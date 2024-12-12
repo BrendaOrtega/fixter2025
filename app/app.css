@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  @apply bg-background;
+
+  /* @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  } */
+}
+.footer {
+  border-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.2) 0%,
+      #85ddcb 50%,
+      rgba(0, 0, 0, 0.2) 100%
+    )
+    1;
+  border-radius: 5px; /* this doesn't work */
+  border-top-width: 1px;
+  border-style: solid;
+}
