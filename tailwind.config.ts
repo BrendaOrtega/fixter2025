@@ -23,6 +23,7 @@ export default {
         stars: "url('/stars.png')",
         card: "url('/card.png')",
         bannerOne: "url('/Banner.svg')",
+        hero: "url('/hero.png')",
       },
       fontFamily: {
         sans: [
