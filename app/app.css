@@ -21,6 +21,11 @@ body {
   --brand-900: #19262a;
   --brand-100: #dae8e5;
 }
+
+*:focus-visible {
+  outline: 4px dashed var(--brand-700);
+}
+
 .footer {
   border-image: linear-gradient(
       to right,
@@ -46,9 +51,7 @@ body {
 }
 
 .markdown code {
-  /* background-image: linear-gradient(#fff 60%, #9a86fd 0)
-     */
-  background-image: linear-gradient(#fff 0%, #718bf1 0);
+  background-image: linear-gradient(#fff 0%, var(--brand-800) 0);
   border-radius: 9px;
   padding: 2px 4px;
   color: white;
@@ -57,6 +60,11 @@ body {
 .markdown blockquote {
   position: relative;
   padding-left: 24px;
+  font-style: italic;
+}
+
+.markdown blockquote p {
+  color: var(--brand-500);
 }
 
 .markdown blockquote::after {

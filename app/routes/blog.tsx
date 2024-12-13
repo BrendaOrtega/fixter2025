@@ -5,6 +5,7 @@ import {
   useState,
   useTransition,
   type ChangeEvent,
+  type ReactNode,
 } from "react";
 import {
   data,
@@ -23,6 +24,7 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import type { Post } from "@prisma/client";
 import { postSearch } from "~/utils/postSearch";
 import { useReadingTime } from "~/utils/useReadingTime";
+import { motion } from "motion/react";
 
 export const meta = () =>
   getMetaTags({
@@ -32,19 +34,16 @@ export const meta = () =>
   });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
+  const url = new URL(request.url); // better working with parsers
   const search = url.searchParams.get("search") ?? "";
   const skip = url.searchParams.get("skip")
     ? Number(url.searchParams.get("skip"))
     : 0;
   let posts;
-  // auditing...
-
-  // the query
   if (search) {
     posts = await postSearch(search);
   } else {
-    // THIS REALLLY should be search-filtered
+    // first render
     posts = await db.post.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
@@ -52,12 +51,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       skip,
     });
   }
-  //
-  const featured = await db.post.findFirst({ where: { isFeatured: true } });
+  // const featured = await db.post.findFirst({ where: { isFeatured: true } }); @todo use again?
   return data(
     {
       posts,
-      featured,
+      // featured,
       search,
       totalLength: await db.post.count({ where: { published: true } }),
     },
@@ -72,32 +70,26 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export default function Route({
   loaderData: { posts, search },
 }: Route.ComponentProps) {
-  const navigation = useTransition();
   const fetcher = useFetcher();
   const [items, setItems] = useState(posts);
-
-  const handleSubmit = (value: string) => {
-    fetcher.submit({ search: value }, { method: "get" });
-  };
-
-  const handleLoadMore = () => {
-    // Auditing...
-    const searchParams = new URLSearchParams();
-    searchParams.set("skip", String(items.length));
-    fetcher.submit(searchParams, { method: "get" });
-  };
 
   useEffect(() => {
     if (fetcher.data && fetcher.data.posts) {
       setItems([...new Set(items.concat(fetcher.data.posts))]);
-      // save(newList);
     }
-    /* eslint-disable */
   }, [fetcher]);
-
   useEffect(() => {
     setItems(posts);
   }, [posts]);
+
+  const handleSubmit = (value: string) => {
+    fetcher.submit({ search: value }, { method: "get" });
+  };
+  const handleLoadMore = () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("skip", String(items.length));
+    fetcher.submit(searchParams, { method: "get" }); // nice 🤓🪄✨
+  };
 
   const isLoading = fetcher.state !== "idle";
   const showLoadMore = !(fetcher.data?.totalLength <= items.length) && !search;
@@ -117,7 +109,7 @@ export default function Route({
         {showLoadMore && (
           <button
             onClick={handleLoadMore}
-            className="bg-[#F5F7FC] dark:bg-[rgba(245,247,252,.2)] dark: py-3 px-4 rounded-lg block mx-auto text-brand-black-500 dark:text-brand-black-100 text-lg"
+            className="py-2 px-6 rounded-full bg-brand-500 text-black font-bold block mx-auto my-6 hover:scale-105 transition-all"
           >
             {isLoading ? <Spinner /> : "Cargar más"}
           </button>
@@ -150,7 +142,7 @@ export const Header = () => {
         <span
           style={{
             background:
-              "linear-gradient(90deg, rgba(133, 58, 246, 1) 0%, rgba(106, 169, 239, 1) 100%)",
+              "linear-gradient(90deg, var(--brand-700) 0%, var(--brand-500) 100%)",
             backgroundClip: "text",
             WebkitBackgroundClip: "text",
             color: "transparent",
@@ -240,12 +232,12 @@ const Searcher = ({
           disabled={isLoading}
           onChange={onChange}
           defaultValue={defaultSearch}
-          className=" border-[1px] pr-3 border-[#EFEFEF] dark:border-white/30 bg-transparent md:w-[100%] h-12 w-[100%] rounded-full px-6 focus:ring-purple focus:ring focus:outline-transparent pl-16"
+          className="border-[1px] pr-3 dark:border-white/30 bg-transparent md:w-[100%] h-12 w-[100%] rounded-full px-6 pl-16 transition-all ring-inset focus:ring-0"
           placeholder="¿Qué quieres aprender hoy?"
         ></input>
         <button className="absolute left-3 top-2">
           {isLoading || loading ? (
-            <span className="block animate-spin-slow text-purple text-2xl">
+            <span className="block animate-spin-slow text-brand-700 text-2xl">
               <AiOutlineLoading3Quarters />
             </span>
           ) : (
@@ -255,17 +247,29 @@ const Searcher = ({
       </div>
       <div className="w-full h-[32px] scrollGradient relative mt-8">
         <div
-          className="flex gap-4 justify-start md:justify-center overflow-x-scroll noscroll"
+          className="flex gap-4 justify-start md:justify-center overflow-x-scroll"
           style={{
-            scrollbarWidth: "none",
+            scrollbarWidth: "none", // esto esconde la barra de scroll (es mala práctica 🤷🏻)
           }}
         >
           <Filter
-            value="javascript" // @todo remove value (controlled)
-            isActive={search === "javascript"}
+            value="motion"
+            isActive={search === "motion"}
             onClick={handleFilter}
-            image="/icons/javascript.svg"
-            title="JavaScript"
+            image="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fuser-images.githubusercontent.com%2F7850794%2F164965509-2a8dc49e-2ed7-4243-a2c9-481b03bbc31a.png&f=1&nofb=1&ipt=d8a1119e423ac23027bcb41540139498d519c0b1aa29d104bfadf5a6d94f820c&ipo=images"
+            // image={ // @todo currently not working
+            //   <svg style={{ width: "100%", height: "100%" }}>
+            //     <use href="#svg12280692161"></use>
+            //   </svg>
+            // }
+            title="Motion"
+          />
+          <Filter
+            value="remix"
+            isActive={search === "remix"}
+            onClick={handleFilter}
+            image="/icons/remix.svg"
+            title="Remix"
           />
           <Filter
             value="react"
@@ -273,6 +277,13 @@ const Searcher = ({
             onClick={handleFilter}
             image="/icons/react.svg"
             title="React"
+          />
+          <Filter
+            value="javascript" // @todo remove value (controlled)
+            isActive={search === "javascript"}
+            onClick={handleFilter}
+            image="/icons/javascript.svg"
+            title="JavaScript"
           />
           <Filter
             value="fullstack"
@@ -287,13 +298,6 @@ const Searcher = ({
             onClick={handleFilter}
             image="/icons/figma.svg"
             title="UX/UI"
-          />
-          <Filter
-            value="remix"
-            isActive={search === "remix"}
-            onClick={handleFilter}
-            image="/icons/remix.svg"
-            title="Remix"
           />
           <Filter
             value="css"
@@ -323,6 +327,7 @@ const Searcher = ({
             image="/icons/GitHub.svg"
             title="Github"
           />
+
           <Filter
             value="prisma"
             isActive={search === "prisma"}
@@ -346,24 +351,34 @@ const Filter = ({
   value?: string;
   onClick?: (value: string | undefined) => void;
   isActive?: boolean;
-  image: string;
+  image: ReactNode;
   title: string;
 }) => {
+  const isNode = !(typeof image === "string");
   return (
-    <button
+    <motion.button
+      style={{
+        backgroundRepeat: "no-repeat",
+        backgroundSize: isActive ? "100%" : "0%",
+      }}
+      transition={{ type: "spring", bounce: 0 }}
       onClick={onClick ? () => onClick(value) : undefined}
       className={twMerge(
-        " hover:bg-[#E9F0F2] dark:hover:bg-white/10 cursor-pointer border-[#E9F0F2] dark:border-white/10 border-[1px] text-brand-black-200 dark:text-brand-black-50 h-8 flex gap-2 items-center justify-center px-2 rounded-lg transition-all",
-        isActive && "bg-indigo-100 scale-110"
+        " hover:bg-[#E9F0F2] dark:hover:bg-white/10 cursor-pointer border-[#E9F0F2] dark:border-white/10 border-[1px] text-brand-black-200 dark:text-brand-black-50 h-8 flex gap-2 items-center justify-center px-2 rounded-lg",
+        isActive && "bg-gradient-to-tl from-brand-800 to-brand-700"
       )}
     >
-      <img className="max-w-[28px] h-[20px]" alt="framework" src={image} />{" "}
+      {isNode ? (
+        image
+      ) : (
+        <img className="max-w-[28px] h-[20px]" alt="framework" src={image} />
+      )}
       {title}
-    </button>
+    </motion.button>
   );
 };
 
-const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
+export const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
   const readingTime = useReadingTime(post.body || "", true);
   return (
     <Link
@@ -373,15 +388,22 @@ const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
       <div className="flex items-center gap-2 bg-gray-900/70 text-white  absolute top-4 right-4 py-1 px-2 rounded-full">
         <img
           className="h-8 rounded-full bg-gradient-to-br from-brand-700 to-brand-800"
-          src={post.photoUrl || "/full_logo.svg"}
+          src={post.photoUrl || "/full-logo.svg"}
           alt="floating"
+          onError={(event) => {
+            event.currentTarget.src = "/full-logo.svg";
+          }}
         />
         <span className="text-xs">{post.authorName}</span>
       </div>
       <img
         className="aspect-video object-cover rounded-2xl mb-4"
-        src={post.metaImage || post.coverImage || undefined}
+        src={post.metaImage || post.coverImage}
         alt="cover"
+        onError={({ currentTarget }) => {
+          currentTarget.src = "/full-logo.svg";
+          currentTarget.onerror = null;
+        }}
       />
       <p className="text-sm">📚 {post.mainTag}</p>
       <h4 className="text-lg font-bold">{post.title}</h4>

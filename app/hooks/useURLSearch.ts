@@ -10,15 +10,15 @@ export default function useURLSearch(search?: string) {
   }: {
     tag: string;
     url: URL;
-    onUpdate: (arg0: string) => void;
+    onUpdate?: (arg0: string) => void;
   }): void => {
-    // find... a better name. But is nicer now.
+    // find... a better name. But t'is nice, for now.
     if (tag === search) {
       url.searchParams.delete("search");
-      onUpdate("");
+      onUpdate?.("");
     } else {
       url.searchParams.set("search", tag);
-      onUpdate(tag);
+      onUpdate?.(tag);
     }
     navigate({
       pathname: url.pathname,
@@ -28,6 +28,6 @@ export default function useURLSearch(search?: string) {
 
   return {
     find,
-    // any loading artifact or state?
+    // @todo any loading artifact or state?
   };
 }
