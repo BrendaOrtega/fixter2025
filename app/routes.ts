@@ -11,9 +11,11 @@ export default [
   route("api/user", "routes/api/user.tsx"),
   route("perfil", "routes/perfil.tsx"),
   route("mis-cursos", "routes/mis-cursos.tsx"),
+  route("detalle", "routes/detail.tsx"),
 
   ...prefix("cursos", [
     index("routes/cursos.tsx"),
     route(":slug/viewer", "routes/viewer.tsx"),
+    route(":slug/detail", "routes/detail.tsx"),
   ]),
 ] satisfies RouteConfig;
