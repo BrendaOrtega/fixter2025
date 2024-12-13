@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     z.string().email().parse(email);
     // @todo: agenda (detached)
     await sendMagicLink({ email });
-    return redirect("/login?success=1");
+    return redirect("/login?success");
   }
   return null;
 };

@@ -1,3 +1,6 @@
+/* // space grotesk */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,6 +13,14 @@ body {
     color-scheme: dark;
   } */
 }
+
+* {
+  --brand-700: #37ab93;
+  --brand-500: #85ddcb;
+  --brand-800: #186656;
+  --brand-900: #19262a;
+  --brand-100: #dae8e5;
+}
 .footer {
   border-image: linear-gradient(
       to right,
@@ -21,4 +32,75 @@ body {
   border-radius: 5px; /* this doesn't work */
   border-top-width: 1px;
   border-style: solid;
+}
+
+/* Markdown para el blog */
+.markdown p {
+  color: var(--brand-100);
+  font-size: 22px;
+  margin: 24px 0 0 0;
+}
+
+.markdown a {
+  color: var(--brand-500);
+}
+
+.markdown code {
+  /* background-image: linear-gradient(#fff 60%, #9a86fd 0)
+     */
+  background-image: linear-gradient(#fff 0%, #718bf1 0);
+  border-radius: 9px;
+  padding: 2px 4px;
+  color: white;
+}
+
+.markdown blockquote {
+  position: relative;
+  padding-left: 24px;
+}
+
+.markdown blockquote::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  background: white;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.markdown li {
+  font-size: 22px;
+  margin: 24px 0 0 0;
+  font-weight: bold;
+  color: var(--brand-500);
+  margin-left: 20px;
+  font-family: "Avenir Book", "Avenir Regular", sans-serif;
+  list-style: circle;
+}
+
+.markdown h2,
+.markdown h1,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6,
+.markdown strong {
+  font-family: "Space Grotesk", Figtree, "Avenir Book", "Avenir Regular",
+    sans-serif;
+  font-weight: bold;
+}
+
+.markdown h1 {
+  font-size: 40px;
+  margin: 32px 0 24px 0;
+  line-height: 1;
+  margin-top: 32px;
+}
+
+.markdown h2 {
+  font-size: 32px;
+  margin: 32px 0 24px 0;
+  line-height: 1;
+  margin-top: 32px;
 }

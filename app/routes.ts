@@ -17,6 +17,11 @@ export default [
     route(":courseSlug/detalle", "routes/courseDetail.tsx"),
   ]),
 
+  ...prefix("blog", [
+    index("routes/blog.tsx"),
+    route(":postSlug", "routes/post.tsx"),
+  ]),
+
   ...prefix("api", [
     route("user", "routes/api/user.tsx"),
     route("course", "routes/api/course.tsx"),
