@@ -1,5 +1,3 @@
-import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
 import { useEffect, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/PrimaryButton";
 import { Footer } from "~/components/Footer";
@@ -13,6 +11,9 @@ import { db } from "~/.server/db";
 import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
 import { useVideosLength } from "~/hooks/useVideosLength";
+import { CourseBanner } from "~/components/CourseBanner";
+import { twMerge } from "tailwind-merge";
+import { cn } from "~/lib/utils";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -54,9 +55,10 @@ export default function Route({
     <>
       <Header />
       <CousesList courses={courses} />
+      <CourseBanner />
       <Banner>
         <div className="w-full md:w-[60%]">
-          <h3 className="text-2xl md:text-4xl text-white font-bold mb-10 leading-snug">
+          <h3 className="text-2xl md:text-4xl text-white font-bold mb-10 !leading-snug">
             ¿Explorando nuevas herramientas? Visita nuestro Blog
           </h3>{" "}
           <PrimaryButton link="/blog" title="Ver blog" />
@@ -67,10 +69,25 @@ export default function Route({
   );
 }
 
-export const Banner = ({ children }: { children: ReactNode }) => {
+export const Banner = ({
+  children,
+  className,
+  variant,
+}: {
+  children: ReactNode;
+  className?: string;
+  variant?: string;
+}) => {
   return (
     <div className="px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
-      <div className="p-12 rounded-3xl border-[2px] border-brand-500 bg-bannerOne bg-cover bg-right-bottom  h-[300px] my-60">
+      <div
+        className={cn(
+          "bg-bannerOne bg-cover  bg-right-bottom  h-[300px] my-60 p-12 rounded-3xl border-[2px] border-brand-500",
+          {
+            "bg-bannerHome ": variant === "home",
+          }
+        )}
+      >
         {children}
       </div>{" "}
     </div>

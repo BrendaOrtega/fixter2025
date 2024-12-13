@@ -22,9 +22,14 @@ export default {
       backgroundImage: {
         stars: "url('/stars.png')",
         card: "url('/card.png')",
-        bannerOne: "url('/Banner.svg')",
+        bannerOne: "url('/bannerCursos.png')",
+        bannerHome: "url('/bannerHome.png')",
+        heroHome: "url('/HeroHome.svg')",
         hero: "url('/hero.png')",
         heroMobile: "url('/hero-mobile.png')",
+        animationsBanner: "url('/bannerAnimations.svg')",
+        animationsBannerMobile: "url('/bannerAnimationsMobile.svg')",
+        planet: "url('/planet.png')",
       },
       fontFamily: {
         sans: [
