@@ -9,7 +9,7 @@ import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 export const NavBar = ({ user }: { user?: Partial<User> }) => {
   const { googleLoginHandler } = useGoogleLogin();
   return (
-    <nav className="h-20 px-6 items-center fixed top-0 w-full">
+    <nav className="h-20 px-6 items-center fixed top-0 w-full z-10">
       <section className="backdrop-blur-md max-w-4xl flex justify-between items-center h-full mx-auto">
         <NavLink to="/">
           <img className="h-10" src="/logo.svg" alt="logo" />
@@ -43,7 +43,7 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
               className="py-2 px-4 rounded-full bg-brand-900/60 font-normal "
               to="/perfil"
             >
-              "Tu perfil"
+              Tu perfil
             </NavLink>
           ) : (
             <button
