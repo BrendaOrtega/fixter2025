@@ -65,7 +65,7 @@ export default function Route() {
   const { googleLoginHandler } = useGoogleLogin();
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-4 pt-20">
       <div>
         <h2 className="text-2xl font-bold text-white text-center">
           Inicia sesión o crea una cuenta
