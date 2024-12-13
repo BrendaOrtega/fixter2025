@@ -48,6 +48,7 @@ body {
 
 .markdown a {
   color: var(--brand-500);
+  text-decoration: underline;
 }
 
 .markdown code {

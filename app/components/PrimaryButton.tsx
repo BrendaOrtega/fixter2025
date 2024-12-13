@@ -20,7 +20,7 @@ export const PrimaryButton = ({
     <Element
       to={to || ""}
       className={cn(
-        "h-12 rounded-full border-[2px] border-brand-500 text-brand-500 px-5 flex items-center",
+        "h-12 rounded-full border-[2px] border-brand-500 text-brand-500 px-5 inline-grid place-content-center items-center",
         {
           "bg-brand-500 text-brand-900": variant === "fill",
           "bg-brand-900 border-brand-900 text-white": variant === "ghost",

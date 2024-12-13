@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaGooglePlay } from "react-icons/fa6";
 import { IoIosClose } from "react-icons/io";
 import { Link } from "react-router";
+import { nanoid } from "nanoid";
 
 export const VideoPlayer = ({
   src,
@@ -67,7 +68,7 @@ export const VideoPlayer = ({
 
   const updateWatchedList = () => {
     if (typeof window === "undefined") return;
-    let list = localStorage.getItem("watched") || "[]";
+    let list: string | string[] = localStorage.getItem("watched") || "[]";
     list = JSON.parse(list);
     list = [...new Set([...list, slug])];
     localStorage.setItem("watched", JSON.stringify(list));
@@ -116,6 +117,7 @@ export const VideoPlayer = ({
           <Link reloadDocument to={nextVideoLink}>
             <motion.button
               // onClick={onClickNextVideo}
+              key={nanoid()}
               whileTap={{ scale: 0.99 }}
               transition={{ type: "spring", bounce: 0.2 }}
               whileHover={{ scale: 1.05 }}

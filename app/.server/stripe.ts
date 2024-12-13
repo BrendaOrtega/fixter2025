@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { db } from "./db";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -10,20 +11,20 @@ export const DEV_COUPON = "rXOpoqJe"; // -25%
 export const COUPON_40 = "EphZ17Lv"; // -40%
 export const COUPON_50 = "yYMKDuTC"; // -50%
 
-export const get40Checkout = async () => {
-  return await getStripeCheckout({
-    coupon: isDev ? DEV_COUPON : COUPON_40,
-  });
-};
+// export const get40Checkout = async () => {
+//   return await getStripeCheckout({
+//     coupon: isDev ? DEV_COUPON : COUPON_40,
+//   });
+// };
 
-export const get50Checkout = async (tokenEmail: string) => {
-  return await getStripeCheckout({
-    coupon: isDev ? DEV_COUPON : COUPON_50, // -50%
-    metadata: {
-      host: tokenEmail,
-    },
-  });
-};
+// export const get50Checkout = async (tokenEmail: string) => {
+//   return await getStripeCheckout({
+//     coupon: isDev ? DEV_COUPON : COUPON_50, // -50%
+//     metadata: {
+//       host: tokenEmail,
+//     },
+//   });
+// };
 
 export const getStripeCheckout = async (options: {
   coupon?: string;
@@ -34,9 +35,14 @@ export const getStripeCheckout = async (options: {
   courseSlug: string;
 }) => {
   const { courseSlug, courseId, customer_email, price } = options || {};
+  const { stripeId } =
+    (await db.course.findUnique({
+      where: { slug: courseSlug },
+      select: { stripeId: true },
+    })) || {};
   const stripe = new Stripe(
     isDev
-      ? process.env.STRIPE_SECRET_KEY_DEV || ""
+      ? process.env.STRIPE_SECRET_KEY || ""
       : (process.env.STRIPE_SECRET_KEY as string),
     {}
   );
@@ -47,13 +53,15 @@ export const getStripeCheckout = async (options: {
   const session = await stripe.checkout.sessions.create({
     metadata: {
       courseId, // others?
+      courseSlug, // yes!
+      stripeId,
       ...options.metadata,
     },
     customer_email,
     mode: "payment",
     line_items: [
       {
-        price: price,
+        price: price || stripeId,
         quantity: 1,
       },
     ],

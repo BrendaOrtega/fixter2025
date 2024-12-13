@@ -1,6 +1,5 @@
 import {
   data,
-  redirect,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -11,7 +10,6 @@ import { VideosMenu } from "~/components/viewer/VideoPlayerMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
-import { getStripeCheckout } from "~/.server/stripe";
 import type { Route } from "./+types/viewer";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {

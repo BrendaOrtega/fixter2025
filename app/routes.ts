@@ -3,6 +3,7 @@ import {
   index,
   prefix,
   route,
+  layout,
 } from "@react-router/dev/routes";
 
 export default [
@@ -25,6 +26,7 @@ export default [
   ...prefix("api", [
     route("user", "routes/api/user.tsx"),
     route("course", "routes/api/course.tsx"),
+    route("stripe", "routes/api/stripe.tsx"),
   ]),
 
   // @todo redirects?

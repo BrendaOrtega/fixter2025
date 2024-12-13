@@ -6,7 +6,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "checkout") {
-    const url = await getStripeCheckout({ courseSlug: params.courseSlug });
+    console.log("Generating stripe...");
+    const url = await getStripeCheckout({
+      courseSlug: formData.get("courseSlug") as string,
+    });
     throw redirect(url.toString());
   }
   return null;
