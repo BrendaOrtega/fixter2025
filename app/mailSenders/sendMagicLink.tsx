@@ -2,7 +2,7 @@ import { magicLinkTemplate } from "~/mailSenders/templates/magicLink";
 import { sendgridTransport } from "~/utils/sendGridTransport";
 import { generateUserToken } from "~/utils/tokens";
 
-const isDev = process.env.NODE_ENV;
+const isDev = process.env.NODE_ENV === "development";
 
 export const sendMagicLink = async (data: {
   email: string;
