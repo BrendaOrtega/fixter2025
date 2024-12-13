@@ -31,10 +31,20 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
           >
             <Discord />
           </a>
-          <NavLink className="hidden md:block" to="/cursos">
+          <NavLink
+            className={cn("hidden md:block", {
+              "sm:block": !user?.email,
+            })}
+            to="/cursos"
+          >
             Cursos
           </NavLink>
-          <NavLink className="md:block hidden" to="/blog">
+          <NavLink
+            className={cn("hidden md:block", {
+              "sm:block": user?.email,
+            })}
+            to="/blog"
+          >
             Blog
           </NavLink>
 

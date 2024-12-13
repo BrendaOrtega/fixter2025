@@ -3,17 +3,10 @@ import {
   useEffect,
   useRef,
   useState,
-  useTransition,
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import {
-  data,
-  Link,
-  useFetcher,
-  useNavigate,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { data, Link, useFetcher, type LoaderFunctionArgs } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { db } from "~/.server/db";
 import { getMetaTags } from "~/utils/getMetaTags";
@@ -97,7 +90,7 @@ export default function Route({
   return (
     <>
       {/* <Navbar /> */}
-      <main className="py-12 md:py-20 px-4 max-w-8xl mx-auto bg-gray-950 text-white">
+      <main className="py-12 md:py-20 px-4 max-w-8xl mx-auto bg-gray-950 text-white pt-20">
         <Header />
         <Searcher
           isLoading={isLoading}
@@ -127,7 +120,7 @@ export const List = ({
   items: Post[];
 }) => {
   return (
-    <div className="flex flex-wrap justify-center gap-6 mt-12">
+    <div className="justify-center mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
       {items.map((p) => (
         <PostCard isLoading={isLoading} key={p.id} post={p} />
       ))}
@@ -383,7 +376,7 @@ export const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
   return (
     <Link
       to={`/blog/${post.slug}`}
-      className="w-[320px] hover:scale-105 transition-all relative"
+      className="hover:scale-105 transition-all relative"
     >
       <div className="flex items-center gap-2 bg-gray-900/70 text-white  absolute top-4 right-4 py-1 px-2 rounded-full">
         <img

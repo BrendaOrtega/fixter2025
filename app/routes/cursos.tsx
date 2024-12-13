@@ -1,6 +1,12 @@
 import type { Route } from "./+types/home";
 import { Welcome } from "../welcome/welcome";
-import { useEffect, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { PrimaryButton } from "~/components/PrimaryButton";
 import { Footer } from "~/components/Footer";
 import {
@@ -13,6 +19,9 @@ import { db } from "~/.server/db";
 import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
 import { useVideosLength } from "~/hooks/useVideosLength";
+import { Header } from "~/components/common/Header";
+import { useMotionValue, motion, useSpring } from "framer-motion";
+import { use3DHover } from "~/hooks/use3DHover";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -78,7 +87,7 @@ export const Banner = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const CousesList = ({ courses }: { courses: Course[] }) => {
+export const CousesList = ({ courses }: { courses: Course[] }) => {
   return (
     <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
       {courses.map((course) => (
@@ -104,15 +113,36 @@ export const CourseCard = ({
   course: Course;
 }) => {
   const videosLength = useVideosLength(course.id);
-
+  const {
+    containerRef,
+    springX,
+    springY,
+    handleMouseEnter,
+    handleMouseLeave,
+    handleMouseMove,
+    isHovered,
+  } = use3DHover();
   // @todo add courses route to save seo
   return (
     <Link
       to={`/cursos/${courseSlug}/detalle`}
       className="grid-cols-1 relative w-full h-[480px]"
+      style={{
+        transformStyle: "preserve-3d",
+        perspective: 600,
+      }}
     >
-      <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl"></div>{" "}
-      <div className="pt-12 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full">
+      {!isHovered && (
+        <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl" />
+      )}
+      <motion.div
+        style={{ rotateX: springX, rotateY: springY }}
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="pt-12 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full"
+      >
         <img className="mx-auto h-60 " src={course.icon} alt={course.title} />
         <h3 className="font-bold text-2xl text-white mt-8 text-center">
           {course.title}
@@ -136,23 +166,7 @@ export const CourseCard = ({
             </span>
           )}
         </div>
-      </div>
+      </motion.div>
     </Link>
-  );
-};
-
-const Header = () => {
-  return (
-    <section className="h-[480px] bg-stars bg-cover bg-bottom flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-4xl md:text-5xl xl:text-6xl font-bold text-white">
-          Cursos
-        </h2>
-        <p className="text-colorParagraph text-xl md:text-2xl mt-6 font-light">
-          Mejora tus skills profesionales con cursos específicos, cuando quieras
-          desde donde quieras.
-        </p>{" "}
-      </div>
-    </section>
   );
 };

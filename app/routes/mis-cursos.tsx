@@ -4,10 +4,10 @@ import { getUserOrRedirect } from "~/.server/dbGetters";
 import type { Route } from "./+types/mis-cursos";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import SimpleFooter from "~/components/common/SimpleFooter";
-import MyCourses from "~/components/MyCourses";
+import { Header } from "~/components/common/Header";
+import { CousesList } from "./cursos";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // this functions validates that user exists in db.
   const user = await getUserOrRedirect(request);
   const enrolledCourses = await db.course.findMany({
     where: {
@@ -26,20 +26,26 @@ export default function Route({
   const isSuccess = searchParams.get("success") === "true" ? true : false; // good to be in the client
 
   return (
-    <main className="min-h-screen flex flex-col dark:bg-brand-black-500 bg-white">
-      {/* <Navbar user={user} /> */}
-      {isSuccess && <SuccessAlert />}
-      <div className="grid mt-16 mb-16 px-4  max-w-6xl mx-auto w-full text-center">
-        <h2 className="text-gray-900 text-4xl font-bold dark:text-gray-10">
-          Estos son todos tus cursos
-        </h2>
-        <p className="text-gray-700 text-lg mb-12 dark:text-gray-500">
-          ¡No tardes en añadir otro!
-        </p>
-        <MyCourses courses={courses} />
-      </div>
-      <SimpleFooter />
-    </main>
+    <>
+      <Header
+        title="Todos tus cursos"
+        text={
+          <span>
+            Colecciona todos los cursos uno por uno o adquiere una membresía
+            ¡con acceso a todo! 🤩
+            <br />
+            <br />
+            ¡No tardes en añadir otro! 🤓📚
+          </span>
+        }
+      />
+
+      <main className="min-h-screen flex flex-col dark:bg-brand-black-500 pt-20">
+        {isSuccess && <SuccessAlert />}
+        <CousesList courses={courses} />
+        <SimpleFooter />
+      </main>
+    </>
   );
 }
 
