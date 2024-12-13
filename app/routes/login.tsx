@@ -1,10 +1,8 @@
 import { FaGoogle, FaMailBulk } from "react-icons/fa";
 import {
-  data,
   Form,
   Link,
   redirect,
-  useFetcher,
   useLoaderData,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -18,9 +16,7 @@ import {
   placeSession,
 } from "~/.server/dbGetters";
 import { commitSession } from "~/sessions";
-import { googleLogin } from "~/lib/firebase";
 import type { Route } from "./+types/login";
-import type { FormEvent } from "react";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -56,7 +52,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function Route() {
   const { success, status, message } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher();
 
   if (String(status).includes("4")) {
     return <BadToken message={message} />;
@@ -65,8 +60,9 @@ export default function Route() {
   const { googleLoginHandler } = useGoogleLogin();
 
   return (
-    <section className="flex flex-col gap-4 pt-20">
+    <section className="flex flex-col gap-4 pt-40 max-w-sm mx-auto">
       <div>
+        <img className="mx-auto mb-8" src="/full-logo.svg" alt="robot" />
         <h2 className="text-2xl font-bold text-white text-center">
           Inicia sesión o crea una cuenta
         </h2>
@@ -114,7 +110,7 @@ export default function Route() {
           <input
             required
             type="email"
-            className="px-4 py-3 rounded-lg focus:border-none focus:outline-2 focus:outline-brand-300"
+            className="px-4 py-3 rounded-lg"
             name="email"
             placeholder="tuemail@tucorreo.com"
           />
