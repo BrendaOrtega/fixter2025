@@ -1,11 +1,15 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
-import { updateUserAndSetSession } from "~/.server/dbGetters";
+import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  if (intent === "self") {
+    return { user: await getUserOrNull(request) };
+  }
 
   if (intent === "google_login") {
     const data = JSON.parse(formData.get("data") as string);

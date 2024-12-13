@@ -34,6 +34,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       authorDescription: true,
       authorName: true,
       photoUrl: true,
+      basePrice: true,
     },
   });
   if (!course) throw data("Course Not Found", { status: 404 });
@@ -46,7 +47,7 @@ export default function Route({
 }: Route.ComponentProps) {
   return (
     <>
-      <CourseHeader {...course} />
+      <CourseHeader course={course} />
       <CourseContent course={course} videos={videos} />
       <Teacher course={course} />
       <Footer />
@@ -70,7 +71,7 @@ const CourseContent = ({
         <img
           className="absolute -top-12 -left-8"
           alt="comic"
-          src="/courses/comic.svg"
+          src={"/courses/comic.svg"}
         />
         <img
           className="w-32 md:w-auto absolute -right-6 md:-right-16 -bottom-16"
@@ -153,23 +154,8 @@ const Lesson = ({ title, isFree }: { title: string; isFree?: boolean }) => {
   );
 };
 
-const CourseHeader = ({
-  title,
-  id,
-  summary,
-  duration,
-  level,
-  slug,
-  basePrice,
-}: {
-  basePrice: number;
-  slug: string;
-  id: string;
-  title?: string;
-  summary?: string;
-  duration?: number;
-  level?: string;
-}) => {
+const CourseHeader = ({ course }: { course: Course }) => {
+  const { title, id, summary, duration, level, slug, basePrice, icon } = course;
   return (
     <section className="w-full h-fit py-20 md:py-0 md:h-[580px] bg-heroMobile md:bg-hero bg-cover bg-botom bg-center ">
       <div className="max-w-7xl mx-auto flex items-center h-full gap-12 md:gap-0  flex-wrap-reverse md:flex-nowrap px-4 md:px-[5%] xl:px-0">

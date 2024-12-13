@@ -87,7 +87,10 @@ const CousesList = ({ courses }: { courses: Course[] }) => {
   );
 };
 
-export const formatDuration = (secs: number) => {
+export const formatDuration = (secs?: string | number | null) => {
+  if (typeof secs === "string") {
+    secs = Number(secs);
+  }
   if (isNaN(secs) || !secs) return "60 mins";
   return (secs / 60).toFixed(0) + " mins";
 };

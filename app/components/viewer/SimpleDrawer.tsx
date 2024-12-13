@@ -88,7 +88,14 @@ export const Drawer = ({
             </button>
           </header>
         )}
-        <section className="overflow-y-scroll h-[95%]">{children}</section>
+        <section
+          style={{
+            scrollbarWidth: "none",
+          }}
+          className="overflow-y-scroll h-[95%]"
+        >
+          {children}
+        </section>
         <nav className="flex justify-end gap-4  mt-auto">
           {cta ? (
             cta

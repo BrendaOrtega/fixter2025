@@ -19,13 +19,7 @@ export default function Route({ loaderData: { user } }: Route.ComponentProps) {
   return (
     <article>
       {/* <NavBar user={user} /> */}
-      <section
-        py={{ base: 8 }}
-        maxW="container.xl"
-        display="flex"
-        flexDir="column"
-        gap={8}
-      >
+      <section display="flex" flexDir="column" gap={8}>
         <div className="py-20">
           <img
             className="rounded-full mx-auto"
