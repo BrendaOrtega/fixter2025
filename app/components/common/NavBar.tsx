@@ -9,8 +9,8 @@ import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 export const NavBar = ({ user }: { user?: Partial<User> }) => {
   const { googleLoginHandler } = useGoogleLogin();
   return (
-    <nav className="h-20 px-6 items-center fixed top-0 w-full z-10">
-      <section className="backdrop-blur-md max-w-4xl flex justify-between items-center h-full mx-auto">
+    <nav className="h-20 px-6 items-center fixed top-0 w-full backdrop-blur-md z-10">
+      <section className=" max-w-4xl flex justify-between items-center h-full mx-auto">
         <NavLink to="/">
           <img className="h-10" src="/logo.svg" alt="logo" />
         </NavLink>

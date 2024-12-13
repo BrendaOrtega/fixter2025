@@ -8,9 +8,9 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
     fetcher.submit({ intent: "self" }, { method: "POST", action: "/api/user" });
   }, []);
   return (
-    <article className="pt-20">
+    <>
       <NavBar user={fetcher.data?.user} />
       {children}
-    </article>
+    </>
   );
 };
