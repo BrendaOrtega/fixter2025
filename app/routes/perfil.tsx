@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useFetcher, type LoaderFunctionArgs } from "react-router";
 import Spinner from "~/components/common/Spinner";
 import type { Route } from "./+types/perfil";
-import { getUserOrRedirect } from "~/utils/dbGetters";
+import { getUserOrRedirect } from "~/.server/dbGetters";
 
 //@TODO update image (make video and resize it 🤩), navbar
 

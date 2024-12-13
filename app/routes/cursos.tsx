@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/PrimaryButton";
 import { Footer } from "~/components/Footer";
 import {
+  Link,
   useFetcher,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
@@ -11,6 +12,7 @@ import {
 import { db } from "~/.server/db";
 import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
+import { useVideosLength } from "~/hooks/useVideosLength";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -22,16 +24,6 @@ export function meta({}: Route.MetaArgs) {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
-
-  if (intent === "videos_length") {
-    const courseId = formData.get("courseId") as string;
-    const videosLength = await db.video.count({
-      where: {
-        courseIds: { has: courseId },
-      },
-    });
-    return { videosLength };
-  }
   return null;
 };
 
@@ -49,6 +41,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       level: true,
       videoIds: true,
       id: true,
+      slug: true,
     },
   });
   return { courses };
@@ -57,8 +50,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Route({
   loaderData: { courses },
 }: Route.ComponentProps) {
-  console.log(courses);
-
   return (
     <>
       <Header />
@@ -86,46 +77,36 @@ export const Banner = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
+const CousesList = ({ courses }: { courses: Course[] }) => {
   return (
     <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
       {courses.map((course) => (
-        <CourseCard key={course.id} course={course} />
+        <CourseCard courseSlug={course.slug} key={course.id} course={course} />
       ))}
     </div>
   );
 };
 
+export const formatDuration = (secs: number) => {
+  if (isNaN(secs) || !secs) return "60 mins";
+  return (secs / 60).toFixed(0) + " mins";
+};
+
 export const CourseCard = ({
   course,
+  courseSlug,
 }: {
-  course: Partial<Course>;
-  title: string;
-  lessons: string;
-  duration: string;
-  level: string;
-  image: string;
+  courseSlug: string;
+  course: Course;
 }) => {
-  const fetcher = useFetcher<typeof action>();
-  const videosLength = fetcher.data?.videosLength || null;
+  const videosLength = useVideosLength(course.id);
 
-  useEffect(() => {
-    fetcher.submit(
-      {
-        intent: "videos_length",
-        courseId: course.id,
-      },
-      { method: "POST" }
-    );
-  }, []);
-
-  const formatDuration = (secs: number) => {
-    if (!secs) return "0mins";
-    return (secs / 60).toFixed(0) + " mins";
-  };
-
+  // @todo add courses route to save seo
   return (
-    <div className="grid-cols-1 relative w-full h-[480px]">
+    <Link
+      to={`/cursos/${courseSlug}/detalle`}
+      className="grid-cols-1 relative w-full h-[480px]"
+    >
       <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl"></div>{" "}
       <div className="pt-12 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full">
         <img className="mx-auto h-60 " src={course.icon} alt={course.title} />
@@ -152,7 +133,7 @@ export const CourseCard = ({
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

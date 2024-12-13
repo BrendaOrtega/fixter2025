@@ -11,7 +11,7 @@ import { VideoPlayer } from "~/components/viewer/VideoPlayer";
 import { VideosMenu } from "~/components/viewer/VideoPlayerMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
-import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/utils/dbGetters";
+import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/viewer";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -30,7 +30,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserOrNull(request);
   const { course, videos } = await getFreeOrEnrolledCourseFor(
     user,
-    params.slug || ""
+    params.courseSlug as string
   );
   const isPurchased = user ? user.courses.includes(course.id) : false;
   let video;

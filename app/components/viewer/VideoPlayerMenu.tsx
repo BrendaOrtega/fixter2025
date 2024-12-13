@@ -25,7 +25,6 @@ export const VideosMenu = ({
   isLocked,
   courseSlug,
   videos,
-  defaultOpen,
   moduleNames,
   currentVideoSlug,
   isOpen,
@@ -64,8 +63,8 @@ export const VideosMenu = ({
     const list: string[] = [];
     moduleNames.map((moduleName) => {
       const allCompleted = videos
-        .filter((vi) => vi.moduleName === moduleName)
-        .every((v) => checkIfWatched(v.slug));
+        .filter((vi) => vi?.moduleName === moduleName)
+        .every((v) => checkIfWatched(v?.slug));
       allCompleted && list.push(moduleName);
     });
     setCompleted(list);
@@ -109,13 +108,13 @@ export const VideosMenu = ({
                 .map((v) => (
                   <ListItem
                     // why this is not receiving the video as a prop? ...because I am creative... 😄
-                    isLocked={v.isPublic ? false : isLocked}
-                    isCompleted={videosCompleted.includes(v.slug)}
-                    isCurrent={currentVideoSlug === v.slug}
-                    slug={v.slug || ""}
-                    key={v.id}
-                    title={v.title || ""}
-                    duration={v.duration || 60}
+                    isLocked={v?.isPublic ? false : isLocked}
+                    isCompleted={videosCompleted.includes(v?.slug)}
+                    isCurrent={currentVideoSlug === v?.slug}
+                    slug={v?.slug || ""}
+                    key={v?.id}
+                    title={v?.title || ""}
+                    duration={v?.duration || 60}
                     courseSlug={courseSlug}
                   />
                 ))}

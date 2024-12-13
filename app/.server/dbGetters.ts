@@ -35,6 +35,19 @@ const getAllVideos = async (courseId: string) => {
   ) as Partial<Video>[];
 };
 // courses
+export const getVideoTitles = async (courseId: string) => {
+  return await db.video.findMany({
+    where: {
+      courseIds: { has: courseId },
+    },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      isPublic: true,
+    },
+  });
+};
 
 export const getFreeOrEnrolledCourseFor = async (
   user: Partial<User> | null,
@@ -54,11 +67,11 @@ export const getFreeOrEnrolledCourseFor = async (
     return { course, videos }; // could be null
   } else {
     // check if enrolled
-
+    console.log("Enrolled?", user.courses);
     const course = await db.course.findFirst({
       where: {
         slug,
-        id: { in: user.courses || [] },
+        // id: { in: user.courses },
       },
     });
     if (!course) return null;

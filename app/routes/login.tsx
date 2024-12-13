@@ -16,7 +16,7 @@ import {
   getOrCreateUser,
   ifUserRedirect,
   placeSession,
-} from "~/utils/dbGetters";
+} from "~/.server/dbGetters";
 import { commitSession } from "~/sessions";
 import { googleLogin } from "~/lib/firebase";
 import type { Route } from "./+types/login";

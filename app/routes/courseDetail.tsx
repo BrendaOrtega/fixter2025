@@ -1,7 +1,13 @@
 import type { ReactNode } from "react";
-import type { Route } from "./+types/home";
 import { Footer } from "~/components/Footer";
 import { PrimaryButton } from "~/components/PrimaryButton";
+import type { Route } from "./+types/courseDetail";
+import { data, type LoaderFunctionArgs } from "react-router";
+import { db } from "~/.server/db";
+import { useVideosLength } from "~/hooks/useVideosLength";
+import { formatDuration } from "./cursos";
+import type { Course, Video } from "@prisma/client";
+import { getVideoTitles } from "~/.server/dbGetters";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -10,27 +16,55 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Detail() {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const course = await db.course.findUnique({
+    where: { slug: params.courseSlug },
+    select: {
+      description: true,
+      title: true,
+      summary: true,
+      duration: true,
+      icon: true,
+      isFree: true,
+      createdAt: true,
+      level: true,
+      videoIds: true,
+      id: true,
+      slug: true,
+      authorDescription: true,
+      authorName: true,
+      photoUrl: true,
+    },
+  });
+  if (!course) throw data("Course Not Found", { status: 404 });
+  const videos = await getVideoTitles(course.id);
+  return { course, videos };
+};
+
+export default function Route({
+  loaderData: { course, videos },
+}: Route.ComponentProps) {
   return (
     <>
-      <CourseHeader />
-      <CourseContent />
-      <Teacher />
+      <CourseHeader {...course} />
+      <CourseContent course={course} videos={videos} />
+      <Teacher course={course} />
       <Footer />
     </>
   );
 }
 
-const CourseContent = () => {
+const CourseContent = ({
+  videos,
+  course,
+}: {
+  videos: Partial<Video>[];
+  course: Course;
+}) => {
   return (
     <section className=" mt-20 md:mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto ">
       <p className="text-colorParagraph text-base md:text-lg mt-6 font-light">
-        Lorem ipsum dolor sit amet consectetur. Nisl euismod tristique
-        vestibulum faucibus diam vel. Tempor dictum tincidunt integer sed
-        scelerisque ipsum tristique eget suspendisse. Nunc ut nisl tortor
-        elementum. Vestibulum enim ut dolor nulla faucibus ut dui. Diam eget
-        sagittis at nisi fermentum purus amet nibh laoreet. Vulputate
-        condimentum cras facilisi ipsum arcu{" "}
+        {course.description}
       </p>
       <div className="border-[1px] my-20 border-brand-500 rounded-3xl p-6 md:p-16 relative">
         <img
@@ -45,31 +79,21 @@ const CourseContent = () => {
         />
         <h3 className="text-4xl font-bold text-white">¿Qué vas a aprender?</h3>
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Lesson title="Pollitos a la naranja" />
-          <Lesson title="Pollitos a la naranja" isFree={true} />
-          <Lesson title="Pollitos a la naranja" />
-          <Lesson title="Pollitos a la naranja" isFree={true} />
-          <Lesson title="Pollitos a la naranja" />
-          <Lesson title="Pollitos a la naranja" />
-          <Lesson title="Pollitos a la naranja" />
-          <Lesson title="Pollitos a la naranja" />
-          <Lesson title="Pollitos a la naranja" />
-          <Lesson title="Pollitos a la naranja" />
+          {videos.map((video) => (
+            <Lesson
+              key={video.id}
+              title={video.title || "Sin título"}
+              isFree={video.isPublic}
+            />
+          ))}
+          {/* <Lesson title="Pollitos a la naranja" /> */}
         </div>
       </div>
     </section>
   );
 };
 
-const Teacher = ({
-  teacher,
-  description,
-  image,
-}: {
-  teacher?: string;
-  description?: ReactNode;
-  image?: string;
-}) => {
+const Teacher = ({ course }: { course: Partial<Course> }) => {
   return (
     <section className="mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto my-[160px]  overflow-hidden">
       <div className="bg-backface rounded-3xl md:py-16 md:pl-16 pt-6 px-6 w-full relative pb-80 ">
@@ -78,10 +102,10 @@ const Teacher = ({
             ¿Quien es tu instructor?
           </span>
           <h3 className="text-white text-3xl font-bold mt-4">
-            {teacher ? teacher : "Héctor Bliss"}
+            {course.authorName ? course.authorName : "Héctor Bliss"}
           </h3>{" "}
-          {description ? (
-            description
+          {course.authorDescription ? (
+            course.authorDescription
           ) : (
             <div>
               {" "}
@@ -107,9 +131,9 @@ const Teacher = ({
         </div>
         <div className=" absolute -bottom-16 -right-16">
           <img
-            className="scale-75 md:scale-100"
-            src={image ? image : "/courses/titor.png"}
-            alt={teacher ? teacher : "Héctor Bliss"}
+            className="w-[320px] rounded-full"
+            src={course.photoUrl ? course.photoUrl : "/courses/titor.png"}
+            alt={course.authorName ? course.authorName : "Héctor Bliss"}
           />
         </div>
       </div>
@@ -131,15 +155,20 @@ const Lesson = ({ title, isFree }: { title: string; isFree?: boolean }) => {
 
 const CourseHeader = ({
   title,
-  description,
+  id,
+  summary,
   lessons,
   duration,
   image,
+  level,
+  slug,
 }: {
+  slug: string;
+  id: string;
   title?: string;
-  description?: ReactNode;
+  summary?: string;
   lessons?: string;
-  duration?: string;
+  duration: number;
   level?: string;
   image?: string;
 }) => {
@@ -148,31 +177,38 @@ const CourseHeader = ({
       <div className="max-w-7xl mx-auto flex items-center h-full gap-12 md:gap-0  flex-wrap-reverse md:flex-nowrap px-4 md:px-[5%] xl:px-0">
         <div className="text-left w-full md:w-[60%]">
           <h2 className="text-4xl md:text-5xl xl:text-5xl font-bold text-white">
-            Mínimo JS para React
+            {title}
           </h2>
           <p className="text-colorParagraph text-base md:text-lg mt-6 font-light">
-            Lorem ipsum dolor sit amet consectetur. Mauris cum sed eget lorem
-            turpis facilisis ac amet tincidunt. Nulla dui egestas sodales augue.
-            Fermentum ac turpis est eu. Porttitor tellus sapien magna
-          </p>{" "}
+            {summary}
+          </p>
           <div className="flex items-center mt-6 gap-4">
             <p className="text-colorParagraph text-base md:text-lg  font-light">
-              17 lecciones
+              {useVideosLength(id)} lecciones
             </p>
             <p className="text-colorParagraph text-base md:text-lg font-light">
-              | 10 horas |
+              | {formatDuration(duration)} |
             </p>
             <div className="flex gap-2 ">
-              <p className=" text-brand-500 uppercase"> Avanzado</p>
+              <p className=" text-brand-500 uppercase"> {level}</p>
               <span className="flex gap-2">
                 <img src="/thunder.svg" className="w-3" />
-                <img src="/thunder.svg" className="w-3" />
-                <img src="/thunder.svg" className="w-3" />
+                {level !== "principiante" && (
+                  <>
+                    <img src="/thunder.svg" className="w-3" />
+                    <img src="/thunder.svg" className="w-3" />
+                  </>
+                )}
               </span>
             </div>
           </div>
           <div className="gap-6 flex mt-10">
-            <PrimaryButton type="fill" title="Empezar gratis" />
+            <PrimaryButton
+              as="Link"
+              to={`/cursos/${slug}/viewer`}
+              type="fill"
+              title="Empezar gratis"
+            />
             <PrimaryButton type="ghost" title="Comprar $499 mxn" />
           </div>
         </div>

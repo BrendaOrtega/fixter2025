@@ -1,7 +1,7 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
-import { updateUserAndSetSession } from "~/utils/dbGetters";
+import { updateUserAndSetSession } from "~/.server/dbGetters";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();

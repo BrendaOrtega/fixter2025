@@ -1,6 +1,6 @@
 import { useSearchParams, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
-import { getUserOrRedirect } from "~/utils/dbGetters";
+import { getUserOrRedirect } from "~/.server/dbGetters";
 import type { Route } from "./+types/mis-cursos";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import SimpleFooter from "~/components/common/SimpleFooter";
