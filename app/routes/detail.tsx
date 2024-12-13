@@ -144,7 +144,7 @@ const CourseHeader = ({
   image?: string;
 }) => {
   return (
-    <section className="w-full h-fit py-20 md:py-0 md:h-[580px] bg-hero bg-cover bg-botom bg-center ">
+    <section className="w-full h-fit py-20 md:py-0 md:h-[580px] bg-heroMobile md:bg-hero bg-cover bg-botom bg-center ">
       <div className="max-w-7xl mx-auto flex items-center h-full gap-12 md:gap-0  flex-wrap-reverse md:flex-nowrap px-4 md:px-[5%] xl:px-0">
         <div className="text-left w-full md:w-[60%]">
           <h2 className="text-4xl md:text-5xl xl:text-5xl font-bold text-white">
