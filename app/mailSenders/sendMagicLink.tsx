@@ -11,7 +11,9 @@ export const sendMagicLink = async (data: {
 }) => {
   // generate token
   const token = generateUserToken(data);
-  const location = isDev ? "http://localhost:3000" : "https://fixtergeek.com";
+  const location = isDev
+    ? "http://localhost:3000"
+    : "https://fixter2025.fly.dev"; // @todo change when domain
   return sendgridTransport
     .sendMail({
       from: "contacto@fixter.org",

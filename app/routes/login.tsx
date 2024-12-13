@@ -42,7 +42,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     invariant(decoded?.email);
     await getOrCreateUser(decoded.email);
-    const session = await placeSession(request, email);
+    const session = await placeSession(request, decoded.email);
     throw redirect("/mis-cursos", {
       headers: { "Set-Cookie": await commitSession(session) },
     });
