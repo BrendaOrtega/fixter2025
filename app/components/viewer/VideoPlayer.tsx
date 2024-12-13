@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { FaGooglePlay } from "react-icons/fa6";
 import { IoIosClose } from "react-icons/io";
+import { Link } from "react-router";
 
 export const VideoPlayer = ({
   src,
@@ -15,7 +16,9 @@ export const VideoPlayer = ({
   onEnd,
   nextVideo,
   slug,
+  nextVideoLink = "",
 }: {
+  nextVideoLink?: string;
   video?: Partial<Video>;
   slug: string;
   nextVideo?: Partial<Video>;
@@ -88,8 +91,6 @@ export const VideoPlayer = ({
     }
   }, []);
 
-  console.log("VIDEO: ", video);
-
   return (
     <section
       className="h-[calc(100vh-80px)] relative overflow-x-hidden"
@@ -99,9 +100,9 @@ export const VideoPlayer = ({
         {!isPlaying && (
           <motion.button
             onClick={togglePlay}
-            initial={{ backdropFilter: "blur(4px)" }}
-            animate={{ backdropFilter: "blur(4px)" }}
-            exit={{ backdropFilter: "blur(0px)", opacity: 0 }}
+            initial={{ backdropFilter: "blur(0px)" }}
+            animate={{ backdropFilter: "blur(0px)" }}
+            exit={{ backdropFilter: "blur(4px)", opacity: 0 }}
             transition={{ duration: 0.2 }}
             key="play_button"
             className="absolute inset-0 bottom-16 flex justify-center items-center cursor-pointer z-10"
@@ -112,40 +113,42 @@ export const VideoPlayer = ({
           </motion.button>
         )}
         {nextVideo && isEnding && (
-          <motion.button
-            onClick={onClickNextVideo}
-            whileTap={{ scale: 0.99 }}
-            transition={{ type: "spring", bounce: 0.2 }}
-            whileHover={{ scale: 1.05 }}
-            exit={{ opacity: 0, filter: "blur(9px)", x: 50 }}
-            initial={{ opacity: 0, filter: "blur(9px)", x: 50 }}
-            animate={{ opacity: 1, filter: "blur(0px)", x: 0 }}
-            className="absolute right-2 bg-gray-100 z-20 bottom-20 md:top-4 md:right-4 md:left-auto md:bottom-auto left-2 md:w-[500px] px-6 md:pt-6 pt-10 pb-6 rounded-3xl flex gap-4 shadow-sm items-end"
-          >
-            <button
-              onClick={() => setIsEnding(false)}
-              className="self-end text-4xl active:scale-95 md:hidden absolute right-4 top-1"
+          <Link reloadDocument to={nextVideoLink}>
+            <motion.button
+              // onClick={onClickNextVideo}
+              whileTap={{ scale: 0.99 }}
+              transition={{ type: "spring", bounce: 0.2 }}
+              whileHover={{ scale: 1.05 }}
+              exit={{ opacity: 0, filter: "blur(9px)", x: 50 }}
+              initial={{ opacity: 0, filter: "blur(9px)", x: 50 }}
+              animate={{ opacity: 1, filter: "blur(0px)", x: 0 }}
+              className="absolute right-2 bg-gray-100 z-20 bottom-20 md:top-4 md:right-4 md:left-auto md:bottom-auto left-2 md:w-[500px] px-6 md:pt-6 pt-10 pb-6 rounded-3xl flex gap-4 shadow-sm items-end"
             >
-              <IoIosClose />
-            </button>
-            <div>
-              <p className="text-left dark:text-metal text-iron">
-                Siguiente video
-              </p>
-              <h4 className="text-2xl text-dark md:w-[280px] md:truncate text-left">
-                {nextVideo.title}
-              </h4>
-            </div>
-            <img
-              alt="poster"
-              src={nextVideo.poster || poster}
-              onError={(e) => {
-                e.target.src = poster;
-                e.target.error = false;
-              }}
-              className="aspect-video w-40 rounded-xl object-cover"
-            />
-          </motion.button>
+              <button
+                onClick={() => setIsEnding(false)}
+                className="self-end text-4xl active:scale-95 md:hidden absolute right-4 top-1"
+              >
+                <IoIosClose />
+              </button>
+              <div>
+                <p className="text-left dark:text-metal text-iron">
+                  Siguiente video
+                </p>
+                <h4 className="text-2xl text-dark md:w-[280px] md:truncate text-left">
+                  {nextVideo.title}
+                </h4>
+              </div>
+              <img
+                alt="poster"
+                src={nextVideo.poster || poster}
+                onError={(e) => {
+                  e.target.src = poster;
+                  e.target.error = false;
+                }}
+                className="aspect-video w-40 rounded-xl object-cover"
+              />
+            </motion.button>
+          </Link>
         )}
       </AnimatePresence>
       <video

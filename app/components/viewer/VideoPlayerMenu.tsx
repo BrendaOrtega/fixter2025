@@ -73,7 +73,7 @@ export const VideosMenu = ({
     otraList = JSON.parse(otraList);
     setVideosCompleted(otraList);
   }, []);
-  console.log("Modulename: ", moduleNames);
+
   return (
     <>
       <MenuButton
@@ -218,7 +218,7 @@ const MenuListContainer = ({
 }) => {
   const ref = useClickOutside({ isActive, onOutsideClick });
   const maskImage = useMotionTemplate`linear-gradient(to bottom, white 80%, transparent 100%`;
-  console.log("Children: ", children);
+
   return (
     <motion.div
       ref={ref}
@@ -253,14 +253,14 @@ const ModuleHeader = ({
         )}
       </span> */}
       <div>
-        <p className="font-sans capitalize font-semibold text-white">
+        <p className="font-sans capitalize font-semibold text-brand-100">
           {subtitle}
         </p>
         <h3
           className={cn(
             "text-lg md:text-2xl font-bold font-sans text-gray-400",
             {
-              "text-green-500": isCompleted,
+              "text-brand-700": isCompleted,
             }
           )}
         >

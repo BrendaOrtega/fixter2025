@@ -1,7 +1,5 @@
 import {
   data,
-  useLoaderData,
-  useNavigate,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -57,9 +55,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       poster: true,
     },
   });
-  //   const moduleNames = [...new Set(videos.map((video) => video.moduleName))];
 
   const moduleNames = ["nomodules"];
+  //   const moduleNames = [...new Set(videos.map((video) => video.moduleName))];
 
   return {
     course,
@@ -87,43 +85,26 @@ export default function Route({
     course,
   },
 }: Route.ComponentProps) {
-  const navigate = useNavigate();
-
   const [successIsOpen, setSuccessIsOpen] = useState(searchParams.success);
-
   const [isMenuOpen, setIsMenuOpen] = useState(true);
-
-  const nextIndex = ((video.index || 0) + 1) % videos.length;
-  // const nextVideo = videos[nextIndex];
-
-  const handleClickEnding = () => {
-    const url = new URL(location.href);
-    url.pathname = "/player";
-    url.searchParams.set("videoSlug", nextVideo.slug);
-    // @todo: fix it (change for a link)
-    // setIsMenuOpen(true);
-    // navigate(url.pathname + url.search, { replace: true, flushSync: true });
-    location.href = url.toString();
-  };
-  console.log("Course:", course);
   return (
     <>
       {/* <NavBar mode="player" className="m-0" /> */}
       <article className="bg-dark relative overflow-x-hidden pt-20">
         <VideoPlayer
           video={video}
-          // @todo visit and refactor please
-          onClickNextVideo={handleClickEnding}
-          // type={video.type || undefined}
           src={video.storageLink || undefined}
-          //   src={"/playlist/" + video.storageKey + "/index.m3u8"}
-          //   type={"application/x-mpegURL"}
           type={"video/mp4"}
           poster={video.poster || undefined}
           nextVideo={nextVideo || undefined}
+          nextVideoLink={
+            nextVideo
+              ? `/cursos/${course.slug}/viewer?videoSlug=${nextVideo.slug}`
+              : undefined
+          }
           slug={video.slug}
           onPause={() => {
-            setIsMenuOpen(true);
+            // setIsMenuOpen(true);// @todo consider this
           }}
         />
 

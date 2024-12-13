@@ -67,7 +67,6 @@ export const getFreeOrEnrolledCourseFor = async (
     return { course, videos }; // could be null
   } else {
     // check if enrolled
-    console.log("Enrolled?", user.courses);
     const course = await db.course.findFirst({
       where: {
         slug,
