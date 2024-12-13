@@ -26,7 +26,7 @@ export const JackPotSection = ({
 }) => {
   return (
     <section className="bg-transparent w-full -my-4  -z-10 overflow-hidden">
-      <main className="flex justify-evenly h-[900px] -my-10 gap-8">
+      <main className="flex justify-evenly h-[400px] md:h-[900px] -my-10 gap-4 md:gap-8">
         <Roll mode={mode} reversed srcset={images} />
         <Roll mode={mode} srcset={shuffle(images)} />
         <Roll reversed mode={mode} srcset={shuffle(images)} />
@@ -77,7 +77,7 @@ const Roll = ({
     <motion.nav
       ref={ref}
       style={{ y }}
-      className={cn("flex flex-col gap-20 h-max py-10", {
+      className={cn("flex flex-col gap-6 md:gap-20 h-max py-10", {
         "self-end": reversed,
       })}
     >

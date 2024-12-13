@@ -82,11 +82,11 @@ export default function Route({
 
 const Comments = () => {
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-[240px] ">
-      <h2 className="text-5xl font-bold text-white leading-snug text-center">
+    <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-[160px] md:my-[240px] ">
+      <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
         Qué piensan nuestros estudiantes
       </h2>
-      <p className="text-lg text-colorParagraph font-light my-4 text-center">
+      <p className="text-base md:text-lg text-colorParagraph font-light my-4 text-center">
         +20,000 estudiantes han confiado en nuestros cursos en línea y
         presenciales
       </p>
@@ -226,7 +226,7 @@ const CommentCard = ({
         />
 
         <div>
-          <h4 className="text-dark dark:text-metal">{name}</h4>
+          <h4 className="text-white">{name}</h4>
           <p className="text-sm text-iron dark:text-white/30 font-light">
             {tag}
           </p>
@@ -244,10 +244,10 @@ export const formatDuration = (secs: number) => {
 const TopCourses = ({ courses }: { courses: Course[] }) => {
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-[160px]">
-      <h2 className="text-5xl font-bold text-white leading-snug text-center">
+      <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
         Cursos más vendidos
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 mt-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 mt-20 px-4 md:px-0">
         {courses.map((course) => (
           <CourseCard
             courseSlug={course.slug}
@@ -262,10 +262,10 @@ const TopCourses = ({ courses }: { courses: Course[] }) => {
 
 const Benefits = () => {
   return (
-    <section className=" my-[160px]">
-      <div className="border border-colorOutline rounded-3xl  pl-16 max-w-7xl mx-auto relative flex gap-16 h-[800px]">
-        <div className="w-[50%] pt-16">
-          <h2 className="text-4xl font-bold text-white leading-snug">
+    <section className=" my-[160px] px-4 md:px-[5%] xl:px-0 overflow-hidden">
+      <div className="border border-colorOutline rounded-3xl px-6 md:pl-16 max-w-7xl mx-auto flex-wrap-reverse md:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[800px]">
+        <div className="w-full md:w-[50%] pt-6 md:pt-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-white leading-snug">
             Que aprender deje de ser aburrido
           </h2>
           <p className=" text-colorParagraph font-light mt-4 mb-12">
@@ -304,7 +304,7 @@ const Benefits = () => {
             />
           </div>
         </div>{" "}
-        <div className="overflow-hidden">
+        <div className="overflow-hidden w-full md:w-[50%]">
           <JackPotSection
             images={[
               "/tools/react.svg",
@@ -324,7 +324,7 @@ const Benefits = () => {
           />
         </div>
         <img
-          className="absolute -right-20 -bottom-20"
+          className="w-32 md:w-auto absolute -right-6 md:-right-20 top-48 md:-bottom-20"
           alt="cohete"
           src="/rocket.svg"
         />
@@ -357,10 +357,10 @@ const Item = ({
 
 const Why = () => {
   return (
-    <section className="max-w-7xl mx-auto my-[160px] flex gap-16">
-      <div className="w-[50%]">
+    <section className="max-w-7xl mx-auto my-[160px] flex-wrap md:flex-nowrap flex gap-16 px-4 md:p-[5%] xl:px-0">
+      <div className="w-full md:w-[50%]">
         <img className="mb-8" src="/galaxy.svg" alt="galaxy" />
-        <h2 className="text-5xl font-bold text-white">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
           Que aprender deje de ser aburrido
         </h2>
         <p className="text-lg text-colorParagraph font-light my-4">
@@ -387,23 +387,28 @@ const Why = () => {
 
 const HomeHero = () => {
   return (
-    <section className="bg-heroHome w-full h-screen bg-cover bg-center ">
-      <div className="flex items-center max-w-7xl mx-auto h-full gap-20">
+    <section className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-52 md:pt-0 ">
+      <div className="flex flex-wrap-reverse md:flex-nowrap justify-center md:justify-between items-center max-w-7xl mx-auto h-full gap-20">
         <div>
-          <h2 className="text-6xl font-bold text-white leading-snug">
+          <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white leading-snug">
             Aprende las{" "}
-            <span className="text-brand-500 font-extrabold text-6xl">
+            <span className="text-brand-500 font-extrabold text-4xl xl:text-6xl ">
               <FlipWords words={["herramientas", "frameworks", "librerías"]} />
             </span>{" "}
             <br />
             que usan los profesionales de la industria.
           </h2>{" "}
-          <div className="flex gap-6 mt-12">
-            <PrimaryButton />
-            <PrimaryButton title="Ir al blog" variant="ghost" />
+          <div className="flex justify-center md:justify-start gap-6 mt-12">
+            <PrimaryButton as="Link" to="/cursos" />
+            <PrimaryButton
+              as="Link"
+              to="/blog"
+              title="Ir al blog"
+              variant="ghost"
+            />
           </div>
         </div>
-        <img src="/robot.svg" alt="robot" />
+        <img className="scale-75 md:scale-100" src="/robot.svg" alt="robot" />
       </div>
     </section>
   );

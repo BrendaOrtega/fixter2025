@@ -83,7 +83,7 @@ export const Banner = ({
     <div className="px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
       <div
         className={cn(
-          "bg-bannerOne bg-cover  bg-right-bottom  h-[300px] my-60 p-12 rounded-3xl border-[2px] border-brand-500",
+          "bg-bannerOne  bg-contain md:bg-cover bg-no-repeat  bg-right-bottom h-[300px] my-60 p-6 md:p-12 rounded-3xl border-[2px] border-brand-500",
           {
             "bg-bannerHome ": variant === "home",
           }
@@ -149,7 +149,7 @@ export const CourseCard = ({
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="pt-12 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full"
+        className="pt-2 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full"
       >
         <img className="mx-auto h-60 " src={course.icon} alt={course.title} />
         <h3 className="font-bold text-2xl text-white mt-8 text-center">
