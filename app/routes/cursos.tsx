@@ -1,8 +1,16 @@
 import type { Route } from "./+types/home";
 import { Welcome } from "../welcome/welcome";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/PrimaryButton";
 import { Footer } from "~/components/Footer";
+import {
+  useFetcher,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
+import { db } from "~/.server/db";
+import type { Route } from "./+types/cursos";
+import type { Course } from "@prisma/client";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,11 +19,50 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Courses() {
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "videos_length") {
+    const courseId = formData.get("courseId") as string;
+    const videosLength = await db.video.count({
+      where: {
+        courseIds: { has: courseId },
+      },
+    });
+    return { videosLength };
+  }
+  return null;
+};
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const courses = await db.course.findMany({
+    where: {
+      published: true,
+    },
+    select: {
+      title: true,
+      duration: true,
+      icon: true,
+      isFree: true,
+      createdAt: true,
+      level: true,
+      videoIds: true,
+      id: true,
+    },
+  });
+  return { courses };
+};
+
+export default function Route({
+  loaderData: { courses },
+}: Route.ComponentProps) {
+  console.log(courses);
+
   return (
     <>
       <Header />
-      <CousesList />
+      <CousesList courses={courses} />
       <Banner>
         <div className="w-full md:w-[60%]">
           <h3 className="text-2xl md:text-4xl text-white font-bold mb-10 leading-snug">
@@ -39,82 +86,58 @@ export const Banner = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const CousesList = () => {
+const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
   return (
     <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
-      <CourseCard
-        title="Mínimo JS para React"
-        lessons=" 17 lecciones"
-        duration="32 minutos"
-        level="Avanzado"
-        image="/js.png"
-      />
-      <CourseCard
-        title="Mínimo JS para React"
-        lessons=" 17 lecciones"
-        duration="32 minutos"
-        level="Avanzado"
-        image="/js.png"
-      />
-      <CourseCard
-        title="Mínimo JS para React"
-        lessons=" 17 lecciones"
-        duration="32 minutos"
-        level="Avanzado"
-        image="/js.png"
-      />
-      <CourseCard
-        title="Mínimo JS para React"
-        lessons=" 17 lecciones"
-        duration="32 minutos"
-        level="Avanzado"
-        image="/js.png"
-      />
-      <CourseCard
-        title="Mínimo JS para React"
-        lessons=" 17 lecciones"
-        duration="32 minutos"
-        level="Avanzado"
-        image="/js.png"
-      />
-      <CourseCard
-        title="Mínimo JS para React"
-        lessons=" 17 lecciones"
-        duration="32 minutos"
-        level="Avanzado"
-        image="/js.png"
-      />
+      {courses.map((course) => (
+        <CourseCard key={course.id} course={course} />
+      ))}
     </div>
   );
 };
 
 export const CourseCard = ({
-  title,
-  lessons,
-  duration,
-  level,
-  image,
+  course,
 }: {
+  course: Partial<Course>;
   title: string;
   lessons: string;
   duration: string;
   level: string;
   image: string;
 }) => {
+  const fetcher = useFetcher<typeof action>();
+  const videosLength = fetcher.data?.videosLength || null;
+
+  useEffect(() => {
+    fetcher.submit(
+      {
+        intent: "videos_length",
+        courseId: course.id,
+      },
+      { method: "POST" }
+    );
+  }, []);
+
+  const formatDuration = (secs: number) => {
+    if (!secs) return "0mins";
+    return (secs / 60).toFixed(0) + " mins";
+  };
+
   return (
     <div className="grid-cols-1 relative w-full h-[480px]">
       <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl"></div>{" "}
       <div className="pt-12 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full">
-        <img className="mx-auto h-60 " src={image} alt={title} />
+        <img className="mx-auto h-60 " src={course.icon} alt={course.title} />
         <h3 className="font-bold text-2xl text-white mt-8 text-center">
-          {title}
+          {course.title}
         </h3>
         <p className="mt-3 text-colorCaption font-light text-center">
-          {lessons} | {duration}
+          {videosLength} lecciones | {formatDuration(course.duration)}
         </p>
         <div className="flex gap-2 mx-auto justify-center text-center mt-6">
-          <p className=" text-brand-500 uppercase">{level}</p>
-          {level === "Avanzado" ? (
+          <p className=" text-brand-500 uppercase">{course.level}</p>
+          {course.level === "Avanzado" ? (
             <span className="flex gap-2">
               <img src="/thunder.svg" className="w-3" />
               <img src="/thunder.svg" className="w-3" />

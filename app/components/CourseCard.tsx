@@ -37,8 +37,8 @@ export default function CourseCard({
     tipo === "live"
       ? (_id || id) + "/dashboard"
       : isEnrolled
-      ? "/courses/" + slug + "/viewer"
-      : "/courses/" + slug + "/detail";
+      ? "/cursos/" + slug + "/viewer"
+      : "/cursos/" + slug + "/detail";
 
   const gradient =
     theme && theme.from && theme.to

@@ -211,18 +211,20 @@ model Video {
   authorName  String? @default("blissmo")
   photoUrl    String?
   description String?
-  slug        String?
+  slug        String? @unique
   storageLink String?
   isPublic    Boolean @default(false)
   duration    String?
 
-  module    String?  @db.ObjectId
-  Module    Module?  @relation(fields: [module], references: [id])
+  poster     String?
+  moduleName String?
+  module     String?  @db.ObjectId
+  Module     Module?  @relation(fields: [module], references: [id])
   // moduleId String? @db.ObjectId
   // Module    Module?  @relation(fields: [module], references: [id])
   // experiment aug 2023
-  courses   Course[] @relation(fields: [courseIds], references: [id])
-  courseIds String[] @db.ObjectId
+  courses    Course[] @relation(fields: [courseIds], references: [id])
+  courseIds  String[] @db.ObjectId
 
   @@map("videos")
 }

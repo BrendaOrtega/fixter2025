@@ -6,7 +6,7 @@ const confettiColors = ["#85ddcb", "#19262a", "#37ab93"];
 export const EmojiConfetti = ({
   emojis = ["🎉", "👾", "💿", "🚀", "📖", "🕹", "📺"],
 }: {
-  emojis: string[] | false;
+  emojis?: string[] | false;
 }) => {
   useEffect(() => {
     const jsConfetti = new JSConfetti();

@@ -5,7 +5,7 @@ export const { getSession, commitSession, destroySession } =
     // @todo improve, upgrade
     cookie: {
       name: "__session",
-      expires: new Date("2050-12-12"),
+      maxAge: 3600 * 24 * 7 * 4,
       path: "/",
       sameSite: "lax",
       secrets: ["blissmo"],

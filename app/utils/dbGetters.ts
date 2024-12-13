@@ -1,7 +1,83 @@
-import type { User } from "@prisma/client";
+import type { User, Video } from "@prisma/client";
 import { redirect } from "react-router";
 import { db } from "~/.server/db";
 import { commitSession, getSession } from "~/sessions";
+
+///util
+const getAllVideos = async (courseId: string) => {
+  const freeVideos = await db.video.findMany({
+    where: {
+      courseIds: {
+        has: courseId,
+      },
+      isPublic: true,
+    },
+  });
+  const nakedVideos = await db.video.findMany({
+    where: {
+      courseIds: {
+        has: courseId,
+      },
+    },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      duration: true,
+      description: true,
+      module: true,
+      isPublic: true,
+      moduleName: true,
+    },
+  });
+  return nakedVideos.map((v, i) =>
+    freeVideos.map((fv) => fv.id).includes(v.id) ? freeVideos[i] : v
+  ) as Partial<Video>[];
+};
+// courses
+
+export const getFreeOrEnrolledCourseFor = async (
+  user: Partial<User> | null,
+  slug: string
+) => {
+  let course;
+  // free only
+  if (!user) {
+    course = await db.course.findUnique({
+      where: {
+        slug,
+      },
+      select: { id: true, title: true, authorName: true, slug: true },
+    });
+    if (!course) return null;
+    const videos = await getAllVideos(course.id);
+    return { course, videos }; // could be null
+  } else {
+    // check if enrolled
+
+    const course = await db.course.findFirst({
+      where: {
+        slug,
+        id: { in: user.courses || [] },
+      },
+    });
+    if (!course) return null;
+    return {
+      videos: await getAllVideos(course.id),
+      course,
+    };
+  }
+};
+
+export const getUserOrNull = async (request: Request) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  if (!session.has("email")) return null;
+  const user = await db.user.findUnique({
+    where: { email: session.get("email") },
+  });
+  if (!user) return null;
+  return user;
+};
 
 export const getUserOrRedirect = async (
   request: Request,
