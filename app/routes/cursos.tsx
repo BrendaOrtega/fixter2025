@@ -29,6 +29,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const courses = await db.course.findMany({
+    orderBy: { createdAt: "desc" },
     where: {
       published: true,
     },
