@@ -10,7 +10,7 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
   const { googleLoginHandler } = useGoogleLogin();
   return (
     <nav className="h-20 px-6 items-center fixed top-0 w-full backdrop-blur-md z-10">
-      <section className=" max-w-4xl flex justify-between items-center h-full mx-auto">
+      <section className=" max-w-7xl flex justify-between items-center h-full mx-auto">
         <NavLink to="/">
           <img className="h-10" src="/logo.svg" alt="logo" />
         </NavLink>
@@ -19,7 +19,7 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
             href="https://www.youtube.com/@fixtergeek8057"
             rel="noreferrer"
             target="_blank"
-            className="grid place-content-center hover:scale-105 transition-all"
+            className="place-content-center hover:scale-105 transition-all sm:grid hidden"
           >
             <Youtube />
           </a>
@@ -31,7 +31,7 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
           >
             <Discord />
           </a>
-          <NavLink className="" to="/cursos">
+          <NavLink className="hidden md:block" to="/cursos">
             Cursos
           </NavLink>
           <NavLink className="md:block hidden" to="/blog">
@@ -40,10 +40,10 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
 
           {user?.email ? (
             <NavLink
-              className="py-2 px-4 rounded-full bg-brand-900/60 font-normal "
-              to="/perfil"
+              className="py-2 px-4 rounded-full bg-brand-900/60 font-normal w-max"
+              to="/mis-cursos"
             >
-              Tu perfil
+              Tus cursos
             </NavLink>
           ) : (
             <button
