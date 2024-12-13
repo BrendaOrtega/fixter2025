@@ -1,5 +1,6 @@
 import {
   data,
+  redirect,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -10,15 +11,12 @@ import { VideosMenu } from "~/components/viewer/VideoPlayerMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
+import { getStripeCheckout } from "~/.server/stripe";
 import type { Route } from "./+types/viewer";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData();
-  const intent = formData.get("intent");
-  if (intent === "checkout") {
-    // const url = await get40Checkout(); // @todo checkout update
-    // return redirect(url);
-  }
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  // const formData = await request.formData();
+  // const intent = formData.get("intent");
   return null;
 };
 
@@ -121,7 +119,9 @@ export default function Route({
         />
       </article>
       {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
-      {!isPurchased && !video.isPublic && <PurchaseDrawer />}
+      {!isPurchased && !video.isPublic && (
+        <PurchaseDrawer courseSlug={course.slug} />
+      )}
     </>
   );
 }

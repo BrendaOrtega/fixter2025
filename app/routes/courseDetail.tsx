@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Footer } from "~/components/Footer";
 import { PrimaryButton } from "~/components/PrimaryButton";
 import type { Route } from "./+types/courseDetail";
-import { data, type LoaderFunctionArgs } from "react-router";
+import { data, Form, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { useVideosLength } from "~/hooks/useVideosLength";
 import { formatDuration } from "./cursos";
@@ -157,20 +157,18 @@ const CourseHeader = ({
   title,
   id,
   summary,
-  lessons,
   duration,
-  image,
   level,
   slug,
+  basePrice,
 }: {
+  basePrice: number;
   slug: string;
   id: string;
   title?: string;
   summary?: string;
-  lessons?: string;
-  duration: number;
+  duration?: number;
   level?: string;
-  image?: string;
 }) => {
   return (
     <section className="w-full h-fit py-20 md:py-0 md:h-[580px] bg-heroMobile md:bg-hero bg-cover bg-botom bg-center ">
@@ -206,10 +204,19 @@ const CourseHeader = ({
             <PrimaryButton
               as="Link"
               to={`/cursos/${slug}/viewer`}
-              type="fill"
+              variant="fill"
               title="Empezar gratis"
             />
-            <PrimaryButton type="ghost" title="Comprar $499 mxn" />
+            <Form method="POST" action="/api/stripe">
+              <input type="hidden" name="courseSlug" value={slug} />
+              <PrimaryButton
+                variant="ghost"
+                name="intent"
+                value="checkout"
+                type="submit"
+                title={`Comprar $${basePrice || 499} mxn`}
+              />
+            </Form>
           </div>
         </div>
         <div className="w-full md:w-[40%]  flex justify-center h-full items-center">

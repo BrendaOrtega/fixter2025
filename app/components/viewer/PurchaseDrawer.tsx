@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
-export const PurchaseDrawer = () => {
+export const PurchaseDrawer = ({ courseSlug }: { courseSlug: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   return (
     <Drawer
@@ -22,7 +22,8 @@ export const PurchaseDrawer = () => {
           ¡Desbloquea el curso completo! 🫶🏻 Construye conmigo todos los
           componentes paso a paso y conviértete en PRO. <br />
         </p>
-        <Form method="POST">
+        <Form method="POST" action="/api/stripe">
+          <input type="hidden" name="courseSlug" value={courseSlug} />
           <PrimaryButton
             onClick={() => setIsLoading(true)}
             isLoading={isLoading}
