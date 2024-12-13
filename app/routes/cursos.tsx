@@ -1,17 +1,8 @@
-import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
-import {
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { type ReactNode } from "react";
 import { PrimaryButton } from "~/components/PrimaryButton";
 import { Footer } from "~/components/Footer";
 import {
   Link,
-  useFetcher,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -20,7 +11,7 @@ import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
 import { useVideosLength } from "~/hooks/useVideosLength";
 import { Header } from "~/components/common/Header";
-import { useMotionValue, motion, useSpring } from "framer-motion";
+import { motion } from "framer-motion";
 import { use3DHover } from "~/hooks/use3DHover";
 
 export function meta({}: Route.MetaArgs) {
