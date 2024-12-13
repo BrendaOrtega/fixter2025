@@ -1,4 +1,4 @@
-import { Outlet, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { NavBar } from "../components/common/NavBar";
 import { useEffect, type ReactNode } from "react";
 

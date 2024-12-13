@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { cn } from "~/lib/utils";
 import { Discord } from "../icons/Discord";
 import type { User } from "@prisma/client";
+import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 
 export const NavBar = ({ user }: { user?: Partial<User> }) => {
+  const { googleLoginHandler } = useGoogleLogin();
   return (
     <nav className="h-20 px-6 items-center fixed top-0 w-full">
       <section className="backdrop-blur-md max-w-4xl flex justify-between items-center h-full mx-auto">
@@ -35,12 +37,22 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
           <NavLink className="md:block hidden" to="/blog">
             Blog
           </NavLink>
-          <NavLink
-            className="py-2 px-4 rounded-full bg-brand-900/60 font-normal "
-            to="/login"
-          >
-            {user?.email ? "Tu perfil" : "Iniciar sesión"}
-          </NavLink>
+
+          {user?.email ? (
+            <NavLink
+              className="py-2 px-4 rounded-full bg-brand-900/60 font-normal "
+              to="/perfil"
+            >
+              "Tu perfil"
+            </NavLink>
+          ) : (
+            <button
+              className="py-2 px-4 rounded-full bg-brand-900/60 font-normal "
+              onClick={googleLoginHandler}
+            >
+              Inicia sesión
+            </button>
+          )}
         </div>
       </section>
     </nav>

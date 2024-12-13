@@ -12,7 +12,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (intent === "google_login") {
-    const data = JSON.parse(formData.get("data") as string);
+    const data = JSON.parse(formData.get("data") as string); // what's data?
     //@todo validate
     await updateUserAndSetSession(data, { request });
   }

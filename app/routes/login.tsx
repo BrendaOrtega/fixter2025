@@ -21,6 +21,7 @@ import { commitSession } from "~/sessions";
 import { googleLogin } from "~/lib/firebase";
 import type { Route } from "./+types/login";
 import type { FormEvent } from "react";
+import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await ifUserRedirect(request);
@@ -61,26 +62,17 @@ export default function Route() {
     return <BadToken message={message} />;
   }
 
-  const handleGoogleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const { user } = await googleLogin();
-    if (!user.accessToken) return;
-    fetcher.submit(
-      { intent: "google_login", data: JSON.stringify(user) },
-      { method: "POST", action: "/api/user" }
-    );
-  };
+  const { googleLoginHandler } = useGoogleLogin();
 
   return (
     <section className="flex flex-col gap-4">
-      <Form method="POST" onSubmit={handleGoogleLogin}>
+      <div>
         <h2 className="text-2xl font-bold text-white text-center">
           Inicia sesión o crea una cuenta
         </h2>
         <button
-          type="submit"
-          name={"intent"}
-          value="google_login"
+          type="button"
+          onClick={googleLoginHandler}
           className={twMerge(
             "cursor-pointer py-3 px-4 text-white  to-brand-200 rounded-lg shadow flex items-center gap-3 justify-center font-bold text-lg bg-gray-700 disabled:text-gray-100 mx-auto my-8"
           )}
@@ -90,7 +82,7 @@ export default function Route() {
           </span>
           <span> Inicia con Google</span>
         </button>
-      </Form>
+      </div>
       <hr className="border-slate-800" />
       <p className="text-gray-400 text-center">
         Puedes iniciar sesión solo con tu correo
