@@ -60,7 +60,7 @@ export default function Route({
           <h3 className="text-2xl md:text-4xl text-white font-bold mb-10 leading-snug">
             ¿Explorando nuevas herramientas? Visita nuestro Blog
           </h3>{" "}
-          <PrimaryButton link="/blog" title="Ver blog" />
+          <PrimaryButton as="Link" to="/blog" title="Ver blog" />
         </div>
       </Banner>
       <Footer />
