@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { PrimaryButton } from "~/components/PrimaryButton";
+import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { Footer } from "~/components/Footer";
 import {
   Link,

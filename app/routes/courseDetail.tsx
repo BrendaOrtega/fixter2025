@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Footer } from "~/components/Footer";
-import { PrimaryButton } from "~/components/PrimaryButton";
+import { PrimaryButton } from "~/components/common/PrimaryButton";
 import type { Route } from "./+types/courseDetail";
 import { data, Form, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";

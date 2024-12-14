@@ -11,6 +11,7 @@ export default [
   route("login", "routes/login.tsx"),
   route("perfil", "routes/perfil.tsx"),
   route("mis-cursos", "routes/mis-cursos.tsx"),
+  route("subscribe", "routes/subscribe.tsx"),
 
   ...prefix("cursos", [
     index("routes/cursos.tsx"),

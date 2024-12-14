@@ -3,7 +3,7 @@ import { FlipWords } from "~/components/FlipWords";
 import { JackPotSection } from "~/components/Jackpot";
 import { Banner, CourseCard } from "~/routes/cursos";
 import { useEffect, type ReactNode } from "react";
-import { PrimaryButton } from "~/components/PrimaryButton";
+import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { Footer } from "~/components/Footer";
 import {
   Link,

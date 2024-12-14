@@ -1,11 +1,25 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
-import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
+import {
+  getUserOrNull,
+  sendConfirmationEmail,
+  updateUserAndSetSession,
+} from "~/.server/dbGetters";
+
+const emailSchema = z.string().email();
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  if (intent === "subscription") {
+    const email = String(formData.get("email"));
+    emailSchema.parse(email);
+    // @todo detached
+    await sendConfirmationEmail(email); // @wip
+    return redirect("/subscribe?success=1");
+  }
 
   if (intent === "self") {
     return { user: await getUserOrNull(request) };
@@ -20,7 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "magic_link") {
     const email = String(await formData.get("email"));
     // validation
-    z.string().email().parse(email);
+    emailSchema.parse(email);
     // @todo: agenda (detached)
     await sendMagicLink({ email });
     return redirect("/login?success");
