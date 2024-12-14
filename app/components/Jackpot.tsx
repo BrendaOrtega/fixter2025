@@ -93,6 +93,18 @@ const Roll = ({
           alt="demo"
         />
       ))}
+      {srcset?.map((src) => (
+        <img className={cn("w-[120px] p-2")} key={src} src={src} alt="demo" />
+      ))}
+      {srcset?.map((src) => (
+        <img
+          // ref={scope}
+          className={cn("w-[120px] p-2")}
+          key={src}
+          src={src}
+          alt="demo"
+        />
+      ))}
     </motion.nav>
   );
 };
