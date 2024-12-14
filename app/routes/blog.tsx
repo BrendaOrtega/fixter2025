@@ -18,6 +18,7 @@ import type { Post } from "@prisma/client";
 import { postSearch } from "~/utils/postSearch";
 import { useReadingTime } from "~/utils/useReadingTime";
 import { motion } from "motion/react";
+import { Header } from "~/components/common/Header";
 
 export const meta = () =>
   getMetaTags({
@@ -90,13 +91,20 @@ export default function Route({
   return (
     <>
       {/* <Navbar /> */}
-      <main className="py-12 md:py-20 px-4 max-w-8xl mx-auto bg-gray-950 text-white pt-20">
-        <Header />
-        <Searcher
-          isLoading={isLoading}
-          onSubmit={handleSubmit}
-          defaultSearch={search}
-        />
+      <main className="ppx-4 max-w-8xl mx-auto bg-background text-white ">
+        <section className="h-[480px] bg-stars bg-cover bg-bottom flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-4xl md:text-5xl xl:text-6xl font-bold text-white">
+              Blog
+            </h2>
+            <Searcher
+              isLoading={isLoading}
+              onSubmit={handleSubmit}
+              defaultSearch={search}
+            />
+          </div>
+        </section>
+
         {posts.length < 1 && <Empty />}
         <List items={items} isLoading={isLoading} />
         {showLoadMore && (
@@ -120,36 +128,11 @@ export const List = ({
   items: Post[];
 }) => {
   return (
-    <div className="justify-center mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+    <div className="justify-center mt-32 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 max-w-7xl mx-auto">
       {items.map((p) => (
         <PostCard isLoading={isLoading} key={p.id} post={p} />
       ))}
     </div>
-  );
-};
-
-export const Header = () => {
-  return (
-    <>
-      <h2 className="text-4xl md:text-6xl  font-bold mb-4 text-center">
-        <span
-          style={{
-            background:
-              "linear-gradient(90deg, var(--brand-700) 0%, var(--brand-500) 100%)",
-            backgroundClip: "text",
-            WebkitBackgroundClip: "text",
-            color: "transparent",
-          }}
-        >
-          Aprende{" "}
-        </span>
-        leyendo 📖
-      </h2>
-      <p className="text-xl md:text-2xl font-medium mb-4 text-brand-black-200 dark:text-brand-black-50 text-center">
-        Aprende las nuevas herramientas y actualízate con los mejores tips,
-        trucos y hacks
-      </p>
-    </>
   );
 };
 
@@ -225,7 +208,7 @@ const Searcher = ({
           disabled={isLoading}
           onChange={onChange}
           defaultValue={defaultSearch}
-          className="border-[1px] pr-3 dark:border-white/30 bg-transparent md:w-[100%] h-12 w-[100%] rounded-full px-6 pl-16 transition-all ring-inset focus:ring-0"
+          className=" pr-3   md:w-[100%] bg-brand-500/5 h-12 w-[100%] rounded-full px-6 pl-16 transition-all placeholder:text-white/40 "
           placeholder="¿Qué quieres aprender hoy?"
         ></input>
         <button className="absolute left-3 top-2">
@@ -357,8 +340,8 @@ const Filter = ({
       transition={{ type: "spring", bounce: 0 }}
       onClick={onClick ? () => onClick(value) : undefined}
       className={twMerge(
-        " hover:bg-[#E9F0F2] dark:hover:bg-white/10 cursor-pointer border-[#E9F0F2] dark:border-white/10 border-[1px] text-brand-black-200 dark:text-brand-black-50 h-8 flex gap-2 items-center justify-center px-2 rounded-lg",
-        isActive && "bg-gradient-to-tl from-brand-800 to-brand-700"
+        " hover:bg-[#263F3E] cursor-pointer border border-brand-100/10  bg-transparent  text-brand-black-200 dark:text-brand-black-50 h-8 flex gap-2 items-center justify-center px-2 rounded-lg",
+        isActive && "bg-brand-500/40"
       )}
     >
       {isNode ? (
@@ -374,30 +357,29 @@ const Filter = ({
 export const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
   const readingTime = useReadingTime(post.body || "", true);
   return (
-    <Link
-      to={`/blog/${post.slug}`}
-      className="hover:scale-105 transition-all relative"
-    >
-      <div className="flex items-center gap-2 bg-gray-900/70 text-white  absolute top-4 right-4 py-1 px-2 rounded-full">
+    <Link to={`/blog/${post.slug}`} className=" relative group">
+      <div className="relative overflow-hidden ">
+        <div className="group-hover:bottom-4  transition-all absolute w-20 h-16 -ml-1 bg-author bg-cover -bottom-12 flex items-end">
+          <img
+            className=" h-8 rounded-full bg-white ml-3 "
+            src={post.photoUrl || "/full-logo.svg"}
+            alt="floating"
+            onError={(event) => {
+              event.currentTarget.src = "/full-logo.svg";
+            }}
+          />
+        </div>
         <img
-          className="h-8 rounded-full bg-gradient-to-br from-brand-700 to-brand-800"
-          src={post.photoUrl || "/full-logo.svg"}
-          alt="floating"
-          onError={(event) => {
-            event.currentTarget.src = "/full-logo.svg";
+          className="aspect-video object-cover rounded-2xl mb-4"
+          src={post.metaImage || post.coverImage}
+          alt="cover"
+          onError={({ currentTarget }) => {
+            currentTarget.src = "/full-logo.svg";
+            currentTarget.onerror = null;
           }}
         />
-        <span className="text-xs">{post.authorName}</span>
       </div>
-      <img
-        className="aspect-video object-cover rounded-2xl mb-4"
-        src={post.metaImage || post.coverImage}
-        alt="cover"
-        onError={({ currentTarget }) => {
-          currentTarget.src = "/full-logo.svg";
-          currentTarget.onerror = null;
-        }}
-      />
+
       <p className="text-sm">📚 {post.mainTag}</p>
       <h4 className="text-lg font-bold">{post.title}</h4>
       <span className="text-xs text-gray-500">{readingTime}</span>

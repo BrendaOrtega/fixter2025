@@ -30,6 +30,7 @@ export default {
         animationsBanner: "url('/bannerAnimations.svg')",
         animationsBannerMobile: "url('/bannerAnimationsMobile.svg')",
         planet: "url('/planet.png')",
+        author: "url('/author.svg')",
       },
       fontFamily: {
         sans: [
