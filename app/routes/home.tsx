@@ -88,8 +88,8 @@ const Comments = () => {
         Qué piensan nuestros estudiantes
       </h2>
       <p className="text-base md:text-lg text-colorParagraph font-light my-4 text-center">
-        +20,000 estudiantes han confiado en nuestros cursos en línea y
-        presenciales
+        <strong className="text-3xl text-brand-700 font-bold"> +20,000 </strong>
+        estudiantes han comprado nuestros cursos en línea y presenciales
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3  mt-12 md:mt-16 gap-8 lg:gap-y-12 xl:gap-12">
         <CommentCard
