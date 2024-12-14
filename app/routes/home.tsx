@@ -2,22 +2,16 @@ import { FlipWords } from "~/components/FlipWords";
 
 import { JackPotSection } from "~/components/Jackpot";
 import { Banner } from "~/routes/cursos";
-import { useEffect, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { Footer } from "~/components/Footer";
-import {
-  Link,
-  useFetcher,
-  type ActionFunctionArgs,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
-import { useVideosLength } from "~/hooks/useVideosLength";
-import { CourseBanner } from "~/components/CourseBanner";
 import { twMerge } from "tailwind-merge";
 import { CourseCard } from "~/components/CourseCard";
+import { useScroll, useTransform, motion, useSpring } from "motion/react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -371,14 +365,53 @@ const Why = () => {
 };
 
 const HomeHero = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+  const springScroll = useSpring(scrollYProgress, { bounce: 0 });
+
+  const opacity = useTransform(springScroll, [0, 1], [1, 0]);
+  const scale = useTransform(springScroll, [0, 1], [1, 1.1]);
+  const filter = useTransform(
+    springScroll,
+    [0.3, 0.5],
+    ["blur(0px)", "blur(9px)"]
+  );
+
   return (
-    <section className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-52 md:pt-0 ">
+    <motion.section
+      ref={ref}
+      style={{ opacity, scale, filter }}
+      className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-52 md:pt-0 md:px-10"
+    >
       <div className="flex flex-wrap-reverse md:flex-nowrap justify-center md:justify-between items-center max-w-7xl mx-auto h-full gap-20">
         <div>
           <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug">
-            Aprende las{" "}
+            Aprende{" "}
             <span className="text-brand-500 font-extrabold text-4xl xl:text-6xl ">
-              <FlipWords words={["herramientas", "frameworks", "librerías"]} />
+              <FlipWords
+                words={[
+                  "las herramientas",
+                  "los frameworks",
+                  "las bibliotecas",
+                  "los patterns",
+                  "los hacks",
+                  "las tendencias",
+                  "leyendo el blog",
+                  "con los cursos",
+                  "la experiencia",
+                  "lo alternativo",
+                  "lo independiente",
+                  "el open source",
+                  "full stack web dev",
+                  "fácilmente",
+                  "mientras disfrutas",
+                  "siguiendo tu curiosidad",
+                  "de Brendi",
+                ]}
+              />
             </span>{" "}
             <br />
             que usan los profesionales de la industria.
@@ -395,6 +428,6 @@ const HomeHero = () => {
         </div>
         <img className="scale-75 md:scale-100" src="/robot.svg" alt="robot" />
       </div>
-    </section>
+    </motion.section>
   );
 };

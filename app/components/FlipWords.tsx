@@ -58,7 +58,7 @@ export function FlipWords({
               //   duration: 0.3,
             }}
           >
-            {letter}
+            {letter === " " ? <>&nbsp;</> : letter}
           </motion.span>
         ))}
       </motion.span>
