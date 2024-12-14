@@ -365,13 +365,13 @@ const Why = () => {
 };
 
 const HomeHero = () => {
+  // <<animation
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
   const springScroll = useSpring(scrollYProgress, { bounce: 0 });
-
   const opacity = useTransform(springScroll, [0, 1], [1, 0]);
   const scale = useTransform(springScroll, [0, 1], [1, 1.1]);
   const filter = useTransform(
@@ -379,6 +379,7 @@ const HomeHero = () => {
     [0.3, 0.5],
     ["blur(0px)", "blur(9px)"]
   );
+  // animation>>
 
   return (
     <motion.section
@@ -421,7 +422,7 @@ const HomeHero = () => {
             <PrimaryButton
               as="Link"
               to="/blog"
-              title="Ir al blog"
+              children="Ir al blog"
               variant="ghost"
             />
           </div>

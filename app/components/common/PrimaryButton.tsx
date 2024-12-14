@@ -16,7 +16,7 @@ export const PrimaryButton = ({
 }: {
   isDisabled?: boolean;
   isLoading?: boolean;
-  children: ReactNode;
+  children?: ReactNode;
   variant?: "fill" | "ghost";
   as?: "Link";
   title?: string;
