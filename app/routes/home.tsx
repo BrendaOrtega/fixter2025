@@ -1,7 +1,7 @@
 import { FlipWords } from "~/components/FlipWords";
 
 import { JackPotSection } from "~/components/Jackpot";
-import { Banner, CourseCard } from "~/routes/cursos";
+import { Banner } from "~/routes/cursos";
 import { useEffect, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { Footer } from "~/components/Footer";
@@ -17,6 +17,7 @@ import type { Course } from "@prisma/client";
 import { useVideosLength } from "~/hooks/useVideosLength";
 import { CourseBanner } from "~/components/CourseBanner";
 import { twMerge } from "tailwind-merge";
+import { CourseCard } from "~/components/CourseCard";
 
 export function meta({}: Route.MetaArgs) {
   return [
