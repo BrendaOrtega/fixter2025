@@ -1,4 +1,4 @@
-import { PrimaryButton } from "./PrimaryButton";
+import { PrimaryButton } from "./common/PrimaryButton";
 
 export const CourseBanner = () => {
   return (

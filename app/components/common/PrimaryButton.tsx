@@ -1,43 +1,53 @@
 import { Link } from "react-router";
-import React, { type ReactNode } from "react";
-import { twMerge } from "tailwind-merge";
+
+import { cn } from "../../lib/utils";
+import type { ReactNode } from "react";
+import Spinner from "./Spinner";
 
 export const PrimaryButton = ({
-  className,
-  children,
-  isDisabled,
-  isLoading,
+  title,
+  to,
   as,
-  to = "",
-  onClick,
+  variant,
+  children,
+  isLoading,
+  isDisabled,
   ...props
 }: {
-  onClick?: () => void;
-  as?: "Link";
-  to?: string;
-  isLoading?: boolean;
   isDisabled?: boolean;
-  className?: string;
+  isLoading?: boolean;
   children: ReactNode;
-  [x: string]: any;
+  variant?: "fill" | "ghost";
+  as?: "Link";
+  title?: string;
+  to?: string;
+  [x: string]: unknown;
 }) => {
   const Element = as === "Link" ? Link : "button";
+  const content = isLoading ? (
+    <Spinner />
+  ) : children ? (
+    children
+  ) : title ? (
+    title
+  ) : (
+    "Explorar cursos"
+  );
   return (
     <Element
-      onClick={onClick}
-      to={to}
       disabled={isDisabled}
+      to={to || ""}
+      className={cn(
+        "h-12 rounded-full border-[2px] border-brand-500 text-brand-500 px-5 inline-grid place-content-center items-center",
+        {
+          "bg-brand-100 text-gray-400 pointer-events-none": isDisabled,
+          "bg-brand-500 text-brand-900": variant === "fill",
+          "bg-brand-900 border-brand-900 text-white": variant === "ghost",
+        }
+      )}
       {...props}
-      className={twMerge(
-        "rounded-full enabled:hover:px-8 transition-all bg-fish text-base md:text-lg text-white h-12 md:h-14 px-6 flex gap-2 items-center justify-center font-light",
-        "disabled:bg-slate-300 disabled:pointer-events-none",
-        className
-      )}
     >
-      {!isLoading && children}
-      {isLoading && (
-        <div className="w-6 h-6 rounded-full animate-spin border-4 border-t-indigo-500" />
-      )}
+      {content}
     </Element>
   );
 };

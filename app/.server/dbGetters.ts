@@ -1,7 +1,9 @@
 import type { User, Video } from "@prisma/client";
 import { redirect } from "react-router";
 import { db } from "~/.server/db";
+import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { commitSession, getSession } from "~/sessions";
+import { generateUserToken } from "~/utils/tokens";
 
 ///util
 const getAllVideos = async (courseId: string) => {
@@ -153,12 +155,27 @@ export const ifUserRedirect = async (
   return Promise.resolve(0);
 };
 
-export const getOrCreateUser = async (email: string) => {
-  const exists = await db.user.findUnique({ where: { email } });
+export const getOrCreateUser = async (
+  email: string,
+  options?: { confirmed: boolean }
+) => {
+  const { confirmed } = options || {};
+
+  let exists;
+  if (confirmed) {
+    exists = await db.user.update({ where: { email }, data: { confirmed } }); // confirming
+  } else {
+    exists = await db.user.findUnique({ where: { email } });
+  }
   if (exists) return exists;
 
   return await db.user.create({
-    data: { username: email, email, tags: ["magic_link"] },
+    data: {
+      username: email,
+      email,
+      tags: ["magic_link"],
+      confirmed: confirmed ? confirmed : undefined,
+    },
   });
 };
 
@@ -196,4 +213,10 @@ export const createOrUpdateUser = async (
     });
   }
   return user;
+};
+
+// at subscribe we send confirmation email
+export const sendConfirmationEmail = async (email: string) => {
+  const token = generateUserToken({ email });
+  return await sendConfirmation(email, token); // @detached
 };
