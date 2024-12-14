@@ -5,7 +5,8 @@ import type { Route } from "./+types/mis-cursos";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import { Header } from "~/components/common/Header";
-import { CousesList } from "./cursos";
+import type { Course } from "@prisma/client";
+import { CourseCard } from "~/components/CourseCard";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUserOrRedirect(request);
@@ -48,6 +49,21 @@ export default function Route({
     </>
   );
 }
+
+const CousesList = ({ courses }: { courses: Course[] }) => {
+  return (
+    <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
+      {courses.map((course) => (
+        <CourseCard
+          to={`/cursos/${course.slug}/viewer`}
+          courseSlug={course.slug}
+          key={course.id}
+          course={course}
+        />
+      ))}
+    </div>
+  );
+};
 
 const SuccessAlert = () => (
   <div className="text-center py-3 bg-gradient-to-r from-brand-100 via-brand-300 to-brand-200 text-white">

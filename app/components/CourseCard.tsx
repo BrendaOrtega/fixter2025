@@ -1,184 +1,74 @@
-import type { Course } from "@prisma/client";
-import clsx from "clsx";
-import React, { useMemo } from "react";
 import { Link } from "react-router";
+import type { Course } from "@prisma/client";
+import { useVideosLength } from "~/hooks/useVideosLength";
+import { motion } from "framer-motion";
+import { use3DHover } from "~/hooks/use3DHover";
+import { formatDuration } from "~/routes/cursos";
 
-export type CourseCardProps = CourseType & {
-  isEnrolled?: boolean;
-  variant?: "default" | "list-item";
-  theme?: Record<string, string>;
-  course: Course;
-  slug: string;
-};
-export default function CourseCard({
-  variant = "default",
-  isEnrolled = false,
-  title,
-  slug,
-  duration,
-  icon,
-  photoUrl,
-  level,
-  tipo,
-  _id,
-  id,
+export const CourseCard = ({
   course,
-  theme,
-}: CourseCardProps) {
-  const formatDuration = (number: string | number | null | undefined) => {
-    const n = Number(number);
-    if (isNaN(n)) return "2hrs 10min";
-    const min = Math.floor((n / 60) % 60);
-    const hrs = Math.floor(n / 60 / 60);
-    return `${hrs}hrs ${min}mins`;
-  };
-
-  const link =
-    tipo === "live"
-      ? (_id || id) + "/dashboard"
-      : isEnrolled
-      ? "/cursos/" + slug + "/viewer"
-      : "/cursos/" + slug + "/detail";
-
-  const gradient =
-    theme && theme.from && theme.to
-      ? `linear-gradient(180deg, ${theme.from} 0%, ${theme.to} 100%)`
-      : `linear-gradient(180deg, #1D2025 0%, #3A3340 100%)`;
-
+  courseSlug,
+  to,
+}: {
+  to?: string;
+  courseSlug: string;
+  course: Course;
+}) => {
+  const videosLength = useVideosLength(course.id);
+  const {
+    containerRef,
+    springX,
+    springY,
+    handleMouseEnter,
+    handleMouseLeave,
+    handleMouseMove,
+    isHovered,
+  } = use3DHover();
+  // @todo add courses route to save seo
   return (
-    <section
+    <Link
+      to={to || `/cursos/${courseSlug}/detalle`}
+      className="grid-cols-1 relative w-full h-[480px]"
       style={{
-        background: gradient,
-        transition: `all 0.8s cubic-bezier(0.075, 0.82, 0.165, 1) 0s`,
+        transformStyle: "preserve-3d",
+        perspective: 600,
       }}
-      className={clsx(
-        "relative group  pt-4 pb-6 w-[300px] md:w-[300px] rounded-xl  transition-all cursor-pointer hover:scale-105  ",
-        variant === "list-item" &&
-          "min-w-full flex max-h-[148px] items-center gap-4 pb-0 "
-      )}
     >
-      <Link
-        to={link}
-        prefetch="intent"
-        className={clsx(variant === "list-item" && "flex flex-row w-full")}
-      >
-        <img
-          className="w-10 h-10 rounded-full bg-white z-1 absolute right-4"
-          src={photoUrl}
-        />
-        <div
-          className={clsx(
-            " mb-3  flex justify-center w-full",
-            variant === "list-item" && "max-w-[200px] mb-0"
-          )}
-        >
-          <img
-            className={clsx(
-              "object-cover w-[80%] group-hover:scale-[.95] transition-all group-hover:translate-y-[-12px]",
-              variant === "list-item" &&
-                "h-[140px] w-[auto] mt-[-16px] group-hover:translate-y-[-6px]"
-            )}
-            style={{
-              transition: "all 0.8s cubic-bezier(0.075, 0.82, 0.165, 1) 0s",
-            }}
-            src={icon}
-            alt="cover"
-          />
-        </div>
-        <article className="px-2 box-border	 w-full">
-          <div
-            className={clsx(
-              " flex	 items-center min-h-[56px] ",
-              variant === "list-item"
-                ? "justify-start text-left min-h-[auto]"
-                : "items-center justify-center text-center"
-            )}
-          >
-            <h3
-              style={{ fontFamily: "Proxima Nova Bold" }}
-              className="font-bold text-lg text-white  "
-            >
-              {title}{" "}
-            </h3>
-          </div>
-          <div
-            className={clsx(
-              "flex flex-col  gap-2 justify-center",
-              variant === "list-item" ? "items-start" : "items-center"
-            )}
-          >
-            <div className="flex items-center">
-              <span className="text-xs  pt-[2px] text-[#EAE9E9]">
-                {theme?.learnings} lecciones
-              </span>
-              <span className="mx-1 text-[#EAE9E9] text-xs">| </span>
-              <img className="w-[12px] " src="/assets/reloj.svg" />
-              <span className="text-xs pt-[2px] ml-[4px] text-[#EAE9E9]">
-                {" "}
-                {formatDuration(duration)}
-              </span>
-            </div>
-            <span className="uppercase text-[#ffffff] tracking-wide text-xs font-light flex gap-1 items-center mt-2">
-              {level} <Dots level={level} />
-            </span>
-          </div>
-        </article>
-      </Link>
-    </section>
-  );
-}
-
-export const Dots = ({
-  level = "principiante",
-}: {
-  level?: "principiante" | "intermedio" | "avanzado" | string;
-}) => {
-  return (
-    <div className="flex gap-[2px] ml-[4px]">
-      {level === "principiante" ? (
-        <>
-          <img src="/assets/rayo-amarillo.svg" />
-          <img src="/assets/rayo-gris.png" />
-          <img src="/assets/rayo-gris.png" />
-        </>
-      ) : level === "intermedio" ? (
-        <>
-          <img src="/assets/rayo-amarillo.svg" />
-          <img src="/assets/rayo-amarillo.svg" />
-          <img src="/assets/rayo-gris.png" />
-        </>
-      ) : (
-        <>
-          <img src="/assets/rayo-amarillo.svg" />
-          <img src="/assets/rayo-amarillo.svg" />
-          <img src="/assets/rayo-amarillo.svg" />
-        </>
+      {!isHovered && (
+        <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl" />
       )}
-    </div>
+      <motion.div
+        style={{ rotateX: springX, rotateY: springY }}
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="pt-2 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full"
+      >
+        <img className="mx-auto h-60 " src={course.icon} alt={course.title} />
+        <h3 className="font-bold text-2xl text-white mt-8 text-center">
+          {course.title}
+        </h3>
+        <p className="mt-3 text-colorCaption font-light text-center">
+          {videosLength} lecciones | {formatDuration(course.duration)}
+        </p>
+        <div className="flex gap-2 mx-auto justify-center text-center mt-6">
+          <p className=" text-brand-500 uppercase">{course.level}</p>
+          {course.level === "Avanzado" ? (
+            <span className="flex gap-2">
+              <img src="/thunder.svg" className="w-3" />
+              <img src="/thunder.svg" className="w-3" />
+              <img src="/thunder.svg" className="w-3" />
+            </span>
+          ) : (
+            <span className="flex gap-2">
+              <img src="/thunder.svg" className="w-3" />
+              <img src="/thunder.svg" className="w-3" />
+              <img className="opacity-25 w-3" src="/thunder.svg" />
+            </span>
+          )}
+        </div>
+      </motion.div>
+    </Link>
   );
-};
-
-const Dot = ({
-  isActive,
-  color,
-}: {
-  isActive?: boolean;
-  color?: "green" | "blue" | "orange";
-}) => {
-  const classname = useMemo(() => {
-    if (!isActive) {
-      return `w-2 h-2 rounded-full bg-slate-300`;
-    }
-    if (color === "green") {
-      return `w-2 h-2 rounded-full bg-green-300`;
-    }
-    if (color === "blue") {
-      return `w-2 h-2 rounded-full bg-blue-300`;
-    }
-    if (color === "orange") {
-      return `w-2 h-2 rounded-full bg-orange-300`;
-    }
-  }, [color, isActive]);
-
-  return <div className={classname}></div>;
 };

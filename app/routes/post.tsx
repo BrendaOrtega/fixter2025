@@ -4,6 +4,7 @@ import type { Route } from "./+types/post";
 import { db } from "~/.server/db";
 import { IoIosArrowBack } from "react-icons/io";
 import { Autor } from "~/components/common/Autor";
+import YoutubeComponent from "~/components/common/YoutubeComponent";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const post = await db.post.findUnique({
@@ -34,6 +35,8 @@ export default function Route({ loaderData: { post } }: Route.ComponentProps) {
         </Link>
         <h2 className="lg:mt-0 text-4xl font-bold text-center">{post.title}</h2>
         <Autor {...post} />
+        <hr />
+        <YoutubeComponent url={post.youtubeLink} />
         <hr />
         <Markdown>{post.body}</Markdown>
       </section>
