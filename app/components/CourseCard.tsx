@@ -34,11 +34,16 @@ export const CourseCard = ({
         perspective: 600,
       }}
     >
-      {!isHovered && (
+      {/* {!isHovered && (
         <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl" />
-      )}
+      )} */}
       <motion.div
-        style={{ rotateX: springX, rotateY: springY }}
+        style={{
+          rotateX: springX,
+          rotateY: springY,
+
+          boxShadow: " 0px 0px 24px 0px #37ab93",
+        }}
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
