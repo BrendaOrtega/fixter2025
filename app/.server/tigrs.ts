@@ -28,7 +28,7 @@ const setCors = async () => {
           AllowedMethods: ["PUT", "DELETE", "GET"],
           AllowedOrigins: isDev
             ? ["http://localhost:3000"]
-            : ["https://animaciones.fixtergeek.com"],
+            : ["https://fixter2025.fly.dev"], // @todo domain
           MaxAgeSeconds: 3600,
         },
       ],
