@@ -28,6 +28,7 @@ export default [
     route("user", "routes/api/user.tsx"),
     route("course", "routes/api/course.tsx"),
     route("stripe", "routes/api/stripe.tsx"),
+    route("file", "routes/api/file.tsx"),
   ]),
 
   // @todo redirects?

@@ -1,8 +1,7 @@
 import { Link } from "react-router";
-
-import { cn } from "../../lib/utils";
 import type { ReactNode } from "react";
 import Spinner from "./Spinner";
+import { cn } from "~/utils/cn";
 
 export const PrimaryButton = ({
   title,

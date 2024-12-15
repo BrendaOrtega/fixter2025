@@ -6,8 +6,8 @@ import { db } from "~/.server/db";
 import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
 import { Header } from "~/components/common/Header";
-import { cn } from "~/lib/utils";
 import { CourseCard } from "~/components/CourseCard";
+import { cn } from "~/utils/cn";
 
 export function meta({}: Route.MetaArgs) {
   return [

@@ -1,10 +1,10 @@
 import { Link } from "react-router";
 import { Youtube } from "../icons/Youtube";
 import type { ReactNode } from "react";
-import { cn } from "~/lib/utils";
 import { Discord } from "../icons/Discord";
 import type { User } from "@prisma/client";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
+import { cn } from "~/utils/cn";
 
 export const NavBar = ({ user }: { user?: Partial<User> }) => {
   const { googleLoginHandler } = useGoogleLogin();
