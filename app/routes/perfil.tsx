@@ -182,7 +182,6 @@ const EditableAvatar = ({
           "w-40 h-40 bg-brand-700",
           "relative inline-block my-8 overflow-hidden rounded-full",
           className
-          // { hidden: isEditing }
         )}
       >
         <button
@@ -239,11 +238,3 @@ const CanvasModal = forwardRef<HTMLCanvasElement>(
     );
   }
 );
-
-/**
- * 1. click and open selector
- * 2. Render fabric with clipath
- * 3. export canvas to img
- * 4. set preview
- * 5. upload on close (async)
- */
