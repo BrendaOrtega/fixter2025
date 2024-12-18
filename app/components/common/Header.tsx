@@ -1,14 +1,22 @@
 import type { ReactNode } from "react";
+import { twMerge } from "tailwind-merge";
 
 export const Header = ({
   title = "Cursos",
-  text = "Mejora tus skills profesionales con cursos específicos, cuando quieras desde donde quieras.",
+  text = "Mejora tus skills profesionales con cursos específicos, cuando quieras desde donde quieras",
+  className,
 }: {
   title?: string;
   text?: ReactNode;
+  className?: string;
 }) => {
   return (
-    <section className="h-[480px] bg-stars bg-cover bg-bottom flex items-center justify-center">
+    <section
+      className={twMerge(
+        "h-[480px] bg-stars bg-cover bg-bottom flex items-center justify-center",
+        className
+      )}
+    >
       <div className="text-center">
         <h2 className="text-4xl md:text-5xl xl:text-6xl font-bold text-white">
           {title}

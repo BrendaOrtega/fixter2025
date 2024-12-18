@@ -19,6 +19,8 @@ import { postSearch } from "~/utils/postSearch";
 import { useReadingTime } from "~/utils/useReadingTime";
 import { motion } from "motion/react";
 import { Header } from "~/components/common/Header";
+import { Banner } from "./cursos";
+import { PrimaryButton } from "~/components/common/PrimaryButton";
 
 export const meta = () =>
   getMetaTags({
@@ -110,11 +112,25 @@ export default function Route({
         {showLoadMore && (
           <button
             onClick={handleLoadMore}
-            className="py-2 px-6 rounded-full bg-brand-500 text-black font-bold block mx-auto my-6 hover:scale-105 transition-all"
+            className="py-2 px-6 bg-brand-900 border-brand-900 text-white rounded-full font-semibold block mx-auto my-20 hover:scale-105 transition-all"
           >
             {isLoading ? <Spinner /> : "Cargar más"}
           </button>
         )}
+        <Banner>
+          <div className="w-full md:w-[60%]">
+            <h3 className="text-3xl md:text-4xl text-white font-bold mb-10 !leading-snug">
+              Suscríbete a nuestro Newsletter y mantente al tanto de lo nuevo
+            </h3>{" "}
+            <div className="rounded-full overflow-hidden bg-brand-500/5 w-fit">
+              <input
+                className="border-none bg-transparent placeholder:text-white/20 font-light"
+                placeholder="tucorreo@gmail.com"
+              />{" "}
+              <PrimaryButton variant="fill" title="Suscribirme" />
+            </div>
+          </div>
+        </Banner>
       </main>
     </>
   );

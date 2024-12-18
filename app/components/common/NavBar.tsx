@@ -14,7 +14,7 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
         <NavLink to="/">
           <img className="h-10" src="/logo.svg" alt="logo" />
         </NavLink>
-        <div className="flex text-white text-lg gap-6">
+        <div className="flex text-white  gap-6">
           <a
             href="https://www.youtube.com/@fixtergeek8057"
             rel="noreferrer"
@@ -23,14 +23,14 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
           >
             <Youtube />
           </a>
-          <a
+          {/* <a
             href="https://www.youtube.com/@fixtergeek8057"
             rel="noreferrer"
             target="_blank"
             className="place-content-center hover:scale-105 transition-all hidden md:grid"
           >
             <Discord />
-          </a>
+          </a> */}
           <NavLink
             className={cn("hidden md:block", {
               "sm:block": !user?.email,
@@ -57,7 +57,7 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
             </NavLink>
           ) : (
             <button
-              className="py-2 px-4 rounded-full bg-brand-900/60 font-normal "
+              className="py-2 px-4 text-base rounded-full bg-brand-900/60 font-normal "
               onClick={googleLoginHandler}
             >
               Inicia sesión
@@ -81,7 +81,7 @@ const NavLink = ({
   return (
     <Link
       className={cn(
-        "grid place-content-center hover:scale-105 transition-all",
+        "grid text-base place-content-center hover:scale-105 transition-all",
         className
       )}
       to={to}

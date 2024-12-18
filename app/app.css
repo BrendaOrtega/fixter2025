@@ -1,6 +1,6 @@
 /* // space grotesk */
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
-
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Licorice&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -42,7 +42,7 @@ body {
 /* Markdown para el blog */
 .markdown p {
   color: var(--brand-100);
-  font-size: 22px;
+  font-size: 18px;
   margin: 24px 0 0 0;
 }
 
@@ -88,6 +88,11 @@ body {
   list-style: circle;
 }
 
+.markdown p {
+  font-family: "Inter", serif;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .markdown h2,
 .markdown h1,
 .markdown h3,
@@ -95,21 +100,20 @@ body {
 .markdown h5,
 .markdown h6,
 .markdown strong {
-  font-family: "Space Grotesk", Figtree, "Avenir Book", "Avenir Regular",
-    sans-serif;
+  font-family: "Inter", Figtree, "Avenir Book", "Avenir Regular", sans-serif;
   font-weight: bold;
 }
 
 .markdown h1 {
   font-size: 40px;
   margin: 32px 0 24px 0;
-  line-height: 1;
-  margin-top: 32px;
+  line-height: 1.2;
+  margin-top: 48px;
 }
 
 .markdown h2 {
   font-size: 32px;
   margin: 32px 0 24px 0;
-  line-height: 1;
-  margin-top: 32px;
+  line-height: 1.2;
+  margin-top: 48px;
 }

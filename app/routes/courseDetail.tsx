@@ -8,6 +8,8 @@ import { useVideosLength } from "~/hooks/useVideosLength";
 import { formatDuration } from "./cursos";
 import type { Course, Video } from "@prisma/client";
 import { getVideoTitles } from "~/.server/dbGetters";
+import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
+import { motion } from "motion/react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -96,7 +98,7 @@ const CourseContent = ({
 
 const Teacher = ({ course }: { course: Partial<Course> }) => {
   return (
-    <section className="mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto my-[160px]  overflow-hidden">
+    <section className="mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto my-[160px]  ">
       <div className="bg-backface rounded-3xl md:py-16 md:pl-16 pt-6 px-6 w-full relative pb-80 ">
         <div className="w-full md:w-[60%]">
           <span className="text-colorParagraph font-light">
@@ -105,9 +107,7 @@ const Teacher = ({ course }: { course: Partial<Course> }) => {
           <h3 className="text-white text-3xl font-bold mt-4">
             {course.authorName ? course.authorName : "Héctor Bliss"}
           </h3>{" "}
-          {course.authorDescription ? (
-            course.authorDescription
-          ) : (
+          {course.authorName === "Héctor Bliss" ? (
             <div>
               {" "}
               <p className="text-colorParagraph font-light mt-8 text-base md:text-lg">
@@ -128,12 +128,36 @@ const Teacher = ({ course }: { course: Partial<Course> }) => {
                 aburrido.
               </p>{" "}
             </div>
+          ) : (
+            <p className="text-colorParagraph font-light mt-8 text-base md:text-lg">
+              {" "}
+              {course.authorDescription}
+            </p>
           )}
         </div>
         <div className=" absolute -bottom-16 -right-16">
+          <a>
+            <motion.span>
+              <BsLinkedin className="text-3xl absolute top-2 text-colorCaption/50" />
+            </motion.span>
+          </a>
+          <a>
+            <motion.span style={{}}>
+              <BsGithub className="text-3xl absolute top-16 -left-12 text-colorCaption/50" />
+            </motion.span>
+          </a>
+          <a>
+            <motion.span>
+              <BsTwitter className="text-3xl absolute -top-10 left-16 text-colorCaption/50" />
+            </motion.span>
+          </a>
           <img
             className="w-[320px] rounded-full"
-            src={course.photoUrl ? course.photoUrl : "/courses/titor.png"}
+            src={
+              course.authorName === "Héctor Bliss"
+                ? "/courses/titor.png"
+                : course.photoUrl
+            }
             alt={course.authorName ? course.authorName : "Héctor Bliss"}
           />
         </div>
@@ -206,7 +230,7 @@ const CourseHeader = ({ course }: { course: Course }) => {
           </div>
         </div>
         <div className="w-full md:w-[40%]  flex justify-center h-full items-center">
-          <img className="w-[50%]" src="/js.png" alt="curso" />{" "}
+          <img className="w-[70%]" src={icon} alt="curso" />{" "}
         </div>
       </div>
     </section>

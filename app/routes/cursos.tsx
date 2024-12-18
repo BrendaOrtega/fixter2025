@@ -48,7 +48,7 @@ export default function Route({
 }: Route.ComponentProps) {
   return (
     <>
-      <Header />
+      <Header className="bg-heroCourses" />
       <CousesList courses={courses} />
       <Banner>
         <div className="w-full md:w-[60%]">

@@ -12,6 +12,7 @@ import type { Course } from "@prisma/client";
 import { twMerge } from "tailwind-merge";
 import { CourseCard } from "~/components/CourseCard";
 import { useScroll, useTransform, motion, useSpring } from "motion/react";
+import { TridiLayers } from "~/components/card3d";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -342,7 +343,7 @@ const Item = ({
 const Why = () => {
   return (
     <section className="max-w-7xl mx-auto my-32 md:my-[160px] flex-wrap md:flex-nowrap flex gap-16 px-4 md:p-[5%] xl:px-0">
-      <div className="w-full md:w-[50%]">
+      <div className="w-full md:w-[45%]">
         <img className="mb-8" src="/galaxy.svg" alt="galaxy" />
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white !leading-snug">
           Que aprender deje de ser aburrido
@@ -359,7 +360,16 @@ const Why = () => {
           forma más didáctica a través de proyectos y ejercicios en cada curso.
         </p>
       </div>
-      <div className="w-[50%] bg-brand-500"> hola</div>
+      <div className="w-[55%] flex- items-center pt-16 ">
+        <TridiLayers
+
+        // images={[
+        //   "https://i.imgur.com/oxKgjIb.png",
+        //   "https://i.imgur.com/nvs8UBe.png",
+        //   "https://i.imgur.com/ArpsLvc.png",
+        // ]}
+        />
+      </div>
     </section>
   );
 };
@@ -399,18 +409,6 @@ const HomeHero = () => {
                   "las bibliotecas",
                   "los patterns",
                   "los hacks",
-                  "las tendencias",
-                  "leyendo el blog",
-                  "con los cursos",
-                  "la experiencia",
-                  "lo alternativo",
-                  "lo independiente",
-                  "el open source",
-                  "full stack web dev",
-                  "fácilmente",
-                  "mientras disfrutas",
-                  "siguiendo tu curiosidad",
-                  "de Brendi",
                 ]}
               />
             </span>{" "}
