@@ -52,7 +52,7 @@ export default function Route({
       <CousesList courses={courses} />
       <Banner>
         <div className="w-full md:w-[60%]">
-          <h3 className="text-3xl md:text-4xl text-white font-bold mb-10 !leading-snug">
+          <h3 className="text-3xl md:text-3xl lg:text-4xl text-white font-bold mb-10 !leading-snug">
             ¿Explorando nuevas herramientas? Visita nuestro Blog
           </h3>{" "}
           <PrimaryButton as="Link" to="/blog" title="Ver blog" />
