@@ -63,7 +63,7 @@ export default function Route() {
               isLoading={isLoading}
               name="intent"
               type="submit"
-              value="subscription"
+              value="suscription"
             >
               Unirme
             </PrimaryButton>

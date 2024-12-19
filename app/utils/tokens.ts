@@ -10,6 +10,7 @@ export const validateUserToken = (token: string) => {
   try {
     const decoded = jwt.verify(token, process.env.SECRET || "fixtergeek") as {
       email: string;
+      suscriptions?: string[];
     };
     return {
       isValid: true,

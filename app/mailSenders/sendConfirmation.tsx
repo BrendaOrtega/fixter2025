@@ -1,5 +1,6 @@
 import { sendgridTransport } from "~/utils/sendGridTransport";
 import { confirmation } from "./templates/confirmation";
+import jwt from "jsonwebtoken";
 
 export const generateURL = (options: {
   pathname?: string;
@@ -17,7 +18,14 @@ export const generateURL = (options: {
   return uri;
 };
 
-export const sendConfirmation = (email: string, token: string) => {
+export const sendConfirmation = (email: string, suscriptions?: string[]) => {
+  const token = jwt.sign(
+    { email, suscriptions },
+    process.env.SECRET || "fixtergeek",
+    {
+      expiresIn: "7d",
+    }
+  );
   const url = new URL(
     process.env.NODE_ENV === "development"
       ? "http://localhost:3000"

@@ -2,37 +2,35 @@ import { useEffect } from "react";
 import JSConfetti from "js-confetti";
 
 const confettiColors = ["#85ddcb", "#19262a", "#37ab93"];
-
+const initial = ["🎉", "👾", "💿", "🚀", "📖", "🕹", "📺"];
 export const EmojiConfetti = ({
-  emojis = ["🎉", "👾", "💿", "🚀", "📖", "🕹", "📺"],
+  emojis = initial,
 }: {
-  emojis?: string[] | false;
+  emojis?: boolean | string[];
 }) => {
   useEffect(() => {
     const jsConfetti = new JSConfetti();
 
-    if (emojis === false) {
+    if (emojis) {
       jsConfetti.addConfetti({
-        confettiColors,
+        emojis: Array.isArray(emojis) ? emojis : initial,
       });
       setTimeout(() => {
         jsConfetti.addConfetti({
-          confettiColors,
+          emojis: Array.isArray(emojis) ? emojis : initial,
         });
       }, 2000);
       return;
     }
-
+    jsConfetti.addConfetti({
+      confettiColors,
+    });
     setTimeout(() => {
       jsConfetti.addConfetti({
-        emojis,
+        confettiColors,
       });
-    }, 300);
-    setTimeout(() => {
-      jsConfetti.addConfetti({
-        emojis,
-      });
-    }, 4000);
+    }, 2000);
   }, []);
+
   return null;
 };

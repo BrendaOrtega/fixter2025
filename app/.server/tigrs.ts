@@ -18,17 +18,18 @@ const S3 = new S3Client({
   endpoint: process.env.AWS_ENDPOINT_URL_S3,
 });
 
+// es mejor configurarlo desde acá en vez dle control panel. (tiene prioridad el panel)
 const setCors = async () => {
   const input = {
     Bucket: process.env.BUCKET_NAME,
     CORSConfiguration: {
       CORSRules: [
         {
-          AllowedHeaders: ["*"],
-          AllowedMethods: ["PUT", "DELETE", "GET"],
           AllowedOrigins: isDev
             ? ["http://localhost:3000"]
             : ["https://fixter2025.fly.dev"], // @todo domain
+          AllowedHeaders: ["*"],
+          AllowedMethods: ["PUT", "DELETE", "GET"],
           MaxAgeSeconds: 3600,
         },
       ],

@@ -157,13 +157,20 @@ export const ifUserRedirect = async (
 
 export const getOrCreateUser = async (
   email: string,
-  options?: { confirmed: boolean }
+  options?: { confirmed: boolean; suscriptions?: string[] }
 ) => {
-  const { confirmed } = options || {};
+  const { confirmed, suscriptions = [] } = options || {};
 
   let exists;
   if (confirmed) {
-    exists = await db.user.update({ where: { email }, data: { confirmed } }); // confirming
+    exists = await db.user.update({
+      where: { email },
+      data: {
+        confirmed,
+        tags: { push: suscriptions },
+        suscriptions: { push: suscriptions },
+      },
+    }); // confirming
   } else {
     exists = await db.user.findUnique({ where: { email } });
   }
@@ -173,8 +180,9 @@ export const getOrCreateUser = async (
     data: {
       username: email,
       email,
-      tags: ["magic_link"],
+      tags: ["magic_link", ...(suscriptions || [])], // @todo improve
       confirmed: confirmed ? confirmed : undefined,
+      suscriptions,
     },
   });
 };

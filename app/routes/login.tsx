@@ -36,12 +36,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         status: 403,
         message: "El token no es valido ⛓️‍💥",
       };
-
     invariant(decoded?.email);
-    await getOrCreateUser(decoded.email, { confirmed: true }); // update confirm
+    await getOrCreateUser(decoded.email, {
+      confirmed: true,
+      suscriptions: decoded.suscriptions,
+    }); // update confirm
     const session = await placeSession(request, decoded.email);
     // @todo where is best?
-    throw redirect("/mis-cursos", {
+    throw redirect("/mis-cursos?confirmed=1", {
       headers: { "Set-Cookie": await commitSession(session) },
     });
   }

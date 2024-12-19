@@ -1,11 +1,8 @@
 import { redirect, type ActionFunctionArgs } from "react-router";
 import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
-import {
-  getUserOrNull,
-  sendConfirmationEmail,
-  updateUserAndSetSession,
-} from "~/.server/dbGetters";
+import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
+import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 
 const emailSchema = z.string().email();
 
@@ -13,11 +10,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  if (intent === "subscription") {
+  if (intent === "suscription") {
     const email = String(formData.get("email"));
     emailSchema.parse(email);
     // @todo detached
-    await sendConfirmationEmail(email); // @wip
+    await sendConfirmation(email, ["newsletter", "blog"]);
     return redirect("/subscribe?success=1");
   }
 
