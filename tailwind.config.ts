@@ -32,7 +32,9 @@ export default {
         planet: "url('/planet.png')",
         author: "url('/author.svg')",
         heroCourses: "url('/heroCourses.svg')",
+        heroProfile: "url('/heroProfile.svg')",
         postbg: "url('/postbg.png')",
+        bloob: "url('/bloob.svg')",
       },
       fontFamily: {
         sans: [

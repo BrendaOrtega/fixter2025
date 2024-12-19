@@ -83,7 +83,7 @@ const Comments = () => {
         Qué piensan nuestros estudiantes
       </h2>
       <p className="text-base md:text-lg text-colorParagraph font-light my-4 text-center">
-        <strong className="text-3xl text-brand-700 font-bold"> +20,000 </strong>
+        <strong className="text-2xl text-brand-700 font-bold"> +20,000 </strong>
         estudiantes han comprado nuestros cursos en línea y presenciales
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3  mt-12 md:mt-16 gap-8 lg:gap-y-12 xl:gap-12">
@@ -147,16 +147,55 @@ const Comments = () => {
           comment="Cumple justo con lo que buscaba. Estaba haciendo un curso más grande en inglés de react y cuando llegué a la parte de redux no entendí nada, así que me puse a buscar una explicación simple y corta de qué es y cómo funciona y encontré este pequeño curso de introducción. Ahora entiendo la base y puedo seguir con el otro, muchas gracias!"
         />
         <CommentCard
+          image="/students/victor.png"
+          name="Victor Reyes"
+          platform="udemy"
+          comment="Super agradecido con todo el equipo de Fixter, en especial con Héctor Bliss, los cursos que impartía me ayudaron a actualizarme en diferentes temas como javascript, firebase, react, que hoy en dia son herramientas que utilizo en mi trabajo, y como olvidar los convivios con pizza y cerveza. "
+        />
+
+        <CommentCard
+          image="/students/osw.png"
+          name="Oswaldo Martínez"
+          platform="udemy"
+          comment="Aprender a programar no es sencillo, enseñarlo tampoco. En fixter tuve la oportunidad de crearme una carrera como desarrollador profesional gracias a la metodología que usan y al acompañamiento que hasta la fecha tengo."
+        />
+        <CommentCard
+          image="/students/carlitos.png"
+          name="Carlos Mendoza"
+          platform="udemy"
+          comment="Mi experiencia en Fixter fue anormal porque conocí a personas motivadas por los mismos temas y podíamos pasar horas y horas hablando de tecnología sin cansancio, ahí descubrí lo increíble que es hacer comunidad."
+        />
+        <CommentCard
+          image="/students/zyan.png"
+          name="Zyanya Mo"
+          platform="udemy"
+          comment="La mejor experiencia en FixterCamp, ya pasaron 5 años y la verdad me gustaría volver a repetir esto, ojala que algún día pueda regresar para actualizarme."
+        />
+        <CommentCard
+          image="/students/pablo.png"
+          name="Pablo Castillo"
+          platform="udemy"
+          comment="Estar en Fixter marco un antes y un después en mi carrera como programador, me mostraron la pasión por el código, resolver problemas, el autoaprendizaje y trabajar duro o irme a casa."
+        />
+
+        <CommentCard
+          image="/students/richi.png"
+          name="Ricardo Hernández"
+          platform="udemy"
+          comment="Un año después de un salir de un bootcamp, los cursos de Fixter.camp me ayudaron a actualizarme en React y mejoró mucho mi código y mi puesto de trabajo."
+        />
+        <CommentCard
           name="Adan A."
           tag="@Adan"
           platform="udemy"
           comment="El instructor es espectacular, ya lo conocía pues tengo otro curso de Hector Bliss, de React y es Fantastico, lastima que no hizo mas cursos. Quedo a la espera de que hagas mas cursos profe."
         />
+
         <CommentCard
-          image="https://img-c.udemycdn.com/user/50x50/33424336_3a73.jpg"
-          name="Jorge M."
+          image="/students/mejia.png"
+          name="David Mejía"
           platform="udemy"
-          comment="Excelente curso!!! Excelente la forma de explicar!!! Sería genial que crees un curso avanzado de React, donde se desarrolle una aplicación con validaciones de formularios, cargar datos a los formularios desde DB, JWT, roles de usuarios, lazyload, múltiples layouts, etc."
+          comment="Fixter fue un antes y después en mi vida, tanto aprendí cosas que me han ayudado en mi entorno profesional como conocí gente apasionada por el código"
         />
       </div>
     </section>
@@ -343,32 +382,27 @@ const Item = ({
 const Why = () => {
   return (
     <section className="max-w-7xl mx-auto my-32 md:my-[160px] flex-wrap md:flex-nowrap flex gap-16 px-4 md:p-[5%] xl:px-0">
-      <div className="w-full md:w-[45%]">
+      <div className="w-full md:w-[42%]">
         <img className="mb-8" src="/galaxy.svg" alt="galaxy" />
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white !leading-snug">
           Que aprender deje de ser aburrido
         </h2>
         <p className="text-lg text-colorParagraph font-light my-4">
           Nuestra metodología incorpora distintas formas de enseñanza que
-          facilitan tu aprendizaje, desde lecciones en video, recursos extra y
+          facilitan tu aprendizaje, desde lecciones en video, recursos extra o
           feedback en comunidad. Creemos que el aprendizaje es más fácil y
           duradero cuando te diviertes practicando.
         </p>
         <p className="text-lg text-colorParagraph font-light">
-          En Fixter no nos detenemos en la teoría, ese es solo el primer paso y
-          ponerlos en práctica es el verdadero reto. Así que lo hacemos de la
-          forma más didáctica a través de proyectos y ejercicios en cada curso.
+          Nos esforzamos para que nuestros cursos no sean un pack de lecciones
+          aburridas llena de teoría y tecnicismos, nos enfocamos en que cada
+          lección sea dinámica, entretenida y con ejemplos y ejercicios
+          prácticos que realmente puedes utilizar en tu día a día como
+          desarrollador.
         </p>
       </div>
       <div className="w-[55%] flex- items-center pt-16 ">
-        <TridiLayers
-
-        // images={[
-        //   "https://i.imgur.com/oxKgjIb.png",
-        //   "https://i.imgur.com/nvs8UBe.png",
-        //   "https://i.imgur.com/ArpsLvc.png",
-        // ]}
-        />
+        <TridiLayers images={["/figma-fg.png", "/osw.jpg", "/codigo-fg.png"]} />
       </div>
     </section>
   );
@@ -377,24 +411,24 @@ const Why = () => {
 const HomeHero = () => {
   // <<animation
   const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const springScroll = useSpring(scrollYProgress, { bounce: 0 });
-  const opacity = useTransform(springScroll, [0, 1], [1, 0]);
-  const scale = useTransform(springScroll, [0, 1], [1, 1.1]);
-  const filter = useTransform(
-    springScroll,
-    [0.3, 0.5],
-    ["blur(0px)", "blur(9px)"]
-  );
+  // const { scrollYProgress } = useScroll({
+  //   target: ref,
+  //   offset: ["start start", "end start"],
+  // });
+  // const springScroll = useSpring(scrollYProgress, { bounce: 0 });
+  // const opacity = useTransform(springScroll, [0, 1], [1, 0]);
+  // const scale = useTransform(springScroll, [0, 1], [1, 1.1]);
+  // const filter = useTransform(
+  //   springScroll,
+  //   [0.3, 0.5],
+  //   ["blur(0px)", "blur(9px)"]
+  // );
   // animation>>
 
   return (
     <motion.section
       ref={ref}
-      style={{ opacity, scale, filter }}
+      // style={{ opacity, scale, filter }}
       className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-52 md:pt-0 md:px-10"
     >
       <div className="flex flex-wrap-reverse md:flex-nowrap justify-center md:justify-between items-center max-w-7xl mx-auto h-full gap-20">

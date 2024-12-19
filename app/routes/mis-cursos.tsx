@@ -29,6 +29,7 @@ export default function Route({
   return (
     <>
       <Header
+        className="bg-heroProfile"
         title="Todos tus cursos"
         text={
           <span>
@@ -41,7 +42,7 @@ export default function Route({
         }
       />
 
-      <main className="min-h-screen flex flex-col dark:bg-brand-black-500 pt-20">
+      <main className="min-h-screen flex flex-col dark:bg-brand-black-500 xl:pt-20">
         {isSuccess && <SuccessAlert />}
         <CousesList courses={courses} />
         <SimpleFooter />
@@ -52,7 +53,7 @@ export default function Route({
 
 const CousesList = ({ courses }: { courses: Course[] }) => {
   return (
-    <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
+    <div className="grid gap-20 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 mt-16 lg:mt-32 w-full  max-w-7xl mx-auto px-8 md:px-[5%] xl:px-0">
       {courses.map((course) => (
         <CourseCard
           to={`/cursos/${course.slug}/viewer`}

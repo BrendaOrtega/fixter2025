@@ -53,6 +53,7 @@ export const LyingCard = ({
           rotateZ: 10,
           rotateX: 0,
           rotateY: 0,
+          z: 20,
           x: -200,
           y: 100,
         })
@@ -65,6 +66,7 @@ export const LyingCard = ({
           rotateZ: -10,
           rotateX: 0,
           rotateY: 0,
+          z: 0,
           x: 200,
           y: 0,
         })
@@ -77,6 +79,7 @@ export const LyingCard = ({
           rotateZ: -5,
           rotateX: 0,
           rotateY: 0,
+          z: 10,
           x: 0,
           y: 0,
         })
@@ -102,7 +105,7 @@ export const LyingCard = ({
         zIndex: type === "left" ? 30 : type === "center" ? 20 : 10,
       }}
       className={cn(
-        "object-cover w-[320px] h-[320px] border rounded-xl bg-white absolute shadow-md",
+        "object-cover w-[320px] h-[320px] border border-white/10 rounded-xl bg-white/10 absolute shadow-md",
 
         className,
         {
