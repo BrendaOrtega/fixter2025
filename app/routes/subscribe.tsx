@@ -18,9 +18,12 @@ export default function Route() {
             No te salgas del loop: Actualízate
           </h1>
           <p className="text-center text-2xl">
-            <span> Unete a nuestra lista exclusiva para geeks.</span>{" "}
             <span>
-              Así no te pierdes nada de los nuevo que se traen entre manos
+              {" "}
+              Estas a punto de ser parte de una lista exclusiva para geeks.
+            </span>{" "}
+            <span>
+              Así no te perderás nada de todo lo nuevo que se traen entre manos:
               Brendi 👩🏻‍💻 y bliss. 🤓
             </span>
           </p>

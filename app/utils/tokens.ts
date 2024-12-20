@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export const generateUserToken = (data: { email: string }) => {
+export const generateUserToken = (data: { email: string; tags?: string[] }) => {
   return jwt.sign(data, process.env.SECRET || "fixtergeek", {
     expiresIn: "1h",
   });
@@ -10,7 +10,7 @@ export const validateUserToken = (token: string) => {
   try {
     const decoded = jwt.verify(token, process.env.SECRET || "fixtergeek") as {
       email: string;
-      suscriptions?: string[];
+      tags?: string[];
     };
     return {
       isValid: true,

@@ -6,13 +6,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import {
-  data,
-  Form,
-  Link,
-  useFetcher,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { data, Link, useFetcher, type LoaderFunctionArgs } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { db } from "~/.server/db";
 import { getMetaTags } from "~/utils/getMetaTags";
@@ -24,9 +18,7 @@ import type { Post } from "@prisma/client";
 import { postSearch } from "~/utils/postSearch";
 import { useReadingTime } from "~/utils/useReadingTime";
 import { motion } from "motion/react";
-import { Header } from "~/components/common/Header";
-import { Banner } from "./cursos";
-import { PrimaryButton } from "~/components/common/PrimaryButton";
+import { SuscriptionBanner } from "~/components/SuscriptionBanner";
 
 export const meta = () =>
   getMetaTags({
@@ -123,28 +115,7 @@ export default function Route({
             {isLoading ? <Spinner /> : "Cargar más"}
           </button>
         )}
-        <Banner>
-          <Form className="w-full md:w-[60%]" method="POST" action="/api/user">
-            <h3 className="text-3xl md:text-3xl lg:text-4xl text-white font-bold mb-10 !leading-snug">
-              Suscríbete a nuestro Newsletter y mantente al tanto de lo nuevo
-            </h3>{" "}
-            <div className="rounded-full overflow-hidden bg-brand-500/5 w-fit">
-              <input
-                required
-                name="email"
-                className="border-none bg-transparent placeholder:text-white/20 font-light"
-                placeholder="tucorreo@gmail.com"
-              />{" "}
-              <PrimaryButton
-                name="intent"
-                value="suscription"
-                type="submit"
-                variant="fill"
-                title="Suscribirme"
-              />
-            </div>
-          </Form>
-        </Banner>
+        <SuscriptionBanner />
       </main>
     </>
   );

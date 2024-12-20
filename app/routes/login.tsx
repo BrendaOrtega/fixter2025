@@ -14,48 +14,60 @@ import {
   getOrCreateUser,
   ifUserRedirect,
   placeSession,
+  updateOrCreateSuscription,
 } from "~/.server/dbGetters";
 import { commitSession } from "~/sessions";
-import type { Route } from "./+types/login";
+import type { Route, Route } from "./+types/login";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await ifUserRedirect(request);
+// @todo Creat la función para eliminar suscripción.
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // await ifUserRedirect(request);
   const url = new URL(request.url);
   const { searchParams } = url;
-
   if (searchParams.has("token")) {
     const token = searchParams.get("token");
     invariant(token !== null);
     const { isValid, decoded } = await validateUserToken(token);
-    if (!isValid)
-      // ui
+    if (!isValid || !decoded?.email) {
+      // for ui
       return {
         success: false,
         status: 403,
         message: "El token no es valido ⛓️‍💥",
       };
-    invariant(decoded?.email);
+    }
+    // user =>
     await getOrCreateUser(decoded.email, {
-      confirmed: true,
-      suscriptions: decoded.suscriptions,
+      confirmed: true, // because of token
+      tags: decoded.tags || [],
     }); // update confirm
+    // @TODO remove this using sendgrid api
+    if (decoded.tags) {
+      await updateOrCreateSuscription(decoded.email, {
+        confirmed: true,
+        tags: decoded.tags,
+      });
+    }
     const session = await placeSession(request, decoded.email);
     // @todo where is best?
     throw redirect("/mis-cursos?confirmed=1", {
       headers: { "Set-Cookie": await commitSession(session) },
     });
   }
-
   return {
     success: searchParams.has("success"),
+    status: 200,
+    message: "ok ⛓️",
   };
 };
 
-export default function Route() {
-  const { success, status, message } = useLoaderData<typeof loader>();
-
+export default function Page({
+  success,
+  message,
+  status,
+}: Route.ComponentProps) {
   if (String(status).includes("4")) {
     return <BadToken message={message} />;
   }

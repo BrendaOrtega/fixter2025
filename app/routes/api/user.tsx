@@ -3,6 +3,7 @@ import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
 import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
+import { db } from "~/.server/db";
 
 const emailSchema = z.string().email();
 
@@ -11,11 +12,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "suscription") {
+    const tags = ["newsletter", "blog"];
     const email = String(formData.get("email"));
     emailSchema.parse(email);
     // @todo detached
-    await sendConfirmation(email, ["newsletter", "blog"]);
-    return redirect("/subscribe?success=1");
+    const suscriber = await db.subscriber.upsert({
+      where: { email },
+      create: { email, tags }, // @todo default tags?
+      update: { tags: { push: tags } },
+    });
+    if (!suscriber.confirmed) {
+      await sendConfirmation(email, tags);
+    }
+    throw redirect("/subscribe?success=1");
   }
 
   if (intent === "self") {

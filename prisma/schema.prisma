@@ -230,49 +230,48 @@ model Video {
 }
 
 model User {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  v            Int?     @map("__v")
-  accessToken  String?
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  v           Int?     @map("__v")
+  accessToken String?
   /// Multiple data types found: Array(String (ObjectId)): 98.7%, Array(Unknown): 1.3% out of 864 sampled entries
-  bootcamps    Json?
-  changePass   Boolean?
-  confirmed    Boolean  @default(false)
+  bootcamps   Json?
+  changePass  Boolean?
+  confirmed   Boolean  @default(false)
   /// Multiple data types found: Array(String): 5.3%, Array(String (ObjectId)): 94.7% out of 334 sampled entries
-  courses      String[] @db.ObjectId
-  Courses      Course[] @relation(fields: [courses], references: [id])
-  displayName  String?
-  editions     String[] @db.ObjectId
-  email        String   @unique
+  courses     String[] @db.ObjectId
+  Courses     Course[] @relation(fields: [courses], references: [id])
+  displayName String?
+  editions    String[] @db.ObjectId
+  email       String   @unique
   /// Could not determine type: the field only had null or empty values in the sample set.
-  enrolled     Json?
-  exams        Json?
-  facebookId   String?
-  googleId     String?
-  hash         String?
-  homeworks    Json?
-  mentoring    Json?
+  enrolled    Json?
+  exams       Json?
+  facebookId  String?
+  googleId    String?
+  hash        String?
+  homeworks   Json?
+  mentoring   Json?
   /// Could not determine type: the field only had null or empty values in the sample set.
-  models       Json?
+  models      Json?
   /// Could not determine type: the field only had null or empty values in the sample set.
-  modules      Json?
+  modules     Json?
   /// Could not determine type: the field only had null or empty values in the sample set.
-  payments     Json?
-  phoneNumber  String?
-  photoURL     String?
-  providerId   String?
-  role         String?  @default("GUEST")
-  roles        String[]
-  salt         String?
-  uid          String?
-  username     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  payments    Json?
+  phoneNumber String?
+  photoURL    String?
+  providerId  String?
+  role        String?  @default("GUEST")
+  roles       String[]
+  salt        String?
+  uid         String?
+  username    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   /// Could not determine type: the field only had null or empty values in the sample set.
-  videos       Json?
+  videos      Json?
   // 2025
-  suscriptions String[]
-  tags         String[]
-  metadata     Json?
+  tags        String[]
+  metadata    Json?
 
   @@map("users")
 }

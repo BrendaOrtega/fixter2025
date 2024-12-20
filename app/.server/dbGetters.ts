@@ -157,9 +157,9 @@ export const ifUserRedirect = async (
 
 export const getOrCreateUser = async (
   email: string,
-  options?: { confirmed: boolean; suscriptions?: string[] }
+  options?: { confirmed: boolean; tags?: string[] }
 ) => {
-  const { confirmed, suscriptions = [] } = options || {};
+  const { confirmed, tags = [] } = options || {};
 
   let exists;
   if (confirmed) {
@@ -167,8 +167,7 @@ export const getOrCreateUser = async (
       where: { email },
       data: {
         confirmed,
-        tags: { push: suscriptions },
-        suscriptions: { push: suscriptions },
+        tags: { push: tags },
       },
     }); // confirming
   } else {
@@ -180,9 +179,8 @@ export const getOrCreateUser = async (
     data: {
       username: email,
       email,
-      tags: ["magic_link", ...(suscriptions || [])], // @todo improve
+      tags: [...(tags || [])], // @todo improve
       confirmed: confirmed ? confirmed : undefined,
-      suscriptions,
     },
   });
 };
@@ -227,4 +225,32 @@ export const createOrUpdateUser = async (
 export const sendConfirmationEmail = async (email: string) => {
   const token = generateUserToken({ email });
   return await sendConfirmation(email, token); // @detached
+};
+
+export const updateOrCreateSuscription = async (
+  email: string,
+  data: { confirmed: boolean; tags?: string[] }
+) => {
+  const { confirmed = false, tags = [] } = data || {};
+  let exists;
+  if (confirmed) {
+    exists = await db.subscriber.update({
+      where: { email },
+      data: {
+        confirmed,
+        tags: { push: tags },
+      },
+    }); // confirming
+  } else {
+    exists = await db.subscriber.findUnique({ where: { email } });
+  }
+  if (exists) return exists;
+
+  return await db.subscriber.create({
+    data: {
+      email,
+      tags: [...(tags || [])], // @todo improve
+      confirmed: confirmed ? confirmed : undefined,
+    },
+  });
 };
