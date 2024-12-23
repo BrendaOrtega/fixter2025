@@ -11,9 +11,12 @@ export const PrimaryButton = ({
   children,
   isLoading,
   isDisabled,
+
+  className,
   ...props
 }: {
   isDisabled?: boolean;
+  className?: string;
   isLoading?: boolean;
   children?: ReactNode;
   variant?: "fill" | "ghost";
@@ -42,7 +45,8 @@ export const PrimaryButton = ({
           "bg-brand-100 text-gray-400 pointer-events-none": isDisabled,
           "bg-brand-500 text-brand-900": variant === "fill",
           "bg-brand-900 border-brand-900 text-white": variant === "ghost",
-        }
+        },
+        className
       )}
       {...props}
     >

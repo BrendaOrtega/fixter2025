@@ -1,7 +1,7 @@
 export const getMetaTags = ({
   title = "Fixtergeek.com",
-  description = "Cursos para programadores latinoamericanos reales",
-  image = "/full-logo.svg",
+  description = "Cursos de programación y diseño desde cero",
+  image = "/cover.ong",
   url = "https://fixtergeek.com",
   video,
   audio,

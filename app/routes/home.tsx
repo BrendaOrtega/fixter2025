@@ -1,7 +1,7 @@
 import { FlipWords } from "~/components/FlipWords";
 
 import { JackPotSection } from "~/components/Jackpot";
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { Footer } from "~/components/Footer";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
@@ -19,6 +19,63 @@ import {
 } from "motion/react";
 import { TridiLayers } from "~/components/card3d";
 import { Banner } from "~/components/common/Banner";
+import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
+
+const companies = [
+  {
+    title: "Inicial",
+    image: "/caption.png",
+  },
+  {
+    title: "GFT",
+    image: "https://i.imgur.com/sDVJX3C.png",
+  },
+  {
+    title: "Santander",
+    image: "https://i.imgur.com/1GfGdEX.png",
+  },
+  {
+    title: "Wize",
+    image: "https://i.imgur.com/1Jgk0PI.png",
+  },
+
+  {
+    title: "Synac",
+    image: "https://i.imgur.com/oikiaPi.png",
+  },
+  {
+    title: "Super rare",
+    image: "https://i.imgur.com/awTelp6.png",
+  },
+  {
+    title: "Mercado libre",
+    image: "https://i.imgur.com/IiE7xmi.png",
+  },
+  {
+    title: "Flink",
+    image: "https://i.imgur.com/1anFfoz.png",
+  },
+  {
+    title: "Runa",
+    image: "https://i.imgur.com/avCu7Ru.png",
+  },
+  {
+    title: "HSBC",
+    image: "https://i.imgur.com/yCCIYcM.png",
+  },
+  {
+    title: "Zendala",
+    image: "https://i.imgur.com/s3VbQJl.png",
+  },
+  {
+    title: "Bancomer",
+    image: "https://i.imgur.com/OT646Dw.png",
+  },
+  {
+    title: "Cisco",
+    image: "https://i.imgur.com/S7Ihn5W.png",
+  },
+];
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -60,6 +117,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Route({
   loaderData: { courses },
 }: Route.ComponentProps) {
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
   return (
     <main className="overflow-hidden">
       <HomeHero />
@@ -94,18 +158,21 @@ const Comments = () => {
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3  mt-12 md:mt-16 gap-8 lg:gap-y-12 xl:gap-12">
         <CommentCard
+          platform="x"
           image="https://pbs.twimg.com/profile_images/456497156975644673/QmpE5sMs_400x400.jpeg"
           name="Rodrigo"
           tag="@Alientres"
           comment="Hola, tomé un curso con @FixterGeek Desarrollo Web Full-Stack, me gusto la forma de explicar del profesor y las mentorías personalizadas, también las tecnologías aprendidas son de vanguardia. ¡Se los recomiendo!"
         />
         <CommentCard
+          platform="x"
           image="https://pbs.twimg.com/profile_images/1640439802104369153/P4m1BLS7_400x400.jpg"
           name="Jonathan"
           tag="@johnxgear"
           comment="Creo que una de las mejores decisiones ha sido tomar un curso en @FixterGeek es una buena forma de aprender / retomar la programación sin duda una gran experiencia, gracias por dejarme ser parte de esta comunidad. 😎🔥🙌🏼"
         />
         <CommentCard
+          platform="x"
           image="https://pbs.twimg.com/profile_images/1363555823138590724/BSg51cKM_400x400.jpg"
           name="Brenda Ortega"
           tag="@brendaojs"
@@ -115,18 +182,21 @@ const Comments = () => {
           image="https://pbs.twimg.com/profile_images/1605726489055334400/olSwWtH8_400x400.jpg"
           name="David Duran Valdes"
           tag="@DavidDuranVal"
+          platform="x"
           comment="La forma de enseñar de @HectorBlisS @FixterGeek junto con la documentación y los lerning's son de gran ayuda para resolver los ejercicios y proyectos del curso, los temas parecen mas faciles de lo que son y te motivan a seguir aprendiendo, practicando y mejorar tus conocimientos."
         />
         <CommentCard
           image="https://pbs.twimg.com/profile_images/1509233081194004490/hwUK6HvV_400x400.jpg"
           name="Sandy"
           tag="@SandHv"
+          platform="x"
           comment="@FixterGeek ha sido una experiencia agradable y nutritiva técnicamente hablando, continuaré con los siguientes cursos para seguir retroalimentando y aprendiendo las nuevas técnicas del mundo de desarrollo web, gracias fixter ✨🐥👩🏻‍💻"
         />
         <CommentCard
           image="https://pbs.twimg.com/profile_images/1659370175546765314/NQtKyiWa_400x400.jpg"
           name="Gustavo"
           tag="@kinxori"
+          platform="x"
           comment="Hi everyone! As you may know, I am in the journey to become a former web developer! I've started taking bootcamps with @FixterGeek and it's been a great experience. We have access to mentorships through all the course lapse and to be fair, Bliss has a natural talent to teach! 👨‍💻"
         />
         <CommentCard
@@ -155,39 +225,33 @@ const Comments = () => {
         <CommentCard
           image="/students/victor.png"
           name="Victor Reyes"
-          platform="udemy"
           comment="Super agradecido con todo el equipo de Fixter, en especial con Héctor Bliss, los cursos que impartía me ayudaron a actualizarme en diferentes temas como javascript, firebase, react, que hoy en dia son herramientas que utilizo en mi trabajo, y como olvidar los convivios con pizza y cerveza. "
         />
 
         <CommentCard
           image="/students/osw.png"
           name="Oswaldo Martínez"
-          platform="udemy"
           comment="Aprender a programar no es sencillo, enseñarlo tampoco. En fixter tuve la oportunidad de crearme una carrera como desarrollador profesional gracias a la metodología que usan y al acompañamiento que hasta la fecha tengo."
         />
         <CommentCard
           image="/students/carlitos.png"
           name="Carlos Mendoza"
-          platform="udemy"
           comment="Mi experiencia en Fixter fue anormal porque conocí a personas motivadas por los mismos temas y podíamos pasar horas y horas hablando de tecnología sin cansancio, ahí descubrí lo increíble que es hacer comunidad."
         />
         <CommentCard
           image="/students/zyan.png"
           name="Zyanya Mo"
-          platform="udemy"
           comment="La mejor experiencia en FixterCamp, ya pasaron 5 años y la verdad me gustaría volver a repetir esto, ojala que algún día pueda regresar para actualizarme."
         />
         <CommentCard
           image="/students/pablo.png"
           name="Pablo Castillo"
-          platform="udemy"
           comment="Estar en Fixter marco un antes y un después en mi carrera como programador, me mostraron la pasión por el código, resolver problemas, el autoaprendizaje y trabajar duro o irme a casa."
         />
 
         <CommentCard
           image="/students/richi.png"
           name="Ricardo Hernández"
-          platform="udemy"
           comment="Un año después de un salir de un bootcamp, los cursos de Fixter.camp me ayudaron a actualizarme en React y mejoró mucho mi código y mi puesto de trabajo."
         />
         <CommentCard
@@ -200,7 +264,6 @@ const Comments = () => {
         <CommentCard
           image="/students/mejia.png"
           name="David Mejía"
-          platform="udemy"
           comment="Fixter fue un antes y después en mi vida, tanto aprendí cosas que me han ayudado en mi entorno profesional como conocí gente apasionada por el código"
         />
       </div>
@@ -244,12 +307,12 @@ const CommentCard = ({
           className="absolute right-5 w-8 md:w-8 opacity-20  	"
           src="/udemy.svg"
         />
-      ) : (
+      ) : platform === "x" ? (
         <img
           className="absolute right-3 w-8 md:w-10 opacity-20  	"
           src="/x-w.png"
         />
-      )}
+      ) : null}
 
       <div className="mt-10">
         <span className="text-base md:text-lg text-colorParagraph font-light mt-8 md:mt-12 xl:mt-16">
@@ -284,7 +347,7 @@ export const formatDuration = (secs: number) => {
 
 const TopCourses = ({ courses }: { courses: Course[] }) => {
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
+    <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
       <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
         Cursos más vendidos
       </h2>
@@ -297,14 +360,25 @@ const TopCourses = ({ courses }: { courses: Course[] }) => {
           />
         ))}{" "}
       </div>
-    </section>
+    </motion.section>
   );
 };
 
 const Benefits = () => {
+  const ref = useRef(null);
+  const isInview = useInView(ref, { once: true });
   return (
     <section className=" mt-0 mb-32 md:my-[160px] px-4 md:px-[5%] xl:px-0 overflow-hidden xl:overflow-visible">
-      <div className="border border-colorOutline rounded-3xl px-6 md:pl-16 max-w-7xl mx-auto flex-wrap-reverse md:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[800px]">
+      <motion.div
+        ref={ref}
+        style={{
+          opacity: isInview ? 1 : 0.8,
+          scale: isInview ? 1 : 0.7,
+          transform: isInview ? "translateY(0px)" : " translateY(40px)",
+          transition: "all 1s ease",
+        }}
+        className="border border-colorOutline rounded-3xl px-6 md:pl-16 max-w-7xl mx-auto flex-wrap-reverse md:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[800px]"
+      >
         <div className="w-full md:w-[50%] pt-6 md:pt-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white leading-snug">
             Una experiencia a la medida
@@ -367,7 +441,7 @@ const Benefits = () => {
           alt="cohete"
           src="/rocket.svg"
         />
-      </div>
+      </motion.div>
     </section>
   );
 };
@@ -401,8 +475,19 @@ const Item = ({
 };
 
 const Why = () => {
+  const ref = useRef(null);
+  const isInview = useInView(ref, { once: true });
   return (
-    <section className="max-w-7xl mx-auto mt-32 mb-16  md:my-[160px] flex-wrap md:flex-nowrap flex gap-0 md:gap-16 px-4 md:p-[5%] xl:px-0 ">
+    <motion.div
+      ref={ref}
+      style={{
+        opacity: isInview ? 1 : 0.8,
+        scale: isInview ? 1 : 0.7,
+        transform: isInview ? "translateY(0px)" : " translateY(40px)",
+        transition: "all 1s ease",
+      }}
+      className="max-w-7xl mx-auto mt-32 mb-16  md:my-[160px] flex-wrap md:flex-nowrap flex gap-0 md:gap-16 px-4 md:p-[5%] xl:px-0 "
+    >
       <div className="w-full md:w-[42%]">
         <img className="mb-8" src="/galaxy.svg" alt="galaxy" />
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white !leading-snug">
@@ -425,7 +510,7 @@ const Why = () => {
       <div className="w-full md:w-[55%] flex- items-center pt-16 ">
         <TridiLayers images={["/figma-fg.png", "/osw.jpg", "/codigo-fg.png"]} />
       </div>
-    </section>
+    </motion.div>
   );
 };
 
@@ -452,9 +537,9 @@ const HomeHero = () => {
       // style={{ opacity, scale, filter }}
       className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-44 md:pt-0 md:px-10 "
     >
-      <div className="flex flex-wrap-reverse md:flex-nowrap justify-center md:justify-between items-center max-w-7xl mx-auto h-full gap-10 md:gap-0 lg:gap-20">
+      <div className="flex  flex-wrap-reverse md:flex-nowrap justify-center md:justify-between items-center max-w-7xl mx-auto h-[85vh] gap-10 md:gap-0 lg:gap-20">
         <div>
-          <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug">
+          <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-12">
             Aprende <br className="md:hidden" />
             <span className="text-brand-500 font-extrabold text-4xl xl:text-6xl ">
               <FlipWords
@@ -481,6 +566,13 @@ const HomeHero = () => {
           </div>
         </div>
         <img className="scale-75 lg:scale-100" src="/robot.svg" alt="robot" />
+      </div>
+      <div className="max-w-7xl mx-auto ">
+        <InfiniteMovingCards
+          items={companies}
+          direction="left"
+          speed="normal"
+        />
       </div>
     </motion.section>
   );

@@ -25,7 +25,7 @@ export const meta = () =>
   getMetaTags({
     title: " Aprende leyendo nuestro blog | Fixtergeek",
     description: "Mantente actualizad@ y mejora tus habilidades disfrutando",
-    image: "https://i.imgur.com/PrnvDBm.png",
+    image: "/cover.png",
   });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -65,6 +65,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export default function Route({
   loaderData: { posts, search },
 }: Route.ComponentProps) {
+  useEffect(() => {
+    window.scrollTo({
+      top: 1000,
+    });
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, []);
   const fetcher = useFetcher();
   const [items, setItems] = useState(posts);
 

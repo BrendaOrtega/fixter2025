@@ -102,6 +102,7 @@ import { FaFacebook, FaYoutube } from "react-icons/fa";
 import { FaSquareXTwitter } from "react-icons/fa6";
 import { BsLinkedin } from "react-icons/bs";
 import { AiFillInstagram } from "react-icons/ai";
+import { cn } from "~/utils/cn";
 
 const navigation = [
   { name: "Cursos", link: "/cursos" },
@@ -172,7 +173,7 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
   const toggleMenu = () => {
     if (isOpen) {
       setIsOpen(false);
-      animate("#drawer", { y: "-100%" }, { duration: 0.5, type: "tween" });
+      animate("#drawer", { y: "-100%" }, { duration: 1, type: "tween" });
     } else {
       setIsOpen(true);
       animate("#drawer", { y: "0%" }, { duration: 0.5, type: "tween" });
@@ -227,8 +228,20 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
         className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute "
       >
         <div className="text-center mt-48 !text-white ">
-          <NavItem link="/cursos" index={1} isOpen={isOpen} title="Cursos" />
-          <NavItem link="/blog" index={2} isOpen={isOpen} title="Blog" />
+          <NavItem
+            onClick={toggleMenu}
+            link="/cursos"
+            index={1}
+            isOpen={isOpen}
+            title="Cursos"
+          />
+          <NavItem
+            onClick={toggleMenu}
+            link="/blog"
+            index={2}
+            isOpen={isOpen}
+            title="Blog"
+          />
           {user?.email ? (
             <NavItem
               link="/mis-cursos"
@@ -238,10 +251,11 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
             />
           ) : (
             <NavItem
-              link="/login"
               index={3}
               isOpen={isOpen}
               title="Iniciar sesión"
+              className="text-4xl my-0 font-light "
+              onClick={googleLoginHandler}
             />
           )}
         </div>
@@ -321,11 +335,15 @@ const NavItem = ({
   isOpen,
   index,
   link,
+  className,
+  onClick,
 }: {
   title: string;
   isOpen?: boolean;
   index: number;
   link?: string;
+  className?: string;
+  onClick?: () => void;
 }) => {
   const [scope, animate] = useAnimate();
   useEffect(() => {
@@ -348,7 +366,8 @@ const NavItem = ({
           transform: "translateY(20px)",
           filter: "blur(9px)",
         }}
-        className="text-4xl my-10 font-light "
+        className={cn("text-4xl my-10 font-light ", className)}
+        onClick={onClick}
       >
         {title}
       </h3>
