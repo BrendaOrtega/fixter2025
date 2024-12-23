@@ -1,7 +1,6 @@
 import { FlipWords } from "~/components/FlipWords";
 
 import { JackPotSection } from "~/components/Jackpot";
-import { Banner } from "~/routes/cursos";
 import { useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { Footer } from "~/components/Footer";
@@ -11,8 +10,15 @@ import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
 import { twMerge } from "tailwind-merge";
 import { CourseCard } from "~/components/CourseCard";
-import { useScroll, useTransform, motion, useSpring } from "motion/react";
+import {
+  useScroll,
+  useTransform,
+  motion,
+  useSpring,
+  useInView,
+} from "motion/react";
 import { TridiLayers } from "~/components/card3d";
+import { Banner } from "~/components/common/Banner";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -55,7 +61,7 @@ export default function Route({
   loaderData: { courses },
 }: Route.ComponentProps) {
   return (
-    <main className="">
+    <main className="overflow-hidden">
       <HomeHero />
       <Why />
       <Benefits />
@@ -78,7 +84,7 @@ export default function Route({
 
 const Comments = () => {
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-[160px] md:my-[240px] ">
+    <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[240px] ">
       <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
         Qué piensan nuestros estudiantes
       </h2>
@@ -217,12 +223,21 @@ const CommentCard = ({
   className?: string;
   platform?: string;
 }) => {
+  const ref = useRef(null);
+  const isInview = useInView(ref, { once: true });
   return (
-    <div
+    <motion.div
+      style={{
+        opacity: isInview ? 1 : 0.8,
+        scale: isInview ? 1 : 0.7,
+        transform: isInview ? "translateY(0px)" : " translateY(40px)",
+        transition: "all 1s ease",
+      }}
       className={twMerge(
         "hover:scale-95 flex flex-col justify-between bg-[#1A2229] col-span-1  rounded-2xl px-4 pt-4 pb-6 relative cursor-pointer hover:shadow-[0_16px_16px_rgba(0,0,0,0.05)] dark:hover:shadow-lg transition-all",
         className
       )}
+      ref={ref}
     >
       {platform === "udemy" ? (
         <img
@@ -258,7 +273,7 @@ const CommentCard = ({
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -269,7 +284,7 @@ export const formatDuration = (secs: number) => {
 
 const TopCourses = ({ courses }: { courses: Course[] }) => {
   return (
-    <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-[160px]">
+    <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
       <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
         Cursos más vendidos
       </h2>
@@ -288,7 +303,7 @@ const TopCourses = ({ courses }: { courses: Course[] }) => {
 
 const Benefits = () => {
   return (
-    <section className=" my-[160px] px-4 md:px-[5%] xl:px-0 overflow-hidden md:overflow-visible">
+    <section className=" mt-0 mb-32 md:my-[160px] px-4 md:px-[5%] xl:px-0 overflow-hidden xl:overflow-visible">
       <div className="border border-colorOutline rounded-3xl px-6 md:pl-16 max-w-7xl mx-auto flex-wrap-reverse md:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[800px]">
         <div className="w-full md:w-[50%] pt-6 md:pt-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white leading-snug">
@@ -367,7 +382,13 @@ const Item = ({
   icon: string;
 }) => {
   return (
-    <div className="flex gap-3 items-start">
+    <motion.div
+      initial={{ opacity: 0, y: 40, filter: "blur(9px" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px" }}
+      exit={{ opacity: 0, y: -40, filter: "blur(9px" }}
+      transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+      className="flex gap-3 items-start"
+    >
       <img src={icon} alt={title} />
       <div>
         <h3 className="text-white font-bold">{title}</h3>
@@ -375,13 +396,13 @@ const Item = ({
           {description}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 const Why = () => {
   return (
-    <section className="max-w-7xl mx-auto my-32 md:my-[160px] flex-wrap md:flex-nowrap flex gap-16 px-4 md:p-[5%] xl:px-0">
+    <section className="max-w-7xl mx-auto mt-32 mb-16  md:my-[160px] flex-wrap md:flex-nowrap flex gap-0 md:gap-16 px-4 md:p-[5%] xl:px-0 ">
       <div className="w-full md:w-[42%]">
         <img className="mb-8" src="/galaxy.svg" alt="galaxy" />
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white !leading-snug">
@@ -401,7 +422,7 @@ const Why = () => {
           desarrollador.
         </p>
       </div>
-      <div className="w-[55%] flex- items-center pt-16 ">
+      <div className="w-full md:w-[55%] flex- items-center pt-16 ">
         <TridiLayers images={["/figma-fg.png", "/osw.jpg", "/codigo-fg.png"]} />
       </div>
     </section>
@@ -429,25 +450,25 @@ const HomeHero = () => {
     <motion.section
       ref={ref}
       // style={{ opacity, scale, filter }}
-      className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-52 md:pt-0 md:px-10"
+      className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-44 md:pt-0 md:px-10 "
     >
-      <div className="flex flex-wrap-reverse md:flex-nowrap justify-center md:justify-between items-center max-w-7xl mx-auto h-full gap-20">
+      <div className="flex flex-wrap-reverse md:flex-nowrap justify-center md:justify-between items-center max-w-7xl mx-auto h-full gap-10 md:gap-0 lg:gap-20">
         <div>
           <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug">
-            Aprende{" "}
+            Aprende <br className="md:hidden" />
             <span className="text-brand-500 font-extrabold text-4xl xl:text-6xl ">
               <FlipWords
                 words={[
-                  "las herramientas",
                   "los frameworks",
-                  "las bibliotecas",
+                  "las herramientas",
+                  "las librerías",
                   "los patterns",
                   "los hacks",
                 ]}
               />
             </span>{" "}
             <br />
-            que usan los profesionales de la industria.
+            que usan los profesionales de la industria
           </h2>{" "}
           <div className="flex justify-center md:justify-start gap-6 mt-12">
             <PrimaryButton as="Link" to="/cursos" />
@@ -459,7 +480,7 @@ const HomeHero = () => {
             />
           </div>
         </div>
-        <img className="scale-75 md:scale-100" src="/robot.svg" alt="robot" />
+        <img className="scale-75 lg:scale-100" src="/robot.svg" alt="robot" />
       </div>
     </motion.section>
   );

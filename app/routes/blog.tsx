@@ -17,8 +17,9 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import type { Post } from "@prisma/client";
 import { postSearch } from "~/utils/postSearch";
 import { useReadingTime } from "~/utils/useReadingTime";
-import { motion } from "motion/react";
+import { motion, useInView } from "motion/react";
 import { SuscriptionBanner } from "~/components/SuscriptionBanner";
+import { Footer } from "~/components/Footer";
 
 export const meta = () =>
   getMetaTags({
@@ -91,10 +92,10 @@ export default function Route({
   return (
     <>
       {/* <Navbar /> */}
-      <main className="ppx-4 max-w-8xl mx-auto bg-background text-white ">
-        <section className="h-[480px] bg-stars bg-cover bg-bottom flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-4xl md:text-5xl xl:text-6xl font-bold text-white">
+      <main className=" w-full mx-auto bg-background text-white ">
+        <section className="h-[360px] md:h-[480px]  bg-stars bg-cover bg-bottom flex items-center justify-center">
+          <div className="text-center max-w-7xl mx-auto  px-4 md:px-[5%] xl:px-0 w-full ">
+            <h2 className="text-4xl md:text-5xl xl:text-6xl font-bold text-white mt-10">
               Blog
             </h2>
             <Searcher
@@ -116,6 +117,7 @@ export default function Route({
           </button>
         )}
         <SuscriptionBanner />
+        <Footer />
       </main>
     </>
   );
@@ -129,7 +131,7 @@ export const List = ({
   items: Post[];
 }) => {
   return (
-    <div className="justify-center mt-32 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 max-w-7xl mx-auto">
+    <div className="justify-center mt-16 md:mt-32 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0">
       {items.map((p) => (
         <PostCard isLoading={isLoading} key={p.id} post={p} />
       ))}
@@ -199,7 +201,7 @@ const Searcher = ({
   const { find } = useURLSearch(search);
 
   return (
-    <section className="flex flex-col items-center w-[100%]">
+    <section className="flex flex-col justify-center items-center w-full px-4 md:px-[5%] xl:px-0 ">
       <div className="mt-6 md:mt-16  flex justify-between  relative w-full md:w-[600px] ">
         <input
           autoFocus
@@ -209,7 +211,7 @@ const Searcher = ({
           disabled={isLoading}
           onChange={onChange}
           defaultValue={defaultSearch}
-          className=" pr-3   md:w-[100%] bg-brand-500/5 h-12 w-[100%] rounded-full px-6 pl-16 transition-all placeholder:text-white/40 "
+          className=" pr-3   md:w-[100%] bg-brand-500/5 h-12 w-[100%] rounded-full px-6 pl-16 transition-all focus:ring-brand-500 focus:border-none placeholder:text-white/40 "
           placeholder="¿Qué quieres aprender hoy?"
         ></input>
         <button className="absolute left-3 top-2">
@@ -222,9 +224,9 @@ const Searcher = ({
           )}
         </button>
       </div>
-      <div className="w-full h-[32px] scrollGradient relative mt-8">
+      <div className="w-full h-[32px] scrollGradient relative mt-8 overflow-hidden">
         <div
-          className="flex gap-4 justify-start md:justify-center overflow-x-scroll"
+          className="flex  gap-4 justify-start md:justify-center overflow-x-scroll "
           style={{
             scrollbarWidth: "none", // esto esconde la barra de scroll (es mala práctica 🤷🏻)
           }}
@@ -357,33 +359,45 @@ const Filter = ({
 
 export const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
   const readingTime = useReadingTime(post.body || "", true);
+  const ref = useRef(null);
+  const isInview = useInView(ref, { once: true });
   return (
-    <Link to={`/blog/${post.slug}`} className=" relative group">
-      <div className="relative overflow-hidden ">
-        <div className="group-hover:bottom-4  transition-all absolute w-20 h-16 -ml-1 bg-author bg-cover -bottom-12 flex items-end">
+    <motion.div
+      ref={ref}
+      style={{
+        opacity: isInview ? 1 : 0.8,
+        scale: isInview ? 1 : 0.7,
+        transform: isInview ? "translateY(0px)" : " translateY(40px)",
+        transition: "all 1s ease",
+      }}
+    >
+      <Link to={`/blog/${post.slug}`} className=" relative group">
+        <div className="relative overflow-hidden ">
+          <div className="group-hover:bottom-4  transition-all absolute w-20 h-16 -ml-1 bg-author bg-cover -bottom-12 flex items-end">
+            <img
+              className=" h-8 rounded-full bg-white ml-3 "
+              src={post.photoUrl || "/full-logo.svg"}
+              alt="floating"
+              onError={(event) => {
+                event.currentTarget.src = "/full-logo.svg";
+              }}
+            />
+          </div>
           <img
-            className=" h-8 rounded-full bg-white ml-3 "
-            src={post.photoUrl || "/full-logo.svg"}
-            alt="floating"
-            onError={(event) => {
-              event.currentTarget.src = "/full-logo.svg";
+            className="aspect-video object-cover rounded-2xl mb-4"
+            src={post.metaImage || post.coverImage}
+            alt="cover"
+            onError={({ currentTarget }) => {
+              currentTarget.src = "/full-logo.svg";
+              currentTarget.onerror = null;
             }}
           />
         </div>
-        <img
-          className="aspect-video object-cover rounded-2xl mb-4"
-          src={post.metaImage || post.coverImage}
-          alt="cover"
-          onError={({ currentTarget }) => {
-            currentTarget.src = "/full-logo.svg";
-            currentTarget.onerror = null;
-          }}
-        />
-      </div>
 
-      <p className="text-sm">📚 {post.mainTag}</p>
-      <h4 className="text-lg font-bold">{post.title}</h4>
-      <span className="text-xs text-gray-500">{readingTime}</span>
-    </Link>
+        <p className="text-sm">📚 {post.mainTag}</p>
+        <h4 className="text-lg font-bold">{post.title}</h4>
+        <span className="text-xs text-gray-500">{readingTime}</span>
+      </Link>{" "}
+    </motion.div>
   );
 };
