@@ -10,6 +10,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ImWhatsapp } from "react-icons/im";
 import { ImFacebook2 } from "react-icons/im";
 import { getMetaTags } from "~/utils/getMetaTags";
+import { FaVolumeHigh } from "react-icons/fa6";
+import { FaVolumeMute } from "react-icons/fa";
 
 export const meta = ({ data: { nombre } }) =>
   getMetaTags({
@@ -29,6 +31,8 @@ export default function Route({}: Route.ComponentProps) {
   const [share, setShare] = useState(false);
   const timeout = useRef<ReturnType<typeof setTimeout>>(null);
   const navigate = useNavigate();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const handleWriting = (event: ChangeEvent<HTMLInputElement>) => {
     timeout.current && clearTimeout(timeout.current);
@@ -50,9 +54,20 @@ export default function Route({}: Route.ComponentProps) {
     `https://fixter2025.fly.dev/feliz_2025/${nombre}`
   );
 
+  const handleVolumeClick = () => {
+    if (!audioRef.current) return;
+    if (audioRef.current.paused) {
+      audioRef.current.play();
+      setIsPlaying(true);
+    } else {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
   return (
     <>
-      <article className="pt-20 text-white grid place-content-center h-screen place-items-center gap-2 px-5 overflow-hidden">
+      <article className="pt-10 text-white grid place-content-center h-screen place-items-center gap-2 px-5 overflow-hidden">
         <h1 className="text-4xl text-center max-w-lg animate-pulse font-bold">
           ¡Feliz año nuevo! 🥂🍾🎉🎊🪅
         </h1>
@@ -61,17 +76,19 @@ export default function Route({}: Route.ComponentProps) {
           className="h-20 animate-bounce"
         />
         <BackCounter />
-        <p className="text-3xl">Te desean:</p>
+        <p className="text-2xl">Te desean:</p>
         <h2 className="text-4xl">{nombre} 🥰</h2>
         <p>Y tus amigos de:</p>
         <img src="/logo.svg" alt="logo" />
+        <button
+          onClick={handleVolumeClick}
+          className="text-3xl border p-2 rounded-xl"
+        >
+          {isPlaying ? <FaVolumeHigh /> : <FaVolumeMute />}
+        </button>
         <Form>
           <input
-            onFocus={() => {
-              const audio = document.createElement("audio");
-              audio.src = "/xmas/fireworks.mp3";
-              audio.oncanplay = () => audio.play();
-            }}
+            onFocus={handleVolumeClick}
             onChange={handleWriting}
             type="text"
             placeholder="Escribe tu nombre"
@@ -108,6 +125,7 @@ export default function Route({}: Route.ComponentProps) {
       <EmojiConfetti />
       <EmojiConfetti emojis={false} colors />
       <Marquees />
+      <audio ref={audioRef} src="/xmas/fireworks.mp3" />
     </>
   );
 }
@@ -161,7 +179,7 @@ export const BackCounter = ({ date }: { date?: Date }) => {
   }, []);
 
   return (
-    <p className="text-center font-bold ">
+    <p className="text-center font-bold text-xs">
       <p> Faltan:</p> <span className="text-brand-700">{remain.days} </span>
       Días, <span className="text-brand-700">{remain.hours} </span>horas,{" "}
       <span className="text-brand-700">{remain.mins} </span>minutos y{" "}
