@@ -11,10 +11,10 @@ import { ImWhatsapp } from "react-icons/im";
 import { ImFacebook2 } from "react-icons/im";
 import { getMetaTags } from "~/utils/getMetaTags";
 
-export const meta = () =>
+export const meta = ({ data: { nombre } }) =>
   getMetaTags({
     title: "Tienes un mensaje sorpresa esperandote 🎁",
-    description: `Te han dejado un mensaje`,
+    description: `${nombre}Te ha dejado un mensaje`,
     image: "/xmas/message-alert.png",
   });
 
@@ -67,6 +67,11 @@ export default function Route({}: Route.ComponentProps) {
         <img src="/logo.svg" alt="logo" />
         <Form>
           <input
+            onFocus={() => {
+              const audio = document.createElement("audio");
+              audio.src = "/xmas/fireworks.mp3";
+              audio.oncanplay = () => audio.play();
+            }}
             onChange={handleWriting}
             type="text"
             placeholder="Escribe tu nombre"
@@ -157,8 +162,8 @@ export const BackCounter = ({ date }: { date?: Date }) => {
 
   return (
     <p className="text-center font-bold ">
-      Faltan: <span className="text-brand-700">{remain.days} </span>Días,{" "}
-      <span className="text-brand-700">{remain.hours} </span>horas,{" "}
+      <p> Faltan:</p> <span className="text-brand-700">{remain.days} </span>
+      Días, <span className="text-brand-700">{remain.hours} </span>horas,{" "}
       <span className="text-brand-700">{remain.mins} </span>minutos y{" "}
       <span className="text-brand-700">{remain.secs} </span>segundos
       <p>Para año nuevo</p>
