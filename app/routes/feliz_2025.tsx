@@ -92,7 +92,7 @@ export default function Route({}: Route.ComponentProps) {
             onChange={handleWriting}
             type="text"
             placeholder="Escribe tu nombre"
-            className="rounded-xl text-black text-2xl"
+            className="rounded-xl text-black text-2xl border-none focus:border-none focus:ring-brand-700 focus:ring-4 transition-all"
           />
         </Form>
         {share && (
@@ -181,10 +181,12 @@ export const BackCounter = ({ date }: { date?: Date }) => {
 
   return (
     <div className="text-center font-bold text-xs">
-      <p> Faltan:</p> <span className="text-brand-700">{remain.days} </span>
-      Días, <span className="text-brand-700">{remain.hours} </span>horas,{" "}
-      <span className="text-brand-700">{remain.mins} </span>minutos y{" "}
-      <span className="text-brand-700">{remain.secs} </span>segundos
+      <p> Faltan:</p>{" "}
+      <span className="text-brand-700 text-lg">{remain.days} </span>
+      Días, <span className="text-brand-700 text-lg">{remain.hours} </span>
+      horas, <span className="text-brand-700 text-lg">{remain.mins} </span>
+      minutos y <span className="text-brand-700 text-lg">{remain.secs} </span>
+      segundos
       <p>Para año nuevo</p>
     </div>
   );

@@ -326,13 +326,13 @@ const Burger = ({
     >
       <div
         id="top"
-        className={cn(" w-8 h-[3px] bg-brand-900 rounded-full", {
+        className={cn(" w-8 h-[3px] bg-gray-300 rounded-full", {
           "bg-white": isOpen,
         })}
       ></div>
       <div
         id="bottom"
-        className={cn("w-8 h-[3px] bg-brand-900 rounded-full", {
+        className={cn("w-8 h-[3px] bg-gray-300 rounded-full", {
           "bg-white": isOpen,
         })}
       ></div>
