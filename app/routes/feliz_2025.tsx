@@ -15,8 +15,8 @@ import { FaVolumeMute } from "react-icons/fa";
 
 export const meta = ({ data: { nombre } }) =>
   getMetaTags({
-    title: "Tienes un mensaje sorpresa esperandote 🎁",
-    description: `${nombre}Te ha dejado un mensaje`,
+    title: "Tienes una sorpresa esperándote 🎁",
+    description: `${nombre} Te dejó un mensaje`,
     image: "/xmas/mail-gift.png",
   });
 
@@ -45,7 +45,7 @@ export default function Route({}: Route.ComponentProps) {
   const whatsURL = new URL("https://api.whatsapp.com/send");
   whatsURL.searchParams.set(
     "text",
-    `${nombre} dejo mensaje sorpresa para ti: 🎁\nhttps://fixter2025.fly.dev/feliz_2025/${nombre}`
+    `${nombre} dejó un mensaje sorpresa para ti: 🎁\nhttps://fixter2025.fly.dev/feliz_2025/${nombre}`
   );
 
   const faceURL = new URL("https://www.facebook.com/sharer/sharer.php");
