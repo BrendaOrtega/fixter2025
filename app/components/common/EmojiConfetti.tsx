@@ -5,7 +5,9 @@ const confettiColors = ["#85ddcb", "#19262a", "#37ab93"];
 const initial = ["🎉", "👾", "💿", "🚀", "📖", "🕹", "📺"];
 export const EmojiConfetti = ({
   emojis = initial,
+  colors,
 }: {
+  colors?: boolean;
   emojis?: boolean | string[];
 }) => {
   useEffect(() => {
@@ -23,13 +25,13 @@ export const EmojiConfetti = ({
       return;
     }
     jsConfetti.addConfetti({
-      confettiColors,
+      confettiColors: colors ? undefined : confettiColors,
     });
     setTimeout(() => {
       jsConfetti.addConfetti({
-        confettiColors,
+        confettiColors: colors ? undefined : confettiColors,
       });
-    }, 2000);
+    }, 3000);
   }, []);
 
   return null;

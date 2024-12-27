@@ -12,6 +12,8 @@ export default [
   route("perfil", "routes/perfil.tsx"),
   route("mis-cursos", "routes/mis-cursos.tsx"),
   route("subscribe", "routes/subscribe.tsx"),
+  // xmas
+  route("feliz_año/:nombre?", "routes/feliz_año.tsx"),
 
   ...prefix("cursos", [
     index("routes/cursos.tsx"),
