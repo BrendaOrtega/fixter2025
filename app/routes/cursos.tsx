@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { Footer } from "~/components/Footer";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
@@ -47,6 +47,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function Route({
   loaderData: { courses },
 }: Route.ComponentProps) {
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
   return (
     <>
       <Header className="bg-heroCourses" />
@@ -66,7 +73,7 @@ export default function Route({
 
 export const CousesList = ({ courses }: { courses: Course[] }) => {
   return (
-    <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
+    <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-16 md:mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
       {courses.map((course) => (
         <CourseCard courseSlug={course.slug} key={course.id} course={course} />
       ))}

@@ -1,9 +1,10 @@
 import { Link } from "react-router";
 import type { Course } from "@prisma/client";
 import { useVideosLength } from "~/hooks/useVideosLength";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { motion, useInView, useSpring, useTransform } from "framer-motion";
 import { use3DHover } from "~/hooks/use3DHover";
 import { formatDuration } from "~/routes/cursos";
+import { useRef } from "react";
 
 export const CourseCard = ({
   course,
@@ -34,7 +35,8 @@ export const CourseCard = ({
 
   const textZ = useTransform(z, [0, 30], [0, 40]);
   const imgZ = useTransform(z, [0, 30], [0, 50]);
-
+  const ref = useRef(null);
+  const isInview = useInView(ref, { once: true });
   return (
     <Link
       to={to || `/cursos/${courseSlug}/detalle`}
@@ -42,7 +44,12 @@ export const CourseCard = ({
       style={{
         transformStyle: "preserve-3d",
         perspective: 900,
+        opacity: isInview ? 1 : 0.8,
+        scale: isInview ? 1 : 0.7,
+        transform: isInview ? "translateY(0px)" : " translateY(40px)",
+        transition: "all 1s ease",
       }}
+      ref={ref}
     >
       {/* {!isHovered && (
         <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl" />
@@ -82,16 +89,22 @@ export const CourseCard = ({
           className="flex gap-2 mx-auto justify-center text-center mt-6"
         >
           <p className=" text-brand-500 uppercase">{course.level}</p>
-          {course.level === "Avanzado" ? (
+          {course.level === "avanzado" ? (
             <span className="flex gap-2">
               <img src="/thunder.svg" className="w-3" />
               <img src="/thunder.svg" className="w-3" />
               <img src="/thunder.svg" className="w-3" />
             </span>
-          ) : (
+          ) : course.level === "intermedio" ? (
             <span className="flex gap-2">
               <img src="/thunder.svg" className="w-3" />
               <img src="/thunder.svg" className="w-3" />
+              <img className="opacity-25 w-3" src="/thunder.svg" />
+            </span>
+          ) : (
+            <span className="flex gap-2">
+              <img src="/thunder.svg" className="w-3" />
+              <img className="opacity-25 w-3" src="/thunder.svg" />
               <img className="opacity-25 w-3" src="/thunder.svg" />
             </span>
           )}

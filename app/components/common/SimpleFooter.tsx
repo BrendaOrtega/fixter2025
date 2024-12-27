@@ -19,35 +19,35 @@ export default function SimpleFooter() {
           href="https://www.facebook.com/fixterme"
           target="_blank"
         >
-          <FaFacebook className="text-colorCaption text-2xl hover:opacity-40" />
+          <FaFacebook className="text-colorCaption text-2xl hover:opacity-40 hover:scale-95" />
         </a>
         <a
           rel="noreferrer"
           href="https://twitter.com/FixterGeek"
           target="_blank"
         >
-          <FaSquareXTwitter className="text-colorCaption text-2xl hover:opacity-40" />
+          <FaSquareXTwitter className="text-colorCaption text-2xl hover:opacity-40 hover:scale-95" />
         </a>
         <a
           rel="noreferrer"
           href="https://www.linkedin.com/company/fixtergeek/"
           target="_blank"
         >
-          <BsLinkedin className="text-colorCaption text-xl hover:opacity-40" />
+          <BsLinkedin className="text-colorCaption text-xl hover:opacity-40 hover:scale-95" />
         </a>
         <a
           rel="noreferrer"
           href="https://www.instagram.com/fixtergeek/"
           target="_blank"
         >
-          <AiFillInstagram className="text-colorCaption text-2xl hover:opacity-40" />
+          <AiFillInstagram className="text-colorCaption text-2xl hover:opacity-40 hover:scale-95" />
         </a>
         <a
           rel="noreferrer"
           href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g"
           target="_blank"
         >
-          <FaYoutube className="text-colorCaption text-2xl hover:opacity-40" />
+          <FaYoutube className="text-colorCaption text-2xl hover:opacity-40 hover:scale-95" />
         </a>
       </div>
       {/* <div className="flex justify-center gap-4 py-4">

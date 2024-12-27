@@ -99,7 +99,7 @@ const CourseContent = ({
 const Teacher = ({ course }: { course: Partial<Course> }) => {
   return (
     <section className="mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto my-[160px]  ">
-      <div className="bg-backface rounded-3xl md:py-16 md:pl-16 pt-6 px-6 w-full relative pb-80 ">
+      <div className="bg-backface rounded-3xl md:py-16 md:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 ">
         <div className="w-full md:w-[60%]">
           <span className="text-colorParagraph font-light">
             ¿Quien es tu instructor?
@@ -135,24 +135,45 @@ const Teacher = ({ course }: { course: Partial<Course> }) => {
             </p>
           )}
         </div>
-        <div className=" absolute -bottom-16 -right-16">
-          <a>
+        <div className=" absolute -bottom-16 -right-8 md:-right-16">
+          <a
+            href={
+              course.authorName === "Héctor Bliss"
+                ? "https://www.linkedin.com/in/hectorbliss/"
+                : course.authorSocial
+            }
+            target="_blank"
+          >
             <motion.span>
-              <BsLinkedin className="text-3xl absolute top-2 text-colorCaption/50" />
+              <BsLinkedin className="text-3xl absolute -top-1 md:top-2 text-colorCaption/50" />
             </motion.span>
           </a>
-          <a>
+          <a
+            href={
+              course.authorName === "Héctor Bliss"
+                ? "https://github.com/blissito"
+                : course.authorSocial
+            }
+            target="_blank"
+          >
             <motion.span style={{}}>
               <BsGithub className="text-3xl absolute top-16 -left-12 text-colorCaption/50" />
             </motion.span>
           </a>
-          <a>
+          <a
+            href={
+              course.authorName === "Héctor Bliss"
+                ? "https://x.com/HectorBlisS"
+                : course.authorSocial
+            }
+            target="_blank"
+          >
             <motion.span>
               <BsTwitter className="text-3xl absolute -top-10 left-16 text-colorCaption/50" />
             </motion.span>
           </a>
           <img
-            className="w-[320px] rounded-full"
+            className="w-60 md:w-[320px] rounded-full"
             src={
               course.authorName === "Héctor Bliss"
                 ? "/courses/titor.png"
@@ -200,12 +221,24 @@ const CourseHeader = ({ course }: { course: Course }) => {
             <div className="flex gap-2 ">
               <p className=" text-brand-500 uppercase"> {level}</p>
               <span className="flex gap-2">
-                <img src="/thunder.svg" className="w-3" />
-                {level !== "principiante" && (
-                  <>
+                {level === "avanzado" ? (
+                  <span className="flex gap-2">
                     <img src="/thunder.svg" className="w-3" />
                     <img src="/thunder.svg" className="w-3" />
-                  </>
+                    <img src="/thunder.svg" className="w-3" />
+                  </span>
+                ) : level === "intermedio" ? (
+                  <span className="flex gap-2">
+                    <img src="/thunder.svg" className="w-3" />
+                    <img src="/thunder.svg" className="w-3" />
+                    <img className="opacity-25 w-3" src="/thunder.svg" />
+                  </span>
+                ) : (
+                  <span className="flex gap-2">
+                    <img src="/thunder.svg" className="w-3" />
+                    <img className="opacity-25 w-3" src="/thunder.svg" />
+                    <img className="opacity-25 w-3" src="/thunder.svg" />
+                  </span>
                 )}
               </span>
             </div>
