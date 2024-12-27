@@ -124,6 +124,7 @@ export default function Route({}: Route.ComponentProps) {
       </article>
       <EmojiConfetti />
       <EmojiConfetti emojis={false} colors />
+      {isPlaying && <EmojiConfetti emojis={false} colors />}
       <Marquees />
       <audio ref={audioRef} src="/xmas/fireworks.mp3" />
     </>
