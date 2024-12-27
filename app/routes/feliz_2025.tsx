@@ -15,7 +15,7 @@ export const meta = ({ data: { nombre } }) =>
   getMetaTags({
     title: "Tienes un mensaje sorpresa esperandote 🎁",
     description: `${nombre}Te ha dejado un mensaje`,
-    image: "/xmas/message-alert.png",
+    image: "/xmas/mail-gift.png",
   });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
