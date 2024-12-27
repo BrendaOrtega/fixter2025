@@ -180,13 +180,13 @@ export const BackCounter = ({ date }: { date?: Date }) => {
   }, []);
 
   return (
-    <p className="text-center font-bold text-xs">
+    <div className="text-center font-bold text-xs">
       <p> Faltan:</p> <span className="text-brand-700">{remain.days} </span>
       Días, <span className="text-brand-700">{remain.hours} </span>horas,{" "}
       <span className="text-brand-700">{remain.mins} </span>minutos y{" "}
       <span className="text-brand-700">{remain.secs} </span>segundos
       <p>Para año nuevo</p>
-    </p>
+    </div>
   );
 };
 

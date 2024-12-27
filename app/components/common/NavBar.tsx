@@ -311,11 +311,11 @@ const Burger = ({
   const [scope, animate] = useAnimate();
   useEffect(() => {
     if (isOpen) {
-      animate("#top", { rotateZ: -135, y: 6, backgroundColor: "white" });
-      animate("#bottom", { rotateZ: 135, y: -5, backgroundColor: "white" });
+      animate("#top", { rotateZ: -135, y: 6 });
+      animate("#bottom", { rotateZ: 135, y: -5 });
     } else {
-      animate("#top", { rotateZ: 0, y: 0, backgroundColor: "white" });
-      animate("#bottom", { rotateZ: 0, y: 0, backgroundColor: "white" });
+      animate("#top", { rotateZ: 0, y: 0 });
+      animate("#bottom", { rotateZ: 0, y: 0 });
     }
   }, [isOpen]);
   return (
@@ -324,8 +324,18 @@ const Burger = ({
       ref={scope}
       className="flex md:hidden flex-col gap-2 relative"
     >
-      <div id="top" className=" w-8 h-[3px] bg-brand-900 rounded-full"></div>
-      <div id="bottom" className="w-8 h-[3px] bg-brand-900 rounded-full"></div>
+      <div
+        id="top"
+        className={cn(" w-8 h-[3px] bg-brand-900 rounded-full", {
+          "bg-white": isOpen,
+        })}
+      ></div>
+      <div
+        id="bottom"
+        className={cn("w-8 h-[3px] bg-brand-900 rounded-full", {
+          "bg-white": isOpen,
+        })}
+      ></div>
     </button>
   );
 };
