@@ -198,9 +198,13 @@ export const Marquees = () => {
         direction="up"
         className="fixed h-screen left-0 top-0 text-3xl w-8 pointer-events-none"
       >
+        <p>🤖</p>
         <p>🥂</p>
         <p>🍾</p>
+        <p>🪄</p>
         <p>🎉</p>
+        <p>🤓</p>
+        <p>🤖</p>
         <p>🎊</p>
         <p>🪅</p>
         <p>🎈</p>
@@ -208,11 +212,15 @@ export const Marquees = () => {
         <p>🍰</p>
         <p>💕</p>
         <p>🥂</p>
+        <p>🤓</p>
         <p>🍾</p>
+        <p>🤖</p>
         <p>🎉</p>
         <p>🎊</p>
         <p>🪅</p>
+        <p>🪄</p>
         <p>🎈</p>
+        <p>🤖</p>
         <p>🎂</p>
         <p>🍰</p>
         <p>💕</p>
@@ -222,9 +230,13 @@ export const Marquees = () => {
         direction="down"
         className="fixed h-screen right-0 top-0 text-3xl w-8 pointer-events-none"
       >
+        <p>🤖</p>
         <p>🥂</p>
         <p>🍾</p>
+        <p>🪄</p>
         <p>🎉</p>
+        <p>🤓</p>
+        <p>🤖</p>
         <p>🎊</p>
         <p>🪅</p>
         <p>🎈</p>
@@ -232,11 +244,15 @@ export const Marquees = () => {
         <p>🍰</p>
         <p>💕</p>
         <p>🥂</p>
+        <p>🤓</p>
         <p>🍾</p>
+        <p>🤖</p>
         <p>🎉</p>
         <p>🎊</p>
         <p>🪅</p>
+        <p>🪄</p>
         <p>🎈</p>
+        <p>🤖</p>
         <p>🎂</p>
         <p>🍰</p>
         <p>💕</p>
