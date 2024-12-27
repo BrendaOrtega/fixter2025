@@ -14,7 +14,7 @@ export default [
   route("mis-cursos", "routes/mis-cursos.tsx"),
   route("subscribe", "routes/subscribe.tsx"),
   // xmas
-  route("feliz_año/:nombre?", "routes/feliz_año.tsx"),
+  route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
 
   ...prefix("cursos", [
     index("routes/cursos.tsx"),

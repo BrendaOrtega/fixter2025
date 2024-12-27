@@ -1,29 +1,21 @@
 import { FaGoogle, FaMailBulk } from "react-icons/fa";
-import {
-  Form,
-  Link,
-  redirect,
-  useLoaderData,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { Form, Link, redirect, type LoaderFunctionArgs } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { validateUserToken } from "~/utils/tokens";
 import invariant from "tiny-invariant";
 import {
   getOrCreateUser,
-  ifUserRedirect,
   placeSession,
   updateOrCreateSuscription,
 } from "~/.server/dbGetters";
 import { commitSession } from "~/sessions";
-import type { Route, Route } from "./+types/login";
+import type { Route } from "./+types/login";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 
 // @todo Creat la función para eliminar suscripción.
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // await ifUserRedirect(request);
   const url = new URL(request.url);
   const { searchParams } = url;
   if (searchParams.has("token")) {

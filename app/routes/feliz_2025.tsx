@@ -4,11 +4,19 @@ import {
   useNavigate,
   type LoaderFunctionArgs,
 } from "react-router";
-import type { Route } from "./+types/feliz_año";
+import type { Route } from "./+types/feliz_2025";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ImWhatsapp } from "react-icons/im";
 import { ImFacebook2 } from "react-icons/im";
+import { getMetaTags } from "~/utils/getMetaTags";
+
+export const meta = () =>
+  getMetaTags({
+    title: "Tienes un mensaje sorpresa esperandote 🎁",
+    description: `Te han dejado un mensaje`,
+    image: "/xmas/message-alert.png",
+  });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return {
@@ -16,20 +24,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   };
 };
 
-function daysBetween(one: Date, another: Date) {
-  return Math.round(Math.abs(+one - +another) / 8.64e7);
-}
-
 export default function Route({}: Route.ComponentProps) {
   const { nombre } = useLoaderData();
-  const [share, setShare] = useState(true);
+  const [share, setShare] = useState(false);
   const timeout = useRef<ReturnType<typeof setTimeout>>(null);
   const navigate = useNavigate();
 
   const handleWriting = (event: ChangeEvent<HTMLInputElement>) => {
     timeout.current && clearTimeout(timeout.current);
     timeout.current = setTimeout(() => {
-      navigate("/feliz_año/" + event.target.value);
+      navigate("/feliz_2025/" + event.target.value);
       setShare(true);
     }, 1000);
   };
@@ -37,27 +41,26 @@ export default function Route({}: Route.ComponentProps) {
   const whatsURL = new URL("https://api.whatsapp.com/send");
   whatsURL.searchParams.set(
     "text",
-    `Tengo un mensaje sorpresa para ti: 🎁\nhttp://localhost:3000/feliz_año/${nombre}`
+    `Tengo un mensaje sorpresa para ti: 🎁\nhttps://fixter2025.fly.dev/feliz_2025/${nombre}`
   );
 
   const faceURL = new URL("https://www.facebook.com/sharer/sharer.php");
   faceURL.searchParams.set(
     "u",
-    `https%3A%2F%fixter2025.fly.dev/feliz_año/${nombre}`
+    `https://fixter2025.fly.dev/feliz_2025/${nombre}`
   );
-  faceURL.searchParams.set("n", nombre);
-  faceURL.searchParams.set("f", "fa");
 
   return (
     <>
       <article className="pt-20 text-white grid place-content-center h-screen place-items-center gap-2 px-5 overflow-hidden">
-        <h1 className="text-4xl text-center max-w-lg animate-pulse">
+        <h1 className="text-4xl text-center max-w-lg animate-pulse font-bold">
           ¡Feliz año nuevo! 🥂🍾🎉🎊🪅
         </h1>
         <img
           src={"/xmas/2025colorful-3d.png"}
           className="h-20 animate-bounce"
         />
+        <BackCounter />
         <p className="text-3xl">Te desean:</p>
         <h2 className="text-4xl">{nombre} 🥰</h2>
         <p>Y tus amigos de:</p>
@@ -75,7 +78,7 @@ export default function Route({}: Route.ComponentProps) {
             <h3 className="text-center mb-2 text-xs">
               Comparte este mensaje con tus seres queridos:
             </h3>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3">
               <a
                 href={whatsURL.toString()}
                 className="border rounded-xl inline-block p-2"
@@ -103,6 +106,65 @@ export default function Route({}: Route.ComponentProps) {
     </>
   );
 }
+
+export const BackCounter = ({ date }: { date?: Date }) => {
+  const timeout = useRef<ReturnType<typeof setInterval>>(null);
+  const newYearsDay = new Date(date || "01/01/2025");
+  const [remain, setRemain] = useState<{
+    days: number;
+    hours: number;
+    mins: number;
+    secs: number;
+  }>({ days: 0, hours: 0, mins: 0, secs: 0 });
+  // const dayFactor = 1000 * 60 * 60 * 24;
+  let oneMin = 60 * 1000;
+  //1hr => 60 minutes
+  let oneHr = 60 * oneMin;
+  //1 day => 24 hours
+  let oneDay = 24 * oneHr;
+
+  const getmissingDays = (remainingTime: number) => {
+    return Math.floor(remainingTime / oneDay);
+  };
+
+  const getmissingHours = (remainingTime: number) => {
+    return Math.floor((remainingTime % oneDay) / oneHr);
+  };
+
+  const getmissingMinutes = (remainingTime: number) => {
+    return Math.floor((remainingTime % oneHr) / oneMin);
+  };
+
+  const getmissingSeconds = (remainingTime: number) => {
+    return Math.floor((remainingTime % oneMin) / 1000);
+  };
+
+  useEffect(() => {
+    const count = () => {
+      timeout.current && clearTimeout(timeout.current);
+      timeout.current = setInterval(() => {
+        const remainingTime = newYearsDay.getTime() - new Date().getTime();
+        setRemain({
+          days: getmissingDays(remainingTime),
+          hours: getmissingHours(remainingTime),
+          mins: getmissingMinutes(remainingTime),
+          secs: getmissingSeconds(remainingTime),
+        });
+      }, 1000);
+    };
+    count();
+  }, []);
+
+  return (
+    <p className="text-center font-bold ">
+      Faltan: <span className="text-brand-700">{remain.days} </span>Días,{" "}
+      <span className="text-brand-700">{remain.hours} </span>horas,{" "}
+      <span className="text-brand-700">{remain.mins} </span>minutos y{" "}
+      <span className="text-brand-700">{remain.secs} </span>segundos
+      <p>Para año nuevo</p>
+    </p>
+  );
+};
 
 export const Marquees = () => {
   return (

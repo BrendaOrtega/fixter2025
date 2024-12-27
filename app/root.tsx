@@ -4,7 +4,6 @@ import {
   Meta,
   Outlet,
   Scripts,
-  ScrollRestoration,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -13,6 +12,14 @@ import { MainLayout } from "./routes/Layout";
 import useGoogleTM from "./lib/useGoogleTM";
 import useHotjar from "./lib/useHotjar";
 import { PrimaryButton } from "./components/common/PrimaryButton";
+import { getMetaTags } from "./utils/getMetaTags";
+
+export const meta = () =>
+  getMetaTags({
+    title: "Tienes un mensaje sorpresa esperandote 🎁",
+    description: `Te han dejado un mensaje`,
+    image: "/xmas/message-alert.png",
+  });
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
