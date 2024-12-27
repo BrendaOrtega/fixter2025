@@ -45,7 +45,7 @@ export default function Route({}: Route.ComponentProps) {
   const whatsURL = new URL("https://api.whatsapp.com/send");
   whatsURL.searchParams.set(
     "text",
-    `Tengo un mensaje sorpresa para ti: 🎁\nhttps://fixter2025.fly.dev/feliz_2025/${nombre}`
+    `${nombre} dejo mensaje sorpresa para ti: 🎁\nhttps://fixter2025.fly.dev/feliz_2025/${nombre}`
   );
 
   const faceURL = new URL("https://www.facebook.com/sharer/sharer.php");
