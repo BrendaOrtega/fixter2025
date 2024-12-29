@@ -21,6 +21,7 @@ export type UseRecaptchaParams = {
 };
 
 export default function useRecaptcha(args?: UseRecaptchaParams) {
+  // Estados 💾
   const {
     siteKey = "6Lex6agqAAAAAIUn17dFeTIxrMQrJn2qMAjHm-dL",
     options = { action: "submit" },
@@ -29,12 +30,12 @@ export default function useRecaptcha(args?: UseRecaptchaParams) {
   const fetcher = useFetcher<{ success: boolean }>();
   const { error } = useToast();
 
+  // Carga 🔋
   useEffect(() => {
     if (!siteKey && typeof siteKey !== "string") return setIsReady(true);
-    // noop ^for testing
+    // noop ^for testing (su no hay key no rompe)
     const scriptURL = new URL("https://www.google.com/recaptcha/api.js");
     scriptURL.searchParams.set("render", siteKey);
-
     const script = document.createElement("script");
     script.src = scriptURL.toString();
     script.async = true;
@@ -53,7 +54,7 @@ export default function useRecaptcha(args?: UseRecaptchaParams) {
     };
   }, [siteKey]);
 
-  //user action score
+  // Se ejecuta al usuario accionar 👨🏻‍💻
   const execute = useCallback(async () => {
     if (!siteKey) return;
 
@@ -62,7 +63,8 @@ export default function useRecaptcha(args?: UseRecaptchaParams) {
     return await window.grecaptcha.execute(siteKey, options);
   }, [siteKey, options, isReady]);
 
-  type EV = FormEvent<HTMLFormElement>;
+  // proxy para el form
+  type EV = FormEvent<HTMLFormElement> | SubmitEvent;
   const handleSubmit = (cb?: (arg0: EV) => void) => async (event: EV) => {
     event.preventDefault();
     const token = (await execute()) as string;
@@ -70,7 +72,7 @@ export default function useRecaptcha(args?: UseRecaptchaParams) {
       { intent: "recaptcha_verify_token", token },
       { method: "POST", action: "/api/user" }
     );
-    const { success } = fetcher.data || {};
+    const { success } = fetcher.data || {}; // @todo is not better to use fetch?
     if (!success) {
       error({
         text: "Lo sentimos, creemos que eres un robot. 🤖 Intenta de nuevo.",
