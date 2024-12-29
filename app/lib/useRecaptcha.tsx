@@ -7,7 +7,6 @@ import {
 } from "react";
 import { useFetcher } from "react-router";
 import { useToast } from "~/hooks/useToaster";
-import type { action } from "~/routes/api/user";
 
 declare global {
   interface Window {

@@ -13,6 +13,7 @@ export default function Route() {
 
   const onSubmit = (event: SubmitEvent) => {
     if (!inputRef.current) return;
+
     fetcher.submit(
       {
         intent: "suscription",
