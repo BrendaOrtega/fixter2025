@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useFetcher } from "react-router";
 import { useToast } from "~/hooks/useToaster";
 import type { action } from "~/routes/api/user";
@@ -32,7 +26,7 @@ export default function useRecaptcha(args?: UseRecaptchaParams) {
     options = { action: "submit" },
   } = args || {};
   const [isReady, setIsReady] = useState(false);
-  const fetcher = useFetcher<typeof action>();
+  const fetcher = useFetcher<{ success: boolean }>();
   const { error } = useToast();
 
   useEffect(() => {
@@ -78,7 +72,9 @@ export default function useRecaptcha(args?: UseRecaptchaParams) {
     );
     const { success } = fetcher.data || {};
     if (!success) {
-      error({ text: "Lo siento, creemos que eres un robot 🤖" });
+      error({
+        text: "Lo sentimos, creemos que eres un robot. 🤖 Intenta de nuevo.",
+      });
       return;
     }
     cb?.(event);

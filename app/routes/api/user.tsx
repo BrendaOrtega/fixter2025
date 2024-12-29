@@ -11,20 +11,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  if (intent === "recaptcha_verify_token") {
-    const token = formData.get("token");
-    const url = new URL("https://www.google.com/recaptcha/api/siteverify");
-    const options: RequestInit = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        secret: process.env.RECAPTCHA_SECRET,
-        response: token,
-      }),
-    };
-    return await fetch(url.toString(), options); // {success}
-  }
-
   if (intent === "suscription") {
     const tags = ["newsletter", "blog"];
     const email = String(formData.get("email"));
@@ -59,5 +45,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await sendMagicLink({ email });
     return redirect("/login?success");
   }
+
+  if (intent === "recaptcha_verify_token") {
+    const url = new URL("https://www.google.com/recaptcha/api/siteverify");
+    url.searchParams.set("secret", process.env.RECAPTCHA_SECRET as string);
+    url.searchParams.set("response", formData.get("token") as string);
+    return await fetch(url.toString(), { method: "POST" }); // {success}
+  }
+
   return data({ message: "No match" }, { status: 200 });
 };
