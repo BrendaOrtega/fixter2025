@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useFetcher } from "react-router";
 import { useToast } from "~/hooks/useToaster";
 import type { action } from "~/routes/api/user";
@@ -20,15 +26,15 @@ export type UseRecaptchaParams = {
   options?: { action: string };
 };
 
-export default function useRecaptcha(args?: UseRecaptchaParams) {
+export default function useRecaptcha(onSubmit: EV) {
   // Estados 💾
-  const {
-    siteKey = "6Lex6agqAAAAAIUn17dFeTIxrMQrJn2qMAjHm-dL",
-    options = { action: "submit" },
-  } = args || {};
+  const siteKey = "6Lex6agqAAAAAIUn17dFeTIxrMQrJn2qMAjHm-dL",
+    options = { action: "submit" };
+
   const [isReady, setIsReady] = useState(false);
   const fetcher = useFetcher<{ success: boolean }>();
   const { error } = useToast();
+  const eventRef = useRef<EV>(null);
 
   // Carga 🔋
   useEffect(() => {
@@ -65,22 +71,27 @@ export default function useRecaptcha(args?: UseRecaptchaParams) {
 
   // proxy para el form
   type EV = FormEvent<HTMLFormElement> | SubmitEvent;
-  const handleSubmit = (cb?: (arg0: EV) => void) => async (event: EV) => {
+  const handleSubmit = async (event: EV) => {
     event.preventDefault();
     const token = (await execute()) as string;
     await fetcher.submit(
       { intent: "recaptcha_verify_token", token },
       { method: "POST", action: "/api/user" }
     );
-    const { success } = fetcher.data || {}; // @todo is not better to use fetch?
-    if (!success) {
+    eventRef.current = event;
+  };
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+
+    if (fetcher.data.success) {
+      onSubmit(eventRef.current);
+    } else {
       error({
         text: "Lo sentimos, creemos que eres un robot. 🤖 Intenta de nuevo.",
       });
-      return;
     }
-    cb?.(event);
-  };
+  }, [fetcher]);
 
   return {
     handleSubmit,

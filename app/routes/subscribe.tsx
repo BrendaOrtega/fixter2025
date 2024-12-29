@@ -5,7 +5,6 @@ import { PrimaryButton } from "~/components/common/PrimaryButton";
 import useRecaptcha from "~/lib/useRecaptcha";
 
 export default function Route() {
-  const { handleSubmit } = useRecaptcha();
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
@@ -14,11 +13,15 @@ export default function Route() {
 
   const onSubmit = (event: SubmitEvent) => {
     if (!inputRef.current) return;
-    fetcher.submit({
-      intent: "suscription",
-      email: inputRef.current.value,
-    });
+    fetcher.submit(
+      {
+        intent: "suscription",
+        email: inputRef.current.value,
+      },
+      { method: "POST", action: "/api/user" }
+    );
   };
+  const { handleSubmit } = useRecaptcha(onSubmit);
 
   return (
     <>
@@ -59,7 +62,7 @@ export default function Route() {
           </div>
         ) : (
           <Form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit}
             className="flex justify-center mt-12 ring-4 ring-brand-700 rounded-full mx-auto w-max overflow-hidden"
           >
             <input
