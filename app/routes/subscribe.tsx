@@ -1,13 +1,25 @@
 import { useRef, useState } from "react";
-import { Form, useSearchParams } from "react-router";
+import { Form, useFetcher, useSearchParams } from "react-router";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
+import useRecaptcha from "~/lib/useRecaptcha";
 
 export default function Route() {
+  const { handleSubmit } = useRecaptcha();
   const [isLoading, setIsLoading] = useState(false);
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
   const success = searchParams.has("success");
+  const fetcher = useFetcher();
+
+  const onSubmit = (event: SubmitEvent) => {
+    if (!inputRef.current) return;
+    fetcher.submit({
+      intent: "suscription",
+      email: inputRef.current.value,
+    });
+  };
+
   return (
     <>
       {success && <EmojiConfetti emojis={false} />}
@@ -47,8 +59,7 @@ export default function Route() {
           </div>
         ) : (
           <Form
-            method="POST"
-            action="/api/user"
+            onSubmit={handleSubmit(onSubmit)}
             className="flex justify-center mt-12 ring-4 ring-brand-700 rounded-full mx-auto w-max overflow-hidden"
           >
             <input
@@ -64,9 +75,7 @@ export default function Route() {
                 setTimeout(() => setIsLoading(false), 3000);
               }}
               isLoading={isLoading}
-              name="intent"
               type="submit"
-              value="suscription"
             >
               Unirme
             </PrimaryButton>

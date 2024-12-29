@@ -1,4 +1,4 @@
-import { redirect, type ActionFunctionArgs } from "react-router";
+import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
 import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
@@ -10,6 +10,20 @@ const emailSchema = z.string().email();
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  if (intent === "recaptcha_verify_token") {
+    const token = formData.get("token");
+    const url = new URL("https://www.google.com/recaptcha/api/siteverify");
+    const options: RequestInit = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secret: process.env.RECAPTCHA_SECRET,
+        response: token,
+      }),
+    };
+    return await fetch(url.toString(), options); // {success}
+  }
 
   if (intent === "suscription") {
     const tags = ["newsletter", "blog"];
@@ -45,5 +59,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     await sendMagicLink({ email });
     return redirect("/login?success");
   }
-  return null;
+  return data({ message: "No match" }, { status: 200 });
 };
