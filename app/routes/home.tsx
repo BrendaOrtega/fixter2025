@@ -32,7 +32,7 @@ const companies = [
   },
   {
     title: "Santander",
-    image: "https://i.imgur.com/1GfGdEX.png",
+    image: "/companies/santander.png",
   },
   {
     title: "Wize",
@@ -41,35 +41,35 @@ const companies = [
 
   {
     title: "Synac",
-    image: "https://i.imgur.com/oikiaPi.png",
+    image: "/companies/synack.png",
   },
   {
     title: "Super rare",
-    image: "https://i.imgur.com/awTelp6.png",
+    image: "/companies/rare.png",
   },
   {
     title: "Mercado libre",
-    image: "https://i.imgur.com/IiE7xmi.png",
+    image: "/companies/mercado.png",
   },
   {
     title: "Flink",
-    image: "https://i.imgur.com/1anFfoz.png",
+    image: "/companies/flink.png",
   },
   {
     title: "Runa",
-    image: "https://i.imgur.com/avCu7Ru.png",
+    image: "/companies/runa.png",
   },
   {
     title: "HSBC",
-    image: "https://i.imgur.com/yCCIYcM.png",
+    image: "/companies/hsbc.png",
   },
   {
     title: "Zendala",
-    image: "https://i.imgur.com/s3VbQJl.png",
+    image: "/companies/zenda.png",
   },
   {
     title: "Bancomer",
-    image: "https://i.imgur.com/OT646Dw.png",
+    image: "/companies/bbva.png",
   },
   {
     title: "Cisco",
