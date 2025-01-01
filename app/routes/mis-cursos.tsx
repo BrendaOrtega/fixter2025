@@ -7,6 +7,7 @@ import SimpleFooter from "~/components/common/SimpleFooter";
 import { Header } from "~/components/common/Header";
 import type { Course } from "@prisma/client";
 import { CourseCard } from "~/components/CourseCard";
+import { getMetaTags } from "~/utils/getMetaTags";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -24,6 +25,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     confirmed: url.searchParams.get("confirmed") === "1",
   };
 };
+
+export const meta = () =>
+  getMetaTags({
+    title: " Mis cursos",
+    description: "¡No tardes en añadir otro! 🤓📚",
+  });
 
 export default function Route({
   loaderData: { courses, confirmed }, // @todo confirmed confetti

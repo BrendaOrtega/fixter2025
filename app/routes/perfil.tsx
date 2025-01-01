@@ -6,12 +6,19 @@ import { cn } from "~/utils/cn";
 import * as fabric from "fabric";
 import { getUserOrRedirect } from "~/.server/dbGetters";
 import { getPutFileUrl } from "~/.server/tigrs";
+import { getMetaTags } from "~/utils/getMetaTags";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUserOrRedirect(request);
   const putURL = await getPutFileUrl(user.email);
   return { user, putURL };
 };
+
+export const meta = () =>
+  getMetaTags({
+    title: " Mi perfil",
+    description: "Actualiza tu información",
+  });
 
 export default function Route({
   loaderData: { user, putURL },
@@ -20,7 +27,7 @@ export default function Route({
     <article className="h-screen">
       <section className="py-20 flex flex-col">
         <EditableAvatar
-          src={`/api/file?storageKey=${user.email}`}
+          src={user.photoURL || `/api/file?storageKey=${user.email}`}
           className="mx-auto"
           putURL={putURL}
         />
