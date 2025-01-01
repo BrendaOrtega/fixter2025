@@ -12,6 +12,8 @@ import {
 import { commitSession } from "~/sessions";
 import type { Route } from "./+types/login";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
+import { FcGoogle } from "react-icons/fc";
+import { GiMagicBroom } from "react-icons/gi";
 
 // @todo Creat la función para eliminar suscripción.
 
@@ -69,7 +71,7 @@ export default function Page({
   return (
     <section className="flex flex-col gap-4 pt-40 max-w-sm mx-auto">
       <div>
-        <img className="mx-auto mb-8" src="/full-logo.svg" alt="robot" />
+        <img className="mx-auto w-64 mb-12" src="/robot.svg" alt="robot" />
         <h2 className="text-2xl font-bold text-white text-center">
           Inicia sesión o crea una cuenta
         </h2>
@@ -77,22 +79,22 @@ export default function Page({
           type="button"
           onClick={googleLoginHandler}
           className={twMerge(
-            "cursor-pointer py-3 px-4 text-white  to-brand-200 rounded-lg shadow flex items-center gap-3 justify-center font-bold text-lg bg-gray-700 disabled:text-gray-100 mx-auto my-8"
+            "cursor-pointer py-3 px-4 text-white  to-brand-200 text-base w-full shadow flex items-center gap-3 justify-center font-semibold  bg-brand-900 rounded-full disabled:text-gray-100 mx-auto my-8"
           )}
         >
           <span className="text-xl">
-            <FaGoogle />
+            <FcGoogle />
           </span>
           <span> Inicia con Google</span>
         </button>
       </div>
       <hr className="border-slate-800" />
-      <p className="text-gray-400 text-center">
-        Puedes iniciar sesión solo con tu correo
+      <p className="text-colorParagraph text-center">
+        O inicia sesión solo con tu correo
       </p>
       {success ? (
         <div className="text-center text-white">
-          <span className="flex justify-center text-4xl">
+          <span className="flex  justify-center text-4xl">
             <FaMailBulk />
           </span>
           <p className="text-xl">
@@ -117,7 +119,7 @@ export default function Page({
           <input
             required
             type="email"
-            className="px-4 py-3 rounded-lg"
+            className="px-4 py-3 text-brand-900  placeholder:text-brand-900/40 rounded-full focus:outline-none  focus:border-brand-500 focus:ring-brand-500"
             name="email"
             placeholder="tuemail@tucorreo.com"
           />
@@ -126,11 +128,11 @@ export default function Page({
             value="magic_link"
             type="submit"
             className={twMerge(
-              "py-3 px-4 font-bold flex rounded-lg items-center justify-center gap-4 bg-brand-700 active:bg-brand-800"
+              "py-3 px-4 rounded-full text-brand-900 font-semibold text-base flex  items-center justify-center gap-4 bg-brand-500 active:bg-brand-800"
             )}
           >
             <span className="">
-              <FaMailBulk />
+              <GiMagicBroom />
             </span>
             Solicitar Link Mágico
           </button>
