@@ -3,17 +3,18 @@ import { twMerge } from "tailwind-merge";
 import type { Route } from "./+types/cursos";
 import { Footer } from "~/components/Footer";
 import type { Course } from "@prisma/client";
-import { motion, useInView } from "motion/react";
+import { inView, motion, useInView } from "motion/react";
 import { TridiLayers } from "~/components/card3d";
 import { FlipWords } from "~/components/FlipWords";
 import { Banner } from "~/components/common/Banner";
 import { CourseCard } from "~/components/CourseCard";
 import { JackPotSection } from "~/components/Jackpot";
-import { useEffect, useRef, type ReactNode } from "react";
+import { use, useEffect, useRef, useState, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { getMetaTags } from "~/utils/getMetaTags";
+import { useCounter } from "~/hooks/useCounter";
 
 const companies = [
   {
@@ -134,13 +135,22 @@ export default function Route({
 }
 
 const Comments = () => {
+  const { ref, count } = useCounter();
+
+  const formatNumber = (number: number) => {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[240px] ">
       <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
         Qué piensan nuestros estudiantes
       </h2>
       <p className="text-base md:text-lg text-colorParagraph font-light my-4 text-center">
-        <strong className="text-2xl text-brand-700 font-bold"> +20,000 </strong>
+        <strong ref={ref} className="text-2xl text-brand-700 font-bold">
+          {" "}
+          +{formatNumber(count)}{" "}
+        </strong>
         estudiantes han comprado nuestros cursos en línea y presenciales
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3  mt-12 md:mt-16 gap-8 lg:gap-y-12 xl:gap-12">
