@@ -1,25 +1,19 @@
+import { db } from "~/.server/db";
+import { twMerge } from "tailwind-merge";
+import type { Route } from "./+types/cursos";
+import { Footer } from "~/components/Footer";
+import type { Course } from "@prisma/client";
+import { motion, useInView } from "motion/react";
+import { TridiLayers } from "~/components/card3d";
 import { FlipWords } from "~/components/FlipWords";
-
+import { Banner } from "~/components/common/Banner";
+import { CourseCard } from "~/components/CourseCard";
 import { JackPotSection } from "~/components/Jackpot";
 import { useEffect, useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
-import { Footer } from "~/components/Footer";
-import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { db } from "~/.server/db";
-import type { Route } from "./+types/cursos";
-import type { Course } from "@prisma/client";
-import { twMerge } from "tailwind-merge";
-import { CourseCard } from "~/components/CourseCard";
-import {
-  useScroll,
-  useTransform,
-  motion,
-  useSpring,
-  useInView,
-} from "motion/react";
-import { TridiLayers } from "~/components/card3d";
-import { Banner } from "~/components/common/Banner";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
+import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { getMetaTags } from "~/utils/getMetaTags";
 
 const companies = [
   {
@@ -77,18 +71,11 @@ const companies = [
   },
 ];
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Cursos" },
-    { name: "description", content: "Encuentra el curso para ti" },
-  ];
-}
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData();
-  const intent = formData.get("intent");
-  return null;
-};
+export const meta = () =>
+  getMetaTags({
+    title:
+      "Aprende las herramientas que usan los profesionales del open source",
+  });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const courses = await db.course.findMany({
@@ -345,7 +332,7 @@ export const formatDuration = (secs: number) => {
   return (secs / 60).toFixed(0) + " mins";
 };
 
-const TopCourses = ({ courses }: { courses: Course[] }) => {
+const TopCourses = ({ courses }: { courses: Partial<Course>[] }) => {
   return (
     <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
       <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">

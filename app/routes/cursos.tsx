@@ -72,10 +72,22 @@ export default function Route({
 }
 
 export const CousesList = ({ courses }: { courses: Course[] }) => {
+  // special courses
+  const ids = ["645d3dbd668b73b34443789c"];
+  //
   return (
     <div className="grid gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-16 md:mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
       {courses.map((course) => (
-        <CourseCard courseSlug={course.slug} key={course.id} course={course} />
+        <CourseCard
+          courseSlug={course.slug}
+          key={course.id}
+          course={course}
+          to={
+            ids.includes(course.id)
+              ? "http://animaciones.fixtergeek.com"
+              : undefined
+          }
+        />
       ))}
     </div>
   );
