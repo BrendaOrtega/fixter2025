@@ -6,12 +6,19 @@ import { cn } from "~/utils/cn";
 import * as fabric from "fabric";
 import { getUserOrRedirect } from "~/.server/dbGetters";
 import { getPutFileUrl } from "~/.server/tigrs";
+import { getMetaTags } from "~/utils/getMetaTags";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUserOrRedirect(request);
   const putURL = await getPutFileUrl(user.email);
   return { user, putURL };
 };
+
+export const meta = () =>
+  getMetaTags({
+    title: " Mi perfil",
+    description: "Actualiza tu información",
+  });
 
 export default function Route({
   loaderData: { user, putURL },
