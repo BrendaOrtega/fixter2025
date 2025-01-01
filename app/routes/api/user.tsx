@@ -9,16 +9,21 @@ import { z } from "zod";
 import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { db } from "~/.server/db";
+import { destroySession, getSession } from "~/sessions";
 
 const emailSchema = z.string().email();
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const intent = url.searchParams.get("intent");
-  if (intent === "self") {
-    return { user: await getUserOrNull(request) };
+  if (url.searchParams.has("signout")) {
+    const session = await getSession(request.headers.get("Cookie"));
+    return redirect("/", {
+      headers: {
+        "Set-Cookie": await destroySession(session),
+      },
+    });
   }
-  return { message: "made by the fixtergeek team t(*_*t)" };
+  return "t(*_*t) by fixter.org team";
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {

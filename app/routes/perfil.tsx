@@ -111,7 +111,8 @@ const EditableAvatar = ({
     a.download = true;
     a.click();
     if (!file) return;
-    await fetch(putURL, { // presignurl
+    await fetch(putURL, {
+      // presignurl
       method: "PUT",
       body: file,
       headers: {
@@ -138,7 +139,7 @@ const EditableAvatar = ({
       // experiment
       // scaleProportionally: true,
       // uniformScaling: true,
-      // controlsAboveOverlay: true,
+      controlsAboveOverlay: true,
     });
     const center = canvasObj.current.getCenterPoint();
     img.left = center.x - 160;
