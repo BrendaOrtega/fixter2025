@@ -22,6 +22,7 @@ export default function Route() {
       { method: "POST", action: "/api/user" }
     );
   };
+
   const { handleSubmit } = useRecaptcha(onSubmit);
 
   return (

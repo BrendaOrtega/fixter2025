@@ -1,7 +1,6 @@
 import { forwardRef, useRef, useState, type ChangeEvent } from "react";
 import { type LoaderFunctionArgs } from "react-router";
 import type { Route } from "./+types/perfil";
-// import { getUserOrRedirect } from "~/.server/dbGetters";
 import { FaEdit } from "react-icons/fa";
 import { cn } from "~/utils/cn";
 import * as fabric from "fabric";
@@ -112,7 +111,7 @@ const EditableAvatar = ({
     a.download = true;
     a.click();
     if (!file) return;
-    await fetch(putURL, {
+    await fetch(putURL, { // presignurl
       method: "PUT",
       body: file,
       headers: {
@@ -124,12 +123,10 @@ const EditableAvatar = ({
 
   const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
     if (!event.currentTarget.files?.length || !canvasRef.current) return; //@todo files
+
     setIsEditing(true);
 
     const imageURL = URL.createObjectURL(event.currentTarget.files[0]);
-    // const imgNode = document.createElement("img");
-    // imgNode.src = imageURL;
-    // document.body.appendChild(imgNode);
     const img = await fabric.FabricImage.fromURL(imageURL);
     img.selectable = true;
     img.scaleToHeight(320);
@@ -139,17 +136,13 @@ const EditableAvatar = ({
       height: innerHeight - 220,
       backgroundColor: "black",
       // experiment
-      scaleProportionally: true,
-      uniformScaling: true,
-      controlsAboveOverlay: true,
+      // scaleProportionally: true,
+      // uniformScaling: true,
+      // controlsAboveOverlay: true,
     });
     const center = canvasObj.current.getCenterPoint();
     img.left = center.x - 160;
     img.top = center.y - 160;
-    // const center = canvasObj.centerObject(img);
-    // console.log("center: ", center);
-    // canvasObj.current.setDimensions({ width: img.width, height: img.height });
-    //objs
     canvasObj.current.add(img);
     // selector
     // const cube = new fabric.Circle({
@@ -167,7 +160,6 @@ const EditableAvatar = ({
       radius: 160,
       top: center.y - 160,
       left: center.x - 160,
-      borderColor: "red",
     });
     canvasObj.current.clipPath = clipPath;
     canvasObj.current.setActiveObject(canvasObj.current.item(0));
