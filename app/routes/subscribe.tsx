@@ -28,13 +28,13 @@ export default function Route() {
   return (
     <>
       {success && <EmojiConfetti emojis={false} />}
-      <article className="py-24 text-gray-300">
-        <section className="max-w-xl flex justify-center flex-col items-center gap-8 mx-auto">
-          <img src="/full-logo.svg" alt="robot" />
-          <h1 className="text-5xl text-center">
+      <article className="py-24 ">
+        <section className="max-w-xl flex justify-center flex-col items-center gap-8 mx-auto pt-28 px-4 md:px-[5%] xl:px-0">
+          <img className="w-52" src="/full-logo.svg" alt="robot" />
+          <h1 className="text-3xl md:text-5xl text-center text-white">
             No te salgas del loop: Actualízate
           </h1>
-          <p className="text-center text-2xl">
+          <p className="text-center text-lg md:text-xl text-brand-100 font-light">
             <span>
               {" "}
               Estas a punto de ser parte de una lista exclusiva para geeks.
@@ -47,7 +47,7 @@ export default function Route() {
         </section>
         {success ? (
           <div>
-            <p className="max-w-xl mx-auto my-8 text-center">
+            <p className="max-w-xl mx-auto my-8 text-center text-brand-100 font-light">
               Te hemos enviado un email de confirmación, una vez que confirmes
               de recibido serás parte de la lista. 👍🏼
               <br />
