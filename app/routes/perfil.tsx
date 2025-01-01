@@ -24,7 +24,7 @@ export default function Route({
           className="mx-auto"
           putURL={putURL}
         />
-        <section className="flex justify-center">
+        <section className="flex justify-center px-10 md:px-[5%] xl:px-0">
           <div
             style={{ backgroundImage: "url(https://i.imgur.com/JEAzNoh.png)" }}
             className="dark:text-white w-[640px] bg-white p-4 rounded-lg bg-cover bg-right border-[1px] border-brand-black-200/10 dark:border-brand-black-100/10 bg-no-repeat"
