@@ -264,11 +264,11 @@ const MobileMenu = ({
     <motion.div
       id="drawer"
       style={{
-        y: "-100%",
+        y: "-120%",
       }}
-      className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden"
+      className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden flex items-center justify-center"
     >
-      <div className="text-center flex flex-col mt-48 !text-white ">
+      <div className="text-center flex flex-col  !text-white ">
         <NavItem
           onClick={toggleMenu}
           as="Link"
@@ -313,43 +313,43 @@ const MobileMenu = ({
             className="text-4xl my-0 font-light "
           />
         )}
-      </div>
-      <div className="flex justify-center items-center gap-6 mt-40">
-        <a
-          rel="noreferrer"
-          href="https://www.facebook.com/fixterme"
-          target="_blank"
-        >
-          <FaFacebook className="text-white text-4xl hover:opacity-40" />
-        </a>
-        <a
-          rel="noreferrer"
-          href="https://twitter.com/FixterGeek"
-          target="_blank"
-        >
-          <FaSquareXTwitter className="text-white text-4xl hover:opacity-40" />
-        </a>
-        <a
-          rel="noreferrer"
-          href="https://www.linkedin.com/company/fixtergeek/"
-          target="_blank"
-        >
-          <BsLinkedin className="text-white text-3xl hover:opacity-40" />
-        </a>
-        <a
-          rel="noreferrer"
-          href="https://www.instagram.com/fixtergeek/"
-          target="_blank"
-        >
-          <AiFillInstagram className="text-white text-4xl hover:opacity-40" />
-        </a>
-        <a
-          rel="noreferrer"
-          href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g"
-          target="_blank"
-        >
-          <FaYoutube className="text-white text-4xl hover:opacity-40" />
-        </a>
+        <div className="flex justify-center items-center gap-6 mt-10">
+          <a
+            rel="noreferrer"
+            href="https://www.facebook.com/fixterme"
+            target="_blank"
+          >
+            <FaFacebook className="text-white text-4xl hover:opacity-40" />
+          </a>
+          <a
+            rel="noreferrer"
+            href="https://twitter.com/FixterGeek"
+            target="_blank"
+          >
+            <FaSquareXTwitter className="text-white text-4xl hover:opacity-40" />
+          </a>
+          <a
+            rel="noreferrer"
+            href="https://www.linkedin.com/company/fixtergeek/"
+            target="_blank"
+          >
+            <BsLinkedin className="text-white text-3xl hover:opacity-40" />
+          </a>
+          <a
+            rel="noreferrer"
+            href="https://www.instagram.com/fixtergeek/"
+            target="_blank"
+          >
+            <AiFillInstagram className="text-white text-4xl hover:opacity-40" />
+          </a>
+          <a
+            rel="noreferrer"
+            href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g"
+            target="_blank"
+          >
+            <FaYoutube className="text-white text-4xl hover:opacity-40" />
+          </a>
+        </div>
       </div>
     </motion.div>
   );
