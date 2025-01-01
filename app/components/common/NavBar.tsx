@@ -171,14 +171,6 @@ const UserMenu = ({ email }: { email: string }) => {
     navigate(path);
   };
 
-  // useEffect(() => {
-  //   animate(
-  //     "#aside",
-  //     { opacity: 0, filter: "blur(4px)", y: -10, pointerEvents: "none" },
-  //     { type: "spring", bounce: 0, duration: 0.25 }
-  //   );
-  // }, []);
-
   return (
     <section>
       <Avatar onClick={toggleMenu} email={email} />
@@ -240,7 +232,14 @@ const Avatar = ({
 }) => {
   return (
     <button onClick={onClick} className="w-10 hover:scale-105 active:scale-100">
-      <img src={`/api/file?storageKey=${email}`} alt="avatar" />
+      <img
+        onError={(event) => {
+          event.error = undefined;
+          event.target.src = "/logo.svg";
+        }}
+        src={`/api/file?storageKey=${email}`}
+        alt="avatar"
+      />
     </button>
   );
 };
