@@ -1,108 +1,20 @@
-// import { Link } from "react-router";
-// import { Youtube } from "../icons/Youtube";
-// import type { ReactNode } from "react";
-// import { Discord } from "../icons/Discord";
-// import type { User } from "@prisma/client";
-// import { useGoogleLogin } from "~/hooks/useGoogleLogin";
-// import { cn } from "~/utils/cn";
-
-// export const NavBar = ({ user }: { user?: Partial<User> }) => {
-//   const { googleLoginHandler } = useGoogleLogin();
-//   return (
-//     <nav className="h-20 px-6 items-center fixed top-0 w-full backdrop-blur-md z-10">
-//       <section className=" max-w-7xl flex justify-between items-center h-full mx-auto">
-//         <NavLink to="/">
-//           <img className="h-10" src="/logo.svg" alt="logo" />
-//         </NavLink>
-//         <div className="flex text-white  gap-6">
-//           <a
-//             href="https://www.youtube.com/@fixtergeek8057"
-//             rel="noreferrer"
-//             target="_blank"
-//             className="place-content-center hover:scale-105 transition-all sm:grid hidden"
-//           >
-//             <Youtube />
-//           </a>
-//           {/* <a
-//             href="https://www.youtube.com/@fixtergeek8057"
-//             rel="noreferrer"
-//             target="_blank"
-//             className="place-content-center hover:scale-105 transition-all hidden md:grid"
-//           >
-//             <Discord />
-//           </a> */}
-//           <NavLink
-//             className={cn("hidden md:block", {
-//               "sm:block": !user?.email,
-//             })}
-//             to="/cursos"
-//           >
-//             Cursos
-//           </NavLink>
-//           <NavLink
-//             className={cn("hidden md:block", {
-//               "sm:block": user?.email,
-//             })}
-//             to="/blog"
-//           >
-//             Blog
-//           </NavLink>
-
-//           {user?.email ? (
-//             <NavLink
-//               className="py-2 px-4 rounded-full bg-brand-900/60 font-normal w-max"
-//               to="/mis-cursos"
-//             >
-//               Tus cursos
-//             </NavLink>
-//           ) : (
-//             <button
-//               className="py-2 px-4 text-base rounded-full bg-brand-900/60 font-normal "
-//               onClick={googleLoginHandler}
-//             >
-//               Inicia sesión
-//             </button>
-//           )}
-//         </div>
-//       </section>
-//     </nav>
-//   );
-// };
-
-// const NavLink = ({
-//   children,
-//   to = "",
-//   className,
-// }: {
-//   children?: ReactNode;
-//   to: string;
-//   className?: string;
-// }) => {
-//   return (
-//     <Link
-//       className={cn(
-//         "grid text-base place-content-center hover:scale-105 transition-all",
-//         className
-//       )}
-//       to={to}
-//     >
-//       {children}
-//     </Link>
-//   );
-// };
-
-import { useEffect, useState } from "react";
-import { motion, useAnimate, useMotionValue, useSpring } from "motion/react";
-import { Link, NavLink, useLocation, useParams } from "react-router";
-import { motionValue } from "motion";
-import { Youtube } from "../icons/Youtube";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
-import type { User } from "@prisma/client";
 import { FaFacebook, FaYoutube } from "react-icons/fa";
-import { FaSquareXTwitter } from "react-icons/fa6";
-import { BsLinkedin } from "react-icons/bs";
+import { FaSquareXTwitter, FaUserAstronaut } from "react-icons/fa6";
+import { motion, stagger, useAnimate } from "motion/react";
+import { Link, useLocation, useNavigate, type To } from "react-router";
 import { AiFillInstagram } from "react-icons/ai";
+import { BsLinkedin } from "react-icons/bs";
+import { useEffect, useState } from "react";
+import type { User } from "@prisma/client";
+import { Youtube } from "../icons/Youtube";
+import { useSelf } from "~/hooks/useSelf";
+import { signal } from "@preact/signals";
 import { cn } from "~/utils/cn";
+import { Triangle } from "./Triangle";
+import { MdOutlineFeedback } from "react-icons/md";
+import { FiLogOut } from "react-icons/fi";
+import Spinner from "./Spinner";
 
 const navigation = [
   { name: "Cursos", link: "/cursos" },
@@ -166,9 +78,11 @@ export const SquigglyUnderline = () => {
   );
 };
 
-export const NavBar = ({ user }: { user?: Partial<User> }) => {
-  const { googleLoginHandler } = useGoogleLogin();
+export const NavBar = () => {
+  const [scope, animate] = useAnimate();
+  const { isLoading, googleLoginHandler } = useGoogleLogin();
   const [isOpen, setIsOpen] = useState(false);
+  const user = useSelf();
 
   const toggleMenu = () => {
     if (isOpen) {
@@ -179,8 +93,6 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
       animate("#drawer", { y: "0%" }, { duration: 0.5, type: "tween" });
     }
   };
-
-  const [scope, animate] = useAnimate();
 
   return (
     <section
@@ -202,102 +114,214 @@ export const NavBar = ({ user }: { user?: Partial<User> }) => {
           </a>
           <SquigglyUnderline />
           {user?.email ? (
-            <NavLink
-              className="py-2 px-4 rounded-full text-white font-normal w-max bg-brand-900/60"
-              to="/mis-cursos"
-            >
-              Tus cursos
-            </NavLink>
+            <UserMenu email={user.email} />
           ) : (
             <button
               className="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60"
               onClick={googleLoginHandler}
             >
-              Inicia sesión
+              {isLoading ? <Spinner /> : "Inicia sesión"}
             </button>
           )}
         </div>
 
         <Burger onClick={toggleMenu} isOpen={isOpen} />
       </nav>
-      <motion.div
-        id="drawer"
-        style={{
-          y: "-100%",
-        }}
-        className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute "
-      >
-        <div className="text-center mt-48 !text-white ">
-          <NavItem
-            onClick={toggleMenu}
-            link="/cursos"
-            index={1}
-            isOpen={isOpen}
-            title="Cursos"
-          />
-          <NavItem
-            onClick={toggleMenu}
-            link="/blog"
-            index={2}
-            isOpen={isOpen}
-            title="Blog"
-          />
-          {user?.email ? (
-            <NavItem
-              link="/mis-cursos"
-              index={3}
-              isOpen={isOpen}
-              title="Mis cursos"
-            />
-          ) : (
-            <NavItem
-              index={3}
-              isOpen={isOpen}
-              title="Iniciar sesión"
-              className="text-4xl my-0 font-light "
-              onClick={googleLoginHandler}
-            />
-          )}
-        </div>
-        <div className="flex justify-center items-center gap-6 mt-40">
-          <a
-            rel="noreferrer"
-            href="https://www.facebook.com/fixterme"
-            target="_blank"
-          >
-            <FaFacebook className="text-white text-4xl hover:opacity-40" />
-          </a>
-          <a
-            rel="noreferrer"
-            href="https://twitter.com/FixterGeek"
-            target="_blank"
-          >
-            <FaSquareXTwitter className="text-white text-4xl hover:opacity-40" />
-          </a>
-          <a
-            rel="noreferrer"
-            href="https://www.linkedin.com/company/fixtergeek/"
-            target="_blank"
-          >
-            <BsLinkedin className="text-white text-3xl hover:opacity-40" />
-          </a>
-          <a
-            rel="noreferrer"
-            href="https://www.instagram.com/fixtergeek/"
-            target="_blank"
-          >
-            <AiFillInstagram className="text-white text-4xl hover:opacity-40" />
-          </a>
-          <a
-            rel="noreferrer"
-            href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g"
-            target="_blank"
-          >
-            <FaYoutube className="text-white text-4xl hover:opacity-40" />
-          </a>
-        </div>
-      </motion.div>
+      <MobileMenu user={user} isOpen={isOpen} toggleMenu={toggleMenu} />
     </section>
+  );
+};
+// @todo: improve animation
+const UserMenu = ({ email }: { email: string }) => {
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(true);
+  const [scope, animate] = useAnimate();
+  const toggleMenu = async () => {
+    setIsOpen((v) => !v);
+    if (isOpen) {
+      animate(
+        scope.current,
+        { filter: "blur(0px)", y: 0, opacity: 1, pointerEvents: "inherit" },
+        {
+          type: "spring",
+          bounce: 0.7,
+        }
+      );
+      animate(
+        "button",
+        { x: 0, opacity: 1, filter: "blur(0px)" },
+        { delay: stagger(0.2) }
+      );
+    } else {
+      // exit
+      animate("button", { x: -10, opacity: 0, filter: "blur(4px)" });
+      animate(
+        scope.current,
+        { opacity: 0, filter: "blur(4px)", y: -10, pointerEvents: "none" },
+        { type: "spring", bounce: 0, duration: 0.25 }
+      );
+    }
+  };
+
+  const handleNavigation = (path: To) => {
+    toggleMenu();
+    navigate(path);
+  };
+
+  // useEffect(() => {
+  //   animate(
+  //     "#aside",
+  //     { opacity: 0, filter: "blur(4px)", y: -10, pointerEvents: "none" },
+  //     { type: "spring", bounce: 0, duration: 0.25 }
+  //   );
+  // }, []);
+
+  return (
+    <section>
+      <Avatar onClick={toggleMenu} email={email} />
+      <aside
+        ref={scope}
+        className={cn(
+          "opacity-0",
+          "bg-background",
+          "border border-brand-100/10",
+          "grid place-items-start rounded-xl shadow-md",
+          "absolute w-[200px] -right-20 top-[95%]"
+        )}
+      >
+        <Triangle className="border-b-brand-500" />
+        <button
+          onClick={() => handleNavigation("/perfil")}
+          className="flex gap-3 items-center text-white hover:bg-brand-500/10 w-full p-4 rounded-t-xl"
+        >
+          <span>
+            <FaUserAstronaut />
+          </span>
+          <span>Perfil</span>
+        </button>
+        <button className="flex gap-3 items-center text-white hover:bg-brand-500/10 w-full p-4">
+          <span>
+            <MdOutlineFeedback />
+          </span>
+          <span>Feedback</span>
+        </button>
+        <button
+          onClick={() => handleNavigation("/api/user?signout=1")}
+          className="flex gap-3 items-center text-white hover:bg-brand-500/10 w-full p-4 rounded-b-xl"
+        >
+          <span>
+            <FiLogOut />
+          </span>
+          <span>Cerrar sesión</span>
+        </button>
+      </aside>
+    </section>
+  );
+};
+
+const Avatar = ({
+  email,
+  onClick,
+}: {
+  onClick?: () => void;
+  email: string;
+}) => {
+  return (
+    <button onClick={onClick} className="w-10 hover:scale-105 active:scale-100">
+      <img src={`/api/file?storageKey=${email}`} alt="avatar" />
+    </button>
+  );
+};
+
+const MobileMenu = ({
+  toggleMenu,
+  isOpen,
+  user,
+}: {
+  user?: Partial<User>;
+  toggleMenu: () => void;
+  isOpen: boolean;
+}) => {
+  const { googleLoginHandler } = useGoogleLogin();
+
+  return (
+    <motion.div
+      id="drawer"
+      style={{
+        y: "-100%",
+      }}
+      className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden"
+    >
+      <div className="text-center mt-48 !text-white ">
+        <NavItem
+          onClick={toggleMenu}
+          link="/cursos"
+          index={1}
+          isOpen={isOpen}
+          title="Cursos"
+        />
+        <NavItem
+          onClick={toggleMenu}
+          link="/blog"
+          index={2}
+          isOpen={isOpen}
+          title="Blog"
+        />
+        {user?.email ? (
+          <NavItem
+            link="/mis-cursos"
+            index={3}
+            isOpen={isOpen}
+            title="Mis cursos"
+          />
+        ) : (
+          <NavItem
+            index={3}
+            isOpen={isOpen}
+            title="Iniciar sesión"
+            className="text-4xl my-0 font-light "
+            onClick={googleLoginHandler}
+          />
+        )}
+      </div>
+      <div className="flex justify-center items-center gap-6 mt-40">
+        <a
+          rel="noreferrer"
+          href="https://www.facebook.com/fixterme"
+          target="_blank"
+        >
+          <FaFacebook className="text-white text-4xl hover:opacity-40" />
+        </a>
+        <a
+          rel="noreferrer"
+          href="https://twitter.com/FixterGeek"
+          target="_blank"
+        >
+          <FaSquareXTwitter className="text-white text-4xl hover:opacity-40" />
+        </a>
+        <a
+          rel="noreferrer"
+          href="https://www.linkedin.com/company/fixtergeek/"
+          target="_blank"
+        >
+          <BsLinkedin className="text-white text-3xl hover:opacity-40" />
+        </a>
+        <a
+          rel="noreferrer"
+          href="https://www.instagram.com/fixtergeek/"
+          target="_blank"
+        >
+          <AiFillInstagram className="text-white text-4xl hover:opacity-40" />
+        </a>
+        <a
+          rel="noreferrer"
+          href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g"
+          target="_blank"
+        >
+          <FaYoutube className="text-white text-4xl hover:opacity-40" />
+        </a>
+      </div>
+    </motion.div>
   );
 };
 

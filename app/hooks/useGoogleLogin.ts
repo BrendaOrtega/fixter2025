@@ -16,5 +16,5 @@ export const useGoogleLogin = () => {
       { method: "POST", action: "/api/user" }
     );
   };
-  return { googleLoginHandler };
+  return { googleLoginHandler, isLoading: fetcher.state !== "idle" };
 };
