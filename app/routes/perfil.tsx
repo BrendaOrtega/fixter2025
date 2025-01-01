@@ -20,7 +20,7 @@ export default function Route({
     <article className="h-screen">
       <section className="py-20 flex flex-col">
         <EditableAvatar
-          src={`/api/file?storageKey=${user.email}`}
+          src={user.photoURL || `/api/file?storageKey=${user.email}`}
           className="mx-auto"
           putURL={putURL}
         />

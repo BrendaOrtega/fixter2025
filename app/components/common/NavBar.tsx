@@ -235,10 +235,11 @@ export const Avatar = ({
       <img
         onError={({ currentTarget }) => {
           currentTarget.onerror = undefined;
-          currentTarget.src = "/logo.svg";
+          currentTarget.src = "/avatar-default.png";
         }}
         src={user.photoURL || `/api/file?storageKey=${user.email}`}
         alt="avatar"
+        className="rounded-full"
       />
     </button>
   );
