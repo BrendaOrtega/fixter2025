@@ -35,7 +35,7 @@ export default function useRecaptcha(onSubmit: EV) {
   const { error } = useToast();
   const eventRef = useRef<EV>(null);
 
-  // Carga 🔋
+  // Carga 🔋 1.
   useEffect(() => {
     if (!siteKey && typeof siteKey !== "string") return setIsReady(true);
     // noop ^for testing (su no hay key no rompe)
@@ -73,7 +73,7 @@ export default function useRecaptcha(onSubmit: EV) {
   const handleSubmit = async (event: EV) => {
     event.preventDefault();
     const token = (await execute()) as string;
-    await fetcher.submit(
+    fetcher.submit(
       { intent: "recaptcha_verify_token", token },
       { method: "POST", action: "/api/user" }
     );

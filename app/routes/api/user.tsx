@@ -1,4 +1,9 @@
-import { data, redirect, type ActionFunctionArgs } from "react-router";
+import {
+  data,
+  redirect,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
 import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
 import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
@@ -6,6 +11,15 @@ import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { db } from "~/.server/db";
 
 const emailSchema = z.string().email();
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const intent = url.searchParams.get("intent");
+  if (intent === "self") {
+    return { user: await getUserOrNull(request) };
+  }
+  return { message: "made by the fixtergeek team t(*_*t)" };
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
