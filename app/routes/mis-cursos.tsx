@@ -47,7 +47,7 @@ export default function Route({
         }
       />
 
-      <main className="min-h-screen flex flex-col dark:bg-brand-black-500 xl:pt-20">
+      <main className="min-h-screen flex flex-col dark:bg-brand-black-500 ">
         {isSuccess && <SuccessAlert />}
         {confirmed && (
           <SuccessAlert emojis title="Gracias por confirmar tu cuenta" />

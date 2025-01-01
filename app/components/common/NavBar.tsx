@@ -15,6 +15,7 @@ import { Triangle } from "./Triangle";
 import { MdOutlineFeedback } from "react-icons/md";
 import { FiLogOut } from "react-icons/fi";
 import Spinner from "./Spinner";
+import { IoIosVideocam } from "react-icons/io";
 
 const navigation = [
   { name: "Cursos", link: "/cursos" },
@@ -116,12 +117,14 @@ export const NavBar = () => {
           {user?.email ? (
             <UserMenu email={user.email} />
           ) : (
-            <button
-              className="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60"
-              onClick={googleLoginHandler}
-            >
-              {isLoading ? <Spinner /> : "Inicia sesión"}
-            </button>
+            <Link to="/login">
+              <button
+                className="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60"
+                // onClick={googleLoginHandler}
+              >
+                {isLoading ? <Spinner /> : "Iniciar sesión"}
+              </button>{" "}
+            </Link>
           )}
         </div>
 
@@ -192,22 +195,31 @@ const UserMenu = ({ email }: { email: string }) => {
         <Triangle className="border-b-brand-500" />
         <button
           onClick={() => handleNavigation("/perfil")}
-          className="flex gap-3 items-center text-white hover:bg-brand-500/10 w-full p-4 rounded-t-xl"
+          className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4 rounded-xl"
         >
           <span>
             <FaUserAstronaut />
           </span>
           <span>Perfil</span>
         </button>
-        <button className="flex gap-3 items-center text-white hover:bg-brand-500/10 w-full p-4">
+        <button
+          onClick={() => handleNavigation("/mis-cursos")}
+          className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4 rounded-xl"
+        >
+          <span>
+            <IoIosVideocam />
+          </span>
+          <span>Mis cursos</span>
+        </button>
+        {/* <button className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4">
           <span>
             <MdOutlineFeedback />
           </span>
           <span>Feedback</span>
-        </button>
+        </button> */}
         <button
           onClick={() => handleNavigation("/api/user?signout=1")}
-          className="flex gap-3 items-center text-white hover:bg-brand-500/10 w-full p-4 rounded-b-xl"
+          className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4 rounded-xl"
         >
           <span>
             <FiLogOut />
@@ -243,7 +255,11 @@ const MobileMenu = ({
   isOpen: boolean;
 }) => {
   const { googleLoginHandler } = useGoogleLogin();
-
+  const navigate = useNavigate();
+  const handleNavigation = (path: To) => {
+    toggleMenu();
+    navigate(path);
+  };
   return (
     <motion.div
       id="drawer"
@@ -252,35 +268,49 @@ const MobileMenu = ({
       }}
       className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden"
     >
-      <div className="text-center mt-48 !text-white ">
+      <div className="text-center flex flex-col mt-48 !text-white ">
         <NavItem
           onClick={toggleMenu}
-          link="/cursos"
+          as="Link"
+          to="/cursos"
           index={1}
           isOpen={isOpen}
           title="Cursos"
         />
         <NavItem
           onClick={toggleMenu}
-          link="/blog"
+          as="Link"
+          to="/blog"
           index={2}
           isOpen={isOpen}
           title="Blog"
         />
         {user?.email ? (
-          <NavItem
-            link="/mis-cursos"
-            index={3}
-            isOpen={isOpen}
-            title="Mis cursos"
-          />
+          <>
+            <NavItem
+              as="Link"
+              to="/mis-cursos"
+              index={3}
+              isOpen={isOpen}
+              title="Mis cursos"
+            />
+            <NavItem
+              onClick={() => handleNavigation("/api/user?signout=1")}
+              to="/mis-cursos"
+              index={4}
+              isOpen={isOpen}
+              title="Cerrar sesión"
+            />
+          </>
         ) : (
           <NavItem
+            onClick={toggleMenu}
+            as="Link"
+            to="/login"
             index={3}
             isOpen={isOpen}
             title="Iniciar sesión"
             className="text-4xl my-0 font-light "
-            onClick={googleLoginHandler}
           />
         )}
       </div>
@@ -368,16 +398,20 @@ const NavItem = ({
   title,
   isOpen,
   index,
-  link,
+
   className,
   onClick,
+  as = "button",
+  to = "",
 }: {
   title: string;
   isOpen?: boolean;
   index: number;
-  link?: string;
+
   className?: string;
   onClick?: () => void;
+  as?: "button" | "Link";
+  to?: string;
 }) => {
   const [scope, animate] = useAnimate();
   useEffect(() => {
@@ -391,20 +425,20 @@ const NavItem = ({
       animate(scope.current, { y: 20, opacity: 0, filter: "blur(9px)" });
     }
   }, [isOpen]);
+  const Element = as === "Link" ? Link : "button";
   return (
-    <Link to={link}>
-      <h3
-        ref={scope}
-        style={{
-          opacity: 0,
-          transform: "translateY(20px)",
-          filter: "blur(9px)",
-        }}
-        className={cn("text-4xl my-10 font-light ", className)}
-        onClick={onClick}
-      >
-        {title}
-      </h3>
-    </Link>
+    <Element
+      to={to}
+      ref={scope}
+      style={{
+        opacity: 0,
+        transform: "translateY(20px)",
+        filter: "blur(9px)",
+      }}
+      className={cn("text-4xl my-10 font-light ", className)}
+      onClick={onClick}
+    >
+      {title}
+    </Element>
   );
 };
