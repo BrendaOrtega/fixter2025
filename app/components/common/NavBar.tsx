@@ -114,7 +114,7 @@ export const NavBar = () => {
           </a>
           <SquigglyUnderline />
           {user?.email ? (
-            <UserMenu email={user.email} />
+            <UserMenu user={user} />
           ) : (
             <button
               className="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60"
@@ -132,7 +132,7 @@ export const NavBar = () => {
   );
 };
 // @todo: improve animation
-const UserMenu = ({ email }: { email: string }) => {
+const UserMenu = ({ user }: { email: Partial<User> }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
   const [scope, animate] = useAnimate();
@@ -170,7 +170,7 @@ const UserMenu = ({ email }: { email: string }) => {
 
   return (
     <section>
-      <Avatar onClick={toggleMenu} email={email} />
+      <Avatar onClick={toggleMenu} user={user} />
       <aside
         ref={scope}
         className={cn(
@@ -211,21 +211,21 @@ const UserMenu = ({ email }: { email: string }) => {
   );
 };
 
-const Avatar = ({
-  email,
+export const Avatar = ({
+  user,
   onClick,
 }: {
   onClick?: () => void;
-  email: string;
+  email: Partial<User>;
 }) => {
   return (
     <button onClick={onClick} className="w-10 hover:scale-105 active:scale-100">
       <img
-        onError={(event) => {
-          event.error = undefined;
-          event.target.src = "/logo.svg";
+        onError={({ currentTarget }) => {
+          currentTarget.onerror = undefined;
+          currentTarget.src = "/logo.svg";
         }}
-        src={`/api/file?storageKey=${email}`}
+        src={user.photoURL || `/api/file?storageKey=${user.email}`}
         alt="avatar"
       />
     </button>
