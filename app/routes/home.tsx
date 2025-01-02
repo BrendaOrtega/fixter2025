@@ -532,11 +532,11 @@ const HomeHero = () => {
     <motion.section
       ref={ref}
       // style={{ opacity, scale, filter }}
-      className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-20 md:pt-0 md:px-10 "
+      className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-12 md:pt-0 md:px-10 "
     >
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
-          <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-12">
+          <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-4 md:mt-12">
             Aprende <br className="md:hidden" />
             <span className="text-brand-500 font-extrabold text-4xl xl:text-6xl ">
               <FlipWords
