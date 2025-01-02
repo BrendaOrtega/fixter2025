@@ -102,7 +102,7 @@ export const NavBar = () => {
     >
       <nav className="flex relative z-[120] max-w-7xl mx-auto py-2 md:py-4 items-center justify-between ">
         <Link to="/">
-          <img className="h-10" src="/logo.svg" alt="logo" />
+          <img className="h-10" src="/logo.png" alt="logo" />
         </Link>
         <div className="md:flex items-center gap-8 hidden ">
           <a
