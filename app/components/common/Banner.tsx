@@ -11,10 +11,10 @@ export const Banner = ({
   variant?: string;
 }) => {
   return (
-    <div className="px-4 md:px-[5%] lg:px-0 max-w-7xl mx-auto">
+    <div className="px-4 md:px-[5%] xl:px-0 max-w-7xl mx-auto">
       <div
         className={cn(
-          "bg-bannerOne  bg-contain md:bg-cover bg-no-repeat  bg-right-bottom h-[300px] my-32 md:my-60 p-6 md:p-12 rounded-3xl border-[2px] border-brand-500",
+          "bg-bannerOne  bg-contain md:bg-cover bg-no-repeat  bg-right-bottom h-[300px] my-32 md:my-60 p-6 md:p-6 xl:p-12 rounded-3xl border-[2px] border-brand-500",
           {
             "bg-bannerHome ": variant === "home",
           }

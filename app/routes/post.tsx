@@ -26,7 +26,7 @@ export default function Route({ loaderData: { post } }: Route.ComponentProps) {
         <img
           src={post.coverImage || "/Banner.svg"}
           alt="cover"
-          className="w-[95%] md:w-full object-cover mx-auto rounded-3xl h-[220px] md:h-[400px]" // 🪄✨ nice
+          className="w-[95%] md:w-full object-cover mx-auto rounded-3xl h-[220px] md:h-[320px] xl:h-[400px]" // 🪄✨ nice
         />
         <div className="relative">
           <Link

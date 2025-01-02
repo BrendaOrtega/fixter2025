@@ -40,7 +40,7 @@ export const PrimaryButton = ({
       disabled={isDisabled}
       to={to || ""}
       className={cn(
-        "h-12 rounded-full border-[2px] border-brand-500 text-brand-500 px-5 inline-grid place-content-center items-center",
+        "h-12 rounded-full border-[2px] border-brand-500 text-center text-brand-500 px-4 inline-grid place-content-center items-center",
         {
           "bg-brand-100 text-gray-400 pointer-events-none": isDisabled,
           "bg-brand-500 text-brand-900": variant === "fill",

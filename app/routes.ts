@@ -13,6 +13,8 @@ export default [
   route("faq", "routes/faq.tsx"),
   route("mis-cursos", "routes/mis-cursos.tsx"),
   route("subscribe", "routes/subscribe.tsx"),
+  route("guides", "routes/guides.tsx"),
+  route("tutoriales", "routes/tutoriales.tsx"),
   // xmas
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
 

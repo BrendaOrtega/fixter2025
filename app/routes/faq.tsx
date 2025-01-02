@@ -21,8 +21,8 @@ export default function Route({}: Route.ComponentProps) {
   }, []);
   return (
     <>
-      <section className="max-w-7xl mx-auto  pt-40 pb-40">
-        <div className="flex mb-20">
+      <section className="max-w-7xl mx-auto py-20 md:pt-40 md:pb-40 px-4 md:px-[5%] xl:px-0">
+        <div className="flex flex-wrap-reverse mb-12 md:mb-20 ">
           <div>
             <h2 className="text-2xl md:text-3xl xl:text-4xl font-bold text-white mt-10">
               ¿Tienes alguna duda? Tal vez estas respuestas puedan ayudarte.
@@ -40,7 +40,7 @@ export default function Route({}: Route.ComponentProps) {
               </a>
             </p>{" "}
           </div>
-          <img className="w-64" src="/ico.png" alt="robot" />
+          <img className="w-40 md:w-64" src="/ico.png" alt="robot" />
         </div>
         {questions.map((faq: any) => (
           <Question key={faq.question} {...faq} />

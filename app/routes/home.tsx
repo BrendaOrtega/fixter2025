@@ -143,7 +143,7 @@ const Comments = () => {
 
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[240px] ">
-      <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
+      <h2 className="text-3xl md:text-4xl xl:text-5xl  font-bold text-white leading-snug text-center">
         Qué piensan nuestros estudiantes
       </h2>
       <p className="text-base md:text-lg text-colorParagraph font-light my-4 text-center">
@@ -345,10 +345,10 @@ export const formatDuration = (secs: number) => {
 const TopCourses = ({ courses }: { courses: Partial<Course>[] }) => {
   return (
     <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
-      <h2 className="text-3xl md:text-4xl lg:text-5xl  font-bold text-white leading-snug text-center">
+      <h2 className="text-3xl md:text-4xl xl:text-5xl  font-bold text-white leading-snug text-center">
         Cursos más vendidos
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 mt-20 px-4 md:px-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-20 mt-20 px-4 md:px-0">
         {courses.map((course) => (
           <CourseCard
             courseSlug={course.slug}
@@ -374,9 +374,9 @@ const Benefits = () => {
           transform: isInview ? "translateY(0px)" : " translateY(40px)",
           transition: "all 1s ease",
         }}
-        className="border border-colorOutline rounded-3xl px-6 md:pl-16 max-w-7xl mx-auto flex-wrap-reverse md:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[800px]"
+        className="border border-colorOutline rounded-3xl px-6 md:pl-10 xl:pl-16 max-w-7xl mx-auto flex-wrap-reverse lg:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[1100px] xl:h-[800px]"
       >
-        <div className="w-full md:w-[50%] pt-6 md:pt-16">
+        <div className="w-full lg:w-[50%] pt-6 md:pt-10 xl:pt-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white leading-snug">
             Una experiencia a la medida
           </h2>
@@ -414,7 +414,7 @@ const Benefits = () => {
             />
           </div>
         </div>{" "}
-        <div className="overflow-hidden w-full md:w-[50%]">
+        <div className="overflow-hidden w-full min-h-[300px] bg-pink-500 lg:w-[50%]">
           <JackPotSection
             images={[
               "/tools/react.svg",
@@ -483,11 +483,11 @@ const Why = () => {
         transform: isInview ? "translateY(0px)" : " translateY(40px)",
         transition: "all 1s ease",
       }}
-      className="max-w-7xl mx-auto mt-32 mb-16  md:my-[160px] flex-wrap md:flex-nowrap flex gap-0 md:gap-16 px-4 md:p-[5%] xl:px-0 "
+      className="max-w-7xl mx-auto mt-32 mb-16  md:my-[160px] flex-wrap xl:flex-nowrap flex gap-0 md:gap-16 px-4 md:p-[5%] xl:px-0 "
     >
-      <div className="w-full md:w-[42%]">
+      <div className="w-full xl:w-[42%]">
         <img className="mb-8" src="/galaxy.svg" alt="galaxy" />
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white !leading-snug">
+        <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-white !leading-snug">
           Que aprender deje de ser aburrido
         </h2>
         <p className="text-lg text-colorParagraph font-light my-4">
@@ -504,7 +504,7 @@ const Why = () => {
           desarrollador.
         </p>
       </div>
-      <div className="w-full md:w-[55%] flex- items-center pt-16 ">
+      <div className="w-full xl:w-[55%] flex- items-center pt-16 ">
         <TridiLayers images={["/figma-fg.png", "/osw.jpg", "/codigo-fg.png"]} />
       </div>
     </motion.div>

@@ -98,11 +98,11 @@ export const NavBar = () => {
   return (
     <section
       ref={scope}
-      className=" w-full px-6 md:px-[12%] lg:px-[5%] xl:px-0  fixed backdrop-blur  z-[100]"
+      className=" w-full px-6 md:px-[5%] xl:px-0  fixed backdrop-blur  z-[100]"
     >
       <nav className="flex relative z-[120] max-w-7xl mx-auto py-2 md:py-4 items-center justify-between ">
         <Link to="/">
-          <img className="h-8" src="/logo.png" alt="logo" />
+          <img className="h-7" src="/logo.png" alt="logo" />
         </Link>
         <div className="md:flex items-center gap-8 hidden ">
           <a

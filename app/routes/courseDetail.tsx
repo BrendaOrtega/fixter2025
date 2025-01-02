@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Footer } from "~/components/Footer";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import type { Route } from "./+types/courseDetail";
@@ -64,12 +64,19 @@ const CourseContent = ({
   videos: Partial<Video>[];
   course: Course;
 }) => {
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
   return (
-    <section className=" mt-20 md:mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto ">
+    <section className=" mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ">
       <p className="text-colorParagraph text-base md:text-lg mt-6 font-light">
         {course.description}
       </p>
-      <div className="border-[1px] my-20 border-brand-500 rounded-3xl p-6 md:p-16 relative">
+      <div className="border-[1px] my-20 border-brand-500 rounded-3xl p-6 md:p-10 xl:p-16 relative">
         <img
           className="absolute -top-12 -left-8"
           alt="comic"
@@ -98,8 +105,8 @@ const CourseContent = ({
 
 const Teacher = ({ course }: { course: Partial<Course> }) => {
   return (
-    <section className="mt-32 w-full px-8 md:px-[5%] lg:px-0 max-w-7xl mx-auto my-[160px]  ">
-      <div className="bg-backface rounded-3xl md:py-16 md:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 ">
+    <section className="mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto my-[160px]  ">
+      <div className="bg-backface rounded-3xl md:py-10 xl:py-16 md:pl-10 xl:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 ">
         <div className="w-full md:w-[60%]">
           <span className="text-colorParagraph font-light">
             ¿Quien es tu instructor?
@@ -212,14 +219,17 @@ const CourseHeader = ({ course }: { course: Course }) => {
             {summary}
           </p>
           <div className="flex items-center mt-6 gap-4">
-            <p className="text-colorParagraph text-base md:text-lg  font-light">
+            <p className="text-colorParagraph text-sm md:text-lg  font-light">
               {useVideosLength(id)} lecciones
             </p>
-            <p className="text-colorParagraph text-base md:text-lg font-light">
+            <p className="text-colorParagraph text-sm md:text-lg font-light">
               | {formatDuration(duration)} |
             </p>
-            <div className="flex gap-2 ">
-              <p className=" text-brand-500 uppercase"> {level}</p>
+            <div className="flex items-center gap-2 ">
+              <p className=" text-brand-500 uppercase text-sm md:text-lg">
+                {" "}
+                {level}
+              </p>
               <span className="flex gap-2">
                 {level === "avanzado" ? (
                   <span className="flex gap-2">

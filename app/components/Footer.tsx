@@ -7,7 +7,7 @@ export const Footer = () => {
   return (
     <div className="footer max-w-7xl mx-auto px-4 md:px-[5%] gap-10 xl:px-0 py-12 flex justify-between flex-wrap lg:flex-nowrap">
       <div className="w-full md:w-fit">
-        <img className="w-40" alt="logo" src="/logo-full.png" />{" "}
+        <img className="w-28 md:w-40" alt="logo" src="/logo-full.png" />{" "}
       </div>
       <div className="flex flex-col gap-3 w-[40%] md:w-fit ">
         <h3 className="text-white font-mdedium">Sobre nosotros</h3>
