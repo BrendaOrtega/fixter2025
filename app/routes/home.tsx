@@ -532,7 +532,7 @@ const HomeHero = () => {
     <motion.section
       ref={ref}
       // style={{ opacity, scale, filter }}
-      className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-12 md:pt-0 md:px-10 "
+      className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-6 md:pt-0 md:px-10 "
     >
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
