@@ -414,7 +414,7 @@ const Benefits = () => {
             />
           </div>
         </div>{" "}
-        <div className="overflow-hidden w-full min-h-[300px] bg-pink-500 lg:w-[50%]">
+        <div className="overflow-hidden w-full min-h-[300px]  lg:w-[50%]">
           <JackPotSection
             images={[
               "/tools/react.svg",
