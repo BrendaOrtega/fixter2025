@@ -268,7 +268,7 @@ const MobileMenu = ({
       }}
       className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden flex items-center justify-center"
     >
-      <div className="text-center flex flex-col  !text-white ">
+      <div className="text-center flex flex-col  !text-white -mt-10 md: ">
         <NavItem
           onClick={toggleMenu}
           as="Link"
