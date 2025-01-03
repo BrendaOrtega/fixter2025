@@ -4,6 +4,7 @@ import {
   Meta,
   Outlet,
   Scripts,
+  useRouteError,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -11,7 +12,6 @@ import stylesheet from "./app.css?url";
 import { MainLayout } from "./routes/Layout";
 import useGoogleTM from "./lib/useGoogleTM";
 import useHotjar from "./lib/useHotjar";
-import { PrimaryButton } from "./components/common/PrimaryButton";
 import { getMetaTags } from "./utils/getMetaTags";
 
 export const meta = () =>
@@ -65,45 +65,28 @@ export default function App() {
   return <Outlet />;
 }
 
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
-  let stack: string | undefined;
+export function ErrorBoundary() {
+  const error = useRouteError();
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "¡Vaya, vaya! Esta página no existe"
-        : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
-  }
-
-  return (
-    <main className="pt-16 p-4 min-h-screen container mx-auto text-white flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <h1 className="text-[110px] md:text-[140px] font-bold text-brand-500 text-center mb-0 pb-0">
-          {message}
+    return (
+      <div>
+        <h1>
+          {error.status} {error.statusText}
         </h1>
-        <p className="text-colorParagraph font-light text-xl text-center -mt-6">
-          {details}
-        </p>
-        <PrimaryButton
-          as="Link"
-          to="/"
-          className="mx-auto mt-8 z-10 relative"
-          title="Volver al inicio"
-          variant="fill"
-        />
-        <img className="mt-0 md:-mt-16" alt="cover" src="/404.png" />
-        {stack && (
-          <pre className="w-full p-4 overflow-x-auto">
-            <code>{stack}</code>
-          </pre>
-        )}{" "}
+        <p>{error.data}</p>
       </div>
-    </main>
-  );
+    );
+  } else if (error instanceof Error) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>{error.message}</p>
+        <p>The stack trace is:</p>
+        <pre>{error.stack}</pre>
+      </div>
+    );
+  } else {
+    return <h1>Unknown Error</h1>;
+  }
 }
