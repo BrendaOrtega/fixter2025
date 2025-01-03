@@ -1,20 +1,25 @@
 import { db } from "~/.server/db";
 import { twMerge } from "tailwind-merge";
-import type { Route } from "./+types/cursos";
 import { Footer } from "~/components/Footer";
-import type { Course } from "@prisma/client";
-import { inView, motion, useInView } from "motion/react";
+import { useCounter } from "~/hooks/useCounter";
+import { motion, useInView } from "motion/react";
+import { getMetaTags } from "~/utils/getMetaTags";
 import { TridiLayers } from "~/components/card3d";
 import { FlipWords } from "~/components/FlipWords";
 import { Banner } from "~/components/common/Banner";
 import { CourseCard } from "~/components/CourseCard";
 import { JackPotSection } from "~/components/Jackpot";
-import { use, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
-import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { getMetaTags } from "~/utils/getMetaTags";
-import { useCounter } from "~/hooks/useCounter";
+
+import type { Route } from "./+types/cursos";
+import type { Course } from "@prisma/client";
+import {
+  useFetcher,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
 
 const companies = [
   {
@@ -78,33 +83,35 @@ export const meta = () =>
       "Aprende las herramientas que usan los profesionales del open source",
   });
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const courses = await db.course.findMany({
-    take: 3,
-    orderBy: {
-      createdAt: "desc",
-    },
-    where: {
-      published: true,
-    },
-    select: {
-      title: true,
-      duration: true,
-      icon: true,
-      isFree: true,
-      createdAt: true,
-      level: true,
-      videoIds: true,
-      id: true,
-      slug: true,
-    },
-  });
-  return { courses };
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const formData = await request.formData();
+  const intent = formData.get("intent") as string;
+  if (intent === "load_highlighted_courses") {
+    return {
+      courses: await db.course.findMany({
+        take: 3,
+        orderBy: {
+          createdAt: "desc",
+        },
+        where: {
+          published: true,
+        },
+        select: {
+          title: true,
+          duration: true,
+          icon: true,
+          isFree: true,
+          createdAt: true,
+          level: true,
+          id: true,
+          slug: true,
+        },
+      }),
+    };
+  }
 };
 
-export default function Route({
-  loaderData: { courses },
-}: Route.ComponentProps) {
+export default function Route() {
   useEffect(() => {
     window.scrollTo({
       top: 0,
@@ -117,7 +124,7 @@ export default function Route({
       <HomeHero />
       <Why />
       <Benefits />
-      <TopCourses courses={courses} />
+      <TopCourses />
       <div className="bg-planet bg-bottom bg-cover ">
         <Comments />
         <Banner variant="home">
@@ -135,7 +142,7 @@ export default function Route({
 }
 
 const Comments = () => {
-  const { ref, count } = useCounter();
+  const { ref, count } = useCounter(); // ref se usa para el inView (detona y resetea)
 
   const formatNumber = (number: number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -342,7 +349,15 @@ export const formatDuration = (secs: number) => {
   return (secs / 60).toFixed(0) + " mins";
 };
 
-const TopCourses = ({ courses }: { courses: Partial<Course>[] }) => {
+const TopCourses = () => {
+  const fetcher = useFetcher();
+
+  useEffect(() => {
+    fetcher.submit({ intent: "load_highlighted_courses" }, { method: "post" });
+  }, []);
+
+  const courses: Partial<Course>[] = fetcher.data?.courses || [];
+
   return (
     <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
       <h2 className="text-3xl md:text-4xl xl:text-5xl  font-bold text-white leading-snug text-center">
@@ -351,7 +366,7 @@ const TopCourses = ({ courses }: { courses: Partial<Course>[] }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-20 mt-20 px-4 md:px-0">
         {courses.map((course) => (
           <CourseCard
-            courseSlug={course.slug}
+            courseSlug={course.slug as string}
             key={course.id}
             course={course}
           />

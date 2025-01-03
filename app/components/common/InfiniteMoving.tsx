@@ -84,8 +84,8 @@ export const InfiniteMovingCards = ({
           pauseOnHover && "hover:[animation-play-state:paused]"
         )}
       >
-        {items.map((item) => (
-          <div className="   w-[120px] h-fit  group cursor-pointer ">
+        {items.map((item, i) => (
+          <div key={i} className="   w-[120px] h-fit  group cursor-pointer ">
             <div className="overflow-hidden  flex justify-center relative">
               <img
                 className="grayscale w-auto max-h-10 object-cover group-hover:scale-125 transition-all"

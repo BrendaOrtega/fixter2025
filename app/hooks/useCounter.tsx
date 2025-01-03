@@ -1,29 +1,40 @@
 import { useInView } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
-export const useCounter = () => {
+export const useCounter = (options?: {
+  add?: number;
+  limit?: number;
+  speed?: number;
+}) => {
+  const { limit = 20_000, speed = 10, add = 50 } = options || {};
   const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const interval = useRef<ReturnType<typeof setInterval>>(null);
+  const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref);
+  const timeout = useRef<ReturnType<typeof setTimeout>>(null);
 
+  const stopCounting = () => timeout.current && clearTimeout(timeout.current);
   const startCounting = () => {
-    interval.current = setTimeout(() => {
-      let limit;
+    timeout.current = setTimeout(() => {
       setCount((n) => {
-        if (n > 19999) limit = true;
-        return n + 500;
+        if (n > limit) {
+          stopCounting();
+          return n;
+        }
+        return n + add;
       });
 
-      !limit && startCounting();
-    }, 100);
+      startCounting();
+    }, speed);
   };
 
   useEffect(() => {
-    startCounting();
     if (!isInView) {
+      stopCounting();
       setCount(0);
+    } else {
+      startCounting();
     }
+    return () => stopCounting();
   }, [isInView]);
 
   return { count, ref };

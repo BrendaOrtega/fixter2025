@@ -13,7 +13,7 @@ export const CourseCard = ({
 }: {
   to?: string;
   courseSlug: string;
-  course: Course;
+  course: Partial<Course>;
 }) => {
   const videosLength = useVideosLength(course.id);
   const z = useSpring(0, { bounce: 0 });
@@ -71,7 +71,7 @@ export const CourseCard = ({
         <motion.img
           style={{ z: imgZ }}
           className="mx-auto h-60 "
-          src={course.icon}
+          src={course.icon || ""}
           alt={course.title}
         />
         <motion.h3

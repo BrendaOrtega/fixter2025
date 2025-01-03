@@ -7,6 +7,7 @@ type Mode = "fast" | "normal" | "slow";
 
 const noop = () => false;
 
+// @todo: rethink this to compilance ssr
 const shuffle = (images: string[]) => {
   const randomized: string[] = [];
   const list = Array.from(images);
@@ -28,9 +29,9 @@ export const JackPotSection = ({
     <section className="bg-transparent w-full -my-4  -z-10 overflow-hidden">
       <main className="flex justify-evenly h-[400px] md:h-[900px] -my-10 gap-4 md:gap-8">
         <Roll mode={mode} reversed srcset={images} />
-        <Roll mode={mode} srcset={shuffle(images)} />
-        <Roll reversed mode={mode} srcset={shuffle(images)} />
-        <Roll srcset={shuffle(images)} mode={mode} />
+        <Roll mode={mode} srcset={images} />
+        <Roll reversed mode={mode} srcset={images} />
+        <Roll srcset={images} mode={mode} />
       </main>
     </section>
   );
