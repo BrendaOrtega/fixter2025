@@ -35,6 +35,7 @@ export default {
         heroProfile: "url('/heroProfile.svg')",
         postbg: "url('/postbg.png')",
         bloob: "url('/bloob.svg')",
+        avatar: "url('/avatar-default.png')",
       },
       fontFamily: {
         sans: [

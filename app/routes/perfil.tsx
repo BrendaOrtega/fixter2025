@@ -31,6 +31,10 @@ export default function Route({
           className="mx-auto"
           putURL={putURL}
         />
+        <p className="text-brand-100 text-center mb-16 lowercase">
+          {user.email}
+        </p>
+
         <section className="flex justify-center px-10 md:px-[5%] xl:px-0">
           <div
             style={{ backgroundImage: "url(https://i.imgur.com/JEAzNoh.png)" }}
@@ -179,7 +183,7 @@ const EditableAvatar = ({
       <section
         className={cn(
           "group border-white border-4",
-          "w-40 h-40 bg-brand-700",
+          "w-40 h-40 bg-avatar bg-cover",
           "relative inline-block my-8 overflow-hidden rounded-full",
           className
         )}

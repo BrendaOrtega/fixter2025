@@ -71,7 +71,7 @@ export const Drawer = ({
         animate={{ x: 0 }}
         exit={{ x: "120%" }}
         transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-        className="bg-dark border border-white/10 lg:w-[40%] md:w-[60%] w-[90%] z-10 h-screen fixed top-0 right-0 shadow-xl rounded-tl-3xl rounded-bl-3xl py-8 px-12 flex flex-col bg-gray-950 text-white"
+        className="bg-dark border border-white/10 lg:w-[40%] md:w-[60%] w-[90%] z-10 h-screen fixed top-0 right-0 shadow-xl rounded-tl-3xl rounded-bl-3xl p-6 md:py-8 md:px-12 flex flex-col bg-gray-950 text-white"
       >
         {header ? (
           header
