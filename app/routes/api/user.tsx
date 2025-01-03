@@ -62,7 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     emailSchema.parse(email);
     // @todo: agenda (detached)
     await sendMagicLink({ email });
-    return redirect("/login?success");
+    return redirect("/login?success=1");
   }
 
   if (intent === "recaptcha_verify_token") {

@@ -1,5 +1,12 @@
-import { FaGoogle, FaMailBulk } from "react-icons/fa";
-import { Form, Link, redirect, type LoaderFunctionArgs } from "react-router";
+import { FaMailBulk } from "react-icons/fa";
+import {
+  Form,
+  Link,
+  redirect,
+  useFetchers,
+  useLoaderData,
+  type LoaderFunctionArgs,
+} from "react-router";
 import { twMerge } from "tailwind-merge";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { validateUserToken } from "~/utils/tokens";
@@ -14,6 +21,7 @@ import type { Route } from "./+types/login";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 import { FcGoogle } from "react-icons/fc";
 import { GiMagicBroom } from "react-icons/gi";
+import Spinner from "~/components/common/Spinner";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -56,16 +64,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 };
 
-export default function Page({
-  success,
-  message,
-  status,
-}: Route.ComponentProps) {
+export default function Route() {
+  const { success, message, status } = useLoaderData(); // WTF?
+  const { googleLoginHandler } = useGoogleLogin();
+  const fetchers = useFetchers(); // hack for Form (not working very well 😡)
+
   if (String(status).includes("4")) {
     return <BadToken message={message} />;
   }
 
-  const { googleLoginHandler } = useGoogleLogin();
+  const isLoading = fetchers[0] && fetchers[0].state !== "idle";
 
   return (
     <section className="flex flex-col gap-4 pt-28 md:pt-40 max-w-sm mx-auto">
@@ -135,7 +143,7 @@ export default function Page({
             )}
           >
             <span className="">
-              <GiMagicBroom />
+              {isLoading ? <Spinner /> : <GiMagicBroom />}
             </span>
             <span>Solicitar Link Mágico</span>
           </button>
