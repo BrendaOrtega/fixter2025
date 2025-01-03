@@ -3,14 +3,6 @@ import { db } from "./db";
 
 const isDev = process.env.NODE_ENV === "development";
 
-export const PRICE_1499 = "price_1QKLfhJ7Zwl77LqnZw5iaY1V";
-export const PRICE_999 = "price_1QKRbEJ7Zwl77Lqn0O8rRwrN";
-
-export const DEV_PRICE = "price_1KBnlPJ7Zwl77LqnixoYRahN"; // 1200
-export const DEV_COUPON = "rXOpoqJe"; // -25%
-export const COUPON_40 = "EphZ17Lv"; // -40%
-export const COUPON_50 = "yYMKDuTC"; // -50%
-
 export const getStripeCheckout = async (options: {
   coupon?: string;
   customer_email?: string;
@@ -27,7 +19,7 @@ export const getStripeCheckout = async (options: {
     })) || {};
   const stripe = new Stripe(
     isDev
-      ? process.env.STRIPE_SECRET_KEY || ""
+      ? (process.env.STRIPE_SECRET_KEY as string)
       : (process.env.STRIPE_SECRET_KEY as string),
     {}
   );
@@ -37,8 +29,8 @@ export const getStripeCheckout = async (options: {
   const successURL = `${location}/cursos/${courseSlug}/viewer`;
   const session = await stripe.checkout.sessions.create({
     metadata: {
-      courseId, // others?
-      courseSlug, // yes!
+      courseId,
+      courseSlug,
       stripeId,
       ...options.metadata,
     },
@@ -51,7 +43,7 @@ export const getStripeCheckout = async (options: {
       },
     ],
     success_url: `${successURL}?success=1`,
-    cancel_url: `${successURL}?videoIndex=10`, // @todo no me acuerdo pa que es el 10
+    cancel_url: `${successURL}?cancel=1`, // @todo no me acuerdo pa que es el 10
     discounts: options.coupon ? [{ coupon: options.coupon }] : undefined,
     allow_promotion_codes: options.coupon ? undefined : true,
     // <= @todo multi moneda?
