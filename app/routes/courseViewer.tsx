@@ -104,6 +104,7 @@ export default function Route({
         />
 
         <VideosMenu
+          courseVersion={course.version}
           courseTitle={course.title}
           courseSlug={course.slug}
           isOpen={isMenuOpen}

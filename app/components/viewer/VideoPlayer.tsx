@@ -82,13 +82,13 @@ export const VideoPlayer = ({
       videoNode.canPlayType("application/vnd.apple.mpegURL");
     console.log(
       hlsSupport(videoRef.current)
-        ? `HLS Supported ✅:: ${hlsSupport(videoRef.current)}`
-        : "HLS Not supported 📵"
+        ? `::HLS Supported ✅:: ${hlsSupport(videoRef.current)}`
+        : "::HLS Not supported 📵::"
     );
     if (hlsSupport(videoRef.current)) {
     } else {
       videoRef.current.src = video?.storageLink;
-      console.log("Fallbacking to storageLink::");
+      console.info("::Fallbacking to storageLink::");
     }
   }, []);
 

@@ -30,7 +30,9 @@ export const VideosMenu = ({
   isOpen,
   setIsOpen,
   courseTitle,
+  courseVersion,
 }: {
+  courseVersion?: string;
   courseSlug: string;
   courseTitle?: string;
   isOpen: boolean;
@@ -117,6 +119,7 @@ export const VideosMenu = ({
                     duration={v?.duration || 60}
                     courseSlug={courseSlug}
                     hasStorageLink={!!v.storageLink}
+                    courseVersion={courseVersion}
                   />
                 ))}
             </div>
@@ -138,6 +141,7 @@ const ListItem = ({
   slug,
   isLocked,
   hasStorageLink,
+  courseVersion,
 }: {
   hasStorageLink?: boolean;
   courseSlug?: string;
@@ -147,8 +151,13 @@ const ListItem = ({
   duration: number | string;
   isCompleted?: boolean;
   title: string;
+  courseVersion: string;
 }) => {
   const formatDuration = (mins: number | string) => {
+    // use seconds if version < 0.0.2 (2025)
+    if (courseVersion !== "0.0.2") {
+      mins = +mins / 60;
+    }
     return Number(mins).toFixed(0) + "m";
   };
   const ref = useRef<HTMLAnchorElement>(null);

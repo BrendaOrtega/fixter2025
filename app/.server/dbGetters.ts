@@ -71,6 +71,7 @@ export const getFreeOrEnrolledCourseFor = async (
         title: true,
         authorName: true,
         slug: true,
+        version: true,
       },
     });
     if (!course) throw data("Course not found", { status: 404 });
