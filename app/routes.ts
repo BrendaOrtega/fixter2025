@@ -39,5 +39,6 @@ export default [
   ]),
   // @todo remove?
   route("courses/*", "routes/courses.tsx"),
+  // 404
   route("*", "routes/404.tsx"),
 ] satisfies RouteConfig;
