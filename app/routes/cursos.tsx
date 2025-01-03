@@ -76,7 +76,7 @@ export const CousesList = ({ courses }: { courses: Course[] }) => {
   const ids = ["645d3dbd668b73b34443789c"];
   //
   return (
-    <div className="grid md:gap-8 xl:gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-16 lg:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto">
+    <div className="grid gap-10 xl:gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-16 lg:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto">
       {courses.map((course) => (
         <CourseCard
           courseSlug={course.slug}

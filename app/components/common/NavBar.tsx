@@ -268,7 +268,7 @@ const MobileMenu = ({
       }}
       className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden flex items-center justify-center"
     >
-      <div className="text-center flex flex-col  !text-white ">
+      <div className="text-center flex flex-col  !text-white -mt-10 md: ">
         <NavItem
           onClick={toggleMenu}
           as="Link"
@@ -310,7 +310,7 @@ const MobileMenu = ({
             index={3}
             isOpen={isOpen}
             title="Iniciar sesión"
-            className="text-4xl my-0 font-light "
+            className="text-4xl my-6 font-light "
           />
         )}
         <div className="flex justify-center items-center gap-6 mt-10">
@@ -435,7 +435,7 @@ const NavItem = ({
         transform: "translateY(20px)",
         filter: "blur(9px)",
       }}
-      className={cn("text-4xl my-10 font-light ", className)}
+      className={cn("text-4xl my-6 font-light ", className)}
       onClick={onClick}
     >
       {title}
