@@ -14,6 +14,7 @@ export default [
   route("subscribe", "routes/subscribe.tsx"),
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
+  route("sitemap.xml", "routes/sitemap.tsx"),
   //stripe webhook
   route("stripe/webhook", "routes/stripeWebhook.ts"),
   // xmas
@@ -36,9 +37,6 @@ export default [
     route("stripe", "routes/api/stripe.tsx"),
     route("file", "routes/api/file.tsx"),
   ]),
-
-  // @todo redirects?
-  // route("courses/:courseSlug/viewer", "routes/courseViewer.tsx"),
-  // route("courses/:courseSlug/detail", "routes/courseDetail.tsx"),
-  // route("courses", "routes/cursos.tsx"),
+  // @todo remove?
+  route("courses/*", "routes/courses.tsx"),
 ] satisfies RouteConfig;

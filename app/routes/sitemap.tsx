@@ -1,7 +1,7 @@
-import type { LoaderFunction } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 
-export const loader: LoaderFunction = async ({ params, request }) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const allPosts = await db.post.findMany({
     where: { published: true },
@@ -32,77 +32,48 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const xml = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
-    // Agregamos nuestras tres feeds a la lista de rutas (y cualquier otra ruta que quieras indexar)
-    // `<url>`,
-    // `<loc>https://fixtergeek.com/feed.xml</loc>`,
-    // `<lastmod>${new Date()}</lastmod>`,
-    // `</url>`,
-
-    // `<url>`,
-    // `<loc>https://fixtergeek.com/feed.json</loc>`,
-    // `<lastmod>${new Date()}</lastmod>`,
-    // `</url>`,
-
-    // `<url>`,
-    // `<loc>https://fixtergeek.com/feed.atom</loc>`,
-    // `<lastmod>${new Date()}</lastmod>`,
-    // `</url>`,
-    // index page, or /blog page
-
     `<url>`,
     `<loc>${url.origin}/eventos</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/faq</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/guides</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/tutoriales</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/subscribe</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/subscribe</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/blog</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     ...postItems,
-
     `<url>`,
     `<loc>${url.origin}/cursos</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/courses</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     `<url>`,
     `<loc>${url.origin}/eventos/remix_oct_2023</loc>`,
     `<lastmod>${new Date()}</lastmod>`,
     `</url>`,
-
     ...courseItems,
-
     `</urlset>`,
   ];
 
