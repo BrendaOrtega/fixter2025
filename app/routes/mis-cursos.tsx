@@ -23,7 +23,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     user,
     courses: enrolledCourses,
-    confirmed: url.searchParams.get("confirmed") === "1",
+    // confirmed: url.searchParams.get("confirmed") === "1",
   };
 };
 
@@ -34,7 +34,7 @@ export const meta = () =>
   });
 
 export default function Route({
-  loaderData: { courses, confirmed }, // @todo confirmed confetti
+  loaderData: { courses }, // @todo confirmed confetti
 }: Route.ComponentProps) {
   const [searchParams] = useSearchParams();
   const isSuccess = searchParams.get("success") === "true" ? true : false;
@@ -56,13 +56,8 @@ export default function Route({
           ) : (
             <p className="text-xl px-4 grid gap-2">
               <span>
-                Para que te animes con tu primer curso, usa el código:
-              </span>
-              <span className="text-3xl text-brand-500 font-bold">
-                COMENZAR15
-              </span>
-              <span>
-                Y obten -15% de descuento ¡en CUALQUIERA de nuestros cursos!
+                Para que te animes con tu primer curso, tenemos un descuento
+                especial para ti.
               </span>
             </p>
           )
@@ -71,16 +66,31 @@ export default function Route({
 
       <main className="flex flex-col dark:bg-brand-black-500 ">
         {isSuccess && <SuccessAlert />}
-        {confirmed && (
-          <SuccessAlert emojis title="Gracias por confirmar tu cuenta" />
-        )}
-        <CourseList courses={courses} />
-
+        {courses.length > 0 ? <CourseList courses={courses} /> : <Empty />}
         <SimpleFooter />
       </main>
     </>
   );
 }
+
+const Empty = () => {
+  return (
+    <div className="flex justify-center mt-12 text-center text-white">
+      <div>
+        <img className="mx-auto w-52" alt="astronaut" src="/discount.png" />
+        <p className="text-xl px-4 grid gap-2">
+          <span>Usa el código</span>
+          <span className="text-3xl text-brand-500 my-2 font-bold">
+            COMENZAR15
+          </span>
+          <span>
+            Y obten -15% de descuento ¡en CUALQUIERA de nuestros cursos!
+          </span>
+        </p>{" "}
+      </div>
+    </div>
+  );
+};
 
 const CourseList = ({ courses }: { courses: Course[] }) => {
   const ids = ["645d3dbd668b73b34443789c"];
@@ -109,7 +119,7 @@ const SuccessAlert = ({
   emojis?: boolean | string[];
   title?: string;
 }) => (
-  <div className="text-center py-3 bg-gradient-to-r from-brand-100 via-brand-300 to-brand-200 text-white">
+  <div className="text-center py-3 bg-gradient-to-r from-brand-500 via-brand-300 to-brand-800 text-white">
     <h2 className="text-xl font-semibold">🎉 {title}</h2>
     <p className="font-medium">Ahora preparate para tu primera clase 🤓</p>
     <EmojiConfetti emojis={emojis} />

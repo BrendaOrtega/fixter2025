@@ -5,7 +5,7 @@ export const magicLinkTemplate = ({ link }: { link: string }) => `
     👋🏼 ¡Hola Geek! 🤓
   </h2>
   <p>
-    Aquí está tu enlace para iniciar seisón. <strong>Así no tienes que recordar contraseñas.</strong> <br />
+    Aquí está tu enlace para iniciar sesión. <strong>Así no tienes que recordar contraseñas.</strong> <br />
   <p>
     <strong>Solo da clic en el enlace y no te olvides de visitar los estrenos.</strong> 🔥
   </p>

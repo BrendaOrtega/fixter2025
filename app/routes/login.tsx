@@ -1,4 +1,3 @@
-import { FaMailBulk } from "react-icons/fa";
 import {
   Form,
   Link,
@@ -22,6 +21,7 @@ import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 import { FcGoogle } from "react-icons/fc";
 import { GiMagicBroom } from "react-icons/gi";
 import Spinner from "~/components/common/Spinner";
+import { BsMailboxFlag } from "react-icons/bs";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -53,7 +53,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
     const session = await placeSession(request, decoded.email);
     // @todo where is best?
-    throw redirect("/mis-cursos?confirmed=1", {
+    throw redirect("/mis-cursos", {
       headers: { "Set-Cookie": await commitSession(session) },
     });
   }
@@ -76,7 +76,7 @@ export default function Route() {
   const isLoading = fetchers[0] && fetchers[0].state !== "idle";
 
   return (
-    <section className="flex flex-col gap-4 pt-28 md:pt-40 max-w-sm mx-auto">
+    <section className="flex flex-col gap-4 pt-28 md:pt-40 max-w-lg px-4 md:px-[5%] xl:px-0 mx-auto">
       <div>
         <img
           className="mx-auto w-40 md:w-64 mb-12"
@@ -106,17 +106,17 @@ export default function Route() {
       {success ? (
         <div className="text-center text-white">
           <span className="flex  justify-center text-4xl">
-            <FaMailBulk />
+            <BsMailboxFlag />
           </span>
-          <p className="text-xl">
-            Checa tu correo <br /> y tu bandeja de spam
+          <p className="text-xl">Ya te enviamos tu Magic link</p>
+          <p className="text-gray-400 text-sm mt-3">
+            Checa bien tu correo, ya ves que luego se esconden en spam. 😬
           </p>
-
-          <p className="text-gray-400 text-sm">
-            Agreganos a tus contactos y abre el link
+          <p className="text-gray-400 text-sm mb-4">
+            No olvides agregarnos a tus contactos.
           </p>
           <a
-            className="underline text-brand-300"
+            className="underline text-brand-500"
             rel="noreferrer"
             target="_blank"
             href="https://gmail.com"
