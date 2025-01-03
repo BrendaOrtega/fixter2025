@@ -6,6 +6,7 @@ import { IoIosArrowBack } from "react-icons/io";
 import { Autor } from "~/components/common/Autor";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
 import { CourseBanner } from "~/components/CourseBanner";
+import { useEffect } from "react";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const post = await db.post.findUnique({
@@ -20,6 +21,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export default function Route({ loaderData: { post } }: Route.ComponentProps) {
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
   return (
     <article className="text-white bg-postbg  bg-bottom bg-contain bg-no-repeat pb-20">
       <section className="flex flex-col max-w-3xl mx-auto py-20 px-4  md:px-[5%] xl:px-0 gap-4 ">
