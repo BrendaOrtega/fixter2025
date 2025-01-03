@@ -116,6 +116,7 @@ export const VideosMenu = ({
                     title={v?.title || ""}
                     duration={v?.duration || 60}
                     courseSlug={courseSlug}
+                    hasStorageLink={!!v.storageLink}
                   />
                 ))}
             </div>
@@ -136,7 +137,9 @@ const ListItem = ({
   isCurrent,
   slug,
   isLocked,
+  hasStorageLink,
 }: {
+  hasStorageLink?: boolean;
   courseSlug?: string;
   isLocked?: boolean;
   slug: string;
@@ -196,10 +199,12 @@ const ListItem = ({
         <span className="ml-auto pr-8">
           <IoMdLock />
         </span>
-      ) : (
+      ) : hasStorageLink ? (
         <div className="text-xs pl-auto ml-auto pr-4">
           {formatDuration(duration)}
         </div>
+      ) : (
+        <p className="ml-auto whitespace-nowrap">👷🏽🚧👷🏻‍♀️</p>
       )}
     </Link>
   );

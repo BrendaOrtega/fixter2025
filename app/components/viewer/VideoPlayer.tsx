@@ -88,7 +88,7 @@ export const VideoPlayer = ({
     if (hlsSupport(videoRef.current)) {
     } else {
       videoRef.current.src = video?.storageLink;
-      console.log("Fallbacking to storageLink::", video?.storageLink);
+      console.log("Fallbacking to storageLink::");
     }
   }, []);
 
