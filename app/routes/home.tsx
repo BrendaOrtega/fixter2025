@@ -389,7 +389,7 @@ const Benefits = () => {
           transform: isInview ? "translateY(0px)" : " translateY(40px)",
           transition: "all 1s ease",
         }}
-        className="border border-colorOutline rounded-3xl px-6 md:pl-10 xl:pl-16 max-w-7xl mx-auto flex-wrap-reverse lg:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[1100px] xl:h-[800px]"
+        className="border border-colorOutline rounded-3xl px-6 md:pl-10 xl:pl-16 max-w-7xl mx-auto flex-wrap-reverse lg:flex-nowrap relative flex gap-6 md:gap-16 h-fit md:h-[1100px] lg:h-[900px] xl:h-[800px]"
       >
         <div className="w-full lg:w-[50%] pt-6 md:pt-10 xl:pt-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white leading-snug">
@@ -449,7 +449,7 @@ const Benefits = () => {
           />
         </div>
         <img
-          className="w-32 md:w-auto absolute -right-6 md:-right-20  bottom-[950px] md:-bottom-20"
+          className="w-32 md:w-44 lg:w-auto absolute -right-6 lg:-right-20  top-48 bottom-[inherit] lg:top-[inherit] lg:-bottom-20"
           alt="cohete"
           src="/rocket.svg"
         />

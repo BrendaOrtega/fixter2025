@@ -33,7 +33,7 @@ export const SuscriptionBanner = () => {
   return (
     <Banner>
       <Form onSubmit={handleSubmit} className="w-full md:w-[60%]">
-        <h3 className="text-3xl md:text-3xl lg:text-4xl text-white font-bold mb-10 !leading-snug">
+        <h3 className="text-[28px] md:text-3xl lg:text-4xl text-white font-bold mb-10 !leading-snug">
           Suscríbete a nuestro Newsletter y mantente al tanto de lo nuevo
         </h3>
         <div className="rounded-full overflow-hidden bg-brand-500/5 w-fit flex">
@@ -41,7 +41,7 @@ export const SuscriptionBanner = () => {
             ref={inputRef}
             required
             name="email"
-            className="border-none bg-transparent placeholder:text-white/20 font-light"
+            className="border-none !w-[60%] md:w-auto bg-transparent placeholder:text-white/20 font-light"
             placeholder="tucorreo@gmail.com"
           />
           <PrimaryButton
