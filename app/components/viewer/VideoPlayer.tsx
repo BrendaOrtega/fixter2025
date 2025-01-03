@@ -155,7 +155,9 @@ export const VideoPlayer = ({
         )}
       </AnimatePresence>
       <video
-        poster={poster}
+        poster={
+          video?.storageLink ? poster || video.poster : "/video-blocked.png"
+        }
         controlsList="nodownload"
         ref={videoRef}
         className="w-full h-full"
