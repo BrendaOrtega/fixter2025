@@ -1,4 +1,4 @@
-import type { User, Video } from "@prisma/client";
+import type { Course, User, Video } from "@prisma/client";
 import { redirect } from "react-router";
 import { db } from "~/.server/db";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
@@ -22,6 +22,7 @@ const getAllVideos = async (courseId: string) => {
       },
     },
     select: {
+      index: true,
       id: true,
       slug: true,
       title: true,
@@ -33,8 +34,10 @@ const getAllVideos = async (courseId: string) => {
     },
   });
   return nakedVideos.map((v, i) =>
-    freeVideos.map((fv) => fv.id).includes(v.id) ? freeVideos[i] : v
-  ) as Partial<Video>[];
+    freeVideos.find((fv) => fv.id === v.id)
+      ? freeVideos.find((fv) => fv.id === v.id)
+      : v
+  );
 };
 // courses
 export const getVideoTitles = async (courseId: string) => {
@@ -79,7 +82,7 @@ export const getFreeOrEnrolledCourseFor = async (
     return {
       videos: await getAllVideos(course.id),
       course,
-    };
+    } as { videos: Partial<Video>[]; course: Partial<Course> };
   }
 };
 

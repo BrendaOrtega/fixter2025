@@ -134,7 +134,7 @@ export default function Page({
             <span className="">
               <GiMagicBroom />
             </span>
-            Solicitar Link Mágico
+            <span>Solicitar Link Mágico</span>
           </button>
         </Form>
       )}

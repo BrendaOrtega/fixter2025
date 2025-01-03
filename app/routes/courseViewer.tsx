@@ -11,6 +11,7 @@ import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/viewer";
+import type { Course } from "@prisma/client";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   // const formData = await request.formData();
@@ -38,7 +39,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     video = videos[0];
   }
 
-  if (!video) throw data(null, { status: 404 });
+  if (!video) throw data("Video not found", { status: 404 });
   const nextVideo = await db.video.findFirst({
     where: {
       index: video.index + 1,
