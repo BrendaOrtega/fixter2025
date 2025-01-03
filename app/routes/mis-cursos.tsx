@@ -1,13 +1,14 @@
-import { useSearchParams, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
-import { getUserOrRedirect } from "~/.server/dbGetters";
-import type { Route } from "./+types/mis-cursos";
-import { EmojiConfetti } from "~/components/common/EmojiConfetti";
-import SimpleFooter from "~/components/common/SimpleFooter";
-import { Header } from "~/components/common/Header";
-import type { Course } from "@prisma/client";
-import { CourseCard } from "~/components/CourseCard";
 import { getMetaTags } from "~/utils/getMetaTags";
+import { Header } from "~/components/common/Header";
+import { CourseCard } from "~/components/CourseCard";
+import { getUserOrRedirect } from "~/.server/dbGetters";
+import SimpleFooter from "~/components/common/SimpleFooter";
+import { EmojiConfetti } from "~/components/common/EmojiConfetti";
+import { useSearchParams, type LoaderFunctionArgs } from "react-router";
+
+import type { Course } from "@prisma/client";
+import type { Route } from "./+types/mis-cursos";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -36,7 +37,7 @@ export default function Route({
   loaderData: { courses, confirmed }, // @todo confirmed confetti
 }: Route.ComponentProps) {
   const [searchParams] = useSearchParams();
-  const isSuccess = searchParams.get("success") === "true" ? true : false; // good to be in the client
+  const isSuccess = searchParams.get("success") === "true" ? true : false;
 
   return (
     <>
@@ -44,22 +45,37 @@ export default function Route({
         className="bg-heroProfile"
         title="Todos tus cursos"
         text={
-          <span>
-            Colecciona todos los cursos uno por uno o adquiere una membresía
-            ¡con acceso a todo! 🤩
-            <br />
-            <br />
-            ¡No tardes en añadir otro! 🤓📚
-          </span>
+          courses.length > 0 ? (
+            <span>
+              Colecciona todos los cursos uno por uno; o adquiere una membresía
+              ¡con acceso a todo, muy pronto! 🤩
+              <br />
+              <br />
+              ¡No tardes en añadir otro! 🤓📚
+            </span>
+          ) : (
+            <p className="text-xl px-4 grid gap-2">
+              <span>
+                Para que te animes con tu primer curso, usa el código:
+              </span>
+              <span className="text-3xl text-brand-500 font-bold">
+                COMENZAR15
+              </span>
+              <span>
+                Y obten -15% de descuento ¡en CUALQUIERA de nuestros cursos!
+              </span>
+            </p>
+          )
         }
       />
 
-      <main className="min-h-screen flex flex-col dark:bg-brand-black-500 ">
+      <main className="flex flex-col dark:bg-brand-black-500 ">
         {isSuccess && <SuccessAlert />}
         {confirmed && (
           <SuccessAlert emojis title="Gracias por confirmar tu cuenta" />
         )}
         <CourseList courses={courses} />
+
         <SimpleFooter />
       </main>
     </>

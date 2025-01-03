@@ -149,7 +149,7 @@ export const updateUserAndSetSession = async (
   },
   options: { request: Request; redirectUrl?: string }
 ) => {
-  const { request, redirectUrl = "/perfil" } = options || {};
+  const { request, redirectUrl = "/mis-cursos" } = options || {};
   await db.user.upsert({
     where: {
       email,

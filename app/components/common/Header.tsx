@@ -21,7 +21,7 @@ export const Header = ({
         <h2 className="text-4xl md:text-5xl xl:text-6xl font-bold text-white">
           {title}
         </h2>
-        <p className="text-colorParagraph text-xl md:text-2xl mt-6 font-light lg:max-w-7xl max-w-lg">
+        <p className="text-colorParagraph text-xl mt-6 font-light lg:max-w-7xl max-w-2xl">
           {text}
         </p>{" "}
       </div>

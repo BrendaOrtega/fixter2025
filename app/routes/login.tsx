@@ -15,11 +15,10 @@ import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 import { FcGoogle } from "react-icons/fc";
 import { GiMagicBroom } from "react-icons/gi";
 
-// @todo Creat la función para eliminar suscripción.
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const { searchParams } = url;
+  // @todo make this a function
   if (searchParams.has("token")) {
     const token = searchParams.get("token");
     invariant(token !== null);
