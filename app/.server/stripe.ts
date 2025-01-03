@@ -11,21 +11,6 @@ export const DEV_COUPON = "rXOpoqJe"; // -25%
 export const COUPON_40 = "EphZ17Lv"; // -40%
 export const COUPON_50 = "yYMKDuTC"; // -50%
 
-// export const get40Checkout = async () => {
-//   return await getStripeCheckout({
-//     coupon: isDev ? DEV_COUPON : COUPON_40,
-//   });
-// };
-
-// export const get50Checkout = async (tokenEmail: string) => {
-//   return await getStripeCheckout({
-//     coupon: isDev ? DEV_COUPON : COUPON_50, // -50%
-//     metadata: {
-//       host: tokenEmail,
-//     },
-//   });
-// };
-
 export const getStripeCheckout = async (options: {
   coupon?: string;
   customer_email?: string;

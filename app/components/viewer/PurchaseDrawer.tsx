@@ -7,6 +7,7 @@ export const PurchaseDrawer = ({ courseSlug }: { courseSlug: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   return (
     <Drawer
+      noOverlay
       header={<></>}
       cta={<></>}
       className="z-50 "

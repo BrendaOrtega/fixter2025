@@ -15,6 +15,8 @@ export default [
   route("subscribe", "routes/subscribe.tsx"),
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
+  //stripe webhook
+  route("stripe/webhook", "routes/stripeWebhook.ts"),
   // xmas
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
 

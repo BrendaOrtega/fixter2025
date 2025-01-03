@@ -6,6 +6,7 @@ import { cn } from "~/utils/cn";
 
 export const Drawer = ({
   children,
+  noOverlay,
   isOpen = false,
   onClose,
   title = "Título",
@@ -14,6 +15,7 @@ export const Drawer = ({
   className,
   header,
 }: {
+  noOverlay?: boolean;
   header?: ReactNode;
   cta?: ReactNode;
   title?: string;
@@ -55,13 +57,15 @@ export const Drawer = ({
 
   const jsx = (
     <article className={cn("relative ", className)}>
-      <motion.button
-        onClick={onClose}
-        id="overlay"
-        className="fixed inset-0 bg-dark/60  z-10"
-        animate={{ backdropFilter: "blur(4px)" }}
-        exit={{ backdropFilter: "blur(0)", opacity: 0 }}
-      />
+      {!noOverlay && (
+        <motion.button
+          onClick={onClose}
+          id="overlay"
+          className="fixed inset-0 bg-dark/60  z-10"
+          animate={{ backdropFilter: "blur(4px)" }}
+          exit={{ backdropFilter: "blur(0)", opacity: 0 }}
+        />
+      )}
       <motion.section
         initial={{ x: "100%" }}
         animate={{ x: 0 }}

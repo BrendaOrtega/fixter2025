@@ -115,7 +115,7 @@ export const VideoPlayer = ({
         )}
         {nextVideo && isEnding && (
           <Link reloadDocument to={nextVideoLink}>
-            <motion.button
+            <motion.div
               // onClick={onClickNextVideo}
               key={nanoid()}
               whileTap={{ scale: 0.99 }}
@@ -142,14 +142,15 @@ export const VideoPlayer = ({
               </div>
               <img
                 alt="poster"
-                src={nextVideo.poster || poster}
-                onError={(e) => {
-                  e.target.src = poster;
-                  e.target.error = false;
+                src={nextVideo.poster || "/public/spaceman.svg"}
+                onError={({ currentTarget }) => {
+                  console.log("WTF?");
+                  currentTarget.onerror = null;
+                  currentTarget.src = "/public/spaceman.svg";
                 }}
                 className="aspect-video w-40 rounded-xl object-cover"
               />
-            </motion.button>
+            </motion.div>
           </Link>
         )}
       </AnimatePresence>

@@ -10,6 +10,7 @@ import { VideosMenu } from "~/components/viewer/VideoPlayerMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
+import type { Route } from "./+types/courseViewer";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   // const formData = await request.formData();
@@ -85,13 +86,11 @@ export default function Route({
 
   return (
     <>
-      {/* <NavBar mode="player" className="m-0" /> */}
       <article className="bg-dark relative overflow-x-hidden pt-20">
         <VideoPlayer
           video={video}
           src={video.storageLink || undefined}
           type={"video/mp4"}
-          poster={video.poster || undefined}
           nextVideo={nextVideo || undefined}
           nextVideoLink={
             nextVideo
