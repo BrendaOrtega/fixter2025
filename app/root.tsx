@@ -6,13 +6,13 @@ import {
   Scripts,
   useRouteError,
 } from "react-router";
+import stylesheet from "./app.css?url";
+import useHotjar from "./lib/useHotjar";
+import useGoogleTM from "./lib/useGoogleTM";
+import { MainLayout } from "./routes/Layout";
+import { getMetaTags } from "./utils/getMetaTags";
 
 import type { Route } from "./+types/root";
-import stylesheet from "./app.css?url";
-import { MainLayout } from "./routes/Layout";
-import useGoogleTM from "./lib/useGoogleTM";
-import useHotjar from "./lib/useHotjar";
-import { getMetaTags } from "./utils/getMetaTags";
 
 export const meta = () =>
   getMetaTags({

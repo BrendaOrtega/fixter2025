@@ -81,7 +81,6 @@ export const SquigglyUnderline = () => {
 
 export const NavBar = () => {
   const [scope, animate] = useAnimate();
-  const { isLoading, googleLoginHandler } = useGoogleLogin();
   const [isOpen, setIsOpen] = useState(false);
   const user = useSelf();
 
@@ -118,11 +117,8 @@ export const NavBar = () => {
             <UserMenu user={user} />
           ) : (
             <Link to="/login">
-              <button
-                className="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60"
-                // onClick={googleLoginHandler}
-              >
-                {isLoading ? <Spinner /> : "Iniciar sesión"}
+              <button className="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60">
+                Iniciar sesión
               </button>{" "}
             </Link>
           )}
@@ -135,12 +131,16 @@ export const NavBar = () => {
   );
 };
 // @todo: improve animation
-const UserMenu = ({ user }: { email: Partial<User> }) => {
+const UserMenu = ({ user }: { user: Partial<User> }) => {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [scope, animate] = useAnimate();
+
   const toggleMenu = async () => {
-    setIsOpen((v) => !v);
+    setIsOpen((o) => !o);
+  };
+
+  useEffect(() => {
     if (isOpen) {
       animate(
         scope.current,
@@ -156,7 +156,6 @@ const UserMenu = ({ user }: { email: Partial<User> }) => {
         { delay: stagger(0.2) }
       );
     } else {
-      // exit
       animate("button", { x: -10, opacity: 0, filter: "blur(4px)" });
       animate(
         scope.current,
@@ -164,7 +163,7 @@ const UserMenu = ({ user }: { email: Partial<User> }) => {
         { type: "spring", bounce: 0, duration: 0.25 }
       );
     }
-  };
+  }, [isOpen]);
 
   const handleNavigation = (path: To) => {
     toggleMenu();
@@ -203,12 +202,6 @@ const UserMenu = ({ user }: { email: Partial<User> }) => {
           </span>
           <span>Mis cursos</span>
         </button>
-        {/* <button className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4">
-          <span>
-            <MdOutlineFeedback />
-          </span>
-          <span>Feedback</span>
-        </button> */}
         <button
           onClick={() => handleNavigation("/api/user?signout=1")}
           className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4 rounded-xl"
@@ -228,7 +221,7 @@ export const Avatar = ({
   onClick,
 }: {
   onClick?: () => void;
-  email: Partial<User>;
+  user: Partial<User>;
 }) => {
   return (
     <button onClick={onClick} className="w-10 hover:scale-105 active:scale-100">
