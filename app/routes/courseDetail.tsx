@@ -258,18 +258,20 @@ const CourseHeader = ({ course }: { course: Course }) => {
               as="Link"
               to={`/cursos/${slug}/viewer`}
               variant="fill"
-              title="Empezar gratis"
+              title={course.isFree ? "Ver curso 📺" : "Empezar gratis"}
             />
-            <Form method="POST" action="/api/stripe">
-              <input type="hidden" name="courseSlug" value={slug} />
-              <PrimaryButton
-                variant="ghost"
-                name="intent"
-                value="checkout"
-                type="submit"
-                title={`Comprar $${basePrice || 499} mxn`}
-              />
-            </Form>
+            {!course.isFree && (
+              <Form method="POST" action="/api/stripe">
+                <input type="hidden" name="courseSlug" value={slug} />
+                <PrimaryButton
+                  variant="ghost"
+                  name="intent"
+                  value="checkout"
+                  type="submit"
+                  title={`Comprar $${basePrice || 499} mxn`}
+                />
+              </Form>
+            )}
           </div>
         </div>
         <div className="w-full md:w-[40%]  flex justify-center h-full items-center">

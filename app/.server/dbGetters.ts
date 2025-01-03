@@ -1,5 +1,5 @@
 import type { Course, User, Video } from "@prisma/client";
-import { redirect } from "react-router";
+import { data, redirect } from "react-router";
 import { db } from "~/.server/db";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { commitSession, getSession } from "~/sessions";
@@ -59,17 +59,34 @@ export const getFreeOrEnrolledCourseFor = async (
   slug: string
 ) => {
   let course;
-  // free only
+  // free videos only
   if (!user) {
     course = await db.course.findUnique({
       where: {
         slug,
       },
-      select: { id: true, title: true, authorName: true, slug: true },
+      select: {
+        isFree: true,
+        id: true,
+        title: true,
+        authorName: true,
+        slug: true,
+      },
     });
-    if (!course) return null;
+    if (!course) throw data("Course not found", { status: 404 });
+    // free course
+    if (course.isFree) {
+      const videosForFreeCourse = await db.video.findMany({
+        where: {
+          courseIds: {
+            has: course.id,
+          },
+        },
+      });
+      return { course, videos: videosForFreeCourse };
+    }
     const videos = await getAllVideos(course.id);
-    return { course, videos }; // could be null
+    return { course, videos };
   } else {
     // check if enrolled
     const course = await db.course.findFirst({

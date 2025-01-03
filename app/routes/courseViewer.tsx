@@ -10,8 +10,6 @@ import { VideosMenu } from "~/components/viewer/VideoPlayerMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
-import type { Route } from "./+types/viewer";
-import type { Course } from "@prisma/client";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   // const formData = await request.formData();
@@ -23,6 +21,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const user = await getUserOrNull(request);
+
   const { course, videos } = await getFreeOrEnrolledCourseFor(
     user,
     params.courseSlug as string
@@ -54,15 +53,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 
   const moduleNames = ["nomodules"];
-  //   const moduleNames = [...new Set(videos.map((video) => video.moduleName))];
-
+  const removeStorageLink = !isPurchased && !video.isPublic && !course.isFree;
   return {
     course,
     nextVideo,
     user,
     isPurchased,
-    video:
-      !isPurchased && !video.isPublic ? { ...video, storageLink: "" } : video,
+    video: removeStorageLink ? { ...video, storageLink: "" } : video,
     videos,
     moduleNames,
     searchParams: {
@@ -84,6 +81,8 @@ export default function Route({
 }: Route.ComponentProps) {
   const [successIsOpen, setSuccessIsOpen] = useState(searchParams.success);
   const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const showPurchaseDrawer = !isPurchased && !video.isPublic && !course.isFree;
+
   return (
     <>
       {/* <NavBar mode="player" className="m-0" /> */}
@@ -114,13 +113,11 @@ export default function Route({
           videos={videos}
           moduleNames={moduleNames.filter((n) => typeof n === "string")}
           defaultOpen={!searchParams.success}
-          isLocked={!isPurchased}
+          isLocked={course.isFree ? false : !isPurchased}
         />
       </article>
       {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
-      {!isPurchased && !video.isPublic && (
-        <PurchaseDrawer courseSlug={course.slug} />
-      )}
+      {showPurchaseDrawer && <PurchaseDrawer courseSlug={course.slug} />}
     </>
   );
 }

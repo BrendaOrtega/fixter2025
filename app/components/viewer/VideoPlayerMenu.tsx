@@ -107,7 +107,7 @@ export const VideosMenu = ({
                 .sort((a, b) => (a.index < b.index ? -1 : 1))
                 .map((v) => (
                   <ListItem
-                    // why this is not receiving the video as a prop? ...because I am creative... 😄
+                    // why this is not receiving the video as a prop? ...because I am creative... 🫤
                     isLocked={v?.isPublic ? false : isLocked}
                     isCompleted={videosCompleted.includes(v?.slug)}
                     isCurrent={currentVideoSlug === v?.slug}
