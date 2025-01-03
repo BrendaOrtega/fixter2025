@@ -25,7 +25,7 @@ export const getStripeCheckout = async (options: {
   );
   const location = isDev
     ? "http://localhost:3000"
-    : "https://fixter2025.fly.dev"; // @todo move to prod
+    : "https://www.fixtergeek.com"; // @todo move to prod
   const successURL = `${location}/cursos/${courseSlug}/viewer`;
   const session = await stripe.checkout.sessions.create({
     metadata: {
