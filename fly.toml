@@ -13,5 +13,5 @@ primary_region = 'dfw'
 
 [[vm]]
   size = 'shared-cpu-1x'
-   memory = "256mb"
+  memory = "256mb"
 
