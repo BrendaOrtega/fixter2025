@@ -2,7 +2,7 @@ import { PrimaryButton } from "./common/PrimaryButton";
 
 export const CourseBanner = () => {
   return (
-    <div className="px-8 md:px-[5%] xl:px-0 max-w-3xl mx-auto">
+    <div className="px-4 md:px-[5%] xl:px-0 max-w-3xl mx-auto">
       <div className="p-6 md:p-8 xl:p-12 rounded-3xl bg-animationsBannerMobile md:bg-animationsBanner bg-cover bg-right  h-[280px] my-16">
         <div className="w-full md:w-[60%]">
           <span className="text-brand-500 text-2xl font-semibold">

@@ -68,10 +68,14 @@ export default function Page({
   const { googleLoginHandler } = useGoogleLogin();
 
   return (
-    <section className="flex flex-col gap-4 pt-40 max-w-sm mx-auto">
+    <section className="flex flex-col gap-4 pt-28 md:pt-40 max-w-sm mx-auto">
       <div>
-        <img className="mx-auto w-64 mb-12" src="/robot.svg" alt="robot" />
-        <h2 className="text-2xl font-bold text-white text-center">
+        <img
+          className="mx-auto w-40 md:w-64 mb-12"
+          src="/robot.svg"
+          alt="robot"
+        />
+        <h2 className="text-xl md:text-2xl font-bold text-white text-center">
           Inicia sesión o crea una cuenta
         </h2>
         <button
