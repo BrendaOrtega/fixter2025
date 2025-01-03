@@ -12,7 +12,7 @@ import { AiFillInstagram } from "react-icons/ai";
 
 export default function SimpleFooter() {
   return (
-    <section className="mt-20 bg-brand-black-500 py-8  pb-20">
+    <section className="mt-20 bg-brand-black-500 py-8  pb-12">
       <div className="flex justify-center items-center gap-3">
         <a
           rel="noreferrer"
