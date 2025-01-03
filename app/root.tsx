@@ -68,25 +68,24 @@ export default function App() {
 export function ErrorBoundary() {
   const error = useRouteError();
 
-  if (isRouteErrorResponse(error)) {
-    return (
-      <div>
-        <h1>
-          {error.status} {error.statusText}
-        </h1>
-        <p>{error.data}</p>
-      </div>
-    );
-  } else if (error instanceof Error) {
-    return (
-      <div>
-        <h1>Error</h1>
-        <p>{error.message}</p>
-        <p>The stack trace is:</p>
-        <pre>{error.stack}</pre>
-      </div>
-    );
-  } else {
-    return <h1>Unknown Error</h1>;
-  }
+  const is404 = isRouteErrorResponse(error);
+  const isError = error instanceof Error;
+
+  return (
+    <div className="text-white pt-20">
+      <h1>
+        {!isError && !is404 ? (
+          <h1>Unknown Error</h1>
+        ) : is404 ? (
+          <>
+            {error.status} {error.statusText}
+          </>
+        ) : (
+          <p>{error.message}</p>
+        )}
+      </h1>
+      {is404 && <p>{error.data}</p>}
+      {isError && <pre>{error.stack}</pre>}
+    </div>
+  );
 }

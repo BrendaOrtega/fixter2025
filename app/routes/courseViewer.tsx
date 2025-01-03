@@ -1,5 +1,6 @@
 import {
-  data,
+  // data,
+  redirect,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -39,7 +40,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     video = videos[0];
   }
 
-  if (!video) throw data("Video not found", { status: 404 });
+  // if (!video) throw data("Video not found", { status: 404 });
+  if (!video) throw redirect("/404"); // @todo throw a proper 404!
   const nextVideo = await db.video.findFirst({
     where: {
       index: video.index + 1,

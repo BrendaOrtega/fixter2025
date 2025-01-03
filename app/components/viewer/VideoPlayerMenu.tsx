@@ -30,9 +30,7 @@ export const VideosMenu = ({
   isOpen,
   setIsOpen,
   courseTitle,
-  courseVersion,
 }: {
-  courseVersion?: string;
   courseSlug: string;
   courseTitle?: string;
   isOpen: boolean;
@@ -118,8 +116,6 @@ export const VideosMenu = ({
                     title={v?.title || ""}
                     duration={v?.duration || 60}
                     courseSlug={courseSlug}
-                    hasStorageLink={!!v.storageLink}
-                    courseVersion={courseVersion}
                   />
                 ))}
             </div>
@@ -140,10 +136,7 @@ const ListItem = ({
   isCurrent,
   slug,
   isLocked,
-  hasStorageLink,
-  courseVersion,
 }: {
-  hasStorageLink?: boolean;
   courseSlug?: string;
   isLocked?: boolean;
   slug: string;
@@ -151,13 +144,10 @@ const ListItem = ({
   duration: number | string;
   isCompleted?: boolean;
   title: string;
-  courseVersion: string;
 }) => {
   const formatDuration = (mins: number | string) => {
-    // use seconds if version < 0.0.2 (2025)
-    if (courseVersion !== "0.0.2") {
-      mins = +mins / 60;
-    }
+    // @todo use seconds if version < 0.0.2 (2025)
+    mins = +mins / 60;
     return Number(mins).toFixed(0) + "m";
   };
   const ref = useRef<HTMLAnchorElement>(null);
@@ -208,12 +198,10 @@ const ListItem = ({
         <span className="ml-auto pr-8">
           <IoMdLock />
         </span>
-      ) : hasStorageLink ? (
+      ) : (
         <div className="text-xs pl-auto ml-auto pr-4">
           {formatDuration(duration)}
         </div>
-      ) : (
-        <p className="ml-auto whitespace-nowrap">👷🏽🚧👷🏻‍♀️</p>
       )}
     </Link>
   );
