@@ -31,11 +31,11 @@ export const GlobalBanner = ({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -160 }}
           transition={{ type: "spring", bounce: 0.4 }}
-          className="fixed bottom-8 left-8 w-[480px] z-[999] rounded-xl overflow-hidden h-[240px] hidden md:flex "
+          className="fixed bottom-8 left-8 w-[480px] z-[999] rounded-xl overflow-hidden h-[240px] hidden md:flex  "
         >
           <div
             className={cn(
-              "bg-animationsBanner bg-bottom bg-cover bg-no-repeat h-full  px-6  items-center justify-between ",
+              "bg-animationsBanner bg-bottom bg-cover bg-no-repeat h-full  px-6 pt-8 items-center justify-between ",
               {
                 "bg-bannerHome ": variant === "home",
               }
@@ -54,16 +54,16 @@ export const GlobalBanner = ({
                 />{" "}
               </button>
               <img
-                className="h-[120px] animate-rotate absolute right-0 -bottom-8"
+                className="h-[120px] animate-rotate absolute right-0 -bottom-6"
                 src="https://i.imgur.com/aThPBNV.png"
                 alt="badge"
               />
-              <div className="pr-3">
+              <div className="pr-3 mt-2">
                 <h2 className="font-bold text-xl text-brand-100">
                   Compra el curso de Animaciones con React + Motion a precio
                   especial 🔥🔥🔥
                 </h2>
-                <p className="text-white/60 mt-1 font-light">
+                <p className="text-white/60 mt-2 font-light">
                   Aprevecha el{" "}
                   <span className="font-bold text-brand-500">
                     30% y 40% de descuento
