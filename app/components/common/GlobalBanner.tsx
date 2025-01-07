@@ -31,11 +31,11 @@ export const GlobalBanner = ({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -160 }}
           transition={{ type: "spring", bounce: 0.4 }}
-          className="fixed bottom-8 left-8 w-[480px] z-[999] rounded-xl overflow-hidden h-[240px]"
+          className="fixed bottom-8 left-8 w-[480px] z-[999] rounded-xl overflow-hidden h-[240px] hidden md:flex "
         >
           <div
             className={cn(
-              "bg-animationsBanner bg-bottom bg-cover bg-no-repeat h-full  px-6  items-center justify-between hidden md:flex ",
+              "bg-animationsBanner bg-bottom bg-cover bg-no-repeat h-full  px-6  items-center justify-between ",
               {
                 "bg-bannerHome ": variant === "home",
               }
