@@ -36,6 +36,7 @@ export default {
         postbg: "url('/postbg.png')",
         bloob: "url('/bloob.svg')",
         avatar: "url('/avatar-default.png')",
+        globalbanner: "url('/blobpng.png')",
       },
       fontFamily: {
         sans: [
