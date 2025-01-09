@@ -36,6 +36,7 @@ export default {
         postbg: "url('/postbg.png')",
         bloob: "url('/bloob.svg')",
         avatar: "url('/avatar-default.png')",
+        globalbanner: "url('/blobpng.png')",
       },
       fontFamily: {
         sans: [
@@ -59,8 +60,16 @@ export default {
             transform: "translate(calc(-50% - 0.5rem))",
           },
         },
+        rotate: {
+          "0%": { rotate: "0deg" },
+          "25%": { rotate: "6deg" },
+          "50%": { rotate: "0deg" },
+          "75%": { rotate: "-6deg" },
+          "100%": { rotate: "0deg" },
+        },
       },
       animation: {
+        rotate: "rotate 4s infinite linear",
         shine: "shine 5s linear infinite",
         scroll:
           "scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite",
