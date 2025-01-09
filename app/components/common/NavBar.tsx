@@ -9,12 +9,9 @@ import { useEffect, useState } from "react";
 import type { User } from "@prisma/client";
 import { Youtube } from "../icons/Youtube";
 import { useSelf } from "~/hooks/useSelf";
-import { signal } from "@preact/signals";
 import { cn } from "~/utils/cn";
 import { Triangle } from "./Triangle";
-import { MdOutlineFeedback } from "react-icons/md";
 import { FiLogOut } from "react-icons/fi";
-import Spinner from "./Spinner";
 import { IoIosVideocam } from "react-icons/io";
 
 const navigation = [

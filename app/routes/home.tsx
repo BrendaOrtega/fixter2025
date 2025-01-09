@@ -1,12 +1,9 @@
-import { Footer } from "~/components/Footer";
 import { getMetaTags } from "~/utils/getMetaTags";
-import { Banner } from "~/components/common/Banner";
 import { useEffect } from "react";
-import { PrimaryButton } from "~/components/common/PrimaryButton";
 import {
   Benefits,
-  Comments,
   HomeHero,
+  SocialPlanet,
   TopCourses,
   Why,
 } from "./home/components";
@@ -19,6 +16,7 @@ export const meta = () =>
       "Aprende las herramientas que usan los profesionales del open source",
   });
 
+// esto es para prerender, si no: evitar.
 export const loader = async () => {
   return {
     topCourses: await db.course.findMany({
@@ -54,18 +52,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       <Why />
       <Benefits />
       <TopCourses courses={topCourses} />
-      <div className="bg-planet bg-bottom bg-cover ">
-        <Comments />
-        <Banner variant="home">
-          <div className="w-full md:w-[60%]">
-            <h3 className="text-3xl md:text-4xl text-white font-bold mb-10 !leading-snug">
-              ¿Listo para mejorar tus skills en programación?
-            </h3>{" "}
-            <PrimaryButton as="Link" to="/cursos" title="Explorar cursos" />
-          </div>
-        </Banner>
-        <Footer />
-      </div>
+      <SocialPlanet />
     </main>
   );
 }

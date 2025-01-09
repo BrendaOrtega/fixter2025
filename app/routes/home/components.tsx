@@ -10,6 +10,8 @@ import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
 import type { Course } from "@prisma/client";
 import { useFetcher } from "react-router";
+import { Footer } from "~/components/Footer";
+import { Banner } from "~/components/common/Banner";
 
 const companies = [
   {
@@ -66,6 +68,23 @@ const companies = [
     image: "https://i.imgur.com/S7Ihn5W.png",
   },
 ];
+
+export const SocialPlanet = () => {
+  return (
+    <div className="bg-planet bg-bottom bg-cover ">
+      <Comments />
+      <Banner variant="home">
+        <div className="w-full md:w-[60%]">
+          <h3 className="text-3xl md:text-4xl text-white font-bold mb-10 !leading-snug">
+            ¿Listo para mejorar tus skills en programación?
+          </h3>{" "}
+          <PrimaryButton as="Link" to="/cursos" title="Explorar cursos" />
+        </div>
+      </Banner>
+      <Footer />
+    </div>
+  );
+};
 
 export const Comments = () => {
   const { ref, count } = useCounter(); // ref se usa para el inView (detona y resetea)
