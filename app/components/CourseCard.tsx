@@ -8,11 +8,9 @@ import { useRef } from "react";
 
 export const CourseCard = ({
   course,
-  courseSlug,
   to,
 }: {
   to?: string;
-  courseSlug: string;
   course: Partial<Course>;
 }) => {
   const videosLength = useVideosLength(course.id);
@@ -39,7 +37,7 @@ export const CourseCard = ({
 
   return (
     <Link
-      to={to || `/cursos/${courseSlug}/detalle`}
+      to={to || `/cursos/${course.slug}/detalle`}
       className="grid-cols-1 relative w-full h-[480px]"
       style={{
         transformStyle: "preserve-3d",
