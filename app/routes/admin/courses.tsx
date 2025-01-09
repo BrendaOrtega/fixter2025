@@ -5,6 +5,7 @@ import type { Course } from "@prisma/client";
 import { useState } from "react";
 import { Drawer } from "~/components/viewer/SimpleDrawer";
 import { CourseForm } from "~/components/forms/CourseForm";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const intent = (await request.formData()).get("intent");
@@ -21,7 +22,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  // await getAdminOrRedirect(request, { next: "/admin/cursos" });
+  await getAdminOrRedirect(request, { next: "/admin/cursos" });
 
   const courses = await db.course.findMany({ orderBy: { updatedAt: "desc" } });
   return { courses };
