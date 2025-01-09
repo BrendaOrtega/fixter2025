@@ -97,7 +97,7 @@ export const NavBar = () => {
   return (
     <section
       ref={scope}
-      className=" w-full px-6 md:px-[5%] xl:px-0 fixed backdrop-blur"
+      className=" w-full px-6 md:px-[5%] xl:px-0 fixed backdrop-blur z-10"
     >
       <nav className="flex relative z-[120] max-w-7xl mx-auto py-2 md:py-4 items-center justify-between ">
         <Link to="/">

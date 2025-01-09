@@ -275,17 +275,18 @@ export const formatDuration = (secs: number) => {
   return (secs / 60).toFixed(0) + " mins";
 };
 
-export const TopCourses = () => {
+export const TopCourses = ({ courses }: { courses?: Partial<Course>[] }) => {
   const fetcher = useFetcher();
 
   useEffect(() => {
+    if (courses) return;
     fetcher.submit(
       { intent: "get_top_courses" },
       { method: "POST", action: "/api/course" }
     );
-  }, []);
+  }, [courses]);
 
-  const courses: Partial<Course>[] = fetcher.data || [];
+  const c: Partial<Course>[] = courses || fetcher.data || [];
 
   return (
     <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
@@ -293,7 +294,7 @@ export const TopCourses = () => {
         Cursos más vendidos
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-20 mt-20 px-4 md:px-0">
-        {courses.map((course) => (
+        {c.map((course) => (
           <CourseCard key={course.id} course={course} />
         ))}
       </div>

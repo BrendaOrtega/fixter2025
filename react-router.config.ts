@@ -1,10 +1,20 @@
 import type { Config } from "@react-router/dev/config";
+import { db } from "./app/.server/db";
 
 export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
   ssr: true,
   async prerender() {
-    return ["/"];
+    const posts = await db.post.findMany({
+      where: { published: true },
+      select: { slug: true },
+    });
+    const courses = await db.course.findMany({
+      where: { published: true },
+      select: { slug: true },
+    });
+    return ["/", "/cursos", "/blog"]
+      .concat(posts.map((post) => `/blog/${post.slug}`))
+      .concat(courses.map((course) => `/cursos/${course.slug}/detalle`));
+    // return ["/", "/blog", "/cursos"];
   },
 } satisfies Config;

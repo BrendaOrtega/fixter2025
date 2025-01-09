@@ -219,7 +219,7 @@ const Searcher = ({
           ref={inputRef}
           disabled={isLoading}
           onChange={onChange}
-          defaultValue={defaultSearch}
+          // defaultValue={defaultSearch}
           className=" pr-3   md:w-[100%] bg-brand-500/5 h-12 w-[100%] rounded-full px-6 pl-16 transition-all focus:ring-brand-500 focus:border-none placeholder:text-white/40 "
           placeholder="¿Qué quieres aprender hoy?"
         ></input>
