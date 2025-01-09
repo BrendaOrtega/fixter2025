@@ -139,7 +139,7 @@ export const getAdminOrRedirect = async (
   request: Request,
   config?: { redirectURL?: string; next?: string }
 ) => {
-  const { redirectURL = "/login", next = "/perfil" } = config || {};
+  const { redirectURL = "/login", next = "/" } = config || {};
   const searchParams = createSearchParams([["next", next]]);
   const cookie = request.headers.get("cookie");
   const session = await getSession(cookie);

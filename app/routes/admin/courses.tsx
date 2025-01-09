@@ -22,7 +22,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await getAdminOrRedirect(request, { next: "/admin/cursos" });
+  // await getAdminOrRedirect(request, { next: "/admin/cursos" });
 
   const courses = await db.course.findMany({ orderBy: { updatedAt: "desc" } });
   return { courses };

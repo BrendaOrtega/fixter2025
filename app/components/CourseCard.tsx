@@ -32,11 +32,11 @@ export const CourseCard = ({
       z.set(0);
     },
   });
-
   const textZ = useTransform(z, [0, 30], [0, 40]);
   const imgZ = useTransform(z, [0, 30], [0, 50]);
   const ref = useRef(null);
   const isInview = useInView(ref, { once: true });
+
   return (
     <Link
       to={to || `/cursos/${courseSlug}/detalle`}
@@ -51,9 +51,6 @@ export const CourseCard = ({
       }}
       ref={ref}
     >
-      {/* {!isHovered && (
-        <div className="bg-brand-500/40 blur-xl w-full h-[480px] rounded-3xl" />
-      )} */}
       <motion.div
         style={{
           rotateX: springX,

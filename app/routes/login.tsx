@@ -1,62 +1,53 @@
-import {
-  Form,
-  Link,
-  redirect,
-  useFetchers,
-  useLoaderData,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { Form, Link, redirect, useFetchers, useLoaderData } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
-import { validateUserToken } from "~/utils/tokens";
-import invariant from "tiny-invariant";
-import {
-  getOrCreateUser,
-  placeSession,
-  updateOrCreateSuscription,
-} from "~/.server/dbGetters";
+// import { validateUserToken } from "~/utils/tokens";
+// import {
+//   getOrCreateUser,
+//   placeSession,
+//   updateOrCreateSuscription,
+// } from "~/.server/dbGetters";
 import { commitSession } from "~/sessions";
-import type { Route } from "./+types/login";
 import { useGoogleLogin } from "~/hooks/useGoogleLogin";
 import { FcGoogle } from "react-icons/fc";
 import { GiMagicBroom } from "react-icons/gi";
 import Spinner from "~/components/common/Spinner";
 import { BsMailboxFlag } from "react-icons/bs";
+import type { Route } from "./+types/login";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const { searchParams } = url;
   // @todo make this a function
-  if (searchParams.has("token")) {
-    const token = searchParams.get("token");
-    invariant(token !== null);
-    const { isValid, decoded } = await validateUserToken(token);
-    if (!isValid || !decoded?.email) {
-      // for ui
-      return {
-        success: false,
-        status: 403,
-        message: "El token no es valido ⛓️‍💥",
-      };
-    }
-    // user =>
-    await getOrCreateUser(decoded.email, {
-      confirmed: true, // because of token
-      tags: decoded.tags || [],
-    }); // update confirm
-    // @TODO remove this using sendgrid api
-    if (decoded.tags) {
-      await updateOrCreateSuscription(decoded.email, {
-        confirmed: true,
-        tags: decoded.tags,
-      });
-    }
-    const session = await placeSession(request, decoded.email);
-    // @todo where is best?
-    throw redirect("/mis-cursos", {
-      headers: { "Set-Cookie": await commitSession(session) },
-    });
-  }
+  // if (searchParams.has("token")) {
+  //   const token = searchParams.get("token") as string;
+  //   const { isValid, decoded } = await validateUserToken(token);
+  //   if (!isValid || !decoded?.email) {
+  //     // for ui
+  //     return {
+  //       success: false,
+  //       status: 403,
+  //       message: "El token no es valido ⛓️‍💥",
+  //     };
+  //   }
+  //   // user =>
+  //   await getOrCreateUser(decoded.email, {
+  //     confirmed: true, // because of token
+  //     tags: decoded.tags || [],
+  //   }); // update confirm
+  //   // @TODO remove this using sendgrid api
+  //   if (decoded.tags) {
+  //     await updateOrCreateSuscription(decoded.email, {
+  //       confirmed: true,
+  //       tags: decoded.tags,
+  //     });
+  //   }
+  //   const session = await placeSession(request, decoded.email);
+  //   // @todo where is best?
+  //   throw redirect("/mis-cursos", {
+  //     headers: { "Set-Cookie": await commitSession(session) },
+  //   });
+  // }
   return {
     success: searchParams.has("success"),
     status: 200,
@@ -64,7 +55,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 };
 
-export default function Route() {
+export default function Page() {
   const { success, message, status } = useLoaderData(); // WTF?
   const { googleLoginHandler } = useGoogleLogin();
   const fetchers = useFetchers(); // hack for Form (not working very well 😡)

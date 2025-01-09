@@ -181,7 +181,6 @@ export const CourseForm = ({
             label="Nombre del autor"
             name="authorName"
             placeholder="blissmo"
-            defaultValue={"Héctorbliss"}
             defaultValue={editingVideo?.authorName}
           />
           <Input

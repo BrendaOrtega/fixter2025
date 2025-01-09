@@ -57,17 +57,6 @@ export const getRedirectLogin = async () => {
   return result.user;
 };
 
-export const facebookLogin = async () => {
-  const provider = new FacebookAuthProvider();
-  provider.addScope("email");
-  const auth = getAuth();
-  auth.languageCode = "es";
-  const result = await signInWithPopup(auth, provider);
-  const credential = FacebookAuthProvider.credentialFromResult(result);
-  console.log("Credential: ", credential);
-  return result;
-};
-
 export const googleLogin = async (): Promise<UserCredential> => {
   const provider = new GoogleAuthProvider();
   provider.addScope("email");

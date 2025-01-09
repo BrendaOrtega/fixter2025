@@ -12,14 +12,8 @@ import { JackPotSection } from "~/components/Jackpot";
 import { useEffect, useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
-
-import type { Route } from "./+types/cursos";
 import type { Course } from "@prisma/client";
-import {
-  useFetcher,
-  type ActionFunctionArgs,
-  type LoaderFunctionArgs,
-} from "react-router";
+import type { Route } from "./+types/home";
 
 const companies = [
   {
@@ -83,35 +77,33 @@ export const meta = () =>
       "Aprende las herramientas que usan los profesionales del open source",
   });
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData();
-  const intent = formData.get("intent") as string;
-  if (intent === "load_highlighted_courses") {
-    return {
-      courses: await db.course.findMany({
-        take: 3,
-        orderBy: {
-          createdAt: "desc",
-        },
-        where: {
-          published: true,
-        },
-        select: {
-          title: true,
-          duration: true,
-          icon: true,
-          isFree: true,
-          createdAt: true,
-          level: true,
-          id: true,
-          slug: true,
-        },
-      }),
-    };
-  }
+export const loader = async () => {
+  return {
+    topCourses: await db.course.findMany({
+      take: 3,
+      orderBy: {
+        createdAt: "desc",
+      },
+      where: {
+        published: true,
+      },
+      select: {
+        title: true,
+        duration: true,
+        icon: true,
+        isFree: true,
+        createdAt: true,
+        level: true,
+        id: true,
+        slug: true,
+      },
+    }),
+  };
 };
 
-export default function Route() {
+export default function Page({ loaderData }: Route.ComponentProps) {
+  const { topCourses } = loaderData;
+
   useEffect(() => {
     window.scrollTo({
       top: 0,
@@ -119,12 +111,13 @@ export default function Route() {
       behavior: "smooth",
     });
   }, []);
+
   return (
     <main className="overflow-hidden">
       <HomeHero />
       <Why />
       <Benefits />
-      <TopCourses />
+      <TopCourses courses={topCourses} />
       <div className="bg-planet bg-bottom bg-cover ">
         <Comments />
         <Banner variant="home">
@@ -349,28 +342,22 @@ export const formatDuration = (secs: number) => {
   return (secs / 60).toFixed(0) + " mins";
 };
 
-const TopCourses = () => {
-  const fetcher = useFetcher();
-
-  useEffect(() => {
-    fetcher.submit({ intent: "load_highlighted_courses" }, { method: "post" });
-  }, []);
-
-  const courses: Partial<Course>[] = fetcher.data?.courses || [];
-
+const TopCourses = ({ courses }: { courses: Partial<Course>[] }) => {
   return (
     <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
       <h2 className="text-3xl md:text-4xl xl:text-5xl  font-bold text-white leading-snug text-center">
         Cursos más vendidos
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-20 mt-20 px-4 md:px-0">
-        {courses.map((course) => (
-          <CourseCard
-            courseSlug={course.slug as string}
-            key={course.id}
-            course={course}
-          />
-        ))}{" "}
+        {courses.map(
+          (course) =>
+            null
+            // <CourseCard
+            //   courseSlug={course.slug as string}
+            //   key={course.id}
+            //   course={course}
+            // />
+        )}
       </div>
     </motion.section>
   );
