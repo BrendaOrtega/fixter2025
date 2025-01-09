@@ -31,7 +31,7 @@ export default function Page() {
       <HomeHero />
       <Why />
       <Benefits />
-      <TopCourses courses={[]} />
+      <TopCourses />
       <div className="bg-planet bg-bottom bg-cover ">
         <Comments />
         <Banner variant="home">

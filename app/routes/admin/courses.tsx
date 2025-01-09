@@ -1,6 +1,5 @@
 import { db } from "~/.server/db";
-import { getAdminOrRedirect } from "~/.server/dbGetters";
-import { Form, redirect } from "react-router";
+import { redirect } from "react-router";
 import type { Route } from "../+types/cursos";
 import type { Course } from "@prisma/client";
 import { useState } from "react";

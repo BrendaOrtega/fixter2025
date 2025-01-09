@@ -5,10 +5,11 @@ import { TridiLayers } from "~/components/card3d";
 import { FlipWords } from "~/components/FlipWords";
 import { CourseCard } from "~/components/CourseCard";
 import { JackPotSection } from "~/components/Jackpot";
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
 import type { Course } from "@prisma/client";
+import { useFetcher } from "react-router";
 
 const companies = [
   {
@@ -274,7 +275,18 @@ export const formatDuration = (secs: number) => {
   return (secs / 60).toFixed(0) + " mins";
 };
 
-export const TopCourses = ({ courses }: { courses: Partial<Course>[] }) => {
+export const TopCourses = () => {
+  const fetcher = useFetcher();
+
+  useEffect(() => {
+    fetcher.submit(
+      { intent: "get_top_courses" },
+      { method: "POST", action: "/api/course" }
+    );
+  }, []);
+
+  const courses: Partial<Course>[] = fetcher.data || [];
+
   return (
     <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
       <h2 className="text-3xl md:text-4xl xl:text-5xl  font-bold text-white leading-snug text-center">

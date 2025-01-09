@@ -2,10 +2,9 @@ import { db } from "~/.server/db";
 import type { Route } from "./+types/course";
 import slugify from "slugify";
 import { randomUUID } from "crypto";
-import { getAdminOrRedirect } from "~/.server/dbGetters";
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  await getAdminOrRedirect(request);
+  // await getAdminOrRedirect(request); @todo move to admin api
 
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -71,6 +70,22 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
     });
     return { videosLength };
+  }
+
+  if (intent === "get_top_courses") {
+    return await db.course.findMany({
+      orderBy: { createdAt: "desc" },
+      where: { published: true },
+      take: 3,
+      select: {
+        id: true,
+        title: true,
+        icon: true,
+        duration: true,
+        level: true,
+        slug: true,
+      },
+    });
   }
 
   return null;
