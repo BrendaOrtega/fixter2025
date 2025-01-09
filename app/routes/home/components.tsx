@@ -299,6 +299,7 @@ export const TopCourses = ({ courses }: { courses?: Partial<Course>[] }) => {
 
   useEffect(() => {
     if (courses) return;
+
     fetcher.submit(
       { intent: "get_top_courses" },
       { method: "POST", action: "/api/course" }

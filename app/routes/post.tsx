@@ -1,23 +1,22 @@
-import { data, Link, type LoaderFunctionArgs } from "react-router";
-import Markdown from "~/components/common/Markdown";
-import type { Route } from "./+types/post";
+import { useEffect } from "react";
 import { db } from "~/.server/db";
+import { Link } from "react-router";
+import type { Route } from "./+types/post";
 import { IoIosArrowBack } from "react-icons/io";
 import { Autor } from "~/components/common/Autor";
-import YoutubeComponent from "~/components/common/YoutubeComponent";
+import Markdown from "~/components/common/Markdown";
 import { CourseBanner } from "~/components/CourseBanner";
-import { useEffect } from "react";
+import YoutubeComponent from "~/components/common/YoutubeComponent";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: Route.LoaderArgs) => {
   const post = await db.post.findUnique({
     where: {
       slug: params.postSlug,
+      published: true,
     },
   });
-  if (!post) throw data("Not Found", { status: 404 });
-  return {
-    post,
-  };
+  if (!post) throw new Response(null, { status: 404 });
+  return { post };
 };
 
 export default function Route({ loaderData: { post } }: Route.ComponentProps) {
@@ -28,6 +27,7 @@ export default function Route({ loaderData: { post } }: Route.ComponentProps) {
       behavior: "smooth",
     });
   }, []);
+
   return (
     <article className="text-white bg-postbg  bg-bottom bg-contain bg-no-repeat pb-20">
       <section className="flex flex-col max-w-3xl mx-auto py-20 px-4  md:px-[5%] xl:px-0 gap-4 ">
@@ -50,7 +50,7 @@ export default function Route({ loaderData: { post } }: Route.ComponentProps) {
           <hr className="mt-6 opacity-10" />
         </div>
 
-        <YoutubeComponent url={post.youtubeLink} />
+        <YoutubeComponent url={post.youtubeLink as string} />
         <Markdown>{post.body}</Markdown>
       </section>
 

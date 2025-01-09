@@ -8,6 +8,6 @@ export default {
       where: { published: true },
       select: { slug: true },
     });
-    return posts.map((post) => `/blog/${post.slug}`);
+    return ["/", "/cursos"].concat(posts.map((post) => `/blog/${post.slug}`));
   },
 } satisfies Config;
