@@ -10,12 +10,14 @@ import type { Course, Video } from "@prisma/client";
 import { getVideoTitles } from "~/.server/dbGetters";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
 import { motion } from "motion/react";
+import { getMetaTags } from "~/utils/getMetaTags";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Cursos" },
-    { name: "description", content: "Encuentra el curso para ti" },
-  ];
+export function meta({ data }: Route.MetaArgs) {
+  return getMetaTags({
+    title: data.course.title,
+    description: data.course.description?.slice(0, 50),
+    image: data.course.icon || undefined,
+  });
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {

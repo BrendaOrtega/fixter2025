@@ -137,49 +137,52 @@ model Post {
 
 model Course {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  v                 Int?      @map("__v")
+  slug              String    @unique
+  title             String
+  isFree            Boolean   @default(true)
+  published         Boolean?  @default(false)
+  basePrice         Int       @default(599)
+  // videos
+  videos            Video[]   @relation(fields: [videoIds], references: [id])
+  videoIds          String[]  @db.ObjectId
+  // stripe
+  stripeCoupon      String?
+  stripeId          String?
+  // optionals
+  icon              String?
+  poster            String?
+  isLive            Boolean   @default(false)
   summary           String?
   authorAt          String?
   authorDescription String?
   authorName        String?
   authorSocial      String?
   banner            String?
-  basePrice         Int
   classTime         String?
-  createdAt         DateTime  @db.Date
   description       String?
   duration          String?
-  icon              String?
-  isFree            Boolean
-  isLive            Boolean
   level             String?
   logos             String?
   meta              String?
   offer             String?   @db.ObjectId
   photoUrl          String?
-  poster            String?
-  published         Boolean?
-  slug              String    @unique
-  startDate         DateTime? @db.Date
-  stripeCoupon      String?
-  stripeId          String?
   tipo              String?
-  title             String
   tool              String?
   trailer           String?
-  updatedAt         DateTime  @updatedAt
   version           String?
   theme             Json?
-  // sep 2023
+  v                 Int?      @map("__v")
+  // dates
+  startDate         DateTime? @db.Date
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  // arrays
   module            Json?
   Modules           Module[]
   modules           String[]  @db.ObjectId
   // relations aug 2023
   Users             User[]    @relation(fields: [userIds], references: [id])
   userIds           String[]  @db.ObjectId
-  //
-  videos            Video[]   @relation(fields: [videoIds], references: [id])
-  videoIds          String[]  @db.ObjectId
 
   @@map("courses")
 }
@@ -200,31 +203,30 @@ model Module {
 }
 
 model Video {
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  v  Int?   @map("__v")
-
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String   @unique
+  title       String
+  isPublic    Boolean  @default(false)
+  //optionals
+  moduleName  String?
+  storageLink String?
   index       Int?
-  title       String?
-  authorName  String? @default("blissmo")
+  authorName  String?  @default("blissmo")
   photoUrl    String?
   description String?
-  slug        String? @unique
-  storageLink String?
-  isPublic    Boolean @default(false)
-  duration    String?
-
-  poster     String?
-  moduleName String?
-  module     String?  @db.ObjectId
-  Module     Module?  @relation(fields: [module], references: [id])
+  duration    String?  @default("0") // prefer mins
+  poster      String?
+  module      String?  @db.ObjectId
+  Module      Module?  @relation(fields: [module], references: [id])
   // moduleId String? @db.ObjectId
   // Module    Module?  @relation(fields: [module], references: [id])
   // experiment aug 2023
-  courses    Course[] @relation(fields: [courseIds], references: [id])
-  courseIds  String[] @db.ObjectId
+  courses     Course[] @relation(fields: [courseIds], references: [id])
+  courseIds   String[] @db.ObjectId
+  v           Int?     @map("__v")
+  //dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("videos")
 }

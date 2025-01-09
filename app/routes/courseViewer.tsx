@@ -1,9 +1,4 @@
-import {
-  // data,
-  redirect,
-  type ActionFunctionArgs,
-  type LoaderFunctionArgs,
-} from "react-router";
+import { redirect } from "react-router";
 import { useState } from "react";
 import { db } from "~/.server/db";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
@@ -13,13 +8,7 @@ import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/courseViewer";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  // const formData = await request.formData();
-  // const intent = formData.get("intent");
-  return null;
-};
-
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const user = await getUserOrNull(request);
@@ -106,7 +95,6 @@ export default function Route({
         />
 
         <VideosMenu
-          courseVersion={course.version}
           courseTitle={course.title}
           courseSlug={course.slug}
           isOpen={isMenuOpen}

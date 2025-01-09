@@ -162,6 +162,8 @@ const ListItem = ({
     }
   }, [isCurrent]);
 
+  console.log("DURATION:", duration);
+
   return (
     <Link
       reloadDocument

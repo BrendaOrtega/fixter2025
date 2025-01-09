@@ -10,7 +10,7 @@ import { data, Link, useFetcher, type LoaderFunctionArgs } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { db } from "~/.server/db";
 import { getMetaTags } from "~/utils/getMetaTags";
-import type { Route } from "./+types/blog";
+import type { Route, Route } from "./+types/blog";
 import Spinner from "~/components/common/Spinner";
 import useURLSearch from "~/hooks/useURLSearch";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
@@ -28,7 +28,7 @@ export const meta = () =>
     image: "/cover.png",
   });
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const url = new URL(request.url); // better working with parsers
   const search = url.searchParams.get("search") ?? "";
   const skip = url.searchParams.get("skip")
@@ -62,7 +62,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   );
 };
 
-export default function Route({
+export default function Page({
   loaderData: { posts, search },
 }: Route.ComponentProps) {
   useEffect(() => {

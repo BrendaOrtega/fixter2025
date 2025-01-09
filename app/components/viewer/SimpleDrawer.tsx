@@ -5,6 +5,7 @@ import { IoClose } from "react-icons/io5";
 import { cn } from "~/utils/cn";
 
 export const Drawer = ({
+  mode,
   children,
   noOverlay,
   isOpen = false,
@@ -15,6 +16,7 @@ export const Drawer = ({
   className,
   header,
 }: {
+  mode?: string;
   noOverlay?: boolean;
   header?: ReactNode;
   cta?: ReactNode;
@@ -25,7 +27,7 @@ export const Drawer = ({
   children: ReactNode;
   className?: string;
 }) => {
-  const body = useRef<HTMLElement>();
+  const body = useRef<HTMLElement>(null);
 
   // listeners
   const handleKeys = (event: unknown) => {
@@ -70,13 +72,18 @@ export const Drawer = ({
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "120%" }}
-        transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-        className="bg-dark border border-white/10 lg:w-[40%] md:w-[60%] w-[90%] z-10 h-screen fixed top-0 right-0 shadow-xl rounded-tl-3xl rounded-bl-3xl p-6 md:py-8 md:px-12 flex flex-col bg-gray-950 text-white"
+        transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+        className={cn(
+          "bg-dark border border-white/10 lg:w-[40%] md:w-[60%] w-[90%] z-10 h-screen fixed top-0 right-0 shadow-xl rounded-tl-3xl rounded-bl-3xl p-6 md:py-8 md:px-12 flex flex-col bg-gray-950 text-white",
+          {
+            "md:w-[90%]": mode === "big",
+          }
+        )}
       >
         {header ? (
           header
         ) : (
-          <header className="flex items-start justify-between mb-6 ">
+          <header className="flex items-center justify-between mb-6 ">
             <div>
               <h4 className="text-2xl font-semibold md:text-4xl text-white">
                 {title}
@@ -86,7 +93,7 @@ export const Drawer = ({
             <button
               tabIndex={0}
               onClick={onClose}
-              className="text-2xl bg-gray-200 round-full p-1 active:scale-95"
+              className="text-2xl round-full p-1 active:scale-95"
             >
               <IoClose />
             </button>

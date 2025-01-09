@@ -1,5 +1,5 @@
 import type { Course, User, Video } from "@prisma/client";
-import { data, redirect } from "react-router";
+import { createSearchParams, data, redirect } from "react-router";
 import { db } from "~/.server/db";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { commitSession, getSession } from "~/sessions";
@@ -135,6 +135,30 @@ export const getUserOrRedirect = async (
   return user;
 };
 
+export const getAdminOrRedirect = async (
+  request: Request,
+  config?: { redirectURL?: string; next?: string }
+) => {
+  const { redirectURL = "/login", next = "/perfil" } = config || {};
+  const searchParams = createSearchParams([["next", next]]);
+  const cookie = request.headers.get("cookie");
+  const session = await getSession(cookie);
+  if (!session.has("email")) {
+    throw redirect(redirectURL + "?" + searchParams.toString());
+  }
+  const email = session.get("email");
+  const user = await db.user.findUnique({
+    where: {
+      email,
+    },
+  });
+  if (!user || user.role !== "ADMIN") {
+    // admin only
+    throw redirect(redirectURL + "?" + searchParams.toString());
+  }
+  return user;
+};
+
 export const updateUserAndSetSession = async (
   {
     email,
@@ -147,9 +171,9 @@ export const updateUserAndSetSession = async (
     displayName: string;
     metadata: any;
   },
-  options: { request: Request; redirectUrl?: string }
+  options: { next: string; request: Request; redirectUrl?: string }
 ) => {
-  const { request, redirectUrl = "/mis-cursos" } = options || {};
+  const { request, redirectUrl = "/mis-cursos", next } = options || {};
   await db.user.upsert({
     where: {
       email,
@@ -159,7 +183,7 @@ export const updateUserAndSetSession = async (
     select: { id: true },
   });
   const session = await placeSession(request, email);
-  throw redirect(redirectUrl, {
+  throw redirect(next ? next : redirectUrl, {
     headers: { "Set-Cookie": await commitSession(session) },
   });
 };

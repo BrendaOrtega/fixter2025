@@ -51,9 +51,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (intent === "google_login") {
+    const next = formData.get("next") as string;
     const data = JSON.parse(formData.get("data") as string); // what's data?
     //@todo validate
-    await updateUserAndSetSession(data, { request });
+    await updateUserAndSetSession(data, { request, next });
   }
 
   if (intent === "magic_link") {
