@@ -6,7 +6,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { data, Link, useFetcher, type LoaderFunctionArgs } from "react-router";
+import { data, Link, useFetcher } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { db } from "~/.server/db";
 import { getMetaTags } from "~/utils/getMetaTags";

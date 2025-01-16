@@ -15,7 +15,7 @@ const isDev = process.env.NODE_ENV === "development";
 
 const S3 = new S3Client({
   region: "auto",
-  endpoint: process.env.AWS_ENDPOINT_URL_S3,
+  endpoint: "https://fly.storage.tigris.dev",
 });
 
 // es mejor configurarlo desde acá en vez dle control panel. (tiene prioridad el panel)
@@ -25,9 +25,7 @@ const setCors = async () => {
     CORSConfiguration: {
       CORSRules: [
         {
-          AllowedOrigins: isDev
-            ? ["http://localhost:3000"]
-            : ["https://www.fixtergeek.com"], // @todo domain
+          AllowedOrigins: ["*"],
           AllowedHeaders: ["*"],
           AllowedMethods: ["PUT", "DELETE", "GET"],
           MaxAgeSeconds: 3600,

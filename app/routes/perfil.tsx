@@ -27,9 +27,10 @@ export default function Route({
     <article className="h-screen">
       <section className="py-20 flex flex-col">
         <EditableAvatar
-          src={user.photoURL || `/api/file?storageKey=${user.email}`}
+          src={`/api/file?storageKey=${user.email}`}
           className="mx-auto"
           putURL={putURL}
+          fallbackSrc={user.photoURL}
         />
         <p className="text-brand-100 text-center mb-16 lowercase">
           {user.email}
@@ -87,7 +88,9 @@ const EditableAvatar = ({
   src,
   className,
   putURL,
+  fallbackSrc,
 }: {
+  fallbackSrc?: string;
   putURL: string;
   className?: string;
   src?: string;
@@ -122,15 +125,13 @@ const EditableAvatar = ({
     a.download = true;
     a.click();
     if (!file) return;
-    await fetch(putURL, {
+    console.log("About to put:", putURL);
+    const res = await fetch(putURL, {
       // presignurl
       method: "PUT",
       body: file,
-      headers: {
-        "content-type": file.type,
-        "content-length": file.size,
-      },
     }).catch((e) => console.error(e));
+    console.log("RES:", res);
   };
 
   const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -207,6 +208,10 @@ const EditableAvatar = ({
           className={cn("object-cover w-full h-full")}
           src={imageSrc || "/robot.svg"}
           alt="avatar"
+          onError={(e) => {
+            e.target.src = fallbackSrc;
+            e.target.onerror = null;
+          }}
         />
         <input
           ref={inputRef}
