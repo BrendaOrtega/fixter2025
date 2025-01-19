@@ -15,23 +15,23 @@ export const GlobalBanner = ({
   const [show, setShow] = useState(false);
 
   const handleClose = () => {
+    setShow(false);
     const item = {
       key: "global_banner_closed",
-      expiry: new Date().getTime() / 1000 + 60 * 60 * 24 * 7,
-      // una semana en secs                 ^s   ^m   ^h   ^d
+      expiry: Date.now() / 1000 + 60 * 60 * 24 * 7,
+      // una semana en secs       ^s   ^m   ^h   ^d
     };
     localStorage.setItem(item.key, JSON.stringify(item));
-    setShow(false);
   };
 
   const showAd = () => {
     setShow(true);
     setTimeout(() => {
       setShow(false);
-    }, 1000 * 60 * 1.5);
+    }, 1000 * 6);
   };
 
-  const rememberClose = () => {
+  const rememberClosed = () => {
     let item: string | null | { expiry: number } = localStorage.getItem(
       "global_banner_closed"
     );
@@ -47,8 +47,8 @@ export const GlobalBanner = ({
 
   useEffect(() => {
     setTimeout(() => {
-      rememberClose();
-    }, 1000 * 60 * 0.1);
+      rememberClosed();
+    }, 1000 * 6);
   }, []);
 
   return (
