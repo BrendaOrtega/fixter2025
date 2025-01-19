@@ -17,8 +17,6 @@ export const GlobalBanner = ({
   const handleClose = () => {
     const item = {
       key: "global_banner_closed",
-      value: "global_banner_closed",
-      // expiry: Math.floor(Date.now() / 1000) + 60, // 1m in secs
       expiry: new Date().getTime() / 1000 + 60 * 60 * 24 * 7,
       // una semana en secs                 ^s   ^m   ^h   ^d
     };
