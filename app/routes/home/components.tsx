@@ -505,6 +505,7 @@ export const HomeHero = () => {
                   "los frameworks",
                   "las herramientas",
                   "las librerías",
+                  "las bibliotecas",
                   "los patterns",
                   "los hacks",
                 ]}
