@@ -20,7 +20,10 @@ export default [
   // xmas
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
   // groups
-  ...prefix("admin", [route("cursos", "routes/admin/courses.tsx")]),
+  ...prefix("admin", [
+    index("routes/admin/dash.tsx"),
+    route("cursos", "routes/admin/courses.tsx"),
+  ]),
   ...prefix("cursos", [
     index("routes/cursos.tsx"),
     route(":courseSlug/viewer", "routes/courseViewer.tsx"),
@@ -35,6 +38,7 @@ export default [
     route("course", "routes/api/course.tsx"),
     route("stripe", "routes/api/stripe.tsx"),
     route("file", "routes/api/file.tsx"),
+    // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?
   route("courses/*", "routes/courses.tsx"),
