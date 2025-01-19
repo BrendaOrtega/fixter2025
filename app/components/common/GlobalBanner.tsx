@@ -14,13 +14,43 @@ export const GlobalBanner = ({
 }) => {
   const [show, setShow] = useState(false);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setShow(true);
-    }, 1000 * 60 * 0.1);
+  const handleClose = () => {
+    const item = {
+      key: "global_banner_closed",
+      value: "global_banner_closed",
+      // expiry: Math.floor(Date.now() / 1000) + 60, // 1m in secs
+      expiry: new Date().getTime() / 1000 + 60 * 60 * 24 * 7,
+      // una semana en secs                 ^s   ^m   ^h   ^d
+    };
+    localStorage.setItem(item.key, JSON.stringify(item));
+    setShow(false);
+  };
+
+  const showAd = () => {
+    setShow(true);
     setTimeout(() => {
       setShow(false);
     }, 1000 * 60 * 1.5);
+  };
+
+  const rememberClose = () => {
+    let item: string | null | { expiry: number } = localStorage.getItem(
+      "global_banner_closed"
+    );
+    if (!item) return showAd();
+
+    item = JSON.parse(item) as { expiry: number };
+    const shouldShow = Date.now() / 1000 > item.expiry; // secs
+    if (shouldShow) {
+      showAd();
+      localStorage.removeItem("global_banner_closed");
+    }
+  };
+
+  useEffect(() => {
+    setTimeout(() => {
+      rememberClose();
+    }, 1000 * 60 * 0.1);
   }, []);
 
   return (
@@ -42,11 +72,7 @@ export const GlobalBanner = ({
             )}
           >
             <div className="flex items-center justify-start relative">
-              <button
-                onClick={() => {
-                  setShow(false);
-                }}
-              >
+              <button onClick={handleClose}>
                 <img
                   alt="close"
                   src="/closeDark.png"
