@@ -1,16 +1,18 @@
-import { useFetcher } from "react-router";
 import { NavBar } from "../components/common/NavBar";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { GlobalBanner } from "~/components/common/GlobalBanner";
+import type { User } from "@prisma/client";
 
-export const MainLayout = ({ children }: { children: ReactNode }) => {
-  const fetcher = useFetcher();
-  useEffect(() => {
-    fetcher.submit({ intent: "self" }, { method: "GET", action: "/api/user" });
-  }, []);
+export const MainLayout = ({
+  children,
+  user,
+}: {
+  user?: User;
+  children: ReactNode;
+}) => {
   return (
     <>
-      <NavBar user={fetcher.data?.user} />
+      <NavBar user={user} />
       {children}
       <GlobalBanner />
     </>

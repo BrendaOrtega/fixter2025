@@ -76,10 +76,9 @@ export const SquigglyUnderline = () => {
   );
 };
 
-export const NavBar = () => {
+export const NavBar = ({ user }: { user?: User }) => {
   const [scope, animate] = useAnimate();
   const [isOpen, setIsOpen] = useState(false);
-  const user = useSelf();
 
   const toggleMenu = () => {
     if (isOpen) {

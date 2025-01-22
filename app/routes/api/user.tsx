@@ -1,4 +1,5 @@
 import {
+  createSearchParams,
   data,
   redirect,
   type ActionFunctionArgs,
@@ -33,7 +34,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "suscription") {
     const tags = ["newsletter", "blog"];
     const email = String(formData.get("email"));
-    emailSchema.parse(email);
+    const { success, error } = emailSchema.safeParse(email);
+    if (!success) {
+      return data({
+        errors: error.errors.reduce((acc, el) => {
+          acc[el.validation] = { code: el.code, message: el.message };
+          return acc;
+        }, {}),
+      });
+    }
     // @todo detached
     const suscriber = await db.subscriber.upsert({
       where: { email },
@@ -43,7 +52,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!suscriber.confirmed) {
       await sendConfirmation(email, tags);
     }
-    throw redirect("/subscribe?success=1");
+    throw redirect("/subscribe?success=1"); // throw to force the fetcher
   }
 
   if (intent === "self") {

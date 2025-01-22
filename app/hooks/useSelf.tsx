@@ -2,6 +2,7 @@ import type { User } from "@prisma/client";
 import { useEffect } from "react";
 import { useFetcher, useLocation } from "react-router";
 
+/** DEPRECATED Using clientLoaders */
 export const useSelf = (): Partial<User> | undefined => {
   const location = useLocation();
   const fetcher = useFetcher();

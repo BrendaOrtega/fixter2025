@@ -1,11 +1,10 @@
-import { useRef, useState } from "react";
-import { Form, useFetcher, useSearchParams } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { useFetcher, useSearchParams } from "react-router";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import useRecaptcha from "~/lib/useRecaptcha";
 
 export default function Route() {
-  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
   const success = searchParams.has("success");
@@ -24,6 +23,17 @@ export default function Route() {
   };
 
   const { handleSubmit } = useRecaptcha(onSubmit);
+
+  // const errors = fetcher.data || {}; // errors.email.message
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (fetcher.data?.errors) {
+      setErrors(fetcher.data.errors);
+    }
+  }, [fetcher]);
+
+  const isLoading = fetcher.state !== "idle";
 
   return (
     <>
@@ -72,20 +82,20 @@ export default function Route() {
               type="email"
               required
               name="email"
-              className="bg-transparent border-none focus:ring-0 "
+              className="bg-transparent border-none focus:ring-0 text-gray-400"
             />
-            <PrimaryButton
-              onClick={() => {
-                setIsLoading(true);
-                setTimeout(() => setIsLoading(false), 3000);
-              }}
-              isLoading={isLoading}
-              type="submit"
-            >
+            <PrimaryButton isLoading={isLoading} type="submit">
               Unirme
             </PrimaryButton>
           </fetcher.Form>
         )}
+        <>
+          {errors.email && (
+            <p className="text-red-500 text-md mt-2 text-center">
+              Este email no es válido
+            </p>
+          )}
+        </>
         {!success && (
           <p className="mx-auto max-w-xl text-center mt-3 text-xs text-brand-500">
             Puedes desuscribirte en cualquier momento. 😇
