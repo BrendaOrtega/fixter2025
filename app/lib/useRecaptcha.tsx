@@ -25,7 +25,9 @@ export type UseRecaptchaParams = {
   options?: { action: string };
 };
 
-export default function useRecaptcha(onSubmit: EV) {
+export default function useRecaptcha(
+  onSubmit?: (event: FormEvent<HTMLFormElement> | SubmitEvent) => any
+) {
   // Estados 💾
   const siteKey = "6Lex6agqAAAAAIUn17dFeTIxrMQrJn2qMAjHm-dL",
     options = { action: "submit" };
@@ -38,7 +40,7 @@ export default function useRecaptcha(onSubmit: EV) {
   // Carga 🔋 1.
   useEffect(() => {
     if (!siteKey && typeof siteKey !== "string") return setIsReady(true);
-    // noop ^for testing (su no hay key no rompe)
+    // noop ^for testing (si no hay key rompe)
     const scriptURL = new URL("https://www.google.com/recaptcha/api.js");
     scriptURL.searchParams.set("render", siteKey);
     const script = document.createElement("script");
@@ -69,8 +71,9 @@ export default function useRecaptcha(onSubmit: EV) {
   }, [siteKey, options, isReady]);
 
   // proxy para el form
-  type EV = FormEvent<HTMLFormElement> | SubmitEvent;
-  const handleSubmit = async (event: EV) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement> | SubmitEvent
+  ) => {
     event.preventDefault();
     const token = (await execute()) as string;
     fetcher.submit(
@@ -84,7 +87,7 @@ export default function useRecaptcha(onSubmit: EV) {
     if (!fetcher.data) return;
 
     if (fetcher.data.success) {
-      onSubmit(eventRef.current);
+      onSubmit?.(eventRef.current);
     } else {
       error({
         text: "Lo sentimos, creemos que eres un robot. 🤖 Intenta de nuevo.",

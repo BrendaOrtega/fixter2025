@@ -63,7 +63,7 @@ export default function Route() {
             </p>
           </div>
         ) : (
-          <Form
+          <fetcher.Form
             onSubmit={handleSubmit}
             className="flex justify-center mt-12 ring-4 ring-brand-700 rounded-full mx-auto w-max overflow-hidden"
           >
@@ -84,7 +84,7 @@ export default function Route() {
             >
               Unirme
             </PrimaryButton>
-          </Form>
+          </fetcher.Form>
         )}
         {!success && (
           <p className="mx-auto max-w-xl text-center mt-3 text-xs text-brand-500">
