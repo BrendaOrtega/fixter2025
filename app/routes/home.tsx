@@ -36,7 +36,7 @@ export const loader = async () => {
 };
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const { topCourses } = loaderData;
+  const { topCourses } = loaderData || {};
 
   useEffect(() => {
     window.scrollTo({

@@ -11,7 +11,7 @@ export default function Route() {
   const success = searchParams.has("success");
   const fetcher = useFetcher();
 
-  const onSubmit = (event: SubmitEvent) => {
+  const onSubmit = (_: SubmitEvent) => {
     if (!inputRef.current) return;
 
     fetcher.submit(
