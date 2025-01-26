@@ -42,8 +42,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
       metaImage: formData.get("metaImage") as string,
       authorAt: "@blissito",
       photoUrl: "https://i.imgur.com/TaDTihr.png",
-      authorAtLink: "https://twitter.com/HectorBlisS",
-      authorName: "@Héctorbliss",
+      authorAtLink: "https://www.hectorbliss.com",
+      authorName: "Héctorbliss",
       tags: (formData.get("tags") as string).split(","),
       mainTag: (formData.get("tags") as string).split(",")[0],
       published: true,
@@ -152,7 +152,15 @@ const PostCard = ({
   post: Post;
 }) => {
   return (
-    <section className="flex flex-col border rounded-xl py-3 px-6 hover:scale-105 transition-all">
+    <section
+      style={
+        {
+          // backgroundImage: `url('${post.metaImage}')`,
+          // backgroundSize: "cover",
+        }
+      }
+      className="flex flex-col border rounded-xl py-3 px-6 hover:scale-105 transition-all"
+    >
       <h2>{post.title}</h2>
       <nav className="mt-auto flex justify-end gap-4">
         <a
