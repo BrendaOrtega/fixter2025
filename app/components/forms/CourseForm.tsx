@@ -368,7 +368,7 @@ export const Input = ({
 }) => {
   const Element = type === "textarea" ? "textarea" : "input";
   return (
-    <label className="grid gap-2 mb-px text-white">
+    <label className="grid gap-2 mb-px text-white w-full">
       <span>{label}</span>
       <Element
         defaultValue={defaultValue || undefined}

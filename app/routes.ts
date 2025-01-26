@@ -23,6 +23,7 @@ export default [
   ...prefix("admin", [
     index("routes/admin/dash.tsx"),
     route("cursos", "routes/admin/courses.tsx"),
+    route("posts", "routes/admin/postList.tsx"),
   ]),
   ...prefix("cursos", [
     index("routes/cursos.tsx"),
