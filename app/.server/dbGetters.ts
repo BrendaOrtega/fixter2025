@@ -171,19 +171,19 @@ export const updateUserAndSetSession = async (
     displayName: string;
     metadata: any;
   },
-  options: { next: string; request: Request; redirectUrl?: string }
+  options: { request: Request; redirectUrl?: string }
 ) => {
-  const { request, redirectUrl = "/mis-cursos", next } = options || {};
+  const { request, redirectUrl = "/mis-cursos" } = options || {};
   await db.user.upsert({
     where: {
       email,
     },
     update: { photoURL, displayName, metadata },
     create: { email, photoURL, displayName, username: email, metadata },
-    select: { id: true },
+    // select: { id: true },
   });
   const session = await placeSession(request, email);
-  throw redirect(next ? next : redirectUrl, {
+  throw redirect(redirectUrl, {
     headers: { "Set-Cookie": await commitSession(session) },
   });
 };
