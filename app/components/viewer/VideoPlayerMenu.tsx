@@ -93,7 +93,7 @@ export const VideosMenu = ({
                 title={moduleName === "nomodules" ? courseTitle : moduleName}
                 subtitle={
                   moduleName === "nomodules"
-                    ? "Lista de videos"
+                    ? "Lecciones del curso"
                     : "capitulo 0" + (index + 1)
                 }
                 isCompleted={completed.includes(moduleName)}
@@ -173,13 +173,13 @@ const ListItem = ({
       className={cn(
         "group text-metal/50 overflow-hidden w-[90%] mx-auto relative pl-4 flex py-4  hover:brightness-100 rounded-2xl hover:text-metal/80 transition-all items-center",
         {
-          "bg-[#1B1C20]  hover:text-white text-white ": isCurrent,
+          "bg-[#141A20]  hover:text-white text-white ": isCurrent,
           "cursor-pointer": !isLocked,
           "cursor-not-allowed": isLocked,
         }
       )}
     >
-      <div className="absolute w-0 group-hover:w-[120%] transition-all duration-700 bg-[rgba(35,35,44,.3)] h-full rounded-3xl -left-4"></div>
+      <div className="absolute w-0 group-hover:w-[120%] transition-all duration-700 bg-[rgba(20,26,32,.4)] h-full rounded-3xl -left-4"></div>
       <span
         className={cn("text-2xl ", {
           "text-green-500": isCompleted,
@@ -231,7 +231,7 @@ const MenuListContainer = ({
         scrollbarWidth: "none",
         maskImage,
       }}
-      className="md:w-[380px] w-[300px] fixed z-10 rounded-xl overflow-y-scroll h-[88%] bg-dark top-0 left-0 pt-20 bg-gray-950 text-gray-400"
+      className="md:w-[380px] w-[300px] fixed z-10 rounded-xl overflow-y-scroll h-[88%] bg-dark top-0 left-0 pt-20 bg-[#0E1317] text-gray-400"
     >
       {children}
     </motion.div>
@@ -248,7 +248,7 @@ const ModuleHeader = ({
   subtitle?: string;
 }) => {
   return (
-    <header className="text-fish rounded-3xl pl-9 py-3 bg-[#141518] flex items-center gap-4 mb-2">
+    <header className="text-fish rounded-3xl pl-9 py-3 bg-[#182026] flex items-center gap-4 mb-2">
       {/* <span className={cn("text-4xl", isCompleted && "text-green-500")}>
         {isCompleted ? (
           <MdOutlineRadioButtonChecked />
