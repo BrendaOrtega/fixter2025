@@ -16,8 +16,9 @@ import type { Route } from "./+types/root";
 
 export const meta = () =>
   getMetaTags({
-    title: "Tienes un mensaje sorpresa esperandote 🎁",
-    description: `Te han dejado un mensaje`,
+    title:
+      "Aprende las herramientas que usan los profesionales del open source",
+    description: `Conviértete en un profesional del desarrollo web`,
     image: "/xmas/message-alert.png",
   });
 
