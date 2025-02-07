@@ -15,7 +15,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
     <>
       <NavBar user={user} />
       {children}
-      <GlobalBanner />
+      {/* <GlobalBanner /> */}
     </>
   );
 };
