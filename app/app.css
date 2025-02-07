@@ -44,6 +44,7 @@ body {
   color: var(--brand-100);
   font-size: 18px;
   margin: 24px 0 0 0;
+  font-weight: normal;
 }
 
 .markdown a {
@@ -79,13 +80,17 @@ body {
 }
 
 .markdown li {
-  font-size: 22px;
+  font-size: 18px;
   margin: 24px 0 0 0;
   font-weight: bold;
-  color: var(--brand-500);
+  /* color: var(--brand-500); */
+  color: rgba(255, 255, 255, 0.8);
   margin-left: 20px;
   font-family: "Avenir Book", "Avenir Regular", sans-serif;
   list-style: circle;
+}
+.markdown li::marker {
+  color: var(--brand-500);
 }
 
 .markdown p {
@@ -113,6 +118,13 @@ body {
 
 .markdown h2 {
   font-size: 32px;
+  margin: 32px 0 24px 0;
+  line-height: 1.2;
+  margin-top: 48px;
+}
+
+.markdown h3 {
+  font-size: 24px;
   margin: 32px 0 24px 0;
   line-height: 1.2;
   margin-top: 48px;
