@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { db } from "~/.server/db";
 import { Link } from "react-router";
-import type { Route, Route } from "./+types/post";
+import type { Route } from "./+types/post";
 import { IoIosArrowBack } from "react-icons/io";
 import { Autor } from "~/components/common/Autor";
 import Markdown from "~/components/common/Markdown";

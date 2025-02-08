@@ -10,7 +10,7 @@ import { data, Link, useFetcher } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { db } from "~/.server/db";
 import { getMetaTags } from "~/utils/getMetaTags";
-import type { Route, Route } from "./+types/blog";
+import type { Route } from "./+types/blog";
 import Spinner from "~/components/common/Spinner";
 import useURLSearch from "~/hooks/useURLSearch";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
@@ -24,7 +24,8 @@ import { Footer } from "~/components/Footer";
 export const meta = () =>
   getMetaTags({
     title: " Aprende leyendo nuestro blog | Fixtergeek",
-    description: "Mantente actualizad@ y mejora tus habilidades disfrutando",
+    description:
+      "Mantente actualizad@ y mejora tus habilidades mientras disfrutas",
     image: "/cover.png",
   });
 
