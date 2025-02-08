@@ -1,12 +1,22 @@
 import { useEffect } from "react";
 import { db } from "~/.server/db";
 import { Link } from "react-router";
-import type { Route } from "./+types/post";
+import type { Route, Route } from "./+types/post";
 import { IoIosArrowBack } from "react-icons/io";
 import { Autor } from "~/components/common/Autor";
 import Markdown from "~/components/common/Markdown";
 import { CourseBanner } from "~/components/CourseBanner";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
+import { getMetaTags } from "~/utils/getMetaTags";
+
+export const meta = ({ data }: Route.MetaArgs) => {
+  const { post } = data;
+  return getMetaTags({
+    title: post.title,
+    description: post.body?.slice(0, 60),
+    image: post.metaImage || post.coverImage || undefined,
+  });
+};
 
 export const loader = async ({ params }: Route.LoaderArgs) => {
   const post = await db.post.findUnique({
@@ -19,7 +29,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
   return { post };
 };
 
-export default function Route({ loaderData: { post } }: Route.ComponentProps) {
+export default function Page({ loaderData: { post } }: Route.ComponentProps) {
   useEffect(() => {
     window.scrollTo({
       top: 0,
@@ -32,9 +42,13 @@ export default function Route({ loaderData: { post } }: Route.ComponentProps) {
     <article className="text-white bg-postbg  bg-bottom bg-contain bg-no-repeat pb-20">
       <section className="flex flex-col max-w-3xl mx-auto py-20 px-4  md:px-[5%] xl:px-0 gap-4 ">
         <img
-          src={post.coverImage || "/Banner.svg"}
+          src={post.metaImage || post.coverImage || "/stars.png"}
           alt="cover"
           className="w-[95%] md:w-full object-cover mx-auto rounded-3xl h-[220px] md:h-[320px] xl:h-[400px]" // 🪄✨ nice
+          onError={(e) => {
+            e.currentTarget.src = "/stars.png";
+            e.currentTarget.onerror = null;
+          }}
         />
         <div className="relative">
           <Link

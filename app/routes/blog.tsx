@@ -394,10 +394,10 @@ export const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
           </div>
           <img
             className="aspect-video object-cover rounded-2xl mb-4"
-            src={post.metaImage || post.coverImage}
+            src={post.metaImage || post.coverImage || "/stars.png"}
             alt="cover"
             onError={({ currentTarget }) => {
-              currentTarget.src = "/full-logo.svg";
+              currentTarget.src = "/stars.png";
               currentTarget.onerror = null;
             }}
           />
