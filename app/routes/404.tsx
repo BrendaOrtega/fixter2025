@@ -1,4 +1,17 @@
 import { PrimaryButton } from "~/components/common/PrimaryButton";
+import type { Route } from "./+types/404";
+import { redirect } from "react-router";
+
+export const loader = ({ request }: Route.LoaderArgs) => {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+  if (pathname.includes("react-router")) {
+    throw redirect(
+      "/cursos/Introduccion-al-desarrollo-web-full-stack-con-React-Router/detalle"
+    );
+  }
+  return null;
+};
 
 export default function Route() {
   return (

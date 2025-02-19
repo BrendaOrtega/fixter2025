@@ -8,8 +8,11 @@ export default {
       where: { published: true },
       select: { slug: true },
     });
-    return ["/", "/cursos", "/subscribe"].concat(
-      posts.map((post) => `/blog/${post.slug}`)
-    );
+    return [
+      "/",
+      "/cursos",
+      "/subscribe",
+      "/cursos/Introduccion-al-desarrollo-web-full-stack-con-React-Router/detalle",
+    ].concat(posts.map((post) => `/blog/${post.slug}`));
   },
 } satisfies Config;
