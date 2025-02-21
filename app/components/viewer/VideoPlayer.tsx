@@ -5,6 +5,7 @@ import { FaGooglePlay } from "react-icons/fa6";
 import { IoIosClose } from "react-icons/io";
 import { Link } from "react-router";
 import { nanoid } from "nanoid";
+import Hls from "hls.js";
 
 export const VideoPlayer = ({
   src,
@@ -75,20 +76,31 @@ export const VideoPlayer = ({
   };
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !video) return;
 
     // detecting HLS support
     const hlsSupport = (videoNode: HTMLVideoElement) =>
       videoNode.canPlayType("application/vnd.apple.mpegURL");
-    console.log(
+    console.info(
       hlsSupport(videoRef.current)
-        ? `::HLS Supported ✅:: ${hlsSupport(videoRef.current)}`
-        : "::HLS Not supported 📵::"
+        ? `::NATIVE_HLS_SUPPORTED::✅:: ${hlsSupport(videoRef.current)}`
+        : "::HLS_NOT_SUPPORTED 📵::"
     );
     if (hlsSupport(videoRef.current)) {
+      if (video.m3u8) {
+        videoRef.current.src = video.storageLink!;
+      }
     } else {
-      videoRef.current.src = video?.storageLink;
-      console.info("::Fallbacking to storageLink::");
+      // hls
+      if (video.m3u8) {
+        const hls = new Hls();
+        hls.loadSource(video.m3u8);
+        hls.attachMedia(videoRef.current);
+        console.info("::FALLBACKING_TO_HLS.JS::🪄::");
+      } else {
+        videoRef.current.src = video.storageLink!;
+        console.info("::FALLBACKING_TO_STORAGEKEY::⚽️::");
+      }
     }
   }, []);
 

@@ -29,7 +29,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   if (intent === "admin_update_video") {
     const data = JSON.parse(formData.get("data") as string);
     const index = Number(data.index);
-    const isPublic = data.isPublic === "on" ? true : undefined;
+    const isPublic = data.isPublic === "on" ? true : undefined; // @todo validate
     return await db.video.update({
       where: { id: data.id },
       data: { ...data, index, isPublic, id: undefined },

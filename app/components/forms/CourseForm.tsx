@@ -154,6 +154,12 @@ export const CourseForm = ({
             placeholder="Link del video"
           />
           <Input
+            defaultValue={editingVideo?.m3u8}
+            label="Playlist"
+            name="m3u8"
+            placeholder="Link de la playlist"
+          />
+          <Input
             defaultValue={editingVideo?.duration}
             label="Duración en segundos"
             name="duration"
