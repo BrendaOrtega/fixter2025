@@ -207,12 +207,16 @@ const ListItem = ({
   );
 };
 
-const MenuListContainer = ({
+export const MenuListContainer = ({
   children,
+  className,
+  mode,
   x = 0,
   onOutsideClick,
   isOpen: isActive = false,
 }: {
+  mode?: "big";
+  className?: string;
   isOpen?: boolean;
   children: ReactNode;
   x?: MotionValue | number;
@@ -229,7 +233,13 @@ const MenuListContainer = ({
         scrollbarWidth: "none",
         maskImage,
       }}
-      className="md:w-[380px] w-[300px] fixed z-10 rounded-xl overflow-y-scroll h-[88%] bg-dark top-0 left-0 pt-20 bg-[#0C1115] text-gray-400"
+      className={cn(
+        "md:w-[380px] w-[300px] fixed z-20 rounded-xl overflow-y-scroll h-[88%] bg-dark top-0 left-0 py-20 bg-[#0C1115] text-gray-400",
+        className,
+        {
+          "lg:min-w-[50vw] min-w-[90vw]": mode === "big",
+        }
+      )}
     >
       {children}
     </motion.div>
@@ -273,11 +283,15 @@ const ModuleHeader = ({
   );
 };
 
-const MenuButton = ({
+export const MenuButton = ({
   isOpen,
   x = 0,
   onToggle,
+  className,
+  icon,
 }: {
+  icon?: ReactNode;
+  className?: string;
   x?: MotionValue | number;
   onToggle?: () => void;
   isOpen?: boolean;
@@ -288,11 +302,12 @@ const MenuButton = ({
       style={{ x }}
       onClick={onToggle}
       className={cn(
-        "fixed bg-[#0C1115] border-[1px] border-colorOutline/40 text-4xl w-14 h-14 text-white top-0 mt-20 p-2 z-50 flex items-center justify-center rounded-r-2xl hover:bg-[rgba(12,17,21,.7)]",
+        "fixed bg-[#0C1115] border-[1px] border-colorOutline/40 text-4xl w-14 h-14 text-white top-0 mt-20 p-2 z-10 flex items-center justify-center rounded-r-2xl hover:bg-[rgba(12,17,21,.7)]",
         {
           "left-[-80px] md:left-auto": isOpen,
           "rounded-2xl": isOpen,
-        }
+        },
+        className
       )}
     >
       <AnimatePresence mode="popLayout">
@@ -312,7 +327,7 @@ const MenuButton = ({
             exit={{ filter: "blur(9px)", opacity: 0 }}
             key="close"
           >
-            <BsMenuButtonWide className="text-3xl " />
+            {icon ? icon : <BsMenuButtonWide className="text-3xl " />}
           </motion.span>
         )}
       </AnimatePresence>

@@ -7,6 +7,7 @@ import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/courseViewer";
+import { MarkdownViewer } from "~/components/viewer/MarkdownViewer";
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const url = new URL(request.url);
@@ -105,6 +106,7 @@ export default function Route({
           defaultOpen={!searchParams.success}
           isLocked={course.isFree ? false : !isPurchased}
         />
+        <MarkdownViewer body={video.description} />
       </article>
       {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
       {showPurchaseDrawer && <PurchaseDrawer courseSlug={course.slug} />}
