@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
+  build: { rollupOptions: { external: ["peerjs"] } },
   server: { port: 3000 },
   css: {
     postcss: {

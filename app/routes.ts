@@ -24,7 +24,10 @@ export default [
     index("routes/admin/dash.tsx"),
     route("cursos", "routes/admin/courses.tsx"),
     route("posts", "routes/admin/postList.tsx"),
+    route("talleres", "routes/admin/talleres.tsx"),
   ]),
+  // testing WebRTC
+  route("live_session", "routes/talleres/live_session.tsx"),
   ...prefix("cursos", [
     index("routes/cursos.tsx"),
     route(":courseSlug/viewer", "routes/courseViewer.tsx"),

@@ -77,7 +77,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
           </button>
         </nav>
         <hr className="my-4" />
-        <section className="grid gap-2">
+        <section className="grid gap-2 max-w-3xl mx-auto grid-cols-3">
           {courses.map((course) => (
             <CourseCard
               onClick={() => onCourseSelect(course)}
@@ -103,8 +103,8 @@ export const CourseCard = ({
       onClick={onClick}
       className="py-2 px-4 shadow border border-gray-300 rounded-lg hover:shadow-md text-left hover:bg-gray-900 flex justify-between items-center"
     >
-      <h3>{course.title}</h3>
-      <div className="flex gap-1">
+      <h3 className="text-xs">{course.title}</h3>
+      <div className="grid gap-1">
         {course.isFree && (
           <p className="text-xs py-[1px] px-1 bg-green-500 text-white rounded-lg">
             Gratis
