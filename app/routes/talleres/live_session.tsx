@@ -1,15 +1,12 @@
 import { FaMicrophone } from "react-icons/fa6";
 import { useUserMedia } from "./rtc_utils";
-import { useEffect, useState } from "react";
-import { useNavigate, useSubmit } from "react-router";
+import { useNavigate } from "react-router";
 import { FaMicrophoneAltSlash } from "react-icons/fa";
 import { IoMdVideocam } from "react-icons/io";
 import { IoVideocamOff } from "react-icons/io5";
 import { cn } from "~/utils/cn";
 import { PeerToPeerVideoCall } from "~/components/PeerToPeerVideoCall";
 import type { Route } from "./+types/live_session";
-
-const TEST_ID = "pelusines_test";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
@@ -20,41 +17,34 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 };
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  // main data
   const { id, type } = loaderData;
-  // states
-  const [callID, setCallId] = useState<string | null>(id);
-  const { disconnect, videoRef, constraints, toggleConstraint, initCall } =
-    useUserMedia();
   const navigate = useNavigate();
+  const { disconnect, videoRef, constraints, toggleConstraint } =
+    useUserMedia(); // for preparation only
   // methods
-  const createCall = () => {
-    if (callID) return;
+  const startCall = () => navigate("/live_session?" + "type=call"); // @todo improve names semantics
 
-    const id = initCall(TEST_ID);
-    setCallId(id);
-    navigate("/live_session?id=" + id);
-  };
   const handleDisconection = () => {
     disconnect();
-    setCallId(null);
+    // setCallId(null);
     navigate("/live_session");
   };
-  const copyLink = () => {
+  const copyLink = (peerId: string) => {
     const url = new URL(location.href);
+    url.searchParams.set("id", peerId);
     url.searchParams.set("type", "join");
     console.log("URL: ", url.toString());
     navigator.clipboard.writeText(url.toString());
   };
 
   // screen replacer
-  if (callID) {
+  if (type) {
     return (
       <PeerToPeerVideoCall
+        id={id}
         type={type}
         onCopyLink={copyLink}
         onDisconnect={handleDisconection}
-        id={callID}
       />
     );
   }
@@ -80,7 +70,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
             {constraints.video ? <IoMdVideocam /> : <IoVideocamOff />}
           </Button>
         </div>
-        <Button onClick={createCall}>Iniciar llamada</Button>
+        <Button onClick={startCall}>Iniciar llamada</Button>
       </nav>
     </article>
   );

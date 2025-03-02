@@ -3,7 +3,7 @@ import { AiOutlineAudioMuted } from "react-icons/ai";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { BsCameraVideo } from "react-icons/bs";
 import { BsCameraVideoOff } from "react-icons/bs";
-import { LuScreenShare } from "react-icons/lu";
+// import { LuScreenShare } from "react-icons/lu";
 import { ImPhoneHangUp } from "react-icons/im";
 import { IoCopyOutline } from "react-icons/io5";
 import {
@@ -20,14 +20,12 @@ import {
 
 export const PeerToPeerVideoCall = ({
   id,
-  type,
   onDisconnect,
   onCopyLink,
 }: {
-  type?: "call" | "join";
-  onCopyLink?: () => void;
+  id?: string;
+  onCopyLink?: (arg0: string | null) => void;
   onDisconnect: () => void;
-  id: string;
 }) => {
   const {
     constraints,
@@ -35,15 +33,19 @@ export const PeerToPeerVideoCall = ({
     connectToID,
     remoteVideoRef,
     videoRef,
+    peerId,
   } = useUserMedia();
 
   useEffect(() => {
     const connect = async () => {
-      const error = await connectToID(id, type);
+      const error: Error | undefined = await connectToID(id);
       if (error) {
         console.error(error);
         onDisconnect();
       }
+      return () => {
+        onDisconnect();
+      };
     };
     connect();
   }, []);
@@ -58,7 +60,10 @@ export const PeerToPeerVideoCall = ({
       <Controls
         onToggleVideo={toggleConstraint("video")}
         onToggleAudio={toggleConstraint("audio")}
-        onCopyLink={onCopyLink}
+        onCopyLink={() => {
+          console.log("OHTWF!", peerId);
+          onCopyLink?.(peerId);
+        }}
         onHangup={onDisconnect}
         constraints={constraints}
       />

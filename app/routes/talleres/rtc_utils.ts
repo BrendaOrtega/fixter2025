@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Peer from "peerjs";
 import type { Stream } from "stream";
+import { nanoid } from "nanoid";
 
 export type MediaConstraints = {
   audio: boolean;
@@ -8,7 +9,7 @@ export type MediaConstraints = {
 };
 
 export const useUserMedia = () => {
-  // const [id, setId] = useState("");
+  const [peerId, setId] = useState<string | null>(null);
   const peer = useRef<Peer>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -38,12 +39,15 @@ export const useUserMedia = () => {
   const setRemoteStream = (remoteStream: MediaStream) =>
     (remoteVideoRef.current!.srcObject = remoteStream);
 
-  const wait = async (id: string) => {
-    console.info("::WAITING::");
+  const wait = async () => {
+    console.info("::GENERATING_ID::");
+    const p = new Peer(nanoid(4));
+    setId(p.id);
+    peer.current = p;
+    console.info("::WAITING::", p.id);
+    console.info("::PEER::", p);
     const mediaStream = await getUserMedia();
     videoRef.current!.srcObject = mediaStream;
-    const p = new Peer(id);
-    peer.current = p;
     p.on("call", (call) => {
       console.info("::INCOMING_CALL::", call);
       call.answer(mediaStream);
@@ -55,14 +59,20 @@ export const useUserMedia = () => {
     p.on("error", (e) => console.info("::PEER_ERROR::", e));
   };
 
-  const connectToID = async (id: string, type: "join" | "call") => {
+  const connectToID = async (
+    id?: string | null
+  ): Promise<undefined | Error> => {
     // setId(id);
     if (!remoteVideoRef.current || !videoRef.current) {
       console.error("::NO_VIDEO_ELEMENTS_FOUND::");
       return;
     }
-    console.log("::TYPE::", type);
-    type === "join" ? join(id) : wait(id);
+    if (id) {
+      await join(id);
+    } else {
+      await wait();
+    }
+    return;
   };
 
   const getUserMedia = () => {
@@ -78,13 +88,6 @@ export const useUserMedia = () => {
         // stop();
         return err;
       });
-  };
-
-  // @todo change name? getId?
-  const initCall = (id?: string) => {
-    const p = new Peer(id!);
-    peer.current = p;
-    return p.id;
   };
 
   const answerCall = (id: string) => {
@@ -168,9 +171,10 @@ export const useUserMedia = () => {
     updateConstraint,
     constraints,
     toggleConstraint,
-    initCall,
+
     disconnect,
     remoteVideoRef,
     answerCall,
+    peerId,
   };
 };
