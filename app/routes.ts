@@ -42,6 +42,7 @@ export default [
     route("course", "routes/api/course.tsx"),
     route("stripe", "routes/api/stripe.tsx"),
     route("file", "routes/api/file.tsx"),
+    route("sockets", "routes/api/sockets.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

@@ -7,12 +7,14 @@ import { IoVideocamOff } from "react-icons/io5";
 import { cn } from "~/utils/cn";
 import { PeerToPeerVideoCall } from "~/components/PeerToPeerVideoCall";
 import type { Route } from "./+types/live_session";
+import { nanoid } from "nanoid";
+import { useState } from "react";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
   const type = url.searchParams.get("type") as "call" | "join";
-  console.info("::TYPE::", type);
+
   return { id, type };
 };
 
@@ -22,7 +24,11 @@ export default function Page({ loaderData }: Route.ComponentProps) {
   const { disconnect, videoRef, constraints, toggleConstraint } =
     useUserMedia(); // for preparation only
   // methods
-  const startCall = () => navigate("/live_session?" + "type=call"); // @todo improve names semantics
+  const startCall = () => {
+    setIsCreator(true);
+    navigate("/live_session?id=" + nanoid(2));
+  }; // @todo improve names semantics
+  const [isCreator, setIsCreator] = useState(false);
 
   const handleDisconection = () => {
     disconnect();
@@ -38,9 +44,10 @@ export default function Page({ loaderData }: Route.ComponentProps) {
   };
 
   // screen replacer
-  if (type) {
+  if (id) {
     return (
       <PeerToPeerVideoCall
+        isCreator={isCreator}
         id={id}
         type={type}
         onCopyLink={copyLink}

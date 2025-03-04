@@ -17,65 +17,65 @@ import {
   useUserMedia,
   type MediaConstraints,
 } from "~/routes/talleres/rtc_utils";
+import { useWebRTC } from "~/routes/talleres/useWebRTC";
 
 export const PeerToPeerVideoCall = ({
   id,
   onDisconnect,
   onCopyLink,
+  isCreator,
 }: {
+  isCreator?: boolean;
   id?: string;
   onCopyLink?: (arg0: string | null) => void;
   onDisconnect: () => void;
 }) => {
-  const {
-    constraints,
-    toggleConstraint,
-    connectToID,
-    remoteVideoRef,
-    videoRef,
-    peerId,
-  } = useUserMedia();
-
-  useEffect(() => {
-    const connect = async () => {
-      const error: Error | undefined = await connectToID(id);
-      if (error) {
-        console.error(error);
-        onDisconnect();
-      }
-      return () => {
-        onDisconnect();
-      };
-    };
-    connect();
-  }, []);
-
+  const { room, remoteVideoRef, videoRef } = useWebRTC(id, {
+    isCreator,
+    onError() {
+      onDisconnect();
+    },
+  });
   return (
-    <article className="h-screen pt-12 relative">
-      <VideoStream ref={remoteVideoRef} className="absolute top-20 inset-0" />
-      <VideoStream
-        ref={videoRef}
-        className="absolute bottom-4 right-4 h-40 aspect-video"
-      />
-      <Controls
-        onToggleVideo={toggleConstraint("video")}
-        onToggleAudio={toggleConstraint("audio")}
-        onCopyLink={() => {
-          console.log("OHTWF!", peerId);
-          onCopyLink?.(peerId);
-        }}
-        onHangup={onDisconnect}
-        constraints={constraints}
-      />
-    </article>
+    <>
+      <ul className="text-white">
+        <h2 className="text-2xl text-white pt-20">Participantes?</h2>
+        {room.map((peer) => (
+          <li key={peer}>{peer}</li>
+        ))}
+      </ul>
+      <article className="h-screen pt-12 relative">
+        <VideoStream
+          // isMuted={false}
+          ref={remoteVideoRef}
+          className="absolute top-20 inset-0"
+        />
+        <VideoStream
+          ref={videoRef}
+          className="absolute bottom-4 right-4 h-40 aspect-square"
+        />
+        <Controls
+          // id={peerId}
+          // onToggleVideo={toggleConstraint("video")}
+          // onToggleAudio={toggleConstraint("audio")}
+          onCopyLink={() => {
+            // onCopyLink?.(peerId);
+          }}
+          onHangup={onDisconnect}
+          // constraints={constraints}
+        />
+      </article>
+    </>
   );
 };
 
 const VideoStream = ({
   className = "aspect-video",
   ref,
+  isMuted = true,
   ...props
 }: {
+  isMuted?: boolean;
   ref: RefObject<HTMLVideoElement | null>;
   className?: string;
   [x: string]: unknown;
@@ -85,13 +85,14 @@ const VideoStream = ({
       <video
         ref={ref}
         className={cn(
+          "scale-x-[-1]",
           "object-cover",
           "w-full h-full",
           "border-2 border-white rounded-3xl",
           className
         )}
         autoPlay
-        muted
+        muted={isMuted}
         {...props}
       />
     </div>
@@ -100,11 +101,13 @@ const VideoStream = ({
 
 const Controls = ({
   onCopyLink,
+  id,
   onHangup,
   onToggleAudio,
   onToggleVideo,
-  constraints,
+  constraints = {},
 }: {
+  id?: string;
   constraints: MediaConstraints;
   onToggleVideo?: () => void;
   onToggleAudio?: () => void;
@@ -126,13 +129,15 @@ const Controls = ({
       >
         <ImPhoneHangUp />
       </Button>
-      <Button
-        onClick={onCopyLink}
-        label="Copiar link de la llamada"
-        isMuted={false}
-      >
-        <IoCopyOutline />
-      </Button>
+      {id && (
+        <Button
+          onClick={onCopyLink}
+          label="Copiar link de la llamada"
+          isMuted={false}
+        >
+          <IoCopyOutline />
+        </Button>
+      )}
     </nav>
   );
 };

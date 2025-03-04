@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useStore } from "zustand";
 import Peer from "peerjs";
-import type { Stream } from "stream";
 import { nanoid } from "nanoid";
 
 export type MediaConstraints = {
@@ -8,47 +8,70 @@ export type MediaConstraints = {
   video: boolean;
 };
 
-export const useUserMedia = () => {
+let pee: Peer;
+
+export const useUserMedia = (config?: { onError?: (e: unknown) => void }) => {
+  const { onError } = config || {};
   const [peerId, setId] = useState<string | null>(null);
-  const peer = useRef<Peer>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [constraints, setConstraints] = useState<MediaConstraints>({
     video: true,
     audio: true,
   });
+  // @todo types
+  let peer;
+  const setPeer = (p) => (peer = p);
+  // const peer = useStore<any>((state) => state.peer) as Peer;
+  // const setPeer = useStore<any>((state) => state.setPeer) as (p: Peer) => void;
 
   const join = async (id: string) => {
-    console.info("::JOINING::");
+    console.info("::JOINING::", id);
     const mediaStream = await getUserMedia();
     videoRef.current!.srcObject = mediaStream;
     const p = new Peer();
-    peer.current = p;
-    const call = p.call(id, mediaStream);
-    p.on("close", (a) => {
-      console.info("JOINING_PEER_CLOSED::", a);
+    setPeer(p);
+    p.on("open", () => {
+      // This waiting is very important
+      const call = p.call(id, mediaStream);
+
+      p.on("close", (a) => {
+        console.info("JOINING_PEER_CLOSED::", a);
+        onError?.(a);
+      });
+      p.on("error", (e) => console.info("::JOINING_PEER_ERROR::", e));
+      call.on("close", (closed) => {
+        console.info("::  CALL_CLOSED::", closed);
+        onError?.(closed);
+      });
+      call.on("error", (e) => {
+        console.info("::CALL_ERROR::", e);
+        onError?.(e);
+      });
+      call.on("stream", setRemoteStream);
+      call.on("iceStateChanged", (e) => {
+        console.info("ICE?", e);
+      });
     });
-    p.on("error", (e) => console.info("::CALL_ERROR::", e));
-    call.on("stream", setRemoteStream);
-    call.on("close", (a) => {
-      console.info("CALL CLOSED::", a);
-    });
-    call.on("error", (e) => console.info("::CALL_ERROR::", e));
   };
 
-  const setRemoteStream = (remoteStream: MediaStream) =>
-    (remoteVideoRef.current!.srcObject = remoteStream);
+  const setRemoteStream = (remoteStream: MediaStream) => {
+    console.info("::STARTING::", remoteStream);
+    remoteVideoRef.current!.srcObject = remoteStream;
+  };
 
   const wait = async () => {
     console.info("::GENERATING_ID::");
-    const p = new Peer(nanoid(4));
-    setId(p.id);
-    peer.current = p;
-    console.info("::WAITING::", p.id);
-    console.info("::PEER::", p);
-    const mediaStream = await getUserMedia();
-    videoRef.current!.srcObject = mediaStream;
-    p.on("call", (call) => {
+    const key = nanoid(4);
+    const p = new Peer(key); // @todo we can wait for uuid
+    setPeer(p);
+    p.on("open", (id) => {
+      console.info("::CONNECTION_OPENED_AND_WAITING_ON::", id);
+      setId(id);
+    });
+    p.on("call", async (call) => {
+      const mediaStream = await getUserMedia();
+      videoRef.current!.srcObject = mediaStream;
       console.info("::INCOMING_CALL::", call);
       call.answer(mediaStream);
       call.on("stream", setRemoteStream);
@@ -84,31 +107,19 @@ export const useUserMedia = () => {
         return mediaStream;
       })
       .catch(function (err) {
-        console.info("::ERROR::", err);
+        console.info("::USER_MEDIA_ERROR::", err);
         // stop();
+        onError?.(err);
         return err;
       });
   };
 
-  const answerCall = (id: string) => {
-    const p = new Peer();
-    p.on("call", (call) => {
-      console.info("::ANSWERING::");
-      navigator.mediaDevices
-        .getUserMedia(constraints)
-        .then(function (mediaStream) {
-          console.info("::LOCAL_MEDIA_ADQUIRED::");
-          videoRef.current!.srcObject = mediaStream;
-        });
-    });
-  };
+  const disconnect = useCallback(() => {
+    console.info("::ABOUT_TO_DESTROY::", peer);
+    if (!peer) return;
 
-  const disconnect = () => {
-    const p = peer.current;
-    if (!p) return;
-
-    p.disconnect();
-  };
+    peer.destroy();
+  }, [peer]);
 
   const updateConstraint = (name: "audio" | "video", val: boolean) => {
     setConstraints((c) => ({ ...c, [name]: val }));
@@ -174,7 +185,7 @@ export const useUserMedia = () => {
 
     disconnect,
     remoteVideoRef,
-    answerCall,
+
     peerId,
   };
 };
