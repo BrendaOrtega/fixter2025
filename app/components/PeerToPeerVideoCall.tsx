@@ -3,20 +3,10 @@ import { AiOutlineAudioMuted } from "react-icons/ai";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { BsCameraVideo } from "react-icons/bs";
 import { BsCameraVideoOff } from "react-icons/bs";
-// import { LuScreenShare } from "react-icons/lu";
 import { ImPhoneHangUp } from "react-icons/im";
 import { IoCopyOutline } from "react-icons/io5";
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from "react";
-import {
-  useUserMedia,
-  type MediaConstraints,
-} from "~/routes/talleres/rtc_utils";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
+import { type MediaConstraints } from "~/routes/talleres/rtc_utils";
 import { useWebRTC } from "~/routes/talleres/useWebRTC";
 
 export const PeerToPeerVideoCall = ({
@@ -30,7 +20,7 @@ export const PeerToPeerVideoCall = ({
   onCopyLink?: (arg0: string | null) => void;
   onDisconnect: () => void;
 }) => {
-  const { room, remoteVideoRef, videoRef } = useWebRTC(id, {
+  const { participants, remoteVideoRef, videoRef } = useWebRTC(id, {
     isCreator,
     onError() {
       onDisconnect();
@@ -40,13 +30,13 @@ export const PeerToPeerVideoCall = ({
     <>
       <ul className="text-white">
         <h2 className="text-2xl text-white pt-20">Participantes?</h2>
-        {room.map((peer) => (
-          <li key={peer}>{peer}</li>
+        {participants.map((participant) => (
+          <li key={participant}>{participant}</li>
         ))}
       </ul>
       <article className="h-screen pt-12 relative">
         <VideoStream
-          // isMuted={false}
+          isMuted={false}
           ref={remoteVideoRef}
           className="absolute top-20 inset-0"
         />

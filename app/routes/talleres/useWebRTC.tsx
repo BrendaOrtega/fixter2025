@@ -1,19 +1,20 @@
-import { nanoid } from "nanoid";
 import { useEffect, useRef, useState } from "react";
-import { useICEPreventCollition } from "~/hooks/useICEPreventCollition";
 import { useToast } from "~/hooks/useToaster";
+
+// const SOCKET = "ws://localhost:8000/ws";
+const SOCKET = "ws://video-converter-hono.fly.dev/ws";
 
 type PeerData = {
   participants?: string[];
   roomId?: string;
   peerId?: string;
   intent:
+    | "joined"
     | "peer_joined"
-    | "peer_left"
-    | "rollback"
-    | "negotiation"
-    | "offer"
-    | "answer"
+    | "rejected"
+    | "create_offer"
+    | "answer_the_offer"
+    | "connect"
     | "candidate";
   description?: RTCSessionDescriptionInit;
   candidate?: RTCIceCandidateInit;
@@ -29,40 +30,37 @@ const json = (data: Record<string, any>) => JSON.stringify(data);
 const noop = () => {};
 
 export const useWebRTC = (
-  roomId: string = "perro_room",
+  roomId: string = "test_room",
   options?: { onError?: (arg0: unknown) => void; isCreator?: boolean }
 ) => {
-  const { onError = noop, isCreator } = options || {};
+  const { onError = noop } = options || {};
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<WebSocket>(null);
   const [room, setRoom] = useState<string[]>([]);
   const [constraints, setConstraints] = useState<Record<string, any>>({
     audio: true,
-    video: true,
-    // video: {
-    //   width: { max: 480 },
-    //   height: { max: 320 },
-    //   frameRate: { max: 15 },
-    //   //   facingMode: { exact: "user" },
-    // },
+    // video: true,
+    video: {
+      width: { max: 480 },
+      height: { max: 320 },
+      frameRate: { max: 15 },
+      //   facingMode: { exact: "user" },
+    },
   });
-  const peerId = useRef(nanoid(3)).current;
   //   const [peers, setPeers] = useState<Peer[]>([]);
   const selfConnectionRef = useRef<RTCPeerConnection>(null);
   const selfStream = useRef<MediaStream>(null);
   //   const socketRef = useRef<any>(null);
   // connection
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/ws");
+    const ws = new WebSocket(SOCKET);
     socketRef.current = ws;
-    ws.onopen = async function (event) {
+    ws.onopen = (event) => {
       console.log("::SOCKET_IS::", event.type);
-      createPeer(peerId, true);
       ws.send(
         json({
           roomId,
-          peerId,
           intent: "join",
         })
       );
@@ -70,20 +68,30 @@ export const useWebRTC = (
     ws.onmessage = async (event) => {
       const data = JSON.parse(event.data) as PeerData;
       switch (data.intent) {
+        case "joined":
+          handleSelfJoin(data);
+          break;
         case "peer_joined":
           handlePeerJoin(data);
           break;
-        case "peer_left":
-          handlePeerLeft(data);
+        case "rejected":
+          handleRejection();
           break;
-        case "offer":
-          handleOffer(data);
+        // starter
+        case "create_offer":
+          createPeer();
           break;
-        case "answer":
-          handleAnswer(data.description!);
+        case "answer_the_offer":
+          createAnswer(data);
+          break;
+        case "connect":
+          await selfConnectionRef.current!.setRemoteDescription(
+            data.description!
+          );
+          console.log("Answer:", data.description!);
           break;
         case "candidate":
-          handleCandidate(data.candidate!);
+          handleCandidate(data.candidate);
           break;
       }
     };
@@ -95,64 +103,121 @@ export const useWebRTC = (
     };
   }, []);
 
+  const toast = useToast();
+  const [participants, setParticipants] = useState<string[]>([]);
+  const peerId = useRef<string | null>(null);
   const isFirst = useRef(false);
-  const offering = useRef(false);
-  const handleOffer = async ({
+  const mediaStream = useRef<MediaStream>(null);
+
+  const handleRejection = () => {
+    toast.error({
+      text: `Esta sala "${roomId}" ya está llena, crea una nueva. 📞`,
+    });
+    onError?.(null);
+  };
+
+  const handleSelfJoin = ({
+    isFirst: first,
+    id,
+  }: {
+    isFirst: boolean;
+    id: string;
+  }) => {
+    peerId.current = id;
+    isFirst.current = first;
+    console.info("JOINED_TO_ROOM_SUCCESSFULLY");
+    requestUserMedia();
+  };
+
+  const getUserMedia = (
+    constraints: { audio: boolean; video: boolean } = {
+      video: true,
+      audio: true,
+    }
+  ): Promise<MediaStream> => {
+    return navigator.mediaDevices.getUserMedia(constraints).catch((err) => {
+      console.info("::USER_MEDIA_ERROR::", err);
+      onError?.(err);
+      return err;
+    });
+  };
+
+  const requestUserMedia = async () => {
+    if (!videoRef.current)
+      return console.error("Debes asignar un video al ref");
+
+    mediaStream.current = await getUserMedia();
+    videoRef.current!.srcObject = mediaStream.current;
+  };
+
+  const handlePeerJoin = ({ participants }: { participants: string[] }) => {
+    toast.success({
+      text: "::Iniciando llamada:: 📞",
+    });
+    setParticipants(participants);
+  };
+
+  const createPeer = async () => {
+    const c = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    });
+
+    if (!mediaStream.current) {
+      mediaStream.current = await getUserMedia();
+    }
+
+    for (let track of mediaStream.current.getTracks()) {
+      c.addTrack(track, mediaStream.current);
+      // pass the stream    ^
+    }
+    c.onnegotiationneeded = onnegotiationneeded;
+    c.onicecandidate = onicecandidate;
+    c.ontrack = ontrack;
+
+    selfConnectionRef.current = c;
+    console.info("::PEER_CONNECTION_CREATED::✅");
+    return c;
+  };
+
+  const createAnswer = async ({
     description,
   }: {
     description: RTCSessionDescriptionInit;
   }) => {
-    console.log("Handling offer");
-    await selfConnectionRef.current!.setRemoteDescription(description);
-    await selfConnectionRef.current!.setLocalDescription();
+    const c = await createPeer();
+    await c.setRemoteDescription(description);
+    await c.setLocalDescription();
     socketRef.current!.send(
       json({
-        description: selfConnectionRef.current!.localDescription,
+        description: c.localDescription,
         intent: "answer",
+        roomId,
       })
     );
+    selfConnectionRef.current = c;
+    console.log("::ANSER_SENT::");
   };
+
+  const handleCandidate = (candidate: RTCIceCandidateInit) => {
+    // if (!selfConnectionRef.current!.remoteDescription) return; // revisit
+    selfConnectionRef.current!.addIceCandidate(candidate);
+  };
+
+  async function ontrack({ streams: [stream] }: RTCTrackEvent) {
+    console.log("::ON_TRACK::", selfConnectionRef.current!.signalingState);
+    console.log("::STREAM::", !!stream, stream.active);
+    remoteVideoRef.current!.srcObject = stream;
+  }
+
+  ////////////////////////////////////////////////////// ///////////////////////////
 
   const handleAnswer = async (description: RTCSessionDescriptionInit) => {
     await selfConnectionRef.current!.setRemoteDescription(description);
   };
-
-  const handleCandidate = (candidate: RTCIceCandidateInit) => {
-    if (!selfConnectionRef.current!.remoteDescription) return;
-
-    selfConnectionRef.current?.addIceCandidate(candidate); // @todo check if remote exist
-  };
-
-  const createPeer = async (peerId: string, isSelf: boolean = false) => {
-    const peer = {
-      isSelf,
-      id: peerId,
-      connection: new RTCPeerConnection({
-        iceServers: [
-          {
-            urls: "stun:stun.l.google.com:19302",
-          },
-        ],
-      }),
-    };
-    selfConnectionRef.current = peer.connection; // experiment
-    console.log("Constainsrt", constraints);
-    selfStream.current = await getUserMedia(constraints as any); // @todo types
-    for (let track of selfStream.current!.getTracks()) {
-      console.log("track", track);
-      selfConnectionRef.current!.addTrack(track, selfStream.current!);
-      // We NEED the Fucking! (sorry, this was though) Stream container    ^
-    }
-    registerRtcCallbacks();
-    videoRef.current!.srcObject = selfStream.current;
-  };
-
-  function registerRtcCallbacks() {
-    selfConnectionRef.current!.onnegotiationneeded = onnegotiationneeded;
-    selfConnectionRef.current!.onicecandidate = onicecandidate;
-    selfConnectionRef.current!.ontrack = ontrack;
-    console.info("::PEER_REGISTERED::");
-  }
 
   // send any ice candidates to the other peer
   function onicecandidate({
@@ -164,31 +229,27 @@ export const useWebRTC = (
 
     socketRef.current!.send(
       json({
+        roomId,
         candidate,
         intent: "candidate", // shared
       })
     );
   }
 
+  /// REUSABLE LISTENERS
   async function onnegotiationneeded() {
-    if (isFirst.current) return;
+    if (isFirst.current) return; // revisit
+    console.info("::ICE_NEGOTIATION_STARTED::");
 
     await selfConnectionRef.current!.setLocalDescription(); // guest sets local offer
-    console.log("OFERRING", selfConnectionRef.current!.signalingState);
+    console.info(selfConnectionRef.current!.signalingState);
     socketRef.current!.send(
       json({
         description: selfConnectionRef.current!.localDescription,
         intent: "offer",
+        roomId,
       })
     );
-  }
-
-  async function ontrack({ track, streams: [stream] }: RTCTrackEvent) {
-    console.log("::ON_TRACK::", selfConnectionRef.current!.signalingState);
-    console.log("::STREAM::", !!stream);
-    console.log("::TRACK::", track);
-
-    remoteVideoRef.current!.srcObject = stream;
   }
 
   // todo
@@ -199,41 +260,8 @@ export const useWebRTC = (
     // setRoom(data.participants);
   };
 
-  const toast = useToast();
-  const handlePeerJoin = (data: PeerData) => {
-    toast.success({
-      text: "Se ha unido un nuevo participante::" + data.peerId,
-    });
-    console.info(
-      "Setting first: ",
-      data.participants,
-      data.participants!.length === 1
-    );
-    isFirst.current = isFirst.current
-      ? isFirst.current
-      : data.participants!.length === 1;
-    // videoRef.current!.srcObject = localStream; // @todo remote
-    setRoom(data.participants!);
-  };
-
-  const getUserMedia = (
-    constraints: { audio: boolean; video: boolean } = {
-      video: true,
-      audio: true,
-    }
-  ) => {
-    return navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then((mediaStream) => mediaStream)
-      .catch((err) => {
-        console.info("::USER_MEDIA_ERROR::", err);
-        onError?.(err);
-        return err;
-      });
-  };
-
   return {
-    room,
+    participants,
     remoteVideoRef,
     videoRef,
   };
