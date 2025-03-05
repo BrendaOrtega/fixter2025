@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useToast } from "~/hooks/useToaster";
 
 // const SOCKET = "ws://localhost:8000/ws";
-const SOCKET = "ws://video-converter-hono.fly.dev/ws";
+const SOCKET = "wss://video-converter-hono.fly.dev/ws";
 
 type PeerData = {
   participants?: string[];

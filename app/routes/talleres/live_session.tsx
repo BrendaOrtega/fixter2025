@@ -36,11 +36,8 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     navigate("/live_session");
   };
   const copyLink = (peerId: string) => {
-    const url = new URL(location.href);
-    url.searchParams.set("id", peerId);
-    url.searchParams.set("type", "join");
-    console.log("URL: ", url.toString());
-    navigator.clipboard.writeText(url.toString());
+    console.log("location", location.href);
+    navigator.clipboard.writeText(location.href);
   };
 
   // screen replacer

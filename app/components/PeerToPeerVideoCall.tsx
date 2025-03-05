@@ -28,12 +28,6 @@ export const PeerToPeerVideoCall = ({
   });
   return (
     <>
-      <ul className="text-white">
-        <h2 className="text-2xl text-white pt-20">Participantes?</h2>
-        {participants.map((participant) => (
-          <li key={participant}>{participant}</li>
-        ))}
-      </ul>
       <article className="h-screen pt-12 relative">
         <VideoStream
           isMuted={false}
@@ -45,11 +39,11 @@ export const PeerToPeerVideoCall = ({
           className="absolute bottom-4 right-4 h-40 aspect-square"
         />
         <Controls
-          // id={peerId}
+          id
           // onToggleVideo={toggleConstraint("video")}
           // onToggleAudio={toggleConstraint("audio")}
           onCopyLink={() => {
-            // onCopyLink?.(peerId);
+            onCopyLink?.(location.href);
           }}
           onHangup={onDisconnect}
           // constraints={constraints}
@@ -119,15 +113,14 @@ const Controls = ({
       >
         <ImPhoneHangUp />
       </Button>
-      {id && (
-        <Button
-          onClick={onCopyLink}
-          label="Copiar link de la llamada"
-          isMuted={false}
-        >
-          <IoCopyOutline />
-        </Button>
-      )}
+
+      <Button
+        onClick={onCopyLink}
+        label="Copiar link de la llamada"
+        isMuted={false}
+      >
+        <IoCopyOutline />
+      </Button>
     </nav>
   );
 };
