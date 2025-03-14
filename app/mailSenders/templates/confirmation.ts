@@ -8,7 +8,7 @@ export const confirmation = ({ link }: { link: string }) => `
     Este es un token para confirmar que eres real. 🤖 <strong>Tú sabes que los robots poco a poco se apoderan del planeta 🌎 y necesitamos asegurarnos. 😅</strong> <br />
   </p>
   <p>
-    Solo da clic en el enlace. ¡Nos vemos el Fixter para ver unas cursos, o compartir tutoriales y guías! 
+    Solo da clic en el enlace. ¡Nos vemos el Fixter para ver un curso, o compartir tutoriales y guías! 
   </p>
   <a href="${link}" style="border-radius:24px;text-decoration:none;background:#83F3D3;padding:12px 16px;font-size:18px;margin:32px 0;display:block;max-width:180px;text-align:center;cursor:pointer;color:#0E1317;">
     Confirmar mi cuenta

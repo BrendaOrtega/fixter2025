@@ -34,6 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "suscription") {
     const tags = ["newsletter", "blog"];
     const email = String(formData.get("email"));
+    const name = String(formData.get("name"));
     const { success, error } = emailSchema.safeParse(email);
     if (!success) {
       return data({
@@ -46,8 +47,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // @todo detached
     const suscriber = await db.subscriber.upsert({
       where: { email },
-      create: { email, tags }, // @todo default tags?
-      update: { tags: { push: tags } },
+      create: { email, name, tags }, // @todo default tags?
+      update: { name, tags: { push: tags } },
     });
     if (!suscriber.confirmed) {
       await sendConfirmation(email, tags);
