@@ -10,6 +10,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { MdEdit } from "react-icons/md";
 import { redirect, useSearchParams } from "react-router";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
+import { nanoid } from "nanoid";
 
 export const createPostSchema = z.object({
   title: z.string().min(3),
@@ -35,7 +36,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const youtubeLink = formData.get("youtubeLink") as string;
     const body = formData.get("body") as string;
     const payload = {
-      slug: slugify(title) + randomUUID(),
+      slug: slugify(title) + "_" + nanoid(3),
       title,
       youtubeLink,
       body,
