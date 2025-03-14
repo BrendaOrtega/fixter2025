@@ -3,7 +3,6 @@ import type { Route } from "./+types/postList";
 import type { Post } from "@prisma/client";
 import { PostForm } from "~/components/forms/PostForm";
 import slugify from "slugify";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { AiOutlineDeliveredProcedure } from "react-icons/ai";
 import { useEffect, useState, type ReactNode } from "react";
@@ -35,16 +34,29 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const title = formData.get("title") as string;
     const youtubeLink = formData.get("youtubeLink") as string;
     const body = formData.get("body") as string;
+
+    const author =
+      formData.get("author") === "brendi"
+        ? {
+            authorAt: "@brendago",
+            photoUrl: "https://i.imgur.com/TFQxcIu.jpg",
+            authorAtLink: "https://www.linkedin.com/in/brendago",
+            authorName: "BrendaGo",
+          }
+        : {
+            authorAt: "@blissito",
+            photoUrl: "https://i.imgur.com/TaDTihr.png",
+            authorAtLink: "https://www.hectorbliss.com",
+            authorName: "Héctorbliss",
+          };
+
     const payload = {
       slug: slugify(title) + "_" + nanoid(3),
       title,
       youtubeLink,
       body,
       metaImage: formData.get("metaImage") as string,
-      authorAt: "@blissito",
-      photoUrl: "https://i.imgur.com/TaDTihr.png",
-      authorAtLink: "https://www.hectorbliss.com",
-      authorName: "Héctorbliss",
+      ...author,
       tags: (formData.get("tags") as string).split(","),
       mainTag: (formData.get("tags") as string).split(",")[0],
       published: true,
@@ -96,7 +108,6 @@ export default function Page({ loaderData }: Route.ComponentProps) {
   };
 
   useEffect(() => {
-    console.log("??", hasSuccess);
     onClose();
   }, [hasSuccess]);
 

@@ -2,6 +2,7 @@ import { useFetcher } from "react-router";
 import { Input } from "./CourseForm";
 import Spinner from "../common/Spinner";
 import type { Post } from "@prisma/client";
+import { SelectInput } from "./SelectInput";
 
 export const PostForm = ({
   current,
@@ -42,6 +43,16 @@ export const PostForm = ({
           placeholder="http://image.be/3j38DFGr"
         />
       </div>
+      <SelectInput
+        name="author"
+        defaultValue="brendi"
+        className="w-[220px]"
+        label="Autor"
+        options={[
+          { value: "brendi", label: "Brendi" },
+          { value: "bliss", label: "Bliss" },
+        ]}
+      />
       <Input
         defaultValue={current?.body}
         label="Cuerpo"
