@@ -11,7 +11,6 @@ export const SuscriptionBanner = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = () => {
-    console.log("captcha ok?");
     if (!inputRef.current?.value) return; // guard
 
     fetcher.submit(

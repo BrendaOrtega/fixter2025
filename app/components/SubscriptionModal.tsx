@@ -4,9 +4,9 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { cn } from "~/utils/cn";
-import { useFetcher } from "react-router";
+import { useFetcher, useNavigate } from "react-router";
 import { useRemember } from "~/hooks/useRemember";
 import { IoClose } from "react-icons/io5";
 import Spinner from "./common/Spinner";
@@ -23,7 +23,7 @@ export const SubscriptionModal = () => {
   const onClose = () => {
     setIsOpen(false);
     resumeScroll();
-    // avoidForSecs(30);
+    // avoidForSecs(10);
     avoidForDays(7);
   };
 
@@ -48,6 +48,13 @@ export const SubscriptionModal = () => {
   }, []);
 
   const isLoading = fetcher.state !== "idle";
+  const navigate = useNavigate();
+  const handleSubmit = (ev: FormEvent<HTMLFormElement>) => {
+    avoidForDays(180);
+    const formData = new FormData(ev.currentTarget);
+    fetcher.submit(formData, { method: "post", action: "/api/user" });
+    navigate("/subscribe?success=1");
+  };
 
   return (
     <AnimatePresence>
@@ -84,20 +91,19 @@ export const SubscriptionModal = () => {
             />
             <fetcher.Form
               className="flex flex-col gap-2 py-2"
-              method="post"
-              action="/api/user"
+              onSubmit={handleSubmit}
             >
               <input
-                className="rounded-xl focus:border-none ring-transparent ring-4 focus:ring-brand-500 focus:ring-4 transition-all text-black"
+                required
                 name="name"
+                className="bg-transparent placeholder:text-white/20 font-light rounded-xl border-brand-700 border focus:border-none focus:ring-brand-500 focus:ring-2"
                 placeholder="Escribe tu nombre"
               />
               <input
                 required
-                className="rounded-xl focus:border-none ring-transparent ring-4 focus:ring-brand-500 focus:ring-4 transition-all text-black"
                 name="email"
-                type="email"
-                placeholder="Escribe tu correo"
+                className="bg-transparent placeholder:text-white/20 font-light rounded-xl border-brand-700 border focus:border-none focus:ring-brand-500 focus:ring-2"
+                placeholder="tucorreo@gmail.com"
               />
               <button
                 disabled={isLoading}
