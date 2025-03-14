@@ -31,6 +31,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
 
   const postCount = await db.post.count();
   const posts = await db.post.findMany({
+    where: { published: true },
     take: 2,
     skip: Math.floor(Math.random() * (postCount - 1)),
     select: { title: true, metaImage: true, slug: true },
