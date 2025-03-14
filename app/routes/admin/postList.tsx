@@ -10,6 +10,7 @@ import { MdEdit } from "react-icons/md";
 import { redirect, useSearchParams } from "react-router";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { nanoid } from "nanoid";
+import { getMetaTags } from "~/utils/getMetaTags";
 
 export const createPostSchema = z.object({
   title: z.string().min(3),

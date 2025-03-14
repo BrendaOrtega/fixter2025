@@ -1,7 +1,7 @@
 export const getMetaTags = ({
   title = "Fixtergeek.com",
   description = "Cursos y recursos de programación y diseño web",
-  image = "/cover.png",
+  image = "https://fixtergeek.com/cover.png",
   url = "https://fixtergeek.com",
   video,
   audio,
