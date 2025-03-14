@@ -12,14 +12,14 @@ export const NextPost = ({ posts }: { posts: Partial<Post>[] }) => {
   );
 };
 
-const Thumb = ({ post }: { post: Post }) => {
+const Thumb = ({ post }: { post: Partial<Post> }) => {
   return (
     <Link
       to={`/blog/${post.slug}`}
       className="rounded-xl p-3 flex flex-col gap-4 flex-1 group"
     >
       <img
-        className="w-full aspect-video object-cover object-left group-hover:scale-110 transition-all rounded-2xl"
+        className="w-full aspect-video object-cover object-left-top group-hover:scale-110 transition-all rounded-2xl"
         src={post.metaImage || "/logo.svg"}
         alt="meta cover"
         onError={(ev) => {
@@ -28,10 +28,10 @@ const Thumb = ({ post }: { post: Post }) => {
         }}
       />
       <div>
-        <h2 className="text-xl font-bold">{post.title}</h2>
-        <h4 className="font-thin flex items-center gap-8">
-          <span>Lee este otro Post</span>
-          <span className="group-hover:translate-x-8 transition-all">
+        <h2 className="text-xl font-bold mb-2">{post.title}</h2>
+        <h4 className="font-thin flex items-center gap-2 text-brand-700">
+          <span>Checa este otro Post</span>
+          <span className="group-hover:translate-x-4 transition-all">
             <IoArrowForward />
           </span>
         </h4>
