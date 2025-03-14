@@ -9,6 +9,7 @@ import { CourseBanner } from "~/components/CourseBanner";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
 import { getMetaTags } from "~/utils/getMetaTags";
 import { SubscriptionModal } from "~/components/SubscriptionModal";
+import { NextPost } from "~/components/common/NextPost";
 
 export const meta = ({ data }: Route.MetaArgs) => {
   const { post } = data;
@@ -27,17 +28,27 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     },
   });
   if (!post) throw new Response(null, { status: 404 });
-  return { post };
+
+  const postCount = await db.post.count();
+  const posts = await db.post.findMany({
+    take: 2,
+    skip: Math.floor(Math.random() * (postCount - 1)),
+    select: { title: true, metaImage: true, slug: true },
+  });
+
+  return { post, posts };
 };
 
-export default function Page({ loaderData: { post } }: Route.ComponentProps) {
+export default function Page({
+  loaderData: { post, posts },
+}: Route.ComponentProps) {
   useEffect(() => {
     window.scrollTo({
       top: 0,
       left: 0,
       behavior: "smooth",
     });
-  }, []);
+  }, [post]);
 
   return (
     <>
@@ -70,7 +81,7 @@ export default function Page({ loaderData: { post } }: Route.ComponentProps) {
           <YoutubeComponent url={post.youtubeLink as string} />
           <Markdown>{post.body}</Markdown>
         </section>
-
+        <NextPost posts={posts} />
         <CourseBanner />
       </article>
     </>
