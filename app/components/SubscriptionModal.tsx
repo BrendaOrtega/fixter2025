@@ -16,14 +16,15 @@ export const SubscriptionModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const fetcher = useFetcher();
 
-  const { avoidForSecs, shouldAvoid } = useRemember();
+  const { avoidForDays, shouldAvoid } = useRemember();
 
   const pauseScroll = () => (document.body.style.overflow = "hidden");
   const resumeScroll = () => (document.body.style.overflow = "inherit");
   const onClose = () => {
     setIsOpen(false);
     resumeScroll();
-    avoidForSecs(30);
+    // avoidForSecs(30);
+    avoidForDays(7);
   };
 
   useMotionValueEvent(scrollYProgress, "change", (last) => {
