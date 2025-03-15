@@ -35,6 +35,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
     take: 2,
     skip: Math.floor(Math.random() * (postCount - 1)),
     select: { title: true, metaImage: true, slug: true },
+    // orderBy: { createdAt: "desc" },
   });
 
   return { post, posts };
