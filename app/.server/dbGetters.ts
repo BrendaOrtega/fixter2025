@@ -207,7 +207,11 @@ export const getOrCreateUser = async (
   const { confirmed, tags = [] } = options || {};
 
   let exists;
-  if (confirmed) {
+
+  exists = await db.user.findUnique({
+    where: { email },
+  });
+  if (exists) {
     exists = await db.user.update({
       where: { email },
       data: {
@@ -215,11 +219,8 @@ export const getOrCreateUser = async (
         tags: { push: tags },
       },
     }); // confirming
-  } else {
-    exists = await db.user.findUnique({ where: { email } });
+    return exists;
   }
-  if (exists) return exists;
-
   return await db.user.create({
     data: {
       username: email,

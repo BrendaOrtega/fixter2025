@@ -15,6 +15,8 @@ import {
 import { commitSession } from "~/sessions";
 import { validateUserToken } from "~/utils/tokens";
 
+// http://localhost:3000/login?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InZhbmVzYWFsb25kcmEwMTIzNDVAZ21haWwuY29tIiwiaWF0IjoxNzQyNDkxODgyLCJleHAiOjE3NDI0OTU0ODJ9.i4Xt7tNjBQ-wHrF5NbJJgrOoha-m1b_Ot9HYXD_QmVI
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const { searchParams } = url;
@@ -30,6 +32,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         message: "El token no es valido ⛓️‍💥",
       };
     }
+    console.log("Decoded: ,", decoded);
     // user =>
     await getOrCreateUser(decoded.email, {
       confirmed: true, // because of token
