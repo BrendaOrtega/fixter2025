@@ -81,10 +81,10 @@ export default function Page({
             </Link>
 
             <div className="">
-              <h2 className=" text-4xl font-bold text-left mb-6 !leading-snug mt-16 lg:mt-0">
+              <h2 className="text-3xl md:text-4xl font-bold text-left mb-6 !leading-snug mt-16 lg:mt-0">
                 {post.title}
               </h2>
-              <div className="flex justify-between items-center flex-wrap">
+              <div className="flex justify-between items-center flex-wrap gap-y-4">
                 <Autor {...post} /> <Sharing metalink={post.slug} />
               </div>
             </div>
@@ -111,7 +111,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
   };
 
   return (
-    <div className="flex gap-2 mt-5 md:mt-0">
+    <div className="flex gap-2  items-center ">
       <SocialMedia onClick={handleSocialClick} name="Link">
         <PiLinkSimpleBold />
       </SocialMedia>
@@ -166,7 +166,7 @@ const SocialMedia = ({
       <button
         onClick={onClick}
         className={twMerge(
-          "group rounded-full w-10 hover:scale-125 transition-all h-10 text-xl opacity-50 hover:opacity-100 flex items-center justify-center relative active:scale-95"
+          "group rounded-full w-8 hover:scale-125 transition-all h-8 text-xl opacity-50 hover:opacity-100 flex items-center justify-center relative active:scale-95"
         )}
       >
         {children}
