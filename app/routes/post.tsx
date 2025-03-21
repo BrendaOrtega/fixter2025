@@ -139,7 +139,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
       <SocialMedia
         onClick={handleSocialClick}
         // link={`whatsapp://send?text=¡Te comparto mi descuento! ${link}`}
-        link={`https://api.whatsapp.com/send/?text=¡Vi+este+post+y+me+pareció+interesante!${link}&type=phone_number&app_absent=0`}
+        link={`https://api.whatsapp.com/send/?text=¡Vi+este+post+y+me+pareció+interesante!\n${link}&type=phone_number&app_absent=0`}
         name="Whatsapp"
       >
         <IoLogoWhatsapp />
