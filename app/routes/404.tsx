@@ -1,6 +1,13 @@
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import type { Route } from "./+types/404";
 import { redirect } from "react-router";
+import getMetaTags from "~/utils/getMetaTags";
+
+export const meta = () =>
+  getMetaTags({
+    title: "404",
+    description: "Página no encontrada",
+  });
 
 export const loader = ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);

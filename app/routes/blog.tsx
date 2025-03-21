@@ -9,7 +9,6 @@ import {
 import { data, Link, useFetcher } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { db } from "~/.server/db";
-import { getMetaTags } from "~/utils/getMetaTags";
 import type { Route } from "./+types/blog";
 import Spinner from "~/components/common/Spinner";
 import useURLSearch from "~/hooks/useURLSearch";
@@ -20,13 +19,13 @@ import { useReadingTime } from "~/utils/useReadingTime";
 import { motion, useInView } from "motion/react";
 import { SuscriptionBanner } from "~/components/SuscriptionBanner";
 import { Footer } from "~/components/Footer";
+import getMetaTags from "~/utils/getMetaTags";
 
 export const meta = () =>
   getMetaTags({
     title: " Aprende leyendo nuestro blog | Fixtergeek",
     description:
       "Mantente actualizad@ y mejora tus habilidades mientras disfrutas",
-    image: "/cover.png",
   });
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {

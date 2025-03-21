@@ -1,5 +1,4 @@
 import { db } from "~/.server/db";
-import { getMetaTags } from "~/utils/getMetaTags";
 import { Header } from "~/components/common/Header";
 import { CourseCard } from "~/components/CourseCard";
 import { getUserOrRedirect } from "~/.server/dbGetters";
@@ -9,6 +8,7 @@ import { useSearchParams, type LoaderFunctionArgs } from "react-router";
 
 import type { Course } from "@prisma/client";
 import type { Route } from "./+types/mis-cursos";
+import getMetaTags from "~/utils/getMetaTags";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);

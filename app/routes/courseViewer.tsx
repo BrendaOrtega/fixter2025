@@ -8,6 +8,15 @@ import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/courseViewer";
 import { MarkdownViewer } from "~/components/viewer/MarkdownViewer";
+import getMetaTags from "~/utils/getMetaTags";
+
+export function meta({ data }: Route.MetaArgs) {
+  return getMetaTags({
+    title: data.course.title,
+    description: data.course.description?.slice(0, 50),
+    image: data.course.icon || undefined,
+  });
+}
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const url = new URL(request.url);

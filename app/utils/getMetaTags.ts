@@ -1,82 +1,56 @@
-export const getMetaTags = ({
-  title = "Fixtergeek.com",
-  description = "Cursos y recursos de programación y diseño web",
-  image = "https://fixtergeek.com/cover.png",
-  url = "https://fixtergeek.com",
-  video,
-  audio,
-}: {
+export type GetBasicMetaTagsPros = {
   title?: string;
   description?: string;
   image?: string;
-  video?: string;
-  audio?: string;
-  url?: string;
-}) => [
-  { title },
-  {
-    property: "og:title",
-    content: title,
-  },
-  {
-    name: "description",
-    content: description,
-  },
-  {
-    property: "og:description",
-    content: description,
-  },
-  {
-    property: "og:site_name",
-    content: title,
-  },
-  {
-    property: "og:url",
-    content: url,
-  },
+  twitterCard?: "summary" | "summary_large_image";
+};
 
-  {
-    property: "og:type",
-    content: "video.courses",
-  },
-  {
-    property: "og:image",
-    content: image,
-  },
-  {
-    property: "og:image:alt",
-    content: "fixtergeek.com logo",
-  },
-  {
-    property: "og:locale",
-    content: "es_MX",
-  },
-  {
-    property: "og:video",
-    content: video,
-  },
-  {
-    property: "og:audio",
-    content: audio,
-  },
-  {
-    property: "twitter:card",
-    content: "summary_large_image",
-  },
-  {
-    property: "twitter:url",
-    content: url,
-  },
-  {
-    property: "twitter:title",
-    content: title,
-  },
-  {
-    property: "twitter:description",
-    content: description,
-  },
-  {
-    property: "twitter:image",
-    content: image,
-  },
-];
+export default function getMetaTags({
+  title,
+  description = "Cursos y recursos de programación y diseño web", // description should be at least 100 chars
+  image = "https://fixtergeek.com/cover.png",
+  twitterCard = "summary",
+}: GetBasicMetaTagsPros) {
+  if (!title) {
+    return [
+      {
+        title: "Fixtergeek",
+      },
+      {
+        name: "description",
+        content: "Cursos y recursos de programación y diseño web",
+      },
+    ];
+  }
+  return [
+    { title },
+    {
+      property: "og:title",
+      content: title,
+    },
+    {
+      name: "description",
+      content: description,
+    },
+    {
+      property: "og:image",
+      content: image,
+    },
+    {
+      property: "og:type",
+      content: "website",
+    },
+    {
+      property: "og:url",
+      content: "www.fixtergeek.com",
+    },
+    {
+      name: "twitter:card",
+      content: twitterCard,
+    },
+    {
+      name: "twitter:image",
+      content: image,
+    },
+  ];
+}

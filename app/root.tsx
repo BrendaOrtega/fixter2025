@@ -10,16 +10,15 @@ import stylesheet from "./app.css?url";
 import useHotjar from "./lib/useHotjar";
 import useGoogleTM from "./lib/useGoogleTM";
 import { MainLayout } from "./routes/Layout";
-import { getMetaTags } from "./utils/getMetaTags";
 
 import type { Route } from "./+types/root";
+import getMetaTags from "./utils/getMetaTags";
 
 export const meta = () =>
   getMetaTags({
     title:
       "Aprende las herramientas que usan los profesionales del open source",
     description: `Conviértete en un profesional del desarrollo web`,
-    image: "/xmas/message-alert.png",
   });
 
 export const links: Route.LinksFunction = () => [
