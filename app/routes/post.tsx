@@ -84,7 +84,7 @@ export default function Page({
               <h2 className=" text-4xl font-bold text-left mb-6 !leading-snug mt-16 lg:mt-0">
                 {post.title}
               </h2>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center flex-wrap">
                 <Autor {...post} /> <Sharing metalink={post.slug} />
               </div>
             </div>
@@ -111,7 +111,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
   };
 
   return (
-    <div className="flex gap-2 mt-3">
+    <div className="flex gap-2 mt-5 md:mt-0">
       <SocialMedia onClick={handleSocialClick} name="Link">
         <PiLinkSimpleBold />
       </SocialMedia>
