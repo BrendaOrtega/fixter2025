@@ -96,13 +96,13 @@ export const SubscriptionModal = () => {
               <input
                 required
                 name="name"
-                className=" placeholder:text-white/20  bg-brand-500/5 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2"
+                className=" placeholder:text-white/20 h-12 bg-brand-500/5 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2"
                 placeholder="Escribe tu nombre"
               />
               <input
                 required
                 name="email"
-                className=" bg-brand-500/5 placeholder:text-white/20 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2 mb-2 "
+                className=" bg-brand-500/5 h-12 placeholder:text-white/20 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2 mb-2 "
                 placeholder="tucorreo@gmail.com"
               />
               <button
