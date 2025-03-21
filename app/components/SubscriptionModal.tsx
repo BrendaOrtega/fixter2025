@@ -13,7 +13,7 @@ import Spinner from "./common/Spinner";
 
 export const SubscriptionModal = () => {
   const { scrollYProgress } = useScroll();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const fetcher = useFetcher();
 
   const { avoidForDays, shouldAvoid } = useRemember();
@@ -73,7 +73,7 @@ export const SubscriptionModal = () => {
             initial={{ x: 10, opacity: 0, filter: "blur(4px)" }}
             exit={{ x: -10, opacity: 0, filter: "blur(4px)" }}
             animate={{ x: 0, opacity: 1, filter: "blur(0px)" }}
-            className="bg-black text-white rounded-2xl w-[90%] md:w-[480px] p-8 md:p-12 relative"
+            className="bg-background text-white rounded-2xl w-[90%] md:w-[480px] p-8 md:p-12 relative"
           >
             <button
               onClick={onClose}
@@ -96,13 +96,13 @@ export const SubscriptionModal = () => {
               <input
                 required
                 name="name"
-                className="bg-transparent placeholder:text-white/20 font-light rounded-xl border-white/20 border focus:border-none focus:ring-brand-500 focus:ring-2"
+                className=" placeholder:text-white/20  bg-brand-500/5 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2"
                 placeholder="Escribe tu nombre"
               />
               <input
                 required
                 name="email"
-                className="bg-transparent placeholder:text-white/20 font-light rounded-xl border-white/20 border focus:border-none focus:ring-brand-500 focus:ring-2 mb-2 "
+                className=" bg-brand-500/5 placeholder:text-white/20 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2 mb-2 "
                 placeholder="tucorreo@gmail.com"
               />
               <button
