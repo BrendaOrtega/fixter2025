@@ -11,9 +11,11 @@ export const action = async ({ request }) => {
     console.info("MESSAGE", body.Message);
 
     // @todo do this in background
-    const newsletter = await db.newsletter.findUnique({
+    const newsletter = await db.newsletter.findFirst({
       where: {
-        messageId: body.Message.mail.messageId, // the id of the email not the notification
+        messageIds: {
+          hasSome: [body.Message.mail.messageId],
+        }, // the id of the email not the notification
       },
     });
     if (!newsletter) return new Response(null);

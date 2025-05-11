@@ -36,10 +36,10 @@ model Newsletter {
   status NewsletterStatus @default(DRAFT)
 
   // stats
-  messageId String?  @unique
-  delivered String[]
-  opened    String[]
-  clicked   String[]
+  messageIds String[]
+  delivered  String[]
+  opened     String[]
+  clicked    String[]
 
   userId     String?   @db.ObjectId
   template   String?

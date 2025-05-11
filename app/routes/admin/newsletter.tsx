@@ -7,9 +7,12 @@ import { Form, useFetcher } from "react-router";
 import { type FormEvent, type ReactNode } from "react";
 import { cn } from "~/utils/cn";
 import { sendSESTEST } from "~/mailSenders/sendSESTEST";
+import Spinner from "~/components/common/Spinner";
 
 export const loader = async () => {
-  const newsletters = await db.newsletter.findMany();
+  const newsletters = await db.newsletter.findMany({
+    orderBy: { createdAt: "desc" },
+  });
   return { newsletters };
 };
 
@@ -26,21 +29,31 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
     });
     if (!newsletter) throw new Response("no recipients found", { status: 400 });
-    const sendResult = await sendSESTEST(newsletter.recipients, {
-      html: newsletter.content,
-    });
-    console.log("RESULT::", sendResult);
-    // @todo confirm success from result
-    if (!sendResult) throw new Response("No se pudo enviar", { status: 400 });
 
+    let messageIds = [];
+    for await (let email of newsletter.recipients) {
+      const sendResult = await sendSESTEST(email, {
+        html: newsletter.content,
+        subject: newsletter.title,
+      });
+      // @todo confirm success from result
+      if (sendResult) {
+        messageIds.push(sendResult.response);
+      } else {
+        console.error("No se pudo enviar a::", r);
+      }
+    }
+
+    // just one update at the end
     await db.newsletter.update({
       where: { id },
       data: {
-        messageId: sendResult.response,
+        messageIds,
         status: "SENT",
         sent: new Date(),
       },
     });
+
     return { screen: "list" };
   }
 
@@ -150,11 +163,12 @@ export default function Page({ loaderData }: Route.ComponentProps) {
         <NewsletterForm
           cta={
             <button
+              disabled={fetcher.state !== "idle"}
               onClick={handleSendNow}
               type="button"
               className="text-white p-2 bg-red-500 ml-auto active:scale-95"
             >
-              Enviar ahora
+              {fetcher.state !== "idle" ? <Spinner /> : "Enviar ahora"}
             </button>
           }
           onCancel={handleCancel}
@@ -171,7 +185,9 @@ const NewsletterForm = ({
   onSubmit,
   onCancel,
   cta,
+  isLoading,
 }: {
+  isLoading?: boolean;
   cta?: ReactNode;
   onCancel?: () => void;
   onSubmit: (arg0: FormEvent<HTMLFormElement>) => void;
@@ -368,7 +384,7 @@ const NewsLetterCard = ({ onEdit, newsletter }: { newsletter: Newsletter }) => {
           )
             ? 0
             : (newsletter.clicked.length * 100) / newsletter.recipients.length}
-          %Click Rate
+          % Click Rate
         </p>
         <p>{newsletter.clicked.length} Clicks</p>
         <p>0 Unsuscribers</p>
