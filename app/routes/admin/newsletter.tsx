@@ -23,7 +23,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
     delete data.intent;
     delete data.id;
     // data.schedule = data.schedule ? new Date(data.schedule) : data.schedule;
-    console.log("DATA:", data);
     // return { screen: "list" };
     await db.newsletter.update({
       where: {
@@ -91,7 +90,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     formD.set("intent", "save");
     formD.set("id", fetcher.data.newsletter.id);
     const d = new Date(form.schedule).toISOString();
-    console.log("DATE:", d);
+
     formD.set("schedule", d);
     fetcher.submit(formD, { method: "post" });
   };
@@ -107,8 +106,6 @@ export default function Page({ loaderData }: Route.ComponentProps) {
 
   const screen = fetcher.data?.screen || "list"; // list | edit
   const newsletter = fetcher.data?.newsletter;
-
-  console.log("SCHEDULE: ", new Date(newsletter?.schedule));
 
   return (
     <article className="py-20 text-white max-w-3xl mx-auto px-3 h-svh">
@@ -148,7 +145,6 @@ const NewsletterForm = ({
     const invert =
       fd.split("/").reverse().join("-") +
       `T${withZero(d.getHours())}:${withZero(d.getMinutes())}:00`;
-    console.log("CLIENt_DATE", invert);
     return invert;
   };
   return (
