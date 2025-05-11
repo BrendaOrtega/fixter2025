@@ -58,13 +58,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const data = JSON.parse(formData.get("data") as string);
     delete data.id;
     data.recipients = data.recipients ? data.recipients.split(",") : [];
-    await db.newsletter.update({
+    const newsletter = await db.newsletter.update({
       where: {
         id,
       },
       data,
     });
-    return { screen: "list" };
+    return { screen: "edit", newsletter };
   }
 
   if (intent === "new") {
