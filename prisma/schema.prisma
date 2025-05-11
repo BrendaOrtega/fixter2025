@@ -25,6 +25,7 @@ type Option {
 // 2025 to leave sendGrid
 enum NewsletterStatus {
   DRAFT
+  SENT
   PUBLISHED
 }
 
@@ -33,6 +34,12 @@ model Newsletter {
   slug   String           @unique
   title  String
   status NewsletterStatus @default(DRAFT)
+
+  // stats
+  messageId String?  @unique
+  delivered String[]
+  opened    String[]
+  clicked   String[]
 
   userId     String?   @db.ObjectId
   template   String?

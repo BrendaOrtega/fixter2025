@@ -4,8 +4,9 @@ import type { Route } from "./+types/newsletter";
 import slugify from "slugify";
 import { getUserOrRedirect } from "~/.server/dbGetters";
 import { Form, useFetcher } from "react-router";
-import { useState, type FormEvent } from "react";
+import { type FormEvent, type ReactNode } from "react";
 import { cn } from "~/utils/cn";
+import { sendSESTEST } from "~/mailSenders/sendSESTEST";
 
 export const loader = async () => {
   const newsletters = await db.newsletter.findMany();
@@ -17,13 +18,37 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  if (intent === "send") {
+    const id = formData.get("id") as string;
+    const newsletter = await db.newsletter.findUnique({
+      where: {
+        id,
+      },
+    });
+    if (!newsletter) throw new Response("no recipients found", { status: 400 });
+    const sendResult = await sendSESTEST(newsletter.recipients, {
+      html: newsletter.content,
+    });
+    console.log("RESULT::", sendResult);
+    // @todo confirm success from result
+    if (!sendResult) throw new Response("No se pudo enviar", { status: 400 });
+
+    await db.newsletter.update({
+      where: { id },
+      data: {
+        messageId: sendResult.response,
+        status: "SENT",
+        sent: new Date(),
+      },
+    });
+    return { screen: "list" };
+  }
+
   if (intent === "save") {
     const id = formData.get("id") as string;
-    const data = Object.fromEntries(formData);
-    delete data.intent;
+    const data = JSON.parse(formData.get("data") as string);
     delete data.id;
-    // data.schedule = data.schedule ? new Date(data.schedule) : data.schedule;
-    // return { screen: "list" };
+    data.recipients = data.recipients.split(",");
     await db.newsletter.update({
       where: {
         id,
@@ -85,13 +110,15 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     ev.preventDefault();
 
     const formD = new FormData(ev.currentTarget);
-    const form = Object.fromEntries(formD);
+    const form = Object.fromEntries(formD) as Record<string, string>;
 
     formD.set("intent", "save");
     formD.set("id", fetcher.data.newsletter.id);
-    const d = new Date(form.schedule).toISOString();
+    const d = form.schedule ? new Date(form.schedule).toISOString() : "";
+    form["schedule"] = d;
+    formD.set("data", JSON.stringify(form));
 
-    formD.set("schedule", d);
+    // console.log("saving::", Object.fromEntries(formD));
     fetcher.submit(formD, { method: "post" });
   };
 
@@ -104,6 +131,13 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     );
   };
 
+  // @todo fix flow (set like this just to test)
+  const handleSendNow = () => {
+    if (!confirm("Se enviará a todos")) return;
+
+    fetcher.submit({ intent: "send", id: newsletter.id }, { method: "post" });
+  };
+
   const screen = fetcher.data?.screen || "list"; // list | edit
   const newsletter = fetcher.data?.newsletter;
 
@@ -114,6 +148,15 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       )}
       {screen === "edit" && (
         <NewsletterForm
+          cta={
+            <button
+              onClick={handleSendNow}
+              type="button"
+              className="text-white p-2 bg-red-500 ml-auto active:scale-95"
+            >
+              Enviar ahora
+            </button>
+          }
           onCancel={handleCancel}
           onSubmit={handleSubmit}
           newsletter={newsletter}
@@ -127,7 +170,9 @@ const NewsletterForm = ({
   newsletter,
   onSubmit,
   onCancel,
+  cta,
 }: {
+  cta?: ReactNode;
   onCancel?: () => void;
   onSubmit: (arg0: FormEvent<HTMLFormElement>) => void;
   newsletter: Newsletter;
@@ -147,8 +192,13 @@ const NewsletterForm = ({
       `T${withZero(d.getHours())}:${withZero(d.getMinutes())}:00`;
     return invert;
   };
+
+  const recipientsString = newsletter.recipients
+    ? newsletter.recipients.join(",")
+    : "";
+
   return (
-    <Form className="text-black" onSubmit={onSubmit}>
+    <Form className="text-black pb-2" onSubmit={onSubmit}>
       <h2 className="text-xl mb-6 text-white">Editando entrega</h2>
       <label className="font-medium my-2 block text-white">Asunto</label>
       <input
@@ -172,6 +222,17 @@ const NewsletterForm = ({
         name="content"
         className="w-full h-[350px]"
       />
+      <hr />
+
+      <label className="font-medium my-2 block text-white">Recipientes:</label>
+      <input
+        className="w-full"
+        type="text"
+        name="recipients"
+        placeholder="separa con comas @todo: select all suscribers"
+        defaultValue={recipientsString}
+      />
+      <hr />
       <label className="font-medium my-2 block text-white">
         Programar envío para:
       </label>
@@ -181,11 +242,12 @@ const NewsletterForm = ({
         // defaultValue={"2025-05-17T10:00:00"}
         defaultValue={formatSchedule(newsletter)}
       />
-      <nav className="flex gap-4">
+      <nav className="flex gap-4 justify-end">
+        {cta && cta}
         <button
           type="button"
           onClick={onCancel}
-          className="text-white p-2 bg-brand-500/30 ml-auto active:scale-95"
+          className="text-white p-2 bg-brand-500/30 active:scale-95"
         >
           Cancelar
         </button>
@@ -275,12 +337,40 @@ const NewsLetterCard = ({ onEdit, newsletter }: { newsletter: Newsletter }) => {
             Editar
           </button>
         )}
+        {newsletter.sent && (
+          <button
+            // onClick={onEdit} // @todo
+            className="group-hover:block hidden text-xs bg-blue-300 rounded px-2 ml-auto text-black"
+          >
+            Clonar
+          </button>
+        )}
       </div>
       <div className="text-xs flex items-center gap-3 text-gray-500">
-        <p>{newsletter.recipients.length} recipients</p>
-        <p>42.3% Open Rate</p>
-        <p>40.9% Click Rate</p>
-        <p>1,082 Clicks</p>
+        <p>
+          {newsletter.recipients
+            ? Object.keys(newsletter.recipients).length
+            : 0}{" "}
+          recipients
+        </p>
+        <p>
+          {isNaN(
+            (newsletter.opened.length * 100) / newsletter.recipients.length
+          )
+            ? 0
+            : (newsletter.opened.length * 100) / newsletter.recipients.length}
+          % Open Rate
+        </p>
+        <p>
+          {/* //@todo mejorar */}
+          {isNaN(
+            (newsletter.clicked.length * 100) / newsletter.recipients.length
+          )
+            ? 0
+            : (newsletter.clicked.length * 100) / newsletter.recipients.length}
+          %Click Rate
+        </p>
+        <p>{newsletter.clicked.length} Clicks</p>
         <p>0 Unsuscribers</p>
       </div>
       <p className="text-sm text-gray-400">

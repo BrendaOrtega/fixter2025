@@ -48,6 +48,8 @@ export default [
   ]),
   // @todo remove?
   route("courses/*", "routes/courses.tsx"),
+  // AWS sns, ses
+  route("/sns", "routes/api/sns.tsx"),
   // 404 & marketing
   route("*", "routes/404.tsx"),
 ] satisfies RouteConfig;
