@@ -41,11 +41,11 @@ model Newsletter {
   opened     String[]
   clicked    String[]
 
+  content    String?
+  recipients String[]
   userId     String?   @db.ObjectId
   template   String?
-  content    String?
   sent       DateTime?
-  recipients String[]
   schedule   DateTime?
 
   createdAt DateTime @default(now())

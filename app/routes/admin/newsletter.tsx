@@ -8,6 +8,7 @@ import { type FormEvent, type ReactNode } from "react";
 import { cn } from "~/utils/cn";
 import Spinner from "~/components/common/Spinner";
 import { scheduleNewsletterSend } from "~/.server/agenda";
+import { nanoid } from "nanoid";
 
 export const loader = async () => {
   const newsletters = await db.newsletter.findMany({
@@ -20,6 +21,20 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const user = await getUserOrRedirect(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  if (intent === "clone") {
+    let data = JSON.parse(formData.get("data") as string);
+    data = {
+      title: `Copia de: ${data.title}`,
+      slug: slugify(`Copia de: ${data.title}_${nanoid(3)}`),
+      recipients: data.recipients,
+      userId: data.userId,
+      content: data.content,
+    };
+    // @todo validate
+    await db.newsletter.create({ data });
+    return { screen: "list" };
+  }
 
   if (intent === "schedule") {
     const id = formData.get("id") as string;
@@ -159,13 +174,25 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     );
   };
 
+  const handleClone = (original: Newsletter) => {
+    const formD = new FormData();
+    formD.set("intent", "clone");
+    formD.set("data", JSON.stringify(original));
+    fetcher.submit(formD, { method: "post" });
+  };
+
   const screen = fetcher.data?.screen || "list"; // list | edit
   const newsletter = fetcher.data?.newsletter;
 
   return (
     <article className="py-20 text-white max-w-3xl mx-auto px-3 h-svh">
       {screen === "list" && (
-        <List onNew={handleNew} newsletters={newsletters} onEdit={handleEdit} />
+        <List
+          onClone={handleClone}
+          onNew={handleNew}
+          newsletters={newsletters}
+          onEdit={handleEdit}
+        />
       )}
       {screen === "edit" && (
         <NewsletterForm
@@ -292,7 +319,7 @@ const NewsletterForm = ({
   );
 };
 
-const List = ({ onEdit, onNew, newsletters }) => {
+const List = ({ onClone, onEdit, onNew, newsletters }) => {
   return (
     <>
       <nav className="flex items-center justify-between px-8">
@@ -304,27 +331,47 @@ const List = ({ onEdit, onNew, newsletters }) => {
           + Nueva entrega
         </button>
       </nav>
-      <NewsLettersTable onEdit={onEdit} newsletters={newsletters} />
+      <NewsLettersTable
+        onClone={onClone}
+        onEdit={onEdit}
+        newsletters={newsletters}
+      />
     </>
   );
 };
 
 const NewsLettersTable = ({
   onEdit,
+  onClone,
   newsletters,
 }: {
+  onEdit?: (arg0: string) => void;
+  onClone?: (arg0: Newsletter) => void;
   newsletters: Newsletter[];
 }) => {
   return (
     <article className="my-10 px-3">
       {newsletters.map((n) => (
-        <NewsLetterCard onEdit={() => onEdit(n.id)} newsletter={n} key={n.id} />
+        <NewsLetterCard
+          onClone={() => onClone?.(n)}
+          onEdit={() => onEdit?.(n.id)}
+          newsletter={n}
+          key={n.id}
+        />
       ))}
     </article>
   );
 };
 
-const NewsLetterCard = ({ onEdit, newsletter }: { newsletter: Newsletter }) => {
+const NewsLetterCard = ({
+  onClone,
+  onEdit,
+  newsletter,
+}: {
+  onEdit?: () => void;
+  onClone?: () => void;
+  newsletter: Newsletter;
+}) => {
   const getFormatedDate = (date?: string | Date | null) => {
     if (!date) return null;
 
@@ -369,7 +416,7 @@ const NewsLetterCard = ({ onEdit, newsletter }: { newsletter: Newsletter }) => {
         )}
         {newsletter.sent && (
           <button
-            // onClick={onEdit} // @todo
+            onClick={onClone} // @todo
             className="group-hover:block hidden text-xs bg-blue-300 rounded px-2 ml-auto text-black"
           >
             Clonar
