@@ -29,7 +29,7 @@ const Thumb = ({ post }: { post: Partial<Post> }) => {
       />
       <div>
         <h2 className="text-xl font-bold mb-2">{post.title}</h2>
-        <h4 className="font-thin flex items-center gap-2 text-brand-700">
+        <h4 className="font-normal flex items-center gap-2 text-brand-500">
           <span>Checa este otro Post</span>
           <span className="group-hover:translate-x-4 transition-all">
             <IoArrowForward />

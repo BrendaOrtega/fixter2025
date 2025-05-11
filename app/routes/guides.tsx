@@ -3,7 +3,7 @@ import type { Route } from "../+types/root";
 import questions from "~/data/questions";
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { getMetaTags } from "~/utils/getMetaTags";
+import getMetaTags from "~/utils/getMetaTags";
 
 export const meta = () =>
   getMetaTags({

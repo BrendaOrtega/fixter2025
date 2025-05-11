@@ -1,4 +1,3 @@
-import { getMetaTags } from "~/utils/getMetaTags";
 import { useEffect } from "react";
 import {
   Benefits,
@@ -9,6 +8,7 @@ import {
 } from "./home/components";
 import { db } from "~/.server/db";
 import type { Route } from "./+types/home";
+import getMetaTags from "~/utils/getMetaTags";
 
 export const meta = () =>
   getMetaTags({

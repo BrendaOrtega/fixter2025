@@ -13,7 +13,7 @@ import Spinner from "./common/Spinner";
 
 export const SubscriptionModal = () => {
   const { scrollYProgress } = useScroll();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const fetcher = useFetcher();
 
   const { avoidForDays, shouldAvoid } = useRemember();
@@ -73,7 +73,7 @@ export const SubscriptionModal = () => {
             initial={{ x: 10, opacity: 0, filter: "blur(4px)" }}
             exit={{ x: -10, opacity: 0, filter: "blur(4px)" }}
             animate={{ x: 0, opacity: 1, filter: "blur(0px)" }}
-            className="bg-black text-white rounded-2xl w-[420px] p-8 relative"
+            className="bg-background text-white rounded-2xl w-[90%] md:w-[480px] p-8 md:p-12 relative"
           >
             <button
               onClick={onClose}
@@ -81,38 +81,42 @@ export const SubscriptionModal = () => {
             >
               <IoClose />
             </button>{" "}
-            <h1 className="text-2xl font-bold mb-4 text-center">
-              ¡No te pierdas todo lo nuevo!
+            <h1 className="text-2xl font-bold mb-8 text-center">
+              ¡No te pierdas las próximas publicaciones!
             </h1>
             <img
-              className="w-full rounded-xl"
-              src="/thumbnails/subscription_0.png"
+              className="w-[80%] mx-auto"
+              src="/thumbnails/invite.webp"
               alt="thumbnail"
             />
             <fetcher.Form
-              className="flex flex-col gap-2 py-2"
+              className="flex flex-col gap-4 py-2 mt-4 "
               onSubmit={handleSubmit}
             >
               <input
                 required
                 name="name"
-                className="bg-transparent placeholder:text-white/20 font-light rounded-xl border-brand-700 border focus:border-none focus:ring-brand-500 focus:ring-2"
+                className=" placeholder:text-white/20  bg-brand-500/5 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2"
                 placeholder="Escribe tu nombre"
               />
               <input
                 required
                 name="email"
-                className="bg-transparent placeholder:text-white/20 font-light rounded-xl border-brand-700 border focus:border-none focus:ring-brand-500 focus:ring-2"
+                className=" bg-brand-500/5 placeholder:text-white/20 font-light rounded-xl border-none border focus:border-none focus:ring-brand-500 focus:ring-2 mb-2 "
                 placeholder="tucorreo@gmail.com"
               />
               <button
                 disabled={isLoading}
                 name="intent"
                 value="suscription"
-                className="cursor-pointer bg-gradient-to-r from-brand-800 to-brand-500 py-3 px-8 rounded-xl transition-all active:to-brand-700"
+                className="cursor-pointer bg-gradient-to-r  from-brand-800 to-brand-700 py-3 px-8 rounded-xl transition-all active:to-brand-700 hover:-translate-y-1"
                 type="submit"
               >
-                {isLoading ? <Spinner /> : "¡Quiero ser parte de la comunidad!"}
+                {isLoading ? (
+                  <Spinner />
+                ) : (
+                  "¡Quiero ser parte de la comunidad! 🧑🏻‍💻"
+                )}
               </button>
               <p className="text-xs text-gray-500">
                 Te puedes desuscribir en cualquier momento.

@@ -9,13 +9,13 @@ import { Header } from "~/components/common/Header";
 import { CourseCard } from "~/components/CourseCard";
 import { cn } from "~/utils/cn";
 import { Banner } from "~/components/common/Banner";
+import getMetaTags from "~/utils/getMetaTags";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Escoge tu curso" },
-    { name: "description", content: "Encuentra el curso para ti" },
-  ];
-}
+export const meta = () =>
+  getMetaTags({
+    title: "Escoge tu curso",
+    description: "Encuentra el curso para ti",
+  });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();

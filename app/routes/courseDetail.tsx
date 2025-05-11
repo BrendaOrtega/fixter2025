@@ -10,7 +10,7 @@ import type { Course, Video } from "@prisma/client";
 import { getVideoTitles } from "~/.server/dbGetters";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
 import { motion } from "motion/react";
-import { getMetaTags } from "~/utils/getMetaTags";
+import getMetaTags from "~/utils/getMetaTags";
 
 export function meta({ data }: Route.MetaArgs) {
   return getMetaTags({

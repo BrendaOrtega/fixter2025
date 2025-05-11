@@ -8,7 +8,7 @@ export const useToast = () => {
   const setInitial = (toast) => {
     toast.style.transition = "all .3s ease";
     toast.style.position = "fixed";
-    toast.style.top = "64px";
+    toast.style.top = "80px";
     toast.style.right = "40px";
     toast.style.transform = "translateY(20px)";
     toast.style.opacity = 0;
@@ -34,14 +34,14 @@ export const useToast = () => {
     icon = "✅",
     color = "green",
   }: ToasterType) => {
-    const textColor = color === "red" ? "text-red-100" : "text-[#32472F]";
-    const bgColor = color === "red" ? "bg-red-800" : "bg-[#ECF2EB]";
+    const textColor = color === "red" ? "text-red-100" : "text-brand-900";
+    const bgColor = color === "red" ? "bg-red-800" : "bg-white";
     const toast = document.createElement("section");
     setInitial(toast);
     toast.innerHTML = `
-    <div class="pl-4 pr-4 py-4 h-16 ${bgColor} ${textColor} rounded-full flex items-center justify-center " >
-    <div class="flex items-center gap-3"><span class="w-12 h-12 text-4xl flex items-center justify-center rounded-full">${icon}</span>
-    <p class="text-xl ${textColor} "> ${text}</p></div>
+    <div class="px-4 py-4 h-12 md:h-16 ${bgColor} ${textColor} rounded-full flex items-center justify-center " >
+    <div class="flex items-center gap-1"><span class="w-fit text-2xl flex items-center justify-center rounded-full">${icon}</span>
+    <p class="text-lg ${textColor} "> ${text}</p></div>
     </div>
     `;
     document.body.appendChild(toast);

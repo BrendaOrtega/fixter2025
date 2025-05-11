@@ -3,6 +3,13 @@ import { useFetcher, useSearchParams } from "react-router";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import useRecaptcha from "~/lib/useRecaptcha";
+import getMetaTags from "~/utils/getMetaTags";
+
+export const meta = () =>
+  getMetaTags({
+    title: "Suscripción",
+    description: " No te salgas del loop: Actualízate ",
+  });
 
 export default function Route() {
   const inputRef = useRef<HTMLInputElement>(null);
