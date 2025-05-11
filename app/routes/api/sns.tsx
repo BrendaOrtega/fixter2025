@@ -14,18 +14,17 @@ export const action = async ({ request }) => {
     const newsletter = await db.newsletter.findFirst({
       where: {
         messageIds: {
-          hasSome: [body.Message.mail.messageId],
+          has: body.Message.mail.messageId,
         }, // the id of the email not the notification
       },
     });
     if (!newsletter) return new Response(null);
 
+    // @todo bounces?
+
     if (body.Message.eventType === "Delivery") {
       const delivered = [
-        ...new Set([
-          ...newsletter.delivered,
-          ...body.Message.delivery.recipients,
-        ]),
+        ...new Set([...newsletter.delivered, ...body.Message.mail.destination]),
       ];
       await db.newsletter.update({
         where: {
@@ -48,7 +47,7 @@ export const action = async ({ request }) => {
     }
 
     if (body.Message.eventType === "Click") {
-      // @todo save link clicked?
+      // @todo save who clicked?
       console.info("Link clicked", body.Message.link);
       const clicked = [...newsletter.clicked, body.Message.click.link];
       await db.newsletter.update({

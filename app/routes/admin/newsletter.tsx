@@ -6,8 +6,8 @@ import { getUserOrRedirect } from "~/.server/dbGetters";
 import { Form, useFetcher } from "react-router";
 import { type FormEvent, type ReactNode } from "react";
 import { cn } from "~/utils/cn";
-import { sendSESTEST } from "~/mailSenders/sendSESTEST";
 import Spinner from "~/components/common/Spinner";
+import { scheduleNewsletterSend } from "~/.server/agenda";
 
 export const loader = async () => {
   const newsletters = await db.newsletter.findMany({
@@ -21,6 +21,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  if (intent === "schedule") {
+    const id = formData.get("id") as string;
+    const newsletter = await db.newsletter.findUnique({
+      where: {
+        id,
+      },
+    });
+    if (!newsletter || !newsletter.schedule)
+      throw new Response("no recipients found", { status: 400 });
+
+    scheduleNewsletterSend({
+      newsletter,
+      when: new Date(newsletter.schedule),
+    });
+
+    return { screen: "list" };
+  }
+
   if (intent === "send") {
     const id = formData.get("id") as string;
     const newsletter = await db.newsletter.findUnique({
@@ -30,29 +48,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     });
     if (!newsletter) throw new Response("no recipients found", { status: 400 });
 
-    let messageIds = [];
-    for await (let email of newsletter.recipients) {
-      const sendResult = await sendSESTEST(email, {
-        html: newsletter.content,
-        subject: newsletter.title,
-      });
-      // @todo confirm success from result
-      if (sendResult) {
-        messageIds.push(sendResult.response);
-      } else {
-        console.error("No se pudo enviar a::", r);
-      }
-    }
-
-    // just one update at the end
-    await db.newsletter.update({
-      where: { id },
-      data: {
-        messageIds,
-        status: "SENT",
-        sent: new Date(),
-      },
-    });
+    scheduleNewsletterSend({ newsletter });
 
     return { screen: "list" };
   }
@@ -61,7 +57,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const id = formData.get("id") as string;
     const data = JSON.parse(formData.get("data") as string);
     delete data.id;
-    data.recipients = data.recipients.split(",");
+    data.recipients = data.recipients ? data.recipients.split(",") : [];
     await db.newsletter.update({
       where: {
         id,
@@ -123,11 +119,14 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     ev.preventDefault();
 
     const formD = new FormData(ev.currentTarget);
-    const form = Object.fromEntries(formD) as Record<string, string>;
+    const form = Object.fromEntries(formD) as Record<
+      string,
+      string | undefined
+    >;
 
     formD.set("intent", "save");
     formD.set("id", fetcher.data.newsletter.id);
-    const d = form.schedule ? new Date(form.schedule).toISOString() : "";
+    const d = form.schedule ? new Date(form.schedule).toISOString() : undefined;
     form["schedule"] = d;
     formD.set("data", JSON.stringify(form));
 
@@ -146,9 +145,18 @@ export default function Page({ loaderData }: Route.ComponentProps) {
 
   // @todo fix flow (set like this just to test)
   const handleSendNow = () => {
-    if (!confirm("Se enviará a todos")) return;
+    if (!confirm("Se enviará a todos") || !newsletter.recipients) return;
 
     fetcher.submit({ intent: "send", id: newsletter.id }, { method: "post" });
+  };
+
+  const handleSchedule = () => {
+    if (!confirm("Se programará el envio") || !newsletter.recipients) return;
+
+    fetcher.submit(
+      { intent: "schedule", id: newsletter.id },
+      { method: "post" }
+    );
   };
 
   const screen = fetcher.data?.screen || "list"; // list | edit
@@ -164,11 +172,17 @@ export default function Page({ loaderData }: Route.ComponentProps) {
           cta={
             <button
               disabled={fetcher.state !== "idle"}
-              onClick={handleSendNow}
+              onClick={newsletter.schedule ? handleSchedule : handleSendNow}
               type="button"
               className="text-white p-2 bg-red-500 ml-auto active:scale-95"
             >
-              {fetcher.state !== "idle" ? <Spinner /> : "Enviar ahora"}
+              {fetcher.state !== "idle" ? (
+                <Spinner />
+              ) : newsletter.schedule ? (
+                "Programar"
+              ) : (
+                "Enviar ahora"
+              )}
             </button>
           }
           onCancel={handleCancel}
@@ -374,7 +388,10 @@ const NewsLetterCard = ({ onEdit, newsletter }: { newsletter: Newsletter }) => {
             (newsletter.opened.length * 100) / newsletter.recipients.length
           )
             ? 0
-            : (newsletter.opened.length * 100) / newsletter.recipients.length}
+            : (
+                (newsletter.opened.length * 100) /
+                newsletter.recipients.length
+              ).toFixed(0)}
           % Open Rate
         </p>
         <p>
@@ -383,7 +400,10 @@ const NewsLetterCard = ({ onEdit, newsletter }: { newsletter: Newsletter }) => {
             (newsletter.clicked.length * 100) / newsletter.recipients.length
           )
             ? 0
-            : (newsletter.clicked.length * 100) / newsletter.recipients.length}
+            : (
+                (newsletter.clicked.length * 100) /
+                newsletter.recipients.length
+              ).toFixed(0)}
           % Click Rate
         </p>
         <p>{newsletter.clicked.length} Clicks</p>
