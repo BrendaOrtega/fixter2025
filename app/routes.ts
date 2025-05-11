@@ -25,6 +25,7 @@ export default [
     route("cursos", "routes/admin/courses.tsx"),
     route("posts", "routes/admin/postList.tsx"),
     route("talleres", "routes/admin/talleres.tsx"),
+    route("newsletter", "routes/admin/newsletter.tsx"),
   ]),
   // testing WebRTC
   route("live_session", "routes/talleres/live_session.tsx"),

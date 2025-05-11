@@ -22,15 +22,38 @@ type Option {
   description String?
 }
 
-model Survey {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String   @unique
-  description String?
-  title       String?
-  options     Option[]
-  votes       Vote[]
-  totals      Json?
+// 2025 to leave sendGrid
+enum NewsletterStatus {
+  DRAFT
+  PUBLISHED
 }
+
+model Newsletter {
+  id     String           @id @default(auto()) @map("_id") @db.ObjectId
+  slug   String           @unique
+  title  String
+  status NewsletterStatus @default(DRAFT)
+
+  userId     String?   @db.ObjectId
+  template   String?
+  content    String?
+  sent       DateTime?
+  recipients String[]
+  schedule   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// model Survey {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   slug        String   @unique
+//   description String?
+//   title       String?
+//   options     Option[]
+//   votes       Vote[]
+//   totals      Json?
+// }
 
 //generator zod {
 //  provider = "prisma-zod-generator"
