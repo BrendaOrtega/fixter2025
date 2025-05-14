@@ -23,8 +23,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       webhookSecret
     );
   } catch (error) {
-    console.error(`Stripe construct event error: ${error}`);
-    return data(error, { status: 500 });
+    console.error(`::Stripe construct failed:: ${error}`);
+    return new Response("::Stripe construct failed::", { status: 500 });
   }
   switch (event.type) {
     case "checkout.session.async_payment_failed":
@@ -39,6 +39,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       invariant(session.metadata);
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
+
       const course = await db.course.findUnique({
         where: {
           slug: session.metadata.courseSlug,
@@ -81,7 +82,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         courseSlug: course.slug,
       });
       console.info("WEBHOOK: success");
-      return null;
+      return new Response(null);
     default:
       return null;
   }

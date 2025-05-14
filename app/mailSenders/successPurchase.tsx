@@ -21,8 +21,9 @@ export const successPurchase = async ({
   const date = new Date().toLocaleDateString();
   return sendgridTransport
     .sendMail({
+      from: "NotiBot de Fixtergeek <contacto@fixter.org>",
       subject: "👾¡Una compra en fixtergeek.com!🤖",
-      bcc: ["contacto@fixter.org", "brenda@fixter.org, hola@fixtergeek.com"],
+      bcc: ["contacto@fixter.org", "brenda@fixter.org"],
       html: `
   
   

@@ -25,6 +25,7 @@ export default [
     route("cursos", "routes/admin/courses.tsx"),
     route("posts", "routes/admin/postList.tsx"),
     route("talleres", "routes/admin/talleres.tsx"),
+    route("newsletter", "routes/admin/newsletter.tsx"),
   ]),
   // testing WebRTC
   route("live_session", "routes/talleres/live_session.tsx"),
@@ -47,6 +48,8 @@ export default [
   ]),
   // @todo remove?
   route("courses/*", "routes/courses.tsx"),
+  // AWS sns, ses
+  route("/sns", "routes/api/sns.tsx"),
   // 404 & marketing
   route("*", "routes/404.tsx"),
 ] satisfies RouteConfig;
