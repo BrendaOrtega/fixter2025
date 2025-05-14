@@ -33,7 +33,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
       published: true,
     },
   });
-  if (!post) throw new Response(null, { status: 404 });
+  if (!post) throw new Response("Post not found", { status: 404 });
 
   const postCount = await db.post.count();
   const posts = await db.post.findMany({
