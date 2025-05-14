@@ -82,7 +82,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         courseSlug: course.slug,
       });
       console.info("WEBHOOK: success");
-      return null;
+      return new Response(null);
     default:
       return null;
   }
