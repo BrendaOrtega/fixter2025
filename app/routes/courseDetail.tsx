@@ -110,7 +110,7 @@ const Teacher = ({ course }: { course: Partial<Course> }) => {
     <section className="mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto my-[160px]  ">
       <div className="bg-backface rounded-3xl md:py-10 xl:py-16 md:pl-10 xl:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 ">
         <div className="w-full md:w-[60%]">
-          <span className="text-colorParagraph font-light">
+          <span className="text-colorParagraph/50 font-light">
             ¿Quien es tu instructor?
           </span>
           <h3 className="text-white text-3xl font-bold mt-4">

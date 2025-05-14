@@ -13,7 +13,7 @@ import Spinner from "./common/Spinner";
 
 export const SubscriptionModal = () => {
   const { scrollYProgress } = useScroll();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const fetcher = useFetcher();
 
   const { avoidForDays, shouldAvoid } = useRemember();
