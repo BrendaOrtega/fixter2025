@@ -31,7 +31,7 @@ export const SuccessDrawer = ({
               nosotros seas un entusiasta del desarrollo web.{" "}
             </p> */}
             <p className="text-lg bg-[#0E1317]  dark:text-metal text-center text-iron font-light mt-6">
-              Inicia sesión para empezar a codear 🧙🏻🪄.
+              Ingresa a tu cuenta para empezar a codear 🧙🏻🪄.
             </p>
             <p className="text-lg bg-[#0E1317]  dark:text-metal text-center text-iron font-light mt-6">
               Inicia sesión directamente con Gmail o ve a tu{" "}
