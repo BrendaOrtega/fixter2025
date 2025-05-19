@@ -155,7 +155,7 @@ export default function Page() {
             <span className="">
               {isLoading ? <Spinner /> : <GiMagicBroom />}
             </span>
-            <span>Solicitar Link Mágico</span>
+            <span>Solicitar magic link</span>
           </button>
         </Form>
       )}

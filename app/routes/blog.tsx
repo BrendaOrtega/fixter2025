@@ -65,15 +65,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 export default function Page({
   loaderData: { posts, search },
 }: Route.ComponentProps) {
-  useEffect(() => {
-    window.scrollTo({
-      top: 1000,
-    });
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }, []);
   const fetcher = useFetcher();
   const [items, setItems] = useState(posts);
 
@@ -393,8 +384,8 @@ export const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
             />
           </div>
           <img
-            className="aspect-video object-cover rounded-2xl mb-4"
-            src={post.metaImage || post.coverImage || "/stars.png"}
+            className="aspect-video object-cover rounded-2xl mb-4 border-white/5 border"
+            src={post.metaImage || post.coverImage || "/cover.png"}
             alt="cover"
             onError={({ currentTarget }) => {
               currentTarget.src = "/stars.png";
