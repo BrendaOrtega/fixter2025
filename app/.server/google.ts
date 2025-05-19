@@ -72,6 +72,7 @@ export const createGoogleSession = async (code: string, request: Request) => {
     create: partial,
     update: partial,
   }); // @todo: revisit to send welcome email
+  // sendWelcome(email)
 
   const session = await getSession(request.headers.get("Cookie"));
   session.set("email", partial.email);
