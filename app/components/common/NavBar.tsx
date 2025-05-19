@@ -198,7 +198,9 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
           </span>
           <span>Mis cursos</span>
         </button>
-        <button
+        <Link
+          reloadDocument
+          to="/logout"
           onClick={() => handleNavigation("/api/user?signout=1")}
           className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4 rounded-xl"
         >
@@ -206,7 +208,7 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
             <FiLogOut />
           </span>
           <span>Cerrar sesión</span>
-        </button>
+        </Link>
       </aside>
     </section>
   );

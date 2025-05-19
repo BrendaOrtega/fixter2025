@@ -14,13 +14,29 @@ import {
 } from "~/.server/dbGetters";
 import { commitSession } from "~/sessions";
 import { validateUserToken } from "~/utils/tokens";
-
-// http://localhost:3000/login?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InZhbmVzYWFsb25kcmEwMTIzNDVAZ21haWwuY29tIiwiaWF0IjoxNzQyNDkxODgyLCJleHAiOjE3NDI0OTU0ODJ9.i4Xt7tNjBQ-wHrF5NbJJgrOoha-m1b_Ot9HYXD_QmVI
+import { createGoogleSession } from "~/.server/google";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const { searchParams } = url;
-  // @todo make this a function
+
+  // new google login
+  if (
+    searchParams.has("auth") &&
+    searchParams.get("auth") === "google" &&
+    searchParams.has("code")
+  ) {
+    const next = searchParams.get("next") || "/mis-cursos";
+    const code = searchParams.get("code")!;
+    const session = await createGoogleSession(code, request);
+    return redirect(next, {
+      headers: {
+        "Set-Cookie": await commitSession(session!),
+      },
+    });
+  }
+
+  // @todo remove?
   if (searchParams.has("token")) {
     const token = searchParams.get("token") as string;
     const { isValid, decoded } = await validateUserToken(token);
@@ -60,7 +76,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export default function Page() {
   const { success, message, status } = useLoaderData(); // WTF?
-  const { googleLoginHandler } = useGoogleLogin();
+  const { clientHandler } = useGoogleLogin();
   const fetchers = useFetchers(); // hack for Form (not working very well 😡)
 
   if (String(status).includes("4")) {
@@ -82,7 +98,7 @@ export default function Page() {
         </h2>
         <button
           type="button"
-          onClick={googleLoginHandler}
+          onClick={clientHandler}
           className={twMerge(
             "cursor-pointer py-3 px-4 text-white  to-brand-200 text-base w-full shadow flex items-center gap-3 justify-center font-semibold  bg-brand-900 rounded-full disabled:text-gray-100 mx-auto my-8"
           )}

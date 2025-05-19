@@ -1,5 +1,4 @@
 import {
-  createSearchParams,
   data,
   redirect,
   type ActionFunctionArgs,
@@ -7,10 +6,11 @@ import {
 } from "react-router";
 import { sendMagicLink } from "~/mailSenders/sendMagicLink";
 import { z } from "zod";
-import { getUserOrNull, updateUserAndSetSession } from "~/.server/dbGetters";
+import { getUserOrNull } from "~/.server/dbGetters";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { db } from "~/.server/db";
 import { destroySession, getSession } from "~/sessions";
+import { getGoogleURL } from "~/.server/google";
 
 const emailSchema = z.string().email();
 
@@ -60,12 +60,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { user: await getUserOrNull(request) };
   }
 
-  if (intent === "google_login") {
-    const data = JSON.parse(formData.get("data") as string);
-    //@todo validate
-    await updateUserAndSetSession(data, {
-      request,
-    });
+  if (intent === "google_login_redirect") {
+    const url = getGoogleURL();
+    return redirect(url);
   }
 
   if (intent === "magic_link") {

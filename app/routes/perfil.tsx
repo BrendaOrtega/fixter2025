@@ -27,10 +27,12 @@ export default function Route({
     <article className="h-screen">
       <section className="py-20 flex flex-col">
         <EditableAvatar
-          src={`/api/file?storageKey=${user.email}`}
+          // @todo: fix it
+          src={user.photoURL || `/api/file?storageKey=${user.email}`}
+          // src={user.photoURL}
           className="mx-auto"
           putURL={putURL}
-          fallbackSrc={user.photoURL}
+          // fallbackSrc={user.photoURL}
         />
         <p className="text-brand-100 text-center mb-16 lowercase">
           {user.email}
