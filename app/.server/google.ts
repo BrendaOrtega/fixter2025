@@ -1,6 +1,7 @@
 import type { User } from "@prisma/client";
 import { db } from "./db";
-import { getSession } from "~/sessions";
+import { commitSession, getSession } from "~/sessions";
+import { redirect } from "react-router";
 
 type GoogleUserData = {
   id: string;
@@ -10,6 +11,26 @@ type GoogleUserData = {
   given_name: string;
   family_name: string;
   picture: string;
+};
+
+export const googleHandler = async (request: Request, nextURL: string) => {
+  const url = new URL(request.url);
+  const { searchParams } = url;
+  // new google login
+  if (
+    searchParams.has("auth") &&
+    searchParams.has("code") &&
+    searchParams.get("auth") === "google"
+  ) {
+    const next = searchParams.get("next") || nextURL || "/mis-cursos";
+    const code = searchParams.get("code")!;
+    const session = await createGoogleSession(code, request);
+    throw redirect(next, {
+      headers: {
+        "Set-Cookie": await commitSession(session!),
+      },
+    });
+  }
 };
 
 const location =

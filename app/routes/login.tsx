@@ -14,30 +14,15 @@ import {
 } from "~/.server/dbGetters";
 import { commitSession } from "~/sessions";
 import { validateUserToken } from "~/utils/tokens";
-import { createGoogleSession } from "~/.server/google";
+import { googleHandler } from "~/.server/google";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
-  const { searchParams } = url;
 
-  // new google login
-  if (
-    searchParams.has("auth") &&
-    searchParams.get("auth") === "google" &&
-    searchParams.has("code")
-  ) {
-    const next = searchParams.get("next") || "/mis-cursos";
-    const code = searchParams.get("code")!;
-    const session = await createGoogleSession(code, request);
-    return redirect(next, {
-      headers: {
-        "Set-Cookie": await commitSession(session!),
-      },
-    });
-  }
+  await googleHandler(request, "/mis-cursos"); // this will throw
 
   // @todo remove?
-  if (searchParams.has("token")) {
+  if (url.searchParams.has("token")) {
     const token = searchParams.get("token") as string;
     const { isValid, decoded } = await validateUserToken(token);
     if (!isValid || !decoded?.email) {
@@ -68,7 +53,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     });
   }
   return {
-    success: searchParams.has("success"),
+    success: url.searchParams.has("success"),
     status: 200,
     message: "ok ⛓️",
   };

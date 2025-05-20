@@ -286,8 +286,10 @@ const MobileMenu = ({
               title="Mis cursos"
             />
             <NavItem
-              onClick={() => handleNavigation("/api/user?signout=1")}
-              to="/mis-cursos"
+              // onClick={() => handleNavigation("/api/user?signout=1")}
+              to="/logout"
+              reloadDocument
+              as="Link"
               index={4}
               isOpen={isOpen}
               title="Cerrar sesión"
@@ -389,7 +391,7 @@ const NavItem = ({
   title,
   isOpen,
   index,
-
+  reloadDocument,
   className,
   onClick,
   as = "button",
@@ -398,7 +400,7 @@ const NavItem = ({
   title: string;
   isOpen?: boolean;
   index: number;
-
+  reloadDocument?: boolean;
   className?: string;
   onClick?: () => void;
   as?: "button" | "Link";
@@ -416,9 +418,12 @@ const NavItem = ({
       animate(scope.current, { y: 20, opacity: 0, filter: "blur(9px)" });
     }
   }, [isOpen]);
+
   const Element = as === "Link" ? Link : "button";
+
   return (
     <Element
+      reloadDocument={reloadDocument}
       to={to}
       ref={scope}
       style={{
