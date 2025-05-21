@@ -10,7 +10,7 @@ export const sendWelcome = async (email: string) => {
   const token = generateUserToken({ email });
   return sendgridTransport
     .sendMail({
-      from: "contacto@fixter.org",
+      from: "Fixtergeek <contacto@fixter.org>",
       subject: "👾¡En hora buena!🤖",
       bcc: [email],
       html: welcomeTemplate({
