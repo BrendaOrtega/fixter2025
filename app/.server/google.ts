@@ -2,6 +2,7 @@ import type { User } from "@prisma/client";
 import { db } from "./db";
 import { commitSession, getSession } from "~/sessions";
 import { redirect } from "react-router";
+import { createAndWelcomeUser } from "./dbGetters";
 
 type GoogleUserData = {
   id: string;
@@ -84,16 +85,9 @@ export const createGoogleSession = async (code: string, request: Request) => {
     confirmed: userData.verified_email,
     email: userData.email,
     photoURL: userData.picture,
-  } as Partial<User>;
+  } as User;
 
-  await db.user.upsert({
-    where: {
-      email: partial.email,
-    },
-    create: partial,
-    update: partial,
-  }); // @todo: revisit to send welcome email
-  // sendWelcome(email)
+  await createAndWelcomeUser(partial);
 
   const session = await getSession(request.headers.get("Cookie"));
   session.set("email", partial.email);

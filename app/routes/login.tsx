@@ -23,7 +23,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   // @todo remove?
   if (url.searchParams.has("token")) {
-    const token = searchParams.get("token") as string;
+    const token = url.searchParams.get("token") as string;
     const { isValid, decoded } = await validateUserToken(token);
     if (!isValid || !decoded?.email) {
       // for ui
@@ -34,7 +34,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       };
     }
     console.log("Decoded: ,", decoded);
-    // user =>
+    // user => //@todo maybe this is not necessary?
     await getOrCreateUser(decoded.email, {
       confirmed: true, // because of token
       tags: decoded.tags || [],

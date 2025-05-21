@@ -2,8 +2,24 @@ import type { Course, User, Video } from "@prisma/client";
 import { createSearchParams, data, redirect } from "react-router";
 import { db } from "~/.server/db";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
+import { sendWelcome } from "~/mailSenders/sendWelcome";
 import { commitSession, getSession } from "~/sessions";
 import { generateUserToken } from "~/utils/tokens";
+
+// welcome or not
+export const createAndWelcomeUser = async (data: User) => {
+  const exists = await db.user.findUnique({
+    where: {
+      email: data.email,
+    },
+  });
+  if (!exists) {
+    const user = await db.user.create({
+      data,
+    });
+    await sendWelcome(user.email);
+  }
+};
 
 ///util
 const getAllVideos = async (courseId: string) => {

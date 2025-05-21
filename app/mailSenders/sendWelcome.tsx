@@ -5,18 +5,14 @@ import { welcomeTemplate } from "./templates/welcome";
 const isDev = process.env.NODE_ENV === "development";
 const location = isDev ? "http://localhost:3000" : "https://www.fixtergeek.com";
 
-export const sendWelcome = async (data: {
-  email: string;
-  next?: string;
-  userId?: string;
-}) => {
+export const sendWelcome = async (email: string) => {
   // generate token
-  const token = generateUserToken(data);
+  const token = generateUserToken({ email });
   return sendgridTransport
     .sendMail({
       from: "contacto@fixter.org",
-      subject: "👾¡Inicia sesión en Fixtergeek!🤖",
-      bcc: [data.email],
+      subject: "👾¡En hora buena!🤖",
+      bcc: [email],
       html: welcomeTemplate({
         link: `${location}/login?token=${token}`,
       }),
