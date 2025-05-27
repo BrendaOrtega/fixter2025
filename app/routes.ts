@@ -15,6 +15,8 @@ export default [
   route("subscribe", "routes/subscribe.tsx"),
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
+  route("aviso-de-privacidad", "routes/aviso.tsx"),
+  route("terminos-y-condiciones", "routes/terms.tsx"),
   route("sitemap.xml", "routes/sitemap.tsx"),
   //stripe webhook
   route("stripe/webhook", "routes/stripeWebhook.ts"),

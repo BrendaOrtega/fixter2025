@@ -18,6 +18,12 @@ export const Footer = () => {
         <Link to="/faq">
           <p className="text-colorCaption font-light">Preguntas Frecuentes</p>{" "}
         </Link>
+        <Link to="/aviso-de-privacidad">
+          <p className="text-colorCaption font-light">Aviso de Privacidad</p>{" "}
+        </Link>
+        <Link to="/terminos-y-condiciones">
+          <p className="text-colorCaption font-light">Términos y condiciones</p>{" "}
+        </Link>
       </div>
       <div className="flex flex-col gap-3  w-[40%] md:w-fit">
         <h3 className="text-white font-mdedium">Recursos</h3>
