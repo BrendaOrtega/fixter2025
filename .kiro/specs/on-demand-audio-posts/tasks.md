@@ -8,7 +8,7 @@
   - Add environment variables for APIs and S3
   - _Requirements: 4.1, 4.2, 4.3_
 
-- [-] 2. Build core audio generation service
+- [x] 2. Build core audio generation service
 
   - Create audio service with TTS generation using Effect
   - Implement S3 upload and caching with pre-signed URLs

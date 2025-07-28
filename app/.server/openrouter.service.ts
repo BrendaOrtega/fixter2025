@@ -42,7 +42,7 @@ export const OpenRouterConfig =
 
 // Default TTS options
 const DEFAULT_TTS_OPTIONS: Required<TTSOptions> = {
-  voice: "es-ES-Standard-A", // Spanish voice
+  voice: "nova", // Female voice for better engagement
   speed: 1.0,
   format: "mp3",
 };
@@ -86,14 +86,14 @@ const makeOpenRouterTTSService = Effect.gen(function* () {
       catch: (error) => new Error(`Failed to generate speech: ${error}`),
     });
 
-  const estimateCost = (text: string) =>
-    Effect.succeed(() => {
-      // OpenRouter TTS pricing estimation (approximate)
-      // Based on character count - roughly $0.000015 per character
-      const characterCount = text.length;
-      const costPerCharacter = 0.000015;
-      return characterCount * costPerCharacter;
-    });
+  const estimateCost = (text: string) => {
+    // OpenRouter TTS pricing estimation (approximate)
+    // Based on character count - roughly $0.000015 per character
+    const characterCount = text.length;
+    const costPerCharacter = 0.000015;
+    const cost = characterCount * costPerCharacter;
+    return Effect.succeed(cost);
+  };
 
   const getSupportedVoices = () =>
     Effect.succeed([
