@@ -379,7 +379,7 @@ export const PostCard = ({ post }: { isLoading?: boolean; post: Post }) => {
           <div className="group-hover:bottom-4  transition-all absolute w-20 h-16 -ml-1 bg-author bg-cover -bottom-12 flex items-end">
             <img
               className=" h-8 rounded-full bg-white ml-3 "
-              src={post.metaImage || "/full-logo.svg"}
+              src={post.photoUrl || "/full-logo.svg"}
               alt="floating"
               onError={(event) => {
                 event.currentTarget.src = "/full-logo.svg";

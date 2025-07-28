@@ -6,7 +6,7 @@ export const NextPost = ({ posts }: { posts: Partial<Post>[] }) => {
   return (
     <section className="flex max-w-3xl mx-auto gap-3">
       {posts.map((post) => (
-        <Thumb post={post} />
+        <Thumb key={post.slug} post={post} />
       ))}
     </section>
   );

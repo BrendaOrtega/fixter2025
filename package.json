@@ -11,11 +11,12 @@
     "prisma": "npx -y prisma generate"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.712.0",
+    "@aws-sdk/client-s3": "^3.850.0",
     "@aws-sdk/client-ses": "^3.806.0",
-    "@aws-sdk/s3-request-presigner": "^3.712.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
     "@effect/platform": "^0.90.0",
     "@effect/platform-node": "^0.94.0",
+    "@google-cloud/text-to-speech": "^6.2.0",
     "@prisma/client": "^6.0.1",
     "@react-router/node": "^7.1.1",
     "@react-router/serve": "^7.1.1",

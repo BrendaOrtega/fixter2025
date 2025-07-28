@@ -9,12 +9,13 @@ import { CourseBanner } from "~/components/CourseBanner";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
 import { SubscriptionModal } from "~/components/SubscriptionModal";
 import { NextPost } from "~/components/common/NextPost";
-import { FaFacebookF, FaGoogle, FaLinkedinIn } from "react-icons/fa";
+import { FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { PiLinkSimpleBold } from "react-icons/pi";
 import { useToast } from "~/hooks/useToaster";
 import { twMerge } from "tailwind-merge";
 import getMetaTags from "~/utils/getMetaTags";
+import AudioPlayer from "~/components/AudioPlayer";
 
 export const meta = ({ data, location }: Route.MetaArgs) => {
   const { post } = data;
@@ -96,6 +97,17 @@ export default function Page({
           </div>
 
           <YoutubeComponent url={post.youtubeLink as string} />
+
+          {/* Audio Player */}
+          {post.body && (
+            <AudioPlayer
+              postId={post.id}
+              postTitle={post.title}
+              postBody={post.body}
+              className="my-6"
+            />
+          )}
+
           <Markdown>{post.body}</Markdown>
         </section>
         <NextPost posts={posts} />
@@ -116,10 +128,11 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
 
   return (
     <div className="flex gap-2  items-center ">
-      <SocialMedia onClick={handleSocialClick} name="Link">
+      <SocialMedia key="link" onClick={handleSocialClick} name="Link">
         <PiLinkSimpleBold />
       </SocialMedia>
       <SocialMedia
+        key="facebook"
         onClick={handleSocialClick}
         name="Facebook"
         link={`https://www.facebook.com/sharer/sharer.php?u=${link}`}
@@ -127,6 +140,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
         <FaFacebookF />
       </SocialMedia>
       <SocialMedia
+        key="x"
         onClick={handleSocialClick}
         name="X"
         link={`https://twitter.com/intent/tweet?url=${link}&text=¡Vi este post y me pareció interesante!`}
@@ -134,6 +148,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
         <FaXTwitter />
       </SocialMedia>
       <SocialMedia
+        key="linkedin"
         onClick={handleSocialClick}
         name="Linkedin"
         link={`http://www.linkedin.com/shareArticle?mini=true&url=${link}&title=¡Vi este post y me pareció interesante!`}
@@ -141,6 +156,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
         <FaLinkedinIn />
       </SocialMedia>
       <SocialMedia
+        key="whatsapp"
         onClick={handleSocialClick}
         // link={`whatsapp://send?text=¡Te comparto mi descuento! ${link}`}
         link={`https://api.whatsapp.com/send/?text=¡Vi+este+post+y+me+pareció+interesante!\n${link}&type=phone_number&app_absent=0`}
@@ -153,13 +169,11 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
 };
 
 const SocialMedia = ({
-  className,
   children,
   name,
   link,
   onClick,
 }: {
-  className?: string;
   children: ReactNode;
   name?: string;
   onClick?: () => void;

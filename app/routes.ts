@@ -15,6 +15,7 @@ export default [
   route("subscribe", "routes/subscribe.tsx"),
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
+  route("audio-demo", "routes/audio-demo.tsx"),
   route("aviso-de-privacidad", "routes/aviso.tsx"),
   route("terminos-y-condiciones", "routes/terms.tsx"),
   route("sitemap.xml", "routes/sitemap.tsx"),
@@ -47,6 +48,7 @@ export default [
     route("stripe", "routes/api/stripe.tsx"),
     route("file", "routes/api/file.tsx"),
     route("sockets", "routes/api/sockets.tsx"),
+    route("audio", "routes/api/audio.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?
