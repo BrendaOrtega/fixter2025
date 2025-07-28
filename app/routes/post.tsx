@@ -16,13 +16,17 @@ import { useToast } from "~/hooks/useToaster";
 import { twMerge } from "tailwind-merge";
 import getMetaTags from "~/utils/getMetaTags";
 
-export const meta = ({ data }: Route.MetaArgs) => {
+export const meta = ({ data, location }: Route.MetaArgs) => {
   const { post } = data;
-  console.log(post.title, "info");
+  const url = `https://www.fixtergeek.com${location.pathname}`;
+  const description = post.body?.replace(/[#*`]/g, "").slice(0, 155) + "...";
+
   return getMetaTags({
-    title: post.title,
-    description: post.body?.slice(0, 60) + "...",
+    title: `${post.title} | Fixtergeek`,
+    description,
     image: post.metaImage || post.coverImage || undefined,
+    url,
+    type: "article",
   });
 };
 

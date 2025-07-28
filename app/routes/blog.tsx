@@ -21,12 +21,15 @@ import { SuscriptionBanner } from "~/components/SuscriptionBanner";
 import { Footer } from "~/components/Footer";
 import getMetaTags from "~/utils/getMetaTags";
 
-export const meta = () =>
-  getMetaTags({
-    title: " Aprende leyendo nuestro blog | Fixtergeek",
+export const meta = ({ location }: Route.MetaArgs) => {
+  const url = `https://www.fixtergeek.com${location.pathname}`;
+  return getMetaTags({
+    title: "Blog de Programación y Desarrollo Web | Fixtergeek",
     description:
-      "Mantente actualizad@ y mejora tus habilidades mientras disfrutas",
+      "Aprende programación, desarrollo web, React, JavaScript y más con nuestros tutoriales y artículos. Mantente actualizado con las últimas tecnologías.",
+    url,
   });
+};
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const url = new URL(request.url); // better working with parsers
@@ -46,7 +49,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       skip,
     });
   }
-  // const featured = await db.post.findFirst({ where: { isFeatured: true } }); @todo use again?
+  // const featured = await db.post.findFirst({ where: { isFeatured: true } }); @todo use it again?
   return data(
     {
       posts,

@@ -163,6 +163,9 @@ model Post {
   tags       String[]
   category   String[]
   banner     Banner?
+
+  // Relations
+  audioCache AudioCache?
 }
 
 model Course {
@@ -307,4 +310,85 @@ model User {
   metadata    Json?
 
   @@map("users")
+}
+
+model AudioCache {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @unique @db.ObjectId
+  s3Key     String // S3 object key
+  audioUrl  String // Pre-signed URL or CloudFront URL
+  duration  Int // in seconds
+  fileSize  Int // in bytes
+  cost      Float // generation cost in USD
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model AudioAnalytics {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId       String   @db.ObjectId
+  event        String // 'generate', 'play', 'pause', 'complete'
+  timestamp    DateTime @default(now())
+  sessionId    String?
+  userAgent    String?
+  playDuration Int? // for play events
+}
+
+model BlogAnalytics {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @db.ObjectId
+  sessionId String // Anonymous session identifier
+  event     String // 'page_view', 'scroll', 'read_time', 'text_select', 'copy', 'click'
+  timestamp DateTime @default(now())
+
+  // Reading behavior
+  readingTime    Int? // seconds spent reading
+  scrollDepth    Float? // percentage of page scrolled (0-100)
+  completionRate Float? // estimated reading completion (0-100)
+
+  // Interaction data
+  elementClicked String? // CSS selector or element ID
+  textSelected   String? // selected text (first 100 chars)
+
+  // Heatmap coordinates (normalized percentages)
+  clickX  Float? // X coordinate as percentage (0-100)
+  clickY  Float? // Y coordinate as percentage (0-100)
+  scrollY Float? // Scroll position when click occurred
+
+  // Viewport context for responsive heatmaps
+  viewportWidth  Int? // Browser viewport width
+  viewportHeight Int? // Browser viewport height
+  contentWidth   Int? // Content container width
+  contentHeight  Int? // Content container height
+
+  // Technical data
+  userAgent String?
+  referrer  String?
+
+  // Privacy-safe metadata
+  country    String? // from IP geolocation
+  deviceType String? // mobile, tablet, desktop
+}
+
+// Aggregated heatmap data for performance
+model HeatmapData {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId String   @db.ObjectId
+  date   DateTime @db.Date // Daily aggregation
+
+  // Heatmap points (JSON array of {x, y, intensity, element})
+  clickPoints  Json // Aggregated click coordinates
+  scrollPoints Json // Scroll depth distribution
+
+  // Aggregation metadata
+  totalClicks    Int
+  uniqueSessions Int
+  avgScrollDepth Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([postId, date])
 }

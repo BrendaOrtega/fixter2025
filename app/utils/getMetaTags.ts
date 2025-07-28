@@ -2,14 +2,18 @@ export type GetBasicMetaTagsPros = {
   title?: string;
   description?: string;
   image?: string;
+  url?: string;
   twitterCard?: "summary" | "summary_large_image";
+  type?: "website" | "article";
 };
 
 export default function getMetaTags({
   title,
-  description = "Cursos y recursos de programación y diseño web", // description should be at least 100 chars
+  description = "Cursos y recursos de programación y diseño web",
   image = "https://fixtergeek.com/cover.png",
-  twitterCard = "summary",
+  url = "https://www.fixtergeek.com",
+  twitterCard = "summary_large_image",
+  type = "website",
 }: GetBasicMetaTagsPros) {
   if (!title) {
     return [
@@ -25,11 +29,20 @@ export default function getMetaTags({
   return [
     { title },
     {
+      name: "description",
+      content: description,
+    },
+    {
+      rel: "canonical",
+      href: url,
+    },
+    // Open Graph
+    {
       property: "og:title",
       content: title,
     },
     {
-      name: "description",
+      property: "og:description",
       content: description,
     },
     {
@@ -38,15 +51,28 @@ export default function getMetaTags({
     },
     {
       property: "og:type",
-      content: "website",
+      content: type,
     },
     {
       property: "og:url",
-      content: "www.fixtergeek.com",
+      content: url,
     },
+    {
+      property: "og:site_name",
+      content: "Fixtergeek",
+    },
+    // Twitter
     {
       name: "twitter:card",
       content: twitterCard,
+    },
+    {
+      name: "twitter:title",
+      content: title,
+    },
+    {
+      name: "twitter:description",
+      content: description,
     },
     {
       name: "twitter:image",
