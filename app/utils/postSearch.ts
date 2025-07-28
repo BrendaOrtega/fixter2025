@@ -49,7 +49,7 @@ export const postSearch = async (search: string) => {
           id: 1,
           title: 1,
           slug: 1,
-          metaImagen: 1,
+          metaImage: 1,
           coverImage: 1,
           authorName: 1,
           mainTag: 1,
