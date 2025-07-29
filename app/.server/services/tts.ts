@@ -224,10 +224,8 @@ function cleanTextForTTS(text: string): string {
 
   let cleaned = text;
   
-  // Replace emojis with text
-  cleaned = cleaned.replace(/[\p{Emoji}]/gu, (emoji) => {
-    return EMOJI_MAP[emoji] ? ` [${EMOJI_MAP[emoji]}] ` : ' ';
-  });
+  // Remove all emojis
+  cleaned = cleaned.replace(/[\p{Emoji}]/gu, ' ');
 
   // Clean up markdown, HTML, and other formatting
   cleaned = cleaned
@@ -253,15 +251,30 @@ function cleanTextForTTS(text: string): string {
     .replace(/\s+/g, ' ') // Collapse multiple spaces
     .replace(/^\s+|\s+$/g, ''); // Trim whitespace
 
-  // Add a natural pause between title and body if the text contains a title
-  // This looks for a common pattern where title ends with punctuation and is followed by a newline
-  cleaned = cleaned.replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2');
+  // Add a natural pause after titles and headings
+  // 1. For titles followed by text (title ends with punctuation and newline)
+  cleaned = cleaned.replace(/([.!?])\s*\n\s*([A-Z])/g, '$1<break time="1s"/> $2');
   
-  // Add a longer pause after headings (lines ending with : or ?)
-  cleaned = cleaned.replace(/([:?])\s*\n/g, '.\n\n');
+  // 2. For headings (lines ending with : or ? followed by newline)
+  cleaned = cleaned.replace(/([:?])\s*\n/g, '$1<break time="1.5s"/>\n');
+  
+  // 3. For paragraphs (double newlines)
+  cleaned = cleaned.replace(/\n\s*\n/g, '<break time="2s"/>');
+  
+  // 4. For list items (lines starting with - or *)
+  cleaned = cleaned.replace(/\n\s*[-*]\s+/g, '<break time="1s"/> ');
+  
+  // 5. For sentences (add a small pause after sentence-ending punctuation)
+  cleaned = cleaned.replace(/([.!?])\s+/g, '$1<break time="0.8s"/> ');
+  
+  // 6. For commas and semicolons (shorter pause)
+  cleaned = cleaned.replace(/([,;])\s+/g, '$1<break time="0.3s"/> ');
   
   // Remove any remaining double spaces
   cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
+  
+  // Wrap the final text in SSML tags for better control
+  cleaned = `<speak>${cleaned}</speak>`;
 
   return cleaned;
 }
