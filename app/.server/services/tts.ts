@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
+import { cleanTextForTTS } from "fonema";
 
 // Google Cloud TTS Service using Effect
 export interface Voice {
@@ -65,7 +66,7 @@ export const TTSServiceLive: TTSService = {
         );
       }
 
-      const cleanText = cleanTextForTTS(text);
+      const cleanText = yield* cleanTextForTTS(text);
       if (cleanText.length === 0) {
         yield* Effect.fail(
           new TTSError("No valid text content for TTS", "EMPTY_TEXT")
@@ -93,16 +94,16 @@ export const TTSServiceLive: TTSService = {
           },
           audioConfig: {
             audioEncoding: "MP3" as const,
-            speakingRate: options.speakingRate || 1.0,  // Velocidad ligeramente reducida para mejor claridad
+            speakingRate: options.speakingRate || 1.0, // Velocidad ligeramente reducida para mejor claridad
             pitch: options.pitch || 0,
-            volumeGainDb: 0,  // Volumen normal
-            sampleRateHertz: 24000,  // Frecuencia de muestreo óptima para voz
-            
+            volumeGainDb: 0, // Volumen normal
+            sampleRateHertz: 24000, // Frecuencia de muestreo óptima para voz
+
             // Perfil de efectos optimizado para voz clara en español
             effectsProfileId: ["telephony-class-application"],
-            
+
             // Configuración específica para puntuación
-            enableTimepointing: ["SSML_MARK"]
+            enableTimepointing: ["SSML_MARK"],
           },
         };
 
@@ -275,20 +276,20 @@ export function cleanTextForTTS(text: string): string {
   // Handle code blocks and inline code
   cleaned = cleaned
     // Completely remove code blocks with triple backticks
-    .replace(/```[\s\S]*?```/gs, '')
+    .replace(/```[\s\S]*?```/gs, "")
     // Remove indented code blocks (4 spaces or tab at start of line)
-    .replace(/^( {4,}|\t).*$/gm, '')
+    .replace(/^( {4,}|\t).*$/gm, "")
     // Remove backticks but keep the content inside for inline code
-    .replace(/`([^`]+)`/g, '$1')
+    .replace(/`([^`]+)`/g, "$1")
     // Remove code blocks in HTML <pre> and <code> tags but keep content
-    .replace(/<(pre|code|kbd|samp|var)>([\s\S]*?)<\/\1>/gi, '$2')
+    .replace(/<(pre|code|kbd|samp|var)>([\s\S]*?)<\/\1>/gi, "$2")
     // Remove XML/HTML comments
     .replace(/<!--[\s\S]*?-->/g, "");
 
   // Clean up markdown, HTML, and other formatting
   cleaned = cleaned
     // Remove # from headers but keep the text
-    .replace(/^#{1,6}\s+/gm, (match) => '\n\n') // Add double newline before headers
+    .replace(/^#{1,6}\s+/gm, (match) => "\n\n") // Add double newline before headers
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Links [text](url)
     .replace(
       /<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi,
@@ -303,39 +304,39 @@ export function cleanTextForTTS(text: string): string {
     .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove zero-width spaces
     .replace(/[\u2018\u2019]/g, "'") // Replace smart single quotes
     .replace(/[\u201C\u201D]/g, '"') // Replace smart double quotes
-    .replace(/[\u2013\u2014]/g, "-") // Replace en/em dashes with hyphen
-    
+    .replace(/[\u2013\u2014]/g, "-"); // Replace en/em dashes with hyphen
+
   // Normalize line breaks and paragraphs
   cleaned = cleaned
-    .replace(/\s*\n\s*\n\s*/g, '\n\n')  // Preserve double newlines as paragraph breaks
-    .replace(/\s*\n\s*/g, ' ')  // Convert single newlines to spaces
-    
+    .replace(/\s*\n\s*\n\s*/g, "\n\n") // Preserve double newlines as paragraph breaks
+    .replace(/\s*\n\s*/g, " "); // Convert single newlines to spaces
+
   // Mejorar el manejo de puntuación para español
   // 1. Manejo de espacios alrededor de signos de puntuación
   // Primero normalizamos todos los signos de puntuación para que no tengan espacios antes
   cleaned = cleaned
-    .replace(/\s*([.,;:!?])\s*/g, '$1 ')  // Un solo espacio después de cada signo de puntuación
-    .replace(/\s+/g, ' ')  // Normalizar múltiples espacios a uno solo
-    
+    .replace(/\s*([.,;:!?])\s*/g, "$1 ") // Un solo espacio después de cada signo de puntuación
+    .replace(/\s+/g, " "); // Normalizar múltiples espacios a uno solo
+
   // 2. Manejo especial para comas - asegurar que siempre tengan un espacio después
   // y que no tengan espacios antes
   cleaned = cleaned
-    .replace(/,+/g, ',')  // Eliminar comas duplicadas
-    .replace(/\s*,/g, ',')  // Eliminar espacios antes de comas
-    .replace(/,(?=[^\s])/g, ', ')  // Añadir espacio después de comas si no lo hay
-    
+    .replace(/,+/g, ",") // Eliminar comas duplicadas
+    .replace(/\s*,/g, ",") // Eliminar espacios antes de comas
+    .replace(/,(?=[^\s])/g, ", "); // Añadir espacio después de comas si no lo hay
+
   // 3. Manejo especial para puntos - asegurar que terminen oraciones
   cleaned = cleaned
-    .replace(/\.+/g, '.')  // Eliminar puntos duplicados
+    .replace(/\.+/g, ".") // Eliminar puntos duplicados
     .replace(/([a-z])\.\s*([a-z])/g, (match, p1, p2) => {
       // Asegurar mayúscula después de punto si es inicio de oración
       return `${p1}. ${p2.toUpperCase()}`;
     });
-    
+
   // Handle lists
   cleaned = cleaned
-    .replace(/\s*[\*\-]\s+/g, '\n• ')  // Convert bullet points
-    .replace(/\s*\d+\.\s+/g, '\n$&')  // Numbered lists on new lines
+    .replace(/\s*[\*\-]\s+/g, "\n• ") // Convert bullet points
+    .replace(/\s*\d+\.\s+/g, "\n$&") // Numbered lists on new lines
     .replace(/\.(\s|$)/g, ".$1") // Ensure space after periods
     .replace(/(?:^|\s)@[\w-]+/g, "") // Remove mentions (@username)
     .replace(/(?:^|\s)#[\w-]+/g, "") // Remove hashtags
@@ -369,7 +370,7 @@ export function cleanTextForTTS(text: string): string {
 
   // No convertimos números, dejamos que el LLM los maneje
   // Solo nos aseguramos de que tengan el formato adecuado
-  
+
   // Normalizar espacios y saltos de línea
   cleaned = cleaned
     .replace(/\s*[\r\n]+\s*/g, "\n") // Normalize line breaks
@@ -437,16 +438,19 @@ function splitTextIntoChunks(text: string, maxBytes: number): string[] {
   const sentences = text.split(/(?<=[.!?])\s+/);
 
   for (const sentence of sentences) {
-    const sentenceBytes = Buffer.byteLength(sentence, 'utf8');
-    
+    const sentenceBytes = Buffer.byteLength(sentence, "utf8");
+
     // If the sentence is too large, split it into words
     if (sentenceBytes > maxBytes) {
       const words = sentence.split(/(\s+)/);
-      
+
       for (const word of words) {
-        const wordBytes = Buffer.byteLength(word, 'utf8');
-        const chunkWithWordBytes = Buffer.byteLength(currentChunk + word, 'utf8');
-        
+        const wordBytes = Buffer.byteLength(word, "utf8");
+        const chunkWithWordBytes = Buffer.byteLength(
+          currentChunk + word,
+          "utf8"
+        );
+
         if (chunkWithWordBytes <= maxBytes) {
           currentChunk += word;
         } else {
@@ -454,7 +458,7 @@ function splitTextIntoChunks(text: string, maxBytes: number): string[] {
             chunks.push(currentChunk);
             currentChunk = "";
           }
-          
+
           // If a single word is larger than maxBytes, we have to split it
           if (wordBytes > maxBytes) {
             const splitWord = splitLongText(word, maxBytes);
@@ -468,22 +472,25 @@ function splitTextIntoChunks(text: string, maxBytes: number): string[] {
         }
       }
     } else {
-      const chunkWithSentenceBytes = Buffer.byteLength(currentChunk + ' ' + sentence, 'utf8');
-      
+      const chunkWithSentenceBytes = Buffer.byteLength(
+        currentChunk + " " + sentence,
+        "utf8"
+      );
+
       if (currentChunk && chunkWithSentenceBytes > maxBytes) {
         chunks.push(currentChunk);
         currentChunk = sentence;
       } else {
-        currentChunk = currentChunk ? currentChunk + ' ' + sentence : sentence;
+        currentChunk = currentChunk ? currentChunk + " " + sentence : sentence;
       }
     }
   }
-  
+
   // Add the last chunk if it's not empty
   if (currentChunk) {
     chunks.push(currentChunk);
   }
-  
+
   return chunks;
 }
 
@@ -496,47 +503,48 @@ function splitTextIntoChunks(text: string, maxBytes: number): string[] {
 function splitLongText(text: string, maxBytes: number): string[] {
   const chunks: string[] = [];
   let remainingText = text;
-  
+
   while (remainingText.length > 0) {
     // If the remaining text is small enough, add it and finish
-    if (Buffer.byteLength(remainingText, 'utf8') <= maxBytes) {
+    if (Buffer.byteLength(remainingText, "utf8") <= maxBytes) {
       chunks.push(remainingText);
       break;
     }
-    
+
     // Start by trying to split at a word boundary
     let splitPos = Math.min(maxBytes, remainingText.length);
     let chunk = remainingText.slice(0, splitPos);
-    
+
     // Adjust for multi-byte characters
-    while (Buffer.byteLength(chunk, 'utf8') > maxBytes) {
+    while (Buffer.byteLength(chunk, "utf8") > maxBytes) {
       splitPos--;
       chunk = remainingText.slice(0, splitPos);
     }
-    
+
     // Try to find the last space to avoid splitting words
-    const lastSpace = chunk.lastIndexOf(' ');
-    if (lastSpace > 0 && (splitPos - lastSpace) < 20) { // Only move back a little to avoid very long words
+    const lastSpace = chunk.lastIndexOf(" ");
+    if (lastSpace > 0 && splitPos - lastSpace < 20) {
+      // Only move back a little to avoid very long words
       splitPos = lastSpace + 1; // Include the space
       chunk = remainingText.slice(0, splitPos);
     }
-    
+
     // If we couldn't find a good split point, just split at the maxBytes
     if (chunk.length === 0) {
       splitPos = Math.min(maxBytes, remainingText.length);
       chunk = remainingText.slice(0, splitPos);
-      
+
       // Adjust for multi-byte characters
-      while (Buffer.byteLength(chunk, 'utf8') > maxBytes) {
+      while (Buffer.byteLength(chunk, "utf8") > maxBytes) {
         splitPos--;
         chunk = remainingText.slice(0, splitPos);
       }
     }
-    
+
     chunks.push(chunk.trim());
     remainingText = remainingText.slice(splitPos).trimStart();
   }
-  
+
   return chunks;
 }
 

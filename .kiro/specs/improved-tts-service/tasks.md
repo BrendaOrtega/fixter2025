@@ -1,13 +1,13 @@
 # Implementation Plan
 
-- [x] 1. Create "fonema" ultra-minimal library in `packages/fonema/`
+- [ ] 1. Create "fonema" ultra-minimal library in `packages/fonema/`
 
   - Single index.ts file with all functionality
   - Package.json with Effect peer dependency only
   - ESM only build
   - _Requirements: All_
 
-- [ ] 2. Implement Spanish text cleaning in single Effect pipeline
+- [x] 2. Implement Spanish text cleaning in single Effect pipeline
 
   - Spanish number conversion (1,234 → "mil doscientos treinta y cuatro")
   - Abbreviation expansion (Dr. → "Doctor", etc. → "etcétera")
@@ -17,19 +17,20 @@
   - RAE-compliant punctuation normalization
   - _Requirements: All_
 
-- [ ] 3. Create minimal README with Effect examples
+- [x] 3. Create minimal README with Effect examples
 
   - Standalone usage
   - TTS integration examples
   - _Requirements: Documentation_
 
-- [ ] 4. Publish fonema to NPM
+- [x] 4. Publish fonema to NPM
 
   - Configure NPM publishing
   - Publish initial version
   - _Requirements: Distribution_
 
-- [ ] 5. Integrate into TTS service
+- [-] 5. Integrate into TTS service
   - Replace cleanTextForTTS with fonema
   - Test with Google Cloud TTS
+  - Use the new library from npm cloud in fixtergeek2025 project
   - _Requirements: Integration_

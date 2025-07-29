@@ -36,6 +36,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/blissito/fonema.git"
+  },
+  "homepage": "https://github.com/blissito/fonema#readme",
+  "bugs": {
+    "url": "https://github.com/blissito/fonema/issues"
   }
 }
