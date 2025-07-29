@@ -176,6 +176,70 @@ const cleanCodeContent = (
       ),
   });
 
+// Clean markdown formatting
+const cleanMarkdown = (
+  text: string
+): Effect.Effect<string, TextCleaningError> =>
+  Effect.try({
+    try: () => {
+      let cleaned = text;
+
+      // Remove headers but keep text
+      cleaned = cleaned.replace(/^#{1,6}\s+/gm, "");
+      cleaned = cleaned.replace(/#{1,6}\s+/g, ""); // Headers in middle of text
+
+      // Remove bold/italic formatting but keep text
+      cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, "$1"); // **bold**
+      cleaned = cleaned.replace(/\*([^*]+)\*/g, "$1"); // *italic*
+      cleaned = cleaned.replace(/__([^_]+)__/g, "$1"); // __bold__
+      cleaned = cleaned.replace(/_([^_]+)_/g, "$1"); // _italic_
+
+      // Remove strikethrough but keep text
+      cleaned = cleaned.replace(/~~([^~]+)~~/g, "$1");
+
+      // Remove links but keep text
+      cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
+      // Remove images completely
+      cleaned = cleaned.replace(/!\[([^\]]*)\]\([^)]+\)/g, "");
+
+      // Remove HTML tags but keep content
+      cleaned = cleaned.replace(/<[^>]*>/g, "");
+
+      // Remove blockquotes
+      cleaned = cleaned.replace(/^>\s*/gm, "");
+
+      // Remove list markers
+      cleaned = cleaned.replace(/^[-*+]\s+/gm, "");
+      cleaned = cleaned.replace(/^\d+\.\s+/gm, "");
+
+      // Remove horizontal rules
+      cleaned = cleaned.replace(/^[-*_]{3,}$/gm, "");
+
+      // Remove remaining underscores that might be formatting artifacts
+      cleaned = cleaned.replace(/_{2,}/g, " "); // Multiple underscores
+      cleaned = cleaned.replace(/\b_+\b/g, " "); // Standalone underscores
+      cleaned = cleaned.replace(/(\w)_+(\w)/g, "$1 $2"); // Underscores between words
+
+      // Remove table formatting
+      cleaned = cleaned.replace(/\|/g, " "); // Table separators
+
+      // Remove footnote references
+      cleaned = cleaned.replace(/\[\^[^\]]+\]/g, "");
+
+      // Remove reference-style links
+      cleaned = cleaned.replace(/^\[[^\]]+\]:\s*.+$/gm, "");
+
+      return cleaned;
+    },
+    catch: (error) =>
+      new TextCleaningError(
+        `Markdown cleaning failed: ${error}`,
+        "MARKDOWN_CLEANING_FAILED",
+        "PRE_PROCESSING"
+      ),
+  });
+
 // Convert Spanish numbers
 const convertNumbers = (
   text: string
@@ -348,11 +412,14 @@ export const cleanTextForTTS = (
   Effect.gen(function* () {
     // Pipeline: each stage processes the text sequentially
     const afterCodeCleaning = yield* cleanCodeContent(text);
-    const afterDigitalRemoval = yield* removeDigitalContent(afterCodeCleaning);
+    const afterMarkdownCleaning = yield* cleanMarkdown(afterCodeCleaning);
+    const afterDigitalRemoval = yield* removeDigitalContent(
+      afterMarkdownCleaning
+    );
     const afterAbbreviations = yield* expandAbbreviations(afterDigitalRemoval);
     const afterDates = yield* convertDates(afterAbbreviations);
     const afterNumbers = yield* convertNumbers(afterDates);
-    const final = yield* normalizePunctuation(afterDates);
+    const final = yield* normalizePunctuation(afterNumbers);
 
     return final;
   });

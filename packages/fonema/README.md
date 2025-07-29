@@ -8,54 +8,6 @@ Ultra-minimal Spanish text cleaning library for TTS. 100% Effect-TS, ESM-only, z
 npm install fonema effect
 ```
 
-## Quick Start
-
-```typescript
-import { cleanTextForTTS } from "fonema";
-import { Effect } from "effect";
-
-// Ejemplo que demuestra todas las capacidades de limpieza
-const text = `
-El Dr. García, especialista en IA, tiene 25 años de experiencia.
-Nació el 15/03/1980 y atiende en la C/ Mayor, 123, 2ºB.
-Su correo es dr.garcia@clinica.com y su web https://drgarcia.es
-
-Su última investigación mostró un 75% de efectividad:
-
-\`\`\`
-function saludar() { return "Hola, soy el Dr. García"; }
-\`\`\`
-
-¡Agenda tu cita al 555-123-4567!`;
-
-const program = cleanTextForTTS(text);
-
-Effect.runSync(program);
-/* → 
-"El Doctor García, especialista en I A, tiene veinticinco años de experiencia.
-Nació el quince de marzo de mil novecientos ochenta y atiende en la Calle Mayor, 
-ciento veintitrés, segundo B.
-
-Su última investigación mostró un setenta y cinco por ciento de efectividad:
-
-¡Agenda tu cita al cinco cinco cinco, uno veintitrés, cuarenta y cinco, sesenta y siete!"
-*/
-```
-
-### ¿Qué hizo fonema?
-
-1. **Abreviaturas**: `Dr.` → `Doctor`
-2. **Fechas**: `15/03/1980` → `quince de marzo de mil novecientos ochenta`
-3. **Direcciones**: `C/ Mayor` → `Calle Mayor`
-4. **Números**: `123` → `ciento veintitrés`
-5. **Porcentajes**: `75%` → `setenta y cinco por ciento`
-6. **Eliminó**:
-   - Email: `dr.garcia@clinica.com`
-   - URL: `https://drgarcia.es`
-   - Bloque de código completo
-7. **Números de teléfono**: `555-123-4567` → `cinco cinco cinco, uno veintitrés, cuarenta y cinco, sesenta y siete`
-8. **Formato de piso**: `2ºB` → `segundo B`
-
 ## API
 
 ### `cleanTextForTTS(text: string)`
@@ -76,9 +28,66 @@ Main function that applies all Spanish text cleaning transformations in a single
 - **Dates**: `15/03/2024` → `"quince de marzo de dos mil veinticuatro"`
 - **Abbreviations**: `Dr.` → `"Doctor"`, `etc.` → `"etcétera"`
 - **Percentages**: `25%` → `"veinticinco por ciento"`
+- **Markdown**: `**bold**` → `"bold"`, `*italic*` → `"italic"`, removes headers, lists, links
 - **Code blocks**: Removes ```blocks, preserves inline`code`
 - **URLs/emails**: Complete removal
 - **Punctuation**: RAE-compliant normalization
+
+## Inicio Rápido
+
+```typescript
+import { cleanTextForTTS } from "fonema";
+import { Effect } from "effect";
+
+// Ejemplo que demuestra todas las capacidades de limpieza
+const text = `
+El Dr. García, experto en IA y PLN, ha estado utilizando fonema v1.2.3 en su investigación durante 5 años.
+Nació el 15/03/1980 y atiende en C/ Mayor, 123, 2ºB.
+Contacto: dr.garcia@clinica.com | https://drgarcia.es
+
+Su último estudio muestra una mejora del 75% en la naturalidad del TTS usando la normalización de texto de fonema:
+
+\`\`\`typescript
+// Antes: "El Dr. García atiende en C/ Mayor, 123"
+// Después de fonema: "El Doctor García atiende en Calle Mayor, ciento veintitrés"
+const texto = "El Dr. García atiende en C/ Mayor, 123";
+const textoLimpio = await Effect.runPromise(cleanTextForTTS(texto));
+\`\`\`
+
+¡Agenda tu cita al 555-123-4567!`;
+
+const programa = cleanTextForTTS(text);
+
+Effect.runSync(programa);
+/* → 
+"El Doctor García, experto en I A y P L N, ha estado utilizando fonema v uno punto dos punto tres en su investigación durante cinco años.
+Nació el quince de marzo de mil novecientos ochenta y atiende en Calle Mayor, ciento veintitrés, segundo B.
+Contacto: 
+
+Su último estudio muestra una mejora del setenta y cinco por ciento en la naturalidad del T T S usando la normalización de texto de fonema:
+
+¡Agenda tu cita al cinco cinco cinco, uno veintitrés, cuarenta y cinco, sesenta y siete!"
+*/
+```
+
+### ¿Qué hizo fonema?
+
+1. **Abreviaturas**: `Dr.` → `Doctor`
+2. **Fechas**: `15/03/1980` → `quince de marzo de mil novecientos ochenta`
+3. **Direcciones**: `C/ Mayor` → `Calle Mayor`
+4. **Números**:
+   - `123` → `ciento veintitrés`
+   - `1.2.3` → `uno punto dos punto tres`
+   - `5` → `cinco`
+5. **Porcentajes**: `75%` → `setenta y cinco por ciento`
+6. **Eliminó**:
+   - Email: `dr.garcia@clinica.com`
+   - URL: `https://drgarcia.es`
+   - Bloque de código completo
+7. **Números de teléfono**: `555-123-4567` → `cinco cinco cinco, uno veintitrés, cuarenta y cinco, sesenta y siete`
+8. **Formato de piso**: `2ºB` → `segundo B`
+9. **Versiones**: `v1.2.3` → `v uno punto dos punto tres`
+10. **Abreviaturas técnicas**: `IA` → `I A`, `PLN` → `P L N`, `TTS` → `T T S`
 
 ## Examples
 
@@ -244,6 +253,58 @@ const program = myTTSPipeline("Text with números 123 and Dr. abbreviations", {
   speed: 1.0,
 });
 ```
+
+## Limpieza de Markdown
+
+fonema limpia automáticamente el formato markdown preservando el contenido:
+
+```typescript
+import { cleanTextForTTS } from "fonema";
+import { Effect } from "effect";
+
+const markdownText = `
+# Título Principal
+## Subtítulo
+
+Este texto tiene **negritas** y *cursivas*.
+También __negritas__ y _cursivas_ con guiones bajos.
+Y texto ~~tachado~~ que se limpia.
+
+- Lista con viñetas
+- Segundo elemento
+
+1. Lista numerada
+2. Segundo elemento
+
+> Cita en blockquote
+
+[Enlace a sitio web](https://example.com)
+![Imagen](imagen.jpg)
+
+Código \`inline\` se preserva.
+`;
+
+const programa = cleanTextForTTS(markdownText);
+Effect.runSync(programa);
+
+/* Resultado:
+"Título Principal Subtítulo Este texto tiene negritas y cursivas. También negritas y cursivas con guiones bajos. Y texto tachado que se limpia. Lista con viñetas Segundo elemento Lista numerada Segundo elemento Cita en blockquote Enlace a sitio web Código inline se preserva."
+*/
+```
+
+### Elementos Markdown Soportados
+
+- ✅ **Negritas**: `**texto**` y `__texto__` → `texto`
+- ✅ **Cursivas**: `*texto*` y `_texto_` → `texto`
+- ✅ **Tachado**: `~~texto~~` → `texto`
+- ✅ **Títulos**: `# Título` → `Título`
+- ✅ **Listas**: `- item` y `1. item` → `item`
+- ✅ **Blockquotes**: `> cita` → `cita`
+- ✅ **Enlaces**: `[texto](url)` → `texto`
+- ✅ **Imágenes**: `![alt](url)` → (se eliminan)
+- ✅ **Código inline**: `` `código` `` → `código`
+- ✅ **Código en bloque**: ` ```código``` ` → (se elimina)
+- ✅ **HTML tags**: `<tag>contenido</tag>` → `contenido`
 
 ## License
 

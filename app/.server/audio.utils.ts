@@ -2,40 +2,6 @@
  * Audio utility functions for text processing and cost calculations
  */
 
-// Clean HTML and markdown from text for TTS
-export function cleanTextForTTS(htmlContent: string): string {
-  // Remove HTML tags
-  let cleanText = htmlContent.replace(/<[^>]*>/g, " ");
-
-  // Remove markdown syntax
-  cleanText = cleanText
-    // Remove headers
-    .replace(/#{1,6}\s+/g, "")
-    // Remove bold/italic
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/__([^_]+)__/g, "$1")
-    .replace(/_([^_]+)_/g, "$1")
-    // Remove links
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    // Remove code blocks
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/`([^`]+)`/g, "$1")
-    // Remove blockquotes
-    .replace(/^>\s+/gm, "")
-    // Remove list markers
-    .replace(/^[-*+]\s+/gm, "")
-    .replace(/^\d+\.\s+/gm, "");
-
-  // Clean up whitespace
-  cleanText = cleanText
-    .replace(/\s+/g, " ")
-    .replace(/\n\s*\n/g, "\n")
-    .trim();
-
-  return cleanText;
-}
-
 // Estimate reading time in seconds
 export function estimateReadingTime(text: string): number {
   const wordsPerMinute = 200; // Average reading speed

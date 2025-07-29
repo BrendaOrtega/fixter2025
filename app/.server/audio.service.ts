@@ -3,12 +3,12 @@ import { PrismaClient } from "@prisma/client";
 import { S3Service } from "./s3.service";
 import { OpenRouterTTSService } from "./openrouter.service";
 import {
-  cleanTextForTTS,
   estimateTTSDuration,
   validateTextForTTS,
   generateAudioS3Key,
   calculateTTSCost,
 } from "./audio.utils";
+import { cleanTextForTTS } from "fonema";
 
 // Audio Result Interface
 export interface AudioResult {
@@ -119,7 +119,7 @@ const makeAudioService = Effect.gen(function* () {
       }
 
       // Clean text for TTS
-      const cleanText = cleanTextForTTS(text);
+      const cleanText = yield* cleanTextForTTS(text);
 
       // Estimate cost before generation
       const estimatedCost = calculateTTSCost(cleanText);

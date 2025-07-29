@@ -150,8 +150,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
-// Import the cleanTextForTTS function from the TTS service
-import { cleanTextForTTS } from "~/.server/services/tts";
+// Import the cleanTextForTTS function from fonema
+import { cleanTextForTTS } from "fonema";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
@@ -164,8 +164,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const voice = formData.get("voice") as string;
 
     // Clean text from emojis for better TTS experience
-    const cleanTitle = cleanTextForTTS(postTitle);
-    const cleanBody = cleanTextForTTS(postBody);
+    const cleanTitle = Effect.runSync(cleanTextForTTS(postTitle));
+    const cleanBody = Effect.runSync(cleanTextForTTS(postBody));
 
     if (!postId || !postTitle || !postBody) {
       return new Response(

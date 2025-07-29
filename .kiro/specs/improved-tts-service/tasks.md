@@ -29,7 +29,7 @@
   - Publish initial version
   - _Requirements: Distribution_
 
-- [-] 5. Integrate into TTS service
+- [x] 5. Integrate into TTS service
   - Replace cleanTextForTTS with fonema
   - Test with Google Cloud TTS
   - Use the new library from npm cloud in fixtergeek2025 project
