@@ -17,7 +17,7 @@ export interface TTSService {
 
 export interface TTSOptions {
   languageCode?: string;
-  voiceName?: string; // e.g., 'en-US-Wavenet-F'
+  voiceName?: string; // e.g., 'es-US-Neural2-A'
   speakingRate?: number; // 0.25 to 4.0
   pitch?: number; // -20.0 to 20.0
 }
@@ -311,28 +311,26 @@ export function cleanTextForTTS(text: string): string {
     .replace(/\s*\n\s*/g, ' ')  // Convert single newlines to spaces
     
   // Mejorar el manejo de puntuación para español
-  // 1. Asegurar espacios después de signos de puntuación
+  // 1. Manejo de espacios alrededor de signos de puntuación
+  // Primero normalizamos todos los signos de puntuación para que no tengan espacios antes
   cleaned = cleaned
-    .replace(/([.,;:!?])([^\s])/g, '$1 $2')  // Añadir espacio después de puntuación
-    .replace(/([.,;:!?])\s+/g, '$1  ')  // Doble espacio después de puntuación
+    .replace(/\s*([.,;:!?])\s*/g, '$1 ')  // Un solo espacio después de cada signo de puntuación
+    .replace(/\s+/g, ' ')  // Normalizar múltiples espacios a uno solo
     
-  // 2. Manejo especial para comas
+  // 2. Manejo especial para comas - asegurar que siempre tengan un espacio después
+  // y que no tengan espacios antes
   cleaned = cleaned
-    .replace(/,/g, ', ')  // Asegurar espacio después de comas
-    .replace(/\s+,/g, ',')  // Eliminar espacios antes de comas
     .replace(/,+/g, ',')  // Eliminar comas duplicadas
-    .replace(/,\s*,/g, ', ')  // Eliminar múltiples comas con espacios
+    .replace(/\s*,/g, ',')  // Eliminar espacios antes de comas
+    .replace(/,(?=[^\s])/g, ', ')  // Añadir espacio después de comas si no lo hay
     
-  // 3. Manejo especial para puntos
+  // 3. Manejo especial para puntos - asegurar que terminen oraciones
   cleaned = cleaned
-    .replace(/\.(\s|$)/g, '.$1')  // Asegurar espacio después de puntos
-    .replace(/\.\s*\./g, '.')  // Eliminar puntos duplicados
-    .replace(/([a-zA-Z])\.\s*([a-z])/g, '$1. $2')  // Asegurar mayúsculas después de punto
-    
-  // 4. Normalizar espacios alrededor de signos de puntuación
-  cleaned = cleaned
-    .replace(/\s+([.,;:!?])/g, '$1')  // Eliminar espacios antes de puntuación
-    .replace(/([.,;:!?])([^\s])/g, '$1 $2')  // Asegurar espacio después
+    .replace(/\.+/g, '.')  // Eliminar puntos duplicados
+    .replace(/([a-z])\.\s*([a-z])/g, (match, p1, p2) => {
+      // Asegurar mayúscula después de punto si es inicio de oración
+      return `${p1}. ${p2.toUpperCase()}`;
+    });
     
   // Handle lists
   cleaned = cleaned
@@ -369,108 +367,10 @@ export function cleanTextForTTS(text: string): string {
     .replace(/\s+/g, " ") // Collapse multiple spaces
     .replace(/^\s+|\s+$/g, ""); // Trim whitespace
 
-  // Format numbers for natural speech in Spanish
-  // Handle floating point numbers by converting them to words
-  cleaned = cleaned.replace(/(\d+)\.(\d+)/g, (match) => {
-    // For decimal numbers, read them as individual digits
-    // e.g., "3.14" becomes "tres punto uno cuatro"
-    return match
-      .split("")
-      .map((char) => {
-        if (char === ".") return "punto";
-        if (/\d/.test(char)) {
-          const num = parseInt(char, 10);
-          return [
-            "cero",
-            "uno",
-            "dos",
-            "tres",
-            "cuatro",
-            "cinco",
-            "seis",
-            "siete",
-            "ocho",
-            "nueve",
-          ][num];
-        }
-        return char;
-      })
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
-  });
-
-  // Format integers (only those not part of a decimal number)
-  cleaned = cleaned.replace(/(^|\s)(\d+)(?=\s|$)/g, (match, prefix, numStr) => {
-    const num = parseInt(numStr, 10);
-    
-    // Números del 0 al 19
-    if (num < 20) {
-      const words = [
-        "cero",
-        "uno",
-        "dos",
-        "tres",
-        "cuatro",
-        "cinco",
-        "seis",
-        "siete",
-        "ocho",
-        "nueve",
-        "diez",
-        "once",
-        "doce",
-        "trece",
-        "catorce",
-        "quince",
-        "dieciséis",
-        "diecisiete",
-        "dieciocho",
-        "diecinueve",
-      ];
-      return `${prefix}${words[num]}`;
-    }
-    // Números del 20 al 29
-    else if (num < 30) {
-      const ones = num % 10;
-      if (ones === 0) return `${prefix}veinte`;
-      return `${prefix}veinti${[
-        "", "uno", "dos", "tres", "cuatro", 
-        "cinco", "seis", "siete", "ocho", "nueve"
-      ][ones]}`;
-    }
-    // Números del 30 al 99
-    else if (num < 100) {
-      const tens = [
-        "", "", "veinte", "treinta", "cuarenta", 
-        "cincuenta", "sesenta", "setenta", "ochenta", "noventa"
-      ][Math.floor(num / 10)];
-      const ones = num % 10;
-      if (ones === 0) return `${prefix}${tens}`;
-      return `${prefix}${tens} y ${[
-        "", "uno", "dos", "tres", "cuatro", 
-        "cinco", "seis", "siete", "ocho", "nueve"
-      ][ones]}`;
-    }
-    // Números del 100 en adelante
-    else if (num < 1000) {
-      const hundreds = Math.floor(num / 100);
-      const remainder = num % 100;
-      const hundredWord = hundreds === 1 ? "ciento" : 
-                         hundreds === 5 ? "quinientos" :
-                         hundreds === 7 ? "setecientos" :
-                         hundreds === 9 ? "novecientos" :
-                         ["", "", "tres", "cuatro", "quinientos", 
-                          "seis", "setecientos", "ocho", "novecientos"][hundreds];
-      
-      if (remainder === 0) return `${prefix}${hundredWord}`;
-      return `${prefix}${hundredWord} ${cleanTextForTTS(remainder.toString())}`;
-    }
-    // Para números mayores a 999, los dejamos como están
-    return match;
-  });
-
-  // Normalize whitespace and line breaks
+  // No convertimos números, dejamos que el LLM los maneje
+  // Solo nos aseguramos de que tengan el formato adecuado
+  
+  // Normalizar espacios y saltos de línea
   cleaned = cleaned
     .replace(/\s*[\r\n]+\s*/g, "\n") // Normalize line breaks
     .replace(/\n{3,}/g, "\n\n") // Limit consecutive newlines to 2
@@ -478,108 +378,23 @@ export function cleanTextForTTS(text: string): string {
     .replace(/\s+/g, " ") // Collapse multiple spaces
     .replace(/^\s+|\s+$/g, ""); // Trim whitespace
 
-  // Ensure numbers are properly formatted for TTS
-  cleaned = cleaned.replace(/(\d+)/g, (match) => {
-    // For numbers less than 20, convert to words for natural reading
-    const num = parseInt(match, 10);
-    if (num < 20) {
-      const words = [
-        "cero",
-        "uno",
-        "dos",
-        "tres",
-        "cuatro",
-        "cinco",
-        "seis",
-        "siete",
-        "ocho",
-        "nueve",
-        "diez",
-        "once",
-        "doce",
-        "trece",
-        "catorce",
-        "quince",
-        "dieciséis",
-        "diecisiete",
-        "dieciocho",
-        "diecinueve",
-        "veinte",
-      ];
-      return words[num] || match;
-    }
-    // For numbers 21-99
-    else if (num < 100) {
-      const tens = [
-        "",
-        "",
-        "veinti",
-        "treinta",
-        "cuarenta",
-        "cincuenta",
-        "sesenta",
-        "setenta",
-        "ochenta",
-        "noventa",
-      ][Math.floor(num / 10)];
-      const ones = num % 10;
-      if (ones === 0) return tens.replace("i", "e").replace("ta ", "ta y ");
-      if (num < 30)
-        return `${tens}${
-          [
-            "",
-            "uno",
-            "dos",
-            "tres",
-            "cuatro",
-            "cinco",
-            "seis",
-            "siete",
-            "ocho",
-            "nueve",
-          ][ones]
-        }`;
-      return `${tens} y ${
-        [
-          "",
-          "un",
-          "dos",
-          "tres",
-          "cuatro",
-          "cinco",
-          "seis",
-          "siete",
-          "ocho",
-          "nueve",
-        ][ones]
-      }`;
-    }
-    // For larger numbers, keep as digits
-    return match;
-  });
-
   // Add natural paragraph breaks
   cleaned = cleaned.replace(/\n\s*\n/g, "\n\n");
 
-  // Add a single newline for list items
-  cleaned = cleaned.replace(/\n\s*[-*]\s+/g, "\n");
+  // Remove any remaining technical artifacts
+  cleaned = cleaned
+    .replace(/\[\^[^\]]+\]/g, "") // Remove footnotes [^1]
+    .replace(/\[\d+\]/g, "") // Remove numbered references [1]
+    .replace(/#+\s*([^\n]+)/g, "$1") // Remove markdown headers but keep text
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // Remove bold
+    .replace(/\*([^*]+)\*/g, "$1") // Remove italic
+    .replace(/`([^`]+)`/g, "$1") // Remove inline code
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Remove markdown links
+    .replace(/<[^>]+>/g, "") // Remove HTML tags
+    .replace(/\s+/g, " ") // Collapse multiple spaces
+    .trim();
 
-  // Remove any remaining double spaces
-  cleaned = cleaned.replace(/\s{2,}/g, " ").trim();
-
-  // Return the cleaned text without SSML tags
   return cleaned;
-}
-
-/**
- * Splits text into chunks that are at most maxBytes bytes long, trying to split at sentence boundaries.
- * If a single sentence exceeds maxBytes, it will be split at the word boundary.
- */
-function splitTextIntoChunks(text: string, maxBytes: number): string[] {
-  // First, try to split into sentences
-  const sentences = text.match(/[^.!?]+[.!?]+\s*/g) || [text];
-  const chunks: string[] = [];
-  let currentChunk = "";
 
   for (const sentence of sentences) {
     const sentenceBytes = Buffer.byteLength(sentence, "utf8");
@@ -608,47 +423,120 @@ function splitTextIntoChunks(text: string, maxBytes: number): string[] {
   if (currentChunk.trim().length > 0) {
     chunks.push(currentChunk.trim());
   }
+}
 
-  return chunks.length > 0 ? chunks : [text.substring(0, maxBytes)];
+/**
+ * Splits text into chunks that are at most maxBytes bytes long, trying to split at sentence boundaries.
+ * If a single sentence exceeds maxBytes, it will be split at the word boundary.
+ */
+function splitTextIntoChunks(text: string, maxBytes: number): string[] {
+  const chunks: string[] = [];
+  let currentChunk = "";
+
+  // Split text into sentences first (naive approach)
+  const sentences = text.split(/(?<=[.!?])\s+/);
+
+  for (const sentence of sentences) {
+    const sentenceBytes = Buffer.byteLength(sentence, 'utf8');
+    
+    // If the sentence is too large, split it into words
+    if (sentenceBytes > maxBytes) {
+      const words = sentence.split(/(\s+)/);
+      
+      for (const word of words) {
+        const wordBytes = Buffer.byteLength(word, 'utf8');
+        const chunkWithWordBytes = Buffer.byteLength(currentChunk + word, 'utf8');
+        
+        if (chunkWithWordBytes <= maxBytes) {
+          currentChunk += word;
+        } else {
+          if (currentChunk) {
+            chunks.push(currentChunk);
+            currentChunk = "";
+          }
+          
+          // If a single word is larger than maxBytes, we have to split it
+          if (wordBytes > maxBytes) {
+            const splitWord = splitLongText(word, maxBytes);
+            // Add all but the last part to chunks
+            chunks.push(...splitWord.slice(0, -1));
+            // Set the last part as current chunk
+            currentChunk = splitWord[splitWord.length - 1] || "";
+          } else {
+            currentChunk = word;
+          }
+        }
+      }
+    } else {
+      const chunkWithSentenceBytes = Buffer.byteLength(currentChunk + ' ' + sentence, 'utf8');
+      
+      if (currentChunk && chunkWithSentenceBytes > maxBytes) {
+        chunks.push(currentChunk);
+        currentChunk = sentence;
+      } else {
+        currentChunk = currentChunk ? currentChunk + ' ' + sentence : sentence;
+      }
+    }
+  }
+  
+  // Add the last chunk if it's not empty
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+  
+  return chunks;
 }
 
 /**
  * Splits a long text into chunks that are at most maxBytes bytes long,
- * trying to split at word boundaries.
+ * trying to split at word boundaries when possible.
+ * This is a helper function used when we have text that needs to be split
+ * to fit within size constraints.
  */
 function splitLongText(text: string, maxBytes: number): string[] {
   const chunks: string[] = [];
   let remainingText = text;
-
-  while (Buffer.byteLength(remainingText, "utf8") > maxBytes) {
-    // Start with the maximum possible chunk
-    let chunk = remainingText.substring(0, maxBytes);
-
-    // Find the last space in the chunk to split at word boundary
-    let lastSpace = chunk.lastIndexOf(" ");
-    if (lastSpace > 0) {
-      chunk = chunk.substring(0, lastSpace).trim();
-    }
-
-    // If we couldn't find a space, just split at maxBytes
-    if (chunk.length === 0) {
-      chunk = remainingText.substring(0, maxBytes).trim();
-    }
-
-    chunks.push(chunk);
-    remainingText = remainingText.substring(chunk.length).trimStart();
-
-    // Safety check to prevent infinite loops
-    if (chunk.length === 0) {
+  
+  while (remainingText.length > 0) {
+    // If the remaining text is small enough, add it and finish
+    if (Buffer.byteLength(remainingText, 'utf8') <= maxBytes) {
+      chunks.push(remainingText);
       break;
     }
+    
+    // Start by trying to split at a word boundary
+    let splitPos = Math.min(maxBytes, remainingText.length);
+    let chunk = remainingText.slice(0, splitPos);
+    
+    // Adjust for multi-byte characters
+    while (Buffer.byteLength(chunk, 'utf8') > maxBytes) {
+      splitPos--;
+      chunk = remainingText.slice(0, splitPos);
+    }
+    
+    // Try to find the last space to avoid splitting words
+    const lastSpace = chunk.lastIndexOf(' ');
+    if (lastSpace > 0 && (splitPos - lastSpace) < 20) { // Only move back a little to avoid very long words
+      splitPos = lastSpace + 1; // Include the space
+      chunk = remainingText.slice(0, splitPos);
+    }
+    
+    // If we couldn't find a good split point, just split at the maxBytes
+    if (chunk.length === 0) {
+      splitPos = Math.min(maxBytes, remainingText.length);
+      chunk = remainingText.slice(0, splitPos);
+      
+      // Adjust for multi-byte characters
+      while (Buffer.byteLength(chunk, 'utf8') > maxBytes) {
+        splitPos--;
+        chunk = remainingText.slice(0, splitPos);
+      }
+    }
+    
+    chunks.push(chunk.trim());
+    remainingText = remainingText.slice(splitPos).trimStart();
   }
-
-  // Add the remaining text if there's any left
-  if (remainingText.trim().length > 0) {
-    chunks.push(remainingText.trim());
-  }
-
+  
   return chunks;
 }
 
