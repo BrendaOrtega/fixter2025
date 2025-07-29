@@ -94,6 +94,10 @@ export const TTSServiceLive: TTSService = {
             audioEncoding: "MP3" as const,
             speakingRate: options.speakingRate || 1.0,
             pitch: options.pitch || 0,
+            // Ajustes para mejorar la naturalidad del habla en español
+            effectsProfileId: ["small-bluetooth-speaker-class-device"],
+            // Asegurar que la puntuación se respete
+            enableTimepointing: ["SSML_MARK"],
           },
         };
 
@@ -230,7 +234,7 @@ const EMOJI_MAP: Record<string, string> = {
 };
 
 // Clean text for TTS (remove markdown, HTML, URLs, etc.)
-function cleanTextForTTS(text: string): string {
+export function cleanTextForTTS(text: string): string {
   if (!text) return "";
 
   let cleaned = text;
@@ -263,24 +267,23 @@ function cleanTextForTTS(text: string): string {
   // Remove all emojis
   cleaned = cleaned.replace(/[\p{Emoji}]/gu, " ");
 
-  // Remove code blocks and technical content first
+  // Handle code blocks and inline code
   cleaned = cleaned
-    // Remove code blocks (```code```)
-    .replace(/```[\s\S]*?```/gs, "")
-    // Remove code blocks with language specifier (```javascript, ```python, etc.)
-    .replace(/```[a-z]*\n[\s\S]*?```/g, "")
+    // Completely remove code blocks with triple backticks
+    .replace(/```[\s\S]*?```/gs, '')
     // Remove indented code blocks (4 spaces or tab at start of line)
-    .replace(/^( {4,}|\t).*$/gm, "")
-    // Remove inline code (`code`)
-    .replace(/`[^`]+`/g, '')
-    // Remove code blocks in HTML <pre> and <code> tags
-    .replace(/<(pre|code|kbd|samp|var)>[\s\S]*?<\/\1>/gi, "")
+    .replace(/^( {4,}|\t).*$/gm, '')
+    // Remove backticks but keep the content inside for inline code
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove code blocks in HTML <pre> and <code> tags but keep content
+    .replace(/<(pre|code|kbd|samp|var)>([\s\S]*?)<\/\1>/gi, '$2')
     // Remove XML/HTML comments
     .replace(/<!--[\s\S]*?-->/g, "");
 
   // Clean up markdown, HTML, and other formatting
   cleaned = cleaned
-    .replace(/^#{1,6}\s+/gm, "") // Headers
+    // Remove # from headers but keep the text
+    .replace(/^#{1,6}\s+/gm, (match) => '\n\n') // Add double newline before headers
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Links [text](url)
     .replace(
       /<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi,
@@ -296,8 +299,22 @@ function cleanTextForTTS(text: string): string {
     .replace(/[\u2018\u2019]/g, "'") // Replace smart single quotes
     .replace(/[\u201C\u201D]/g, '"') // Replace smart double quotes
     .replace(/[\u2013\u2014]/g, "-") // Replace en/em dashes with hyphen
-    .replace(/\s*[\r\n]+\s*/g, "\n") // Normalize line breaks
-    .replace(/\n{3,}/g, "\n\n") // Limit consecutive newlines to 2
+    
+  // Normalize line breaks and paragraphs
+  cleaned = cleaned
+    .replace(/\s*\n\s*\n\s*/g, '\n\n')  // Preserve double newlines as paragraph breaks
+    .replace(/\s*\n\s*/g, ' ')  // Convert single newlines to spaces
+    
+  // Ensure proper spacing after punctuation
+  cleaned = cleaned
+    .replace(/([.!?])([^\s])/g, '$1 $2')  // Add space after sentence-ending punctuation
+    .replace(/([.!?])\s+/g, '$1  ')  // Double space after sentences for better pause
+    .replace(/([^0-9]),\s*/g, '$1, ')  // Ensure space after commas
+    
+  // Handle lists
+  cleaned = cleaned
+    .replace(/\s*[\*\-]\s+/g, '\n• ')  // Convert bullet points
+    .replace(/\s*\d+\.\s+/g, '\n$&')  // Numbered lists on new lines
     .replace(/\.(\s|$)/g, ".$1") // Ensure space after periods
     .replace(/(?:^|\s)@[\w-]+/g, "") // Remove mentions (@username)
     .replace(/(?:^|\s)#[\w-]+/g, "") // Remove hashtags
