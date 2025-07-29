@@ -30,9 +30,9 @@
   - Add rate limiting and error handling
   - _Requirements: 1.2, 1.3, 2.1, 2.2_
 
-- [ ] 5. Add voice selection for audio generation
+- [x] 5. Add voice selection for audio generation
 
-  - [ ] 5.1 Create voice configuration constants
+  - [x] 5.1 Create voice configuration constants
 
     - Define available OpenRouter TTS voices with metadata (name, description, language, gender)
     - Create voice preview samples or descriptions for each option
@@ -40,7 +40,7 @@
     - Export voice constants with proper TypeScript types
     - _Requirements: 6.1, 6.2_
 
-  - [ ] 5.2 Update AudioPlayer component with voice selector
+  - [x] 5.2 Update AudioPlayer component with voice selector
 
     - Add voice selection dropdown/modal in the initial "Generate Audio" state
     - Create VoiceSelector component with voice previews and descriptions
@@ -49,7 +49,7 @@
     - Show selected voice in the audio player header when audio is ready
     - _Requirements: 6.1, 6.2, 6.3_
 
-  - [ ] 5.3 Enhance audio generation hook for voice selection
+  - [x] 5.3 Enhance audio generation hook for voice selection
 
     - Update useAudioGeneration hook to accept voice parameter
     - Modify generateAudio function to include voice in API request
@@ -57,7 +57,7 @@
     - Update hook state to track selected voice
     - _Requirements: 2.1, 2.2_
 
-  - [ ] 5.4 Update API routes to handle voice parameter
+  - [x] 5.4 Update API routes to handle voice parameter
 
     - Modify /api/audio POST route to accept voice parameter from formData
     - Update audio service to pass voice option to TTS service
@@ -65,7 +65,7 @@
     - Include voice metadata in analytics tracking
     - _Requirements: 2.1, 2.2, 4.5_
 
-  - [ ] 5.5 Update database schema for voice tracking
+  - [x] 5.5 Update database schema for voice tracking
 
     - Add voice field to AudioCache model to store selected voice
     - Update Prisma schema and regenerate client
@@ -73,7 +73,7 @@
     - Create database migration if needed
     - _Requirements: 4.1, 4.2_
 
-  - [ ] 5.6 Implement voice-based caching strategy
+  - [x] 5.6 Implement voice-based caching strategy
 
     - Update cache key generation to include voice parameter
     - Modify S3 key generation to include voice in path structure
@@ -81,7 +81,7 @@
     - Ensure different voices generate separate cached files
     - _Requirements: 2.3, 2.4_
 
-  - [ ] 5.7 Add voice selection UI components
+  - [x] 5.7 Add voice selection UI components
 
     - Create VoiceOption component for individual voice display
     - Implement voice preview functionality (if available)
@@ -90,7 +90,7 @@
     - Add accessibility features (ARIA labels, keyboard navigation)
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-  - [ ] 5.8 Update error handling for voice-related issues
+  - [x] 5.8 Update error handling for voice-related issues
     - Add voice validation error messages
     - Handle unsupported voice errors from OpenRouter
     - Update error utilities to include voice-specific error handling
@@ -104,7 +104,7 @@
   - Handle success/error flows and auto-play
   - _Requirements: 1.1, 1.4, 1.5_
 
-- [ ] 7. Implement caching and cleanup
+- [x] 7. Implement caching and cleanup
 
   - Create S3 cache checking mechanism
   - Add cache invalidation on post updates
@@ -115,7 +115,6 @@
 
   - Implement blog analytics service using Effect
   - Track page views, reading time, scroll depth
-  - Track audio generation and playback events
   - Add click tracking with normalized coordinates
   - _Requirements: 7.1, 7.2, 7.3, 3.1, 3.2_
 

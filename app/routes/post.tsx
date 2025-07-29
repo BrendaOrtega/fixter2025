@@ -16,6 +16,7 @@ import { useToast } from "~/hooks/useToaster";
 import { twMerge } from "tailwind-merge";
 import getMetaTags from "~/utils/getMetaTags";
 import { AudioPlayer } from "~/components/AudioPlayer";
+import useAnalytics from "~/hooks/use-analytics";
 
 export const meta = ({ data, location }: Route.MetaArgs) => {
   const { post } = data;
@@ -83,12 +84,36 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 export default function Page({
   loaderData: { post, posts, audioData },
 }: Route.ComponentProps) {
+  // Inicializar analytics para este post
+  useAnalytics(post.id);
+
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "smooth",
-    });
+    // Scroll suave al principio del post
+    const scrollToTop = () => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+    };
+
+    // Trackear cuando el componente se monta
+    if (typeof window !== 'undefined') {
+      window.trackEvent?.({
+        type: 'page_view',
+        postId: post.id,
+        metadata: {
+          title: post.title,
+          referrer: document.referrer,
+        },
+      });
+    }
+
+    scrollToTop();
+    
+    return () => {
+      // Limpieza si es necesario
+    };
   }, [post]);
 
   return (

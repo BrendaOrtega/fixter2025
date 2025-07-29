@@ -46,9 +46,9 @@ export function AudioPlayer({
   const [error, setError] = useState<string | null>(null);
   const [voices] = useState<Array<{ name: string; displayName: string }>>([
     // Voces REALES de Google Cloud TTS (NO hay WaveNet para español)
+    { name: "es-US-Neural2-B", displayName: "Diego (México)" },
+    { name: "es-US-Neural2-A", displayName: "Carmen (México)" },
     { name: "es-ES-Neural2-A", displayName: "Lucía (España)" },
-    { name: "es-US-Neural2-A", displayName: "Carmen (Latina)" },
-    { name: "es-US-Neural2-B", displayName: "Diego (Latino)" },
   ]);
   const [selectedVoice, setSelectedVoice] = useState("es-US-Neural2-A");
 
