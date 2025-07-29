@@ -1,0 +1,41 @@
+{
+  "name": "fonema",
+  "version": "0.0.1",
+  "description": "Ultra-minimal Spanish text cleaning library for TTS - 100% Effect-TS & ESM",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "effect": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "spanish",
+    "text-cleaning",
+    "tts",
+    "text-to-speech",
+    "effect-ts",
+    "normalization"
+  ],
+  "author": "@blissito",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
