@@ -15,7 +15,7 @@ import { PiLinkSimpleBold } from "react-icons/pi";
 import { useToast } from "~/hooks/useToaster";
 import { twMerge } from "tailwind-merge";
 import getMetaTags from "~/utils/getMetaTags";
-import AudioPlayer from "~/components/AudioPlayer";
+import { AudioPlayer } from "~/components/AudioPlayer";
 
 export const meta = ({ data, location }: Route.MetaArgs) => {
   const { post } = data;
@@ -31,7 +31,8 @@ export const meta = ({ data, location }: Route.MetaArgs) => {
   });
 };
 
-export const loader = async ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ params, request }: Route.LoaderArgs) => {
+  // Get the post data
   const post = await db.post.findUnique({
     where: {
       slug: params.postSlug,
@@ -40,20 +41,47 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
   });
   if (!post) throw new Response("Post not found", { status: 404 });
 
+  // Get related posts
   const postCount = await db.post.count();
   const posts = await db.post.findMany({
     where: { published: true },
     take: 2,
     skip: Math.floor(Math.random() * (postCount - 1)),
     select: { title: true, metaImage: true, slug: true },
-    // orderBy: { createdAt: "desc" },
   });
 
-  return { post, posts };
+  // Check for existing audio
+  let audioData = null;
+  try {
+    const response = await fetch(
+      `${new URL(request.url).origin}/api/audio?postId=${post.id}&intent=check&voice=en-US-Neural2-D`
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result.data?.audioUrl) {
+        audioData = {
+          audioUrl: result.data.audioUrl,
+          duration: result.data.duration || 0,
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching audio data:", error);
+  }
+
+  return {
+    post: {
+      ...post,
+      body: post.body || "", // Ensure body is always a string
+    },
+    posts,
+    audioData,
+  };
 };
 
 export default function Page({
-  loaderData: { post, posts },
+  loaderData: { post, posts, audioData },
 }: Route.ComponentProps) {
   useEffect(() => {
     window.scrollTo({
@@ -105,6 +133,7 @@ export default function Page({
               postTitle={post.title}
               postBody={post.body}
               className="my-6"
+              audioData={audioData}
             />
           )}
 

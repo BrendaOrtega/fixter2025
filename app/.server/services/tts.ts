@@ -75,11 +75,15 @@ export const TTSServiceLive: TTSService = {
       const audioBuffers: ArrayBuffer[] = [];
 
       for (const chunk of chunks) {
+        // Extract language code from voice name (e.g., "es-ES-Neural2-A" -> "es-ES")
+        const voiceName = options.voiceName || "es-US-Neural2-A";
+        const extractedLanguageCode = voiceName.split('-').slice(0, 2).join('-');
+        
         const request = {
           input: { text: chunk },
           voice: {
-            languageCode: options.languageCode || "es-US",
-            name: options.voiceName || "es-US-Wavenet-A",
+            languageCode: options.languageCode || extractedLanguageCode,
+            name: voiceName,
           },
           audioConfig: {
             audioEncoding: "MP3" as const,
@@ -171,6 +175,39 @@ export const TTSServiceLive: TTSService = {
     }),
 };
 
+// Common emoji to text mapping
+const EMOJI_MAP: Record<string, string> = {
+  '😊': 'sonriendo',
+  '😂': 'riendo',
+  '😍': 'enamorado',
+  '🥰': 'enamorado',
+  '😎': 'con gafas de sol',
+  '👍': 'pulgar arriba',
+  '👎': 'pulgar abajo',
+  '❤️': 'corazón',
+  '🔥': 'fuego',
+  '🎉': 'festejando',
+  '✨': 'brillando',
+  '🤔': 'pensando',
+  '🤯': 'sorprendido',
+  '👏': 'aplaudiendo',
+  '🙏': 'rezando',
+  '💪': 'músculo',
+  '🎯': 'diana',
+  '🚀': 'cohete',
+  '📚': 'libros',
+  '💡': 'bombilla',
+  '👀': 'ojos',
+  '🙌': 'celebrando',
+  '🤝': 'apretón de manos',
+  '💯': 'cien puntos',
+  '✅': 'marca de verificación',
+  '❌': 'equis',
+  '⚠️': 'advertencia',
+  '❓': 'signo de interrogación',
+  '❗': 'signo de exclamación',
+};
+
 // Clean text for TTS (remove markdown, HTML, URLs, etc.)
 function cleanTextForTTS(text: string): string {
   if (!text) return '';
@@ -186,11 +223,13 @@ function cleanTextForTTS(text: string): string {
   ];
 
   let cleaned = text;
-  for (const pattern of urlPatterns) {
-    cleaned = cleaned.replace(pattern, '');
-  }
+  
+  // Replace emojis with text
+  cleaned = cleaned.replace(/[\p{Emoji}]/gu, (emoji) => {
+    return EMOJI_MAP[emoji] ? ` [${EMOJI_MAP[emoji]}] ` : ' ';
+  });
 
-  // Then clean up markdown and HTML
+  // Clean up markdown, HTML, and other formatting
   cleaned = cleaned
     .replace(/^#{1,6}\s+/gm, "") // Headers
     .replace(/\([^[]+\]\([^)]+\)/g, "$1") // Links [text](url)
@@ -199,37 +238,113 @@ function cleanTextForTTS(text: string): string {
     .replace(/\*([^*]+)\*/g, "$1") // Italic *text*
     .replace(/__([^_]+)__/g, "$1") // Bold __text__
     .replace(/_([^_]+)_/g, "$1") // Italic _text_
-    .replace(/```[\s\S]*?```/g, "") // Code blocks
+    .replace(/```[\s\S]*?```/gs, "") // Code blocks (with 's' flag for . to match newlines)
     .replace(/`([^`]+)`/g, "$1") // Inline code
     .replace(/<[^>]*>/g, "") // HTML tags
-    .replace(/\n\s*\n/g, "\n\n") // Multiple newlines
-    .replace(/\.(\s|$)/g, '$1') // Remove trailing dots
-    .replace(/\s+/g, " ") // Multiple spaces
-    .trim();
+    .replace(/\[([^\]]+)\]/g, "$1") // Remove any remaining square brackets
+    .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width spaces
+    .replace(/[\u2018\u2019]/g, "'") // Replace smart single quotes
+    .replace(/[\u201C\u201D]/g, '"') // Replace smart double quotes
+    .replace(/[\u2013\u2014]/g, '-') // Replace en/em dashes with hyphen
+    .replace(/\s*[\r\n]+\s*/g, '\n') // Normalize line breaks
+    .replace(/\n{3,}/g, '\n\n') // Limit consecutive newlines to 2
+    .replace(/\.(\s|$)/g, '.$1') // Ensure space after periods
+    .replace(/([.!?])\s*/g, '$1 ') // Ensure space after sentence endings
+    .replace(/\s+/g, ' ') // Collapse multiple spaces
+    .replace(/^\s+|\s+$/g, ''); // Trim whitespace
+
+  // Add a natural pause between title and body if the text contains a title
+  // This looks for a common pattern where title ends with punctuation and is followed by a newline
+  cleaned = cleaned.replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2');
+  
+  // Add a longer pause after headings (lines ending with : or ?)
+  cleaned = cleaned.replace(/([:?])\s*\n/g, '.\n\n');
+  
+  // Remove any remaining double spaces
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
 
   return cleaned;
 }
 
-// Split text into chunks for TTS processing
-function splitTextIntoChunks(text: string, maxLength: number): string[] {
-  if (text.length <= maxLength) {
-    return [text];
-  }
+/**
+ * Splits text into chunks that are at most maxBytes bytes long, trying to split at sentence boundaries.
+ * If a single sentence exceeds maxBytes, it will be split at the word boundary.
+ */
+function splitTextIntoChunks(text: string, maxBytes: number): string[] {
+  // First, try to split into sentences
+  const sentences = text.match(/[^.!?]+[.!?]+\s*/g) || [text];
   const chunks: string[] = [];
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-  let currentChunk = "";
-
+  let currentChunk = '';
+  
   for (const sentence of sentences) {
-    if ((currentChunk + sentence).length > maxLength) {
-      chunks.push(currentChunk);
-      currentChunk = sentence;
-    } else {
-      currentChunk += sentence;
+    const sentenceBytes = Buffer.byteLength(sentence, 'utf8');
+    const currentChunkBytes = Buffer.byteLength(currentChunk, 'utf8');
+    
+    // If adding this sentence would exceed maxBytes, finalize the current chunk
+    if (currentChunkBytes + sentenceBytes > maxBytes) {
+      // If the current chunk is not empty, add it to chunks
+      if (currentChunkBytes > 0) {
+        chunks.push(currentChunk);
+        currentChunk = '';
+      }
+      
+      // If this single sentence is larger than maxBytes, we need to split it
+      if (sentenceBytes > maxBytes) {
+        chunks.push(...splitLongText(sentence, maxBytes));
+        continue;
+      }
+    }
+    
+    // Add the sentence to the current chunk
+    currentChunk += sentence;
+  }
+  
+  // Add the last chunk if it's not empty
+  if (currentChunk.trim().length > 0) {
+    chunks.push(currentChunk.trim());
+  }
+  
+  return chunks.length > 0 ? chunks : [text.substring(0, maxBytes)];
+}
+
+/**
+ * Splits a long text into chunks that are at most maxBytes bytes long,
+ * trying to split at word boundaries.
+ */
+function splitLongText(text: string, maxBytes: number): string[] {
+  const chunks: string[] = [];
+  let remainingText = text;
+  
+  while (Buffer.byteLength(remainingText, 'utf8') > maxBytes) {
+    // Start with the maximum possible chunk
+    let chunk = remainingText.substring(0, maxBytes);
+    
+    // Find the last space in the chunk to split at word boundary
+    let lastSpace = chunk.lastIndexOf(' ');
+    if (lastSpace > 0) {
+      chunk = chunk.substring(0, lastSpace).trim();
+    }
+    
+    // If we couldn't find a space, just split at maxBytes
+    if (chunk.length === 0) {
+      chunk = remainingText.substring(0, maxBytes).trim();
+    }
+    
+    chunks.push(chunk);
+    remainingText = remainingText.substring(chunk.length).trimStart();
+    
+    // Safety check to prevent infinite loops
+    if (chunk.length === 0) {
+      break;
     }
   }
-  if (currentChunk) chunks.push(currentChunk);
-
-  return chunks.length > 0 ? chunks : [text.substring(0, maxLength)];
+  
+  // Add the remaining text if there's any left
+  if (remainingText.trim().length > 0) {
+    chunks.push(remainingText.trim());
+  }
+  
+  return chunks;
 }
 
 // Export service instance

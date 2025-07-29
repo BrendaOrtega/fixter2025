@@ -17,7 +17,7 @@ export interface AudioTrackingResponse {
   error?: string;
 }
 
-export type AudioEvent = "play" | "pause" | "complete";
+export type AudioEvent = "play" | "pause" | "complete" | "progress";
 
 export interface AudioMetadata {
   currentTime?: number;

@@ -28,6 +28,9 @@ export interface AudioService {
     postId: string,
     options?: { voice?: string }
   ) => Effect.Effect<AudioResult, AudioError>;
+  getCachedAudio: (
+    postId: string
+  ) => Effect.Effect<AudioResult | null, AudioError>;
 }
 
 /**
@@ -44,6 +47,33 @@ function estimateAudioDuration(text: string): number {
 
 // Live Implementation
 const AudioServiceLive: AudioService = {
+  getCachedAudio: (postId: string) =>
+    Effect.gen(function* (_) {
+      // Only check for cached audio in the database, never generate
+      const cachedAudio = yield* _(
+        Effect.tryPromise({
+          try: () => db.audioCache.findUnique({ where: { postId } }),
+          catch: (error) =>
+            new PostError(
+              `DB lookup failed: ${(error as Error).message}`,
+              "DATABASE_ERROR"
+            ),
+        })
+      );
+
+      if (!cachedAudio || !cachedAudio.s3Key) {
+        return null; // No cached audio found
+      }
+
+      // Get presigned URL for existing cached audio
+      const presignedUrl = yield* _(s3Service.getPresignedUrl(cachedAudio.s3Key));
+      return {
+        ...cachedAudio,
+        audioUrl: presignedUrl,
+        cached: true,
+      };
+    }),
+
   getOrCreateAudio: (postId: string, options: { voice?: string } = {}) =>
     Effect.gen(function* (_) {
       // 1. Check for cached audio in the database first
