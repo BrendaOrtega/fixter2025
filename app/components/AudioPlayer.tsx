@@ -169,7 +169,7 @@ export function AudioPlayer({
       setError(err instanceof Error ? err.message : "Failed to generate audio");
     } finally {
       setIsLoading(false);
-      submit();
+      submit({});
     }
   };
 
@@ -355,3 +355,5 @@ export function AudioPlayer({
     </div>
   );
 }
+
+export default AudioPlayer;
