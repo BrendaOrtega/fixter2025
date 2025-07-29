@@ -84,6 +84,7 @@ export const TTSServiceLive: TTSService = {
           .slice(0, 2)
           .join("-");
 
+        // Configuración optimizada para español
         const request = {
           input: { text: chunk },
           voice: {
@@ -92,12 +93,16 @@ export const TTSServiceLive: TTSService = {
           },
           audioConfig: {
             audioEncoding: "MP3" as const,
-            speakingRate: options.speakingRate || 1.0,
+            speakingRate: options.speakingRate || 1.0,  // Velocidad ligeramente reducida para mejor claridad
             pitch: options.pitch || 0,
-            // Ajustes para mejorar la naturalidad del habla en español
-            effectsProfileId: ["small-bluetooth-speaker-class-device"],
-            // Asegurar que la puntuación se respete
-            enableTimepointing: ["SSML_MARK"],
+            volumeGainDb: 0,  // Volumen normal
+            sampleRateHertz: 24000,  // Frecuencia de muestreo óptima para voz
+            
+            // Perfil de efectos optimizado para voz clara en español
+            effectsProfileId: ["telephony-class-application"],
+            
+            // Configuración específica para puntuación
+            enableTimepointing: ["SSML_MARK"]
           },
         };
 
@@ -305,11 +310,29 @@ export function cleanTextForTTS(text: string): string {
     .replace(/\s*\n\s*\n\s*/g, '\n\n')  // Preserve double newlines as paragraph breaks
     .replace(/\s*\n\s*/g, ' ')  // Convert single newlines to spaces
     
-  // Ensure proper spacing after punctuation
+  // Mejorar el manejo de puntuación para español
+  // 1. Asegurar espacios después de signos de puntuación
   cleaned = cleaned
-    .replace(/([.!?])([^\s])/g, '$1 $2')  // Add space after sentence-ending punctuation
-    .replace(/([.!?])\s+/g, '$1  ')  // Double space after sentences for better pause
-    .replace(/([^0-9]),\s*/g, '$1, ')  // Ensure space after commas
+    .replace(/([.,;:!?])([^\s])/g, '$1 $2')  // Añadir espacio después de puntuación
+    .replace(/([.,;:!?])\s+/g, '$1  ')  // Doble espacio después de puntuación
+    
+  // 2. Manejo especial para comas
+  cleaned = cleaned
+    .replace(/,/g, ', ')  // Asegurar espacio después de comas
+    .replace(/\s+,/g, ',')  // Eliminar espacios antes de comas
+    .replace(/,+/g, ',')  // Eliminar comas duplicadas
+    .replace(/,\s*,/g, ', ')  // Eliminar múltiples comas con espacios
+    
+  // 3. Manejo especial para puntos
+  cleaned = cleaned
+    .replace(/\.(\s|$)/g, '.$1')  // Asegurar espacio después de puntos
+    .replace(/\.\s*\./g, '.')  // Eliminar puntos duplicados
+    .replace(/([a-zA-Z])\.\s*([a-z])/g, '$1. $2')  // Asegurar mayúsculas después de punto
+    
+  // 4. Normalizar espacios alrededor de signos de puntuación
+  cleaned = cleaned
+    .replace(/\s+([.,;:!?])/g, '$1')  // Eliminar espacios antes de puntuación
+    .replace(/([.,;:!?])([^\s])/g, '$1 $2')  // Asegurar espacio después
     
   // Handle lists
   cleaned = cleaned

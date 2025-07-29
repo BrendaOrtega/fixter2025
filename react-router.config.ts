@@ -4,16 +4,35 @@ import { db } from "./app/.server/db";
 export default {
   ssr: true,
   async prerender() {
-    // const posts = await db.post.findMany({
-    //   where: { published: true },
-    //   select: { slug: true },
-    // });
-    return [
+    // Get posts that have an associated audio cache
+    const postsWithAudio = await db.post.findMany({
+      where: { 
+        published: true,
+        audioCache: { isNot: null } // Only posts with audio
+      },
+      select: { 
+        slug: true,
+        audioCache: {
+          select: {
+            audioUrl: true
+          }
+        }
+      },
+    });
+
+    // Static routes that should always be pre-rendered
+    const staticRoutes = [
       "/",
       "/cursos",
       "/subscribe",
-      "/cursos/Introduccion-al-desarrollo-web-full-stack-con-React-Router/detalle",
+      "/cursos/Introduccion-al-desarrollo-web-full-stack-con-React-Router/detalle"
     ];
-    // .concat(posts.map((post) => `/blog/${post.slug}`));
+
+    // Add blog post routes for posts with audio
+    const postRoutes = postsWithAudio
+      .filter(post => post.audioCache?.audioUrl) // Ensure audio URL exists
+      .map(post => `/blog/${post.slug}`);
+
+    return [...staticRoutes, ...postRoutes];
   },
 } satisfies Config;
