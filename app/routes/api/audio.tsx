@@ -226,27 +226,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         )
       );
 
-      // Track analytics
-      try {
-        await db.blogAnalytics.create({
-          data: {
-            postId,
-            event: "audio_generated",
-            userId: user?.id || null,
-            sessionId: clientId,
-            metadata: {
-              duration: audioResult.duration,
-              fileSize: audioResult.fileSize,
-              cached: audioResult.cached,
-              s3Key: audioResult.s3Key,
-              clientId,
-            },
-          },
-        });
-      } catch (analyticsError) {
-        console.error("Analytics tracking error:", analyticsError);
-        // Don't fail the request if analytics fails
-      }
+      // Intentar hacer seguimiento de analytics en segundo plano sin bloquear la respuesta
+      // ni afectar la generación de audio en caso de error
+      const trackAnalytics = async () => {
+        try {
+          const isProduction = process.env.NODE_ENV === 'production';
+          if (!isProduction) {
+            await db.blogAnalytics.create({
+              data: {
+                postId,
+                event: "audio_generated",
+                userId: user?.id || null,
+                sessionId: clientId,
+                metadata: {
+                  duration: audioResult.duration,
+                  fileSize: audioResult.fileSize,
+                  cached: audioResult.cached,
+                  s3Key: audioResult.s3Key,
+                  clientId,
+                },
+              },
+            });
+          }
+        } catch (analyticsError) {
+          // Silenciar el error de analytics para no afectar la experiencia del usuario
+          console.error("[Non-critical] Analytics tracking failed:", analyticsError);
+        }
+      };
+      
+      // Iniciar el seguimiento de analytics sin esperar a que termine
+      // Usamos void para ignorar explícitamente la promesa
+      void trackAnalytics();
 
       return new Response(
         JSON.stringify({
