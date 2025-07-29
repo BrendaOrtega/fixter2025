@@ -20,6 +20,7 @@ Main function that applies all Spanish text cleaning transformations in a single
 
 - `convertSpanishNumber(num: number): string` - Convert numbers to Spanish words
 - `expandSpanishAbbreviation(abbrev: string): string` - Expand Spanish abbreviations
+- `convertEmojiToSpanish(emoji: string): string` - Convert emoji to Spanish description
 
 ## Features
 
@@ -28,6 +29,7 @@ Main function that applies all Spanish text cleaning transformations in a single
 - **Dates**: `15/03/2024` → `"quince de marzo de dos mil veinticuatro"`
 - **Abbreviations**: `Dr.` → `"Doctor"`, `etc.` → `"etcétera"`
 - **Percentages**: `25%` → `"veinticinco por ciento"`
+- **Emojis**: `😀` → `"emoji de cara sonriente"`, `🚀` → `"emoji de cohete"`
 - **Markdown**: `**bold**` → `"bold"`, `*italic*` → `"italic"`, removes headers, lists, links
 - **Code blocks**: Removes ```blocks, preserves inline`code`
 - **URLs/emails**: Complete removal
@@ -80,33 +82,43 @@ Su último estudio muestra una mejora del setenta y cinco por ciento en la natur
    - `1.2.3` → `uno punto dos punto tres`
    - `5` → `cinco`
 5. **Porcentajes**: `75%` → `setenta y cinco por ciento`
-6. **Eliminó**:
+6. **Emojis**: `🚀` → `emoji de cohete`, `😀` → `emoji de cara sonriente`
+7. **Eliminó**:
    - Email: `dr.garcia@clinica.com`
    - URL: `https://drgarcia.es`
    - Bloque de código completo
-7. **Números de teléfono**: `555-123-4567` → `cinco cinco cinco, uno veintitrés, cuarenta y cinco, sesenta y siete`
-8. **Formato de piso**: `2ºB` → `segundo B`
-9. **Versiones**: `v1.2.3` → `v uno punto dos punto tres`
-10. **Abreviaturas técnicas**: `IA` → `I A`, `PLN` → `P L N`, `TTS` → `T T S`
+8. **Números de teléfono**: `555-123-4567` → `cinco cinco cinco, uno veintitrés, cuarenta y cinco, sesenta y siete`
+9. **Formato de piso**: `2ºB` → `segundo B`
+10. **Versiones**: `v1.2.3` → `v uno punto dos punto tres`
+11. **Abreviaturas técnicas**: `IA` → `I A`, `PLN` → `P L N`, `TTS` → `T T S`
 
 ## Examples
 
 ### Standalone Usage
 
 ```typescript
-import { cleanTextForTTS, convertSpanishNumber } from "fonema";
+import {
+  cleanTextForTTS,
+  convertSpanishNumber,
+  convertEmojiToSpanish,
+} from "fonema";
 import { Effect } from "effect";
 
 // Number conversion
 convertSpanishNumber(1234); // → "mil doscientos treinta y cuatro"
 
+// Emoji conversion
+convertEmojiToSpanish("🚀"); // → "emoji de cohete"
+convertEmojiToSpanish("😀"); // → "emoji de cara sonriente"
+convertEmojiToSpanish("❤️"); // → "emoji de corazón rojo"
+
 // Full text cleaning
 const program = Effect.gen(function* () {
   const result = yield* cleanTextForTTS(
-    "El 15/03/2024 el Dr. Smith presentó el 50% del proyecto."
+    "El 15/03/2024 el Dr. Smith presentó el 50% del proyecto. ¡Fue increíble! 🚀😀"
   );
   console.log(result);
-  // → "El quince de marzo de dos mil veinticuatro el Doctor Smith presentó el cincuenta por ciento del proyecto."
+  // → "El quince de marzo de dos mil veinticuatro el Doctor Smith presentó el cincuenta por ciento del proyecto. ¡Fue increíble! emoji de cohete emoji de cara sonriente"
 });
 
 Effect.runSync(program);
@@ -305,6 +317,50 @@ Effect.runSync(programa);
 - ✅ **Código inline**: `` `código` `` → `código`
 - ✅ **Código en bloque**: ` ```código``` ` → (se elimina)
 - ✅ **HTML tags**: `<tag>contenido</tag>` → `contenido`
+
+## Manejo de Emojis
+
+fonema convierte automáticamente emojis a descripciones en español natural para TTS:
+
+```typescript
+import { cleanTextForTTS, convertEmojiToSpanish } from "fonema";
+import { Effect } from "effect";
+
+// Conversión individual de emojis
+convertEmojiToSpanish("🚀"); // → "emoji de cohete"
+convertEmojiToSpanish("😀"); // → "emoji de cara sonriente"
+convertEmojiToSpanish("❤️"); // → "emoji de corazón rojo"
+convertEmojiToSpanish("🎉"); // → "emoji de fiesta"
+
+// Texto con múltiples emojis
+const textoConEmojis =
+  "¡Hola! 😀 Me encanta programar 🚀 y usar React ❤️ para crear apps increíbles 🎉";
+
+const programa = cleanTextForTTS(textoConEmojis);
+Effect.runSync(programa);
+
+/* Resultado:
+"¡Hola! emoji de cara sonriente Me encanta programar emoji de cohete y usar React emoji de corazón rojo para crear apps increíbles emoji de fiesta"
+*/
+```
+
+### Emojis Soportados
+
+fonema incluye más de 400 emojis comunes con descripciones en español:
+
+- **Caras y emociones**: 😀 😃 😄 😁 😆 😅 🤣 😂 🙂 🙃 😉 😊 😇 🥰 😍 🤩 😘 😗 ☺️ 😚 😙 🥲 😋 😛 😜 🤪 😝 🤑 🤗 🤭 🤫 🤔 🤐 🤨 😐 😑 😶 😏 😒 🙄 😬 🤥 😔 😕 🙁 ☹️ 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🤗 🤔 😴 💤 😪 😵 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕
+- **Corazones**: ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💓 💗 💖 💘 💝 💟
+- **Gestos y manos**: 👍 👎 👌 ✌️ 🤞 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐️ 🖖 👋 🤝 🙏 ✍️ 👏 🙌 👐 🤲 🤜 🤛 ✊ 👊 🫶
+- **Objetos y símbolos**: 🔥 💯 💫 ⭐ 🌟 ✨ ⚡ 💥 💢 💨 💦 💧 🌈 ☀️ ⛅ ☁️ 🌧️ ⛈️ 🌩️ ❄️ ☃️ ⛄ 🌪️ 🌊
+- **Comida y bebidas**: 🍎 🍌 🍓 🍇 🍉 🍊 🥑 🍅 🥕 🌽 🥖 🍞 🧀 🥓 🍖 🍗 🍕 🍔 🌭 🥪 🌮 🌯 🍜 🍝 🍚 🍛 🍤 🍣 🍦 🍰 🎂 🍪 🍫 🍬 🍭 ☕ 🍵 🥤 🍺 🍷 🥂 🍾
+- **Animales**: 🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🙈 🙉 🙊 🐒 🐔 🐧 🐦 🐤 🐣 🐥 🦆 🦅 🦉 🦇 🐺 🐗 🐴 🦄 🐝 🐛 🦋 🐌 🐞 🐜 🦗 🕷️ 🦂 🐢 🐍 🦎 🐙 🦑 🦐 🦀 🐡 🐠 🐟 🐬 🐳 🐋 🦈
+- **Actividades y deportes**: ⚽ 🏀 🏈 ⚾ 🥎 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🥅 ⛳ 🪁 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛷 ⛸️ 🥌 🎿 ⛷️ 🏂 🪂 🏋️ 🤸 🤼 🤽 🤾 🤹 🧘 🛀 🛌
+- **Viajes y lugares**: 🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🏍️ 🛵 🚲 🛴 🚁 ✈️ 🛩️ 🚀 🛸 🚢 ⛵ 🚤 ⛴️ 🛥️ 🚂 🚃 🚄 🚅 🚆 🚇 🚈 🚉 🚊 🚝 🚞 🚟 🚠 🚡 🛰️
+- **Objetos y herramientas**: 📱 💻 🖥️ ⌨️ 🖱️ 🖲️ 💽 💾 💿 📀 🧮 🎥 📹 📷 📸 📼 🔍 🔎 🕯️ 💡 🔦 🏮 🪔 📔 📕 📖 📗 📘 📙 📚 📓 📒 📃 📜 📄 📰 🗞️ 📑 🔖 🏷️ 💰 🪙 💴 💵 💶 💷 💸 💳 🧾 💎 ⚖️ 🪜 🧰 🔧 🔨 ⚒️ 🛠️ ⛏️ 🪓 🪚 🔩 ⚙️ 🪤 🧲 🪣 🧽 🧴 🧷 🧹 🧺 🪑 🚪 🪟 🛏️ 🛋️ 🚿 🛁 🚽 🪠 🧻 🪥 🧼 🪒 🧯 🛒
+- **Música y entretenimiento**: 🎵 🎶 🎼 🎹 🥁 🎷 🎺 🎸 🪕 🎻 🎤 🎧 📻 🎬 🎭 🎪 🎨 🎯 🎲 🎮 🕹️ 🎰 🎳
+- **Magia y fantasía**: 🪄 🔮 🧿 🪬 🎃 👻 💀 ☠️ 👽 👾 🤖 🎅 🤶 🧙 🧚 🧛 🧜 🧝 🧞 🧟 🦸 🦹
+
+Los emojis no reconocidos se convierten automáticamente en "emoji" genérico.
 
 ## License
 

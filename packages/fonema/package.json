@@ -1,6 +1,6 @@
 {
   "name": "fonema",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "Ultra-minimal Spanish text cleaning library for TTS - 100% Effect-TS & ESM",
   "type": "module",
   "main": "./dist/index.js",

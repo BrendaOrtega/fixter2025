@@ -55,7 +55,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   let audioData = null;
   try {
     const response = await fetch(
-      `${new URL(request.url).origin}/api/audio?postId=${post.id}&intent=check&voice=en-US-Neural2-D`
+      `${new URL(request.url).origin}/api/audio?postId=${
+        post.id
+      }&intent=check&voice=en-US-Neural2-D`
     );
 
     if (response.ok) {
@@ -98,9 +100,9 @@ export default function Page({
     };
 
     // Trackear cuando el componente se monta
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.trackEvent?.({
-        type: 'page_view',
+        type: "page_view",
         postId: post.id,
         metadata: {
           title: post.title,
@@ -110,7 +112,7 @@ export default function Page({
     }
 
     scrollToTop();
-    
+
     return () => {
       // Limpieza si es necesario
     };
@@ -177,7 +179,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
 
   const handleSocialClick = () => {
     navigator.clipboard.writeText(link);
-    toast.success({ text: "Link copiado", icon: "🪄" });
+    toast.success({ text: "Link copiado 📋", icon: "🔗" });
   };
 
   return (
@@ -197,7 +199,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
         key="x"
         onClick={handleSocialClick}
         name="X"
-        link={`https://twitter.com/intent/tweet?url=${link}&text=¡Vi este post y me pareció interesante!`}
+        link={`https://twitter.com/intent/tweet?url=${link}&text=¡Vi este post y me pareció interesante! 🚀`}
       >
         <FaXTwitter />
       </SocialMedia>
@@ -205,7 +207,7 @@ export const Sharing = ({ metalink }: { metalink: string }) => {
         key="linkedin"
         onClick={handleSocialClick}
         name="Linkedin"
-        link={`http://www.linkedin.com/shareArticle?mini=true&url=${link}&title=¡Vi este post y me pareció interesante!`}
+        link={`http://www.linkedin.com/shareArticle?mini=true&url=${link}&title=¡Vi este post y me pareció interesante! 💡`}
       >
         <FaLinkedinIn />
       </SocialMedia>

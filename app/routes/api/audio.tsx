@@ -163,10 +163,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const postBody = formData.get("postBody") as string;
     const voice = formData.get("voice") as string;
 
-    // Clean text from emojis for better TTS experience
-    const cleanTitle = Effect.runSync(cleanTextForTTS(postTitle));
-    const cleanBody = Effect.runSync(cleanTextForTTS(postBody));
-
     if (!postId || !postTitle || !postBody) {
       return new Response(
         JSON.stringify({
