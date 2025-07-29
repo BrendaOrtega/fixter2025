@@ -233,7 +233,15 @@ const EMOJI_MAP: Record<string, string> = {
 function cleanTextForTTS(text: string): string {
   if (!text) return "";
 
-  // First, remove all URLs and email addresses
+  let cleaned = text;
+
+  // First, remove all image references and markdown images
+  cleaned = cleaned
+    .replace(/!\[([^\]]*?)\]\([^)]+?\)/g, "") // Markdown images: ![...](...)
+    .replace(/<img[^>]+>/g, "") // HTML images
+    .replace(/\[img\][^\[]*\[\/img\]/gi, ""); // BBCode images
+
+  // Remove all URLs and email addresses
   const urlPatterns = [
     // Standard URLs with http/https
     /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+[^\s]*/g,
@@ -241,24 +249,47 @@ function cleanTextForTTS(text: string): string {
     /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
     // URL fragments without protocol
     /(?:^|\s)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?/g,
+    // File paths
+    /(?:\/[\w.-]+)+\/?(?:\?[^\s]*)?/g,
+    // Common file extensions
+    /\b\w+\.(?:jpg|jpeg|png|gif|svg|webp|pdf|docx?|xlsx?|pptx?|txt|csv|zip|tar\.gz|mp3|mp4|mov|avi|wav|flac|aac|ogg|webm)\b/gi,
   ];
 
-  let cleaned = text;
+  // Apply all URL patterns
+  urlPatterns.forEach((pattern) => {
+    cleaned = cleaned.replace(pattern, "");
+  });
 
   // Remove all emojis
   cleaned = cleaned.replace(/[\p{Emoji}]/gu, " ");
 
+  // Remove code blocks and technical content first
+  cleaned = cleaned
+    // Remove code blocks (```code```)
+    .replace(/```[\s\S]*?```/gs, "")
+    // Remove code blocks with language specifier (```javascript, ```python, etc.)
+    .replace(/```[a-z]*\n[\s\S]*?```/g, "")
+    // Remove indented code blocks (4 spaces or tab at start of line)
+    .replace(/^( {4,}|\t).*$/gm, "")
+    // Remove inline code (`code`)
+    .replace(/`[^`]+`/g, '')
+    // Remove code blocks in HTML <pre> and <code> tags
+    .replace(/<(pre|code|kbd|samp|var)>[\s\S]*?<\/\1>/gi, "")
+    // Remove XML/HTML comments
+    .replace(/<!--[\s\S]*?-->/g, "");
+
   // Clean up markdown, HTML, and other formatting
   cleaned = cleaned
     .replace(/^#{1,6}\s+/gm, "") // Headers
-    .replace(/\([^[]+\]\([^)]+\)/g, "$1") // Links [text](url)
-    .replace(/\[([^\]]+)\]/g, "$1") // Link text [text]
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Links [text](url)
+    .replace(
+      /<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi,
+      "$2"
+    ) // HTML links
     .replace(/\*\*([^*]+)\*\*/g, "$1") // Bold **text**
     .replace(/\*([^*]+)\*/g, "$1") // Italic *text*
     .replace(/__([^_]+)__/g, "$1") // Bold __text__
     .replace(/_([^_]+)_/g, "$1") // Italic _text_
-    .replace(/```[\s\S]*?```/gs, "") // Code blocks (with 's' flag for . to match newlines)
-    .replace(/`([^`]+)`/g, "$1") // Inline code
     .replace(/<[^>]*>/g, "") // HTML tags
     .replace(/\[([^\]]+)\]/g, "$1") // Remove any remaining square brackets
     .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove zero-width spaces
@@ -268,45 +299,235 @@ function cleanTextForTTS(text: string): string {
     .replace(/\s*[\r\n]+\s*/g, "\n") // Normalize line breaks
     .replace(/\n{3,}/g, "\n\n") // Limit consecutive newlines to 2
     .replace(/\.(\s|$)/g, ".$1") // Ensure space after periods
+    .replace(/(?:^|\s)@[\w-]+/g, "") // Remove mentions (@username)
+    .replace(/(?:^|\s)#[\w-]+/g, "") // Remove hashtags
+    .replace(/\b(?:https?|ftp|file|chrome|about|data):\/\/[^\s)]+/gi, "") // More URL patterns
+    .replace(/\b(?:www\.[^\s)]+)/gi, "") // Remove www. links
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, "") // Remove email addresses
+    // Remove common programming language keywords and syntax
+    .replace(
+      /\b(function|const|let|var|return|if|else|for|while|do|switch|case|break|continue|class|interface|type|import|export|from|require|default|export default)\b/gi,
+      ""
+    )
+    // Remove common code patterns
+    .replace(/[{}()\[\]=+\-*\/%,;:<>]/g, " ")
+    // Remove console logs and debug statements
+    .replace(/console\.[a-z]+\([^)]*\)/gi, "")
+    // Remove variable assignments (var x = y;)
+    .replace(/\b(?:const|let|var)\s+[a-zA-Z_$][0-9a-zA-Z_$]*\s*=[^;]+;/g, "")
+    // Clean up any remaining technical artifacts
+    .replace(
+      /\b(?:function|class|interface|type)\s+[a-zA-Z_$][0-9a-zA-Z_$]*/g,
+      ""
+    )
+    // Clean up multiple spaces after removing code
+    .replace(/\s+/g, " ")
+    // Remove any single characters that might be left from code
+    .replace(/\s[^\w\s]\s/g, " ")
+    // Final cleanup
     .replace(/([.!?])\s*/g, "$1 ") // Ensure space after sentence endings
     .replace(/\s+/g, " ") // Collapse multiple spaces
     .replace(/^\s+|\s+$/g, ""); // Trim whitespace
 
-  // Format numbers for proper speech using SSML
-  // Match numbers with potential decimal points and convert them to SSML say-as tags
-  cleaned = cleaned.replace(
-    /(\d+(\.\d+)?)/g,
-    '<say-as interpret-as="cardinal">$1</say-as>'
-  );
+  // Format numbers for natural speech in Spanish
+  // Handle floating point numbers by converting them to words
+  cleaned = cleaned.replace(/(\d+)\.(\d+)/g, (match) => {
+    // For decimal numbers, read them as individual digits
+    // e.g., "3.14" becomes "tres punto uno cuatro"
+    return match
+      .split("")
+      .map((char) => {
+        if (char === ".") return "punto";
+        if (/\d/.test(char)) {
+          const num = parseInt(char, 10);
+          return [
+            "cero",
+            "uno",
+            "dos",
+            "tres",
+            "cuatro",
+            "cinco",
+            "seis",
+            "siete",
+            "ocho",
+            "nueve",
+          ][num];
+        }
+        return char;
+      })
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  });
 
-  // Add a natural pause after titles and headings
-  // 1. For titles followed by text (title ends with punctuation and newline)
-  cleaned = cleaned.replace(
-    /([.!?])\s*\n\s*([A-Z])/g,
-    '$1<break time="1s"/> $2'
-  );
+  // Format integers (only those not part of a decimal number)
+  cleaned = cleaned.replace(/(^|\s)(\d+)(?=\s|$)/g, (match, prefix, numStr) => {
+    const num = parseInt(numStr, 10);
+    
+    // Números del 0 al 19
+    if (num < 20) {
+      const words = [
+        "cero",
+        "uno",
+        "dos",
+        "tres",
+        "cuatro",
+        "cinco",
+        "seis",
+        "siete",
+        "ocho",
+        "nueve",
+        "diez",
+        "once",
+        "doce",
+        "trece",
+        "catorce",
+        "quince",
+        "dieciséis",
+        "diecisiete",
+        "dieciocho",
+        "diecinueve",
+      ];
+      return `${prefix}${words[num]}`;
+    }
+    // Números del 20 al 29
+    else if (num < 30) {
+      const ones = num % 10;
+      if (ones === 0) return `${prefix}veinte`;
+      return `${prefix}veinti${[
+        "", "uno", "dos", "tres", "cuatro", 
+        "cinco", "seis", "siete", "ocho", "nueve"
+      ][ones]}`;
+    }
+    // Números del 30 al 99
+    else if (num < 100) {
+      const tens = [
+        "", "", "veinte", "treinta", "cuarenta", 
+        "cincuenta", "sesenta", "setenta", "ochenta", "noventa"
+      ][Math.floor(num / 10)];
+      const ones = num % 10;
+      if (ones === 0) return `${prefix}${tens}`;
+      return `${prefix}${tens} y ${[
+        "", "uno", "dos", "tres", "cuatro", 
+        "cinco", "seis", "siete", "ocho", "nueve"
+      ][ones]}`;
+    }
+    // Números del 100 en adelante
+    else if (num < 1000) {
+      const hundreds = Math.floor(num / 100);
+      const remainder = num % 100;
+      const hundredWord = hundreds === 1 ? "ciento" : 
+                         hundreds === 5 ? "quinientos" :
+                         hundreds === 7 ? "setecientos" :
+                         hundreds === 9 ? "novecientos" :
+                         ["", "", "tres", "cuatro", "quinientos", 
+                          "seis", "setecientos", "ocho", "novecientos"][hundreds];
+      
+      if (remainder === 0) return `${prefix}${hundredWord}`;
+      return `${prefix}${hundredWord} ${cleanTextForTTS(remainder.toString())}`;
+    }
+    // Para números mayores a 999, los dejamos como están
+    return match;
+  });
 
-  // 2. For headings (lines ending with : or ? followed by newline)
-  cleaned = cleaned.replace(/([:?])\s*\n/g, '$1<break time="1.5s"/>\n');
+  // Normalize whitespace and line breaks
+  cleaned = cleaned
+    .replace(/\s*[\r\n]+\s*/g, "\n") // Normalize line breaks
+    .replace(/\n{3,}/g, "\n\n") // Limit consecutive newlines to 2
+    .replace(/([.!?])\s*/g, "$1 ") // Ensure space after sentence endings
+    .replace(/\s+/g, " ") // Collapse multiple spaces
+    .replace(/^\s+|\s+$/g, ""); // Trim whitespace
 
-  // 3. For paragraphs (double newlines)
-  cleaned = cleaned.replace(/\n\s*\n/g, '<break time="2s"/>');
+  // Ensure numbers are properly formatted for TTS
+  cleaned = cleaned.replace(/(\d+)/g, (match) => {
+    // For numbers less than 20, convert to words for natural reading
+    const num = parseInt(match, 10);
+    if (num < 20) {
+      const words = [
+        "cero",
+        "uno",
+        "dos",
+        "tres",
+        "cuatro",
+        "cinco",
+        "seis",
+        "siete",
+        "ocho",
+        "nueve",
+        "diez",
+        "once",
+        "doce",
+        "trece",
+        "catorce",
+        "quince",
+        "dieciséis",
+        "diecisiete",
+        "dieciocho",
+        "diecinueve",
+        "veinte",
+      ];
+      return words[num] || match;
+    }
+    // For numbers 21-99
+    else if (num < 100) {
+      const tens = [
+        "",
+        "",
+        "veinti",
+        "treinta",
+        "cuarenta",
+        "cincuenta",
+        "sesenta",
+        "setenta",
+        "ochenta",
+        "noventa",
+      ][Math.floor(num / 10)];
+      const ones = num % 10;
+      if (ones === 0) return tens.replace("i", "e").replace("ta ", "ta y ");
+      if (num < 30)
+        return `${tens}${
+          [
+            "",
+            "uno",
+            "dos",
+            "tres",
+            "cuatro",
+            "cinco",
+            "seis",
+            "siete",
+            "ocho",
+            "nueve",
+          ][ones]
+        }`;
+      return `${tens} y ${
+        [
+          "",
+          "un",
+          "dos",
+          "tres",
+          "cuatro",
+          "cinco",
+          "seis",
+          "siete",
+          "ocho",
+          "nueve",
+        ][ones]
+      }`;
+    }
+    // For larger numbers, keep as digits
+    return match;
+  });
 
-  // 4. For list items (lines starting with - or *)
-  cleaned = cleaned.replace(/\n\s*[-*]\s+/g, '<break time="1s"/> ');
+  // Add natural paragraph breaks
+  cleaned = cleaned.replace(/\n\s*\n/g, "\n\n");
 
-  // 5. For sentences (add a small pause after sentence-ending punctuation)
-  cleaned = cleaned.replace(/([.!?])\s+/g, '$1<break time="0.8s"/> ');
-
-  // 6. For commas and semicolons (shorter pause)
-  cleaned = cleaned.replace(/([,;])\s+/g, '$1<break time="0.3s"/> ');
+  // Add a single newline for list items
+  cleaned = cleaned.replace(/\n\s*[-*]\s+/g, "\n");
 
   // Remove any remaining double spaces
   cleaned = cleaned.replace(/\s{2,}/g, " ").trim();
 
-  // Wrap the final text in SSML tags for better control
-  cleaned = `<speak>${cleaned}</speak>`;
-
+  // Return the cleaned text without SSML tags
   return cleaned;
 }
 
