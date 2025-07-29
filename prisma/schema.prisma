@@ -312,16 +312,6 @@ model User {
   @@map("users")
 }
 
-model AnalyticsEvent {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  type      String   // e.g., 'page_view', 'audio_play', 'audio_generate'
-  postId    String?  @db.ObjectId
-  metadata  Json?    // Additional event data
-  userAgent String?  // User agent string
-  ipAddress String?  // IP address for basic tracking
-  createdAt DateTime @default(now())
-}
-
 model AudioCache {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   postId      String   @unique @db.ObjectId

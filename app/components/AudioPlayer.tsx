@@ -166,8 +166,7 @@ export function AudioPlayer({
         throw new Error(result.error || "Failed to generate audio");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to generate audio";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "Failed to generate audio");
     } finally {
       setIsLoading(false);
       submit({});
