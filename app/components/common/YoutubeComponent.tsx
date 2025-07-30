@@ -5,7 +5,7 @@ const YoutubeComponent = ({ url }: { url: string }) => {
   }
   return (
     <>
-      <h3>Mira el video si prefieres:</h3>{" "}
+      <h3>Mira el video:</h3>{" "}
       <iframe
         title="youtube video"
         // width="560"

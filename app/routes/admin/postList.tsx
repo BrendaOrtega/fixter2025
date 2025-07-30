@@ -7,7 +7,8 @@ import { z } from "zod";
 import { AiOutlineDeliveredProcedure } from "react-icons/ai";
 import { useEffect, useState, type ReactNode } from "react";
 import { MdEdit } from "react-icons/md";
-import { redirect, useSearchParams } from "react-router";
+import { redirect, useSearchParams, Link } from "react-router";
+import { HiOutlineChartBar } from "react-icons/hi";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { nanoid } from "nanoid";
 
@@ -120,6 +121,15 @@ export default function Page({ loaderData }: Route.ComponentProps) {
             key={post.id}
             extraButtons={
               <>
+                <Link
+                  to={`/admin/heatmap/${post.id}`}
+                  className="p-1 hover rounded-lg hover:bg-gray-800 group"
+                >
+                  <HiOutlineChartBar />
+                  <span className="text-xs p-1 bg-gray-800 rounded text-gray-400 translate-x-[-20px] block invisible group-hover:visible absolute w-max bottom-10">
+                    Ver Heatmap
+                  </span>
+                </Link>
                 <button
                   onClick={() => onOpen(post)}
                   className="p-1 hover rounded-lg hover:bg-gray-800 group"

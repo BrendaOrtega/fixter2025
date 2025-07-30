@@ -30,7 +30,10 @@ export default [
     route("posts", "routes/admin/postList.tsx"),
     route("talleres", "routes/admin/talleres.tsx"),
     route("newsletter", "routes/admin/newsletter.tsx"),
+    route("analytics", "routes/admin/analytics.tsx"),
+    route("heatmap/:postId", "routes/admin/heatmap.$postId.tsx"),
   ]),
+  // Analytics moved to admin section
   // testing WebRTC
   route("live_session", "routes/talleres/live_session.tsx"),
   ...prefix("cursos", [

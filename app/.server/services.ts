@@ -14,3 +14,6 @@ export {
   OpenRouterTTSService,
   type OpenRouterTTSService as OpenRouterTTSServiceInterface,
 } from "./openrouter.service";
+
+// Re-export cohort analysis service
+export { cohortAnalysis } from "./services/cohort-analysis";
