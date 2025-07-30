@@ -6,8 +6,10 @@ import { useState, useCallback } from "react";
 import { Form, Link } from "react-router";
 import { HeatmapVisualization } from "~/components/HeatmapVisualization";
 import Spinner from "~/components/common/Spinner";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
+  await getAdminOrRedirect(request);
   try {
     const url = new URL(request.url);
     const startDateParam = url.searchParams.get("startDate");
