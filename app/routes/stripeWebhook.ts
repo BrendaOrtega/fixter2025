@@ -40,6 +40,67 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
 
+      // Handle Claude Workshop purchases (both form-based and direct)
+      if (session.metadata.type === "claude-workshop" || session.metadata.type === "claude-workshop-direct") {
+        const isDirectPurchase = session.metadata.type === "claude-workshop-direct";
+        
+        const user = await db.user.upsert({
+          where: { email },
+          create: {
+            email,
+            username: email,
+            displayName: session.metadata.name || session.customer_details?.name,
+            phoneNumber: session.metadata.phone || session.customer_details?.phone,
+            courses: [],
+            editions: [],
+            roles: [],
+            tags: [
+              "claude-workshop-paid",
+              "newsletter",
+              ...(isDirectPurchase ? ["direct-purchase"] : [
+                `level-${session.metadata.experienceLevel}`,
+                `context-${session.metadata.contextObjective}`,
+                `urgency-${session.metadata.urgencyTimeline}`
+              ])
+            ],
+            workshop: {
+              selectedModules: JSON.parse(session.metadata.selectedModules),
+              totalPrice: Number(session.metadata.totalPrice),
+              paidAt: new Date().toISOString(),
+              sessionId: session.id,
+              paymentStatus: "completed",
+              purchaseType: isDirectPurchase ? "direct" : "form"
+            },
+            confirmed: true,
+            role: "STUDENT"
+          },
+          update: {
+            displayName: session.metadata.name || session.customer_details?.name,
+            phoneNumber: session.metadata.phone || session.customer_details?.phone,
+            tags: { push: "claude-workshop-paid" },
+            workshop: {
+              selectedModules: JSON.parse(session.metadata.selectedModules),
+              totalPrice: Number(session.metadata.totalPrice),
+              paidAt: new Date().toISOString(),
+              sessionId: session.id,
+              paymentStatus: "completed",
+              purchaseType: isDirectPurchase ? "direct" : "form"
+            }
+          }
+        });
+
+        await successPurchase({
+          userName: user.displayName || session.customer_details?.name || "Sin nombre",
+          userMail: user.email,
+          slug: "claude-workshop",
+          meta: session.metadata,
+        });
+
+        console.info("WEBHOOK: Claude workshop purchase successful");
+        return new Response(null);
+      }
+
+      // Handle regular course purchases
       const course = await db.course.findUnique({
         where: {
           slug: session.metadata.courseSlug,

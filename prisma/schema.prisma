@@ -308,6 +308,7 @@ model User {
   // 2025
   tags        String[]
   metadata    Json?
+  webinar     Json? // Información del webinar con las 3 preguntas
 
   @@map("users")
 }

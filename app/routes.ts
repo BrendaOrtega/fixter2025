@@ -23,6 +23,8 @@ export default [
   route("stripe/webhook", "routes/stripeWebhook.ts"),
   // xmas
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
+  // Claude Code Workshop
+  route("claude", "routes/claude.tsx"),
   // groups
   ...prefix("admin", [
     index("routes/admin/dash.tsx"),

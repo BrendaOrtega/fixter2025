@@ -6,9 +6,11 @@ const initial = ["🎉", "👾", "💿", "🚀", "📖", "🕹", "📺"];
 export const EmojiConfetti = ({
   emojis = initial,
   colors,
+  small = false,
 }: {
   colors?: boolean;
   emojis?: boolean | string[];
+  small?: boolean;
 }) => {
   useEffect(() => {
     const jsConfetti = new JSConfetti();
@@ -16,10 +18,14 @@ export const EmojiConfetti = ({
     if (emojis) {
       jsConfetti.addConfetti({
         emojis: Array.isArray(emojis) ? emojis : initial,
+        confettiNumber: small ? 8 : 100,
+        emojiSize: small ? 50 : 100,
       });
       setTimeout(() => {
         jsConfetti.addConfetti({
           emojis: Array.isArray(emojis) ? emojis : initial,
+          confettiNumber: small ? 5 : 80,
+          emojiSize: small ? 50 : 100,
         });
       }, 2000);
       return;

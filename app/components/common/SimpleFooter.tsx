@@ -63,7 +63,7 @@ export default function SimpleFooter() {
         </Link>
       </div> */}
       <p className="text-center text-gray-300 text-sm opacity-40 font-light mt-4">
-        © 2016 - 2023 Fixtergeek
+        © 2016 - 2025 Fixtergeek
       </p>
     </section>
   );
