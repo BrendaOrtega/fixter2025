@@ -1,12 +1,5 @@
-import {
-  FaFacebook,
-  FaInstagram,
-  FaLinkedinIn,
-  FaYoutube,
-} from "react-icons/fa";
-import { FaSquareXTwitter, FaXTwitter } from "react-icons/fa6";
-import { Link } from "react-router";
-import { Youtube } from "../icons/Youtube";
+import { FaFacebook, FaYoutube } from "react-icons/fa";
+import { FaSquareXTwitter } from "react-icons/fa6";
 import { BsLinkedin, BsYoutube } from "react-icons/bs";
 import { AiFillInstagram } from "react-icons/ai";
 
@@ -50,18 +43,7 @@ export default function SimpleFooter() {
           <FaYoutube className="text-colorCaption text-2xl hover:opacity-40 hover:scale-95" />
         </a>
       </div>
-      {/* <div className="flex justify-center gap-4 py-4">
-        <Link to="/aviso">
-          <span className="text-gray-400 hover:text-gray-300 hover:underline">
-            <p>Aviso de Privacidad</p>
-          </span>
-        </Link>
-        <Link to="/politicas">
-          <span className="text-gray-400 hover:text-gray-300 hover:underline">
-            <p>Términos y condiciones</p>
-          </span>
-        </Link>
-      </div> */}
+
       <p className="text-center text-gray-300 text-sm opacity-40 font-light mt-4">
         © 2016 - 2025 Fixtergeek
       </p>

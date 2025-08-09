@@ -7,6 +7,7 @@ import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
+import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
 
 export const meta = () =>
   getMetaTags({
@@ -71,7 +72,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
       });
       
-      // TODO: Send confirmation email
+      // Send confirmation email
+      await sendWebinarCongrats({
+        to: email,
+        webinarTitle: "De Junior a Senior con Claude Code",
+        webinarDate: "Jueves 14 de Agosto, 7:00 PM (CDMX)",
+        userName: name
+      });
+      
       return data({ success: true, type: "webinar", message: "Registro exitoso para el webinar" });
     } catch (error) {
       console.error("Error registering for webinar:", error);
@@ -148,7 +156,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function ClaudeLanding() {
   const [selectedModules, setSelectedModules] = useState<number[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [showStickyBanner, setShowStickyBanner] = useState(false);
   const [showWebinarForm, setShowWebinarForm] = useState(false);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showPaymentCancel, setShowPaymentCancel] = useState(false);
@@ -199,25 +206,11 @@ export default function ClaudeLanding() {
     };
   }, [showWebinarForm]);
 
-  // Mostrar banner sticky después de hacer scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 500) {
-        setShowStickyBanner(true);
-      } else {
-        setShowStickyBanner(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   const modules = [
     {
       id: 1,
       title: "Sesión 1: Fundamentos y Context Management",
-      date: "Sábado 23 Agosto • 4 horas",
+      date: "Sábado 23 Agosto • 2 horas",
       topics: [
         "Setup profesional de Claude Code",
         "Arquitectura de prompts efectivos",
@@ -228,25 +221,25 @@ export default function ClaudeLanding() {
     },
     {
       id: 2,
-      title: "Sesión 2: MCP y Automatización",
-      date: "Sábado 30 Agosto • 4 horas",
-      topics: [
-        "MCP con JSON (sin programar)",
-        "GitHub MCP: explora miles de repos",
-        "Automatización de GitHub Actions",
-        "Conectar bases de datos y APIs",
-      ],
-      price: 1490,
-    },
-    {
-      id: 3,
-      title: "Sesión 3: SDK, Subagentes y Scripting",
-      date: "Sábado 6 Septiembre • 4 horas",
+      title: "Sesión 2: SDK, Subagentes y Scripting",
+      date: "Sábado 30 Agosto • 2 horas",
       topics: [
         "Claude SDK para Python/JavaScript",
         "Subagentes y delegación de tareas",
         "Scripting con TypeScript y Python",
         "Pipelines CI/CD y casos empresariales",
+      ],
+      price: 1490,
+    },
+    {
+      id: 3,
+      title: "Sesión 3: MCP y Automatización",
+      date: "Sábado 6 Septiembre • 2 horas",
+      topics: [
+        "MCP con JSON (sin programar)",
+        "GitHub MCP: explora miles de repos",
+        "Automatización de GitHub Actions",
+        "Conectar bases de datos y APIs",
       ],
       price: 1490,
     },
@@ -329,7 +322,7 @@ export default function ClaudeLanding() {
             Ahorro total de $971 MXN + Sesión privada 1:1 incluida
           </div>
           <div className="text-sm text-gray-400 mt-1">
-            3 sesiones de 4h c/u + 1 sesión privada individual por $3,499
+            3 sesiones de 2h c/u + 1 sesión privada individual por $3,499
           </div>
         </div>
       );
@@ -338,7 +331,7 @@ export default function ClaudeLanding() {
       return (
         <div>
           <div className="text-xl font-bold text-green-400 mb-2">
-            ✅ ¡Paquete de 3 sesiones de 4h cada una!
+            ✅ ¡Paquete de 3 sesiones de 2h cada una!
           </div>
           <div className="text-sm text-gray-400">
             Ahorro de $971 MXN
@@ -604,42 +597,6 @@ export default function ClaudeLanding() {
         <EmojiConfetti emojis={["🎉", "🎊", "✨", "🎁", "💰", "🚀", "⭐"]} small />
       )}
 
-      {/* Banner Sticky del Webinar */}
-      <AnimatePresence>
-        {showStickyBanner && (
-          <motion.div
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            exit={{ y: -100 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 text-white py-3 px-4 shadow-2xl"
-          >
-            <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <span className="animate-pulse text-2xl">🔥</span>
-                <div>
-                  <p className="font-black text-sm md:text-base">
-                    WEBINAR GRATIS - JUEVES 14 AGO: "De Junior a Senior con Claude
-                    Code"
-                  </p>
-                  <p className="text-xs opacity-90">
-                    Sin compromiso • Sin tarjeta • 100% práctico
-                  </p>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowWebinarForm(true)}
-                className="bg-white text-red-600 font-black px-6 py-2 rounded-full text-sm hover:bg-yellow-100 transition-colors"
-              >
-                RESERVAR MI LUGAR →
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Hero Section con Webinar CTA */}
       <section className="relative min-h-screen bg-stars bg-cover bg-bottom text-white overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/50 to-gray-900/90"></div>
@@ -688,7 +645,7 @@ export default function ClaudeLanding() {
               </motion.div>
 
               <h2 className="text-3xl font-black mb-3 text-white">
-                🔥 Masterclass GRATUITA: "De Junior a Senior con Claude Code"
+                🔥 Webinar GRATUITO: "De Junior a Senior con Claude Code"
               </h2>
               <div className="text-yellow-300 font-bold text-lg mb-4">
                 Sin tarjeta de crédito • Sin compromiso • Sin spam
@@ -699,7 +656,7 @@ export default function ClaudeLanding() {
                   {" "}
                   Verás EN VIVO demos y ejemplos prácticos
                 </span>{" "}
-                de lo que podrás dominar en el taller completo.
+                de lo que podrás dominar en el taller completo (3 sesiones de 2h cada una + bonus).
               </p>
 
               <div className="bg-black/30 rounded-xl p-4 mb-6">
@@ -713,7 +670,7 @@ export default function ClaudeLanding() {
                     ✅ Cómo los subagentes pueden automatizar tareas complejas
                   </li>
                   <li>
-                    ✅ Preview del temario completo del taller (4 sesiones +
+                    ✅ Preview del temario completo del taller (3 sesiones de 2h +
                     bonus)
                   </li>
                 </ul>
@@ -743,7 +700,7 @@ export default function ClaudeLanding() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-purple-400">
-                  12+ horas
+                  8+ horas
                 </div>
                 <div className="text-gray-400">de contenido práctico</div>
               </div>
@@ -751,7 +708,7 @@ export default function ClaudeLanding() {
                 <div className="text-3xl font-bold text-purple-400">
                   3+1 sesiones
                 </div>
-                <div className="text-gray-400">4h cada una + sesión privada</div>
+                <div className="text-gray-400">2h cada una + sesión privada</div>
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-purple-400">

@@ -4,6 +4,7 @@ import invariant from "tiny-invariant";
 import { data, type ActionFunctionArgs } from "react-router";
 import { successPurchase } from "~/mailSenders/successPurchase";
 import { purchaseCongrats } from "~/mailSenders/purchaseCongrats";
+import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -94,6 +95,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           userMail: user.email,
           slug: "claude-workshop",
           meta: session.metadata,
+        });
+
+        // Send webinar congratulations email
+        await sendWebinarCongrats({
+          to: user.email,
+          webinarTitle: "Claude Workshop",
+          webinarDate: "15 de Febrero 2025", // Update with actual date
+          userName: user.displayName || session.customer_details?.name
         });
 
         console.info("WEBHOOK: Claude workshop purchase successful");
