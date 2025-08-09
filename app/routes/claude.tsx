@@ -224,7 +224,7 @@ export default function ClaudeLanding() {
       title: "Sesión 2: SDK, Subagentes y Scripting",
       date: "Sábado 30 Agosto • 2 horas",
       topics: [
-        "Claude SDK para Python/JavaScript",
+        "Claude SDK para Python/TypeScript",
         "Subagentes y delegación de tareas",
         "Scripting con TypeScript y Python",
         "Pipelines CI/CD y casos empresariales",
@@ -615,7 +615,7 @@ export default function ClaudeLanding() {
                 ⏰ WEBINAR GRATIS - Jueves 14 de Agosto - 7:00 PM
               </span>
               <span className="bg-white text-black text-xs font-black px-2 py-1 rounded-full">
-                CUPOS LIMITADOS
+                CUPO LIMITADO
               </span>
             </motion.div>
 
@@ -659,21 +659,59 @@ export default function ClaudeLanding() {
                 de lo que podrás dominar en el taller completo (3 sesiones de 2h cada una + bonus).
               </p>
 
-              <div className="bg-black/30 rounded-xl p-4 mb-6">
-                <p className="text-white font-bold mb-2">Lo que descubrirás:</p>
-                <ul className="text-gray-200 space-y-1">
-                  <li>
-                    ✅ Tour completo por las funciones avanzadas de Claude Code
-                  </li>
-                  <li>✅ Qué es MCP y por qué cambiará tu forma de trabajar</li>
-                  <li>
-                    ✅ Cómo los subagentes pueden automatizar tareas complejas
-                  </li>
-                  <li>
-                    ✅ Preview del temario completo del taller (3 sesiones de 2h +
-                    bonus)
-                  </li>
-                </ul>
+              <div className="bg-black/30 rounded-xl p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">🎯</span>
+                  <p className="text-white font-bold text-lg">Lo que descubrirás en el webinar:</p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <span className="text-green-400 text-xl flex-shrink-0 mt-0.5">✨</span>
+                      <div>
+                        <h4 className="text-white font-semibold mb-1">Tour Completo Claude Code</h4>
+                        <p className="text-gray-300 text-sm">Funciones avanzadas que el 99% no conoce</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-blue-400 text-xl flex-shrink-0 mt-0.5">🔌</span>
+                      <div>
+                        <h4 className="text-white font-semibold mb-1">MCP y Automatización</h4>
+                        <p className="text-gray-300 text-sm">Por qué cambiará tu forma de trabajar para siempre</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-purple-400 text-xl flex-shrink-0 mt-0.5">🤖</span>
+                      <div>
+                        <h4 className="text-white font-semibold mb-1">Subagentes Inteligentes</h4>
+                        <p className="text-gray-300 text-sm">Cómo automatizar tareas complejas sin esfuerzo</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <span className="text-orange-400 text-xl flex-shrink-0 mt-0.5">💻</span>
+                      <div>
+                        <h4 className="text-white font-semibold mb-1">SDK y Scripting</h4>
+                        <p className="text-gray-300 text-sm">Integra Claude en tus aplicaciones Python/TS</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-yellow-400 text-xl flex-shrink-0 mt-0.5">🎁</span>
+                      <div>
+                        <h4 className="text-white font-semibold mb-1">Preview Taller Completo</h4>
+                        <p className="text-gray-300 text-sm">Temario de las 3 sesiones + bonus individual</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <span className="text-red-400 text-xl flex-shrink-0 mt-0.5">🔥</span>
+                      <div>
+                        <h4 className="text-white font-semibold mb-1">Demos EN VIVO</h4>
+                        <p className="text-gray-300 text-sm">Casos reales y ejemplos prácticos</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col gap-4">
@@ -690,7 +728,7 @@ export default function ClaudeLanding() {
                     📅 Jueves 14 de Agosto • 7:00 PM (CDMX)
                   </p>
                   <p className="text-gray-400 text-sm mt-1">
-                    ⚠️ Quedan pocos lugares disponibles
+                    ⚠️ Queda poco cupo disponible
                   </p>
                 </div>
               </div>
