@@ -14,7 +14,7 @@ export const sendWebinarCongrats = async ({
   webinarDate = "Próximamente",
   userName
 }: WebinarCongratsProps) => {
-  const link = `${process.env.BASE_URL || "https://fixtergeek.com"}/profile`;
+  const link = `${process.env.BASE_URL || "https://fixtergeek.com"}/mis-cursos`;
   
   const htmlContent = webinarCongratsTemplate({ 
     link, 

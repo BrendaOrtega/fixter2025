@@ -78,7 +78,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
     "registered"
   );
   return (
-    <>
+    <article className="pt-20">
       <AdminNav />
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
         <h1 className="text-3xl font-bold mb-6 text-white">
@@ -433,6 +433,6 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
           </button>
         </div>
       </div>
-    </>
+    </article>
   );
 }

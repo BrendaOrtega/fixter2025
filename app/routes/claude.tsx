@@ -19,7 +19,7 @@ export const meta = () =>
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
-  
+
   if (intent === "webinar_registration") {
     const name = String(formData.get("name"));
     const email = String(formData.get("email"));
@@ -27,24 +27,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const experienceLevel = String(formData.get("experienceLevel"));
     const contextObjective = String(formData.get("contextObjective"));
     const urgencyTimeline = String(formData.get("urgencyTimeline"));
-    
+
     try {
       await db.user.upsert({
         where: { email },
-        create: { 
-          email, 
-          username: name || email.split('@')[0], // Usar name o parte del email como username
+        create: {
+          email,
+          username: name || email.split("@")[0], // Usar name o parte del email como username
           displayName: name,
           phoneNumber: phone || undefined,
           courses: [], // Array vacío requerido
           editions: [], // Array vacío requerido
           roles: [], // Array vacío requerido
           tags: [
-            "webinar_agosto", 
-            "newsletter", 
+            "webinar_agosto",
+            "newsletter",
             `level-${experienceLevel}`,
             `context-${contextObjective}`,
-            `urgency-${urgencyTimeline}`
+            `urgency-${urgencyTimeline}`,
           ],
           webinar: {
             experienceLevel,
@@ -52,12 +52,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             urgencyTimeline,
             registeredAt: new Date().toISOString(),
             webinarType: "agosto_2025",
-            webinarDate: "2025-08-14T19:00:00-06:00" // Jueves 14 de Agosto, 7:00 PM CDMX
+            webinarDate: "2025-08-14T19:00:00-06:00", // Jueves 14 de Agosto, 7:00 PM CDMX
           },
           confirmed: false,
-          role: "GUEST"
+          role: "GUEST",
         },
-        update: { 
+        update: {
           displayName: name,
           phoneNumber: phone || undefined,
           tags: { push: "webinar_agosto" },
@@ -67,45 +67,54 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             urgencyTimeline,
             registeredAt: new Date().toISOString(),
             webinarType: "agosto_2025",
-            webinarDate: "2025-08-14T19:00:00-06:00" // Jueves 14 de Agosto, 7:00 PM CDMX
-          }
-        }
+            webinarDate: "2025-08-14T19:00:00-06:00", // Jueves 14 de Agosto, 7:00 PM CDMX
+          },
+        },
       });
-      
+
       // Send confirmation email
       await sendWebinarCongrats({
         to: email,
         webinarTitle: "De Junior a Senior con Claude Code",
         webinarDate: "Jueves 14 de Agosto, 7:00 PM (CDMX)",
-        userName: name
+        userName: name,
       });
-      
-      return data({ success: true, type: "webinar", message: "Registro exitoso para el webinar" });
+
+      return data({
+        success: true,
+        type: "webinar",
+        message: "Registro exitoso para el webinar",
+      });
     } catch (error) {
       console.error("Error registering for webinar:", error);
-      return data({ success: false, error: "Error en el registro. Intenta nuevamente." });
+      return data({
+        success: false,
+        error: "Error en el registro. Intenta nuevamente.",
+      });
     }
   }
-  
+
   if (intent === "direct_checkout") {
     const selectedModules = JSON.parse(String(formData.get("selectedModules")));
     const totalPrice = Number(formData.get("totalPrice"));
-    
+
     try {
       // Create Stripe checkout session with dynamic pricing directly
       const stripe = new (await import("stripe")).default(
         process.env.STRIPE_SECRET_KEY as string,
         {}
       );
-      
+
       const isDev = process.env.NODE_ENV === "development";
-      const location = isDev ? "http://localhost:3000" : "https://www.fixtergeek.com";
-      
+      const location = isDev
+        ? "http://localhost:3000"
+        : "https://www.fixtergeek.com";
+
       const session = await stripe.checkout.sessions.create({
         metadata: {
           selectedModules: JSON.stringify(selectedModules),
           totalPrice: String(totalPrice),
-          type: "claude-workshop-direct"
+          type: "claude-workshop-direct",
         },
         mode: "payment",
         line_items: [
@@ -114,15 +123,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               currency: "mxn",
               product_data: {
                 name: `Taller Claude Code - ${selectedModules.length} sesiones`,
-                description: `Sesiones seleccionadas: ${selectedModules.map(id => {
-                  const modules = [
-                    { id: 1, title: "Fundamentos y Context Management" },
-                    { id: 2, title: "MCP y Automatización" },
-                    { id: 3, title: "SDK, Subagentes y Scripting" },
-                    { id: 4, title: "BONUS: Sesión Privada Individual" }
-                  ];
-                  return modules.find(m => m.id === id)?.title;
-                }).filter(Boolean).join(", ")}`,
+                description: `Sesiones seleccionadas: ${selectedModules
+                  .map((id) => {
+                    const modules = [
+                      { id: 1, title: "Fundamentos y Context Management" },
+                      { id: 2, title: "MCP y Automatización" },
+                      { id: 3, title: "SDK, Subagentes y Scripting" },
+                      { id: 4, title: "BONUS: Sesión Privada Individual" },
+                    ];
+                    return modules.find((m) => m.id === id)?.title;
+                  })
+                  .filter(Boolean)
+                  .join(", ")}`,
               },
               unit_amount: totalPrice * 100,
             },
@@ -132,24 +144,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         success_url: `${location}/claude?success=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${location}/claude?cancel=1`,
         allow_promotion_codes: true,
-        billing_address_collection: 'required',
+        billing_address_collection: "required",
         phone_number_collection: {
           enabled: true,
         },
       });
-      
+
       if (!session.url) {
         throw new Error("Failed to create checkout session");
       }
-      
+
       return redirect(session.url);
     } catch (error) {
       console.error("Error creating direct checkout session:", error);
-      return data({ success: false, error: "Error al procesar el pago. Intenta nuevamente." });
+      return data({
+        success: false,
+        error: "Error al procesar el pago. Intenta nuevamente.",
+      });
     }
   }
-  
-  
+
   return data({ success: false });
 };
 
@@ -164,7 +178,7 @@ export default function ClaudeLanding() {
   // Check for payment result in URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success') === '1') {
+    if (urlParams.get("success") === "1") {
       setShowPaymentSuccess(true);
       setShowConfetti(true);
       setTimeout(() => {
@@ -172,37 +186,37 @@ export default function ClaudeLanding() {
         setShowPaymentSuccess(false);
       }, 8000);
       // Clean URL
-      window.history.replaceState({}, '', '/claude');
+      window.history.replaceState({}, "", "/claude");
     }
-    if (urlParams.get('cancel') === '1') {
+    if (urlParams.get("cancel") === "1") {
       setShowPaymentCancel(true);
       setTimeout(() => setShowPaymentCancel(false), 5000);
       // Clean URL
-      window.history.replaceState({}, '', '/claude');
+      window.history.replaceState({}, "", "/claude");
     }
   }, []);
 
   // Handle escape key to close forms and block scroll
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setShowWebinarForm(false);
       }
     };
 
     if (showWebinarForm) {
-      document.addEventListener('keydown', handleEscapeKey);
+      document.addEventListener("keydown", handleEscapeKey);
       // Block body scroll when modal is open
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
       // Restore body scroll when modal is closed
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener("keydown", handleEscapeKey);
       // Restore scroll on cleanup
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [showWebinarForm]);
 
@@ -210,7 +224,7 @@ export default function ClaudeLanding() {
     {
       id: 1,
       title: "Sesión 1: Fundamentos y Context Management",
-      date: "Sábado 23 Agosto • 2 horas",
+      date: "Martes 19 Agosto • 2 horas • 7:00 PM",
       topics: [
         "Setup profesional de Claude Code",
         "Arquitectura de prompts efectivos",
@@ -222,7 +236,7 @@ export default function ClaudeLanding() {
     {
       id: 2,
       title: "Sesión 2: SDK, Subagentes y Scripting",
-      date: "Sábado 30 Agosto • 2 horas",
+      date: "Jueves 21 Agosto • 2 horas • 7:00 PM",
       topics: [
         "Claude SDK para Python/TypeScript",
         "Subagentes y delegación de tareas",
@@ -234,7 +248,7 @@ export default function ClaudeLanding() {
     {
       id: 3,
       title: "Sesión 3: MCP y Automatización",
-      date: "Sábado 6 Septiembre • 2 horas",
+      date: "Martes 26 Agosto • 2 horas • 7:00 PM",
       topics: [
         "MCP con JSON (sin programar)",
         "GitHub MCP: explora miles de repos",
@@ -261,26 +275,26 @@ export default function ClaudeLanding() {
   const toggleModule = (id: number) => {
     // No permitir seleccionar directamente el BONUS
     if (id === 4) return;
-    
+
     setSelectedModules((prev) => {
       const newSelection = prev.includes(id)
         ? prev.filter((m) => m !== id)
         : [...prev, id];
 
       // Auto-agregar BONUS cuando seleccionan las 3 principales
-      const mainSessions = newSelection.filter(id => id <= 3).length;
-      const previousMainSessions = prev.filter(id => id <= 3).length;
-      
+      const mainSessions = newSelection.filter((id) => id <= 3).length;
+      const previousMainSessions = prev.filter((id) => id <= 3).length;
+
       if (mainSessions === 3 && previousMainSessions !== 3) {
         // Activar confetti cuando desbloquean el BONUS
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
         return [...newSelection, 4]; // Auto-agregar el BONUS
       }
-      
+
       if (mainSessions < 3 && previousMainSessions === 3) {
         // Remover BONUS si ya no tienen las 3 principales
-        return newSelection.filter(id => id !== 4);
+        return newSelection.filter((id) => id !== 4);
       }
 
       return newSelection;
@@ -289,29 +303,29 @@ export default function ClaudeLanding() {
 
   const calculatePrice = () => {
     if (selectedModules.length === 0) return 0;
-    
-    const mainSessions = selectedModules.filter(id => id <= 3).length;
+
+    const mainSessions = selectedModules.filter((id) => id <= 3).length;
     const hasBonus = selectedModules.includes(4);
-    
+
     // Precio base de las principales
     let total = mainSessions * 1490;
-    
+
     // Descuento si toman las 3 sesiones principales
     if (mainSessions === 3) {
       total = 3499; // Precio especial paquete de 3
     }
-    
+
     // El BONUS siempre está incluido gratis cuando tienen las 3 principales
     // No se suma nada adicional
-    
+
     return total;
   };
 
   const getPriceMessage = () => {
     const count = selectedModules.length;
-    const mainSessions = selectedModules.filter(id => id <= 3).length;
+    const mainSessions = selectedModules.filter((id) => id <= 3).length;
     const hasBonus = selectedModules.includes(4);
-    
+
     if (mainSessions === 3 && hasBonus) {
       return (
         <div>
@@ -333,9 +347,7 @@ export default function ClaudeLanding() {
           <div className="text-xl font-bold text-green-400 mb-2">
             ✅ ¡Paquete de 3 sesiones de 2h cada una!
           </div>
-          <div className="text-sm text-gray-400">
-            Ahorro de $971 MXN
-          </div>
+          <div className="text-sm text-gray-400">Ahorro de $971 MXN</div>
         </div>
       );
     }
@@ -360,169 +372,175 @@ export default function ClaudeLanding() {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
     }
-    
+
     return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={() => setShowWebinarForm(false)}
-    >
       <motion.div
-        initial={{ y: 50 }}
-        animate={{ y: 0 }}
-        exit={{ y: 50 }}
-        className={`bg-gray-900 rounded-2xl p-8 max-w-md w-full border text-center ${
-          isSuccess 
-            ? 'border-green-500/30' 
-            : 'border-purple-500/30'
-        }`}
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onClick={() => setShowWebinarForm(false)}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-white">
-            {isSuccess ? '¡Registro Exitoso!' : 'Registro Webinar'}
-          </h3>
-          <button
-            onClick={() => setShowWebinarForm(false)}
-            className="text-gray-400 hover:text-white"
-          >
-            ✕
-          </button>
-        </div>
-        
-        {isSuccess ? (
-          <div>
-            <div className="text-6xl mb-4">🎉</div>
-            <p className="text-gray-300 mb-6">
-              Te has registrado exitosamente al webinar. Te enviaremos los detalles por email.
-            </p>
+        <motion.div
+          initial={{ y: 50 }}
+          animate={{ y: 0 }}
+          exit={{ y: 50 }}
+          className={`bg-gray-900 rounded-2xl p-8 max-w-md w-full border text-center ${
+            isSuccess ? "border-green-500/30" : "border-purple-500/30"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-white">
+              {isSuccess ? "¡Registro Exitoso!" : "Registro Webinar"}
+            </h3>
             <button
               onClick={() => setShowWebinarForm(false)}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+              className="text-gray-400 hover:text-white"
             >
-              Cerrar
+              ✕
             </button>
           </div>
-        ) : (
-          <fetcher.Form method="post" className="space-y-3">
-          <input type="hidden" name="intent" value="webinar_registration" />
-          
-          <div>
-            <label className="block text-white mb-2">Nombre completo</label>
-            <input
-              name="name"
-              type="text"
-              required
-              className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
-              placeholder="Tu nombre completo"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-white mb-2">Email</label>
-            <input
-              name="email"
-              type="email"
-              required
-              className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
-              placeholder="tu@email.com"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-white mb-2">Teléfono (opcional)</label>
-            <input
-              name="phone"
-              type="tel"
-              className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
-              placeholder="+52 1 234 567 8900"
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-white mb-1 text-xs">Nivel</label>
-              <select
-                name="experienceLevel"
-                required
-                className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
-              >
-                <option value="">Selecciona...</option>
-                <option value="junior">Junior (0-2 años)</option>
-                <option value="mid">Mid-level (2-5 años)</option>
-                <option value="senior">Senior (5+ años)</option>
-                <option value="lead">Lead/Manager</option>
-                <option value="student">Estudiante</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-white mb-1 text-xs">Situación</label>
-              <select
-                name="contextObjective"
-                required
-                className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
-              >
-                <option value="">Selecciona...</option>
-                <option value="empleado">Empleado en empresa</option>
-                <option value="freelancer">Freelancer independiente</option>
-                <option value="startup">Startup/Emprendimiento</option>
-                <option value="estudiante">Estudiante/Aprendiendo</option>
-                <option value="consultor">Consultor/Servicios</option>
-                <option value="team-lead">Líder de equipo</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-white mb-1 text-xs">Urgencia</label>
-              <select
-                name="urgencyTimeline"
-                required
-                className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
-              >
-                <option value="">Selecciona...</option>
-                <option value="inmediato">🔥 Inmediato</option>
-                <option value="proximas-semanas">⚡ Próximas semanas</option>
-                <option value="proximos-meses">📅 Próximos meses</option>
-                <option value="largo-plazo">🌱 Largo plazo</option>
-              </select>
-            </div>
-          </div>
-          
-          {error && (
-            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-              {error}
-            </div>
-          )}
-          
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-4 px-8 rounded-xl text-lg transition-all disabled:opacity-50"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-                Registrando...
-              </div>
-            ) : (
-              "Confirmar mi lugar 🎯"
-            )}
-          </button>
-        </fetcher.Form>
-        )}
-      </motion.div>
-    </motion.div>
-  );
-  };
 
+          {isSuccess ? (
+            <div>
+              <div className="text-6xl mb-4">🎉</div>
+              <p className="text-gray-300 mb-6">
+                Te has registrado exitosamente al webinar. Te enviaremos los
+                detalles por email.
+              </p>
+              <button
+                onClick={() => setShowWebinarForm(false)}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+              >
+                Cerrar
+              </button>
+            </div>
+          ) : (
+            <fetcher.Form method="post" className="space-y-3">
+              <input type="hidden" name="intent" value="webinar_registration" />
+
+              <div>
+                <label className="block text-white mb-2">Nombre completo</label>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  placeholder="Tu nombre completo"
+                />
+              </div>
+
+              <div>
+                <label className="block text-white mb-2">Email</label>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  placeholder="tu@email.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-white mb-2">
+                  Teléfono (opcional)
+                </label>
+                <input
+                  name="phone"
+                  type="tel"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  placeholder="+52 1 234 567 8900"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-white mb-1 text-xs">Nivel</label>
+                  <select
+                    name="experienceLevel"
+                    required
+                    className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
+                  >
+                    <option value="">Selecciona...</option>
+                    <option value="junior">Junior (0-2 años)</option>
+                    <option value="mid">Mid-level (2-5 años)</option>
+                    <option value="senior">Senior (5+ años)</option>
+                    <option value="lead">Lead/Manager</option>
+                    <option value="student">Estudiante</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-white mb-1 text-xs">
+                    Situación
+                  </label>
+                  <select
+                    name="contextObjective"
+                    required
+                    className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
+                  >
+                    <option value="">Selecciona...</option>
+                    <option value="empleado">Empleado en empresa</option>
+                    <option value="freelancer">Freelancer independiente</option>
+                    <option value="startup">Startup/Emprendimiento</option>
+                    <option value="estudiante">Estudiante/Aprendiendo</option>
+                    <option value="consultor">Consultor/Servicios</option>
+                    <option value="team-lead">Líder de equipo</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-white mb-1 text-xs">
+                    Urgencia
+                  </label>
+                  <select
+                    name="urgencyTimeline"
+                    required
+                    className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
+                  >
+                    <option value="">Selecciona...</option>
+                    <option value="inmediato">🔥 Inmediato</option>
+                    <option value="proximas-semanas">
+                      ⚡ Próximas semanas
+                    </option>
+                    <option value="proximos-meses">📅 Próximos meses</option>
+                    <option value="largo-plazo">🌱 Largo plazo</option>
+                  </select>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-4 px-8 rounded-xl text-lg transition-all disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                    Registrando...
+                  </div>
+                ) : (
+                  "Confirmar mi lugar 🎯"
+                )}
+              </button>
+            </fetcher.Form>
+          )}
+        </motion.div>
+      </motion.div>
+    );
+  };
 
   return (
     <>
       <NavBar />
-      
+
       {/* Form Modals */}
       <AnimatePresence>
         {showWebinarForm && <WebinarForm />}
@@ -542,12 +560,15 @@ export default function ClaudeLanding() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-6xl mb-4">🎉</div>
-              <h3 className="text-2xl font-bold text-white mb-4">¡Pago Completado!</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">
+                ¡Pago Completado!
+              </h3>
               <p className="text-gray-300 mb-4">
                 Tu inscripción al taller ha sido confirmada exitosamente.
               </p>
               <p className="text-gray-300 mb-6">
-                Te enviaremos todos los detalles por email, incluyendo enlaces de Zoom y material preparatorio.
+                Te enviaremos todos los detalles por email, incluyendo enlaces
+                de Zoom y material preparatorio.
               </p>
               <button
                 onClick={() => setShowPaymentSuccess(false)}
@@ -574,12 +595,15 @@ export default function ClaudeLanding() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-6xl mb-4">⏸️</div>
-              <h3 className="text-2xl font-bold text-white mb-4">Pago Cancelado</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Pago Cancelado
+              </h3>
               <p className="text-gray-300 mb-4">
                 No te preocupes, tu reserva sigue disponible.
               </p>
               <p className="text-gray-300 mb-6">
-                Puedes completar tu inscripción cuando quieras. Los lugares se liberan después de 24 horas.
+                Puedes completar tu inscripción cuando quieras. Los lugares se
+                liberan después de 24 horas.
               </p>
               <button
                 onClick={() => setShowPaymentCancel(false)}
@@ -591,10 +615,13 @@ export default function ClaudeLanding() {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* Confetti cuando completan el paquete */}
       {showConfetti && (
-        <EmojiConfetti emojis={["🎉", "🎊", "✨", "🎁", "💰", "🚀", "⭐"]} small />
+        <EmojiConfetti
+          emojis={["🎉", "🎊", "✨", "🎁", "💰", "🚀", "⭐"]}
+          small
+        />
       )}
 
       {/* Hero Section con Webinar CTA */}
@@ -651,63 +678,103 @@ export default function ClaudeLanding() {
                 Sin tarjeta de crédito • Sin compromiso • Sin spam
               </div>
               <p className="text-gray-200 mb-6 text-lg">
-                Una sesión de 60 minutos donde te muestro todas las herramientas geniales del ecosistema Claude Code.
+                Una sesión de 60 minutos donde te muestro todas las herramientas
+                geniales del ecosistema Claude Code.
                 <span className="text-yellow-300 font-bold">
                   {" "}
                   Verás EN VIVO demos y ejemplos prácticos
                 </span>{" "}
-                de lo que podrás dominar en el taller completo (3 sesiones de 2h cada una + bonus).
+                de lo que podrás dominar en el taller completo (3 sesiones de 2h
+                cada una + bonus).
               </p>
 
               <div className="bg-black/30 rounded-xl p-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-2xl">🎯</span>
-                  <p className="text-white font-bold text-lg">Lo que descubrirás en el webinar:</p>
+                  <p className="text-white font-bold text-lg">
+                    Lo que descubrirás en el webinar:
+                  </p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <span className="text-green-400 text-xl flex-shrink-0 mt-0.5">✨</span>
+                      <span className="text-green-400 text-xl flex-shrink-0 mt-0.5">
+                        ✨
+                      </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">Tour Completo Claude Code</h4>
-                        <p className="text-gray-300 text-sm">Funciones avanzadas que el 99% no conoce</p>
+                        <h4 className="text-white font-semibold mb-1">
+                          Tour Completo Claude Code
+                        </h4>
+                        <p className="text-gray-300 text-sm">
+                          Funciones avanzadas que el 99% no conoce
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-blue-400 text-xl flex-shrink-0 mt-0.5">🔌</span>
+                      <span className="text-blue-400 text-xl flex-shrink-0 mt-0.5">
+                        🔌
+                      </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">MCP y Automatización</h4>
-                        <p className="text-gray-300 text-sm">Por qué cambiará tu forma de trabajar para siempre</p>
+                        <h4 className="text-white font-semibold mb-1">
+                          MCP y Automatización
+                        </h4>
+                        <p className="text-gray-300 text-sm">
+                          Por qué cambiará tu forma de trabajar para siempre
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-purple-400 text-xl flex-shrink-0 mt-0.5">🤖</span>
+                      <span className="text-purple-400 text-xl flex-shrink-0 mt-0.5">
+                        🤖
+                      </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">Subagentes Inteligentes</h4>
-                        <p className="text-gray-300 text-sm">Cómo automatizar tareas complejas sin esfuerzo</p>
+                        <h4 className="text-white font-semibold mb-1">
+                          Subagentes Inteligentes
+                        </h4>
+                        <p className="text-gray-300 text-sm">
+                          Cómo automatizar tareas complejas sin esfuerzo
+                        </p>
                       </div>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <span className="text-orange-400 text-xl flex-shrink-0 mt-0.5">💻</span>
+                      <span className="text-orange-400 text-xl flex-shrink-0 mt-0.5">
+                        💻
+                      </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">SDK y Scripting</h4>
-                        <p className="text-gray-300 text-sm">Integra Claude en tus aplicaciones Python/TS</p>
+                        <h4 className="text-white font-semibold mb-1">
+                          SDK y Scripting
+                        </h4>
+                        <p className="text-gray-300 text-sm">
+                          Integra Claude en tus aplicaciones Python/TS
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-yellow-400 text-xl flex-shrink-0 mt-0.5">🎁</span>
+                      <span className="text-yellow-400 text-xl flex-shrink-0 mt-0.5">
+                        🎁
+                      </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">Preview Taller Completo</h4>
-                        <p className="text-gray-300 text-sm">Temario de las 3 sesiones + bonus individual</p>
+                        <h4 className="text-white font-semibold mb-1">
+                          Preview Taller Completo
+                        </h4>
+                        <p className="text-gray-300 text-sm">
+                          Temario de las 3 sesiones + bonus individual
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-red-400 text-xl flex-shrink-0 mt-0.5">🔥</span>
+                      <span className="text-red-400 text-xl flex-shrink-0 mt-0.5">
+                        🔥
+                      </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">Demos EN VIVO</h4>
-                        <p className="text-gray-300 text-sm">Casos reales y ejemplos prácticos</p>
+                        <h4 className="text-white font-semibold mb-1">
+                          Demos EN VIVO
+                        </h4>
+                        <p className="text-gray-300 text-sm">
+                          Casos reales y ejemplos prácticos
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -746,7 +813,9 @@ export default function ClaudeLanding() {
                 <div className="text-3xl font-bold text-purple-400">
                   3+1 sesiones
                 </div>
-                <div className="text-gray-400">2h cada una + sesión privada</div>
+                <div className="text-gray-400">
+                  2h cada una + sesión privada
+                </div>
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-purple-400">
@@ -760,39 +829,232 @@ export default function ClaudeLanding() {
       </section>
 
       {/* ¿Para quién es este taller? */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 text-white">
-            ¿Es este taller para ti?
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/30 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-green-400 mb-4">
-                ✅ SÍ es para ti si...
-              </h3>
-              <ul className="space-y-3 text-gray-300">
-                <li>• Eres developer Jr/Mid con ganas de destacar</li>
-                <li>
-                  • Ya probaste Claude pero sientes que no le sacas provecho
-                </li>
-                <li>• Quieres automatizar tareas repetitivas</li>
-                <li>• Buscas ser más productivo sin burnout</li>
-                <li>• Te interesa estar a la vanguardia en AI</li>
-              </ul>
-            </div>
-            <div className="bg-gradient-to-br from-red-500/10 to-red-600/10 border border-red-500/30 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-red-400 mb-4">
-                ❌ NO es para ti si...
-              </h3>
-              <ul className="space-y-3 text-gray-300">
-                <li>• Nunca has usado una terminal</li>
-                <li>• Buscas una introducción básica a programación</li>
-                <li>• No tienes tiempo para practicar</li>
-                <li>• Esperas resultados mágicos sin esfuerzo</li>
-                <li>• No te interesa mejorar tu flujo de trabajo</li>
-              </ul>
-            </div>
+      <section className="py-20 bg-background relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-purple-900/10"></div>
+        <div className="relative container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+              ¿Es este taller para ti?
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Descubre si este programa se adapta a tu nivel y objetivos
+              profesionales
+            </p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {/* SÍ es para ti */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-green-600/10 border border-green-500/30 rounded-2xl p-8 backdrop-blur-sm hover:border-green-400/50 transition-all duration-300"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <motion.div
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3,
+                  }}
+                  className="text-3xl"
+                >
+                  ✅
+                </motion.div>
+                <h3 className="text-2xl font-bold text-green-400">
+                  SÍ es para ti si...
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  {
+                    icon: "🚀",
+                    text: "Eres developer Jr/Mid con ganas de destacar",
+                    delay: 0.1,
+                  },
+                  {
+                    icon: "🔍",
+                    text: "Ya probaste Claude pero sientes que no le sacas provecho",
+                    delay: 0.2,
+                  },
+                  {
+                    icon: "⚡",
+                    text: "Quieres automatizar tareas repetitivas",
+                    delay: 0.3,
+                  },
+                  {
+                    icon: "🎯",
+                    text: "Buscas ser más productivo sin burnout",
+                    delay: 0.4,
+                  },
+                  {
+                    icon: "🤖",
+                    text: "Te interesa estar a la vanguardia en AI",
+                    delay: 0.5,
+                  },
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: item.delay }}
+                    viewport={{ once: true }}
+                    whileHover={{
+                      scale: 1.02,
+                      x: 5,
+                      transition: { duration: 0.2 },
+                    }}
+                    className="flex items-start gap-4 p-4 rounded-xl bg-green-500/5 border border-green-500/20 hover:border-green-400/40 hover:bg-green-500/10 transition-all duration-300 cursor-pointer group"
+                  >
+                    <motion.span
+                      className="text-2xl flex-shrink-0"
+                      whileHover={{ rotate: [0, -10, 10, 0] }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {item.icon}
+                    </motion.span>
+                    <p className="text-gray-200 group-hover:text-white transition-colors duration-300 font-medium leading-relaxed">
+                      {item.text}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* NO es para ti */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+              className="bg-gradient-to-br from-red-500/10 via-orange-500/5 to-red-600/10 border border-red-500/30 rounded-2xl p-8 backdrop-blur-sm hover:border-red-400/50 transition-all duration-300"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <motion.div
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    rotate: [0, -5, 0],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    repeat: Infinity,
+                    repeatDelay: 4,
+                  }}
+                  className="text-3xl"
+                >
+                  ❌
+                </motion.div>
+                <h3 className="text-2xl font-bold text-red-400">
+                  NO es para ti si...
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  {
+                    icon: "💻",
+                    text: "Nunca has usado una terminal",
+                    delay: 0.1,
+                  },
+                  {
+                    icon: "📚",
+                    text: "Buscas una introducción básica a programación",
+                    delay: 0.2,
+                  },
+                  {
+                    icon: "⏰",
+                    text: "No tienes tiempo para practicar",
+                    delay: 0.3,
+                  },
+                  {
+                    icon: "✨",
+                    text: "Esperas resultados mágicos sin esfuerzo",
+                    delay: 0.4,
+                  },
+                  {
+                    icon: "🔧",
+                    text: "No te interesa mejorar tu flujo de trabajo",
+                    delay: 0.5,
+                  },
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: item.delay }}
+                    viewport={{ once: true }}
+                    whileHover={{
+                      scale: 1.02,
+                      x: -5,
+                      transition: { duration: 0.2 },
+                    }}
+                    className="flex items-start gap-4 p-4 rounded-xl bg-red-500/5 border border-red-500/20 hover:border-red-400/40 hover:bg-red-500/10 transition-all duration-300 cursor-pointer group"
+                  >
+                    <motion.span
+                      className="text-2xl flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-300"
+                      whileHover={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {item.icon}
+                    </motion.span>
+                    <p className="text-gray-300 group-hover:text-gray-200 transition-colors duration-300 font-medium leading-relaxed">
+                      {item.text}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           </div>
+
+          {/* Call to action adicional */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mt-16"
+          >
+            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-8 max-w-2xl mx-auto">
+              <motion.div
+                animate={{
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="text-4xl mb-4"
+              >
+                🎯
+              </motion.div>
+              <h4 className="text-xl font-bold text-white mb-3">
+                ¿Aún no estás seguro(a)?
+              </h4>
+              <p className="text-gray-300 mb-4">
+                Asiste al webinar gratuito y descubre si este programa es lo que
+                necesitas para tu carrera
+              </p>
+              <button
+                onClick={() => setShowWebinarForm(true)}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105"
+              >
+                Reservar mi lugar gratuito →
+              </button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -826,7 +1088,7 @@ export default function ClaudeLanding() {
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
-              {selectedModules.filter(id => id <= 3).length === 2 && (
+              {selectedModules.filter((id) => id <= 3).length === 2 && (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -835,7 +1097,7 @@ export default function ClaudeLanding() {
                   ¡Una sesión más para el descuento! 💰
                 </motion.p>
               )}
-              {selectedModules.filter(id => id <= 3).length === 3 && (
+              {selectedModules.filter((id) => id <= 3).length === 3 && (
                 <motion.p
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -864,14 +1126,14 @@ export default function ClaudeLanding() {
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 onClick={() => toggleModule(module.id)}
                 className={`border rounded-xl p-4 transition-all duration-150 h-full ${
-                  module.isBonus 
+                  module.isBonus
                     ? selectedModules.includes(module.id)
                       ? "border-yellow-500 bg-gradient-to-br from-yellow-500/20 to-orange-500/10 shadow-xl shadow-yellow-500/20"
                       : "border-yellow-600/30 bg-gradient-to-br from-yellow-600/5 to-orange-600/5 opacity-60"
                     : selectedModules.includes(module.id)
                     ? "border-purple-500 bg-gradient-to-br from-purple-500/20 to-pink-500/10 shadow-xl shadow-purple-500/20 cursor-pointer"
                     : "border-gray-600 bg-gray-800/50 hover:border-purple-400 hover:bg-gray-800/70 cursor-pointer"
-                } ${module.isBonus ? '' : 'cursor-pointer'}`}
+                } ${module.isBonus ? "" : "cursor-pointer"}`}
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
@@ -884,42 +1146,54 @@ export default function ClaudeLanding() {
                         }
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                       >
-                        <span className={`text-2xl font-bold text-transparent bg-clip-text ${
-                          module.isBonus 
-                            ? "bg-gradient-to-r from-yellow-400 to-orange-400" 
-                            : "bg-gradient-to-r from-purple-400 to-pink-400"
-                        }`}>
+                        <span
+                          className={`text-2xl font-bold text-transparent bg-clip-text ${
+                            module.isBonus
+                              ? "bg-gradient-to-r from-yellow-400 to-orange-400"
+                              : "bg-gradient-to-r from-purple-400 to-pink-400"
+                          }`}
+                        >
                           {module.isBonus ? "🎁" : module.id}
                         </span>
                       </motion.div>
                       <div>
                         <h3 className="text-lg font-bold text-white">
-                          {module.isBonus ? module.title : module.title.split(":")[1].trim()}
+                          {module.isBonus
+                            ? module.title
+                            : module.title.split(":")[1].trim()}
                         </h3>
                         {module.isBonus && (
                           <div className="flex flex-col gap-1">
                             <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-black font-bold px-2 py-0.5 rounded-full">
-                              {selectedModules.includes(module.id) ? "DESBLOQUEADO" : "SE DESBLOQUEA"}
+                              {selectedModules.includes(module.id)
+                                ? "DESBLOQUEADO"
+                                : "SE DESBLOQUEA"}
                             </span>
                             <span className="text-xs text-gray-400">
-                              {selectedModules.includes(module.id) ? "¡Sesión privada 1:1 incluida!" : "Al tomar las 3 sesiones"}
+                              {selectedModules.includes(module.id)
+                                ? "¡Sesión privada 1:1 incluida!"
+                                : "Al tomar las 3 sesiones"}
                             </span>
                           </div>
                         )}
                       </div>
                     </div>
-                    <p className={`text-xs mt-1 ${
-                      module.isBonus ? "text-yellow-300" : "text-purple-300"
-                    }`}>
+                    <p
+                      className={`text-xs mt-1 ${
+                        module.isBonus ? "text-yellow-300" : "text-purple-300"
+                      }`}
+                    >
                       {module.date}
                     </p>
                   </div>
                   {module.isBonus ? (
-                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      selectedModules.includes(module.id)
-                        ? "bg-gradient-to-r from-yellow-500 to-orange-500 border-yellow-500"
-                        : "border-yellow-600/50 bg-yellow-600/10"
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        selectedModules.includes(module.id)
+                          ? "bg-gradient-to-r from-yellow-500 to-orange-500 border-yellow-500"
+                          : "border-yellow-600/50 bg-yellow-600/10"
+                      }`}
+                    >
                       {selectedModules.includes(module.id) ? (
                         <span className="text-white text-sm">🎁</span>
                       ) : (
@@ -994,19 +1268,20 @@ export default function ClaudeLanding() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className={`mt-3 inline-flex items-center gap-1 text-white text-xs font-semibold px-2 py-1 rounded-full ${
-                      module.isBonus 
-                        ? "bg-gradient-to-r from-yellow-500 to-orange-500" 
+                      module.isBonus
+                        ? "bg-gradient-to-r from-yellow-500 to-orange-500"
                         : "bg-gradient-to-r from-purple-500 to-pink-500"
                     }`}
                   >
-                    <span>{module.isBonus ? "BONUS Activado" : "Incluido"}</span>
+                    <span>
+                      {module.isBonus ? "BONUS Activado" : "Incluido"}
+                    </span>
                     <span>{module.isBonus ? "🎁" : "✓"}</span>
                   </motion.div>
                 )}
               </motion.div>
             ))}
           </div>
-
 
           {/* Precio dinámico */}
           {selectedModules.length > 0 && (
@@ -1018,12 +1293,21 @@ export default function ClaudeLanding() {
               <div className="text-purple-400 mb-6">{getPriceMessage()}</div>
               <fetcher.Form method="post">
                 <input type="hidden" name="intent" value="direct_checkout" />
-                <input type="hidden" name="selectedModules" value={JSON.stringify(selectedModules)} />
-                <input type="hidden" name="totalPrice" value={calculatePrice()} />
-                <button 
+                <input
+                  type="hidden"
+                  name="selectedModules"
+                  value={JSON.stringify(selectedModules)}
+                />
+                <input
+                  type="hidden"
+                  name="totalPrice"
+                  value={calculatePrice()}
+                />
+                <button
                   type="submit"
                   disabled={fetcher.state !== "idle"}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition-all transform hover:scale-105 shadow-lg disabled:opacity-50">
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
+                >
                   {fetcher.state !== "idle" ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -1042,54 +1326,203 @@ export default function ClaudeLanding() {
         </div>
       </section>
 
-      {/* Qué aprenderás */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 text-white">
-            Lo que NO encontrarás en YouTube
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/30 rounded-xl p-6">
-              <div className="text-3xl mb-4">🧠</div>
-              <h3 className="text-xl font-bold text-white mb-3">
-                Context Management Pro
-              </h3>
-              <p className="text-gray-400">
-                Aprende a mantener sesiones de días sin perder contexto. Trucos
-                para optimizar tokens y usar /resume como experto.
-              </p>
+      {/* Lo que NO encontrarás en YouTube */}
+      <section className="py-20 bg-background relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-900/5 to-purple-900/10"></div>
+        <div className="relative container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <motion.span
+                animate={{ 
+                  rotate: [0, -10, 10, -5, 0],
+                  scale: [1, 1.1, 1.05, 1]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity,
+                  repeatDelay: 6,
+                  ease: "easeInOut"
+                }}
+                className="text-5xl"
+              >
+                🚫
+              </motion.span>
+              <h2 className="text-4xl md:text-5xl font-bold text-white">
+                Lo que NO encontrarás en YouTube
+              </h2>
             </div>
-            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/30 rounded-xl p-6">
-              <div className="text-3xl mb-4">🔌</div>
-              <h3 className="text-xl font-bold text-white mb-3">
-                MCP Sin Código
-              </h3>
-              <p className="text-gray-400">
-                Configura MCPs con JSON (sin programar). Explora miles de repos
-                con GitHub MCP y automatiza GitHub Actions directo desde Claude.
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/30 rounded-xl p-6">
-              <div className="text-3xl mb-4">🤖</div>
-              <h3 className="text-xl font-bold text-white mb-3">
-                Subagentes & SDK
-              </h3>
-              <p className="text-gray-400">
-                Automatiza flujos complejos con subagentes. Integra Claude en
-                tus aplicaciones con el SDK.
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-orange-500/10 to-red-600/10 border border-orange-500/30 rounded-xl p-6">
-              <div className="text-3xl mb-4">🚀</div>
-              <h3 className="text-xl font-bold text-white mb-3">
-                Scripting Avanzado
-              </h3>
-              <p className="text-gray-400">
-                Automatiza tareas con TypeScript y Python. Crea pipelines de
-                CI/CD y scripts reutilizables que Claude entiende.
-              </p>
-            </div>
+            <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+              Contenido exclusivo, técnicas avanzadas y secretos que solo conocen los 
+              <span className="text-purple-400 font-semibold"> verdaderos power users</span>
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            {[
+              {
+                icon: "🧠",
+                title: "Context Management Pro",
+                description: "Mantén sesiones de días sin perder contexto. Trucos para optimizar tokens y dominar /resume como un experto.",
+                gradient: "from-purple-500/10 to-indigo-600/10",
+                border: "border-purple-500/30",
+                color: "text-purple-400",
+                delay: 0.1,
+                skills: ["Gestión avanzada de memoria", "Optimización de tokens", "Sesiones persistentes"]
+              },
+              {
+                icon: "🔌",
+                title: "MCP Sin Código",
+                description: "Configura MCPs con JSON (sin programar). Explora repositorios masivos y automatiza GitHub Actions.",
+                gradient: "from-blue-500/10 to-cyan-600/10",
+                border: "border-blue-500/30",
+                color: "text-blue-400",
+                delay: 0.2,
+                skills: ["JSON MCP Setup", "GitHub integration", "Actions automation"]
+              },
+              {
+                icon: "🤖",
+                title: "Subagentes & SDK",
+                description: "Automatiza flujos complejos con subagentes inteligentes. Integra Claude en aplicaciones Python/TS.",
+                gradient: "from-green-500/10 to-emerald-600/10",
+                border: "border-green-500/30",
+                color: "text-green-400",
+                delay: 0.3,
+                skills: ["Delegación inteligente", "SDK integration", "Workflow automation"]
+              },
+              {
+                icon: "🚀",
+                title: "Scripting Avanzado",
+                description: "Crea pipelines CI/CD y scripts reutilizables. Automatización que va más allá de lo básico.",
+                gradient: "from-orange-500/10 to-red-600/10",
+                border: "border-orange-500/30",
+                color: "text-orange-400",
+                delay: 0.4,
+                skills: ["CI/CD pipelines", "Script automation", "TypeScript/Python"]
+              }
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: feature.delay }}
+                viewport={{ once: true }}
+                whileHover={{ 
+                  scale: 1.05,
+                  y: -5,
+                  transition: { duration: 0.3 }
+                }}
+                className={`bg-gradient-to-br ${feature.gradient} ${feature.border} border backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden group hover:border-opacity-60 transition-all duration-300 cursor-pointer`}
+              >
+                {/* Background glow effect */}
+                <motion.div
+                  className={`absolute -inset-1 bg-gradient-to-r ${feature.gradient} rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-500`}
+                />
+                
+                <div className="relative">
+                  {/* Icon with animation */}
+                  <motion.div
+                    whileHover={{ 
+                      rotate: [0, -10, 10, -5, 0],
+                      scale: [1, 1.2, 1.1]
+                    }}
+                    transition={{ duration: 0.5 }}
+                    className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-300"
+                  >
+                    {feature.icon}
+                  </motion.div>
+
+                  {/* Title with gradient text */}
+                  <h3 className={`text-xl font-bold text-white mb-3 group-hover:${feature.color} transition-colors duration-300`}>
+                    {feature.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-400 group-hover:text-gray-300 transition-colors duration-300 leading-relaxed mb-4">
+                    {feature.description}
+                  </p>
+
+                  {/* Skills tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {feature.skills.map((skill, skillIndex) => (
+                      <motion.span
+                        key={skillIndex}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        transition={{ 
+                          duration: 0.3, 
+                          delay: feature.delay + (skillIndex * 0.1) + 0.3 
+                        }}
+                        viewport={{ once: true }}
+                        className={`text-xs px-2 py-1 rounded-full bg-white/10 ${feature.color} border border-current/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+                      >
+                        {skill}
+                      </motion.span>
+                    ))}
+                  </div>
+
+                  {/* Hover indicator */}
+                  <motion.div
+                    className={`absolute bottom-4 right-4 w-8 h-8 rounded-full ${feature.gradient} border ${feature.border} flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                    whileHover={{ rotate: 180 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span className="text-white text-sm">→</span>
+                  </motion.div>
+                </div>
+              </motion.div>
+            ))}
           </div>
+
+          {/* Call to action section */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mt-16"
+          >
+            <div className="bg-gradient-to-r from-red-500/10 via-purple-500/10 to-pink-500/10 border border-red-500/30 rounded-2xl p-8 max-w-4xl mx-auto">
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  opacity: [0.8, 1, 0.8]
+                }}
+                transition={{ 
+                  duration: 2.5, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="text-4xl mb-4"
+              >
+                ⚡
+              </motion.div>
+              <h4 className="text-2xl font-bold text-white mb-4">
+                Técnicas que cambiarán tu carrera para siempre
+              </h4>
+              <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+                Estos conocimientos avanzados te separarán del 99% de developers. 
+                No los encontrarás en tutoriales gratuitos ni cursos básicos.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => setShowWebinarForm(true)}
+                  className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                >
+                  Ver estas técnicas EN VIVO →
+                </button>
+                <div className="flex items-center justify-center gap-2 text-gray-400">
+                  <span className="text-green-400">✓</span>
+                  <span>Webinar gratuito - Sin compromiso</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -1204,13 +1637,14 @@ export default function ClaudeLanding() {
             si quieres profundizar con el taller completo.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
+            <button
               onClick={() => setShowWebinarForm(true)}
-              className="bg-white text-purple-900 hover:bg-gray-100 font-bold py-4 px-8 rounded-lg text-lg transition-all transform hover:scale-105 shadow-lg">
+              className="bg-white text-purple-900 hover:bg-gray-100 font-bold py-4 px-8 rounded-lg text-lg transition-all transform hover:scale-105 shadow-lg"
+            >
               Quiero mi lugar en el webinar →
             </button>
-            <a 
-              href="/temario-claude-code.pdf" 
+            <a
+              href="/temario-claude-code.pdf"
               download="Temario-Claude-Code-Power-User.pdf"
               className="inline-block bg-transparent border-2 border-white text-white hover:bg-white hover:text-purple-900 font-bold py-4 px-8 rounded-lg text-lg transition-all text-center"
             >
