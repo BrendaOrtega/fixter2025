@@ -3,9 +3,10 @@ import type { Route } from "./+types/webinar";
 import { useState } from "react";
 import { cn } from "~/utils/cn";
 import { AdminNav } from "~/components/admin/AdminNav";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  // await getAdminOrRedirect(request);
+  await getAdminOrRedirect(request);
 
   // Debug: obtener algunos usuarios para ver sus tags
   const debugUsers = await db.user.findMany({
@@ -282,21 +283,25 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
-                          {webinarData?.webinarDate 
-                            ? new Date(webinarData.webinarDate).toLocaleDateString("es-MX", {
+                          {webinarData?.webinarDate
+                            ? new Date(
+                                webinarData.webinarDate
+                              ).toLocaleDateString("es-MX", {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
                                 hour: "2-digit",
-                                minute: "2-digit"
+                                minute: "2-digit",
                               })
                             : "-"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
-                          {webinarData?.registeredAt 
-                            ? new Date(webinarData.registeredAt).toLocaleDateString("es-MX")
+                          {webinarData?.registeredAt
+                            ? new Date(
+                                webinarData.registeredAt
+                              ).toLocaleDateString("es-MX")
                             : "-"}
                         </div>
                       </td>
@@ -389,17 +394,22 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                         ?.replace("urgency-", "") ||
                       "",
                     webinarData?.webinarType || "",
-                    webinarData?.webinarDate 
-                      ? new Date(webinarData.webinarDate).toLocaleDateString("es-MX", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        })
+                    webinarData?.webinarDate
+                      ? new Date(webinarData.webinarDate).toLocaleDateString(
+                          "es-MX",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )
                       : "",
-                    webinarData?.registeredAt 
-                      ? new Date(webinarData.registeredAt).toLocaleDateString("es-MX")
+                    webinarData?.registeredAt
+                      ? new Date(webinarData.registeredAt).toLocaleDateString(
+                          "es-MX"
+                        )
                       : "",
                     new Date(user.createdAt).toLocaleDateString("es-MX"),
                   ];
