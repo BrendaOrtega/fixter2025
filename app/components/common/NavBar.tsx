@@ -17,6 +17,7 @@ import { IoIosVideocam } from "react-icons/io";
 const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
+  { name: "Domina Claude Code", link: "/libro" },
 ];
 
 export const SquigglyUnderline = () => {

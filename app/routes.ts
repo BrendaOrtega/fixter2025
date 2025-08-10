@@ -25,6 +25,8 @@ export default [
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
   // Claude Code Workshop
   route("claude", "routes/claude.tsx"),
+  // Libro interactivo
+  route("libro", "routes/libro.tsx"),
   // groups
   ...prefix("admin", [
     index("routes/admin/dash.tsx"),
