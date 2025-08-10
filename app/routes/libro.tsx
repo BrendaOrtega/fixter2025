@@ -11,9 +11,25 @@ import getMetaTags from "~/utils/getMetaTags";
 const chapters = [
   { id: "prólogo", title: "Prólogo", slug: "prologo" },
   { id: "intro", title: "Introducción", slug: "introduccion" },
-  { id: "01", title: "Fundamentos para administrar mejor el contexto", slug: "capitulo-01" },
+  {
+    id: "01",
+    title: "Fundamentos para administrar mejor el contexto",
+    slug: "capitulo-01",
+  },
   { id: "02", title: "SDK - Automatización y Scripting", slug: "capitulo-02" },
-  // Añadir más capítulos aquí
+  {
+    id: "03",
+    title: "CLAUDE.md - La Memoria Persistente del Proyecto",
+    slug: "capitulo-03",
+  },
+  { id: "04", title: "Usando GitHub MCP Básicamente", slug: "capitulo-04" },
+  { id: "05", title: "Dominando Git Worktree", slug: "capitulo-05" },
+  {
+    id: "06",
+    title: "Usando GitHub MCP de Forma Avanzada",
+    slug: "capitulo-06",
+  },
+  { id: "07", title: "Entendiendo los JSON MCPs", slug: "capitulo-07" },
 ];
 
 export const meta = ({ location }: Route.MetaArgs) => {
@@ -86,21 +102,33 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeHeading, setActiveHeading] = useState("");
-  const [headings, setHeadings] = useState<Array<{ id: string; text: string; level: number }>>([]);
+  const [headings, setHeadings] = useState<
+    Array<{ id: string; text: string; level: number }>
+  >([]);
+
+  // Scroll to top when chapter changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentChapter.slug]);
 
   // Extraer headings y manejar scroll
   useEffect(() => {
     const extractHeadings = () => {
-      const headingElements = document.querySelectorAll("article h1, article h2, article h3");
+      const headingElements = document.querySelectorAll(
+        "article h1, article h2, article h3"
+      );
       const extractedHeadings = Array.from(headingElements).map((heading) => {
         const text = heading.textContent || "";
         const level = parseInt(heading.tagName.charAt(1));
-        const id = text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-áéíóúñü]/g, "");
-        
+        const id = text
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w\-áéíóúñü]/g, "");
+
         if (!heading.id) {
           heading.id = id;
         }
-        
+
         return { id: heading.id, text, level };
       });
       setHeadings(extractedHeadings);
@@ -109,21 +137,24 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
     const handleScroll = () => {
       // Progress bar
       const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight - windowHeight;
+      const documentHeight =
+        document.documentElement.scrollHeight - windowHeight;
       const scrollTop = window.scrollY;
       setProgress((scrollTop / documentHeight) * 100);
 
       // Active heading detection
-      const headingElements = document.querySelectorAll("article h1, article h2, article h3");
+      const headingElements = document.querySelectorAll(
+        "article h1, article h2, article h3"
+      );
       let active = "";
-      
+
       for (const heading of headingElements) {
         const rect = heading.getBoundingClientRect();
         if (rect.top <= 150) {
           active = heading.id;
         }
       }
-      
+
       setActiveHeading(active);
     };
 
@@ -131,14 +162,14 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
     setTimeout(extractHeadings, 200);
     window.addEventListener("scroll", handleScroll);
     handleScroll();
-    
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, [content]);
 
   const scrollToHeading = (headingId: string) => {
-    document.getElementById(headingId)?.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
+    document.getElementById(headingId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
     });
   };
 
@@ -181,7 +212,7 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
 
       <div className="flex max-w-7xl mx-auto relative">
         {/* Sidebar - Desktop */}
-        <aside className="hidden lg:block w-72 min-h-screen border-r border-gray-200 bg-white sticky top-14">
+        <aside className="hidden lg:block min-h-screen border-r border-gray-200 bg-white sticky top-14 max-w-80 min-w-80">
           <nav className="p-6">
             <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-6">
               Tabla de Contenidos
@@ -198,7 +229,9 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
                     }`}
                   >
                     <span className="text-xs opacity-60">
-                      {chapter.id === "prólogo" || chapter.id === "intro" ? "" : `Capítulo ${chapter.id}`}
+                      {chapter.id === "prólogo" || chapter.id === "intro"
+                        ? ""
+                        : `Capítulo ${chapter.id}`}
                     </span>
                     <div className="font-medium mt-1">{chapter.title}</div>
                   </Link>
@@ -223,7 +256,7 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
                 initial={{ x: -300 }}
                 animate={{ x: 0 }}
                 exit={{ x: -300 }}
-                className="fixed left-0 top-0 w-80 h-full bg-white z-50 shadow-2xl lg:hidden"
+                className="fixed left-0 top-0 w-96 h-full bg-white z-50 shadow-2xl lg:hidden"
               >
                 <div className="p-6 border-b border-gray-200">
                   <h2 className="text-lg font-bold text-gray-900">
@@ -244,7 +277,9 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
                           }`}
                         >
                           <span className="text-xs opacity-60">
-                            {chapter.id === "prólogo" || chapter.id === "intro" ? "" : `Capítulo ${chapter.id}`}
+                            {chapter.id === "prólogo" || chapter.id === "intro"
+                              ? ""
+                              : `Capítulo ${chapter.id}`}
                           </span>
                           <div className="font-medium mt-1">
                             {chapter.title}
@@ -263,60 +298,60 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
         <main className="flex-1 px-4 sm:px-6 lg:px-12 py-8 lg:py-16 bg-white relative">
           <div className="flex gap-8">
             <article className="flex-1 max-w-3xl">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <BookMarkdown>{content}</BookMarkdown>
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <BookMarkdown>{content}</BookMarkdown>
+              </motion.div>
 
-            {/* Navegación entre capítulos */}
-            <nav className="mt-20 pt-12 border-t border-gray-100 dark:border-gray-800">
-              <div className="flex items-center justify-between">
-                {prevChapter ? (
-                  <Link
-                    to={`?chapter=${prevChapter.slug}`}
-                    className="group flex items-center space-x-3 px-6 py-4 rounded-xl bg-gray-50 hover:bg-purple-50 transition-all duration-200 border border-gray-200"
-                  >
-                    <IoIosArrowBack className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
-                    <div className="text-left">
-                      <div className="text-xs text-gray-500 uppercase tracking-wider">
-                        Anterior
+              {/* Navegación entre capítulos */}
+              <nav className="mt-20 pt-12 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between">
+                  {prevChapter ? (
+                    <Link
+                      to={`?chapter=${prevChapter.slug}`}
+                      className="group flex items-center space-x-3 px-6 py-4 rounded-xl bg-gray-50 hover:bg-purple-50 transition-all duration-200 border border-gray-200"
+                    >
+                      <IoIosArrowBack className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                      <div className="text-left">
+                        <div className="text-xs text-gray-500 uppercase tracking-wider">
+                          Anterior
+                        </div>
+                        <div className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                          {prevChapter.title}
+                        </div>
                       </div>
-                      <div className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                        {prevChapter.title}
-                      </div>
-                    </div>
-                  </Link>
-                ) : (
-                  <div />
-                )}
+                    </Link>
+                  ) : (
+                    <div />
+                  )}
 
-                {nextChapter ? (
-                  <Link
-                    to={`?chapter=${nextChapter.slug}`}
-                    className="group flex items-center space-x-3 px-6 py-4 rounded-xl bg-gray-50 hover:bg-purple-50 transition-all duration-200 border border-gray-200"
-                  >
-                    <div className="text-right">
-                      <div className="text-xs text-gray-500 uppercase tracking-wider">
-                        Siguiente
+                  {nextChapter ? (
+                    <Link
+                      to={`?chapter=${nextChapter.slug}`}
+                      className="group flex items-center space-x-3 px-6 py-4 rounded-xl bg-gray-50 hover:bg-purple-50 transition-all duration-200 border border-gray-200"
+                    >
+                      <div className="text-right">
+                        <div className="text-xs text-gray-500 uppercase tracking-wider">
+                          Siguiente
+                        </div>
+                        <div className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                          {nextChapter.title}
+                        </div>
                       </div>
-                      <div className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                        {nextChapter.title}
-                      </div>
-                    </div>
-                    <IoIosArrowForward className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
-                  </Link>
-                ) : (
-                  <div />
-                )}
-              </div>
-            </nav>
+                      <IoIosArrowForward className="w-5 h-5 text-gray-400 group-hover:text-purple-600 transition-colors" />
+                    </Link>
+                  ) : (
+                    <div />
+                  )}
+                </div>
+              </nav>
             </article>
 
             {/* Navegador de títulos - Tablet y Desktop */}
-            <aside className="hidden md:block w-64 sticky top-20 self-start">
+            <aside className="hidden md:block w-80 sticky top-20 self-start">
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">
                   En esta sección
@@ -327,18 +362,16 @@ export default function Libro({ loaderData }: Route.ComponentProps) {
                       <button
                         key={heading.id}
                         onClick={() => scrollToHeading(heading.id)}
-                        className={`block text-left w-full px-3 py-2 text-sm rounded-md transition-all duration-200 ${
+                        className={`block text-left w-full px-4 py-3 text-sm rounded-md transition-all duration-200 ${
                           activeHeading === heading.id
                             ? "bg-purple-100 text-purple-700 font-semibold border-l-2 border-purple-500"
                             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                         }`}
                         style={{
-                          paddingLeft: `${(heading.level - 1) * 12 + 12}px`
+                          paddingLeft: `${(heading.level - 1) * 12 + 12}px`,
                         }}
                       >
-                        <div className="truncate">
-                          {heading.text}
-                        </div>
+                        <div className="truncate">{heading.text}</div>
                       </button>
                     ))}
                   </nav>

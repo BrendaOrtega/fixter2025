@@ -27,8 +27,8 @@ Una vez instalado, el SDK se integra naturalmente con tu flujo de trabajo existe
 ```json
 {
   "scripts": {
-    "analyze": "claude 'analyze code quality and suggest improvements'",
-    "refactor": "claude 'refactor this module following clean code principles'"
+    "analyze": "claude 'analiza la calidad del código y sugiere mejoras'",
+    "refactor": "claude 'refactoriza este módulo siguiendo principios de código limpio'"
   }
 }
 ```
@@ -42,9 +42,9 @@ Los patrones fundamentales del SDK se basan en un principio central: la mayoría
 El poder real emerge cuando consideramos que cada comando simple puede desencadenar una cadena compleja de operaciones. Un commit "inteligente" no solo ejecuta git commit, sino que analiza los cambios, genera un mensaje descriptivo apropiado, y puede incluso sugerir mejoras en el código antes de commitear.
 
 ```bash
-claude "commit my changes with a descriptive message"
-claude "what technologies does this project use?"
-claude "create a new branch called feature/user-auth"
+claude "confirma mis cambios con un mensaje descriptivo"
+claude "¿qué tecnologías usa este proyecto?"
+claude "crea una nueva rama llamada feature/user-auth"
 ```
 
 ### Automatización Compleja en Instrucciones Simples
@@ -54,8 +54,8 @@ La verdadera revolución del SDK radica en su capacidad de manejar complejidad a
 Esta capacidad transforma fundamentalmente cómo pensamos sobre la automatización. En lugar de escribir scripts que manejan cada caso edge específico, podemos delegar la responsabilidad de manejar complejidad al SDK, que puede razonar sobre situaciones imprevistas y adaptar su approach dinámicamente.
 
 ```bash
-claude "refactor the authentication module to use modern patterns"
-claude "optimize this React component for better performance"
+claude "refactoriza el módulo de autenticación para usar patrones modernos"
+claude "optimiza este componente de React para mejor rendimiento"
 ```
 
 ## Scripting con Contexto Persistente
@@ -67,8 +67,8 @@ El contexto persistente representa quizás la innovación más fundamental del S
 La persistencia del contexto tiene implicaciones profundas para cómo estructuramos nuestros flujos de trabajo. Podemos comenzar con una exploración general del proyecto, refinar gradualmente nuestra comprensión, y luego aplicar cambios informados por todo el contexto acumulado. Esta aproximación iterativa espeja más de cerca cómo trabajamos naturalmente como desarrolladores.
 
 ```bash
-claude "I want to add user authentication to this app"
-claude --continue "now add password reset functionality"
+claude "quiero añadir autenticación de usuario a esta app"
+claude --continue "Ahora, agrega la funcionalidad de resetear el password"
 claude --resume  # Para reanudar conversaciones previas
 ```
 
@@ -79,10 +79,10 @@ La capacidad de mantener contexto entre múltiples comandos permite crear sesion
 En el ejemplo siguiente, el SDK no solo ejecuta cada comando individualmente, sino que mantiene una comprensión evolutiva del sistema que está siendo modificado. Los tests generados en el paso 3 reflejan tanto el código original analizado en el paso 1 como las modificaciones implementadas en el paso 2.
 
 ```bash
-claude "analyze the current user management system"
-claude --continue "refactor it to be more modular"
-claude --continue "add unit tests for the new modules"
-claude --continue "update the documentation"
+claude "analiza el sistema actual de gestión de usuarios"
+claude --continue "refactorízalo para que sea más modular"
+claude --continue "añade pruebas unitarias para los nuevos módulos"
+claude --continue "actualiza la documentación"
 ```
 
 ## Workflows de Automatización Avanzada
@@ -96,10 +96,23 @@ En el flujo de desarrollo paralelo, el SDK no solo ejecuta comandos en diferente
 La coordinación temporal también es crucial. El SDK puede determinar cuándo ciertos procesos deben esperar por otros, cuándo pueden proceder en paralelo, y cómo manejar sincronización cuando los procesos paralelos necesitan intercambiar información.
 
 ```bash
+# Crear un nuevo worktree desde la rama actual y cambiar a una nueva rama feature
 git worktree add ../feature-branch -b feature/new-api
+
+# Navegar al directorio del nuevo worktree
 cd ../feature-branch
-claude "implement REST API endpoints for user management" &
+
+# Ejecutar Claude Code en background para implementar la API
+claude "implementa endpoints de REST API para gestión de usuarios" &
+
+# Esperar a que complete el proceso de Claude Code antes de continuar
 wait $CLAUDE_PID
+
+# Este pattern permite:
+# 1. Desarrollo paralelo en múltiples worktrees sin conflictos
+# 2. Ejecución en background de tareas complejas
+# 3. Sincronización controlada entre procesos interdependientes
+# 4. Mantenimiento de contexto específico por worktree
 ```
 
 ### Inteligencia Adaptativa en CI/CD
@@ -109,9 +122,9 @@ Los pipelines tradicionales de CI/CD siguen secuencias fijas de pasos. El SDK in
 El análisis de impacto que realiza el SDK va mucho más allá de identificar qué archivos cambiaron. Puede evaluar la naturaleza semántica de los cambios, predecir qué componentes del sistema pueden verse afectados, y determinar el nivel apropiado de testing y validación requerido.
 
 ```bash
-CHANGES=$(claude "analyze what changed in this commit and categorize the impact")
+CHANGES=$(claude "analiza qué cambió en este commit y categoriza el impacto")
 if [[ $CHANGES == *"critical"* ]]; then
-  claude "run comprehensive test suite and performance benchmarks"
+  claude "ejecuta la suite completa de pruebas y benchmarks de rendimiento"
 fi
 ```
 
@@ -122,10 +135,10 @@ La filosofía Unix de herramientas pequeñas, composables y especializadas encue
 Los aliases y git hooks representan puntos de integración particularmente poderosos porque permiten que la inteligencia del SDK se active automáticamente en momentos críticos del flujo de desarrollo. Un git hook no solo ejecuta una verificación, sino que puede adaptar su nivel de escrutinio basándose en el contexto del proyecto y la naturaleza de los cambios.
 
 ```bash
-echo 'alias lint-ai="claude \"you are a linter. review this code for issues\""' >> ~/.bashrc
+echo 'alias lint-ai="claude \"eres un linter. revisa este código en busca de problemas\""' >> ~/.bashrc
 cat > .git/hooks/pre-commit << 'EOF'
 #!/bin/bash
-claude "review staged changes for potential issues before commit"
+claude "revisa los cambios en staging para posibles problemas antes del commit"
 EOF
 ```
 
@@ -138,10 +151,10 @@ Los subagentes representan una evolución natural de la especialización en herr
 Esta delegación automática se basa en análisis contextual sofisticado. Cuando mencionas "security", el SDK comprende que necesitas un enfoque de análisis diferente al que usarías para "performance optimization". Esta comprensión va más allá del reconocimiento de palabras clave; incluye entendimiento de las metodologías, herramientas, y perspectivas específicas que cada dominio requiere.
 
 ```bash
-claude "review the security of the authentication module"
+claude "revisa la seguridad del módulo de autenticación"
 # Automáticamente usa expertise en security review
 
-claude "optimize the database queries in the user service"  
+claude "optimiza las consultas de base de datos en el servicio de usuarios"
 # Aplica conocimiento especializado en performance
 ```
 
@@ -155,7 +168,7 @@ La configuración de subagentes personalizados permite que los equipos codifique
 // Configuración de expertise especializado
 {
   'api-reviewer': {
-    prompt: 'You are an API design expert. Review endpoints for REST principles.',
+    prompt: 'Eres un experto en diseño de APIs. Revisa los endpoints siguiendo principios REST.',
     tools: ['Read', 'Grep', 'Write']
   }
 }
@@ -170,8 +183,8 @@ El concepto de "extended thinking" representa una de las capacidades más sofist
 Esta capacidad es particularmente valiosa para decisiones que tienen consecuencias a largo plazo o que requieren balancear múltiples trade-offs. El pensamiento extendido no simplemente produce más output; produce razonamiento más estructurado, consideración más sistemática de alternativas, y análisis más profundo de implicaciones.
 
 ```bash
-claude "think deeply about the best database architecture for a multi-tenant SaaS application"
-claude "analyze and think step by step through this memory leak issue"
+claude "piensa profundamente sobre la mejor arquitectura de base de datos para una aplicación SaaS multi-tenant"
+claude "analiza y piensa paso a paso este problema de fuga de memoria"
 ```
 
 ## Automatización de Flujos Empresariales
@@ -183,9 +196,9 @@ Los flujos empresariales revelan donde el SDK realmente brilla: la coordinación
 El SDK puede analizar la estructura del proyecto, identificar las dependencias críticas, generar configuraciones apropiadas para el entorno específico, y establecer herramientas de desarrollo que se alineen con las prácticas del equipo. Cada paso informa al siguiente, creando un proceso de onboarding que se adapta dinámicamente a las condiciones encontradas.
 
 ```bash
-claude "analyze the project structure and create a setup guide"
-claude "install all required dependencies and resolve any conflicts"  
-claude "configure git hooks for code quality and commit standards"
+claude "analiza la estructura del proyecto y crea una guía de configuración"
+claude "instala todas las dependencias requeridas y resuelve cualquier conflicto"
+claude "configura git hooks para calidad de código y estándares de commit"
 ```
 
 ### Releases Inteligentes y Monitoreo Adaptativo
@@ -195,8 +208,8 @@ Los procesos de release tradicionales siguen checklists rígidos que pueden no s
 El monitoreo automatizado representa otra área donde la inteligencia contextual del SDK proporciona valor significativo. En lugar de simplemente verificar métricas predefinidas, el SDK puede evaluar la salud del sistema de manera holística, identificar patrones anómalos, e incluso intentar remediation automática para problemas comunes.
 
 ```bash
-claude "run comprehensive test suite and security audit"
-claude "check application health and performance metrics"
+claude "ejecuta la suite completa de pruebas y auditoría de seguridad"
+claude "verifica la salud de la aplicación y métricas de rendimiento"
 ```
 
 ## Integración Ecosistémica
@@ -211,7 +224,7 @@ La configuración de tasks en VS Code ejemplifica cómo podemos crear puntos de 
 {
   "label": "Claude Refactor",
   "command": "claude",
-  "args": ["refactor selected code to be more maintainable"]
+  "args": ["refactoriza el código seleccionado para que sea más mantenible"]
 }
 ```
 
@@ -220,8 +233,8 @@ La configuración de tasks en VS Code ejemplifica cómo podemos crear puntos de 
 La integración con sistemas de CI/CD como GitHub Actions representa una evolución hacia pipelines verdaderamente inteligentes. En lugar de ejecutar los mismos checks para todos los cambios, el pipeline puede adaptar su comportamiento basándose en análisis contextual del código modificado, optimizando tanto tiempo como recursos computacionales.
 
 ```yaml
-# Automated review que adapta su profundidad al contexto
-claude "review the changes in this PR for code quality, security, and performance"
+# Review automatizado que adapta su profundidad al contexto
+claude "revisa los cambios en este PR para calidad de código, seguridad y rendimiento"
 ```
 
 ## Resiliencia y Recuperación Inteligente
@@ -233,8 +246,8 @@ Los sistemas de producción requieren robustez que va más allá del simple retr
 El debugging automatizado representa un cambio fundamental en cómo abordamos la resolución de problemas. En lugar de requerir intervención manual para cada error, el SDK puede analizar logs, formular hipótesis, e incluso implementar fixes para problemas comunes, escalando a intervención humana solo cuando la automatización alcanza sus límites.
 
 ```bash
-claude "diagnose deployment failure and attempt automatic recovery"
-claude --continue "implement a fix for this issue if possible"
+claude "diagnostica el fallo de despliegue e intenta recuperación automática"
+claude --continue "implementa una solución para este problema si es posible"
 ```
 
 ## Metodologías de Desarrollo Emergentes
@@ -246,7 +259,7 @@ El SDK está habilitando una nueva metodología de desarrollo que podríamos lla
 Esta metodología tiene implicaciones profundas para cómo estructura mos proyectos, documentamos decisiones, y transferimos conocimiento entre miembros del equipo. Los scripts se convierten en documentación ejecutable de intenciones de alto nivel, mientras que los detalles de implementación se delegan a sistemas inteligentes.
 
 ```bash
-claude "migrate from $SOURCE_FRAMEWORK to $TARGET_FRAMEWORK incrementally"
+claude "migra de $SOURCE_FRAMEWORK a $TARGET_FRAMEWORK de forma incremental"
 ```
 
 ## El Futuro del Scripting: Hacia la Automatización Conversacional
