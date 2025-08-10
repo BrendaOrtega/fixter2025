@@ -1,289 +1,322 @@
-# Capítulo 4: Usando GitHub MCP Básicamente
+# Capítulo 4: Comandos CLI Básicos - El Punto de Entrada
 
-## La Integración Fundamental con GitHub
+## La Revolución de la Interfaz de Terminal
 
-GitHub MCP (Model Context Protocol) representa la evolución natural de la colaboración entre desarrollo local y el ecosistema de GitHub. No es simplemente otra forma de interactuar con repositories remotos; es la democratización de workflows complejos que tradicionalmente requerían expertise profundo en Git, APIs de GitHub, y scripting avanzado.
+Los comandos CLI de Claude Code representan tu primera interacción con esta nueva forma de desarrollo conversacional. No son simplemente otra herramienta de línea de comandos; son la puerta de entrada a un ecosistema donde la intención se traduce directamente en acción, donde la complejidad se abstrae sin sacrificar control, y donde la productividad se amplifica attraverso de la inteligencia contextual.
 
-La integración básica de GitHub MCP permite que desarrolladores de cualquier nivel de experiencia ejecuten tareas que antes estaban reservadas para DevOps specialists o desarrolladores senior con años de experiencia en automation. Esta democratización tiene implicaciones profundas no solo para productividad individual, sino para cómo los equipos pueden distribuir responsabilidades y acelerar development cycles.
+Esta revolución comienza en el lugar más familiar para cualquier desarrollador: la terminal. Desde ahí, Claude Code extiende naturalmente tu flujo de trabajo existente, integrándose seamlessly con tus herramientas actuales mientras introduce capacidades que transforman fundamentalmente cómo abordas los problemas de desarrollo.
 
-Cuando dominas las capacidades básicas de GitHub MCP, no solo estás aprendiendo comandos; estás desarrollando una nueva relación con el código colaborativo donde las barreras entre intención y ejecución se difuminan. Esta transformación cambia fundamentalmente cómo piensas sobre el desarrollo en equipo y la gestión de proyectos.
+La maestría de los comandos CLI no radica en memorizar flags y opciones, sino en desarrollar una comprensión intuitiva de cuándo y cómo usar cada modalidad de interacción para maximizar tu efectividad según el contexto específico de cada situación.
 
-## Configuración e Instalación
+## El Comando Base: `claude`
 
-### El Proceso de Conexión Inicial
+### Entrada al Mundo Conversacional
 
-La configuración de GitHub MCP está diseñada para ser intuitiva, pero cada paso establece foundations importantes para workflows futuros. La autenticación no es solo un paso técnico; es el establishment de un canal de comunicación bidireccional entre tu ambiente local y el ecosistema GitHub.
-
-```bash
-# Instalación del MCP server para GitHub
-npx @modelcontextprotocol/create-mcp-server github
-
-# Configuración en settings
-claude config set mcp.github.enabled true
-claude config set mcp.github.token "ghp_your_token_here"
-```
-
-La configuración inicial también determina qué nivel de acceso tendrás a diferentes operations. Los tokens con permisos específicos habilitan diferentes tipos de automation, desde simple issue management hasta complex deployment workflows.
-
-### Integración con Proyectos Existentes
-
-Una vez configurado, GitHub MCP se integra transparentemente con tu development workflow existente. No reemplaza Git local; lo amplifica con capabilities inteligentes que conectan seamlessly con GitHub's cloud-based features.
+El comando `claude` sin argumentos es la puerta más directa al desarrollo conversacional. Te lleva al modo interactivo donde puedes mantener diálogos extendidos, explorar problemas complejos paso a paso, y recibir asistencia contextual que evoluciona con tu trabajo.
 
 ```bash
-# Verificar la integración
-claude "¿qué issues están abiertos en este proyecto?"
-claude "muéstrame el estado de los pull requests actuales"
-claude "¿cuál es el historial de releases recientes?"
+claude
+# Inicia modo interactivo completo
 ```
 
-Esta integration significa que puedes mantener tu flujo local favorito mientras gains access a powerful remote operations through natural language commands.
+Esta simplicidad esconde una sofisticación profunda. El modo interactivo mantiene contexto de proyecto, aprende de tus patrones de trabajo, y se adapta a tu estilo específico de desarrollo. No es un simple prompt; es un colaborador inteligente que comprende tu proyecto y puede razonar sobre él de manera sofisticada.
 
-## Operaciones Básicas de Repositorio
+### Consultas Directas y Análisis Puntuales
 
-### Clonado y Setup Inteligente
-
-El clonado básico a través de GitHub MCP va más allá de un simple git clone. El sistema puede analizar el repository, entender su estructura, y configurar el ambiente local optimally basándose en the project's specific requirements.
+Para tareas específicas que no requieren sesión extendida, puedes expresar tu intención directamente como argumento:
 
 ```bash
-# Clonado inteligente con setup automático
-claude "clona el repositorio user/project-name y configúralo para desarrollo"
-
-# El sistema automáticamente:
-# - Clona el repo
-# - Instala dependencies
-# - Configura environment variables necesarias  
-# - Verifica que todas las tools requeridas estén disponibles
+claude "analiza la estructura de este proyecto React y sugiere mejoras arquitectónicas"
+claude "¿qué tecnologías usa este repositorio y cómo están organizadas?"
+claude "revisa el código en src/ y identifica posibles problemas de rendimiento"
+claude "explica qué hace esta función y cómo podría optimizarse"
 ```
 
-Esta approach elimina the friction común del project onboarding, donde new team members spend hours figuring out configuration details que aren't always well documented.
+Esta modalidad es invaluable para:
+- **Análisis rápidos**: Evaluación inmediata de código o arquitectura
+- **Consultas específicas**: Preguntas que pueden resolverse en una interacción
+- **Integración con scripts**: Incorporación en workflows automatizados
+- **Verificaciones puntuales**: Validación rápida de approaches o decisiones
 
-### Exploración de Proyecto Contextual
+## Flags de Control Fundamental
 
-Una vez que tienes access al repository, GitHub MCP enables contextual exploration que goes far beyond browsing files. Puede analyze project structure, understand architectural patterns, y provide insights sobre how different components interact.
+### `--print` / `-p`: Scripting y Automatización
+
+La flag `--print` transforma Claude Code en una poderosa herramienta de scripting que puede integrarse en pipelines, workflows de CI/CD, y scripts de automatización:
 
 ```bash
-# Exploración contextual del proyecto
-claude "dame un overview de la arquitectura de este proyecto"
-claude "¿qué tecnologías y frameworks se usan aquí?"
-claude "identifica los componentes principales y sus responsabilidades"
+# Análisis para scripting
+claude -p "genera un resumen de los cambios en el último commit"
+claude --print "verifica que todos los tests pasen y reporta cualquier fallo"
+claude -p "evalúa la complejidad de este módulo en escala 1-10"
+
+# Integración en pipelines
+ANALYSIS=$(claude -p "analiza la calidad del código y dame un score numérico")
+if [[ $ANALYSIS =~ "score: [89]|score: 10" ]]; then
+    echo "✅ Código aprobado para merge"
+else
+    echo "❌ Código requiere mejoras antes del merge"
+    exit 1
+fi
+
+# Generación de reports
+claude -p "genera reporte de cobertura de tests en formato JSON" > coverage-report.json
 ```
 
-Esta contextual understanding se vuelve la foundation para all subsequent work, ensuring que your contributions align con existing patterns y architectural decisions.
+**Características Clave**:
+- **Output limpio**: Solo la respuesta, sin interfaz interactiva
+- **Scriptable**: Perfecto para capturar output en variables
+- **CI/CD friendly**: Ideal para integraciones automatizadas
+- **Format agnóstico**: Puede generar cualquier formato requerido
 
-### Navegación de Issues y Pull Requests
+### `--continue` / `-c`: Continuidad de Contexto
 
-El management básico de issues y pull requests through GitHub MCP transforms these administrative tasks into conversational interactions. Invece de navigating complex GitHub interfaces, puedes manage project workflow through natural language.
+Una de las capacidades más poderosas: reanudar conversaciones previas con todo el contexto intact:
 
 ```bash
-# Gestión básica de issues
-claude "créame un issue para implementar autenticación de usuarios"
-claude "¿qué issues están asignados a mí?"
-claude "muéstrame issues relacionados con performance"
+claude --continue
+# Reanuda la conversación más reciente
 
-# Pull request basics
-claude "crea un pull request para mi rama feature/auth"
-claude "¿qué PR necesitan review?"
-claude "agrega reviewers al PR #123"
+claude -c  
+# Forma abreviada del comando anterior
 ```
 
-## Workflows de Desarrollo Básicos
+**Potencia de la Continuidad**:
+- **Memoria de proyecto**: Recuerda análisis previos y decisiones tomadas
+- **Contexto evolutivo**: Entiende cómo ha cambiado tu proyecto over time
+- **Workflows extendidos**: Permite tareas que se desarrollan a lo largo de múltiples sesiones
+- **Aprendizaje acumulativo**: Cada sesión informa las siguientes
 
-### Creación de Branches y Feature Development
+**Casos de Uso Típicos**:
+```bash
+# Sesión 1: Análisis inicial
+claude "analiza la arquitectura de este proyecto de e-commerce"
 
-GitHub MCP simplifica el branch management by understanding context about what you're working on y creating appropriately named branches con meaningful descriptions.
+# Sesión 2: Continuación al día siguiente  
+claude -c "basándote en el análisis de ayer, implementa optimizaciones de performance"
+
+# Sesión 3: Una semana después
+claude -c "¿cómo han afectado los cambios recientes a las optimizaciones que implementamos?"
+```
+
+### `--model`: Selección Estratégica de Capacidades
+
+Diferentes modelos ofrecen diferentes balances entre velocidad, profundidad, y especialización:
 
 ```bash
-# Creación inteligente de branches
-claude "crea una nueva rama para implementar notificaciones push"
-
-# El sistema:
-# - Sugiere un nombre descriptivo: feature/push-notifications
-# - Crea la branch desde main (o base branch apropiada)
-# - Hace switch automáticamente
-# - Opcionalmente crea un issue tracking para la feature
+claude --model sonnet-3.5 "análisis arquitectónico profundo de este sistema complejo"
+claude --model haiku-3 "verificación rápida de sintaxis en este archivo"
+claude --model opus-3 "revisión exhaustiva de seguridad y code review completo"
 ```
 
-Esta approach ensures consistent naming conventions y reduces the cognitive overhead de branch management decisions.
+**Estrategias de Selección**:
+- **Sonnet**: Balance óptimo para la mayoría de tareas de desarrollo
+- **Haiku**: Respuestas rápidas para consultas simples y verificaciones
+- **Opus**: Análisis profundos y tareas que requieren razonamiento complejo
 
-### Commit Messages Inteligentes
+### `--add-dir`: Expansión de Contexto
 
-Una de las capabilities más immediately useful es la generation de commit messages que are both descriptive y follow established conventions. GitHub MCP puede analyze your changes y generate messages que accurately reflect what was accomplished.
+Para proyectos que abarcan múltiples directorios o cuando necesitas incluir contexto específico:
 
 ```bash
-# Commits con mensajes generados inteligentemente
-claude "haz commit de mis cambios con un mensaje descriptivo"
-
-# Ejemplo de output:
-# "feat: implement user authentication with JWT tokens
-# 
-# - Add login/logout endpoints
-# - Implement token validation middleware  
-# - Create user session management
-# - Add password hashing utilities"
+claude --add-dir /path/to/frontend --add-dir /path/to/backend "analiza la integración completa"
+claude --add-dir ./docs --add-dir ./tests "verifica que la documentación esté actualizada con los tests"
 ```
 
-El system puede also detect different types de changes (features, bug fixes, refactoring) y format messages according to conventional commit standards.
+Esta capacidad es crucial para:
+- **Proyectos monorepo**: Analizando múltiples packages simultáneamente
+- **Arquitecturas distribuidas**: Frontend, backend, y servicios relacionados
+- **Context expansion**: Incluyendo documentación, tests, o configuraciones específicas
 
-### Synchronization con Remote
+### `--output-format`: Control de Formato
 
-La synchronization básica entre local y remote repositories becomes más intelligent con GitHub MCP. Instead de manually managing pushes, pulls, y merge conflicts, puedes describe your intentions y let the system handle the mechanics.
+Diferentes formatos para diferentes necesidades de integración:
 
 ```bash
-# Sincronización inteligente
-claude "sincroniza mi trabajo con el repositorio remoto"
-claude "incorpora los últimos cambios del main branch"
-claude "resuelve conflicts de merge en favor de mis cambios locales"
+# JSON estructurado para processing programático
+claude --output-format json "analiza este código y estructura la respuesta"
+
+# Text plano para legibilidad humana
+claude --output-format text "dame un resumen simple de los cambios"  
+
+# Streaming JSON para resultados en tiempo real
+claude --output-format stream-json "análisis detallado con resultados progresivos"
 ```
 
-## Colaboración Básica
+**Aplicaciones por Formato**:
+- **JSON**: Integración con otras herramientas, processing automatizado
+- **Text**: Output limpio para usuarios, documentación
+- **Stream-JSON**: Interfaces en tiempo real, feedback progresivo
 
-### Review Requests y Feedback
+## Comandos de Mantenimiento y Configuración
 
-GitHub MCP simplifies the code review process by making it conversational. Puedes request reviews, respond to feedback, y manage the review lifecycle through natural language interactions.
+### `claude update`: Evolución Continua
 
 ```bash
-# Gestión de code reviews
-claude "solicita review de mis cambios a @teammate"
-claude "responde a los comentarios del PR con las correcciones solicitadas"
-claude "marca como resueltos los comentarios que ya corregí"
+claude update
+# Actualiza a la versión más reciente con nuevas capacidades
 ```
 
-Esta conversational approach reduce the administrative overhead de review management y helps maintain momentum in development cycles.
+Mantener Claude Code actualizado es crucial porque:
+- **Nuevos modelos**: Acceso a capacidades mejoradas
+- **Bug fixes**: Resolución de problemas conocidos  
+- **Features**: Nuevas funcionalidades y integraciones
+- **Performance**: Optimizaciones de velocidad y eficiencia
 
-### Issue Tracking y Project Management
-
-Basic project management through GitHub MCP transforms issue tracking from a separate administrative task into an integrated part del development workflow.
+### `claude mcp`: Gestión de Integraciones
 
 ```bash
-# Project management básico
-claude "crea un milestone para el release v2.0"
-claude "asigna estos issues al milestone actual"
-claude "¿qué issues están bloqueados esperando dependencies?"
+claude mcp
+# Accede al sistema de configuración de Model Context Protocol
 ```
 
-### Team Communication
+MCP permite integraciones sofisticadas con:
+- **Servicios externos**: APIs, databases, herramientas especializadas
+- **Custom tools**: Herramientas desarrolladas específicamente para tu workflow
+- **Team integrations**: Servicios compartidos del equipo
 
-GitHub MCP enables basic team communication that's context-aware. Comments, mentions, y notifications become más targeted y meaningful cuando the system understands project context.
+## Patrones de Uso Efectivo
+
+### Workflows Cotidianos
 
 ```bash
-# Comunicación contextual del equipo
-claude "notifica al equipo sobre el nuevo feature branch"
-claude "pregunta a @lead-dev sobre la approach para implementar caching"
-claude "documenta la decisión de usar Redis en el issue correspondiente"
+# Inicio del día: Context refresh
+claude -c "¿en qué estábamos trabajando y cuáles son los próximos pasos?"
+
+# Análisis rápido antes de empezar trabajo
+claude "revisa el estado actual del proyecto y sugiere prioridades para hoy"
+
+# Verificación antes de commit
+claude -p "revisa estos cambios y verifica que estén listos para commit" | tee commit-review.txt
+
+# End of day: Progress summary
+claude "resume el progreso de hoy y prepara context para mañana"
 ```
 
-## Casos de Uso Prácticos Básicos
-
-### Onboarding de Nuevo Proyecto
-
-Cuando te unes a un new project, GitHub MCP puede streamline el onboarding process by providing contextual guidance y automated setup.
+### Integración con Git Workflows
 
 ```bash
-# Onboarding inteligente
-claude "soy nuevo en este proyecto, ¿cómo empiezo a contribuir?"
+# Pre-commit analysis
+claude -p "analiza los archivos en staging, busca problemas potenciales"
 
-# El sistema puede:
-# - Explicar la arquitectura del proyecto
-# - Identificar "good first issues" 
-# - Setup development environment
-# - Conectarte con relevant team members
+# Commit message generation  
+COMMIT_MSG=$(claude -p "genera un mensaje de commit descriptivo para estos cambios")
+git commit -m "$COMMIT_MSG"
+
+# Post-merge analysis
+claude "analiza el resultado del merge y identifica potential integration issues"
 ```
 
-### Bug Reporting y Tracking
-
-El basic bug tracking se vuelve más systematic y útil cuando GitHub MCP puede provide context about similar issues, potential causes, y reproduction steps.
+### Debugging y Troubleshooting
 
 ```bash
-# Bug reporting mejorado  
-claude "reporta un bug: la página de login no responde en mobile"
+# Error analysis
+claude "analiza este error y sugiere soluciones: $(cat error.log)"
 
-# El system puede:
-# - Crear issue con template apropiado
-# - Tag con labels relevantes
-# - Cross-reference con similar issues
-# - Suggest potential assignees based en expertise
+# Performance investigation
+claude --model sonnet-3.5 "investiga estos performance issues en detalle" --add-dir ./profiling
+
+# Verbose diagnostic mode  
+claude --verbose "¿por qué está fallando este deployment?" > diagnostic-report.md
 ```
 
-### Feature Request Management
+## Combinando Comandos para Workflows Sofisticados
 
-Managing feature requests becomes more strategic cuando GitHub MCP puede analyze project roadmap, understand technical constraints, y provide context about implementation complexity.
+### Pipeline de Code Review
 
 ```bash
-# Feature request inteligente
-claude "sugiere implementar dark mode para la aplicación"
+#!/bin/bash
+# Comprehensive code review pipeline
 
-# El system puede:
-# - Evaluar feasibility basándose en current codebase
-# - Estimate complexity level
-# - Identify related issues o PRs
-# - Suggest implementation approach
+echo "🔍 Iniciando review automatizado..."
+
+# Quick syntax and style check
+claude -p "verificación rápida de sintaxis y estilo" --model haiku-3
+
+# Deep architectural analysis  
+claude -p "análisis arquitectónico profundo" --model sonnet-3.5 > arch-review.md
+
+# Security audit
+claude -p "audit de seguridad exhaustivo" --model opus-3 > security-review.md
+
+# Generate summary report
+claude -p "consolida estos reports en un summary ejecutivo" \
+  --add-dir ./arch-review.md --add-dir ./security-review.md > final-review.md
+
+echo "✅ Review completo disponible en final-review.md"
 ```
 
-## Mejores Prácticas para Uso Básico
-
-### Establecimiento de Patrones Consistentes
-
-Las basic best practices con GitHub MCP include establecer patterns consistentes para naming, messaging, y workflow organization. Esta consistency pays dividends as projects grow y teams expand.
+### Development Session Orchestration
 
 ```bash
-# Establecer patrones de trabajo
-claude "configura un template para issues de bug reports"
-claude "define naming conventions para branches de feature"
-claude "crea labels estándar para categorizar issues"
+# Smart development session startup
+function dev-session() {
+    local project_context=$(claude -c "resume el contexto actual del proyecto")
+    echo "📋 Context: $project_context"
+    
+    local priorities=$(claude -p "basándote en el estado actual, ¿cuáles son las 3 prioridades principales para hoy?")
+    echo "🎯 Prioridades: $priorities"
+    
+    # Start interactive session with full context
+    claude -c
+}
 ```
 
-### Mantenimiento de Contexto de Proyecto
-
-Maintaining project context es crucial para maximizar los benefits de GitHub MCP. Regular project health checks y context updates ensure que el system mantains accurate understanding del project state.
-
-```bash
-# Mantenimiento de contexto
-claude "actualiza la documentación del proyecto basándose en cambios recientes"  
-claude "identifica issues obsoletos que pueden cerrarse"
-claude "¿qué areas del codebase necesitan más attention?"
-```
-
-### Integration con Development Workflow
-
-Las successful integration de GitHub MCP require aligning con existing development workflows en lugar de replacing them completely. El goal es amplification, not disruption.
-
-```bash
-# Integration workflow
-claude "configura automation para ejecutar tests antes de cada push"
-claude "notifícame cuando hay new issues asignados a mí"
-claude "crea daily summary de project activity"
-```
-
-## Limitaciones y Consideraciones Básicas
-
-### Understanding Scope y Boundaries
-
-Es importante understand qué can y cannot be accomplished through basic GitHub MCP usage. Certain operations still require direct Git commands o GitHub interface interaction, especialmente para complex merge scenarios o advanced repository administration.
-
-### Security y Permissions
-
-Basic usage require understanding de GitHub permissions y how they apply to MCP operations. Not all operations are available a todos users, y some require elevated permissions que might not be appropriate para all team members.
+## Best Practices para CLI Usage
 
 ### Context Management
 
-Even en basic usage, effective context management es crucial. GitHub MCP works better cuando has clear understanding de project structure, team roles, y development processes.
+```bash
+# Establish rich context at session start
+claude "# PROYECTO: E-commerce Platform
+Stack: React 18, Node.js, MongoDB, Stripe
+Estado actual: Implementando checkout flow
+Constraints: Must maintain PCI compliance"
 
-## Transición hacia Uso Avanzado
+# Maintain context continuity
+claude --continue "continuando con checkout implementation..."
+```
 
-### Identificación de Patterns Emergentes
+### Performance Optimization
 
-As you become comfortable con basic GitHub MCP operations, you'll start recognizing patterns que pueden be automated further y workflows que benefit from more sophisticated approaches.
+```bash
+# Use appropriate model for task complexity
+claude --model haiku-3 "simple syntax check"           # Fast
+claude --model sonnet-3.5 "architectural analysis"     # Balanced  
+claude --model opus-3 "comprehensive security audit"   # Thorough
+```
 
-### Building Automation Foundations
+### Output Management
 
-Las basic operations provide the foundation para more complex automation. Understanding these fundamentals es essential before progressing to advanced techniques que leverage multiple services y complex workflows.
+```bash
+# Structured output for further processing
+claude -p --output-format json "analiza dependencies y list outdated packages" | jq '.packages[]'
 
-### Preparación para Integrations Complejas
+# Clean text for documentation
+claude -p --output-format text "genera user documentation para esta API" > api-docs.md
+```
 
-El dominio de basic GitHub MCP capabilities prepares you para more advanced integrations con CI/CD systems, project management tools, y custom automation workflows que we'll explore en the next chapter.
+## El Futuro de la CLI Conversacional
 
-El real power de GitHub MCP emerge cuando these basic capabilities become second nature y you can focus on solving higher-level problems en lugar de managing low-level mechanics. Esta foundation enables the advanced techniques que transform individual productivity into team-wide efficiency gains.
+### Evolución de las Interfaces
+
+Los comandos CLI de Claude Code representan la primera generación de interfaces conversacionales para desarrollo. Las futuras evoluciones probablemente incluirán:
+
+- **Predictive commands**: Sugerencias automáticas basadas en context y patterns
+- **Cross-session intelligence**: Memory persistente que evoluciona con tu proyecto
+- **Adaptive interfaces**: CLI que se adapta a tu estilo específico de trabajo
+- **Integrated workflows**: Coordination seamless con todas las herramientas de desarrollo
+
+### Preparándose para el Futuro
+
+La maestría de los comandos CLI actuales proporciona la foundation para aprovechar futuras capabilities. Los principios fundamentales—expresión clara de intenciones, context management efectivo, y integration thoughtful con workflows existentes—permanecerán relevantes incluso mientras las interfaces específicas evolucionan.
+
+## Dominando la Base
+
+Los comandos CLI de Claude Code son tu foundation para todo lo que sigue. No son simplemente una forma de invocar funcionalidades; son la interface fundamental entre tu intención y la ejecución inteligente. Dominar estos comandos significa desarrollar intuición sobre cuándo usar cada modalidad, cómo combinarlas efectivamente, y cómo integrarlas seamlessly en tu workflow de desarrollo actual.
+
+Cada comando CLI que hemos explorado aquí se convierte en más poderoso cuando se combina con los slash commands que exploraremos en el próximo capítulo, donde descubrirás cómo controlar granularmente el comportamiento de Claude Code durante sesiones interactivas.
 
 ---
 
-*Con solid understanding de basic GitHub MCP operations, estás ready to explore advanced techniques que leverage these foundations para complex automation y sophisticated development workflows.*
+*La CLI de Claude Code no es solo una herramienta; es el primer paso hacia un new paradigm de desarrollo donde la conversación con sistemas inteligentes se convierte en parte natural del creative process.*

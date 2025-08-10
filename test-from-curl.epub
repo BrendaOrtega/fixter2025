@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preload" as="image" href="/logo.png"/><title>Aprende las herramientas que usan los profesionales del open source</title><meta name="description" content="Conviértete en un profesional del desarrollo web"/><meta rel="canonical" href="https://www.fixtergeek.com"/><meta property="og:title" content="Aprende las herramientas que usan los profesionales del open source"/><meta property="og:description" content="Conviértete en un profesional del desarrollo web"/><meta property="og:image" content="https://fixtergeek.com/cover.png"/><meta property="og:type" content="website"/><meta property="og:url" content="https://www.fixtergeek.com"/><meta property="og:site_name" content="Fixtergeek"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="Aprende las herramientas que usan los profesionales del open source"/><meta name="twitter:description" content="Conviértete en un profesional del desarrollo web"/><meta name="twitter:image" content="https://fixtergeek.com/cover.png"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/><link rel="icon" href="/ico.png" type="image/png"/><link rel="modulepreload" href="/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx"/><link rel="modulepreload" href="/app/root.tsx"/><link rel="modulepreload" href="/app/routes/libros/domina_claude_code.tsx"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap"/><link rel="stylesheet" href="/app/app.css"/></head><body><section class=" w-full px-6 md:px-[5%] xl:px-0 fixed backdrop-blur z-10"><nav class="flex relative z-[120] max-w-7xl mx-auto py-2 md:py-4 items-center justify-between "><a href="/" data-discover="true"><img class="h-7" src="/logo.png" alt="logo"/></a><div class="md:flex items-center gap-8 hidden "><a href="https://www.youtube.com/@fixtergeek8057" rel="noreferrer" target="_blank" class="place-content-center hover:scale-105 transition-all sm:grid text-white hidden"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23.001 9.7095C23.0505 8.27815 22.7374 6.85751 22.091 5.5795C21.6524 5.05509 21.0437 4.70121 20.371 4.5795C17.5885 4.32702 14.7945 4.22354 12.001 4.2695C9.21765 4.22145 6.43371 4.3216 3.661 4.5695C3.11282 4.66921 2.60552 4.92634 2.201 5.3095C1.301 6.1395 1.201 7.5595 1.101 8.7595C0.955916 10.9171 0.955916 13.0819 1.101 15.2395C1.12993 15.9149 1.2305 16.5853 1.401 17.2395C1.52158 17.7446 1.76553 18.2118 2.111 18.5995C2.51827 19.003 3.03739 19.2747 3.601 19.3795C5.75692 19.6456 7.92922 19.7559 10.101 19.7095C13.601 19.7595 16.671 19.7095 20.301 19.4295C20.8785 19.3311 21.4122 19.059 21.831 18.6495C22.111 18.3694 22.3201 18.0266 22.441 17.6495C22.7986 16.5521 22.9743 15.4036 22.961 14.2495C23.001 13.6895 23.001 10.3095 23.001 9.7095ZM9.741 14.8495V8.6595L15.661 11.7695C14.001 12.6895 11.811 13.7295 9.741 14.8495Z" fill="currentColor"></path></svg></a><div class="flex gap-3 md:gap-6 lg:gap-8"><a class="relative text-sm leading-6 no-underline text-white" href="/cursos" data-discover="true">Cursos</a><a class="relative text-sm leading-6 no-underline text-white" href="/blog" data-discover="true">Blog</a><a class="relative text-sm leading-6 no-underline font-semibold text-white" href="/libros/domina_claude_code" data-discover="true">Domina Claude Code<div class="absolute -bottom-[1px] left-0 right-0 h-[1px]"><svg width="37" height="8" viewBox="0 0 37 8" fill="none"><path d="M1 5.39971C7.48565 -1.08593 6.44837 -0.12827 8.33643 6.47992C8.34809 6.52075 11.6019 2.72875 12.3422 2.33912C13.8991 1.5197 16.6594 2.96924 18.3734 2.96924C21.665 2.96924 23.1972 1.69759 26.745 2.78921C29.7551 3.71539 32.6954 3.7794 35.8368 3.7794" stroke="#51B4A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="84.20591735839844" stroke-dashoffset="84.20591735839844"></path></svg></div></a></div><a href="/login" data-discover="true"><button class="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60">Iniciar sesión</button> </a></div><button class="flex md:hidden flex-col gap-2 relative"><div id="top" class="w-8 h-[3px] bg-gray-300 rounded-full"></div><div id="bottom" class="w-8 h-[3px] bg-gray-300 rounded-full"></div></button></nav><div id="drawer" class="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden flex items-center justify-center" style="transform:translateY(-120%)"><div class="text-center flex flex-col  !text-white -mt-10 md: "><a style="opacity:0;transform:translateY(20px);filter:blur(9px)" class="text-4xl my-6 font-light" href="/cursos" data-discover="true">Cursos</a><a style="opacity:0;transform:translateY(20px);filter:blur(9px)" class="text-4xl my-6 font-light" href="/blog" data-discover="true">Blog</a><a style="opacity:0;transform:translateY(20px);filter:blur(9px)" class="text-4xl my-6 font-light" href="/login" data-discover="true">Iniciar sesión</a><div class="flex justify-center items-center gap-6 mt-10"><a rel="noreferrer" href="https://www.facebook.com/fixterme" target="_blank"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" class="text-white text-4xl hover:opacity-40" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z"></path></svg></a><a rel="noreferrer" href="https://twitter.com/FixterGeek" target="_blank"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" class="text-white text-4xl hover:opacity-40" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm297.1 84L257.3 234.6 379.4 396H283.8L209 298.1 123.3 396H75.8l111-126.9L69.7 116h98l67.7 89.5L313.6 116h47.5zM323.3 367.6L153.4 142.9H125.1L296.9 367.6h26.3z"></path></svg></a><a rel="noreferrer" href="https://www.linkedin.com/company/fixtergeek/" target="_blank"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" class="text-white text-3xl hover:opacity-40" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"></path></svg></a><a rel="noreferrer" href="https://www.instagram.com/fixtergeek/" target="_blank"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024" class="text-white text-4xl hover:opacity-40" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M512 378.7c-73.4 0-133.3 59.9-133.3 133.3S438.6 645.3 512 645.3 645.3 585.4 645.3 512 585.4 378.7 512 378.7zM911.8 512c0-55.2.5-109.9-2.6-165-3.1-64-17.7-120.8-64.5-167.6-46.9-46.9-103.6-61.4-167.6-64.5-55.2-3.1-109.9-2.6-165-2.6-55.2 0-109.9-.5-165 2.6-64 3.1-120.8 17.7-167.6 64.5C132.6 226.3 118.1 283 115 347c-3.1 55.2-2.6 109.9-2.6 165s-.5 109.9 2.6 165c3.1 64 17.7 120.8 64.5 167.6 46.9 46.9 103.6 61.4 167.6 64.5 55.2 3.1 109.9 2.6 165 2.6 55.2 0 109.9.5 165-2.6 64-3.1 120.8-17.7 167.6-64.5 46.9-46.9 61.4-103.6 64.5-167.6 3.2-55.1 2.6-109.8 2.6-165zM512 717.1c-113.5 0-205.1-91.6-205.1-205.1S398.5 306.9 512 306.9 717.1 398.5 717.1 512 625.5 717.1 512 717.1zm213.5-370.7c-26.5 0-47.9-21.4-47.9-47.9s21.4-47.9 47.9-47.9 47.9 21.4 47.9 47.9a47.84 47.84 0 0 1-47.9 47.9z"></path></svg></a><a rel="noreferrer" href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g" target="_blank"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 576 512" class="text-white text-4xl hover:opacity-40" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"></path></svg></a></div></div></div></section><div class="text-white pt-20"><h1><p>require is not defined</p></h1><pre>ReferenceError: require is not defined
+    at /Users/bliss/taller/fixter2025/app/utils/generateEpub.server.ts:1:14
+    at instantiateModule (file:///Users/bliss/taller/fixter2025/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52972:5)</pre></div><script>window.__reactRouterContext = {"basename":"/","future":{"unstable_optimizeDeps":false},"isSpaMode":false};window.__reactRouterContext.stream = new ReadableStream({start(controller){window.__reactRouterContext.streamController = controller;}}).pipeThrough(new TextEncoderStream());</script><script type="module" async="">import "/@id/__x00__virtual:react-router/inject-hmr-runtime";;
+import * as route0 from "/app/root.tsx";
+import * as route1 from "/app/routes/libros/domina_claude_code.tsx";
+  window.__reactRouterManifest = {
+  "version": "0.7696884982478562",
+  "url": "/@id/__x00__virtual:react-router/browser-manifest",
+  "hmr": {
+    "runtime": "/@id/__x00__virtual:react-router/inject-hmr-runtime"
+  },
+  "entry": {
+    "module": "/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx",
+    "imports": []
+  },
+  "routes": {
+    "root": {
+      "id": "root",
+      "path": "",
+      "module": "/app/root.tsx",
+      "hasAction": false,
+      "hasLoader": false,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasErrorBoundary": true,
+      "imports": []
+    },
+    "routes/libros/domina_claude_code": {
+      "id": "routes/libros/domina_claude_code",
+      "parentId": "root",
+      "path": "libros/domina_claude_code",
+      "module": "/app/routes/libros/domina_claude_code.tsx",
+      "hasAction": true,
+      "hasLoader": true,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasErrorBoundary": false,
+      "imports": []
+    },
+    "routes/home": {
+      "id": "routes/home",
+      "parentId": "root",
+      "index": true,
+      "module": "/app/routes/home.tsx",
+      "hasAction": false,
+      "hasLoader": true,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasErrorBoundary": false,
+      "imports": []
+    },
+    "routes/404": {
+      "id": "routes/404",
+      "parentId": "root",
+      "path": "*",
+      "module": "/app/routes/404.tsx",
+      "hasAction": false,
+      "hasLoader": true,
+      "hasClientAction": false,
+      "hasClientLoader": false,
+      "hasErrorBoundary": false,
+      "imports": []
+    }
+  }
+};
+  window.__reactRouterRouteModules = {"root":route0,"routes/libros/domina_claude_code":route1};
+
+import("/node_modules/@react-router/dev/dist/config/defaults/entry.client.tsx");</script><!--$--><script>window.__reactRouterContext.streamController.enqueue("[{\"_1\":2,\"_5\":-5,\"_6\":7},\"loaderData\",{\"_3\":-5,\"_4\":-5},\"root\",\"routes/libros/domina_claude_code\",\"actionData\",\"errors\",{\"_3\":8},{\"_9\":10,\"_11\":12,\"_13\":14,\"_15\":16},\"message\",\"require is not defined\",\"stack\",\"ReferenceError: require is not defined\\n    at /Users/bliss/taller/fixter2025/app/utils/generateEpub.server.ts:1:14\\n    at instantiateModule (file:///Users/bliss/taller/fixter2025/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52972:5)\",\"__type\",\"Error\",\"__subType\",\"ReferenceError\"]\n");</script><!--$--><script>window.__reactRouterContext.streamController.close();</script><!--/$--><!--/$--></body></html>

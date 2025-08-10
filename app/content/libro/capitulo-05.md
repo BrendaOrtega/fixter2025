@@ -1,375 +1,578 @@
-# Capítulo 5: Dominando Git Worktree
+# Capítulo 5: Slash Commands Completos - Control de Sesión Avanzado
 
-## La Revolución del Desarrollo Paralelo
+## La Revolución del Control Granular
 
-Git worktree representa una de las capacidades más poderosas y menos utilizadas del ecosistema Git moderno. Mientras que la mayoría de desarrolladores están familiarizados con branch switching y merge operations, worktree introduce un paradigma completamente diferente: la habilidad de trabajar simultáneamente en múltiples branches o estados del mismo repositorio sin los costly context switches tradicionales.
+Los slash commands de Claude Code representan una evolución fundamental en cómo controlamos sistemas inteligentes durante sesiones interactivas. No son simplemente comandos adicionales; son la interface que te permite moldear, dirigir, y optimizar la experiencia conversacional de desarrollo según las necesidades específicas de cada momento y contexto.
 
-Esta capability no es solo una conveniencia técnica; es una transformación fundamental en cómo podemos approach development workflows complejos. Imagine poder trabajar en una feature critical mientras simultáneamente mantains hotfixes, verifica regression tests en different branches, y experimenta con architectural changes - todo sin interrumpir tu flow principal o perder context.
+Mientras que los comandos CLI te permiten iniciar y configurar sesiones, los slash commands te dan control granular sobre el comportamiento de Claude Code una vez que estás dentro de una conversación activa. Esta dualidad—broad control através de CLI, fine-grained control através de slash commands—crea un ecosystem de interacción que es tanto poderoso como intuitivo.
 
-La integración de worktree workflows con Claude Code amplifica estas capabilities exponentially. No solo puedes manage múltiples worktrees eficientemente, sino que puedes coordinate work across them de manera inteligente, maintaining context y ensuring consistency a través de different development streams.
+La maestría de los slash commands transforma tu relación con Claude Code desde user-tool a verdadera colaboración, donde puedes adaptar dinámicamente la personalidad, focus, y capabilities del sistema para alinear perfectamente con tu flujo de thinking y trabajo.
 
-## Fundamentos de Git Worktree
+## Comandos de Control Fundamental
 
-### Conceptual Framework
+### `/clear` - Limpieza Estratégica de Contexto
 
-Git worktree fundamentally changes la relationship entre working directory y git repository. En traditional Git workflows, tienes un working directory asociado con una repository, y cambias branches within that directory. Worktree enables múltiples working directories, cada uno associated con different branches del mismo repository.
-
-Esta architectural change enables workflows که previously required complex scripting o multiple repository clones. Ahora puedes have production code en un directory, development work en another, y experimental features en a third - all sharing la same Git history y maintaining referential integrity.
+El comando más directo pero también uno de los más estratégicamente importantes:
 
 ```bash
-# Traditional workflow limitation
-git checkout feature-branch    # Loses current working state
-git checkout main             # Context switch overhead
-
-# Worktree advantage  
-cd ../feature-worktree        # Different directory, persistent state
-cd ../main-worktree          # No context loss, instant switching
+/clear
+# Borra toda la historia de la conversación actual
 ```
 
-### Architecture y Storage
+**Cuándo Usar `/clear`**:
+- **Context overload**: Cuando el contexto se vuelve demasiado amplio o confuso
+- **Topic switching**: Al cambiar completamente de tipo de trabajo
+- **Fresh perspective**: Cuando necesitas que Claude Code evalúe algo sin bias de discusiones previas
+- **Performance optimization**: Para mantener sesiones responsive y focused
 
-Worktrees share la same Git object database, meaning que todos history, branches, y references son shared across worktrees. Solo el working directory y index son separate. Esta sharing provides efficiency - no duplicate storage - while maintaining isolation donde es needed.
+**Patrones Efectivos**:
+```bash
+# Pattern 1: Explicit context reset
+/clear
+claude "# NUEVO CONTEXTO: Análisis de performance
+Este proyecto React tiene problemas de rendering lento..."
 
-Claude Code understands esta architecture y puede help optimize worktree layouts basándose en your specific project needs y development patterns.
+# Pattern 2: Strategic topic separation
+# ... trabajo extenso en feature A ...
+/clear  
+# Ahora trabajar en feature B completamente diferente
+
+# Pattern 3: Fresh evaluation
+/clear
+claude "Evalúa este código sin conocimiento previo - ¿qué piensas?"
+```
+
+### `/help` - Información Contextual Inteligente
 
 ```bash
-# Claude Code para worktree architecture analysis
-claude "analiza mi proyecto y sugiere una estrategia de worktree optimal"
-claude "¿cómo debería organizar worktrees para este workflow de desarrollo?"
+/help
+# Muestra comandos disponibles y información contextual
 ```
 
-## Configuración y Creación de Worktrees
+El sistema de ayuda de Claude Code es intelligente y adaptivo:
+- **Context-aware**: Muestra información relevante al estado actual
+- **Dynamic**: Se actualiza según las capabilities disponibles
+- **Learning-oriented**: Proporciona not just what, sino when y why
 
-### Setup Inicial Inteligente
+### `/model` - Switching de Capacidades en Tiempo Real
 
-La creation de worktrees with Claude Code goes beyond basic git worktree commands. El system puede analyze your project structure, understand development patterns, y create optimized worktree layouts که maximize productivity mientras maintain organization.
+Cambio dinámico de modelos durante conversación activa:
 
 ```bash
-# Creación básica de worktree
-git worktree add ../feature-auth feature/authentication
+/model sonnet-3.5
+# Cambia a Sonnet para análisis balanceado
 
-# Con Claude Code intelligence
-claude "crea un worktree para trabajar en authentication feature con setup completo"
+/model haiku-3  
+# Switch a Haiku para respuestas rápidas
 
-# El sistema puede:
-# - Crear el worktree en ubicación optimal
-# - Install dependencies automáticamente  
-# - Configure environment variables específicas
-# - Setup tooling (linters, formatters) para el branch
-# - Create symbolic links para shared resources
+/model opus-3
+# Upgrade a Opus para análisis profundo
 ```
 
-### Estrategias de Organización
+**Estrategias de Model Switching**:
+```bash
+# Pattern: Progressive complexity
+/model haiku-3
+"¿hay errores de sintaxis obvios en este código?"
 
-Different projects benefit from different worktree organization strategies. Claude Code puede help identify optimal patterns basándose en team size, project complexity, y development velocity requirements.
+/model sonnet-3.5  
+"Ahora analiza la arquitectura y sugiere mejoras"
+
+/model opus-3
+"Finalmente, haz un security audit completo"
+```
+
+### `/add-dir` - Expansión Dinámica de Contexto
 
 ```bash
-# Feature-based organization
-/project-main/           # Main development branch
-/project-feature1/       # Feature development
-/project-feature2/       # Parallel feature work
-/project-hotfix/         # Production fixes
-
-# Environment-based organization  
-/project-dev/            # Development work
-/project-staging/        # Staging verification
-/project-prod/           # Production maintenance
-
-# Role-based organization
-/project-backend/        # Backend development
-/project-frontend/       # Frontend work  
-/project-devops/         # Infrastructure changes
+/add-dir /path/to/additional/code
+# Incluye directorio adicional en contexto actual
 ```
 
-Claude Code puede analyze your team's workflow patterns y recommend la optimal organization strategy:
+**Casos de Uso Avanzados**:
+```bash
+# Progressive context building
+/add-dir ./src/components
+"Analiza estos components..."
+
+/add-dir ./src/hooks  
+"Ahora considera también estos custom hooks..."
+
+/add-dir ./tests
+"Incluye los tests para análisis completo..."
+```
+
+## Comandos de Especialización
+
+### `/review` - Modo de Revisión de Código
 
 ```bash
-claude "basándote en nuestro history de commits y branch patterns, ¿qué organización de worktree recomiendas?"
+/review
+# Activa perspectiva especializada en code review
 ```
 
-## Workflows Básicos con Worktree
+En modo review, Claude Code aplica:
+- **Quality standards**: Mejores prácticas de código
+- **Security focus**: Identificación de vulnerabilities  
+- **Performance analysis**: Bottlenecks y optimizations
+- **Maintainability assessment**: Code readability y structure
 
-### Desarrollo Paralelo de Features
-
-Una de las applications más immediate y powerful de worktrees es parallel feature development. Instead de costly branch switches که interrupt focus, puedes maintain continuous progress en multiple features simultaneously.
+### `/vim` - Modo de Edición Avanzada
 
 ```bash
-# Setup para desarrollo paralelo
-claude "configura worktrees para desarrollar authentication y payment features en paralelo"
-
-# Working seamlessly between features
-cd ../auth-worktree
-claude "implementa JWT token validation"
-
-cd ../payment-worktree  
-claude "integra Stripe payment processing"
-
-# Context maintained en ambos worktrees
+/vim
+# Activa modo Vim para entrada de texto
 ```
 
-Esta approach es particularly powerful para complex features که require extended development time. Puedes iterate en una feature while maintaining another en stable state para testing o demonstration purposes.
+**Capabilities del Modo Vim**:
+- **Navigation**: `h/j/k/l` para movimiento
+- **Editing**: `dd`, `x`, `i/a/o` para modifications
+- **Modes**: Normal e Insert mode completos
+- **Efficiency**: Rapid text manipulation para power users
 
-### Hotfix y Maintenance Workflows
-
-Production issues require immediate attention, pero switching branches interrupts ongoing feature work. Worktrees enable immediate response to production issues mientras maintaining development momentum.
+### `/terminal-setup` - Configuración de Terminal
 
 ```bash
-# Hotfix workflow with worktrees
-claude "crea un worktree desde production branch para emergency hotfix"
-
-# Fix critical issue
-cd ../hotfix-worktree
-claude "identifica y corrige el memory leak en user session management"
-
-# Deploy hotfix
-claude "prepara el hotfix para deployment inmediato"
-
-# Continue feature work uninterrupted
-cd ../feature-worktree
-# Development context preserved exactly where you left off
+/terminal-setup
+# Optimiza configuración para tu terminal específico
 ```
 
-### Testing y Verification Parallel
+Ajusta:
+- **Multiline input**: `Shift+Enter` functionality
+- **Key bindings**: Terminal-specific shortcuts
+- **Display optimization**: Formatting for your terminal
 
-Worktrees enable sophisticated testing strategies donde puedes run different test suites en different states del repository simultaneously. Esta capability es crucial para comprehensive quality assurance.
+## Comandos de Gestión y Configuración
+
+### `/config` - Configuración de Sesión
 
 ```bash
-# Parallel testing strategy
-claude "configura worktrees para testing: unit tests en development branch, integration tests en staging"
-
-# Terminal 1: Unit tests
-cd ../dev-worktree
-npm run test:unit --watch
-
-# Terminal 2: Integration tests  
-cd ../staging-worktree
-npm run test:integration --watch
-
-# Terminal 3: Continued development
-cd ../main-worktree
-# Development continues while tests run in background
+/config
+# Accede a configuración de sesión actual
 ```
 
-## Técnicas Avanzadas de Worktree
+Permite modificar:
+- **Response style**: Verbosity, tone, format
+- **Default behaviors**: Auto-analysis, suggestion levels  
+- **Context preferences**: Memory management, focus areas
 
-### Shared Resources y Optimización
-
-Advanced worktree workflows often require sharing certain resources entre worktrees while maintaining isolation donde necessary. Claude Code puede help identify optimal sharing strategies basándose en project analysis.
+### `/status` - Estado del Sistema
 
 ```bash
-# Optimización de shared resources
-claude "analiza qué resources pueden ser shared entre worktrees para este proyecto"
-
-# Potential shared resources:
-# - node_modules (via symbolic links)
-# - Build artifacts
-# - Configuration files
-# - Development databases
-# - Asset files
+/status  
+# Muestra estado actual del sistema y sesión
 ```
 
-Proper resource sharing can significantly reduce disk usage y improve development efficiency, pero requires careful planning to avoid conflicts.
+**Información Disponible**:
+- **Session state**: Contexto activo, memory usage
+- **Model information**: Current model, token usage
+- **Connection status**: MCP servers, integrations
+- **Performance metrics**: Response times, efficiency stats
 
-### Automated Worktree Management
-
-As worktree usage scales, manual management becomes unwieldy. Claude Code enables automated worktree lifecycle management که can create, configure, y cleanup worktrees basándose en development patterns.
+### `/cost` - Monitoreo de Costos
 
 ```bash
-# Automated worktree lifecycle
-claude "crea automation para manage worktree lifecycle basándose en branch creation patterns"
-
-# Ejemplo de automation:
-# - Auto-create worktree cuando new feature branch is created
-# - Auto-configure development environment
-# - Auto-cleanup worktrees cuando branches are merged/deleted
-# - Monitor worktree health y resource usage
+/cost
+# Muestra información de usage y costos
 ```
 
-### Cross-Worktree Development Coordination
+**Métricas Incluidas**:
+- **Token usage**: Input y output tokens por sesión
+- **Cost breakdown**: Por modelo y operación
+- **Usage trends**: Patterns over time
+- **Optimization suggestions**: Ways to reduce costs
 
-Advanced workflows require coordination between multiple worktrees. Esta might include shared state management, cross-worktree testing, o integrated deployment processes.
+### `/memory` - Gestión de Memoria
 
 ```bash
-# Cross-worktree coordination
-claude "implementa coordination system entre worktrees para shared database state"
-
-# Coordination strategies:
-# - Shared development database
-# - Inter-worktree communication via file system
-# - Coordinated testing pipelines
-# - Integrated build systems
+/memory
+# Controla qué se mantiene en memory y qué se olvida
 ```
 
-## Integration con Claude Code Workflows
+**Memory Management**:
+```bash
+/memory save "Esta decisión arquitectónica es importante para el futuro"
+/memory forget "contexto específico que ya no es relevante" 
+/memory list "muestra qué está guardado en memory persistente"
+```
 
-### Context Management Across Worktrees
+## Comandos de Integración y Extensibilidad
 
-Managing context across multiple worktrees requires sophisticated strategies که Claude Code can help optimize. Each worktree might need different context, pero some context should be shared globally.
+### `/init` - Inicialización de Proyecto
 
 ```bash
-# Context strategies per worktree
-claude --context-file=global.md "este context aplica a todos worktrees"
-claude --context-file=feature-auth.md "context específico para authentication worktree"
-claude --context-file=feature-payment.md "context específico para payment worktree"
+/init
+# Inicializa configuración específica para el proyecto actual
 ```
 
-### Automated Project State Synchronization
+Automatically:
+- **Detects project type**: Framework, dependencies, structure
+- **Sets up context**: Relevant patterns, constraints, best practices
+- **Configures tooling**: Appropriate analysis modes y suggestions
 
-Complex worktree workflows benefit from automated synchronization of project state, dependencies, y configuration across worktrees. Claude Code puede manage این synchronization intelligently.
+### `/mcp` - Model Context Protocol
 
 ```bash
-# State synchronization across worktrees
-claude "sincroniza dependencies y configuration across all worktrees"
-
-# Synchronization puede incluir:
-# - Package.json dependencies
-# - Environment variables
-# - Development tool configurations
-# - Database schema migrations
-# - API configurations
+/mcp
+# Gestiona conexiones y configuración MCP
 ```
 
-### Intelligent Worktree Recommendations
+**MCP Operations**:
+```bash
+/mcp list     # Muestra servers disponibles
+/mcp connect github-server  # Conecta a specific server
+/mcp disconnect service-name # Desconecta service
+```
 
-Claude Code puede analyze your development patterns و recommend optimal worktree strategies que align con your specific workflow requirements.
+### `/agents` - Gestión de Subagentes
 
 ```bash
-# Intelligence recommendations
-claude "analiza mi pattern de development y recomienda worktree organization optimal"
-claude "identifica opportunities para improve efficiency con worktree workflows"
+/agents
+# Lista y manage subagentes especializados
 ```
 
-## Casos de Uso Especializado
+**Agent Management**:
+```bash
+/agents list                    # Show available agents
+/agents use security-reviewer   # Switch to security expert
+/agents custom my-reviewer      # Use custom agent
+```
 
-### Large Team Coordination
+## Comandos de Desarrollo y Debugging
 
-En large teams, worktree strategies need careful coordination to avoid conflicts y maximize efficiency. Claude Code puede help establish team-wide worktree conventions y best practices.
+### `/doctor` - Diagnóstico del Sistema
 
 ```bash
-# Team coordination strategies
-claude "diseña team-wide worktree strategy para 10+ developers trabajando en parallel"
-
-# Team strategies pueden incluir:
-# - Standardized worktree naming conventions
-# - Shared resource allocation
-# - Conflict resolution procedures
-# - Resource usage monitoring
+/doctor
+# Ejecuta diagnósticos comprehensivos del sistema
 ```
 
-### Continuous Integration Optimization
+**Health Checks**:
+- **Configuration validity**: Settings y connections
+- **Performance status**: Response times, bottlenecks
+- **Integration status**: MCP servers, external tools
+- **Recommendations**: Optimizations y improvements
 
-Worktrees enable sophisticated CI/CD strategies که can dramatically reduce build times y improve deployment reliability.
+### `/bug` - Reporte de Issues
 
 ```bash
-# CI/CD optimization with worktrees
-claude "diseña CI pipeline که leverages worktrees para parallel build y testing"
-
-# CI optimizations:
-# - Parallel builds en different worktrees
-# - Isolated test environments
-# - Staged deployment verification
-# - Rollback capabilities
+/bug
+# Facilita reporting de bugs o unexpected behavior
 ```
 
-### Multi-Version Maintenance
+**Automated Bug Reporting**:
+- **Context capture**: Current session state, inputs
+- **Error details**: Stack traces, error messages  
+- **Environment info**: OS, version, configuration
+- **Reproduction steps**: What led to the issue
 
-Projects که require maintaining multiple versions simultaneously benefit significantly from worktree workflows. Each version can be maintained en separate worktrees con appropriate tooling y dependencies.
+### `/permissions` - Control de Acceso
 
 ```bash
-# Multi-version maintenance
-claude "configura worktrees para maintain v1.x, v2.x, y current development simultaneously"
-
-# Version maintenance includes:
-# - Version-specific dependencies
-# - Separate build configurations  
-# - Independent testing environments
-# - Cross-version patch coordination
+/permissions
+# Gestiona permissions para file access y operations
 ```
 
-## Mejores Prácticas y Patterns
+**Security Controls**:
+```bash
+/permissions grant read ./src     # Allow reading source
+/permissions deny write ./config  # Prevent config changes
+/permissions list                 # Show current permissions
+```
 
-### Resource Management
+## Comandos de Revisión y Calidad
 
-Effective worktree usage requires careful resource management to avoid system performance degradation. Claude Code puede monitor y optimize resource usage across worktrees.
+### `/pr_comments` - Comentarios de Pull Request
 
 ```bash
-# Resource monitoring y optimization
-claude "monitorea resource usage across worktrees y optimiza allocation"
-claude "identifica worktrees idle که pueden ser temporarily suspended"
+/pr_comments
+# Genera comentarios structured para PRs
 ```
 
-### Cleanup y Maintenance
+**PR Comment Generation**:
+- **Structured feedback**: Organized by category y priority
+- **Actionable suggestions**: Specific improvements with code examples
+- **Standards compliance**: Alignment con team conventions
+- **Constructive tone**: Helpful rather than critical
 
-Long-term worktree usage requires systematic cleanup y maintenance procedures to prevent repository bloat y maintain performance.
+### `/compact` - Respuestas Concisas
 
 ```bash
-# Worktree maintenance
-claude "implementa automated cleanup routine para worktrees obsoletos"
-claude "verifica integrity de todos worktrees y repara issues"
+/compact
+# Switch to concise response mode
 ```
 
-### Security Considerations
+**Compact Mode Benefits**:
+- **Efficiency**: Faster reading y processing  
+- **Focus**: Essential information only
+- **Clarity**: Reduced cognitive load
+- **Speed**: Quicker iterations y feedback
 
-Multiple worktrees introduce additional security considerations که need careful management, especially en sensitive projects.
+## Comandos de Autenticación y Configuración
+
+### `/login` y `/logout` - Gestión de Sesión
 
 ```bash
-# Security best practices
-claude "analiza security implications de current worktree setup y sugiere improvements"
-claude "implementa access controls apropiadas para different worktrees"
+/login
+# Autentica o re-autentica sesión
+
+/logout  
+# Cierra sesión y clear credentials
 ```
 
-## Troubleshooting Common Issues
+**Session Management**:
+- **Secure authentication**: Token-based, time-limited
+- **Context preservation**: Maintain session state appropriately
+- **Clean termination**: Proper cleanup on logout
 
-### Performance Problems
+## Slash Commands Personalizados
 
-Worktree performance problems often stem from resource contention o inefficient organization. Claude Code puede diagnose y resolve these issues systematically.
+### Creación de Commands Específicos
+
+Los slash commands más poderosos son los que creates para tu workflow específico:
+
+**Ubicaciones**:
+- `.claude/commands/` (específico del proyecto)
+- `~/.claude/commands/` (personal, global)
+
+### Ejemplo: Command de Performance Analysis
+
+```markdown
+# /analyze-performance
+
+Analiza el rendimiento del código actual enfocándose en:
+
+- Complejidad algorítmica y optimizaciones potenciales
+- Memory usage y potential leaks  
+- Database query efficiency y N+1 problems
+- Frontend bundle size y rendering optimization
+- Network request patterns y caching opportunities
+
+## Arguments
+
+- `--deep`: Incluye profiling detallado y benchmarks
+- `--focus=area`: Concentra análisis en área específica
+- `--report`: Genera reporte estructurado en markdown
+
+## Examples
 
 ```bash
-# Performance diagnosis
-claude "diagnostica performance issues en worktree setup y sugiere optimizations"
-claude "analiza disk I/O patterns y optimiza worktree file organization"
+/analyze-performance
+/analyze-performance --deep --focus=database
+/analyze-performance --report > performance-analysis.md
+```
 ```
 
-### Synchronization Conflicts
+### Ejemplo: Command de Security Audit
 
-When multiple worktrees work con shared resources, conflicts can arise که require careful resolution.
+```markdown
+# /security-audit
+
+Ejecuta audit de seguridad comprehensivo incluyendo:
+
+- Vulnerability scanning en dependencies
+- Code analysis para security antipatterns  
+- Configuration review para security misconfigurations
+- Authentication y authorization flow analysis
+- Data handling y privacy compliance check
+
+## Usage
 
 ```bash
-# Conflict resolution
-claude "resuelve synchronization conflicts entre worktrees sin perder work"
-claude "implementa conflict prevention strategies para shared resources"
+/security-audit            # Full audit
+/security-audit --quick    # Fast scan only
+/security-audit --severe   # Only high-severity issues
+```
 ```
 
-### Recovery Procedures
+## Patterns Avanzados de Slash Commands
 
-Complex worktree setups sometimes require recovery procedures cuando things go wrong.
+### Combinaciones Estratégicas
 
 ```bash
-# Recovery y repair
-claude "recupera corrupted worktree sin afectar other worktrees"
-claude "rebuild worktree setup desde scratch preservando current work"
+# Pattern: Progressive analysis
+/clear
+/init
+"Establecer contexto para proyecto React e-commerce..."
+
+/add-dir ./src/components
+/review
+"Revisar quality de estos components..."
+
+/model opus-3
+/security-audit
+"Deep security analysis..."
+
+/compact
+/pr_comments  
+"Generate concise PR feedback..."
 ```
 
-## El Futuro de Worktree Workflows
+### Context Management Workflows
 
-### Emerging Patterns
+```bash
+# Pattern: Focused work sessions
+/clear
+/memory save "Working on checkout flow optimization"
 
-As worktree adoption increases, new workflow patterns are emerging که take advantage of parallel development capabilities en innovative ways.
+# Work session...
 
-### Integration con Cloud Development
+/memory save "Key decision: usando Stripe Elements para PCI compliance"
+/add-dir ./src/checkout
 
-Cloud development environments are beginning to leverage worktree concepts para provide scalable, parallel development experiences.
+# More work...
 
-### AI-Enhanced Worktree Management
+/status
+# Check current session state before break
+```
 
-Future developments will likely include more sophisticated AI-enhanced worktree management که can predictively optimize workflows basándose en development patterns.
+### Quality Assurance Pipelines
 
-## Mastering Parallel Development
+```bash
+# Pattern: Comprehensive QA
+/init
+/add-dir ./src ./tests ./docs
 
-Dominar git worktree with Claude Code transforms how you approach complex development challenges. Instead de thinking linearly about development tasks, you can orchestrate parallel workflows که maintain context, maximize efficiency, y enable sophisticated development strategies که weren't practical with traditional approaches.
+/review
+"Code quality check..."
 
-La key to mastery es understanding که worktrees are not just a technical tool; they enable a fundamentally different approach to development thinking. When you can maintain multiple contexts simultaneously, your problem-solving approaches become more sophisticated y your ability to handle complex projects increases dramatically.
+/model haiku-3  
+"Quick syntax verification..."
+
+/model sonnet-3.5
+"Architecture analysis..."  
+
+/security-audit
+"Security assessment..."
+
+/pr_comments
+"Generate final feedback..."
+```
+
+## MCP Slash Commands Dinámicos
+
+Cuando tienes MCP servers configurados, commands adicionales están disponibles dinámicamente:
+
+### GitHub Integration Commands
+
+```bash
+/github-issues              # Lista issues del repo
+/github-pr                  # Gestiona pull requests  
+/github-actions            # Verifica CI/CD status
+/github-releases           # Manage releases
+```
+
+### Database Integration Commands  
+
+```bash
+/db-schema                 # Muestra database schema
+/db-query                  # Ejecuta safe queries
+/db-migrate               # Manage migrations
+/db-backup                # Database backup operations
+```
+
+### Deployment Commands
+
+```bash
+/deploy-status            # Check deployment state
+/deploy-logs             # Retrieve deployment logs
+/deploy-rollback         # Rollback to previous version
+```
+
+## Best Practices para Slash Commands
+
+### Session Hygiene
+
+```bash
+# Start with clean context for complex tasks
+/clear
+/init
+
+# Establish rich context
+/add-dir ./relevant/paths
+"Context establishment..."
+
+# Work efficiently  
+/compact  # When you need speed
+/model haiku-3  # For simple tasks
+
+# Document important decisions
+/memory save "Key architectural decision made here"
+```
+
+### Performance Optimization
+
+```bash
+# Use appropriate model complexity
+/model haiku-3    # Simple questions
+/model sonnet-3.5  # Balanced analysis  
+/model opus-3     # Complex reasoning
+
+# Manage context size
+/clear            # When context gets unwieldy
+/compact          # For faster responses
+```
+
+### Collaborative Workflows
+
+```bash
+# Prepare for handoffs
+/pr_comments      # Document feedback clearly
+/memory save      # Preserve important context
+/status          # Check session state before sharing
+```
+
+## Troubleshooting Slash Commands
+
+### Common Issues y Solutions
+
+**Problem**: Command not recognized
+```bash
+/help            # List available commands
+/doctor          # Check system status  
+/mcp list        # Verify MCP integrations
+```
+
+**Problem**: Unexpected behavior
+```bash
+/clear           # Reset context if confused
+/config          # Check session configuration
+/permissions     # Verify access rights
+```
+
+**Problem**: Performance issues  
+```bash
+/status          # Check system resources
+/compact         # Reduce response complexity
+/model haiku-3   # Use faster model
+```
+
+## El Futuro de los Slash Commands
+
+### Evolución Anticipada
+
+Los slash commands están evolucionando hacia:
+- **Predictive suggestions**: Commands sugeridos basándose en context
+- **Natural language parsing**: `/do something complex` interpretado intelligentemente
+- **Collaborative commands**: Commands que coordinate multiple agents
+- **Learning commands**: Commands que se adaptan a tu usage patterns
+
+### Preparing for Advanced Capabilities  
+
+La maestría actual de slash commands te prepara para:
+- **Voice-activated commands**: Slash commands através de voice interface
+- **Gesture-based control**: Visual interfaces para command selection
+- **AI-suggested workflows**: System recommendations para command sequences
+- **Cross-session command memory**: Commands que persisten conhecimento across sessions
+
+## Dominando el Control Granular
+
+Los slash commands de Claude Code te dan unprecedented control sobre tu development experience. No son simplemente features adicionales; son la interface que transforma Claude Code from a tool you use to a collaborator you direct. La maestría de estos commands significa developing intuition sobre cuándo aplicar qué level de control, cómo combinar commands para workflows sofisticados, y cómo adaptar la experience dinámicamente según your changing needs.
+
+Cada slash command representa un dimension de control que puedes exercise. Combined with the CLI foundation del previous capítulo, tienes un toolkit completo para orchestrating intelligent development conversations que se adaptan precisely a your thinking y working style.
+
+En el próximo capítulo, exploraremos cómo aplicar estos foundational skills a GitHub MCP integrations, donde the combination de CLI commands y slash commands enables sophisticated collaborative workflows que transform how teams develop software together.
 
 ---
 
-*Con solid worktree mastery, you're equipped to handle advanced GitHub MCP techniques که leverage parallel development capabilities para unprecedented development efficiency.*
+*Los slash commands no solo controlan Claude Code; they unlock tu potential para direct intelligent systems con precision, creating development experiences که are uniquely tuned a tu approach y objectives.*

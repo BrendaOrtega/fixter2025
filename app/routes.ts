@@ -26,7 +26,7 @@ export default [
   // Claude Code Workshop
   route("claude", "routes/claude.tsx"),
   // Libro interactivo
-  route("libro", "routes/libro.tsx"),
+  route("libros/domina_claude_code", "routes/libros/domina_claude_code.tsx"),
   // groups
   ...prefix("admin", [
     index("routes/admin/dash.tsx"),
