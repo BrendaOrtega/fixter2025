@@ -11,6 +11,11 @@ Este archivo contiene información útil para Claude Code sobre el proyecto y pr
 - **Emails**: Amazon SES
 - **Animaciones**: Motion (motion/react)
 
+## Lo nuevo
+
+Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legibla, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
+Siempre siguiendo los estilos de la aplicación, colores y formatos. Es mejor copiar que inventar nuevos, es mejor usar los componentes ya existentes antes que crear nuevos.
+
 ## Información de Contacto
 
 - **Email de contacto**: brenda@fixter.org
