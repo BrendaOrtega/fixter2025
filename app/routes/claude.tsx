@@ -231,7 +231,7 @@ export default function ClaudeLanding() {
         "Gestión avanzada de contexto y /resume",
         "Optimización de tokens y memoria",
       ],
-      price: 1490,
+      price: 999,
     },
     {
       id: 2,
@@ -243,7 +243,7 @@ export default function ClaudeLanding() {
         "Scripting con TypeScript y Python",
         "Pipelines CI/CD y casos empresariales",
       ],
-      price: 1490,
+      price: 999,
     },
     {
       id: 3,
@@ -255,7 +255,7 @@ export default function ClaudeLanding() {
         "Automatización de GitHub Actions",
         "Conectar bases de datos y APIs",
       ],
-      price: 1490,
+      price: 999,
     },
     {
       id: 4,
@@ -267,7 +267,7 @@ export default function ClaudeLanding() {
         "Resolución de tus dudas particulares",
         "Estrategias adaptadas a tu flujo de trabajo",
       ],
-      price: 1499,
+      price: 999,
       isBonus: true,
     },
   ];
@@ -308,11 +308,11 @@ export default function ClaudeLanding() {
     const hasBonus = selectedModules.includes(4);
 
     // Precio base de las principales
-    let total = mainSessions * 1490;
+    let total = mainSessions * 999;
 
     // Descuento si toman las 3 sesiones principales
     if (mainSessions === 3) {
-      total = 3499; // Precio especial paquete de 3
+      total = 2490; // Precio especial paquete de 3
     }
 
     // El BONUS siempre está incluido gratis cuando tienen las 3 principales
@@ -333,10 +333,10 @@ export default function ClaudeLanding() {
             🎉 ¡PAQUETE COMPLETO! 🎉
           </div>
           <div className="text-lg">
-            Ahorro total de $971 MXN + Sesión privada 1:1 incluida
+            Ahorro total de $507 MXN + Sesión privada 1:1 incluida
           </div>
           <div className="text-sm text-gray-400 mt-1">
-            3 sesiones de 2h c/u + 1 sesión privada individual por $3,499
+            3 sesiones de 2h c/u + 1 sesión privada individual por $2,490
           </div>
         </div>
       );
@@ -347,7 +347,7 @@ export default function ClaudeLanding() {
           <div className="text-xl font-bold text-green-400 mb-2">
             ✅ ¡Paquete de 3 sesiones de 2h cada una!
           </div>
-          <div className="text-sm text-gray-400">Ahorro de $971 MXN</div>
+          <div className="text-sm text-gray-400">Ahorro de $507 MXN</div>
         </div>
       );
     }
@@ -421,7 +421,9 @@ export default function ClaudeLanding() {
               <input type="hidden" name="intent" value="webinar_registration" />
 
               <div>
-                <label className="block text-white mb-2">Nombre completo</label>
+                <label className="block text-white mb-2 text-left">
+                  Nombre completo
+                </label>
                 <input
                   name="name"
                   type="text"
@@ -432,7 +434,7 @@ export default function ClaudeLanding() {
               </div>
 
               <div>
-                <label className="block text-white mb-2">Email</label>
+                <label className="block text-white mb-2 text-left">Email</label>
                 <input
                   name="email"
                   type="email"
@@ -443,7 +445,7 @@ export default function ClaudeLanding() {
               </div>
 
               <div>
-                <label className="block text-white mb-2">
+                <label className="block text-white mb-2 text-left">
                   Teléfono (opcional)
                 </label>
                 <input
@@ -456,7 +458,9 @@ export default function ClaudeLanding() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-white mb-1 text-xs">Nivel</label>
+                  <label className="block text-white mb-1 text-xs text-left">
+                    Nivel
+                  </label>
                   <select
                     name="experienceLevel"
                     required
@@ -472,7 +476,7 @@ export default function ClaudeLanding() {
                 </div>
 
                 <div>
-                  <label className="block text-white mb-1 text-xs">
+                  <label className="block text-white mb-1 text-xs text-left">
                     Situación
                   </label>
                   <select
@@ -491,7 +495,7 @@ export default function ClaudeLanding() {
                 </div>
 
                 <div>
-                  <label className="block text-white mb-1 text-xs">
+                  <label className="block text-white mb-1 text-xs text-left">
                     Urgencia
                   </label>
                   <select
@@ -794,9 +798,7 @@ export default function ClaudeLanding() {
                   <p className="text-orange-300 font-bold text-lg">
                     📅 Jueves 14 de Agosto • 7:00 PM (CDMX)
                   </p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    ⚠️ Pocos lugares
-                  </p>
+                  <p className="text-gray-400 text-sm mt-1">⚠️ Pocos lugares</p>
                 </div>
               </div>
             </motion.div>
@@ -819,7 +821,7 @@ export default function ClaudeLanding() {
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-purple-400">
-                  $1,490 MXN
+                  $999 MXN
                 </div>
                 <div className="text-gray-400">por sesión individual</div>
               </div>
@@ -1103,7 +1105,7 @@ export default function ClaudeLanding() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-xs text-green-400 mt-1 font-bold"
                 >
-                  ¡Descuento de $500 activado! 🎉
+                  ¡Descuento de $507 activado! 🎉
                 </motion.p>
               )}
             </div>
@@ -1291,6 +1293,22 @@ export default function ClaudeLanding() {
                 ${calculatePrice().toLocaleString()} MXN
               </div>
               <div className="text-purple-400 mb-6">{getPriceMessage()}</div>
+
+              {/* Cupón para estudiantes previos */}
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6 w-max mx-auto">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">💰</span>
+                  <h4 className="text-yellow-400 font-bold">
+                    ¿Ya has tomado un curso con nosotros?
+                  </h4>
+                </div>
+                <p className="text-gray-300 text-sm text-left">
+                  Si ya eres parte de la familia FixterGeek,
+                  <br /> pídele tu cupón del 20% de descuento a{" "}
+                  <span className="text-yellow-400 font-semibold">Brendi</span>
+                </p>
+              </div>
+
               <fetcher.Form method="post">
                 <input type="hidden" name="intent" value="direct_checkout" />
                 <input
