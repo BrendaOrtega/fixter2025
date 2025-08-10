@@ -677,7 +677,7 @@ export default function ClaudeLanding() {
               <div className="text-yellow-300 font-bold text-lg mb-4">
                 Sin tarjeta de crédito • Sin compromiso • Sin spam
               </div>
-              <p className="text-gray-200 mb-6 text-lg">
+              <p className="text-gray-200 mb-6 text-lg text-left">
                 Una sesión de 60 minutos donde te muestro todas las herramientas
                 geniales del ecosistema Claude Code.
                 <span className="text-yellow-300 font-bold">
@@ -702,10 +702,10 @@ export default function ClaudeLanding() {
                         ✨
                       </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">
+                        <h4 className="text-white font-semibold mb-1 text-left">
                           Tour Completo Claude Code
                         </h4>
-                        <p className="text-gray-300 text-sm">
+                        <p className="text-gray-300 text-sm text-left">
                           Funciones avanzadas que el 99% no conoce
                         </p>
                       </div>
@@ -715,10 +715,10 @@ export default function ClaudeLanding() {
                         🔌
                       </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">
+                        <h4 className="text-white font-semibold mb-1 text-left">
                           MCP y Automatización
                         </h4>
-                        <p className="text-gray-300 text-sm">
+                        <p className="text-gray-300 text-sm text-left">
                           Por qué cambiará tu forma de trabajar para siempre
                         </p>
                       </div>
@@ -728,10 +728,10 @@ export default function ClaudeLanding() {
                         🤖
                       </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">
+                        <h4 className="text-white font-semibold mb-1 text-left">
                           Subagentes Inteligentes
                         </h4>
-                        <p className="text-gray-300 text-sm">
+                        <p className="text-gray-300 text-sm text-left">
                           Cómo automatizar tareas complejas sin esfuerzo
                         </p>
                       </div>
@@ -743,10 +743,10 @@ export default function ClaudeLanding() {
                         💻
                       </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">
+                        <h4 className="text-white font-semibold mb-1 text-left">
                           SDK y Scripting
                         </h4>
-                        <p className="text-gray-300 text-sm">
+                        <p className="text-gray-300 text-sm text-left">
                           Integra Claude en tus aplicaciones Python/TS
                         </p>
                       </div>
@@ -756,10 +756,10 @@ export default function ClaudeLanding() {
                         🎁
                       </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">
+                        <h4 className="text-white font-semibold mb-1 text-left">
                           Preview Taller Completo
                         </h4>
-                        <p className="text-gray-300 text-sm">
+                        <p className="text-gray-300 text-sm text-left">
                           Temario de las 3 sesiones + bonus individual
                         </p>
                       </div>
@@ -769,10 +769,10 @@ export default function ClaudeLanding() {
                         🔥
                       </span>
                       <div>
-                        <h4 className="text-white font-semibold mb-1">
+                        <h4 className="text-white font-semibold mb-1 text-left">
                           Demos EN VIVO
                         </h4>
-                        <p className="text-gray-300 text-sm">
+                        <p className="text-gray-300 text-sm text-left">
                           Casos reales y ejemplos prácticos
                         </p>
                       </div>
@@ -795,7 +795,7 @@ export default function ClaudeLanding() {
                     📅 Jueves 14 de Agosto • 7:00 PM (CDMX)
                   </p>
                   <p className="text-gray-400 text-sm mt-1">
-                    ⚠️ Queda poco cupo disponible
+                    ⚠️ Pocos lugares
                   </p>
                 </div>
               </div>
@@ -1339,15 +1339,15 @@ export default function ClaudeLanding() {
           >
             <div className="flex items-center justify-center gap-4 mb-6">
               <motion.span
-                animate={{ 
+                animate={{
                   rotate: [0, -10, 10, -5, 0],
-                  scale: [1, 1.1, 1.05, 1]
+                  scale: [1, 1.1, 1.05, 1],
                 }}
-                transition={{ 
-                  duration: 4, 
+                transition={{
+                  duration: 4,
                   repeat: Infinity,
                   repeatDelay: 6,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
                 className="text-5xl"
               >
@@ -1358,8 +1358,12 @@ export default function ClaudeLanding() {
               </h2>
             </div>
             <p className="text-gray-400 text-lg max-w-3xl mx-auto">
-              Contenido exclusivo, técnicas avanzadas y secretos que solo conocen los 
-              <span className="text-purple-400 font-semibold"> verdaderos power users</span>
+              Contenido exclusivo, técnicas avanzadas y secretos que solo
+              conocen los
+              <span className="text-purple-400 font-semibold">
+                {" "}
+                verdaderos power users
+              </span>
             </p>
           </motion.div>
 
@@ -1368,43 +1372,63 @@ export default function ClaudeLanding() {
               {
                 icon: "🧠",
                 title: "Context Management Pro",
-                description: "Mantén sesiones de días sin perder contexto. Trucos para optimizar tokens y dominar /resume como un experto.",
+                description:
+                  "Mantén sesiones de días sin perder contexto. Trucos para optimizar tokens y dominar /resume como un experto.",
                 gradient: "from-purple-500/10 to-indigo-600/10",
                 border: "border-purple-500/30",
                 color: "text-purple-400",
                 delay: 0.1,
-                skills: ["Gestión avanzada de memoria", "Optimización de tokens", "Sesiones persistentes"]
+                skills: [
+                  "Gestión avanzada de memoria",
+                  "Optimización de tokens",
+                  "Sesiones persistentes",
+                ],
               },
               {
                 icon: "🔌",
                 title: "MCP Sin Código",
-                description: "Configura MCPs con JSON (sin programar). Explora repositorios masivos y automatiza GitHub Actions.",
+                description:
+                  "Configura MCPs con JSON (sin programar). Explora repositorios masivos y automatiza GitHub Actions.",
                 gradient: "from-blue-500/10 to-cyan-600/10",
                 border: "border-blue-500/30",
                 color: "text-blue-400",
                 delay: 0.2,
-                skills: ["JSON MCP Setup", "GitHub integration", "Actions automation"]
+                skills: [
+                  "JSON MCP Setup",
+                  "GitHub integration",
+                  "Actions automation",
+                ],
               },
               {
                 icon: "🤖",
                 title: "Subagentes & SDK",
-                description: "Automatiza flujos complejos con subagentes inteligentes. Integra Claude en aplicaciones Python/TS.",
+                description:
+                  "Automatiza flujos complejos con subagentes inteligentes. Integra Claude en aplicaciones Python/TS.",
                 gradient: "from-green-500/10 to-emerald-600/10",
                 border: "border-green-500/30",
                 color: "text-green-400",
                 delay: 0.3,
-                skills: ["Delegación inteligente", "SDK integration", "Workflow automation"]
+                skills: [
+                  "Delegación inteligente",
+                  "SDK integration",
+                  "Workflow automation",
+                ],
               },
               {
                 icon: "🚀",
                 title: "Scripting Avanzado",
-                description: "Crea pipelines CI/CD y scripts reutilizables. Automatización que va más allá de lo básico.",
+                description:
+                  "Crea pipelines CI/CD y scripts reutilizables. Automatización que va más allá de lo básico.",
                 gradient: "from-orange-500/10 to-red-600/10",
                 border: "border-orange-500/30",
                 color: "text-orange-400",
                 delay: 0.4,
-                skills: ["CI/CD pipelines", "Script automation", "TypeScript/Python"]
-              }
+                skills: [
+                  "CI/CD pipelines",
+                  "Script automation",
+                  "TypeScript/Python",
+                ],
+              },
             ].map((feature, index) => (
               <motion.div
                 key={index}
@@ -1412,10 +1436,10 @@ export default function ClaudeLanding() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: feature.delay }}
                 viewport={{ once: true }}
-                whileHover={{ 
+                whileHover={{
                   scale: 1.05,
                   y: -5,
-                  transition: { duration: 0.3 }
+                  transition: { duration: 0.3 },
                 }}
                 className={`bg-gradient-to-br ${feature.gradient} ${feature.border} border backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden group hover:border-opacity-60 transition-all duration-300 cursor-pointer`}
               >
@@ -1423,13 +1447,13 @@ export default function ClaudeLanding() {
                 <motion.div
                   className={`absolute -inset-1 bg-gradient-to-r ${feature.gradient} rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-500`}
                 />
-                
+
                 <div className="relative">
                   {/* Icon with animation */}
                   <motion.div
-                    whileHover={{ 
+                    whileHover={{
                       rotate: [0, -10, 10, -5, 0],
-                      scale: [1, 1.2, 1.1]
+                      scale: [1, 1.2, 1.1],
                     }}
                     transition={{ duration: 0.5 }}
                     className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-300"
@@ -1438,7 +1462,9 @@ export default function ClaudeLanding() {
                   </motion.div>
 
                   {/* Title with gradient text */}
-                  <h3 className={`text-xl font-bold text-white mb-3 group-hover:${feature.color} transition-colors duration-300`}>
+                  <h3
+                    className={`text-xl font-bold text-white mb-3 group-hover:${feature.color} transition-colors duration-300`}
+                  >
                     {feature.title}
                   </h3>
 
@@ -1454,9 +1480,9 @@ export default function ClaudeLanding() {
                         key={skillIndex}
                         initial={{ opacity: 0, scale: 0.8 }}
                         whileInView={{ opacity: 1, scale: 1 }}
-                        transition={{ 
-                          duration: 0.3, 
-                          delay: feature.delay + (skillIndex * 0.1) + 0.3 
+                        transition={{
+                          duration: 0.3,
+                          delay: feature.delay + skillIndex * 0.1 + 0.3,
                         }}
                         viewport={{ once: true }}
                         className={`text-xs px-2 py-1 rounded-full bg-white/10 ${feature.color} border border-current/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
@@ -1489,14 +1515,14 @@ export default function ClaudeLanding() {
           >
             <div className="bg-gradient-to-r from-red-500/10 via-purple-500/10 to-pink-500/10 border border-red-500/30 rounded-2xl p-8 max-w-4xl mx-auto">
               <motion.div
-                animate={{ 
+                animate={{
                   scale: [1, 1.1, 1],
-                  opacity: [0.8, 1, 0.8]
+                  opacity: [0.8, 1, 0.8],
                 }}
-                transition={{ 
-                  duration: 2.5, 
+                transition={{
+                  duration: 2.5,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
                 className="text-4xl mb-4"
               >
@@ -1506,8 +1532,9 @@ export default function ClaudeLanding() {
                 Técnicas que cambiarán tu carrera para siempre
               </h4>
               <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-                Estos conocimientos avanzados te separarán del 99% de developers. 
-                No los encontrarás en tutoriales gratuitos ni cursos básicos.
+                Estos conocimientos avanzados te separarán del 99% de
+                developers. No los encontrarás en tutoriales gratuitos ni cursos
+                básicos.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
@@ -1617,7 +1644,7 @@ export default function ClaudeLanding() {
                   developer, mi día está completo."
                 </p>
                 <p className="text-purple-400 text-center mt-4 font-semibold">
-                  - Héctor Bliss
+                  - @blissito
                 </p>
               </div>
             </div>
@@ -1652,7 +1679,8 @@ export default function ClaudeLanding() {
             </a>
           </div>
           <p className="text-sm text-gray-400 mt-6">
-            💡 Tip: Si tomas las 4 sesiones, la 5ta sesión de Q&A es GRATIS
+            💡 Tip: Si compras el paquete completo, incluye sesión privada
+            individual GRATIS
           </p>
         </div>
       </section>
