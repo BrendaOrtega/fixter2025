@@ -60,8 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               "newsletter",
               ...(isDirectPurchase ? ["direct-purchase"] : [
                 `level-${session.metadata.experienceLevel}`,
-                `context-${session.metadata.contextObjective}`,
-                `urgency-${session.metadata.urgencyTimeline}`
+                `context-${session.metadata.contextObjective}`
               ])
             ],
             workshop: {

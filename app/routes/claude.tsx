@@ -27,7 +27,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const phone = String(formData.get("phone"));
     const experienceLevel = String(formData.get("experienceLevel"));
     const contextObjective = String(formData.get("contextObjective"));
-    const urgencyTimeline = String(formData.get("urgencyTimeline"));
 
     try {
       await db.user.upsert({
@@ -45,12 +44,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             "newsletter",
             `level-${experienceLevel}`,
             `context-${contextObjective}`,
-            `urgency-${urgencyTimeline}`,
           ],
           webinar: {
             experienceLevel,
             contextObjective,
-            urgencyTimeline,
             registeredAt: new Date().toISOString(),
             webinarType: "agosto_2025",
             webinarDate: "2025-08-14T19:00:00-06:00", // Jueves 14 de Agosto, 7:00 PM CDMX
@@ -65,7 +62,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           webinar: {
             experienceLevel,
             contextObjective,
-            urgencyTimeline,
             registeredAt: new Date().toISOString(),
             webinarType: "agosto_2025",
             webinarDate: "2025-08-14T19:00:00-06:00", // Jueves 14 de Agosto, 7:00 PM CDMX
@@ -451,7 +447,7 @@ export default function ClaudeLanding() {
               />
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div>
                 <label className="block text-white mb-1 text-xs text-left">Nivel</label>
                 <select
@@ -482,20 +478,6 @@ export default function ClaudeLanding() {
                   <option value="estudiante">Estudiante/Aprendiendo</option>
                   <option value="consultor">Consultor/Servicios</option>
                   <option value="team-lead">Líder de equipo</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-white mb-1 text-xs text-left">Implementación AI</label>
-                <select
-                  name="urgencyTimeline"
-                  className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
-                >
-                  <option value="">Selecciona...</option>
-                  <option value="inmediato">🔥 Inmediato</option>
-                  <option value="proximas-semanas">⚡ Próximas semanas</option>
-                  <option value="proximos-meses">📅 Próximos meses</option>
-                  <option value="largo-plazo">🌱 Largo plazo</option>
                 </select>
               </div>
             </div>

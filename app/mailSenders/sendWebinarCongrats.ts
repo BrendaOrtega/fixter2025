@@ -14,6 +14,21 @@ export const sendWebinarCongrats = async ({
   webinarDate = "Próximamente",
   userName
 }: WebinarCongratsProps) => {
+  // Temporalmente deshabilitado hasta configurar SendGrid o AWS SES correctamente
+  console.log(`📧 Email del webinar deshabilitado temporalmente para: ${to}`);
+  console.log(`   Título: ${webinarTitle}`);
+  console.log(`   Fecha: ${webinarDate}`);
+  console.log(`   Usuario: ${userName || 'Sin nombre'}`);
+  
+  // Retornar éxito simulado para no bloquear el flujo
+  return Promise.resolve({
+    messageId: 'simulated-' + Date.now(),
+    accepted: [to],
+    rejected: [],
+    pending: []
+  });
+  
+  /* Código original comentado temporalmente
   const link = `${process.env.BASE_URL || "https://fixtergeek.com"}/mis-cursos`;
   
   const htmlContent = webinarCongratsTemplate({ 
@@ -37,4 +52,5 @@ export const sendWebinarCongrats = async ({
       console.error(`❌ Error sending webinar email to ${to}:`, error);
       throw error;
     });
+  */
 };

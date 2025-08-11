@@ -162,21 +162,6 @@ export const WebinarBanner = () => {
                     <option value="team-lead">Líder de equipo</option>
                   </select>
                 </div>
-                
-                <div>
-                  <label className="block text-white mb-1 text-xs text-left">Urgencia</label>
-                  <select
-                    name="urgencyTimeline"
-                    required
-                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
-                  >
-                    <option value="">Selecciona...</option>
-                    <option value="inmediato">🔥 Inmediato</option>
-                    <option value="proximas-semanas">⚡ Próximas semanas</option>
-                    <option value="proximos-meses">📅 Próximos meses</option>
-                    <option value="largo-plazo">🌱 Largo plazo</option>
-                  </select>
-                </div>
               </div>
               
               {error && (

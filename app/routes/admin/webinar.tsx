@@ -163,9 +163,6 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                     Contexto
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Urgencia
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tipo Webinar
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -209,13 +206,6 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       ?.toString()
                       .replace("context-", "") ||
                     "-";
-                  const urgency =
-                    webinarData?.urgencyTimeline ||
-                    userTags
-                      .find((t) => String(t).startsWith("urgency-"))
-                      ?.toString()
-                      .replace("urgency-", "") ||
-                    "-";
 
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
@@ -258,23 +248,6 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{context}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={cn(
-                            "px-2 py-1 text-xs rounded-full",
-                            urgency === "inmediato" &&
-                              "bg-red-100 text-red-800",
-                            urgency === "proximas-semanas" &&
-                              "bg-orange-100 text-orange-800",
-                            urgency === "proximos-meses" &&
-                              "bg-blue-100 text-blue-800",
-                            urgency === "largo-plazo" &&
-                              "bg-gray-100 text-gray-800"
-                          )}
-                        >
-                          {urgency}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
@@ -341,7 +314,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                 ).length === 0 && (
                   <tr>
                     <td
-                      colSpan={activeTab === "purchased" ? 11 : 10}
+                      colSpan={activeTab === "purchased" ? 10 : 9}
                       className="px-6 py-8 text-center text-gray-500"
                     >
                       No hay usuarios en esta categoría
@@ -366,7 +339,6 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                   "Teléfono",
                   "Nivel",
                   "Contexto",
-                  "Urgencia",
                   "Tipo Webinar",
                   "Fecha Webinar",
                   "Registrado En",
@@ -387,11 +359,6 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       user.tags
                         .find((t) => t.startsWith("context-"))
                         ?.replace("context-", "") ||
-                      "",
-                    webinarData?.urgencyTimeline ||
-                      user.tags
-                        .find((t) => t.startsWith("urgency-"))
-                        ?.replace("urgency-", "") ||
                       "",
                     webinarData?.webinarType || "",
                     webinarData?.webinarDate
