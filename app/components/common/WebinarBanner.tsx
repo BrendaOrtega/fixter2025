@@ -61,16 +61,16 @@ export const WebinarBanner = () => {
           initial={{ y: 50 }}
           animate={{ y: 0 }}
           exit={{ y: 50 }}
-          className={`bg-gray-900 rounded-2xl p-8 max-w-md w-full border text-center ${
+          className={`bg-background rounded-2xl p-8 max-w-md w-full border text-center ${
             isSuccess 
-              ? 'border-green-500/30' 
-              : 'border-purple-500/30'
+              ? 'border-brand-500/30' 
+              : 'border-brand-500/30'
           }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-2xl font-bold text-white">
-              {isSuccess ? '¡Registro Exitoso!' : 'Registro Webinar'}
+              {isSuccess ? '¡Registro Exitoso!' : 'Regístrate al Webinar'}
             </h3>
             <button
               onClick={() => setShowWebinarForm(false)}
@@ -98,44 +98,44 @@ export const WebinarBanner = () => {
               <input type="hidden" name="intent" value="webinar_registration" />
               
               <div>
-                <label className="block text-white mb-2">Nombre completo</label>
+                <label className="block text-white mb-1 text-left">Nombre</label>
                 <input
                   name="name"
                   type="text"
                   required
-                  className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
                   placeholder="Tu nombre completo"
                 />
               </div>
               
               <div>
-                <label className="block text-white mb-2">Email</label>
+                <label className="block text-white mb-1 text-left">Email</label>
                 <input
                   name="email"
                   type="email"
                   required
-                  className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
                   placeholder="tu@email.com"
                 />
               </div>
               
               <div>
-                <label className="block text-white mb-2">Teléfono (opcional)</label>
+                <label className="block text-white mb-1 text-left">Teléfono (opcional)</label>
                 <input
                   name="phone"
                   type="tel"
-                  className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
                   placeholder="+52 1 234 567 8900"
                 />
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-white mb-1 text-xs">Nivel</label>
+                  <label className="block text-white mb-1 text-xs text-left">Nivel</label>
                   <select
                     name="experienceLevel"
                     required
-                    className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
+                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
                   >
                     <option value="">Selecciona...</option>
                     <option value="junior">Junior (0-2 años)</option>
@@ -147,11 +147,11 @@ export const WebinarBanner = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-white mb-1 text-xs">Situación</label>
+                  <label className="block text-white mb-1 text-xs text-left">Ocupación</label>
                   <select
                     name="contextObjective"
                     required
-                    className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
+                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
                   >
                     <option value="">Selecciona...</option>
                     <option value="empleado">Empleado en empresa</option>
@@ -164,11 +164,11 @@ export const WebinarBanner = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-white mb-1 text-xs">Urgencia</label>
+                  <label className="block text-white mb-1 text-xs text-left">Urgencia</label>
                   <select
                     name="urgencyTimeline"
                     required
-                    className="w-full px-2 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-purple-500 focus:outline-none text-xs"
+                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
                   >
                     <option value="">Selecciona...</option>
                     <option value="inmediato">🔥 Inmediato</option>
@@ -184,11 +184,11 @@ export const WebinarBanner = () => {
                   {error}
                 </div>
               )}
-              
+              <br/>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-4 px-8 rounded-xl text-lg transition-all disabled:opacity-50"
+                className="w-full bg-brand-500 mt-10  rounded-full text-brand-900 font-bold py-4 px-8 text-lg transition-all disabled:opacity-50"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -221,10 +221,10 @@ export const WebinarBanner = () => {
             animate={{ y: 0 }}
             exit={{ y: -100 }}
             transition={{ type: "spring", stiffness: 300 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 text-white py-3 px-4 shadow-2xl cursor-pointer"
+            className="fixed flex items-center top-0 left-0 right-0 z-50 bg-gradient-to-r from-claude-700 via-claude-600 to-claude-500 text-white h-fit md:h-14 px-4 shadow-2xl cursor-pointer"
             onClick={() => navigate('/claude')}
           >
-            <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+            <div className="container mx-auto flex  items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <span className="animate-pulse text-2xl">🔥</span>
                 <div>
@@ -243,9 +243,9 @@ export const WebinarBanner = () => {
                   e.stopPropagation();
                   setShowWebinarForm(true);
                 }}
-                className="bg-white text-red-600 font-black px-6 py-2 rounded-full text-sm hover:bg-yellow-100 transition-colors"
+                className="bg-white flex gap-1 text-claude-700 font-black px-6 py-2 rounded-full text-sm  transition-colors"
               >
-                RESERVAR MI LUGAR →
+                RESERVAR <span className="hidden md:block">MI LUGAR →</span>
               </motion.button>
             </div>
           </motion.div>
