@@ -529,7 +529,6 @@ export default function ClaudeLanding() {
 
   return (
     <>
-      <NavBar />
 
       {/* Form Modals */}
       <AnimatePresence>

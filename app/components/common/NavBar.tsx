@@ -17,7 +17,7 @@ import { IoIosVideocam } from "react-icons/io";
 const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
-  { name: "Domina Claude Code", link: "/libro" },
+  { name: "Claude Webinar", link: "/claude" },
 ];
 
 export const SquigglyUnderline = () => {
@@ -276,6 +276,14 @@ const MobileMenu = ({
           index={2}
           isOpen={isOpen}
           title="Blog"
+        />
+            <NavItem
+          onClick={toggleMenu}
+          as="Link"
+          to="/claude"
+          index={2}
+          isOpen={isOpen}
+          title="Claude Webinar"
         />
         {user?.email ? (
           <>
