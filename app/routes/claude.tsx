@@ -50,7 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             contextObjective,
             registeredAt: new Date().toISOString(),
             webinarType: "agosto_2025",
-            webinarDate: "2025-08-14T19:00:00-06:00", // Jueves 14 de Agosto, 7:00 PM CDMX
+            webinarDate: "2025-08-15T19:00:00-06:00", // Viernes 15 de Agosto, 7:00 PM CDMX
           },
           confirmed: false,
           role: "GUEST",
@@ -64,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             contextObjective,
             registeredAt: new Date().toISOString(),
             webinarType: "agosto_2025",
-            webinarDate: "2025-08-14T19:00:00-06:00", // Jueves 14 de Agosto, 7:00 PM CDMX
+            webinarDate: "2025-08-15T19:00:00-06:00", // Viernes 15 de Agosto, 7:00 PM CDMX
           },
         },
       });
@@ -73,7 +73,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await sendWebinarCongrats({
         to: email,
         webinarTitle: "De Junior a Senior con Claude Code",
-        webinarDate: "Jueves 14 de Agosto, 7:00 PM (CDMX)",
+        webinarDate: "Viernes 15 de Agosto, 7:00 PM (CDMX)",
         userName: name,
       });
 
@@ -610,7 +610,7 @@ export default function ClaudeLanding() {
             >
               <span className="animate-pulse h-3 w-3 bg-red-500 rounded-full"></span>
               <span className="text-base font-bold text-white">
-                ⏰ WEBINAR GRATIS - Jueves 14 de Agosto - 7:00 PM
+                ⏰ WEBINAR GRATIS - Viernes 15 de Agosto - 7:00 PM
               </span>
               <span className="bg-white text-black text-xs font-black px-2 py-1 rounded-full">
                 CUPO LIMITADO
@@ -763,7 +763,7 @@ export default function ClaudeLanding() {
                 </motion.button>
                 <div className="text-center">
                   <p className="text-[#EEC85A] font-bold text-lg">
-                    📅 Jueves 14 de Agosto • 7:00 PM (CDMX)
+                    📅 Viernes 15 de Agosto • 7:00 PM (CDMX)
                   </p>
                   <p className="text-white text-sm mt-1">⚠️ Pocos lugares</p>
                 </div>

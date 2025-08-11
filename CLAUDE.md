@@ -126,7 +126,7 @@ def create_pdf(filename, title, content):
 
 ### Claude Landing (/claude)
 
-- Webinar gratuito: 14 Agosto 2025, 7:00 PM CDMX
+- Webinar gratuito: 15 Agosto 2025, 7:00 PM CDMX
 - Taller modular: 3 sesiones de 2h cada una + bonus
 - Fechas sesiones: 19, 21 y 26 Agosto 2025 a las 7:00 PM
 - Precios: $999 MXN individual, $2,490 MXN paquete completo
@@ -152,6 +152,7 @@ def create_pdf(filename, title, content):
 - **Prisma**: `npx prisma studio`
 - **Generar PDF**: `python3 generate_pdf.py` (desde /public/)
 - **Generar EPUB del libro**: `python3 app/scripts/generate_epub.py`
+- **Generar PDF del temario**: `python3 generate_temario_pdf.py`
 
 ## Generación de EPUB
 
