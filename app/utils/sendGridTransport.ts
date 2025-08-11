@@ -14,10 +14,10 @@ let sesClient;
 const getSesClient = () => {
   // @ts-ignore
   sesClient ??= new SESClient({
-    region: process.env.AWS_REGION || "us-east-1",
+    region: process.env.SES_REGION || "us-east-2",
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId: process.env.SES_KEY,
+      secretAccessKey: process.env.SES_SECRET,
     },
   });
   return sesClient;
