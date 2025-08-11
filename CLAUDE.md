@@ -19,7 +19,25 @@ Siempre siguiendo los estilos de la aplicación, colores y formatos. Es mejor co
 
 ## el libro
 
-cada que estes por escribir un nuevo capitulo, lee el prologo y recuerda el propósito, la filosofía y el estilo.
+- cada que estes por escribir un nuevo capitulo, lee el prologo y recuerda el propósito, la filosofía y el estilo.
+  Cada capítulo incluye ejemplos prácticos que puedes ejecutar inmediatamente, pero más importante, cada técnica está presentada en el contexto de problemas reales que enfrentan desarrolladores trabajando en proyectos de producción.
+- Además de técnicas específicas, cada capítulo incluye reflexiones sobre las implicaciones más amplias de estas capacidades - cómo están cambiando la naturaleza del trabajo de desarrollo, qué nuevas oportunidades están creando, y cómo puedes posicionarte estratégicamente para aprovecharlas.
+- Los ejemplos de prompts son siempre en español así como los comentarios de código.
+
+### Proceso para Añadir o Refactorizar Capítulos
+
+Cada vez que añadas o refactorices un capítulo, sigue estos pasos:
+
+1. **Leer contexto existente**: Revisa prólogo y capítulos anteriores para mantener consistencia
+2. **Verificar numeración**: Asegúrate de que la secuencia de capítulos sea lógica
+3. **Actualizar archivos afectados** (SIEMPRE en este orden):
+   - Crear o editar el archivo `capitulo-XX.md` en `app/content/libro/`
+   - Actualizar la lista de capítulos en `app/routes/libros/domina_claude_code.tsx`
+   - Actualizar referencias entre capítulos (próximo/anterior)
+   - Renumerar capítulos posteriores si es necesario
+4. **Verificar enlaces**: Confirma que todas las referencias internas funcionan correctamente
+5. **Mantener estilo**: Seguir la filosofía y tono establecidos en el prólogo
+6. **Regenerar EPUB**: Ejecutar `python3 app/scripts/generate_epub.py` para actualizar el archivo descargable
 
 ## Información de Contacto
 
@@ -133,6 +151,30 @@ def create_pdf(filename, title, content):
 - **Build**: `npm run build`
 - **Prisma**: `npx prisma studio`
 - **Generar PDF**: `python3 generate_pdf.py` (desde /public/)
+- **Generar EPUB del libro**: `python3 app/scripts/generate_epub.py`
+
+## Generación de EPUB
+
+Para generar o actualizar el archivo EPUB del libro "Dominando Claude Code":
+
+```bash
+python3 app/scripts/generate_epub.py
+```
+
+**Cuándo regenerar el EPUB:**
+- Después de modificar cualquier capítulo en `app/content/libro/`
+- Al añadir nuevos capítulos
+- Cuando el usuario lo solicite explícitamente
+- Antes de publicar actualizaciones del libro
+
+**Ubicación del archivo generado:** `/public/dominando-claude-code.epub`
+
+**Metadatos del EPUB:**
+- Autor: Héctorbliss
+- Publisher: FixterGeek
+- Website: fixtergeek.com
+
+El script procesa automáticamente todos los capítulos de la lista en `app/routes/libros/domina_claude_code.tsx` y genera un EPUB válido con tabla de contenidos y estilos personalizados.
 
 ## Notas Adicionales
 
