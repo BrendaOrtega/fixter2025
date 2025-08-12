@@ -178,11 +178,13 @@ npx tsx app/subagents/document-generator.ts --epub --pdf --force
 ### Generación Manual
 
 **EPUB del libro:**
+
 ```bash
 python3 app/scripts/generate_epub.py
 ```
 
 **PDF del temario:**
+
 ```bash
 python3 generate_temario_pdf.py
 ```
@@ -190,21 +192,25 @@ python3 generate_temario_pdf.py
 ### Cuándo regenerar los documentos:
 
 **EPUB:**
+
 - Después de modificar cualquier capítulo en `app/content/libro/`
 - Al añadir nuevos capítulos
 - Cuando el usuario lo solicite explícitamente
 - Antes de publicar actualizaciones del libro
 
 **PDF:**
+
 - Después de cambiar fechas del webinar
 - Al actualizar precios o información del taller
 - Cuando se modifique el contenido del temario
 
 ### Archivos generados:
+
 - **EPUB:** `/public/dominando-claude-code.epub`
 - **PDF:** `/public/temario-claude-code.pdf`
 
 ### Metadatos del EPUB:
+
 - Autor: Héctorbliss
 - Publisher: FixterGeek
 - Website: fixtergeek.com
@@ -214,6 +220,7 @@ El subagente procesa automáticamente todos los capítulos y genera documentos v
 ### Uso con Claude Code
 
 Claude Code puede usar automáticamente el agente `technical-book-editor` que incluye estas funcionalidades para:
+
 - Revisar capítulos del libro para consistencia técnica
 - Generar EPUBs actualizados cuando se modifiquen capítulos
 - Generar PDFs del temario cuando cambien fechas o precios
@@ -227,3 +234,96 @@ El agente se invoca automáticamente cuando Claude detecta cambios en el conteni
 - Email de contacto correcto: brenda@fixter.org
 - Las sesiones del taller son de 2 horas cada una
 - El webinar es completamente gratuito
+
+## Guía de Estilo para Claude Code
+
+### Audiencia y Tono
+
+#### Audiencia Objetivo
+
+- Desarrolladores principiantes en código y Claude
+- Usuarios que buscan mejorar su productividad
+- Profesionales que quieren dominar herramientas de IA
+
+#### Tono de Escritura
+
+- **Sobrio y profesional**: Evitar jerga innecesaria o tono demasiado casual
+- **Accesible**: Explicar conceptos técnicos de manera clara
+- **Directo**: Ir al grano sin rodeos excesivos
+- **Práctico**: Incluir ejemplos concretos y aplicables
+
+### Estructura de Contenido
+
+#### Formato de Artículos
+
+1. **Título claro y específico**: Que indique el valor del contenido
+2. **Introducción breve**: Contexto y promesa de valor
+3. **Secciones numeradas**: Para facilitar la navegación
+4. **Ejemplos de código**: Con sintaxis apropiada
+5. **Conclusión práctica**: Próximos pasos o resumen de valor
+
+#### Longitud de Secciones
+
+- **Párrafos**: 2-4 oraciones máximo
+- **Explicaciones**: Suficientes para entender, sin exceso
+- **Ejemplos**: Concisos pero completos
+
+### Elementos de Estilo
+
+#### Uso de Código
+
+```
+Usar bloques de código para comandos y ejemplos
+```
+
+#### Listas y Viñetas
+
+- Usar viñetas para enumerar características
+- Usar números para procesos paso a paso
+- Incluir emojis ocasionales para mejorar legibilidad (✅ 📋 🎯 ⚠️)
+
+#### Énfasis
+
+- **Negritas** para conceptos clave
+- `Código inline` para comandos y referencias técnicas
+- _Cursivas_ para términos en inglés cuando sea necesario
+
+### Principios de Redacción
+
+#### Claridad
+
+- Una idea por párrafo
+- Oraciones directas y activas
+- Evitar ambigüedades
+
+#### Utilidad
+
+- Cada sección debe aportar valor práctico
+- Incluir casos de uso reales
+- Proporcionar soluciones, no solo problemas
+
+#### Progresión
+
+- De conceptos simples a complejos
+- Construir sobre conocimiento previo
+- Conectar ideas entre secciones
+
+### Elementos Específicos para Claude Code
+
+#### Comandos
+
+- Mostrar sintaxis exacta
+- Explicar parámetros cuando sea relevante
+- Incluir variaciones útiles
+
+#### Ejemplos
+
+- Usar casos de uso comunes
+- Mostrar input y output esperado
+- Contextualizar dentro de flujos de trabajo reales
+
+#### Consejos
+
+- Incluir "hacks" y trucos prácticos
+- Mencionar errores comunes a evitar
+- Sugerir mejores prácticas
