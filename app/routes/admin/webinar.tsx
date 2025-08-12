@@ -38,7 +38,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       webinar: true,
     },
     orderBy: {
-      createdAt: "desc",
+      updatedAt: "desc",
     },
   });
 
