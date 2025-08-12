@@ -13,28 +13,42 @@ export const Footer = () => {
         <h3 className="text-white font-mdedium">Sobre nosotros</h3>
         {/* <p className="text-colorCaption font-light">Nuestra historia</p> */}
         <a href="https://wa.me/527757609276" target="_blank" rel="noreferrer">
-          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">Contacto</p>
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            Contacto
+          </p>
         </a>
         <Link to="/faq">
-          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">Preguntas Frecuentes</p>{" "}
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            Preguntas Frecuentes
+          </p>{" "}
         </Link>
         <Link to="/aviso-de-privacidad">
-          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">Aviso de Privacidad</p>{" "}
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            Aviso de Privacidad
+          </p>{" "}
         </Link>
         <Link to="/terminos-y-condiciones">
-          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">Términos y condiciones</p>{" "}
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            Términos y condiciones
+          </p>{" "}
         </Link>
       </div>
       <div className="flex flex-col gap-3  w-[40%] md:w-fit">
         <h3 className="text-white font-mdedium">Recursos</h3>
-        <Link to="/libro">
-          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">Domina Claude Code</p>
+        <Link to="/libros">
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            Libro: Domina Claude Code
+          </p>
         </Link>
         <Link to="/cursos">
-          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">Cursos</p>
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            Cursos
+          </p>
         </Link>
         <Link to="/blog">
-          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">Blog</p>
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            Blog
+          </p>
         </Link>
         {/* <p className="text-colorCaption font-light">Guías</p> */}
       </div>
