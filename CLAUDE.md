@@ -153,29 +153,73 @@ def create_pdf(filename, title, content):
 - **Generar PDF**: `python3 generate_pdf.py` (desde /public/)
 - **Generar EPUB del libro**: `python3 app/scripts/generate_epub.py`
 - **Generar PDF del temario**: `python3 generate_temario_pdf.py`
+- **Generar documentos (subagente)**: `npx tsx app/subagents/document-generator.ts --epub --pdf`
 
-## Generación de EPUB
+## Generación de Documentos
 
-Para generar o actualizar el archivo EPUB del libro "Dominando Claude Code":
+### Subagente Document Generator
 
+Puedes usar el subagente especializado para generar tanto EPUB como PDF:
+
+```bash
+# Generar solo EPUB del libro
+npx tsx app/subagents/document-generator.ts --epub
+
+# Generar solo PDF del temario
+npx tsx app/subagents/document-generator.ts --pdf
+
+# Generar ambos documentos
+npx tsx app/subagents/document-generator.ts --epub --pdf
+
+# Forzar regeneración
+npx tsx app/subagents/document-generator.ts --epub --pdf --force
+```
+
+### Generación Manual
+
+**EPUB del libro:**
 ```bash
 python3 app/scripts/generate_epub.py
 ```
 
-**Cuándo regenerar el EPUB:**
+**PDF del temario:**
+```bash
+python3 generate_temario_pdf.py
+```
+
+### Cuándo regenerar los documentos:
+
+**EPUB:**
 - Después de modificar cualquier capítulo en `app/content/libro/`
 - Al añadir nuevos capítulos
 - Cuando el usuario lo solicite explícitamente
 - Antes de publicar actualizaciones del libro
 
-**Ubicación del archivo generado:** `/public/dominando-claude-code.epub`
+**PDF:**
+- Después de cambiar fechas del webinar
+- Al actualizar precios o información del taller
+- Cuando se modifique el contenido del temario
 
-**Metadatos del EPUB:**
+### Archivos generados:
+- **EPUB:** `/public/dominando-claude-code.epub`
+- **PDF:** `/public/temario-claude-code.pdf`
+
+### Metadatos del EPUB:
 - Autor: Héctorbliss
 - Publisher: FixterGeek
 - Website: fixtergeek.com
 
-El script procesa automáticamente todos los capítulos de la lista en `app/routes/libros/domina_claude_code.tsx` y genera un EPUB válido con tabla de contenidos y estilos personalizados.
+El subagente procesa automáticamente todos los capítulos y genera documentos válidos con verificación de integridad.
+
+### Uso con Claude Code
+
+Claude Code puede usar automáticamente el agente `technical-book-editor` que incluye estas funcionalidades para:
+- Revisar capítulos del libro para consistencia técnica
+- Generar EPUBs actualizados cuando se modifiquen capítulos
+- Generar PDFs del temario cuando cambien fechas o precios
+- Organizar y renumerar capítulos del libro
+
+El agente se invoca automáticamente cuando Claude detecta cambios en el contenido del libro o cuando se solicita explícitamente la generación de documentos.
 
 ## Notas Adicionales
 

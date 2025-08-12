@@ -214,7 +214,7 @@ export const WebinarBanner = () => {
                 <span className="animate-pulse text-2xl">🔥</span>
                 <div>
                   <p className="font-black text-sm md:text-base">
-                    WEBINAR GRATIS - JUEVES 14 AGO: "De Junior a Senior con Claude Code"
+                    WEBINAR GRATIS - VIERNES 15 AGO: "De Junior a Senior con Claude Code"
                   </p>
                   <p className="text-xs opacity-90">
                     Sin compromiso • Sin tarjeta • 100% práctico

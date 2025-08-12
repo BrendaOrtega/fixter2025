@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * EPUB Generator Subagent
+ * Document Generator Subagent
  * 
- * Subagente especializado para generar archivos EPUB del libro "Dominando Claude Code"
- * Puede ser usado con el Task tool para automatizar la generación de EPUB.
+ * Subagente especializado para generar archivos EPUB y PDF del libro "Dominando Claude Code"
+ * y temarios del taller Claude Code.
+ * Puede ser usado con el Task tool para automatizar la generación de documentos.
  * 
  * Funciones:
  * - Regenerar archivo EPUB usando el script Python existente
- * - Verificar si los capítulos han sido modificados
- * - Validar que el EPUB se generó exitosamente
- * - Devolver información del archivo generado (ruta y tamaño)
+ * - Generar PDF del temario del taller con información actualizada
+ * - Verificar si los archivos fuente han sido modificados
+ * - Validar que los archivos se generaron exitosamente
+ * - Devolver información de los archivos generados (ruta y tamaño)
  */
 
 import { exec } from "child_process";
@@ -26,13 +28,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..", "..");
 
-interface EpubGeneratorResult {
+interface DocumentGeneratorResult {
   success: boolean;
   message: string;
   epubPath?: string;
-  fileSize?: number;
+  pdfPath?: string;
+  epubFileSize?: number;
+  pdfFileSize?: number;
   generatedAt?: string;
   chaptersProcessed?: number;
+  documentsGenerated?: string[];
   error?: string;
 }
 
@@ -59,17 +64,21 @@ const CHAPTERS: ChapterInfo[] = [
   { id: "12", title: "El Camino Hacia Adelante", slug: "capitulo-12" },
 ];
 
-class EpubGenerator {
+class DocumentGenerator {
   private scriptsPath: string;
   private contentPath: string;
   private publicPath: string;
   private epubPath: string;
+  private pdfPath: string;
+  private pdfGeneratorPath: string;
 
   constructor() {
     this.scriptsPath = path.join(projectRoot, "app", "scripts");
     this.contentPath = path.join(projectRoot, "app", "content", "libro");
     this.publicPath = path.join(projectRoot, "public");
     this.epubPath = path.join(this.publicPath, "dominando-claude-code.epub");
+    this.pdfPath = path.join(this.publicPath, "temario-claude-code.pdf");
+    this.pdfGeneratorPath = path.join(projectRoot, "generate_temario_pdf.py");
   }
 
   /**
@@ -119,7 +128,7 @@ class EpubGenerator {
   /**
    * Genera el archivo EPUB usando el script Python existente
    */
-  async generateEpub(): Promise<EpubGeneratorResult> {
+  async generateEpub(): Promise<DocumentGeneratorResult> {
     try {
       console.log("🚀 Iniciando generación de EPUB...");
       
@@ -234,60 +243,176 @@ class EpubGenerator {
   }
 
   /**
-   * Función principal del subagente - verifica modificaciones y genera EPUB si es necesario
+   * Genera el archivo PDF del temario usando el script Python
    */
-  async run(forceRegenerate: boolean = false): Promise<EpubGeneratorResult> {
+  async generatePdf(): Promise<DocumentGeneratorResult> {
     try {
-      console.log("📚 Subagente EPUB Generator iniciado");
+      console.log("📄 Iniciando generación de PDF del temario...");
       
-      if (!forceRegenerate) {
-        // Verificar si hay modificaciones
-        const { hasModifications, modifiedFiles } = await this.checkForModifications();
-        
-        if (!hasModifications) {
-          // Validar que el archivo actual es válido
-          const validation = await this.validateEpub();
-          
-          if (validation.isValid) {
-            const stats = await fs.stat(this.epubPath);
-            return {
-              success: true,
-              message: "EPUB ya está actualizado, no se requiere regeneración",
-              epubPath: this.epubPath,
-              fileSize: stats.size,
-              generatedAt: stats.mtime.toISOString(),
-              chaptersProcessed: CHAPTERS.length
-            };
-          } else {
-            console.log("⚠️ EPUB existente no es válido, regenerando...");
-          }
-        } else {
-          console.log(`📝 Modificaciones detectadas en: ${modifiedFiles.join(", ")}`);
-        }
+      // Verificar que el script Python existe
+      try {
+        await fs.access(this.pdfGeneratorPath);
+      } catch {
+        return {
+          success: false,
+          message: "Error: Script generador de PDF no encontrado",
+          error: `Script no existe en: ${this.pdfGeneratorPath}`
+        };
       }
 
-      // Generar el EPUB
-      const result = await this.generateEpub();
-      
-      if (result.success) {
-        // Validar el archivo generado
-        const validation = await this.validateEpub();
-        if (!validation.isValid) {
-          return {
-            success: false,
-            message: `EPUB generado pero no es válido: ${validation.message}`,
-            error: validation.message
-          };
-        }
+      // Ejecutar el script Python
+      console.log("📝 Ejecutando script Python para generar PDF del temario...");
+      const { stdout, stderr } = await execAsync(`python3 "${this.pdfGeneratorPath}"`);
+
+      // Verificar si hay errores críticos
+      if (stderr && !stderr.includes("WARNING") && !stderr.includes("UserWarning")) {
+        console.error("Error del script Python:", stderr);
+        return {
+          success: false,
+          message: "Error ejecutando script generador de PDF",
+          error: stderr
+        };
       }
 
-      return result;
+      console.log("Salida del script:", stdout);
+
+      // Verificar que el archivo PDF se generó correctamente
+      let pdfStats;
+      try {
+        pdfStats = await fs.stat(this.pdfPath);
+      } catch {
+        return {
+          success: false,
+          message: "Error: El archivo PDF no fue generado",
+          error: "Archivo no encontrado después de la ejecución del script"
+        };
+      }
+
+      console.log(`✅ PDF generado exitosamente: ${this.pdfPath}`);
+      console.log(`   Tamaño: ${(pdfStats.size / 1024).toFixed(2)} KB`);
+
+      return {
+        success: true,
+        message: "PDF del temario generado exitosamente",
+        pdfPath: this.pdfPath,
+        pdfFileSize: pdfStats.size,
+        generatedAt: new Date().toISOString(),
+        documentsGenerated: ["PDF"]
+      };
 
     } catch (error) {
-      console.error("Error en subagente EPUB Generator:", error);
+      console.error("Error generando PDF:", error);
       return {
         success: false,
-        message: "Error ejecutando subagente EPUB Generator",
+        message: "Error generando PDF del temario",
+        error: error instanceof Error ? error.message : "Error desconocido"
+      };
+    }
+  }
+
+  /**
+   * Función principal del subagente - verifica modificaciones y genera documentos según se requiera
+   */
+  async run(options: { forceRegenerate?: boolean; generateEpub?: boolean; generatePdf?: boolean } = {}): Promise<DocumentGeneratorResult> {
+    try {
+      const { forceRegenerate = false, generateEpub = true, generatePdf = false } = options;
+      console.log("📚 Subagente Document Generator iniciado");
+      console.log(`   - EPUB: ${generateEpub ? '✅' : '❌'}`); 
+      console.log(`   - PDF: ${generatePdf ? '✅' : '❌'}`);
+      
+      const results: DocumentGeneratorResult = {
+        success: true,
+        message: "Documentos procesados exitosamente",
+        documentsGenerated: [],
+        generatedAt: new Date().toISOString()
+      };
+
+      // Generar EPUB si se solicita
+      if (generateEpub) {
+        if (!forceRegenerate) {
+          // Verificar si hay modificaciones
+          const { hasModifications, modifiedFiles } = await this.checkForModifications();
+          
+          if (!hasModifications) {
+            // Validar que el archivo actual es válido
+            const validation = await this.validateEpub();
+            
+            if (validation.isValid) {
+              const stats = await fs.stat(this.epubPath);
+              console.log("✅ EPUB ya está actualizado, no se requiere regeneración");
+              results.epubPath = this.epubPath;
+              results.epubFileSize = stats.size;
+              results.chaptersProcessed = CHAPTERS.length;
+              results.documentsGenerated!.push("EPUB (ya actualizado)");
+            } else {
+              console.log("⚠️ EPUB existente no es válido, regenerando...");
+              const epubResult = await this.generateEpub();
+              if (epubResult.success) {
+                results.epubPath = epubResult.epubPath;
+                results.epubFileSize = epubResult.fileSize;
+                results.chaptersProcessed = epubResult.chaptersProcessed;
+                results.documentsGenerated!.push("EPUB (regenerado)");
+              } else {
+                results.success = false;
+                results.error = epubResult.error;
+                return results;
+              }
+            }
+          } else {
+            console.log(`📝 Modificaciones detectadas en: ${modifiedFiles.join(", ")}`);
+            const epubResult = await this.generateEpub();
+            if (epubResult.success) {
+              results.epubPath = epubResult.epubPath;
+              results.epubFileSize = epubResult.fileSize;
+              results.chaptersProcessed = epubResult.chaptersProcessed;
+              results.documentsGenerated!.push("EPUB (actualizado)");
+            } else {
+              results.success = false;
+              results.error = epubResult.error;
+              return results;
+            }
+          }
+        } else {
+          const epubResult = await this.generateEpub();
+          if (epubResult.success) {
+            results.epubPath = epubResult.epubPath;
+            results.epubFileSize = epubResult.fileSize;
+            results.chaptersProcessed = epubResult.chaptersProcessed;
+            results.documentsGenerated!.push("EPUB (forzado)");
+          } else {
+            results.success = false;
+            results.error = epubResult.error;
+            return results;
+          }
+        }
+      }
+
+      // Generar PDF si se solicita
+      if (generatePdf) {
+        const pdfResult = await this.generatePdf();
+        if (pdfResult.success) {
+          results.pdfPath = pdfResult.pdfPath;
+          results.pdfFileSize = pdfResult.pdfFileSize;
+          results.documentsGenerated!.push("PDF");
+        } else {
+          results.success = false;
+          results.error = pdfResult.error;
+          return results;
+        }
+      }
+
+      // Si no se generó ningún documento
+      if (results.documentsGenerated!.length === 0) {
+        results.message = "No se solicitó la generación de ningún documento";
+      }
+
+      return results;
+
+    } catch (error) {
+      console.error("Error en subagente Document Generator:", error);
+      return {
+        success: false,
+        message: "Error ejecutando subagente Document Generator",
         error: error instanceof Error ? error.message : "Error desconocido"
       };
     }
@@ -298,35 +423,50 @@ class EpubGenerator {
 async function main() {
   const args = process.argv.slice(2);
   const forceRegenerate = args.includes("--force") || args.includes("-f");
+  const generateEpub = args.includes("--epub") || (!args.includes("--pdf") && !args.includes("--epub"));
+  const generatePdf = args.includes("--pdf") || args.includes("--temario");
   const helpRequested = args.includes("--help") || args.includes("-h");
 
   if (helpRequested) {
     console.log(`
-📚 EPUB Generator Subagent
-Subagente especializado para generar archivos EPUB del libro "Dominando Claude Code"
+📚 Document Generator Subagent
+Subagente especializado para generar archivos EPUB y PDF del proyecto Claude Code
 
 Uso:
   node epub-generator.ts [opciones]
 
 Opciones:
+  --epub         Generar archivo EPUB del libro (por defecto si no se especifica nada)
+  --pdf, --temario  Generar archivo PDF del temario del taller
   --force, -f    Forzar regeneración incluso si no hay cambios
   --help, -h     Mostrar esta ayuda
 
+Ejemplos:
+  node epub-generator.ts --epub          # Solo generar EPUB
+  node epub-generator.ts --pdf           # Solo generar PDF
+  node epub-generator.ts --epub --pdf    # Generar ambos
+  node epub-generator.ts --force --pdf   # Forzar regeneración del PDF
+
 Funciones:
-  ✅ Verificar modificaciones en capítulos
-  ✅ Generar EPUB usando script Python existente
-  ✅ Validar integridad del archivo generado
+  ✅ Verificar modificaciones en archivos fuente
+  ✅ Generar EPUB del libro usando script Python existente
+  ✅ Generar PDF del temario del taller
+  ✅ Validar integridad de archivos generados
   ✅ Devolver información detallada del resultado
     `);
     process.exit(0);
   }
 
-  const generator = new EpubGenerator();
-  const result = await generator.run(forceRegenerate);
+  const generator = new DocumentGenerator();
+  const result = await generator.run({ 
+    forceRegenerate, 
+    generateEpub, 
+    generatePdf 
+  });
 
   // Salida estructurada para usar con Task tool
   console.log("\n" + "=".repeat(60));
-  console.log("📊 RESULTADO DEL SUBAGENTE EPUB GENERATOR");
+  console.log("📊 RESULTADO DEL SUBAGENTE DOCUMENT GENERATOR");
   console.log("=".repeat(60));
   console.log(JSON.stringify(result, null, 2));
 
@@ -339,5 +479,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 // Exportar para uso programático
-export { EpubGenerator };
-export type { EpubGeneratorResult, ChapterInfo };
+export { DocumentGenerator };
+export type { DocumentGeneratorResult, ChapterInfo };
