@@ -1637,7 +1637,7 @@ export default function ClaudeLanding() {
               Quiero mi lugar en el webinar →
             </button>
             <a
-              href="/temario-claude-code.pdf"
+              href="/temario-claude-workshop.pdf"
               download="Temario-Claude-Code-Power-User.pdf"
               className="inline-block bg-transparent border-2 border-brand-500 text-brand-500 hover:bg-brand-500/5  font-medium py-4 px-8 rounded-full text-lg transition-all text-center"
             >
