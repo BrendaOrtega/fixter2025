@@ -1,14 +1,119 @@
 #!/usr/bin/env python3
 
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from bs4 import BeautifulSoup
+import re
+
+def parse_html_temario():
+    """Lee y parsea el archivo HTML del temario"""
+    with open("public/temario-claude-code.html", "r", encoding="utf-8") as f:
+        html_content = f.read()
+    
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # Extraer el contenido principal
+    content_data = {
+        'title': soup.find('h1', class_='title').get_text(strip=True) if soup.find('h1', class_='title') else "Temario Completo: Claude Code Power User",
+        'webinar': {},
+        'sessions': [],
+        'pricing': {},
+        'contact': {}
+    }
+    
+    # Extraer información del webinar
+    webinar_section = soup.find('section', class_='webinar-box')
+    if webinar_section:
+        content_data['webinar'] = {
+            'date': webinar_section.find('h4').get_text(strip=True) if webinar_section.find('h4') else "",
+            'details': [],
+            'topics': []
+        }
+        
+        # Extraer detalles del webinar
+        for p in webinar_section.find_all('p'):
+            text = p.get_text(strip=True)
+            if text:
+                content_data['webinar']['details'].append(text)
+        
+        # Extraer temas del webinar
+        ul = webinar_section.find('ul')
+        if ul:
+            for li in ul.find_all('li'):
+                content_data['webinar']['topics'].append(li.get_text(strip=True))
+    
+    # Extraer información de las sesiones
+    for session in soup.find_all('section', class_='session'):
+        session_data = {
+            'title': '',
+            'meta': '',
+            'topics': []
+        }
+        
+        # Título de la sesión
+        h4 = session.find('h4')
+        if h4:
+            session_data['title'] = h4.get_text(strip=True)
+        
+        # Metadata de la sesión
+        meta_div = session.find('div', class_='session-meta')
+        if meta_div:
+            session_data['meta'] = meta_div.get_text(strip=True)
+        
+        # Temas de la sesión
+        ul = session.find('ul')
+        if ul:
+            for li in ul.find_all('li'):
+                session_data['topics'].append(li.get_text(strip=True))
+        
+        # Para la sesión bonus, incluir el valor adicional
+        if 'bonus' in session.get('class', []):
+            bonus_p = session.find('p')
+            if bonus_p:
+                session_data['bonus_value'] = bonus_p.get_text(strip=True)
+        
+        content_data['sessions'].append(session_data)
+    
+    # Extraer información de precios
+    pricing_section = soup.find('section', class_='pricing')
+    if pricing_section:
+        price_options = pricing_section.find_all('div', class_='price-option')
+        content_data['pricing']['options'] = []
+        for option in price_options:
+            price_text = option.get_text(strip=True)
+            content_data['pricing']['options'].append(price_text)
+        
+        # Extraer lo que incluye
+        includes_h4 = pricing_section.find('h4', string=re.compile('Incluye'))
+        if includes_h4:
+            next_p = includes_h4.find_next_sibling('p')
+            if next_p:
+                includes_text = next_p.get_text()
+                content_data['pricing']['includes'] = [line.strip() for line in includes_text.split('\n') if line.strip()]
+    
+    # Extraer información de contacto
+    contact_section = soup.find('section', class_='contact-info')
+    if contact_section:
+        for p in contact_section.find_all('p'):
+            text = p.get_text(strip=True)
+            if 'Website:' in text:
+                content_data['contact']['website'] = text.replace('Website:', '').strip()
+            elif 'Email:' in text:
+                content_data['contact']['email'] = text.replace('Email:', '').strip()
+            elif 'Registro' in text:
+                content_data['contact']['registro'] = text
+    
+    return content_data
 
 def create_temario_pdf():
     filename = "public/temario-claude-code.pdf"
-    title = "De Junior a Senior con Claude Code"
+    
+    # Parsear el HTML
+    content_data = parse_html_temario()
     
     # Create PDF document
     doc = SimpleDocTemplate(filename, pagesize=letter,
@@ -25,7 +130,7 @@ def create_temario_pdf():
         fontSize=24,
         spaceAfter=30,
         textColor=HexColor('#667eea'),
-        alignment=1  # Center
+        alignment=TA_CENTER
     )
     
     subtitle_style = ParagraphStyle(
@@ -34,7 +139,7 @@ def create_temario_pdf():
         fontSize=18,
         spaceAfter=20,
         textColor=HexColor('#83F3D3'),
-        alignment=1
+        alignment=TA_CENTER
     )
     
     section_style = ParagraphStyle(
@@ -45,126 +150,133 @@ def create_temario_pdf():
         textColor=HexColor('#667eea')
     )
     
+    session_title_style = ParagraphStyle(
+        'SessionTitle',
+        parent=styles['Heading3'],
+        fontSize=14,
+        spaceAfter=10,
+        textColor=HexColor('#2D3748'),
+        fontName='Helvetica-Bold'
+    )
+    
     webinar_style = ParagraphStyle(
         'Webinar',
         parent=styles['Normal'],
-        fontSize=14,
+        fontSize=12,
         spaceAfter=10,
         textColor=HexColor('#2D3748'),
         backColor=HexColor('#F7FAFC'),
         borderColor=HexColor('#83F3D3'),
         borderWidth=1,
-        borderPadding=10
+        borderPadding=10,
+        leftIndent=10,
+        rightIndent=10
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=11,
+        leading=14
+    )
+    
+    meta_style = ParagraphStyle(
+        'Meta',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=HexColor('#559B8B'),
+        spaceAfter=8
     )
 
-    # Content
-    content = [
-        # Title
-        Paragraph(title, title_style),
-        Spacer(1, 12),
+    # Title
+    story.append(Paragraph(content_data['title'], title_style))
+    story.append(Spacer(1, 12))
+    
+    story.append(Paragraph("Webinar Gratis + Taller Modular", subtitle_style))
+    story.append(Spacer(1, 20))
+    
+    # Webinar section
+    story.append(Paragraph("🎯 Webinar Gratuito de Introducción", section_style))
+    
+    webinar_content = f"<b>{content_data['webinar']['date']}</b><br/><br/>"
+    for detail in content_data['webinar']['details']:
+        webinar_content += f"<b>{detail}</b><br/>"
+    
+    webinar_content += "<br/><b>Lo que descubrirás:</b><br/>"
+    for topic in content_data['webinar']['topics']:
+        webinar_content += f"• {topic}<br/>"
+    
+    story.append(Paragraph(webinar_content, webinar_style))
+    story.append(Spacer(1, 20))
+    
+    # Taller Modular
+    story.append(Paragraph("🚀 Taller Modular Especializado", section_style))
+    story.append(Paragraph("Elige las sesiones que necesites o toma el paquete completo con descuento y sesión bonus.", normal_style))
+    story.append(Spacer(1, 15))
+    
+    # Sessions
+    for i, session in enumerate(content_data['sessions']):
+        # Keep session content together
+        session_content = []
         
-        Paragraph("Taller Modular Especializado", subtitle_style),
-        Spacer(1, 20),
+        session_content.append(Paragraph(f"<b>{session['title']}</b>", session_title_style))
+        session_content.append(Paragraph(session['meta'], meta_style))
         
-        # Webinar section
-        Paragraph("🎯 Webinar Gratuito de Introducción", section_style),
+        topics_text = ""
+        for topic in session['topics']:
+            topics_text += f"• {topic}<br/>"
+        session_content.append(Paragraph(topics_text, normal_style))
         
-        Paragraph("""
-        <b>📅 Viernes 15 de Agosto 2025 - 7:00 PM (CDMX)</b><br/>
-        <b>Duración:</b> 60 minutos + Q&A<br/>
-        <b>Modalidad:</b> Online en vivo (Zoom)<br/>
-        <b>Costo:</b> 100% GRATIS<br/><br/>
+        # Para la sesión bonus
+        if 'bonus_value' in session:
+            session_content.append(Spacer(1, 8))
+            session_content.append(Paragraph(f"<b>{session['bonus_value']}</b>", normal_style))
         
-        <b>Lo que descubrirás:</b><br/>
-        • Tour completo por las funciones avanzadas de Claude Code<br/>
-        • Qué es MCP y por qué cambiará tu forma de trabajar<br/>
-        • Cómo los subagentes pueden automatizar tareas complejas<br/>
-        • Preview del temario completo del taller (3 sesiones de 2h + bonus)<br/>
-        • Demos en vivo y casos de uso reales
-        """, webinar_style),
-        
-        Spacer(1, 20),
-        
-        # Sessions
-        Paragraph("🚀 Taller Modular Especializado", section_style),
-        Paragraph("Elige las sesiones que necesites o toma el paquete completo con descuento y sesión bonus.", styles['Normal']),
-        Spacer(1, 15),
-        
-        # Session 1
-        Paragraph("<b>Sesión 1: Fundamentos y Context Management</b>", styles['Heading3']),
-        Paragraph("📅 Martes 19 Agosto • 2 horas • $999 MXN", styles['Normal']),
-        Paragraph("""
-        • Setup profesional de Claude Code y configuración óptima<br/>
-        • Arquitectura de prompts efectivos para proyectos grandes<br/>
-        • Gestión avanzada de contexto y uso experto de /resume<br/>
-        • Optimización de tokens y memoria para sesiones largas<br/>
-        • Técnicas para mantener conversaciones coherentes por días<br/>
-        • Casos prácticos: debugging de proyectos complejos
-        """, styles['Normal']),
-        Spacer(1, 12),
-        
-        # Session 2
-        Paragraph("<b>Sesión 2: SDK, Subagentes y Scripting</b>", styles['Heading3']),
-        Paragraph("📅 Jueves 21 Agosto • 2 horas • $999 MXN", styles['Normal']),
-        Paragraph("""
-        • Claude SDK para integración avanzada en tus aplicaciones<br/>
-        • Creación y configuración de subagentes especializados<br/>
-        • Automatización de workflows de desarrollo<br/>
-        • Scripting avanzado para tareas repetitivas<br/>
-        • Integración con herramientas de desarrollo<br/>
-        • Casos de uso: automatización de testing y deployment
-        """, styles['Normal']),
-        Spacer(1, 12),
-        
-        # Session 3
-        Paragraph("<b>Sesión 3: MCP y Automatización</b>", styles['Heading3']),
-        Paragraph("📅 Martes 26 Agosto • 2 horas • $999 MXN", styles['Normal']),
-        Paragraph("""
-        • MCP (Model Context Protocol) configurado con JSON (sin programar)<br/>
-        • GitHub MCP: explora y analiza miles de repositorios<br/>
-        • Automatización de GitHub Actions directamente desde Claude<br/>
-        • Conexión con bases de datos y APIs externas<br/>
-        • Creación de workflows automatizados complejos<br/>
-        • Casos prácticos: análisis masivo de código y documentación
-        """, styles['Normal']),
-        Spacer(1, 12),
-        
-        # Bonus
-        Paragraph("<b>BONUS: Sesión Privada Individual</b>", styles['Heading3']),
-        Paragraph("📅 Por agendar • 1 hora • Solo con paquete completo", styles['Normal']),
-        Paragraph("""
-        • Revisión personalizada de tu proyecto específico<br/>
-        • Consultoría 1:1 para implementar Claude Code en tu stack<br/>
-        • Resolución de casos particulares de tu trabajo<br/>
-        • Estrategias personalizadas para tu nivel y contexto
-        """, styles['Normal']),
-        Spacer(1, 20),
-        
-        # Pricing
-        Paragraph("💰 Precios", section_style),
-        Paragraph("""
-        <b>Sesión Individual:</b> $999 MXN<br/>
-        <b>Paquete Completo (3 sesiones + bonus):</b> $2,490 MXN<br/>
-        <b>Ahorro:</b> $507 MXN + sesión bonus privada incluida
-        """, styles['Normal']),
-        Spacer(1, 20),
-        
-        # Contact
-        Paragraph("📧 Información de Contacto", section_style),
-        Paragraph("""
-        <b>Email:</b> brenda@fixter.org<br/>
-        <b>Website:</b> fixtergeek.com<br/><br/>
-        
-        <i>Conviértete en Power User de Claude Code y multiplica tu productividad 10x</i>
-        """, styles['Normal']),
-    ]
-
-    # Add all content to story
-    for item in content:
-        if isinstance(item, str):
-            story.append(Paragraph(item, styles['Normal']))
-        else:
-            story.append(item)
+        story.append(KeepTogether(session_content))
+        story.append(Spacer(1, 15))
+    
+    # Pricing
+    story.append(Paragraph("💰 Inversión y Opciones de Pago", section_style))
+    
+    pricing_text = "<b>Precios y Paquetes:</b><br/><br/>"
+    for option in content_data['pricing']['options']:
+        # Limpiar y formatear el texto de precio
+        option_clean = option.replace('\n', ' ').strip()
+        pricing_text += f"• {option_clean}<br/>"
+    
+    pricing_text += "<br/><b>Incluye:</b><br/>"
+    if 'includes' in content_data['pricing']:
+        for include in content_data['pricing']['includes']:
+            if include.strip():
+                pricing_text += f"{include}<br/>"
+    
+    story.append(Paragraph(pricing_text, normal_style))
+    story.append(Spacer(1, 20))
+    
+    # Contact
+    story.append(Paragraph("📧 Información de Contacto", section_style))
+    contact_text = ""
+    if 'email' in content_data['contact']:
+        contact_text += f"<b>Email:</b> {content_data['contact']['email']}<br/>"
+    if 'website' in content_data['contact']:
+        contact_text += f"<b>Website:</b> {content_data['contact']['website']}<br/>"
+    if 'registro' in content_data['contact']:
+        contact_text += f"<br/>{content_data['contact']['registro']}<br/>"
+    
+    contact_text += "<br/><br/><i>Conviértete en Power User de Claude Code y multiplica tu productividad 10x</i>"
+    
+    story.append(Paragraph(contact_text, normal_style))
+    
+    # Footer
+    story.append(Spacer(1, 30))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=HexColor('#666666'),
+        alignment=TA_CENTER
+    )
+    story.append(Paragraph("© 2025 FixterGeek - Todos los derechos reservados", footer_style))
 
     doc.build(story)
     print(f"PDF generado: {filename}")
