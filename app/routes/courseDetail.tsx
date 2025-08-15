@@ -9,8 +9,11 @@ import { formatDuration } from "./cursos";
 import type { Course, Video } from "@prisma/client";
 import { getVideoTitles } from "~/.server/dbGetters";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
-import { motion } from "motion/react";
+import { motion, useSpring, useTransform } from "motion/react";
 import getMetaTags from "~/utils/getMetaTags";
+import { cn } from "~/utils/cn";
+import { use3DHover } from "~/hooks/use3DHover";
+import Markdown from "~/components/common/Markdown";
 
 export function meta({ data }: Route.MetaArgs) {
   return getMetaTags({
@@ -50,12 +53,13 @@ export default function Route({
   loaderData: { course, videos },
 }: Route.ComponentProps) {
   return (
-    <>
+    // <article className="pt-40">
+    <article>
       <CourseHeader course={course} />
       <CourseContent course={course} videos={videos} />
       <Teacher course={course} />
       <Footer />
-    </>
+    </article>
   );
 }
 
@@ -75,9 +79,9 @@ const CourseContent = ({
   }, []);
   return (
     <section className=" mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ">
-      <p className="text-colorParagraph text-base md:text-lg mt-6 font-light">
-        {course.description}
-      </p>
+      <div className="prose prose-lg prose-invert max-w-none text-colorParagraph">
+        <Markdown>{course.description}</Markdown>
+      </div>
       <div className="border-[1px] my-20 border-brand-500 rounded-3xl p-6 md:p-10 xl:p-16 relative">
         <img
           className="absolute -top-12 -left-8"
@@ -208,10 +212,41 @@ const Lesson = ({ title, isFree }: { title: string; isFree?: boolean }) => {
   );
 };
 
-const CourseHeader = ({ course }: { course: Course }) => {
+const CourseHeader = ({
+  className,
+  course,
+}: {
+  className?: string;
+  course: Course;
+}) => {
   const { title, id, summary, duration, level, slug, basePrice, icon } = course;
+
+  // 3D hover effect setup
+  const z = useSpring(0, { bounce: 0 });
+  const {
+    containerRef,
+    springX,
+    springY,
+    handleMouseEnter,
+    handleMouseLeave,
+    handleMouseMove,
+  } = use3DHover({
+    onMouseEnter: () => {
+      z.set(30);
+    },
+    onMouseLeave: () => {
+      z.set(0);
+    },
+  });
+  const imgZ = useTransform(z, [0, 30], [0, 50]);
+
   return (
-    <section className="w-full h-fit py-20 md:py-0 md:h-[580px] bg-heroMobile md:bg-hero bg-cover bg-botom bg-center ">
+    <section
+      className={cn(
+        "w-full h-fit py-20 md:py-0 md:h-[580px] bg-heroMobile md:bg-hero bg-cover bg-botom bg-center",
+        className
+      )}
+    >
       <div className="max-w-7xl mx-auto flex items-center h-full gap-12 md:gap-0  flex-wrap-reverse md:flex-nowrap px-4 md:px-[5%] xl:px-0">
         <div className="text-left w-full md:w-[60%]">
           <h2 className="text-4xl md:text-5xl xl:text-5xl font-bold text-white !leading-snug">
@@ -276,8 +311,33 @@ const CourseHeader = ({ course }: { course: Course }) => {
             )}
           </div>
         </div>
-        <div className="w-full md:w-[40%]  flex justify-center h-full items-center">
-          <img className="w-[70%]" src={icon} alt="curso" />{" "}
+        <div
+          className="w-full md:w-[40%] flex justify-center h-full items-center"
+          style={{
+            transformStyle: "preserve-3d",
+            perspective: 900,
+          }}
+        >
+          <motion.div
+            ref={containerRef}
+            style={{
+              rotateX: springX,
+              rotateY: springY,
+              transformStyle: "preserve-3d",
+              perspective: 600,
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            className="w-[70%]"
+          >
+            <motion.img
+              style={{ z: imgZ }}
+              className="w-full"
+              src={icon}
+              alt="curso"
+            />
+          </motion.div>
         </div>
       </div>
     </section>

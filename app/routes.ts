@@ -39,6 +39,7 @@ export default [
     route("newsletter", "routes/admin/newsletter.tsx"),
     route("analytics", "routes/admin/analytics.tsx"),
     route("heatmap/:postId", "routes/admin/heatmap.$postId.tsx"),
+    route("send", "routes/admin/send.tsx"),
   ]),
   // Analytics moved to admin section
   // testing WebRTC
