@@ -44,12 +44,16 @@ export const VideosMenu = ({
   // const [isOpen, setIsOpen] = useState(defaultOpen);
   const x = useMotionValue(0);
   const springX = useSpring(x, { bounce: 0.2 });
-  const buttonX = useTransform(springX, [-400, 0], [0, 394]);
+  // Ajustar el rango de transformación basado en el ancho del menú
+  const menuWidth = typeof window !== 'undefined' && window.innerWidth >= 768 ? 380 : 300;
+  const buttonX = useTransform(springX, [-menuWidth - 20, 0], [0, menuWidth - 14]);
   const [completed, setCompleted] = useState<string[]>([]);
   const [videosCompleted, setVideosCompleted] = useState<string[]>([]);
 
   useEffect(() => {
-    isOpen ? x.set(0) : x.set(-400);
+    // Ajustar según el ancho del menú (300px móvil, 380px desktop)
+    const menuWidth = window.innerWidth >= 768 ? 380 : 300;
+    isOpen ? x.set(0) : x.set(-menuWidth - 20);
   }, [isOpen, x]);
 
   const checkIfWatched = (slug: string) => {
@@ -234,7 +238,8 @@ export const MenuListContainer = ({
         maskImage,
       }}
       className={cn(
-        "md:w-[380px] w-[300px] fixed z-20 rounded-xl overflow-y-scroll h-[88%] bg-dark top-0 left-0 py-20 bg-[#0C1115] text-gray-400",
+        "md:w-[380px] w-[300px] fixed z-50 rounded-xl overflow-y-scroll h-[88%] top-0 left-0 py-20 text-gray-400",
+        "bg-[#0C1115]/95 backdrop-blur-sm shadow-2xl border-r border-gray-800/50",
         className,
         {
           "lg:min-w-[50vw] min-w-[90vw]": mode === "big",
@@ -302,10 +307,10 @@ export const MenuButton = ({
       style={{ x }}
       onClick={onToggle}
       className={cn(
-        "fixed bg-[#0C1115] border-[1px] border-colorOutline/40 text-4xl w-14 h-14 text-white top-0 mt-20 p-2 z-10 flex items-center justify-center rounded-r-2xl hover:bg-[rgba(12,17,21,.7)]",
+        "fixed bg-[#0C1115] border-[1px] border-colorOutline/40 text-4xl w-14 h-14 text-white top-0 mt-20 p-2 z-[60] flex items-center justify-center rounded-r-2xl hover:bg-[rgba(12,17,21,.7)] transition-colors",
         {
-          "left-[-80px] md:left-auto": isOpen,
-          "rounded-2xl": isOpen,
+          "rounded-2xl": !isOpen,
+          "rounded-r-2xl": isOpen,
         },
         className
       )}

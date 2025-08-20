@@ -1,13 +1,12 @@
 import { redirect } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "~/.server/db";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
-import { VideosMenu } from "~/components/viewer/VideoPlayerMenu";
+import { UnifiedSidebarMenu } from "~/components/viewer/UnifiedSidebarMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/courseViewer";
-import { MarkdownViewer } from "~/components/viewer/MarkdownViewer";
 import getMetaTags from "~/utils/getMetaTags";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -82,8 +81,26 @@ export default function Route({
   },
 }: Route.ComponentProps) {
   const [successIsOpen, setSuccessIsOpen] = useState(searchParams.success);
-  const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const showPurchaseDrawer = !isPurchased && !video.isPublic && !course.isFree;
+
+  // Set initial menu state based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMenuOpen(true); // Open on desktop by default
+      } else {
+        setIsMenuOpen(false); // Closed on mobile by default
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Listen for resize events
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <>
@@ -104,7 +121,7 @@ export default function Route({
           }}
         />
 
-        <VideosMenu
+        <UnifiedSidebarMenu
           courseTitle={course.title}
           courseSlug={course.slug}
           isOpen={isMenuOpen}
@@ -112,10 +129,10 @@ export default function Route({
           currentVideoSlug={video.slug || undefined}
           videos={videos}
           moduleNames={moduleNames.filter((n) => typeof n === "string")}
-          defaultOpen={!searchParams.success}
           isLocked={course.isFree ? false : !isPurchased}
+          markdownBody={video.description || undefined}
+          defaultTab="videos"
         />
-        <MarkdownViewer body={video.description} />
       </article>
       {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
       {showPurchaseDrawer && <PurchaseDrawer courseSlug={course.slug} />}
