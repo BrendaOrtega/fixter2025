@@ -46,16 +46,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
   if (!course) throw data("Course Not Found", { status: 404 });
   const videos = await getVideoTitles(course.id);
-  return { course, videos };
+  const hasPublicVideos = videos.some(video => video.isPublic);
+  return { course, videos, hasPublicVideos };
 };
 
 export default function Route({
-  loaderData: { course, videos },
+  loaderData: { course, videos, hasPublicVideos },
 }: Route.ComponentProps) {
   return (
     // <article className="pt-40">
     <article>
-      <CourseHeader course={course} />
+      <CourseHeader course={course} hasPublicVideos={hasPublicVideos} />
       <CourseContent course={course} videos={videos} />
       <Teacher course={course} />
       <Footer />
@@ -215,9 +216,11 @@ const Lesson = ({ title, isFree }: { title: string; isFree?: boolean }) => {
 const CourseHeader = ({
   className,
   course,
+  hasPublicVideos,
 }: {
   className?: string;
   course: Course;
+  hasPublicVideos?: boolean;
 }) => {
   const { title, id, summary, duration, level, slug, basePrice, icon } = course;
 
@@ -291,12 +294,29 @@ const CourseHeader = ({
             </div>
           </div>
           <div className="gap-6 flex mt-10">
-            <PrimaryButton
-              as="Link"
-              to={`/cursos/${slug}/viewer`}
-              variant="fill"
-              title={course.isFree ? "Ver curso 📺" : "Empezar gratis"}
-            />
+            {course.isFree ? (
+              <PrimaryButton
+                as="Link"
+                to={`/cursos/${slug}/viewer`}
+                variant="fill"
+                title="Empezar gratis"
+              />
+            ) : hasPublicVideos ? (
+              <PrimaryButton
+                as="Link"
+                to={`/cursos/${slug}/viewer`}
+                variant="fill"
+                title="Ver trailer"
+              />
+            ) : slug === "power-user-en-claude-code" ? (
+              <PrimaryButton
+                as="a"
+                to="https://youtu.be/EkH82XjN45w"
+                target="_blank"
+                variant="fill"
+                title="Ver demo"
+              />
+            ) : null}
             {!course.isFree && (
               <Form method="POST" action="/api/stripe">
                 <input type="hidden" name="courseSlug" value={slug} />

@@ -94,6 +94,11 @@ export const CousesList = ({ courses }: { courses: Course[] }) => {
 };
 
 export const formatDuration = (secs?: string | number | null) => {
+  // Si ya viene como string con formato (ej: "120 min"), devolverlo directamente
+  if (typeof secs === "string" && secs.includes("min")) {
+    return secs;
+  }
+  
   if (typeof secs === "string") {
     secs = Number(secs);
   }

@@ -1,5 +1,10 @@
-import { redirect, type ActionFunctionArgs } from "react-router";
+import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { getStripeCheckout } from "~/.server/stripe";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // Manejar requests GET redirigiendo a home
+  throw redirect("/");
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();

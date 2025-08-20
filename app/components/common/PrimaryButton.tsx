@@ -20,12 +20,12 @@ export const PrimaryButton = ({
   isLoading?: boolean;
   children?: ReactNode;
   variant?: "fill" | "ghost";
-  as?: "Link";
+  as?: "Link" | "a";
   title?: string;
   to?: string;
   [x: string]: unknown;
 }) => {
-  const Element = as === "Link" ? Link : "button";
+  const Element = as === "Link" ? Link : as === "a" ? "a" : "button";
   const content = isLoading ? (
     <Spinner />
   ) : children ? (
@@ -38,7 +38,7 @@ export const PrimaryButton = ({
   return (
     <Element
       disabled={isDisabled}
-      to={to || ""}
+      {...(as === "Link" ? { to: to || "" } : as === "a" ? { href: to } : {})}
       className={cn(
         "h-12 rounded-full border-[2px] hover:-translate-y-1 transition-all border-brand-500 text-center text-brand-500 px-4 inline-grid place-content-center items-center",
         {
