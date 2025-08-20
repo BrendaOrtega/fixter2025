@@ -35,7 +35,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       },
     });
   } else {
+    // Si no hay videoSlug, usar el primer video y redireccionar
     video = videos[0];
+    if (video?.slug) {
+      throw redirect(`/cursos/${params.courseSlug}/viewer?videoSlug=${video.slug}`);
+    }
   }
 
   // if (!video) throw data("Video not found", { status: 404 });

@@ -138,7 +138,7 @@ export const UnifiedSidebarMenu = ({
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
                     {
-                      "bg-brand-500 text-white": activeTab === tab.id,
+                      "bg-brand-500 text-brand-900": activeTab === tab.id,
                       "text-gray-400 hover:text-gray-200": activeTab !== tab.id,
                     }
                   )}
