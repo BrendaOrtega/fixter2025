@@ -10,10 +10,29 @@ import type { Route } from "./+types/courseViewer";
 import getMetaTags from "~/utils/getMetaTags";
 
 export function meta({ data }: Route.MetaArgs) {
+  if (!data) {
+    return getMetaTags({
+      title: "Cargando curso...",
+      description: "Accediendo al contenido del curso",
+    });
+  }
+
+  const { course, video } = data;
+  
+  // Si hay un video específico, usar su información
+  if (video) {
+    return getMetaTags({
+      title: `${video.title} - ${course.title}`,
+      description: video.description?.slice(0, 150) || course.description?.slice(0, 150) || `Aprende con ${video.title} en el curso ${course.title}`,
+      image: course.icon || course.poster || undefined,
+    });
+  }
+  
+  // Fallback al curso general
   return getMetaTags({
-    title: data.course.title,
-    description: data.course.description?.slice(0, 50),
-    image: data.course.icon || undefined,
+    title: course.title,
+    description: course.description?.slice(0, 150) || `Curso completo: ${course.title}`,
+    image: course.icon || course.poster || undefined,
   });
 }
 
