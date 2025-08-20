@@ -31,5 +31,4 @@ export const getSesTransport = () => {
   });
 };
 
-export const getSesRemitent = () =>
-  `Brendi de Fixtergeek <brenda@fixtergeek.com>`;
+export const getSesRemitent = () => `Fixtergeek <fixtergeek@gmail.com>`;

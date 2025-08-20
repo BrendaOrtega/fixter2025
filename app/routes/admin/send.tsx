@@ -7,6 +7,7 @@ import { AdminNav } from "~/components/admin/AdminNav";
 import fs from "fs/promises";
 import path from "path";
 import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 
 // Cargar templates disponibles
 async function loadTemplates() {
@@ -31,7 +32,7 @@ async function loadTemplateContent(templateName: string) {
       `${templateName}.ts`
     );
     const content = await fs.readFile(templatePath, "utf-8");
-    
+
     // Los templates son funciones, necesitamos extraer el HTML template
     // Buscar el template literal que está después del arrow function
     const templateMatch = content.match(/=>\s*`([\s\S]*?)`\s*;?\s*$/);
@@ -40,22 +41,22 @@ async function loadTemplateContent(templateName: string) {
       let html = templateMatch[1];
       html = html.replace(/\$\{[^}]+\}/g, (match) => {
         // Proveer valores de ejemplo para las variables
-        if (match.includes('link')) return 'https://fixtergeek.com';
-        if (match.includes('webinarTitle')) return 'Claude Workshop';
-        if (match.includes('webinarDate')) return 'Próximamente';
-        return 'ejemplo';
+        if (match.includes("link")) return "https://fixtergeek.com";
+        if (match.includes("webinarTitle")) return "Claude Workshop";
+        if (match.includes("webinarDate")) return "Próximamente";
+        return "ejemplo";
       });
       return html;
     }
-    
+
     // Si no encontramos el patrón de arrow function, buscar return statement
     const returnMatch = content.match(/return\s+`([\s\S]*?)`/);
     if (returnMatch) {
       let html = returnMatch[1];
-      html = html.replace(/\$\{[^}]+\}/g, 'ejemplo');
+      html = html.replace(/\$\{[^}]+\}/g, "ejemplo");
       return html;
     }
-    
+
     return "";
   } catch (error) {
     console.error("Error loading template:", error);
@@ -64,6 +65,8 @@ async function loadTemplateContent(templateName: string) {
 }
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
+  await getAdminOrRedirect(request);
+
   const url = new URL(request.url);
   const tagsParam = url.searchParams.get("tags");
   const templateParam = url.searchParams.get("template");
@@ -77,67 +80,76 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const allTags = new Map<string, number>(); // tag -> count
   let filteredRecipients: any[] = [];
   let allRecords: any[] = []; // Para contar tags
-  
+
   if (sourceParam === "users" || sourceParam === "all") {
     const allUsers = await db.user.findMany({
       select: { tags: true, email: true, displayName: true },
     });
-    
+
     // Guardar todos los usuarios para conteo
-    allRecords = [...allRecords, ...allUsers.map(u => ({ ...u, source: "user" }))];
-    
+    allRecords = [
+      ...allRecords,
+      ...allUsers.map((u) => ({ ...u, source: "user" })),
+    ];
+
     // Contar tags
     allUsers.forEach((user) => {
       user.tags.forEach((tag) => {
         allTags.set(tag, (allTags.get(tag) || 0) + 1);
       });
     });
-    
+
     // Filtrar usuarios según tags - solo si hay tags seleccionados
     if (selectedTags.length > 0) {
-      filteredRecipients = allUsers.filter(user => 
-        user.tags.some(tag => selectedTags.includes(tag))
-      ).map(u => ({ ...u, source: "user" }));
+      filteredRecipients = allUsers
+        .filter((user) => user.tags.some((tag) => selectedTags.includes(tag)))
+        .map((u) => ({ ...u, source: "user" }));
     }
   }
-  
+
   if (sourceParam === "subscribers" || sourceParam === "all") {
     const allSubscribers = await db.subscriber.findMany({
       select: { tags: true, email: true, name: true },
     });
-    
+
     // Guardar todos los subscribers para conteo
-    const subscribersForCount = allSubscribers.map(s => ({ 
-      email: s.email, 
-      displayName: s.name, 
-      tags: s.tags, 
-      source: "subscriber" 
+    const subscribersForCount = allSubscribers.map((s) => ({
+      email: s.email,
+      displayName: s.name,
+      tags: s.tags,
+      source: "subscriber",
     }));
     allRecords = [...allRecords, ...subscribersForCount];
-    
+
     // Si es solo subscribers, limpiar tags primero
     if (sourceParam === "subscribers") {
       allTags.clear();
     }
-    
+
     // Contar tags de subscribers
     allSubscribers.forEach((sub) => {
       sub.tags.forEach((tag) => {
         allTags.set(tag, (allTags.get(tag) || 0) + 1);
       });
     });
-    
+
     // Filtrar subscribers según tags - solo si hay tags seleccionados
-    const subscriberRecipients = selectedTags.length > 0
-      ? allSubscribers.filter(sub => 
-          sub.tags.some(tag => selectedTags.includes(tag))
-        ).map(s => ({ email: s.email, displayName: s.name, tags: s.tags, source: "subscriber" }))
-      : [];
-    
+    const subscriberRecipients =
+      selectedTags.length > 0
+        ? allSubscribers
+            .filter((sub) => sub.tags.some((tag) => selectedTags.includes(tag)))
+            .map((s) => ({
+              email: s.email,
+              displayName: s.name,
+              tags: s.tags,
+              source: "subscriber",
+            }))
+        : [];
+
     if (sourceParam === "all") {
       // Combinar y eliminar duplicados por email
       const emailMap = new Map();
-      [...filteredRecipients, ...subscriberRecipients].forEach(r => {
+      [...filteredRecipients, ...subscriberRecipients].forEach((r) => {
         if (!emailMap.has(r.email)) {
           emailMap.set(r.email, r);
         }
@@ -199,12 +211,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
       const content = await loadTemplateContent(templateName);
       return { templateContent: content };
     }
-    
+
     case "delete_newsletter": {
       try {
         const newsletterId = formData.get("newsletterId") as string;
         await db.newsletter.delete({
-          where: { id: newsletterId }
+          where: { id: newsletterId },
         });
         return { success: true, deleted: true };
       } catch (error) {
@@ -212,7 +224,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
         return { error: "Error al eliminar" };
       }
     }
-    
+
     case "load_draft": {
       try {
         const newsletterId = formData.get("newsletterId") as string;
@@ -221,21 +233,21 @@ export const action = async ({ request }: Route.ActionArgs) => {
           select: {
             title: true,
             content: true,
-            recipients: true
-          }
+            recipients: true,
+          },
         });
-        
+
         if (!newsletter) {
           return { error: "Borrador no encontrado" };
         }
-        
-        return { 
-          success: true, 
+
+        return {
+          success: true,
           loadedDraft: {
             subject: newsletter.title,
             htmlContent: newsletter.content || "",
-            recipients: newsletter.recipients.join(", ")
-          }
+            recipients: newsletter.recipients.join(", "),
+          },
         };
       } catch (error) {
         console.error("Error loading draft:", error);
@@ -314,10 +326,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
         return { success: true, simulated: true, newsletterId: newsletter.id };
       } catch (error) {
         console.error("Error simulating send:", error);
-        return { error: error instanceof Error ? error.message : "Error al simular envío" };
+        return {
+          error:
+            error instanceof Error ? error.message : "Error al simular envío",
+        };
       }
     }
-    
+
     case "send_real": {
       try {
         const subject = formData.get("subject") as string;
@@ -348,72 +363,103 @@ export const action = async ({ request }: Route.ActionArgs) => {
             sent: new Date(),
             delivered: [],
             opened: [],
-            clicked: []
+            clicked: [],
           },
         });
+
+        // Añadir pixel de tracking de SES al HTML
+        // SES reemplazará {{ses:openTracker}} con el pixel de tracking automáticamente
+        let finalHtmlContent = htmlContent;
+        if (!htmlContent.includes("{{ses:openTracker}}")) {
+          // Añadir el pixel de tracking al principio del body para evitar truncamiento
+          // Algunos clientes de email truncan el final del mensaje
+          if (htmlContent.includes("<body")) {
+            finalHtmlContent = htmlContent.replace(
+              /<body[^>]*>/i,
+              "$&\n{{ses:openTracker}}"
+            );
+          } else {
+            // Si no hay tag body, añadir al principio
+            finalHtmlContent = "{{ses:openTracker}}\n" + htmlContent;
+          }
+          console.log("📍 Added SES open tracking pixel to email");
+        }
 
         // Enviar correos realmente
         const transporter = getSesTransport();
         const from = getSesRemitent();
-        
+
+        // Configuration Set desde variable de entorno
+        const configurationSet =
+          process.env.SES_CONFIGURATION_SET || "first_stats";
+        console.log("📧 Using SES Configuration Set:", configurationSet);
+
         // Enviar en lotes de 50 para evitar límites de SES
         const batchSize = 50;
         const results = [];
-        
+
         for (let i = 0; i < recipientsList.length; i += batchSize) {
           const batch = recipientsList.slice(i, i + batchSize);
-          
+
           try {
             const result = await transporter.sendMail({
               from,
               subject,
               bcc: batch, // Usar BCC para proteger privacidad
-              html: htmlContent,
+              html: finalHtmlContent,
+              // Headers para SES Configuration Set y tracking
+              headers: {
+                "X-SES-CONFIGURATION-SET": configurationSet,
+                "X-SES-MESSAGE-TAGS": `newsletter_id=${newsletter.id}`,
+              },
             });
-            
+
             results.push({ success: true, batch, messageId: result.messageId });
-            
+
             // Actualizar newsletter con emails enviados
             await db.newsletter.update({
               where: { id: newsletter.id },
               data: {
                 delivered: {
-                  push: batch
+                  push: batch,
                 },
                 messageIds: {
-                  push: result.messageId || ""
-                }
-              }
+                  push: result.messageId || "",
+                },
+              },
             });
-            
           } catch (error) {
             console.error(`Error sending batch ${i}:`, error);
             results.push({ success: false, batch, error: error.message });
           }
-          
+
           // Esperar 1 segundo entre lotes para evitar rate limiting
           if (i + batchSize < recipientsList.length) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
           }
         }
 
-        const successCount = results.filter(r => r.success).reduce((acc, r) => acc + r.batch.length, 0);
+        const successCount = results
+          .filter((r) => r.success)
+          .reduce((acc, r) => acc + r.batch.length, 0);
         const failCount = recipientsList.length - successCount;
 
-        return { 
-          success: true, 
-          real: true, 
+        return {
+          success: true,
+          real: true,
           newsletterId: newsletter.id,
           stats: {
             total: recipientsList.length,
             sent: successCount,
-            failed: failCount
-          }
+            failed: failCount,
+          },
         };
-        
       } catch (error) {
         console.error("Error sending real emails:", error);
-        return { error: error instanceof Error ? error.message : "Error al enviar correos" };
+        return {
+          error:
+            error instanceof Error ? error.message : "Error al enviar correos",
+        };
       }
     }
 
@@ -487,7 +533,7 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
       setSearchParams(searchParams);
     }
   };
-  
+
   const handleSourceChange = (newSource: string) => {
     searchParams.set("source", newSource);
     // Limpiar tags al cambiar de fuente
@@ -530,9 +576,9 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
     console.log("Simulating send with:", {
       subject,
       htmlContent: htmlContent?.substring(0, 100),
-      recipientsCount: allEmails.length
+      recipientsCount: allEmails.length,
     });
-    
+
     fetcher.submit(
       {
         intent: "simulate_send",
@@ -543,13 +589,15 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
       { method: "post" }
     );
   };
-  
+
   const handleRealSend = () => {
     const confirmMessage = `⚠️ ATENCIÓN: Estás a punto de enviar correos REALES a ${allEmails.length} destinatarios.\n\n¿Estás seguro de que quieres continuar?`;
-    
+
     if (confirm(confirmMessage)) {
-      const doubleCheck = confirm(`🔴 ÚLTIMA CONFIRMACIÓN:\n\nEnviar "${subject}" a ${allEmails.length} correos?\n\nEsta acción NO se puede deshacer.`);
-      
+      const doubleCheck = confirm(
+        `🔴 ÚLTIMA CONFIRMACIÓN:\n\nEnviar "${subject}" a ${allEmails.length} correos?\n\nEsta acción NO se puede deshacer.`
+      );
+
       if (doubleCheck) {
         fetcher.submit(
           {
@@ -583,7 +631,7 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
             Copiar URL con filtros
           </button>
         </div>
-        
+
         {/* Tabs para seleccionar modelo */}
         <div className="flex gap-2 mb-6">
           <button
@@ -693,7 +741,7 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                   <div
                     dangerouslySetInnerHTML={{ __html: htmlContent }}
                     className="text-gray-900"
-                    style={{ minHeight: '100px' }}
+                    style={{ minHeight: "100px" }}
                   />
                 </div>
               )}
@@ -720,11 +768,13 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                         className="rounded bg-gray-800 border-gray-700"
                       />
                       <span className="text-sm">{tag}</span>
-                      <span className="text-xs text-gray-500">
-                        ({count})
-                      </span>
+                      <span className="text-xs text-gray-500">({count})</span>
                       <span className="text-xs text-gray-400 ml-1">
-                        {source === "users" ? "users" : source === "subscribers" ? "subs" : "total"}
+                        {source === "users"
+                          ? "users"
+                          : source === "subscribers"
+                          ? "subs"
+                          : "total"}
                       </span>
                     </label>
                   ))}
@@ -766,23 +816,36 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                 </p>
                 <div className="text-xs text-gray-500">
                   {selectedEmails.length > 0 && (
-                    <p>• {selectedEmails.length} desde {source === "all" ? "filtros" : source}</p>
+                    <p>
+                      • {selectedEmails.length} desde{" "}
+                      {source === "all" ? "filtros" : source}
+                    </p>
                   )}
                   {manualEmails && (
-                    <p>• {manualEmails.split(",").filter(e => e.trim()).length} manuales</p>
+                    <p>
+                      • {manualEmails.split(",").filter((e) => e.trim()).length}{" "}
+                      manuales
+                    </p>
                   )}
                 </div>
-                
+
                 {/* Checklist para envío */}
                 <div className="pt-2 border-t border-gray-700 text-xs space-y-1">
                   <p className={subject ? "text-green-500" : "text-gray-500"}>
                     {subject ? "✓" : "○"} Asunto
                   </p>
-                  <p className={htmlContent ? "text-green-500" : "text-gray-500"}>
+                  <p
+                    className={htmlContent ? "text-green-500" : "text-gray-500"}
+                  >
                     {htmlContent ? "✓" : "○"} Contenido HTML
                   </p>
-                  <p className={allEmails.length > 0 ? "text-green-500" : "text-gray-500"}>
-                    {allEmails.length > 0 ? "✓" : "○"} Destinatarios ({allEmails.length})
+                  <p
+                    className={
+                      allEmails.length > 0 ? "text-green-500" : "text-gray-500"
+                    }
+                  >
+                    {allEmails.length > 0 ? "✓" : "○"} Destinatarios (
+                    {allEmails.length})
                   </p>
                 </div>
               </div>
@@ -812,16 +875,23 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                   }
                   className={cn(
                     "px-4 py-2 rounded-lg text-sm transition-colors",
-                    fetcher.state !== "idle" || !subject || !htmlContent || allEmails.length === 0
+                    fetcher.state !== "idle" ||
+                      !subject ||
+                      !htmlContent ||
+                      allEmails.length === 0
                       ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                       : "bg-brand-600 hover:bg-brand-700 text-white cursor-pointer"
                   )}
                   title={
-                    !subject ? "Falta el asunto" :
-                    !htmlContent ? "Falta el contenido HTML" :
-                    allEmails.length === 0 ? "No hay destinatarios" :
-                    fetcher.state !== "idle" ? "Procesando..." :
-                    "Simular envío de correo"
+                    !subject
+                      ? "Falta el asunto"
+                      : !htmlContent
+                      ? "Falta el contenido HTML"
+                      : allEmails.length === 0
+                      ? "No hay destinatarios"
+                      : fetcher.state !== "idle"
+                      ? "Procesando..."
+                      : "Simular envío de correo"
                   }
                 >
                   Simular Envío
@@ -836,16 +906,23 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                   }
                   className={cn(
                     "px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2",
-                    fetcher.state !== "idle" || !subject || !htmlContent || allEmails.length === 0
+                    fetcher.state !== "idle" ||
+                      !subject ||
+                      !htmlContent ||
+                      allEmails.length === 0
                       ? "bg-gray-700 text-gray-400 border-gray-600 cursor-not-allowed"
                       : "bg-red-600 hover:bg-red-700 text-white border-red-500 hover:border-red-400 cursor-pointer shadow-lg"
                   )}
                   title={
-                    !subject ? "Falta el asunto" :
-                    !htmlContent ? "Falta el contenido HTML" :
-                    allEmails.length === 0 ? "No hay destinatarios" :
-                    fetcher.state !== "idle" ? "Procesando..." :
-                    "🚨 ENVÍO REAL de correos"
+                    !subject
+                      ? "Falta el asunto"
+                      : !htmlContent
+                      ? "Falta el contenido HTML"
+                      : allEmails.length === 0
+                      ? "No hay destinatarios"
+                      : fetcher.state !== "idle"
+                      ? "Procesando..."
+                      : "🚨 ENVÍO REAL de correos"
                   }
                 >
                   🚨 ENVIAR REAL
@@ -855,12 +932,10 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
               {/* Feedback */}
               {fetcher.state === "submitting" && (
                 <div className="mt-4 p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
-                  <p className="text-sm text-blue-400">
-                    ⏳ Procesando...
-                  </p>
+                  <p className="text-sm text-blue-400">⏳ Procesando...</p>
                 </div>
               )}
-              
+
               {fetcher.state === "idle" && fetcher.data?.success && (
                 <div className="mt-4 p-3 bg-green-900/20 border border-green-700 rounded-lg">
                   <p className="text-sm text-green-400">
@@ -870,18 +945,30 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                       ? "✓ Envío simulado exitosamente"
                       : "✓ Borrador guardado exitosamente"}
                   </p>
-                  
+
                   {fetcher.data.stats && (
                     <div className="text-xs text-gray-300 mt-2 space-y-1">
-                      <p>📊 <strong>Estadísticas del envío:</strong></p>
+                      <p>
+                        📊 <strong>Estadísticas del envío:</strong>
+                      </p>
                       <p>• Total: {fetcher.data.stats.total} correos</p>
-                      <p>• Enviados: <span className="text-green-400">{fetcher.data.stats.sent}</span></p>
+                      <p>
+                        • Enviados:{" "}
+                        <span className="text-green-400">
+                          {fetcher.data.stats.sent}
+                        </span>
+                      </p>
                       {fetcher.data.stats.failed > 0 && (
-                        <p>• Fallidos: <span className="text-red-400">{fetcher.data.stats.failed}</span></p>
+                        <p>
+                          • Fallidos:{" "}
+                          <span className="text-red-400">
+                            {fetcher.data.stats.failed}
+                          </span>
+                        </p>
                       )}
                     </div>
                   )}
-                  
+
                   {fetcher.data.newsletterId && (
                     <p className="text-xs text-gray-500 mt-2">
                       ID: {fetcher.data.newsletterId}
@@ -889,7 +976,7 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                   )}
                 </div>
               )}
-              
+
               {fetcher.state === "idle" && fetcher.data?.error && (
                 <div className="mt-4 p-3 bg-red-900/20 border border-red-700 rounded-lg">
                   <p className="text-sm text-red-400">
@@ -925,29 +1012,36 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                     <td className="py-2 px-3">
                       <div>
                         <p className="font-medium">{newsletter.title}</p>
-                        <p className="text-xs text-gray-500">ID: {newsletter.id.slice(-8)}</p>
+                        <p className="text-xs text-gray-500">
+                          ID: {newsletter.id.slice(-8)}
+                        </p>
                       </div>
                     </td>
                     <td className="text-center py-2 px-3">
-                      <span className={cn(
-                        "px-2 py-1 rounded text-xs",
-                        newsletter.status === "SENT" 
-                          ? "bg-green-900/30 text-green-400"
-                          : newsletter.status === "DRAFT"
-                          ? "bg-yellow-900/30 text-yellow-400"
-                          : "bg-gray-900/30 text-gray-400"
-                      )}>
+                      <span
+                        className={cn(
+                          "px-2 py-1 rounded text-xs",
+                          newsletter.status === "SENT"
+                            ? "bg-green-900/30 text-green-400"
+                            : newsletter.status === "DRAFT"
+                            ? "bg-yellow-900/30 text-yellow-400"
+                            : "bg-gray-900/30 text-gray-400"
+                        )}
+                      >
                         {newsletter.status}
                       </span>
                     </td>
                     <td className="text-center py-2 px-3">
                       {newsletter.sent
-                        ? new Date(newsletter.sent).toLocaleDateString("es-MX", {
-                            day: "numeric",
-                            month: "long",
-                            hour: "numeric",
-                            hour12: true
-                          })
+                        ? new Date(newsletter.sent).toLocaleDateString(
+                            "es-MX",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              hour: "numeric",
+                              hour12: true,
+                            }
+                          )
                         : "-"}
                     </td>
                     <td className="text-center py-2 px-3">
@@ -956,9 +1050,12 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                     <td className="text-center py-2 px-3">
                       {newsletter.status === "SENT" ? (
                         <div className="text-xs">
-                          <span className="text-gray-400">E:</span> {newsletter.delivered.length} |{" "}
-                          <span className="text-gray-400">A:</span> {newsletter.opened.length} |{" "}
-                          <span className="text-gray-400">C:</span> {newsletter.clicked.length}
+                          <span className="text-gray-400">E:</span>{" "}
+                          {newsletter.delivered.length} |{" "}
+                          <span className="text-gray-400">A:</span>{" "}
+                          {newsletter.opened.length} |{" "}
+                          <span className="text-gray-400">C:</span>{" "}
+                          {newsletter.clicked.length}
                         </div>
                       ) : (
                         "-"
@@ -970,7 +1067,10 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                           <button
                             onClick={() => {
                               fetcher.submit(
-                                { intent: "load_draft", newsletterId: newsletter.id },
+                                {
+                                  intent: "load_draft",
+                                  newsletterId: newsletter.id,
+                                },
                                 { method: "post" }
                               );
                             }}
@@ -984,7 +1084,10 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                           onClick={() => {
                             if (confirm("¿Eliminar este newsletter?")) {
                               fetcher.submit(
-                                { intent: "delete_newsletter", newsletterId: newsletter.id },
+                                {
+                                  intent: "delete_newsletter",
+                                  newsletterId: newsletter.id,
+                                },
                                 { method: "post" }
                               );
                             }
