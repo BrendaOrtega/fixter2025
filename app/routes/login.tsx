@@ -6,7 +6,6 @@ import { GiMagicBroom } from "react-icons/gi";
 import Spinner from "~/components/common/Spinner";
 import { BsMailboxFlag } from "react-icons/bs";
 import { useState } from "react";
-import { IoMdClose } from "react-icons/io";
 import type { Route } from "./+types/login";
 import {
   getOrCreateUser,
@@ -68,7 +67,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function Page() {
   const { success, message, status, error } = useLoaderData(); 
   const fetchers = useFetchers(); // hack for Form (not working very well 😡)
-  const [showWarning, setShowWarning] = useState(true);
 
   if (String(status).includes("4")) {
     return <BadToken message={message} />;
@@ -99,35 +97,6 @@ export default function Page() {
           </div>
         )}
         
-        {/* Aviso temporal sobre servicio de Google - posicionado a la izquierda */}
-        <div 
-          className={twMerge(
-            "fixed left-4 top-24 z-40 max-w-sm transition-all duration-500 ease-in-out",
-            showWarning 
-              ? "translate-x-0 opacity-60 hover:opacity-90" 
-              : "-translate-x-full opacity-0 pointer-events-none"
-          )}
-        >
-          <div className="bg-yellow-900/90 backdrop-blur-sm border border-yellow-500/30 text-yellow-200 px-4 py-3 rounded-lg relative shadow-lg">
-            <button
-              onClick={() => setShowWarning(false)}
-              className="absolute top-2 right-2 text-yellow-400 hover:text-yellow-300 transition-colors"
-              aria-label="Cerrar aviso"
-            >
-              <IoMdClose size={18} />
-            </button>
-            <div className="flex items-start gap-2 pr-6">
-              <span className="text-yellow-400 mt-0.5">⚠️</span>
-              <div className="text-xs">
-                <p className="font-semibold mb-1">Aviso del sistema</p>
-                <p className="text-yellow-100/90 leading-relaxed">
-                  El servicio de Google está experimentando latencias. 
-                  Usa el magic link si tienes problemas.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
         
         <GoogleLoginLink />
       </div>
