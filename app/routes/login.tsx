@@ -1,8 +1,7 @@
 import { Form, Link, redirect, useFetchers, useLoaderData } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
-import { useGoogleLogin } from "~/hooks/useGoogleLogin";
-import { FcGoogle } from "react-icons/fc";
+import { GoogleLoginLink } from "~/components/GoogleLoginLink";
 import { GiMagicBroom } from "react-icons/gi";
 import Spinner from "~/components/common/Spinner";
 import { BsMailboxFlag } from "react-icons/bs";
@@ -19,7 +18,11 @@ import { googleHandler } from "~/.server/google";
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
 
-  await googleHandler(request, "/mis-cursos"); // this will throw
+  // Manejar Google OAuth
+  const googleResponse = await googleHandler(request, "/mis-cursos");
+  if (googleResponse) {
+    return googleResponse; // Retornar el redirect si Google lo maneja
+  }
 
   // @todo remove?
   if (url.searchParams.has("token")) {
@@ -54,21 +57,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
   return {
     success: url.searchParams.has("success"),
+    error: url.searchParams.get("error"),
     status: 200,
     message: "ok ⛓️",
   };
 };
 
 export default function Page() {
-  const { success, message, status } = useLoaderData(); // WTF?
-  const { clientHandler } = useGoogleLogin();
+  const { success, message, status, error } = useLoaderData(); 
   const fetchers = useFetchers(); // hack for Form (not working very well 😡)
 
   if (String(status).includes("4")) {
     return <BadToken message={message} />;
   }
 
-  const isLoading = fetchers[0] && fetchers[0].state !== "idle";
+  // Solo el loading del magic link form
+  const isMagicLinkLoading = fetchers.some(f => f.formAction === "/api/user" && f.formData?.get("intent") === "magic_link" && f.state !== "idle");
 
   return (
     <section className="flex flex-col gap-4 pt-28 md:pt-40 max-w-lg px-4 md:px-[5%] xl:px-0 mx-auto">
@@ -81,18 +85,34 @@ export default function Page() {
         <h2 className="text-xl md:text-2xl font-bold text-white text-center">
           Inicia sesión o crea una cuenta
         </h2>
-        <button
-          type="button"
-          onClick={clientHandler}
-          className={twMerge(
-            "cursor-pointer py-3 px-4 text-white  to-brand-200 text-base w-full shadow flex items-center gap-3 justify-center font-semibold  bg-brand-900 rounded-full disabled:text-gray-100 mx-auto my-8"
-          )}
-        >
-          <span className="text-xl">
-            <FcGoogle />
-          </span>
-          <span> Inicia con Google</span>
-        </button>
+        
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mt-4">
+            <p className="text-sm text-center">
+              {error === 'google_auth_failed' && '❌ Error al iniciar sesión con Google. Inténtalo de nuevo.'}
+              {error === 'google_oauth_denied' && '⚠️ Acceso denegado. Necesitas permitir el acceso para continuar.'}
+              {!['google_auth_failed', 'google_oauth_denied'].includes(error) && `❌ Error: ${error}`}
+            </p>
+          </div>
+        )}
+        
+        {/* Aviso temporal sobre servicio de Google */}
+        <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 px-4 py-3 rounded-lg mt-4">
+          <div className="flex items-start gap-2">
+            <span className="text-yellow-400 mt-0.5">⚠️</span>
+            <div className="text-sm">
+              <p className="font-semibold mb-1">Aviso del sistema</p>
+              <p className="text-yellow-100/90 leading-relaxed">
+                Actualmente el servicio de autenticación de Google está experimentando latencias intermitentes. 
+                El proceso de inicio de sesión podría tardar más de lo habitual o fallar temporalmente. 
+                Si experimentas problemas, te recomendamos usar el magic link como alternativa. 
+                Agradecemos tu paciencia.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <GoogleLoginLink />
       </div>
       <hr className="border-slate-800" />
       <p className="text-colorParagraph text-center">
@@ -133,14 +153,15 @@ export default function Page() {
             name="intent"
             value="magic_link"
             type="submit"
+            disabled={isMagicLinkLoading}
             className={twMerge(
-              "py-3 px-4 rounded-full text-brand-900 font-semibold text-base flex  items-center justify-center gap-4 bg-brand-500 active:bg-brand-800"
+              "py-3 px-4 rounded-full text-brand-900 font-semibold text-base flex  items-center justify-center gap-4 bg-brand-500 active:bg-brand-800 disabled:opacity-75 disabled:cursor-not-allowed"
             )}
           >
             <span className="">
-              {isLoading ? <Spinner /> : <GiMagicBroom />}
+              {isMagicLinkLoading ? <Spinner /> : <GiMagicBroom />}
             </span>
-            <span>Solicitar magic link</span>
+            <span>{isMagicLinkLoading ? "Enviando..." : "Solicitar magic link"}</span>
           </button>
         </Form>
       )}

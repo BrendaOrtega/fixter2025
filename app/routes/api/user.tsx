@@ -10,7 +10,6 @@ import { getUserOrNull } from "~/.server/dbGetters";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { db } from "~/.server/db";
 import { destroySession, getSession } from "~/sessions";
-import { getGoogleURL } from "~/.server/google";
 
 const emailSchema = z.string().email();
 
@@ -60,10 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { user: await getUserOrNull(request) };
   }
 
-  if (intent === "google_login_redirect") {
-    const url = getGoogleURL();
-    return redirect(url);
-  }
+  // Google login redirect is now handled client-side for better performance
 
   if (intent === "magic_link") {
     const email = String(await formData.get("email"));

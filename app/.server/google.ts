@@ -17,7 +17,8 @@ type GoogleUserData = {
 export const googleHandler = async (request: Request, nextURL: string) => {
   const url = new URL(request.url);
   const { searchParams } = url;
-  // new google login
+  
+  // Handle Google OAuth callback
   if (
     searchParams.has("auth") &&
     searchParams.has("code") &&
@@ -25,11 +26,34 @@ export const googleHandler = async (request: Request, nextURL: string) => {
   ) {
     const next = searchParams.get("next") || nextURL || "/mis-cursos";
     const code = searchParams.get("code")!;
-    const session = await createGoogleSession(code, request);
-    throw redirect(next, {
-      headers: {
-        "Set-Cookie": await commitSession(session!),
-      },
+    
+    try {
+      console.log("🚀 Starting Google OAuth flow...");
+      const session = await createGoogleSession(code, request);
+      
+      console.log(`✅ Redirecting to: ${next}`);
+      // Redirect exitoso - no envolver en try/catch
+      return redirect(next, {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      });
+      
+    } catch (error) {
+      console.error("❌ Google OAuth error:", error);
+      // Solo llegar aquí si createGoogleSession falla
+      return redirect("/login?error=google_auth_failed", {
+        status: 302
+      });
+    }
+  }
+
+  // Handle Google OAuth error callback
+  if (searchParams.has("error")) {
+    const error = searchParams.get("error");
+    console.error("❌ Google OAuth error from Google:", error);
+    return redirect("/login?error=google_oauth_denied", {
+      status: 302
     });
   }
 };
@@ -52,54 +76,91 @@ export const getGoogleURL = () => {
 };
 
 const validateGoogleCode = (code: string) => {
-  const url = new URL("https://oauth2.googleapis.com/token");
-  url.searchParams.set("code", code);
-  url.searchParams.set("grant_type", "authorization_code");
-  url.searchParams.set("redirect_uri", location + "/login?auth=google");
+  const url = "https://oauth2.googleapis.com/token";
+  
+  // Los parámetros deben ir en el body como form-data, no en searchParams
+  const body = new URLSearchParams();
+  body.append("code", code);
+  body.append("client_id", process.env.GOOGLE_CLIENT_ID as string);
+  body.append("client_secret", process.env.GOOGLE_SECRET as string);
+  body.append("redirect_uri", location + "/login?auth=google");
+  body.append("grant_type", "authorization_code");
+
   const options: RequestInit = {
     method: "POST",
     headers: {
-      "content-type": "application/json",
-      Authorization: `Basic ${btoa(
-        process.env.GOOGLE_CLIENT_ID + ":" + process.env.GOOGLE_SECRET
-      )}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
+    body: body.toString(),
   };
-  return fetch(url.toString(), options)
+  
+  return fetch(url, options)
     .then((r) => r.json())
-    .catch((e) => console.error(e));
+    .catch((e) => {
+      console.error("Error validating Google code:", e);
+      return { error: e.message };
+    });
 };
 
 export const createGoogleSession = async (code: string, request: Request) => {
-  // @todo: save refresh_t
-  const { error, access_token, refresh_token } = await validateGoogleCode(code);
+  try {
+    console.log("🔍 Validating Google code...");
+    const tokenResponse = await validateGoogleCode(code);
+    
+    if (tokenResponse.error || !tokenResponse.access_token) {
+      console.error("❌ Token validation failed:", tokenResponse.error);
+      throw new Error(`Google OAuth error: ${tokenResponse.error || 'No access token received'}`);
+    }
 
-  if (!access_token || error) {
-    throw new Error("There is a problem with google code::" + error);
+    console.log("✅ Token received, fetching user data...");
+    const userData = (await getGoogleExtraData(tokenResponse.access_token)) as GoogleUserData;
+    
+    if (!userData || !userData.email) {
+      console.error("❌ Failed to get user data from Google");
+      throw new Error("Failed to retrieve user information from Google");
+    }
+
+    const partial = {
+      username: userData.email,
+      displayName: userData.name,
+      confirmed: userData.verified_email,
+      email: userData.email,
+      photoURL: userData.picture,
+    } as User;
+
+    console.log(`✅ Creating/updating user: ${partial.email}`);
+    await createAndWelcomeUser(partial);
+
+    const session = await getSession(request.headers.get("Cookie"));
+    session.set("email", partial.email);
+    
+    console.log("✅ Google session created successfully");
+    return session;
+    
+  } catch (error) {
+    console.error("❌ Error in createGoogleSession:", error);
+    throw error;
   }
-
-  const userData = (await getGoogleExtraData(access_token)) as GoogleUserData;
-  const partial = {
-    username: userData.email,
-    displayName: userData.name,
-    confirmed: userData.verified_email,
-    email: userData.email,
-    photoURL: userData.picture,
-  } as User;
-
-  await createAndWelcomeUser(partial);
-
-  const session = await getSession(request.headers.get("Cookie"));
-  session.set("email", partial.email);
-  return session;
 };
 
-const getGoogleExtraData = (access_token: string): Promise<unknown> => {
-  const url = new URL("https://www.googleapis.com/oauth2/v2/userinfo");
+const getGoogleExtraData = (access_token: string): Promise<GoogleUserData> => {
+  const url = "https://www.googleapis.com/oauth2/v2/userinfo";
   const options: RequestInit = {
-    headers: { Authorization: `Bearer ${access_token}` },
+    headers: { 
+      Authorization: `Bearer ${access_token}`,
+      Accept: "application/json"
+    },
   };
-  return fetch(url.toString(), options)
-    .then((r) => r.json())
-    .catch((e) => console.error(e));
+  
+  return fetch(url, options)
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`Google API error: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .catch((error) => {
+      console.error("❌ Error fetching Google user data:", error);
+      throw error;
+    });
 };
