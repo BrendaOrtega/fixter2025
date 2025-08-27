@@ -1,0 +1,16 @@
+{
+  "name": "screen-recorder",
+  "version": "0.1.0",
+  "description": "Prototipo de grabador de pantalla con funcionalidad de autozoom similar a Screen Studio",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "screen-recorder",
+    "autozoom",
+    "prototype"
+  ],
+  "author": "",
+  "license": "MIT"
+}

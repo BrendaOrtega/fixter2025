@@ -1,0 +1,398 @@
+datasource db {
+  url      = env("DATABASE_URL")
+  provider = "mongodb"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Votes
+type Vote {
+  email     String
+  surveyId  String
+  createdAt String
+  response  String
+}
+
+type Option {
+  emoji       String?
+  title       String
+  image       String?
+  description String?
+}
+
+// 2025 to leave sendGrid
+enum NewsletterStatus {
+  DRAFT
+  SENT
+  PUBLISHED
+}
+
+model Newsletter {
+  id     String           @id @default(auto()) @map("_id") @db.ObjectId
+  slug   String           @unique
+  title  String
+  status NewsletterStatus @default(DRAFT)
+
+  // stats
+  messageIds String[]
+  delivered  String[]
+  opened     String[]
+  clicked    String[]
+
+  content    String?
+  recipients String[]
+  userId     String?   @db.ObjectId
+  template   String?
+  sent       DateTime?
+  schedule   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// model Survey {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   slug        String   @unique
+//   description String?
+//   title       String?
+//   options     Option[]
+//   votes       Vote[]
+//   totals      Json?
+// }
+
+//generator zod {
+//  provider = "prisma-zod-generator"
+//  output   = "./zod"
+//}
+
+type LocalVideo {
+  src         String
+  cover       String?
+  description String?
+  title       String
+}
+
+type Author {
+  name  String?
+  image String?
+}
+
+model Subscriber {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt  DateTime @default(now())
+  name       String?
+  email      String   @unique
+  tags       String[]
+  confirmed  Boolean  @default(false)
+  validToken Boolean  @default(true)
+
+  tutorialIds String[]   @db.ObjectId
+  tutorials   Tutorial[] @relation(fields: [tutorialIds], references: [id])
+
+  updatedAt DateTime? @updatedAt
+}
+
+model Tutorial {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String   @unique
+  lessons     Lesson[]
+  icon        String?
+  published   Boolean? @default(false)
+  description String?
+  author      Author?
+  codeLink    String?
+  poster      String?
+
+  subscriberIds String[]     @db.ObjectId
+  subscribers   Subscriber[] @relation(fields: [subscriberIds], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lesson {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  body        String?
+  isFirst     Boolean      @default(false)
+  title       String
+  slug        String       @unique
+  videos      LocalVideo[]
+  tutorial    Tutorial     @relation(fields: [tutorialId], references: [id])
+  tutorialId  String       @db.ObjectId
+  index       Int?
+  codesandbox String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+type Banner {
+  img  String
+  link String
+}
+
+model Post {
+  // Basic fields
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  // Unique fields
+  slug  String @unique
+  title String @unique
+
+  // defaults
+  published Boolean @default(false)
+
+  // Miscelanius
+  coverImage   String?
+  body         String?
+  authorAt     String?
+  photoUrl     String?
+  isFeatured   Boolean? @default(false)
+  metaImage    String?
+  youtubeLink  String?
+  authorAtLink String?
+
+  // Filtering
+  authorName String?
+  mainTag    String?
+  tags       String[]
+  category   String[]
+  banner     Banner?
+
+  // Relations
+  audioCache AudioCache?
+}
+
+model Course {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug              String    @unique
+  title             String
+  isFree            Boolean   @default(true)
+  published         Boolean?  @default(false)
+  basePrice         Int       @default(599)
+  // videos
+  videos            Video[]   @relation(fields: [videoIds], references: [id])
+  videoIds          String[]  @db.ObjectId
+  // stripe
+  stripeCoupon      String?
+  stripeId          String?
+  // optionals
+  icon              String?
+  poster            String?
+  isLive            Boolean   @default(false)
+  summary           String?
+  authorAt          String?
+  authorDescription String?
+  authorName        String?
+  authorSocial      String?
+  banner            String?
+  classTime         String?
+  description       String?
+  duration          String?
+  level             String?
+  logos             String?
+  meta              String?
+  offer             String?   @db.ObjectId
+  photoUrl          String?
+  tipo              String?
+  tool              String?
+  trailer           String?
+  version           String?
+  theme             Json?
+  v                 Int?      @map("__v")
+  // dates
+  startDate         DateTime? @db.Date
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  // arrays
+  module            Json?
+  Modules           Module[]
+  modules           String[]  @db.ObjectId
+  // relations aug 2023
+  Users             User[]    @relation(fields: [userIds], references: [id])
+  userIds           String[]  @db.ObjectId
+
+  @@map("courses")
+}
+
+model Module {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  v         Int?     @map("__v")
+
+  title String
+  slug  String?
+
+  Course Course? @relation(fields: [course], references: [id])
+  course String? @db.ObjectId
+
+  Video Video[]
+}
+
+model Video {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String   @unique
+  title       String
+  isPublic    Boolean  @default(false)
+  //optionals
+  moduleName  String?
+  storageLink String?
+  m3u8        String?
+  index       Int?
+  authorName  String?  @default("blissmo")
+  photoUrl    String?
+  description String?
+  duration    String?  @default("0") // prefer mins
+  poster      String?
+  module      String?  @db.ObjectId
+  Module      Module?  @relation(fields: [module], references: [id])
+  // moduleId String? @db.ObjectId
+  // Module    Module?  @relation(fields: [module], references: [id])
+  // experiment aug 2023
+  courses     Course[] @relation(fields: [courseIds], references: [id])
+  courseIds   String[] @db.ObjectId
+  v           Int?     @map("__v")
+  //dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("videos")
+}
+
+model User {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  v           Int?     @map("__v")
+  accessToken String?
+  /// Multiple data types found: Array(String (ObjectId)): 98.7%, Array(Unknown): 1.3% out of 864 sampled entries
+  bootcamps   Json?
+  changePass  Boolean?
+  confirmed   Boolean  @default(false)
+  /// Multiple data types found: Array(String): 5.3%, Array(String (ObjectId)): 94.7% out of 334 sampled entries
+  courses     String[] @db.ObjectId
+  Courses     Course[] @relation(fields: [courses], references: [id])
+  displayName String?
+  editions    String[] @db.ObjectId
+  email       String   @unique
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  enrolled    Json?
+  exams       Json?
+  facebookId  String?
+  googleId    String?
+  hash        String?
+  homeworks   Json?
+  mentoring   Json?
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  models      Json?
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  modules     Json?
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  payments    Json?
+  phoneNumber String?
+  photoURL    String?
+  providerId  String?
+  role        String?  @default("GUEST")
+  roles       String[]
+  salt        String?
+  uid         String?
+  username    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  videos      Json?
+  // 2025
+  tags        String[]
+  metadata    Json?
+  webinar     Json? // Información del webinar con las 3 preguntas
+
+  @@map("users")
+}
+
+model AudioCache {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId      String   @unique @db.ObjectId
+  s3Key       String // S3 object key
+  audioUrl    String // Pre-signed URL or CloudFront URL
+  duration    Int // in seconds
+  fileSize    Int // in bytes
+  cost        Float? // generation cost in USD
+  generatedBy String?  @db.ObjectId // User who generated the audio
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model AudioAnalytics {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId       String   @db.ObjectId
+  event        String // 'generate', 'play', 'pause', 'complete'
+  timestamp    DateTime @default(now())
+  sessionId    String?
+  userAgent    String?
+  playDuration Int? // for play events
+}
+
+model BlogAnalytics {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @db.ObjectId
+  sessionId String // Anonymous session identifier
+  event     String // 'page_view', 'scroll', 'read_time', 'text_select', 'copy', 'click'
+  timestamp DateTime @default(now())
+  userId    String?  @db.ObjectId // Optional user ID for authenticated users
+
+  // Reading behavior
+  readingTime    Int? // seconds spent reading
+  scrollDepth    Float? // percentage of page scrolled (0-100)
+  completionRate Float? // estimated reading completion (0-100)
+
+  // Interaction data
+  elementClicked String? // CSS selector or element ID
+  textSelected   String? // selected text (first 100 chars)
+
+  // Heatmap coordinates (normalized percentages)
+  clickX  Float? // X coordinate as percentage (0-100)
+  clickY  Float? // Y coordinate as percentage (0-100)
+  scrollY Float? // Scroll position when click occurred
+
+  // Viewport context for responsive heatmaps
+  viewportWidth  Int? // Browser viewport width
+  viewportHeight Int? // Browser viewport height
+  contentWidth   Int? // Content container width
+  contentHeight  Int? // Content container height
+
+  // Technical data
+  userAgent String?
+  referrer  String?
+
+  // Privacy-safe metadata
+  country    String? // from IP geolocation
+  deviceType String? // mobile, tablet, desktop
+  metadata   Json? // Additional metadata as JSON
+}
+
+// Aggregated heatmap data for performance
+model HeatmapData {
+  id     String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId String   @db.ObjectId
+  date   DateTime @db.Date // Daily aggregation
+
+  // Heatmap points (JSON array of {x, y, intensity, element})
+  clickPoints  Json // Aggregated click coordinates
+  scrollPoints Json // Scroll depth distribution
+
+  // Aggregation metadata
+  totalClicks    Int
+  uniqueSessions Int
+  avgScrollDepth Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([postId, date])
+}

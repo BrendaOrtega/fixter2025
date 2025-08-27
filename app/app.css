@@ -1,0 +1,131 @@
+/* // space grotesk */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Licorice&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  @apply bg-background;
+
+  /* @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  } */
+}
+
+* {
+  --brand-700: #37ab93;
+  --brand-500: #85ddcb;
+  --brand-800: #186656;
+  --brand-900: #19262a;
+  --brand-100: #dae8e5;
+}
+
+*:focus-visible {
+  outline: 4px dashed var(--brand-700);
+}
+
+.footer {
+  border-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.2) 0%,
+      #85ddcb 50%,
+      rgba(0, 0, 0, 0.2) 100%
+    )
+    1;
+  border-radius: 5px; /* this doesn't work */
+  border-top-width: 1px;
+  border-style: solid;
+}
+
+/* Markdown para el blog */
+.markdown p {
+  color: var(--brand-100);
+  font-size: 18px;
+  margin: 24px 0 0 0;
+  font-weight: normal;
+}
+
+.markdown a {
+  color: var(--brand-500);
+  text-decoration: underline;
+}
+
+.markdown code {
+  background-image: linear-gradient(#fff 0%, var(--brand-800) 0);
+  border-radius: 9px;
+  padding: 2px 4px;
+  color: white;
+}
+
+.markdown blockquote {
+  position: relative;
+  padding-left: 24px;
+  font-style: italic;
+}
+
+.markdown blockquote p {
+  color: var(--brand-500);
+}
+
+.markdown blockquote::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  background: white;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.markdown li {
+  font-size: 18px;
+  margin: 24px 0 0 0;
+  font-weight: bold;
+  /* color: var(--brand-500); */
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 20px;
+  font-family: "Avenir Book", "Avenir Regular", sans-serif;
+  list-style: circle;
+}
+.markdown li::marker {
+  color: var(--brand-500);
+}
+
+.markdown p {
+  font-family: "Inter", serif;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.markdown h2,
+.markdown h1,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6,
+.markdown strong {
+  font-family: "Inter", Figtree, "Avenir Book", "Avenir Regular", sans-serif;
+  font-weight: bold;
+}
+
+.markdown h1 {
+  font-size: 40px;
+  margin: 32px 0 24px 0;
+  line-height: 1.2;
+  margin-top: 48px;
+}
+
+.markdown h2 {
+  font-size: 32px;
+  margin: 32px 0 24px 0;
+  line-height: 1.2;
+  margin-top: 48px;
+}
+
+.markdown h3 {
+  font-size: 24px;
+  margin: 32px 0 24px 0;
+  line-height: 1.2;
+  margin-top: 48px;
+}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Screen Recorder con AutoZoom</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <header>
+        <h1>Screen Recorder con AutoZoom</h1>
+        <div class="controls">
+          <button id="startBtn" class="btn primary">Iniciar Grabación</button>
+          <button id="stopBtn" class="btn" disabled>Detener Grabación</button>
+          <label class="toggle">
+            <input type="checkbox" id="autozoomToggle" checked />
+            <span class="slider"></span>
+            <span class="label">AutoZoom</span>
+          </label>
+        </div>
+      </header>
+
+      <main>
+        <div class="preview-container">
+          <div id="recordingPreview" class="preview-screen">
+            <!-- Contenido de demostración para simular la pantalla -->
+            <div class="demo-content">
+              <div class="demo-window">
+                <div class="window-header">
+                  <span class="window-controls">
+                    <span class="control red"></span>
+                    <span class="control yellow"></span>
+                    <span class="control green"></span>
+                  </span>
+                  <span class="window-title">Demo Editor</span>
+                </div>
+                <div class="window-content">
+                  <div class="editor-line">
+                    <span class="line-number">1</span
+                    ><span class="keyword">function</span>
+                    <span class="function">calculateArea</span>(<span
+                      class="parameter"
+                      >width</span
+                    >, <span class="parameter">height</span>) {
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">2</span>
+                    <span class="keyword">return</span> width * height;
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">3</span>}
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">4</span>
+                  </div>
+                  <div class="editor-line cursor-line">
+                    <span class="line-number">5</span
+                    ><span class="keyword">const</span>
+                    <span class="variable">rectangle</span> = {
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">6</span> width:
+                    <span class="number">10</span>,
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">7</span> height:
+                    <span class="number">5</span>
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">8</span>};
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">9</span>
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">10</span
+                    ><span class="keyword">const</span>
+                    <span class="variable">area</span> =
+                    <span class="function">calculateArea</span>(rectangle.width,
+                    rectangle.height);
+                  </div>
+                  <div class="editor-line">
+                    <span class="line-number">11</span
+                    ><span class="function">console</span>.<span class="method"
+                      >log</span
+                    >(<span class="string">'Área del rectángulo:'</span>, area);
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="cursor" class="demo-cursor"></div>
+
+          <div class="zoom-view-container">
+            <div id="zoomView" class="zoom-view">
+              <!-- El contenido del zoom se clona desde preview mediante JS -->
+            </div>
+            <div id="zoomIndicator" class="zoom-indicator">ZOOM: 2.5x</div>
+          </div>
+        </div>
+
+        <div class="recording-info">
+          <div id="recordingStatus">Listo para grabar</div>
+          <div id="recordingTime">00:00</div>
+        </div>
+      </main>
+
+      <footer>
+        <div class="settings">
+          <div class="setting-group">
+            <label for="zoomSensitivity">Sensibilidad del zoom:</label>
+            <input
+              type="range"
+              id="zoomSensitivity"
+              min="0.1"
+              max="1"
+              step="0.1"
+              value="0.5"
+            />
+          </div>
+          <div class="setting-group">
+            <label for="transitionSpeed">Velocidad de transición:</label>
+            <input
+              type="range"
+              id="transitionSpeed"
+              min="0.3"
+              max="2"
+              step="0.1"
+              value="0.8"
+            />
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="autozoom.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>
