@@ -293,138 +293,43 @@ const CourseHeader = ({
               </span>
             </div>
           </div>
-          {/* Sección especial para Claude Code con video demo */}
-          {slug === "power-user-en-claude-code" ? (
-            <>
-              <div className="mt-10 mb-8">
-                <div className="bg-gradient-to-r from-brand-500/20 to-brand-600/20 border border-brand-500/50 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">
-                    🎬 Mira el demo completo del curso
-                  </h3>
-                  <div className="relative w-full rounded-xl overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                    <iframe 
-                      className="absolute top-0 left-0 w-full h-full"
-                      src="https://www.youtube.com/embed/EkH82XjN45w"
-                      title="Claude Code Power User - Demo del Curso"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
-                    ></iframe>
-                  </div>
-                  <p className="text-colorParagraph text-sm mt-4 font-light">
-                    Descubre las técnicas avanzadas que el 99% de developers no conocen.
-                    Automatiza tu flujo de trabajo y multiplica tu productividad 10x.
-                  </p>
-                  
-                  {/* Badges de características */}
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="flex items-center gap-2 bg-brand-500/10 border border-brand-500/30 rounded-lg px-3 py-2">
-                      <span className="text-brand-400">✨</span>
-                      <span className="text-xs text-white font-medium">4 Módulos + Bonus</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-brand-500/10 border border-brand-500/30 rounded-lg px-3 py-2">
-                      <span className="text-brand-400">🚀</span>
-                      <span className="text-xs text-white font-medium">SDK & MCP</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-lg px-3 py-2">
-                      <span className="text-purple-400">🎯</span>
-                      <span className="text-xs text-white font-medium">Sesión 1:1 incluida</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
-                      <span className="text-green-400">💰</span>
-                      <span className="text-xs text-white font-medium">Solo $999 MXN</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Sección de características destacadas */}
-              <div className="bg-gradient-to-r from-brand-600/10 to-brand-700/10 border border-brand-500/20 rounded-2xl p-6 mb-8">
-                <h4 className="text-lg font-bold text-white mb-4">
-                  🎯 Lo que aprenderás en este curso:
-                </h4>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <span className="text-brand-400 text-lg mt-1">🧠</span>
-                      <div>
-                        <h5 className="text-white font-semibold text-sm">Context Management Pro</h5>
-                        <p className="text-colorParagraph text-xs">Mantén sesiones largas sin perder contexto</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-purple-400 text-lg mt-1">🔌</span>
-                      <div>
-                        <h5 className="text-white font-semibold text-sm">MCP y Automatización</h5>
-                        <p className="text-colorParagraph text-xs">Conecta Claude con tus herramientas favoritas</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <span className="text-green-400 text-lg mt-1">🤖</span>
-                      <div>
-                        <h5 className="text-white font-semibold text-sm">SDK y Subagentes</h5>
-                        <p className="text-colorParagraph text-xs">Integra Claude en tus aplicaciones</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-yellow-400 text-lg mt-1">⚡</span>
-                      <div>
-                        <h5 className="text-white font-semibold text-sm">Orquestación Avanzada</h5>
-                        <p className="text-colorParagraph text-xs">Coordina múltiples agentes inteligentes</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="gap-6 flex">
+          <div className="gap-6 flex mt-10">
+            {course.isFree ? (
+              <PrimaryButton
+                as="Link"
+                to={`/cursos/${slug}/viewer`}
+                variant="fill"
+                title="Empezar gratis"
+              />
+            ) : hasPublicVideos ? (
+              <PrimaryButton
+                as="Link"
+                to={`/cursos/${slug}/viewer`}
+                variant="fill"
+                title="Ver trailer"
+              />
+            ) : slug === "power-user-en-claude-code" ? (
+              <PrimaryButton
+                as="a"
+                to="https://youtu.be/EkH82XjN45w"
+                target="_blank"
+                variant="fill"
+                title="Ver demo"
+              />
+            ) : null}
+            {!course.isFree && (
+              <Form method="POST" action="/api/stripe">
+                <input type="hidden" name="courseSlug" value={slug} />
                 <PrimaryButton
-                  as="Link"
-                  to="/claude#temario"
-                  variant="fill"
-                  title="Comprar curso - $999 MXN"
-                />
-                <PrimaryButton
-                  as="Link"
-                  to="/claude"
                   variant="ghost"
-                  title="Ver más detalles"
+                  name="intent"
+                  value="checkout"
+                  type="submit"
+                  title={`Comprar $${basePrice || 499} mxn`}
                 />
-              </div>
-            </>
-          ) : (
-            <div className="gap-6 flex mt-10">
-              {course.isFree ? (
-                <PrimaryButton
-                  as="Link"
-                  to={`/cursos/${slug}/viewer`}
-                  variant="fill"
-                  title="Empezar gratis"
-                />
-              ) : hasPublicVideos ? (
-                <PrimaryButton
-                  as="Link"
-                  to={`/cursos/${slug}/viewer`}
-                  variant="fill"
-                  title="Ver trailer"
-                />
-              ) : null}
-              {!course.isFree && (
-                <Form method="POST" action="/api/stripe">
-                  <input type="hidden" name="courseSlug" value={slug} />
-                  <PrimaryButton
-                    variant="ghost"
-                    name="intent"
-                    value="checkout"
-                    type="submit"
-                    title={`Comprar $${basePrice || 499} mxn`}
-                  />
-                </Form>
-              )}
-            </div>
-          )}
+              </Form>
+            )}
+          </div>
         </div>
         <div
           className="w-full md:w-[40%] flex justify-center h-full items-center"

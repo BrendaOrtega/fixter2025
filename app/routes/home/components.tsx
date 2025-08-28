@@ -82,7 +82,7 @@ export const SocialPlanet = () => {
             Domina las herramientas de IA más avanzadas. Curso disponible on demand.
           </p>
           <div className="flex gap-4 flex-wrap">
-            <PrimaryButton as="Link" to="/claude" title="Comprar curso - $999 MXN" />
+            <PrimaryButton as="Link" to="/claude" title="Comprar curso - $1,490 MXN" />
             <PrimaryButton as="Link" to="/cursos" title="Ver más cursos" variant="ghost" />
           </div>
         </div>
@@ -516,25 +516,16 @@ export const HomeHero = () => {
             </span>
           </motion.div>
           <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-4 md:mt-12">
-            Domina <br className="md:hidden" />
+            Aprende las{" "}
             <span className="text-brand-500 font-extrabold text-4xl xl:text-6xl ">
-              <FlipWords
-                words={[
-                  "Claude Code",
-                  "la IA generativa",
-                  "la automatización",
-                  "los subagentes",
-                  "el MCP",
-                  "el SDK",
-                ]}
-              />
+              herramientas
             </span>{" "}
             <br />
-            y multiplica tu productividad 10x
+            que usan los profesionales del{" "}
+            <span className="text-brand-500 font-extrabold">open source</span>
           </h2>{" "}
           <p className="text-lg text-colorParagraph font-light mt-4 mb-8 max-w-xl">
-            Aprende las técnicas avanzadas que el 99% de developers no conocen.
-            Curso disponible on demand + próximas sesiones en vivo.
+            Conviértete en un desarrollador de alto nivel dominando las herramientas y técnicas que utilizan los profesionales más exitosos de la industria.
           </p>
           <div className="flex justify-center md:justify-start gap-6 mt-12">
             <PrimaryButton as="Link" to="/claude" children="Ver curso Claude Code" />

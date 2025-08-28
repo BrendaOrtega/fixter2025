@@ -99,8 +99,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         // Send webinar congratulations email
         await sendWebinarCongrats({
           to: user.email,
-          webinarTitle: "Claude Workshop",
-          webinarDate: "15 de Febrero 2025", // Update with actual date
+          webinarTitle: "Power-User en Claude Code",
+          webinarDate: "15 de Febrero 2025",
           userName: user.displayName || session.customer_details?.name
         });
 

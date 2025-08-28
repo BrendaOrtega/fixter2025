@@ -11,10 +11,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "checkout") {
-    const url = await getStripeCheckout({
-      courseSlug: formData.get("courseSlug") as string,
-    });
-    throw redirect(url.toString());
+    try {
+      const courseSlug = formData.get("courseSlug") as string;
+      
+      if (!courseSlug) {
+        throw new Error("No se especificó el curso");
+      }
+      
+      console.log("Iniciando checkout para curso:", courseSlug);
+      
+      const url = await getStripeCheckout({
+        courseSlug,
+      });
+      
+      if (!url) {
+        throw new Error("No se pudo crear la sesión de checkout");
+      }
+      
+      console.log("Redirigiendo a Stripe checkout:", url);
+      throw redirect(url.toString());
+    } catch (error) {
+      // Si el error es un redirect de React Router, no es realmente un error
+      if (error instanceof Response && error.status === 302) {
+        throw error; // Re-throw the redirect
+      }
+      
+      console.error("Error real en checkout:", error);
+      // Solo redirigir con error si es un error real
+      throw redirect(`/cursos/${formData.get("courseSlug")}?error=checkout_failed`);
+    }
   }
   return null;
 };

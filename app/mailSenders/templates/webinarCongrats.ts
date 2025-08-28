@@ -13,19 +13,13 @@ export const webinarCongratsTemplate = ({
     🎉 ¡Felicitaciones! 🚀
   </h2>
   <p>
-    <strong>Te has registrado exitosamente al webinar:</strong>
+    <strong>Ahora puedes disfrutar de tu curso 📼</strong>
   </p>
   <h3 style="color:#83F3D3;font-size:24px;margin:20px 0;">
     ${webinarTitle}
   </h3>
-  <p style="margin:20px 0;">
-    <strong>📅 Fecha:</strong> ${webinarDate}
-  </p>
   <p>
-    Recibirás un recordatorio con el link de acceso 24 horas antes del evento.
-  </p>
-  <p style="margin-top:24px;">
-    <strong>Mientras tanto, explora nuestros recursos y prepárate para el webinar:</strong>
+    Puedes comenzar a verlo desde tu perfil. Si se programan nuevas sesiones, serás el primero en saberlo. 😎
   </p>
   <a href="${link}" style="border-radius:24px;text-decoration:none;background:#83F3D3;padding:12px 16px;font-size:16px;margin:32px 0;display:block;max-width:180px;text-align:center;cursor:pointer;color:#0E1317;">
     Ir a mi cuenta

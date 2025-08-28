@@ -14,7 +14,7 @@ export const meta = () =>
   getMetaTags({
     title: "Conviértete en Power User de Claude Code | FixterGeek",
     description:
-      "Domina Claude Code como un experto: SDK, MCP, GitHub integration, subagentes y trucos avanzados. Webinar gratis y taller modular desde $999 MXN",
+      "Domina Claude Code como un experto: SDK, MCP, GitHub integration, subagentes y trucos avanzados. Webinar gratis y taller modular desde $1,490 MXN",
   });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -127,7 +127,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                       { id: 1, title: "Fundamentos y Context Management" },
                       { id: 2, title: "MCP y Automatización" },
                       { id: 3, title: "SDK, Subagentes y Scripting" },
-                      { id: 4, title: "BONUS: Sesión Privada Individual" },
                     ];
                     return modules.find((m) => m.id === id)?.title;
                   })
@@ -231,7 +230,7 @@ export default function ClaudeLanding() {
         "Gestión avanzada de contexto y /resume",
         "Optimización de tokens y memoria",
       ],
-      price: 999,
+      price: 1490,
     },
     {
       id: 2,
@@ -243,7 +242,7 @@ export default function ClaudeLanding() {
         "Scripting con TypeScript y Python",
         "Pipelines CI/CD y casos empresariales",
       ],
-      price: 999,
+      price: 1490,
     },
     {
       id: 3,
@@ -255,7 +254,7 @@ export default function ClaudeLanding() {
         "Automatización de GitHub Actions",
         "Conectar bases de datos y APIs",
       ],
-      price: 999,
+      price: 1490,
     },
     {
       id: 4,
@@ -266,21 +265,8 @@ export default function ClaudeLanding() {
         "Coordinación y comunicación entre agentes",
         "Patrones avanzados de orquestación y flujos de trabajo",
       ],
-      price: 999,
+      price: 1490,
       isFuture: true,
-    },
-    {
-      id: 5,
-      title: "BONUS: Sesión Privada Individual",
-      date: "A programar contigo • 30 minutos",
-      topics: [
-        "Sesión 1:1 personalizada solo para ti",
-        "Review de TU proyecto específico con Claude Code",
-        "Resolución de tus dudas particulares",
-        "Estrategias adaptadas a tu flujo de trabajo",
-      ],
-      price: 999,
-      isBonus: true,
     },
   ];
 
@@ -290,8 +276,8 @@ export default function ClaudeLanding() {
   };
 
   const calculatePrice = () => {
-    // Precio único de $999 para todo el curso completo
-    return 999;
+    // Precio único de $1,490 para todo el curso completo
+    return 1490;
   };
 
   const getPriceMessage = () => {
@@ -702,7 +688,7 @@ export default function ClaudeLanding() {
                           Contenido Completo
                         </h4>
                         <p className="text-gray-300 text-sm text-left">
-                          3 módulos completos + sesión individual de bonus
+                          3 módulos completos + acceso a futuras sesiones
                         </p>
                       </div>
                     </div>
@@ -731,7 +717,7 @@ export default function ClaudeLanding() {
                     name="selectedModules"
                     value={JSON.stringify([1, 2, 3, 4, 5])}
                   />
-                  <input type="hidden" name="totalPrice" value={999} />
+                  <input type="hidden" name="totalPrice" value={1490} />
                   <motion.button
                     type="submit"
                     disabled={fetcher.state !== "idle"}
@@ -745,7 +731,7 @@ export default function ClaudeLanding() {
                         Procesando...
                       </div>
                     ) : (
-                      "🚀 COMPRAR CURSO AHORA - $999 MXN"
+                      "🚀 COMPRAR CURSO AHORA - $1,490 MXN"
                     )}
                   </motion.button>
                 </fetcher.Form>
@@ -778,7 +764,7 @@ export default function ClaudeLanding() {
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-brand-500">
-                  $999 MXN
+                  $1,490 MXN
                 </div>
                 <div className="text-gray-300">por sesión individual</div>
               </div>
@@ -1032,7 +1018,7 @@ export default function ClaudeLanding() {
                       name="selectedModules"
                       value={JSON.stringify([1, 2, 3, 4, 5])}
                     />
-                    <input type="hidden" name="totalPrice" value={999} />
+                    <input type="hidden" name="totalPrice" value={1490} />
                     <button
                       type="submit"
                       disabled={fetcher.state !== "idle"}
@@ -1044,7 +1030,7 @@ export default function ClaudeLanding() {
                           Procesando...
                         </div>
                       ) : (
-                        "🎯 Comprar curso - $999 MXN"
+                        "🎯 Comprar curso - $1,490 MXN"
                       )}
                     </button>
                   </fetcher.Form>
@@ -1099,7 +1085,7 @@ export default function ClaudeLanding() {
             <div className="max-w-md mx-auto">
               <div className="bg-gradient-to-r from-brand-500/20 to-brand-600/20 border border-brand-500/50 rounded-full px-6 py-3">
                 <span className="text-sm font-bold text-white">
-                  ✅ CURSO COMPLETO INCLUIDO - 4 MÓDULOS + BONUS
+                  ✅ CURSO COMPLETO INCLUIDO - 3 MÓDULOS + ACCESO A NUEVAS SESIONES
                 </span>
               </div>
             </div>
@@ -1135,32 +1121,17 @@ export default function ClaudeLanding() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                       >
                         <span className={`text-2xl font-bold text-brand-500`}>
-                          {module.isBonus ? "🎁" : module.id}
+                          {module.id}
                         </span>
                       </motion.div>
                       <div>
                         <h3 className="text-lg font-bold text-white">
-                          {module.isBonus
-                            ? module.title
-                            : module.title.split(":")[1].trim()}
+                          {module.title.split(":")[1].trim()}
                         </h3>
-                        {module.isBonus && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs bg-gradient-to-r from-yellow-400 to-yellow-500 text-brand-900 font-bold px-2 py-0.5 rounded-full">
-                              {selectedModules.includes(module.id)
-                                ? "DESBLOQUEADO"
-                                : "SE DESBLOQUEA"}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
                     <p
-                      className={`text-xs mt-1 font-light ${
-                        module.isBonus
-                          ? "text-colorParagraph"
-                          : "text-colorParagraph"
-                      }`}
+                      className="text-xs mt-1 font-light text-colorParagraph"
                     >
                       {module.date}
                     </p>
@@ -1209,8 +1180,8 @@ export default function ClaudeLanding() {
             ))}
           </div>
 
-          {/* Segunda fila: Sesión 4 (próximamente) + BONUS */}
-          <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8">
+          {/* Segunda fila: Sesión 4 (próximamente) */}
+          <div className="max-w-lg mx-auto mb-8">
             {/* Sesión 4 - Próximamente */}
             <motion.div
               key={modules[3].id}
@@ -1280,65 +1251,6 @@ export default function ClaudeLanding() {
               </div>
             </motion.div>
 
-            {/* BONUS */}
-            <motion.div
-              key={modules[4].id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{
-                scale: 1.03,
-                transition: { duration: 0.15, ease: "easeOut" },
-              }}
-              whileTap={{
-                scale: 0.97,
-                transition: { duration: 0.1 },
-              }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="border border-yellow-500 bg-gradient-to-br from-yellow-400/10 to-yellow-500/5 shadow-xl shadow-yellow-500/20 rounded-xl p-4 transition-all duration-150 h-full cursor-default"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <div className="flex items-start gap-2">
-                    <motion.div>
-                      <span className="text-2xl font-bold text-yellow-400">
-                        🎁
-                      </span>
-                    </motion.div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
-                        {modules[4].title}
-                      </h3>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs bg-gradient-to-r from-yellow-400 to-yellow-500 text-brand-900 font-bold px-2 py-0.5 rounded-full w-fit">
-                          INCLUIDO
-                        </span>
-                      </div>
-                      <p className="text-xs mt-1 font-light text-colorParagraph">
-                        {modules[4].date}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="w-8 h-8 rounded-full border-2 bg-gradient-to-r from-brand-500 to-brand-600 border-brand-500 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm">🎁</span>
-                </div>
-              </div>
-
-              <ul className="space-y-2">
-                {modules[4].topics.map((topic, idx) => (
-                  <motion.li
-                    key={idx}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.45 + idx * 0.02 }}
-                    className="flex items-start text-gray-200 text-base"
-                  >
-                    <span className="mr-2 text-base text-brand-300">✓</span>
-                    <span className="leading-relaxed">{topic}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
           </div>
 
           {/* Precio único */}
@@ -1391,6 +1303,32 @@ export default function ClaudeLanding() {
                 )}
               </button>
             </fetcher.Form>
+          </div>
+
+          {/* Acceso a nuevas sesiones */}
+          <div className="bg-gradient-to-r from-green-500/10 to-emerald-600/10 border border-green-500/30 rounded-2xl p-6 max-w-2xl mx-auto text-center mt-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="text-2xl">🚀</span>
+              <h3 className="text-xl font-bold text-white">Acceso a Futuras Sesiones</h3>
+            </div>
+            <p className="text-colorParagraph">
+              Tu curso incluye acceso automático y gratuito a todas las nuevas sesiones que lancemos sobre Claude Code. 
+              <span className="text-green-400 font-medium"> ¡Sin costo adicional!</span>
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-300">
+              <div className="flex items-center gap-1">
+                <span className="text-green-400">✓</span>
+                <span>Nuevos features</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-400">✓</span>
+                <span>Actualizaciones</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-400">✓</span>
+                <span>Casos avanzados</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1638,7 +1576,7 @@ export default function ClaudeLanding() {
                     name="selectedModules"
                     value={JSON.stringify([1, 2, 3, 4, 5])}
                   />
-                  <input type="hidden" name="totalPrice" value={999} />
+                  <input type="hidden" name="totalPrice" value={1490} />
                   <button
                     type="submit"
                     disabled={fetcher.state !== "idle"}
@@ -1772,7 +1710,7 @@ export default function ClaudeLanding() {
                 name="selectedModules"
                 value={JSON.stringify([1, 2, 3, 4, 5])}
               />
-              <input type="hidden" name="totalPrice" value={999} />
+              <input type="hidden" name="totalPrice" value={1490} />
               <button
                 type="submit"
                 disabled={fetcher.state !== "idle"}

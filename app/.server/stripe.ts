@@ -12,12 +12,24 @@ export const getStripeCheckout = async (options: {
   courseSlug: string;
 }) => {
   const { courseSlug, courseId, customer_email, price } = options || {};
+  console.log("Buscando curso con slug:", courseSlug);
+  
   const course = await db.course.findUnique({
     where: { slug: courseSlug },
-    select: { stripeId: true, basePrice: true, title: true },
+    select: { stripeId: true, basePrice: true, title: true, isFree: true },
   });
   
-  if (!course) throw new Error("Course not found");
+  console.log("Curso encontrado:", course);
+  
+  if (!course) {
+    console.error("Curso no encontrado con slug:", courseSlug);
+    throw new Error(`Course not found: ${courseSlug}`);
+  }
+  
+  if (course.isFree) {
+    console.error("El curso es gratuito, no se puede comprar:", courseSlug);
+    throw new Error("Cannot checkout free course");
+  }
   
   const stripe = new Stripe(
     isDev
@@ -28,8 +40,16 @@ export const getStripeCheckout = async (options: {
   
   const location = isDev
     ? "http://localhost:3000"
-    : "https://www.fixtergeek.com"; // @todo move to prod
-  const successURL = `${location}/cursos/${courseSlug}/viewer`;
+    : (process.env.BASE_URL || "https://www.fixtergeek.com");
+  const successURL = `${location}/mis-cursos`;
+  const cancelURL = `${location}/cursos/${courseSlug}/detalle`;
+  
+  console.log('URLs de retorno configuradas:', {
+    location,
+    successURL,
+    cancelURL,
+    isDev
+  });
   
   // Determinar si usar price ID existente o crear precio dinámico
   const hasValidPriceId = price || course.stripeId;
@@ -59,16 +79,24 @@ export const getStripeCheckout = async (options: {
     metadata: {
       courseId,
       courseSlug,
-      stripeId: course.stripeId,
+      stripeId: course.stripeId || '',
       ...options.metadata,
     },
     customer_email,
     mode: "payment",
     line_items: lineItems,
-    success_url: `${successURL}?success=1`,
-    cancel_url: `${successURL}?cancel=1`,
+    success_url: `${successURL}?success=1&course=${courseSlug}`,
+    cancel_url: `${cancelURL}?cancel=1`,
     discounts: options.coupon ? [{ coupon: options.coupon }] : undefined,
     allow_promotion_codes: options.coupon ? undefined : true,
   });
-  return session.url || "/";
+  
+  console.log('Sesión de Stripe creada exitosamente:', session.id);
+  console.log('URL de checkout:', session.url);
+  
+  if (!session.url) {
+    throw new Error('Stripe no devolvió URL de checkout');
+  }
+  
+  return session.url;
 };

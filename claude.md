@@ -129,7 +129,7 @@ def create_pdf(filename, title, content):
 - Webinar gratuito: 15 Agosto 2025, 7:00 PM CDMX
 - Taller modular: 3 sesiones de 2h cada una + bonus
 - Fechas sesiones: 19, 21 y 26 Agosto 2025 a las 7:00 PM
-- Precios: $999 MXN individual, $2,490 MXN paquete completo
+- Precios: $1,490 MXN individual, $2,490 MXN paquete completo
 - Orden de sesiones:
   1. Fundamentos y Context Management (Martes 19 Agosto)
   2. SDK, Subagentes y Scripting (Jueves 21 Agosto)
