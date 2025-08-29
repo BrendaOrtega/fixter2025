@@ -118,8 +118,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             price_data: {
               currency: "mxn",
               product_data: {
-                name: `Taller Gemini CLI - ${selectedModules.length} sesiones${selectedModules.length === 3 ? ' + Bonus 1:1' : ''}`,
-                description: `${selectedModules.length === 3 ? 'Paquete completo con BONUS 1:1 de 30min incluido. ' : ''}Sesiones seleccionadas: ${selectedModules
+                name: `Taller Gemini CLI - ${selectedModules.length} sesiones${selectedModules.length === 3 ? ' + Acceso Perpetuo' : ''}`,
+                description: `${selectedModules.length === 3 ? 'Paquete completo con ACCESO PERPETUO a futuras sesiones incluido. ' : ''}Sesiones seleccionadas: ${selectedModules
                   .map((id) => {
                     const modules = [
                       { id: 1, title: "Introducción y Configuración Avanzada" },
@@ -129,7 +129,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     return modules.find((m) => m.id === id)?.title;
                   })
                   .filter(Boolean)
-                  .join(", ")}${selectedModules.length === 3 ? '. INCLUYE: Sesión privada 1:1 de 30 minutos (valor $1,500 MXN)' : ''}`,
+                  .join(", ")}${selectedModules.length === 3 ? '. INCLUYE: Acceso perpetuo a todas las futuras sesiones y actualizaciones del curso' : ''}`,
               },
               unit_amount: totalPrice * 100,
             },
@@ -718,7 +718,7 @@ export default function GeminiLanding() {
                   ⚙️ Conviértete en AI-Powered Developer
                 </h3>
                 <p className="text-gray-300 mb-4">
-                  3 sesiones para transformar tu carrera + Sesión privada 1:1 para acelerar tu crecimiento
+                  3 sesiones para transformar tu carrera + Acceso perpetuo a futuras sesiones
                 </p>
                 <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                   <div className="bg-purple-500/10 rounded-lg p-3">
@@ -811,7 +811,7 @@ export default function GeminiLanding() {
                       className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-4"
                     >
                       <p className="text-green-400 font-bold text-sm">
-                        🎉 ¡Paquete completo! Ahorras $507 MXN + Bonus 1:1 incluido
+                        🎉 ¡Paquete completo! Ahorras $507 MXN + Acceso perpetuo incluido
                       </p>
                     </motion.div>
                   )}
@@ -927,16 +927,16 @@ export default function GeminiLanding() {
                 🎁
               </motion.div>
               <h3 className="text-2xl font-bold text-white mb-4">
-                BONUS EXCLUSIVO: Sesión 1:1 Privada
+                BONUS EXCLUSIVO: Acceso Perpetuo
               </h3>
               <p className="text-gray-200 mb-6">
-                Al inscribirte al paquete completo (3 módulos), recibes una sesión privada
-                de 30 minutos donde resolveremos tus dudas específicas y trabajaremos
-                en tu proyecto personal con Gemini CLI.
+                Al inscribirte al paquete completo (3 módulos), recibes acceso de por vida
+                a todas las futuras sesiones y actualizaciones del curso. Nunca te quedarás
+                atrás con las nuevas versiones y características de Gemini CLI.
               </p>
               <div className="bg-black/30 rounded-xl p-4">
                 <p className="text-yellow-400 font-bold">
-                  Valor: $1,500 MXN • Incluido GRATIS con el paquete completo
+                  Valor: INVALUABLE • Incluido GRATIS con el paquete completo
                 </p>
               </div>
             </div>
@@ -1112,8 +1112,8 @@ export default function GeminiLanding() {
                   </blockquote>
                   <div className="flex items-center gap-3">
                     <img
-                      src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop&crop=face"
-                      alt="Developer"
+                      src="https://i.imgur.com/UP22Uzb.jpg"
+                      alt="Carlos Mendoza"
                       className="w-10 h-10 rounded-full object-cover"
                     />
                     <div>
