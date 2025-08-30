@@ -251,6 +251,7 @@ El agente se invoca automáticamente cuando Claude detecta cambios en el conteni
 - **Accesible**: Explicar conceptos técnicos de manera clara
 - **Directo**: Ir al grano sin rodeos excesivos
 - **Práctico**: Incluir ejemplos concretos y aplicables
+- **Auténtico**: Siempre usar copys auténticos, no pretenciosos. Evitar números inflados o claims exagerados. Preferir métricas reales y modestas sobre afirmaciones grandilocuentes.
 
 ### Estructura de Contenido
 

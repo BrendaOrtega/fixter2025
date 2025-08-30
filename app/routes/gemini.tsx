@@ -701,7 +701,7 @@ export default function GeminiLanding() {
                     <div className="flex items-center gap-2">
                       <span className="text-green-400 text-lg">✓</span>
                       <span className="text-gray-300 text-base">
-                        Posicionarte como líder técnico
+                        Cómo posicionarte como líder técnico
                       </span>
                     </div>
                   </div>
@@ -961,20 +961,315 @@ export default function GeminiLanding() {
               >
                 🎁
               </motion.div>
-              <h3 className="text-2xl font-bold text-white mb-4">
-                BONUS EXCLUSIVO: Acceso Perpetuo
-              </h3>
-              <p className="text-gray-200 mb-6">
-                Al inscribirte al paquete completo (3 módulos), recibes acceso
-                de por vida a todas las futuras sesiones y actualizaciones del
-                curso. Nunca te quedarás atrás con las nuevas versiones y
-                características de Gemini CLI.
-              </p>
-              <div className="bg-black/30 rounded-xl p-4">
-                <p className="text-yellow-400 font-bold">
-                  Valor: INVALUABLE • Incluido GRATIS con el paquete completo
-                </p>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0, y: 30 }}
+                whileInView={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ 
+                  type: "spring",
+                  damping: 20,
+                  stiffness: 300,
+                  delay: 0.2 
+                }}
+                viewport={{ once: true }}
+              >
+                <motion.h3 
+                  className="text-2xl font-bold text-white mb-4 text-center"
+                  initial={{ rotateX: -15 }}
+                  whileInView={{ rotateX: 0 }}
+                  transition={{
+                    type: "spring",
+                    damping: 25,
+                    stiffness: 400,
+                    delay: 0.4
+                  }}
+                >
+                  🎁 BONUS EXCLUSIVO DEL PAQUETE COMPLETO
+                </motion.h3>
+                <motion.p 
+                  className="text-gray-200 mb-8 text-center"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{
+                    type: "spring",
+                    damping: 30,
+                    stiffness: 200,
+                    delay: 0.6
+                  }}
+                >
+                  Al inscribirte a las 3 sesiones, estos beneficios premium son tuyos:
+                </motion.p>
+              </motion.div>
+              
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <motion.div
+                  initial={{ opacity: 0, x: -100, rotateY: -25 }}
+                  whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
+                  transition={{ 
+                    type: "spring",
+                    damping: 25,
+                    stiffness: 200,
+                    delay: 0.3 
+                  }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.03, 
+                    y: -8,
+                    rotateY: 2,
+                    transition: {
+                      type: "spring",
+                      damping: 15,
+                      stiffness: 400
+                    }
+                  }}
+                  className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-2xl p-6 relative overflow-hidden group cursor-pointer"
+                >
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 360],
+                      scale: [1, 1.15, 1]
+                    }}
+                    transition={{ 
+                      type: "spring",
+                      damping: 8,
+                      stiffness: 100,
+                      repeat: Infinity,
+                      duration: 12
+                    }}
+                    whileHover={{
+                      scale: 1.3,
+                      rotate: 180,
+                      transition: {
+                        type: "spring",
+                        damping: 10,
+                        stiffness: 300
+                      }
+                    }}
+                    className="text-3xl mb-4 inline-block"
+                  >
+                    🔄
+                  </motion.div>
+                  <motion.h4 
+                    className="text-xl font-bold text-white mb-3 group-hover:text-blue-400"
+                    transition={{
+                      type: "spring",
+                      damping: 20,
+                      stiffness: 300
+                    }}
+                  >
+                    Acceso Perpetuo
+                  </motion.h4>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Acceso de por vida a todas las futuras sesiones y actualizaciones del curso. 
+                    Nunca te quedarás atrás con las nuevas versiones y características de Gemini CLI.
+                  </p>
+                  <motion.div
+                    className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100"
+                    animate={{ 
+                      scale: [0.8, 1.8, 0.8],
+                      opacity: [0.2, 1, 0.2]
+                    }}
+                    transition={{ 
+                      type: "spring",
+                      damping: 6,
+                      stiffness: 200,
+                      repeat: Infinity,
+                      duration: 3
+                    }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 bg-blue-500/5 rounded-2xl opacity-0 group-hover:opacity-100"
+                    transition={{
+                      type: "spring",
+                      damping: 25,
+                      stiffness: 300
+                    }}
+                  />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: 100, rotateY: 25 }}
+                  whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
+                  transition={{ 
+                    type: "spring",
+                    damping: 25,
+                    stiffness: 200,
+                    delay: 0.4 
+                  }}
+                  viewport={{ once: true }}
+                  whileHover={{ 
+                    scale: 1.03, 
+                    y: -8,
+                    rotateY: -2,
+                    transition: {
+                      type: "spring",
+                      damping: 15,
+                      stiffness: 400
+                    }
+                  }}
+                  className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-6 relative overflow-hidden group cursor-pointer"
+                >
+                  <motion.div
+                    animate={{ 
+                      y: [-4, 6, -4],
+                      rotate: [-2, 2, -2],
+                      scale: [1, 1.05, 1]
+                    }}
+                    transition={{ 
+                      type: "spring",
+                      damping: 12,
+                      stiffness: 150,
+                      repeat: Infinity,
+                      duration: 4
+                    }}
+                    whileHover={{
+                      y: -6,
+                      scale: 1.2,
+                      rotate: 5,
+                      transition: {
+                        type: "spring",
+                        damping: 8,
+                        stiffness: 400
+                      }
+                    }}
+                    className="text-3xl mb-4 inline-block"
+                  >
+                    👨‍💻
+                  </motion.div>
+                  <motion.h4 
+                    className="text-xl font-bold text-white mb-3 group-hover:text-purple-400"
+                    transition={{
+                      type: "spring",
+                      damping: 20,
+                      stiffness: 300
+                    }}
+                  >
+                    Sesión Privada 1:1 <span className="text-purple-400">(30 min)</span>
+                  </motion.h4>
+                  <p className="text-gray-300 text-sm leading-relaxed">
+                    Sesión personalizada con el instructor para resolver dudas específicas 
+                    de tu proyecto, optimizar tu flujo de trabajo o profundizar en casos de uso avanzados.
+                  </p>
+                  <motion.div
+                    className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full opacity-0 group-hover:opacity-100"
+                    animate={{ 
+                      scale: [0.8, 1.8, 0.8],
+                      opacity: [0.2, 1, 0.2]
+                    }}
+                    transition={{ 
+                      type: "spring",
+                      damping: 6,
+                      stiffness: 200,
+                      repeat: Infinity,
+                      duration: 3,
+                      delay: 0.5
+                    }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 bg-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100"
+                    transition={{
+                      type: "spring",
+                      damping: 25,
+                      stiffness: 300
+                    }}
+                  />
+                </motion.div>
               </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  type: "spring",
+                  damping: 20,
+                  stiffness: 200,
+                  delay: 0.5 
+                }}
+                viewport={{ once: true }}
+                whileHover={{
+                  scale: 1.02,
+                  y: -4,
+                  transition: {
+                    type: "spring",
+                    damping: 12,
+                    stiffness: 400
+                  }
+                }}
+                className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-2xl p-6 text-center relative overflow-hidden cursor-pointer group"
+              >
+                <motion.div
+                  animate={{
+                    opacity: [0.3, 0.9, 0.3],
+                    scale: [0.98, 1.08, 0.98],
+                  }}
+                  transition={{
+                    type: "spring",
+                    damping: 15,
+                    stiffness: 100,
+                    repeat: Infinity,
+                    duration: 4
+                  }}
+                  className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-2xl"
+                />
+                <div className="relative z-10">
+                  <motion.span 
+                    animate={{ 
+                      rotate: [0, 15, -15, 0],
+                      scale: [1, 1.1, 1],
+                      y: [0, -2, 0]
+                    }}
+                    transition={{ 
+                      type: "spring",
+                      damping: 8,
+                      stiffness: 200,
+                      repeat: Infinity,
+                      duration: 5,
+                      delay: 1
+                    }}
+                    whileHover={{
+                      rotate: [0, 360],
+                      scale: 1.3,
+                      transition: {
+                        type: "spring",
+                        damping: 10,
+                        stiffness: 300,
+                        duration: 1
+                      }
+                    }}
+                    className="text-2xl inline-block mr-2"
+                  >
+                    💰
+                  </motion.span>
+                  <motion.span 
+                    className="text-yellow-400 font-bold text-lg"
+                    whileHover={{
+                      scale: 1.05,
+                      transition: {
+                        type: "spring",
+                        damping: 15,
+                        stiffness: 400
+                      }
+                    }}
+                  >
+                    Valor total de estos bonus: $1,500 MXN
+                  </motion.span>
+                  <motion.p 
+                    className="text-white font-semibold mt-2"
+                    animate={{
+                      opacity: [0.8, 1, 0.8],
+                    }}
+                    transition={{
+                      type: "spring",
+                      damping: 20,
+                      stiffness: 100,
+                      repeat: Infinity,
+                      duration: 3,
+                      delay: 2
+                    }}
+                  >
+                    ✨ Incluidos GRATIS con tu paquete completo
+                  </motion.p>
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
@@ -1144,7 +1439,14 @@ export default function GeminiLanding() {
                 <div className="bg-purple-600/10 border border-purple-500/20 rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex text-yellow-400">⭐⭐⭐⭐⭐</div>
-                    <span className="text-sm text-gray-300">Verificado</span>
+                    <a
+                      href="https://www.linkedin.com/in/reloadercf/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-gray-300 hover:text-purple-400 underline transition-colors"
+                    >
+                      Verificado
+                    </a>
                   </div>
                   <blockquote className="text-gray-200 mb-4 italic">
                     "FixterGeek siempre está a la vanguardia con las mejores
@@ -1169,6 +1471,410 @@ export default function GeminiLanding() {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Casos de Éxito Reales */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-12 text-white">
+              Casos reales de automatización con Gemini CLI
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                {
+                  title: "Análisis de código 10x más rápido",
+                  before: "3 horas revisando PRs manualmente",
+                  after: "15 minutos con scripts automatizados",
+                  savings: "2.5 horas por día",
+                  icon: "⚡",
+                },
+                {
+                  title: "Generación de documentación",
+                  before: "2 días escribiendo docs técnicas",
+                  after: "2 horas con templates automatizados",
+                  savings: "14 horas por proyecto",
+                  icon: "📚",
+                },
+                {
+                  title: "Testing automatizado",
+                  before: "1 semana escribiendo tests",
+                  after: "1 día con generación inteligente",
+                  savings: "80% menos tiempo",
+                  icon: "🧪",
+                },
+                {
+                  title: "Refactoring masivo",
+                  before: "3 días refactorizando legacy code",
+                  after: "3 horas con análisis AI",
+                  savings: "90% más eficiente",
+                  icon: "🔧",
+                },
+              ].map((caso, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true }}
+                  className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/30 rounded-2xl p-6"
+                >
+                  <div className="text-3xl mb-4">{caso.icon}</div>
+                  <h3 className="text-xl font-bold text-white mb-4">
+                    {caso.title}
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-red-400">❌</span>
+                      <div>
+                        <p className="text-gray-400 text-sm">Antes:</p>
+                        <p className="text-gray-300">{caso.before}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-green-400">✅</span>
+                      <div>
+                        <p className="text-gray-400 text-sm">Ahora:</p>
+                        <p className="text-gray-300">{caso.after}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-purple-500/20">
+                    <p className="text-yellow-400 font-bold">
+                      Ahorro: {caso.savings}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Comparación con otras herramientas */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-4 text-white">
+              ¿Por qué Gemini CLI y no otras herramientas?
+            </h2>
+            <p className="text-center text-gray-300 mb-12">
+              La herramienta oficial de Google vs las alternativas
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="p-4 text-white font-bold">Característica</th>
+                    <th className="p-4 text-center">
+                      <div className="text-purple-400 font-bold">
+                        Gemini CLI
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Google Official
+                      </div>
+                    </th>
+                    <th className="p-4 text-center">
+                      <div className="text-gray-400">ChatGPT</div>
+                      <div className="text-xs text-gray-500">OpenAI</div>
+                    </th>
+                    <th className="p-4 text-center">
+                      <div className="text-gray-400">Claude</div>
+                      <div className="text-xs text-gray-500">Anthropic</div>
+                    </th>
+                    <th className="p-4 text-center">
+                      <div className="text-gray-400">Copilot</div>
+                      <div className="text-xs text-gray-500">GitHub</div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    {
+                      feature: "CLI nativo",
+                      gemini: "✅",
+                      chatgpt: "❌",
+                      claude: "Limitado",
+                      copilot: "Parcial",
+                    },
+                    {
+                      feature: "Integración Google Workspace",
+                      gemini: "✅",
+                      chatgpt: "❌",
+                      claude: "❌",
+                      copilot: "❌",
+                    },
+                    {
+                      feature: "Contexto de 2M tokens",
+                      gemini: "✅",
+                      chatgpt: "128K",
+                      claude: "200K",
+                      copilot: "8K",
+                    },
+                    {
+                      feature: "Automatización bash/zsh",
+                      gemini: "✅",
+                      chatgpt: "Manual",
+                      claude: "Manual",
+                      copilot: "❌",
+                    },
+                    {
+                      feature: "Precio mensual",
+                      gemini: "$0-20",
+                      chatgpt: "$20+",
+                      claude: "$20+",
+                      copilot: "$10+",
+                    },
+                    {
+                      feature: "APIs ilimitadas",
+                      gemini: "✅",
+                      chatgpt: "Límites",
+                      claude: "Límites",
+                      copilot: "❌",
+                    },
+                  ].map((row, i) => (
+                    <tr key={i} className="border-b border-gray-800">
+                      <td className="p-4 text-gray-300">{row.feature}</td>
+                      <td className="p-4 text-center">
+                        <span className="text-green-400 font-bold">
+                          {row.gemini}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center text-gray-500">
+                        {row.chatgpt}
+                      </td>
+                      <td className="p-4 text-center text-gray-500">
+                        {row.claude}
+                      </td>
+                      <td className="p-4 text-center text-gray-500">
+                        {row.copilot}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-8 p-6 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-2xl text-center">
+              <p className="text-white font-bold text-lg mb-2">
+                💡 Gemini CLI es la única herramienta con soporte oficial de
+                Google
+              </p>
+              <p className="text-gray-300">
+                Mientras otros usan wrappers no oficiales, tú tendrás acceso
+                directo a la API más potente
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-12 text-white">
+              Preguntas frecuentes
+            </h2>
+            <div className="space-y-4">
+              {[
+                {
+                  q: "¿Necesito experiencia previa con AI o CLI?",
+                  a: "No, empezamos desde cero. Si sabes usar la terminal básica es suficiente. Te enseñaremos todo lo demás paso a paso.",
+                },
+                {
+                  q: "¿Las grabaciones estarán disponibles?",
+                  a: "Sí, todas las sesiones se graban y tendrás acceso inmediato. Además, con el paquete completo obtienes acceso perpetuo a futuras actualizaciones.",
+                },
+                {
+                  q: "¿Qué pasa si no puedo asistir en vivo?",
+                  a: "No hay problema. Las grabaciones están disponibles 24/7 y puedes hacer preguntas en la comunidad privada de Discord.",
+                },
+                {
+                  q: "¿Gemini CLI es gratis o tiene costo?",
+                  a: "Gemini ofrece un tier gratuito generoso (hasta 1500 requests/día). Para uso profesional intensivo hay planes desde $20/mes.",
+                },
+                {
+                  q: "¿Incluye soporte después del taller?",
+                  a: "Sí, tendrás acceso a la comunidad privada donde podrás hacer preguntas y compartir experiencias con otros power users.",
+                },
+                {
+                  q: "¿Hay garantía de satisfacción?",
+                  a: "Absolutamente. Si en los primeros 7 días no estás satisfecho, te devolvemos el 100% de tu inversión sin preguntas.",
+                },
+              ].map((faq, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  viewport={{ once: true }}
+                  className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-purple-500/50 transition-all"
+                >
+                  <h3 className="text-lg font-bold text-white mb-3 flex items-start gap-2">
+                    <span className="text-purple-400">▸</span>
+                    {faq.q}
+                  </h3>
+                  <p className="text-gray-300 pl-6">{faq.a}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Beneficio Early Bird */}
+      <section className="py-16 bg-gradient-to-br from-purple-900/30 via-blue-900/30 to-indigo-900/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500 rounded-3xl p-10"
+            >
+              <div className="text-5xl mb-4">🎯</div>
+              <h3 className="text-3xl font-bold text-white mb-4">
+                Recompensa para Early Adopters
+              </h3>
+              <p className="text-xl text-gray-200 mb-6">
+                Como agradecimiento por confiar en nosotros desde el inicio,
+                <br />
+                tienes acceso al mejor precio disponible.
+              </p>
+              <div className="bg-black/30 rounded-xl p-6 inline-block">
+                <p className="text-lg text-gray-300 mb-2">
+                  Precio especial para primeros inscritos:
+                </p>
+                <p className="text-3xl font-bold text-white">
+                  <span className="line-through text-gray-500 text-2xl">
+                    $3,490
+                  </span>{" "}
+                  <span className="text-green-400">$2,490 MXN</span>
+                </p>
+                <p className="text-sm text-yellow-400 mt-2">
+                  Incluye acceso perpetuo + sesión 1:1
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sobre el Instructor */}
+      <section className="mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto my-[160px]">
+        <div className="bg-gray-900/50 rounded-3xl md:py-10 xl:py-16 md:pl-10 xl:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 border border-purple-500/20">
+          <div className="w-full md:w-[60%]">
+            <span className="text-gray-400/50 font-light">
+              ¿Quién es tu instructor?
+            </span>
+            <h3 className="text-white text-3xl font-bold mt-4">Héctor Bliss</h3>
+            <div>
+              <p className="text-gray-300 font-light mt-8 text-base md:text-lg">
+                Con más de 10 años de experiencia como desarrollador de software
+                profesional e instructor tecnológico, Héctor Bliss disfruta de
+                simplificar temas complejos para que sus estudiantes puedan
+                aprender de la forma más práctica, rápida y divertida. Héctor ha
+                sido instructor en diferentes bootcamps internacionales, y ha
+                grabado infinidad de cursos en línea. Por medio de{" "}
+                <a href="" target="_blank" rel="noreferrer">
+                  su canal de youtube
+                </a>
+                enseña los temas más actualizados de la industria tecnológica,
+                acercando las herramientas que usan los profesionales a nivel
+                mundial a sus estudiantes de habla hispana.
+              </p>
+              <p className="text-gray-300 font-light mt-4 text-base md:text-lg">
+                Si no has experimentado una clase con Héctor Bliss, es tu
+                momento de comprobar que aprender no tiene que ser ni difícil ni
+                aburrido.
+              </p>
+              {/* Estadísticas */}
+              <div className="grid grid-cols-3 gap-4 mt-8">
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-purple-400">8+</div>
+                  <div className="text-xs text-gray-400/50 font-light">
+                    Años enseñando
+                  </div>
+                </div>
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-purple-400">2K+</div>
+                  <div className="text-xs text-gray-400/50 font-light">
+                    En comunidad
+                  </div>
+                </div>
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-purple-400">100%</div>
+                  <div className="text-xs text-gray-400/50 font-light">
+                    Práctico
+                  </div>
+                </div>
+              </div>
+              {/* Cita del autor */}
+              <div className="mt-8 p-6 bg-purple-500/5 border border-purple-500/20 rounded-xl">
+                <p className="text-white italic">
+                  "Me encanta compartir lo que aprendo en el camino. Si puedo
+                  ayudarte a ahorrar tiempo y frustración mientras creces como
+                  developer, mi día está completo."
+                </p>
+                <p className="text-gray-400 mt-3 text-sm font-light">
+                  - Héctor Bliss
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="absolute -bottom-16 -right-8 md:-right-16">
+            <a
+              href="https://www.linkedin.com/in/hectorbliss/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <motion.span>
+                <svg
+                  className="text-3xl absolute -top-1 md:top-2 text-gray-400/50 w-8 h-8"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                </svg>
+              </motion.span>
+            </a>
+            <a
+              href="https://github.com/blissito"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <motion.span>
+                <svg
+                  className="text-3xl absolute top-16 -left-12 text-gray-400/50 w-8 h-8"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
+              </motion.span>
+            </a>
+            <a
+              href="https://x.com/HectorBlisS"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <motion.span>
+                <svg
+                  className="text-3xl absolute -top-10 left-16 text-gray-400/50 w-8 h-8"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </motion.span>
+            </a>
+            <img
+              className="w-60 md:w-[320px] rounded-full"
+              src="/courses/titor.png"
+              alt="Héctor Bliss"
+            />
+          </div>
         </div>
       </section>
 

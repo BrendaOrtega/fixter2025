@@ -1641,21 +1641,21 @@ export default function ClaudeLanding() {
               {/* Estadísticas */}
               <div className="grid grid-cols-3 gap-4 mt-8">
                 <div className="text-left">
-                  <div className="text-2xl font-bold text-brand-500">10+</div>
+                  <div className="text-2xl font-bold text-brand-500">8+</div>
                   <div className="text-xs text-colorParagraph/50 font-light">
-                    Años de experiencia
+                    Años enseñando
                   </div>
                 </div>
                 <div className="text-left">
-                  <div className="text-2xl font-bold text-brand-500">50+</div>
+                  <div className="text-2xl font-bold text-brand-500">2K+</div>
                   <div className="text-xs text-colorParagraph/50 font-light">
-                    Cursos impartidos
+                    En comunidad
                   </div>
                 </div>
                 <div className="text-left">
-                  <div className="text-2xl font-bold text-brand-500">20K+</div>
+                  <div className="text-2xl font-bold text-brand-500">100%</div>
                   <div className="text-xs text-colorParagraph/50 font-light">
-                    Estudiantes
+                    Práctico
                   </div>
                 </div>
               </div>
