@@ -145,6 +145,36 @@ def create_pdf(filename, title, content):
 - Exporta CSV con toda la información
 - Acceso protegido con `getAdminOrRedirect`
 
+## Módulos Reutilizables
+
+### webinarUtils.ts (`app/.server/webinarUtils.ts`)
+
+Módulo que centraliza toda la lógica de gestión de usuarios de webinars. **Usar en cualquier lugar donde necesites trabajar con usuarios de webinars** (ej: `/admin/webinar`, `/admin/send`, etc).
+
+**Funciones disponibles:**
+- `getWebinarRegistrants()` - Obtiene todos los usuarios registrados a webinars
+- `categorizeUsers(users)` - Separa entre registrados y compradores
+- `getTagsWithCounts(users)` - Obtiene tags únicas con conteos
+- `calculateStats(onlyRegistered, purchasedWorkshop)` - Calcula estadísticas de conversión
+- `filterUsersByTag(users, tagFilter)` - Filtra usuarios por tag específica
+- `getWebinarData()` - Helper que retorna toda la data procesada
+
+**Constantes exportadas:**
+- `COURSE_IDS.CLAUDE` - ID del curso de Claude Code
+- `COURSE_IDS.GEMINI` - ID del curso de Gemini CLI  
+- `WEBINAR_TAGS` - Tags de los diferentes webinars
+
+**Ejemplo de uso:**
+```typescript
+import { getWebinarData, filterUsersByTag } from "~/.server/webinarUtils";
+
+// En un loader
+export const loader = async () => {
+  const webinarData = await getWebinarData();
+  return webinarData;
+};
+```
+
 ## Comandos Útiles
 
 - **Desarrollo**: `npm run dev`
