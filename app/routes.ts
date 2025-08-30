@@ -27,6 +27,8 @@ export default [
   route("claude", "routes/claude.tsx"),
   // Gemini CLI Workshop
   route("gemini", "routes/gemini.tsx"),
+  // Email verification
+  route("verify-email/:token", "routes/verify-email.tsx"),
   // Libros
   route("libros", "routes/libros.tsx"),
   // Libro interactivo

@@ -7,7 +7,7 @@ import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
-import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
+import { sendWebinarRegistration } from "~/mailSenders/sendWebinarRegistration";
 
 export const meta = () =>
   getMetaTags({
@@ -28,7 +28,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const contextObjective = String(formData.get("contextObjective"));
 
     try {
-      await db.user.upsert({
+      // Validar datos requeridos
+      if (!name || !email || !experienceLevel || !contextObjective) {
+        return data({
+          success: false,
+          error: "Todos los campos son requeridos.",
+        });
+      }
+
+      // Preparar tags para añadir
+      const tagsToAdd = [
+        "gemini_webinar_septiembre",
+        "newsletter",
+        `level-${experienceLevel}`,
+        `context-${contextObjective}`,
+      ];
+
+      // Buscar usuario existente
+      const existingUser = await db.user.findUnique({
+        where: { email },
+        select: { tags: true },
+      });
+
+      let finalTags = tagsToAdd;
+      
+      // Si existe el usuario, combinar tags
+      if (existingUser) {
+        const existingTags = existingUser.tags || [];
+        finalTags = [...new Set([...existingTags, ...tagsToAdd])];
+      }
+
+      const user = await db.user.upsert({
         where: { email },
         create: {
           email,
@@ -38,12 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           courses: [],
           editions: [],
           roles: [],
-          tags: [
-            "gemini_webinar_septiembre",
-            "newsletter",
-            `level-${experienceLevel}`,
-            `context-${contextObjective}`,
-          ],
+          tags: tagsToAdd,
           webinar: {
             experienceLevel,
             contextObjective,
@@ -57,7 +82,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         update: {
           displayName: name,
           phoneNumber: phone || undefined,
-          tags: { push: ["gemini_webinar_septiembre"] },
+          tags: finalTags,
           webinar: {
             experienceLevel,
             contextObjective,
@@ -68,13 +93,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
 
-      // Send confirmation email
-      await sendWebinarCongrats({
-        to: email,
-        webinarTitle: "Domina Gemini CLI: Webinar Gratuito",
-        webinarDate: "Jueves 12 de Septiembre, 7:00 PM (CDMX)",
-        userName: name,
-      });
+      // Send webinar registration confirmation email
+      try {
+        await sendWebinarRegistration({
+          to: email,
+          webinarTitle: "Domina Gemini CLI: Webinar Gratuito",
+          webinarDate: "Jueves 12 de Septiembre, 7:00 PM (CDMX)",
+          userName: name,
+          isConfirmed: user.confirmed,
+        });
+      } catch (emailError) {
+        console.error("Email failed but registration succeeded:", emailError);
+        // No lanzar error, el registro ya fue exitoso
+      }
 
       return data({
         success: true,
@@ -85,7 +116,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       console.error("Error registering for gemini workshop:", error);
       return data({
         success: false,
-        error: "Error en el registro. Intenta nuevamente.",
+        error: `Error en el registro: ${error.message}`,
       });
     }
   }
@@ -178,9 +209,11 @@ export default function GeminiLanding() {
   const [showWebinarForm, setShowWebinarForm] = useState(false);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showPaymentCancel, setShowPaymentCancel] = useState(false);
+  const [showEmailConfirmed, setShowEmailConfirmed] = useState(false);
+  const [showConfirmationError, setShowConfirmationError] = useState(false);
   const fetcher = useFetcher();
 
-  // Check for payment result in URL params
+  // Check for payment result and confirmation status in URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("success") === "1") {
@@ -196,6 +229,26 @@ export default function GeminiLanding() {
     if (urlParams.get("cancel") === "1") {
       setShowPaymentCancel(true);
       setTimeout(() => setShowPaymentCancel(false), 5000);
+      // Clean URL
+      window.history.replaceState({}, "", "/gemini");
+    }
+    // Check for email confirmation
+    if (urlParams.get("confirmed") === "true") {
+      setShowEmailConfirmed(true);
+      setShowConfetti(true);
+      setTimeout(() => {
+        setShowConfetti(false);
+        setShowEmailConfirmed(false);
+      }, 6000);
+      // Clean URL
+      window.history.replaceState({}, "", "/gemini");
+    }
+    // Check for confirmation errors
+    if (urlParams.get("error")) {
+      setShowConfirmationError(true);
+      const errorType = urlParams.get("error");
+      console.log("Error de confirmación:", errorType);
+      setTimeout(() => setShowConfirmationError(false), 8000);
       // Clean URL
       window.history.replaceState({}, "", "/gemini");
     }
@@ -275,166 +328,256 @@ export default function GeminiLanding() {
     );
   };
 
-  // Webinar Form Component
+  // Manejar el confetti por éxito del webinar fuera del componente
+  const isWebinarSuccess = fetcher.data?.success && fetcher.data?.type === "webinar";
+  
+  // Activar confetti cuando hay éxito - usando useEffect para evitar side effects en render
+  useEffect(() => {
+    if (isWebinarSuccess && !showConfetti) {
+      setShowConfetti(true);
+      const timer = setTimeout(() => setShowConfetti(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isWebinarSuccess, showConfetti]);
+
+  // El modal ahora es permanente en DOM, controlado solo por showWebinarForm
+
+  // Webinar Form Component - PERMANENTE EN DOM
   const WebinarForm = () => {
     const isSuccess = fetcher.data?.success && fetcher.data?.type === "webinar";
     const error = fetcher.data?.error;
     const isLoading = fetcher.state !== "idle";
 
-    // Activar confetti cuando hay éxito
-    if (isSuccess && !showConfetti) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000);
-    }
-
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-        onClick={() => setShowWebinarForm(false)}
+      <div 
+        className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 transition-all duration-300 ${
+          showWebinarForm 
+            ? 'opacity-100 visible pointer-events-auto' 
+            : 'opacity-0 invisible pointer-events-none'
+        }`}
+        onClick={() => {
+          // Solo permitir cierre si no está cargando y no hay éxito
+          if (!isLoading && !isSuccess) {
+            setShowWebinarForm(false);
+          }
+        }}
       >
         <motion.div
-          initial={{ y: 50 }}
-          animate={{ y: 0 }}
-          exit={{ y: 50 }}
-          className={`bg-background rounded-2xl p-8 max-w-md w-full border text-center ${
-            isSuccess ? "border-purple-500/30" : "border-purple-500/30"
+          animate={{ 
+            scale: showWebinarForm ? 1 : 0.9, 
+            y: showWebinarForm ? 0 : 20,
+          }}
+          transition={{ 
+            type: "spring", 
+            damping: 25, 
+            stiffness: 300,
+            duration: 0.3
+          }}
+          className={`bg-background rounded-2xl p-8 max-w-md w-full border text-center transition-colors duration-300 ${
+            isSuccess ? "border-green-500/30" : "border-purple-500/30"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Header que no cambia bruscamente */}
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-2xl font-bold text-white">
+            <motion.h3 
+              className="text-2xl font-bold text-white"
+              layout
+            >
               {isSuccess
                 ? "¡Registro Exitoso!"
                 : "Regístrate al Webinar Gratuito"}
-            </h3>
+            </motion.h3>
             <button
-              onClick={() => setShowWebinarForm(false)}
-              className="text-gray-400 hover:text-white"
+              onClick={() => {
+                // Solo cerrar si no está cargando, o si ya hay éxito
+                if (!isLoading || isSuccess) {
+                  setShowWebinarForm(false);
+                }
+              }}
+              disabled={isLoading && !isSuccess}
+              className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               ✕
             </button>
           </div>
 
-          {isSuccess ? (
-            <div>
-              <div className="text-6xl mb-4">🎉</div>
-              <p className="text-gray-300 mb-6">
+          {/* Contenido que se transforma sin AnimatePresence - SIN BRINCOS */}
+          <div className="relative min-h-[400px]">
+            {/* Estado de Éxito */}
+            <div className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 ${
+              isSuccess ? 'opacity-100 visible' : 'opacity-0 invisible'
+            }`}>
+              <motion.div 
+                className="text-6xl mb-4"
+                animate={{ 
+                  scale: isSuccess ? 1 : 0, 
+                  rotate: isSuccess ? 0 : -180 
+                }}
+                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              >
+                🎉
+              </motion.div>
+              <p className="text-gray-300 mb-6 text-center">
                 Te has registrado exitosamente al webinar gratuito. Te
                 enviaremos los detalles por email.
               </p>
-              <button
-                onClick={() => setShowWebinarForm(false)}
+              <motion.button
+                onClick={() => {
+                  setShowWebinarForm(false);
+                  setTimeout(() => {
+                    if (fetcher.data) {
+                      fetcher.load('/gemini');
+                    }
+                  }, 300);
+                }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 Cerrar
-              </button>
+              </motion.button>
             </div>
-          ) : (
-            <fetcher.Form method="post" action="/gemini" className="space-y-3">
-              <input type="hidden" name="intent" value="webinar_registration" />
 
-              <div>
-                <label className="block text-white mb-1 text-left">
-                  Nombre
-                </label>
-                <input
-                  name="name"
-                  type="text"
-                  required
-                  className="w-full px-4 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none"
-                  placeholder="Tu nombre completo"
-                />
-              </div>
+            {/* Estado de Loading */}
+            <div className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-300 ${
+              isLoading ? 'opacity-100 visible' : 'opacity-0 invisible'
+            }`}>
+              <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+              <p className="text-white font-medium mb-2">Registrando tu solicitud...</p>
+              <p className="text-gray-400 text-sm">No cierres esta ventana</p>
+            </div>
 
-              <div>
-                <label className="block text-white mb-1 text-left">Email</label>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  className="w-full px-4 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none"
-                  placeholder="tu@email.com"
-                />
-              </div>
+            {/* Estado del Formulario */}
+            <div className={`absolute inset-0 transition-all duration-300 ${
+              !isLoading && !isSuccess ? 'opacity-100 visible' : 'opacity-0 invisible'
+            }`}>
+                <fetcher.Form method="post" action="/gemini" className="space-y-3">
+                  <input type="hidden" name="intent" value="webinar_registration" />
 
-              <div>
-                <label className="block text-white mb-1 text-left">
-                  Teléfono (opcional)
-                </label>
-                <input
-                  name="phone"
-                  type="tel"
-                  className="w-full px-4 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none"
-                  placeholder="+52 1 234 567 8900"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-white mb-1 text-xs text-left">
-                    Nivel
-                  </label>
-                  <select
-                    name="experienceLevel"
-                    required
-                    className="w-full px-2 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none text-xs"
+                  <motion.div
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1, duration: 0.4 }}
                   >
-                    <option value="">Selecciona...</option>
-                    <option value="junior">Junior (0-2 años)</option>
-                    <option value="mid">Mid-level (2-5 años)</option>
-                    <option value="senior">Senior (5+ años)</option>
-                    <option value="lead">Lead/Manager</option>
-                    <option value="student">Estudiante</option>
-                  </select>
-                </div>
+                    <label className="block text-white mb-1 text-left">
+                      Nombre
+                    </label>
+                    <input
+                      name="name"
+                      type="text"
+                      required
+                      disabled={isLoading}
+                      className="w-full px-4 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none disabled:opacity-50"
+                      placeholder="Tu nombre completo"
+                    />
+                  </motion.div>
 
-                <div>
-                  <label className="block text-white mb-1 text-xs text-left">
-                    Ocupación
-                  </label>
-                  <select
-                    name="contextObjective"
-                    required
-                    className="w-full px-2 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none text-xs"
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2, duration: 0.4 }}
                   >
-                    <option value="">Selecciona...</option>
-                    <option value="empleado">Empleado en empresa</option>
-                    <option value="freelancer">Freelancer independiente</option>
-                    <option value="startup">Startup/Emprendimiento</option>
-                    <option value="estudiante">Estudiante/Aprendiendo</option>
-                    <option value="consultor">Consultor/Servicios</option>
-                    <option value="team-lead">Líder de equipo</option>
-                  </select>
-                </div>
-              </div>
+                    <label className="block text-white mb-1 text-left">Email</label>
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      disabled={isLoading}
+                      className="w-full px-4 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none disabled:opacity-50"
+                      placeholder="tu@email.com"
+                    />
+                  </motion.div>
 
-              {error && (
-                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                  {error}
-                </div>
-              )}
-              <br />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-600 mt-10 rounded-full text-white font-bold py-4 px-8 text-lg transition-all disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                    Registrando...
-                  </div>
-                ) : (
-                  "Reservar mi lugar"
-                )}
-              </button>
-            </fetcher.Form>
-          )}
-        </motion.div>
-      </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                  >
+                    <label className="block text-white mb-1 text-left">
+                      Teléfono (opcional)
+                    </label>
+                    <input
+                      name="phone"
+                      type="tel"
+                      disabled={isLoading}
+                      className="w-full px-4 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none disabled:opacity-50"
+                      placeholder="+52 1 234 567 8900"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4, duration: 0.4 }}
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-3"
+                  >
+                    <div>
+                      <label className="block text-white mb-1 text-xs text-left">
+                        Nivel
+                      </label>
+                      <select
+                        name="experienceLevel"
+                        required
+                        disabled={isLoading}
+                        className="w-full px-2 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none text-xs disabled:opacity-50"
+                      >
+                        <option value="">Selecciona...</option>
+                        <option value="junior">Junior (0-2 años)</option>
+                        <option value="mid">Mid-level (2-5 años)</option>
+                        <option value="senior">Senior (5+ años)</option>
+                        <option value="lead">Lead/Manager</option>
+                        <option value="student">Estudiante</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-white mb-1 text-xs text-left">
+                        Ocupación
+                      </label>
+                      <select
+                        name="contextObjective"
+                        required
+                        disabled={isLoading}
+                        className="w-full px-2 h-12 rounded-lg bg-purple-500/5 text-white border-none focus:border-purple-500 focus:ring-0 focus:outline-none text-xs disabled:opacity-50"
+                      >
+                        <option value="">Selecciona...</option>
+                        <option value="empleado">Empleado en empresa</option>
+                        <option value="freelancer">Freelancer independiente</option>
+                        <option value="startup">Startup/Emprendimiento</option>
+                        <option value="estudiante">Estudiante/Aprendiendo</option>
+                        <option value="consultor">Consultor/Servicios</option>
+                        <option value="team-lead">Líder de equipo</option>
+                      </select>
+                    </div>
+                  </motion.div>
+
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                  <br />
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-purple-500 to-blue-600 mt-10 rounded-full text-white font-bold py-4 px-8 text-lg transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                    whileHover={!isLoading ? { scale: 1.02 } : {}}
+                    whileTap={!isLoading ? { scale: 0.98 } : {}}
+                  >
+                    Reservar mi lugar
+                  </motion.button>
+                </fetcher.Form>
+              </div>
+            </div>
+          </motion.div>
+        </div>
     );
   };
 
@@ -442,9 +585,10 @@ export default function GeminiLanding() {
     <>
       <NavBar />
 
-      {/* Form Modals */}
+      {/* Webinar Modal - SIEMPRE EN DOM, solo oculto/visible */}
+      <WebinarForm />
+      
       <AnimatePresence>
-        {showWebinarForm && <WebinarForm />}
         {showPaymentSuccess && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -476,6 +620,69 @@ export default function GeminiLanding() {
                 className="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
               >
                 ¡Perfecto!
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+        {showEmailConfirmed && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowEmailConfirmed(false)}
+          >
+            <motion.div
+              initial={{ y: 50 }}
+              animate={{ y: 0 }}
+              exit={{ y: 50 }}
+              className="bg-gray-900 rounded-2xl p-8 max-w-md w-full border border-green-500/30 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-6xl mb-4">✅</div>
+              <h3 className="text-2xl font-bold text-white mb-4">
+                ¡Email Confirmado!
+              </h3>
+              <p className="text-gray-300 mb-6">
+                Tu email ha sido confirmado exitosamente. Ahora recibirás todas las notificaciones del webinar.
+              </p>
+              <button
+                onClick={() => setShowEmailConfirmed(false)}
+                className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
+              >
+                ¡Excelente!
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+        {showConfirmationError && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowConfirmationError(false)}
+          >
+            <motion.div
+              initial={{ y: 50 }}
+              animate={{ y: 0 }}
+              exit={{ y: 50 }}
+              className="bg-gray-900 rounded-2xl p-8 max-w-md w-full border border-red-500/30 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Error de Confirmación
+              </h3>
+              <p className="text-gray-300 mb-6">
+                No pudimos confirmar tu email. El enlace puede haber expirado o ser inválido. 
+                Intenta registrarte nuevamente.
+              </p>
+              <button
+                onClick={() => setShowConfirmationError(false)}
+                className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
+              >
+                Entendido
               </button>
             </motion.div>
           </motion.div>
@@ -715,7 +922,7 @@ export default function GeminiLanding() {
                     <div className="flex items-center gap-2">
                       <span className="text-green-400 text-lg">✓</span>
                       <span className="text-gray-300 text-base">
-                        Casos reales y sesión de Q&A en vivo
+                        Demo con casos reales y sesión de Q&A en vivo
                       </span>
                     </div>
                   </div>
@@ -964,15 +1171,15 @@ export default function GeminiLanding() {
               <motion.div
                 initial={{ scale: 0.8, opacity: 0, y: 30 }}
                 whileInView={{ scale: 1, opacity: 1, y: 0 }}
-                transition={{ 
+                transition={{
                   type: "spring",
                   damping: 20,
                   stiffness: 300,
-                  delay: 0.2 
+                  delay: 0.2,
                 }}
                 viewport={{ once: true }}
               >
-                <motion.h3 
+                <motion.h3
                   className="text-2xl font-bold text-white mb-4 text-center"
                   initial={{ rotateX: -15 }}
                   whileInView={{ rotateX: 0 }}
@@ -980,12 +1187,12 @@ export default function GeminiLanding() {
                     type: "spring",
                     damping: 25,
                     stiffness: 400,
-                    delay: 0.4
+                    delay: 0.4,
                   }}
                 >
                   🎁 BONUS EXCLUSIVO DEL PAQUETE COMPLETO
                 </motion.h3>
-                <motion.p 
+                <motion.p
                   className="text-gray-200 mb-8 text-center"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -993,47 +1200,48 @@ export default function GeminiLanding() {
                     type: "spring",
                     damping: 30,
                     stiffness: 200,
-                    delay: 0.6
+                    delay: 0.6,
                   }}
                 >
-                  Al inscribirte a las 3 sesiones, estos beneficios premium son tuyos:
+                  Al inscribirte a las 3 sesiones, estos beneficios premium son
+                  tuyos:
                 </motion.p>
               </motion.div>
-              
+
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 <motion.div
                   initial={{ opacity: 0, x: -100, rotateY: -25 }}
                   whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
-                  transition={{ 
+                  transition={{
                     type: "spring",
                     damping: 25,
                     stiffness: 200,
-                    delay: 0.3 
+                    delay: 0.3,
                   }}
                   viewport={{ once: true }}
-                  whileHover={{ 
-                    scale: 1.03, 
+                  whileHover={{
+                    scale: 1.03,
                     y: -8,
                     rotateY: 2,
                     transition: {
                       type: "spring",
                       damping: 15,
-                      stiffness: 400
-                    }
+                      stiffness: 400,
+                    },
                   }}
                   className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-2xl p-6 relative overflow-hidden group cursor-pointer"
                 >
                   <motion.div
-                    animate={{ 
+                    animate={{
                       rotate: [0, 360],
-                      scale: [1, 1.15, 1]
+                      scale: [1, 1.15, 1],
                     }}
-                    transition={{ 
+                    transition={{
                       type: "spring",
                       damping: 8,
                       stiffness: 100,
                       repeat: Infinity,
-                      duration: 12
+                      duration: 12,
                     }}
                     whileHover={{
                       scale: 1.3,
@@ -1041,39 +1249,40 @@ export default function GeminiLanding() {
                       transition: {
                         type: "spring",
                         damping: 10,
-                        stiffness: 300
-                      }
+                        stiffness: 300,
+                      },
                     }}
                     className="text-3xl mb-4 inline-block"
                   >
                     🔄
                   </motion.div>
-                  <motion.h4 
+                  <motion.h4
                     className="text-xl font-bold text-white mb-3 group-hover:text-blue-400"
                     transition={{
                       type: "spring",
                       damping: 20,
-                      stiffness: 300
+                      stiffness: 300,
                     }}
                   >
                     Acceso Perpetuo
                   </motion.h4>
                   <p className="text-gray-300 text-sm leading-relaxed">
-                    Acceso de por vida a todas las futuras sesiones y actualizaciones del curso. 
-                    Nunca te quedarás atrás con las nuevas versiones y características de Gemini CLI.
+                    Acceso de por vida a todas las futuras sesiones y
+                    actualizaciones del curso. Nunca te quedarás atrás con las
+                    nuevas versiones y características de Gemini CLI.
                   </p>
                   <motion.div
                     className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100"
-                    animate={{ 
+                    animate={{
                       scale: [0.8, 1.8, 0.8],
-                      opacity: [0.2, 1, 0.2]
+                      opacity: [0.2, 1, 0.2],
                     }}
-                    transition={{ 
+                    transition={{
                       type: "spring",
                       damping: 6,
                       stiffness: 200,
                       repeat: Infinity,
-                      duration: 3
+                      duration: 3,
                     }}
                   />
                   <motion.div
@@ -1081,7 +1290,7 @@ export default function GeminiLanding() {
                     transition={{
                       type: "spring",
                       damping: 25,
-                      stiffness: 300
+                      stiffness: 300,
                     }}
                   />
                 </motion.div>
@@ -1089,37 +1298,37 @@ export default function GeminiLanding() {
                 <motion.div
                   initial={{ opacity: 0, x: 100, rotateY: 25 }}
                   whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
-                  transition={{ 
+                  transition={{
                     type: "spring",
                     damping: 25,
                     stiffness: 200,
-                    delay: 0.4 
+                    delay: 0.4,
                   }}
                   viewport={{ once: true }}
-                  whileHover={{ 
-                    scale: 1.03, 
+                  whileHover={{
+                    scale: 1.03,
                     y: -8,
                     rotateY: -2,
                     transition: {
                       type: "spring",
                       damping: 15,
-                      stiffness: 400
-                    }
+                      stiffness: 400,
+                    },
                   }}
                   className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-6 relative overflow-hidden group cursor-pointer"
                 >
                   <motion.div
-                    animate={{ 
+                    animate={{
                       y: [-4, 6, -4],
                       rotate: [-2, 2, -2],
-                      scale: [1, 1.05, 1]
+                      scale: [1, 1.05, 1],
                     }}
-                    transition={{ 
+                    transition={{
                       type: "spring",
                       damping: 12,
                       stiffness: 150,
                       repeat: Infinity,
-                      duration: 4
+                      duration: 4,
                     }}
                     whileHover={{
                       y: -6,
@@ -1128,40 +1337,42 @@ export default function GeminiLanding() {
                       transition: {
                         type: "spring",
                         damping: 8,
-                        stiffness: 400
-                      }
+                        stiffness: 400,
+                      },
                     }}
                     className="text-3xl mb-4 inline-block"
                   >
                     👨‍💻
                   </motion.div>
-                  <motion.h4 
+                  <motion.h4
                     className="text-xl font-bold text-white mb-3 group-hover:text-purple-400"
                     transition={{
                       type: "spring",
                       damping: 20,
-                      stiffness: 300
+                      stiffness: 300,
                     }}
                   >
-                    Sesión Privada 1:1 <span className="text-purple-400">(30 min)</span>
+                    Sesión Privada 1:1{" "}
+                    <span className="text-purple-400">(30 min)</span>
                   </motion.h4>
                   <p className="text-gray-300 text-sm leading-relaxed">
-                    Sesión personalizada con el instructor para resolver dudas específicas 
-                    de tu proyecto, optimizar tu flujo de trabajo o profundizar en casos de uso avanzados.
+                    Sesión personalizada con el instructor para resolver dudas
+                    específicas de tu proyecto, optimizar tu flujo de trabajo o
+                    profundizar en casos de uso avanzados.
                   </p>
                   <motion.div
                     className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full opacity-0 group-hover:opacity-100"
-                    animate={{ 
+                    animate={{
                       scale: [0.8, 1.8, 0.8],
-                      opacity: [0.2, 1, 0.2]
+                      opacity: [0.2, 1, 0.2],
                     }}
-                    transition={{ 
+                    transition={{
                       type: "spring",
                       damping: 6,
                       stiffness: 200,
                       repeat: Infinity,
                       duration: 3,
-                      delay: 0.5
+                      delay: 0.5,
                     }}
                   />
                   <motion.div
@@ -1169,7 +1380,7 @@ export default function GeminiLanding() {
                     transition={{
                       type: "spring",
                       damping: 25,
-                      stiffness: 300
+                      stiffness: 300,
                     }}
                   />
                 </motion.div>
@@ -1178,11 +1389,11 @@ export default function GeminiLanding() {
               <motion.div
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
+                transition={{
                   type: "spring",
                   damping: 20,
                   stiffness: 200,
-                  delay: 0.5 
+                  delay: 0.5,
                 }}
                 viewport={{ once: true }}
                 whileHover={{
@@ -1191,8 +1402,8 @@ export default function GeminiLanding() {
                   transition: {
                     type: "spring",
                     damping: 12,
-                    stiffness: 400
-                  }
+                    stiffness: 400,
+                  },
                 }}
                 className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50 rounded-2xl p-6 text-center relative overflow-hidden cursor-pointer group"
               >
@@ -1206,24 +1417,24 @@ export default function GeminiLanding() {
                     damping: 15,
                     stiffness: 100,
                     repeat: Infinity,
-                    duration: 4
+                    duration: 4,
                   }}
                   className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-2xl"
                 />
                 <div className="relative z-10">
-                  <motion.span 
-                    animate={{ 
+                  <motion.span
+                    animate={{
                       rotate: [0, 15, -15, 0],
                       scale: [1, 1.1, 1],
-                      y: [0, -2, 0]
+                      y: [0, -2, 0],
                     }}
-                    transition={{ 
+                    transition={{
                       type: "spring",
                       damping: 8,
                       stiffness: 200,
                       repeat: Infinity,
                       duration: 5,
-                      delay: 1
+                      delay: 1,
                     }}
                     whileHover={{
                       rotate: [0, 360],
@@ -1232,27 +1443,27 @@ export default function GeminiLanding() {
                         type: "spring",
                         damping: 10,
                         stiffness: 300,
-                        duration: 1
-                      }
+                        duration: 1,
+                      },
                     }}
                     className="text-2xl inline-block mr-2"
                   >
                     💰
                   </motion.span>
-                  <motion.span 
+                  <motion.span
                     className="text-yellow-400 font-bold text-lg"
                     whileHover={{
                       scale: 1.05,
                       transition: {
                         type: "spring",
                         damping: 15,
-                        stiffness: 400
-                      }
+                        stiffness: 400,
+                      },
                     }}
                   >
                     Valor total de estos bonus: $1,500 MXN
                   </motion.span>
-                  <motion.p 
+                  <motion.p
                     className="text-white font-semibold mt-2"
                     animate={{
                       opacity: [0.8, 1, 0.8],
@@ -1263,7 +1474,7 @@ export default function GeminiLanding() {
                       stiffness: 100,
                       repeat: Infinity,
                       duration: 3,
-                      delay: 2
+                      delay: 2,
                     }}
                   >
                     ✨ Incluidos GRATIS con tu paquete completo
