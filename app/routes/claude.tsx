@@ -239,6 +239,7 @@ export default function ClaudeLanding() {
       topics: [
         "Claude SDK para Python/TypeScript",
         "Subagentes y delegación de tareas",
+        "Nano y Banana: los agentes que cambiarán tu forma de trabajar",
         "Scripting con TypeScript y Python",
         "Pipelines CI/CD y casos empresariales",
       ],
@@ -287,7 +288,7 @@ export default function ClaudeLanding() {
           🎉 ¡OFERTA ESPECIAL! 🎉
         </div>
         <div className="text-lg">
-          Curso completo con 4 módulos + Sesión privada 1:1 incluida
+          Curso completo con 4 módulos + <s>Sesión privada 1:1 incluida</s>
         </div>
       </div>
     );
@@ -750,23 +751,27 @@ export default function ClaudeLanding() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-brand-500">
-                  8+ horas
+                  6+ horas
                 </div>
                 <div className="text-gray-300">de contenido práctico</div>
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-brand-500">
-                  4+1 sesiones
+                  4+<s>1 sesiones</s>
                 </div>
                 <div className="text-gray-300">
-                  2h cada una + sesión privada
+                  2h cada una + <s>sesión privada</s>
                 </div>
+                <p className="text-[8px]">
+                  La sesión privada solo está disponible si el taller se toma en
+                  vivo.
+                </p>
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-brand-500">
                   $1,490 MXN
                 </div>
-                <div className="text-gray-300">por sesión individual</div>
+                <div className="text-gray-300">por todo el curso completo</div>
               </div>
             </div>
           </div>
@@ -1077,15 +1082,16 @@ export default function ClaudeLanding() {
               Inscríbete al curso completo
             </h2>
             <p className="text-lg text-colorParagraph font-light mb-6">
-              Accede a todos los módulos del curso + sesión privada individual
-              incluida
+              Accede a todos los módulos del curso +{" "}
+              <s>sesión privada individual incluida</s>
             </p>
 
             {/* Badge de curso completo */}
             <div className="max-w-md mx-auto">
               <div className="bg-gradient-to-r from-brand-500/20 to-brand-600/20 border border-brand-500/50 rounded-full px-6 py-3">
                 <span className="text-sm font-bold text-white">
-                  ✅ CURSO COMPLETO INCLUIDO - 3 MÓDULOS + ACCESO A NUEVAS SESIONES
+                  ✅ CURSO COMPLETO INCLUIDO - 3 MÓDULOS + ACCESO A NUEVAS
+                  SESIONES
                 </span>
               </div>
             </div>
@@ -1130,9 +1136,7 @@ export default function ClaudeLanding() {
                         </h3>
                       </div>
                     </div>
-                    <p
-                      className="text-xs mt-1 font-light text-colorParagraph"
-                    >
+                    <p className="text-xs mt-1 font-light text-colorParagraph">
                       {module.date}
                     </p>
                   </div>
@@ -1250,7 +1254,6 @@ export default function ClaudeLanding() {
                 </button>
               </div>
             </motion.div>
-
           </div>
 
           {/* Precio único */}
@@ -1309,11 +1312,17 @@ export default function ClaudeLanding() {
           <div className="bg-gradient-to-r from-green-500/10 to-emerald-600/10 border border-green-500/30 rounded-2xl p-6 max-w-2xl mx-auto text-center mt-8">
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="text-2xl">🚀</span>
-              <h3 className="text-xl font-bold text-white">Acceso a Futuras Sesiones</h3>
+              <h3 className="text-xl font-bold text-white">
+                Acceso a Futuras Sesiones
+              </h3>
             </div>
             <p className="text-colorParagraph">
-              Tu curso incluye acceso automático y gratuito a todas las nuevas sesiones que lancemos sobre Claude Code. 
-              <span className="text-green-400 font-medium"> ¡Sin costo adicional!</span>
+              Tu curso incluye acceso automático y gratuito a todas las nuevas
+              sesiones que lancemos sobre Claude Code.
+              <span className="text-green-400 font-medium">
+                {" "}
+                ¡Sin costo adicional!
+              </span>
             </p>
             <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-300">
               <div className="flex items-center gap-1">
@@ -1749,8 +1758,8 @@ export default function ClaudeLanding() {
             </button>
           </div>
           <p className="text-sm text-gray-400 font-light mt-6">
-            💡 Tip: Si compras el paquete completo, incluye sesión privada
-            individual GRATIS
+            💡 Tip: Si compras el paquete completo,{" "}
+            <s>incluye sesión privada individual GRATIS</s>
           </p>
         </div>
       </section>
