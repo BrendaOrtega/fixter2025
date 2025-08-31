@@ -2,28 +2,31 @@ import type { Route } from "./+types/webinar";
 import { useState } from "react";
 import { cn } from "~/utils/cn";
 import { AdminNav } from "~/components/admin/AdminNav";
-import { getWebinarData, filterUsersByTag, COURSE_IDS } from "~/.server/webinarUtils";
-// import { getAdminOrRedirect } from "~/.server/dbGetters";
+import { getWebinarData } from "~/.server/webinarUtils";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
+import { COURSE_IDS } from "~/constants/webinar";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  // await getAdminOrRedirect(request);
-  
+  await getAdminOrRedirect(request);
+
   // Obtener toda la data procesada del webinar
   const webinarData = await getWebinarData();
-  
+
   return webinarData;
 };
 
 export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
-  const { stats, onlyRegistered, purchasedWorkshop, availableTags } = loaderData;
+  const { stats, onlyRegistered, purchasedWorkshop, availableTags } =
+    loaderData;
   const [activeTab, setActiveTab] = useState<"registered" | "purchased">(
     "registered"
   );
   const [tagFilter, setTagFilter] = useState("");
 
-
   // Filtrar usuarios por tag
-  const filteredUsers = (activeTab === "registered" ? onlyRegistered : purchasedWorkshop).filter(user => {
+  const filteredUsers = (
+    activeTab === "registered" ? onlyRegistered : purchasedWorkshop
+  ).filter((user) => {
     if (!tagFilter) return true;
     const userTags = Array.isArray(user.tags) ? user.tags : [];
     return userTags.includes(tagFilter);
@@ -96,7 +99,10 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
           {/* Filtro de tags */}
           <div className="p-4 bg-gray-50 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <label htmlFor="tagFilter" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="tagFilter"
+                className="text-sm font-medium text-gray-700"
+              >
                 Filtrar por tag:
               </label>
               <select
@@ -123,9 +129,10 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
               <span className="text-xs text-gray-500 ml-2">
                 {tagFilter && (
                   <span>
-                    Tag: <strong>{tagFilter}</strong> | 
+                    Tag: <strong>{tagFilter}</strong> |
                   </span>
-                )} Mostrando: {filteredUsers.length} usuarios
+                )}{" "}
+                Mostrando: {filteredUsers.length} usuarios
               </span>
             </div>
           </div>
@@ -170,7 +177,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       colSpan={activeTab === "purchased" ? 8 : 7}
                       className="px-6 py-8 text-center text-gray-500"
                     >
-                      {tagFilter 
+                      {tagFilter
                         ? `No hay usuarios con el tag "${tagFilter}"`
                         : activeTab === "registered"
                         ? "No hay usuarios registrados solamente al webinar"
