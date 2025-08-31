@@ -25,6 +25,8 @@ export default [
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
   // Claude Code Workshop
   route("claude", "routes/claude.tsx"),
+  // Gemini CLI Workshop
+  route("gemini", "routes/gemini.tsx"),
   // Libros
   route("libros", "routes/libros.tsx"),
   // Libro interactivo
