@@ -389,10 +389,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         const transporter = getSesTransport();
         const from = getSesRemitent();
 
-        // Configuration Set desde variable de entorno
-        const configurationSet =
-          process.env.SES_CONFIGURATION_SET || "first_stats";
-        console.log("📧 Using SES Configuration Set:", configurationSet);
+        // Configuration Set desde variable de entorno (opcional)
+        const configurationSet = process.env.SES_CONFIGURATION_SET;
+        console.log("📧 SES Configuration Set:", configurationSet || "none");
 
         // Enviar en lotes de 50 para evitar límites de SES
         const batchSize = 50;
@@ -408,8 +407,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
               bcc: batch, // Usar BCC para proteger privacidad
               html: finalHtmlContent,
               // Headers para SES Configuration Set y tracking
-              headers: {
+              headers: configurationSet ? {
                 "X-SES-CONFIGURATION-SET": configurationSet,
+                "X-SES-MESSAGE-TAGS": `newsletter_id=${newsletter.id}`,
+              } : {
                 "X-SES-MESSAGE-TAGS": `newsletter_id=${newsletter.id}`,
               },
             });

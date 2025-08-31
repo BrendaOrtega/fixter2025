@@ -14,7 +14,7 @@ export const meta = () =>
   getMetaTags({
     title: "Conviértete en Power User de Claude Code | FixterGeek",
     description:
-      "Domina Claude Code como un experto: SDK, MCP, GitHub integration, subagentes y trucos avanzados. Webinar gratis y taller modular desde $999 MXN",
+      "Domina Claude Code como un experto: SDK, MCP, GitHub integration, subagentes y trucos avanzados. Webinar gratis y taller modular desde $1,490 MXN",
   });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -41,6 +41,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           roles: [], // Array vacío requerido
           tags: [
             "webinar_agosto",
+            "claude_septiembre",
             "newsletter",
             `level-${experienceLevel}`,
             `context-${contextObjective}`,
@@ -58,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         update: {
           displayName: name,
           phoneNumber: phone || undefined,
-          tags: { push: "webinar_agosto" },
+          tags: { push: ["webinar_agosto", "claude_septiembre"] },
           webinar: {
             experienceLevel,
             contextObjective,
@@ -126,7 +127,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                       { id: 1, title: "Fundamentos y Context Management" },
                       { id: 2, title: "MCP y Automatización" },
                       { id: 3, title: "SDK, Subagentes y Scripting" },
-                      { id: 4, title: "BONUS: Sesión Privada Individual" },
                     ];
                     return modules.find((m) => m.id === id)?.title;
                   })
@@ -165,7 +165,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function ClaudeLanding() {
-  const [selectedModules, setSelectedModules] = useState<number[]>([]);
+  const [selectedModules, setSelectedModules] = useState<number[]>([
+    1, 2, 3, 4, 5,
+  ]); // Todos seleccionados por defecto
   const [showConfetti, setShowConfetti] = useState(false);
   const [showWebinarForm, setShowWebinarForm] = useState(false);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
@@ -228,7 +230,7 @@ export default function ClaudeLanding() {
         "Gestión avanzada de contexto y /resume",
         "Optimización de tokens y memoria",
       ],
-      price: 999,
+      price: 1490,
     },
     {
       id: 2,
@@ -237,10 +239,11 @@ export default function ClaudeLanding() {
       topics: [
         "Claude SDK para Python/TypeScript",
         "Subagentes y delegación de tareas",
+        "Nano y Banana: los agentes que cambiarán tu forma de trabajar",
         "Scripting con TypeScript y Python",
         "Pipelines CI/CD y casos empresariales",
       ],
-      price: 999,
+      price: 1490,
     },
     {
       id: 3,
@@ -252,107 +255,43 @@ export default function ClaudeLanding() {
         "Automatización de GitHub Actions",
         "Conectar bases de datos y APIs",
       ],
-      price: 999,
+      price: 1490,
     },
     {
       id: 4,
-      title: "BONUS: Sesión Privada Individual",
-      date: "A programar contigo • 2 horas",
+      title: "🆕 Sesión 4: Orquestación de Agentes",
+      date: "Fecha por confirmar - Septiembre 2025 • 2 horas • 7:00 PM",
       topics: [
-        "Sesión 1:1 personalizada solo para ti",
-        "Review de TU proyecto específico con Claude Code",
-        "Resolución de tus dudas particulares",
-        "Estrategias adaptadas a tu flujo de trabajo",
+        "Arquitectura de sistemas multi-agente",
+        "Coordinación y comunicación entre agentes",
+        "Patrones avanzados de orquestación y flujos de trabajo",
       ],
-      price: 999,
-      isBonus: true,
+      price: 1490,
+      isFuture: true,
     },
   ];
 
   const toggleModule = (id: number) => {
-    // No permitir seleccionar directamente el BONUS
-    if (id === 4) return;
-
-    setSelectedModules((prev) => {
-      const newSelection = prev.includes(id)
-        ? prev.filter((m) => m !== id)
-        : [...prev, id];
-
-      // Auto-agregar BONUS cuando seleccionan las 3 principales
-      const mainSessions = newSelection.filter((id) => id <= 3).length;
-      const previousMainSessions = prev.filter((id) => id <= 3).length;
-
-      if (mainSessions === 3 && previousMainSessions !== 3) {
-        // Activar confetti cuando desbloquean el BONUS
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 5000);
-        return [...newSelection, 4]; // Auto-agregar el BONUS
-      }
-
-      if (mainSessions < 3 && previousMainSessions === 3) {
-        // Remover BONUS si ya no tienen las 3 principales
-        return newSelection.filter((id) => id !== 4);
-      }
-
-      return newSelection;
-    });
+    // No permitir deseleccionar módulos - todos incluidos en el precio
+    return;
   };
 
   const calculatePrice = () => {
-    if (selectedModules.length === 0) return 0;
-
-    const mainSessions = selectedModules.filter((id) => id <= 3).length;
-    const hasBonus = selectedModules.includes(4);
-
-    // Precio base de las principales
-    let total = mainSessions * 999;
-
-    // Descuento si toman las 3 sesiones principales
-    if (mainSessions === 3) {
-      total = 2490; // Precio especial paquete de 3
-    }
-
-    // El BONUS siempre está incluido gratis cuando tienen las 3 principales
-    // No se suma nada adicional
-
-    return total;
+    // Precio único de $1,490 para todo el curso completo
+    return 1490;
   };
 
   const getPriceMessage = () => {
-    const count = selectedModules.length;
-    const mainSessions = selectedModules.filter((id) => id <= 3).length;
-    const hasBonus = selectedModules.includes(4);
-
-    if (mainSessions === 3 && hasBonus) {
-      return (
-        <div>
-          <div className="text-2xl font-bold text-yellow-500 mb-2">
-            🎉 ¡PAQUETE COMPLETO! 🎉
-          </div>
-          <div className="text-lg">
-            Ahorro total de $507 MXN + Sesión privada 1:1 incluida
-          </div>
+    return (
+      <div>
+        <div className="text-2xl font-bold text-yellow-500 mb-2">
+          🎉 ¡OFERTA ESPECIAL! 🎉
         </div>
-      );
-    }
-    if (mainSessions === 3 && !hasBonus) {
-      return (
-        <div>
-          <div className="text-xl font-bold text-green-400 mb-2">
-            ✅ ¡Paquete de 3 sesiones de 2h cada una!
-          </div>
-          <div className="text-sm text-gray-400 font-light">Ahorro de $507 MXN</div>
+        <div className="text-lg">
+          Curso completo con 4 módulos + <s>Sesión privada 1:1 incluida</s>
         </div>
-      );
-    }
-    if (mainSessions === 2) {
-      return (
-        <div className="animate-pulse text-brand-500">
-          ⚡ ¡Una más para completar las 3 sesiones con descuento!
-        </div>
-      );
-    }
-    return "";
+      </div>
+    );
   };
 
   // Webinar Form Component
@@ -369,149 +308,155 @@ export default function ClaudeLanding() {
 
     return (
       <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-      onClick={() => setShowWebinarForm(false)}
-    >
-      <motion.div
-        initial={{ y: 50 }}
-        animate={{ y: 0 }}
-        exit={{ y: 50 }}
-        className={`bg-background rounded-2xl p-8 max-w-md w-full border text-center ${
-          isSuccess 
-            ? 'border-brand-500/30' 
-            : 'border-brand-500/30'
-        }`}
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+        onClick={() => setShowWebinarForm(false)}
       >
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-white">
-            {isSuccess ? '¡Registro Exitoso!' : 'Regístrate al Webinar'}
-          </h3>
-          <button
-            onClick={() => setShowWebinarForm(false)}
-            className="text-gray-400 hover:text-white"
-          >
-            ✕
-          </button>
-        </div>
-        
-        {isSuccess ? (
-          <div>
-            <div className="text-6xl mb-4">🎉</div>
-            <p className="text-gray-300 mb-6">
-              Te has registrado exitosamente al webinar. Te enviaremos los detalles por email.
-            </p>
+        <motion.div
+          initial={{ y: 50 }}
+          animate={{ y: 0 }}
+          exit={{ y: 50 }}
+          className={`bg-background rounded-2xl p-8 max-w-md w-full border text-center ${
+            isSuccess ? "border-brand-500/30" : "border-brand-500/30"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-white">
+              {isSuccess ? "¡Registro Exitoso!" : "Regístrate al Webinar"}
+            </h3>
             <button
               onClick={() => setShowWebinarForm(false)}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+              className="text-gray-400 hover:text-white"
             >
-              Cerrar
+              ✕
             </button>
           </div>
-        ) : (
-          <fetcher.Form method="post" action="/claude" className="space-y-3">
-            <input type="hidden" name="intent" value="webinar_registration" />
-            
+
+          {isSuccess ? (
             <div>
-              <label className="block text-white mb-1 text-left">Nombre</label>
-              <input
-                name="name"
-                type="text"
-                required
-                className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
-                placeholder="Tu nombre completo"
-              />
+              <div className="text-6xl mb-4">🎉</div>
+              <p className="text-gray-300 mb-6">
+                Te has registrado exitosamente al webinar. Te enviaremos los
+                detalles por email.
+              </p>
+              <button
+                onClick={() => setShowWebinarForm(false)}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+              >
+                Cerrar
+              </button>
             </div>
-            
-            <div>
-              <label className="block text-white mb-1 text-left">Email</label>
-              <input
-                name="email"
-                type="email"
-                required
-                className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
-                placeholder="tu@email.com"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-white mb-1 text-left">Teléfono (opcional)</label>
-              <input
-                name="phone"
-                type="tel"
-                className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
-                placeholder="+52 1 234 567 8900"
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          ) : (
+            <fetcher.Form method="post" action="/claude" className="space-y-3">
+              <input type="hidden" name="intent" value="webinar_registration" />
+
               <div>
-                <label className="block text-white mb-1 text-xs text-left">Nivel</label>
-                <select
-                  name="experienceLevel"
+                <label className="block text-white mb-1 text-left">
+                  Nombre
+                </label>
+                <input
+                  name="name"
+                  type="text"
                   required
-                  className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
-                >
-                  <option value="">Selecciona...</option>
-                  <option value="junior">Junior (0-2 años)</option>
-                  <option value="mid">Mid-level (2-5 años)</option>
-                  <option value="senior">Senior (5+ años)</option>
-                  <option value="lead">Lead/Manager</option>
-                  <option value="student">Estudiante</option>
-                </select>
+                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
+                  placeholder="Tu nombre completo"
+                />
               </div>
-              
+
               <div>
-                <label className="block text-white mb-1 text-xs text-left">Ocupación</label>
-                <select
-                  name="contextObjective"
+                <label className="block text-white mb-1 text-left">Email</label>
+                <input
+                  name="email"
+                  type="email"
                   required
-                  className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
-                >
-                  <option value="">Selecciona...</option>
-                  <option value="empleado">Empleado en empresa</option>
-                  <option value="freelancer">Freelancer independiente</option>
-                  <option value="startup">Startup/Emprendimiento</option>
-                  <option value="estudiante">Estudiante/Aprendiendo</option>
-                  <option value="consultor">Consultor/Servicios</option>
-                  <option value="team-lead">Líder de equipo</option>
-                </select>
+                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
+                  placeholder="tu@email.com"
+                />
               </div>
-            </div>
-            
-            {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                {error}
+
+              <div>
+                <label className="block text-white mb-1 text-left">
+                  Teléfono (opcional)
+                </label>
+                <input
+                  name="phone"
+                  type="tel"
+                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
+                  placeholder="+52 1 234 567 8900"
+                />
               </div>
-            )}
-            <br/>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-brand-500 mt-10  rounded-full text-brand-900 font-bold py-4 px-8 text-lg transition-all disabled:opacity-50"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-                  Registrando...
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-white mb-1 text-xs text-left">
+                    Nivel
+                  </label>
+                  <select
+                    name="experienceLevel"
+                    required
+                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
+                  >
+                    <option value="">Selecciona...</option>
+                    <option value="junior">Junior (0-2 años)</option>
+                    <option value="mid">Mid-level (2-5 años)</option>
+                    <option value="senior">Senior (5+ años)</option>
+                    <option value="lead">Lead/Manager</option>
+                    <option value="student">Estudiante</option>
+                  </select>
                 </div>
-              ) : (
-                "Confirmar mi lugar 🎯"
+
+                <div>
+                  <label className="block text-white mb-1 text-xs text-left">
+                    Ocupación
+                  </label>
+                  <select
+                    name="contextObjective"
+                    required
+                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
+                  >
+                    <option value="">Selecciona...</option>
+                    <option value="empleado">Empleado en empresa</option>
+                    <option value="freelancer">Freelancer independiente</option>
+                    <option value="startup">Startup/Emprendimiento</option>
+                    <option value="estudiante">Estudiante/Aprendiendo</option>
+                    <option value="consultor">Consultor/Servicios</option>
+                    <option value="team-lead">Líder de equipo</option>
+                  </select>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                  {error}
+                </div>
               )}
-            </button>
-          </fetcher.Form>
-        )}
+              <br />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-brand-500 mt-10  rounded-full text-brand-900 font-bold py-4 px-8 text-lg transition-all disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                    Registrando...
+                  </div>
+                ) : (
+                  "Confirmar mi lugar 🎯"
+                )}
+              </button>
+            </fetcher.Form>
+          )}
+        </motion.div>
       </motion.div>
-    </motion.div>
     );
   };
 
   return (
     <>
-
       {/* Form Modals */}
       <AnimatePresence>
         {showWebinarForm && <WebinarForm />}
@@ -608,12 +553,12 @@ export default function ClaudeLanding() {
               transition={{ duration: 2, repeat: Infinity }}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-700/30 to-brand-500/30 border border-brand-500 rounded-full px-6 py-3 mb-8"
             >
-              <span className="animate-pulse h-3 w-3 bg-red-500 rounded-full"></span>
+              <span className="animate-pulse h-3 w-3 bg-green-500 rounded-full"></span>
               <span className="text-base font-bold text-white">
-                ⏰ WEBINAR GRATIS - Viernes 15 de Agosto - 7:00 PM
+                🎯 CURSO DISPONIBLE ON DEMAND - Aprende a tu propio ritmo
               </span>
               <span className="bg-white text-black text-xs font-black px-2 py-1 rounded-full">
-                CUPO LIMITADO
+                ACCESO INMEDIATO
               </span>
             </motion.div>
 
@@ -626,44 +571,57 @@ export default function ClaudeLanding() {
               Automatiza tu flujo de trabajo y multiplica tu productividad 10x.
             </p>
 
-            {/* Webinar CTA Principal MEJORADO */}
+            {/* Video Trailer CTA Principal */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="relative mt-20 bg-gradient-to-r from-brand-500/20 via-brand-600/20 to-brand-700/20 backdrop-blur border-2 border-brand-500 rounded-3xl p-10 mb-12 max-w-3xl mx-auto shadow-2xl"
+              className="relative mt-20 bg-gradient-to-r from-brand-500/20 via-brand-600/20 to-brand-700/20 backdrop-blur border-2 border-brand-500 rounded-3xl p-10 mb-12 max-w-4xl mx-auto shadow-2xl"
             >
-              {/* Badge GRATIS flotante */}
+              {/* Badge NUEVO flotante */}
               <motion.div
                 animate={{ rotate: [-5, 5, -5] }}
                 transition={{ duration: 2, repeat: Infinity }}
                 className="absolute -top-4 -right-4 bg-gradient-to-r from-brand-500 to-brand-700 text-white font-black px-6 py-3 rounded-full text-lg shadow-lg"
               >
-                100% GRATIS
+                🎬 VER TRAILER
               </motion.div>
 
-              <h2 className="text-3xl font-black mb-3  text-white">
-                🔥 Webinar GRATUITO: "De Junior a Senior con Claude Code"
+              <h2 className="text-3xl font-black mb-6  text-white">
+                🚀 Descubre el poder de Claude Code en acción
               </h2>
-              <div className="text-brand-300 font-bold text-lg mb-4">
-                Sin tarjeta de crédito • Sin compromiso • Sin spam
+
+              {/* Video de YouTube responsive */}
+              <div
+                className="relative w-full"
+                style={{ paddingBottom: "56.25%" }}
+              >
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full rounded-xl"
+                  src="https://www.youtube.com/embed/dtQg_TmD6nI?si=v323WcC4L4OcwJPU"
+                  title="Claude Code - Trailer del Curso"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                ></iframe>
               </div>
-              <p className="text-gray-200 mb-6 text-lg text-left">
-                Una sesión de 60 minutos donde te muestro todas las herramientas
-                geniales del ecosistema Claude Code.
+
+              <p className="text-gray-200 mt-6 text-lg text-center">
+                Domina las técnicas avanzadas que el 99% de developers no
+                conocen.
                 <span className="text-brand-500 font-bold">
                   {" "}
-                  Verás EN VIVO demos y ejemplos prácticos
-                </span>{" "}
-                de lo que podrás dominar en el taller completo (3 sesiones de 2h
-                cada una + bonus).
+                  Automatiza tu flujo de trabajo y multiplica tu productividad
+                  10x
+                </span>
               </p>
 
-              <div className="bg-black/30 rounded-xl p-6 mb-6">
+              <div className="bg-black/30 rounded-xl p-6 mt-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-2xl">🎯</span>
                   <p className="text-white font-bold text-lg">
-                    Lo que descubrirás en el webinar:
+                    Lo que aprenderás en este curso:
                   </p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -728,10 +686,10 @@ export default function ClaudeLanding() {
                       </span>
                       <div>
                         <h4 className="text-white font-semibold mb-1 text-left">
-                          Preview Taller Completo
+                          Contenido Completo
                         </h4>
                         <p className="text-gray-300 text-sm text-left">
-                          Temario de las 3 sesiones + bonus individual
+                          3 módulos completos + acceso a futuras sesiones
                         </p>
                       </div>
                     </div>
@@ -741,10 +699,10 @@ export default function ClaudeLanding() {
                       </span>
                       <div>
                         <h4 className="text-white font-semibold mb-1 text-left">
-                          Demos EN VIVO
+                          Ejemplos Prácticos
                         </h4>
                         <p className="text-gray-300 text-sm text-left">
-                          Casos reales y ejemplos prácticos
+                          Casos reales que puedes aplicar de inmediato
                         </p>
                       </div>
                     </div>
@@ -753,19 +711,38 @@ export default function ClaudeLanding() {
               </div>
 
               <div className="flex flex-col gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowWebinarForm(true)}
-                  className="bg-brand-500 text-brand-900  font-black py-5 px-10 rounded-full text-xl transition-all shadow-xl"
-                >
-                  🎯 SÍ, QUIERO MI LUGAR GRATIS
-                </motion.button>
+                <fetcher.Form method="post">
+                  <input type="hidden" name="intent" value="direct_checkout" />
+                  <input
+                    type="hidden"
+                    name="selectedModules"
+                    value={JSON.stringify([1, 2, 3, 4, 5])}
+                  />
+                  <input type="hidden" name="totalPrice" value={1490} />
+                  <motion.button
+                    type="submit"
+                    disabled={fetcher.state !== "idle"}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-brand-500 text-brand-900 font-black py-5 px-10 rounded-full text-xl transition-all shadow-xl disabled:opacity-50 w-full"
+                  >
+                    {fetcher.state !== "idle" ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        Procesando...
+                      </div>
+                    ) : (
+                      "🚀 COMPRAR CURSO AHORA - $1,490 MXN"
+                    )}
+                  </motion.button>
+                </fetcher.Form>
                 <div className="text-center">
                   <p className="text-[#EEC85A] font-bold text-lg">
-                    📅 Viernes 15 de Agosto • 7:00 PM (CDMX)
+                    📚 Acceso inmediato • Aprende a tu ritmo
                   </p>
-                  <p className="text-white text-sm mt-1">⚠️ Pocos lugares</p>
+                  <p className="text-white text-sm mt-1">
+                    💡 Próximamente nuevas sesiones en vivo
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -774,23 +751,27 @@ export default function ClaudeLanding() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-brand-500">
-                  8+ horas
+                  6+ horas
                 </div>
                 <div className="text-gray-300">de contenido práctico</div>
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-brand-500">
-                  3+1 sesiones
+                  4+<s>1 sesiones</s>
                 </div>
                 <div className="text-gray-300">
-                  2h cada una + sesión privada
+                  2h cada una + <s>sesión privada</s>
                 </div>
+                <p className="text-[8px]">
+                  La sesión privada solo está disponible si el taller se toma en
+                  vivo.
+                </p>
               </div>
               <div className="bg-white/5 backdrop-blur rounded-lg p-6">
                 <div className="text-3xl font-bold text-brand-500">
-                  $999 MXN
+                  $1,490 MXN
                 </div>
-                <div className="text-gray-300">por sesión individual</div>
+                <div className="text-gray-300">por todo el curso completo</div>
               </div>
             </div>
           </div>
@@ -799,7 +780,6 @@ export default function ClaudeLanding() {
 
       {/* ¿Para quién es este taller? */}
       <section className="py-20  relative overflow-hidden">
-      
         <div className="relative container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -995,90 +975,131 @@ export default function ClaudeLanding() {
             viewport={{ once: true }}
             className="text-center mt-16"
           >
-            <div className="bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/30 rounded-2xl p-8 max-w-2xl mx-auto">
-              <motion.div
-                animate={{
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="text-4xl mb-4"
-              >
-                🎯
-              </motion.div>
-              <h4 className="text-xl font-bold text-white mb-3">
-                ¿Aún no estás seguro(a)?
-              </h4>
-              <p className="text-gray-300 mb-4">
-                Asiste al webinar gratuito y descubre si este programa es lo que
-                necesitas para tu carrera
-              </p>
-              <button
-                onClick={() => setShowWebinarForm(true)}
-                className="bg-brand-500 text-brand-900 font-medium  py-3 px-6 rounded-full transition-all transform hover:scale-105"
-              >
-                Reservar mi lugar gratuito →
-              </button>
+            {/* Social Proof Section */}
+            <div className="bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/30 rounded-2xl p-8 max-w-4xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                {/* Left: Stats */}
+                <div className="text-center md:text-left">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.05, 1],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="text-4xl mb-4"
+                  >
+                    🚀
+                  </motion.div>
+                  <h4 className="text-2xl font-bold text-white mb-4">
+                    Únete a developers exitosos
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-brand-500/10 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-brand-400">
+                        8+
+                      </div>
+                      <div className="text-xs text-gray-300">
+                        Años formando devs
+                      </div>
+                    </div>
+                    <div className="bg-green-500/10 rounded-lg p-4">
+                      <div className="text-2xl font-bold text-green-400">
+                        2K+
+                      </div>
+                      <div className="text-xs text-gray-300">En comunidad</div>
+                    </div>
+                  </div>
+                  <fetcher.Form method="post" className="w-full">
+                    <input
+                      type="hidden"
+                      name="intent"
+                      value="direct_checkout"
+                    />
+                    <input
+                      type="hidden"
+                      name="selectedModules"
+                      value={JSON.stringify([1, 2, 3, 4, 5])}
+                    />
+                    <input type="hidden" name="totalPrice" value={1490} />
+                    <button
+                      type="submit"
+                      disabled={fetcher.state !== "idle"}
+                      className="w-full bg-brand-500 text-brand-900 font-bold py-4 px-8 rounded-full transition-all transform hover:scale-105 disabled:opacity-50"
+                    >
+                      {fetcher.state !== "idle" ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                          Procesando...
+                        </div>
+                      ) : (
+                        "🎯 Comprar curso - $1,490 MXN"
+                      )}
+                    </button>
+                  </fetcher.Form>
+                </div>
+
+                {/* Right: Testimonial */}
+                <div className="bg-brand-600/10 border border-brand-500/20 rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex text-yellow-400">⭐⭐⭐⭐⭐</div>
+                    <span className="text-sm text-gray-300">Verificado</span>
+                  </div>
+                  <blockquote className="text-gray-200 mb-4 italic">
+                    "Con FixterGeek uno se pone al día de volada, pero lo mejor
+                    es que se aprende las herramientas verdaderamente
+                    importantes de la industria."
+                  </blockquote>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop&crop=face"
+                      alt="Oswaldo Anaya"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <div className="text-white font-semibold">
+                        Oswaldo Anaya
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Desarrollador Full Stack
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* Temario Modular */}
-      <section className="py-12 bg-background relative">
+      <section id="temario" className="py-12 bg-background relative">
         <div className="relative container mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-5xl font-bold mb-3 text-white">
-              Inscríbete al taller
+              Inscríbete al curso completo
             </h2>
             <p className="text-lg text-colorParagraph font-light mb-6">
-              Toma las sesiones que necesites o el paquete completo para desbloquear el BONUS
+              Accede a todos los módulos del curso +{" "}
+              <s>sesión privada individual incluida</s>
             </p>
 
-            {/* Progress indicator */}
+            {/* Badge de curso completo */}
             <div className="max-w-md mx-auto">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-colorParagraph font-light">
-                  Sesiones seleccionadas
-                </span>
-                <span className="text-xs font-light text-colorParagraph">
-                  {selectedModules.length}/4
+              <div className="bg-gradient-to-r from-brand-500/20 to-brand-600/20 border border-brand-500/50 rounded-full px-6 py-3">
+                <span className="text-sm font-bold text-white">
+                  ✅ CURSO COMPLETO INCLUIDO - 3 MÓDULOS + ACCESO A NUEVAS
+                  SESIONES
                 </span>
               </div>
-              <div className="h-2 bg-gray-700/40 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-brand-500 to-brand-700"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${(selectedModules.length / 4) * 100}%` }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                />
-              </div>
-              {selectedModules.filter((id) => id <= 3).length === 2 && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-xs text-brand-300 mt-1 animate-pulse"
-                >
-                  ¡Una sesión más para el descuento! 💰
-                </motion.p>
-              )}
-              {selectedModules.filter((id) => id <= 3).length === 3 && (
-                <motion.p
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-xs text-yellow-300 mt-1 font-light"
-                >
-                  ¡Descuento de $507 activado! 🎉
-                </motion.p>
-              )}
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto mb-8">
-            {modules.map((module, index) => (
+          {/* Primera fila: 3 sesiones principales */}
+          <div className="grid md:grid-cols-3 gap-4 max-w-7xl mx-auto mb-6">
+            {modules.slice(0, 3).map((module, index) => (
               <motion.div
                 key={module.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -1092,16 +1113,7 @@ export default function ClaudeLanding() {
                   transition: { duration: 0.1 },
                 }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
-                onClick={() => toggleModule(module.id)}
-                className={`border rounded-xl p-4 transition-all duration-150 h-full ${
-                  module.isBonus
-                    ? selectedModules.includes(module.id)
-                      ? "border-yellow-500 bg-gradient-to-br from-yellow-400/10 to-yellow-500/5 shadow-xl shadow-yellow-500/20"
-                      : "border-brand-600/30 bg-gradient-to-br from-brand-700/10 to-brand-600/10 opacity-60"
-                    : selectedModules.includes(module.id)
-                    ? "border-brand-500 bg-gradient-to-br from-brand-500/20 to-brand-600/10 shadow-xl shadow-brand-500/20 cursor-pointer"
-                    : "border-none bg-brand-600 hover:border-brand-400 hover:bg-brand-600/50 cursor-pointer"
-                } ${module.isBonus ? "" : "cursor-pointer"}`}
+                className="border rounded-xl p-4 transition-all duration-150 h-full border-brand-500 bg-gradient-to-br from-brand-500/20 to-brand-600/10 shadow-xl shadow-brand-500/20 cursor-default"
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
@@ -1114,86 +1126,33 @@ export default function ClaudeLanding() {
                         }
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                       >
-                        <span
-                          className={`text-2xl font-bold text-brand-500`}
-                        >
-                          {module.isBonus ? "🎁" : module.id}
+                        <span className={`text-2xl font-bold text-brand-500`}>
+                          {module.id}
                         </span>
                       </motion.div>
                       <div>
                         <h3 className="text-lg font-bold text-white">
-                          {module.isBonus
-                            ? module.title
-                            : module.title.split(":")[1].trim()}
+                          {module.title.split(":")[1].trim()}
                         </h3>
-                        {module.isBonus && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs bg-gradient-to-r from-yellow-400 to-yellow-500 text-brand-900 font-bold px-2 py-0.5 rounded-full">
-                              {selectedModules.includes(module.id)
-                                ? "DESBLOQUEADO"
-                                : "SE DESBLOQUEA"}
-                            </span>
-                      
-                          </div>
-                        )}
                       </div>
                     </div>
-                    <p
-                      className={`text-xs mt-1 font-light ${
-                        module.isBonus ? "text-colorParagraph" : "text-colorParagraph"
-                      }`}
-                    >
+                    <p className="text-xs mt-1 font-light text-colorParagraph">
                       {module.date}
                     </p>
                   </div>
-                  {module.isBonus ? (
-                    <div
-                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        selectedModules.includes(module.id)
-                          ? "bg-gradient-to-r from-brand-500 to-brand-600 border-brand-500"
-                          : "border-brand-600/50 bg-brand-600/10"
-                      }`}
+                  <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-brand-500 to-brand-700 border-brand-500">
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
                     >
-                      {selectedModules.includes(module.id) ? (
-                        <span className="text-white text-sm">🎁</span>
-                      ) : (
-                        <span className="text-brand-700 text-xs">🔒</span>
-                      )}
-                    </div>
-                  ) : (
-                    <motion.div
-                      animate={
-                        selectedModules.includes(module.id)
-                          ? { rotate: 360 }
-                          : { rotate: 0 }
-                      }
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        selectedModules.includes(module.id)
-                          ? "bg-gradient-to-r from-brand-500 to-brand-700 border-brand-500"
-                          : "border-gray-500 hover:border-brand-400"
-                      }`}
-                    >
-                      <AnimatePresence mode="wait">
-                        {selectedModules.includes(module.id) && (
-                          <motion.svg
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            className="w-5 h-5 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </motion.svg>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  )}
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
                 </div>
                 <ul className="space-y-2">
                   {module.topics.map((topic, idx) => (
@@ -1225,62 +1184,161 @@ export default function ClaudeLanding() {
             ))}
           </div>
 
-          {/* Precio dinámico */}
-          {selectedModules.length > 0 && (
-            <div className="bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/30 rounded-2xl p-8 max-w-2xl mx-auto text-center">
-              <div className="text-sm text-colorParagraph font-light mb-2">Tu inversión:</div>
-              <div className="text-5xl font-bold text-white mb-2">
-                ${calculatePrice().toLocaleString()} MXN
+          {/* Segunda fila: Sesión 4 (próximamente) */}
+          <div className="max-w-lg mx-auto mb-8">
+            {/* Sesión 4 - Próximamente */}
+            <motion.div
+              key={modules[3].id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{
+                scale: 1.03,
+                transition: { duration: 0.15, ease: "easeOut" },
+              }}
+              whileTap={{
+                scale: 0.97,
+                transition: { duration: 0.1 },
+              }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="border border-purple-500 bg-gradient-to-br from-purple-400/10 to-purple-500/5 shadow-xl shadow-purple-500/20 rounded-xl p-4 transition-all duration-150 h-full cursor-default relative overflow-hidden"
+            >
+              {/* Badge de PRÓXIMAMENTE */}
+              <div className="absolute top-2 right-2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                PRÓXIMAMENTE
               </div>
-              <div className="text-brand-300 text-colorParagraph font-light mb-6">{getPriceMessage()}</div>
 
-              {/* Cupón para estudiantes previos */}
-              <div className="bg-brand-400/10 border border-white/30 rounded-lg p-4 mb-6 w-max mx-auto">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">💰</span>
-                  <h4 className="text-white font-bold">
-                    ¿Ya has tomado un curso con nosotros?
-                  </h4>
-                </div>
-                <p className="text-colorParagraph text-sm text-left">
-                  Si ya eres parte de la familia FixterGeek,
-                  <br /> pídele tu cupón del 20% de descuento a{" "}
-                  <span className="text-brand-300 font-semibold">Brendi</span>
-                </p>
-              </div>
-
-              <fetcher.Form method="post">
-                <input type="hidden" name="intent" value="direct_checkout" />
-                <input
-                  type="hidden"
-                  name="selectedModules"
-                  value={JSON.stringify(selectedModules)}
-                />
-                <input
-                  type="hidden"
-                  name="totalPrice"
-                  value={calculatePrice()}
-                />
-                <button
-                  type="submit"
-                  disabled={fetcher.state !== "idle"}
-                  className="bg-brand-500  text-brand-900 font-medium h-12 px-8 rounded-full  transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
-                >
-                  {fetcher.state !== "idle" ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                      Procesando...
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <div className="flex items-start gap-2">
+                    <motion.div>
+                      <span className="text-2xl font-bold text-purple-400">
+                        4
+                      </span>
+                    </motion.div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        {modules[3].title.replace("🆕 Sesión 4: ", "")}
+                      </h3>
+                      <p className="text-xs mt-1 font-light text-colorParagraph">
+                        {modules[3].date}
+                      </p>
                     </div>
-                  ) : (
-                    <>
-                      Reservar mis {selectedModules.length}{" "}
-                      {selectedModules.length === 1 ? "sesión" : "sesiones"} →
-                    </>
-                  )}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-purple-500 bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm">🔔</span>
+                </div>
+              </div>
+
+              <ul className="space-y-2">
+                {modules[3].topics.map((topic, idx) => (
+                  <motion.li
+                    key={idx}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35 + idx * 0.02 }}
+                    className="flex items-start text-gray-200 text-base"
+                  >
+                    <span className="mr-2 text-base text-purple-300">✓</span>
+                    <span className="leading-relaxed">{topic}</span>
+                  </motion.li>
+                ))}
+              </ul>
+
+              <div className="mt-4 pt-4 border-t border-purple-500/30">
+                <button
+                  onClick={() => setShowWebinarForm(true)}
+                  className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-medium py-2 px-4 rounded-lg transition-all text-sm"
+                >
+                  📧 Notificarme cuando esté disponible
                 </button>
-              </fetcher.Form>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Precio único */}
+          <div className="bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/30 rounded-2xl p-8 max-w-2xl mx-auto text-center">
+            <div className="text-sm text-colorParagraph font-light mb-2">
+              Precio especial:
             </div>
-          )}
+            <div className="text-5xl font-bold text-white mb-2">
+              ${calculatePrice().toLocaleString("es-MX")} MXN
+            </div>
+            <div className="text-brand-300 text-colorParagraph font-light mb-6">
+              {getPriceMessage()}
+            </div>
+
+            {/* Cupón para estudiantes previos */}
+            <div className="bg-brand-400/10 border border-white/30 rounded-lg p-4 mb-6 w-max mx-auto">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">💰</span>
+                <h4 className="text-white font-bold">
+                  ¿Ya has tomado un curso con nosotros?
+                </h4>
+              </div>
+              <p className="text-colorParagraph text-sm text-left">
+                Si ya eres parte de la familia FixterGeek,
+                <br /> pídele tu cupón del 20% de descuento a{" "}
+                <span className="text-brand-300 font-semibold">Brendi</span>
+              </p>
+            </div>
+
+            <fetcher.Form method="post">
+              <input type="hidden" name="intent" value="direct_checkout" />
+              <input
+                type="hidden"
+                name="selectedModules"
+                value={JSON.stringify(selectedModules)}
+              />
+              <input type="hidden" name="totalPrice" value={calculatePrice()} />
+              <button
+                type="submit"
+                disabled={fetcher.state !== "idle"}
+                className="bg-brand-500  text-brand-900 font-medium h-12 px-8 rounded-full  transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
+              >
+                {fetcher.state !== "idle" ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    Procesando...
+                  </div>
+                ) : (
+                  <>Comprar curso completo →</>
+                )}
+              </button>
+            </fetcher.Form>
+          </div>
+
+          {/* Acceso a nuevas sesiones */}
+          <div className="bg-gradient-to-r from-green-500/10 to-emerald-600/10 border border-green-500/30 rounded-2xl p-6 max-w-2xl mx-auto text-center mt-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="text-2xl">🚀</span>
+              <h3 className="text-xl font-bold text-white">
+                Acceso a Futuras Sesiones
+              </h3>
+            </div>
+            <p className="text-colorParagraph">
+              Tu curso incluye acceso automático y gratuito a todas las nuevas
+              sesiones que lancemos sobre Claude Code.
+              <span className="text-green-400 font-medium">
+                {" "}
+                ¡Sin costo adicional!
+              </span>
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-300">
+              <div className="flex items-center gap-1">
+                <span className="text-green-400">✓</span>
+                <span>Nuevos features</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-400">✓</span>
+                <span>Actualizaciones</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-400">✓</span>
+                <span>Casos avanzados</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1317,7 +1375,7 @@ export default function ClaudeLanding() {
             <p className="text-gray-400 font-light text-lg max-w-3xl mx-auto">
               Contenido exclusivo, técnicas avanzadas y secretos que solo
               conocen los
-                <span className="text-brand-300 font-semibold">
+              <span className="text-brand-300 font-semibold">
                 {" "}
                 verdaderos power users
               </span>
@@ -1470,7 +1528,7 @@ export default function ClaudeLanding() {
             viewport={{ once: true }}
             className="text-center mt-16"
           >
-            <div className="bg-gradient-to-r from-brand-700/10 via-brand-500/10 to-brand-400/10 border border-brand-500/30 rounded-2xl p-8 max-w-4xl mx-auto">
+            <div className="bg-gradient-to-r from-brand-700/10 via-brand-500/10 to-brand-400/10 border border-brand-500/30 rounded-2xl p-8 max-w-5xl mx-auto">
               <motion.div
                 animate={{
                   scale: [1, 1.1, 1],
@@ -1488,21 +1546,64 @@ export default function ClaudeLanding() {
               <h4 className="text-2xl font-bold text-white mb-4">
                 Técnicas que cambiarán tu carrera para siempre
               </h4>
-              <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+              <p className="text-gray-300 mb-6 max-w-3xl mx-auto">
                 Estos conocimientos avanzados te separarán del 99% de
                 developers. No los encontrarás en tutoriales gratuitos ni cursos
                 básicos.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => setShowWebinarForm(true)}
-                  className="bg-brand-500  text-brand-900 font-medium h-12 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg"
+
+              {/* Video Demo */}
+              <div className="bg-gradient-to-r from-brand-500/20 to-brand-600/20 border border-brand-500/50 rounded-2xl p-6 mb-8">
+                <h5 className="text-xl font-bold text-white mb-4 text-center">
+                  🎬 Mira el demo completo - Técnicas exclusivas en acción
+                </h5>
+                <div
+                  className="relative w-full rounded-xl overflow-hidden max-w-4xl mx-auto"
+                  style={{ paddingBottom: "56.25%" }}
                 >
-                  Ver estas técnicas EN VIVO →
-                </button>
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full"
+                    src="https://www.youtube.com/embed/EkH82XjN45w"
+                    title="Claude Code Power User - Demo de Técnicas Avanzadas"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+                <p className="text-colorParagraph text-sm mt-4 font-light text-center">
+                  💡 Ve en tiempo real cómo estas técnicas transforman tu flujo
+                  de trabajo
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <fetcher.Form method="post">
+                  <input type="hidden" name="intent" value="direct_checkout" />
+                  <input
+                    type="hidden"
+                    name="selectedModules"
+                    value={JSON.stringify([1, 2, 3, 4, 5])}
+                  />
+                  <input type="hidden" name="totalPrice" value={1490} />
+                  <button
+                    type="submit"
+                    disabled={fetcher.state !== "idle"}
+                    className="bg-brand-500 text-brand-900 font-medium h-12 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center justify-center disabled:opacity-50"
+                  >
+                    {fetcher.state !== "idle" ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        Procesando...
+                      </div>
+                    ) : (
+                      "Dominar estas técnicas ahora →"
+                    )}
+                  </button>
+                </fetcher.Form>
                 <div className="flex items-center justify-center gap-2 text-gray-400 font-light">
                   <span className="text-brand-300">✓</span>
-                  <span>Webinar gratuito - Sin compromiso</span>
+                  <span>Acceso inmediato - Garantía de satisfacción</span>
                 </div>
               </div>
             </div>
@@ -1511,107 +1612,88 @@ export default function ClaudeLanding() {
       </section>
 
       {/* Sobre el Instructor */}
-   <section className="mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto my-[160px]  ">
+      <section className="mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto my-[160px]  ">
         <div className="bg-backface rounded-3xl md:py-10 xl:py-16 md:pl-10 xl:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 ">
           <div className="w-full md:w-[60%]">
             <span className="text-colorParagraph/50 font-light">
               ¿Quien es tu instructor?
             </span>
-            <h3 className="text-white text-3xl font-bold mt-4">
- Héctor Bliss
-            </h3>{" "}
-              <div>
-                {" "}
-                <p className="text-colorParagraph font-light mt-8 text-base md:text-lg">
-                  Con más de 10 años de experiencia como desarrollador de software
-                  profesional e instructor tecnológico, Héctor Bliss disfruta de
-                  simplificar temas complejos para que sus estudiantes
-                  puedan aprender de la forma más práctica, rápida y
-                  divertida. Héctor ha sido instructor en diferentes bootcamps
-                  internacionales, y ha grabado infinidad de cursos en línea. Por
-                  medio de su canal de youtube enseña los temas más actualizados
-                  de la industria tecnológica, acercando las herramientas que usan
-                  los profesionales a nivel mundial a sus estudiantes de habla
-                  hispana.
-                </p>
-                <p className="text-colorParagraph font-light mt-4 text-base md:text-lg">
-                  Si no has experimentado una clase con Héctor Bliss, es tu
-                  momento de comprobar que aprender no tiene que ser ni díficil ni
-                  aburrido.
-                </p>
-                
-                {/* Estadísticas */}
-                <div className="grid grid-cols-3 gap-4 mt-8">
-                  <div className="text-left">
-                    <div className="text-2xl font-bold text-brand-500">10+</div>
-                    <div className="text-xs text-colorParagraph/50 font-light">
-                      Años de experiencia
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="text-2xl font-bold text-brand-500">50+</div>
-                    <div className="text-xs text-colorParagraph/50 font-light">
-                      Cursos impartidos
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="text-2xl font-bold text-brand-500">20K+</div>
-                    <div className="text-xs text-colorParagraph/50 font-light">
-                      Estudiantes
-                    </div>
+            <h3 className="text-white text-3xl font-bold mt-4">Héctor Bliss</h3>{" "}
+            <div>
+              {" "}
+              <p className="text-colorParagraph font-light mt-8 text-base md:text-lg">
+                Con más de 10 años de experiencia como desarrollador de software
+                profesional e instructor tecnológico, Héctor Bliss disfruta de
+                simplificar temas complejos para que sus estudiantes
+                puedan aprender de la forma más práctica, rápida y
+                divertida. Héctor ha sido instructor en diferentes bootcamps
+                internacionales, y ha grabado infinidad de cursos en línea. Por
+                medio de su canal de youtube enseña los temas más actualizados
+                de la industria tecnológica, acercando las herramientas que usan
+                los profesionales a nivel mundial a sus estudiantes de habla
+                hispana.
+              </p>
+              <p className="text-colorParagraph font-light mt-4 text-base md:text-lg">
+                Si no has experimentado una clase con Héctor Bliss, es tu
+                momento de comprobar que aprender no tiene que ser ni díficil ni
+                aburrido.
+              </p>
+              {/* Estadísticas */}
+              <div className="grid grid-cols-3 gap-4 mt-8">
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-brand-500">8+</div>
+                  <div className="text-xs text-colorParagraph/50 font-light">
+                    Años enseñando
                   </div>
                 </div>
-                
-                {/* Cita del autor */}
-                <div className="mt-8 p-6 bg-brand-500/5 border border-brand-500/20 rounded-xl">
-                  <p className="text-white italic">
-                    "Me encanta compartir lo que aprendo en el camino. Si puedo ayudarte a ahorrar tiempo y frustración mientras creces como developer, mi día está completo."
-                  </p>
-                  <p className="text-colorParagraph mt-3 text-sm font-light">
-                    - Héctor Bliss
-                  </p>
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-brand-500">2K+</div>
+                  <div className="text-xs text-colorParagraph/50 font-light">
+                    En comunidad
+                  </div>
+                </div>
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-brand-500">100%</div>
+                  <div className="text-xs text-colorParagraph/50 font-light">
+                    Práctico
+                  </div>
                 </div>
               </div>
-          
+              {/* Cita del autor */}
+              <div className="mt-8 p-6 bg-brand-500/5 border border-brand-500/20 rounded-xl">
+                <p className="text-white italic">
+                  "Me encanta compartir lo que aprendo en el camino. Si puedo
+                  ayudarte a ahorrar tiempo y frustración mientras creces como
+                  developer, mi día está completo."
+                </p>
+                <p className="text-colorParagraph mt-3 text-sm font-light">
+                  - Héctor Bliss
+                </p>
+              </div>
+            </div>
           </div>
           <div className=" absolute -bottom-16 -right-8 md:-right-16">
             <a
-              href={
-                "https://www.linkedin.com/in/hectorbliss/"
-              }
+              href={"https://www.linkedin.com/in/hectorbliss/"}
               target="_blank"
             >
               <motion.span>
                 <BsLinkedin className="text-3xl absolute -top-1 md:top-2 text-colorCaption/50" />
               </motion.span>
             </a>
-            <a
-              href={
-                "https://github.com/blissito"
-           
-              }
-              target="_blank"
-            >
+            <a href={"https://github.com/blissito"} target="_blank">
               <motion.span style={{}}>
                 <BsGithub className="text-3xl absolute top-16 -left-12 text-colorCaption/50" />
               </motion.span>
             </a>
-            <a
-              href={
-                "https://x.com/HectorBlisS"
-            
-              }
-              target="_blank"
-            >
+            <a href={"https://x.com/HectorBlisS"} target="_blank">
               <motion.span>
                 <BsTwitter className="text-3xl absolute -top-10 left-16 text-colorCaption/50" />
               </motion.span>
             </a>
             <img
               className="w-60 md:w-[320px] rounded-full"
-              src={
-                "/courses/titor.png"
-              }
+              src={"/courses/titor.png"}
               alt={"Héctor Bliss"}
             />
           </div>
@@ -1623,19 +1705,36 @@ export default function ClaudeLanding() {
         <div className="absolute inset-0 bg-gradient-to-br from-brand-800/80 to-brand-900/90"></div>
         <div className="relative container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6 text-white">
-            Empieza con el webinar GRATIS
+            Comienza tu transformación hoy mismo
           </h2>
           <p className="text-xl text-colorParagraph font-light mb-8 max-w-2xl mx-auto">
-            No te comprometas a nada. Ven al webinar, conoce el método, y decide
-            si quieres profundizar con el taller completo.
+            Accede al curso completo de inmediato. Aprende a tu ritmo con
+            contenido on demand y prepárate para las próximas sesiones en vivo.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => setShowWebinarForm(true)}
-              className="bg-white text-brand-900 font-medium py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg"
-            >
-              Quiero mi lugar en el webinar →
-            </button>
+            <fetcher.Form method="post" className="inline-block">
+              <input type="hidden" name="intent" value="direct_checkout" />
+              <input
+                type="hidden"
+                name="selectedModules"
+                value={JSON.stringify([1, 2, 3, 4, 5])}
+              />
+              <input type="hidden" name="totalPrice" value={1490} />
+              <button
+                type="submit"
+                disabled={fetcher.state !== "idle"}
+                className="bg-white text-brand-900 font-medium py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
+              >
+                {fetcher.state !== "idle" ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-brand-900/20 border-t-brand-900 rounded-full animate-spin"></div>
+                    Procesando...
+                  </div>
+                ) : (
+                  "Comprar curso ahora →"
+                )}
+              </button>
+            </fetcher.Form>
             <a
               href="/temario-claude-workshop.pdf"
               download="Temario-Claude-Code-Power-User.pdf"
@@ -1644,9 +1743,23 @@ export default function ClaudeLanding() {
               📄 Descargar temario completo
             </a>
           </div>
+          <div className="mt-8 p-4 bg-brand-500/10 border border-brand-500/30 rounded-xl max-w-md mx-auto">
+            <p className="text-sm text-brand-300 font-medium mb-2">
+              🔔 ¿Prefieres sesiones en vivo?
+            </p>
+            <p className="text-xs text-gray-400 mb-3">
+              Regístrate para recibir notificaciones de las próximas fechas
+            </p>
+            <button
+              onClick={() => setShowWebinarForm(true)}
+              className="bg-brand-500/20 border border-brand-500/50 text-brand-300 py-2 px-4 rounded-full text-sm hover:bg-brand-500/30 transition-all"
+            >
+              Notificarme de próximas sesiones
+            </button>
+          </div>
           <p className="text-sm text-gray-400 font-light mt-6">
-            💡 Tip: Si compras el paquete completo, incluye sesión privada
-            individual GRATIS
+            💡 Tip: Si compras el paquete completo,{" "}
+            <s>incluye sesión privada individual GRATIS</s>
           </p>
         </div>
       </section>
