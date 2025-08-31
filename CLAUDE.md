@@ -17,6 +17,19 @@ Este archivo contiene información útil para Claude Code sobre el proyecto y pr
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
 Siempre siguiendo los estilos de la aplicación, colores y formatos. Es mejor copiar que inventar nuevos, es mejor usar los componentes ya existentes antes que crear nuevos.
 
+### Actualizaciones Agosto 31, 2025
+
+- **Nueva ruta /gemini**: Landing page para el curso de Gemini CLI completamente funcional
+- **Navbar actualizada**: Ahora incluye enlaces a "Claude Code" y "Gemini CLI"
+- **Homepage mejorada**: 
+  - Tag de anuncio "✨ Nuevo taller de Gemini-CLI disponible" encima del título principal
+  - Tres CTAs principales: "Explorar Claude", "Explorar Gemini", "Explorar el blog"
+- **Módulo webinarUtils.ts**: Centraliza toda la lógica de gestión de webinars (usar siempre este módulo)
+- **Precios actualizados**: 
+  - Claude: $1,490 MXN (curso completo)
+  - Gemini: En desarrollo
+- **IMPORTANTE sobre merges**: Siempre verificar que las rutas estén registradas en `app/routes.ts` antes de hacer merge a main
+
 ## el libro
 
 - cada que estes por escribir un nuevo capitulo, lee el prologo y recuerda el propósito, la filosofía y el estilo.
