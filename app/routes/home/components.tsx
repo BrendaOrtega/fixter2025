@@ -495,6 +495,21 @@ export const HomeHero = () => {
       // style={{ opacity, scale, filter }}
       className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-6 md:pt-0 md:px-10 "
     >
+      {/* Tag de nuevo taller Gemini-CLI */}
+      <div className="flex justify-center pt-4 md:pt-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/50 rounded-full px-4 py-2"
+        >
+          <span className="animate-pulse h-2 w-2 bg-purple-500 rounded-full"></span>
+          <span className="text-sm font-semibold text-white">
+            🆕 Nuevo taller de Gemini-CLI disponible
+          </span>
+        </motion.div>
+      </div>
+
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
           <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-4 md:mt-12">
@@ -514,12 +529,22 @@ export const HomeHero = () => {
             <br />
             que usan los profesionales de la industria
           </h2>{" "}
-          <div className="flex justify-center md:justify-start gap-6 mt-12">
-            <PrimaryButton as="Link" to="/cursos" />
+          <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-12">
+            <PrimaryButton 
+              as="Link" 
+              to="/claude" 
+              children="Explorar Claude"
+            />
+            <PrimaryButton 
+              as="Link" 
+              to="/gemini" 
+              children="Explorar Gemini"
+              variant="ghost"
+            />
             <PrimaryButton
               as="Link"
               to="/blog"
-              children="Ir al blog"
+              children="Explorar el blog"
               variant="ghost"
             />
           </div>
