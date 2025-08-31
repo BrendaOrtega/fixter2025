@@ -17,7 +17,8 @@ import { IoIosVideocam } from "react-icons/io";
 const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
-  { name: "Claude Webinar", link: "/claude" },
+  { name: "Claude Code", link: "/claude" },
+  { name: "Gemini CLI", link: "/gemini" },
 ];
 
 export const SquigglyUnderline = () => {
@@ -283,14 +284,22 @@ const MobileMenu = ({
           to="/claude"
           index={2}
           isOpen={isOpen}
-          title="Claude Webinar"
+          title="Claude Code"
+        />
+            <NavItem
+          onClick={toggleMenu}
+          as="Link"
+          to="/gemini"
+          index={3}
+          isOpen={isOpen}
+          title="Gemini CLI"
         />
         {user?.email ? (
           <>
             <NavItem
               as="Link"
               to="/mis-cursos"
-              index={3}
+              index={4}
               isOpen={isOpen}
               title="Mis cursos"
             />
@@ -299,7 +308,7 @@ const MobileMenu = ({
               to="/logout"
               reloadDocument
               as="Link"
-              index={4}
+              index={5}
               isOpen={isOpen}
               title="Cerrar sesión"
             />
@@ -309,7 +318,7 @@ const MobileMenu = ({
             onClick={toggleMenu}
             as="Link"
             to="/login"
-            index={3}
+            index={4}
             isOpen={isOpen}
             title="Iniciar sesión"
             className="text-4xl my-6 font-light "
