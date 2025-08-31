@@ -1,0 +1,546 @@
+// 🚀 Newsletter System - Superior to ConvertKit
+// Este es el nuevo schema que reemplazará el modelo actual
+
+// ============================
+// CORE NEWSLETTER SYSTEM
+// ============================
+
+enum NewsletterStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAUSED
+  CANCELLED
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED_SOFT
+  BOUNCED_HARD
+  COMPLAINED
+  PAUSED
+  PENDING_CONFIRMATION
+}
+
+enum SequenceTrigger {
+  SUBSCRIPTION         // Al suscribirse
+  TAG_ADDED           // Al añadir tag
+  CUSTOM_EVENT        // Evento personalizado
+  DATE_BASED          // Basado en fecha
+  BEHAVIOR_BASED      // Basado en comportamiento
+  PURCHASE            // Tras una compra
+  ENGAGEMENT_SCORE    // Por score de engagement
+}
+
+// ============================
+// AUDIENCIAS Y SEGMENTACIÓN
+// ============================
+
+model Audience {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  
+  // Segmentación automática
+  tags            String[]
+  conditions      Json?        // Condiciones dinámicas de filtrado
+  isDynamic       Boolean      @default(false) // Se actualiza automáticamente
+  
+  // Relaciones
+  subscribers     Subscriber[]
+  newsletters     Newsletter[]
+  sequences       Sequence[]
+  
+  // Estadísticas
+  subscriberCount Int          @default(0)
+  avgEngagement   Float        @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================
+// SUSCRIPTORES AVANZADOS  
+// ============================
+
+model Subscriber {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
+  
+  // Información personal
+  firstName   String?
+  lastName    String?
+  avatar      String?
+  
+  // Campos personalizados ilimitados
+  customFields Json?
+  
+  // Estado y confirmación
+  status        SubscriberStatus @default(PENDING_CONFIRMATION)
+  confirmed     Boolean          @default(false)
+  confirmedAt   DateTime?
+  doubleOptIn   Boolean          @default(true)
+  
+  // Segmentación
+  tags              String[]
+  audiences         Audience[]
+  autoTags          String[]     // Tags automáticos basados en comportamiento
+  
+  // Engagement Intelligence
+  engagementScore   Float        @default(0)   // Score de 0-100
+  lastEngagement    DateTime?
+  totalOpens        Int          @default(0)
+  totalClicks       Int          @default(0)
+  avgTimeToOpen     Int?         // Minutos promedio para abrir
+  preferredSendTime String?      // Hora preferida basada en comportamiento
+  
+  // Geolocalización y contexto
+  timeZone    String?
+  country     String?
+  city        String?
+  language    String?    @default("es")
+  
+  // Origen y tracking
+  source       String?   // organic, paid, referral, etc.
+  utmData      Json?     // Datos UTM completos
+  referrer     String?
+  landingPage  String?
+  
+  // Preferencias
+  preferences SubscriberPreferences?
+  
+  // Historial y relaciones
+  opens        NewsletterOpen[]
+  clicks       NewsletterClick[]
+  bounces      NewsletterBounce[]
+  complaints   NewsletterComplaint[]
+  unsubscribes NewsletterUnsubscribe[]
+  
+  // Automatizaciones
+  sequenceEnrollments SequenceEnrollment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([email])
+  @@index([status])
+  @@index([engagementScore])
+  @@index([tags])
+}
+
+model SubscriberPreferences {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  subscriberId String @unique @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  
+  // Frecuencia y timing
+  frequency         String   @default("weekly") // daily, weekly, monthly, custom
+  customFrequency   Json?    // Para frecuencias personalizadas
+  preferredDays     String[] // ["monday", "wednesday"]
+  preferredHour     Int?     // Hora preferida (0-23)
+  
+  // Intereses y contenido
+  topics           String[]
+  contentTypes     String[] // newsletter, promotional, educational
+  
+  // Formato
+  htmlEmails       Boolean  @default(true)
+  plaintextFallback Boolean @default(true)
+  
+  // Privacidad
+  allowTracking    Boolean  @default(true)
+  allowProfiling   Boolean  @default(true)
+  gdprConsent      Boolean  @default(false)
+  gdprConsentDate  DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================
+// NEWSLETTER AVANZADO
+// ============================
+
+model Newsletter {
+  id     String           @id @default(auto()) @map("_id") @db.ObjectId
+  title  String
+  slug   String?          @unique
+  status NewsletterStatus @default(DRAFT)
+  
+  // Contenido
+  subject         String
+  previewText     String?          // Texto de preview
+  content         String           // HTML content
+  plainTextContent String?         // Fallback texto plano
+  
+  // A/B Testing
+  isAbTest        Boolean          @default(false)
+  abTestVariant   String?          // A, B, C, etc.
+  abTestSettings  Json?            // Configuración del test
+  winningVariant  String?          // Variante ganadora
+  
+  // Personalización
+  mergeFields     Json?            // Campos de personalización
+  dynamicContent  Json?            // Contenido dinámico por segmento
+  
+  // Audiencias objetivo
+  audiences       Audience[]
+  segments        Json?            // Reglas de segmentación avanzada
+  excludeSegments Json?            // Segmentos a excluir
+  
+  // Configuración de envío
+  fromName        String
+  fromEmail       String
+  replyToEmail    String?
+  
+  // Programación inteligente
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  timeZoneOptimized Boolean       @default(false) // Envío por zona horaria
+  sendTimeOptimization Boolean   @default(false) // Optimización automática
+  
+  // Template y diseño
+  templateId      String?          @db.ObjectId
+  template        Template?        @relation(fields: [templateId], references: [id])
+  designData      Json?            // Datos del editor drag & drop
+  
+  // Analytics y métricas
+  analytics       NewsletterAnalytics?
+  
+  // Automatización
+  isAutomated     Boolean          @default(false)
+  automationId    String?          @db.ObjectId
+  
+  // Compliance y deliverability
+  deliverabilityScore Float?       // Score de deliverability estimado
+  spamScore          Float?        // Score de spam
+  compliance         Json?         // Datos de compliance GDPR/CAN-SPAM
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([sentAt])
+}
+
+// ============================
+// ANALYTICS AVANZADOS
+// ============================
+
+model NewsletterAnalytics {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  newsletterId String @unique @db.ObjectId
+  newsletter   Newsletter @relation(fields: [newsletterId], references: [id], onDelete: Cascade)
+  
+  // Estadísticas de envío
+  sent       Int @default(0)
+  delivered  Int @default(0)
+  bounced    Int @default(0)
+  failed     Int @default(0)
+  
+  // Estadísticas de engagement
+  opened        Int @default(0)
+  uniqueOpens   Int @default(0)
+  clicked       Int @default(0)
+  uniqueClicks  Int @default(0)
+  unsubscribed  Int @default(0)
+  complained    Int @default(0)
+  
+  // Tasas calculadas
+  deliveryRate    Float?
+  openRate        Float?
+  clickRate       Float?
+  clickToOpenRate Float?
+  bounceRate      Float?
+  unsubscribeRate Float?
+  complaintRate   Float?
+  
+  // Métricas avanzadas
+  avgTimeToOpen     Int?    // Minutos promedio para abrir
+  avgEngagementTime Int?    // Tiempo promedio de engagement
+  forwardRate       Float?  // Tasa de reenvío estimada
+  socialShares      Int     @default(0)
+  
+  // Análisis geográfico
+  topCountries Json?        // Top países por engagement
+  topCities    Json?        // Top ciudades
+  
+  // Análisis temporal
+  bestSendTime Json?        // Mejor hora para enviar
+  engagementByHour Json?    // Engagement por hora
+  
+  // Eventos detallados
+  opens       NewsletterOpen[]
+  clicks      NewsletterClick[]
+  bounces     NewsletterBounce[]
+  complaints  NewsletterComplaint[]
+  unsubscribes NewsletterUnsubscribe[]
+  
+  // Heatmap data
+  heatmapData Json?         // Datos de heatmap del email
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================
+// TRACKING EVENTS DETALLADOS
+// ============================
+
+model NewsletterOpen {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  analyticsId  String @db.ObjectId
+  analytics    NewsletterAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
+  
+  // Contexto del open
+  timestamp    DateTime @default(now())
+  userAgent    String?
+  ipAddress    String?
+  
+  // Geolocalización
+  country      String?
+  city         String?
+  region       String?
+  
+  // Contexto técnico
+  emailClient  String?   // Gmail, Outlook, Apple Mail, etc.
+  device       String?   // mobile, desktop, tablet
+  os           String?   // iOS, Android, Windows, etc.
+  
+  // Engagement
+  isUnique     Boolean   @default(true)
+  
+  @@index([subscriberId])
+  @@index([timestamp])
+}
+
+model NewsletterClick {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  analyticsId  String @db.ObjectId
+  analytics    NewsletterAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
+  
+  // Detalles del click
+  url          String
+  linkText     String?
+  linkPosition String?   // header, body, footer
+  timestamp    DateTime @default(now())
+  
+  // Contexto
+  userAgent    String?
+  ipAddress    String?
+  country      String?
+  city         String?
+  device       String?
+  
+  // Tracking
+  isUnique     Boolean  @default(true)
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  
+  @@index([subscriberId])
+  @@index([url])
+  @@index([timestamp])
+}
+
+model NewsletterBounce {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  analyticsId  String @db.ObjectId
+  analytics    NewsletterAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
+  
+  // Detalles del bounce
+  bounceType   String    // hard, soft
+  bounceCode   String?   // Código SMTP
+  bounceReason String?   // Razón del bounce
+  timestamp    DateTime @default(now())
+  
+  // Automatización
+  processed    Boolean  @default(false)
+  actionTaken  String?  // unsubscribed, flagged, retried
+  
+  @@index([subscriberId])
+  @@index([bounceType])
+}
+
+model NewsletterComplaint {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  analyticsId  String @db.ObjectId
+  analytics    NewsletterAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
+  
+  // Detalles
+  provider     String?   // Gmail, Yahoo, Outlook
+  timestamp    DateTime @default(now())
+  processed    Boolean  @default(false)
+  
+  @@index([subscriberId])
+}
+
+model NewsletterUnsubscribe {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  analyticsId  String? @db.ObjectId
+  analytics    NewsletterAnalytics? @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
+  
+  // Detalles
+  reason       String?   // Razón del unsubscribe
+  feedback     String?   // Feedback opcional
+  timestamp    DateTime @default(now())
+  
+  // Contexto
+  source       String?   // link, reply, manual
+  ipAddress    String?
+  userAgent    String?
+  
+  @@index([subscriberId])
+}
+
+// ============================
+// TEMPLATES Y DISEÑO
+// ============================
+
+model Template {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  
+  // Contenido
+  htmlContent  String
+  designData   Json?      // Datos del editor drag & drop
+  previewImage String?    // Imagen de preview
+  
+  // Categorización
+  category     String?
+  tags         String[]
+  isPublic     Boolean   @default(false)
+  isPremium    Boolean   @default(false)
+  
+  // Uso
+  newsletters  Newsletter[]
+  timesUsed    Int       @default(0)
+  
+  // Autor
+  authorId     String?   @db.ObjectId
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([category])
+  @@index([isPublic])
+}
+
+// ============================
+// AUTOMATIZACIONES Y SECUENCIAS
+// ============================
+
+model Sequence {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  
+  // Configuración del trigger
+  trigger         SequenceTrigger
+  triggerSettings Json?            // Configuración específica del trigger
+  
+  // Audiencias objetivo
+  audiences       Audience[]
+  
+  // Estado
+  isActive        Boolean         @default(false)
+  isPaused        Boolean         @default(false)
+  
+  // Configuración avanzada
+  exitConditions  Json?           // Condiciones para salir de la secuencia
+  goalTracking    Json?           // Tracking de objetivos/conversiones
+  
+  // Emails de la secuencia
+  emails          SequenceEmail[]
+  
+  // Inscripciones
+  enrollments     SequenceEnrollment[]
+  
+  // Estadísticas
+  totalEnrolled   Int             @default(0)
+  totalCompleted  Int             @default(0)
+  avgCompletionRate Float         @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SequenceEmail {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId String @db.ObjectId
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  
+  // Orden y timing
+  order     Int
+  delay     Int       // Minutos a esperar
+  delayType String    @default("minutes") // minutes, hours, days, weeks
+  
+  // Condiciones
+  conditions Json?    // Condiciones para enviar este email
+  
+  // Contenido
+  subject     String
+  content     String
+  templateId  String? @db.ObjectId
+  
+  // A/B Testing a nivel de email
+  isAbTest    Boolean @default(false)
+  abVariants  Json?   // Variantes del email
+  
+  // Configuración
+  fromName    String?
+  fromEmail   String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([sequenceId, order])
+}
+
+model SequenceEnrollment {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId   String @db.ObjectId
+  sequence     Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
+  
+  // Estado
+  status           String    @default("active") // active, completed, paused, exited
+  currentEmailIndex Int      @default(0)
+  nextEmailAt      DateTime?
+  
+  // Tracking
+  enrolledAt       DateTime  @default(now())
+  completedAt      DateTime?
+  exitedAt         DateTime?
+  exitReason       String?
+  
+  // Métricas
+  emailsSent       Int       @default(0)
+  emailsOpened     Int       @default(0)
+  emailsClicked    Int       @default(0)
+  
+  @@unique([sequenceId, subscriberId])
+  @@index([status])
+  @@index([nextEmailAt])
+}

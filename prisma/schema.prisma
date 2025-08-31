@@ -22,34 +22,129 @@ type Option {
   description String?
 }
 
-// 2025 to leave sendGrid
+// 🚀 NEWSLETTER SYSTEM - Plugin-Ready Architecture
+// Simple pero extractable para @fixtergeek/sequences plugin
+
 enum NewsletterStatus {
   DRAFT
+  SCHEDULED
   SENT
-  PUBLISHED
+  CANCELLED
 }
+
+enum SequenceTrigger {
+  SUBSCRIPTION    // Al suscribirse
+  TAG_ADDED      // Al añadir tag  
+  MANUAL         // Inscripción manual
+  COURSE_PURCHASE // Tras comprar curso
+}
+
+// ============================
+// EMAIL SEQUENCES (Core Feature)
+// ============================
+
+model Sequence {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String                    // "Bienvenida Claude Code"
+  description String?                   // Descripción interna
+  
+  // Trigger
+  trigger     SequenceTrigger
+  triggerTag  String?                   // Tag específico si trigger es TAG_ADDED
+  
+  // Estado
+  isActive    Boolean @default(false)
+  isFeatured  Boolean @default(false)    // Para destacar en la UI
+  
+  // Emails de la secuencia (ordenados)
+  emails      SequenceEmail[]
+  
+  // Inscripciones de usuarios
+  enrollments SequenceEnrollment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SequenceEmail {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId String @db.ObjectId
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  
+  // Orden y timing
+  order      Int                        // 1, 2, 3, etc.
+  delayDays  Int                        // Días a esperar desde email anterior
+  
+  // Contenido
+  subject    String                     // "¡Bienvenido a FixterGeek!"
+  content    String                     // HTML del email
+  
+  // Configuración
+  fromName   String @default("FixterGeek")
+  fromEmail  String @default("contacto@fixter.org")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([sequenceId, order])
+}
+
+model SequenceEnrollment {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId   String @db.ObjectId
+  sequence     Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  
+  // Estado actual
+  status           String    @default("active")  // active, completed, paused
+  currentEmailIndex Int      @default(0)         // Qué email sigue
+  nextEmailAt      DateTime?                     // Cuándo enviar el siguiente
+  
+  // Tracking básico
+  enrolledAt       DateTime  @default(now())
+  completedAt      DateTime?
+  emailsSent       Int       @default(0)
+  
+  @@unique([sequenceId, subscriberId])           // Un usuario solo puede estar una vez en cada secuencia
+  @@index([status, nextEmailAt])                 // Para encontrar emails a enviar
+}
+
+// ============================
+// NEWSLETTER SIMPLIFICADO 
+// ============================
 
 model Newsletter {
   id     String           @id @default(auto()) @map("_id") @db.ObjectId
-  slug   String           @unique
   title  String
+  slug   String?          @unique
   status NewsletterStatus @default(DRAFT)
-
-  // stats
+  
+  // Contenido básico
+  subject    String?
+  content    String?
+  
+  // Configuración
+  fromName   String? @default("FixterGeek")
+  fromEmail  String? @default("contacto@fixter.org")
+  
+  // Programación
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  
+  // Backward compatibility
   messageIds String[]
   delivered  String[]
   opened     String[]
   clicked    String[]
-
-  content    String?
   recipients String[]
   userId     String?   @db.ObjectId
-  template   String?
-  sent       DateTime?
-  schedule   DateTime?
-
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@index([status])
 }
 
 // model Survey {
@@ -79,19 +174,42 @@ type Author {
   image String?
 }
 
-model Subscriber {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime @default(now())
-  name       String?
-  email      String   @unique
-  tags       String[]
-  confirmed  Boolean  @default(false)
-  validToken Boolean  @default(true)
+// ============================
+// SUSCRIPTORES AVANZADOS  
+// ============================
 
+model Subscriber {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
+  
+  // Información personal
+  firstName   String?
+  lastName    String?
+  name        String?        // Backward compatibility
+  avatar      String?
+  
+  // Campos personalizados ilimitados
+  customFields Json?
+  
+  // Estado y confirmación
+  confirmed     Boolean          @default(false)
+  confirmedAt   DateTime?
+  validToken    Boolean          @default(true)  // Backward compatibility
+  
+  // Segmentación simple
+  tags              String[]
+  
+  // Sequences relation
+  sequenceEnrollments SequenceEnrollment[]
+  
+  // Backward compatibility with tutorials
   tutorialIds String[]   @db.ObjectId
   tutorials   Tutorial[] @relation(fields: [tutorialIds], references: [id])
 
-  updatedAt DateTime? @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([tags])
 }
 
 model Tutorial {
@@ -396,3 +514,4 @@ model HeatmapData {
 
   @@unique([postId, date])
 }
+

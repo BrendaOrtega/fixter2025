@@ -17,6 +17,7 @@ import { IoIosVideocam } from "react-icons/io";
 const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
+  { name: "Newsletters", link: "/newsletters" },
   { name: "Claude Code", link: "/claude" },
   { name: "Gemini CLI", link: "/gemini" },
 ];
@@ -278,19 +279,27 @@ const MobileMenu = ({
           isOpen={isOpen}
           title="Blog"
         />
-            <NavItem
+        <NavItem
+          onClick={toggleMenu}
+          as="Link"
+          to="/newsletters"
+          index={3}
+          isOpen={isOpen}
+          title="Newsletters"
+        />
+        <NavItem
           onClick={toggleMenu}
           as="Link"
           to="/claude"
-          index={2}
+          index={4}
           isOpen={isOpen}
           title="Claude Code"
         />
-            <NavItem
+        <NavItem
           onClick={toggleMenu}
           as="Link"
           to="/gemini"
-          index={3}
+          index={5}
           isOpen={isOpen}
           title="Gemini CLI"
         />
@@ -299,7 +308,7 @@ const MobileMenu = ({
             <NavItem
               as="Link"
               to="/mis-cursos"
-              index={4}
+              index={6}
               isOpen={isOpen}
               title="Mis cursos"
             />
@@ -308,7 +317,7 @@ const MobileMenu = ({
               to="/logout"
               reloadDocument
               as="Link"
-              index={5}
+              index={7}
               isOpen={isOpen}
               title="Cerrar sesión"
             />
@@ -318,7 +327,7 @@ const MobileMenu = ({
             onClick={toggleMenu}
             as="Link"
             to="/login"
-            index={4}
+            index={6}
             isOpen={isOpen}
             title="Iniciar sesión"
             className="text-4xl my-6 font-light "

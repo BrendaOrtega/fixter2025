@@ -1,0 +1,99 @@
+// 🎯 SEQUENCES - Modelo simplista pero potente para la industria
+
+enum SequenceTrigger {
+  SUBSCRIPTION     // Al suscribirse (welcome series)
+  TAG_ADDED       // Cuando se añade un tag específico
+  MANUAL          // Inscripción manual por admin
+  INACTIVITY      // Por inactividad (re-engagement)
+  COURSE_PURCHASE // Tras comprar curso
+}
+
+// ============================
+// SEQUENCE (Serie de emails)
+// ============================
+
+model Sequence {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String                    // "Bienvenida Claude Code"
+  description String?                   // Descripción interna
+  
+  // Trigger
+  trigger     SequenceTrigger
+  triggerTag  String?                   // Tag específico si trigger es TAG_ADDED
+  
+  // Estado
+  isActive    Boolean @default(false)
+  
+  // Emails de la secuencia (ordenados)
+  emails      SequenceEmail[]
+  
+  // Inscripciones de usuarios
+  enrollments SequenceEnrollment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================
+// SEQUENCE EMAIL (Email individual)
+// ============================
+
+model SequenceEmail {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId String @db.ObjectId
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  
+  // Orden y timing
+  order      Int                        // 1, 2, 3, etc.
+  delayDays  Int                        // Días a esperar desde email anterior
+  
+  // Contenido
+  subject    String                     // "¡Bienvenido a FixterGeek!"
+  content    String                     // HTML del email
+  
+  // Configuración
+  fromName   String @default("FixterGeek")
+  fromEmail  String @default("contacto@fixter.org")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([sequenceId, order])
+}
+
+// ============================
+// SEQUENCE ENROLLMENT (Inscripción de usuario)
+// ============================
+
+model SequenceEnrollment {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId   String @db.ObjectId
+  sequence     Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  
+  subscriberId String @db.ObjectId
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  
+  // Estado actual
+  status           String    @default("active")  // active, completed, paused
+  currentEmailIndex Int      @default(0)         // Qué email sigue
+  nextEmailAt      DateTime?                     // Cuándo enviar el siguiente
+  
+  // Tracking básico
+  enrolledAt       DateTime  @default(now())
+  completedAt      DateTime?
+  emailsSent       Int       @default(0)
+  
+  @@unique([sequenceId, subscriberId])           // Un usuario solo puede estar una vez en cada secuencia
+  @@index([status, nextEmailAt])                 // Para encontrar emails a enviar
+}
+
+// ============================
+// ACTUALIZACIÓN A SUBSCRIBER
+// ============================
+
+model Subscriber {
+  // ... campos existentes ...
+  
+  // Nueva relación con sequences
+  sequenceEnrollments SequenceEnrollment[]
+}

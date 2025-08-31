@@ -13,6 +13,7 @@ export default [
   route("faq", "routes/faq.tsx"),
   route("mis-cursos", "routes/mis-cursos.tsx"),
   route("subscribe", "routes/subscribe.tsx"),
+  route("newsletters", "routes/newsletters.tsx"),
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
   route("audio-demo", "routes/audio-demo.tsx"),
@@ -53,6 +54,7 @@ export default [
   ]),
   ...prefix("blog", [
     index("routes/blog.tsx"),
+    route("aws-ses-features-ocultos", "routes/blog.aws-ses-features-ocultos.tsx"),
     route(":postSlug", "routes/post.tsx"),
   ]),
   ...prefix("api", [

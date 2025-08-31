@@ -25,6 +25,13 @@ Siempre siguiendo los estilos de la aplicación, colores y formatos. Es mejor co
   - Tag de anuncio "✨ Nuevo taller de Gemini-CLI disponible" encima del título principal
   - Tres CTAs principales: "Explorar Claude", "Explorar Gemini", "Explorar el blog"
 - **Módulo webinarUtils.ts**: Centraliza toda la lógica de gestión de webinars (usar siempre este módulo)
+- **Sistema de Email Sequences implementado**:
+  - Ruta `/newsletters` actualizada con sequences automáticas
+  - Modelos Prisma: `Sequence`, `SequenceEmail`, `SequenceEnrollment`
+  - Triggers: SUBSCRIPTION, TAG_ADDED, MANUAL, COURSE_PURCHASE
+  - Sequences de ejemplo: "Bienvenida Claude Code", "Pre-Webinar | Gemini-CLI", "Re-engagement"
+  - Comandos: `npm run sequences:create` para datos de ejemplo
+  - Arquitectura preparada para extracción a plugin @fixtergeek/email-sequences
 - **Precios actualizados**: 
   - Claude: $1,490 MXN (curso completo)
   - Gemini: En desarrollo

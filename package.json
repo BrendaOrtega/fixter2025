@@ -5,11 +5,15 @@
   "scripts": {
     "build": "cross-env NODE_ENV=production react-router build",
     "dev": "react-router dev",
+    "login": "node scripts/dev-login.cjs",
     "start": "cross-env NODE_ENV=production react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "deploy": "npm run build && fly deploy --remote-only",
     "prisma": "npx -y prisma generate",
-    "test": "vitest"
+    "test": "vitest",
+    "newsletter:check": "npx tsx scripts/check-newsletter-migration.ts",
+    "newsletter:migrate": "npx tsx scripts/migrate-newsletter-data.ts",
+    "sequences:create": "npx tsx scripts/create-sample-sequences.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.850.0",

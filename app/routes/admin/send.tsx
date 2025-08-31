@@ -407,12 +407,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
               bcc: batch, // Usar BCC para proteger privacidad
               html: finalHtmlContent,
               // Headers para SES Configuration Set y tracking
-              headers: configurationSet ? {
-                "X-SES-CONFIGURATION-SET": configurationSet,
-                "X-SES-MESSAGE-TAGS": `newsletter_id=${newsletter.id}`,
-              } : {
-                "X-SES-MESSAGE-TAGS": `newsletter_id=${newsletter.id}`,
-              },
+              headers: configurationSet
+                ? {
+                    "X-SES-CONFIGURATION-SET": configurationSet,
+                    "X-SES-MESSAGE-TAGS": `newsletter_id=${newsletter.id}`,
+                  }
+                : {
+                    "X-SES-MESSAGE-TAGS": `newsletter_id=${newsletter.id}`,
+                  },
             });
 
             results.push({ success: true, batch, messageId: result.messageId });
