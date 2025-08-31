@@ -25,13 +25,27 @@ Siempre siguiendo los estilos de la aplicación, colores y formatos. Es mejor co
   - Tag de anuncio "✨ Nuevo taller de Gemini-CLI disponible" encima del título principal
   - Tres CTAs principales: "Explorar Claude", "Explorar Gemini", "Explorar el blog"
 - **Módulo webinarUtils.ts**: Centraliza toda la lógica de gestión de webinars (usar siempre este módulo)
-- **Sistema de Email Sequences implementado**:
-  - Ruta `/newsletters` actualizada con sequences automáticas
-  - Modelos Prisma: `Sequence`, `SequenceEmail`, `SequenceEnrollment`
-  - Triggers: SUBSCRIPTION, TAG_ADDED, MANUAL, COURSE_PURCHASE
-  - Sequences de ejemplo: "Bienvenida Claude Code", "Pre-Webinar | Gemini-CLI", "Re-engagement"
-  - Comandos: `npm run sequences:create` para datos de ejemplo
-  - Arquitectura preparada para extracción a plugin @fixtergeek/email-sequences
+- **Sistema de Email Sequences completamente implementado**:
+  - **Ruta `/newsletters`**: Gestión completa de sequences con tabs persistentes
+  - **Modelos Prisma**: `Sequence`, `SequenceEmail`, `SequenceEnrollment`
+  - **Triggers**: SUBSCRIPTION, TAG_ADDED, MANUAL, COURSE_PURCHASE
+  - **Sequences activas**: 
+    - "Bienvenida Claude Code" (3 emails)
+    - "Pre-Webinar | Gemini-CLI" (3 emails, featured)
+    - "Re-engagement" (1 email, pausada)
+  - **Funcionalidades**:
+    - ⏸️ Pausar/Reanudar con preservación del progreso (`currentEmailIndex`)
+    - 📊 Visualización de progreso en porcentajes
+    - 🎵 Iconos play/pause de react-icons
+    - 🌟 Sistema de sequences destacadas (`isFeatured`)
+    - 🔄 Pestañas que recuerdan selección (localStorage)
+    - ⚙️ Preferencias de frecuencia mejoradas con textos naturales
+  - **Preferencias de Usuario**: 
+    - "No me molesta recibir varios a la semana" (weekly)
+    - "Prefiero recibir menos de 6 al mes" (biweekly) 
+    - "Prefiero recibir solo 1 al mes" (monthly)
+  - **Scripts útiles**: `npm run sequences:create`, múltiples scripts de testing
+  - **Decisión de diseño**: Sistema simple sin validación automática de frecuencia
 - **Precios actualizados**: 
   - Claude: $1,490 MXN (curso completo)
   - Gemini: En desarrollo
@@ -164,6 +178,17 @@ def create_pdf(filename, title, content):
 - Filtra entre solo registrados vs compraron taller
 - Exporta CSV con toda la información
 - Acceso protegido con `getAdminOrRedirect`
+
+### Sequences Admin (/admin/sequences) - PLANIFICADO
+
+- **Panel completo** para gestionar email sequences
+- **Dashboard**: Métricas generales, sequences activas, enrollments
+- **CRUD Sequences**: Crear, editar, pausar, eliminar sequences
+- **Editor de Emails**: Gestionar emails de cada sequence con WYSIWYG
+- **Analytics**: Stats por sequence, performance de emails, lista de usuarios
+- **Funcionalidades**: Filtros, búsqueda, acciones bulk, preview de emails
+- **Diseño**: Consistente con admin existente, responsive, estados claros
+- **Plan detallado**: Ver `docs/admin-sequences-plan.md`
 
 ## Comandos Útiles
 

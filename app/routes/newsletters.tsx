@@ -7,12 +7,14 @@ import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { useFetcher } from "react-router";
+import { FaPause, FaPlay } from "react-icons/fa";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUserOrNull(request);
   
   let subscriber = null;
   let enrolledSequences: any[] = [];
+  let pausedSequences: any[] = [];
   
   // Get user's current subscriber info only if user is logged in
   if (user) {
@@ -22,21 +24,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         sequenceEnrollments: {
           include: {
             sequence: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                isActive: true,
+              include: {
+                emails: {
+                  select: { id: true }
+                }
               }
             }
           },
           where: {
-            status: 'active'
-          }
+            status: { in: ['active', 'paused'] }
+          },
+          orderBy: { enrolledAt: 'desc' }
         }
       }
     });
-    enrolledSequences = subscriber?.sequenceEnrollments || [];
+    
+    // Separar sequences activas y pausadas
+    const allEnrollments = subscriber?.sequenceEnrollments || [];
+    enrolledSequences = allEnrollments.filter(e => e.status === 'active');
+    pausedSequences = allEnrollments.filter(e => e.status === 'paused');
   }
 
   // Get all sequences to show in discover (both enrolled and available)
@@ -67,6 +73,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     user, 
     subscriber,
     enrolledSequences,
+    pausedSequences,
     allSequences: sequencesWithFeatured,
     enrolledSequenceIds,
     isSubscribed: !!subscriber?.confirmed,
@@ -79,7 +86,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
   
-  if (intent === "leave_sequence") {
+  if (intent === "pause_sequence") {
     const sequenceId = formData.get("sequenceId") as string;
     
     const subscriber = await db.subscriber.findUnique({
@@ -87,6 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
     
     if (subscriber) {
+      // Pausar pero mantener currentEmailIndex para poder retomar
       await db.sequenceEnrollment.updateMany({
         where: {
           subscriberId: subscriber.id,
@@ -94,8 +102,65 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
         data: {
           status: 'paused'
+          // currentEmailIndex se mantiene intacto
         }
       });
+    }
+    
+    return { success: true };
+  }
+  
+  if (intent === "resume_sequence") {
+    const sequenceId = formData.get("sequenceId") as string;
+    
+    const subscriber = await db.subscriber.findUnique({
+      where: { email: user.email }
+    });
+    
+    if (subscriber) {
+      // Buscar el enrollment pausado
+      const enrollment = await db.sequenceEnrollment.findUnique({
+        where: {
+          sequenceId_subscriberId: {
+            sequenceId,
+            subscriberId: subscriber.id
+          }
+        }
+      });
+      
+      if (enrollment && enrollment.status === 'paused') {
+        // Calcular el próximo email basado en el currentEmailIndex actual
+        const sequence = await db.sequence.findUnique({
+          where: { id: sequenceId },
+          include: {
+            emails: {
+              where: { order: { gte: enrollment.currentEmailIndex } },
+              orderBy: { order: 'asc' },
+              take: 1
+            }
+          }
+        });
+        
+        const nextEmail = sequence?.emails[0];
+        const nextEmailAt = nextEmail 
+          ? new Date(Date.now() + (nextEmail.delayDays * 24 * 60 * 60 * 1000))
+          : null;
+        
+        // Reanudar desde donde quedó
+        await db.sequenceEnrollment.update({
+          where: {
+            sequenceId_subscriberId: {
+              sequenceId,
+              subscriberId: subscriber.id
+            }
+          },
+          data: {
+            status: 'active',
+            nextEmailAt
+            // currentEmailIndex se mantiene para continuar desde donde pausó
+          }
+        });
+      }
     }
     
     return { success: true };
@@ -231,7 +296,7 @@ export const meta = () =>
   });
 
 export default function Route({
-  loaderData: { user, subscriber, enrolledSequences, allSequences, enrolledSequenceIds, isSubscribed, isLoggedIn },
+  loaderData: { user, subscriber, enrolledSequences, pausedSequences, allSequences, enrolledSequenceIds, isSubscribed, isLoggedIn },
 }: Route.ComponentProps) {
   // Inicializar tab desde localStorage o usar default
   const [activeTab, setActiveTab] = useState<"subscriptions" | "discover" | "settings">(() => {
@@ -333,7 +398,8 @@ export default function Route({
           {/* Content */}
           {activeTab === "subscriptions" ? (
             <SequencesTab 
-              enrolledSequences={enrolledSequences} 
+              enrolledSequences={enrolledSequences}
+              pausedSequences={pausedSequences} 
               isSubscribed={isSubscribed}
               fetcher={fetcher}
               isLoggedIn={isLoggedIn}
@@ -394,17 +460,19 @@ export default function Route({
 }
 
 function SequencesTab({ 
-  enrolledSequences, 
+  enrolledSequences,
+  pausedSequences, 
   isSubscribed, 
   fetcher,
   isLoggedIn 
 }: { 
-  enrolledSequences: any[]; 
+  enrolledSequences: any[];
+  pausedSequences: any[]; 
   isSubscribed: boolean;
   fetcher: any;
   isLoggedIn: boolean;
 }) {
-  if (!isSubscribed || !enrolledSequences?.length) {
+  if (!isSubscribed || (!enrolledSequences?.length && !pausedSequences?.length)) {
     return (
       <div className="text-center py-16">
         <div className="text-6xl mb-6">🤖</div>
@@ -448,8 +516,12 @@ function SequencesTab({
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-brand-800/30 rounded-lg p-3">
-                <div className="text-brand-300 text-xs font-medium mb-1">Emails enviados</div>
-                <div className="text-white text-lg font-semibold">{enrollment.emailsSent}</div>
+                <div className="text-brand-300 text-xs font-medium mb-1">Progreso</div>
+                <div className="text-white text-lg font-semibold">
+                  {enrollment.sequence.emails?.length > 0 
+                    ? Math.round((enrollment.emailsSent / enrollment.sequence.emails.length) * 100)
+                    : 0}%
+                </div>
               </div>
               {enrollment.nextEmailAt && (
                 <div className="bg-brand-800/30 rounded-lg p-3">
@@ -467,20 +539,106 @@ function SequencesTab({
             {/* Actions */}
             <div className="flex justify-end">
               <fetcher.Form method="post">
-                <input type="hidden" name="intent" value="leave_sequence" />
+                <input type="hidden" name="intent" value="pause_sequence" />
                 <input type="hidden" name="sequenceId" value={enrollment.sequenceId} />
                 <button
                   type="submit"
-                  className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
-                  disabled={fetcher.state !== "idle" && fetcher.formData?.get("intent") === "leave_sequence" && fetcher.formData?.get("sequenceId") === enrollment.sequenceId}
+                  className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 text-sm font-medium transition-colors"
+                  disabled={fetcher.state !== "idle" && fetcher.formData?.get("intent") === "pause_sequence" && fetcher.formData?.get("sequenceId") === enrollment.sequenceId}
                 >
-                  {fetcher.state !== "idle" && fetcher.formData?.get("intent") === "leave_sequence" && fetcher.formData?.get("sequenceId") === enrollment.sequenceId ? "Pausando..." : "Pausar"}
+                  {fetcher.state !== "idle" && fetcher.formData?.get("intent") === "pause_sequence" && fetcher.formData?.get("sequenceId") === enrollment.sequenceId ? (
+                    "Pausando..."
+                  ) : (
+                    <>
+                      <FaPause className="w-3 h-3" />
+                      Pausar
+                    </>
+                  )}
                 </button>
               </fetcher.Form>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Sequences Pausadas */}
+      {pausedSequences && pausedSequences.length > 0 && (
+        <>
+          <div className="mt-12 mb-6">
+            <h3 className="text-xl font-semibold text-white">Sequences Pausadas</h3>
+            <p className="text-brand-100 text-sm mt-1">
+              Puedes reanudar estas sequences para continuar donde lo dejaste
+            </p>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {pausedSequences.map((enrollment: any) => (
+              <div
+                key={enrollment.id}
+                className="bg-brand-900/30 border border-brand-100/5 rounded-lg p-6 opacity-80 hover:opacity-100 transition-opacity"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white/80 leading-tight">
+                    {enrollment.sequence.name}
+                  </h3>
+                  <span className="text-xs px-3 py-1 rounded-full font-medium text-gray-400 bg-gray-900/60">
+                    ⏸️ Pausada
+                  </span>
+                </div>
+                
+                {/* Description */}
+                <p className="text-brand-100/70 mb-6 text-sm leading-relaxed">
+                  {enrollment.sequence.description || "Secuencia de emails automatizada"}
+                </p>
+                
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-brand-800/20 rounded-lg p-3">
+                    <div className="text-brand-300/70 text-xs font-medium mb-1">Progreso</div>
+                    <div className="text-white text-lg font-semibold">
+                      {enrollment.sequence.emails?.length > 0 
+                        ? Math.round((enrollment.emailsSent / enrollment.sequence.emails.length) * 100)
+                        : 0}%
+                    </div>
+                  </div>
+                  <div className="bg-brand-800/20 rounded-lg p-3">
+                    <div className="text-brand-300/70 text-xs font-medium mb-1">Pausado desde</div>
+                    <div className="text-white text-sm font-medium">
+                      {new Date(enrollment.updatedAt || enrollment.enrolledAt).toLocaleDateString('es-MX', { 
+                        day: 'numeric', 
+                        month: 'short' 
+                      })}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex justify-end">
+                  <fetcher.Form method="post">
+                    <input type="hidden" name="intent" value="resume_sequence" />
+                    <input type="hidden" name="sequenceId" value={enrollment.sequenceId} />
+                    <button
+                      type="submit"
+                      className="flex items-center gap-2 text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
+                      disabled={fetcher.state !== "idle" && fetcher.formData?.get("intent") === "resume_sequence" && fetcher.formData?.get("sequenceId") === enrollment.sequenceId}
+                    >
+                      {fetcher.state !== "idle" && fetcher.formData?.get("intent") === "resume_sequence" && fetcher.formData?.get("sequenceId") === enrollment.sequenceId ? (
+                        "Reanudando..."
+                      ) : (
+                        <>
+                          <FaPlay className="w-3 h-3" />
+                          Reanudar
+                        </>
+                      )}
+                    </button>
+                  </fetcher.Form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
     </div>
   );
@@ -668,9 +826,10 @@ function SettingsTab({
           </h3>
           <div className="space-y-3">
             {[
-              { value: 'daily', label: 'Diario', desc: 'Recibe newsletters todos los días', disabled: true, reason: 'Muy intenso para empezar 😅' },
-              { value: 'weekly', label: 'Semanal', desc: 'Una vez por semana' },
-              { value: 'monthly', label: 'Mensual', desc: 'Una vez al mes' },
+              { value: 'daily', label: 'No me molesta recibir varios al día', desc: 'Estoy súper interesado en el contenido', disabled: true, reason: 'Muy intenso para empezar 😅' },
+              { value: 'weekly', label: 'No me molesta recibir varios a la semana', desc: 'Me gusta mantenerme actualizado regularmente' },
+              { value: 'biweekly', label: 'Prefiero recibir menos de 6 al mes', desc: 'Un balance entre estar informado y no saturarme' },
+              { value: 'monthly', label: 'Prefiero recibir solo 1 al mes', desc: 'Solo lo esencial, por favor' },
             ].map((option) => (
               <label key={option.value} className={`flex items-start gap-3 ${option.disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
                 <input
