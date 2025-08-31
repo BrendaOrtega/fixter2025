@@ -4,7 +4,6 @@ import invariant from "tiny-invariant";
 import { data, type ActionFunctionArgs } from "react-router";
 import { successPurchase } from "~/mailSenders/successPurchase";
 import { purchaseCongrats } from "~/mailSenders/purchaseCongrats";
-import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -41,74 +40,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
 
-      // Handle Claude Workshop purchases (both form-based and direct)
-      if (session.metadata.type === "claude-workshop" || session.metadata.type === "claude-workshop-direct") {
-        const isDirectPurchase = session.metadata.type === "claude-workshop-direct";
-        
-        const user = await db.user.upsert({
-          where: { email },
-          create: {
-            email,
-            username: email,
-            displayName: session.metadata.name || session.customer_details?.name,
-            phoneNumber: session.metadata.phone || session.customer_details?.phone,
-            courses: [],
-            editions: [],
-            roles: [],
-            tags: [
-              "claude-workshop-paid",
-              "newsletter",
-              ...(isDirectPurchase ? ["direct-purchase"] : [
-                `level-${session.metadata.experienceLevel}`,
-                `context-${session.metadata.contextObjective}`
-              ])
-            ],
-            workshop: {
-              selectedModules: JSON.parse(session.metadata.selectedModules),
-              totalPrice: Number(session.metadata.totalPrice),
-              paidAt: new Date().toISOString(),
-              sessionId: session.id,
-              paymentStatus: "completed",
-              purchaseType: isDirectPurchase ? "direct" : "form"
-            },
-            confirmed: true,
-            role: "STUDENT"
-          },
-          update: {
-            displayName: session.metadata.name || session.customer_details?.name,
-            phoneNumber: session.metadata.phone || session.customer_details?.phone,
-            tags: { push: "claude-workshop-paid" },
-            workshop: {
-              selectedModules: JSON.parse(session.metadata.selectedModules),
-              totalPrice: Number(session.metadata.totalPrice),
-              paidAt: new Date().toISOString(),
-              sessionId: session.id,
-              paymentStatus: "completed",
-              purchaseType: isDirectPurchase ? "direct" : "form"
-            }
-          }
-        });
-
-        await successPurchase({
-          userName: user.displayName || session.customer_details?.name || "Sin nombre",
-          userMail: user.email,
-          slug: "claude-workshop",
-          meta: session.metadata,
-        });
-
-        // Send webinar congratulations email
-        await sendWebinarCongrats({
-          to: user.email,
-          webinarTitle: "Claude Workshop",
-          webinarDate: "15 de Febrero 2025", // Update with actual date
-          userName: user.displayName || session.customer_details?.name
-        });
-
-        console.info("WEBHOOK: Claude workshop purchase successful");
-        return new Response(null);
-      }
-
-      // Handle regular course purchases
+      // Handle ALL course purchases - unified logic
       const course = await db.course.findUnique({
         where: {
           slug: session.metadata.courseSlug,
@@ -124,6 +56,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         });
         return null;
       }
+      // Build tags based on metadata
+      const tags = ["newsletter"];
+      
+      // Add purchase-specific tags
+      if (session.metadata.type === "claude-workshop" || session.metadata.type === "claude-workshop-direct") {
+        tags.push("claude-course-paid");
+        if (session.metadata.type === "claude-workshop-direct") {
+          tags.push("direct-purchase");
+        } else {
+          if (session.metadata.experienceLevel) tags.push(`level-${session.metadata.experienceLevel}`);
+          if (session.metadata.contextObjective) tags.push(`context-${session.metadata.contextObjective}`);
+        }
+      }
+      
+      // Store any additional purchase metadata
+      let purchaseMetadata = {};
+      if (session.metadata.selectedModules) {
+        purchaseMetadata = {
+          selectedModules: JSON.parse(session.metadata.selectedModules || "[]"),
+          totalPrice: Number(session.metadata.totalPrice || 0),
+          paidAt: new Date().toISOString(),
+          sessionId: session.id,
+          purchaseType: session.metadata.type || "standard"
+        };
+      }
+      
       const user = await db.user.upsert({
         where: {
           email,
@@ -131,12 +89,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         create: {
           email,
           username: email,
-          displayName: session.customer_details?.name,
+          displayName: session.metadata.name || session.customer_details?.name,
+          phoneNumber: session.metadata.phone || session.customer_details?.phone,
           courses: [course.id],
+          tags,
+          metadata: Object.keys(purchaseMetadata).length > 0 ? { purchase: purchaseMetadata } : {},
+          confirmed: true,
+          role: "STUDENT"
         },
         update: {
           courses: { push: course.id },
-          displayName: session.customer_details?.name || undefined, // @todo remove?
+          displayName: session.metadata.name || session.customer_details?.name || undefined,
+          phoneNumber: session.metadata.phone || undefined,
+          tags: { push: tags },
+          metadata: Object.keys(purchaseMetadata).length > 0 ? {
+            ...(await db.user.findUnique({ where: { email }, select: { metadata: true }}))?.metadata,
+            purchase: purchaseMetadata
+          } : undefined
         },
       });
       await successPurchase({

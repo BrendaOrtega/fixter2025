@@ -9,7 +9,7 @@ export const purchaseCongrats = async ({
   courseTitle: string;
   courseSlug: string;
 }) => {
-  const link = `https://fixtergeek.com/courses/${courseSlug}/viewer`;
+  const link = `${process.env.BASE_URL || "https://www.fixtergeek.com"}/cursos/${courseSlug}/viewer`;
   return sendgridTransport.sendMail({
     subject: "🎉¡Gracias por tu compra!🥳",
     from: "contacto@fixter.org",
