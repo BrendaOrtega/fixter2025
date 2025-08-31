@@ -507,7 +507,7 @@ export const HomeHero = () => {
             >
               <span className="animate-pulse h-2 w-2 bg-purple-500 rounded-full"></span>
               <span className="text-sm font-semibold text-white">
-                🆕 Nuevo taller de Gemini-CLI disponible
+                ✨ Nuevo taller de Gemini-CLI disponible
               </span>
             </motion.div>
           </div>
