@@ -39,6 +39,7 @@ export default [
     route("posts", "routes/admin/postList.tsx"),
     route("talleres", "routes/admin/talleres.tsx"),
     route("webinar", "routes/admin/webinar.tsx"),
+    route("sequences", "routes/admin/sequences.tsx"),
     route("newsletter", "routes/admin/newsletter.tsx"),
     route("analytics", "routes/admin/analytics.tsx"),
     route("heatmap/:postId", "routes/admin/heatmap.$postId.tsx"),
@@ -64,6 +65,8 @@ export default [
     route("file", "routes/api/file.tsx"),
     route("sockets", "routes/api/sockets.tsx"),
     route("audio", "routes/api/audio.tsx"),
+    route("sequences/start", "routes/api.sequences.start.ts"),
+    route("sequences/process", "routes/api.sequences.process.ts"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

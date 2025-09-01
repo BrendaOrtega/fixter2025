@@ -72,8 +72,12 @@ model SequenceEmail {
   sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
   
   // Orden y timing
-  order      Int                        // 1, 2, 3, etc.
-  delayDays  Int                        // Días a esperar desde email anterior
+  order        Int                      // 1, 2, 3, etc.
+  
+  // Dos formas de programar el envío:
+  schedulingType String @default("delay") // "delay" | "specific_date"
+  delayDays      Int?                     // Días a esperar (para schedulingType: "delay")
+  specificDate   DateTime?                // Fecha/hora específica (para schedulingType: "specific_date")
   
   // Contenido
   subject    String                     // "¡Bienvenido a FixterGeek!"
