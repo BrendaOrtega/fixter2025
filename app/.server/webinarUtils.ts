@@ -5,7 +5,7 @@ import { COURSE_IDS } from "~/constants/webinar";
 export const WEBINAR_TAGS = {
   CLAUDE_AGOSTO: "webinar_agosto",
   CLAUDE_PAID: "claude-workshop-paid",
-  GEMINI_SEPTIEMBRE: "gemini_webinar_septiembre",
+  GEMINI_SOLICITUD: "gemini_webinar_solicitud",
 } as const;
 
 export interface WebinarUser {

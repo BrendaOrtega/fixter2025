@@ -38,7 +38,7 @@ export const sendWebinarRegistration = async ({
     .sendMail({
       from: getSesRemitent(),
       bcc: to, // Usar BCC como funcionaba antes
-      subject: `✅ Registro confirmado - ${webinarTitle}`,
+      subject: `✅ Solicitud registrada - ${webinarTitle}`,
       html: htmlContent
     })
     .then((result: any) => {

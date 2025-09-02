@@ -8,6 +8,7 @@ import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { sendWebinarRegistration } from "~/mailSenders/sendWebinarRegistration";
+import { sendWebinarThresholdNotification } from "~/mailSenders/sendWebinarThresholdNotification";
 
 export const meta = () =>
   getMetaTags({
@@ -38,7 +39,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       // Preparar tags para añadir
       const tagsToAdd = [
-        "gemini_webinar_septiembre",
+        "gemini_webinar_solicitud",
+        "gemini", // Trigger para la sequence Pre-Webinar Gemini-CLI
         "newsletter",
         `level-${experienceLevel}`,
         `context-${contextObjective}`,
@@ -74,7 +76,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             contextObjective,
             registeredAt: new Date().toISOString(),
             webinarType: "gemini_2025",
-            webinarDate: "2025-09-12T19:00:00-06:00",
+            webinarDate: "A programar con 12 solicitudes",
           },
           confirmed: false,
           role: "GUEST",
@@ -88,17 +90,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             contextObjective,
             registeredAt: new Date().toISOString(),
             webinarType: "gemini_2025",
-            webinarDate: "2025-09-12T19:00:00-06:00",
+            webinarDate: "A programar con 12 solicitudes",
           },
         },
       });
 
-      // Send webinar registration confirmation email
+      // Send webinar request confirmation email
       try {
         await sendWebinarRegistration({
           to: email,
           webinarTitle: "Domina Gemini CLI: Webinar Gratuito",
-          webinarDate: "Jueves 12 de Septiembre, 7:00 PM (CDMX)",
+          webinarDate: "A programar con 12 solicitudes",
           userName: name,
           isConfirmed: user.confirmed,
         });
@@ -107,10 +109,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         // No lanzar error, el registro ya fue exitoso
       }
 
+      // Check if we've reached the threshold of 12 registrations
+      try {
+        const registrationCount = await db.user.count({
+          where: {
+            tags: {
+              has: "gemini_webinar_solicitud"
+            }
+          }
+        });
+
+        console.log(`📊 Registros actuales para Gemini webinar: ${registrationCount}`);
+
+        // Send notification to Brenda if we've reached exactly 12 registrations
+        if (registrationCount === 12) {
+          console.log("🎯 ¡Meta alcanzada! Enviando notificación a Brenda...");
+          await sendWebinarThresholdNotification({
+            webinarType: "Gemini CLI",
+            registrationCount,
+            threshold: 12
+          });
+          console.log("✅ Notificación enviada exitosamente");
+        }
+      } catch (thresholdError) {
+        console.error("Error checking threshold:", thresholdError);
+        // No interrumpir el flujo si falla la notificación
+      }
+
       return data({
         success: true,
         type: "webinar",
-        message: "Registro exitoso para el webinar gratuito",
+        message: "Solicitud registrada para el webinar gratuito",
       });
     } catch (error) {
       console.error("Error registering for gemini workshop:", error);
@@ -280,7 +309,7 @@ export default function GeminiLanding() {
     {
       id: 1,
       title: "Sesión 1: Introducción y Configuración Avanzada",
-      date: "Martes 23 Septiembre • 2 horas • 7:00 PM",
+      date: "Sesión 1 • 2 horas • Horario a confirmar",
       topics: [
         "Setup completo de Gemini CLI",
         "Configuración avanzada de entornos",
@@ -292,7 +321,7 @@ export default function GeminiLanding() {
     {
       id: 2,
       title: "Sesión 2: Automatización y Scripting",
-      date: "Jueves 25 Septiembre • 2 horas • 7:00 PM",
+      date: "Sesión 2 • 2 horas • Horario a confirmar",
       topics: [
         "Scripts automatizados con Gemini CLI",
         "Integración con bash y zsh",
@@ -304,7 +333,7 @@ export default function GeminiLanding() {
     {
       id: 3,
       title: "Sesión 3: Integración con Herramientas y APIs",
-      date: "Martes 30 Septiembre • 2 horas • 7:00 PM",
+      date: "Sesión 3 • 2 horas • Horario a confirmar",
       topics: [
         "Conexión con APIs externas",
         "Integración con GitHub",
@@ -419,8 +448,8 @@ export default function GeminiLanding() {
                 🎉
               </motion.div>
               <p className="text-gray-300 mb-6 text-center">
-                Te has registrado exitosamente al webinar gratuito. Te
-                enviaremos los detalles por email.
+                Tu solicitud para el webinar ha sido registrada. Te
+                enviaremos los detalles cuando se programe con 12 solicitudes.
               </p>
               <motion.button
                 onClick={() => {
@@ -887,7 +916,7 @@ export default function GeminiLanding() {
                 <div className="flex items-center gap-2 mb-4 justify-center">
                   <span className="text-3xl">📅</span>
                   <p className="text-white font-bold text-xl">
-                    WEBINAR: Jueves 12 de Septiembre • 7:00 PM (CDMX)
+                    WEBINAR: Se programa con 12 solicitudes
                   </p>
                 </div>
                 <p className="text-gray-200 text-lg mb-4">
@@ -934,7 +963,7 @@ export default function GeminiLanding() {
                   className="w-full bg-white text-purple-500 font-bold py-4 px-8 rounded-full text-lg transition-all shadow-xl relative overflow-hidden"
                 >
                   <span className="relative z-10">
-                    Asegurar mi lugar en el webinar gratuito
+                    Solicitar el webinar gratuito
                   </span>
                 </motion.button>
               </div>
@@ -2169,7 +2198,7 @@ export default function GeminiLanding() {
                 className="bg-white text-purple-500 font-bold py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 shadow-xl relative overflow-hidden"
               >
                 <span className="relative z-10">
-                  Asegurar mi lugar en el webinar gratuito
+                  Solicitar el webinar gratuito
                 </span>
               </motion.button>
               <fetcher.Form method="post" className="inline-block">
@@ -2207,7 +2236,7 @@ export default function GeminiLanding() {
                 de ella
               </p>
               <p className="text-gray-300 text-xs mt-4">
-                📅 12 Sept - Webinar GRATIS • 23, 25, 30 Sept - Transformación
+                📅 Se programa con 12 solicitudes - Webinar GRATIS • Sesiones - Transformación
               </p>
             </div>
           </motion.div>
