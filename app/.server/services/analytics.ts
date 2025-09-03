@@ -158,3 +158,25 @@ export const useAnalytics = () => {
       }),
   };
 };
+
+// Server-side function for API routes
+export async function trackAnalyticsEvent(event: {
+  type: string;
+  postId: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const result = await Effect.runPromise(
+      analytics.track({
+        type: event.type as any,
+        postId: event.postId,
+        pathname: '/', // Default since we don't have pathname in server context
+        metadata: event.metadata,
+      })
+    );
+    return result;
+  } catch (error) {
+    console.error('Failed to track analytics event:', error);
+    throw error;
+  }
+}

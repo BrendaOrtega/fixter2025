@@ -65,6 +65,7 @@ export default [
     route("file", "routes/api/file.tsx"),
     route("sockets", "routes/api/sockets.tsx"),
     route("audio", "routes/api/audio.tsx"),
+    route("analytics", "routes/api.analytics.tsx"),
     route("sequences/start", "routes/api.sequences.start.ts"),
     route("sequences/process", "routes/api.sequences.process.ts"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
