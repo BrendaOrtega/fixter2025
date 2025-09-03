@@ -24,14 +24,21 @@ export interface WebinarUser {
  * Obtiene todos los usuarios registrados a webinars o que compraron workshops
  */
 export async function getWebinarRegistrants() {
+  // Filtrar solo los tags que existen para evitar undefined
+  const validTags = [
+    WEBINAR_TAGS.CLAUDE_AGOSTO,
+    WEBINAR_TAGS.CLAUDE_PAID,
+    WEBINAR_TAGS.GEMINI_SEPTIEMBRE,
+  ].filter(Boolean); // Eliminar valores undefined/null
+
+  const orConditions = [
+    ...validTags.map(tag => ({ tags: { has: tag } })),
+    { webinar: { not: null } },
+  ];
+
   const webinarRegistrants = await db.user.findMany({
     where: {
-      OR: [
-        { tags: { has: WEBINAR_TAGS.CLAUDE_AGOSTO } },
-        { tags: { has: WEBINAR_TAGS.CLAUDE_PAID } },
-        { tags: { has: WEBINAR_TAGS.GEMINI_SEPTIEMBRE } },
-        { webinar: { not: null } },
-      ],
+      OR: orConditions,
     },
     select: {
       id: true,
