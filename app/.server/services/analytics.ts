@@ -52,20 +52,49 @@ class AnalyticsService {
           postId: event.postId || '000000000000000000000000', // Default ObjectId
           sessionId: 'session-' + Date.now(),
           timestamp: new Date(),
-          // Optional fields with default values
-          userId: undefined,
-          readingTime: undefined,
-          scrollDepth: undefined,
-          completionRate: undefined,
-          elementClicked: undefined,
-          textSelected: undefined,
-          clickX: undefined,
-          clickY: undefined,
-          scrollY: undefined,
-          // Add metadata as JSON string in a field if needed
-          // Or map specific metadata to the corresponding fields
-          ...(event.metadata || {})
         };
+
+        // Map metadata to proper fields based on event type and schema
+        if (event.metadata) {
+          const metadata = event.metadata as any;
+          
+          // Handle scroll events
+          if (event.type === 'scroll') {
+            if (metadata.depth !== undefined) {
+              analyticsData.scrollDepth = Math.round(metadata.depth * 100); // Convert 0-1 to 0-100
+            }
+            if (metadata.timeOnPage !== undefined) {
+              analyticsData.readingTime = Math.round(metadata.timeOnPage);
+            }
+          }
+          
+          // Handle click events
+          if (event.type === 'click') {
+            if (metadata.x !== undefined) {
+              analyticsData.clickX = Math.round(metadata.x * 100); // Convert 0-1 to 0-100
+            }
+            if (metadata.y !== undefined) {
+              analyticsData.clickY = Math.round(metadata.y * 100); // Convert 0-1 to 0-100
+            }
+            if (metadata.element !== undefined) {
+              analyticsData.elementClicked = metadata.element;
+            }
+            if (metadata.text !== undefined) {
+              analyticsData.textSelected = metadata.text.substring(0, 100);
+            }
+          }
+          
+          // Handle viewport information
+          if (metadata.viewport) {
+            analyticsData.viewportWidth = metadata.viewport.width;
+            analyticsData.viewportHeight = metadata.viewport.height;
+          }
+          
+          // Handle referrer
+          if (metadata.referrer !== undefined) {
+            analyticsData.referrer = metadata.referrer;
+          }
+        }
 
         // Store the event in the database
         await db.blogAnalytics.create({

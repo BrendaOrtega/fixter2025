@@ -6,6 +6,7 @@ export const WEBINAR_TAGS = {
   CLAUDE_AGOSTO: "webinar_agosto",
   CLAUDE_PAID: "claude-workshop-paid",
   GEMINI_SOLICITUD: "gemini_webinar_solicitud",
+  GEMINI_SEPTIEMBRE: "webinar_gemini_septiembre",
 } as const;
 
 export interface WebinarUser {
