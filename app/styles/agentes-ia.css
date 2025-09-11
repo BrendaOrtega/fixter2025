@@ -1,0 +1,198 @@
+/* Agentes IA Landing Page Theme Variables - Solo para esta página */
+.agentes-ia-page {
+  /* Light mode colors - Exactamente como las proporcionaste */
+  --background: 204.0000 12.1951% 91.9608%;
+  --foreground: 0 0% 20%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 20%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 20%;
+  --primary: 13.2143 73.0435% 54.9020%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220.0000 14.2857% 95.8824%;
+  --secondary-foreground: 215 13.7931% 34.1176%;
+  --muted: 210 20.0000% 98.0392%;
+  --muted-foreground: 220 8.9362% 46.0784%;
+  --accent: 207.6923 46.4286% 89.0196%;
+  --accent-foreground: 224.4444 64.2857% 32.9412%;
+  --destructive: 0 84.2365% 60.1961%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 9.3750% 87.4510%;
+  --input: 220 15.7895% 96.2745%;
+  --ring: 13.2143 73.0435% 54.9020%;
+  --chart-1: 210 37.5000% 65.4902%;
+  --chart-2: 12.9032 73.2283% 75.0980%;
+  --chart-3: 213.1579 29.9213% 50.1961%;
+  --chart-4: 216.9231 35.7798% 42.7451%;
+  --chart-5: 221.0127 43.6464% 35.4902%;
+  --sidebar: 216 7.9365% 87.6471%;
+  --sidebar-foreground: 0 0% 20%;
+  --sidebar-primary: 13.2143 73.0435% 54.9020%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 207.6923 46.4286% 89.0196%;
+  --sidebar-accent-foreground: 224.4444 64.2857% 32.9412%;
+  --sidebar-border: 220 13.0435% 90.9804%;
+  --sidebar-ring: 13.2143 73.0435% 54.9020%;
+  --font-sans: Inter, sans-serif;
+  --font-serif: Source Serif 4, serif;
+  --font-mono: JetBrains Mono, monospace;
+  --radius: 0.75rem;
+  --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark .agentes-ia-page {
+  /* Dark mode colors - Exactamente como las proporcionaste */
+  --background: 219.1304 29.1139% 15.4902%;
+  --foreground: 0 0% 89.8039%;
+  --card: 223.6364 20.7547% 20.7843%;
+  --card-foreground: 0 0% 89.8039%;
+  --popover: 223.3333 19.1489% 18.4314%;
+  --popover-foreground: 0 0% 89.8039%;
+  --primary: 13.2143 73.0435% 54.9020%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 222 19.2308% 20.3922%;
+  --secondary-foreground: 0 0% 89.8039%;
+  --muted: 222 19.2308% 20.3922%;
+  --muted-foreground: 0 0% 63.9216%;
+  --accent: 223.6364 34.3750% 25.0980%;
+  --accent-foreground: 213.3333 96.9231% 87.2549%;
+  --destructive: 0 84.2365% 60.1961%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 224.3478 15.8621% 28.4314%;
+  --input: 224.3478 15.8621% 28.4314%;
+  --ring: 13.2143 73.0435% 54.9020%;
+  --chart-1: 210 37.5000% 65.4902%;
+  --chart-2: 11.7241 63.5036% 73.1373%;
+  --chart-3: 213.1579 29.9213% 50.1961%;
+  --chart-4: 216.9231 35.7798% 42.7451%;
+  --chart-5: 221.0127 43.6464% 35.4902%;
+  --sidebar: 222.8571 20.0000% 20.5882%;
+  --sidebar-foreground: 0 0% 89.8039%;
+  --sidebar-primary: 13.2143 73.0435% 54.9020%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 223.6364 34.3750% 25.0980%;
+  --sidebar-accent-foreground: 213.3333 96.9231% 87.2549%;
+  --sidebar-border: 224.3478 15.8621% 28.4314%;
+  --sidebar-ring: 13.2143 73.0435% 54.9020%;
+  --font-sans: Inter, sans-serif;
+  --font-serif: Source Serif 4, serif;
+  --font-mono: JetBrains Mono, monospace;
+  --radius: 0.75rem;
+  --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.10), 0px 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.25);
+}
+
+/* Custom utility classes using the theme variables */
+.ia-bg-gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 100%);
+}
+
+.ia-bg-gradient-accent {
+  background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--primary)) 100%);
+}
+
+.ia-text-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 50%, hsl(var(--chart-1)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ia-border-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 100%);
+  padding: 2px;
+}
+
+.ia-shadow-theme {
+  box-shadow: 3px 3px 0px 0px hsl(var(--border));
+}
+
+.ia-shadow-theme-lg {
+  box-shadow: 5px 5px 0px 0px hsl(var(--border));
+}
+
+/* Enhanced buttons and interactive elements */
+.ia-button-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 100%);
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: var(--radius);
+  transition: all 0.3s ease;
+}
+
+.ia-button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.ia-card-theme {
+  background: hsl(var(--card));
+  border: 2px solid hsl(var(--border));
+  border-radius: var(--radius);
+  color: hsl(var(--card-foreground));
+}
+
+.ia-input-theme {
+  background: hsl(var(--input));
+  border: 2px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  border-radius: var(--radius);
+}
+
+.ia-input-theme:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2);
+}
+
+/* Animations */
+@keyframes ia-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes ia-pulse-glow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes ia-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.ia-float {
+  animation: ia-float 3s ease-in-out infinite;
+}
+
+.ia-pulse-glow {
+  animation: ia-pulse-glow 2s ease-in-out infinite;
+}
+
+.ia-gradient-animate {
+  background-size: 200% 200%;
+  animation: ia-gradient-shift 3s ease infinite;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .agentes-ia-page {
+    --spacing: 0.125rem;
+  }
+}

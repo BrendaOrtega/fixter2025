@@ -19,7 +19,7 @@ const navigation = [
   { name: "Blog", link: "/blog" },
   { name: "Newsletters", link: "/newsletters" },
   { name: "Claude Code", link: "/claude" },
-  { name: "Gemini CLI", link: "/gemini" },
+  { name: "Agentes IA", link: "/agentes-ia" },
 ];
 
 export const SquigglyUnderline = () => {
@@ -298,10 +298,10 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/gemini"
+          to="/agentes-ia"
           index={5}
           isOpen={isOpen}
-          title="Gemini CLI"
+          title="Agentes IA"
         />
         {user?.email ? (
           <>
