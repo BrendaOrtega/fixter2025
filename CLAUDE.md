@@ -49,7 +49,28 @@ Siempre siguiendo los estilos de la aplicación, colores y formatos. Es mejor co
 - **Precios actualizados**: 
   - Claude: $1,490 MXN (curso completo)
   - Gemini: En desarrollo
+  - **Agentes IA**: $4,900 MXN (curso premium completo)
 - **IMPORTANTE sobre merges**: Siempre verificar que las rutas estén registradas en `app/routes.ts` antes de hacer merge a main
+
+### Actualizaciones Diciembre 11, 2025 - Página Agentes IA
+
+- **Precio premium establecido**: $4,900 MXN para posicionamiento serio en el mercado
+- **Estructura de sesiones reorganizada**:
+  1. **Sesión 1**: Tu Primer Chatbot con Memoria (fundamentos)
+  2. **Sesión 2**: Herramientas y Automatización → Asistente de Restaurante Inteligente
+  3. **Sesión 3**: Estudio Fotográfico Automático → Proyecto nano-banana (generación de imágenes)
+  4. **Sesión 4**: Cerebro Maestro Empresarial con RAG (finale avanzado)
+- **Proyecto estrella definido**: Sistema que toma imagen de producto + modelo → genera 3+ variantes profesionales
+- **Sección de testimonios agregada**:
+  - Carlos Mendoza (Fundador Agencia Digital): +$50K MXN mensuales con sistema drag-and-drop
+  - Kevin James (CTO Software): 40% reducción tiempo + 25% satisfacción cliente
+  - Fotos reales de Pexels para máxima credibilidad
+- **Cards de "próximamente" con estilo deshabilitado**:
+  - Generación de Video Avanzada (Q2 2025)
+  - Asistente Personal Inteligente (Q3 2025)
+  - Sin hover effects, cursors disabled, badges "PRÓXIMAMENTE"
+- **Hover especial nano-banana**: Confeti de emojis que rotan y suben infinitamente con fondo amarillo
+- **Precio visible en sección CTA**: Card "Taller Completo" muestra $4,900 MXN claramente
 
 ## el libro
 

@@ -114,7 +114,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   if (intent === "direct_checkout") {
-    const totalPrice = 2490;
+    const totalPrice = 4900;
 
     try {
       const stripe = new (await import("stripe")).default(
@@ -1163,49 +1163,45 @@ export default function IAVisualLanding() {
                 },
                 {
                   icon: <BiLayer className="w-8 h-8" />,
-                  title: "Chatbot Experto con RAG",
+                  title: "Asistente de Restaurante Inteligente",
                   description:
-                    "Asistente que conoce tus documentos, políticas y base de conocimiento completa",
-                  tech: ["RAG", "Base Conocimiento", "Documentos"],
+                    "Agente que consulta menús, calcula precios, agenda reservas y maneja pedidos automáticamente",
+                  tech: ["Herramientas", "Cálculos", "Automatización"],
                   color: "var(--chart-2)",
                 },
                 {
                   icon: <span className="text-2xl">🍌</span>,
-                  title: (
-                    <span>
-                      Generador Visual
-                      <br />
-                      con Nano-banana
-                    </span>
-                  ),
+                  title: "Estudio Fotográfico Automático",
                   description:
-                    "Agente que crea imágenes personalizadas, logos y contenido visual usando la API de moda",
-                  tech: ["Nano-banana", "Herramientas", "Flujos Visuales"],
+                    "Toma producto + modelo, genera 3+ variantes profesionales con poses perfectas usando nano-banana",
+                  tech: ["Nano-banana", "Multi-Input", "E-commerce"],
                   color: "var(--chart-3)",
                 },
                 {
                   icon: <AiOutlineFileImage className="w-8 h-8" />,
-                  title: "Agente en Producción",
+                  title: "Cerebro Maestro Empresarial",
                   description:
-                    "Tu agente desplegado profesionalmente con seguridad, logs y acceso público",
-                  tech: ["Deployment", "Seguridad", "Monitoreo"],
+                    "RAG supremo que domina todos tus documentos, políticas y conocimiento corporativo",
+                  tech: ["RAG", "Documentos", "Omnisciente"],
                   color: "var(--primary)",
                 },
                 {
-                  icon: <span className="text-2xl">🎬</span>,
+                  icon: <span className="text-2xl opacity-50">🎬</span>,
                   title: "Generación de Video Avanzada",
                   description:
-                    "Agentes que crean contenido audiovisual automático con IA de última generación",
-                  tech: ["Video IA", "Automatización", "Contenido"],
-                  color: "var(--chart-1)",
+                    "Próximamente: Agentes que crean contenido audiovisual automático con IA",
+                  tech: ["Próximamente", "Q2 2025", "Por Anunciar"],
+                  color: "var(--muted-foreground)",
+                  disabled: true,
                 },
                 {
-                  icon: <BiMouseAlt className="w-8 h-8" />,
-                  title: "Próxima Sesión - Por Anunciar",
+                  icon: <span className="text-2xl opacity-50">🤖</span>,
+                  title: "Asistente Personal Inteligente",
                   description:
-                    "Más contenido especializado se añadirá al programa",
-                  tech: ["Próximamente", "TBD", "Futuro"],
-                  color: "var(--chart-2)",
+                    "Próximamente: Agente que gestiona tu calendario, emails y tareas automáticamente",
+                  tech: ["Próximamente", "Q3 2025", "Productividad"],
+                  color: "var(--muted-foreground)",
+                  disabled: true,
                 },
               ].map((project, index) => (
                 <motion.div
@@ -1214,7 +1210,9 @@ export default function IAVisualLanding() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   whileHover={
-                    index === 2
+                    project.disabled
+                      ? {} // Sin hover para tarjetas deshabilitadas
+                      : index === 2
                       ? {
                           scale: 1.05,
                           y: -15,
@@ -1243,16 +1241,27 @@ export default function IAVisualLanding() {
                           },
                         }
                   }
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={project.disabled ? {} : { scale: 0.98 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="border-2 rounded-2xl p-6 group cursor-pointer overflow-hidden relative"
+                  className={`border-2 rounded-2xl p-6 group overflow-hidden relative ${
+                    project.disabled
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer"
+                  }`}
                   style={{
-                    backgroundColor: "var(--card)",
-                    borderColor: "var(--border)",
+                    backgroundColor: project.disabled
+                      ? "var(--muted)"
+                      : "var(--card)",
+                    borderColor: project.disabled
+                      ? "var(--muted-foreground)"
+                      : "var(--border)",
+                    borderStyle: project.disabled ? "dashed" : "solid",
                   }}
                 >
                   {/* Hover Shine Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                  {!project.disabled && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                  )}
 
                   {/* Confeti de emojis para nano-banana */}
                   {index === 2 && (
@@ -1295,23 +1304,34 @@ export default function IAVisualLanding() {
                         ))}
                     </div>
                   )}
-                  <motion.div
-                    className="p-3 rounded-lg inline-block mb-4 transition-all duration-300 group-hover:scale-110"
-                    style={{
-                      backgroundColor: project.color + "20",
-                      color: project.color,
-                    }}
-                    whileHover={{
-                      rotate: [0, -10, 10, 0],
-                      scale: 1.2,
-                    }}
-                    transition={{
-                      duration: 0.6,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    {project.icon}
-                  </motion.div>
+                  <div className="relative mb-4">
+                    <motion.div
+                      className="p-3 rounded-lg inline-block transition-all duration-300"
+                      style={{
+                        backgroundColor: project.color + "20",
+                        color: project.color,
+                      }}
+                      whileHover={
+                        project.disabled
+                          ? {}
+                          : {
+                              rotate: [0, -10, 10, 0],
+                              scale: 1.2,
+                            }
+                      }
+                      transition={{
+                        duration: 0.6,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {project.icon}
+                    </motion.div>
+                    {project.disabled && (
+                      <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                        PRÓXIMAMENTE
+                      </span>
+                    )}
+                  </div>
                   <h3
                     className={`text-xl font-bold mb-3 transition-colors duration-300 ${
                       index === 2 ? "group-hover:!text-gray-900" : ""
@@ -1346,6 +1366,141 @@ export default function IAVisualLanding() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Success Stories Section */}
+        <section className="py-20 relative overflow-hidden" style={{ backgroundColor: "var(--background)" }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            {/* Section Header */}
+            <div className="text-center mb-16">
+              <motion.h2
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="text-4xl md:text-5xl font-bold mb-6"
+                style={{ color: "var(--foreground)" }}
+              >
+                Resultados que Hablan
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="text-xl md:text-2xl max-w-3xl mx-auto"
+                style={{ color: "var(--muted-foreground)" }}
+              >
+                Profesionales que ya dominan el sistema visual de agentes IA
+              </motion.p>
+            </div>
+
+            {/* Testimonials Grid */}
+            <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+              {/* Testimonio 1: Portfolio de Graduados */}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="border-2 rounded-3xl p-8 relative overflow-hidden group hover:shadow-2xl transition-all duration-500"
+                style={{
+                  backgroundColor: "var(--card)",
+                  borderColor: "var(--border)",
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-blue-500/30">
+                      <img 
+                        src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
+                        alt="Carlos Mendoza"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold mb-1" style={{ color: "var(--foreground)" }}>
+                        Carlos Mendoza
+                      </h4>
+                      <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                        Fundador de Agencia Digital
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <blockquote className="text-lg leading-relaxed mb-6" style={{ color: "var(--foreground)" }}>
+                    "Integré la creación de agentes visuales como nuevo servicio en mi agencia. El sistema drag-and-drop me permitió escalar rápidamente: <strong>añadí $50K MXN mensuales</strong> de ingresos recurrentes automatizando clientes con agentes que construyo en horas, no semanas."
+                  </blockquote>
+                  
+                  <div className="flex items-center gap-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                    <span>⭐⭐⭐⭐⭐</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Testimonio 2: Validación del Método */}
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="border-2 rounded-3xl p-8 relative overflow-hidden group hover:shadow-2xl transition-all duration-500"
+                style={{
+                  backgroundColor: "var(--card)",
+                  borderColor: "var(--border)",
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-green-500/30">
+                      <img 
+                        src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
+                        alt="Kevin James"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold mb-1" style={{ color: "var(--foreground)" }}>
+                        Kevin James
+                      </h4>
+                      <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                        CTO, Empresa de Software
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <blockquote className="text-lg leading-relaxed mb-6" style={{ color: "var(--foreground)" }}>
+                    "Adoptamos el sistema visual para automatizar soporte con RAG corporativo. <strong>Reducimos 40% el tiempo de respuesta y aumentamos 25% la satisfacción</strong> del cliente. Lo mejor: nuestro equipo sin experiencia técnica ahora construye agentes complejos sin código."
+                  </blockquote>
+                  
+                  <div className="flex items-center gap-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                    <span>⭐⭐⭐⭐⭐</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Trust Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              viewport={{ once: true }}
+              className="text-center mt-12"
+            >
+              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border" 
+                   style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+                <span className="text-2xl">✅</span>
+                <span style={{ color: "var(--foreground)" }} className="font-medium">
+                  100% de los graduados implementan al menos 1 agente en 30 días
+                </span>
+              </div>
+            </motion.div>
           </div>
         </section>
 
@@ -1614,45 +1769,14 @@ export default function IAVisualLanding() {
                 },
                 {
                   module: "Sesión 2",
-                  title: "Bases de Conocimiento y RAG",
-                  icon: <BiBrain className="w-6 h-6" />,
-                  badge: "📚 RAG",
-                  topics: [
-                    {
-                      title: "Cargar y procesar documentos (PDF, Word, Web)",
-                      description:
-                        "Aprenderás a subir cualquier tipo de documento y convertirlo automáticamente en conocimiento que tu agente puede usar para responder preguntas específicas.",
-                    },
-                    {
-                      title: "Crear bases de conocimiento vectoriales",
-                      description:
-                        "Construiremos una base de datos inteligente que entiende el contexto y significado de tu información, no solo palabras clave.",
-                    },
-                    {
-                      title: "RAG: Agentes que responden con tu información",
-                      description:
-                        "Tu agente podrá buscar y citar información exacta de tus documentos, combinando la potencia de la IA con tus datos específicos.",
-                    },
-                    {
-                      title: "Proyecto: Chatbot experto con RAG",
-                      description:
-                        "Construiremos un agente que conoce tus documentos, políticas y base de conocimiento completa. Podrá responder preguntas específicas citando información exacta de tus archivos.",
-                    },
-                  ],
-                  color: "var(--chart-2)",
-                  progress: "50%",
-                },
-                {
-                  module: "Sesión 3",
-                  title: "Herramientas y Generación Visual",
+                  title: "Herramientas y Automatización",
                   icon: <BiLayer className="w-6 h-6" />,
                   badge: "🔧 TOOLS",
                   topics: [
                     {
-                      title:
-                        "Agentes con herramientas: búsqueda web, calculadora, APIs",
+                      title: "Agentes con herramientas: calculadora, calendarios, APIs",
                       description:
-                        "Tu agente podrá usar herramientas externas como buscar en Google, hacer cálculos complejos o conectarse con servicios externos en tiempo real.",
+                        "Tu agente podrá usar herramientas externas como hacer cálculos complejos, consultar disponibilidad de citas o conectarse con servicios externos en tiempo real.",
                     },
                     {
                       title: "Cadenas secuenciales y paralelas",
@@ -1660,14 +1784,44 @@ export default function IAVisualLanding() {
                         "Aprenderás a crear flujos de trabajo donde tu agente puede realizar múltiples tareas en orden o simultáneamente para resolver problemas complejos.",
                     },
                     {
-                      title: "API de nano-banana para generación de imágenes",
+                      title: "Workflows complejos: decisiones y condicionales",
                       description:
-                        "Aprenderás a integrar la API de moda nano-banana para que tu agente pueda generar imágenes personalizadas, logos y contenido visual automáticamente.",
+                        "Diseñarás agentes que toman decisiones inteligentes según el contexto, usando condicionales y lógica para elegir qué herramientas usar en cada situación.",
                     },
                     {
-                      title: "Proyecto: Generador Visual con nano-banana",
+                      title: "Proyecto: Asistente de Restaurante Inteligente",
                       description:
-                        "Construirás un agente que crea imágenes personalizadas, logos y contenido visual usando la API nano-banana. El agente analizará requerimientos y generará contenido visual profesional.",
+                        "Construirás un agente que consulta menús, calcula precios con descuentos, agenda reservas y maneja pedidos. Como tener un empleado que nunca se equivoca y trabaja 24/7.",
+                    },
+                  ],
+                  color: "var(--chart-2)",
+                  progress: "50%",
+                },
+                {
+                  module: "Sesión 3",
+                  title: "Estudio Fotográfico Automático",
+                  icon: <span className="text-xl">🍌</span>,
+                  badge: "📸 STUDIO",
+                  topics: [
+                    {
+                      title: "Multi-input: análisis de productos e imágenes",
+                      description:
+                        "Tu agente analizará automáticamente productos (forma, colores, estilo) y modelos (pose, expresión, iluminación) para crear prompts perfectos.",
+                    },
+                    {
+                      title: "Prompt engineering automático con nano-banana",
+                      description:
+                        "El sistema combinará inteligentemente las características del producto y modelo para generar prompts optimizados que produzcan resultados profesionales.",
+                    },
+                    {
+                      title: "Generación masiva y refinamiento iterativo",
+                      description:
+                        "Crea 3+ variantes simultáneas con diferentes poses y estilos, plus un sistema de refinamiento que mejora automáticamente los resultados.",
+                    },
+                    {
+                      title: "Proyecto: Estudio Fotográfico E-commerce",
+                      description:
+                        "Construirás un agente que toma imagen de producto + modelo y genera múltiples fotos profesionales. Perfecto para tiendas online que necesitan variedad sin fotógrafo.",
                     },
                   ],
                   color: "var(--chart-3)",
@@ -1675,29 +1829,29 @@ export default function IAVisualLanding() {
                 },
                 {
                   module: "Sesión 4",
-                  title: "Producción y Gestión de Agentes",
-                  icon: <BiTargetLock className="w-6 h-6" />,
-                  badge: "🚀 PROD",
+                  title: "Cerebro Maestro Empresarial con RAG",
+                  icon: <BiBrain className="w-6 h-6" />,
+                  badge: "🧠 RAG",
                   topics: [
                     {
-                      title: "Publicar tu agente: embeddings, APIs, widgets",
+                      title: "Cargar y procesar documentos masivos (PDF, Word, Web)",
                       description:
-                        "Aprenderás diferentes formas de hacer tu agente accesible: desde widgets en sitios web hasta APIs que otras aplicaciones pueden usar.",
+                        "Tu agente procesará cientos de documentos corporativos automáticamente: manuales, políticas, contratos, reportes. Usando splitters inteligentes para fragmentar información de manera óptima.",
                     },
                     {
-                      title: "Configuración básica de seguridad",
+                      title: "Bases de conocimiento vectoriales avanzadas",
                       description:
-                        "Aprenderás a configurar autenticación simple con usuario/contraseña para proteger tu instancia de Flowise y las consideraciones de seguridad para ambientes de producción.",
+                        "Construirás un cerebro digital que entiende contexto, relaciones y significados profundos entre documentos, no solo búsquedas por palabras clave.",
                     },
                     {
-                      title: "Explorando opciones de deployment",
+                      title: "RAG conversacional: citando fuentes exactas",
                       description:
-                        "Revisaremos las diferentes alternativas para poner tu agente en producción: desde contenedores Docker hasta plataformas como Railway y Hugging Face, evaluando pros y contras de cada opción.",
+                        "Tu agente responderá preguntas complejas citando documentos específicos, páginas exactas y secciones relevantes. Transparencia total en cada respuesta.",
                     },
                     {
-                      title: "Logs y monitoreo básico",
+                      title: "Proyecto: Cerebro Maestro Corporativo",
                       description:
-                        "Te mostraré cómo revisar los logs de conversaciones de tu agente, configurar diferentes niveles de logging (debug, info, error) y entender qué información captura la plataforma automáticamente.",
+                        "El gran finale: un super-agente que domina toda la información de tu empresa. Responde desde 'política de vacaciones' hasta 'análisis financiero Q3' con precisión absoluta.",
                     },
                   ],
                   color: "var(--primary)",
@@ -2706,7 +2860,7 @@ export default function IAVisualLanding() {
                       className="text-4xl font-black text-center mb-2"
                       style={{ color: "var(--primary)" }}
                     >
-                      Próximamente
+                      $4,900 MXN
                     </div>
                     <p
                       className="text-center mb-6 opacity-80"
