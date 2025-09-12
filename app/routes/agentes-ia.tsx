@@ -178,6 +178,8 @@ export default function IAVisualLanding() {
   const [showEarlyAccessForm, setShowEarlyAccessForm] = useState(false);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showPaymentCancel, setShowPaymentCancel] = useState(false);
+  const [expandedModule, setExpandedModule] = useState<number | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<{moduleIndex: number, topicIndex: number} | null>(null);
   const fetcher = useFetcher();
 
   // Check for payment result in URL params
@@ -1503,10 +1505,22 @@ export default function IAVisualLanding() {
                   icon: <BiRocket className="w-6 h-6" />,
                   badge: "🎁 GRATIS",
                   topics: [
-                    "Instalación y configuración de tu servidor personal",
-                    "Interfaz visual: nodos, cadenas y flujos",
-                    "Conectar tu primer modelo de IA (GPT, Claude, Gemini)",
-                    "Crear un chatbot funcional con memoria",
+                    {
+                      title: "Instalación y configuración de tu servidor personal",
+                      description: "Te guiaré paso a paso para configurar tu entorno de trabajo con acceso a herramientas profesionales de IA, completamente gratis durante el taller."
+                    },
+                    {
+                      title: "Interfaz visual: nodos, cadenas y flujos",
+                      description: "Aprenderás a usar la interfaz drag-and-drop para conectar componentes de IA sin escribir código, como si fuera un diagrama de flujo visual."
+                    },
+                    {
+                      title: "Conectar tu primer modelo de IA (GPT, Claude, Gemini)",
+                      description: "Configuraremos conexiones directas a los modelos más potentes del mercado y aprenderás cuándo usar cada uno según tu proyecto."
+                    },
+                    {
+                      title: "Crear un chatbot funcional con memoria",
+                      description: "Construirás tu primer agente que puede mantener conversaciones coherentes, recordar contexto y responder de forma natural."
+                    },
                   ],
                   color: "var(--chart-1)",
                   progress: "25%",
@@ -1517,10 +1531,22 @@ export default function IAVisualLanding() {
                   icon: <BiBrain className="w-6 h-6" />,
                   badge: "📚 RAG",
                   topics: [
-                    "Cargar y procesar documentos (PDF, Word, Web)",
-                    "Crear bases de conocimiento vectoriales",
-                    "RAG: Agentes que responden con tu información",
-                    "Proyecto: Asistente de soporte con tu documentación",
+                    {
+                      title: "Cargar y procesar documentos (PDF, Word, Web)",
+                      description: "Aprenderás a subir cualquier tipo de documento y convertirlo automáticamente en conocimiento que tu agente puede usar para responder preguntas específicas."
+                    },
+                    {
+                      title: "Crear bases de conocimiento vectoriales",
+                      description: "Construiremos una base de datos inteligente que entiende el contexto y significado de tu información, no solo palabras clave."
+                    },
+                    {
+                      title: "RAG: Agentes que responden con tu información",
+                      description: "Tu agente podrá buscar y citar información exacta de tus documentos, combinando la potencia de la IA con tus datos específicos."
+                    },
+                    {
+                      title: "Proyecto: Chatbot experto en tu restaurante/tienda",
+                      description: "Construiremos un agente que conoce tu menú, precios, horarios y políticas. Podrá responder '¿Hacen entregas?', '¿Cuánto cuesta el combo familiar?' o '¿Aceptan tarjetas?' como si fuera tu empleado más informado."
+                    },
                   ],
                   color: "var(--chart-2)",
                   progress: "50%",
@@ -1531,10 +1557,22 @@ export default function IAVisualLanding() {
                   icon: <BiLayer className="w-6 h-6" />,
                   badge: "🔧 TOOLS",
                   topics: [
-                    "Agentes con herramientas: búsqueda web, calculadora, APIs",
-                    "Cadenas secuenciales y paralelas",
-                    "Integraciones: WhatsApp, Telegram, Discord",
-                    "Proyecto: Agente multi-herramienta para tu negocio",
+                    {
+                      title: "Agentes con herramientas: búsqueda web, calculadora, APIs",
+                      description: "Tu agente podrá usar herramientas externas como buscar en Google, hacer cálculos complejos o conectarse con servicios externos en tiempo real."
+                    },
+                    {
+                      title: "Cadenas secuenciales y paralelas",
+                      description: "Aprenderás a crear flujos de trabajo donde tu agente puede realizar múltiples tareas en orden o simultáneamente para resolver problemas complejos."
+                    },
+                    {
+                      title: "Integraciones: WhatsApp, Telegram, Discord",
+                      description: "Conectaremos tu agente directamente a plataformas de mensajería para que pueda interactuar con usuarios donde ellos ya están."
+                    },
+                    {
+                      title: "Proyecto: Agente multi-herramienta para tu negocio",
+                      description: "Construirás un agente versátil que combine todas las herramientas aprendidas para automatizar procesos específicos de tu industria."
+                    },
                   ],
                   color: "var(--chart-3)",
                   progress: "75%",
@@ -1545,10 +1583,22 @@ export default function IAVisualLanding() {
                   icon: <BiTargetLock className="w-6 h-6" />,
                   badge: "💰 LAUNCH",
                   topics: [
-                    "Publicar tu agente: embeddings, APIs, widgets",
-                    "Seguridad y control de acceso",
-                    "Cómo vender agentes a empresas locales",
-                    "Casos de éxito y modelos de negocio probados",
+                    {
+                      title: "Publicar tu agente: embeddings, APIs, widgets",
+                      description: "Aprenderás diferentes formas de hacer tu agente accesible: desde widgets en sitios web hasta APIs que otras aplicaciones pueden usar."
+                    },
+                    {
+                      title: "Seguridad y control de acceso",
+                      description: "Implementaremos medidas de seguridad para proteger tu agente y controlar quién puede usarlo, especialmente importante para aplicaciones comerciales."
+                    },
+                    {
+                      title: "Cómo vender agentes a empresas locales",
+                      description: "Te mostraré estrategias probadas para identificar oportunidades, presentar tu servicio y cerrar ventas con pequeñas y medianas empresas."
+                    },
+                    {
+                      title: "Casos de éxito y modelos de negocio probados",
+                      description: "Analizaremos ejemplos reales de estudiantes que han monetizado sus agentes y los diferentes modelos: suscripción, por uso, o servicios personalizados."
+                    },
                   ],
                   color: "var(--primary)",
                   progress: "100%",
@@ -1567,35 +1617,41 @@ export default function IAVisualLanding() {
                   viewport={{ once: true }}
                   whileHover={{
                     scale: 1.02,
-                    y: -8,
-                    boxShadow: `0 20px 40px ${module.color}20`,
+                    y: -12,
+                    rotateY: 2,
+                    boxShadow: `0 25px 60px ${module.color}25`,
                     transition: {
                       type: "spring",
-                      stiffness: 300,
-                      damping: 20
+                      stiffness: 250,
+                      damping: 18,
+                      mass: 0.8
                     }
                   }}
                   whileTap={{ scale: 0.98 }}
                   className="mb-8 group cursor-pointer"
                 >
                   <div
-                    className="relative rounded-3xl p-8 border-2 backdrop-blur-sm overflow-hidden"
+                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden"
                     style={{
                       backgroundColor: "var(--card)",
-                      borderColor: module.color + "40",
                       boxShadow: `0 8px 32px ${module.color}10`,
+                      border: `1px solid ${module.color}20`,
                     }}
                   >
                     {/* Background Gradient */}
-                    <div 
-                      className="absolute inset-0 opacity-5"
+                    <motion.div 
+                      className="absolute inset-0 opacity-5 group-hover:opacity-8 transition-opacity duration-500"
                       style={{
                         background: `linear-gradient(135deg, ${module.color}20 0%, transparent 50%)`
+                      }}
+                      whileHover={{
+                        background: `linear-gradient(135deg, ${module.color}25 0%, ${module.color}05 70%, transparent 100%)`,
+                        transition: { duration: 0.3 }
                       }}
                     />
                     
                     {/* Shine Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/3 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-800 ease-out opacity-0 group-hover:opacity-100"></div>
 
                     {/* Header */}
                     <div className="relative z-10 flex items-center justify-between mb-6">
@@ -1625,28 +1681,45 @@ export default function IAVisualLanding() {
                             >
                               {module.module}
                             </span>
-                            <span 
+                            <motion.span 
                               className="text-xs px-3 py-1 rounded-full font-bold border"
                               style={{
                                 backgroundColor: module.color + "20",
                                 borderColor: module.color + "40",
                                 color: module.color,
                               }}
+                              whileHover={{
+                                scale: 1.1,
+                                backgroundColor: module.color + "30",
+                                transition: { duration: 0.2 }
+                              }}
+                              whileTap={{ scale: 0.95 }}
                             >
                               {module.badge}
-                            </span>
+                            </motion.span>
                           </div>
-                          <h3
-                            className="text-2xl font-bold"
+                          <motion.h3
+                            className="text-2xl font-bold group-hover:scale-105 transition-transform duration-300"
                             style={{ color: "var(--foreground)" }}
+                            whileHover={{ 
+                              x: 5,
+                              transition: { type: "spring", stiffness: 400 }
+                            }}
                           >
                             {module.title}
-                          </h3>
+                          </motion.h3>
                         </div>
                       </div>
                       
                       {/* Progress Circle */}
-                      <div className="relative w-16 h-16">
+                      <motion.div 
+                        className="relative w-16 h-16"
+                        whileHover={{ 
+                          scale: 1.1,
+                          rotate: 5,
+                          transition: { type: "spring", stiffness: 300, damping: 20 }
+                        }}
+                      >
                         <svg className="w-16 h-16 transform -rotate-90">
                           <circle
                             cx="32"
@@ -1679,45 +1752,129 @@ export default function IAVisualLanding() {
                         >
                           {module.progress}
                         </div>
-                      </div>
+                      </motion.div>
                     </div>
 
                     {/* Topics List */}
                     <ul className="space-y-3 relative z-10">
-                      {module.topics.map((topic, idx) => (
-                        <motion.li 
-                          key={idx} 
-                          className="flex items-start gap-4 group/item"
-                          initial={{ opacity: 0, x: -20 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ 
-                            duration: 0.5, 
-                            delay: (index * 0.15) + (idx * 0.1) + 0.3 
-                          }}
-                          viewport={{ once: true }}
-                          whileHover={{ x: 8 }}
-                        >
-                          <motion.div
-                            className="flex-shrink-0 mt-1"
-                            whileHover={{ 
-                              rotate: 360,
-                              scale: 1.2,
-                              transition: { duration: 0.3 }
+                      {module.topics.map((topic, idx) => {
+                        const isSelected = selectedTopic?.moduleIndex === index && selectedTopic?.topicIndex === idx;
+                        const isModuleExpanded = expandedModule === index;
+                        
+                        return (
+                          <motion.li 
+                            key={idx} 
+                            className="group/item"
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ 
+                              duration: 0.5, 
+                              delay: (index * 0.15) + (idx * 0.1) + 0.3 
                             }}
+                            viewport={{ once: true }}
                           >
-                            <BiCheckCircle
-                              className="w-5 h-5"
-                              style={{ color: module.color }}
-                            />
-                          </motion.div>
-                          <span 
-                            className="group-hover/item:text-white transition-colors duration-300"
-                            style={{ color: "var(--muted-foreground)" }}
-                          >
-                            {topic}
-                          </span>
-                        </motion.li>
-                      ))}
+                            <motion.div
+                              className="flex items-start gap-4 cursor-pointer p-3 rounded-xl"
+                              animate={{
+                                backgroundColor: isSelected ? module.color + "10" : "transparent"
+                              }}
+                              whileHover={{ 
+                                x: 6,
+                                backgroundColor: module.color + "08"
+                              }}
+                              whileTap={{ scale: 0.98 }}
+                              transition={{
+                                duration: 0.2,
+                                ease: "easeOut"
+                              }}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedTopic(null);
+                                  setExpandedModule(null);
+                                } else {
+                                  setSelectedTopic({ moduleIndex: index, topicIndex: idx });
+                                  setExpandedModule(index);
+                                }
+                              }}
+                            >
+                              <motion.div
+                                className="flex-shrink-0 mt-1"
+                                whileHover={{ 
+                                  rotate: 360,
+                                  scale: 1.2
+                                }}
+                                animate={{
+                                  scale: isSelected ? 1.1 : 1,
+                                  rotate: isSelected ? 90 : 0
+                                }}
+                                transition={{
+                                  duration: 0.25,
+                                  ease: "easeOut"
+                                }}
+                              >
+                                <BiCheckCircle
+                                  className="w-5 h-5"
+                                  style={{ color: module.color }}
+                                />
+                              </motion.div>
+                              <span 
+                                className="group-hover/item:text-white transition-colors duration-300 font-medium"
+                                style={{ 
+                                  color: isSelected ? module.color : "var(--muted-foreground)"
+                                }}
+                              >
+                                {topic.title}
+                              </span>
+                            </motion.div>
+                            
+                            {/* Description Card */}
+                            <AnimatePresence>
+                              {isSelected && (
+                                <motion.div
+                                  layout
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ 
+                                    duration: 0.4,
+                                    ease: [0.04, 0.62, 0.23, 0.98]
+                                  }}
+                                  className="ml-9 mt-3 overflow-hidden"
+                                >
+                                  <motion.div
+                                    initial={{ y: -20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: -10, opacity: 0 }}
+                                    transition={{ 
+                                      duration: 0.3,
+                                      delay: 0.1,
+                                      ease: "easeOut"
+                                    }}
+                                    className="p-4 rounded-xl backdrop-blur-sm relative"
+                                    style={{
+                                      backgroundColor: module.color + "08",
+                                      boxShadow: `0 4px 20px ${module.color}12`
+                                    }}
+                                  >
+                                    {/* Subtle left accent */}
+                                    <div
+                                      className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full"
+                                      style={{ backgroundColor: module.color }}
+                                    />
+                                    
+                                    <p
+                                      className="text-sm leading-relaxed pl-3"
+                                      style={{ color: "var(--foreground)" }}
+                                    >
+                                      {topic.description}
+                                    </p>
+                                  </motion.div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.li>
+                        );
+                      })}
                     </ul>
                   </div>
                 </motion.div>
