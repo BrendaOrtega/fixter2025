@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavBar } from "~/components/common/NavBar";
 import SimpleFooter from "~/components/common/SimpleFooter";
-import { Banner } from "~/components/common/Banner";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
@@ -14,26 +12,18 @@ import {
   BiTargetLock,
   BiRocket,
   BiStar,
-  BiChip,
-  BiCode,
   BiLayer,
   BiPlay,
   BiCheckCircle,
   BiChevronRight,
-  BiGroup,
-  BiMouseAlt,
   BiBot,
-  BiPalette,
 } from "react-icons/bi";
 import {
-  AiOutlineEye,
-  AiOutlineCamera,
   AiOutlineFileImage,
   AiOutlineRobot,
-  AiOutlineCode,
 } from "react-icons/ai";
-import { HiSparkles, HiLightningBolt, HiOutlineSparkles } from "react-icons/hi";
-import { RiRobot2Line, RiPaletteLine, RiMagicLine } from "react-icons/ri";
+import { HiSparkles } from "react-icons/hi";
+import { RiRobot2Line } from "react-icons/ri";
 import "~/styles/agentes-ia.css";
 
 export const meta = () =>
@@ -179,7 +169,6 @@ export default function IAVisualLanding() {
   const [showEarlyAccessForm, setShowEarlyAccessForm] = useState(false);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showPaymentCancel, setShowPaymentCancel] = useState(false);
-  const [expandedModule, setExpandedModule] = useState<number | null>(0);
   const [selectedTopic, setSelectedTopic] = useState<{
     moduleIndex: number;
     topicIndex: number;
@@ -2071,7 +2060,6 @@ export default function IAVisualLanding() {
                         const isSelected =
                           selectedTopic?.moduleIndex === index &&
                           selectedTopic?.topicIndex === idx;
-                        const isModuleExpanded = expandedModule === index;
 
                         return (
                           <motion.li
@@ -2104,13 +2092,11 @@ export default function IAVisualLanding() {
                               onClick={() => {
                                 if (isSelected) {
                                   setSelectedTopic(null);
-                                  setExpandedModule(null);
                                 } else {
                                   setSelectedTopic({
                                     moduleIndex: index,
                                     topicIndex: idx,
                                   });
-                                  setExpandedModule(index);
                                 }
                               }}
                             >
@@ -2802,6 +2788,7 @@ export default function IAVisualLanding() {
                   <div
                     className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10"
                     style={{
+                      width: "max-content",
                       backgroundColor: "var(--chart-3)",
                       color: "var(--primary-foreground)",
                       boxShadow: "0 2px 8px var(--chart-3)30",
@@ -2815,11 +2802,11 @@ export default function IAVisualLanding() {
                     style={{
                       backgroundColor: "var(--card)",
                       borderColor: "var(--chart-3)",
-                      boxShadow: "0 10px 30px var(--chart-3)15",
+                      boxShadow: "0 10px 30px var(--chart-3)/15",
                     }}
                     whileHover={{
                       y: -3,
-                      boxShadow: "0 15px 40px var(--chart-3)25",
+                      boxShadow: "0 15px 40px var(--chart-3)/25",
                       borderColor: "var(--chart-3)",
                       transition: { duration: 0.3, ease: "easeOut" },
                     }}
@@ -3024,32 +3011,6 @@ export default function IAVisualLanding() {
             </div>
           </div>
         </section>
-
-        <Banner variant="agentes">
-          <div className="w-full md:w-[60%]">
-            <h3 className="text-3xl md:text-4xl text-white font-bold mb-10 !leading-snug">
-              ¿Listo para crear tu primer agente IA sin código?
-            </h3>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300"
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 100%)",
-                color: "hsl(var(--primary-foreground))",
-                boxShadow: "0 10px 30px hsl(var(--primary) / 0.4)"
-              }}
-              onClick={() => {
-                document.getElementById('early-access-form')?.scrollIntoView({ 
-                  behavior: 'smooth' 
-                });
-              }}
-            >
-              <BiRocket className="text-xl" />
-              Acceder al taller
-            </motion.button>
-          </div>
-        </Banner>
 
         <SimpleFooter />
       </div>

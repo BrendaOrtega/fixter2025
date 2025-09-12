@@ -17,7 +17,6 @@ import { IoIosVideocam } from "react-icons/io";
 const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
-  { name: "Newsletters", link: "/newsletters" },
   { name: "Claude Code", link: "/claude" },
   { name: "Agentes IA", link: "/agentes" },
 ];
@@ -282,16 +281,8 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/newsletters"
-          index={3}
-          isOpen={isOpen}
-          title="Newsletters"
-        />
-        <NavItem
-          onClick={toggleMenu}
-          as="Link"
           to="/claude"
-          index={4}
+          index={3}
           isOpen={isOpen}
           title="Claude Code"
         />
@@ -299,7 +290,7 @@ const MobileMenu = ({
           onClick={toggleMenu}
           as="Link"
           to="/agentes"
-          index={5}
+          index={4}
           isOpen={isOpen}
           title="Agentes IA"
         />
@@ -308,7 +299,7 @@ const MobileMenu = ({
             <NavItem
               as="Link"
               to="/mis-cursos"
-              index={6}
+              index={5}
               isOpen={isOpen}
               title="Mis cursos"
             />
@@ -317,7 +308,7 @@ const MobileMenu = ({
               to="/logout"
               reloadDocument
               as="Link"
-              index={7}
+              index={6}
               isOpen={isOpen}
               title="Cerrar sesión"
             />
@@ -327,7 +318,7 @@ const MobileMenu = ({
             onClick={toggleMenu}
             as="Link"
             to="/login"
-            index={6}
+            index={5}
             isOpen={isOpen}
             title="Iniciar sesión"
             className="text-4xl my-6 font-light "

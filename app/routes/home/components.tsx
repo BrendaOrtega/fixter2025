@@ -9,7 +9,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
 import type { Course } from "@prisma/client";
-import { useFetcher } from "react-router";
+import { useFetcher, Link } from "react-router";
 import { Footer } from "~/components/Footer";
 import { Banner } from "~/components/common/Banner";
 
@@ -499,16 +499,18 @@ export const HomeHero = () => {
         <div>
           {/* Tag de nuevo taller Agentes IA */}
           <div className="flex justify-center md:justify-start mb-6">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600/20 to-orange-400/20 border border-orange-500/50 rounded-full px-4 py-2"
-            >
-              <span className="text-sm font-semibold text-white">
-                ✨ Nuevo taller de Construcción de Agentes IA drag & drop
-              </span>
-            </motion.div>
+            <Link to="/agentes" className="group">
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600/20 to-orange-400/20 border border-orange-500/50 rounded-full px-4 py-2 hover:from-orange-600/30 hover:to-orange-400/30 hover:border-orange-400/70 transition-all duration-300"
+              >
+                <span className="text-sm font-semibold text-white group-hover:text-orange-200 transition-colors">
+                  ✨ Nuevo taller de Construcción de Agentes IA drag & drop
+                </span>
+              </motion.div>
+            </Link>
           </div>
           
           <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-4 md:mt-12">
