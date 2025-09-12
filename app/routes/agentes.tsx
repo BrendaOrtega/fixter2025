@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavBar } from "~/components/common/NavBar";
 import SimpleFooter from "~/components/common/SimpleFooter";
+import { Banner } from "~/components/common/Banner";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
@@ -3023,6 +3024,32 @@ export default function IAVisualLanding() {
             </div>
           </div>
         </section>
+
+        <Banner variant="agentes">
+          <div className="w-full md:w-[60%]">
+            <h3 className="text-3xl md:text-4xl text-white font-bold mb-10 !leading-snug">
+              ¿Listo para crear tu primer agente IA sin código?
+            </h3>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-2)) 100%)",
+                color: "hsl(var(--primary-foreground))",
+                boxShadow: "0 10px 30px hsl(var(--primary) / 0.4)"
+              }}
+              onClick={() => {
+                document.getElementById('early-access-form')?.scrollIntoView({ 
+                  behavior: 'smooth' 
+                });
+              }}
+            >
+              <BiRocket className="text-xl" />
+              Acceder al taller
+            </motion.button>
+          </div>
+        </Banner>
 
         <SimpleFooter />
       </div>

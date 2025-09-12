@@ -3,18 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useFetcher, useNavigate } from "react-router";
 
 export const WebinarBanner = () => {
-  const [showStickyBanner, setShowStickyBanner] = useState(false);
+  const [showStickyBanner, setShowStickyBanner] = useState(true);
   const [showWebinarForm, setShowWebinarForm] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
   // Mostrar banner sticky después de hacer scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 500) {
-        setShowStickyBanner(true);
+      if (window.scrollY > 100) {
+        setIsSticky(true);
       } else {
-        setShowStickyBanner(false);
+        setIsSticky(false);
       }
     };
 
@@ -202,22 +203,24 @@ export const WebinarBanner = () => {
       <AnimatePresence>
         {showStickyBanner && (
           <motion.div
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            exit={{ y: -100 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="fixed flex items-center top-0 left-0 right-0 z-50 bg-gradient-to-r from-claude-700 via-claude-600 to-claude-500 text-white h-fit md:h-14 px-4 shadow-2xl cursor-pointer"
-            onClick={() => navigate('/claude')}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className={`flex items-center left-0 right-0 z-[150] bg-gradient-to-r from-orange-700 via-orange-600 to-orange-500 text-white h-fit md:h-14 px-4 shadow-2xl cursor-pointer ${
+              isSticky ? 'fixed top-20' : 'relative'
+            }`}
+            onClick={() => navigate('/agentes')}
           >
             <div className="container mx-auto flex  items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <span className="animate-pulse text-2xl">🔥</span>
                 <div>
                   <p className="font-black text-sm md:text-base">
-                    WEBINAR GRATIS - VIERNES 15 AGO: "De Junior a Senior con Claude Code"
+                    NUEVO TALLER: "Construcción de Agentes IA drag & drop - Sin Código"
                   </p>
                   <p className="text-xs opacity-90">
-                    Sin compromiso • Sin tarjeta • 100% práctico
+                    100% práctico • $4,900 MXN • Acceso completo
                   </p>
                 </div>
               </div>
@@ -226,11 +229,11 @@ export const WebinarBanner = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowWebinarForm(true);
+                  navigate('/agentes');
                 }}
-                className="bg-white flex gap-1 text-claude-700 font-black px-6 py-2 rounded-full text-sm  transition-colors"
+                className="bg-white flex gap-1 text-orange-700 font-black px-6 py-2 rounded-full text-sm  transition-colors"
               >
-                RESERVAR <span className="hidden md:block">MI LUGAR →</span>
+                VER TALLER <span className="hidden md:block">→</span>
               </motion.button>
             </div>
           </motion.div>

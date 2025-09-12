@@ -17,6 +17,7 @@ export const Banner = ({
           "bg-bannerOne  bg-contain md:bg-cover bg-no-repeat  bg-right-bottom h-[300px] my-32 md:my-60 p-6 md:p-6 xl:p-12 rounded-3xl border-[2px] border-brand-500",
           {
             "bg-bannerHome ": variant === "home",
+            "bg-gradient-to-r from-orange-900/20 to-orange-700/20 border-orange-500/50": variant === "agentes",
           }
         )}
       >

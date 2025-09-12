@@ -2,6 +2,7 @@ import { NavBar } from "../components/common/NavBar";
 import { useEffect, type ReactNode } from "react";
 import { GlobalBanner } from "~/components/common/GlobalBanner";
 import { WebinarBanner } from "~/components/common/WebinarBanner";
+import { FloatingPromo } from "~/components/common/FloatingPromo";
 import { useFetcher } from "react-router";
 
 export const MainLayout = ({ children }: { children: ReactNode }) => {
@@ -15,8 +16,9 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
   return (
     <>
       <NavBar user={user} />
-      {/* <WebinarBanner /> */}
       {children}
+      <FloatingPromo />
+      {/* <WebinarBanner /> */}
       {/* <GlobalBanner /> */}
     </>
   );

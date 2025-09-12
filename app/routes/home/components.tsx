@@ -497,16 +497,16 @@ export const HomeHero = () => {
     >
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
-          {/* Tag de nuevo taller Gemini-CLI */}
+          {/* Tag de nuevo taller Agentes IA */}
           <div className="flex justify-center md:justify-start mb-6">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/50 rounded-full px-4 py-2"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600/20 to-orange-400/20 border border-orange-500/50 rounded-full px-4 py-2"
             >
               <span className="text-sm font-semibold text-white">
-                ✨ Nuevo taller de Gemini-CLI disponible
+                ✨ Nuevo taller de Construcción de Agentes IA drag & drop
               </span>
             </motion.div>
           </div>
@@ -536,8 +536,8 @@ export const HomeHero = () => {
             />
             <PrimaryButton 
               as="Link" 
-              to="/gemini" 
-              children="Explorar Gemini"
+              to="/agentes" 
+              children="Explorar creación de agentes no-code"
               variant="ghost"
             />
             <PrimaryButton
