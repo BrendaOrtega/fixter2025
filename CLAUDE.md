@@ -17,13 +17,29 @@ Este archivo contiene información útil para Claude Code sobre el proyecto y pr
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
 Siempre siguiendo los estilos de la aplicación, colores y formatos. Es mejor copiar que inventar nuevos, es mejor usar los componentes ya existentes antes que crear nuevos.
 
+### Actualizaciones Septiembre 12, 2025 - FloatingPromo Moderno
+
+- **FloatingPromo Widget**: Sistema de promoción innovador siguiendo patrones UX 2025
+  - **Widget flotante**: Bottom-left position, no interfiere con reCAPTCHA
+  - **Timing inteligente**: Aparece después de 3 segundos (respeta flujo del usuario)
+  - **Dismiss inteligente**: Se oculta por 24 horas con localStorage persistence
+  - **Hover unificado**: Area invisible conecta botón y card, elimina brincos
+  - **Progressive disclosure**: Botón compacto → hover → card expandida
+  - **Responsive**: Dark mode support, touch-friendly, animaciones smooth
+- **Homepage actualizada**:
+  - Tag de anuncio: "✨ Nuevo taller de Construcción de Agentes IA drag & drop"
+  - Botón CTA actualizado: "Explorar creación de agentes no-code" → `/agentes`
+  - Colores naranja consistentes con página de Agentes IA
+- **Banner en página /agentes**: Optimización de conversión con CTA directo
+- **Promoción "Sesión gratis"**: Más atractivo que mostrar precio completo
+
 ### Actualizaciones Agosto 31, 2025
 
 - **Nueva ruta /gemini**: Landing page para el curso de Gemini CLI completamente funcional
-- **Navbar actualizada**: Ahora incluye enlaces a "Claude Code" y "Gemini CLI"
-- **Homepage mejorada**: 
-  - Tag de anuncio "✨ Nuevo taller de Gemini-CLI disponible" encima del título principal
-  - Tres CTAs principales: "Explorar Claude", "Explorar Gemini", "Explorar el blog"
+- **Navbar actualizada**: Ahora incluye enlaces a "Claude Code" y "Agentes IA"
+- **Homepage anterior**: 
+  - Tag de anuncio previo de Gemini-CLI (reemplazado por Agentes IA)
+  - Tres CTAs principales: "Explorar Claude", "Explorar Gemini", "Explorar el blog" (actualizado)
 - **Módulo webinarUtils.ts**: Centraliza toda la lógica de gestión de webinars (usar siempre este módulo)
 - **Sistema de Email Sequences completamente implementado**:
   - **Ruta `/newsletters`**: Gestión completa de sequences con tabs persistentes
@@ -210,6 +226,43 @@ def create_pdf(filename, title, content):
 - **Funcionalidades**: Filtros, búsqueda, acciones bulk, preview de emails
 - **Diseño**: Consistente con admin existente, responsive, estados claros
 - **Plan detallado**: Ver `docs/admin-sequences-plan.md`
+
+## Sistemas de Promoción y Marketing
+
+### FloatingPromo - Widget Moderno de Promoción
+
+Componente innovador que sigue patrones UX 2025 para promoción no-intrusiva:
+
+**Ubicación**: `app/components/common/FloatingPromo.tsx`
+
+**Características**:
+- **Posicionamiento**: `fixed bottom-6 left-6` (evita conflicto con reCAPTCHA)
+- **Timing**: Aparece después de 3 segundos (respeta flujo del usuario)
+- **Persistence**: localStorage con expiración de 24 horas
+- **Progressive Disclosure**: Botón compacto → hover → card expandida
+- **Hover Unificado**: Área invisible conecta elementos, elimina brincos
+- **Responsive**: Dark mode, touch-friendly, animaciones Framer Motion
+
+**Implementación**:
+```tsx
+// Activado en MainLayout
+import { FloatingPromo } from "~/components/common/FloatingPromo";
+
+// Se muestra automáticamente, dismiss inteligente
+// Promociona taller actual con colores consistentes
+```
+
+**Ventajas sobre banners tradicionales**:
+- ✅ No bloquea navegación
+- ✅ Timing respetuoso 
+- ✅ Dismiss temporal (no permanente)
+- ✅ Hover sin brincos
+- ✅ Posicionamiento inteligente
+
+### Sistemas de Promoción Anteriores
+
+- **WebinarBanner**: Banner sticky tradicional (actualmente desactivado)
+- **GlobalBanner**: Banner global (disponible pero no usado)
 
 ## Comandos Útiles
 
