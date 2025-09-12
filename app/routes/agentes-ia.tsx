@@ -237,10 +237,10 @@ export default function IAVisualLanding() {
 
     return (
       <div
-        className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 transition-all duration-300 ${
+        className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 ${
           showEarlyAccessForm
-            ? "opacity-100 visible pointer-events-auto"
-            : "opacity-0 invisible pointer-events-none"
+            ? "opacity-100 visible pointer-events-auto z-[60]"
+            : "opacity-0 invisible pointer-events-none -z-10"
         }`}
         onClick={() => {
           // Only allow closing if not loading and not success
@@ -590,7 +590,7 @@ export default function IAVisualLanding() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
               onClick={() => setShowPaymentSuccess(false)}
             >
               <motion.div
@@ -634,7 +634,7 @@ export default function IAVisualLanding() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
               onClick={() => setShowPaymentCancel(false)}
             >
               <motion.div
@@ -1072,8 +1072,20 @@ export default function IAVisualLanding() {
                 ].map((stat, index) => (
                   <motion.div
                     key={index}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    className="text-center p-6 rounded-2xl border backdrop-blur-sm transition-all duration-300"
+                    whileHover={{ 
+                      scale: 1.05, 
+                      y: -8,
+                      rotateY: 5,
+                      boxShadow: "0 20px 40px hsl(var(--primary) / 0.15)",
+                      transition: {
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 25,
+                        mass: 0.8
+                      }
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    className="text-center p-6 rounded-2xl border backdrop-blur-sm cursor-pointer"
                     style={{
                       backgroundColor: "hsl(var(--card) / 0.6)",
                       borderColor: "var(--border)",
@@ -1189,24 +1201,46 @@ export default function IAVisualLanding() {
                   key={index}
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
                   viewport={{ once: true }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  className="border-2 rounded-2xl p-6 transition-all duration-300 group"
+                  whileHover={{ 
+                    scale: 1.03, 
+                    y: -12,
+                    rotateX: 5,
+                    boxShadow: "0 25px 50px hsl(var(--primary) / 0.12)",
+                    transition: {
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20,
+                      mass: 0.9
+                    }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="border-2 rounded-2xl p-6 group cursor-pointer overflow-hidden relative"
                   style={{
                     backgroundColor: "var(--card)",
                     borderColor: "var(--border)",
                   }}
                 >
-                  <div
-                    className="p-3 rounded-lg inline-block mb-4"
+                  {/* Hover Shine Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                  <motion.div
+                    className="p-3 rounded-lg inline-block mb-4 transition-all duration-300 group-hover:scale-110"
                     style={{
                       backgroundColor: project.color + "20",
                       color: project.color,
                     }}
+                    whileHover={{ 
+                      rotate: [0, -10, 10, 0],
+                      scale: 1.2
+                    }}
+                    transition={{
+                      duration: 0.6,
+                      ease: "easeInOut"
+                    }}
                   >
                     {project.icon}
-                  </div>
+                  </motion.div>
                   <h3
                     className="text-xl font-bold mb-3"
                     style={{ color: "var(--foreground)" }}
@@ -1236,6 +1270,179 @@ export default function IAVisualLanding() {
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Video Demo Section */}
+        <section
+          className="py-20 relative overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(135deg, var(--card) 0%, var(--background) 100%)",
+          }}
+        >
+          <div className="relative container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <h2
+                className="text-4xl md:text-5xl font-bold mb-4"
+                style={{ color: "var(--primary)" }}
+              >
+                Demo de la herramienta
+              </h2>
+              <p
+                className="font-light text-lg max-w-2xl mx-auto"
+                style={{ color: "var(--muted-foreground)" }}
+              >
+                Descubre la plataforma visual que usaremos en el taller para crear agentes inteligentes
+              </p>
+            </motion.div>
+
+            <div className="max-w-4xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="relative rounded-3xl overflow-hidden border-2"
+                style={{
+                  backgroundColor: "var(--card)",
+                  borderColor: "var(--chart-1)",
+                  boxShadow: "0 20px 40px hsl(var(--card) / 0.5)",
+                }}
+              >
+                {/* Video Container */}
+                <div className="relative pb-[56.25%] h-0">
+                  <iframe
+                    src="https://www.youtube.com/embed/yqlndqa7o8k"
+                    title="Demo: Agente de IA sin código"
+                    className="absolute top-0 left-0 w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+
+                {/* Video Overlay Info */}
+                <div className="p-6 border-t" style={{ borderColor: "var(--border)" }}>
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="p-3 rounded-lg"
+                        style={{
+                          backgroundColor: "var(--primary)20",
+                          color: "var(--primary)",
+                        }}
+                      >
+                        <BiPlay className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3
+                          className="font-bold text-lg"
+                          style={{ color: "var(--foreground)" }}
+                        >
+                          Demo de la Plataforma
+                        </h3>
+                        <p
+                          className="text-sm"
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          La herramienta visual que dominarás en el taller
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {["Interfaz Visual", "Drag & Drop", "No-Code"].map((tag, index) => (
+                        <span
+                          key={index}
+                          className="text-xs px-3 py-1 rounded-full border font-semibold"
+                          style={{
+                            backgroundColor: "var(--chart-2)20",
+                            borderColor: "var(--chart-2)30",
+                            color: "var(--chart-2)",
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Bottom Stats */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12"
+              >
+                {[
+                  {
+                    icon: <BiTargetLock className="w-6 h-6" />,
+                    stat: "100%",
+                    label: "Visual",
+                    desc: "Sin código",
+                  },
+                  {
+                    icon: <BiRocket className="w-6 h-6" />,
+                    stat: "15min",
+                    label: "Setup",
+                    desc: "Primer agente",
+                  },
+                  {
+                    icon: <BiStar className="w-6 h-6" />,
+                    stat: "∞",
+                    label: "Posibilidades",
+                    desc: "Una vez aprendido",
+                  },
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="text-center p-6 rounded-2xl border backdrop-blur-sm"
+                    style={{
+                      backgroundColor: "hsl(var(--card) / 0.6)",
+                      borderColor: "var(--border)",
+                    }}
+                  >
+                    <div
+                      className="inline-flex items-center justify-center p-3 rounded-lg mb-3"
+                      style={{
+                        backgroundColor: "var(--primary)20",
+                        color: "var(--primary)",
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <div
+                      className="text-2xl font-bold"
+                      style={{ color: "var(--primary)" }}
+                    >
+                      {item.stat}
+                    </div>
+                    <div
+                      className="font-semibold mb-1"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {item.label}
+                    </div>
+                    <div
+                      className="text-sm opacity-80"
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      {item.desc}
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
             </div>
           </div>
         </section>
@@ -1270,11 +1477,31 @@ export default function IAVisualLanding() {
               </p>
             </motion.div>
 
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto relative">
+              {/* Animated Timeline Line */}
+              <div 
+                className="absolute left-[52px] top-[120px] bottom-[200px] w-0.5 opacity-20"
+                style={{
+                  background: "linear-gradient(to bottom, transparent, var(--primary), transparent)"
+                }}
+              >
+                <motion.div
+                  className="w-full"
+                  style={{
+                    background: "linear-gradient(to bottom, var(--chart-1), var(--chart-2), var(--chart-3), var(--primary))"
+                  }}
+                  initial={{ height: 0 }}
+                  whileInView={{ height: "100%" }}
+                  transition={{ duration: 2, delay: 0.5 }}
+                  viewport={{ once: true }}
+                />
+              </div>
               {[
                 {
                   module: "Sesión 1 (GRATIS)",
                   title: "Tu Primer Agente en 30 Minutos",
+                  icon: <BiRocket className="w-6 h-6" />,
+                  badge: "🎁 GRATIS",
                   topics: [
                     "Instalación y configuración de tu servidor personal",
                     "Interfaz visual: nodos, cadenas y flujos",
@@ -1282,10 +1509,13 @@ export default function IAVisualLanding() {
                     "Crear un chatbot funcional con memoria",
                   ],
                   color: "var(--chart-1)",
+                  progress: "25%",
                 },
                 {
                   module: "Sesión 2",
                   title: "Bases de Conocimiento y RAG",
+                  icon: <BiBrain className="w-6 h-6" />,
+                  badge: "📚 RAG",
                   topics: [
                     "Cargar y procesar documentos (PDF, Word, Web)",
                     "Crear bases de conocimiento vectoriales",
@@ -1293,10 +1523,13 @@ export default function IAVisualLanding() {
                     "Proyecto: Asistente de soporte con tu documentación",
                   ],
                   color: "var(--chart-2)",
+                  progress: "50%",
                 },
                 {
                   module: "Sesión 3",
                   title: "Herramientas y Automatizaciones",
+                  icon: <BiLayer className="w-6 h-6" />,
+                  badge: "🔧 TOOLS",
                   topics: [
                     "Agentes con herramientas: búsqueda web, calculadora, APIs",
                     "Cadenas secuenciales y paralelas",
@@ -1304,10 +1537,13 @@ export default function IAVisualLanding() {
                     "Proyecto: Agente multi-herramienta para tu negocio",
                   ],
                   color: "var(--chart-3)",
+                  progress: "75%",
                 },
                 {
                   module: "Sesión 4",
                   title: "Deployment y Monetización",
+                  icon: <BiTargetLock className="w-6 h-6" />,
+                  badge: "💰 LAUNCH",
                   topics: [
                     "Publicar tu agente: embeddings, APIs, widgets",
                     "Seguridad y control de acceso",
@@ -1315,41 +1551,175 @@ export default function IAVisualLanding() {
                     "Casos de éxito y modelos de negocio probados",
                   ],
                   color: "var(--primary)",
+                  progress: "100%",
                 },
               ].map((module, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  initial={{ opacity: 0, y: 60, rotateX: -15 }}
+                  whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                  transition={{ 
+                    duration: 0.8, 
+                    delay: index * 0.15,
+                    type: "spring",
+                    stiffness: 100
+                  }}
                   viewport={{ once: true }}
-                  className="mb-8 pl-6"
-                  style={{ borderLeft: `4px solid ${module.color}` }}
+                  whileHover={{
+                    scale: 1.02,
+                    y: -8,
+                    boxShadow: `0 20px 40px ${module.color}20`,
+                    transition: {
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20
+                    }
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="mb-8 group cursor-pointer"
                 >
-                  <div className="flex items-center gap-4 mb-4">
-                    <span className="font-bold" style={{ color: module.color }}>
-                      {module.module}
-                    </span>
-                    <h3
-                      className="text-2xl font-bold"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      {module.title}
-                    </h3>
-                  </div>
-                  <ul className="space-y-2">
-                    {module.topics.map((topic, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <BiCheckCircle
-                          className="w-5 h-5 flex-shrink-0 mt-0.5"
+                  <div
+                    className="relative rounded-3xl p-8 border-2 backdrop-blur-sm overflow-hidden"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      borderColor: module.color + "40",
+                      boxShadow: `0 8px 32px ${module.color}10`,
+                    }}
+                  >
+                    {/* Background Gradient */}
+                    <div 
+                      className="absolute inset-0 opacity-5"
+                      style={{
+                        background: `linear-gradient(135deg, ${module.color}20 0%, transparent 50%)`
+                      }}
+                    />
+                    
+                    {/* Shine Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/3 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+
+                    {/* Header */}
+                    <div className="relative z-10 flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        {/* Animated Icon */}
+                        <motion.div
+                          className="p-4 rounded-2xl border-2"
+                          style={{
+                            backgroundColor: module.color + "20",
+                            borderColor: module.color + "40",
+                            color: module.color,
+                          }}
+                          whileHover={{
+                            rotate: [0, -10, 10, 0],
+                            scale: 1.1,
+                            transition: { duration: 0.6 }
+                          }}
+                        >
+                          {module.icon}
+                        </motion.div>
+                        
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <span 
+                              className="font-bold text-lg"
+                              style={{ color: module.color }}
+                            >
+                              {module.module}
+                            </span>
+                            <span 
+                              className="text-xs px-3 py-1 rounded-full font-bold border"
+                              style={{
+                                backgroundColor: module.color + "20",
+                                borderColor: module.color + "40",
+                                color: module.color,
+                              }}
+                            >
+                              {module.badge}
+                            </span>
+                          </div>
+                          <h3
+                            className="text-2xl font-bold"
+                            style={{ color: "var(--foreground)" }}
+                          >
+                            {module.title}
+                          </h3>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Circle */}
+                      <div className="relative w-16 h-16">
+                        <svg className="w-16 h-16 transform -rotate-90">
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="var(--border)"
+                            strokeWidth="3"
+                            fill="none"
+                            opacity="0.3"
+                          />
+                          <motion.circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke={module.color}
+                            strokeWidth="3"
+                            fill="none"
+                            strokeLinecap="round"
+                            initial={{ pathLength: 0 }}
+                            whileInView={{ pathLength: parseInt(module.progress) / 100 }}
+                            transition={{ duration: 1.5, delay: index * 0.2 }}
+                            style={{
+                              pathLength: parseInt(module.progress) / 100
+                            }}
+                          />
+                        </svg>
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center text-sm font-bold"
                           style={{ color: module.color }}
-                        />
-                        <span style={{ color: "var(--muted-foreground)" }}>
-                          {topic}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                        >
+                          {module.progress}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Topics List */}
+                    <ul className="space-y-3 relative z-10">
+                      {module.topics.map((topic, idx) => (
+                        <motion.li 
+                          key={idx} 
+                          className="flex items-start gap-4 group/item"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ 
+                            duration: 0.5, 
+                            delay: (index * 0.15) + (idx * 0.1) + 0.3 
+                          }}
+                          viewport={{ once: true }}
+                          whileHover={{ x: 8 }}
+                        >
+                          <motion.div
+                            className="flex-shrink-0 mt-1"
+                            whileHover={{ 
+                              rotate: 360,
+                              scale: 1.2,
+                              transition: { duration: 0.3 }
+                            }}
+                          >
+                            <BiCheckCircle
+                              className="w-5 h-5"
+                              style={{ color: module.color }}
+                            />
+                          </motion.div>
+                          <span 
+                            className="group-hover/item:text-white transition-colors duration-300"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            {topic}
+                          </span>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
                 </motion.div>
               ))}
             </div>
