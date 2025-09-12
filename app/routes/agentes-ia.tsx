@@ -179,7 +179,10 @@ export default function IAVisualLanding() {
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showPaymentCancel, setShowPaymentCancel] = useState(false);
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
-  const [selectedTopic, setSelectedTopic] = useState<{moduleIndex: number, topicIndex: number} | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<{
+    moduleIndex: number;
+    topicIndex: number;
+  } | null>(null);
   const fetcher = useFetcher();
 
   // Check for payment result in URL params
@@ -1074,8 +1077,8 @@ export default function IAVisualLanding() {
                 ].map((stat, index) => (
                   <motion.div
                     key={index}
-                    whileHover={{ 
-                      scale: 1.05, 
+                    whileHover={{
+                      scale: 1.05,
                       y: -8,
                       rotateY: 5,
                       boxShadow: "0 20px 40px hsl(var(--primary) / 0.15)",
@@ -1083,8 +1086,8 @@ export default function IAVisualLanding() {
                         type: "spring",
                         stiffness: 400,
                         damping: 25,
-                        mass: 0.8
-                      }
+                        mass: 0.8,
+                      },
                     }}
                     whileTap={{ scale: 0.98 }}
                     className="text-center p-6 rounded-2xl border backdrop-blur-sm cursor-pointer"
@@ -1152,50 +1155,56 @@ export default function IAVisualLanding() {
               {[
                 {
                   icon: <RiRobot2Line className="w-8 h-8" />,
-                  title: "Chatbot de Soporte Inteligente",
+                  title: "Tu Primer Chatbot con Memoria",
                   description:
-                    "Asistente que responde dudas complejas y deriva casos automáticamente",
-                  tech: ["GPT-5", "Base de Conocimiento", "Integraciones"],
+                    "Agente conversacional que recuerda el contexto y mantiene conversaciones coherentes",
+                  tech: ["GPT/Claude", "Memoria", "Interfaz Visual"],
                   color: "var(--chart-1)",
                 },
                 {
                   icon: <BiLayer className="w-8 h-8" />,
-                  title: "Automatizador de Tareas",
+                  title: "Chatbot Experto con RAG",
                   description:
-                    "Agente que gestiona procesos empresariales y toma decisiones inteligentes",
-                  tech: ["Workflows", "Condicionales", "APIs"],
+                    "Asistente que conoce tus documentos, políticas y base de conocimiento completa",
+                  tech: ["RAG", "Base Conocimiento", "Documentos"],
                   color: "var(--chart-2)",
                 },
                 {
-                  icon: <BiChip className="w-8 h-8" />,
-                  title: "Agente de Ventas IA",
+                  icon: <span className="text-2xl">🍌</span>,
+                  title: (
+                    <span>
+                      Generador Visual
+                      <br />
+                      con Nano-banana
+                    </span>
+                  ),
                   description:
-                    "Asistente que califica leads, agenda citas y hace seguimiento personalizado",
-                  tech: ["CRM Integration", "Email Marketing", "Analytics"],
+                    "Agente que crea imágenes personalizadas, logos y contenido visual usando la API de moda",
+                  tech: ["Nano-banana", "Herramientas", "Flujos Visuales"],
                   color: "var(--chart-3)",
                 },
                 {
                   icon: <AiOutlineFileImage className="w-8 h-8" />,
-                  title: "Generador de Contenido",
+                  title: "Agente en Producción",
                   description:
-                    "Agente que crea blogs, emails y contenido para redes sociales automáticamente",
-                  tech: ["GPT-5", "Templates", "Social Media APIs"],
+                    "Tu agente desplegado profesionalmente con seguridad, logs y acceso público",
+                  tech: ["Deployment", "Seguridad", "Monitoreo"],
                   color: "var(--primary)",
                 },
                 {
-                  icon: <AiOutlineCamera className="w-8 h-8" />,
-                  title: "Asistente de Investigación",
+                  icon: <span className="text-2xl">🎬</span>,
+                  title: "Generación de Video Avanzada",
                   description:
-                    "Agente que busca información, analiza datos y genera reportes completos",
-                  tech: ["Web Scraping", "Data Analysis", "Report Generation"],
+                    "Agentes que crean contenido audiovisual automático con IA de última generación",
+                  tech: ["Video IA", "Automatización", "Contenido"],
                   color: "var(--chart-1)",
                 },
                 {
                   icon: <BiMouseAlt className="w-8 h-8" />,
-                  title: "Agente de Atención al Cliente",
+                  title: "Próxima Sesión - Por Anunciar",
                   description:
-                    "Sistema completo que maneja tickets, responde consultas y escala problemas",
-                  tech: ["Multi-Channel", "Ticket System", "Knowledge Base"],
+                    "Más contenido especializado se añadirá al programa",
+                  tech: ["Próximamente", "TBD", "Futuro"],
                   color: "var(--chart-2)",
                 },
               ].map((project, index) => (
@@ -1204,18 +1213,36 @@ export default function IAVisualLanding() {
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  whileHover={{ 
-                    scale: 1.03, 
-                    y: -12,
-                    rotateX: 5,
-                    boxShadow: "0 25px 50px hsl(var(--primary) / 0.12)",
-                    transition: {
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 20,
-                      mass: 0.9
-                    }
-                  }}
+                  whileHover={
+                    index === 2
+                      ? {
+                          scale: 1.05,
+                          y: -15,
+                          rotateX: 8,
+                          boxShadow: "0 30px 60px rgba(255, 193, 7, 0.4)",
+                          backgroundColor: "#FFF59D",
+                          borderColor: "#FFB300",
+                          color: "#1A1A1A",
+                          transition: {
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 25,
+                            mass: 0.8,
+                          },
+                        }
+                      : {
+                          scale: 1.03,
+                          y: -12,
+                          rotateX: 5,
+                          boxShadow: "0 25px 50px hsl(var(--primary) / 0.12)",
+                          transition: {
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 20,
+                            mass: 0.9,
+                          },
+                        }
+                  }
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className="border-2 rounded-2xl p-6 group cursor-pointer overflow-hidden relative"
@@ -1226,31 +1253,77 @@ export default function IAVisualLanding() {
                 >
                   {/* Hover Shine Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+
+                  {/* Confeti de emojis para nano-banana */}
+                  {index === 2 && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                      <style dangerouslySetInnerHTML={{
+                        __html: `
+                          @keyframes confetti-float {
+                            0% { opacity: 0; transform: translateY(0) scale(0) rotate(0deg); }
+                            25% { opacity: 1; transform: translateY(-20px) scale(1.2) rotate(90deg); }
+                            50% { opacity: 1; transform: translateY(-40px) scale(1) rotate(180deg); }
+                            75% { opacity: 1; transform: translateY(-60px) scale(1) rotate(270deg); }
+                            100% { opacity: 0; transform: translateY(-80px) scale(0) rotate(360deg); }
+                          }
+                          .confetti-emoji {
+                            animation: confetti-float 2s ease-out infinite;
+                            animation-fill-mode: both;
+                            animation-play-state: paused;
+                          }
+                          .group:hover .confetti-emoji {
+                            animation-play-state: running;
+                          }
+                        `
+                      }} />
+                      {[...Array(8)].map((_, i) => (
+                        <div
+                          key={`confetti-${i}`}
+                          className="absolute text-lg confetti-emoji"
+                          style={{
+                            left: `${15 + (i % 4) * 20}%`,
+                            top: `${20 + Math.floor(i / 4) * 40}%`,
+                            animationDelay: `${i * 0.2}s`,
+                          }}
+                        >
+                            {
+                              ["🍌", "🎨", "✨", "🌟", "🎯", "💫", "🚀", "🔥"][
+                                i
+                              ]
+                            }
+                          </div>
+                        ))}
+                    </div>
+                  )}
                   <motion.div
                     className="p-3 rounded-lg inline-block mb-4 transition-all duration-300 group-hover:scale-110"
                     style={{
                       backgroundColor: project.color + "20",
                       color: project.color,
                     }}
-                    whileHover={{ 
+                    whileHover={{
                       rotate: [0, -10, 10, 0],
-                      scale: 1.2
+                      scale: 1.2,
                     }}
                     transition={{
                       duration: 0.6,
-                      ease: "easeInOut"
+                      ease: "easeInOut",
                     }}
                   >
                     {project.icon}
                   </motion.div>
                   <h3
-                    className="text-xl font-bold mb-3"
+                    className={`text-xl font-bold mb-3 transition-colors duration-300 ${
+                      index === 2 ? "group-hover:!text-gray-900" : ""
+                    }`}
                     style={{ color: "var(--foreground)" }}
                   >
                     {project.title}
                   </h3>
                   <p
-                    className="mb-4"
+                    className={`mb-4 transition-colors duration-300 ${
+                      index === 2 ? "group-hover:!text-gray-800" : ""
+                    }`}
                     style={{ color: "var(--muted-foreground)" }}
                   >
                     {project.description}
@@ -1302,7 +1375,8 @@ export default function IAVisualLanding() {
                 className="font-light text-lg max-w-2xl mx-auto"
                 style={{ color: "var(--muted-foreground)" }}
               >
-                Descubre la plataforma visual que usaremos en el taller para crear agentes inteligentes
+                Descubre la plataforma visual que usaremos en el taller para
+                crear agentes inteligentes
               </p>
             </motion.div>
 
@@ -1332,7 +1406,10 @@ export default function IAVisualLanding() {
                 </div>
 
                 {/* Video Overlay Info */}
-                <div className="p-6 border-t" style={{ borderColor: "var(--border)" }}>
+                <div
+                  className="p-6 border-t"
+                  style={{ borderColor: "var(--border)" }}
+                >
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <div
@@ -1361,19 +1438,21 @@ export default function IAVisualLanding() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {["Interfaz Visual", "Drag & Drop", "No-Code"].map((tag, index) => (
-                        <span
-                          key={index}
-                          className="text-xs px-3 py-1 rounded-full border font-semibold"
-                          style={{
-                            backgroundColor: "var(--chart-2)20",
-                            borderColor: "var(--chart-2)30",
-                            color: "var(--chart-2)",
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                      {["Interfaz Visual", "Drag & Drop", "No-Code"].map(
+                        (tag, index) => (
+                          <span
+                            key={index}
+                            className="text-xs px-3 py-1 rounded-full border font-semibold"
+                            style={{
+                              backgroundColor: "var(--chart-2)20",
+                              borderColor: "var(--chart-2)30",
+                              color: "var(--chart-2)",
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1481,16 +1560,18 @@ export default function IAVisualLanding() {
 
             <div className="max-w-5xl mx-auto relative">
               {/* Animated Timeline Line */}
-              <div 
+              <div
                 className="absolute left-[52px] top-[120px] bottom-[200px] w-0.5 opacity-20"
                 style={{
-                  background: "linear-gradient(to bottom, transparent, var(--primary), transparent)"
+                  background:
+                    "linear-gradient(to bottom, transparent, var(--primary), transparent)",
                 }}
               >
                 <motion.div
                   className="w-full"
                   style={{
-                    background: "linear-gradient(to bottom, var(--chart-1), var(--chart-2), var(--chart-3), var(--primary))"
+                    background:
+                      "linear-gradient(to bottom, var(--chart-1), var(--chart-2), var(--chart-3), var(--primary))",
                   }}
                   initial={{ height: 0 }}
                   whileInView={{ height: "100%" }}
@@ -1506,20 +1587,26 @@ export default function IAVisualLanding() {
                   badge: "🎁 GRATIS",
                   topics: [
                     {
-                      title: "Instalación y configuración de tu servidor personal",
-                      description: "Te guiaré paso a paso para configurar tu entorno de trabajo con acceso a herramientas profesionales de IA, completamente gratis durante el taller."
+                      title:
+                        "Instalación y configuración de tu servidor personal",
+                      description:
+                        "Te guiaré paso a paso para configurar tu entorno de trabajo con acceso a herramientas profesionales de IA, completamente gratis durante el taller.",
                     },
                     {
                       title: "Interfaz visual: nodos, cadenas y flujos",
-                      description: "Aprenderás a usar la interfaz drag-and-drop para conectar componentes de IA sin escribir código, como si fuera un diagrama de flujo visual."
+                      description:
+                        "Aprenderás a usar la interfaz drag-and-drop para conectar componentes de IA sin escribir código, como si fuera un diagrama de flujo visual.",
                     },
                     {
-                      title: "Conectar tu primer modelo de IA (GPT, Claude, Gemini)",
-                      description: "Configuraremos conexiones directas a los modelos más potentes del mercado y aprenderás cuándo usar cada uno según tu proyecto."
+                      title:
+                        "Conectar tu primer modelo de IA (GPT, Claude, Gemini)",
+                      description:
+                        "Configuraremos conexiones directas a los modelos más potentes del mercado y aprenderás cuándo usar cada uno según tu proyecto.",
                     },
                     {
                       title: "Crear un chatbot funcional con memoria",
-                      description: "Construirás tu primer agente que puede mantener conversaciones coherentes, recordar contexto y responder de forma natural."
+                      description:
+                        "Construirás tu primer agente que puede mantener conversaciones coherentes, recordar contexto y responder de forma natural.",
                     },
                   ],
                   color: "var(--chart-1)",
@@ -1533,19 +1620,23 @@ export default function IAVisualLanding() {
                   topics: [
                     {
                       title: "Cargar y procesar documentos (PDF, Word, Web)",
-                      description: "Aprenderás a subir cualquier tipo de documento y convertirlo automáticamente en conocimiento que tu agente puede usar para responder preguntas específicas."
+                      description:
+                        "Aprenderás a subir cualquier tipo de documento y convertirlo automáticamente en conocimiento que tu agente puede usar para responder preguntas específicas.",
                     },
                     {
                       title: "Crear bases de conocimiento vectoriales",
-                      description: "Construiremos una base de datos inteligente que entiende el contexto y significado de tu información, no solo palabras clave."
+                      description:
+                        "Construiremos una base de datos inteligente que entiende el contexto y significado de tu información, no solo palabras clave.",
                     },
                     {
                       title: "RAG: Agentes que responden con tu información",
-                      description: "Tu agente podrá buscar y citar información exacta de tus documentos, combinando la potencia de la IA con tus datos específicos."
+                      description:
+                        "Tu agente podrá buscar y citar información exacta de tus documentos, combinando la potencia de la IA con tus datos específicos.",
                     },
                     {
-                      title: "Proyecto: Chatbot experto en tu restaurante/tienda",
-                      description: "Construiremos un agente que conoce tu menú, precios, horarios y políticas. Podrá responder '¿Hacen entregas?', '¿Cuánto cuesta el combo familiar?' o '¿Aceptan tarjetas?' como si fuera tu empleado más informado."
+                      title: "Proyecto: Chatbot experto con RAG",
+                      description:
+                        "Construiremos un agente que conoce tus documentos, políticas y base de conocimiento completa. Podrá responder preguntas específicas citando información exacta de tus archivos.",
                     },
                   ],
                   color: "var(--chart-2)",
@@ -1553,25 +1644,30 @@ export default function IAVisualLanding() {
                 },
                 {
                   module: "Sesión 3",
-                  title: "Herramientas y Automatizaciones",
+                  title: "Herramientas y Generación Visual",
                   icon: <BiLayer className="w-6 h-6" />,
                   badge: "🔧 TOOLS",
                   topics: [
                     {
-                      title: "Agentes con herramientas: búsqueda web, calculadora, APIs",
-                      description: "Tu agente podrá usar herramientas externas como buscar en Google, hacer cálculos complejos o conectarse con servicios externos en tiempo real."
+                      title:
+                        "Agentes con herramientas: búsqueda web, calculadora, APIs",
+                      description:
+                        "Tu agente podrá usar herramientas externas como buscar en Google, hacer cálculos complejos o conectarse con servicios externos en tiempo real.",
                     },
                     {
                       title: "Cadenas secuenciales y paralelas",
-                      description: "Aprenderás a crear flujos de trabajo donde tu agente puede realizar múltiples tareas en orden o simultáneamente para resolver problemas complejos."
+                      description:
+                        "Aprenderás a crear flujos de trabajo donde tu agente puede realizar múltiples tareas en orden o simultáneamente para resolver problemas complejos.",
                     },
                     {
-                      title: "Integraciones: WhatsApp, Telegram, Discord",
-                      description: "Revisaremos las opciones disponibles para conectar tu agente a plataformas de mensajería y cómo elegir la mejor estrategia según tu audiencia."
+                      title: "API de nano-banana para generación de imágenes",
+                      description:
+                        "Aprenderás a integrar la API de moda nano-banana para que tu agente pueda generar imágenes personalizadas, logos y contenido visual automáticamente.",
                     },
                     {
-                      title: "Proyecto: Vendedor virtual inteligente",
-                      description: "Construirás un agente que atiende consultas de clientes, busca productos en tu catálogo, calcula cotizaciones personalizadas y agenda citas de demostración. Todo sin que tengas que estar presente."
+                      title: "Proyecto: Generador Visual con nano-banana",
+                      description:
+                        "Construirás un agente que crea imágenes personalizadas, logos y contenido visual usando la API nano-banana. El agente analizará requerimientos y generará contenido visual profesional.",
                     },
                   ],
                   color: "var(--chart-3)",
@@ -1579,25 +1675,29 @@ export default function IAVisualLanding() {
                 },
                 {
                   module: "Sesión 4",
-                  title: "Deployment y Monetización",
+                  title: "Producción y Gestión de Agentes",
                   icon: <BiTargetLock className="w-6 h-6" />,
-                  badge: "💰 LAUNCH",
+                  badge: "🚀 PROD",
                   topics: [
                     {
                       title: "Publicar tu agente: embeddings, APIs, widgets",
-                      description: "Aprenderás diferentes formas de hacer tu agente accesible: desde widgets en sitios web hasta APIs que otras aplicaciones pueden usar."
+                      description:
+                        "Aprenderás diferentes formas de hacer tu agente accesible: desde widgets en sitios web hasta APIs que otras aplicaciones pueden usar.",
                     },
                     {
-                      title: "Seguridad y control de acceso",
-                      description: "Implementaremos medidas de seguridad para proteger tu agente y controlar quién puede usarlo, especialmente importante para aplicaciones comerciales."
+                      title: "Configuración básica de seguridad",
+                      description:
+                        "Aprenderás a configurar autenticación simple con usuario/contraseña para proteger tu instancia de Flowise y las consideraciones de seguridad para ambientes de producción.",
                     },
                     {
-                      title: "Cómo vender agentes a empresas locales",
-                      description: "Te mostraré estrategias probadas para identificar oportunidades, presentar tu servicio y cerrar ventas con pequeñas y medianas empresas."
+                      title: "Explorando opciones de deployment",
+                      description:
+                        "Revisaremos las diferentes alternativas para poner tu agente en producción: desde contenedores Docker hasta plataformas como Railway y Hugging Face, evaluando pros y contras de cada opción.",
                     },
                     {
-                      title: "Opciones de deployment y arquitectura",
-                      description: "Exploraremos las diferentes opciones para poner tu agente en producción: desde embeddings en sitios web hasta APIs que otros desarrolladores puedan consumir, y qué considerar para cada escenario."
+                      title: "Logs y monitoreo básico",
+                      description:
+                        "Te mostraré cómo revisar los logs de conversaciones de tu agente, configurar diferentes niveles de logging (debug, info, error) y entender qué información captura la plataforma automáticamente.",
                     },
                   ],
                   color: "var(--primary)",
@@ -1608,11 +1708,11 @@ export default function IAVisualLanding() {
                   key={index}
                   initial={{ opacity: 0, y: 60, rotateX: -15 }}
                   whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-                  transition={{ 
-                    duration: 0.8, 
+                  transition={{
+                    duration: 0.8,
                     delay: index * 0.15,
                     type: "spring",
-                    stiffness: 100
+                    stiffness: 100,
                   }}
                   viewport={{ once: true }}
                   whileHover={{
@@ -1624,8 +1724,8 @@ export default function IAVisualLanding() {
                       type: "spring",
                       stiffness: 250,
                       damping: 18,
-                      mass: 0.8
-                    }
+                      mass: 0.8,
+                    },
                   }}
                   whileTap={{ scale: 0.98 }}
                   className="mb-8 group cursor-pointer"
@@ -1639,17 +1739,17 @@ export default function IAVisualLanding() {
                     }}
                   >
                     {/* Background Gradient */}
-                    <motion.div 
+                    <motion.div
                       className="absolute inset-0 opacity-5 group-hover:opacity-8 transition-opacity duration-500"
                       style={{
-                        background: `linear-gradient(135deg, ${module.color}20 0%, transparent 50%)`
+                        background: `linear-gradient(135deg, ${module.color}20 0%, transparent 50%)`,
                       }}
                       whileHover={{
                         background: `linear-gradient(135deg, ${module.color}25 0%, ${module.color}05 70%, transparent 100%)`,
-                        transition: { duration: 0.3 }
+                        transition: { duration: 0.3 },
                       }}
                     />
-                    
+
                     {/* Shine Effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-800 ease-out opacity-0 group-hover:opacity-100"></div>
 
@@ -1667,21 +1767,21 @@ export default function IAVisualLanding() {
                           whileHover={{
                             rotate: [0, -10, 10, 0],
                             scale: 1.1,
-                            transition: { duration: 0.6 }
+                            transition: { duration: 0.6 },
                           }}
                         >
                           {module.icon}
                         </motion.div>
-                        
+
                         <div>
                           <div className="flex items-center gap-3 mb-2">
-                            <span 
+                            <span
                               className="font-bold text-lg"
                               style={{ color: module.color }}
                             >
                               {module.module}
                             </span>
-                            <motion.span 
+                            <motion.span
                               className="text-xs px-3 py-1 rounded-full font-bold border"
                               style={{
                                 backgroundColor: module.color + "20",
@@ -1691,7 +1791,7 @@ export default function IAVisualLanding() {
                               whileHover={{
                                 scale: 1.1,
                                 backgroundColor: module.color + "30",
-                                transition: { duration: 0.2 }
+                                transition: { duration: 0.2 },
                               }}
                               whileTap={{ scale: 0.95 }}
                             >
@@ -1701,23 +1801,27 @@ export default function IAVisualLanding() {
                           <motion.h3
                             className="text-2xl font-bold group-hover:scale-105 transition-transform duration-300"
                             style={{ color: "var(--foreground)" }}
-                            whileHover={{ 
+                            whileHover={{
                               x: 5,
-                              transition: { type: "spring", stiffness: 400 }
+                              transition: { type: "spring", stiffness: 400 },
                             }}
                           >
                             {module.title}
                           </motion.h3>
                         </div>
                       </div>
-                      
+
                       {/* Progress Circle */}
-                      <motion.div 
+                      <motion.div
                         className="relative w-16 h-16"
-                        whileHover={{ 
+                        whileHover={{
                           scale: 1.1,
                           rotate: 5,
-                          transition: { type: "spring", stiffness: 300, damping: 20 }
+                          transition: {
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 20,
+                          },
                         }}
                       >
                         <svg className="w-16 h-16 transform -rotate-90">
@@ -1739,14 +1843,16 @@ export default function IAVisualLanding() {
                             fill="none"
                             strokeLinecap="round"
                             initial={{ pathLength: 0 }}
-                            whileInView={{ pathLength: parseInt(module.progress) / 100 }}
+                            whileInView={{
+                              pathLength: parseInt(module.progress) / 100,
+                            }}
                             transition={{ duration: 1.5, delay: index * 0.2 }}
                             style={{
-                              pathLength: parseInt(module.progress) / 100
+                              pathLength: parseInt(module.progress) / 100,
                             }}
                           />
                         </svg>
-                        <div 
+                        <div
                           className="absolute inset-0 flex items-center justify-center text-sm font-bold"
                           style={{ color: module.color }}
                         >
@@ -1758,58 +1864,65 @@ export default function IAVisualLanding() {
                     {/* Topics List */}
                     <ul className="space-y-3 relative z-10">
                       {module.topics.map((topic, idx) => {
-                        const isSelected = selectedTopic?.moduleIndex === index && selectedTopic?.topicIndex === idx;
+                        const isSelected =
+                          selectedTopic?.moduleIndex === index &&
+                          selectedTopic?.topicIndex === idx;
                         const isModuleExpanded = expandedModule === index;
-                        
+
                         return (
-                          <motion.li 
-                            key={idx} 
+                          <motion.li
+                            key={idx}
                             className="group/item"
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ 
-                              duration: 0.5, 
-                              delay: (index * 0.15) + (idx * 0.1) + 0.3 
+                            transition={{
+                              duration: 0.5,
+                              delay: index * 0.15 + idx * 0.1 + 0.3,
                             }}
                             viewport={{ once: true }}
                           >
                             <motion.div
                               className="flex items-start gap-4 cursor-pointer p-3 rounded-xl"
                               animate={{
-                                backgroundColor: isSelected ? module.color + "10" : "transparent"
+                                backgroundColor: isSelected
+                                  ? module.color + "10"
+                                  : "transparent",
                               }}
-                              whileHover={{ 
+                              whileHover={{
                                 x: 6,
-                                backgroundColor: module.color + "08"
+                                backgroundColor: module.color + "08",
                               }}
                               whileTap={{ scale: 0.98 }}
                               transition={{
                                 duration: 0.2,
-                                ease: "easeOut"
+                                ease: "easeOut",
                               }}
                               onClick={() => {
                                 if (isSelected) {
                                   setSelectedTopic(null);
                                   setExpandedModule(null);
                                 } else {
-                                  setSelectedTopic({ moduleIndex: index, topicIndex: idx });
+                                  setSelectedTopic({
+                                    moduleIndex: index,
+                                    topicIndex: idx,
+                                  });
                                   setExpandedModule(index);
                                 }
                               }}
                             >
                               <motion.div
                                 className="flex-shrink-0 mt-1"
-                                whileHover={{ 
+                                whileHover={{
                                   rotate: 360,
-                                  scale: 1.2
+                                  scale: 1.2,
                                 }}
                                 animate={{
                                   scale: isSelected ? 1.1 : 1,
-                                  rotate: isSelected ? 90 : 0
+                                  rotate: isSelected ? 90 : 0,
                                 }}
                                 transition={{
                                   duration: 0.25,
-                                  ease: "easeOut"
+                                  ease: "easeOut",
                                 }}
                               >
                                 <BiCheckCircle
@@ -1817,16 +1930,18 @@ export default function IAVisualLanding() {
                                   style={{ color: module.color }}
                                 />
                               </motion.div>
-                              <span 
+                              <span
                                 className="group-hover/item:text-white transition-colors duration-300 font-medium"
-                                style={{ 
-                                  color: isSelected ? module.color : "var(--muted-foreground)"
+                                style={{
+                                  color: isSelected
+                                    ? module.color
+                                    : "var(--muted-foreground)",
                                 }}
                               >
                                 {topic.title}
                               </span>
                             </motion.div>
-                            
+
                             {/* Description Card */}
                             <AnimatePresence>
                               {isSelected && (
@@ -1835,9 +1950,9 @@ export default function IAVisualLanding() {
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: "auto" }}
                                   exit={{ opacity: 0, height: 0 }}
-                                  transition={{ 
+                                  transition={{
                                     duration: 0.4,
-                                    ease: [0.04, 0.62, 0.23, 0.98]
+                                    ease: [0.04, 0.62, 0.23, 0.98],
                                   }}
                                   className="ml-9 mt-3 overflow-hidden"
                                 >
@@ -1845,15 +1960,15 @@ export default function IAVisualLanding() {
                                     initial={{ y: -20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     exit={{ y: -10, opacity: 0 }}
-                                    transition={{ 
+                                    transition={{
                                       duration: 0.3,
                                       delay: 0.1,
-                                      ease: "easeOut"
+                                      ease: "easeOut",
                                     }}
                                     className="p-4 rounded-xl backdrop-blur-sm relative"
                                     style={{
                                       backgroundColor: module.color + "08",
-                                      boxShadow: `0 4px 20px ${module.color}12`
+                                      boxShadow: `0 4px 20px ${module.color}12`,
                                     }}
                                   >
                                     {/* Subtle left accent */}
@@ -1861,7 +1976,7 @@ export default function IAVisualLanding() {
                                       className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full"
                                       style={{ backgroundColor: module.color }}
                                     />
-                                    
+
                                     <p
                                       className="text-sm leading-relaxed pl-3"
                                       style={{ color: "var(--foreground)" }}
