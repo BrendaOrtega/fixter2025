@@ -1567,11 +1567,11 @@ export default function IAVisualLanding() {
                     },
                     {
                       title: "Integraciones: WhatsApp, Telegram, Discord",
-                      description: "Conectaremos tu agente directamente a plataformas de mensajería para que pueda interactuar con usuarios donde ellos ya están."
+                      description: "Revisaremos las opciones disponibles para conectar tu agente a plataformas de mensajería y cómo elegir la mejor estrategia según tu audiencia."
                     },
                     {
-                      title: "Proyecto: Agente multi-herramienta para tu negocio",
-                      description: "Construirás un agente versátil que combine todas las herramientas aprendidas para automatizar procesos específicos de tu industria."
+                      title: "Proyecto: Vendedor virtual inteligente",
+                      description: "Construirás un agente que atiende consultas de clientes, busca productos en tu catálogo, calcula cotizaciones personalizadas y agenda citas de demostración. Todo sin que tengas que estar presente."
                     },
                   ],
                   color: "var(--chart-3)",
@@ -1596,8 +1596,8 @@ export default function IAVisualLanding() {
                       description: "Te mostraré estrategias probadas para identificar oportunidades, presentar tu servicio y cerrar ventas con pequeñas y medianas empresas."
                     },
                     {
-                      title: "Casos de éxito y modelos de negocio probados",
-                      description: "Analizaremos ejemplos reales de estudiantes que han monetizado sus agentes y los diferentes modelos: suscripción, por uso, o servicios personalizados."
+                      title: "Opciones de deployment y arquitectura",
+                      description: "Exploraremos las diferentes opciones para poner tu agente en producción: desde embeddings en sitios web hasta APIs que otros desarrolladores puedan consumir, y qué considerar para cada escenario."
                     },
                   ],
                   color: "var(--primary)",
