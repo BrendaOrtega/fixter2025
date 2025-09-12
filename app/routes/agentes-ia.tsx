@@ -37,7 +37,7 @@ import "~/styles/agentes-ia.css";
 
 export const meta = () =>
   getMetaTags({
-    title: "Crea Agentes de IA Sin Código | Curso Completo | FixterGeek",
+    title: " Sin Código | Curso Completo | FixterGeek",
     description:
       "Aprende a crear agentes de IA inteligentes sin programar. Construye chatbots, asistentes virtuales y automatizaciones complejas usando herramientas visuales no-code. Curso 100% práctico.",
   });
@@ -793,6 +793,7 @@ export default function IAVisualLanding() {
                       >
                         Agentes de IA
                       </span>
+
                       <div
                         className="absolute -bottom-2 left-0 right-0 h-1 rounded-full opacity-60"
                         style={{
