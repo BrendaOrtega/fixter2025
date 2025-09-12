@@ -19,7 +19,7 @@ const navigation = [
   { name: "Blog", link: "/blog" },
   { name: "Newsletters", link: "/newsletters" },
   { name: "Claude Code", link: "/claude" },
-  { name: "Agentes IA", link: "/agentes-ia" },
+  { name: "Agentes IA", link: "/agentes" },
 ];
 
 export const SquigglyUnderline = () => {
@@ -298,7 +298,7 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/agentes-ia"
+          to="/agentes"
           index={5}
           isOpen={isOpen}
           title="Agentes IA"

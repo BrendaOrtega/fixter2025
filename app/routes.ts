@@ -29,7 +29,7 @@ export default [
   // Gemini CLI Workshop
   route("gemini", "routes/gemini.tsx"),
   // Agentes IA No-Code Course
-  route("agentes-ia", "routes/agentes-ia.tsx"),
+  route("agentes", "routes/agentes.tsx"),
   // Libros
   route("libros", "routes/libros.tsx"),
   // Libro interactivo

@@ -178,11 +178,14 @@ export default function IAVisualLanding() {
   const [showEarlyAccessForm, setShowEarlyAccessForm] = useState(false);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showPaymentCancel, setShowPaymentCancel] = useState(false);
-  const [expandedModule, setExpandedModule] = useState<number | null>(null);
+  const [expandedModule, setExpandedModule] = useState<number | null>(0);
   const [selectedTopic, setSelectedTopic] = useState<{
     moduleIndex: number;
     topicIndex: number;
-  } | null>(null);
+  } | null>({
+    moduleIndex: 0,
+    topicIndex: 0,
+  });
   const fetcher = useFetcher();
 
   // Check for payment result in URL params
@@ -817,14 +820,14 @@ export default function IAVisualLanding() {
                     className="text-xl lg:text-2xl font-light mb-10 leading-relaxed max-w-xl"
                     style={{ color: "var(--muted-foreground)" }}
                   >
-                    Domina las herramientas visuales más avanzadas para
-                    construir agentes inteligentes.
+                    Construye agentes de IA profesionales con herramientas
+                    visuales, drag-and-drop y open source.
                     <span
                       className="font-semibold"
                       style={{ color: "var(--primary)" }}
                     >
                       {" "}
-                      4 sesiones intensivas, primera completamente gratis.
+                      4 sesiones intensivas, la primera completamente gratis.
                     </span>
                   </p>
 
@@ -1266,8 +1269,9 @@ export default function IAVisualLanding() {
                   {/* Confeti de emojis para nano-banana */}
                   {index === 2 && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                      <style dangerouslySetInnerHTML={{
-                        __html: `
+                      <style
+                        dangerouslySetInnerHTML={{
+                          __html: `
                           @keyframes confetti-float {
                             0% { opacity: 0; transform: translateY(0) scale(0) rotate(0deg); }
                             25% { opacity: 1; transform: translateY(-20px) scale(1.2) rotate(90deg); }
@@ -1283,8 +1287,9 @@ export default function IAVisualLanding() {
                           .group:hover .confetti-emoji {
                             animation-play-state: running;
                           }
-                        `
-                      }} />
+                        `,
+                        }}
+                      />
                       {[...Array(8)].map((_, i) => (
                         <div
                           key={`confetti-${i}`}
@@ -1295,13 +1300,9 @@ export default function IAVisualLanding() {
                             animationDelay: `${i * 0.2}s`,
                           }}
                         >
-                            {
-                              ["🍌", "🎨", "✨", "🌟", "🎯", "💫", "🚀", "🔥"][
-                                i
-                              ]
-                            }
-                          </div>
-                        ))}
+                          {["🍌", "🎨", "✨", "🌟", "🎯", "💫", "🚀", "🔥"][i]}
+                        </div>
+                      ))}
                     </div>
                   )}
                   <div className="relative mb-4">
@@ -1370,7 +1371,10 @@ export default function IAVisualLanding() {
         </section>
 
         {/* Success Stories Section */}
-        <section className="py-20 relative overflow-hidden" style={{ backgroundColor: "var(--background)" }}>
+        <section
+          className="py-20 relative overflow-hidden"
+          style={{ backgroundColor: "var(--background)" }}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             {/* Section Header */}
             <div className="text-center mb-16">
@@ -1411,31 +1415,47 @@ export default function IAVisualLanding() {
                 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
+
                 <div className="relative z-10">
                   <div className="flex items-start gap-4 mb-6">
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-blue-500/30">
-                      <img 
+                      <img
                         src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
                         alt="Carlos Mendoza"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold mb-1" style={{ color: "var(--foreground)" }}>
+                      <h4
+                        className="text-xl font-bold mb-1"
+                        style={{ color: "var(--foreground)" }}
+                      >
                         Carlos Mendoza
                       </h4>
-                      <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                      <p
+                        className="text-sm"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
                         Fundador de Agencia Digital
                       </p>
                     </div>
                   </div>
-                  
-                  <blockquote className="text-lg leading-relaxed mb-6" style={{ color: "var(--foreground)" }}>
-                    "Integré la creación de agentes visuales como nuevo servicio en mi agencia. El sistema drag-and-drop me permitió escalar rápidamente: <strong>añadí $50K MXN mensuales</strong> de ingresos recurrentes automatizando clientes con agentes que construyo en horas, no semanas."
+
+                  <blockquote
+                    className="text-lg leading-relaxed mb-6"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    "Integré la creación de agentes visuales como nuevo servicio
+                    en mi agencia. El sistema drag-and-drop me permitió escalar
+                    rápidamente: <strong>añadí $50K MXN mensuales</strong> de
+                    ingresos recurrentes automatizando clientes con agentes que
+                    construyo en horas, no semanas."
                   </blockquote>
-                  
-                  <div className="flex items-center gap-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+
+                  <div
+                    className="flex items-center gap-2 text-sm"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
                     <span>⭐⭐⭐⭐⭐</span>
                   </div>
                 </div>
@@ -1454,31 +1474,50 @@ export default function IAVisualLanding() {
                 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
+
                 <div className="relative z-10">
                   <div className="flex items-start gap-4 mb-6">
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-green-500/30">
-                      <img 
+                      <img
                         src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
                         alt="Kevin James"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold mb-1" style={{ color: "var(--foreground)" }}>
+                      <h4
+                        className="text-xl font-bold mb-1"
+                        style={{ color: "var(--foreground)" }}
+                      >
                         Kevin James
                       </h4>
-                      <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                      <p
+                        className="text-sm"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
                         CTO, Empresa de Software
                       </p>
                     </div>
                   </div>
-                  
-                  <blockquote className="text-lg leading-relaxed mb-6" style={{ color: "var(--foreground)" }}>
-                    "Adoptamos el sistema visual para automatizar soporte con RAG corporativo. <strong>Reducimos 40% el tiempo de respuesta y aumentamos 25% la satisfacción</strong> del cliente. Lo mejor: nuestro equipo sin experiencia técnica ahora construye agentes complejos sin código."
+
+                  <blockquote
+                    className="text-lg leading-relaxed mb-6"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    "Adoptamos el sistema visual para automatizar soporte con
+                    RAG corporativo.{" "}
+                    <strong>
+                      Reducimos 40% el tiempo de respuesta y aumentamos 25% la
+                      satisfacción
+                    </strong>{" "}
+                    del cliente. Lo mejor: nuestro equipo sin experiencia
+                    técnica ahora construye agentes complejos sin código."
                   </blockquote>
-                  
-                  <div className="flex items-center gap-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+
+                  <div
+                    className="flex items-center gap-2 text-sm"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
                     <span>⭐⭐⭐⭐⭐</span>
                   </div>
                 </div>
@@ -1493,10 +1532,18 @@ export default function IAVisualLanding() {
               viewport={{ once: true }}
               className="text-center mt-12"
             >
-              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border" 
-                   style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
+              <div
+                className="inline-flex items-center gap-3 px-6 py-3 rounded-full border"
+                style={{
+                  backgroundColor: "var(--card)",
+                  borderColor: "var(--border)",
+                }}
+              >
                 <span className="text-2xl">✅</span>
-                <span style={{ color: "var(--foreground)" }} className="font-medium">
+                <span
+                  style={{ color: "var(--foreground)" }}
+                  className="font-medium"
+                >
                   100% de los graduados implementan al menos 1 agente en 30 días
                 </span>
               </div>
@@ -1774,7 +1821,8 @@ export default function IAVisualLanding() {
                   badge: "🔧 TOOLS",
                   topics: [
                     {
-                      title: "Agentes con herramientas: calculadora, calendarios, APIs",
+                      title:
+                        "Agentes con herramientas: calculadora, calendarios, APIs",
                       description:
                         "Tu agente podrá usar herramientas externas como hacer cálculos complejos, consultar disponibilidad de citas o conectarse con servicios externos en tiempo real.",
                     },
@@ -1834,7 +1882,8 @@ export default function IAVisualLanding() {
                   badge: "🧠 RAG",
                   topics: [
                     {
-                      title: "Cargar y procesar documentos masivos (PDF, Word, Web)",
+                      title:
+                        "Cargar y procesar documentos masivos (PDF, Word, Web)",
                       description:
                         "Tu agente procesará cientos de documentos corporativos automáticamente: manuales, políticas, contratos, reportes. Usando splitters inteligentes para fragmentar información de manera óptima.",
                     },
@@ -2198,26 +2247,29 @@ export default function IAVisualLanding() {
                 viewport={{ once: true }}
                 className="text-center mb-20"
               >
-                <div
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full mb-8 border-2"
+                <motion.div
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-full mb-8 border-2 relative overflow-hidden"
                   style={{
                     backgroundColor: "var(--card)",
                     borderColor: "var(--accent)",
                     boxShadow: "0 8px 32px var(--accent)15",
                   }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
                   <span className="text-2xl">🎯</span>
                   <span
-                    className="font-bold text-lg"
+                    className="font-bold text-lg relative z-10"
                     style={{ color: "var(--accent)" }}
                   >
-                    ENCUENTRA TU PERFIL
+                    ENCUENTRA TU PERFIL IDEAL
                   </span>
-                </div>
+                </motion.div>
 
                 <h2 className="text-5xl md:text-6xl font-black leading-tight mb-8">
                   <span style={{ color: "var(--foreground)" }}>
-                    ¿Este taller es para{" "}
+                    Este taller es{" "}
                   </span>
                   <span className="relative">
                     <span
@@ -2228,7 +2280,7 @@ export default function IAVisualLanding() {
                         WebkitTextFillColor: "transparent",
                       }}
                     >
-                      ti?
+                      para ti
                     </span>
                     <div
                       className="absolute -bottom-2 left-0 right-0 h-2 rounded-full opacity-60"
@@ -2244,14 +2296,14 @@ export default function IAVisualLanding() {
                   className="text-xl md:text-2xl font-light max-w-3xl mx-auto leading-relaxed"
                   style={{ color: "var(--muted-foreground)" }}
                 >
-                  Descubre si este taller se adapta a tu perfil y objetivos
-                  profesionales.
+                  Deberías tomar este taller sin importar tu perfil profesional.
                   <span
                     className="font-semibold"
                     style={{ color: "var(--primary)" }}
                   >
                     <br />
-                    Sin importar tu experiencia previa. 👶🏻
+                    La IA visual es para todos. No necesitas experiencia previa.
+                    🚀
                   </span>
                 </p>
               </motion.div>
@@ -2285,30 +2337,30 @@ export default function IAVisualLanding() {
                       className="text-3xl font-bold mb-6"
                       style={{ color: "var(--foreground)" }}
                     >
-                      Perfecto para ti si...
+                      Lo que vas a lograr
                     </h3>
 
                     <div className="space-y-4">
                       {[
                         {
-                          text: "🚀 Quieres crear agentes de IA pero no sabes programar",
-                          highlight: "crear agentes",
+                          text: "🚀 Crear agentes de IA sin programar una sola línea",
+                          highlight: "sin programar",
                         },
                         {
-                          text: "🏢 Tienes una empresa y necesitas automatizar procesos",
-                          highlight: "automatizar",
+                          text: "🏢 Automatizar procesos empresariales en tiempo récord",
+                          highlight: "tiempo récord",
                         },
                         {
-                          text: "💰 Buscas una nueva fuente de ingresos con IA",
-                          highlight: "ingresos",
+                          text: "💰 Generar una nueva fuente de ingresos con IA",
+                          highlight: "nueva fuente",
                         },
                         {
-                          text: "🎯 Quieres ofrecer servicios de automatización",
-                          highlight: "servicios",
+                          text: "🎯 Ofrecer servicios profesionales de automatización",
+                          highlight: "servicios profesionales",
                         },
                         {
-                          text: "🤯 Te fascina la IA pero los cursos técnicos te abruman",
-                          highlight: "te abruman",
+                          text: "🤯 Dominar herramientas visuales intuitivas y poderosas",
+                          highlight: "visuales intuitivas",
                         },
                       ].map((item, index) => (
                         <motion.div
@@ -2380,26 +2432,26 @@ export default function IAVisualLanding() {
                       className="text-3xl font-bold mb-6"
                       style={{ color: "var(--foreground)" }}
                     >
-                      Solo necesitas...
+                      Requisitos mínimos
                     </h3>
 
                     <div className="space-y-4">
                       {[
                         {
-                          text: "💻 Saber usar una computadora básicamente",
-                          highlight: "básicamente",
+                          text: "💻 Computadora con navegador web moderno",
+                          highlight: "navegador web",
                         },
                         {
-                          text: "🧠 Ganas de aprender herramientas nuevas",
-                          highlight: "aprender",
+                          text: "🌐 Conexión a internet estable y confiable",
+                          highlight: "estable",
                         },
                         {
-                          text: "🔬 Mentalidad de experimentación y prueba-error",
-                          highlight: "experimentación",
+                          text: "🧠 Mentalidad abierta para experimentar con IA",
+                          highlight: "experimentar",
                         },
                         {
-                          text: "🌐 Acceso a internet estable",
-                          highlight: "internet estable",
+                          text: "⏰ 2 horas disponibles por sesión en vivo",
+                          highlight: "2 horas",
                         },
                         {
                           text: "🚫 NO necesitas programación ni experiencia técnica",
@@ -2481,7 +2533,7 @@ export default function IAVisualLanding() {
                     className="text-2xl font-bold mb-3"
                     style={{ color: "var(--foreground)" }}
                   >
-                    ¿Te identificas con alguno de estos perfiles?
+                    ¡Hora de actuar!
                   </h3>
 
                   <p
@@ -2723,14 +2775,14 @@ export default function IAVisualLanding() {
                   className="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto leading-relaxed"
                   style={{ color: "var(--muted-foreground)" }}
                 >
-                  No esperes más para dominar las herramientas que están
-                  definiendo el futuro del trabajo.
+                  Los que aprenden IA visual hoy serán los líderes tecnológicos
+                  del mañana.
                   <span
                     className="font-semibold"
                     style={{ color: "var(--primary)" }}
                   >
                     {" "}
-                    Tu lugar te está esperando.
+                    Tu transformación empieza aquí.
                   </span>
                 </p>
               </motion.div>
@@ -2739,178 +2791,208 @@ export default function IAVisualLanding() {
               <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 {/* Free Session Card */}
                 <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
                   viewport={{ once: true }}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                  className="relative p-8 rounded-3xl border-2 backdrop-blur-sm"
-                  style={{
-                    backgroundColor: "var(--card)",
-                    borderColor: "var(--chart-3)",
-                    boxShadow: "0 20px 40px var(--chart-3)20",
-                  }}
+                  className="relative group"
                 >
+                  {/* Badge */}
                   <div
-                    className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded-full text-sm font-bold"
+                    className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10"
                     style={{
                       backgroundColor: "var(--chart-3)",
                       color: "var(--primary-foreground)",
+                      boxShadow: "0 2px 8px var(--chart-3)30",
                     }}
                   >
                     ✨ COMPLETAMENTE GRATIS ✨
                   </div>
 
-                  <div className="pt-4">
-                    <h3
-                      className="text-2xl font-bold mb-4 text-center"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      Primera Sesión
-                    </h3>
-                    <div
-                      className="text-4xl font-black text-center mb-2"
-                      style={{ color: "var(--chart-3)" }}
-                    >
-                      $0
-                    </div>
-                    <p
-                      className="text-center mb-6 opacity-80"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
-                      Sin compromiso • Cancela cuando quieras
-                    </p>
+                  <motion.div
+                    className="relative p-8 pt-10 rounded-3xl border-2 backdrop-blur-sm h-full"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--chart-3)",
+                      boxShadow: "0 10px 30px var(--chart-3)15",
+                    }}
+                    whileHover={{
+                      y: -3,
+                      boxShadow: "0 15px 40px var(--chart-3)25",
+                      borderColor: "var(--chart-3)",
+                      transition: { duration: 0.3, ease: "easeOut" },
+                    }}
+                  >
+                    <div className="pt-4">
+                      <h3
+                        className="text-2xl font-bold mb-4 text-center"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        Primera Sesión
+                      </h3>
+                      <div
+                        className="text-4xl font-black text-center mb-2"
+                        style={{ color: "var(--chart-3)" }}
+                      >
+                        $0
+                      </div>
+                      <p
+                        className="text-center mb-6 opacity-80"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Sin compromiso • Cancela cuando quieras
+                      </p>
 
-                    <ul className="space-y-3 mb-8">
-                      {[
-                        "Construye tu primer agente en 30 minutos",
-                        "Acceso completo a tu servidor personal",
-                        "Introducción a herramientas no-code",
-                        "Q&A en vivo con el instructor",
-                      ].map((feature, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-                            style={{ backgroundColor: "var(--chart-3)" }}
-                          >
-                            <span
-                              className="text-xs"
-                              style={{ color: "#ffffff" }}
+                      <ul className="space-y-3 mb-8">
+                        {[
+                          "Construye tu primer agente en 30 minutos",
+                          "Acceso completo a tu servidor personal",
+                          "Introducción a herramientas no-code",
+                          "Q&A en vivo con el instructor",
+                        ].map((feature, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
+                              style={{ backgroundColor: "var(--chart-3)" }}
                             >
-                              ✓
+                              <span
+                                className="text-xs"
+                                style={{ color: "#ffffff" }}
+                              >
+                                ✓
+                              </span>
+                            </div>
+                            <span
+                              className="text-sm"
+                              style={{ color: "var(--foreground)" }}
+                            >
+                              {feature}
                             </span>
-                          </div>
-                          <span
-                            className="text-sm"
-                            style={{ color: "var(--foreground)" }}
-                          >
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                          </li>
+                        ))}
+                      </ul>
 
-                    <button
-                      onClick={() => setShowEarlyAccessForm(true)}
-                      className="w-full font-bold py-4 px-6 rounded-2xl text-lg transition-all transform hover:scale-105"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, var(--chart-3) 0%, var(--primary) 100%)",
-                        color: "var(--primary-foreground)",
-                        boxShadow: "0 10px 30px var(--chart-3)40",
-                      }}
-                    >
-                      🎓 Reservar Mi Lugar Gratis
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => setShowEarlyAccessForm(true)}
+                        className="w-full font-bold py-4 px-6 rounded-2xl text-lg transition-all transform hover:scale-105"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, var(--chart-3) 0%, var(--primary) 100%)",
+                          color: "var(--primary-foreground)",
+                          boxShadow: "0 10px 30px var(--chart-3)40",
+                        }}
+                      >
+                        🎓 Reservar Mi Lugar Gratis
+                      </button>
+                    </div>
+                  </motion.div>
                 </motion.div>
 
                 {/* Full Course Card */}
                 <motion.div
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
                   viewport={{ once: true }}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                  className="relative p-8 rounded-3xl border-2 backdrop-blur-sm"
-                  style={{
-                    backgroundColor: "var(--card)",
-                    borderColor: "var(--primary)",
-                    boxShadow: "0 20px 40px var(--primary)30",
-                  }}
+                  className="relative group"
                 >
-                  <div
-                    className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded-full text-sm font-bold"
+                  {/* Badge */}
+                  <motion.div
+                    className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10"
                     style={{
                       backgroundColor: "var(--primary)",
                       color: "var(--primary-foreground)",
+                      boxShadow: "0 2px 10px var(--primary)40",
+                    }}
+                    animate={{
+                      y: [0, -2, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
                     }}
                   >
                     🔥 MÁS POPULAR 🔥
-                  </div>
+                  </motion.div>
 
-                  <div className="pt-4">
-                    <h3
-                      className="text-2xl font-bold mb-4 text-center"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      Taller Completo
-                    </h3>
-                    <div
-                      className="text-4xl font-black text-center mb-2"
-                      style={{ color: "var(--primary)" }}
-                    >
-                      $4,900 MXN
-                    </div>
-                    <p
-                      className="text-center mb-6 opacity-80"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
-                      4 sesiones intensivas • Servidor incluido
-                    </p>
+                  <motion.div
+                    className="relative p-8 pt-10 rounded-3xl border-2 backdrop-blur-sm h-full"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--primary)",
+                      boxShadow: "0 10px 30px var(--primary)20",
+                    }}
+                    whileHover={{
+                      y: -5,
+                      boxShadow: "0 20px 50px var(--primary)30",
+                      borderColor: "var(--primary)",
+                      transition: { duration: 0.3, ease: "easeOut" },
+                    }}
+                  >
+                    <div className="pt-4">
+                      <h3
+                        className="text-2xl font-bold mb-4 text-center"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        Taller Completo
+                      </h3>
+                      <div
+                        className="text-4xl font-black text-center mb-2"
+                        style={{ color: "var(--primary)" }}
+                      >
+                        $4,900 MXN
+                      </div>
+                      <p
+                        className="text-center mb-6 opacity-80"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        4 sesiones intensivas • Servidor incluido
+                      </p>
 
-                    <ul className="space-y-3 mb-8">
-                      {[
-                        "4 sesiones interactivas de 2 horas",
-                        "Servidor personal por 15 días",
-                        "Proyectos comerciales reales",
-                        "Certificado de finalización",
-                      ].map((feature, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-                            style={{ backgroundColor: "var(--primary)" }}
-                          >
-                            <span
-                              className="text-xs"
-                              style={{ color: "#ffffff" }}
+                      <ul className="space-y-3 mb-8">
+                        {[
+                          "4 sesiones interactivas de 2 horas",
+                          "Servidor personal por 15 días",
+                          "Proyectos comerciales reales",
+                          "Certificado de finalización",
+                        ].map((feature, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
+                              style={{ backgroundColor: "var(--primary)" }}
                             >
-                              ✓
+                              <span
+                                className="text-xs"
+                                style={{ color: "#ffffff" }}
+                              >
+                                ✓
+                              </span>
+                            </div>
+                            <span
+                              className="text-sm"
+                              style={{ color: "var(--foreground)" }}
+                            >
+                              {feature}
                             </span>
-                          </div>
-                          <span
-                            className="text-sm"
-                            style={{ color: "var(--foreground)" }}
-                          >
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                          </li>
+                        ))}
+                      </ul>
 
-                    <button
-                      onClick={() => setShowEarlyAccessForm(true)}
-                      className="w-full font-bold py-4 px-6 rounded-2xl text-lg transition-all transform hover:scale-105"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
-                        color: "var(--primary-foreground)",
-                        boxShadow: "0 10px 30px var(--primary)40",
-                      }}
-                    >
-                      🚀 Notificarme del Lanzamiento
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => setShowEarlyAccessForm(true)}
+                        className="w-full font-bold py-4 px-6 rounded-2xl text-lg transition-all transform hover:scale-105"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
+                          color: "var(--primary-foreground)",
+                          boxShadow: "0 10px 30px var(--primary)40",
+                        }}
+                      >
+                        🚀 Notificarme del Lanzamiento
+                      </button>
+                    </div>
+                  </motion.div>
                 </motion.div>
               </div>
 
