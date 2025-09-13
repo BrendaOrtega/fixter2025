@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
+import LiquidEther from "~/components/backgrounds/LiquidEther";
+import FaultyTerminal from "~/components/backgrounds/FaultyTerminal";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
@@ -689,43 +691,155 @@ export default function IAVisualLanding() {
               "linear-gradient(135deg, var(--background) 0%, var(--card) 50%, var(--muted) 100%)",
           }}
         >
-          {/* Dynamic Background Pattern */}
+          {/* Faulty Terminal Background */}
           <div className="absolute inset-0">
-            {/* Animated Grid */}
-            <div
-              className="absolute inset-0 opacity-10"
+            <FaultyTerminal
+              scale={1}
+              gridMul={[1.5, 1]}
+              digitSize={1.2}
+              timeScale={0.4}
+              pause={false}
+              scanlineIntensity={0.2}
+              glitchAmount={0.8}
+              flickerAmount={0.6}
+              noiseAmp={0.05}
+              chromaticAberration={2}
+              dither={0}
+              curvature={0.1}
+              tint="#ff7e5f"
+              mouseReact={true}
+              mouseStrength={0.3}
+              pageLoadAnimation={true}
+              brightness={0.7}
+            />
+            
+            {/* Overlay gradient for better text readability */}
+            <div 
+              className="absolute inset-0 pointer-events-none" 
               style={{
-                backgroundImage:
-                  "radial-gradient(circle at 2px 2px, var(--chart-1) 1px, transparent 0)",
-                backgroundSize: "40px 40px",
+                background: `
+                  linear-gradient(135deg, 
+                    rgba(42, 32, 36, 0.8) 0%, 
+                    rgba(42, 32, 36, 0.6) 40%, 
+                    rgba(42, 32, 36, 0.7) 100%
+                  ),
+                  radial-gradient(circle at center, 
+                    transparent 20%, 
+                    rgba(42, 32, 36, 0.3) 60%, 
+                    rgba(42, 32, 36, 0.8) 100%
+                  )
+                `,
               }}
-            ></div>
+            />
 
-            {/* Floating Shapes */}
+            {/* Accent gradient shapes */}
             <div
-              className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full opacity-20 animate-pulse"
+              className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full opacity-10"
               style={{
                 background:
-                  "radial-gradient(circle, var(--primary)30 0%, transparent 70%)",
+                  "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
+                filter: 'blur(40px)',
               }}
             ></div>
             <div
-              className="absolute top-3/4 right-1/4 w-48 h-48 rounded-full opacity-15 animate-pulse animation-delay-2000"
+              className="absolute top-3/4 right-1/4 w-56 h-56 rounded-full opacity-8"
               style={{
                 background:
-                  "radial-gradient(circle, var(--chart-2)30 0%, transparent 70%)",
+                  "radial-gradient(circle, var(--chart-2) 0%, transparent 70%)",
+                filter: 'blur(50px)',
               }}
             ></div>
             <div
-              className="absolute bottom-1/4 left-1/3 w-24 h-24 rounded-full opacity-25 animate-pulse animation-delay-1000"
+              className="absolute bottom-1/4 left-1/3 w-32 h-32 rounded-full opacity-12"
               style={{
                 background:
-                  "radial-gradient(circle, var(--chart-1)40 0%, transparent 70%)",
+                  "radial-gradient(circle, var(--accent) 0%, transparent 70%)",
+                filter: 'blur(35px)',
               }}
             ></div>
           </div>
+          
+          {/* Visual effects layer - z-index: 1, pointer-events: none */}
+          <div className="absolute inset-0 z-[1] pointer-events-none">
+            {/* Gradient overlay for depth */}
+            <div 
+              className="absolute inset-0" 
+              style={{
+                background: `
+                  radial-gradient(circle at 20% 50%, rgba(255, 126, 95, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 50%, rgba(254, 180, 123, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 80%, rgba(254, 180, 123, 0.1) 0%, transparent 50%)
+                `,
+                mixBlendMode: 'screen',
+              }}
+            />
+            
+            {/* Vignette for better text readability */}
+            <div 
+              className="absolute inset-0" 
+              style={{
+                background: 'radial-gradient(circle at center, transparent 30%, rgba(42, 32, 36, 0.7) 100%)',
+              }}
+            />
 
-          <div className="relative z-10 container mx-auto px-4 py-20">
+            {/* Floating accent shapes for additional depth */}
+            <motion.div
+              animate={{
+                x: [0, 30, 0],
+                y: [0, -30, 0],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 20,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full"
+              style={{
+                background: "radial-gradient(circle, rgba(255, 126, 95, 0.3) 0%, transparent 70%)",
+                filter: 'blur(60px)',
+              }}
+            />
+            <motion.div
+              animate={{
+                x: [0, -40, 0],
+                y: [0, 20, 0],
+                scale: [1, 0.9, 1],
+              }}
+              transition={{
+                duration: 25,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 5,
+              }}
+              className="absolute top-3/4 right-1/4 w-56 h-56 rounded-full"
+              style={{
+                background: "radial-gradient(circle, rgba(254, 180, 123, 0.25) 0%, transparent 70%)",
+                filter: 'blur(70px)',
+              }}
+            />
+            <motion.div
+              animate={{
+                x: [0, 20, 0],
+                y: [0, 30, 0],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 18,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 10,
+              }}
+              className="absolute bottom-1/4 left-1/3 w-32 h-32 rounded-full"
+              style={{
+                background: "radial-gradient(circle, rgba(255, 202, 167, 0.35) 0%, transparent 70%)",
+                filter: 'blur(50px)',
+              }}
+            />
+          </div>
+
+          {/* Content layer - z-index: 2, pointer-events: none on container, auto on interactive elements */}
+          <div className="relative z-[2] container mx-auto px-4 py-20 pointer-events-none">
             <div className="max-w-6xl mx-auto">
               {/* Premium Badge */}
               <motion.div
@@ -854,7 +968,7 @@ export default function IAVisualLanding() {
                     onClick={() => setShowEarlyAccessForm(true)}
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="group relative font-bold py-6 px-10 rounded-2xl text-xl transition-all duration-300 overflow-hidden"
+                    className="group relative font-bold py-6 px-10 rounded-2xl text-xl transition-all duration-300 overflow-hidden pointer-events-auto"
                     style={{
                       background:
                         "linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 100%)",
@@ -1122,6 +1236,54 @@ export default function IAVisualLanding() {
               "linear-gradient(45deg, var(--muted) 0%, var(--card) 100%)",
           }}
         >
+          {/* Subtle Pixel Blast Background */}
+          <div className="absolute inset-0">
+            <style
+              dangerouslySetInnerHTML={{
+                __html: `
+                  @keyframes pixel-float {
+                    0%, 100% { transform: translateY(0) scale(1); opacity: 0.1; }
+                    50% { transform: translateY(-20px) scale(1.1); opacity: 0.2; }
+                  }
+                  
+                  .pixel-float {
+                    position: absolute;
+                    background: linear-gradient(135deg, var(--chart-1), var(--chart-2));
+                    animation: pixel-float ease-in-out infinite;
+                    border-radius: 10%;
+                  }
+                `,
+              }}
+            />
+            
+            {/* Generate floating pixels */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(10)].map((_, i) => {
+                const size = 30 + Math.random() * 50;
+                const duration = 10 + Math.random() * 15;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                
+                return (
+                  <div
+                    key={`pixel-float-${i}`}
+                    className="pixel-float"
+                    style={{
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      left: `${left}%`,
+                      top: `${top}%`,
+                      animationDuration: `${duration}s`,
+                      animationDelay: `${i * 0.5}s`,
+                      filter: 'blur(2px)',
+                      opacity: 0.1,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          
           <div className="relative container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -1365,6 +1527,150 @@ export default function IAVisualLanding() {
           className="py-20 relative overflow-hidden"
           style={{ backgroundColor: "var(--background)" }}
         >
+          {/* Liquid Ether Background */}
+          <div className="absolute inset-0">
+            {/* Generate liquid ether blobs with inline animations */}
+            <div className="absolute inset-0 overflow-hidden">
+              {/* Large background blobs */}
+              <motion.div
+                animate={{
+                  x: [0, 30, -20, 0],
+                  y: [0, -30, 20, 0],
+                  scale: [1, 1.1, 0.9, 1],
+                  rotate: [0, 120, 240, 360],
+                }}
+                transition={{
+                  duration: 25,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                style={{
+                  position: 'absolute',
+                  width: '400px',
+                  height: '400px',
+                  background: `linear-gradient(135deg, var(--primary), var(--chart-2))`,
+                  left: '10%',
+                  top: '20%',
+                  opacity: 0.2,
+                  filter: 'blur(40px)',
+                  borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%',
+                }}
+              />
+              <motion.div
+                animate={{
+                  x: [0, -30, 20, 0],
+                  y: [0, 30, -20, 0],
+                  scale: [1, 0.9, 1.1, 1],
+                  rotate: [360, 240, 120, 0],
+                }}
+                transition={{
+                  duration: 30,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: 5,
+                }}
+                style={{
+                  position: 'absolute',
+                  width: '350px',
+                  height: '350px',
+                  background: `linear-gradient(45deg, var(--chart-1), var(--accent))`,
+                  right: '15%',
+                  bottom: '25%',
+                  opacity: 0.15,
+                  filter: 'blur(40px)',
+                  borderRadius: '30% 60% 70% 40% / 50% 60% 30% 60%',
+                }}
+              />
+              <motion.div
+                animate={{
+                  x: [0, 20, -30, 0],
+                  y: [0, -20, 30, 0],
+                  scale: [1, 1.05, 0.95, 1],
+                  rotate: [0, 90, 180, 270, 360],
+                }}
+                transition={{
+                  duration: 35,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: 10,
+                }}
+                style={{
+                  position: 'absolute',
+                  width: '300px',
+                  height: '300px',
+                  background: `linear-gradient(90deg, var(--chart-3), var(--primary))`,
+                  left: '50%',
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  opacity: 0.18,
+                  filter: 'blur(40px)',
+                  borderRadius: '50% 60% 60% 50% / 40% 50% 60% 50%',
+                }}
+              />
+              
+              {/* Smaller accent blobs */}
+              {[...Array(5)].map((_, i) => {
+                const size = 150 + Math.random() * 200;
+                const duration = 20 + Math.random() * 20;
+                const delay = Math.random() * 10;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const colors = [
+                  `linear-gradient(135deg, var(--primary)80, transparent)`,
+                  `linear-gradient(45deg, var(--chart-2)80, transparent)`,
+                  `linear-gradient(90deg, var(--accent)80, transparent)`,
+                ];
+                const shapes = [
+                  '60% 40% 30% 70% / 60% 30% 70% 40%',
+                  '30% 60% 70% 40% / 50% 60% 30% 60%',
+                  '50% 60% 60% 50% / 40% 50% 60% 50%',
+                  '40% 50% 50% 60% / 60% 40% 50% 60%',
+                  '70% 30% 30% 70% / 60% 40% 60% 40%',
+                ];
+                
+                return (
+                  <motion.div
+                    key={`ether-${i}`}
+                    animate={{
+                      x: [0, 25 - i * 5, -(20 - i * 3), 0],
+                      y: [0, -(25 - i * 5), 20 - i * 3, 0],
+                      scale: [1, 1 + i * 0.02, 1 - i * 0.02, 1],
+                    }}
+                    transition={{
+                      duration: duration,
+                      repeat: Infinity,
+                      ease: "linear",
+                      delay: delay,
+                    }}
+                    style={{
+                      position: 'absolute',
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      background: colors[i % colors.length],
+                      left: `${left}%`,
+                      top: `${top}%`,
+                      opacity: 0.1 + Math.random() * 0.1,
+                      filter: 'blur(35px)',
+                      borderRadius: shapes[i % shapes.length],
+                    }}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* Gradient overlay for better readability */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(180deg, 
+                  transparent 0%, 
+                  rgba(42, 32, 36, 0.4) 30%, 
+                  rgba(42, 32, 36, 0.6) 70%, 
+                  rgba(42, 32, 36, 0.8) 100%)`,
+              }}
+            />
+          </div>
+          
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             {/* Section Header */}
             <div className="text-center mb-16">
@@ -1549,7 +1855,7 @@ export default function IAVisualLanding() {
               "linear-gradient(135deg, var(--card) 0%, var(--background) 100%)",
           }}
         >
-          <div className="relative container mx-auto px-4">
+          <div className="relative container mx-auto px-4 z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1722,13 +2028,39 @@ export default function IAVisualLanding() {
 
         {/* Curriculum Section */}
         <section
-          className="py-20 relative"
+          className="py-20 relative overflow-hidden"
           style={{
             background:
               "linear-gradient(135deg, var(--background) 0%, var(--secondary) 100%)",
           }}
         >
-          <div className="relative container mx-auto px-4">
+          {/* LiquidEther Background for Curriculum */}
+          <div className="absolute inset-0">
+            <LiquidEther
+              colors={['#ff7e5f', '#feb47b', '#ffcaa7']}
+              mouseForce={15}
+              cursorSize={120}
+              autoDemo={true}
+              autoSpeed={0.3}
+              autoIntensity={1.8}
+              resolution={0.4}
+              className="opacity-50"
+            />
+            
+            {/* Gradient overlay for better readability */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg,
+                  transparent 0%,
+                  rgba(42, 32, 36, 0.2) 30%,
+                  rgba(42, 32, 36, 0.4) 70%,
+                  rgba(42, 32, 36, 0.6) 100%)`,
+              }}
+            />
+          </div>
+          
+          <div className="relative container mx-auto px-4 z-10 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1931,17 +2263,19 @@ export default function IAVisualLanding() {
                       border: `1px solid ${module.color}20`,
                     }}
                   >
-                    {/* Background Gradient */}
-                    <motion.div
-                      className="absolute inset-0 opacity-5 group-hover:opacity-8 transition-opacity duration-500"
-                      style={{
-                        background: `linear-gradient(135deg, ${module.color}20 0%, transparent 50%)`,
-                      }}
-                      whileHover={{
-                        background: `linear-gradient(135deg, ${module.color}25 0%, ${module.color}05 70%, transparent 100%)`,
-                        transition: { duration: 0.3 },
-                      }}
-                    />
+                    {/* LiquidEther Background per Card */}
+                    <div className="absolute inset-0 overflow-hidden rounded-3xl opacity-30 group-hover:opacity-40 transition-opacity duration-500">
+                      <LiquidEther
+                        colors={['#ff7e5f', '#feb47b', '#ffcaa7']}
+                        mouseForce={12}
+                        cursorSize={80}
+                        autoDemo={true}
+                        autoSpeed={0.2 + index * 0.1}
+                        autoIntensity={1.5 + index * 0.3}
+                        resolution={0.3}
+                        autoResumeDelay={2000 + index * 500}
+                      />
+                    </div>
 
                     {/* Shine Effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-800 ease-out opacity-0 group-hover:opacity-100"></div>
@@ -2074,7 +2408,7 @@ export default function IAVisualLanding() {
                             viewport={{ once: true }}
                           >
                             <motion.div
-                              className="flex items-start gap-4 cursor-pointer p-3 rounded-xl"
+                              className="flex items-start gap-4 cursor-pointer p-3 rounded-xl pointer-events-auto"
                               animate={{
                                 backgroundColor: isSelected
                                   ? module.color + "10"
@@ -2552,16 +2886,36 @@ export default function IAVisualLanding() {
 
         {/* Instructor Section */}
         <section
-          className="py-20 relative"
+          className="py-20 relative overflow-hidden"
           style={{
             background:
               "linear-gradient(45deg, var(--secondary) 0%, var(--background) 100%)",
           }}
         >
-          <div className="relative container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+          {/* LiquidEther Background */}
+          <div className="absolute inset-0 z-0">
+            <LiquidEther
+              colors={['#ff7e5f', '#feb47b', '#ffcaa7']}
+              mouseForce={50}
+              cursorSize={150}
+              isViscous={false}
+              viscous={30}
+              iterationsViscous={32}
+              iterationsPoisson={32}
+              resolution={0.3}
+              isBounce={false}
+              autoDemo={true}
+              autoSpeed={0.3}
+              autoIntensity={1.5}
+              takeoverDuration={0.1}
+              autoResumeDelay={2000}
+              autoRampDuration={0.3}
+            />
+          </div>
+          <div className="relative container mx-auto px-4 z-10 pointer-events-none">
+            <div className="max-w-4xl mx-auto pointer-events-auto">
               <div
-                className="rounded-3xl p-8 md:p-12 border-2"
+                className="rounded-3xl p-8 md:p-12 border-2 relative overflow-hidden"
                 style={{
                   backgroundColor: "var(--card)",
                   borderColor: "var(--border)",
@@ -2667,39 +3021,120 @@ export default function IAVisualLanding() {
               "linear-gradient(135deg, var(--background) 0%, var(--secondary) 40%, var(--card) 100%)",
           }}
         >
-          {/* Background Pattern */}
+          {/* Intense Pixel Blast Background */}
           <div className="absolute inset-0">
-            <div
-              className="absolute inset-0 opacity-5"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 20% 50%, var(--primary) 2px, transparent 2px), radial-gradient(circle at 80% 50%, var(--accent) 1px, transparent 1px)",
-                backgroundSize: "100px 100px, 80px 80px",
+            <style
+              dangerouslySetInnerHTML={{
+                __html: `
+                  @keyframes pixel-explosion {
+                    0% { 
+                      transform: translate(0, 0) rotate(0deg) scale(1);
+                      opacity: 0;
+                    }
+                    10% {
+                      opacity: 0.4;
+                    }
+                    50% { 
+                      transform: translate(50px, -50px) rotate(180deg) scale(1.5);
+                      opacity: 0.2;
+                    }
+                    100% { 
+                      transform: translate(-30px, 30px) rotate(360deg) scale(1);
+                      opacity: 0;
+                    }
+                  }
+                  
+                  @keyframes pixel-pulse {
+                    0%, 100% { 
+                      transform: scale(1);
+                      filter: brightness(1);
+                    }
+                    50% { 
+                      transform: scale(1.2);
+                      filter: brightness(1.5);
+                    }
+                  }
+                  
+                  .pixel-explosion {
+                    position: absolute;
+                    animation: pixel-explosion infinite;
+                  }
+                  
+                  .pixel-static {
+                    position: absolute;
+                    animation: pixel-pulse infinite;
+                  }
+                `,
               }}
-            ></div>
-
-            {/* Floating Elements */}
-            <div
-              className="absolute top-10 left-10 w-20 h-20 rounded-full opacity-20 animate-pulse"
+            />
+            
+            {/* Dynamic explosion pixels */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(15)].map((_, i) => {
+                const size = 15 + Math.random() * 40;
+                const duration = 8 + Math.random() * 12;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const colors = [
+                  'linear-gradient(45deg, var(--primary), var(--accent))',
+                  'linear-gradient(135deg, var(--chart-1), var(--chart-2))',
+                  'linear-gradient(90deg, var(--chart-3), var(--primary))',
+                ];
+                
+                return (
+                  <div
+                    key={`explosion-${i}`}
+                    className="pixel-explosion"
+                    style={{
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      left: `${left}%`,
+                      top: `${top}%`,
+                      background: colors[i % colors.length],
+                      borderRadius: i % 2 === 0 ? '50%' : '20%',
+                      animationDuration: `${duration}s`,
+                      animationDelay: `${i * 0.3}s`,
+                      filter: 'blur(0.5px)',
+                    }}
+                  />
+                );
+              })}
+              
+              {/* Static pulsing pixels for depth */}
+              {[...Array(8)].map((_, i) => {
+                const size = 60 + Math.random() * 80;
+                const duration = 3 + Math.random() * 4;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                
+                return (
+                  <div
+                    key={`static-${i}`}
+                    className="pixel-static"
+                    style={{
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      left: `${left}%`,
+                      top: `${top}%`,
+                      background: `radial-gradient(circle, var(--primary)30, transparent 70%)`,
+                      borderRadius: '50%',
+                      animationDuration: `${duration}s`,
+                      animationDelay: `${i * 0.4}s`,
+                      filter: 'blur(3px)',
+                      opacity: 0.15,
+                    }}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* Gradient overlay for readability */}
+            <div 
+              className="absolute inset-0" 
               style={{
-                background:
-                  "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
+                background: 'linear-gradient(180deg, transparent 0%, var(--background)20 50%, var(--background)40 100%)',
               }}
-            ></div>
-            <div
-              className="absolute bottom-10 right-10 w-32 h-32 rounded-full opacity-15 animate-pulse animation-delay-2000"
-              style={{
-                background:
-                  "radial-gradient(circle, var(--accent) 0%, transparent 70%)",
-              }}
-            ></div>
-            <div
-              className="absolute top-1/2 left-1/4 w-16 h-16 rounded-full opacity-25 animate-pulse animation-delay-1000"
-              style={{
-                background:
-                  "radial-gradient(circle, var(--chart-3) 0%, transparent 70%)",
-              }}
-            ></div>
+            />
           </div>
 
           <div className="relative z-10 container mx-auto px-4">
