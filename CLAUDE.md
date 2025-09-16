@@ -354,6 +354,18 @@ El agente se invoca automáticamente cuando Claude detecta cambios en el conteni
 - Las sesiones del taller son de 2 horas cada una
 - El webinar es completamente gratuito
 
+### Benchmarks Claude Sonnet 4 (para post de blog)
+
+**TODO: Recordar solicitar post de blog sobre estos benchmarks**
+
+- **MMLU (80.1%)**: Massive Multitask Language Understanding - mide conocimiento general en 57 materias académicas
+- **GPQA (50.3%)**: Graduate-Level Google-Proof Q&A - preguntas de nivel posgrado en ciencias que requieren razonamiento experto
+- **Aider Coding (9.8%)**: Benchmark específico de programación que mide capacidad de editar código existente
+- **Context (1M tokens)**: Ventana de contexto - puede procesar ~750,000 palabras en una sola conversación
+- **Fortaleza**: Velocidad y clasificación - destaca en rapidez de respuesta y tareas de categorización
+
+Los porcentajes indican qué tan bien el modelo resuelve cada tipo de problema comparado con el máximo posible.
+
 ## Guía de Estilo para Claude Code
 
 ### Audiencia y Tono

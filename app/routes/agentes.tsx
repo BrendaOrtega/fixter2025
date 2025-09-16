@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
-import FaultyTerminal from "~/components/backgrounds/FaultyTerminal";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
@@ -180,13 +179,18 @@ export default function IAVisualLanding() {
   });
   const fetcher = useFetcher();
 
+  // PERFORMANCE: Refs for timeout cleanup to prevent memory leaks
+  const paymentSuccessTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const paymentCancelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const confettiTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Check for payment result in URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("success") === "1") {
       setShowPaymentSuccess(true);
       setShowConfetti(true);
-      setTimeout(() => {
+      paymentSuccessTimeoutRef.current = setTimeout(() => {
         setShowConfetti(false);
         setShowPaymentSuccess(false);
       }, 8000);
@@ -194,9 +198,19 @@ export default function IAVisualLanding() {
     }
     if (urlParams.get("cancel") === "1") {
       setShowPaymentCancel(true);
-      setTimeout(() => setShowPaymentCancel(false), 5000);
+      paymentCancelTimeoutRef.current = setTimeout(() => setShowPaymentCancel(false), 5000);
       window.history.replaceState({}, "", "/agentes");
     }
+
+    // Cleanup timeouts on unmount
+    return () => {
+      if (paymentSuccessTimeoutRef.current) {
+        clearTimeout(paymentSuccessTimeoutRef.current);
+      }
+      if (paymentCancelTimeoutRef.current) {
+        clearTimeout(paymentCancelTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Handle escape key for forms
@@ -231,8 +245,14 @@ export default function IAVisualLanding() {
     useEffect(() => {
       if (isSuccess && !showConfetti) {
         setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 5000);
+        confettiTimeoutRef.current = setTimeout(() => setShowConfetti(false), 5000);
       }
+
+      return () => {
+        if (confettiTimeoutRef.current) {
+          clearTimeout(confettiTimeoutRef.current);
+        }
+      };
     }, [isSuccess, showConfetti]);
 
     return (
@@ -322,11 +342,12 @@ export default function IAVisualLanding() {
               <motion.button
                 onClick={() => {
                   setShowEarlyAccessForm(false);
-                  setTimeout(() => {
+                  // Use requestAnimationFrame instead of setTimeout for better performance
+                  requestAnimationFrame(() => {
                     if (fetcher.data) {
                       fetcher.load("/agentes");
                     }
-                  }, 300);
+                  });
                 }}
                 className="w-full font-bold py-3 px-6 rounded-lg transition-all"
                 style={{
@@ -675,8 +696,8 @@ export default function IAVisualLanding() {
           )}
         </AnimatePresence>
 
-        {/* Confetti */}
-        {showConfetti && (
+        {/* Confetti - Temporarily disabled to fix WebGL contexts */}
+        {false && showConfetti && (
           <EmojiConfetti
             emojis={["🤖", "👁️", "✨", "🎨", "🚀", "💡", "🎯"]}
             small
@@ -691,42 +712,62 @@ export default function IAVisualLanding() {
               "linear-gradient(135deg, var(--background) 0%, var(--card) 50%, var(--muted) 100%)",
           }}
         >
-          {/* Faulty Terminal Background */}
+          {/* Pixel Blast Background */}
           <div className="absolute inset-0">
-            <FaultyTerminal
-              scale={1}
-              gridMul={[1.5, 1]}
-              digitSize={1.2}
-              timeScale={0.4}
-              pause={false}
-              scanlineIntensity={0.2}
-              glitchAmount={0.8}
-              flickerAmount={0.6}
-              noiseAmp={0.05}
-              chromaticAberration={2}
-              dither={0}
-              curvature={0.1}
-              tint="#ff7e5f"
-              mouseReact={true}
-              mouseStrength={0.3}
-              pageLoadAnimation={true}
-              brightness={0.7}
+            <style
+              dangerouslySetInnerHTML={{
+                __html: `
+                  @keyframes pixel-float {
+                    0%, 100% { transform: translateY(0) scale(1); opacity: 0.1; }
+                    50% { transform: translateY(-20px) scale(1.1); opacity: 0.2; }
+                  }
+
+                  .pixel-float {
+                    position: absolute;
+                    background: linear-gradient(135deg, var(--chart-1), var(--chart-2));
+                    animation: pixel-float ease-in-out infinite;
+                    border-radius: 10%;
+                  }
+                `,
+              }}
             />
-            
+
+            {/* Generate floating pixels */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(12)].map((_, i) => {
+                const size = 25 + Math.random() * 40;
+                const duration = 8 + Math.random() * 12;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+
+                return (
+                  <div
+                    key={`pixel-float-${i}`}
+                    className="pixel-float"
+                    style={{
+                      width: `${size}px`,
+                      height: `${size}px`,
+                      left: `${left}%`,
+                      top: `${top}%`,
+                      animationDuration: `${duration}s`,
+                      animationDelay: `${i * 0.4}s`,
+                      filter: 'blur(1px)',
+                      opacity: 0.15,
+                    }}
+                  />
+                );
+              })}
+            </div>
+
             {/* Overlay gradient for better text readability */}
-            <div 
-              className="absolute inset-0 pointer-events-none" 
+            <div
+              className="absolute inset-0 pointer-events-none"
               style={{
                 background: `
-                  linear-gradient(135deg, 
-                    rgba(42, 32, 36, 0.8) 0%, 
-                    rgba(42, 32, 36, 0.6) 40%, 
-                    rgba(42, 32, 36, 0.7) 100%
-                  ),
-                  radial-gradient(circle at center, 
-                    transparent 20%, 
-                    rgba(42, 32, 36, 0.3) 60%, 
-                    rgba(42, 32, 36, 0.8) 100%
+                  linear-gradient(135deg,
+                    rgba(42, 32, 36, 0.2) 0%,
+                    rgba(42, 32, 36, 0.1) 40%,
+                    rgba(42, 32, 36, 0.3) 100%
                   )
                 `,
               }}
@@ -734,7 +775,7 @@ export default function IAVisualLanding() {
 
             {/* Accent gradient shapes */}
             <div
-              className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full opacity-10"
+              className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full opacity-8"
               style={{
                 background:
                   "radial-gradient(circle, var(--primary) 0%, transparent 70%)",
@@ -742,19 +783,11 @@ export default function IAVisualLanding() {
               }}
             ></div>
             <div
-              className="absolute top-3/4 right-1/4 w-56 h-56 rounded-full opacity-8"
+              className="absolute bottom-1/3 right-1/4 w-48 h-48 rounded-full opacity-6"
               style={{
                 background:
                   "radial-gradient(circle, var(--chart-2) 0%, transparent 70%)",
                 filter: 'blur(50px)',
-              }}
-            ></div>
-            <div
-              className="absolute bottom-1/4 left-1/3 w-32 h-32 rounded-full opacity-12"
-              style={{
-                background:
-                  "radial-gradient(circle, var(--accent) 0%, transparent 70%)",
-                filter: 'blur(35px)',
               }}
             ></div>
           </div>
@@ -1418,6 +1451,13 @@ export default function IAVisualLanding() {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
                   )}
 
+                  {/* Glow Effect Background */}
+                  {!project.disabled && (
+                    <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+                      backgroundImage: `linear-gradient(to bottom right, ${project.color}05, ${project.color}10)`
+                    }}></div>
+                  )}
+
                   {/* Confeti de emojis para nano-banana */}
                   {index === 2 && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -2028,39 +2068,13 @@ export default function IAVisualLanding() {
 
         {/* Curriculum Section */}
         <section
-          className="py-20 relative overflow-hidden"
+          className="py-20 relative"
           style={{
-            background:
-              "linear-gradient(135deg, var(--background) 0%, var(--secondary) 100%)",
+            backgroundColor: "var(--background)",
           }}
         >
-          {/* LiquidEther Background for Curriculum */}
-          <div className="absolute inset-0">
-            <LiquidEther
-              colors={['#ff7e5f', '#feb47b', '#ffcaa7']}
-              mouseForce={15}
-              cursorSize={120}
-              autoDemo={true}
-              autoSpeed={0.3}
-              autoIntensity={1.8}
-              resolution={0.4}
-              className="opacity-50"
-            />
-            
-            {/* Gradient overlay for better readability */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: `linear-gradient(180deg,
-                  transparent 0%,
-                  rgba(42, 32, 36, 0.2) 30%,
-                  rgba(42, 32, 36, 0.4) 70%,
-                  rgba(42, 32, 36, 0.6) 100%)`,
-              }}
-            />
-          </div>
-          
-          <div className="relative container mx-auto px-4 z-10 pointer-events-none">
+
+          <div className="relative container mx-auto px-4 z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -2083,26 +2097,14 @@ export default function IAVisualLanding() {
             </motion.div>
 
             <div className="max-w-5xl mx-auto relative">
-              {/* Animated Timeline Line */}
+              {/* Timeline Line */}
               <div
                 className="absolute left-[52px] top-[120px] bottom-[200px] w-0.5 opacity-20"
                 style={{
                   background:
-                    "linear-gradient(to bottom, transparent, var(--primary), transparent)",
+                    "linear-gradient(to bottom, var(--chart-1), var(--chart-2), var(--chart-3), var(--primary))",
                 }}
-              >
-                <motion.div
-                  className="w-full"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, var(--chart-1), var(--chart-2), var(--chart-3), var(--primary))",
-                  }}
-                  initial={{ height: 0 }}
-                  whileInView={{ height: "100%" }}
-                  transition={{ duration: 2, delay: 0.5 }}
-                  viewport={{ once: true }}
-                />
-              </div>
+              ></div>
               {[
                 {
                   module: "Sesión 1 (GRATIS)",
@@ -2240,65 +2242,39 @@ export default function IAVisualLanding() {
                     stiffness: 100,
                   }}
                   viewport={{ once: true }}
-                  whileHover={{
-                    scale: 1.02,
-                    y: -12,
-                    rotateY: 2,
-                    boxShadow: `0 25px 60px ${module.color}25`,
-                    transition: {
-                      type: "spring",
-                      stiffness: 250,
-                      damping: 18,
-                      mass: 0.8,
-                    },
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  className="mb-8 group cursor-pointer"
+                  className="mb-8 group"
                 >
                   <div
-                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden"
+                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden hover:shadow-2xl transition-all duration-500"
                     style={{
                       backgroundColor: "var(--card)",
                       boxShadow: `0 8px 32px ${module.color}10`,
                       border: `1px solid ${module.color}20`,
                     }}
                   >
-                    {/* LiquidEther Background per Card */}
-                    <div className="absolute inset-0 overflow-hidden rounded-3xl opacity-30 group-hover:opacity-40 transition-opacity duration-500">
-                      <LiquidEther
-                        colors={['#ff7e5f', '#feb47b', '#ffcaa7']}
-                        mouseForce={12}
-                        cursorSize={80}
-                        autoDemo={true}
-                        autoSpeed={0.2 + index * 0.1}
-                        autoIntensity={1.5 + index * 0.3}
-                        resolution={0.3}
-                        autoResumeDelay={2000 + index * 500}
-                      />
-                    </div>
+                    {/* Hover Shine Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
 
-                    {/* Shine Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-800 ease-out opacity-0 group-hover:opacity-100"></div>
+                    {/* Glow Effect Background */}
+                    <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+                      backgroundImage: `linear-gradient(to bottom right, ${module.color}05, ${module.color}10)`
+                    }}></div>
+
 
                     {/* Header */}
                     <div className="relative z-10 flex items-center justify-between mb-6">
                       <div className="flex items-center gap-4">
                         {/* Animated Icon */}
-                        <motion.div
+                        <div
                           className="p-4 rounded-2xl border-2"
                           style={{
                             backgroundColor: module.color + "20",
                             borderColor: module.color + "40",
                             color: module.color,
                           }}
-                          whileHover={{
-                            rotate: [0, -10, 10, 0],
-                            scale: 1.1,
-                            transition: { duration: 0.6 },
-                          }}
                         >
                           {module.icon}
-                        </motion.div>
+                        </div>
 
                         <div>
                           <div className="flex items-center gap-3 mb-2">
@@ -2308,49 +2284,28 @@ export default function IAVisualLanding() {
                             >
                               {module.module}
                             </span>
-                            <motion.span
+                            <span
                               className="text-xs px-3 py-1 rounded-full font-bold border"
                               style={{
                                 backgroundColor: module.color + "20",
                                 borderColor: module.color + "40",
                                 color: module.color,
                               }}
-                              whileHover={{
-                                scale: 1.1,
-                                backgroundColor: module.color + "30",
-                                transition: { duration: 0.2 },
-                              }}
-                              whileTap={{ scale: 0.95 }}
                             >
                               {module.badge}
-                            </motion.span>
+                            </span>
                           </div>
-                          <motion.h3
-                            className="text-2xl font-bold group-hover:scale-105 transition-transform duration-300"
+                          <h3
+                            className="text-2xl font-bold"
                             style={{ color: "var(--foreground)" }}
-                            whileHover={{
-                              x: 5,
-                              transition: { type: "spring", stiffness: 400 },
-                            }}
                           >
                             {module.title}
-                          </motion.h3>
+                          </h3>
                         </div>
                       </div>
 
                       {/* Progress Circle */}
-                      <motion.div
-                        className="relative w-16 h-16"
-                        whileHover={{
-                          scale: 1.1,
-                          rotate: 5,
-                          transition: {
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 20,
-                          },
-                        }}
-                      >
+                      <div className="relative w-16 h-16">
                         <svg className="w-16 h-16 transform -rotate-90">
                           <circle
                             cx="32"
@@ -2385,7 +2340,7 @@ export default function IAVisualLanding() {
                         >
                           {module.progress}
                         </div>
-                      </motion.div>
+                      </div>
                     </div>
 
                     {/* Topics List */}
@@ -2407,55 +2362,30 @@ export default function IAVisualLanding() {
                             }}
                             viewport={{ once: true }}
                           >
-                            <motion.div
-                              className="flex items-start gap-4 cursor-pointer p-3 rounded-xl pointer-events-auto"
-                              animate={{
+                            <div
+                              className={`flex items-start gap-4 cursor-pointer p-3 rounded-xl pointer-events-auto transition-colors duration-150 ease-out ${
+                                isSelected ? "bg-opacity-10" : ""
+                              }`}
+                              style={{
                                 backgroundColor: isSelected
-                                  ? module.color + "10"
-                                  : "transparent",
-                              }}
-                              whileHover={{
-                                x: 6,
-                                backgroundColor: module.color + "08",
-                              }}
-                              whileTap={{ scale: 0.98 }}
-                              transition={{
-                                duration: 0.2,
-                                ease: "easeOut",
+                                  ? `${module.color}20`
+                                  : "transparent"
                               }}
                               onClick={() => {
-                                if (isSelected) {
-                                  setSelectedTopic(null);
-                                } else {
-                                  setSelectedTopic({
-                                    moduleIndex: index,
-                                    topicIndex: idx,
-                                  });
-                                }
+                                setSelectedTopic(isSelected ? null : {
+                                  moduleIndex: index,
+                                  topicIndex: idx,
+                                });
                               }}
                             >
-                              <motion.div
-                                className="flex-shrink-0 mt-1"
-                                whileHover={{
-                                  rotate: 360,
-                                  scale: 1.2,
-                                }}
-                                animate={{
-                                  scale: isSelected ? 1.1 : 1,
-                                  rotate: isSelected ? 90 : 0,
-                                }}
-                                transition={{
-                                  duration: 0.25,
-                                  ease: "easeOut",
-                                }}
-                              >
+                              <div className="flex-shrink-0 mt-1">
                                 <BiCheckCircle
-                                  className="w-5 h-5"
+                                  className={`w-5 h-5 transition-transform duration-75 ${isSelected ? 'scale-110 rotate-90' : ''}`}
                                   style={{ color: module.color }}
                                 />
-                              </motion.div>
+                              </div>
                               <span
-                                className="group-hover/item:text-white transition-colors duration-300 font-medium"
+                                className="font-medium transition-colors duration-150"
                                 style={{
                                   color: isSelected
                                     ? module.color
@@ -2464,31 +2394,24 @@ export default function IAVisualLanding() {
                               >
                                 {topic.title}
                               </span>
-                            </motion.div>
+                            </div>
 
                             {/* Description Card */}
                             <AnimatePresence>
                               {isSelected && (
                                 <motion.div
-                                  layout
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: "auto" }}
-                                  exit={{ opacity: 0, height: 0 }}
+                                  className="ml-9 mt-3"
+                                  initial={{ opacity: 0, scaleY: 0, transformOrigin: "top" }}
+                                  animate={{ opacity: 1, scaleY: 1, transformOrigin: "top" }}
+                                  exit={{ opacity: 0, scaleY: 0, transformOrigin: "top" }}
                                   transition={{
-                                    duration: 0.4,
-                                    ease: [0.04, 0.62, 0.23, 0.98],
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 30,
+                                    mass: 0.8
                                   }}
-                                  className="ml-9 mt-3 overflow-hidden"
                                 >
-                                  <motion.div
-                                    initial={{ y: -20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    exit={{ y: -10, opacity: 0 }}
-                                    transition={{
-                                      duration: 0.3,
-                                      delay: 0.1,
-                                      ease: "easeOut",
-                                    }}
+                                  <div
                                     className="p-4 rounded-xl backdrop-blur-sm relative"
                                     style={{
                                       backgroundColor: module.color + "08",
@@ -2507,7 +2430,7 @@ export default function IAVisualLanding() {
                                     >
                                       {topic.description}
                                     </p>
-                                  </motion.div>
+                                  </div>
                                 </motion.div>
                               )}
                             </AnimatePresence>
