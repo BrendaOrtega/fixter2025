@@ -29,9 +29,9 @@ import "~/styles/agentes-ia.css";
 
 export const meta = () =>
   getMetaTags({
-    title: " Sin Código | Curso Completo | FixterGeek",
+    title: "Agentes de IA Sin Código | Taller Completo | FixterGeek",
     description:
-      "Aprende a crear agentes de IA inteligentes sin programar. Construye chatbots, asistentes virtuales y automatizaciones complejas usando herramientas visuales no-code. Curso 100% práctico.",
+      "Aprende a crear agentes de IA inteligentes sin programar. Construye chatbots, asistentes virtuales y automatizaciones complejas usando herramientas visuales no-code. Taller 100% práctico.",
   });
 
 export const action = async ({ request }: ActionFunctionArgs) => {

@@ -30,10 +30,14 @@ export default [
   route("gemini", "routes/gemini.tsx"),
   // Agentes IA No-Code Course
   route("agentes", "routes/agentes.tsx"),
+  // LlamaIndex Agent Workflows Course
+  route("llamaindex", "routes/llamaindex.tsx"),
   // Libros
   route("libros", "routes/libros.tsx"),
   // Libro interactivo
   route("libros/domina_claude_code", "routes/libros/domina_claude_code.tsx"),
+  // Libro LlamaIndex Agent Workflows
+  route("libros/llamaindex", "routes/libros/llamaindex.tsx"),
   // groups
   ...prefix("admin", [
     index("routes/admin/dash.tsx"),
@@ -57,7 +61,10 @@ export default [
   ]),
   ...prefix("blog", [
     index("routes/blog.tsx"),
-    route("aws-ses-features-ocultos", "routes/blog.aws-ses-features-ocultos.tsx"),
+    route(
+      "aws-ses-features-ocultos",
+      "routes/blog.aws-ses-features-ocultos.tsx"
+    ),
     route(":postSlug", "routes/post.tsx"),
   ]),
   ...prefix("api", [
