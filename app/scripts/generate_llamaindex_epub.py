@@ -144,10 +144,15 @@ def create_llamaindex_epub():
             html_content = markdown.markdown(md_content,
                                            extensions=['fenced_code', 'tables', 'nl2br'])
 
-            # Crear capítulo EPUB
+            # Crear capítulo EPUB con ID único para navegación
+            chapter_id = f"chapter_{chapter_info['id']}"
+            # Usar el título completo como nombre de archivo (sin caracteres especiales)
+            safe_title = chapter_info['title'].replace('?', '').replace('¿', '').replace(' ', '_').replace(':', '').replace(',', '')
+            safe_filename = f"{safe_title}.xhtml"
             chapter = epub.EpubHtml(title=chapter_info['title'],
-                                   file_name=f'chap_{i+1:02d}.xhtml',
-                                   lang='es')
+                                   file_name=safe_filename,
+                                   lang='es',
+                                   uid=chapter_id)
 
             # Envolver el HTML con estructura adecuada (sin duplicar título)
             chapter.content = f'''
@@ -177,8 +182,15 @@ def create_llamaindex_epub():
         except Exception as e:
             print(f"✗ Error procesando {chapter_info['slug']}: {e}")
 
-    # Crear tabla de contenidos dinámicamente
-    book.toc = epub_chapters
+    # Crear tabla de contenidos explícita con títulos correctos
+    toc_entries = []
+    for i, chapter in enumerate(epub_chapters):
+        chapter_info = chapters_info[i]
+        # Crear entrada del TOC con título explícito
+        toc_entry = epub.Link(chapter.file_name, chapter_info['title'], f"chapter_{chapter_info['id']}")
+        toc_entries.append(toc_entry)
+
+    book.toc = toc_entries
 
     # Añadir página de navegación
     book.add_item(epub.EpubNcx())
