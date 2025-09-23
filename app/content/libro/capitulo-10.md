@@ -29,19 +29,27 @@ claude "necesito analizar este código en busca de vulnerabilidades de seguridad
 
 Cada subagente tiene tres componentes fundamentales que determinan su comportamiento y capacidades:
 
-```python
-# Definición conceptual de un subagente
-class SubAgent:
-    def __init__(self):
-        self.contexto = {}      # Información específica del dominio
-        self.herramientas = []  # Tools disponibles para el agente
-        self.objetivo = ""      # Misión específica del agente
-        
-    def procesar(self, entrada):
-        # El agente procesa la entrada basándose en su contexto
-        # y objetivo, usando sus herramientas disponibles
-        resultado = self.ejecutar_tarea(entrada)
-        return self.formatear_salida(resultado)
+```typescript
+// Definición conceptual de un subagente con LlamaIndex
+import { agent } from "@llamaindex/workflow";
+import { tool } from "llamaindex";
+import { openai } from "@llamaindex/openai";
+
+interface SubAgentConfig {
+  contexto: Record<string, any>;     // Información específica del dominio
+  herramientas: any[];               // Tools disponibles para el agente
+  objetivo: string;                  // Misión específica del agente
+}
+
+// Crear un agente especializado
+const crearSubAgente = (config: SubAgentConfig) => {
+  return agent({
+    name: "SubAgente",
+    description: config.objetivo,
+    tools: config.herramientas,
+    llm: openai({ model: "gpt-4o-mini" })
+  });
+};
 ```
 
 ### Tipos de SubAgentes Disponibles
@@ -74,55 +82,64 @@ claude "quiero refactorizar el archivo src/components/UserDashboard.tsx"
 
 Cuando trabajas con subagentes, es importante entender cómo estructurar las tareas para aprovechar sus capacidades:
 
-```python
-#!/usr/bin/env python3
-"""
-Ejemplo de orquestación básica de subagentes
-para refactorización de código
-"""
+```typescript
+/**
+ * Ejemplo de orquestación básica de subagentes
+ * para refactorización de código con LlamaIndex
+ */
 
-def orquestar_refactorizacion(archivo):
-    # Paso 1: Análisis inicial
-    analisis = invocar_subagente(
-        tipo="general-purpose",
-        prompt=f"""
-        Analiza el archivo {archivo} y identifica:
-        - Complejidad ciclomática
-        - Duplicación de código
-        - Violaciones de principios SOLID
-        - Oportunidades de optimización
-        """,
-        herramientas=["Read", "Grep"]
-    )
-    
-    # Paso 2: Generación de propuestas
-    propuestas = invocar_subagente(
-        tipo="code-reviewer",
-        prompt=f"""
-        Basándote en este análisis: {analisis}
-        Genera propuestas específicas de refactorización
-        que mejoren la calidad del código sin cambiar
-        su funcionalidad.
-        """,
-        herramientas=["Edit", "Write"]
-    )
-    
-    # Paso 3: Validación
-    validacion = invocar_subagente(
-        tipo="test-generator",
-        prompt=f"""
-        Verifica que las siguientes refactorizaciones
-        no rompen la funcionalidad existente:
-        {propuestas}
-        """,
-        herramientas=["Bash", "Read"]
-    )
-    
-    return {
-        "analisis": analisis,
-        "propuestas": propuestas,
-        "validacion": validacion
-    }
+import { multiAgent } from "@llamaindex/workflow";
+import { agent } from "@llamaindex/workflow";
+import { tool } from "llamaindex";
+import { z } from "zod";
+
+// Definir herramientas para análisis de código
+const readTool = tool({
+  name: "read_file",
+  description: "Lee el contenido de un archivo",
+  parameters: z.object({ path: z.string() }),
+  execute: async ({ path }) => {
+    // Implementación de lectura de archivo
+    return `Contenido del archivo ${path}`;
+  }
+});
+
+// Crear agentes especializados
+const agenteAnalisis = agent({
+  name: "AnalizadorCodigo",
+  description: "Analiza código para identificar mejoras",
+  tools: [readTool],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+const agenteRefactor = agent({
+  name: "RefactorExpert",
+  description: "Genera propuestas de refactorización",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+const agenteValidador = agent({
+  name: "ValidadorTests",
+  description: "Valida que las refactorizaciones no rompen tests",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+// Orquestación de múltiples agentes
+const orquestarRefactorizacion = async (archivo: string) => {
+  const workflow = multiAgent({
+    agents: [agenteAnalisis, agenteRefactor, agenteValidador],
+    rootAgent: agenteAnalisis
+  });
+
+  const resultado = await workflow.run({
+    prompt: `Analiza y refactoriza el archivo ${archivo}`,
+    stream: true
+  });
+
+  return resultado;
+};
 ```
 
 ## Patrones de Comunicación Entre Agentes
@@ -158,26 +175,64 @@ claude "necesito un análisis completo de rendimiento del sistema"
 
 Un agente maestro coordina múltiples subagentes especializados:
 
-```python
-# Estructura jerárquica de agentes
-class AgenteCoordinador:
-    def __init__(self):
-        self.agentes_especializados = {
-            "seguridad": AgenteSeguridad(),
-            "rendimiento": AgenteRendimiento(),
-            "calidad": AgenteCalidad(),
-            "documentacion": AgenteDocumentacion()
-        }
-    
-    def procesar_proyecto(self, proyecto):
-        resultados = {}
-        
-        # Delegar tareas a agentes especializados
-        for nombre, agente in self.agentes_especializados.items():
-            resultados[nombre] = agente.analizar(proyecto)
-        
-        # Consolidar y priorizar resultados
-        return self.consolidar_resultados(resultados)
+```typescript
+// Estructura jerárquica de agentes con LlamaIndex
+import { multiAgent, agent } from "@llamaindex/workflow";
+
+interface ProyectoAnalisis {
+  seguridad: string;
+  rendimiento: string;
+  calidad: string;
+  documentacion: string;
+}
+
+// Crear agentes especializados
+const agenteSeguridad = agent({
+  name: "AgenteSeguridad",
+  description: "Analiza vulnerabilidades de seguridad",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+const agenteRendimiento = agent({
+  name: "AgenteRendimiento",
+  description: "Evalúa métricas de performance",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+const agenteCalidad = agent({
+  name: "AgenteCalidad",
+  description: "Revisa estándares de código",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+const agenteDocumentacion = agent({
+  name: "AgenteDocumentacion",
+  description: "Verifica y genera documentación",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+// Coordinador jerárquico
+const coordinadorWorkflow = multiAgent({
+  agents: [
+    agenteSeguridad,
+    agenteRendimiento,
+    agenteCalidad,
+    agenteDocumentacion
+  ],
+  rootAgent: agenteSeguridad // El coordinador principal
+});
+
+const procesarProyecto = async (proyecto: string): Promise<ProyectoAnalisis> => {
+  const resultado = await coordinadorWorkflow.run({
+    prompt: `Analiza el proyecto ${proyecto} en todas sus dimensiones`
+  });
+
+  return resultado as ProyectoAnalisis;
+};
 ```
 
 ## Casos de Uso Prácticos
@@ -216,36 +271,56 @@ claude "migra el proyecto de JavaScript a TypeScript"
 
 Implementar un proceso de code review multi-perspectiva:
 
-```python
-# Sistema de review con múltiples perspectivas
-def code_review_completo(pull_request):
-    reviews = []
-    
-    # Review de seguridad
-    reviews.append(
-        invocar_subagente(
-            tipo="security-auditor",
-            prompt=f"Revisa PR {pull_request} buscando vulnerabilidades"
-        )
-    )
-    
-    # Review de performance
-    reviews.append(
-        invocar_subagente(
-            tipo="general-purpose",
-            prompt=f"Analiza el impacto en performance de PR {pull_request}"
-        )
-    )
-    
-    # Review de estándares
-    reviews.append(
-        invocar_subagente(
-            tipo="code-reviewer",
-            prompt=f"Verifica que PR {pull_request} sigue los estándares del proyecto"
-        )
-    )
-    
-    return consolidar_reviews(reviews)
+```typescript
+// Sistema de review con múltiples perspectivas usando LlamaIndex
+import { multiAgent } from "@llamaindex/workflow";
+import { z } from "zod";
+
+// Schema para el resultado del review
+const ReviewResultSchema = z.object({
+  seguridad: z.string(),
+  performance: z.string(),
+  estandares: z.string(),
+  recomendaciones: z.array(z.string())
+});
+
+// Agentes especializados para code review
+const securityAuditor = agent({
+  name: "SecurityAuditor",
+  description: "Audita código para vulnerabilidades de seguridad",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+const performanceAnalyzer = agent({
+  name: "PerformanceAnalyzer",
+  description: "Analiza impacto en performance",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+const standardsReviewer = agent({
+  name: "StandardsReviewer",
+  description: "Verifica cumplimiento de estándares",
+  tools: [],
+  llm: openai({ model: "gpt-4o-mini" })
+});
+
+// Workflow de code review completo
+const codeReviewWorkflow = multiAgent({
+  agents: [securityAuditor, performanceAnalyzer, standardsReviewer],
+  rootAgent: securityAuditor
+});
+
+const codeReviewCompleto = async (pullRequest: string) => {
+  const resultado = await codeReviewWorkflow.run({
+    prompt: `Realiza un review completo del PR ${pullRequest}`,
+    structuredOutput: ReviewResultSchema,
+    stream: false
+  });
+
+  return resultado;
+};
 ```
 
 ## Configuración y Optimización
@@ -254,45 +329,91 @@ def code_review_completo(pull_request):
 
 El contexto es crucial para el rendimiento de los subagentes:
 
-```python
-# Configuración óptima de contexto
-contexto_optimizado = {
-    "proyecto": {
-        "tipo": "aplicación web",
-        "stack": ["React", "Node.js", "PostgreSQL"],
-        "convenciones": "path/to/conventions.md"
-    },
-    "objetivo_especifico": "optimizar queries de base de datos",
-    "restricciones": [
-        "mantener compatibilidad con API existente",
-        "no modificar schema de base de datos",
-        "mejorar performance en al menos 20%"
-    ],
-    "herramientas_permitidas": ["Read", "Edit", "Bash"],
-    "formato_salida": "json"
+```typescript
+// Configuración óptima de contexto con TypeScript
+interface ContextoOptimizado {
+  proyecto: {
+    tipo: string;
+    stack: string[];
+    convenciones: string;
+  };
+  objetivoEspecifico: string;
+  restricciones: string[];
+  herramientasPermitidas: string[];
+  formatoSalida: 'json' | 'text' | 'markdown';
 }
+
+const contextoOptimizado: ContextoOptimizado = {
+  proyecto: {
+    tipo: "aplicación web",
+    stack: ["React", "Node.js", "PostgreSQL"],
+    convenciones: "path/to/conventions.md"
+  },
+  objetivoEspecifico: "optimizar queries de base de datos",
+  restricciones: [
+    "mantener compatibilidad con API existente",
+    "no modificar schema de base de datos",
+    "mejorar performance en al menos 20%"
+  ],
+  herramientasPermitidas: ["Read", "Edit", "Bash"],
+  formatoSalida: "json"
+};
+
+// Aplicar contexto al agente
+const agenteOptimizador = agent({
+  name: "DBOptimizer",
+  description: contextoOptimizado.objetivoEspecifico,
+  tools: [], // herramientas basadas en permisos
+  llm: openai({
+    model: "gpt-4o-mini",
+    systemMessage: JSON.stringify(contextoOptimizado)
+  })
+});
 ```
 
 ### Limitaciones y Consideraciones
 
 Es importante entender las limitaciones actuales de los subagentes:
 
-```python
-# Consideraciones al usar subagentes
-limitaciones = {
-    "contexto": "Cada subagente tiene su propio límite de contexto",
-    "comunicacion": "No pueden comunicarse directamente entre ellos",
-    "persistencia": "No mantienen estado entre invocaciones",
-    "sincronizacion": "Requieren coordinación manual para tareas paralelas"
+```typescript
+// Consideraciones al usar subagentes en TypeScript
+interface Limitaciones {
+  contexto: string;
+  comunicacion: string;
+  persistencia: string;
+  sincronizacion: string;
 }
 
-# Estrategias para mitigar limitaciones
-def estrategia_contexto_compartido():
-    # Usar archivos temporales para compartir contexto
-    contexto_compartido = "/tmp/shared_context.json"
-    
-    # Cada agente lee y escribe al contexto compartido
-    return contexto_compartido
+const limitaciones: Limitaciones = {
+  contexto: "Cada subagente tiene su propio límite de contexto",
+  comunicacion: "No pueden comunicarse directamente entre ellos",
+  persistencia: "No mantienen estado entre invocaciones",
+  sincronizacion: "Requieren coordinación manual para tareas paralelas"
+};
+
+// Estrategias para mitigar limitaciones con LlamaIndex
+import { tool } from "llamaindex";
+import fs from "fs/promises";
+
+const contextoCompartidoTool = tool({
+  name: "shared_context",
+  description: "Lee y escribe contexto compartido entre agentes",
+  parameters: z.object({
+    action: z.enum(["read", "write"]),
+    data: z.any().optional()
+  }),
+  execute: async ({ action, data }) => {
+    const path = "/tmp/shared_context.json";
+
+    if (action === "read") {
+      const content = await fs.readFile(path, "utf-8");
+      return JSON.parse(content);
+    } else {
+      await fs.writeFile(path, JSON.stringify(data));
+      return { success: true };
+    }
+  }
+});
 ```
 
 ## Debugging y Troubleshooting
@@ -316,33 +437,76 @@ claude "ejecuta análisis de código con logging detallado de subagentes"
 
 Los subagentes pueden fallar, y es importante tener estrategias de recuperación:
 
-```python
-# Manejo robusto de errores
-def ejecutar_con_recuperacion(tarea):
-    max_intentos = 3
-    
-    for intento in range(max_intentos):
-        try:
-            resultado = invocar_subagente(
-                tipo="general-purpose",
-                prompt=tarea,
-                timeout=30  # segundos
-            )
-            
-            if resultado.exitoso:
-                return resultado
-                
-        except TimeoutError:
-            print(f"Intento {intento + 1} falló por timeout")
-            # Simplificar tarea o dividirla
-            tarea = simplificar_tarea(tarea)
-            
-        except ContextLimitError:
-            print("Límite de contexto alcanzado")
-            # Reducir contexto o dividir en subtareas
-            tarea = reducir_contexto(tarea)
-    
-    return manejar_fallo_total()
+```typescript
+// Manejo robusto de errores con TypeScript y LlamaIndex
+interface ResultadoAgente {
+  exitoso: boolean;
+  data?: any;
+  error?: string;
+}
+
+class TimeoutError extends Error {}
+class ContextLimitError extends Error {}
+
+const ejecutarConRecuperacion = async (
+  tarea: string,
+  maxIntentos: number = 3
+): Promise<ResultadoAgente> => {
+
+  for (let intento = 0; intento < maxIntentos; intento++) {
+    try {
+      // Crear agente con timeout configurado
+      const agenteConTimeout = agent({
+        name: "GeneralPurpose",
+        description: "Agente de propósito general",
+        tools: [],
+        llm: openai({
+          model: "gpt-4o-mini",
+          timeout: 30000 // 30 segundos en ms
+        })
+      });
+
+      const resultado = await agenteConTimeout.run({
+        prompt: tarea
+      });
+
+      if (resultado) {
+        return {
+          exitoso: true,
+          data: resultado
+        };
+      }
+
+    } catch (error) {
+      if (error instanceof TimeoutError) {
+        console.log(`Intento ${intento + 1} falló por timeout`);
+        // Simplificar tarea o dividirla
+        tarea = await simplificarTarea(tarea);
+
+      } else if (error instanceof ContextLimitError) {
+        console.log("Límite de contexto alcanzado");
+        // Reducir contexto o dividir en subtareas
+        tarea = await reducirContexto(tarea);
+      }
+    }
+  }
+
+  return {
+    exitoso: false,
+    error: "Máximo de intentos alcanzado"
+  };
+};
+
+// Funciones auxiliares
+const simplificarTarea = async (tarea: string): Promise<string> => {
+  // Lógica para simplificar la tarea
+  return tarea.substring(0, tarea.length / 2);
+};
+
+const reducirContexto = async (tarea: string): Promise<string> => {
+  // Lógica para reducir el contexto
+  return tarea.split("\n")[0];
+};
 ```
 
 ## Mejores Prácticas
@@ -356,54 +520,152 @@ Para obtener los mejores resultados, las tareas deben ser:
 3. **Verificables**: Con criterios claros de éxito
 4. **Modulares**: Fácilmente componibles con otras tareas
 
-```python
-# Ejemplo de tarea bien diseñada
-tarea_bien_diseñada = {
-    "objetivo": "Optimizar función calculateTotalPrice()",
-    "ubicacion": "src/utils/pricing.ts",
-    "metricas_exito": {
-        "tiempo_ejecucion": "< 100ms",
-        "complejidad": "< 5",
-        "cobertura_tests": "> 90%"
-    },
-    "restricciones": [
-        "mantener firma de función",
-        "no cambiar comportamiento observable"
-    ]
-}
+```typescript
+// Ejemplo de tarea bien diseñada con tipos TypeScript
+import { z } from "zod";
+
+// Schema para validar estructura de tarea
+const TareaBienDiseñadaSchema = z.object({
+  objetivo: z.string(),
+  ubicacion: z.string(),
+  metricasExito: z.object({
+    tiempoEjecucion: z.string(),
+    complejidad: z.string(),
+    coberturaTests: z.string()
+  }),
+  restricciones: z.array(z.string())
+});
+
+type TareaBienDiseñada = z.infer<typeof TareaBienDiseñadaSchema>;
+
+const tareaBienDiseñada: TareaBienDiseñada = {
+  objetivo: "Optimizar función calculateTotalPrice()",
+  ubicacion: "src/utils/pricing.ts",
+  metricasExito: {
+    tiempoEjecucion: "< 100ms",
+    complejidad: "< 5",
+    coberturaTests: "> 90%"
+  },
+  restricciones: [
+    "mantener firma de función",
+    "no cambiar comportamiento observable"
+  ]
+};
+
+// Crear agente con la tarea estructurada
+const agenteOptimizacion = agent({
+  name: "FunctionOptimizer",
+  description: tareaBienDiseñada.objetivo,
+  tools: [],
+  llm: openai({
+    model: "gpt-4o-mini",
+    systemMessage: JSON.stringify(tareaBienDiseñada)
+  })
+});
 ```
 
 ### Orquestación Eficiente
 
 La clave para usar subagentes efectivamente es la orquestación inteligente:
 
-```python
-# Patrón de orquestación eficiente
-class OrquestadorInteligente:
-    def procesar(self, proyecto):
-        # 1. Análisis inicial para determinar estrategia
-        complejidad = self.evaluar_complejidad(proyecto)
-        
-        # 2. Selección dinámica de agentes
-        if complejidad < 5:
-            return self.estrategia_simple(proyecto)
-        elif complejidad < 10:
-            return self.estrategia_paralela(proyecto)
-        else:
-            return self.estrategia_jerarquica(proyecto)
-    
-    def estrategia_simple(self, proyecto):
-        # Un solo agente para tareas simples
-        return invocar_subagente("general-purpose", proyecto)
-    
-    def estrategia_paralela(self, proyecto):
-        # Múltiples agentes en paralelo
-        tareas = self.dividir_proyecto(proyecto)
-        return ejecutar_paralelo(tareas)
-    
-    def estrategia_jerarquica(self, proyecto):
-        # Estructura compleja con coordinación
-        return self.coordinar_multiples_niveles(proyecto)
+```typescript
+// Patrón de orquestación eficiente con LlamaIndex
+import { multiAgent, agent } from "@llamaindex/workflow";
+
+class OrquestadorInteligente {
+  // Análisis inicial para determinar estrategia
+  private evaluarComplejidad(proyecto: string): number {
+    // Lógica para evaluar complejidad del proyecto
+    return proyecto.length / 100; // Ejemplo simplificado
+  }
+
+  async procesar(proyecto: string) {
+    const complejidad = this.evaluarComplejidad(proyecto);
+
+    // Selección dinámica de estrategia
+    if (complejidad < 5) {
+      return await this.estrategiaSimple(proyecto);
+    } else if (complejidad < 10) {
+      return await this.estrategiaParalela(proyecto);
+    } else {
+      return await this.estrategiaJerarquica(proyecto);
+    }
+  }
+
+  private async estrategiaSimple(proyecto: string) {
+    // Un solo agente para tareas simples
+    const agenteSimple = agent({
+      name: "SimpleAgent",
+      description: "Procesamiento simple",
+      tools: [],
+      llm: openai({ model: "gpt-4o-mini" })
+    });
+
+    return await agenteSimple.run({ prompt: proyecto });
+  }
+
+  private async estrategiaParalela(proyecto: string) {
+    // Múltiples agentes trabajando en paralelo
+    const agente1 = agent({
+      name: "ParallelAgent1",
+      description: "Procesa parte A",
+      tools: [],
+      llm: openai({ model: "gpt-4o-mini" })
+    });
+
+    const agente2 = agent({
+      name: "ParallelAgent2",
+      description: "Procesa parte B",
+      tools: [],
+      llm: openai({ model: "gpt-4o-mini" })
+    });
+
+    const workflow = multiAgent({
+      agents: [agente1, agente2],
+      rootAgent: agente1
+    });
+
+    return await workflow.run({ prompt: proyecto });
+  }
+
+  private async estrategiaJerarquica(proyecto: string) {
+    // Estructura compleja con múltiples niveles
+    const coordinador = agent({
+      name: "Coordinator",
+      description: "Coordina agentes especializados",
+      tools: [],
+      llm: openai({ model: "gpt-4o" }) // Modelo más potente para coordinación
+    });
+
+    const especialista1 = agent({
+      name: "Specialist1",
+      description: "Especialista en análisis",
+      tools: [],
+      llm: openai({ model: "gpt-4o-mini" })
+    });
+
+    const especialista2 = agent({
+      name: "Specialist2",
+      description: "Especialista en optimización",
+      tools: [],
+      llm: openai({ model: "gpt-4o-mini" })
+    });
+
+    const workflowJerarquico = multiAgent({
+      agents: [coordinador, especialista1, especialista2],
+      rootAgent: coordinador
+    });
+
+    return await workflowJerarquico.run({
+      prompt: proyecto,
+      stream: true
+    });
+  }
+}
+
+// Uso del orquestador
+const orquestador = new OrquestadorInteligente();
+const resultado = await orquestador.procesar("proyecto complejo");
 ```
 
 ## El Poder de la Colaboración Emergente

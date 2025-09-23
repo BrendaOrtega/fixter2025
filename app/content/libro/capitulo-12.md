@@ -96,27 +96,49 @@ Ahora que has completado este journey inicial, aquí hay acciones concretas para
 
 Para verdaderamente dominar estas técnicas, considera estos proyectos desafiantes:
 
-```python
-# Proyecto 1: Sistema de Desarrollo Autónomo
-"""
-Crea un sistema que pueda tomar un conjunto de requisitos de negocio
-y generar, desplegar, y mantener una aplicación completa sin
-intervención humana más allá de la aprobación de checkpoints críticos.
-"""
+```typescript
+// Proyecto 1: Sistema de Desarrollo Autónomo
+/**
+ * Crea un sistema que pueda tomar un conjunto de requisitos de negocio
+ * y generar, desplegar, y mantener una aplicación completa sin
+ * intervención humana más allá de la aprobación de checkpoints críticos.
+ */
 
-# Proyecto 2: Arquitectura Auto-Evolucionante
-"""
-Diseña un sistema que monitoree su propio rendimiento y evolucione
-su arquitectura automáticamente para optimizar métricas específicas,
-documentando cada decisión y su razonamiento.
-"""
+import { multiAgent } from '@llamaindex/workflow';
+import { agent } from '@llamaindex/workflow';
 
-# Proyecto 3: Ecosistema de Agentes Colaborativos
-"""
-Implementa un ecosistema donde múltiples agentes especializados
-colaboren para mantener y evolucionar una base de código grande,
-cada uno con su área de expertise y responsabilidad.
-"""
+// Proyecto 2: Arquitectura Auto-Evolucionante
+/**
+ * Diseña un sistema que monitoree su propio rendimiento y evolucione
+ * su arquitectura automáticamente para optimizar métricas específicas,
+ * documentando cada decisión y su razonamiento.
+ */
+
+const arquitecturaAutoEvolucionante = multiAgent({
+  agents: [
+    agent({ name: "Monitor", description: "Monitorea métricas de rendimiento" }),
+    agent({ name: "Analyzer", description: "Analiza patrones y oportunidades" }),
+    agent({ name: "Evolver", description: "Evoluciona la arquitectura" })
+  ],
+  rootAgent: agent({ name: "Orchestrator", description: "Coordina la evolución" })
+});
+
+// Proyecto 3: Ecosistema de Agentes Colaborativos
+/**
+ * Implementa un ecosistema donde múltiples agentes especializados
+ * colaboren para mantener y evolucionar una base de código grande,
+ * cada uno con su área de expertise y responsabilidad.
+ */
+
+const ecosistemaColaborativo = multiAgent({
+  agents: [
+    agent({ name: "SecurityExpert", description: "Especialista en seguridad" }),
+    agent({ name: "PerformanceOptimizer", description: "Optimiza rendimiento" }),
+    agent({ name: "CodeQualityGuardian", description: "Mantiene calidad del código" }),
+    agent({ name: "DocumentationWriter", description: "Mantiene documentación" })
+  ],
+  rootAgent: agent({ name: "ProjectManager", description: "Gestiona el proyecto" })
+});
 ```
 
 ## Sabiduría para el Camino
@@ -206,12 +228,25 @@ Pero más importante aún, verás que no solo adoptaste nuevas herramientas - ab
 
 El futuro del desarrollo de software está siendo escrito ahora mismo, y tú eres uno de sus autores.
 
-```python
-# El futuro comienza con tu próxima línea de código
-print("Hello, Future!")
+```typescript
+// El futuro comienza con tu próxima línea de código
+console.log("Hello, Future!");
 
-# Pero más probablemente, comienza con:
-claude "let's build something amazing together"
+// Pero más probablemente, comienza con:
+// claude "let's build something amazing together"
+
+// O con un workflow de agentes en TypeScript:
+import { agent } from '@llamaindex/workflow';
+
+const futureBuilder = agent({
+  name: "FutureBuilder",
+  description: "Construyamos algo asombroso juntos",
+  llm: openai({ model: "gpt-4o" })
+});
+
+await futureBuilder.run({
+  prompt: "Let's build something amazing together"
+});
 ```
 
 ---
