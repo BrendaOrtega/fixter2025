@@ -126,19 +126,43 @@ Antes de comenzar, asegúrate de tener:
 Aquí tienes un ejemplo súper simple de lo que construiremos:
 
 ```typescript
-// Un workflow que saluda en español
-class SaludoWorkflow extends Workflow {
-  @step()
-  async saludar(ev: StartEvent<{ nombre: string }>) {
-    const saludo = `¡Hola ${ev.data.nombre}! Bienvenido a los Agent Workflows`;
-    return new StopEvent({ mensaje: saludo });
-  }
-}
+import { tool } from "llamaindex";
+import { agent } from "@llamaindex/workflow";
+import { openai } from "@llamaindex/openai";
 
-// Usar el workflow
-const workflow = new SaludoWorkflow();
-const resultado = await workflow.run({ nombre: "María" });
-console.log(resultado.data.mensaje); // "¡Hola María! Bienvenido a los Agent Workflows"
+// Definir una herramienta simple
+const saludoTool = tool(
+  ({ nombre }: { nombre: string }) =>
+    `¡Hola ${nombre}! Bienvenido a los Agent Workflows`,
+  {
+    name: "saludar",
+    description: "Saluda a una persona por su nombre",
+    parameters: {
+      type: "object",
+      properties: {
+        nombre: {
+          type: "string",
+          description: "El nombre de la persona a saludar"
+        }
+      },
+      required: ["nombre"]
+    }
+  }
+);
+
+// Crear el agent workflow
+const saludoAgent = agent({
+  tools: [saludoTool],
+  llm: openai({ model: "gpt-4o-mini" }),
+});
+
+// Usar el agent workflow
+const main = async () => {
+  const resultado = await saludoAgent.run("Saluda a María");
+  console.log(resultado); // El agente usará la herramienta para saludar
+};
+
+main();
 ```
 
 Simple, ¿verdad? Pero este patrón básico es la base para sistemas increíblemente poderosos.
