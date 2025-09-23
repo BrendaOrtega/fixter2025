@@ -25,7 +25,7 @@ export const meta = () => {
   const baseMeta = getMetaTags({
     title: "LlamaIndex Agent Workflows | Curso TypeScript | FixterGeek",
     description:
-      "Domina LlamaIndex Agent Workflows en TypeScript. Aprende a crear agentes inteligentes, workflows estructurados y sistemas multi-agente. 10 videos prácticos para principiantes.",
+      "Domina LlamaIndex Agent Workflows en TypeScript. Aprende a crear agentes inteligentes, workflows estructurados y sistemas multi-agente. Contenido premium para principiantes.",
   });
 
   return [
@@ -308,7 +308,7 @@ export default function LlamaIndexPage() {
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
                   Domina la creación de agentes inteligentes y workflows estructurados
-                  en TypeScript. <strong className="text-white">10 videos prácticos desde los fundamentos hasta sistemas multi-agente.</strong>
+                  en TypeScript. <strong className="text-white">Contenido premium desde los fundamentos hasta sistemas multi-agente.</strong>
                 </p>
               </div>
 
