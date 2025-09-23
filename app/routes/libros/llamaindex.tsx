@@ -9,7 +9,6 @@ import getMetaTags from "~/utils/getMetaTags";
 import TableOfContents from "~/components/book/TableOfContents";
 import HeadingsList from "~/components/book/HeadingsList";
 import BookLayout from "~/components/book/BookLayout";
-import { generateEpub } from "~/utils/generateEpub.server";
 
 // Lista de capítulos del libro de LlamaIndex
 const chapters = [
@@ -85,25 +84,34 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const chapterSlug = url.searchParams.get("chapter") || "prologo";
 
-  console.log("Loading chapter:", chapterSlug);
+  console.log("🔍 Loading chapter:", chapterSlug);
+
+  // Función helper para leer archivos
+  const readChapterFile = async (slug: string) => {
+    try {
+      const fs = await import("fs").then((m) => m.promises);
+      const path = await import("path");
+      const filePath = path.join(
+        process.cwd(),
+        "app",
+        "content",
+        "llamaindex",
+        `${slug}.md`
+      );
+
+      console.log("📁 Reading file:", filePath);
+      const content = await fs.readFile(filePath, "utf-8");
+      console.log("✅ Content loaded, length:", content.length);
+      return content;
+    } catch (error) {
+      console.error("❌ Error reading file:", error);
+      throw error;
+    }
+  };
 
   try {
-    // Leer el archivo MD del capítulo
-    const fs = await import("fs").then((m) => m.promises);
-    const path = await import("path");
-    const filePath = path.join(
-      process.cwd(),
-      "app",
-      "content",
-      "llamaindex",
-      `${chapterSlug}.md`
-    );
-
-    console.log("File path:", filePath);
-
-    const content = await fs.readFile(filePath, "utf-8");
-
-    console.log("Content length:", content.length);
+    // Intentar leer el archivo solicitado
+    const content = await readChapterFile(chapterSlug);
 
     // Encontrar el capítulo actual y los adyacentes
     const currentIndex = chapters.findIndex((c) => c.slug === chapterSlug);
@@ -111,6 +119,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     const nextChapter =
       currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
+
+    console.log("📖 Chapter found:", currentChapter.title);
 
     return {
       content,
@@ -120,31 +130,43 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       chapters,
     };
   } catch (error) {
-    // Si no se encuentra el capítulo, cargar el primero
-    const fs = await import("fs").then((m) => m.promises);
-    const path = await import("path");
-    const filePath = path.join(
-      process.cwd(),
-      "app",
-      "content",
-      "llamaindex",
-      "prologo.md"
-    );
-    const content = await fs.readFile(filePath, "utf-8");
+    console.error("❌ Error loading chapter, falling back to prologo:", error);
 
-    return {
-      content,
-      currentChapter: chapters[0],
-      prevChapter: null,
-      nextChapter: chapters[1] || null,
-      chapters,
-    };
+    try {
+      // Fallback: cargar el prólogo
+      const content = await readChapterFile("prologo");
+
+      return {
+        content,
+        currentChapter: chapters[0],
+        prevChapter: null,
+        nextChapter: chapters[1] || null,
+        chapters,
+      };
+    } catch (fallbackError) {
+      console.error("❌ Error loading fallback:", fallbackError);
+
+      // Último recurso: contenido hardcodeado
+      return {
+        content: "# Error\n\nNo se pudo cargar el contenido del capítulo.",
+        currentChapter: chapters[0],
+        prevChapter: null,
+        nextChapter: chapters[1] || null,
+        chapters,
+      };
+    }
   }
 };
 
 export default function LibroLlamaIndex({ loaderData }: Route.ComponentProps) {
   const { content, currentChapter, prevChapter, nextChapter, chapters } =
     loaderData;
+
+  console.log("🎨 Component rendering with:", {
+    contentLength: content?.length,
+    currentChapter: currentChapter?.title,
+    hasContent: !!content,
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeHeading, setActiveHeading] = useState("");
@@ -470,7 +492,21 @@ export default function LibroLlamaIndex({ loaderData }: Route.ComponentProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <BookMarkdown readingMode={readingMode}>{content}</BookMarkdown>
+            <div className="prose prose-lg max-w-none">
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  fontSize: "12px",
+                  background: "#f5f5f5",
+                  padding: "10px",
+                }}
+              >
+                DEBUG - Content length: {content?.length || 0}
+                {"\n"}
+                Content preview: {content?.substring(0, 200) || "NO CONTENT"}
+              </pre>
+              <BookMarkdown readingMode={readingMode}>{content}</BookMarkdown>
+            </div>
           </motion.div>
 
           {/* Navegación entre capítulos */}
