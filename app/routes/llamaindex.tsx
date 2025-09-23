@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
+import { PhoneInput } from "~/components/common/PhoneInput";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher, Link } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
@@ -55,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "early_access_registration") {
     const name = String(formData.get("name"));
     const email = String(formData.get("email"));
-    const phone = String(formData.get("phone"));
+    const phone = String(formData.get("phone_full") || formData.get("phone"));
     const experience = String(formData.get("experience"));
     const interest = String(formData.get("interest"));
 
@@ -433,11 +434,11 @@ export default function LlamaIndexPage() {
                       </div>
 
                       <div>
-                        <input
-                          type="tel"
+                        <PhoneInput
                           name="phone"
                           placeholder="Teléfono (opcional)"
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent transition-colors backdrop-blur-sm"
+                          className="w-full"
+                          dark={true}
                         />
                       </div>
 
