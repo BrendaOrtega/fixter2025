@@ -28,6 +28,12 @@ export default {
         backface: "#182128",
         colorCaption: "#8D9194",
         surface: "#2C3944",
+        llamaindex: {
+          pink: "#F2B5E3",
+          cyan: "#74DCF4",
+          purple: "#AA99E6",
+          peach: "#F2DDDA",
+        },
       },
       backgroundImage: {
         stars: "url('/stars.png')",

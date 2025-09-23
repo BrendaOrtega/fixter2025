@@ -9,17 +9,15 @@ import { db } from "~/.server/db";
 import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
 import {
   BiChevronRight,
-  BiPlay,
   BiCheckCircle,
   BiCode,
   BiNetworkChart,
   BiCog,
   BiRocket,
   BiStar,
-  BiBot,
   BiLayer,
 } from "react-icons/bi";
-import { HiSparkles } from "react-icons/hi";
+import { GiRobotGolem } from "react-icons/gi";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -135,7 +133,7 @@ export default function LlamaIndexPage() {
   return (
     <div className="h-screen overflow-hidden bg-slate-900 relative" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* Gradient overlay más intenso */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#37D7FA]/20 via-[#3E18F9]/25 via-[#FF8DF2]/8 to-[#FF8705]/15"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-llamaindex-cyan/20 via-llamaindex-purple/25 to-llamaindex-pink/15"></div>
 
       {/* Overlay para profundidad */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20"></div>
@@ -172,14 +170,14 @@ export default function LlamaIndexPage() {
         >
           <div className="relative">
             <div className={`absolute inset-0 bg-gradient-to-r ${
-              i % 4 === 0 ? 'from-[#37D7FA]/10 to-[#3E18F9]/10' :
-              i % 4 === 1 ? 'from-[#3E18F9]/10 to-[#FF8DF2]/10' :
-              i % 4 === 2 ? 'from-[#FF8DF2]/10 to-[#FF8705]/10' :
-              'from-[#FF8705]/10 to-[#37D7FA]/10'
+              i % 4 === 0 ? 'from-llamaindex-cyan/10 to-llamaindex-purple/10' :
+              i % 4 === 1 ? 'from-llamaindex-purple/10 to-llamaindex-pink/10' :
+              i % 4 === 2 ? 'from-llamaindex-pink/10 to-llamaindex-cyan/10' :
+              'from-llamaindex-cyan/10 to-llamaindex-pink/10'
             } rounded-full blur-lg transform scale-150`}></div>
             <img
-              src="/courses/new_me 1.svg"
-              alt="AI Character"
+              src={i % 3 === 0 ? "/llama.png" : "/courses/new_me 1.svg"}
+              alt={i % 3 === 0 ? "LlamaIndex Mascot" : "AI Character"}
               className={`relative z-10 filter ${
                 i < 2 ? 'w-32 h-32' :
                 i < 5 ? 'w-24 h-24' :
@@ -216,8 +214,8 @@ export default function LlamaIndexPage() {
           }}
         >
           <img
-            src="/courses/new_me 1.svg"
-            alt="AI Character"
+            src={i % 2 === 0 ? "/llama.png" : "/courses/new_me 1.svg"}
+            alt={i % 2 === 0 ? "LlamaIndex Mascot" : "AI Character"}
             className={`filter ${
               i < 2 ? 'w-16 h-16' :
               i < 4 ? 'w-12 h-12' : 'w-8 h-8'
@@ -251,10 +249,10 @@ export default function LlamaIndexPage() {
         style={{ zIndex: 6 }}
       >
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#37D7FA]/30 to-[#FF8DF2]/30 rounded-full blur-2xl transform scale-125"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-llamaindex-cyan/30 to-llamaindex-pink/30 rounded-full blur-2xl transform scale-125"></div>
           <img
-            src="/courses/new_me 1.svg"
-            alt="AI Agent Character"
+            src="/llama.png"
+            alt="LlamaIndex Mascot"
             className="w-40 h-40 relative z-10 filter drop-shadow-2xl"
           />
         </div>
@@ -270,7 +268,7 @@ export default function LlamaIndexPage() {
             <div className="space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
-                  <div className="inline-flex items-center px-4 py-2 bg-[#37D7FA]/10 border border-[#37D7FA]/20 rounded-full text-[#37D7FA] text-sm font-medium">
+                  <div className="inline-flex items-center px-4 py-2 bg-llamaindex-purple/10 border border-llamaindex-purple/20 rounded-full text-llamaindex-purple text-sm font-medium">
                     <BiRocket className="mr-2" />
                     Curso en Desarrollo
                   </div>
@@ -293,24 +291,24 @@ export default function LlamaIndexPage() {
                   </motion.div>
                 </div>
 
-                <div className="flex items-center space-x-4 mb-4">
-                  <img
-                    src="/llamaindex.png"
-                    alt="LlamaIndex"
-                    className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl"
-                  />
-                  <h1 className="text-5xl lg:text-6xl font-bold leading-tight text-white">
-                    <span className="bg-gradient-to-r from-[#FF8705] to-[#FF8DF2] bg-clip-text text-transparent">
+                <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-4">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <img
+                      src="/llamaindex.png"
+                      alt="LlamaIndex"
+                      className="w-14 h-14 lg:w-16 lg:h-16 rounded-xl inline-block"
+                    />
+                    <span className="bg-gradient-to-r from-llamaindex-pink via-llamaindex-cyan to-llamaindex-purple bg-clip-text text-transparent">
                       LlamaIndex
                     </span>
-                    <br />
-                    <span className="text-white">Agent Workflows</span>
-                  </h1>
-                </div>
+                    <span className="text-white">Agent</span>
+                    <span className="text-white">Workflows</span>
+                  </div>
+                </h1>
 
-                <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
+                <p className="text-xl text-slate-300 leading-relaxed max-w-lg font-light">
                   Domina la creación de agentes inteligentes y workflows estructurados
-                  en TypeScript. <strong className="text-white">Contenido premium desde los fundamentos hasta sistemas multi-agente.</strong>
+                  en TypeScript. <strong className="text-white">Aprende desde los fundamentos hasta sistemas multi-agente.</strong>
                 </p>
 
                 {/* Link sutil al libro */}
@@ -318,7 +316,7 @@ export default function LlamaIndexPage() {
                   <span className="text-slate-400">Mientras tanto,</span>
                   <Link
                     to="/libros/llamaindex"
-                    className="text-[#37D7FA] hover:text-[#FF8DF2] transition-colors underline decoration-dotted underline-offset-4 hover:decoration-solid"
+                    className="text-llamaindex-cyan hover:text-llamaindex-purple transition-colors underline decoration-dotted underline-offset-4 hover:decoration-solid"
                   >
                     lee el libro interactivo gratuito
                   </Link>
@@ -328,36 +326,36 @@ export default function LlamaIndexPage() {
 
               {/* Características principales */}
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="flex items-start space-x-4 p-4 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="flex-shrink-0 w-10 h-10 bg-[#37D7FA]/20 rounded-lg flex items-center justify-center">
-                    <BiCode className="text-[#37D7FA] text-xl" />
+                <div className="flex items-start space-x-4 p-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="flex-shrink-0 w-10 h-10 bg-llamaindex-cyan/20 rounded-2xl flex items-center justify-center">
+                    <BiCode className="text-llamaindex-cyan text-xl" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white text-sm">TypeScript Nativo</h3>
                     <p className="text-slate-300 text-sm mt-1">Implementación completa en TypeScript</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4 p-4 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="flex-shrink-0 w-10 h-10 bg-[#3E18F9]/20 rounded-lg flex items-center justify-center">
-                    <BiNetworkChart className="text-[#3E18F9] text-xl" />
+                <div className="flex items-start space-x-4 p-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="flex-shrink-0 w-10 h-10 bg-llamaindex-purple/20 rounded-2xl flex items-center justify-center">
+                    <BiNetworkChart className="text-llamaindex-purple text-xl" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white text-sm">Multi-Agent Systems</h3>
                     <p className="text-slate-300 text-sm mt-1">Coordinación entre múltiples agentes</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4 p-4 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="flex-shrink-0 w-10 h-10 bg-[#FF8DF2]/20 rounded-lg flex items-center justify-center">
-                    <BiCog className="text-[#FF8DF2] text-xl" />
+                <div className="flex items-start space-x-4 p-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="flex-shrink-0 w-10 h-10 bg-llamaindex-pink/20 rounded-2xl flex items-center justify-center">
+                    <BiCog className="text-llamaindex-pink text-xl" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white text-sm">Structured Output</h3>
                     <p className="text-slate-300 text-sm mt-1">Respuestas estructuradas con Zod</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4 p-4 rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="flex-shrink-0 w-10 h-10 bg-[#FF8705]/20 rounded-lg flex items-center justify-center">
-                    <BiLayer className="text-[#FF8705] text-xl" />
+                <div className="flex items-start space-x-4 p-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="flex-shrink-0 w-10 h-10 bg-llamaindex-peach/20 rounded-2xl flex items-center justify-center">
+                    <BiLayer className="text-llamaindex-peach text-xl" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white text-sm">Event Streaming</h3>
@@ -397,7 +395,7 @@ export default function LlamaIndexPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-8 shadow-2xl relative z-10 group hover:bg-white/15 transition-all duration-300"
+                    className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-2xl relative z-10 group hover:bg-white/15 transition-all duration-300"
                     whileHover={{ y: -2 }}
                   >
                     <div className="text-center mb-8">
@@ -418,7 +416,7 @@ export default function LlamaIndexPage() {
                           name="name"
                           placeholder="Tu nombre completo"
                           required
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent transition-colors backdrop-blur-sm"
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
                         />
                       </div>
 
@@ -428,7 +426,7 @@ export default function LlamaIndexPage() {
                           name="email"
                           placeholder="tu@email.com"
                           required
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent transition-colors backdrop-blur-sm"
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
                         />
                       </div>
 
@@ -437,7 +435,7 @@ export default function LlamaIndexPage() {
                           type="tel"
                           name="phone"
                           placeholder="Teléfono (opcional)"
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent transition-colors backdrop-blur-sm"
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
                         />
                       </div>
 
@@ -445,7 +443,7 @@ export default function LlamaIndexPage() {
                         <select
                           name="experience"
                           required
-                          className="w-full px-4 py-3 bg-white border border-[#e7e7e7] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent transition-colors"
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
                         >
                           <option value="">Nivel de experiencia en TypeScript</option>
                           <option value="beginner">Principiante</option>
@@ -458,7 +456,7 @@ export default function LlamaIndexPage() {
                         <select
                           name="interest"
                           required
-                          className="w-full px-4 py-3 bg-white border border-[#e7e7e7] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent transition-colors"
+                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
                         >
                           <option value="">¿Qué te interesa más?</option>
                           <option value="single_agents">Agentes individuales</option>
@@ -471,14 +469,25 @@ export default function LlamaIndexPage() {
                       <button
                         type="submit"
                         disabled={fetcher.state === "submitting"}
-                        className="w-full bg-gradient-to-r from-[#FF8705] to-[#FF8DF2] hover:shadow-lg text-white py-3 rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        className="w-full !mt-10 !text-slate-900 relative overflow-hidden bg-gradient-to-r from-llamaindex-pink via-llamaindex-cyan to-llamaindex-purple text-white py-3 rounded-full font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group hover:scale-105 hover:shadow-2xl hover:shadow-llamaindex-cyan/30"
+                        style={{
+                          backgroundSize: '200% 100%',
+                          backgroundPosition: '0% 50%',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundPosition = '100% 50%';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundPosition = '0% 50%';
+                        }}
                       >
+                        <span className="absolute  inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
                         {fetcher.state === "submitting" ? (
-                          <span>Registrando...</span>
+                          <span className="relative">Registrando...</span>
                         ) : (
                           <>
-                            <span>Registrarme</span>
-                            <BiPlay className="text-lg" />
+                            <span className="relative">Registrarme</span>
+                            <GiRobotGolem className="text-lg " />
                           </>
                         )}
                       </button>
@@ -523,7 +532,7 @@ export default function LlamaIndexPage() {
                       Te notificaremos cuando el primer video esté disponible.
                       Revisa tu email para más detalles.
                     </p>
-                    <div className="flex items-center justify-center space-x-2 text-[#37D7FA] mb-6">
+                    <div className="flex items-center justify-center space-x-2 text-llamaindex-cyan mb-6">
                       <BiStar className="text-lg" />
                       <span className="text-sm font-medium">Acceso anticipado confirmado</span>
                     </div>
@@ -536,7 +545,7 @@ export default function LlamaIndexPage() {
                     >
                       <Link
                         to="/cursos/llamaindex/detalle"
-                        className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF8705] to-[#FF8DF2] hover:shadow-lg text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                        className="inline-flex items-center space-x-2 bg-gradient-to-r from-llamaindex-pink via-llamaindex-cyan to-llamaindex-purple hover:shadow-lg text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
                       >
                         <BiRocket className="text-lg" />
                         <span>Ver detalle del curso</span>
