@@ -27,6 +27,7 @@ export const meta = () => {
     description:
       "Domina LlamaIndex Agent Workflows en TypeScript. Aprende a crear agentes inteligentes, workflows estructurados y sistemas multi-agente. Contenido premium para principiantes.",
     url: "https://www.fixtergeek.com/llamaindex",
+    image: "https://nocodestartup.io/wp-content/uploads/2025/06/LlamaIndex-e-para-que-ele-serve-1024x683.png",
   });
 
   return [
