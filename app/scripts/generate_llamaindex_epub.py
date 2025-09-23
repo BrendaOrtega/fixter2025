@@ -109,25 +109,8 @@ def create_llamaindex_epub():
                             content=css)
     book.add_item(nav_css)
 
-    # Añadir imagen de portada desde archivo temporal
-    try:
-        cover_path = "/tmp/llamaindex_cover.jpg"
-        if os.path.exists(cover_path):
-            with open(cover_path, 'rb') as cover_file:
-                cover_data = cover_file.read()
-
-            cover_image = epub.EpubItem(uid="cover_image",
-                                      file_name="images/cover.jpg",
-                                      media_type="image/jpeg",
-                                      content=cover_data)
-            book.add_item(cover_image)
-            book.set_cover("images/cover.jpg", cover_data)
-            print("✓ Portada añadida desde Pexels")
-        else:
-            print("⚠ No se encontró imagen de portada, continuando sin ella")
-    except Exception as e:
-        print(f"⚠ Error añadiendo portada: {e}")
-        print("📖 Continuando sin imagen de portada")
+    # Sin imagen de portada
+    print("📖 Generando EPUB sin imagen de portada")
 
     # Lista de capítulos de LlamaIndex
     chapters_info = [
