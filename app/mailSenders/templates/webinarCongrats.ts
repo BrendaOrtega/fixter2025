@@ -25,7 +25,7 @@ export const webinarCongratsTemplate = ({
     Serás el primero en saber cuando el <strong>primer video</strong> esté disponible. Prepárate para dominar la creación de agentes inteligentes en TypeScript. 💻⚡
   </p>
   <div style="background:linear-gradient(135deg, #37D7FA 0%, #3E18F9 50%, #FF8DF2 100%);border-radius:12px;padding:16px;margin:24px 0;color:white;text-align:center;box-shadow:0 4px 15px rgba(55, 215, 250, 0.3);">
-    <strong>🎯 10 videos prácticos esperándote</strong><br>
+    <strong>🎯 Contenido premium en desarrollo</strong><br>
     <small>Desde fundamentos hasta sistemas multi-agente</small>
   </div>
   <a href="${link}" style="border-radius:24px;text-decoration:none;background:linear-gradient(135deg, #FF8705 0%, #FF8DF2 100%);padding:12px 16px;font-size:16px;margin:32px 0;display:block;max-width:180px;text-align:center;cursor:pointer;color:white;font-weight:bold;box-shadow:0 4px 12px rgba(255, 135, 5, 0.4);transition:all 0.3s ease;">
