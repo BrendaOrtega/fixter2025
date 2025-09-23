@@ -26,7 +26,8 @@ export const meta = () => {
     description:
       "Domina LlamaIndex Agent Workflows en TypeScript. Aprende a crear agentes inteligentes, workflows estructurados y sistemas multi-agente. Contenido premium para principiantes.",
     url: "https://www.fixtergeek.com/llamaindex",
-    image: "https://nocodestartup.io/wp-content/uploads/2025/06/LlamaIndex-e-para-que-ele-serve-1024x683.png",
+    image:
+      "https://nocodestartup.io/wp-content/uploads/2025/06/LlamaIndex-e-para-que-ele-serve-1024x683.png",
   });
 
   return [
@@ -132,7 +133,12 @@ export default function LlamaIndexPage() {
   }, [fetcher.data]);
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-900 relative" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div
+      className="h-screen overflow-hidden bg-slate-900 relative"
+      style={{
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+      }}
+    >
       {/* Gradient overlay más intenso */}
       <div className="absolute inset-0 bg-gradient-to-br from-llamaindex-cyan/20 via-llamaindex-purple/25 to-llamaindex-pink/15"></div>
 
@@ -140,9 +146,12 @@ export default function LlamaIndexPage() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20"></div>
 
       {/* Grid pattern sutil */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23000000' fill-opacity='1'%3e%3ccircle cx='30' cy='30' r='1.5'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`,
-      }}></div>
+      <div
+        className="absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23000000' fill-opacity='1'%3e%3ccircle cx='30' cy='30' r='1.5'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`,
+        }}
+      ></div>
 
       {/* Múltiples imágenes flotantes - Desktop */}
       {[...Array(12)].map((_, i) => (
@@ -161,7 +170,7 @@ export default function LlamaIndexPage() {
             duration: 8 + Math.random() * 8,
             repeat: Infinity,
             delay: i * 1.5,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
           style={{
             top: `${Math.random() * 80 + 10}%`,
@@ -170,20 +179,35 @@ export default function LlamaIndexPage() {
           }}
         >
           <div className="relative">
-            <div className={`absolute inset-0 bg-gradient-to-r ${
-              i % 4 === 0 ? 'from-llamaindex-cyan/10 to-llamaindex-purple/10' :
-              i % 4 === 1 ? 'from-llamaindex-purple/10 to-llamaindex-pink/10' :
-              i % 4 === 2 ? 'from-llamaindex-pink/10 to-llamaindex-cyan/10' :
-              'from-llamaindex-cyan/10 to-llamaindex-pink/10'
-            } rounded-full blur-lg transform scale-150`}></div>
+            <div
+              className={`absolute inset-0 bg-gradient-to-r ${
+                i % 4 === 0
+                  ? "from-llamaindex-cyan/10 to-llamaindex-purple/10"
+                  : i % 4 === 1
+                  ? "from-llamaindex-purple/10 to-llamaindex-pink/10"
+                  : i % 4 === 2
+                  ? "from-llamaindex-pink/10 to-llamaindex-cyan/10"
+                  : "from-llamaindex-cyan/10 to-llamaindex-pink/10"
+              } rounded-full blur-lg transform scale-150`}
+            ></div>
             <img
               src={i % 3 === 0 ? "/llama.png" : "/courses/new_me 1.svg"}
               alt={i % 3 === 0 ? "LlamaIndex Mascot" : "AI Character"}
               className={`relative z-10 filter ${
-                i < 2 ? 'w-32 h-32' :
-                i < 5 ? 'w-24 h-24' :
-                i < 8 ? 'w-16 h-16' : 'w-12 h-12'
-              } ${i % 2 === 0 ? 'hue-rotate-15' : i % 3 === 0 ? 'hue-rotate-30' : ''}`}
+                i < 2
+                  ? "w-32 h-32"
+                  : i < 5
+                  ? "w-24 h-24"
+                  : i < 8
+                  ? "w-16 h-16"
+                  : "w-12 h-12"
+              } ${
+                i % 2 === 0
+                  ? "hue-rotate-15"
+                  : i % 3 === 0
+                  ? "hue-rotate-30"
+                  : ""
+              }`}
             />
           </div>
         </motion.div>
@@ -206,7 +230,7 @@ export default function LlamaIndexPage() {
             duration: 12 + Math.random() * 6,
             repeat: Infinity,
             delay: i * 2,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
           style={{
             top: `${Math.random() * 90 + 5}%`,
@@ -218,9 +242,8 @@ export default function LlamaIndexPage() {
             src={i % 2 === 0 ? "/llama.png" : "/courses/new_me 1.svg"}
             alt={i % 2 === 0 ? "LlamaIndex Mascot" : "AI Character"}
             className={`filter ${
-              i < 2 ? 'w-16 h-16' :
-              i < 4 ? 'w-12 h-12' : 'w-8 h-8'
-            } ${i % 2 === 0 ? 'hue-rotate-15' : ''}`}
+              i < 2 ? "w-16 h-16" : i < 4 ? "w-12 h-12" : "w-8 h-8"
+            } ${i % 2 === 0 ? "hue-rotate-15" : ""}`}
           />
         </motion.div>
       ))}
@@ -239,13 +262,13 @@ export default function LlamaIndexPage() {
           y: {
             duration: 4,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
           },
           rotate: {
             duration: 8,
             repeat: Infinity,
-            ease: "easeInOut"
-          }
+            ease: "easeInOut",
+          },
         }}
         style={{ zIndex: 6 }}
       >
@@ -264,7 +287,6 @@ export default function LlamaIndexPage() {
         {/* Contenido principal */}
         <main className="flex-1 flex items-start md:items-center justify-center px-6 py-4 pt-20 md:pt-4 overflow-y-auto">
           <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-
             {/* Columna izquierda - Contenido */}
             <div className="space-y-8">
               <div className="space-y-4">
@@ -280,7 +302,7 @@ export default function LlamaIndexPage() {
                     transition={{
                       duration: 3,
                       repeat: Infinity,
-                      ease: "easeInOut"
+                      ease: "easeInOut",
                     }}
                     className="lg:hidden"
                   >
@@ -308,8 +330,11 @@ export default function LlamaIndexPage() {
                 </h1>
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg font-light">
-                  Domina la creación de agentes inteligentes y workflows estructurados
-                  en TypeScript. <strong className="text-white">Aprende desde los fundamentos hasta sistemas multi-agente.</strong>
+                  Domina la creación de agentes inteligentes y workflows
+                  estructurados en TypeScript.{" "}
+                  <strong className="text-white">
+                    Aprende desde los fundamentos hasta sistemas multi-agente.
+                  </strong>
                 </p>
 
                 {/* Link sutil al libro */}
@@ -332,8 +357,12 @@ export default function LlamaIndexPage() {
                     <BiCode className="text-llamaindex-cyan text-xl" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">TypeScript Nativo</h3>
-                    <p className="text-slate-300 text-sm mt-1">Implementación completa en TypeScript</p>
+                    <h3 className="font-semibold text-white text-sm">
+                      TypeScript Nativo
+                    </h3>
+                    <p className="text-slate-300 text-sm mt-1">
+                      Implementación completa en TypeScript
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4 p-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
@@ -341,8 +370,12 @@ export default function LlamaIndexPage() {
                     <BiNetworkChart className="text-llamaindex-purple text-xl" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">Multi-Agent Systems</h3>
-                    <p className="text-slate-300 text-sm mt-1">Coordinación entre múltiples agentes</p>
+                    <h3 className="font-semibold text-white text-sm">
+                      Multi-Agent Systems
+                    </h3>
+                    <p className="text-slate-300 text-sm mt-1">
+                      Coordinación entre múltiples agentes
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4 p-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
@@ -350,8 +383,12 @@ export default function LlamaIndexPage() {
                     <BiCog className="text-llamaindex-pink text-xl" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">Structured Output</h3>
-                    <p className="text-slate-300 text-sm mt-1">Respuestas estructuradas con Zod</p>
+                    <h3 className="font-semibold text-white text-sm">
+                      Structured Output
+                    </h3>
+                    <p className="text-slate-300 text-sm mt-1">
+                      Respuestas estructuradas con Zod
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4 p-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
@@ -359,12 +396,15 @@ export default function LlamaIndexPage() {
                     <BiLayer className="text-llamaindex-peach text-xl" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white text-sm">Event Streaming</h3>
-                    <p className="text-slate-300 text-sm mt-1">Monitoreo en tiempo real</p>
+                    <h3 className="font-semibold text-white text-sm">
+                      Event Streaming
+                    </h3>
+                    <p className="text-slate-300 text-sm mt-1">
+                      Monitoreo en tiempo real
+                    </p>
                   </div>
                 </div>
               </div>
-
             </div>
 
             {/* Columna derecha - Registro */}
@@ -379,7 +419,7 @@ export default function LlamaIndexPage() {
                 transition={{
                   duration: 6,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               >
                 <img
@@ -404,12 +444,17 @@ export default function LlamaIndexPage() {
                         Acceso Anticipado
                       </h3>
                       <p className="text-slate-300 text-sm">
-                        Regístrate para ser notificado cuando el primer video esté disponible
+                        Regístrate para ser notificado cuando el primer video
+                        esté disponible
                       </p>
                     </div>
 
                     <fetcher.Form method="post" className="space-y-4">
-                      <input type="hidden" name="intent" value="early_access_registration" />
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="early_access_registration"
+                      />
 
                       <div>
                         <input
@@ -435,12 +480,8 @@ export default function LlamaIndexPage() {
                         <PhoneInput
                           name="phone"
                           placeholder="Teléfono (opcional)"
-<<<<<<< HEAD
                           className="w-full"
                           dark={true}
-=======
-                          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
->>>>>>> 83eee4c1a349ae60eda5d0f9f4060f9436121b42
                         />
                       </div>
 
@@ -450,7 +491,9 @@ export default function LlamaIndexPage() {
                           required
                           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
                         >
-                          <option value="">Nivel de experiencia en TypeScript</option>
+                          <option value="">
+                            Nivel de experiencia en TypeScript
+                          </option>
                           <option value="beginner">Principiante</option>
                           <option value="intermediate">Intermedio</option>
                           <option value="advanced">Avanzado</option>
@@ -464,8 +507,12 @@ export default function LlamaIndexPage() {
                           className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-llamaindex-cyan focus:border-transparent transition-colors backdrop-blur-sm"
                         >
                           <option value="">¿Qué te interesa más?</option>
-                          <option value="single_agents">Agentes individuales</option>
-                          <option value="multi_agents">Sistemas multi-agente</option>
+                          <option value="single_agents">
+                            Agentes individuales
+                          </option>
+                          <option value="multi_agents">
+                            Sistemas multi-agente
+                          </option>
                           <option value="workflows">Workflows complejos</option>
                           <option value="all">Todo lo anterior</option>
                         </select>
@@ -476,14 +523,14 @@ export default function LlamaIndexPage() {
                         disabled={fetcher.state === "submitting"}
                         className="w-full !mt-10 !text-slate-900 relative overflow-hidden bg-gradient-to-r from-llamaindex-pink via-llamaindex-cyan to-llamaindex-purple text-white py-3 rounded-full font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group hover:scale-105 hover:shadow-2xl hover:shadow-llamaindex-cyan/30"
                         style={{
-                          backgroundSize: '200% 100%',
-                          backgroundPosition: '0% 50%',
+                          backgroundSize: "200% 100%",
+                          backgroundPosition: "0% 50%",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundPosition = '100% 50%';
+                          e.currentTarget.style.backgroundPosition = "100% 50%";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundPosition = '0% 50%';
+                          e.currentTarget.style.backgroundPosition = "0% 50%";
                         }}
                       >
                         <span className="absolute  inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
@@ -511,14 +558,21 @@ export default function LlamaIndexPage() {
                     className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-8 shadow-2xl text-center relative"
                   >
                     {/* Confetti de celebración */}
-                    <EmojiConfetti emojis={["🤖", "🎉", "⚡", "🚀", "💻", "🦙", "🔥"]} small={true} />
+                    <EmojiConfetti
+                      emojis={["🤖", "🎉", "⚡", "🚀", "💻", "🦙", "🔥"]}
+                      small={true}
+                    />
 
                     {/* Celebración con imagen */}
                     <motion.div
                       className="absolute -top-4 -right-4"
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
-                      transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                      transition={{
+                        delay: 0.3,
+                        type: "spring",
+                        stiffness: 200,
+                      }}
                     >
                       <img
                         src="/courses/new_me 1.svg"
@@ -539,7 +593,9 @@ export default function LlamaIndexPage() {
                     </p>
                     <div className="flex items-center justify-center space-x-2 text-llamaindex-cyan mb-6">
                       <BiStar className="text-lg" />
-                      <span className="text-sm font-medium">Acceso anticipado confirmado</span>
+                      <span className="text-sm font-medium">
+                        Acceso anticipado confirmado
+                      </span>
                     </div>
 
                     {/* Progressive Disclosure - Botón al curso */}
@@ -563,12 +619,13 @@ export default function LlamaIndexPage() {
           </div>
         </main>
 
-
         {/* Footer compacto */}
         <div className="relative z-10 py-2">
           <div className="border-t border-white/20 bg-black/20 backdrop-blur-sm">
             <div className="max-w-6xl mx-auto px-6 py-3 text-center">
-              <p className="text-sm text-slate-400">© 2025 FixterGeek. Curso LlamaIndex Agent Workflows.</p>
+              <p className="text-sm text-slate-400">
+                © 2025 FixterGeek. Curso LlamaIndex Agent Workflows.
+              </p>
             </div>
           </div>
         </div>

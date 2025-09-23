@@ -92,11 +92,11 @@ export function PhoneInput({
   };
 
   const baseSelectClasses = dark
-    ? "w-24 px-3 py-3 bg-white/10 border border-white/20 rounded-l-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent backdrop-blur-sm"
+    ? "w-24 px-3 py-3 bg-white/10 border border-white/20 rounded-l-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#74DCF4] focus:border-transparent backdrop-blur-sm transition-colors"
     : "w-24 px-3 py-3 border border-gray-300 rounded-l-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
 
   const baseInputClasses = dark
-    ? "flex-1 px-4 py-3 bg-white/10 border border-l-0 border-white/20 rounded-r-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#37D7FA] focus:border-transparent transition-colors backdrop-blur-sm"
+    ? "flex-1 px-4 py-3 bg-white/10 border border-l-0 border-white/20 rounded-r-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#74DCF4] focus:border-transparent transition-colors backdrop-blur-sm"
     : "flex-1 px-4 py-3 border border-l-0 border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
 
   return (
@@ -107,9 +107,14 @@ export function PhoneInput({
           value={countryCode}
           onChange={(e) => handleCountryChange(e.target.value)}
           className={baseSelectClasses}
+          style={dark ? { colorScheme: 'dark' } : {}}
         >
           {countryCodes.map((country) => (
-            <option key={`${country.code}-${country.country}`} value={country.code}>
+            <option
+              key={`${country.code}-${country.country}`}
+              value={country.code}
+              className={dark ? "bg-slate-800 text-white" : ""}
+            >
               {country.flag} {country.code}
             </option>
           ))}
