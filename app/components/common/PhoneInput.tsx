@@ -59,14 +59,14 @@ export function PhoneInput({
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value.replace(/\D/g, ""); // Solo números
 
-    // Formatear según el país
+    // Formatear según el país - usando formato estándar 3-3-4
     if (countryCode === "+52") {
-      // México: 10 dígitos (55 1234 5678)
+      // México: 10 dígitos (555 123 4567)
       if (inputValue.length > 10) inputValue = inputValue.slice(0, 10);
       if (inputValue.length > 6) {
-        inputValue = inputValue.replace(/(\d{2})(\d{4})(\d{4})/, "$1 $2 $3");
-      } else if (inputValue.length > 2) {
-        inputValue = inputValue.replace(/(\d{2})(\d{4})/, "$1 $2");
+        inputValue = inputValue.replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3");
+      } else if (inputValue.length > 3) {
+        inputValue = inputValue.replace(/(\d{3})(\d{3})/, "$1 $2");
       }
     } else if (countryCode === "+1") {
       // USA/Canadá: 10 dígitos (555 123 4567)
@@ -77,9 +77,13 @@ export function PhoneInput({
         inputValue = inputValue.replace(/(\d{3})(\d{3})/, "$1 $2");
       }
     } else {
-      // Otros países: formato genérico
+      // Otros países: formato genérico 3-3-4 o similar
       if (inputValue.length > 12) inputValue = inputValue.slice(0, 12);
-      inputValue = inputValue.replace(/(\d{3,4})(\d{3,4})(\d{2,4})/, "$1 $2 $3");
+      if (inputValue.length > 6) {
+        inputValue = inputValue.replace(/(\d{3})(\d{3})(\d{1,6})/, "$1 $2 $3");
+      } else if (inputValue.length > 3) {
+        inputValue = inputValue.replace(/(\d{3})(\d{1,3})/, "$1 $2");
+      }
     }
 
     setPhoneNumber(inputValue);
