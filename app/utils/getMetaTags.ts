@@ -4,7 +4,9 @@ export type GetBasicMetaTagsPros = {
   image?: string;
   url?: string;
   twitterCard?: "summary" | "summary_large_image";
-  type?: "website" | "article";
+  type?: "website" | "article" | "book";
+  fbAppId?: string;
+  keywords?: string;
 };
 
 export default function getMetaTags({
@@ -14,6 +16,8 @@ export default function getMetaTags({
   url = "https://www.fixtergeek.com",
   twitterCard = "summary_large_image",
   type = "website",
+  fbAppId = "1234567890", // Placeholder App ID - should be replaced with real FB App ID
+  keywords,
 }: GetBasicMetaTagsPros) {
   if (!title) {
     return [
@@ -24,6 +28,14 @@ export default function getMetaTags({
         name: "description",
         content: "Cursos y recursos de programación y diseño web",
       },
+      {
+        property: "fb:app_id",
+        content: fbAppId,
+      },
+      ...(keywords ? [{
+        name: "keywords",
+        content: keywords,
+      }] : []),
     ];
   }
   return [
@@ -32,6 +44,10 @@ export default function getMetaTags({
       name: "description",
       content: description,
     },
+    ...(keywords ? [{
+      name: "keywords",
+      content: keywords,
+    }] : []),
     {
       rel: "canonical",
       href: url,
@@ -60,6 +76,11 @@ export default function getMetaTags({
     {
       property: "og:site_name",
       content: "Fixtergeek",
+    },
+    // Facebook App ID (required by Facebook)
+    {
+      property: "fb:app_id",
+      content: fbAppId,
     },
     // Twitter
     {

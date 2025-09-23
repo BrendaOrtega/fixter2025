@@ -37,7 +37,12 @@ export const Footer = () => {
         <h3 className="text-white font-mdedium">Recursos</h3>
         <Link to="/libros">
           <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
-            Libro: Domina Claude Code
+            📖 Libro: Domina Claude Code (Gratis)
+          </p>
+        </Link>
+        <Link to="/libros/llamaindex">
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            🦙 Libro: LlamaIndex Agent Workflows (Gratis)
           </p>
         </Link>
         <Link to="/cursos">

@@ -148,7 +148,7 @@ const saludoAgent = agent({
        - FRECUENTE: Saludo de agradecimiento, pregunta si quiere "lo de siempre"
        - VIP: Saludo especial, menciona promociones VIP
     
-    Siempre sé cálido, usa emojis apropiados y habla como mexicano.
+    Siempre sé cálido, usa emojis apropiados y habla de manera amigable.
     Termina preguntando "¿En qué te puedo ayudar?"
   `,
 });
@@ -281,7 +281,7 @@ Puedes usar el mismo agente para diferentes canales (WhatsApp, web, API) sin cam
 
 Sin overhead de clases u objetos. Solo funciones ejecutándose eficientemente.
 
-## Casos de uso reales en México
+## Casos de uso reales
 
 ### 🌮 Sector Alimentario
 

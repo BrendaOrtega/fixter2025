@@ -1,12 +1,12 @@
 # Prólogo
 
-Bienvenido a **Agent Workflows de LlamaIndex TypeScript**, una guía práctica diseñada especialmente para desarrolladores mexicanos que quieren dominar la creación de workflows inteligentes.
+Bienvenido a **Agent Workflows de LlamaIndex TypeScript**, una guía práctica diseñada especialmente para desarrolladores que hablan español que quieren dominar la creación de workflows inteligentes.
 
 ## ¿Por qué este libro?
 
 En el mundo del desarrollo de software, la automatización inteligente ya no es un lujo, es una necesidad. Los Agent Workflows de LlamaIndex TypeScript nos permiten crear sistemas que pueden razonar, tomar decisiones y ejecutar tareas complejas de manera autónoma.
 
-Este libro nació de una necesidad real: **hacer accesible esta tecnología poderosa para desarrolladores principiantes en TypeScript**, usando ejemplos que realmente importan en nuestro contexto mexicano.
+Este libro nació de una necesidad real: **hacer accesible esta tecnología poderosa para desarrolladores principiantes en TypeScript**, usando ejemplos que realmente importan en nuestro contexto hispanohablante.
 
 ## Un enfoque diferente
 
@@ -55,6 +55,6 @@ Cada línea de código que escribas puede hacer la diferencia en un pequeño neg
 
 ---
 
-_Con cariño y respeto para la comunidad de desarrolladores mexicanos._
+_Con cariño y respeto para la comunidad de desarrolladores hispanohablantes._
 
 **El equipo de FixterGeek**

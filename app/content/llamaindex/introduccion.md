@@ -41,7 +41,7 @@ LlamaIndex no es solo otra biblioteca de IA. Es un framework completo que:
 - **Maneja** el estado y la comunicación entre pasos
 - **Escala** desde prototipos hasta sistemas de producción
 
-## Casos de uso reales en México
+## Casos de uso reales
 
 ### 🌮 Sector Alimentario
 

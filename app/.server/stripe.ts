@@ -39,7 +39,7 @@ export const getStripeCheckout = async (options: {
   );
   
   const location = isDev
-    ? "http://localhost:3000"
+    ? (process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`)
     : (process.env.BASE_URL || "https://www.fixtergeek.com");
   const successURL = `${location}/mis-cursos`;
   const cancelURL = `${location}/cursos/${courseSlug}/detalle`;

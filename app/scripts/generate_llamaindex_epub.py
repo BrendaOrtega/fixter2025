@@ -7,6 +7,7 @@ import json
 from ebooklib import epub
 import markdown
 from pathlib import Path
+import urllib.request
 
 def create_llamaindex_epub():
     """Genera un archivo EPUB del libro Agent Workflows de LlamaIndex TypeScript"""
@@ -108,6 +109,26 @@ def create_llamaindex_epub():
                             content=css)
     book.add_item(nav_css)
 
+    # Añadir imagen de portada desde archivo temporal
+    try:
+        cover_path = "/tmp/llamaindex_cover.jpg"
+        if os.path.exists(cover_path):
+            with open(cover_path, 'rb') as cover_file:
+                cover_data = cover_file.read()
+
+            cover_image = epub.EpubItem(uid="cover_image",
+                                      file_name="images/cover.jpg",
+                                      media_type="image/jpeg",
+                                      content=cover_data)
+            book.add_item(cover_image)
+            book.set_cover("images/cover.jpg", cover_data)
+            print("✓ Portada añadida desde Pexels")
+        else:
+            print("⚠ No se encontró imagen de portada, continuando sin ella")
+    except Exception as e:
+        print(f"⚠ Error añadiendo portada: {e}")
+        print("📖 Continuando sin imagen de portada")
+
     # Lista de capítulos de LlamaIndex
     chapters_info = [
         {"id": "prólogo", "title": "Prólogo", "slug": "prologo"},
@@ -145,7 +166,7 @@ def create_llamaindex_epub():
                                    file_name=f'chap_{i+1:02d}.xhtml',
                                    lang='es')
 
-            # Envolver el HTML con estructura adecuada
+            # Envolver el HTML con estructura adecuada (sin duplicar título)
             chapter.content = f'''
             <html xmlns="http://www.w3.org/1999/xhtml">
             <head>
@@ -153,7 +174,6 @@ def create_llamaindex_epub():
                 <link rel="stylesheet" type="text/css" href="style/nav.css"/>
             </head>
             <body>
-                <h1>{chapter_info['title']}</h1>
                 {html_content}
             </body>
             </html>
@@ -174,10 +194,10 @@ def create_llamaindex_epub():
         except Exception as e:
             print(f"✗ Error procesando {chapter_info['slug']}: {e}")
 
-    # Definir tabla de contenidos
+    # Crear tabla de contenidos dinámicamente
     book.toc = epub_chapters
 
-    # Añadir navegación
+    # Añadir página de navegación
     book.add_item(epub.EpubNcx())
     book.add_item(epub.EpubNav())
 
