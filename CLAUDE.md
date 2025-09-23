@@ -302,11 +302,32 @@ npx tsx app/subagents/document-generator.ts --epub --pdf --force
 python3 app/scripts/generate_epub.py
 ```
 
+**EPUB de LlamaIndex:**
+
+```bash
+python3 app/scripts/generate_llamaindex_epub.py
+```
+
 **PDF del temario:**
 
 ```bash
 python3 generate_temario_pdf.py
 ```
+
+### Fix de Títulos en EPUB (Septiembre 2025)
+
+**Problema resuelto**: Los EPUBs mostraban nombres genéricos como "chap_01", "chap_02" en lugar de los títulos reales de los capítulos.
+
+**Solución aplicada**:
+1. **Nombres de archivo descriptivos**: Usar títulos completos como nombres de archivo (ej: `Fundamentos_para_administrar_mejor_el_contexto.xhtml`)
+2. **TOC explícito**: Crear tabla de contenidos con `epub.Link()` para garantizar títulos correctos
+3. **UIDs únicos**: Asignar UIDs únicos a cada capítulo para navegación correcta
+
+**Archivos modificados**:
+- `app/scripts/generate_epub.py` (Claude Code)
+- `app/scripts/generate_llamaindex_epub.py` (LlamaIndex)
+
+**Resultado**: Navegación e índice muestran títulos completos como "Fundamentos para administrar mejor el contexto" en lugar de códigos genéricos.
 
 ### Cuándo regenerar los documentos:
 
