@@ -57,8 +57,11 @@ export const meta = ({ location }: Route.MetaArgs) => {
   return getMetaTags({
     title: "Agent Workflows de LlamaIndex TypeScript | Fixtergeek",
     description:
-      "Aprende a crear workflows inteligentes con ejemplos prácticos mexicanos",
+      "Domina los Agent Workflows de LlamaIndex con TypeScript. Aprende a crear workflows inteligentes paso a paso con ejemplos prácticos mexicanos. Libro interactivo gratuito.",
     url,
+    keywords: "LlamaIndex, Agent Workflows, TypeScript, JavaScript, IA, Inteligencia Artificial, Workflows, Desarrollo, Programación, Libro Gratuito, México",
+    image: "/llamaindex.png",
+    type: "book",
   });
 };
 
@@ -84,8 +87,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const chapterSlug = url.searchParams.get("chapter") || "prologo";
 
-  console.log("🔍 Loading chapter:", chapterSlug);
-
   // Función helper para leer archivos
   const readChapterFile = async (slug: string) => {
     try {
@@ -99,12 +100,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         `${slug}.md`
       );
 
-      console.log("📁 Reading file:", filePath);
       const content = await fs.readFile(filePath, "utf-8");
-      console.log("✅ Content loaded, length:", content.length);
       return content;
     } catch (error) {
-      console.error("❌ Error reading file:", error);
       throw error;
     }
   };
@@ -120,8 +118,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     const nextChapter =
       currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
 
-    console.log("📖 Chapter found:", currentChapter.title);
-
     return {
       content,
       currentChapter,
@@ -130,8 +126,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       chapters,
     };
   } catch (error) {
-    console.error("❌ Error loading chapter, falling back to prologo:", error);
-
     try {
       // Fallback: cargar el prólogo
       const content = await readChapterFile("prologo");
@@ -144,8 +138,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         chapters,
       };
     } catch (fallbackError) {
-      console.error("❌ Error loading fallback:", fallbackError);
-
       // Último recurso: contenido hardcodeado
       return {
         content: "# Error\n\nNo se pudo cargar el contenido del capítulo.",
@@ -281,7 +273,7 @@ export default function LibroLlamaIndex({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Barra de progreso */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
         <motion.div
@@ -292,9 +284,9 @@ export default function LibroLlamaIndex({ loaderData }: Route.ComponentProps) {
       </div>
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm h-16">
+      <header className="sticky top-1 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -491,22 +483,9 @@ export default function LibroLlamaIndex({ loaderData }: Route.ComponentProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="pt-4"
           >
-            <div className="prose prose-lg max-w-none">
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  fontSize: "12px",
-                  background: "#f5f5f5",
-                  padding: "10px",
-                }}
-              >
-                DEBUG - Content length: {content?.length || 0}
-                {"\n"}
-                Content preview: {content?.substring(0, 200) || "NO CONTENT"}
-              </pre>
-              <BookMarkdown readingMode={readingMode}>{content}</BookMarkdown>
-            </div>
+            <BookMarkdown readingMode={readingMode}>{content}</BookMarkdown>
           </motion.div>
 
           {/* Navegación entre capítulos */}
