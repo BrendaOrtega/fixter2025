@@ -59,27 +59,16 @@ export const meta = ({ location }: Route.MetaArgs) => {
     description:
       "Domina los Agent Workflows de LlamaIndex con TypeScript. Aprende a crear workflows inteligentes paso a paso con ejemplos prácticos mexicanos. Libro interactivo gratuito.",
     url,
-    keywords: "LlamaIndex, Agent Workflows, TypeScript, JavaScript, IA, Inteligencia Artificial, Workflows, Desarrollo, Programación, Libro Gratuito, México",
+    keywords:
+      "LlamaIndex, Agent Workflows, TypeScript, JavaScript, IA, Inteligencia Artificial, Workflows, Desarrollo, Programación, Libro Gratuito, México",
     image: "/llamaindex.png",
     type: "book",
   });
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const formData = await request.formData();
-  const action = formData.get("action");
-
-  if (action === "download-epub") {
-    // TODO: Implementar generación de EPUB para LlamaIndex
-    // const epubBuffer = await generateLlamaIndexEpub();
-
-    // Por ahora, retornamos un error amigable
-    return new Response(JSON.stringify({ error: "EPUB en desarrollo" }), {
-      headers: { "Content-Type": "application/json" },
-      status: 501,
-    });
-  }
-
+  // No necesitamos action para LlamaIndex por ahora
+  // La descarga es directa desde el archivo estático
   return null;
 };
 
@@ -172,8 +161,13 @@ export default function LibroLlamaIndex({ loaderData }: Route.ComponentProps) {
     try {
       setIsGeneratingEpub(true);
 
-      // TODO: Implementar descarga de EPUB para LlamaIndex
-      alert("La descarga de EPUB estará disponible pronto 📚");
+      // Simplemente usar el archivo estático que ya se genera
+      const link = document.createElement("a");
+      link.href = "/agent-workflows-llamaindex.epub";
+      link.download = "agent-workflows-llamaindex.epub";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error("Error descargando EPUB:", error);
     } finally {

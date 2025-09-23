@@ -531,14 +531,14 @@ export const HomeHero = () => {
             que usan los profesionales de la industria
           </h2>{" "}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-12">
-            <PrimaryButton 
-              as="Link" 
-              to="/claude" 
+            <PrimaryButton
+              as="Link"
+              to="/claude"
               children="Explorar Claude"
             />
-            <PrimaryButton 
-              as="Link" 
-              to="/agentes" 
+            <PrimaryButton
+              as="Link"
+              to="/agentes"
               children="Explorar creación de agentes no-code"
               variant="ghost"
             />
@@ -548,6 +548,16 @@ export const HomeHero = () => {
               children="Explorar el blog"
               variant="ghost"
             />
+          </div>
+          {/* Link sutil al libro */}
+          <div className="flex justify-center md:justify-start mt-8">
+            <Link
+              to="/libros"
+              className="text-sm text-white/80 hover:text-white hover:underline transition-all duration-200 flex items-center gap-2"
+            >
+              <span className="text-base">📖</span>
+              <span>Libro gratuito: Dominando Claude Code</span>
+            </Link>
           </div>
         </div>
         <img className="scale-75 lg:scale-100" src="/robot.svg" alt="robot" />
