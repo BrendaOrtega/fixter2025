@@ -301,10 +301,10 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                                   webinarData.registeredAt
                                 ).toLocaleDateString("es-MX", {
                                   day: "2-digit",
-                                  month: "2-digit",
+                                  month: "short",
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                }).replace(/\//g, '-').substring(0, 11)
+                                }).replace(/\s/g, '-').replace(/,/g, '')
                               : "-"}
                           </div>
                         </td>
@@ -491,13 +491,12 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       ? new Date(webinarData.registeredAt).toLocaleDateString(
                           "es-MX",
                           {
-                            year: "numeric",
+                            day: "2-digit",
                             month: "short",
-                            day: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
                           }
-                        )
+                        ).replace(/\s/g, '-').replace(/,/g, '')
                       : "",
                     user.phoneNumber || "",
                     experienceLevel,
