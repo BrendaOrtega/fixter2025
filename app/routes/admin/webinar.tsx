@@ -138,33 +138,36 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
           </div>
 
           {/* Lista de usuarios */}
-          <div className="overflow-hidden">
-            <table className="w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto">
+            <table className="w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                     Usuario
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                     Registro
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
-                    Teléfono
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
+                    Tel
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/10">
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                     Nivel
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
+                    Interés
+                  </th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                     Contexto
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/8">
-                    Sesión
+                  <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
+                    Tipo
                   </th>
                   {activeTab === "purchased" && (
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                    <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                       Módulos
                     </th>
                   )}
@@ -174,7 +177,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                 {filteredUsers.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={activeTab === "purchased" ? 8 : 7}
+                      colSpan={activeTab === "purchased" ? 9 : 8}
                       className="px-6 py-8 text-center text-gray-500"
                     >
                       {tagFilter
@@ -195,12 +198,21 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                     const experienceLevel =
                       webinarData?.experienceLevel ||
                       userTags
-                        .find((t) => String(t).startsWith("level-"))
+                        .find((t) => String(t).startsWith("level-") || String(t).startsWith("experience-"))
                         ?.toString()
-                        .replace("level-", "") ||
+                        .replace("level-", "")
+                        .replace("experience-", "") ||
                       "-";
-                    const context =
+
+                    const interest =
                       webinarData?.contextObjective ||
+                      userTags
+                        .find((t) => String(t).startsWith("interest-"))
+                        ?.toString()
+                        .replace("interest-", "") ||
+                      "-";
+
+                    const context =
                       userTags
                         .find((t) => String(t).startsWith("context-"))
                         ?.toString()
@@ -209,77 +221,77 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
 
                     return (
                       <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-3">
+                        <td className="px-2 py-1">
                           <div className="flex items-center gap-1">
                             <div
-                              className="text-sm font-medium text-gray-900"
+                              className="font-medium text-gray-900 truncate max-w-[120px]"
                               title={user.displayName || "Sin nombre"}
                             >
-                              {user.displayName || "Sin nombre"}
+                              {(user.displayName || "Sin nombre").split(' ')[0]}
                             </div>
                             {user.courses &&
                               user.courses.includes(COURSE_IDS.CLAUDE) && (
                                 <span
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                  className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800"
                                   title="Tiene curso de Claude Code"
                                 >
-                                  Claude
+                                  C
                                 </span>
                               )}
                             {user.courses &&
                               user.courses.includes(COURSE_IDS.GEMINI) && (
                                 <span
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                                  className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800"
                                   title="Tiene curso de Gemini CLI"
                                 >
-                                  Gemini
+                                  G
                                 </span>
                               )}
                             {user.courses &&
                               user.courses.includes(COURSE_IDS.LLAMAINDEX) && (
                                 <span
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                                  className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800"
                                   title="Tiene curso de LlamaIndex"
                                 >
-                                  LlamaIndex
+                                  L
                                 </span>
                               )}
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-2 py-1">
                           <div
-                            className="text-sm text-gray-500"
+                            className="text-gray-500 truncate max-w-[140px]"
                             title={user.email}
                           >
                             {user.email}
                           </div>
                         </td>
-                        <td className="px-3 py-3">
-                          <div className="text-xs text-gray-500">
+                        <td className="px-2 py-1">
+                          <div className="text-gray-500">
                             {webinarData?.registeredAt
                               ? new Date(
                                   webinarData.registeredAt
                                 ).toLocaleDateString("es-MX", {
                                   day: "2-digit",
-                                  month: "short",
+                                  month: "2-digit",
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                })
+                                }).replace(/\//g, '-').substring(0, 11)
                               : "-"}
                           </div>
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-2 py-1">
                           <div
-                            className="text-xs text-gray-500 truncate"
+                            className="text-gray-500 truncate max-w-[60px]"
                             title={user.phoneNumber || "-"}
                           >
-                            {user.phoneNumber || "-"}
+                            {user.phoneNumber ? user.phoneNumber.slice(-4) : "-"}
                           </div>
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="px-2 py-1">
                           <span
                             className={cn(
-                              "px-1 py-0.5 text-xs rounded-full whitespace-nowrap",
+                              "px-1 py-0.5 rounded whitespace-nowrap",
                               experienceLevel === "junior" &&
                                 "bg-green-100 text-green-800",
                               experienceLevel === "mid" &&
@@ -289,56 +301,84 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                               experienceLevel === "lead" &&
                                 "bg-red-100 text-red-800",
                               experienceLevel === "student" &&
-                                "bg-yellow-100 text-yellow-800"
+                                "bg-yellow-100 text-yellow-800",
+                              experienceLevel === "beginner" &&
+                                "bg-green-100 text-green-800",
+                              experienceLevel === "intermediate" &&
+                                "bg-blue-100 text-blue-800",
+                              experienceLevel === "advanced" &&
+                                "bg-purple-100 text-purple-800"
                             )}
                           >
-                            {experienceLevel}
+                            {experienceLevel === "beginner" ? "beg" :
+                             experienceLevel === "intermediate" ? "int" :
+                             experienceLevel === "advanced" ? "adv" :
+                             experienceLevel === "junior" ? "jr" :
+                             experienceLevel === "senior" ? "sr" :
+                             experienceLevel === "lead" ? "lead" :
+                             experienceLevel === "student" ? "stu" :
+                             experienceLevel === "mid" ? "mid" : experienceLevel}
                           </span>
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="px-2 py-1">
                           <div
-                            className="text-xs text-gray-500 truncate max-w-24"
-                            title={context}
+                            className="text-gray-500 truncate max-w-[80px]"
+                            title={interest === "single_agents" ? "Agentes individuales" :
+                                    interest === "multi_agents" ? "Multi-agentes" :
+                                    interest === "workflows" ? "Workflows" :
+                                    interest === "all" ? "Todo" : interest}
                           >
-                            {context}
+                            {interest === "single_agents" ? "Individual" :
+                             interest === "multi_agents" ? "Multi" :
+                             interest === "workflows" ? "Workflow" :
+                             interest === "all" ? "Todo" : interest}
                           </div>
                         </td>
-                        <td className="px-2 py-3">
+                        <td className="px-2 py-1">
                           <div
-                            className="text-xs text-gray-500 truncate max-w-20"
+                            className="text-gray-500 truncate max-w-[60px]"
+                            title={context}
+                          >
+                            {context.substring(0, 15)}
+                          </div>
+                        </td>
+                        <td className="px-2 py-1">
+                          <div
+                            className="text-gray-500 truncate max-w-[50px]"
                             title={webinarData?.webinarType || "-"}
                           >
-                            {webinarData?.webinarType || "-"}
+                            {webinarData?.webinarType?.includes("llamaindex") ? "llama" :
+                             webinarData?.webinarType?.includes("claude") ? "claude" :
+                             webinarData?.webinarType?.includes("gemini") ? "gemini" :
+                             webinarData?.webinarType?.substring(0, 8) || "-"}
                           </div>
                         </td>
                         {activeTab === "purchased" && (
-                          <td className="px-2 py-3">
-                            <div className="text-xs text-gray-500">
+                          <td className="px-2 py-1">
+                            <div className="text-gray-500">
                               {workshopData?.selectedModules ? (
                                 <div className="space-y-0.5">
                                   {JSON.parse(
                                     workshopData.selectedModules as any
                                   )
-                                    .slice(0, 2)
+                                    .slice(0, 1)
                                     .map((mod: any, idx: number) => (
                                       <div
                                         key={idx}
-                                        className="bg-gray-100 rounded px-1 py-0.5 text-xs truncate"
+                                        className="bg-gray-100 rounded px-1 truncate"
                                         title={mod.title}
                                       >
-                                        {mod.title}
+                                        {mod.title.substring(0, 15)}
                                       </div>
                                     ))}
                                   {JSON.parse(
                                     workshopData.selectedModules as any
-                                  ).length > 2 && (
-                                    <div className="text-xs text-gray-400">
-                                      +
-                                      {JSON.parse(
+                                  ).length > 1 && (
+                                    <span className="text-[10px] text-gray-400">
+                                      +{JSON.parse(
                                         workshopData.selectedModules as any
-                                      ).length - 2}{" "}
-                                      más
-                                    </div>
+                                      ).length - 1}
+                                    </span>
                                   )}
                                 </div>
                               ) : (
@@ -369,12 +409,33 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                   "Fecha Registro",
                   "Teléfono",
                   "Nivel",
+                  "Interés",
                   "Contexto",
                   "Tipo Webinar",
                   "Fecha",
                 ],
                 ...data.map((user) => {
                   const webinarData = user.webinar as any;
+                  const userTags = Array.isArray(user.tags) ? user.tags : [];
+
+                  const experienceLevel = webinarData?.experienceLevel ||
+                    userTags
+                      .find((t) => t.startsWith("level-") || t.startsWith("experience-"))
+                      ?.replace("level-", "")
+                      .replace("experience-", "") ||
+                    "";
+
+                  const interest = webinarData?.contextObjective ||
+                    userTags
+                      .find((t) => t.startsWith("interest-"))
+                      ?.replace("interest-", "") ||
+                    "";
+
+                  const context = userTags
+                    .find((t) => t.startsWith("context-"))
+                    ?.replace("context-", "") ||
+                    "";
+
                   return [
                     user.displayName || "Sin nombre",
                     user.email,
@@ -391,16 +452,9 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                         )
                       : "",
                     user.phoneNumber || "",
-                    webinarData?.experienceLevel ||
-                      user.tags
-                        .find((t) => t.startsWith("level-"))
-                        ?.replace("level-", "") ||
-                      "",
-                    webinarData?.contextObjective ||
-                      user.tags
-                        .find((t) => t.startsWith("context-"))
-                        ?.replace("context-", "") ||
-                      "",
+                    experienceLevel,
+                    interest,
+                    context,
                     webinarData?.webinarType || "",
                     new Date(user.createdAt).toLocaleDateString("es-MX"),
                   ];
