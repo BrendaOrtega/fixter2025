@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { PhoneInput } from "~/components/common/PhoneInput";
+import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher, Link } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
@@ -139,19 +140,23 @@ export default function LlamaIndexPage() {
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
-      {/* Gradient overlay más intenso */}
-      <div className="absolute inset-0 bg-gradient-to-br from-llamaindex-cyan/20 via-llamaindex-purple/25 to-llamaindex-pink/15"></div>
-
-      {/* Overlay para profundidad */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20"></div>
-
-      {/* Grid pattern sutil */}
-      <div
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23000000' fill-opacity='1'%3e%3ccircle cx='30' cy='30' r='1.5'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`,
-        }}
-      ></div>
+      {/* Liquid Ether Background - z-index bajo para que no tape el contenido */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <LiquidEther
+          colors={['#aa99e6', '#74dcf4', '#f2b5e3', '#f2ddda']}
+          mouseForce={25}
+          cursorSize={120}
+          autoDemo={true}
+          autoSpeed={0.6}
+          autoIntensity={2.0}
+          viscous={25}
+          dt={0.016}
+          resolution={0.7}
+          BFECC={true}
+          style={{ opacity: 0.5 }}
+          className="pointer-events-auto"
+        />
+      </div>
 
       {/* Múltiples imágenes flotantes - Desktop */}
       {[...Array(12)].map((_, i) => (
