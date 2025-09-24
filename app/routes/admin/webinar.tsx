@@ -189,7 +189,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                     Interés
                   </th>
                   <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
-                    Contexto
+                    Objetivo
                   </th>
                   <th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
                     Tipo
@@ -232,15 +232,17 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                         .replace("experience-", "") ||
                       "-";
 
+                    // Interest: específico de cada landing (ej: single_agents, multi_agents, etc.)
                     const interest =
-                      webinarData?.contextObjective ||
                       userTags
                         .find((t) => String(t).startsWith("interest-"))
                         ?.toString()
                         .replace("interest-", "") ||
                       "-";
 
+                    // Context: lo que se guarda en webinar.contextObjective (puede variar por landing)
                     const context =
+                      webinarData?.contextObjective ||
                       userTags
                         .find((t) => String(t).startsWith("context-"))
                         ?.toString()
@@ -458,7 +460,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                   "Teléfono",
                   "Nivel",
                   "Interés",
-                  "Contexto",
+                  "Objetivo",
                   "Tipo Webinar",
                   "Fecha",
                 ],
@@ -473,15 +475,15 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       .replace("experience-", "") ||
                     "";
 
-                  const interest = webinarData?.contextObjective ||
-                    userTags
-                      .find((t) => t.startsWith("interest-"))
-                      ?.replace("interest-", "") ||
+                  const interest = userTags
+                    .find((t) => t.startsWith("interest-"))
+                    ?.replace("interest-", "") ||
                     "";
 
-                  const context = userTags
-                    .find((t) => t.startsWith("context-"))
-                    ?.replace("context-", "") ||
+                  const context = webinarData?.contextObjective ||
+                    userTags
+                      .find((t) => t.startsWith("context-"))
+                      ?.replace("context-", "") ||
                     "";
 
                   return [
