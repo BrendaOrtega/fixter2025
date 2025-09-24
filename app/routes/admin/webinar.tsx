@@ -5,6 +5,7 @@ import { AdminNav } from "~/components/admin/AdminNav";
 import { getWebinarData } from "~/.server/webinarUtils";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { COURSE_IDS } from "~/constants/webinar";
+import { BiCopy, BiLogoWhatsapp } from "react-icons/bi";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await getAdminOrRedirect(request);
@@ -31,6 +32,33 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
     const userTags = Array.isArray(user.tags) ? user.tags : [];
     return userTags.includes(tagFilter);
   });
+
+  // Función para copiar teléfono al clipboard
+  const copyPhone = async (phone: string) => {
+    try {
+      await navigator.clipboard.writeText(phone);
+      // Simple feedback visual
+      const button = document.activeElement as HTMLElement;
+      if (button) {
+        const originalText = button.title;
+        button.title = "¡Copiado!";
+        setTimeout(() => {
+          button.title = originalText;
+        }, 1000);
+      }
+    } catch (err) {
+      console.error('Error copiando teléfono:', err);
+    }
+  };
+
+  // Función para abrir WhatsApp
+  const openWhatsApp = (phone: string) => {
+    // Limpiar el teléfono de caracteres especiales
+    const cleanPhone = phone.replace(/[^\d]/g, '');
+    // Si no tiene código de país, asumir México (+52)
+    const finalPhone = cleanPhone.startsWith('52') ? cleanPhone : `52${cleanPhone}`;
+    window.open(`https://wa.me/${finalPhone}`, '_blank');
+  };
   return (
     <article className="pt-20">
       <AdminNav />
@@ -281,12 +309,32 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                           </div>
                         </td>
                         <td className="px-2 py-1">
-                          <div
-                            className="text-gray-500 truncate max-w-[60px]"
-                            title={user.phoneNumber || "-"}
-                          >
-                            {user.phoneNumber ? user.phoneNumber.slice(-4) : "-"}
-                          </div>
+                          {user.phoneNumber ? (
+                            <div className="flex items-center gap-1">
+                              <span
+                                className="text-gray-500 truncate max-w-[40px]"
+                                title={user.phoneNumber}
+                              >
+                                {user.phoneNumber.slice(-4)}
+                              </span>
+                              <button
+                                onClick={() => copyPhone(user.phoneNumber!)}
+                                className="p-0.5 text-gray-400 hover:text-blue-600 transition-colors"
+                                title={`Copiar: ${user.phoneNumber}`}
+                              >
+                                <BiCopy className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => openWhatsApp(user.phoneNumber!)}
+                                className="p-0.5 text-gray-400 hover:text-green-600 transition-colors"
+                                title={`WhatsApp: ${user.phoneNumber}`}
+                              >
+                                <BiLogoWhatsapp className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">-</span>
+                          )}
                         </td>
                         <td className="px-2 py-1">
                           <span
