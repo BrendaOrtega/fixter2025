@@ -11,6 +11,11 @@ Este archivo contiene información útil para Claude Code sobre el proyecto y pr
 - **Pagos**: Stripe
 - **Emails**: Amazon SES
 - **Animaciones**: Motion (motion/react)
+- **Deploy**: Fly.io con Docker (https://fixter2025.fly.dev/)
+- **Configuración Docker**:
+  - Dockerfile usa Node 20.11.1-alpine
+  - Servidor configurado para escuchar en 0.0.0.0:3000
+  - Variables ENV HOST=0.0.0.0 y PORT=3000 necesarias
 
 ## Lo nuevo
 
@@ -268,6 +273,7 @@ import { FloatingPromo } from "~/components/common/FloatingPromo";
 
 - **Desarrollo**: `npm run dev`
 - **Build**: `npm run build`
+- **Deploy**: `fly deploy` (se despliega en https://fixter2025.fly.dev/)
 - **Prisma**: `npx prisma studio`
 - **Generar PDF**: `python3 generate_pdf.py` (desde /public/)
 - **Generar EPUB del libro**: `python3 app/scripts/generate_epub.py`
