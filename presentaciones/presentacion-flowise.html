@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agentes IA - Presentación</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #37ab93 0%, #186656 100%),
+          url("assets/stars.png");
+        background-size: cover, cover;
+        background-position: center, center;
+        overflow: hidden;
+      }
+
+      .slideshow-container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+      }
+
+      .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 80px;
+        text-align: center;
+        color: white;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(100px);
+        transition: all 0.6s ease-in-out;
+      }
+
+      .slide.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+      }
+
+      .slide h1 {
+        font-size: 3.5rem;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        animation: slideInFromLeft 0.8s ease-out;
+      }
+
+      .slide h2 {
+        font-size: 2.8rem;
+        margin-bottom: 40px;
+        color: #85ddcb;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        animation: slideInFromRight 0.8s ease-out 0.2s both;
+      }
+
+      .slide h3 {
+        font-size: 2.2rem;
+        margin-bottom: 30px;
+        color: #dae8e5;
+        animation: slideInFromBottom 0.8s ease-out 0.3s both;
+      }
+
+      .slide p,
+      .slide li {
+        font-size: 1.4rem;
+        line-height: 1.8;
+        margin-bottom: 20px;
+        animation: fadeIn 0.8s ease-out 0.4s both;
+      }
+
+      .slide ul {
+        list-style: none;
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: left;
+      }
+
+      .slide li {
+        margin-bottom: 15px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .slide li::before {
+        content: "→ ";
+        color: #85ddcb;
+        font-weight: bold;
+        margin-right: 10px;
+      }
+
+      .code-block {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 30px;
+        margin: 30px auto;
+        max-width: 600px;
+        font-family: "Monaco", "Menlo", monospace;
+        text-align: left;
+        animation: slideInFromBottom 0.8s ease-out 0.5s both;
+      }
+
+      .code-block pre {
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+
+      .highlight {
+        color: #85ddcb;
+        font-weight: bold;
+      }
+
+      .emoji {
+        font-size: 1.5em;
+        margin-right: 10px;
+      }
+
+      .quote {
+        font-style: italic;
+        font-size: 1.8rem;
+        margin-top: 40px;
+        color: #dae8e5;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .nav-btn {
+        position: fixed;
+        bottom: 30px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        z-index: 200;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .nav-btn:active {
+        transform: translateY(-1px);
+      }
+
+      .nav-btn.prev {
+        left: 30px;
+      }
+
+      .nav-btn.next {
+        right: 30px;
+      }
+
+      /* Animated Background */
+      .animated-bg {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        overflow: hidden;
+      }
+
+      .flying-ufo {
+        position: absolute;
+        font-size: 60px;
+        opacity: 0;
+        z-index: 1;
+        animation: fly-around 25s infinite linear;
+        animation-delay: 12s;
+        filter: drop-shadow(0 0 15px rgba(133, 221, 203, 0.4));
+      }
+
+      @keyframes fly-around {
+        0% {
+          opacity: 0;
+          transform: translate(-100px, 80vh) rotate(15deg) scale(0.8);
+        }
+        5% {
+          opacity: 0.6;
+        }
+        15% {
+          transform: translate(20vw, 60vh) rotate(-10deg) scale(1);
+        }
+        30% {
+          transform: translate(60vw, 30vh) rotate(25deg) scale(1.1);
+        }
+        45% {
+          transform: translate(40vw, 70vh) rotate(-15deg) scale(0.9);
+        }
+        60% {
+          transform: translate(80vw, 20vh) rotate(35deg) scale(1.2);
+        }
+        75% {
+          transform: translate(90vw, 50vh) rotate(-5deg) scale(1);
+        }
+        90% {
+          opacity: 0.6;
+          transform: translate(110vw, 40vh) rotate(20deg) scale(0.8);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(120vw, 30vh) rotate(0deg) scale(0.6);
+        }
+      }
+
+      .floating-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(133, 221, 203, 0.5) 0%,
+          rgba(133, 221, 203, 0.1) 70%
+        );
+        animation: float-up 20s infinite linear;
+        filter: blur(1px);
+        opacity: 0;
+        bottom: -200px;
+      }
+
+      @keyframes float-up {
+        0% {
+          transform: translateY(0) translateX(0) scale(0.8);
+          opacity: 0;
+        }
+        5% {
+          opacity: 0.6;
+          transform: translateY(-10vh) translateX(10px) scale(1);
+        }
+        95% {
+          opacity: 0.6;
+          transform: translateY(-110vh) translateX(80px) scale(1.2);
+        }
+        100% {
+          transform: translateY(-120vh) translateX(100px) scale(1.5);
+          opacity: 0;
+        }
+      }
+
+      .particle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: rgba(218, 232, 229, 0.9);
+        border-radius: 50%;
+        animation: twinkle 3s infinite;
+        box-shadow: 0 0 10px rgba(133, 221, 203, 0.5);
+      }
+
+      @keyframes twinkle {
+        0% {
+          opacity: 0.1;
+          transform: scale(0.3);
+          box-shadow: 0 0 5px rgba(133, 221, 203, 0.3);
+        }
+        25% {
+          opacity: 0.5;
+          transform: scale(0.8);
+          box-shadow: 0 0 8px rgba(133, 221, 203, 0.6);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.2);
+          box-shadow: 0 0 15px rgba(133, 221, 203, 0.8);
+        }
+        75% {
+          opacity: 0.7;
+          transform: scale(0.9);
+          box-shadow: 0 0 12px rgba(133, 221, 203, 0.5);
+        }
+        100% {
+          opacity: 0.1;
+          transform: scale(0.3);
+          box-shadow: 0 0 5px rgba(133, 221, 203, 0.3);
+        }
+      }
+
+      .slide-counter {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.1rem;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 20px;
+        border-radius: 20px;
+      }
+
+      .logo {
+        position: fixed;
+        top: 30px;
+        left: 30px;
+        height: 50px;
+        opacity: 1;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 8px 12px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .slide-image {
+        max-width: 600px;
+        max-height: 300px;
+        border-radius: 15px;
+        margin: 30px auto;
+        animation: slideInFromBottom 0.8s ease-out 0.6s both,
+          floatInSpace 6s ease-in-out infinite 1.5s;
+      }
+
+      @keyframes floatInSpace {
+        0%,
+        100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        25% {
+          transform: translateY(-8px) rotate(1deg);
+        }
+        50% {
+          transform: translateY(-12px) rotate(0deg);
+        }
+        75% {
+          transform: translateY(-5px) rotate(-1deg);
+        }
+      }
+
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 30px 0;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .image-grid img {
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+      }
+
+      .image-grid img:hover {
+        transform: scale(1.05);
+      }
+
+      /* Animations */
+      @keyframes slideInFromLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-100px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes slideInFromRight {
+        from {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes slideInFromBottom {
+        from {
+          opacity: 0;
+          transform: translateY(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .slide {
+          padding: 40px 20px;
+        }
+
+        .slide h1 {
+          font-size: 2.5rem;
+        }
+        .slide h2 {
+          font-size: 2rem;
+        }
+        .slide h3 {
+          font-size: 1.8rem;
+        }
+        .slide p,
+        .slide li {
+          font-size: 1.2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="animated-bg" id="animatedBg"></div>
+    <div class="slideshow-container">
+      <img class="logo" src="assets/full-logo.svg" alt="FixterGeek Logo" />
+      <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">9</span>
+      </div>
+
+      <!-- Slide 1: Título -->
+      <div class="slide active">
+        <img
+          class="slide-image"
+          src="assets/spaceman.svg"
+          alt="Future Technology"
+        />
+        <h1>Aprende a emplear Inteligencia Artificial</h1>
+        <h2>Agentes & Workflows Visuales</h2>
+        <p>
+          <em
+            >Construcción de IA sin código - Para web devs y principiantes
+            tech</em
+          >
+        </p>
+        <p>Por: Héctorbliss</p>
+      </div>
+
+      <!-- Slide 1.1: Sobre el instructor -->
+      <div class="slide">
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 60px;
+            align-items: center;
+            max-width: 1100px;
+            margin: 0 auto;
+          "
+        >
+          <div style="text-align: left">
+            <h2 style="text-align: left; margin-bottom: 20px">Tu Instructor</h2>
+            <h3 style="color: #85ddcb; margin-bottom: 30px">Héctorbliss</h3>
+            <p style="font-size: 1.2rem; line-height: 1.6; margin-bottom: 20px">
+              Más de 10 años de experiencia como desarrollador de software
+              profesional e instructor tecnológico. Disfruta de simplificar
+              temas complejos para que sus estudiantes aprendan de forma
+              práctica y amena.
+            </p>
+            <p style="font-size: 1rem; font-style: italic; color: #dae8e5">
+              "Me encanta compartir lo que aprendo. Si puedo ayudarte a ahorrar
+              tiempo y frustración mientras creces como developer, mi día está
+              completo."
+            </p>
+          </div>
+          <img
+            src="assets/titor.png"
+            alt="Héctor Bliss"
+            style="
+              width: 300px;
+              border-radius: 50%;
+              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            "
+          />
+        </div>
+      </div>
+
+      <!-- Slide 2: Qué es -->
+      <div class="slide">
+        <h2>¿Qué son los Agentes IA visuales?</h2>
+        <img
+          class="slide-image"
+          src="assets/multi_agents.webp"
+          alt="Multi-agent Architecture"
+        />
+
+        <ul>
+          <li>
+            <span class="highlight">Plataforma visual</span> para construir
+            agentes de IA
+          </li>
+          <li>
+            <span class="highlight">Drag & drop</span> - Sin código, solo
+            conexiones
+          </li>
+          <li>
+            <span class="highlight">Open source</span> - Deploy donde quieras
+          </li>
+          <li>
+            <span class="highlight">100+ integraciones</span> - LLMs,
+            embeddings, bases de datos
+          </li>
+          <li>
+            <span class="highlight">Basado en Frameworks Sólidos</span> - Como
+            LangChain & LlamaIndex
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 2.2: Demo -->
+      <div class="slide">
+        <img class="slide-image" src="assets/robot.svg" alt="Demo Time" />
+        <h1>🚀 Demo Time</h1>
+        <h2>Vamos a construir juntos</h2>
+        <ul style="max-width: 900px">
+          <li style="margin-bottom: 8px; padding: 5px 0">
+            <span class="emoji">🤖</span>
+            <span class="highlight">Chatbot con memoria:</span> Conversación que
+            recuerda el contexto
+          </li>
+          <li style="margin-bottom: 8px; padding: 5px 0">
+            <span class="emoji">📄</span>
+            <span class="highlight">Chat con documentos:</span> RAG para
+            consultar PDFs/documentación
+          </li>
+          <li style="margin-bottom: 8px; padding: 5px 0">
+            <span class="emoji">⚡</span>
+            <span class="highlight">En vivo:</span> De cero a funcionando en 5
+            minutos
+          </li>
+          <li style="margin-bottom: 8px; padding: 5px 0">
+            <span class="emoji">💻</span>
+            <span class="highlight">Deployment:</span> URL lista para compartir
+          </li>
+        </ul>
+        <p class="quote">¡Manos a la obra!</p>
+      </div>
+
+      <!-- Slide 3: El Problema -->
+      <div class="slide">
+        <h2>De Código Manual a Visual</h2>
+        <img
+          class="slide-image"
+          src="https://docs.flowiseai.com/~gitbook/image?url=https%3A%2F%2F823733684-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252F00tYLwhz5RyR7fJEhrWy%252Fuploads%252FZxGswbXpJ3wcJyNHRVSg%252Fscreely-1749594631028.png%3Falt%3Dmedia%26token%3D490115f1-562f-4300-81a7-4e3cefa52ec2&width=768&dpr=2&quality=100&sign=e6c44272&sv=2"
+          alt="Automation"
+        />
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto;
+          "
+        >
+          <div>
+            <h3 style="margin-bottom: 15px; font-size: 1.8rem">❌ Antes</h3>
+            <ul style="text-align: left; font-size: 1.1rem">
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                Configurar SDKs
+              </li>
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                Manejar autenticación
+              </li>
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                Implementar memoria
+              </li>
+              <li style="margin-bottom: 5px; padding: 3px 0">Crear APIs</li>
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                100+ líneas de código
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="margin-bottom: 15px; font-size: 1.8rem">
+              ✅ Con Open Source
+            </h3>
+            <ul style="text-align: left; font-size: 1.1rem">
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                Arrastra componentes
+              </li>
+              <li style="margin-bottom: 5px; padding: 3px 0">Conecta nodos</li>
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                Configura parámetros
+              </li>
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                Deploy automático
+              </li>
+              <li style="margin-bottom: 5px; padding: 3px 0">
+                5 minutos funcionando
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: Stack -->
+      <div class="slide">
+        <h2>Arquitectura & Stack</h2>
+        <img
+          class="slide-image"
+          src="assets/docs.webp"
+          alt="FlowiseAI Interface"
+        />
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+          "
+        >
+          <div>
+            <h3>🛠️ Stack Familiar</h3>
+            <ul style="text-align: left">
+              <li><span class="highlight">Node.js</span> + Express</li>
+              <li><span class="highlight">REST APIs</span> automáticas</li>
+              <li><span class="highlight">WebSockets</span> en tiempo real</li>
+              <li><span class="highlight">Docker</span> deploy</li>
+            </ul>
+          </div>
+          <div>
+            <h3>🧠 Capacidades IA</h3>
+            <ul style="text-align: left">
+              <li><span class="highlight">Multi-agentes</span></li>
+              <li><span class="highlight">RAG</span> con documentos</li>
+              <li><span class="highlight">Memory</span> persistente</li>
+              <li><span class="highlight">Tools</span> personalizadas</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 5: Por qué importa -->
+      <div class="slide">
+        <h2>¿Por Qué te Debería Importar?</h2>
+
+        <img
+          class="slide-image"
+          src="assets/traces.webp"
+          alt="Traces and Monitoring"
+        />
+
+        <ul>
+          <li>
+            <span class="emoji">⚡</span>
+            <span class="highlight">Prototipado:</span> De idea a demo en
+            minutos
+          </li>
+          <li>
+            <span class="emoji">🔌</span>
+            <span class="highlight">Integración:</span> Embed fácil en apps
+            existentes
+          </li>
+          <li>
+            <span class="emoji">🛠️</span>
+            <span class="highlight">Extensible:</span> Custom tools cuando lo
+            necesites
+          </li>
+        </ul>
+        <p class="quote">"Es como Bootstrap para aplicaciones de IA"</p>
+      </div>
+
+      <!-- Slide 6: Capacidades Avanzadas -->
+      <div class="slide">
+        <h2>Capacidades Avanzadas</h2>
+        <img
+          class="slide-image"
+          src="assets/human_in_the_loop.webp"
+          alt="Human in the Loop"
+        />
+        <ul>
+          <li>
+            <span class="emoji">👥</span>
+            <span class="highlight">Human in the Loop:</span> Intervención
+            humana cuando sea necesaria
+          </li>
+          <li>
+            <span class="emoji">🔄</span>
+            <span class="highlight">Workflows complejos:</span> Cadenas de
+            agentes interconectados
+          </li>
+          <li>
+            <span class="emoji">📊</span>
+            <span class="highlight">Analytics:</span> Métricas en tiempo real
+          </li>
+          <li>
+            <span class="emoji">🎯</span>
+            <span class="highlight">Decisiones inteligentes:</span> Lógica
+            condicional avanzada
+          </li>
+        </ul>
+      </div>
+
+      <!-- Slide 9: Oferta -->
+      <div class="slide">
+        <img
+          class="slide-image"
+          style="max-height: 200px"
+          src="assets/spaceman.svg"
+          alt="Oferta especial"
+        />
+        <h1 style="font-size: 2.5rem; margin-bottom: 20px">
+          💎 Oferta Especial
+        </h1>
+        <h2 style="font-size: 2rem; margin-bottom: 25px">
+          Taller Completo de Agentes IA
+        </h2>
+        <div
+          style="
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 0 25px;
+            max-width: 700px;
+            margin: 20px auto;
+          "
+        >
+          <ul style="max-width: 600px; font-size: 1.1rem">
+            <li style="margin-bottom: 10px; padding: 5px 0">
+              <span class="emoji">📚</span>
+              <span class="highlight">5 Sesiones</span> de 2 horas cada una
+            </li>
+            <li style="margin-bottom: 10px; padding: 5px 0">
+              <span class="emoji">💰</span>
+              <span class="highlight">$2,000 MXN</span> individual
+            </li>
+            <li style="margin-bottom: 10px; padding: 5px 0">
+              <span class="emoji">👥</span>
+              <span class="highlight">$3,000 MXN</span> para 2 personas
+            </li>
+            <li style="margin-bottom: 10px; padding: 5px 0">
+              <span class="emoji">🗓️</span>
+              <span class="highlight">Horario flexible</span> a convenir
+            </li>
+          </ul>
+          <p style="font-size: 1rem; margin-top: 20px; color: #85ddcb">
+            ¡Empieza a construir IA hoy mismo!
+          </p>
+        </div>
+        <p class="quote" style="font-size: 1.1rem">
+          📧 brenda@fixter.org o por whats: 7712412825
+          <br />
+          ¡Puedes pagar a 3 meses sin intereses!
+        </p>
+      </div>
+
+      <button class="nav-btn prev" onclick="previousSlide()">← Anterior</button>
+      <button class="nav-btn next" onclick="nextSlide()">Siguiente →</button>
+    </div>
+
+    <script>
+      let currentSlideIndex = 0;
+      const slides = document.querySelectorAll(".slide");
+      const totalSlides = slides.length;
+
+      document.getElementById("totalSlides").textContent = totalSlides;
+
+      function showSlide(n) {
+        slides[currentSlideIndex].classList.remove("active");
+
+        currentSlideIndex = n;
+        if (currentSlideIndex >= totalSlides) currentSlideIndex = 0;
+        if (currentSlideIndex < 0) currentSlideIndex = totalSlides - 1;
+
+        slides[currentSlideIndex].classList.add("active");
+        document.getElementById("currentSlide").textContent =
+          currentSlideIndex + 1;
+      }
+
+      function nextSlide() {
+        showSlide(currentSlideIndex + 1);
+      }
+
+      function previousSlide() {
+        showSlide(currentSlideIndex - 1);
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === " ") {
+          nextSlide();
+        } else if (e.key === "ArrowLeft") {
+          previousSlide();
+        } else if (e.key === "Home") {
+          showSlide(0);
+        } else if (e.key === "End") {
+          showSlide(totalSlides - 1);
+        }
+      });
+
+      // Auto-advance (optional - uncomment to enable)
+      // setInterval(nextSlide, 10000); // 10 seconds per slide
+
+      // Create animated background elements
+      function createBackgroundElements() {
+        const bg = document.getElementById("animatedBg");
+
+        // Create floating circles
+        for (let i = 0; i < 8; i++) {
+          const circle = document.createElement("div");
+          circle.className = "floating-circle";
+          circle.style.width = Math.random() * 150 + 80 + "px";
+          circle.style.height = circle.style.width;
+          circle.style.left = Math.random() * 100 + "%";
+          circle.style.animationDelay = Math.random() * 20 + "s";
+          circle.style.animationDuration = Math.random() * 10 + 15 + "s";
+          bg.appendChild(circle);
+        }
+
+        // Create flying UFO
+        const ufo = document.createElement("div");
+        ufo.innerHTML = "🛸";
+        ufo.className = "flying-ufo";
+        bg.appendChild(ufo);
+
+        // Create twinkling particles
+        for (let i = 0; i < 40; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.style.left = Math.random() * 100 + "%";
+          particle.style.top = Math.random() * 100 + "%";
+          particle.style.animationDelay = Math.random() * 6 + "s";
+          particle.style.animationDuration = Math.random() * 2 + 2 + "s";
+          bg.appendChild(particle);
+        }
+      }
+
+      // Initialize background animation
+      createBackgroundElements();
+    </script>
+  </body>
+</html>
