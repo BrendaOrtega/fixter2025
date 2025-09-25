@@ -9,6 +9,7 @@ import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
+import { BiBrain, BiCheckCircle, BiLayer, BiRocket } from "react-icons/bi";
 
 export const meta = () =>
   getMetaTags({
@@ -299,6 +300,7 @@ export default function ClaudeLanding() {
     const isSuccess = fetcher.data?.success && fetcher.data?.type === "webinar";
     const error = fetcher.data?.error;
     const isLoading = fetcher.state !== "idle";
+  
 
     // Activar confetti cuando hay éxito
     if (isSuccess && !showConfetti) {
@@ -454,7 +456,13 @@ export default function ClaudeLanding() {
       </motion.div>
     );
   };
-
+  const [selectedTopic, setSelectedTopic] = useState<{
+    moduleIndex: number;
+    topicIndex: number;
+  } | null>({
+    moduleIndex: 0,
+    topicIndex: 0,
+  });
   return (
     <>
       {/* Form Modals */}
@@ -967,380 +975,355 @@ export default function ClaudeLanding() {
             </motion.div>
           </div>
 
-          {/* Call to action adicional */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mt-16"
-          >
-            {/* Social Proof Section */}
-            <div className="bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/30 rounded-2xl p-8 max-w-4xl mx-auto">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                {/* Left: Stats */}
-                <div className="text-center md:text-left">
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    className="text-4xl mb-4"
-                  >
-                    🚀
-                  </motion.div>
-                  <h4 className="text-2xl font-bold text-white mb-4">
-                    Únete a developers exitosos
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-brand-500/10 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-brand-400">
-                        8+
-                      </div>
-                      <div className="text-xs text-gray-300">
-                        Años formando devs
-                      </div>
-                    </div>
-                    <div className="bg-green-500/10 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-green-400">
-                        2K+
-                      </div>
-                      <div className="text-xs text-gray-300">En comunidad</div>
-                    </div>
-                  </div>
-                  <fetcher.Form method="post" className="w-full">
-                    <input
-                      type="hidden"
-                      name="intent"
-                      value="direct_checkout"
-                    />
-                    <input
-                      type="hidden"
-                      name="selectedModules"
-                      value={JSON.stringify([1, 2, 3, 4, 5])}
-                    />
-                    <input type="hidden" name="totalPrice" value={1490} />
-                    <button
-                      type="submit"
-                      disabled={fetcher.state !== "idle"}
-                      className="w-full bg-brand-500 text-brand-900 font-bold py-4 px-8 rounded-full transition-all transform hover:scale-105 disabled:opacity-50"
-                    >
-                      {fetcher.state !== "idle" ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                          Procesando...
-                        </div>
-                      ) : (
-                        "🎯 Comprar curso - $1,490 MXN"
-                      )}
-                    </button>
-                  </fetcher.Form>
-                </div>
-
-                {/* Right: Testimonial */}
-                <div className="bg-brand-600/10 border border-brand-500/20 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex text-yellow-400">⭐⭐⭐⭐⭐</div>
-                    <span className="text-sm text-gray-300">Verificado</span>
-                  </div>
-                  <blockquote className="text-gray-200 mb-4 italic">
-                    "Con FixterGeek uno se pone al día de volada, pero lo mejor
-                    es que se aprende las herramientas verdaderamente
-                    importantes de la industria."
-                  </blockquote>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop&crop=face"
-                      alt="Oswaldo Anaya"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <div className="text-white font-semibold">
-                        Oswaldo Anaya
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        Desarrollador Full Stack
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
-
-      {/* Temario Modular */}
-      <section id="temario" className="py-12 bg-background relative">
-        <div className="relative container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-5xl font-bold mb-3 text-white">
-              Inscríbete al curso completo
-            </h2>
-            <p className="text-lg text-colorParagraph font-light mb-6">
-              Accede a todos los módulos del curso +{" "}
-              <s>sesión privada individual incluida</s>
-            </p>
-
-            {/* Badge de curso completo */}
-            <div className="max-w-md mx-auto">
-              <div className="bg-gradient-to-r from-brand-500/20 to-brand-600/20 border border-brand-500/50 rounded-full px-6 py-3">
-                <span className="text-sm font-bold text-white">
-                  ✅ CURSO COMPLETO INCLUIDO - 3 MÓDULOS + ACCESO A NUEVAS
-                  SESIONES
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Primera fila: 3 sesiones principales */}
-          <div className="grid md:grid-cols-3 gap-4 max-w-7xl mx-auto mb-6">
-            {modules.slice(0, 3).map((module, index) => (
-              <motion.div
-                key={module.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{
-                  scale: 1.03,
-                  transition: { duration: 0.15, ease: "easeOut" },
+     <div className="max-w-5xl mx-auto relative">
+              {/* Timeline Line */}
+              <div
+                className="absolute left-[52px] top-[120px] bottom-[200px] w-0.5 opacity-20"
+                style={{
+                  background:
+                    "linear-gradient(to bottom, var(--chart-1), #B0C5E3, #B0C5E3, var(--primary))",
                 }}
-                whileTap={{
-                  scale: 0.97,
-                  transition: { duration: 0.1 },
-                }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="border rounded-xl p-4 transition-all duration-150 h-full border-brand-500 bg-gradient-to-br from-brand-500/20 to-brand-600/10 shadow-xl shadow-brand-500/20 cursor-default"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-2">
-                      <motion.div
-                        animate={
-                          selectedModules.includes(module.id)
-                            ? { rotate: [0, -5, 5, -5, 0] }
-                            : {}
-                        }
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                      >
-                        <span className={`text-2xl font-bold text-brand-500`}>
-                          {module.id}
-                        </span>
-                      </motion.div>
-                      <div>
-                        <h3 className="text-lg font-bold text-white">
-                          {module.title.split(":")[1].trim()}
-                        </h3>
-                      </div>
-                    </div>
-                    <p className="text-xs mt-1 font-light text-colorParagraph">
-                      {module.date}
-                    </p>
-                  </div>
-                  <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 bg-gradient-to-r from-brand-500 to-brand-700 border-brand-500">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <ul className="space-y-2">
-                  {module.topics.map((topic, idx) => (
-                    <motion.li
-                      key={idx}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 + idx * 0.02 }}
-                      className={`flex items-start ${
-                        selectedModules.includes(module.id)
-                          ? "text-gray-200 text-base"
-                          : "text-gray-400 font-light text-base"
-                      }`}
-                    >
-                      <span
-                        className={`mr-2 text-base ${
-                          selectedModules.includes(module.id)
-                            ? "text-brand-300"
-                            : "text-brand-400"
-                        }`}
-                      >
-                        {selectedModules.includes(module.id) ? "✓" : "•"}
-                      </span>
-                      <span className="leading-relaxed">{topic}</span>
-                    </motion.li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Segunda fila: Sesión 4 (próximamente) */}
-          <div className="max-w-lg mx-auto mb-8">
-            {/* Sesión 4 - Próximamente */}
-            <motion.div
-              key={modules[3].id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{
-                scale: 1.03,
-                transition: { duration: 0.15, ease: "easeOut" },
-              }}
-              whileTap={{
-                scale: 0.97,
-                transition: { duration: 0.1 },
-              }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="border border-purple-500 bg-gradient-to-br from-purple-400/10 to-purple-500/5 shadow-xl shadow-purple-500/20 rounded-xl p-4 transition-all duration-150 h-full cursor-default relative overflow-hidden"
-            >
-              {/* Badge de PRÓXIMAMENTE */}
-              <div className="absolute top-2 right-2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                PRÓXIMAMENTE
-              </div>
-
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <div className="flex items-start gap-2">
-                    <motion.div>
-                      <span className="text-2xl font-bold text-purple-400">
-                        4
-                      </span>
-                    </motion.div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">
-                        {modules[3].title.replace("🆕 Sesión 4: ", "")}
-                      </h3>
-                      <p className="text-xs mt-1 font-light text-colorParagraph">
-                        {modules[3].date}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="w-8 h-8 rounded-full border-2 border-purple-500 bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm">🔔</span>
-                </div>
-              </div>
-
-              <ul className="space-y-2">
-                {modules[3].topics.map((topic, idx) => (
-                  <motion.li
-                    key={idx}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.35 + idx * 0.02 }}
-                    className="flex items-start text-gray-200 text-base"
-                  >
-                    <span className="mr-2 text-base text-purple-300">✓</span>
-                    <span className="leading-relaxed">{topic}</span>
-                  </motion.li>
-                ))}
-              </ul>
-
-              <div className="mt-4 pt-4 border-t border-purple-500/30">
-                <button
-                  onClick={() => setShowWebinarForm(true)}
-                  className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-medium py-2 px-4 rounded-lg transition-all text-sm"
+              ></div>
+              {[
+                {
+                  module: "Sesión 1 (GRATIS)",
+                  title: "Tu Primer Agente en 30 Minutos",
+                  icon: <BiRocket className="w-6 h-6" />,
+                  badge: "🎁 GRATIS",
+                  topics: [
+                    {
+                      title:
+                        "Instalación y configuración de tu servidor personal",
+                      description:
+                        "Te guiaré paso a paso para configurar tu entorno de trabajo con acceso a herramientas profesionales de IA, completamente gratis durante el taller.",
+                    },
+                    {
+                      title: "Interfaz visual: nodos, cadenas y flujos",
+                      description:
+                        "Aprenderás a usar la interfaz drag-and-drop para conectar componentes de IA sin escribir código, como si fuera un diagrama de flujo visual.",
+                    },
+                    {
+                      title:
+                        "Conectar tu primer modelo de IA (GPT, Claude, Gemini)",
+                      description:
+                        "Configuraremos conexiones directas a los modelos más potentes del mercado y aprenderás cuándo usar cada uno según tu proyecto.",
+                    },
+                    {
+                      title: "Crear un chatbot funcional con memoria",
+                      description:
+                        "Construirás tu primer agente que puede mantener conversaciones coherentes, recordar contexto y responder de forma natural.",
+                    },
+                  ],
+                  color: "#B0C5E3",
+                  progress: "25%",
+                },
+                {
+                  module: "Sesión 2",
+                  title: "Herramientas y Automatización",
+                  icon: <BiLayer className="w-6 h-6" />,
+                  badge: "🔧 TOOLS",
+                  topics: [
+                    {
+                      title:
+                        "Agentes con herramientas: calculadora, calendarios, APIs",
+                      description:
+                        "Tu agente podrá usar herramientas externas como hacer cálculos complejos, consultar disponibilidad de citas o conectarse con servicios externos en tiempo real.",
+                    },
+                    {
+                      title: "Cadenas secuenciales y paralelas",
+                      description:
+                        "Aprenderás a crear flujos de trabajo donde tu agente puede realizar múltiples tareas en orden o simultáneamente para resolver problemas complejos.",
+                    },
+                    {
+                      title: "Workflows complejos: decisiones y condicionales",
+                      description:
+                        "Diseñarás agentes que toman decisiones inteligentes según el contexto, usando condicionales y lógica para elegir qué herramientas usar en cada situación.",
+                    },
+                    {
+                      title: "Proyecto: Asistente de Restaurante Inteligente",
+                      description:
+                        "Construirás un agente que consulta menús, calcula precios con descuentos, agenda reservas y maneja pedidos. Como tener un empleado que nunca se equivoca y trabaja 24/7.",
+                    },
+                  ],
+                  color: "#B0C5E3",
+                  progress: "50%",
+                },
+                {
+                  module: "Sesión 3",
+                  title: "Estudio Fotográfico Automático",
+                  icon: <span className="text-xl">🍌</span>,
+                  badge: "📸 STUDIO",
+                  topics: [
+                    {
+                      title: "Multi-input: análisis de productos e imágenes",
+                      description:
+                        "Tu agente analizará automáticamente productos (forma, colores, estilo) y modelos (pose, expresión, iluminación) para crear prompts perfectos.",
+                    },
+                    {
+                      title: "Prompt engineering automático con nano-banana",
+                      description:
+                        "El sistema combinará inteligentemente las características del producto y modelo para generar prompts optimizados que produzcan resultados profesionales.",
+                    },
+                    {
+                      title: "Generación masiva y refinamiento iterativo",
+                      description:
+                        "Crea 3+ variantes simultáneas con diferentes poses y estilos, plus un sistema de refinamiento que mejora automáticamente los resultados.",
+                    },
+                    {
+                      title: "Proyecto: Estudio Fotográfico E-commerce",
+                      description:
+                        "Construirás un agente que toma imagen de producto + modelo y genera múltiples fotos profesionales. Perfecto para tiendas online que necesitan variedad sin fotógrafo.",
+                    },
+                  ],
+                  color: "#B0C5E3",
+                  progress: "75%",
+                },
+                {
+                  module: "Sesión 4",
+                  title: "Cerebro Maestro Empresarial con RAG",
+                  icon: <BiBrain className="w-6 h-6" />,
+                  badge: "🧠 RAG",
+                  topics: [
+                    {
+                      title:
+                        "Cargar y procesar documentos masivos (PDF, Word, Web)",
+                      description:
+                        "Tu agente procesará cientos de documentos corporativos automáticamente: manuales, políticas, contratos, reportes. Usando splitters inteligentes para fragmentar información de manera óptima.",
+                    },
+                    {
+                      title: "Bases de conocimiento vectoriales avanzadas",
+                      description:
+                        "Construirás un cerebro digital que entiende contexto, relaciones y significados profundos entre documentos, no solo búsquedas por palabras clave.",
+                    },
+                    {
+                      title: "RAG conversacional: citando fuentes exactas",
+                      description:
+                        "Tu agente responderá preguntas complejas citando documentos específicos, páginas exactas y secciones relevantes. Transparencia total en cada respuesta.",
+                    },
+                    {
+                      title: "Proyecto: Cerebro Maestro Corporativo",
+                      description:
+                        "El gran finale: un super-agente que domina toda la información de tu empresa. Responde desde 'política de vacaciones' hasta 'análisis financiero Q3' con precisión absoluta.",
+                    },
+                  ],
+                  color: "#B0C5E3",
+                  progress: "100%",
+                },
+              ].map((module, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: index * 0.08,
+                    ease: "easeOut",
+                  }}
+                  viewport={{ once: true }}
+                  className="mb-8 group"
                 >
-                  📧 Notificarme cuando esté disponible
-                </button>
-              </div>
-            </motion.div>
-          </div>
+                  <div
+                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden bg-agentes-primary/5 hover:shadow-xl transition-shadow duration-300"
+                    style={{
+                  
+                      boxShadow: `0 8px 32px ${module.color}10`,
+                      border: `1px solid ${module.color}20`,
+                    }}
+                  >
+                    {/* Hover Shine Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
 
-          {/* Precio único */}
-          <div className="bg-gradient-to-r from-brand-500/10 to-brand-600/10 border border-brand-500/30 rounded-2xl p-8 max-w-2xl mx-auto text-center">
-            <div className="text-sm text-colorParagraph font-light mb-2">
-              Precio especial:
-            </div>
-            <div className="text-5xl font-bold text-white mb-2">
-              ${calculatePrice().toLocaleString("es-MX")} MXN
-            </div>
-            <div className="text-brand-300 text-colorParagraph font-light mb-6">
-              {getPriceMessage()}
-            </div>
+                    {/* Glow Effect Background */}
+                    <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+                      backgroundImage: `linear-gradient(to bottom right, ${module.color}05, ${module.color}10)`
+                    }}></div>
 
-            {/* Cupón para estudiantes previos */}
-            <div className="bg-brand-400/10 border border-white/30 rounded-lg p-4 mb-6 w-max mx-auto">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">💰</span>
-                <h4 className="text-white font-bold">
-                  ¿Ya has tomado un curso con nosotros?
-                </h4>
-              </div>
-              <p className="text-colorParagraph text-sm text-left">
-                Si ya eres parte de la familia FixterGeek,
-                <br /> pídele tu cupón del 20% de descuento a{" "}
-                <span className="text-brand-300 font-semibold">Brendi</span>
-              </p>
-            </div>
 
-            <fetcher.Form method="post">
-              <input type="hidden" name="intent" value="direct_checkout" />
-              <input
-                type="hidden"
-                name="selectedModules"
-                value={JSON.stringify(selectedModules)}
-              />
-              <input type="hidden" name="totalPrice" value={calculatePrice()} />
-              <button
-                type="submit"
-                disabled={fetcher.state !== "idle"}
-                className="bg-brand-500  text-brand-900 font-medium h-12 px-8 rounded-full  transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
-              >
-                {fetcher.state !== "idle" ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                    Procesando...
+                    {/* Header */}
+                    <div className="relative z-10 flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        {/* Animated Icon */}
+                        <div
+                          className="p-4 rounded-2xl border-2"
+                          style={{
+                            backgroundColor: module.color + "20",
+                            borderColor: module.color + "40",
+                            color: module.color,
+                          }}
+                        >
+                          {module.icon}
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <span
+                              className="font-bold text-lg"
+                              style={{ color: module.color }}
+                            >
+                              {module.module}
+                            </span>
+                            <span
+                              className="text-xs px-3 py-1 rounded-full font-bold border"
+                              style={{
+                                backgroundColor: module.color + "20",
+                                borderColor: module.color + "40",
+                                color: module.color,
+                              }}
+                            >
+                              {module.badge}
+                            </span>
+                          </div>
+                          <h3
+                            className="text-2xl font-bold"
+                            style={{ color: "var(--foreground)" }}
+                          >
+                            {module.title}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Progress Circle */}
+                      <div className="relative w-16 h-16">
+                        <svg className="w-16 h-16 transform -rotate-90">
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="var(--border)"
+                            strokeWidth="3"
+                            fill="none"
+                            opacity="0.3"
+                          />
+                          <motion.circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke={module.color}
+                            strokeWidth="3"
+                            fill="none"
+                            strokeLinecap="round"
+                            initial={{ pathLength: 0 }}
+                            whileInView={{
+                              pathLength: parseInt(module.progress) / 100,
+                            }}
+                            transition={{ duration: 1.0, delay: index * 0.1, ease: "easeOut" }}
+                            viewport={{ once: true }}
+                            style={{
+                              pathLength: parseInt(module.progress) / 100,
+                            }}
+                          />
+                        </svg>
+                        <div
+                          className="absolute inset-0 flex items-center justify-center text-sm font-bold"
+                          style={{ color: module.color }}
+                        >
+                          {module.progress}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Topics List */}
+                    <ul className="space-y-3 relative z-10">
+                      {module.topics.map((topic, idx) => {
+                        const isSelected =
+                          selectedTopic?.moduleIndex === index &&
+                          selectedTopic?.topicIndex === idx;
+
+                        return (
+                          <motion.li
+                            key={idx}
+                            className="group/item"
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: idx * 0.05,
+                              ease: "easeOut",
+                            }}
+                            viewport={{ once: true }}
+                          >
+                            <div
+                              className={`flex items-start gap-4 cursor-pointer p-3 rounded-xl pointer-events-auto transition-colors duration-150 ease-out ${
+                                isSelected ? "bg-opacity-10" : ""
+                              }`}
+                              style={{
+                                backgroundColor: isSelected
+                                  ? `${module.color}20`
+                                  : "transparent"
+                              }}
+                              onClick={() => {
+                                setSelectedTopic(isSelected ? null : {
+                                  moduleIndex: index,
+                                  topicIndex: idx,
+                                });
+                              }}
+                            >
+                              <div className="flex-shrink-0 mt-1">
+                                <BiCheckCircle
+                                  className={`w-5 h-5 transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}
+                                  style={{ color: module.color }}
+                                />
+                              </div>
+                              <span
+                                className="font-medium transition-colors duration-150"
+                                style={{
+                                  color: isSelected
+                                    ? module.color
+                                    : "var(--muted-foreground)",
+                                }}
+                              >
+                                {topic.title}
+                              </span>
+                            </div>
+
+                            {/* Description Card */}
+                            <AnimatePresence>
+                              {isSelected && (
+                                <motion.div
+                                  className="ml-9 mt-3 overflow-hidden"
+                                  initial={{ opacity: 0, height: 0, transformOrigin: "top" }}
+                                  animate={{ opacity: 1, height: "auto", transformOrigin: "top" }}
+                                  exit={{ opacity: 0, height: 0, transformOrigin: "top" }}
+                                  transition={{
+                                    duration: 0.3,
+                                    ease: "easeInOut",
+                                    opacity: { duration: 0.2 },
+                                    height: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }
+                                  }}
+                                >
+                                  <div
+                                    className="p-4 rounded-xl backdrop-blur-sm relative"
+                                    style={{
+                                      backgroundColor: module.color + "08",
+                                      boxShadow: `0 4px 20px ${module.color}12`,
+                                    }}
+                                  >
+                                    {/* Subtle left accent */}
+                                    <div
+                                      className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full"
+                                      style={{ backgroundColor: module.color }}
+                                    />
+
+                                    <p
+                                      className="text-sm leading-relaxed pl-3"
+                                      style={{ color: "var(--foreground)" }}
+                                    >
+                                      {topic.description}
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.li>
+                        );
+                      })}
+                    </ul>
                   </div>
-                ) : (
-                  <>Comprar curso completo →</>
-                )}
-              </button>
-            </fetcher.Form>
-          </div>
-
-          {/* Acceso a nuevas sesiones */}
-          <div className="bg-gradient-to-r from-green-500/10 to-emerald-600/10 border border-green-500/30 rounded-2xl p-6 max-w-2xl mx-auto text-center mt-8">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="text-2xl">🚀</span>
-              <h3 className="text-xl font-bold text-white">
-                Acceso a Futuras Sesiones
-              </h3>
+                </motion.div>
+              ))}
             </div>
-            <p className="text-colorParagraph">
-              Tu curso incluye acceso automático y gratuito a todas las nuevas
-              sesiones que lancemos sobre Claude Code.
-              <span className="text-green-400 font-medium">
-                {" "}
-                ¡Sin costo adicional!
-              </span>
-            </p>
-            <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-300">
-              <div className="flex items-center gap-1">
-                <span className="text-green-400">✓</span>
-                <span>Nuevos features</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-green-400">✓</span>
-                <span>Actualizaciones</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-green-400">✓</span>
-                <span>Casos avanzados</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Lo que NO encontrarás en YouTube */}
       <section className="py-20  relative overflow-hidden">

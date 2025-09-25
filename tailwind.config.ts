@@ -16,11 +16,12 @@ export default {
         grass:"#8DCF6E",
         danger:"#C4544E",
         claude:{
-          100:"#F1A285",
-          500:"#CF8063",
-          700:"#C06A4A",
-          800:"#A85B3E",
-          900:"#75270A",
+          primary: "#CA9B77",
+          secondary: "#845A8F",
+          tertiary: "#E08236",
+          dark: "#151214",
+          gray:"#837F8A",
+          green:"#7CE5B8"
         },
         background: "#0E1317",
         colorOutline: "#2C3944",
@@ -44,6 +45,7 @@ export default {
         },
       },
       backgroundImage: {
+        'claude-gradient': 'linear-gradient(135deg, #CA9B77 0%, #845A8F 100%)',
         stars: "url('/stars.png')",
         starsClaude: "url('/stars-claude.svg')",
         card: "url('/card.png')",
