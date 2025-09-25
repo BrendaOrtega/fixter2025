@@ -495,27 +495,27 @@ export const HomeHero = () => {
       // style={{ opacity, scale, filter }}
       className="bg-heroHome w-full min-h-screen md:h-screen bg-cover bg-center  pt-6 md:pt-0 md:px-10 "
     >
-      <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[85vh] gap-0 md:gap-0 lg:gap-20">
+      <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[95vh] lg:h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
           {/* Tag de nuevo taller Agentes IA */}
-          <div className="flex justify-center md:justify-start mb-6">
+          <div className="flex justify-center md:justify-start mb-6 hidden md:flex ">
             <Link to="/agentes" className="group">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600/20 to-orange-400/20 border border-orange-500/50 rounded-full px-4 py-2 hover:from-orange-600/30 hover:to-orange-400/30 hover:border-orange-400/70 transition-all duration-300"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-agentes-primary/10 to-agentes-secondary/10 border border-agentes-primary rounded-full px-4 py-2 hover:from-agentes-primary/30 hover:to-agentes-secondary/30 hover:border-agentes-primary/70 transition-all duration-300"
               >
-                <span className="text-sm font-semibold text-white group-hover:text-orange-200 transition-colors">
+                <span className="text-sm font-semibold text-agentes-primary  transition-colors">
                   ✨ Nuevo taller de Construcción de Agentes IA drag & drop
                 </span>
               </motion.div>
             </Link>
           </div>
           
-          <h2 className="text-4xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-4 md:mt-12">
+          <h2 className="text-3xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-0 md:mt-12">
             Aprende <br className="md:hidden" />
-            <span className="text-brand-500 font-extrabold text-4xl xl:text-6xl ">
+            <span className="text-brand-500 font-extrabold text-3xl xl:text-6xl ">
               <FlipWords
                 words={[
                   "los frameworks",
@@ -530,42 +530,38 @@ export const HomeHero = () => {
             <br />
             que usan los profesionales de la industria
           </h2>{" "}
-          <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-12">
+          <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
             <PrimaryButton
               as="Link"
               to="/claude"
-              children="Explorar Claude"
+              children="Aprender Claude"
             />
             <PrimaryButton
               as="Link"
               to="/agentes"
-              children="Explorar creación de agentes no-code"
+              children="Ir a Creación de agentes no-code"
               variant="ghost"
             />
-            <PrimaryButton
+            {/* <PrimaryButton
               as="Link"
               to="/blog"
               children="Explorar el blog"
               variant="ghost"
-            />
+            /> */}
           </div>
           {/* Links sutiles a los libros */}
-          <div className="flex flex-col gap-2 justify-center md:justify-start mt-8">
-            <Link
+        
+            <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
+          📖
+        Libro gratuito:  <Link
               to="/libros"
-              className="text-sm text-white/80 hover:text-white hover:underline transition-all duration-200 flex items-center gap-2"
-            >
-              <span className="text-base">📖</span>
-              <span>Libro gratuito: Dominando Claude Code</span>
-            </Link>
-            <Link
-              to="/libros/llamaindex"
-              className="text-sm text-white/80 hover:text-white hover:underline transition-all duration-200 flex items-center gap-2"
-            >
-              <span className="text-base">📖</span>
-              <span>Libro gratuito: LlamaIndex desde Cero</span>
-            </Link>
-          </div>
+              className="text-sm text-white/80 text-orange-300  hover:underline transition-all duration-200  "
+            >Dominando Claude Code</Link> y    <Link
+            to="/libros/llamaindex"
+            className="text-sm text-llamaindex-purple hover:underline transition-all duration-200  "
+          >LlamaIndex desde Cero</Link>
+            </p>
+
         </div>
         <img className="scale-75 lg:scale-100" src="/robot.svg" alt="robot" />
       </div>

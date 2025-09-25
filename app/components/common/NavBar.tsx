@@ -330,7 +330,7 @@ const MobileMenu = ({
             index={6}
             isOpen={isOpen}
             title="Iniciar sesión"
-            className="text-4xl my-6 font-light "
+            className="text-3xl my-4 font-light "
           />
         )}
         <div className="flex justify-center items-center gap-6 mt-10">
@@ -458,7 +458,7 @@ const NavItem = ({
         transform: "translateY(20px)",
         filter: "blur(9px)",
       }}
-      className={cn("text-4xl my-6 font-light ", className)}
+      className={cn("text-3xl my-4 font-light ", className)}
       onClick={onClick}
     >
       {title}
