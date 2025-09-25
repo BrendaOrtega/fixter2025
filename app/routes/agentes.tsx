@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import SimpleFooter from "~/components/common/SimpleFooter";
+import { FaFacebook, FaYoutube } from "react-icons/fa";
+import { FaSquareXTwitter } from "react-icons/fa6";
+import { BsLinkedin, BsYoutube } from "react-icons/bs";
+import { AiFillInstagram } from "react-icons/ai";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
@@ -564,7 +567,7 @@ export default function IAVisualLanding() {
         dangerouslySetInnerHTML={{
           __html: `
         .agentes-ia-page {
-          --background: #2a2024;
+          --background: #141619;
           --foreground: #f2e9e4;
           --card: #B0CCF2;
           --card-foreground: #f2e9e4;
@@ -707,10 +710,7 @@ export default function IAVisualLanding() {
         {/* Hero Section - Completely Redesigned */}
         <section
           className="relative min-h-screen flex items-center justify-center overflow-hidden"
-          style={{
-            background:
-              "",
-          }}
+       
         >
           {/* Pixel Blast Background */}
           <div className="absolute inset-0">
@@ -718,8 +718,8 @@ export default function IAVisualLanding() {
               dangerouslySetInnerHTML={{
                 __html: `
                   @keyframes pixel-float {
-                    0%, 100% { transform: translateY(0) scale(1); opacity: 0.1; }
-                    50% { transform: translateY(-20px) scale(1.1); opacity: 0.2; }
+                    0%, 100% { transform: translateY(0) scale(1); opacity: 0.08; }
+                    50% { transform: translateY(-20px) scale(1.1); opacity: 0.15; }
                   }
 
                   .pixel-float {
@@ -752,7 +752,7 @@ export default function IAVisualLanding() {
                       animationDuration: `${duration}s`,
                       animationDelay: `${i * 0.4}s`,
                       filter: 'blur(1px)',
-                      opacity: 0.15,
+                      opacity: 0.12,
                     }}
                   />
                 );
@@ -793,7 +793,7 @@ export default function IAVisualLanding() {
           </div>
         
           {/* Content layer - z-index: 2, pointer-events: none on container, auto on interactive elements */}
-          <div className="relative z-[2] container mx-auto px-4 py-20 pointer-events-none">
+          <div className="relative z-[2] container mx-auto px-4 py-32 lg:py-52 pointer-events-none">
             <div className="max-w-7xl mx-auto">
               {/* Premium Badge */}
               <motion.div
@@ -832,7 +832,7 @@ export default function IAVisualLanding() {
               </motion.div>
 
               {/* Main Hero Content */}
-              <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <div className="grid lg:grid-cols-2  items-center">
                 {/* Left Content */}
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
@@ -840,12 +840,12 @@ export default function IAVisualLanding() {
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
                   <h1 className="text-5xl lg:text-6xl font-black leading-tight mb-4">
-                    <span style={{ color: "var(--foreground)" }}>Crea</span>{" "}
+                   
                     <span className="relative">
                       <span
-                        className="bg-gradient-to-r from-agentes-primary to-agentes-secondary bg-clip-text text-transparent"
+                        className="text-agentes-primary"
                       >
-                        Agentes de IA sin código
+                        Crea agentes de IA sin código
                       </span>
 
                     </span>
@@ -853,7 +853,7 @@ export default function IAVisualLanding() {
                   </h1>
 
                   <p
-                    className="text-xl lg:text-2xl !font-light mb-10 leading-relaxed max-w-xl text-agentes-tertiary"
+                    className="text-xl lg:text-2xl !font-light mb-4 leading-relaxed max-w-xl text-agentes-tertiary"
                   >
                     Construye agentes de IA profesionales con herramientas
                     visuales, drag-and-drop y open source.
@@ -867,13 +867,13 @@ export default function IAVisualLanding() {
                   </p>
 
                   {/* Feature Pills */}
-                  <div className="flex flex-wrap gap-3 mb-10">
+                  <div className="flex flex-wrap gap-3 mb-16">
                     {[
-                      { text: "🧠 GPT-5 & Claude", color: "var(--chart-1)" },
-                      { text: "🔗 Integraciones API", color: "#B0C5E3" },
-                      { text: "🖥️ Servidor Incluido", color: "var(--primary)" },
-                      { text: "📊 Proyectos Reales", color: "#B0C5E3" },
-                    ].map((feature, index) => (
+                      "🧠 GPT-5 & Claude",
+                      "🔗 Integraciones API",
+                      "🖥️ Servidor Incluido",
+                    
+                    ].map((text, index) => (
                       <motion.div
                         key={index}
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -881,12 +881,12 @@ export default function IAVisualLanding() {
                         transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
                         className="px-4 py-2 rounded-full text-sm font-semibold border"
                         style={{
-                          backgroundColor: feature.color + "20",
-                          borderColor: feature.color + "40",
-                          color: feature.color,
+                          backgroundColor: "#B0C5E320",
+                          borderColor: "#B0C5E340",
+                          color: "#B0C5E3",
                         }}
                       >
-                        {feature.text}
+                        {text}
                       </motion.div>
                     ))}
                   </div>
@@ -909,8 +909,7 @@ export default function IAVisualLanding() {
                   </motion.button>
 
                   <p
-                    className="text-sm mt-4 opacity-80"
-                    style={{ color: "var(--muted-foreground)" }}
+                    className="text-sm mt-4 opacity-80 text-agentes-tertiary"
                   >
                     ⚡ Notificación instantánea • 🎯 Primera sesión gratis • 🔒
                     Sin compromiso
@@ -922,12 +921,12 @@ export default function IAVisualLanding() {
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, delay: 0.4 }}
-                  className="relative"
+                  className="relative mt-10 md:mt-0"
                 >
                   <div className="relative z-10">
                     {/* Main Dashboard Mockup */}
                     <div
-                      className="rounded-2xl p-8 border-2 backdrop-blur-sm border border-agentes-gray"
+                      className="rounded-2xl p-8 border-2 backdrop-blur-sm border bg-agentes-onix border-agentes-gray"
                       style={{
                         boxShadow: "0 20px 40px hsl(var(--card) / 0.5)",
                       }}
@@ -955,84 +954,113 @@ export default function IAVisualLanding() {
 
                       {/* Content */}
                       <div className="space-y-6">
-                        {/* Workflow Visual */}
-                        <div className="grid grid-cols-3 gap-4">
-                          {[
-                            {
-                              icon: <BiBot className="w-4 h-4" />,
-                              label: "Input",
-                              color: "#B0CCF2",
-                            },
-                            {
-                              icon: <BiBrain className="w-4 h-4" />,
-                              label: "Process",
-                              color: "#ffd230",
-                            },
-                            {
-                              icon: <BiRocket className="w-4 h-4" />,
-                              label: "Output",
-                              color: "#B0CCF2",
-                            },
-                          ].map((node, index) => (
+                        {/* Workflow Automation Visual */}
+                        <div className="relative h-64">
+                          {/* Absolute SVG overlay for all connections */}
+                          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 256">
+                            {/* Left diagonal line from Update prompt to AI action */}
+                            <path
+                              d="M 100 56 L 200 128"
+                              stroke="#B0C5E3"
+                              strokeWidth="2"
+                              strokeDasharray="6 3"
+                              fill="none"
+                            />
+                            {/* Right diagonal line from Update database to AI action */}
+                            <path
+                              d="M 300 56 L 200 128"
+                              stroke="#B0C5E3"
+                              strokeWidth="2"
+                              strokeDasharray="6 3"
+                              fill="none"
+                            />
+                            {/* Vertical line from AI action to result */}
+                            <path
+                              d="M 200 144 L 200 176"
+                              stroke="#B0C5E3"
+                              strokeWidth="2"
+                              strokeDasharray="6 3"
+                              fill="none"
+                            />
+                          </svg>
+
+                          {/* Top Row */}
+                          <div className="absolute top-0 left-0 right-0 grid grid-cols-2 gap-8">
+                            {/* Update Input */}
                             <motion.div
-                              key={index}
-                              animate={{ scale: [1, 1.05, 1] }}
-                              transition={{
-                                duration: 2,
-                                delay: index * 0.5,
-                                repeat: Infinity,
-                              }}
-                              className="p-4 rounded-lg border text-center"
-                              style={{
-                                backgroundColor: node.color + "10",
-                                borderColor: node.color + "30",
-                                color: node.color,
-                              }}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              whileInView={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                              viewport={{ once: true }}
+                              className="bg-white/5 backdrop-blur-sm p-3 w-fit ml-20 rounded-xl border border-agentes-secondary/20"
                             >
-                              <div className="flex justify-center mb-2">
-                                {node.icon}
+                              <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs">👄</span>
+                                </div>
+                                <div>
+                                  <div className="text-xs font-semibold text-gray-300">System prompt</div>
+                                </div>
                               </div>
-                              <span className="text-xs font-semibold">
-                                {node.label}
-                              </span>
                             </motion.div>
-                          ))}
+
+                            {/* Update Database */}
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              whileInView={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                              viewport={{ once: true }}
+                              className="bg-white/5 backdrop-blur-sm p-3 w-fit ml-10 rounded-xl border border-agentes-secondary/20"
+                            >
+                              <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs">💾</span>
+                                </div>
+                                <div>
+                                  <div className="text-xs font-semibold text-gray-300">Vector database</div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
+
+                          {/* AI Action Center */}
+                          <div className="absolute top-24 left-0 right-0 flex justify-center">
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              whileInView={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.8, delay: 0.4, ease: "backOut" }}
+                              viewport={{ once: true }}
+                              className="bg-gradient-to-r from-agentes-primary to-agentes-secondary px-4 py-2 rounded-full"
+                            >
+                              <div className="flex items-center gap-2 text-white">
+                                <span className="text-sm">⚡</span>
+                                <span className="font-bold text-xs text-agentes-dark">AI Agent</span>
+                              </div>
+                            </motion.div>
+                          </div>
+
+                          {/* Result */}
+                          <div className="absolute top-44 left-0 right-0 flex justify-center">
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+                              viewport={{ once: true }}
+                              className="bg-white/5 backdrop-blur-sm p-3 rounded-xl border border-gray-400/20"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs">✨</span>
+                                </div>
+                                <div>
+                                  <div className="text-xs font-semibold text-gray-300">Agent deployed</div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
                         </div>
 
-                        {/* Stats */}
-                        <div
-                          className="grid grid-cols-2 gap-4 pt-4 border-t"
-                          style={{ borderColor: "var(--border)" }}
-                        >
-                          <div>
-                            <div
-                              className="text-2xl font-bold text-amber-300"
-
-                            >
-                              4
-                            </div>
-                            <div
-                              className="text-xs"
-                              style={{ color: "var(--muted-foreground)" }}
-                            >
-                              Sesiones Vivo
-                            </div>
-                          </div>
-                          <div>
-                            <div
-                              className="text-2xl font-bold"
-                              style={{ color: "var(--primary)" }}
-                            >
-                              ∞
-                            </div>
-                            <div
-                              className="text-xs"
-                              style={{ color: "var(--muted-foreground)" }}
-                            >
-                              Posibilidades
-                            </div>
-                          </div>
-                        </div>
+                       
                       </div>
                     </div>
 
@@ -1075,134 +1103,15 @@ export default function IAVisualLanding() {
                 </motion.div>
               </div>
 
-              {/* Bottom Stats */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1 }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 max-w-4xl mx-auto"
-              >
-                {[
-                  {
-                    number: "4",
-                    label: "Sesiones Interactivas",
-                    desc: "en vivo con Q&A",
-                    color: "var(--chart-1)",
-                  },
-                  {
-                    number: "1ª",
-                    label: "Sesión Gratis",
-                    desc: "sin compromiso",
-                    color: "#B0C5E3",
-                  },
-                  {
-                    number: "15",
-                    label: "Días Extra",
-                    desc: "servidor personal",
-                    color: "var(--primary)",
-                  },
-                ].map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    whileHover={{
-                      scale: 1.05,
-                      y: -8,
-                      rotateY: 5,
-                      boxShadow: "0 20px 40px hsl(var(--primary) / 0.15)",
-                      transition: {
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 25,
-                        mass: 0.8,
-                      },
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className="text-center p-6 rounded-2xl border backdrop-blur-sm cursor-pointer"
-                    style={{
-                      backgroundColor: "hsl(var(--card) / 0.6)",
-                      borderColor: "var(--border)",
-                    }}
-                  >
-                    <div
-                      className="text-4xl font-black mb-2"
-                      style={{ color: stat.color }}
-                    >
-                      {stat.number}
-                    </div>
-                    <div
-                      className="text-lg font-semibold mb-1"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      {stat.label}
-                    </div>
-                    <div
-                      className="text-sm opacity-80"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
-                      {stat.desc}
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
+     
             </div>
           </div>
         </section>
 
         {/* What You'll Build Section */}
-        {/* <section
-          className="py-20 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(45deg, var(--muted) 0%, var(--card) 100%)",
-          }}
+        <section
+          className="py-20 relative overflow-hidden bg-agentes-dark"
         >
-      
-          <div className="absolute inset-0">
-            <style
-              dangerouslySetInnerHTML={{
-                __html: `
-                  @keyframes pixel-float {
-                    0%, 100% { transform: translateY(0) scale(1); opacity: 0.1; }
-                    50% { transform: translateY(-20px) scale(1.1); opacity: 0.2; }
-                  }
-                  
-                  .pixel-float {
-                    position: absolute;
-                    background: linear-gradient(135deg, #B0CCF2, #B0C5E3);
-                    animation: pixel-float ease-in-out infinite;
-                    border-radius: 10%;
-                  }
-                `,
-              }}
-            />
-            
-        
-            <div className="absolute inset-0 overflow-hidden">
-              {[...Array(10)].map((_, i) => {
-                const size = 30 + Math.random() * 50;
-                const duration = 10 + Math.random() * 15;
-                const left = Math.random() * 100;
-                const top = Math.random() * 100;
-                
-                return (
-                  <div
-                    key={`pixel-float-${i}`}
-                    className="pixel-float"
-                    style={{
-                      width: `${size}px`,
-                      height: `${size}px`,
-                      left: `${left}%`,
-                      top: `${top}%`,
-                      animationDuration: `${duration}s`,
-                      animationDelay: `${i * 0.5}s`,
-                      filter: 'blur(2px)',
-                      opacity: 0.1,
-                    }}
-                  />
-                );
-              })}
-            </div>
-          </div>
           
           <div className="relative container mx-auto px-4">
             <motion.div
@@ -1213,23 +1122,21 @@ export default function IAVisualLanding() {
               className="text-center mb-16"
             >
               <h2
-                className="text-4xl md:text-5xl font-bold mb-4"
-                style={{ color: "var(--primary)" }}
+                className="text-4xl md:text-5xl font-bold mb-4 text-white"
               >
                 Lo que construirás
               </h2>
               <p
-                className="font-light text-lg max-w-2xl mx-auto"
-                style={{ color: "var(--muted-foreground)" }}
+                className="font-light text-lg max-w-2xl mx-auto text-agentes-tertiary"
               >
-                Agentes inteligentes que tus clientes usarán desde el día uno
+                Agentes inteligentes que tú o tus clientes usarán desde el día uno
               </p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {[
                 {
-                  icon: <RiRobot2Line className="w-8 h-8" />,
+                  icon: <span className="text-2xl">🤖</span>,
                   title: "Tu Primer Chatbot con Memoria",
                   description:
                     "Agente conversacional que recuerda el contexto y mantiene conversaciones coherentes",
@@ -1237,7 +1144,7 @@ export default function IAVisualLanding() {
                   color: "var(--chart-1)",
                 },
                 {
-                  icon: <BiLayer className="w-8 h-8" />,
+                  icon: <span className="text-2xl">🍽️</span>,
                   title: "Asistente de Restaurante Inteligente",
                   description:
                     "Agente que consulta menús, calcula precios, agenda reservas y maneja pedidos automáticamente",
@@ -1245,7 +1152,7 @@ export default function IAVisualLanding() {
                   color: "#B0C5E3",
                 },
                 {
-                  icon: <span className="text-2xl">🍌</span>,
+                  icon: <span className="text-2xl">📸</span>,
                   title: "Estudio Fotográfico Automático",
                   description:
                     "Toma producto + modelo, genera 3+ variantes profesionales con poses perfectas usando nano-banana",
@@ -1253,7 +1160,7 @@ export default function IAVisualLanding() {
                   color: "#B0C5E3",
                 },
                 {
-                  icon: <AiOutlineFileImage className="w-8 h-8" />,
+                  icon: <span className="text-2xl">🧠</span>,
                   title: "Cerebro Maestro Empresarial",
                   description:
                     "RAG supremo que domina todos tus documentos, políticas y conocimiento corporativo",
@@ -1270,7 +1177,7 @@ export default function IAVisualLanding() {
                   disabled: true,
                 },
                 {
-                  icon: <span className="text-2xl opacity-50">🤖</span>,
+                  icon: <span className="text-2xl opacity-50">📅</span>,
                   title: "Asistente Personal Inteligente",
                   description:
                     "Próximamente: Agente que gestiona tu calendario, emails y tareas automáticamente",
@@ -1286,7 +1193,7 @@ export default function IAVisualLanding() {
                   viewport={{ once: true }}
                   whileHover={
                     project.disabled
-                      ? {} // Sin hover para tarjetas deshabilitadas
+                      ? {}
                       : index === 2
                       ? {
                           scale: 1.05,
@@ -1294,7 +1201,7 @@ export default function IAVisualLanding() {
                           rotateX: 8,
                           boxShadow: "0 30px 60px rgba(255, 193, 7, 0.4)",
                           backgroundColor: "#FFF59D",
-                          borderColor: "#FFB300",
+                          borderColor: "#465169",
                           color: "#1A1A1A",
                           transition: {
                             type: "spring",
@@ -1304,45 +1211,23 @@ export default function IAVisualLanding() {
                           },
                         }
                       : {
-                          scale: 1.03,
-                          y: -12,
-                          rotateX: 5,
-                          boxShadow: "0 25px 50px hsl(var(--primary) / 0.12)",
-                          transition: {
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 20,
-                            mass: 0.9,
-                          },
+                          y: -5,
+                          boxShadow: "0 20px 50px #B0C5E330",
+                          transition: { duration: 0.3, ease: "easeOut" },
                         }
                   }
                   whileTap={project.disabled ? {} : { scale: 0.98 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className={`border-2 rounded-2xl p-6 group overflow-hidden relative ${
+                  className={`border border-agentes-gray/30 rounded-3xl p-8 backdrop-blur-sm bg-agentes-primary/5 group overflow-hidden relative ${
                     project.disabled
-                      ? "cursor-not-allowed opacity-60"
+                      ? "cursor-not-allowed opacity-50"
                       : "cursor-pointer"
                   }`}
                   style={{
-                    backgroundColor: project.disabled
-                      ? "var(--muted)"
-                      : "var(--card)",
-                    borderColor: project.disabled
-                      ? "var(--muted-foreground)"
-                      : "var(--border)",
+                    boxShadow: "0 8px 32px #B0C5E320",
                     borderStyle: project.disabled ? "dashed" : "solid",
                   }}
                 >
-                  {!project.disabled && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
-                  )}
-
-                  {!project.disabled && (
-                    <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
-                      backgroundImage: `linear-gradient(to bottom right, ${project.color}05, ${project.color}10)`
-                    }}></div>
-                  )}
-
                   {index === 2 && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
                       <style
@@ -1381,30 +1266,24 @@ export default function IAVisualLanding() {
                       ))}
                     </div>
                   )}
+
+                  {/* Hover Shine Effect - for non-disabled cards */}
+                  {!project.disabled && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
+                  )}
+
                   <div className="relative mb-4">
-                    <motion.div
-                      className="p-3 rounded-lg inline-block transition-all duration-300"
+                    <div
+                      className="w-12 h-12 grid place-items-center rounded-lg inline-block transition-all duration-300"
                       style={{
-                        backgroundColor: project.color + "20",
-                        color: project.color,
-                      }}
-                      whileHover={
-                        project.disabled
-                          ? {}
-                          : {
-                              rotate: [0, -10, 10, 0],
-                              scale: 1.2,
-                            }
-                      }
-                      transition={{
-                        duration: 0.6,
-                        ease: "easeInOut",
+                        backgroundColor: "#B0C5E320",
+                        color: project.disabled ? "var(--muted-foreground)" : "#B0C5E3",
                       }}
                     >
                       {project.icon}
-                    </motion.div>
+                    </div>
                     {project.disabled && (
-                      <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                      <span className="absolute -top-2 -right-2 bg-agentes-secondary text-agentes-dark text-xs px-2 py-1 rounded-full font-bold">
                         PRÓXIMAMENTE
                       </span>
                     )}
@@ -1418,10 +1297,10 @@ export default function IAVisualLanding() {
                     {project.title}
                   </h3>
                   <p
-                    className={`mb-4 transition-colors duration-300 ${
+                    className={`mb-4 transition-colors duration-300 text-agentes-tertiary ${
                       index === 2 ? "group-hover:!text-gray-800" : ""
                     }`}
-                    style={{ color: "var(--muted-foreground)" }}
+    
                   >
                     {project.description}
                   </p>
@@ -1429,12 +1308,9 @@ export default function IAVisualLanding() {
                     {project.tech.map((tech, idx) => (
                       <span
                         key={idx}
-                        className="text-xs px-2 py-1 rounded-full border"
-                        style={{
-                          backgroundColor: "#B0C5E3",
-                          borderColor: "hsl(#B0C5E3 / 0.3)",
-                          color: "black",
-                        }}
+                        className={`text-xs px-2 py-1 rounded-full transition-colors duration-300 bg-white/5 text-white/50 ${
+                          index === 2 ? "group-hover:!bg-yellow-400 group-hover:!text-gray-900" : "group-hover:bg-agentes-primary/20 group-hover:text-white/70"
+                        }`}
                       >
                         {tech}
                       </span>
@@ -1444,12 +1320,11 @@ export default function IAVisualLanding() {
               ))}
             </div>
           </div>
-        </section> */}
+        </section> 
 
-{/*      
+     
         <section
-          className="py-20 relative overflow-hidden"
-          style={{ backgroundColor: "var(--background)" }}
+          className="py-20 relative overflow-hidden bg-agentes-dark"
         >
          
           <div className="absolute inset-0">
@@ -1470,10 +1345,10 @@ export default function IAVisualLanding() {
                   position: 'absolute',
                   width: '400px',
                   height: '400px',
-                  background: `linear-gradient(135deg, var(--primary), #B0C5E3)`,
+                  background: `linear-gradient(135deg, #B0C5E3, transparent)`,
                   left: '10%',
                   top: '20%',
-                  opacity: 0.2,
+                  opacity: 0.15,
                   filter: 'blur(40px)',
                   borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%',
                 }}
@@ -1495,10 +1370,10 @@ export default function IAVisualLanding() {
                   position: 'absolute',
                   width: '350px',
                   height: '350px',
-                  background: `linear-gradient(45deg, var(--chart-1), #B0C5E3)`,
+                  background: `linear-gradient(45deg, #B0C5E3, transparent)`,
                   right: '15%',
                   bottom: '25%',
-                  opacity: 0.15,
+                  opacity: 0.12,
                   filter: 'blur(40px)',
                   borderRadius: '30% 60% 70% 40% / 50% 60% 30% 60%',
                 }}
@@ -1520,11 +1395,11 @@ export default function IAVisualLanding() {
                   position: 'absolute',
                   width: '300px',
                   height: '300px',
-                  background: `linear-gradient(90deg, #B0C5E3, var(--primary))`,
+                  background: `linear-gradient(90deg, #B0C5E3, transparent)`,
                   left: '50%',
                   top: '50%',
                   transform: 'translate(-50%, -50%)',
-                  opacity: 0.18,
+                  opacity: 0.14,
                   filter: 'blur(40px)',
                   borderRadius: '50% 60% 60% 50% / 40% 50% 60% 50%',
                 }}
@@ -1537,7 +1412,7 @@ export default function IAVisualLanding() {
                 const left = Math.random() * 100;
                 const top = Math.random() * 100;
                 const colors = [
-                  `linear-gradient(135deg, var(--primary)80, transparent)`,
+                  `linear-gradient(135deg, #B0C5E380, transparent)`,
                   `linear-gradient(45deg, #B0C5E380, transparent)`,
                   `linear-gradient(90deg, #B0C5E380, transparent)`,
                 ];
@@ -1570,7 +1445,7 @@ export default function IAVisualLanding() {
                       background: colors[i % colors.length],
                       left: `${left}%`,
                       top: `${top}%`,
-                      opacity: 0.1 + Math.random() * 0.1,
+                      opacity: 0.06 + Math.random() * 0.08,
                       filter: 'blur(35px)',
                       borderRadius: shapes[i % shapes.length],
                     }}
@@ -1580,16 +1455,7 @@ export default function IAVisualLanding() {
             </div>
             
         
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(180deg, 
-                  transparent 0%, 
-                  rgba(42, 32, 36, 0.4) 30%, 
-                  rgba(42, 32, 36, 0.6) 70%, 
-                  rgba(42, 32, 36, 0.8) 100%)`,
-              }}
-            />
+       
           </div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -1599,18 +1465,16 @@ export default function IAVisualLanding() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="text-4xl md:text-5xl font-bold mb-6"
-                style={{ color: "var(--foreground)" }}
+                className="text-4xl md:text-5xl font-bold mb-6 text-white"
               >
-                Resultados que Hablan
+                Qué opinan nuestros estudiantes
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="text-xl md:text-2xl max-w-3xl mx-auto"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-lg md:text-xl max-w-3xl mx-auto text-agentes-tertiary font-light"
               >
                 Profesionales que ya dominan el sistema visual de agentes IA
               </motion.p>
@@ -1622,43 +1486,30 @@ export default function IAVisualLanding() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
                 viewport={{ once: true }}
-                className="border-2 rounded-3xl p-8 relative overflow-hidden group hover:shadow-2xl transition-all duration-500"
-                style={{
-                  backgroundColor: "var(--card)",
-                  borderColor: "var(--border)",
-                }}
+                className="  rounded-3xl p-8 relative group transition-all  overflow-hidden hover:shadow-2xl transition-all duration-500"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
 
                 <div className="relative z-10">
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-blue-500/30">
+                    <div className="w-14 h-14 rounded-full overflow-hidden  border-2 border-agentes-secondary">
                       <img
-                        src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
+                        src="https://www.fixtergeek.com/students/carlitos.png"
                         alt="Carlos Mendoza"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
-                      <h4
-                        className="text-xl font-bold mb-1"
-                        style={{ color: "var(--foreground)" }}
-                      >
+                      <h4 className="text-xl font-bold mb-1 text-white">
                         Carlos Mendoza
                       </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: "var(--muted-foreground)" }}
-                      >
+                      <p className="text-sm text-agentes-tertiary">
                         Fundador de Agencia Digital
                       </p>
                     </div>
                   </div>
 
-                  <blockquote
-                    className="text-lg leading-relaxed mb-6"
-                    style={{ color: "var(--foreground)" }}
-                  >
+                  <blockquote className="text-lg leading-relaxed mb-6  text-agentes-tertiary group-hover:text-white">
                     "Integré la creación de agentes visuales como nuevo servicio
                     en mi agencia. El sistema drag-and-drop me permitió escalar
                     rápidamente: <strong>añadí $50K MXN mensuales</strong> de
@@ -1666,10 +1517,7 @@ export default function IAVisualLanding() {
                     construyo en horas, no semanas."
                   </blockquote>
 
-                  <div
-                    className="flex items-center gap-2 text-sm"
-                    style={{ color: "var(--muted-foreground)" }}
-                  >
+                  <div className="flex items-center gap-2 text-sm text-agentes-tertiary">
                     <span>⭐⭐⭐⭐⭐</span>
                   </div>
                 </div>
@@ -1681,43 +1529,29 @@ export default function IAVisualLanding() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="border-2 rounded-3xl p-8 relative overflow-hidden group hover:shadow-2xl transition-all duration-500"
-                style={{
-                  backgroundColor: "var(--card)",
-                  borderColor: "var(--border)",
-                }}
+                className=" rounded-3xl p-8 transition-all duration-500 relative overflow-hidden group hover:shadow-2xl"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 <div className="relative z-10">
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-green-500/30">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-agentes-secondary">
                       <img
-                        src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
+                        src="https://scontent.fmex28-1.fna.fbcdn.net/v/t1.6435-9/81327670_3045384255489837_6297581632681410560_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=eaTF71YBIOQQ7kNvwG7Y3Ss&_nc_oc=Adm8AeTFI6v5NzKB0fAAJCGC9uYSDAot61L-wORptP8kLMjMREGttWuW9QeKfHJldgQ&_nc_zt=23&_nc_ht=scontent.fmex28-1.fna&_nc_gid=4IMBwmrHbAFeeu66pQB54w&oh=00_AfZ2Ch8msyGIzUoidYDQO8vzTxw1_rXR21o2GYV8ySjFFA&oe=68FBF35D"
                         alt="Kevin James"
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div>
-                      <h4
-                        className="text-xl font-bold mb-1"
-                        style={{ color: "var(--foreground)" }}
-                      >
+                      <h4 className="text-xl font-bold mb-1 text-white">
                         Kevin James
                       </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: "var(--muted-foreground)" }}
-                      >
+                      <p className="text-sm text-agentes-tertiary">
                         CTO, Empresa de Software
                       </p>
                     </div>
                   </div>
 
-                  <blockquote
-                    className="text-lg leading-relaxed mb-6"
-                    style={{ color: "var(--foreground)" }}
-                  >
+                  <blockquote className="text-lg leading-relaxed mb-6  text-agentes-tertiary group-hover:text-white">
                     "Adoptamos el sistema visual para automatizar soporte con
                     RAG corporativo.{" "}
                     <strong>
@@ -1728,10 +1562,7 @@ export default function IAVisualLanding() {
                     técnica ahora construye agentes complejos sin código."
                   </blockquote>
 
-                  <div
-                    className="flex items-center gap-2 text-sm"
-                    style={{ color: "var(--muted-foreground)" }}
-                  >
+                  <div className="flex items-center gap-2 text-sm text-agentes-tertiary">
                     <span>⭐⭐⭐⭐⭐</span>
                   </div>
                 </div>
@@ -1739,40 +1570,12 @@ export default function IAVisualLanding() {
             </div>
 
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              viewport={{ once: true }}
-              className="text-center mt-12"
-            >
-              <div
-                className="inline-flex items-center gap-3 px-6 py-3 rounded-full border"
-                style={{
-                  backgroundColor: "var(--card)",
-                  borderColor: "var(--border)",
-                }}
-              >
-                <span className="text-2xl">✅</span>
-                <span
-                  style={{ color: "var(--foreground)" }}
-                  className="font-medium"
-                >
-                  100% de los graduados implementan al menos 1 agente en 30 días
-                </span>
-              </div>
-            </motion.div>
+          
           </div>
-        </section> */}
+        </section>
 
         {/* Video Demo Section */}
-        {/* <section
-          className="py-20 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, var(--card) 0%, var(--background) 100%)",
-          }}
-        >
+         <section className="py-20 relative  bg-agentes-dark">
           <div className="relative container mx-auto px-4 z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -1781,16 +1584,10 @@ export default function IAVisualLanding() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2
-                className="text-4xl md:text-5xl font-bold mb-4"
-                style={{ color: "var(--primary)" }}
-              >
-                Demo de la herramienta
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+                Échale un  <span className="text-agentes-primary">vistazo al demo</span>
               </h2>
-              <p
-                className="font-light text-lg max-w-2xl mx-auto"
-                style={{ color: "var(--muted-foreground)" }}
-              >
+              <p className="font-light text-lg max-w-2xl mx-auto text-agentes-tertiary">
                 Descubre la plataforma visual que usaremos en el taller para
                 crear agentes inteligentes
               </p>
@@ -1802,11 +1599,9 @@ export default function IAVisualLanding() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="relative rounded-3xl overflow-hidden border-2"
+                className="relative rounded-3xl overflow-hidden border-2 bg-agentes-onix border-agentes-primary/20"
                 style={{
-                  backgroundColor: "var(--card)",
-                  borderColor: "var(--chart-1)",
-                  boxShadow: "0 20px 40px hsl(var(--card) / 0.5)",
+                  boxShadow: "0 20px 40px rgba(176, 197, 227, 0.1)",
                 }}
               >
 
@@ -1822,32 +1617,17 @@ export default function IAVisualLanding() {
                 </div>
 
 
-                <div
-                  className="p-6 border-t"
-                  style={{ borderColor: "var(--border)" }}
-                >
+                <div className="p-6 border-t border-agentes-primary/20">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div
-                        className="p-3 rounded-lg"
-                        style={{
-                          backgroundColor: "var(--primary)20",
-                          color: "var(--primary)",
-                        }}
-                      >
+                      <div className="p-3 rounded-lg bg-agentes-primary/20 text-agentes-primary">
                         <BiPlay className="w-6 h-6" />
                       </div>
                       <div>
-                        <h3
-                          className="font-bold text-lg"
-                          style={{ color: "var(--foreground)" }}
-                        >
+                        <h3 className="font-bold text-lg text-white">
                           Demo de la Plataforma
                         </h3>
-                        <p
-                          className="text-sm"
-                          style={{ color: "var(--muted-foreground)" }}
-                        >
+                        <p className="text-sm text-agentes-tertiary">
                           La herramienta visual que dominarás en el taller
                         </p>
                       </div>
@@ -1858,12 +1638,7 @@ export default function IAVisualLanding() {
                         (tag, index) => (
                           <span
                             key={index}
-                            className="text-xs px-3 py-1 rounded-full border font-semibold"
-                            style={{
-                              backgroundColor: "#B0C5E320",
-                              borderColor: "#B0C5E330",
-                              color: "#B0C5E3",
-                            }}
+                            className="text-xs px-3 py-1 rounded-full border font-semibold bg-agentes-primary/20 border-agentes-primary/30 text-agentes-primary"
                           >
                             {tag}
                           </span>
@@ -1873,83 +1648,13 @@ export default function IAVisualLanding() {
                   </div>
                 </div>
               </motion.div>
-
-      
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                viewport={{ once: true }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12"
-              >
-                {[
-                  {
-                    icon: <BiTargetLock className="w-6 h-6" />,
-                    stat: "100%",
-                    label: "Visual",
-                    desc: "Sin código",
-                  },
-                  {
-                    icon: <BiRocket className="w-6 h-6" />,
-                    stat: "15min",
-                    label: "Setup",
-                    desc: "Primer agente",
-                  },
-                  {
-                    icon: <BiStar className="w-6 h-6" />,
-                    stat: "∞",
-                    label: "Posibilidades",
-                    desc: "Una vez aprendido",
-                  },
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="text-center p-6 rounded-2xl border backdrop-blur-sm"
-                    style={{
-                      backgroundColor: "hsl(var(--card) / 0.6)",
-                      borderColor: "var(--border)",
-                    }}
-                  >
-                    <div
-                      className="inline-flex items-center justify-center p-3 rounded-lg mb-3"
-                      style={{
-                        backgroundColor: "var(--primary)20",
-                        color: "var(--primary)",
-                      }}
-                    >
-                      {item.icon}
-                    </div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={{ color: "var(--primary)" }}
-                    >
-                      {item.stat}
-                    </div>
-                    <div
-                      className="font-semibold mb-1"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      {item.label}
-                    </div>
-                    <div
-                      className="text-sm opacity-80"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
-                      {item.desc}
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
             </div>
           </div>
-        </section> */}
+        </section>
 
         {/* Curriculum Section */}
         <section
-          className="py-20 relative"
-          style={{
-            backgroundColor: "var(--background)",
-          }}
+          className="py-20 relative bg-agentes-dark"
         >
 
           <div className="relative container mx-auto px-4 z-10">
@@ -1961,14 +1666,13 @@ export default function IAVisualLanding() {
               className="text-center mb-16"
             >
               <h2
-                className="text-4xl md:text-5xl font-bold mb-4"
-                style={{ color: "var(--primary)" }}
+                className="text-4xl md:text-5xl font-bold mb-4 text-white"
+
               >
-                Programa del Taller
+                Qué <span className="text-agentes-primary">aprenderás</span> en el taller
               </h2>
               <p
-                className="font-light text-lg max-w-2xl mx-auto"
-                style={{ color: "var(--muted-foreground)" }}
+                className="font-light text-lg max-w-2xl mx-auto text-agentes-tertiary"
               >
                 4 sesiones en vivo donde construirás agentes reales desde cero
               </p>
@@ -2013,7 +1717,7 @@ export default function IAVisualLanding() {
                         "Construirás tu primer agente que puede mantener conversaciones coherentes, recordar contexto y responder de forma natural.",
                     },
                   ],
-                  color: "var(--chart-1)",
+                  color: "#B0C5E3",
                   progress: "25%",
                 },
                 {
@@ -2105,27 +1809,26 @@ export default function IAVisualLanding() {
                         "El gran finale: un super-agente que domina toda la información de tu empresa. Responde desde 'política de vacaciones' hasta 'análisis financiero Q3' con precisión absoluta.",
                     },
                   ],
-                  color: "var(--primary)",
+                  color: "#B0C5E3",
                   progress: "100%",
                 },
               ].map((module, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 60, rotateX: -15 }}
-                  whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   transition={{
-                    duration: 0.8,
-                    delay: index * 0.15,
-                    type: "spring",
-                    stiffness: 100,
+                    duration: 0.5,
+                    delay: index * 0.08,
+                    ease: "easeOut",
                   }}
                   viewport={{ once: true }}
                   className="mb-8 group"
                 >
                   <div
-                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden hover:shadow-2xl transition-all duration-500"
+                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden bg-agentes-primary/5 hover:shadow-xl transition-shadow duration-300"
                     style={{
-                      backgroundColor: "var(--card)",
+                  
                       boxShadow: `0 8px 32px ${module.color}10`,
                       border: `1px solid ${module.color}20`,
                     }}
@@ -2206,7 +1909,8 @@ export default function IAVisualLanding() {
                             whileInView={{
                               pathLength: parseInt(module.progress) / 100,
                             }}
-                            transition={{ duration: 1.5, delay: index * 0.2 }}
+                            transition={{ duration: 1.0, delay: index * 0.1, ease: "easeOut" }}
+                            viewport={{ once: true }}
                             style={{
                               pathLength: parseInt(module.progress) / 100,
                             }}
@@ -2232,11 +1936,12 @@ export default function IAVisualLanding() {
                           <motion.li
                             key={idx}
                             className="group/item"
-                            initial={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{
-                              duration: 0.5,
-                              delay: index * 0.15 + idx * 0.1 + 0.3,
+                              duration: 0.3,
+                              delay: idx * 0.05,
+                              ease: "easeOut",
                             }}
                             viewport={{ once: true }}
                           >
@@ -2258,7 +1963,7 @@ export default function IAVisualLanding() {
                             >
                               <div className="flex-shrink-0 mt-1">
                                 <BiCheckCircle
-                                  className={`w-5 h-5 transition-transform duration-75 ${isSelected ? 'scale-110 rotate-90' : ''}`}
+                                  className={`w-5 h-5 transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}
                                   style={{ color: module.color }}
                                 />
                               </div>
@@ -2278,15 +1983,15 @@ export default function IAVisualLanding() {
                             <AnimatePresence>
                               {isSelected && (
                                 <motion.div
-                                  className="ml-9 mt-3"
-                                  initial={{ opacity: 0, scaleY: 0, transformOrigin: "top" }}
-                                  animate={{ opacity: 1, scaleY: 1, transformOrigin: "top" }}
-                                  exit={{ opacity: 0, scaleY: 0, transformOrigin: "top" }}
+                                  className="ml-9 mt-3 overflow-hidden"
+                                  initial={{ opacity: 0, height: 0, transformOrigin: "top" }}
+                                  animate={{ opacity: 1, height: "auto", transformOrigin: "top" }}
+                                  exit={{ opacity: 0, height: 0, transformOrigin: "top" }}
                                   transition={{
-                                    type: "spring",
-                                    stiffness: 300,
-                                    damping: 30,
-                                    mass: 0.8
+                                    duration: 0.3,
+                                    ease: "easeInOut",
+                                    opacity: { duration: 0.2 },
+                                    height: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }
                                   }}
                                 >
                                   <div
@@ -2325,11 +2030,8 @@ export default function IAVisualLanding() {
 
         {/* Who Is This For Section - Completely Redesigned */}
         <section
-          className="py-32 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, var(--background) 0%, var(--secondary) 60%, var(--card) 100%)",
-          }}
+          className="py-32 relative overflow-hidden bg-agentes-dark"
+    
         >
           {/* Background Elements */}
           <div className="absolute inset-0">
@@ -2369,28 +2071,10 @@ export default function IAVisualLanding() {
                 viewport={{ once: true }}
                 className="text-center mb-20"
               >
-                <motion.div
-                  className="inline-flex items-center gap-3 px-8 py-4 rounded-full mb-8 border-2 relative overflow-hidden"
-                  style={{
-                    backgroundColor: "var(--card)",
-                    borderColor: "#B0C5E3",
-                    boxShadow: "0 8px 32px #B0C5E315",
-                  }}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
-                  <span className="text-2xl">🎯</span>
-                  <span
-                    className="font-bold text-lg relative z-10"
-                    style={{ color: "#B0C5E3" }}
-                  >
-                    ENCUENTRA TU PERFIL IDEAL
-                  </span>
-                </motion.div>
+                
 
                 <h2 className="text-5xl md:text-6xl font-black leading-tight mb-8">
-                  <span style={{ color: "var(--foreground)" }}>
+                  <span className="text-white">
                     Este taller es{" "}
                   </span>
                   <span className="relative">
@@ -2404,19 +2088,13 @@ export default function IAVisualLanding() {
                     >
                       para ti
                     </span>
-                    <div
-                      className="absolute -bottom-2 left-0 right-0 h-2 rounded-full opacity-60"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, var(--primary), #B0C5E3)",
-                      }}
-                    ></div>
+                  
                   </span>
                 </h2>
 
                 <p
-                  className="text-xl md:text-2xl font-light max-w-3xl mx-auto leading-relaxed"
-                  style={{ color: "var(--muted-foreground)" }}
+                  className="text-xl md:text-2xl font-light max-w-3xl mx-auto leading-relaxed text-agentes-tertiary" 
+  
                 >
                   Deberías tomar este taller sin importar tu perfil profesional.
                   <span
@@ -2441,18 +2119,15 @@ export default function IAVisualLanding() {
                   className="relative"
                 >
                   <div
-                    className="absolute -top-6 -left-6 w-16 h-16 rounded-2xl flex items-center justify-center z-10"
-                    style={{ backgroundColor: "#B0C5E3" }}
+                    className="absolute -top-6 -left-6 w-16 h-16 rounded-2xl flex items-center justify-center z-10 bg-agentes-secondary"
                   >
                     <span className="text-2xl">✅</span>
                   </div>
 
                   <div
-                    className="border-2 rounded-3xl p-8 pt-12 backdrop-blur-sm"
+                    className="border-2 rounded-3xl p-8 pt-12 border-agentes-gray backdrop-blur-sm bg-agentes-primary/5"
                     style={{
-                      backgroundColor: "var(--card)",
-                      borderColor: "#B0C5E3",
-                      boxShadow: "0 20px 40px #B0C5E320",
+                      boxShadow: "0 8px 32px hsl(#B0C5E3 / 0.2)",
                     }}
                   >
                     <h3
@@ -2494,32 +2169,29 @@ export default function IAVisualLanding() {
                             delay: 0.4 + index * 0.1,
                           }}
                           viewport={{ once: true }}
-                          className="group flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 hover:scale-105"
-                          style={{ backgroundColor: "var(--secondary)" }}
+                          className="group flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 hover:scale-105 bg-agentes-primary/5"
                         >
                           <div
-                            className="w-6 h-6 rounded-full flex items-center justify-center mt-1"
-                            style={{ backgroundColor: "#B0C5E3" }}
+                            className="w-6 h-6 flex items-center justify-center mt-1"
                           >
                             <span
-                              className="text-xs font-bold"
-                              style={{ color: "#ffffff" }}
+                              className="text-xl"
                             >
-                              ✓
+                              {item.text.substring(0, 2).trim()}
                             </span>
                           </div>
                           <p
                             className="text-base leading-relaxed"
                             style={{ color: "var(--foreground)" }}
                           >
-                            {item.text.split(item.highlight)[0]}
+                            {item.text.substring(2).split(item.highlight)[0]}
                             <span
                               className="font-semibold"
                               style={{ color: "#B0C5E3" }}
                             >
                               {item.highlight}
                             </span>
-                            {item.text.split(item.highlight)[1]}
+                            {item.text.substring(2).split(item.highlight)[1]}
                           </p>
                         </motion.div>
                       ))}
@@ -2537,17 +2209,15 @@ export default function IAVisualLanding() {
                 >
                   <div
                     className="absolute -top-6 -left-6 w-16 h-16 rounded-2xl flex items-center justify-center z-10"
-                    style={{ backgroundColor: "var(--primary)" }}
+                    style={{ backgroundColor: "#B0C5E3" }}
                   >
                     <span className="text-2xl">📋</span>
                   </div>
 
                   <div
-                    className="border-2 rounded-3xl p-8 pt-12 backdrop-blur-sm"
+                    className="border-2 rounded-3xl p-8 pt-12 border-agentes-gray backdrop-blur-sm bg-agentes-primary/5"
                     style={{
-                      backgroundColor: "var(--card)",
-                      borderColor: "var(--primary)",
-                      boxShadow: "0 20px 40px var(--primary)20",
+                      boxShadow: "0 8px 32px #B0C5E320",
                     }}
                   >
                     <h3
@@ -2589,42 +2259,31 @@ export default function IAVisualLanding() {
                             delay: 0.4 + index * 0.1,
                           }}
                           viewport={{ once: true }}
-                          className="group flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 hover:scale-105"
-                          style={{ backgroundColor: "var(--secondary)" }}
+                          className="group flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 hover:scale-105 bg-agentes-primary/5"
                         >
                           <div
-                            className="w-6 h-6 rounded-full flex items-center justify-center mt-1"
-                            style={{
-                              backgroundColor:
-                                index === 4
-                                  ? "#B0C5E3"
-                                  : "var(--primary)",
-                            }}
+                            className="w-6 h-6 flex items-center justify-center mt-1"
                           >
                             <span
-                              className="text-xs font-bold"
-                              style={{ color: "#ffffff" }}
+                              className="text-xl"
                             >
-                              {index === 4 ? "✗" : "✓"}
+                              {item.text.substring(0, 2).trim()}
                             </span>
                           </div>
                           <p
                             className="text-base leading-relaxed"
                             style={{ color: "var(--foreground)" }}
                           >
-                            {item.text.split(item.highlight)[0]}
+                            {item.text.substring(2).split(item.highlight)[0]}
                             <span
                               className="font-semibold"
                               style={{
-                                color:
-                                  index === 4
-                                    ? "#B0C5E3"
-                                    : "var(--primary)",
+                                color: "#B0C5E3",
                               }}
                             >
                               {item.highlight}
                             </span>
-                            {item.text.split(item.highlight)[1]}
+                            {item.text.substring(2).split(item.highlight)[1]}
                           </p>
                         </motion.div>
                       ))}
@@ -2642,12 +2301,7 @@ export default function IAVisualLanding() {
                 className="text-center"
               >
                 <div
-                  className="inline-flex flex-col items-center gap-6 p-8 rounded-3xl border-2"
-                  style={{
-                    backgroundColor: "var(--card)",
-                    borderColor: "#B0C5E3",
-                    boxShadow: "0 20px 40px #B0C5E320",
-                  }}
+                  className="inline-flex flex-col items-center gap-6 p-8 rounded-3xl  bg-agentes-primary/5"
                 >
                   <div className="text-6xl mb-2">🎯</div>
 
@@ -2659,8 +2313,7 @@ export default function IAVisualLanding() {
                   </h3>
 
                   <p
-                    className="text-lg mb-6 max-w-2xl"
-                    style={{ color: "var(--muted-foreground)" }}
+                    className="text-lg mb-4 max-w-2xl text-agentes-tertiary"
                   >
                     No importa tu nivel actual. Este taller está diseñado para
                     llevarte desde cero hasta crear agentes funcionales en
@@ -2669,15 +2322,12 @@ export default function IAVisualLanding() {
 
                   <button
                     onClick={() => setShowEarlyAccessForm(true)}
-                    className="font-bold py-4 px-8 rounded-2xl text-lg transition-all transform hover:scale-105"
+                    className="font-semibold h-12 text-agentes-dark px-8 rounded-full text-lg transition-all transform hover:scale-105 bg-gradient-to-r from-agentes-primary to-agentes-secondary"
                     style={{
-                      background:
-                        "linear-gradient(135deg, var(--primary) 0%, #B0C5E3 100%)",
-                      color: "var(--primary-foreground)",
                       boxShadow: "0 10px 30px var(--primary)40",
                     }}
                   >
-                    🚀 ¡Quiero Mi Lugar en el Taller!
+                    🚀 ¡Quiero mi lugar en el taller!
                   </button>
                 </div>
               </motion.div>
@@ -2687,16 +2337,13 @@ export default function IAVisualLanding() {
 
         {/* Instructor Section */}
         <section
-          className="py-20 relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(45deg, var(--secondary) 0%, var(--background) 100%)",
-          }}
+          className="py-20 relative overflow-hidden bg-agentes-dark"
+     
         >
           {/* LiquidEther Background */}
           <div className="absolute inset-0 z-0">
             <LiquidEther
-              colors={['#ff7e5f', '#feb47b', '#ffcaa7']}
+              colors={['#B0CCF2', '#B0C5E3', '#B0CCF2']}
               mouseForce={50}
               cursorSize={150}
               isViscous={false}
@@ -2716,17 +2363,13 @@ export default function IAVisualLanding() {
           <div className="relative container mx-auto px-4 z-10 pointer-events-none">
             <div className="max-w-4xl mx-auto pointer-events-auto">
               <div
-                className="rounded-3xl p-8 md:p-12 border-2 relative overflow-hidden"
-                style={{
-                  backgroundColor: "var(--card)",
-                  borderColor: "var(--border)",
-                }}
+                className="rounded-3xl p-8 md:p-12  relative overflow-hidden bg-agentes-onix "
+           
               >
                 <div className="grid md:grid-cols-2 gap-8 items-center">
                   <div>
                     <span
-                      className="font-light"
-                      style={{ color: "var(--chart-1)" }}
+                      className="font-light text-white"
                     >
                       Tu instructor
                     </span>
@@ -2737,16 +2380,14 @@ export default function IAVisualLanding() {
                       Héctor Bliss
                     </h3>
                     <p
-                      className="mb-6"
-                      style={{ color: "var(--muted-foreground)" }}
+                      className="mb-6 text-agentes-tertiary"
                     >
                       Pionero en hacer la IA accesible para todos, con más de 8
                       años enseñando tecnología y una comunidad de más de 2,000
                       estudiantes activos.
                     </p>
                     <p
-                      className="mb-6"
-                      style={{ color: "var(--muted-foreground)" }}
+                      className="mb-6 text-agentes-tertiary"
                     >
                       Especializado en enseñar herramientas complejas de forma
                       simple, Héctor te guiará paso a paso para crear agentes
@@ -2755,28 +2396,25 @@ export default function IAVisualLanding() {
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <div
-                          className="text-2xl font-bold"
-                          style={{ color: "var(--chart-1)" }}
+                          className="text-2xl font-bold text-agentes-primary"
+                        
                         >
                           8+
                         </div>
                         <div
-                          className="text-xs"
-                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-xs text-agentes-tertiary"
                         >
                           Años enseñando
                         </div>
                       </div>
                       <div>
                         <div
-                          className="text-2xl font-bold"
-                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-2xl font-bold text-agentes-primary"
                         >
                           2K+
                         </div>
                         <div
-                          className="text-xs"
-                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-xs text-agentes-tertiary"
                         >
                           Estudiantes
                         </div>
@@ -2789,8 +2427,7 @@ export default function IAVisualLanding() {
                           100%
                         </div>
                         <div
-                          className="text-xs"
-                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-xs text-agentes-tertiary"
                         >
                           Práctico
                         </div>
@@ -2816,127 +2453,8 @@ export default function IAVisualLanding() {
 
         {/* Final CTA - Completely Redesigned */}
         <section
-          className="relative py-32 overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, var(--background) 0%, var(--secondary) 40%, var(--card) 100%)",
-          }}
+          className="relative py-32 overflow-hidden bg-agentes-dark"
         >
-          {/* Intense Pixel Blast Background */}
-          <div className="absolute inset-0">
-            <style
-              dangerouslySetInnerHTML={{
-                __html: `
-                  @keyframes pixel-explosion {
-                    0% { 
-                      transform: translate(0, 0) rotate(0deg) scale(1);
-                      opacity: 0;
-                    }
-                    10% {
-                      opacity: 0.4;
-                    }
-                    50% { 
-                      transform: translate(50px, -50px) rotate(180deg) scale(1.5);
-                      opacity: 0.2;
-                    }
-                    100% { 
-                      transform: translate(-30px, 30px) rotate(360deg) scale(1);
-                      opacity: 0;
-                    }
-                  }
-                  
-                  @keyframes pixel-pulse {
-                    0%, 100% { 
-                      transform: scale(1);
-                      filter: brightness(1);
-                    }
-                    50% { 
-                      transform: scale(1.2);
-                      filter: brightness(1.5);
-                    }
-                  }
-                  
-                  .pixel-explosion {
-                    position: absolute;
-                    animation: pixel-explosion infinite;
-                  }
-                  
-                  .pixel-static {
-                    position: absolute;
-                    animation: pixel-pulse infinite;
-                  }
-                `,
-              }}
-            />
-            
-            {/* Dynamic explosion pixels */}
-            <div className="absolute inset-0 overflow-hidden">
-              {[...Array(15)].map((_, i) => {
-                const size = 15 + Math.random() * 40;
-                const duration = 8 + Math.random() * 12;
-                const left = Math.random() * 100;
-                const top = Math.random() * 100;
-                const colors = [
-                  'linear-gradient(45deg, var(--primary), #B0C5E3)',
-                  'linear-gradient(135deg, var(--chart-1), #B0C5E3)',
-                  'linear-gradient(90deg, #B0C5E3, var(--primary))',
-                ];
-                
-                return (
-                  <div
-                    key={`explosion-${i}`}
-                    className="pixel-explosion"
-                    style={{
-                      width: `${size}px`,
-                      height: `${size}px`,
-                      left: `${left}%`,
-                      top: `${top}%`,
-                      background: colors[i % colors.length],
-                      borderRadius: i % 2 === 0 ? '50%' : '20%',
-                      animationDuration: `${duration}s`,
-                      animationDelay: `${i * 0.3}s`,
-                      filter: 'blur(0.5px)',
-                    }}
-                  />
-                );
-              })}
-              
-              {/* Static pulsing pixels for depth */}
-              {[...Array(8)].map((_, i) => {
-                const size = 60 + Math.random() * 80;
-                const duration = 3 + Math.random() * 4;
-                const left = Math.random() * 100;
-                const top = Math.random() * 100;
-                
-                return (
-                  <div
-                    key={`static-${i}`}
-                    className="pixel-static"
-                    style={{
-                      width: `${size}px`,
-                      height: `${size}px`,
-                      left: `${left}%`,
-                      top: `${top}%`,
-                      background: `radial-gradient(circle, var(--primary)30, transparent 70%)`,
-                      borderRadius: '50%',
-                      animationDuration: `${duration}s`,
-                      animationDelay: `${i * 0.4}s`,
-                      filter: 'blur(3px)',
-                      opacity: 0.15,
-                    }}
-                  />
-                );
-              })}
-            </div>
-            
-            {/* Gradient overlay for readability */}
-            <div 
-              className="absolute inset-0" 
-              style={{
-                background: 'linear-gradient(180deg, transparent 0%, var(--background)20 50%, var(--background)40 100%)',
-              }}
-            />
-          </div>
 
           <div className="relative z-10 container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
@@ -2946,22 +2464,21 @@ export default function IAVisualLanding() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
                 viewport={{ once: true }}
-                className="text-center mb-16"
+                className="text-center mb-16 "
               >
                 <div
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full mb-8 border-2"
+                  className="inline-flex items-center gap-2 px-4 py-1 rounded-full border backdrop-blur-sm bg-agentes-primary/20 mb-8"
                   style={{
-                    backgroundColor: "var(--card)",
                     borderColor: "var(--primary)",
-                    boxShadow: "0 8px 32px var(--primary)20",
+                    boxShadow: "0 8px 32px hsl(var(--primary) / 0.2)",
                   }}
                 >
-                  <span
-                    className="w-3 h-3 rounded-full animate-pulse"
+                  <div
+                    className="w-2 h-2 rounded-full animate-pulse"
                     style={{ backgroundColor: "var(--primary)" }}
-                  ></span>
+                  ></div>
                   <span
-                    className="font-bold text-lg"
+                    className="font-medium text-sm"
                     style={{ color: "var(--primary)" }}
                   >
                     ¡ÚLTIMOS LUGARES DISPONIBLES!
@@ -2984,19 +2501,12 @@ export default function IAVisualLanding() {
                     >
                       es visual
                     </span>
-                    <div
-                      className="absolute -bottom-2 left-0 right-0 h-2 rounded-full opacity-60"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, var(--primary), #B0C5E3)",
-                      }}
-                    ></div>
+                   
                   </span>
                 </h2>
 
                 <p
-                  className="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto leading-relaxed"
-                  style={{ color: "var(--muted-foreground)" }}
+                  className="text-xl md:text-2xl font-light mb-12 max-w-3xl mx-auto leading-relaxed text-agentes-tertiary"
                 >
                   Los que aprenden IA visual hoy serán los líderes tecnológicos
                   del mañana.
@@ -3022,11 +2532,9 @@ export default function IAVisualLanding() {
                 >
                   {/* Badge */}
                   <div
-                    className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10"
+                    className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10 text-agentes-dark bg-agentes-secondary"
                     style={{
                       width: "max-content",
-                      backgroundColor: "#B0C5E3",
-                      color: "var(--primary-foreground)",
                       boxShadow: "0 2px 8px #B0C5E330",
                     }}
                   >
@@ -3034,16 +2542,13 @@ export default function IAVisualLanding() {
                   </div>
 
                   <motion.div
-                    className="relative p-8 pt-10 rounded-3xl border-2 backdrop-blur-sm h-full"
+                    className="relative p-8 pt-10 rounded-3xl border-2 border-agentes-gray backdrop-blur-sm bg-agentes-primary/5 h-full"
                     style={{
-                      backgroundColor: "var(--card)",
-                      borderColor: "#B0C5E3",
-                      boxShadow: "0 10px 30px #B0C5E3/15",
+                      boxShadow: "0 8px 32px #B0C5E320",
                     }}
                     whileHover={{
                       y: -3,
-                      boxShadow: "0 15px 40px #B0C5E3/25",
-                      borderColor: "#B0C5E3",
+                      boxShadow: "0 15px 40px #B0C5E325",
                       transition: { duration: 0.3, ease: "easeOut" },
                     }}
                   >
@@ -3080,8 +2585,7 @@ export default function IAVisualLanding() {
                               style={{ backgroundColor: "#B0C5E3" }}
                             >
                               <span
-                                className="text-xs"
-                                style={{ color: "#ffffff" }}
+                                className="text-xs text-agentes-dark"
                               >
                                 ✓
                               </span>
@@ -3098,15 +2602,14 @@ export default function IAVisualLanding() {
 
                       <button
                         onClick={() => setShowEarlyAccessForm(true)}
-                        className="w-full font-bold py-4 px-6 rounded-2xl text-lg transition-all transform hover:scale-105"
+                        className="w-full font-bold h-14 px-6 rounded-full text-agentes-dark text-lg transition-all bg-gradient-to-r from-agentes-primary to-agentes-secondary transform hover:scale-105"
                         style={{
-                          background:
-                            "linear-gradient(135deg, #B0C5E3 0%, var(--primary) 100%)",
-                          color: "var(--primary-foreground)",
+                        
+                       
                           boxShadow: "0 10px 30px #B0C5E340",
                         }}
                       >
-                        🎓 Reservar Mi Lugar Gratis
+                        🎓 Reservar mi lugar gratis
                       </button>
                     </div>
                   </motion.div>
@@ -3122,10 +2625,8 @@ export default function IAVisualLanding() {
                 >
                   {/* Badge */}
                   <motion.div
-                    className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10"
+                    className="absolute bg-agentes-secondary -top-3 left-1/3 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10 text-agentes-dark"
                     style={{
-                      backgroundColor: "var(--primary)",
-                      color: "var(--primary-foreground)",
                       boxShadow: "0 2px 10px var(--primary)40",
                     }}
                     animate={{
@@ -3141,16 +2642,13 @@ export default function IAVisualLanding() {
                   </motion.div>
 
                   <motion.div
-                    className="relative p-8 pt-10 rounded-3xl border-2 backdrop-blur-sm h-full"
+                    className="relative p-8 pt-10 rounded-3xl border-2 border-agentes-gray backdrop-blur-sm bg-agentes-primary/5 h-full"
                     style={{
-                      backgroundColor: "var(--card)",
-                      borderColor: "var(--primary)",
-                      boxShadow: "0 10px 30px var(--primary)20",
+                      boxShadow: "0 8px 32px #B0C5E320",
                     }}
                     whileHover={{
                       y: -5,
-                      boxShadow: "0 20px 50px var(--primary)30",
-                      borderColor: "var(--primary)",
+                      boxShadow: "0 20px 50px #B0C5E330",
                       transition: { duration: 0.3, ease: "easeOut" },
                     }}
                   >
@@ -3187,8 +2685,7 @@ export default function IAVisualLanding() {
                               style={{ backgroundColor: "var(--primary)" }}
                             >
                               <span
-                                className="text-xs"
-                                style={{ color: "#ffffff" }}
+                                className="text-xs text-agentes-dark"
                               >
                                 ✓
                               </span>
@@ -3205,50 +2702,67 @@ export default function IAVisualLanding() {
 
                       <button
                         onClick={() => setShowEarlyAccessForm(true)}
-                        className="w-full font-bold py-4 px-6 rounded-2xl text-lg transition-all transform hover:scale-105"
+                        className="w-full font-bold h-14 px-6 bg-gradient-to-r from-agentes-primary to-agentes-secondary rounded-full text-lg transition-all transform hover:scale-105 text-agentes-dark"
                         style={{
-                          background:
-                            "linear-gradient(135deg, var(--primary) 0%, #B0C5E3 100%)",
-                          color: "var(--primary-foreground)",
                           boxShadow: "0 10px 30px var(--primary)40",
                         }}
                       >
-                        🚀 Notificarme del Lanzamiento
+                        🚀 Notificarme del lanzamiento
                       </button>
                     </div>
                   </motion.div>
                 </motion.div>
               </div>
 
-              {/* Bottom Text */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-                viewport={{ once: true }}
-                className="text-center mt-16"
-              >
-                <p
-                  className="text-lg"
-                  style={{ color: "var(--muted-foreground)" }}
-                >
-                  ⚡{" "}
-                  <strong style={{ color: "var(--primary)" }}>
-                    Acceso instantáneo
-                  </strong>{" "}
-                  • 🔒{" "}
-                  <strong style={{ color: "var(--primary)" }}>
-                    Datos seguros
-                  </strong>{" "}
-                  • 🎯{" "}
-                  <strong style={{ color: "var(--primary)" }}>Sin spam</strong>
-                </p>
-              </motion.div>
+          
             </div>
           </div>
         </section>
 
-        <SimpleFooter />
+        {/* Simple Footer with agentes colors */}
+        <section className=" bg-agentes-dark py-8 pb-12">
+          <div className="flex justify-center items-center gap-3">
+            <a
+              rel="noreferrer"
+              href="https://www.facebook.com/fixterme"
+              target="_blank"
+            >
+              <FaFacebook className="text-gray-400 text-2xl hover:opacity-40 hover:scale-95" />
+            </a>
+            <a
+              rel="noreferrer"
+              href="https://twitter.com/FixterGeek"
+              target="_blank"
+            >
+              <FaSquareXTwitter className="text-gray-400 text-2xl hover:opacity-40 hover:scale-95" />
+            </a>
+            <a
+              rel="noreferrer"
+              href="https://www.linkedin.com/company/fixtergeek/"
+              target="_blank"
+            >
+              <BsLinkedin className="text-gray-400 text-xl hover:opacity-40 hover:scale-95" />
+            </a>
+            <a
+              rel="noreferrer"
+              href="https://www.instagram.com/fixtergeek/"
+              target="_blank"
+            >
+              <AiFillInstagram className="text-gray-400 text-2xl hover:opacity-40 hover:scale-95" />
+            </a>
+            <a
+              rel="noreferrer"
+              href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g"
+              target="_blank"
+            >
+              <FaYoutube className="text-gray-400 text-2xl hover:opacity-40 hover:scale-95" />
+            </a>
+          </div>
+
+          <p className="text-center text-gray-300 text-sm opacity-40 font-light mt-4">
+            © 2016 - 2025 Fixtergeek
+          </p>
+        </section>
       </div>
     </>
   );

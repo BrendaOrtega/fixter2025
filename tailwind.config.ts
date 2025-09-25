@@ -36,11 +36,11 @@ export default {
         },
         agentes: {
           primary: "#B0CCF2",
-          secondary: "#B0C5E3",
-          tertiary: "#D6E1F3",
-          dark: "#080B18",
+          secondary: "#8ADAB1",
+          tertiary: "#818791",
+          dark: "#141619",
           gray:"#465169",
-          onix:"#111628"
+          onix:"#222933"
         },
       },
       backgroundImage: {
