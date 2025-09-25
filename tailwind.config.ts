@@ -34,6 +34,14 @@ export default {
           purple: "#AA99E6",
           peach: "#F2DDDA",
         },
+        agentes: {
+          primary: "#B0CCF2",
+          secondary: "#8ADAB1",
+          tertiary: "#818791",
+          dark: "#141619",
+          gray:"#465169",
+          onix:"#222933"
+        },
       },
       backgroundImage: {
         stars: "url('/stars.png')",
