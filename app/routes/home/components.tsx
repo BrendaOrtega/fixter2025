@@ -506,7 +506,7 @@ export const HomeHero = () => {
                 transition={{ duration: 0.5 }}
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-agentes-primary/10 to-agentes-secondary/10 border border-agentes-primary rounded-full px-4 py-2 hover:from-agentes-primary/30 hover:to-agentes-secondary/30 hover:border-agentes-primary/70 transition-all duration-300"
               >
-                <span className="text-sm font-semibold text-agentes-primary  transition-colors">
+                <span className="text-sm font-semibold text-agentes-primary transition-colors">
                   ✨ Nuevo taller de Construcción de Agentes IA drag & drop
                 </span>
               </motion.div>
@@ -553,9 +553,9 @@ export const HomeHero = () => {
         
             <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
           📖
-        Libro gratuito:  <Link
+               Libro gratuito:  <Link
               to="/libros"
-              className="text-sm text-white/80 text-orange-300  hover:underline transition-all duration-200  "
+              className="text-sm  text-orange-300  hover:underline transition-all duration-200  "
             >Dominando Claude Code</Link> y    <Link
             to="/libros/llamaindex"
             className="text-sm text-llamaindex-purple hover:underline transition-all duration-200  "
