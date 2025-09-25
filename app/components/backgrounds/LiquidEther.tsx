@@ -154,24 +154,32 @@ export default function LiquidEther({
       takeoverTo = new THREE.Vector2();
       onInteract: (() => void) | null = null;
 
+      // Pre-bind event handlers for better performance
+      private _onMouseMove = this.onDocumentMouseMove.bind(this);
+      private _onTouchStart = this.onDocumentTouchStart.bind(this);
+      private _onTouchMove = this.onDocumentTouchMove.bind(this);
+      private _onMouseEnter = this.onMouseEnter.bind(this);
+      private _onMouseLeave = this.onMouseLeave.bind(this);
+      private _onTouchEnd = this.onTouchEnd.bind(this);
+
       init(container: HTMLElement) {
         this.container = container;
-        container.addEventListener('mousemove', this.onDocumentMouseMove.bind(this), false);
-        container.addEventListener('touchstart', this.onDocumentTouchStart.bind(this), false);
-        container.addEventListener('touchmove', this.onDocumentTouchMove.bind(this), false);
-        container.addEventListener('mouseenter', this.onMouseEnter.bind(this), false);
-        container.addEventListener('mouseleave', this.onMouseLeave.bind(this), false);
-        container.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+        container.addEventListener('mousemove', this._onMouseMove, false);
+        container.addEventListener('touchstart', this._onTouchStart, false);
+        container.addEventListener('touchmove', this._onTouchMove, false);
+        container.addEventListener('mouseenter', this._onMouseEnter, false);
+        container.addEventListener('mouseleave', this._onMouseLeave, false);
+        container.addEventListener('touchend', this._onTouchEnd, false);
       }
 
       dispose() {
         if (!this.container) return;
-        this.container.removeEventListener('mousemove', this.onDocumentMouseMove.bind(this), false);
-        this.container.removeEventListener('touchstart', this.onDocumentTouchStart.bind(this), false);
-        this.container.removeEventListener('touchmove', this.onDocumentTouchMove.bind(this), false);
-        this.container.removeEventListener('mouseenter', this.onMouseEnter.bind(this), false);
-        this.container.removeEventListener('mouseleave', this.onMouseLeave.bind(this), false);
-        this.container.removeEventListener('touchend', this.onTouchEnd.bind(this), false);
+        this.container.removeEventListener('mousemove', this._onMouseMove, false);
+        this.container.removeEventListener('touchstart', this._onTouchStart, false);
+        this.container.removeEventListener('touchmove', this._onTouchMove, false);
+        this.container.removeEventListener('mouseenter', this._onMouseEnter, false);
+        this.container.removeEventListener('mouseleave', this._onMouseLeave, false);
+        this.container.removeEventListener('touchend', this._onTouchEnd, false);
       }
 
       setCoords(x: number, y: number) {
@@ -252,6 +260,8 @@ export default function LiquidEther({
             this.coords.copy(this.takeoverFrom).lerp(this.takeoverTo, k);
           }
         }
+
+        // Algoritmo simple y efectivo - igual que la versión funcional
         this.diff.subVectors(this.coords, this.coords_old);
         this.coords_old.copy(this.coords);
         if (this.coords_old.x === 0 && this.coords_old.y === 0) this.diff.set(0, 0);
@@ -622,6 +632,8 @@ export default function LiquidEther({
 
       update(props: any) {
         if (!this.mouse) return;
+
+        // Algoritmo simple y directo - igual que la versión funcional
         const forceX = (Mouse.diff.x / 2) * props.mouse_force;
         const forceY = (Mouse.diff.y / 2) * props.mouse_force;
         const cursorSizeX = props.cursor_size * props.cellScale.x;
@@ -634,6 +646,7 @@ export default function LiquidEther({
           Math.max(Mouse.coords.y, -1 + cursorSizeY + props.cellScale.y * 2),
           1 - cursorSizeY - props.cellScale.y * 2
         );
+
         const uniforms = (this.mouse.material as THREE.RawShaderMaterial).uniforms;
         uniforms.force.value.set(forceX, forceY);
         uniforms.center.value.set(centerX, centerY);

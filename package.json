@@ -45,7 +45,7 @@
     "jsonwebtoken": "^9.0.2",
     "marked": "^16.1.2",
     "mdx-bundler": "^10.1.1",
-    "motion": "^11.14.1",
+    "motion": "^11.18.2",
     "nanoid": "^5.0.9",
     "node-static": "^0.7.11",
     "nodemailer": "^6.9.16",

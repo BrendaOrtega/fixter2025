@@ -68,7 +68,8 @@ export function categorizeUsers(users: WebinarUser[]) {
     if (!user.courses || user.courses.length === 0) return true;
     return (
       !user.courses.includes(COURSE_IDS.CLAUDE) &&
-      !user.courses.includes(COURSE_IDS.GEMINI)
+      !user.courses.includes(COURSE_IDS.GEMINI) &&
+      !user.courses.includes(COURSE_IDS.LLAMAINDEX)
     );
   });
 
@@ -76,7 +77,8 @@ export function categorizeUsers(users: WebinarUser[]) {
     if (!user.courses || user.courses.length === 0) return false;
     return (
       user.courses.includes(COURSE_IDS.CLAUDE) ||
-      user.courses.includes(COURSE_IDS.GEMINI)
+      user.courses.includes(COURSE_IDS.GEMINI) ||
+      user.courses.includes(COURSE_IDS.LLAMAINDEX)
     );
   });
 
