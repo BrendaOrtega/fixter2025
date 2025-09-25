@@ -810,179 +810,199 @@ export default function ClaudeLanding() {
           <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {/* SÍ es para ti */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
+              initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-grass/10 via-grass/5 to-grass/20 border border-grass/30 rounded-2xl p-8 backdrop-blur-sm hover:border-grass/50 transition-all duration-300"
+              className="relative"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <motion.div
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 10, 0],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                  }}
-                  className="text-3xl"
-                >
-                  ✅
-                </motion.div>
-                <h3 className="text-2xl font-bold text-white">
-                  SÍ es para ti si...
-                </h3>
+              <div
+                className="absolute -top-6 -left-6 w-16 h-16 rounded-2xl flex items-center justify-center z-10 bg-claude-primary"
+              >
+                <span className="text-2xl">✅</span>
               </div>
 
-              <div className="space-y-4">
-                {[
-                  {
-                    icon: "🚀",
-                    text: "Eres developer Jr/Mid con ganas de destacar",
-                    delay: 0.1,
-                  },
-                  {
-                    icon: "🔍",
-                    text: "Ya probaste Claude pero sientes que no le sacas provecho",
-                    delay: 0.2,
-                  },
-                  {
-                    icon: "⚡",
-                    text: "Quieres automatizar tareas repetitivas",
-                    delay: 0.3,
-                  },
-                  {
-                    icon: "🎯",
-                    text: "Buscas ser más productivo sin burnout",
-                    delay: 0.4,
-                  },
-                  {
-                    icon: "🤖",
-                    text: "Te interesa estar a la vanguardia en AI",
-                    delay: 0.5,
-                  },
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: item.delay }}
-                    viewport={{ once: true }}
-                    whileHover={{
-                      scale: 1.02,
-                      x: 5,
-                      transition: { duration: 0.2 },
-                    }}
-                    className="flex items-start gap-4 p-4 rounded-xl bg-grass/5 border border-grass/20 hover:border-grass/40 hover:bg-grass/10 transition-all duration-300 cursor-pointer group"
-                  >
-                    <motion.span
-                      className="text-2xl flex-shrink-0"
-                      whileHover={{ rotate: [0, -10, 10, 0] }}
-                      transition={{ duration: 0.3 }}
+              <div
+                className="border-2 rounded-3xl p-8 pt-12 border-claude-primary/30 backdrop-blur-sm bg-claude-primary/5"
+                style={{
+                  boxShadow: "0 8px 32px rgba(202, 155, 119, 0.2)",
+                }}
+              >
+                <h3
+                  className="text-3xl font-bold mb-6 text-white"
+                >
+                  SÍ es para ti si...
+                </h3>
+
+                <div className="space-y-4">
+                  {[
+                    {
+                      text: "🚀 Eres developer Jr/Mid con ganas de destacar",
+                      highlight: "destacar",
+                    },
+                    {
+                      text: "🔍 Ya probaste Claude pero no le sacas provecho",
+                      highlight: "provecho",
+                    },
+                    {
+                      text: "⚡ Quieres automatizar tareas repetitivas y aburridas",
+                      highlight: "automatizar",
+                    },
+                    {
+                      text: "🎯 Buscas ser más productivo sin burnout",
+                      highlight: "productivo",
+                    },
+                    {
+                      text: "🤖 Te interesa estar a la vanguardia en AI",
+                      highlight: "vanguardia",
+                    },
+                  ].map((item, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.5,
+                        delay: 0.4 + index * 0.1,
+                      }}
+                      viewport={{ once: true }}
+                      className="group flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 hover:scale-105 bg-claude-primary/5"
                     >
-                      {item.icon}
-                    </motion.span>
-                    <p className="text-gray-200 group-hover:text-white transition-colors duration-300 font-medium leading-relaxed">
-                      {item.text}
-                    </p>
-                  </motion.div>
-                ))}
+                      <div
+                        className="w-6 h-6 flex items-center justify-center mt-1"
+                      >
+                        <span
+                          className="text-xl"
+                        >
+                          {item.text.substring(0, 2).trim()}
+                        </span>
+                      </div>
+                      <p
+                        className="text-base leading-relaxed text-claude-gray"
+                      >
+                        {item.text.substring(2).split(item.highlight)[0]}
+                        <span
+                          className="font-semibold text-claude-primary"
+                        >
+                          {item.highlight}
+                        </span>
+                        {item.text.substring(2).split(item.highlight)[1]}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </motion.div>
 
             {/* NO es para ti */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-danger/10 via-danger/5 to-danger/20 border border-danger/30 rounded-2xl p-8 backdrop-blur-sm hover:border-danger/50 transition-all duration-300"
+              className="relative"
             >
-              <div className="flex items-center gap-3 mb-6">
-                <motion.div
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    rotate: [0, -5, 0],
-                  }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Infinity,
-                    repeatDelay: 4,
-                  }}
-                  className="text-3xl"
-                >
-                  ❌
-                </motion.div>
-                <h3 className="text-2xl font-bold text-white">
-                  NO es para ti si...
-                </h3>
+              <div
+                className="absolute -top-6 -left-6 w-16 h-16 rounded-2xl flex items-center justify-center z-10 bg-claude-secondary"
+              >
+                <span className="text-2xl">🤔</span>
               </div>
 
-              <div className="space-y-4">
-                {[
-                  {
-                    icon: "💻",
-                    text: "Nunca has usado una terminal",
-                    delay: 0.1,
-                  },
-                  {
-                    icon: "📚",
-                    text: "Buscas una introducción básica a programación",
-                    delay: 0.2,
-                  },
-                  {
-                    icon: "⏰",
-                    text: "No tienes tiempo para practicar",
-                    delay: 0.3,
-                  },
-                  {
-                    icon: "✨",
-                    text: "Esperas resultados mágicos sin esfuerzo",
-                    delay: 0.4,
-                  },
-                  {
-                    icon: "🔧",
-                    text: "No te interesa mejorar tu flujo de trabajo",
-                    delay: 0.5,
-                  },
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: item.delay }}
-                    viewport={{ once: true }}
-                    whileHover={{
-                      scale: 1.02,
-                      x: -5,
-                      transition: { duration: 0.2 },
-                    }}
-                    className="flex items-start gap-4 p-4 rounded-xl bg-danger/5 border border-danger/20 hover:border-danger/40 hover:bg-danger/10 transition-all duration-300 cursor-pointer group"
-                  >
-                    <motion.span
-                      className="text-2xl flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-300"
-                      whileHover={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 0.3 }}
+              <div
+                className="border-2 rounded-3xl p-8 pt-12 border-claude-secondary/30 backdrop-blur-sm bg-claude-secondary/5"
+                style={{
+                  boxShadow: "0 8px 32px rgba(132, 90, 143, 0.2)",
+                }}
+              >
+                <h3
+                  className="text-3xl font-bold mb-6 text-white"
+                >
+                  NO es para ti si...
+                </h3>
+
+                <div className="space-y-4">
+                  {[
+                    {
+                      text: "💻 Nunca has usado una terminal",
+                      highlight: "terminal",
+                    },
+                    {
+                      text: "📚 Buscas una introducción básica a programación",
+                      highlight: "básica",
+                    },
+                    {
+                      text: "⏰ No tienes tiempo para practicar",
+                      highlight: "practicar",
+                    },
+                    {
+                      text: "✨ Esperas resultados mágicos sin esfuerzo",
+                      highlight: "sin esfuerzo",
+                    },
+                    {
+                      text: "🔧 No te interesa mejorar tu flujo de trabajo",
+                      highlight: "mejorar",
+                    },
+                  ].map((item, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.5,
+                        delay: 0.4 + index * 0.1,
+                      }}
+                      viewport={{ once: true }}
+                      className="group flex items-start gap-4 p-4 rounded-2xl transition-all duration-300 hover:scale-105 bg-claude-secondary/5"
                     >
-                      {item.icon}
-                    </motion.span>
-                    <p className="text-gray-300 group-hover:text-gray-200 transition-colors duration-300 font-medium leading-relaxed">
-                      {item.text}
-                    </p>
-                  </motion.div>
-                ))}
+                      <div
+                        className="w-6 h-6 flex items-center justify-center mt-1"
+                      >
+                        <span
+                          className="text-xl"
+                        >
+                          {item.text.substring(0, 2).trim()}
+                        </span>
+                      </div>
+                      <p
+                        className="text-base leading-relaxed text-claude-gray"
+                      >
+                        {item.text.substring(2).split(item.highlight)[0]}
+                        <span
+                          className="font-semibold text-claude-secondary"
+                        >
+                          {item.highlight}
+                        </span>
+                        {item.text.substring(2).split(item.highlight)[1]}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </div>
 
         </div>
       </section>
-     <div className="max-w-5xl mx-auto relative">
+     <div className="relative bg-claude-dark py-20">
+<div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            Inscríbete al curso 
+            <span className="text-claude-primary">completo</span>
+            </h2>
+            <p className="text-claude-gray font-light text-lg max-w-2xl mx-auto">
+            Accede a todos los módulos del curso + Acceso a nuevas sesiones
+            </p>
+          </motion.div>
               {/* Timeline Line */}
               <div
-                className="absolute left-[52px] top-[120px] bottom-[200px] w-0.5 opacity-20"
+                className="absolute lg:left-[400px] left-[52px] top-[300px] bottom-[120px] w-0.5 opacity-30"
                 style={{
                   background:
                     "linear-gradient(to bottom, #CA9B77, #845A8F, #E08236, #7CE5B8)",
@@ -1291,6 +1311,7 @@ export default function ClaudeLanding() {
                   </div>
                 </motion.div>
               ))}
+            </div>
             </div>
 
       {/* Video Demo Section */}
