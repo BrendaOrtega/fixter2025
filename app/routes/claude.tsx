@@ -10,6 +10,7 @@ import { db } from "~/.server/db";
 import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
 import { BiBrain, BiCheckCircle, BiLayer, BiRocket } from "react-icons/bi";
+import { RiFlowChart } from "react-icons/ri";
 
 export const meta = () =>
   getMetaTags({
@@ -983,122 +984,127 @@ export default function ClaudeLanding() {
                 className="absolute left-[52px] top-[120px] bottom-[200px] w-0.5 opacity-20"
                 style={{
                   background:
-                    "linear-gradient(to bottom, var(--chart-1), #B0C5E3, #B0C5E3, var(--primary))",
+                    "linear-gradient(to bottom, #CA9B77, #845A8F, #E08236, #7CE5B8)",
                 }}
               ></div>
               {[
                 {
-                  module: "Sesión 1 (GRATIS)",
-                  title: "Tu Primer Agente en 30 Minutos",
+                  module: "Sesión 1",
+                  title: "Fundamentos y Context Management",
                   icon: <BiRocket className="w-6 h-6" />,
                   badge: "🎁 GRATIS",
                   topics: [
                     {
                       title:
-                        "Instalación y configuración de tu servidor personal",
+                        "Setup profesional de Claude Code",
                       description:
                         "Te guiaré paso a paso para configurar tu entorno de trabajo con acceso a herramientas profesionales de IA, completamente gratis durante el taller.",
                     },
                     {
-                      title: "Interfaz visual: nodos, cadenas y flujos",
+                      title: "Arquitectura de prompts efectivos",
                       description:
                         "Aprenderás a usar la interfaz drag-and-drop para conectar componentes de IA sin escribir código, como si fuera un diagrama de flujo visual.",
                     },
                     {
                       title:
-                        "Conectar tu primer modelo de IA (GPT, Claude, Gemini)",
+                        "Gestión avanzada de contexto y /resume",
                       description:
                         "Configuraremos conexiones directas a los modelos más potentes del mercado y aprenderás cuándo usar cada uno según tu proyecto.",
                     },
                     {
-                      title: "Crear un chatbot funcional con memoria",
+                      title: "Optimización de tokens y memoria",
                       description:
                         "Construirás tu primer agente que puede mantener conversaciones coherentes, recordar contexto y responder de forma natural.",
                     },
                   ],
-                  color: "#B0C5E3",
+                  color: "#CA9B77",
                   progress: "25%",
                 },
                 {
                   module: "Sesión 2",
-                  title: "Herramientas y Automatización",
+                  title: "SDK, Subagentes y Scripting",
                   icon: <BiLayer className="w-6 h-6" />,
                   badge: "🔧 TOOLS",
                   topics: [
                     {
                       title:
-                        "Agentes con herramientas: calculadora, calendarios, APIs",
+                        "Claude SDK para Python/TypeScript",
                       description:
                         "Tu agente podrá usar herramientas externas como hacer cálculos complejos, consultar disponibilidad de citas o conectarse con servicios externos en tiempo real.",
                     },
                     {
-                      title: "Cadenas secuenciales y paralelas",
+                      title: "Subagentes y delegación de tareas",
                       description:
                         "Aprenderás a crear flujos de trabajo donde tu agente puede realizar múltiples tareas en orden o simultáneamente para resolver problemas complejos.",
                     },
                     {
-                      title: "Workflows complejos: decisiones y condicionales",
+                      title: "Nano y Banana: los agentes que cambiarán tu forma de trabajar",
                       description:
                         "Diseñarás agentes que toman decisiones inteligentes según el contexto, usando condicionales y lógica para elegir qué herramientas usar en cada situación.",
                     },
                     {
-                      title: "Proyecto: Asistente de Restaurante Inteligente",
+                      title: "Scripting con TypeScript y Python",
+                      description:
+                        "Construirás un agente que consulta menús, calcula precios con descuentos, agenda reservas y maneja pedidos. Como tener un empleado que nunca se equivoca y trabaja 24/7.",
+                    },
+                    {
+                      title: "Pipelines CI/CD y casos empresariales",
                       description:
                         "Construirás un agente que consulta menús, calcula precios con descuentos, agenda reservas y maneja pedidos. Como tener un empleado que nunca se equivoca y trabaja 24/7.",
                     },
                   ],
-                  color: "#B0C5E3",
+                  color: "#CA9B77",
                   progress: "50%",
                 },
                 {
                   module: "Sesión 3",
-                  title: "Estudio Fotográfico Automático",
-                  icon: <span className="text-xl">🍌</span>,
+                  title: "MCP y Automatización",
+                  icon: <RiFlowChart />                  ,
                   badge: "📸 STUDIO",
                   topics: [
                     {
-                      title: "Multi-input: análisis de productos e imágenes",
+                      title: "MCP con JSON (sin programar)",
                       description:
                         "Tu agente analizará automáticamente productos (forma, colores, estilo) y modelos (pose, expresión, iluminación) para crear prompts perfectos.",
                     },
                     {
-                      title: "Prompt engineering automático con nano-banana",
+                      title: "GitHub MCP: explora miles de repos",
                       description:
                         "El sistema combinará inteligentemente las características del producto y modelo para generar prompts optimizados que produzcan resultados profesionales.",
                     },
                     {
-                      title: "Generación masiva y refinamiento iterativo",
+                      title: "Automatización de GitHub Actions",
                       description:
                         "Crea 3+ variantes simultáneas con diferentes poses y estilos, plus un sistema de refinamiento que mejora automáticamente los resultados.",
                     },
                     {
-                      title: "Proyecto: Estudio Fotográfico E-commerce",
+                      title: "Conectar bases de datos y APIs",
                       description:
                         "Construirás un agente que toma imagen de producto + modelo y genera múltiples fotos profesionales. Perfecto para tiendas online que necesitan variedad sin fotógrafo.",
                     },
                   ],
-                  color: "#B0C5E3",
+                  color: "#CA9B77",
                   progress: "75%",
                 },
                 {
                   module: "Sesión 4",
-                  title: "Cerebro Maestro Empresarial con RAG",
+                  title: "Orquestación de Agentes",
                   icon: <BiBrain className="w-6 h-6" />,
                   badge: "🧠 RAG",
                   topics: [
                     {
                       title:
-                        "Cargar y procesar documentos masivos (PDF, Word, Web)",
+                        "Arquitectura de sistemas multi-agente",
                       description:
                         "Tu agente procesará cientos de documentos corporativos automáticamente: manuales, políticas, contratos, reportes. Usando splitters inteligentes para fragmentar información de manera óptima.",
                     },
                     {
-                      title: "Bases de conocimiento vectoriales avanzadas",
+                      title: "Coordinación y comunicación entre agentes",
                       description:
                         "Construirás un cerebro digital que entiende contexto, relaciones y significados profundos entre documentos, no solo búsquedas por palabras clave.",
                     },
                     {
-                      title: "RAG conversacional: citando fuentes exactas",
+                      title: "Patrones avanzados de orquestación y flujos de trabajo",
                       description:
                         "Tu agente responderá preguntas complejas citando documentos específicos, páginas exactas y secciones relevantes. Transparencia total en cada respuesta.",
                     },
@@ -1108,7 +1114,7 @@ export default function ClaudeLanding() {
                         "El gran finale: un super-agente que domina toda la información de tu empresa. Responde desde 'política de vacaciones' hasta 'análisis financiero Q3' con precisión absoluta.",
                     },
                   ],
-                  color: "#B0C5E3",
+                  color: "#845A8F",
                   progress: "100%",
                 },
               ].map((module, index) => (
@@ -1127,7 +1133,7 @@ export default function ClaudeLanding() {
                   <div
                     className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden bg-agentes-primary/5 hover:shadow-xl transition-shadow duration-300"
                     style={{
-                  
+                  backgroundColor: module.color + "10",
                       boxShadow: `0 8px 32px ${module.color}10`,
                       border: `1px solid ${module.color}20`,
                     }}
@@ -1176,8 +1182,7 @@ export default function ClaudeLanding() {
                             </span>
                           </div>
                           <h3
-                            className="text-2xl font-bold"
-                            style={{ color: "var(--foreground)" }}
+                            className="text-2xl font-bold text-white"
                           >
                             {module.title}
                           </h3>
@@ -1271,51 +1276,13 @@ export default function ClaudeLanding() {
                                 style={{
                                   color: isSelected
                                     ? module.color
-                                    : "var(--muted-foreground)",
+                                    : "#cccccc",
                                 }}
                               >
                                 {topic.title}
                               </span>
                             </div>
 
-                            {/* Description Card */}
-                            <AnimatePresence>
-                              {isSelected && (
-                                <motion.div
-                                  className="ml-9 mt-3 overflow-hidden"
-                                  initial={{ opacity: 0, height: 0, transformOrigin: "top" }}
-                                  animate={{ opacity: 1, height: "auto", transformOrigin: "top" }}
-                                  exit={{ opacity: 0, height: 0, transformOrigin: "top" }}
-                                  transition={{
-                                    duration: 0.3,
-                                    ease: "easeInOut",
-                                    opacity: { duration: 0.2 },
-                                    height: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }
-                                  }}
-                                >
-                                  <div
-                                    className="p-4 rounded-xl backdrop-blur-sm relative"
-                                    style={{
-                                      backgroundColor: module.color + "08",
-                                      boxShadow: `0 4px 20px ${module.color}12`,
-                                    }}
-                                  >
-                                    {/* Subtle left accent */}
-                                    <div
-                                      className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full"
-                                      style={{ backgroundColor: module.color }}
-                                    />
-
-                                    <p
-                                      className="text-sm leading-relaxed pl-3"
-                                      style={{ color: "var(--foreground)" }}
-                                    >
-                                      {topic.description}
-                                    </p>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
                           </motion.li>
                         );
                       })}
