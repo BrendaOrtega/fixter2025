@@ -789,7 +789,7 @@ export default function ClaudeLanding() {
       </section>
 
       {/* ¿Para quién es este taller? */}
-      <section className="py-20  relative overflow-hidden">
+      <section className="py-20  relative overflow-hidden bg-claude-dark">
         <div className="relative container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -799,9 +799,9 @@ export default function ClaudeLanding() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-              ¿Es este taller para ti?
+              ¿Es este taller <span className="text-claude-primary">para ti?</span>
             </h2>
-            <p className="text-colorParagraph font-light text-lg max-w-2xl mx-auto">
+            <p className="text-claude-gray font-light text-lg max-w-2xl mx-auto">
               Descubre si este programa se adapta a tu nivel y objetivos
               profesionales
             </p>
@@ -1370,33 +1370,15 @@ export default function ClaudeLanding() {
       </section>
         {/* Instructor Section */}
         <section
-          className="py-20 relative overflow-hidden bg-agentes-dark"
+          className="py-20 relative overflow-hidden bg-claude-dark"
      
         >
           {/* LiquidEther Background */}
-          <div className="absolute inset-0 z-0">
-            <LiquidEther
-              colors={['#CA9B77', '#845A8F', '#CA9B77']}
-              mouseForce={50}
-              cursorSize={150}
-              isViscous={false}
-              viscous={30}
-              iterationsViscous={32}
-              iterationsPoisson={32}
-              resolution={0.3}
-              isBounce={false}
-              autoDemo={true}
-              autoSpeed={0.3}
-              autoIntensity={1.5}
-              takeoverDuration={0.1}
-              autoResumeDelay={2000}
-              autoRampDuration={0.3}
-            />
-          </div>
+       
           <div className="relative container mx-auto px-4 z-10 pointer-events-none">
             <div className="max-w-4xl mx-auto pointer-events-auto">
               <div
-                className="rounded-3xl p-8 md:p-12  relative overflow-hidden bg-[#1C1619] "
+                className="rounded-3xl p-8 md:p-12  relative overflow-hidden bg-[#1C1B1F] "
            
               >
                 <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -1596,15 +1578,13 @@ export default function ClaudeLanding() {
                       </ul>
 
                       <button
-                        onClick={() => setShowEarlyAccessForm(true)}
+                        onClick={() => setShowWebinarForm(true)}
                         className="w-full font-bold h-14 px-6 rounded-full text-white text-lg transition-all bg-gradient-to-r from-claude-primary to-claude-secondary transform hover:scale-105"
                         style={{
-                        
-                       
                           boxShadow: "0 10px 30px #B0C5E340",
                         }}
                       >
-                        🎓 Reservar mi lugar gratis
+                        🎓 Reservar mi lugar 
                       </button>
                     </div>
                   </motion.div>
@@ -1656,7 +1636,7 @@ export default function ClaudeLanding() {
                       <div
                         className="text-4xl font-black text-center mb-2 text-claude-secondary"
                       >
-                        $1,499 MXN
+                        $1,490 MXN
                       </div>
                       <p
                         className="text-center mb-6 opacity-80 text-white/80"
@@ -1691,7 +1671,7 @@ export default function ClaudeLanding() {
                         ))}
                       </ul>
 
-                      <fetcher.Form method="post" className="inline-block">
+                      <fetcher.Form method="post" className="w-full">
                         <input type="hidden" name="intent" value="direct_checkout" />
                         <input
                           type="hidden"
@@ -1702,11 +1682,11 @@ export default function ClaudeLanding() {
                         <button
                           type="submit"
                           disabled={fetcher.state !== "idle"}
-                          className="bg-gradient-to-r from-claude-primary to-claude-secondary min-w-full grow text-white font-medium py-4 px-8 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
+                          className="w-full font-bold h-14 px-6 rounded-full text-white text-lg transition-all bg-gradient-to-r from-claude-primary to-claude-secondary transform hover:scale-105 shadow-lg disabled:opacity-50"
                         >
                           {fetcher.state !== "idle" ? (
                             <div className="flex items-center justify-center gap-2">
-                              <div className="w-4 h-4 border-2 border-brand-900/20 border-t-brand-900 rounded-full animate-spin"></div>
+                              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                               Procesando...
                             </div>
                           ) : (
@@ -1723,71 +1703,8 @@ export default function ClaudeLanding() {
             </div>
           </div>
         </section>
-      {/* CTA Final */}
-      <section className="py-20 bg-stars bg-cover bg-center relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-800/80 to-brand-900/90"></div>
-        <div className="relative container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 text-white">
-            Comienza tu transformación hoy mismo
-          </h2>
-          <p className="text-xl text-colorParagraph font-light mb-8 max-w-2xl mx-auto">
-            Accede al curso completo de inmediato. Aprende a tu ritmo con
-            contenido on demand y prepárate para las próximas sesiones en vivo.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <fetcher.Form method="post" className="inline-block">
-              <input type="hidden" name="intent" value="direct_checkout" />
-              <input
-                type="hidden"
-                name="selectedModules"
-                value={JSON.stringify([1, 2, 3, 4, 5])}
-              />
-              <input type="hidden" name="totalPrice" value={1490} />
-              <button
-                type="submit"
-                disabled={fetcher.state !== "idle"}
-                className="bg-white text-brand-900 font-medium py-4 px-8 rounded-full text-lg transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
-              >
-                {fetcher.state !== "idle" ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-brand-900/20 border-t-brand-900 rounded-full animate-spin"></div>
-                    Procesando...
-                  </div>
-                ) : (
-                  "Comprar curso ahora →"
-                )}
-              </button>
-            </fetcher.Form>
-            <a
-              href="/temario-claude-workshop.pdf"
-              download="Temario-Claude-Code-Power-User.pdf"
-              className="inline-block bg-transparent border-2 border-brand-500 text-brand-500 hover:bg-brand-500/5  font-medium py-4 px-8 rounded-full text-lg transition-all text-center"
-            >
-              📄 Descargar temario completo
-            </a>
-          </div>
-          <div className="mt-8 p-4 bg-brand-500/10 border border-brand-500/30 rounded-xl max-w-md mx-auto">
-            <p className="text-sm text-brand-300 font-medium mb-2">
-              🔔 ¿Prefieres sesiones en vivo?
-            </p>
-            <p className="text-xs text-gray-400 mb-3">
-              Regístrate para recibir notificaciones de las próximas fechas
-            </p>
-            <button
-              onClick={() => setShowWebinarForm(true)}
-              className="bg-brand-500/20 border border-brand-500/50 text-brand-300 py-2 px-4 rounded-full text-sm hover:bg-brand-500/30 transition-all"
-            >
-              Notificarme de próximas sesiones
-            </button>
-          </div>
-          <p className="text-sm text-gray-400 font-light mt-6">
-            💡 Tip: Si compras el paquete completo,{" "}
-            <s>incluye sesión privada individual GRATIS</s>
-          </p>
-        </div>
-      </section>
 
-      <SimpleFooter />
+      <SimpleFooter bgColor="bg-claude-dark"/>
     </>
   );
 }

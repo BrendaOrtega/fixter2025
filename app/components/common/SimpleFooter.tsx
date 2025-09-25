@@ -3,9 +3,13 @@ import { FaSquareXTwitter } from "react-icons/fa6";
 import { BsLinkedin, BsYoutube } from "react-icons/bs";
 import { AiFillInstagram } from "react-icons/ai";
 
-export default function SimpleFooter() {
+interface SimpleFooterProps {
+  bgColor?: string;
+}
+
+export default function SimpleFooter({ bgColor = "bg-brand-900" }: SimpleFooterProps) {
   return (
-    <section className="mt-20 bg-brand-black-500 py-8  pb-12">
+    <section className={`pt-20 ${bgColor} py-8  pb-12`}>
       <div className="flex justify-center items-center gap-3">
         <a
           rel="noreferrer"
