@@ -9,8 +9,9 @@ import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
-import { BiBrain, BiCheckCircle, BiLayer, BiRocket } from "react-icons/bi";
+import { BiBrain, BiCheckCircle, BiLayer, BiPlay, BiRocket } from "react-icons/bi";
 import { RiFlowChart } from "react-icons/ri";
+import LiquidEther from "~/components/backgrounds/LiquidEther";
 
 export const meta = () =>
   getMetaTags({
@@ -1131,7 +1132,7 @@ export default function ClaudeLanding() {
                   className="mb-8 group"
                 >
                   <div
-                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden bg-agentes-primary/5 hover:shadow-xl transition-shadow duration-300"
+                    className="relative rounded-3xl p-8 backdrop-blur-sm overflow-hidden bg-claude-secondary/5 hover:shadow-xl transition-shadow duration-300"
                     style={{
                   backgroundColor: module.color + "10",
                       boxShadow: `0 8px 32px ${module.color}10`,
@@ -1292,9 +1293,9 @@ export default function ClaudeLanding() {
               ))}
             </div>
 
-      {/* Lo que NO encontrarás en YouTube */}
-      <section className="py-20  relative overflow-hidden">
-        <div className="relative container mx-auto px-4">
+      {/* Video Demo Section */}
+      <section className="py-20 relative bg-claude-dark">
+        <div className="relative container mx-auto px-4 z-10 max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1302,354 +1303,426 @@ export default function ClaudeLanding() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <motion.span
-                animate={{
-                  rotate: [0, -10, 10, -5, 0],
-                  scale: [1, 1.1, 1.05, 1],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  repeatDelay: 6,
-                  ease: "easeInOut",
-                }}
-                className="text-5xl"
-              >
-                🚫
-              </motion.span>
-              <h2 className="text-4xl md:text-5xl font-bold text-white">
-                Lo que NO encontrarás en YouTube
-              </h2>
-            </div>
-            <p className="text-gray-400 font-light text-lg max-w-3xl mx-auto">
-              Contenido exclusivo, técnicas avanzadas y secretos que solo
-              conocen los
-              <span className="text-brand-300 font-semibold">
-                {" "}
-                verdaderos power users
-              </span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+              Técnicas que cambiarán tu carrera para{" "}
+              <span className="text-claude-primary">siempre</span>
+            </h2>
+            <p className="font-light text-lg max-w-2xl mx-auto text-claude-gray">
+              Descubre las técnicas avanzadas que separan a los verdaderos power
+              users del resto
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {[
-              {
-                icon: "🧠",
-                title: "Context Management Pro",
-                description:
-                  "Mantén sesiones de días sin perder contexto. Trucos para optimizar tokens y dominar /resume como un experto.",
-                gradient: "from-blue-500/10 to-blue-600/20",
-                border: "border-blue-500/30",
-                color: "text-blue-400",
-                delay: 0.1,
-                skills: [
-                  "Gestión avanzada de memoria",
-                  "Optimización de tokens",
-                  "Sesiones persistentes",
-                ],
-              },
-              {
-                icon: "🔌",
-                title: "MCP Sin Código",
-                description:
-                  "Configura MCPs con JSON (sin programar). Explora repositorios masivos y automatiza GitHub Actions.",
-                gradient: "from-purple-500/10 to-purple-600/20",
-                border: "border-purple-500/30",
-                color: "text-purple-400",
-                delay: 0.2,
-                skills: [
-                  "JSON MCP Setup",
-                  "GitHub integration",
-                  "Actions automation",
-                ],
-              },
-              {
-                icon: "🤖",
-                title: "Subagentes & SDK",
-                description:
-                  "Automatiza flujos complejos con subagentes inteligentes. Integra Claude en aplicaciones Python/TS.",
-                gradient: "from-teal-500/10 to-teal-600/20",
-                border: "border-teal-500/30",
-                color: "text-teal-400",
-                delay: 0.3,
-                skills: [
-                  "Delegación inteligente",
-                  "SDK integration",
-                  "Workflow automation",
-                ],
-              },
-              {
-                icon: "🚀",
-                title: "Scripting Avanzado",
-                description:
-                  "Crea pipelines CI/CD y scripts reutilizables. Automatización que va más allá de lo básico.",
-                gradient: "from-amber-500/10 to-amber-600/20",
-                border: "border-amber-500/30",
-                color: "text-amber-400",
-                delay: 0.4,
-                skills: [
-                  "CI/CD pipelines",
-                  "Script automation",
-                  "TypeScript/Python",
-                ],
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: feature.delay }}
-                viewport={{ once: true }}
-                whileHover={{
-                  scale: 1.05,
-                  y: -5,
-                  transition: { duration: 0.3 },
-                }}
-                className={`bg-gradient-to-br ${feature.gradient} ${feature.border} border backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden group hover:border-opacity-60 transition-all duration-300 cursor-pointer`}
-              >
-                {/* Background glow effect */}
-                <motion.div
-                  className={`absolute -inset-1 bg-gradient-to-r ${feature.gradient} rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-500`}
-                />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="relative rounded-3xl overflow-hidden border-2 bg-claude-dark border-claude-primary/20"
+              style={{
+                boxShadow: "0 20px 40px rgba(202, 155, 119, 0.1)",
+              }}
+            >
+              <div className="relative pb-[56.25%] h-0">
+                <iframe
+                  src="https://www.youtube.com/embed/EkH82XjN45w"
+                  title="Claude Code Power User - Demo de Técnicas Avanzadas"
+                  className="absolute top-0 left-0 w-full h-full"
+                  style={{ border: 0 }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
 
-                <div className="relative">
-                  {/* Icon with animation */}
-                  <motion.div
-                    whileHover={{
-                      rotate: [0, -10, 10, -5, 0],
-                      scale: [1, 1.2, 1.1],
-                    }}
-                    transition={{ duration: 0.5 }}
-                    className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-300"
-                  >
-                    {feature.icon}
-                  </motion.div>
-
-                  {/* Title with gradient text */}
-                  <h3
-                    className={`text-xl font-bold text-white mb-3 group-hover:${feature.color} transition-colors duration-300`}
-                  >
-                    {feature.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-gray-400 font-light group-hover:text-gray-300 transition-colors duration-300 leading-relaxed mb-4">
-                    {feature.description}
-                  </p>
-
-                  {/* Skills tags */}
-                  <div className="flex flex-wrap gap-2">
-                    {feature.skills.map((skill, skillIndex) => (
-                      <motion.span
-                        key={skillIndex}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        transition={{
-                          duration: 0.3,
-                          delay: feature.delay + skillIndex * 0.1 + 0.3,
-                        }}
-                        viewport={{ once: true }}
-                        className={`text-xs px-2 py-1 rounded-full bg-white/5 ${feature.color} border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
-                      >
-                        {skill}
-                      </motion.span>
-                    ))}
+              <div className="p-6 border-t border-claude-primary/20">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-claude-primary/20 text-claude-primary">
+                      <BiPlay className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-white">
+                        Demo de Técnicas Exclusivas
+                      </h3>
+                      <p className="text-sm text-claude-gray">
+                        Las técnicas que solo conocen los verdaderos power users
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Hover indicator */}
-                  <motion.div
-                    className={`absolute bottom-4 right-4 w-8 h-8 rounded-full ${feature.gradient} border ${feature.border} flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                    whileHover={{ rotate: 180 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <span className="text-white text-sm">→</span>
-                  </motion.div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Call to action section */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mt-16"
-          >
-            <div className="bg-gradient-to-r from-brand-700/10 via-brand-500/10 to-brand-400/10 border border-brand-500/30 rounded-2xl p-8 max-w-5xl mx-auto">
-              <motion.div
-                animate={{
-                  scale: [1, 1.1, 1],
-                  opacity: [0.8, 1, 0.8],
-                }}
-                transition={{
-                  duration: 2.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="text-4xl mb-4"
-              >
-                ⚡
-              </motion.div>
-              <h4 className="text-2xl font-bold text-white mb-4">
-                Técnicas que cambiarán tu carrera para siempre
-              </h4>
-              <p className="text-gray-300 mb-6 max-w-3xl mx-auto">
-                Estos conocimientos avanzados te separarán del 99% de
-                developers. No los encontrarás en tutoriales gratuitos ni cursos
-                básicos.
-              </p>
-
-              {/* Video Demo */}
-              <div className="bg-gradient-to-r from-brand-500/20 to-brand-600/20 border border-brand-500/50 rounded-2xl p-6 mb-8">
-                <h5 className="text-xl font-bold text-white mb-4 text-center">
-                  🎬 Mira el demo completo - Técnicas exclusivas en acción
-                </h5>
-                <div
-                  className="relative w-full rounded-xl overflow-hidden max-w-4xl mx-auto"
-                  style={{ paddingBottom: "56.25%" }}
-                >
-                  <iframe
-                    className="absolute top-0 left-0 w-full h-full"
-                    src="https://www.youtube.com/embed/EkH82XjN45w"
-                    title="Claude Code Power User - Demo de Técnicas Avanzadas"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  ></iframe>
-                </div>
-                <p className="text-colorParagraph text-sm mt-4 font-light text-center">
-                  💡 Ve en tiempo real cómo estas técnicas transforman tu flujo
-                  de trabajo
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <fetcher.Form method="post">
-                  <input type="hidden" name="intent" value="direct_checkout" />
-                  <input
-                    type="hidden"
-                    name="selectedModules"
-                    value={JSON.stringify([1, 2, 3, 4, 5])}
-                  />
-                  <input type="hidden" name="totalPrice" value={1490} />
-                  <button
-                    type="submit"
-                    disabled={fetcher.state !== "idle"}
-                    className="bg-brand-500 text-brand-900 font-medium h-12 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center justify-center disabled:opacity-50"
-                  >
-                    {fetcher.state !== "idle" ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                        Procesando...
-                      </div>
-                    ) : (
-                      "Dominar estas técnicas ahora →"
+                  <div className="flex flex-wrap gap-2">
+                    {["Context Pro", "MCP Setup", "SDK Mastery", "Automation"].map(
+                      (tag, index) => (
+                        <span
+                          key={index}
+                          className="text-xs px-3 py-1 rounded-full border font-semibold bg-claude-primary/20 border-claude-primary/30 text-claude-primary"
+                        >
+                          {tag}
+                        </span>
+                      )
                     )}
-                  </button>
-                </fetcher.Form>
-                <div className="flex items-center justify-center gap-2 text-gray-400 font-light">
-                  <span className="text-brand-300">✓</span>
-                  <span>Acceso inmediato - Garantía de satisfacción</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+
         </div>
       </section>
-
-      {/* Sobre el Instructor */}
-      <section className="mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto my-[160px]  ">
-        <div className="bg-backface rounded-3xl md:py-10 xl:py-16 md:pl-10 xl:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 ">
-          <div className="w-full md:w-[60%]">
-            <span className="text-colorParagraph/50 font-light">
-              ¿Quien es tu instructor?
-            </span>
-            <h3 className="text-white text-3xl font-bold mt-4">Héctor Bliss</h3>{" "}
-            <div>
-              {" "}
-              <p className="text-colorParagraph font-light mt-8 text-base md:text-lg">
-                Con más de 10 años de experiencia como desarrollador de software
-                profesional e instructor tecnológico, Héctor Bliss disfruta de
-                simplificar temas complejos para que sus estudiantes
-                puedan aprender de la forma más práctica, rápida y
-                divertida. Héctor ha sido instructor en diferentes bootcamps
-                internacionales, y ha grabado infinidad de cursos en línea. Por
-                medio de su canal de youtube enseña los temas más actualizados
-                de la industria tecnológica, acercando las herramientas que usan
-                los profesionales a nivel mundial a sus estudiantes de habla
-                hispana.
-              </p>
-              <p className="text-colorParagraph font-light mt-4 text-base md:text-lg">
-                Si no has experimentado una clase con Héctor Bliss, es tu
-                momento de comprobar que aprender no tiene que ser ni díficil ni
-                aburrido.
-              </p>
-              {/* Estadísticas */}
-              <div className="grid grid-cols-3 gap-4 mt-8">
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-brand-500">8+</div>
-                  <div className="text-xs text-colorParagraph/50 font-light">
-                    Años enseñando
-                  </div>
-                </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-brand-500">2K+</div>
-                  <div className="text-xs text-colorParagraph/50 font-light">
-                    En comunidad
-                  </div>
-                </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-brand-500">100%</div>
-                  <div className="text-xs text-colorParagraph/50 font-light">
-                    Práctico
-                  </div>
-                </div>
-              </div>
-              {/* Cita del autor */}
-              <div className="mt-8 p-6 bg-brand-500/5 border border-brand-500/20 rounded-xl">
-                <p className="text-white italic">
-                  "Me encanta compartir lo que aprendo en el camino. Si puedo
-                  ayudarte a ahorrar tiempo y frustración mientras creces como
-                  developer, mi día está completo."
-                </p>
-                <p className="text-colorParagraph mt-3 text-sm font-light">
-                  - Héctor Bliss
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className=" absolute -bottom-16 -right-8 md:-right-16">
-            <a
-              href={"https://www.linkedin.com/in/hectorbliss/"}
-              target="_blank"
-            >
-              <motion.span>
-                <BsLinkedin className="text-3xl absolute -top-1 md:top-2 text-colorCaption/50" />
-              </motion.span>
-            </a>
-            <a href={"https://github.com/blissito"} target="_blank">
-              <motion.span style={{}}>
-                <BsGithub className="text-3xl absolute top-16 -left-12 text-colorCaption/50" />
-              </motion.span>
-            </a>
-            <a href={"https://x.com/HectorBlisS"} target="_blank">
-              <motion.span>
-                <BsTwitter className="text-3xl absolute -top-10 left-16 text-colorCaption/50" />
-              </motion.span>
-            </a>
-            <img
-              className="w-60 md:w-[320px] rounded-full"
-              src={"/courses/titor.png"}
-              alt={"Héctor Bliss"}
+        {/* Instructor Section */}
+        <section
+          className="py-20 relative overflow-hidden bg-agentes-dark"
+     
+        >
+          {/* LiquidEther Background */}
+          <div className="absolute inset-0 z-0">
+            <LiquidEther
+              colors={['#CA9B77', '#845A8F', '#CA9B77']}
+              mouseForce={50}
+              cursorSize={150}
+              isViscous={false}
+              viscous={30}
+              iterationsViscous={32}
+              iterationsPoisson={32}
+              resolution={0.3}
+              isBounce={false}
+              autoDemo={true}
+              autoSpeed={0.3}
+              autoIntensity={1.5}
+              takeoverDuration={0.1}
+              autoResumeDelay={2000}
+              autoRampDuration={0.3}
             />
           </div>
-        </div>
-      </section>
+          <div className="relative container mx-auto px-4 z-10 pointer-events-none">
+            <div className="max-w-4xl mx-auto pointer-events-auto">
+              <div
+                className="rounded-3xl p-8 md:p-12  relative overflow-hidden bg-[#1C1619] "
+           
+              >
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <div>
+                    <span
+                      className="font-light text-claude-secondary"
+                    >
+                      Tu instructor
+                    </span>
+                    <h3
+                      className="text-3xl font-bold mt-2 mb-4 text-claude-primary"
+                    >
+                      Héctor Bliss
+                    </h3>
+                    <p
+                      className="mb-6 text-claude-gray"
+                    >
+                      Pionero en hacer la IA accesible para todos, con más de 8
+                      años enseñando tecnología y una comunidad de más de 2,000
+                      estudiantes activos.
+                    </p>
+                    <p
+                      className="mb-6 text-claude-gray"
+                    >
+                      Especializado en enseñar herramientas complejas de forma
+                      simple, Héctor te guiará paso a paso para crear agentes
+                      sin código.
+                    </p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <div
+                          className="text-2xl font-bold text-claude-secondary"
+                        
+                        >
+                          8+
+                        </div>
+                        <div
+                          className="text-xs text-claude-gray"
+                        >
+                          Años enseñando
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          className="text-2xl font-bold text-claude-secondary"
+                        >
+                          2K+
+                        </div>
+                        <div
+                          className="text-xs text-claude-gray"
+                        >
+                          Estudiantes
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          className="text-2xl font-bold text-claude-secondary"
+                        >
+                          100%
+                        </div>
+                        <div
+                          className="text-xs text-claude-gray"
+                        >
+                          Práctico
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <div
+                      className="absolute inset-0 rounded-full blur-3xl opacity-20"
+                      style={{ backgroundColor: "#B0C5E3" }}
+                    ></div>
+                    <img
+                      className="w-full rounded-2xl relative z-10"
+                      src="/courses/titor.png"
+                      alt="Héctor Bliss"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+       {/* Final CTA - Completely Redesigned */}
+        <section
+          className="relative py-32 overflow-hidden bg-claude-dark"
+        >
 
+          <div className="relative z-10 container mx-auto px-4">
+            <div className="max-w-5xl mx-auto">
+              {/* Main Content */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true }}
+                className="text-center mb-16 "
+              >
+                <h2 className="text-5xl md:text-7xl font-black leading-tight mb-8">
+                  <span className="text-white">
+                    Elige la mejor opción
+                  </span>
+                  <br />
+                  <span className="relative">
+                    <span
+                      className="bg-clip-text text-transparent bg-gradient-to-br from-claude-primary to-claude-secondary"
+                    >
+                      para ti
+                    </span>
+                   
+                  </span>
+                </h2>
+
+                <p
+                  className="text-xl md:text-2xl font-light mb-12 max-w-4xl mx-auto leading-relaxed text-claude-gray"
+                >
+          Accede al curso completo de inmediato. Aprende a tu ritmo con contenido on demand y prepárate para las próximas sesiones en vivo.
+
+                </p>
+              </motion.div>
+
+              {/* CTA Cards Grid */}
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                {/* Free Session Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  viewport={{ once: true }}
+                  className="relative group"
+                >
+                  {/* Badge */}
+                  <div
+                    className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10 text-white bg-claude-primary/50"
+                    style={{
+                      width: "max-content",
+                      boxShadow: "0 2px 8px #B0C5E330",
+                    }}
+                  >
+                    ✨ CURSO ONLINE EN VIVO ✨
+                  </div>
+
+                  <motion.div
+                    className="relative p-8 pt-10 rounded-3xl border-2 border-claude-primary/50 backdrop-blur-sm bg-claude-primary/5 h-full"
+                    style={{
+                      boxShadow: "0 8px 32px #B0C5E320",
+                    }}
+                    whileHover={{
+                      y: -3,
+                      boxShadow: "0 15px 40px #B0C5E325",
+                      transition: { duration: 0.3, ease: "easeOut" },
+                    }}
+                  >
+                    <div className="pt-4">
+                      <h3
+                        className="text-2xl font-bold mb-4 text-center text-white"
+                      >
+                     Taller completo
+                      </h3>
+                      <div
+                        className="text-4xl font-black text-center mb-2 text-claude-primary"
+                      >
+                        $3,999.00
+                      </div>
+                      <p
+                        className="text-center mb-6 opacity-80 text-white"
+
+                      >
+                       Curo en línea • Sesión individual o grupal
+                      </p>
+
+                      <ul className="space-y-3 mb-8">
+                        {[
+                          "Incluye 4 sesiones de 2hrs cada (1 sesión por semana)",
+                          "Acceso completo a las grabaciones del curso",
+                          "Certificado de finalización",
+                          "Q&A en vivo con el instructor",
+                        ].map((feature, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <div
+                              className="w-5 h-5 rounded-full flex items-center justify-center mt-0.5 bg-claude-primary"
+                            >
+                              <span
+                                className="text-xs text-claude-dark"
+                              >
+                                ✓
+                              </span>
+                            </div>
+                            <span
+                              className="text-sm text-claude-gray"
+                            >
+                              {feature}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <button
+                        onClick={() => setShowEarlyAccessForm(true)}
+                        className="w-full font-bold h-14 px-6 rounded-full text-white text-lg transition-all bg-gradient-to-r from-claude-primary to-claude-secondary transform hover:scale-105"
+                        style={{
+                        
+                       
+                          boxShadow: "0 10px 30px #B0C5E340",
+                        }}
+                      >
+                        🎓 Reservar mi lugar gratis
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+
+                {/* Full Course Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                  viewport={{ once: true }}
+                  className="relative group"
+                >
+                  {/* Badge */}
+                  <motion.div
+                    className="absolute bg-claude-secondary -top-3 left-1/4 transform -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold z-10 text-white"
+                    style={{
+                      boxShadow: "0 2px 10px var(--primary)40",
+                    }}
+                    animate={{
+                      y: [0, -2, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    🔥 CURSO PREGRABADO 🔥
+                  </motion.div>
+
+                  <motion.div
+                    className="relative p-8 pt-10 rounded-3xl border-2 border-claude-secondary/50 backdrop-blur-sm bg-agentes-primary/5 h-full"
+                    style={{
+                      boxShadow: "0 8px 32px #B0C5E320",
+                    }}
+                    whileHover={{
+                      y: -5,
+                      boxShadow: "0 20px 50px #B0C5E330",
+                      transition: { duration: 0.3, ease: "easeOut" },
+                    }}
+                  >
+                    <div className="pt-4">
+                      <h3
+                        className="text-2xl font-bold mb-4 text-center text-white"
+                      >
+                        Curso Completo
+                      </h3>
+                      <div
+                        className="text-4xl font-black text-center mb-2 text-claude-secondary"
+                      >
+                        $1,499 MXN
+                      </div>
+                      <p
+                        className="text-center mb-6 opacity-80 text-white/80"
+
+                      >
+                        Curso en línea • A tu ritmo
+                      </p>
+
+                      <ul className="space-y-3 mb-8">
+                        {[
+                          "Acceso a las 4 sesiones pregrabadas del taller en vivo",
+                          "Acceso a los recursos del curso",
+                          "Certificado de finalización",
+                          "Acceso a la comunidad de Discord",
+                        ].map((feature, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <div
+                              className="w-5 h-5 rounded-full bg-claude-secondary flex items-center justify-center mt-0.5"
+                            >
+                              <span
+                                className="text-xs text-claude-dark"
+                              >
+                                ✓
+                              </span>
+                            </div>
+                            <span
+                              className="text-sm text-claude-gray"
+                            >
+                              {feature}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <fetcher.Form method="post" className="inline-block">
+                        <input type="hidden" name="intent" value="direct_checkout" />
+                        <input
+                          type="hidden"
+                          name="selectedModules"
+                          value={JSON.stringify([1, 2, 3, 4, 5])}
+                        />
+                        <input type="hidden" name="totalPrice" value={1490} />
+                        <button
+                          type="submit"
+                          disabled={fetcher.state !== "idle"}
+                          className="bg-gradient-to-r from-claude-primary to-claude-secondary min-w-full grow text-white font-medium py-4 px-8 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
+                        >
+                          {fetcher.state !== "idle" ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="w-4 h-4 border-2 border-brand-900/20 border-t-brand-900 rounded-full animate-spin"></div>
+                              Procesando...
+                            </div>
+                          ) : (
+                            "Comprar curso ahora →"
+                          )}
+                        </button>
+                      </fetcher.Form>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </div>
+
+          
+            </div>
+          </div>
+        </section>
       {/* CTA Final */}
       <section className="py-20 bg-stars bg-cover bg-center relative">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-800/80 to-brand-900/90"></div>
