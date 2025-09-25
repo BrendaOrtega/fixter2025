@@ -12,21 +12,13 @@ export const webinarRegistrationTemplate = ({
 <div style="padding:80px 16px;font-family:sans-serif;font-size:18px;max-width:420px;margin:0 auto;color:#0E1317;">
   <img alt="logo" style="width:160px;" src="https://i.imgur.com/mpzZhT9.png" />
   <h2 style="font-size:32px;margin-top:24px;">
-    🎉 ¡Solicitud registrada! ✅
+    🎉 ¡Ya estás registrado! ✅
   </h2>
-  <p>
-    <strong>Has solicitado exitosamente el webinar:</strong>
+  <p>Tu lugar en el webinar
+    <strong style="color:#83F3D3;"> ${webinarTitle} </strong> está reservado.
   </p>
-  <h3 style="color:#83F3D3;font-size:24px;margin:20px 0;">
-    ${webinarTitle}
-  </h3>
-  <div style="background:#f8f9fa;border-radius:12px;padding:20px;margin:20px 0;">
-    <p style="margin:0;font-size:16px;color:#666;">
-      📅 <strong>Fecha:</strong> ${webinarDate}
-    </p>
-  </div>
   <p>
-    <strong>📬 Te haremos saber pronto la fecha del webinar</strong> una vez que se acumulen 12 solicitudes. Te enviaremos el enlace de acceso unos días antes del webinar. 🔗
+    <strong>📬 Te haremos saber la fecha del webinar</strong> una vez que este programado y te enviaremos el enlace de acceso unos días antes de la primera sesión. 🔗
   </p>
   <p>
     <strong>¡No te lo pierdas! 🚀</strong> Será una sesión práctica donde aprenderás herramientas que transformarán tu productividad como profesional.

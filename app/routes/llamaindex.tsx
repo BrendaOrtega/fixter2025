@@ -160,7 +160,7 @@ export default function LlamaIndexPage() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20"></div>
 
       {/* Grid pattern sutil */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{
+      <div className="absolute inset-0 opacity-[0.02] " style={{
         backgroundImage: `url("data:image/svg+xml,%3csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='none' fill-rule='evenodd'%3e%3cg fill='%23000000' fill-opacity='1'%3e%3ccircle cx='30' cy='30' r='1.5'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`,
       }}></div>
 
@@ -296,10 +296,10 @@ export default function LlamaIndexPage() {
       {/* Container principal con altura exacta de pantalla */}
       <div className="h-screen flex flex-col relative z-10">
         {/* Contenido principal */}
-        <main className="flex-1 flex items-start md:items-center justify-center px-6 py-4 pt-20 md:pt-4 overflow-y-auto">
-          <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+        <main className="flex-1 flex items-start md:items-center justify-center px-4 py-4 pt-20 md:pt-4 overflow-y-auto overflow-x-hidden w-full">
+          <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Columna izquierda - Contenido */}
-            <div className="space-y-8">
+            <div className="space-y-8 min-w-0">
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <div className="inline-flex items-center px-4 py-2 bg-llamaindex-purple/10 border border-llamaindex-purple/20 rounded-full text-llamaindex-purple text-sm font-medium">
@@ -419,10 +419,10 @@ export default function LlamaIndexPage() {
             </div>
 
             {/* Columna derecha - Registro */}
-            <div className="relative">
+            <div className="relative min-w-0">
               {/* Imagen decorativa para el formulario */}
               <motion.div
-                className="absolute -top-8 -right-8 hidden lg:block z-0"
+                className="absolute -top-8 -right-4 hidden lg:block z-0"
                 animate={{
                   rotate: [0, 5, -5, 0],
                   scale: [1, 1.05, 1],

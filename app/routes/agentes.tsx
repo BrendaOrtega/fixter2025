@@ -10,7 +10,7 @@ import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
-import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
+import { sendWebinarRegistration } from "~/mailSenders/sendWebinarRegistration";
 import {
   BiBrain,
   BiTargetLock,
@@ -87,11 +87,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
 
-      await sendWebinarCongrats({
+      // Verificar si el usuario está confirmado
+      const user = await db.user.findUnique({
+        where: { email },
+        select: { confirmed: true }
+      });
+
+      await sendWebinarRegistration({
         to: email,
         webinarTitle: "Agentes de IA Visual - Acceso Anticipado",
         webinarDate: "Próximamente",
         userName: name,
+        isConfirmed: user?.confirmed || false
       });
 
       return data({
@@ -283,13 +290,13 @@ export default function IAVisualLanding() {
             stiffness: 300,
             duration: 0.3,
           }}
-          className={`agentes-ia-page bg-[var(--card)] rounded-2xl p-8 max-w-md w-full border-2 text-center transition-colors duration-300 ${
+          className={`agentes-ia-page bg-agentes-dark rounded-2xl px-8 pt-8 max-w-md w-full border-2 text-center transition-colors duration-300 ${
             isSuccess ? "border-green-500/30" : ""
           }`}
           style={{
-            borderColor: isSuccess ? "hsl(120 60% 50%)" : "var(--chart-1)",
+            borderColor: isSuccess ? "#8ADAB1" : "#B0CCF2",
             boxShadow: `5px 5px 0px 0px ${
-              isSuccess ? "hsl(120 60% 50% / 0.5)" : "var(--chart-1)"
+              isSuccess ? "#8ADAB1" : "#B0CCF2"
             }`,
           }}
           onClick={(e) => e.stopPropagation()}
@@ -297,8 +304,7 @@ export default function IAVisualLanding() {
           {/* Header that doesn't change abruptly */}
           <div className="flex justify-between items-center mb-6">
             <motion.h3
-              className="text-2xl font-bold"
-              style={{ color: "var(--primary)" }}
+              className="text-2xl font-bold text-white"
               layout
             >
               {isSuccess ? "¡Registro Exitoso!" : "Acceso Anticipado"}
@@ -352,11 +358,7 @@ export default function IAVisualLanding() {
                     }
                   });
                 }}
-                className="w-full font-bold py-3 px-6 rounded-lg transition-all"
-                style={{
-                  backgroundColor: "var(--primary)",
-                  color: "var(--primary-foreground)",
-                }}
+                className="w-full font-bold py-3 px-6 rounded-full transition-all bg-gradient-to-r from-agentes-primary to-agentes-secondary text-agentes-dark"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -408,8 +410,7 @@ export default function IAVisualLanding() {
 
                 <div>
                   <label
-                    className="block mb-1 text-left"
-                    style={{ color: "var(--primary)" }}
+                    className="block mb-1 text-left text-agentes-tertiary"
                   >
                     Nombre
                   </label>
@@ -417,20 +418,14 @@ export default function IAVisualLanding() {
                     name="name"
                     type="text"
                     required
-                    className="w-full px-4 h-12 rounded-lg border focus:ring-0 focus:outline-none"
-                    style={{
-                      backgroundColor: "var(--input)",
-                      borderColor: "var(--border)",
-                      color: "var(--foreground)",
-                    }}
+                    className="w-full px-4 h-12 rounded-lg border border-agentes-gray bg-agentes-dark/50 text-white focus:ring-2 focus:ring-agentes-secondary focus:border-agentes-primary focus:outline-none transition-all duration-200"
                     placeholder="Tu nombre completo"
                   />
                 </div>
 
                 <div>
                   <label
-                    className="block mb-1 text-left"
-                    style={{ color: "var(--primary)" }}
+                    className="block mb-1 text-left text-agentes-tertiary"
                   >
                     Email
                   </label>
@@ -438,32 +433,21 @@ export default function IAVisualLanding() {
                     name="email"
                     type="email"
                     required
-                    className="w-full px-4 h-12 rounded-lg border focus:ring-0 focus:outline-none"
-                    style={{
-                      backgroundColor: "var(--input)",
-                      borderColor: "var(--border)",
-                      color: "var(--foreground)",
-                    }}
+                    className="w-full px-4 h-12 rounded-lg border border-agentes-gray bg-agentes-dark/50 text-white focus:ring-2 focus:ring-agentes-secondary focus:border-agentes-primary focus:outline-none transition-all duration-200"
                     placeholder="tu@email.com"
                   />
                 </div>
 
                 <div>
                   <label
-                    className="block mb-1 text-left"
-                    style={{ color: "var(--primary)" }}
+                    className="block mb-1 text-left text-agentes-tertiary"
                   >
                     Teléfono (opcional)
                   </label>
                   <input
                     name="phone"
                     type="tel"
-                    className="w-full px-4 h-12 rounded-lg border focus:ring-0 focus:outline-none"
-                    style={{
-                      backgroundColor: "var(--input)",
-                      borderColor: "var(--border)",
-                      color: "var(--foreground)",
-                    }}
+                    className="w-full px-4 h-12 rounded-lg border border-agentes-gray bg-agentes-dark/50 text-white focus:ring-2 focus:ring-agentes-secondary focus:border-agentes-primary focus:outline-none transition-all duration-200"
                     placeholder="+52 1 234 567 8900"
                   />
                 </div>
@@ -471,19 +455,16 @@ export default function IAVisualLanding() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   <div>
                     <label
-                      className="block mb-1 text-xs text-left"
-                      style={{ color: "var(--primary)" }}
+                      className="block mb-1 text-xs text-left text-agentes-tertiary"
                     >
                       ¿Qué te atrae más de los agentes de IA?
                     </label>
                     <select
                       name="experience"
                       required
-                      className="w-full px-2 h-12 rounded-lg border focus:ring-0 focus:outline-none text-xs"
+                      className="w-full px-2 h-12 rounded-lg border border-agentes-gray bg-agentes-dark/50 text-white focus:ring-2 focus:ring-agentes-secondary focus:border-agentes-primary focus:outline-none text-xs transition-all duration-200"
                       style={{
-                        backgroundColor: "var(--input)",
-                        borderColor: "var(--border)",
-                        color: "var(--foreground)",
+                        color: "white",
                       }}
                     >
                       <option value="">Selecciona...</option>
@@ -502,20 +483,14 @@ export default function IAVisualLanding() {
 
                   <div>
                     <label
-                      className="block mb-1 text-xs text-left"
-                      style={{ color: "var(--primary)" }}
+                      className="block mb-1 text-xs text-left text-agentes-tertiary"
                     >
-                      ¿Cuál es tu situación actual?
+                      ¿Qué rol/situación te describe mejor?
                     </label>
                     <select
                       name="interest"
                       required
-                      className="w-full px-2 h-12 rounded-lg border focus:ring-0 focus:outline-none text-xs"
-                      style={{
-                        backgroundColor: "var(--input)",
-                        borderColor: "var(--border)",
-                        color: "var(--foreground)",
-                      }}
+                      className="w-full px-2 h-12 rounded-lg border border-agentes-gray bg-agentes-dark/50 text-white focus:ring-2 focus:ring-agentes-secondary focus:border-agentes-primary focus:outline-none text-xs transition-all duration-200"
                     >
                       <option value="">Selecciona...</option>
                       <option value="business-owner">Tengo un negocio</option>
@@ -528,12 +503,7 @@ export default function IAVisualLanding() {
 
                 {error && (
                   <div
-                    className="p-3 rounded-lg text-sm"
-                    style={{
-                      backgroundColor: "var(--destructive)",
-                      borderColor: "var(--destructive)",
-                      color: "var(--destructive)",
-                    }}
+                    className="p-3 rounded-lg text-sm bg-red-500/20 border border-red-500/30 text-red-400"
                   >
                     {error}
                   </div>
@@ -542,12 +512,9 @@ export default function IAVisualLanding() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full font-bold py-4 px-8 rounded-full text-lg transition-all disabled:opacity-50"
+                  className="w-full font-bold py-4 px-8 rounded-full text-agentes-dark text-lg bg-gradient-to-r from-agentes-primary to-agentes-secondary transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    background:
-                      "linear-gradient(135deg, var(--primary) 0%, var(--muted-foreground) 100%)",
-                    color: "var(--primary-foreground)",
-                    boxShadow: "3px 3px 0px 0px var(--border)",
+                    boxShadow: "0 10px 30px rgba(176, 204, 242, 0.3)",
                   }}
                 >
                   Obtener Acceso Anticipado 🚀
@@ -839,7 +806,7 @@ export default function IAVisualLanding() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  <h1 className="text-5xl lg:text-6xl font-black leading-tight mb-4">
+                  <h1 className="text-4xl lg:text-6xl font-black leading-tight mb-4">
                    
                     <span className="relative">
                       <span
@@ -867,7 +834,7 @@ export default function IAVisualLanding() {
                   </p>
 
                   {/* Feature Pills */}
-                  <div className="flex flex-wrap gap-3 mb-16">
+                  <div className="flex flex-wrap gap-3 mb-6 lg:mb-16">
                     {[
                       "🧠 GPT-5 & Claude",
                       "🔗 Integraciones API",
@@ -899,7 +866,7 @@ export default function IAVisualLanding() {
                     onClick={() => setShowEarlyAccessForm(true)}
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="group relative font-bold h-12 px-10 rounded-full text-lg transition-all duration-300 overflow-hidden pointer-events-auto bg-gradient-to-r from-agentes-primary to-agentes-secondary text-agentes-dark"
+                    className="group relative font-bold h-12 px-4 lg:px-10 rounded-full text-lg transition-all duration-300 overflow-hidden pointer-events-auto bg-gradient-to-r from-agentes-primary to-agentes-secondary text-agentes-dark"
                   >
                     <span className="relative z-10 flex items-center gap-3">
                       🚀 Reservar mi lugar gratis
