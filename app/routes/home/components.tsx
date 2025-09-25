@@ -549,14 +549,21 @@ export const HomeHero = () => {
               variant="ghost"
             />
           </div>
-          {/* Link sutil al libro */}
-          <div className="flex justify-center md:justify-start mt-8">
+          {/* Links sutiles a los libros */}
+          <div className="flex flex-col gap-2 justify-center md:justify-start mt-8">
             <Link
               to="/libros"
               className="text-sm text-white/80 hover:text-white hover:underline transition-all duration-200 flex items-center gap-2"
             >
               <span className="text-base">📖</span>
               <span>Libro gratuito: Dominando Claude Code</span>
+            </Link>
+            <Link
+              to="/libros/llamaindex"
+              className="text-sm text-white/80 hover:text-white hover:underline transition-all duration-200 flex items-center gap-2"
+            >
+              <span className="text-base">📖</span>
+              <span>Libro gratuito: LlamaIndex desde Cero</span>
             </Link>
           </div>
         </div>
