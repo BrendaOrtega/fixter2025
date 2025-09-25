@@ -551,32 +551,27 @@ export default function ClaudeLanding() {
       )}
 
       {/* Hero Section con Webinar CTA */}
-      <section className="relative min-h-screen  text-white overflow-hidden">
-        <div className="absolute inset-0 bg-stars bg-no-repeat bg-cover bg-center"></div>
-
+      <section className="relative min-h-screen  text-white overflow-hidden bg-claude-dark">
         <div className="relative container mx-auto px-4 pt-20 pb-16">
           <div className="max-w-5xl mx-auto text-center">
             {/* Badge URGENTE */}
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-700/30 to-brand-500/30 border border-brand-500 rounded-full px-6 py-3 mb-8"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-claude-primary/10 to-claude-secondary/10 border border-claude-secondary rounded-full px-6 py-3 mb-8"
             >
-              <span className="animate-pulse h-3 w-3 bg-green-500 rounded-full"></span>
-              <span className="text-base font-bold text-white">
+              <span className="animate-pulse h-3 w-3 bg-claude-primary rounded-full"></span>
+              <span className="text-sm font-bold text-claude-secondary">
                 🎯 CURSO DISPONIBLE ON DEMAND - Aprende a tu propio ritmo
               </span>
-              <span className="bg-white text-black text-xs font-black px-2 py-1 rounded-full">
+              <span className="bg-claude-primary/10 text-white/60 text-xs font-black px-2 py-1 rounded-full">
                 ACCESO INMEDIATO
               </span>
             </motion.div>
 
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-brand-100">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-claude-primary to-claude-secondary">
               Conviértete en Power User de Claude Code
             </h1>
 
-            <p className="text-xl md:text-2xl text-colorParagraph font-light mb-8 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-claude-gray font-light mb-8 max-w-5xl mx-auto">
               Domina las técnicas avanzadas que el 99% de developers no conocen.
               Automatiza tu flujo de trabajo y multiplica tu productividad 10x.
             </p>
@@ -1563,7 +1558,7 @@ export default function ClaudeLanding() {
                       <div
                         className="text-4xl font-black text-center mb-2 text-claude-primary"
                       >
-                        $3,999.00
+                        $3,499.00
                       </div>
                       <p
                         className="text-center mb-6 opacity-80 text-white"
@@ -1577,7 +1572,7 @@ export default function ClaudeLanding() {
                           "Incluye 4 sesiones de 2hrs cada (1 sesión por semana)",
                           "Acceso completo a las grabaciones del curso",
                           "Certificado de finalización",
-                          "Q&A en vivo con el instructor",
+                          "1 sesión de 1hr de Q&A en con el instructor",
                         ].map((feature, index) => (
                           <li key={index} className="flex items-start gap-3">
                             <div
