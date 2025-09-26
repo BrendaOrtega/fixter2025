@@ -75,7 +75,7 @@ export const FloatingPromo = () => {
                   animate={{ opacity: 1, y: -10, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute bottom-full left-0 mb-0 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-orange-200 dark:border-orange-800 p-4 z-10"
+                  className="absolute bottom-full left-0 mb-0 w-80 bg-agentes-dark rounded-2xl shadow-xl border border-agentes-primary/40 p-4 z-10"
                 >
                   {/* Close button */}
                   <button
@@ -100,7 +100,7 @@ export const FloatingPromo = () => {
                       Construcción de Agentes IA drag & drop
                     </h4>
                     
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mb-4">
+                    <p className="text-xs text-agentes-tertiary mb-4">
                       Aprende a crear agentes inteligentes sin programar. 
                       4 sesiones prácticas con proyectos incluidos.
                     </p>
@@ -113,7 +113,7 @@ export const FloatingPromo = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleClick}
-                        className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors"
+                        className="bg-gradient-to-r from-agentes-primary to-agentes-secondary text-agentes-dark text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
                         Ver Taller →
                       </motion.button>
@@ -136,26 +136,26 @@ export const FloatingPromo = () => {
             <motion.div
               animate={{ 
                 scale: [1, 1.2, 1],
-                backgroundColor: ["#ea580c", "#fb923c", "#ea580c"]
+                backgroundColor: ["#8ADAB1", "#8ADAB1", "#8ADAB1"]
               }}
               transition={{ 
                 duration: 2, 
                 repeat: Infinity,
                 repeatType: "reverse"
               }}
-              className="absolute -top-2 -right-2 w-4 h-4 bg-orange-600 rounded-full border-2 border-white flex items-center justify-center z-30"
+              className="absolute -top-2 -right-2 w-4 h-4 bg-agentes-primary rounded-full border-2 border-agentes-dark flex items-center justify-center z-30"
             >
               <HiSparkles className="w-2 h-2 text-white" />
             </motion.div>
 
             {/* Main button */}
             <motion.div
-              className="relative z-20 bg-gradient-to-r from-orange-600 to-orange-500 text-white p-4 rounded-2xl shadow-2xl border border-orange-400/30"
-              whileHover={{ boxShadow: "0 20px 40px rgba(234, 88, 12, 0.3)" }}
+              className="relative z-20 bg-gradient-to-r from-agentes-primary to-agentes-secondary text-white p-4 rounded-2xl shadow-2xl border border-agentes-primary/30"
+              whileHover={{ boxShadow: "0 20px 40px rgba(176, 204, 242, 0.3)" }}
               onClick={handleClick}
             >
               <div className="flex items-center gap-3">
-                <BiRocket className="text-2xl" />
+                <BiRocket className="text-2xl text-agentes-dark" />
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
@@ -165,8 +165,8 @@ export const FloatingPromo = () => {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <div className="whitespace-nowrap">
-                        <p className="font-bold text-sm">🚀 Agentes IA</p>
+                      <div className="whitespace-nowrap text-agentes-dark">
+                        <p className="font-bold text-sm">Agentes IA</p>
                         <p className="text-xs opacity-90">Sin código • Sesión gratis</p>
                       </div>
                     </motion.div>
@@ -188,7 +188,7 @@ export const FloatingPromo = () => {
                 repeat: Infinity,
                 repeatType: "reverse",
               }}
-              className="absolute inset-0 bg-orange-500 rounded-2xl -z-10"
+              className="absolute inset-0 bg-agentes-primary rounded-2xl -z-10"
             />
           </div>
         </motion.div>

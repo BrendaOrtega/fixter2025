@@ -12,6 +12,7 @@ import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
 import { BiBrain, BiCheckCircle, BiLayer, BiPlay, BiRocket } from "react-icons/bi";
 import { RiFlowChart } from "react-icons/ri";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
+import { FaWhatsapp } from "react-icons/fa";
 
 export const meta = () =>
   getMetaTags({
@@ -315,25 +316,25 @@ export default function ClaudeLanding() {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+        className="fixed inset-0 bg-claude-dark/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
         onClick={() => setShowWebinarForm(false)}
       >
         <motion.div
           initial={{ y: 50 }}
           animate={{ y: 0 }}
           exit={{ y: 50 }}
-          className={`bg-background rounded-2xl p-8 max-w-md w-full border text-center ${
-            isSuccess ? "border-brand-500/30" : "border-brand-500/30"
+          className={`bg-claude-dark rounded-2xl p-8 max-w-md w-full border text-center ${
+            isSuccess ? "border-claude-primary/30" : "border-claude-primary/30"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-2xl font-bold text-white">
-              {isSuccess ? "¡Registro Exitoso!" : "Regístrate al Webinar"}
+              {isSuccess ? "¡Registro Exitoso!" : "Regístrate al Taller"}
             </h3>
             <button
               onClick={() => setShowWebinarForm(false)}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white transition-all"
             >
               ✕
             </button>
@@ -342,7 +343,7 @@ export default function ClaudeLanding() {
           {isSuccess ? (
             <div>
               <div className="text-6xl mb-4">🎉</div>
-              <p className="text-gray-300 mb-6">
+              <p className="text-claude-gray mb-6">
                 Te has registrado exitosamente al webinar. Te enviaremos los
                 detalles por email.
               </p>
@@ -365,7 +366,7 @@ export default function ClaudeLanding() {
                   name="name"
                   type="text"
                   required
-                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
+                  className="w-full px-4 h-12 rounded-lg bg-claude-primary/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
                   placeholder="Tu nombre completo"
                 />
               </div>
@@ -376,7 +377,7 @@ export default function ClaudeLanding() {
                   name="email"
                   type="email"
                   required
-                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
+                  className="w-full px-4 h-12 rounded-lg bg-claude-primary/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
                   placeholder="tu@email.com"
                 />
               </div>
@@ -388,20 +389,20 @@ export default function ClaudeLanding() {
                 <input
                   name="phone"
                   type="tel"
-                  className="w-full px-4 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
+                  className="w-full px-4 h-12 rounded-lg bg-claude-primary/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none"
                   placeholder="+52 1 234 567 8900"
                 />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-white mb-1 text-xs text-left">
+                  <label className="block text-white mb-1 text-sm text-left">
                     Nivel
                   </label>
                   <select
                     name="experienceLevel"
                     required
-                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
+                    className="w-full px-2 h-12 rounded-lg bg-claude-primary/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
                   >
                     <option value="">Selecciona...</option>
                     <option value="junior">Junior (0-2 años)</option>
@@ -413,13 +414,13 @@ export default function ClaudeLanding() {
                 </div>
 
                 <div>
-                  <label className="block text-white mb-1 text-xs text-left">
+                  <label className="block text-white mb-1 text-sm text-left">
                     Ocupación
                   </label>
                   <select
                     name="contextObjective"
                     required
-                    className="w-full px-2 h-12 rounded-lg bg-brand-500/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
+                    className="w-full px-2 h-12 rounded-lg bg-claude-primary/5 text-white border-none focus:border-brand-500 focus:ring-0 focus:outline-none text-xs"
                   >
                     <option value="">Selecciona...</option>
                     <option value="empleado">Empleado en empresa</option>
@@ -441,7 +442,7 @@ export default function ClaudeLanding() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-brand-500 mt-10  rounded-full text-brand-900 font-bold py-4 px-8 text-lg transition-all disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-claude-primary to-claude-secondary text-white mt-10  rounded-full font-bold py-4 px-8 text-lg transition-all disabled:opacity-50"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -466,7 +467,7 @@ export default function ClaudeLanding() {
     topicIndex: 0,
   });
   return (
-    <>
+    <main className="bg-claude-dark">
       {/* Form Modals */}
       <AnimatePresence>
         {showWebinarForm && <WebinarForm />}
@@ -482,23 +483,19 @@ export default function ClaudeLanding() {
               initial={{ y: 50 }}
               animate={{ y: 0 }}
               exit={{ y: 50 }}
-              className="bg-gray-900 rounded-2xl p-8 max-w-md w-full border border-brand-500/30 text-center"
+              className="bg-claude-dark rounded-2xl p-8 max-w-md w-full border border-claude-primary/30 text-center"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-6xl mb-4">🎉</div>
               <h3 className="text-2xl font-bold text-white mb-4">
                 ¡Pago Completado!
               </h3>
-              <p className="text-gray-300 mb-4">
-                Tu inscripción al taller ha sido confirmada exitosamente.
-              </p>
-              <p className="text-gray-300 mb-6">
-                Te enviaremos todos los detalles por email, incluyendo enlaces
-                de Zoom y material preparatorio.
+              <p className="text-claude-gray mb-4">
+                El curso de Claude te está esperando. Velo desde tu perfil.
               </p>
               <button
                 onClick={() => setShowPaymentSuccess(false)}
-                className="w-full bg-brand-700 hover:bg-brand-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                className="w-full bg-gradient-to-r from-claude-primary to-claude-secondary text-white font-bold py-3 px-6 rounded-full transition-all"
               >
                 ¡Perfecto!
               </button>
@@ -510,30 +507,26 @@ export default function ClaudeLanding() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-claude-dark/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => setShowPaymentCancel(false)}
           >
             <motion.div
               initial={{ y: 50 }}
               animate={{ y: 0 }}
               exit={{ y: 50 }}
-              className="bg-gray-900 rounded-2xl p-8 max-w-md w-full border border-brand-500/30 text-center"
+              className="bg-claude-dark rounded-2xl p-8 max-w-md w-full border border-claude-primary/30 text-center"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-6xl mb-4">⏸️</div>
               <h3 className="text-2xl font-bold text-white mb-4">
                 Pago Cancelado
               </h3>
-              <p className="text-gray-300 mb-4">
-                No te preocupes, tu reserva sigue disponible.
-              </p>
-              <p className="text-gray-300 mb-6">
-                Puedes completar tu inscripción cuando quieras. Los lugares se
-                liberan después de 24 horas.
+              <p className="text-claude-gray mb-4">
+                No te preocupes, puedes completar tu inscripción cuando quieras.
               </p>
               <button
                 onClick={() => setShowPaymentCancel(false)}
-                className="w-full bg-brand-700 hover:bg-brand-800 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                className="w-full bg-gradient-to-r from-claude-primary to-claude-secondary text-white font-bold py-3 px-6 rounded-full transition-all"
               >
                 Entendido
               </button>
@@ -552,18 +545,18 @@ export default function ClaudeLanding() {
 
       {/* Hero Section con Webinar CTA */}
       <section className="relative min-h-screen  text-white overflow-hidden bg-claude-dark">
-        <div className="relative container mx-auto px-4 pt-20 pb-16">
+        <div className="relative container mx-auto px-4 pt-32 pb-16">
           <div className="max-w-5xl mx-auto text-center">
             {/* Badge URGENTE */}
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-claude-primary/10 to-claude-secondary/10 border border-claude-secondary rounded-full px-6 py-3 mb-8"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-claude-primary/10 to-claude-secondary/10 border border-claude-secondary rounded-full px-4 py-2 mb-8"
             >
               <span className="animate-pulse h-3 w-3 bg-claude-primary rounded-full"></span>
-              <span className="text-sm font-bold text-claude-secondary">
-                🎯 CURSO DISPONIBLE ON DEMAND - Aprende a tu propio ritmo
+              <span className="lg:text-sm text-xs font-bold text-[#BC84CB]">
+                🎯 Curso disponible on demand - <span className="hidden lg:inline">Aprende a tu propio ritmo</span>
               </span>
               <span className="bg-claude-primary/10 text-white/60 text-xs font-black px-2 py-1 rounded-full">
-                ACCESO INMEDIATO
+                Acceso inmediato
               </span>
             </motion.div>
 
@@ -575,147 +568,8 @@ export default function ClaudeLanding() {
               Domina las técnicas avanzadas que el 99% de developers no conocen.
               Automatiza tu flujo de trabajo y multiplica tu productividad 10x.
             </p>
-
-            {/* Video Trailer CTA Principal */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="relative mt-20 bg-gradient-to-r from-brand-500/20 via-brand-600/20 to-brand-700/20 backdrop-blur border-2 border-brand-500 rounded-3xl p-10 mb-12 max-w-4xl mx-auto shadow-2xl"
-            >
-              {/* Badge NUEVO flotante */}
-              <motion.div
-                animate={{ rotate: [-5, 5, -5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute -top-4 -right-4 bg-gradient-to-r from-brand-500 to-brand-700 text-white font-black px-6 py-3 rounded-full text-lg shadow-lg"
-              >
-                🎬 VER TRAILER
-              </motion.div>
-
-              <h2 className="text-3xl font-black mb-6  text-white">
-                🚀 Descubre el poder de Claude Code en acción
-              </h2>
-
-              {/* Video de YouTube responsive */}
-              <div
-                className="relative w-full"
-                style={{ paddingBottom: "56.25%" }}
-              >
-                <iframe
-                  className="absolute top-0 left-0 w-full h-full rounded-xl"
-                  src="https://www.youtube.com/embed/dtQg_TmD6nI?si=v323WcC4L4OcwJPU"
-                  title="Claude Code - Trailer del Curso"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                ></iframe>
-              </div>
-
-              <p className="text-gray-200 mt-6 text-lg text-center">
-                Domina las técnicas avanzadas que el 99% de developers no
-                conocen.
-                <span className="text-brand-500 font-bold">
-                  {" "}
-                  Automatiza tu flujo de trabajo y multiplica tu productividad
-                  10x
-                </span>
-              </p>
-
-              <div className="bg-black/30 rounded-xl p-6 mt-6 mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-2xl">🎯</span>
-                  <p className="text-white font-bold text-lg">
-                    Lo que aprenderás en este curso:
-                  </p>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <span className="text-brand-500 text-xl flex-shrink-0 mt-0.5">
-                        ✨
-                      </span>
-                      <div>
-                        <h4 className="text-white font-semibold mb-1 text-left">
-                          Tour Completo Claude Code
-                        </h4>
-                        <p className="text-gray-300 text-sm text-left">
-                          Funciones avanzadas que el 99% no conoce
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-brand-400 text-xl flex-shrink-0 mt-0.5">
-                        🔌
-                      </span>
-                      <div>
-                        <h4 className="text-white font-semibold mb-1 text-left">
-                          MCP y Automatización
-                        </h4>
-                        <p className="text-gray-300 text-sm text-left">
-                          Por qué cambiará tu forma de trabajar para siempre
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-purple-400 text-xl flex-shrink-0 mt-0.5">
-                        🤖
-                      </span>
-                      <div>
-                        <h4 className="text-white font-semibold mb-1 text-left">
-                          Subagentes Inteligentes
-                        </h4>
-                        <p className="text-gray-300 text-sm text-left">
-                          Cómo automatizar tareas complejas sin esfuerzo
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <span className="text-orange-400 text-xl flex-shrink-0 mt-0.5">
-                        💻
-                      </span>
-                      <div>
-                        <h4 className="text-white font-semibold mb-1 text-left">
-                          SDK y Scripting
-                        </h4>
-                        <p className="text-gray-300 text-sm text-left">
-                          Integra Claude en tus aplicaciones Python/TS
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-yellow-400 text-xl flex-shrink-0 mt-0.5">
-                        🎁
-                      </span>
-                      <div>
-                        <h4 className="text-white font-semibold mb-1 text-left">
-                          Contenido Completo
-                        </h4>
-                        <p className="text-gray-300 text-sm text-left">
-                          3 módulos completos + acceso a futuras sesiones
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="text-red-400 text-xl flex-shrink-0 mt-0.5">
-                        🔥
-                      </span>
-                      <div>
-                        <h4 className="text-white font-semibold mb-1 text-left">
-                          Ejemplos Prácticos
-                        </h4>
-                        <p className="text-gray-300 text-sm text-left">
-                          Casos reales que puedes aplicar de inmediato
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4">
+       {/* CTA Buttons */}
+       <div className="flex flex-col gap-4 mt-8">
                 <fetcher.Form method="post">
                   <input type="hidden" name="intent" value="direct_checkout" />
                   <input
@@ -727,9 +581,9 @@ export default function ClaudeLanding() {
                   <motion.button
                     type="submit"
                     disabled={fetcher.state !== "idle"}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-brand-500 text-brand-900 font-black py-5 px-10 rounded-full text-xl transition-all shadow-xl disabled:opacity-50 w-full"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gradient-to-r from-claude-primary to-claude-secondary text-white font-semibold w-fit h-14 px-6 rounded-full text-lg transition-all shadow-xl disabled:opacity-50"
                   >
                     {fetcher.state !== "idle" ? (
                       <div className="flex items-center justify-center gap-2">
@@ -737,48 +591,139 @@ export default function ClaudeLanding() {
                         Procesando...
                       </div>
                     ) : (
-                      "🚀 COMPRAR CURSO AHORA - $1,490 MXN"
+                      "🚀 Comprar curso - $1,490 mxn"
                     )}
                   </motion.button>
                 </fetcher.Form>
                 <div className="text-center">
-                  <p className="text-[#EEC85A] font-bold text-lg">
-                    📚 Acceso inmediato • Aprende a tu ritmo
-                  </p>
-                  <p className="text-white text-sm mt-1">
-                    💡 Próximamente nuevas sesiones en vivo
+                  <p className="text-claude-gray text-sm mt-1">
+                  📚 Aprende a tu ritmo • 💡 Próximamente nuevas sesiones en vivo
                   </p>
                 </div>
               </div>
-            </motion.div>
+            {/* Interactive Terminal Demo */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="relative mt-20 mb-12 max-w-6xl mx-auto"
+            >
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-              <div className="bg-white/5 backdrop-blur rounded-lg p-6">
-                <div className="text-3xl font-bold text-brand-500">
-                  6+ horas
+              {/* Terminal Container */}
+              <div className="relative bg-claude-primary/5 rounded-2xl border border-claude-primary/20 backdrop-blur-sm shadow-2xl overflow-hidden">
+                {/* Terminal Header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-claude-secondary/5 border-b border-claude-primary/20">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-2">
+                      <div className="w-3 h-3 rounded-full bg-claude-secondary"></div>
+                      <div className="w-3 h-3 rounded-full bg-claude-tertiary"></div>
+                      <div className="w-3 h-3 rounded-full bg-claude-green"></div>
+                    </div>
+                    <span className="text-claude-gray text-sm ml-4">Claude Code - Terminal</span>
+                  </div>
+                  <div className="text-claude-gray/60 text-xs">claude --version 3.5-sonnet</div>
                 </div>
-                <div className="text-gray-300">de contenido práctico</div>
+
+                {/* Terminal Content */}
+                <div className="p-6 font-mono text-sm min-h-[400px] relative">
+                  <div className="text-claude-primary">$ claude</div>
+                  <div className="text-claude-gray mt-2">Welcome to Claude Code! 🎉</div>
+                  <div className="text-claude-gray mt-1">Type your request or drag files to get started.</div>
+
+                  <div className="text-claude-primary mt-4">$ </div>
+                  <motion.span
+                    className="text-claude-primary"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >
+                    |
+                  </motion.span>
+
+                  {/* Floating Pills */}
+                  <motion.div
+                    className="absolute top-20 right-10 bg-gradient-to-r from-claude-primary to-claude-secondary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    animate={{
+                      y: [0, -10, 0],
+                      rotate: [0, 2, 0]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    ✨ Context Management
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute top-32 left-16 bg-gradient-to-r from-claude-secondary to-claude-primary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    animate={{
+                      y: [0, 15, 0],
+                      rotate: [0, -2, 0]
+                    }}
+                    transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
+                  >
+                    🔌 MCP Integration
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute bottom-32 right-20 bg-gradient-to-r from-claude-green to-claude-tertiary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    animate={{
+                      y: [0, -12, 0],
+                      rotate: [0, 3, 0]
+                    }}
+                    transition={{ duration: 3.5, repeat: Infinity, delay: 1 }}
+                  >
+                    🤖 Smart Agents
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute bottom-20 left-12 bg-gradient-to-r from-claude-tertiary to-claude-secondary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    animate={{
+                      y: [0, 8, 0],
+                      rotate: [0, -1, 0]
+                    }}
+                    transition={{ duration: 2.8, repeat: Infinity, delay: 1.5 }}
+                  >
+                    💻 SDK & Scripting
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute top-40 left-32 bg-gradient-to-r from-claude-primary/80 to-claude-green text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    animate={{
+                      y: [0, -8, 0],
+                      rotate: [0, 1, 0]
+                    }}
+                    transition={{ duration: 3.2, repeat: Infinity, delay: 2 }}
+                  >
+                    🔥 Advanced Workflows
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute bottom-40 right-32 bg-gradient-to-r from-claude-secondary/80 to-claude-primary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    animate={{
+                      y: [0, 10, 0],
+                      rotate: [0, -2, 0]
+                    }}
+                    transition={{ duration: 2.5, repeat: Infinity, delay: 2.5 }}
+                  >
+                    🎁 Pro Techniques
+                  </motion.div>
+                </div>
+
+                {/* Terminal Footer */}
+                <div className="px-6 py-4 bg-claude-primary/5 border-t border-claude-primary/30">
+                  <div className="flex items-center justify-between">
+                    <div className="text-claude-gray text-xs">
+                      Ready for input • AI-powered development
+                    </div>
+                    <div className="flex items-center gap-2 text-claude-gray text-xs">
+                      <span className="w-2 h-2 bg-claude-green rounded-full animate-pulse"></span>
+                      Connected to Claude
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="bg-white/5 backdrop-blur rounded-lg p-6">
-                <div className="text-3xl font-bold text-brand-500">
-                  4+<s>1 sesiones</s>
-                </div>
-                <div className="text-gray-300">
-                  2h cada una + <s>sesión privada</s>
-                </div>
-                <p className="text-[8px]">
-                  La sesión privada solo está disponible si el taller se toma en
-                  vivo.
-                </p>
-              </div>
-              <div className="bg-white/5 backdrop-blur rounded-lg p-6">
-                <div className="text-3xl font-bold text-brand-500">
-                  $1,490 MXN
-                </div>
-                <div className="text-gray-300">por todo el curso completo</div>
-              </div>
-            </div>
+
+       
+            </motion.div>
           </div>
         </div>
       </section>
@@ -1400,7 +1345,7 @@ export default function ClaudeLanding() {
                 <div className="grid md:grid-cols-2 gap-8 items-center">
                   <div>
                     <span
-                      className="font-light text-claude-secondary"
+                      className="font-light text-white/50"
                     >
                       Tu instructor
                     </span>
@@ -1426,7 +1371,7 @@ export default function ClaudeLanding() {
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <div
-                          className="text-2xl font-bold text-claude-secondary"
+                          className="text-2xl font-bold text-claude-primary"
                         
                         >
                           8+
@@ -1439,7 +1384,7 @@ export default function ClaudeLanding() {
                       </div>
                       <div>
                         <div
-                          className="text-2xl font-bold text-claude-secondary"
+                          className="text-2xl font-bold text-claude-primary"
                         >
                           2K+
                         </div>
@@ -1451,7 +1396,7 @@ export default function ClaudeLanding() {
                       </div>
                       <div>
                         <div
-                          className="text-2xl font-bold text-claude-secondary"
+                          className="text-2xl font-bold text-claude-primary"
                         >
                           100%
                         </div>
@@ -1481,7 +1426,7 @@ export default function ClaudeLanding() {
         </section>
        {/* Final CTA - Completely Redesigned */}
         <section
-          className="relative py-32 overflow-hidden bg-claude-dark"
+          className="relative pt-32 pb-24 overflow-hidden bg-claude-dark"
         >
 
           <div className="relative z-10 container mx-auto px-4">
@@ -1494,7 +1439,7 @@ export default function ClaudeLanding() {
                 viewport={{ once: true }}
                 className="text-center mb-16 "
               >
-                <h2 className="text-5xl md:text-7xl font-black leading-tight mb-8">
+                <h2 className="text-4xl md:text-5xl font-black leading-tight mb-8">
                   <span className="text-white">
                     Elige la mejor opción
                   </span>
@@ -1714,13 +1659,13 @@ export default function ClaudeLanding() {
                   </motion.div>
                 </motion.div>
               </div>
-
+            <p className="text-claude-gray  text-center text-sm mt-6">¿Tienes alguna pregunta? Mandanos un <a className="text-claude-primary underline cursor-pointer " href="https://wa.me/527757609276">Whats App <FaWhatsapp className="inline text-claude-primary" />  </a></p>
           
             </div>
           </div>
         </section>
 
       <SimpleFooter bgColor="bg-claude-dark"/>
-    </>
+    </main>
   );
 }
