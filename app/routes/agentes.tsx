@@ -517,7 +517,7 @@ export default function IAVisualLanding() {
                     boxShadow: "0 10px 30px rgba(176, 204, 242, 0.3)",
                   }}
                 >
-                  Obtener Acceso Anticipado 🚀
+                  Reservar mi lugar 🚀
                 </button>
               </fetcher.Form>
             </div>
@@ -806,7 +806,7 @@ export default function IAVisualLanding() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  <h1 className="text-4xl lg:text-6xl font-black leading-tight mb-4">
+                  <h1 className="text-5xl lg:text-6xl font-black leading-tight mb-4">
                    
                     <span className="relative">
                       <span
@@ -866,7 +866,7 @@ export default function IAVisualLanding() {
                     onClick={() => setShowEarlyAccessForm(true)}
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="group relative font-bold h-12 px-4 lg:px-10 rounded-full text-lg transition-all duration-300 overflow-hidden pointer-events-auto bg-gradient-to-r from-agentes-primary to-agentes-secondary text-agentes-dark"
+                    className="group relative font-bold h-12 px-4 lg:px-10 rounded-full text-base lg:text-lg transition-all duration-300 overflow-hidden pointer-events-auto bg-gradient-to-r from-agentes-primary to-agentes-secondary text-agentes-dark"
                   >
                     <span className="relative z-10 flex items-center gap-3">
                       🚀 Reservar mi lugar gratis
@@ -959,10 +959,10 @@ export default function IAVisualLanding() {
                               whileInView={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.6, ease: "easeOut" }}
                               viewport={{ once: true }}
-                              className="bg-white/5 backdrop-blur-sm p-3 w-fit ml-20 rounded-xl border border-agentes-secondary/20"
+                              className="bg-white/5 backdrop-blur-sm p-3 w-fit ml-1 lg:ml-20 rounded-xl border border-agentes-secondary/20"
                             >
                               <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
+                              <div className="!w-6 !h-6 bg-gray-800 rounded-full flex items-center justify-center">
                                   <span className="text-white text-xs">👄</span>
                                 </div>
                                 <div>
@@ -977,7 +977,7 @@ export default function IAVisualLanding() {
                               whileInView={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
                               viewport={{ once: true }}
-                              className="bg-white/5 backdrop-blur-sm p-3 w-fit ml-10 rounded-xl border border-agentes-secondary/20"
+                              className="bg-white/5 backdrop-blur-sm p-3 w-fit ml-0 lg:ml-10 rounded-xl border border-agentes-secondary/20"
                             >
                               <div className="flex items-center gap-2">
                               <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
@@ -1077,7 +1077,7 @@ export default function IAVisualLanding() {
 
         {/* What You'll Build Section */}
         <section
-          className="py-20 relative overflow-hidden bg-agentes-dark"
+          className="pt-0 pb-10 lg:py-20 relative overflow-hidden bg-agentes-dark"
         >
           
           <div className="relative container mx-auto px-4">
@@ -1291,7 +1291,7 @@ export default function IAVisualLanding() {
 
      
         <section
-          className="py-20 relative overflow-hidden bg-agentes-dark"
+          className="py-10 lg:py-20 relative overflow-hidden bg-agentes-dark"
         >
          
           <div className="absolute inset-0">
@@ -1426,7 +1426,7 @@ export default function IAVisualLanding() {
           </div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="text-center mb-16">
+            <div className="text-center mb-8 lg:mb-16">
               <motion.h2
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1434,7 +1434,7 @@ export default function IAVisualLanding() {
                 viewport={{ once: true }}
                 className="text-4xl md:text-5xl font-bold mb-6 text-white"
               >
-                Qué opinan nuestros estudiantes
+                Qué opinan <span className="text-agentes-primary">nuestros estudiantes</span>
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -1542,7 +1542,7 @@ export default function IAVisualLanding() {
         </section>
 
         {/* Video Demo Section */}
-         <section className="py-20 relative  bg-agentes-dark">
+         <section className="py-10 lg:py-20 relative  bg-agentes-dark">
           <div className="relative container mx-auto px-4 z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -1621,7 +1621,7 @@ export default function IAVisualLanding() {
 
         {/* Curriculum Section */}
         <section
-          className="py-20 relative bg-agentes-dark"
+          className="pb-10 pt-20 lg:py-20 relative bg-agentes-dark"
         >
 
           <div className="relative container mx-auto px-4 z-10">
@@ -1825,7 +1825,7 @@ export default function IAVisualLanding() {
                         </div>
 
                         <div>
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-0 lg:mb-2">
                             <span
                               className="font-bold text-lg"
                               style={{ color: module.color }}
@@ -1833,7 +1833,7 @@ export default function IAVisualLanding() {
                               {module.module}
                             </span>
                             <span
-                              className="text-xs px-3 py-1 rounded-full font-bold border"
+                              className="text-xs px-3 py-1 rounded-full font-bold border hidden lg:block"
                               style={{
                                 backgroundColor: module.color + "20",
                                 borderColor: module.color + "40",
@@ -1844,7 +1844,7 @@ export default function IAVisualLanding() {
                             </span>
                           </div>
                           <h3
-                            className="text-2xl font-bold"
+                            className="text-xl lg:text-2xl font-bold"
                             style={{ color: "var(--foreground)" }}
                           >
                             {module.title}
@@ -1853,7 +1853,7 @@ export default function IAVisualLanding() {
                       </div>
 
                       {/* Progress Circle */}
-                      <div className="relative w-16 h-16">
+                      <div className="relative w-16 h-16 hidden lg:block">
                         <svg className="w-16 h-16 transform -rotate-90">
                           <circle
                             cx="32"
@@ -1935,7 +1935,7 @@ export default function IAVisualLanding() {
                                 />
                               </div>
                               <span
-                                className="font-medium transition-colors duration-150"
+                                className="font-medium transition-colors duration-150 "
                                 style={{
                                   color: isSelected
                                     ? module.color
@@ -1997,7 +1997,7 @@ export default function IAVisualLanding() {
 
         {/* Who Is This For Section - Completely Redesigned */}
         <section
-          className="py-32 relative overflow-hidden bg-agentes-dark"
+          className="py-20 lg:py-32 relative overflow-hidden bg-agentes-dark"
     
         >
           {/* Background Elements */}
@@ -2040,7 +2040,7 @@ export default function IAVisualLanding() {
               >
                 
 
-                <h2 className="text-5xl md:text-6xl font-black leading-tight mb-8">
+                <h2 className="text-4xl md:text-6xl font-black leading-tight mb-8">
                   <span className="text-white">
                     Este taller es{" "}
                   </span>
@@ -2304,7 +2304,7 @@ export default function IAVisualLanding() {
 
         {/* Instructor Section */}
         <section
-          className="py-20 relative overflow-hidden bg-agentes-dark"
+          className="py-10 lg:py-20 relative overflow-hidden bg-agentes-dark"
      
         >
           {/* LiquidEther Background */}
@@ -2420,7 +2420,7 @@ export default function IAVisualLanding() {
 
         {/* Final CTA - Completely Redesigned */}
         <section
-          className="relative py-32 overflow-hidden bg-agentes-dark"
+          className="relative py-16 lg:py-32 overflow-hidden bg-agentes-dark"
         >
 
           <div className="relative z-10 container mx-auto px-4">
@@ -2452,7 +2452,7 @@ export default function IAVisualLanding() {
                   </span>
                 </div>
 
-                <h2 className="text-5xl md:text-7xl font-black leading-tight mb-8">
+                <h2 className="text-4xl md:text-6xl font-black leading-tight mb-8">
                   <span style={{ color: "var(--foreground)" }}>
                     El futuro de la IA
                   </span>
@@ -2569,7 +2569,7 @@ export default function IAVisualLanding() {
 
                       <button
                         onClick={() => setShowEarlyAccessForm(true)}
-                        className="w-full font-bold h-14 px-6 rounded-full text-agentes-dark text-lg transition-all bg-gradient-to-r from-agentes-primary to-agentes-secondary transform hover:scale-105"
+                        className="w-full font-bold h-14 px-6 rounded-full text-agentes-dark text-base lg:text-lg transition-all bg-gradient-to-r from-agentes-primary to-agentes-secondary transform hover:scale-105"
                         style={{
                         
                        
