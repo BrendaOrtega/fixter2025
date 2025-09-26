@@ -642,7 +642,7 @@ export default function ClaudeLanding() {
 
                   {/* Floating Pills */}
                   <motion.div
-                    className="absolute top-20 right-10 bg-gradient-to-r from-claude-primary to-claude-secondary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    className="absolute top-40 lg:top-20 right-4 lg:right-10 bg-gradient-to-r from-claude-primary to-claude-secondary text-white px-3 lg:px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
                     animate={{
                       y: [0, -10, 0],
                       rotate: [0, 2, 0]
@@ -653,7 +653,7 @@ export default function ClaudeLanding() {
                   </motion.div>
 
                   <motion.div
-                    className="absolute top-32 left-16 bg-gradient-to-r from-claude-secondary to-claude-primary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    className="absolute top-52 lg:top-32 left-4 lg:left-16 bg-gradient-to-r from-claude-secondary to-claude-primary text-white px-3 lg:px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
                     animate={{
                       y: [0, 15, 0],
                       rotate: [0, -2, 0]
@@ -664,7 +664,7 @@ export default function ClaudeLanding() {
                   </motion.div>
 
                   <motion.div
-                    className="absolute bottom-32 right-20 bg-gradient-to-r from-claude-green to-claude-tertiary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    className="absolute bottom-20 lg:bottom-32 right-4 lg:right-20 bg-gradient-to-r from-claude-green to-claude-tertiary text-white px-3 lg:px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
                     animate={{
                       y: [0, -12, 0],
                       rotate: [0, 3, 0]
@@ -675,7 +675,7 @@ export default function ClaudeLanding() {
                   </motion.div>
 
                   <motion.div
-                    className="absolute bottom-20 left-12 bg-gradient-to-r from-claude-tertiary to-claude-secondary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    className="absolute bottom-8 lg:bottom-20 left-4 lg:left-12 bg-gradient-to-r from-claude-tertiary to-claude-secondary text-white px-3 lg:px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
                     animate={{
                       y: [0, 8, 0],
                       rotate: [0, -1, 0]
@@ -686,7 +686,7 @@ export default function ClaudeLanding() {
                   </motion.div>
 
                   <motion.div
-                    className="absolute top-40 left-32 bg-gradient-to-r from-claude-primary/80 to-claude-green text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    className="absolute top-64 lg:top-40 left-8 lg:left-32 bg-gradient-to-r from-claude-primary/80 to-claude-green text-white px-3 lg:px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
                     animate={{
                       y: [0, -8, 0],
                       rotate: [0, 1, 0]
@@ -697,7 +697,7 @@ export default function ClaudeLanding() {
                   </motion.div>
 
                   <motion.div
-                    className="absolute bottom-40 right-32 bg-gradient-to-r from-claude-secondary/80 to-claude-primary text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
+                    className="absolute bottom-32 lg:bottom-40 right-8 lg:right-32 bg-gradient-to-r from-claude-secondary/80 to-claude-primary text-white px-3 lg:px-4 py-2 rounded-full text-xs font-semibold shadow-lg"
                     animate={{
                       y: [0, 10, 0],
                       rotate: [0, -2, 0]
@@ -1113,7 +1113,7 @@ export default function ClaudeLanding() {
                       <div className="flex items-center gap-4">
                         {/* Animated Icon */}
                         <div
-                          className="p-4 rounded-2xl border-2"
+                          className="p-3 lg:p-4 rounded-2xl border-2"
                           style={{
                             backgroundColor: module.color + "20",
                             borderColor: module.color + "40",
@@ -1126,12 +1126,12 @@ export default function ClaudeLanding() {
                         <div>
                           <div className="flex items-center gap-3 mb-2">
                             <span
-                              className="font-bold text-lg"
+                              className="font-bold text-sm lg:text-lg"
                               style={{ color: module.color }}
                             >
                               {module.module}
                             </span>
-                            <span
+                            {/* <span
                               className="text-xs px-3 py-1 rounded-full font-bold border"
                               style={{
                                 backgroundColor: module.color + "20",
@@ -1140,10 +1140,10 @@ export default function ClaudeLanding() {
                               }}
                             >
                               {module.badge}
-                            </span>
+                            </span> */}
                           </div>
                           <h3
-                            className="text-2xl font-bold text-white"
+                            className="text-xl lg:text-2xl font-bold text-white"
                           >
                             {module.title}
                           </h3>
@@ -1151,7 +1151,7 @@ export default function ClaudeLanding() {
                       </div>
 
                       {/* Progress Circle */}
-                      <div className="relative w-16 h-16">
+                      <div className="relative w-16 h-16 hidden lg:block">
                         <svg className="w-16 h-16 transform -rotate-90">
                           <circle
                             cx="32"
