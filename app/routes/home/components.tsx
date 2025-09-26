@@ -311,7 +311,7 @@ export const TopCourses = ({ courses }: { courses?: Partial<Course>[] }) => {
   return (
     <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
       <h2 className="text-3xl md:text-4xl xl:text-5xl  font-bold text-white leading-snug text-center">
-        Cursos más vendidos
+        Cursos más recientes
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-20 mt-20 px-4 md:px-0">
         {c.map((course) => (
@@ -512,7 +512,6 @@ export const HomeHero = () => {
               </motion.div>
             </Link>
           </div>
-          
           <h2 className="text-3xl xl:text-6xl text-center md:text-left font-bold text-white !leading-snug mt-0 md:mt-12">
             Aprende <br className="md:hidden" />
             <span className="text-brand-500 font-extrabold text-3xl xl:text-6xl ">
@@ -531,11 +530,7 @@ export const HomeHero = () => {
             que usan los profesionales de la industria
           </h2>{" "}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
-            <PrimaryButton
-              as="Link"
-              to="/claude"
-              children="Aprender Claude"
-            />
+            <PrimaryButton as="Link" to="/claude" children="Aprender Claude" />
             <PrimaryButton
               as="Link"
               to="/agentes"
@@ -550,18 +545,22 @@ export const HomeHero = () => {
             /> */}
           </div>
           {/* Links sutiles a los libros */}
-        
-            <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
-          📖
-               Libro gratuito:  <Link
+          <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
+            📖 Libro gratuito:{" "}
+            <Link
               to="/libros"
               className="text-sm  text-orange-300  hover:underline transition-all duration-200  "
-            >Dominando Claude Code</Link> y    <Link
-            to="/libros/llamaindex"
-            className="text-sm text-llamaindex-purple hover:underline transition-all duration-200  "
-          >LlamaIndex desde Cero</Link>
-            </p>
-
+            >
+              Dominando Claude Code
+            </Link>{" "}
+            y{" "}
+            <Link
+              to="/libros/llamaindex"
+              className="text-sm text-llamaindex-purple hover:underline transition-all duration-200  "
+            >
+              LlamaIndex desde Cero
+            </Link>
+          </p>
         </div>
         <img className="scale-75 lg:scale-100" src="/robot.svg" alt="robot" />
       </div>
