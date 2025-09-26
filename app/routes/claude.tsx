@@ -545,15 +545,15 @@ export default function ClaudeLanding() {
 
       {/* Hero Section con Webinar CTA */}
       <section className="relative min-h-screen  text-white overflow-hidden bg-claude-dark">
-        <div className="relative container mx-auto px-4 pt-32 pb-16">
+        <div className="relative container mx-auto px-4 pt-20 lg:pt-32 pb-16">
           <div className="max-w-5xl mx-auto text-center">
             {/* Badge URGENTE */}
             <motion.div
               className="inline-flex items-center gap-2 bg-gradient-to-r from-claude-primary/10 to-claude-secondary/10 border border-claude-secondary rounded-full px-4 py-2 mb-8"
             >
-              <span className="animate-pulse h-3 w-3 bg-claude-primary rounded-full"></span>
+              <span className="animate-pulse h-3 w-3 bg-claude-primary rounded-full hidden lg:inline"></span>
               <span className="lg:text-sm text-xs font-bold text-[#BC84CB]">
-                🎯 Curso disponible on demand - <span className="hidden lg:inline">Aprende a tu propio ritmo</span>
+                🎯 Curso disponible on demand  <span className="hidden lg:inline"> - Aprende a tu propio ritmo</span>
               </span>
               <span className="bg-claude-primary/10 text-white/60 text-xs font-black px-2 py-1 rounded-full">
                 Acceso inmediato
@@ -606,7 +606,7 @@ export default function ClaudeLanding() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="relative mt-20 mb-12 max-w-6xl mx-auto"
+              className="relative mt-10 lg:mt-20 mb-6 lg:mb-12 max-w-6xl mx-auto"
             >
 
               {/* Terminal Container */}
@@ -729,7 +729,7 @@ export default function ClaudeLanding() {
       </section>
 
       {/* ¿Para quién es este taller? */}
-      <section className="py-20  relative overflow-hidden bg-claude-dark">
+      <section className="py-10 lg:py-20  relative overflow-hidden bg-claude-dark">
         <div className="relative container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -923,7 +923,7 @@ export default function ClaudeLanding() {
 
         </div>
       </section>
-     <div className="relative bg-claude-dark py-20">
+     <div className="relative bg-claude-dark py-16 lg:py-20 px-4">
 <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -933,7 +933,7 @@ export default function ClaudeLanding() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-            Inscríbete al curso 
+            Inscríbete al curso {""}
             <span className="text-claude-primary">completo</span>
             </h2>
             <p className="text-claude-gray font-light text-lg max-w-2xl mx-auto">
@@ -1255,7 +1255,7 @@ export default function ClaudeLanding() {
             </div>
 
       {/* Video Demo Section */}
-      <section className="py-20 relative bg-claude-dark">
+      <section className="pt-0 pb-10 lg:py-20 relative bg-claude-dark">
         <div className="relative container mx-auto px-4 z-10 max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -1426,7 +1426,7 @@ export default function ClaudeLanding() {
         </section>
        {/* Final CTA - Completely Redesigned */}
         <section
-          className="relative pt-32 pb-24 overflow-hidden bg-claude-dark"
+          className="relative pt-10 lg:pt-32 pb-24 overflow-hidden bg-claude-dark"
         >
 
           <div className="relative z-10 container mx-auto px-4">

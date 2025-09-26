@@ -9,7 +9,7 @@ interface SimpleFooterProps {
 
 export default function SimpleFooter({ bgColor = "bg-brand-900" }: SimpleFooterProps) {
   return (
-    <section className={`pt-20 ${bgColor} py-8  pb-12`}>
+    <section className={`pt-10 lg:pt-20 ${bgColor} py-8  pb-12`}>
       <div className="flex justify-center items-center gap-3">
         <a
           rel="noreferrer"
