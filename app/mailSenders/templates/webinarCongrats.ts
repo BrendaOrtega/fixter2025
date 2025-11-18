@@ -13,20 +13,34 @@ export const webinarCongratsTemplate = ({
 <div style="padding:80px 16px;font-family:sans-serif;font-size:18px;max-width:420px;margin:0 auto;">
   <img alt="logo" style="width:160px;" src="https://i.imgur.com/mpzZhT9.png" />
   <h2 style="font-size:32px;margin-top:24px;">
-    ✨ ¡Estás en la lista! 🤖
+    ✨ ¡Estás en la lista prioritaria! 🎯
   </h2>
   <p>
-    <strong>Te has registrado exitosamente para recibir notificaciones del curso 🚀</strong>
+    <strong>Te has registrado exitosamente para el taller del AI SDK en TypeScript 🚀</strong>
   </p>
   <h3 style="color:#3B82F6;font-size:24px;margin:20px 0;">
     ${webinarTitle}
   </h3>
+  <p style="margin-bottom:12px;"><strong>Las fechas están confirmadas:</strong></p>
+  <div style="background:#f8fafc;border-left:3px solid #3B82F6;padding:12px 16px;margin:16px 0;color:#334155;">
+    📅 Martes 9 Dic 2025 · 7-9pm CDMX<br>
+    📅 Jueves 11 Dic 2025 · 7-9pm CDMX<br>
+    📅 Martes 16 Dic 2025 · 7-9pm CDMX<br>
+    📅 Jueves 18 Dic 2025 · 7-9pm CDMX
+  </div>
+  <div style="background:#fef3c7;border-left:3px solid #f59e0b;padding:12px 16px;margin:20px 0;color:#78350f;font-size:15px;">
+    <strong>⚡ Beneficios de lista prioritaria:</strong><br>
+    • Acceso 48h antes del registro público<br>
+    • Cupo garantizado (grupos limitados)<br>
+    • Materiales preparatorios por adelantado
+  </div>
   <p>
-    Serás <strong>de los primeros</strong> en saber cuando publiquemos las fechas del taller. Te notificaremos por email con toda la información de sesiones, precios y acceso. 📧
+    Recibirás el link de acceso por email. Los cupos son limitados para mantener sesiones interactivas y con atención personalizada.
   </p>
   <div style="background:linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);border-radius:12px;padding:16px;margin:24px 0;color:white;text-align:center;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);">
-    <strong>🎯 Taller Práctico en TypeScript</strong><br>
-    <small>4 sesiones × 1.5h | Retrieval, Memory, Agents & HITL</small>
+    <strong>🎯 4 sesiones × 2h en vivo</strong><br>
+    <small>TypeScript | Retrieval, Memory, Agents & HITL</small><br>
+    <strong style="font-size:20px;margin-top:8px;display:block;">$3,999 MXN</strong>
   </div>
   <p style="font-size:14px;color:#666;margin-top:40px;">
     ¿Preguntas sobre el curso? Contáctanos en brenda@fixter.org

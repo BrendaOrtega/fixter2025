@@ -166,12 +166,12 @@ export default function AISdkPage() {
 
               {/* Título principal - Tipografía mejorada */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-balance leading-[1.1] mb-6 tracking-tight">
-                Integra IA en tus{" "}
                 <span className="bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">
-                  Proyectos
-                </span>
+                  Integra IA
+                </span>{" "}
+                en tus Proyectos
                 <br />
-                con AI SDK
+                con el AI SDK
               </h1>
 
               {/* Subtítulo - Tipografía mejorada */}
@@ -183,7 +183,7 @@ export default function AISdkPage() {
               <div className="flex flex-wrap gap-4 mt-10 text-sm text-zinc-400/90">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiLayer className="text-blue-400 text-base" />
-                  <span>4 sesiones × 1.5h</span>
+                  <span>4 sesiones × 2h</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiCode className="text-blue-400 text-base" />
@@ -192,6 +192,29 @@ export default function AISdkPage() {
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiStar className="text-blue-400 text-base" />
                   <span className="font-semibold text-white">$3,999 MXN</span>
+                </div>
+              </div>
+
+              {/* Fechas del Taller */}
+              <div className="mt-8 p-5 bg-gradient-to-b from-blue-900/20 to-blue-900/10 border border-blue-500/30 rounded-xl">
+                <h3 className="text-sm font-semibold text-blue-400 mb-3 uppercase tracking-wide">Fechas del Taller</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <span className="text-blue-400">•</span>
+                    <span>Martes 9 Dic 2025 · 7-9pm CDMX</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <span className="text-blue-400">•</span>
+                    <span>Jueves 11 Dic 2025 · 7-9pm CDMX</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <span className="text-blue-400">•</span>
+                    <span>Martes 16 Dic 2025 · 7-9pm CDMX</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <span className="text-blue-400">•</span>
+                    <span>Jueves 18 Dic 2025 · 7-9pm CDMX</span>
+                  </div>
                 </div>
               </div>
 
@@ -384,74 +407,124 @@ export default function AISdkPage() {
           </div>
         </section>
 
-        {/* Sección Temario - Grid mejorado */}
+        {/* Sección Cómo Funciona y Para Quién */}
         <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
 
           {/* Header */}
           <div className="text-center mb-14">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-              Lo que aprenderás
+              Formato diferente a cursos grabados
             </h2>
             <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
-              Técnicas modernas de IA aplicadas a proyectos reales
+              Sesiones en vivo con práctica hands-on y grupos limitados
             </p>
           </div>
 
-          {/* Grid de Sesiones - 2 columnas bien definido */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                day: "Día 1",
-                title: "Retrieval Completo",
-                topics: ["BM25, embeddings & RRF", "Chunking & reranking", "Metadata-first patterns"],
-                icon: BiNetworkChart,
-              },
-              {
-                day: "Día 2",
-                title: "Memory Systems",
-                topics: ["Semantic & episodic memory", "Working memory patterns", "Automatic memory creation"],
-                icon: BiCog,
-              },
-              {
-                day: "Día 3",
-                title: "Evals & Testing",
-                topics: ["Synthetic datasets", "Tool call evaluation", "LLM-as-judge scoring"],
-                icon: BiCode,
-              },
-              {
-                day: "Día 4",
-                title: "Human-in-the-Loop",
-                topics: ["HITL architecture", "Approval workflows", "Destructive tools safety"],
-                icon: BiLayer,
-              },
-            ].map((session, index) => (
-              <div
-                key={index}
-                className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl hover:border-zinc-700/50 hover:from-zinc-900/60 hover:to-zinc-900/30 transition-all duration-300 group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20 group-hover:bg-blue-500/15 transition-colors">
-                    <session.icon className="text-blue-400 text-xl" />
+          {/* Grid 2 columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+
+            {/* Columna Izquierda: Metodología */}
+            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
+              <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                <BiRocket className="text-blue-400 text-3xl" />
+                Cómo funciona
+              </h3>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20 mt-0.5">
+                    <span className="text-blue-400 font-bold text-sm">🎥</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="text-xs font-semibold text-blue-400 mb-2 uppercase tracking-wide">
-                      {session.day}
-                    </div>
-                    <h3 className="text-lg font-bold text-white mb-3">
-                      {session.title}
-                    </h3>
-                    <ul className="space-y-2.5">
-                      {session.topics.map((topic, i) => (
-                        <li key={i} className="text-sm text-zinc-400/90 flex items-start gap-2">
-                          <span className="text-blue-400 mt-0.5">•</span>
-                          <span>{topic}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Sesiones en vivo</h4>
+                    <p className="text-sm text-zinc-400/90">No videos pregrabados. Interacción real y preguntas en tiempo real.</p>
                   </div>
-                </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20 mt-0.5">
+                    <span className="text-blue-400 font-bold text-sm">💻</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Coding hands-on</h4>
+                    <p className="text-sm text-zinc-400/90">Cada sesión incluye ejercicios prácticos que ejecutas en tu máquina.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20 mt-0.5">
+                    <span className="text-blue-400 font-bold text-sm">👥</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Grupos limitados</h4>
+                    <p className="text-sm text-zinc-400/90">Cupos reducidos para Q&A personalizado y atención individual.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20 mt-0.5">
+                    <span className="text-blue-400 font-bold text-sm">📦</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Código completo</h4>
+                    <p className="text-sm text-zinc-400/90">Todos los ejemplos y proyectos descargables para tu referencia.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Columna Derecha: Para Quién */}
+            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
+              <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                <BiStar className="text-blue-400 text-3xl" />
+                Para quién es
+              </h3>
+
+              {/* Ideal para */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-green-400 mb-3 uppercase tracking-wide flex items-center gap-2">
+                  <BiCheckCircle className="text-base" />
+                  Ideal para
+                </h4>
+                <ul className="space-y-2">
+                  <li className="text-sm text-zinc-400/90 flex items-start gap-2">
+                    <span className="text-green-400 mt-0.5">•</span>
+                    <span>Developers que saben TypeScript y quieren integrar IA</span>
+                  </li>
+                  <li className="text-sm text-zinc-400/90 flex items-start gap-2">
+                    <span className="text-green-400 mt-0.5">•</span>
+                    <span>Quieres ir más allá de wrappers básicos de OpenAI</span>
+                  </li>
+                  <li className="text-sm text-zinc-400/90 flex items-start gap-2">
+                    <span className="text-green-400 mt-0.5">•</span>
+                    <span>Buscas técnicas avanzadas con aplicación práctica</span>
+                  </li>
+                  <li className="text-sm text-zinc-400/90 flex items-start gap-2">
+                    <span className="text-green-400 mt-0.5">•</span>
+                    <span>Valoras aprender en vivo con Q&A directo</span>
+                  </li>
+                </ul>
               </div>
-            ))}
+
+              {/* Ten en cuenta */}
+              <div>
+                <h4 className="text-sm font-semibold text-blue-400 mb-3 uppercase tracking-wide flex items-center gap-2">
+                  <span className="text-base">ℹ️</span>
+                  Ten en cuenta
+                </h4>
+                <ul className="space-y-2">
+                  <li className="text-sm text-zinc-400/90 flex items-start gap-2">
+                    <span className="text-blue-400 mt-0.5">•</span>
+                    <span>Asumimos conocimientos de TypeScript y experiencia con APIs</span>
+                  </li>
+                  <li className="text-sm text-zinc-400/90 flex items-start gap-2">
+                    <span className="text-blue-400 mt-0.5">•</span>
+                    <span>El enfoque es práctico, no teoría académica de ML</span>
+                  </li>
+                  <li className="text-sm text-zinc-400/90 flex items-start gap-2">
+                    <span className="text-blue-400 mt-0.5">•</span>
+                    <span>Las sesiones son en vivo en horarios específicos</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
           </div>
         </section>
 
