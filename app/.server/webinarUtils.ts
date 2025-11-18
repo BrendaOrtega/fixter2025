@@ -20,6 +20,7 @@ export interface WebinarUser {
   tags: string[];
   webinar: any;
   courses: string[];
+  metadata: any;
 }
 
 /**
@@ -53,6 +54,7 @@ export async function getWebinarRegistrants() {
       tags: true,
       webinar: true,
       courses: true,
+      metadata: true,
     },
     orderBy: {
       updatedAt: "desc",
@@ -66,6 +68,20 @@ export async function getWebinarRegistrants() {
  * Separa usuarios entre los que solo se registraron y los que compraron cursos
  */
 export function categorizeUsers(users: WebinarUser[]) {
+  // Debug: log usuarios con tag aisdk_course
+  const aisdkUsers = users.filter(u => u.tags?.includes("aisdk_course"));
+  if (aisdkUsers.length > 0) {
+    console.log("🔍 DEBUG: Usuarios con tag aisdk_course:", aisdkUsers.length);
+    console.log("🔍 DEBUG: Primer usuario aisdk:", {
+      email: aisdkUsers[0].email,
+      courses: aisdkUsers[0].courses,
+      tags: aisdkUsers[0].tags,
+      hasCourses: aisdkUsers[0].courses !== null && aisdkUsers[0].courses !== undefined,
+      coursesLength: aisdkUsers[0].courses?.length,
+      coursesType: typeof aisdkUsers[0].courses,
+    });
+  }
+
   const onlyRegistered = users.filter((user) => {
     if (!user.courses || user.courses.length === 0) return true;
     return (
@@ -84,6 +100,15 @@ export function categorizeUsers(users: WebinarUser[]) {
       user.courses.includes(COURSE_IDS.LLAMAINDEX) ||
       user.courses.includes(COURSE_IDS.AISDK)
     );
+  });
+
+  console.log("📊 DEBUG: Categorización completada:", {
+    total: users.length,
+    aisdkTotal: aisdkUsers.length,
+    onlyRegistered: onlyRegistered.length,
+    purchasedWorkshop: purchasedWorkshop.length,
+    aisdkInRegistered: onlyRegistered.filter(u => u.tags?.includes("aisdk_course")).length,
+    aisdkInPurchased: purchasedWorkshop.filter(u => u.tags?.includes("aisdk_course")).length,
   });
 
   return { onlyRegistered, purchasedWorkshop };
