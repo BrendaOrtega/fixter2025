@@ -24,7 +24,7 @@ export const meta = () => {
     description:
       "Domina AI SDK con TypeScript. Aprende retrieval, memory, agents y human-in-the-loop. Crea asistentes inteligentes para tus aplicaciones en 4 sesiones prácticas.",
     url: "https://www.fixtergeek.com/ai-sdk",
-    image: "/ai-sdk-og.png",
+    image: "/courses/ai-sdk.png",
   });
 
   return [
