@@ -402,27 +402,27 @@ export default function AISdkPage() {
             {[
               {
                 day: "Día 1",
-                title: "Retrieval Systems",
-                topics: ["BM25 & embeddings", "RRF & query rewriting", "Vector search patterns"],
+                title: "Retrieval Completo",
+                topics: ["BM25, embeddings & RRF", "Chunking & reranking", "Metadata-first patterns"],
                 icon: BiNetworkChart,
               },
               {
                 day: "Día 2",
-                title: "Chunking & Reranking",
-                topics: ["Estrategias de chunking", "Agentic reranking", "Context optimization"],
-                icon: BiLayer,
-              },
-              {
-                day: "Día 3",
-                title: "Memory & Context",
-                topics: ["Semantic memory", "Episodic memory", "Working memory patterns"],
+                title: "Memory Systems",
+                topics: ["Semantic & episodic memory", "Working memory patterns", "Automatic memory creation"],
                 icon: BiCog,
               },
               {
-                day: "Día 4",
-                title: "Evals & HITL",
-                topics: ["Testing frameworks", "LLM-as-judge", "Human-in-the-loop"],
+                day: "Día 3",
+                title: "Evals & Testing",
+                topics: ["Synthetic datasets", "Tool call evaluation", "LLM-as-judge scoring"],
                 icon: BiCode,
+              },
+              {
+                day: "Día 4",
+                title: "Human-in-the-Loop",
+                topics: ["HITL architecture", "Approval workflows", "Destructive tools safety"],
+                icon: BiLayer,
               },
             ].map((session, index) => (
               <div
@@ -452,6 +452,200 @@ export default function AISdkPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Sección Temario Completo */}
+        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
+
+          {/* Header */}
+          <div className="text-center mb-14">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+              Temario Completo
+            </h2>
+            <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
+              Programa intensivo de 4 días con ejercicios prácticos y proyectos reales
+            </p>
+          </div>
+
+          {/* Grid de Módulos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+
+            {/* Módulo 1 - Día 1 Teoría */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">01</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Retrieval: Teoría Completa</h3>
+                  <p className="text-xs text-zinc-500">Día 1 · Construcción de habilidades</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Algoritmo BM25 y búsqueda léxica</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Embeddings y búsqueda semántica</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Fusión de rankings (RRF)</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Query rewriting y expansión</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Estrategias de chunking (fijo, estructural)</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Técnicas de reranking</li>
+              </ul>
+            </div>
+
+            {/* Módulo 2 - Día 1 Práctica */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">02</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Retrieval: Proyecto End-to-End</h3>
+                  <p className="text-xs text-zinc-500">Día 1 · Aplicación práctica</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Construcción de dataset personalizado</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Implementar algoritmos de búsqueda</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Playground de chunking con emails</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Reranking en herramienta de búsqueda</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Filtros personalizados y metadata-first</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Integración con agente AI SDK</li>
+              </ul>
+            </div>
+
+            {/* Módulo 3 - Día 2 Teoría */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">03</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Memory Systems: Teoría</h3>
+                  <p className="text-xs text-zinc-500">Día 2 · Construcción de habilidades</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Configuración básica de memoria</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Actualización de memorias previas</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Memoria como tool call</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Búsqueda semántica en memorias</li>
+              </ul>
+            </div>
+
+            {/* Módulo 4 - Día 2 Práctica */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">04</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Memory Systems: Proyecto</h3>
+                  <p className="text-xs text-zinc-500">Día 2 · Aplicación práctica</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Implementar recall semántico</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Working memory con embeddings</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Creación automática de memorias</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Memoria episódica de conversaciones</li>
+              </ul>
+            </div>
+
+            {/* Módulo 5 - Día 3 Teoría */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">05</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Evaluaciones: Teoría</h3>
+                  <p className="text-xs text-zinc-500">Día 3 · Construcción de habilidades</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Evaluar agentes con tool calls</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Crear datasets sintéticos</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Frameworks de testing para IA</li>
+              </ul>
+            </div>
+
+            {/* Módulo 6 - Día 3 Práctica */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">06</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Evaluaciones: Proyecto</h3>
+                  <p className="text-xs text-zinc-500">Día 3 · Aplicación práctica</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Evaluar herramientas de memoria</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Crear dataset de evaluación</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Evaluar sistemas de retrieval</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>LLM-as-judge scorer</li>
+              </ul>
+            </div>
+
+            {/* Módulo 7 - Día 4 Teoría */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">07</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Human-in-the-Loop: Teoría</h3>
+                  <p className="text-xs text-zinc-500">Día 4 · Construcción de habilidades</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Introducción a HITL</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Iniciar solicitudes HITL</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Aprobar solicitudes HITL</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Pasar historial personalizado al LLM</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Procesar y ejecutar solicitudes</li>
+              </ul>
+            </div>
+
+            {/* Módulo 8 - Día 4 Práctica */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">08</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Human-in-the-Loop: Proyecto</h3>
+                  <p className="text-xs text-zinc-500">Día 4 · Aplicación práctica</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Construir herramientas destructivas</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Implementar harness HITL</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Acceso temporal a herramientas</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Testing de flujos de aprobación</li>
+              </ul>
+            </div>
+
+            {/* Módulo 9 - Referencias */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/50 rounded-xl lg:col-span-2">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-blue-500/10 rounded-lg flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">09</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Referencias y Recursos Avanzados</h3>
+                  <p className="text-xs text-zinc-500">Material complementario</p>
+                </div>
+              </div>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-zinc-400/90">
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Stream Object & Partial Streams</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Reconciliación de IDs en Data Parts</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Streaming manual de Text Parts</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>UI Messages vs Model Messages</li>
+              </ul>
+            </div>
+
           </div>
         </section>
 
