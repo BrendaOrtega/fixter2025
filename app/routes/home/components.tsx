@@ -533,8 +533,8 @@ export const HomeHero = () => {
             <PrimaryButton as="Link" to="/claude" children="Aprender Claude" />
             <PrimaryButton
               as="Link"
-              to="/agentes"
-              children="Ir a Creación de agentes no-code"
+              to="/ai-sdk"
+              children="Ir a AI SDK"
               variant="ghost"
             />
             {/* <PrimaryButton

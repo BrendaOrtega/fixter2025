@@ -229,7 +229,7 @@ export default function AISdkPage() {
                       Retrieval Avanzado
                     </h3>
                     <p className="text-xs text-zinc-400/80 leading-relaxed">
-                      BM25, embeddings, RRF y query rewriting
+                      Embeddings, búsqueda semántica y query rewriting
                     </p>
                   </div>
                 </div>
@@ -334,19 +334,19 @@ export default function AISdkPage() {
                           className="w-full h-11 px-4 py-2 bg-black/30 border border-zinc-700/60 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 hover:border-zinc-600 transition-all duration-200"
                         >
                           <option value="" className="bg-zinc-900">
-                            ¿Qué te interesa más?
+                            ¿Has integrado IA en tus apps antes?
                           </option>
-                          <option value="chatbots" className="bg-zinc-900">
-                            Chatbots conversacionales
+                          <option value="never" className="bg-zinc-900">
+                            No, será mi primera vez
                           </option>
-                          <option value="assistants" className="bg-zinc-900">
-                            Asistentes con herramientas
+                          <option value="basic-api" className="bg-zinc-900">
+                            Sí, solo llamadas básicas a APIs
                           </option>
-                          <option value="multimodal" className="bg-zinc-900">
-                            Sistemas multimodales
+                          <option value="advanced" className="bg-zinc-900">
+                            Sí, con RAG o agents
                           </option>
-                          <option value="all" className="bg-zinc-900">
-                            Todo lo anterior
+                          <option value="production" className="bg-zinc-900">
+                            Sí, tengo apps en producción
                           </option>
                         </select>
                       </div>
@@ -556,12 +556,11 @@ export default function AISdkPage() {
                 </div>
               </div>
               <ul className="space-y-2 text-sm text-zinc-400/90">
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Algoritmo BM25 y búsqueda léxica</li>
                 <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Embeddings y búsqueda semántica</li>
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Fusión de rankings (RRF)</li>
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Query rewriting y expansión</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Vector databases y similarity search</li>
                 <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Estrategias de chunking (fijo, estructural)</li>
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Técnicas de reranking</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Metadata y filtros personalizados</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Integración RAG con agentes</li>
               </ul>
             </div>
 
@@ -578,9 +577,8 @@ export default function AISdkPage() {
               </div>
               <ul className="space-y-2 text-sm text-zinc-400/90">
                 <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Construcción de dataset personalizado</li>
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Implementar algoritmos de búsqueda</li>
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Playground de chunking con emails</li>
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Reranking en herramienta de búsqueda</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Generar embeddings con AI SDK</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Similarity search con vector stores</li>
                 <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Filtros personalizados y metadata-first</li>
                 <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Integración con agente AI SDK</li>
               </ul>
@@ -638,7 +636,8 @@ export default function AISdkPage() {
               <ul className="space-y-2 text-sm text-zinc-400/90">
                 <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Evaluar agentes con tool calls</li>
                 <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Crear datasets sintéticos</li>
-                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Frameworks de testing para IA</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Testing manual con inputs reales</li>
+                <li className="flex items-start gap-2"><span className="text-blue-400">•</span>Métricas de performance en agentes</li>
               </ul>
             </div>
 

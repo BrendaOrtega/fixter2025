@@ -373,15 +373,33 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                         <td className="px-2 py-1">
                           <div
                             className="text-gray-500 truncate max-w-[80px]"
-                            title={interest === "single_agents" ? "Agentes individuales" :
-                                    interest === "multi_agents" ? "Multi-agentes" :
-                                    interest === "workflows" ? "Workflows" :
-                                    interest === "all" ? "Todo" : interest}
+                            title={
+                              interest === "single_agents" ? "Agentes individuales" :
+                              interest === "multi_agents" ? "Multi-agentes" :
+                              interest === "workflows" ? "Workflows" :
+                              interest === "all" ? "Todo" :
+                              interest === "never" ? "No, será mi primera vez" :
+                              interest === "basic-api" ? "Sí, solo llamadas básicas a APIs" :
+                              interest === "advanced" ? "Sí, con RAG o agents" :
+                              interest === "production" ? "Sí, tengo apps en producción" :
+                              interest === "chatbots" ? "Chatbots conversacionales" :
+                              interest === "assistants" ? "Asistentes con herramientas" :
+                              interest === "multimodal" ? "Sistemas multimodales" :
+                              interest
+                            }
                           >
                             {interest === "single_agents" ? "Individual" :
                              interest === "multi_agents" ? "Multi" :
                              interest === "workflows" ? "Workflow" :
-                             interest === "all" ? "Todo" : interest}
+                             interest === "all" ? "Todo" :
+                             interest === "never" ? "Primera vez" :
+                             interest === "basic-api" ? "API básica" :
+                             interest === "advanced" ? "RAG/Agents" :
+                             interest === "production" ? "Producción" :
+                             interest === "chatbots" ? "Chatbots" :
+                             interest === "assistants" ? "Assistants" :
+                             interest === "multimodal" ? "Multimodal" :
+                             interest}
                           </div>
                         </td>
                         <td className="px-2 py-1">
