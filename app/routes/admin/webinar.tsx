@@ -286,6 +286,15 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                                   L
                                 </span>
                               )}
+                            {user.courses &&
+                              user.courses.includes(COURSE_IDS.AISDK) && (
+                                <span
+                                  className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-teal-100 text-teal-800"
+                                  title="Tiene curso de AI SDK"
+                                >
+                                  A
+                                </span>
+                              )}
                           </div>
                         </td>
                         <td className="px-2 py-1">
@@ -418,6 +427,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                             {webinarData?.webinarType?.includes("llamaindex") ? "llama" :
                              webinarData?.webinarType?.includes("claude") ? "claude" :
                              webinarData?.webinarType?.includes("gemini") ? "gemini" :
+                             webinarData?.webinarType?.includes("aisdk") ? "aisdk" :
                              webinarData?.webinarType?.substring(0, 8) || "-"}
                           </div>
                         </td>

@@ -8,6 +8,7 @@ export const WEBINAR_TAGS = {
   GEMINI_SOLICITUD: "gemini_webinar_solicitud",
   GEMINI_SEPTIEMBRE: "webinar_gemini_septiembre",
   LLAMAINDEX_COURSE: "llamaindex_course",
+  AISDK_COURSE: "aisdk_course",
 } as const;
 
 export interface WebinarUser {
@@ -31,6 +32,7 @@ export async function getWebinarRegistrants() {
     WEBINAR_TAGS.CLAUDE_PAID,
     WEBINAR_TAGS.GEMINI_SEPTIEMBRE,
     WEBINAR_TAGS.LLAMAINDEX_COURSE,
+    WEBINAR_TAGS.AISDK_COURSE,
   ].filter(Boolean); // Eliminar valores undefined/null
 
   const orConditions = [
@@ -69,7 +71,8 @@ export function categorizeUsers(users: WebinarUser[]) {
     return (
       !user.courses.includes(COURSE_IDS.CLAUDE) &&
       !user.courses.includes(COURSE_IDS.GEMINI) &&
-      !user.courses.includes(COURSE_IDS.LLAMAINDEX)
+      !user.courses.includes(COURSE_IDS.LLAMAINDEX) &&
+      !user.courses.includes(COURSE_IDS.AISDK)
     );
   });
 
@@ -78,7 +81,8 @@ export function categorizeUsers(users: WebinarUser[]) {
     return (
       user.courses.includes(COURSE_IDS.CLAUDE) ||
       user.courses.includes(COURSE_IDS.GEMINI) ||
-      user.courses.includes(COURSE_IDS.LLAMAINDEX)
+      user.courses.includes(COURSE_IDS.LLAMAINDEX) ||
+      user.courses.includes(COURSE_IDS.AISDK)
     );
   });
 
