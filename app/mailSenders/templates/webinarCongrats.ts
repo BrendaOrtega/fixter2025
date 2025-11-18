@@ -7,6 +7,34 @@ export const webinarCongratsTemplate = ({
   webinarTitle?: string;
   webinarDate?: string;
 }) => {
+  // Template específico para AI SDK (lista de espera)
+  if (webinarTitle.includes("AI SDK")) {
+    return `
+<div style="padding:80px 16px;font-family:sans-serif;font-size:18px;max-width:420px;margin:0 auto;">
+  <img alt="logo" style="width:160px;" src="https://i.imgur.com/mpzZhT9.png" />
+  <h2 style="font-size:32px;margin-top:24px;">
+    ✨ ¡Estás en la lista! 🤖
+  </h2>
+  <p>
+    <strong>Te has registrado exitosamente para recibir notificaciones del curso 🚀</strong>
+  </p>
+  <h3 style="color:#3B82F6;font-size:24px;margin:20px 0;">
+    ${webinarTitle}
+  </h3>
+  <p>
+    Serás <strong>de los primeros</strong> en saber cuando publiquemos las fechas del taller. Te notificaremos por email con toda la información de sesiones, precios y acceso. 📧
+  </p>
+  <div style="background:linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);border-radius:12px;padding:16px;margin:24px 0;color:white;text-align:center;box-shadow:0 4px 15px rgba(59, 130, 246, 0.3);">
+    <strong>🎯 Taller Práctico en TypeScript</strong><br>
+    <small>4 sesiones × 1.5h | Retrieval, Memory, Agents & HITL</small>
+  </div>
+  <p style="font-size:14px;color:#666;margin-top:40px;">
+    ¿Preguntas sobre el curso? Contáctanos en brenda@fixter.org
+  </p>
+</div>
+`;
+  }
+
   // Template específico para LlamaIndex
   if (webinarTitle.includes("LlamaIndex")) {
     return `

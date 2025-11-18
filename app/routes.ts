@@ -30,6 +30,8 @@ export default [
   route("gemini", "routes/gemini.tsx"),
   // Agentes IA No-Code Course
   route("agentes", "routes/agentes.tsx"),
+  // AI SDK TypeScript Course
+  route("ai-sdk", "routes/ai-sdk.tsx"),
   // LlamaIndex Agent Workflows Course
   route("llamaindex", "routes/llamaindex.tsx"),
   // Libros
