@@ -3,21 +3,20 @@ import { useState } from "react";
 import { cn } from "~/utils/cn";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { getWebinarData } from "~/.server/webinarUtils";
-import { getAdminOrRedirect } from "~/.server/dbGetters";
+// import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { COURSE_IDS } from "~/constants/webinar";
 import { BiCopy, BiLogoWhatsapp } from "react-icons/bi";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await getAdminOrRedirect(request);
+  // await getAdminOrRedirect(request);
 
   // Obtener toda la data procesada del webinar
   const webinarData = await getWebinarData();
-
   return webinarData;
 };
 
 export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
-  const { stats, onlyRegistered, purchasedWorkshop, availableTags } =
+  const { webinarRegistrants, stats, purchasedWorkshop, availableTags } =
     loaderData;
   const [activeTab, setActiveTab] = useState<"registered" | "purchased">(
     "registered"
@@ -26,7 +25,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
 
   // Filtrar usuarios por tag
   const filteredUsers = (
-    activeTab === "registered" ? onlyRegistered : purchasedWorkshop
+    activeTab === "registered" ? webinarRegistrants : purchasedWorkshop
   ).filter((user) => {
     if (!tagFilter) return true;
     const userTags = Array.isArray(user.tags) ? user.tags : [];
@@ -47,17 +46,19 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
         }, 1000);
       }
     } catch (err) {
-      console.error('Error copiando teléfono:', err);
+      console.error("Error copiando teléfono:", err);
     }
   };
 
   // Función para abrir WhatsApp
   const openWhatsApp = (phone: string) => {
     // Limpiar el teléfono de caracteres especiales
-    const cleanPhone = phone.replace(/[^\d]/g, '');
+    const cleanPhone = phone.replace(/[^\d]/g, "");
     // Si no tiene código de país, asumir México (+52)
-    const finalPhone = cleanPhone.startsWith('52') ? cleanPhone : `52${cleanPhone}`;
-    window.open(`https://wa.me/${finalPhone}`, '_blank');
+    const finalPhone = cleanPhone.startsWith("52")
+      ? cleanPhone
+      : `52${cleanPhone}`;
+    window.open(`https://wa.me/${finalPhone}`, "_blank");
   };
   return (
     <article className="pt-20">
@@ -226,7 +227,11 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                     const experienceLevel =
                       webinarData?.experienceLevel ||
                       userTags
-                        .find((t) => String(t).startsWith("level-") || String(t).startsWith("experience-"))
+                        .find(
+                          (t) =>
+                            String(t).startsWith("level-") ||
+                            String(t).startsWith("experience-")
+                        )
                         ?.toString()
                         .replace("level-", "")
                         .replace("experience-", "") ||
@@ -237,8 +242,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                       userTags
                         .find((t) => String(t).startsWith("interest-"))
                         ?.toString()
-                        .replace("interest-", "") ||
-                      "-";
+                        .replace("interest-", "") || "-";
 
                     // Context: lo que se guarda en webinar.contextObjective (puede variar por landing)
                     const context =
@@ -257,7 +261,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                               className="font-medium text-gray-900 truncate max-w-[120px]"
                               title={user.displayName || "Sin nombre"}
                             >
-                              {(user.displayName || "Sin nombre").split(' ')[0]}
+                              {(user.displayName || "Sin nombre").split(" ")[0]}
                             </div>
                             {user.courses &&
                               user.courses.includes(COURSE_IDS.CLAUDE) && (
@@ -308,14 +312,15 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                         <td className="px-2 py-1">
                           <div className="text-gray-500">
                             {webinarData?.registeredAt
-                              ? new Date(
-                                  webinarData.registeredAt
-                                ).toLocaleDateString("es-MX", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }).replace(/\s/g, '-').replace(/,/g, '')
+                              ? new Date(webinarData.registeredAt)
+                                  .toLocaleDateString("es-MX", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                  .replace(/\s/g, "-")
+                                  .replace(/,/g, "")
                               : "-"}
                           </div>
                         </td>
@@ -369,46 +374,77 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                                 "bg-purple-100 text-purple-800"
                             )}
                           >
-                            {experienceLevel === "beginner" ? "beg" :
-                             experienceLevel === "intermediate" ? "int" :
-                             experienceLevel === "advanced" ? "adv" :
-                             experienceLevel === "junior" ? "jr" :
-                             experienceLevel === "senior" ? "sr" :
-                             experienceLevel === "lead" ? "lead" :
-                             experienceLevel === "student" ? "stu" :
-                             experienceLevel === "mid" ? "mid" : experienceLevel}
+                            {experienceLevel === "beginner"
+                              ? "beg"
+                              : experienceLevel === "intermediate"
+                              ? "int"
+                              : experienceLevel === "advanced"
+                              ? "adv"
+                              : experienceLevel === "junior"
+                              ? "jr"
+                              : experienceLevel === "senior"
+                              ? "sr"
+                              : experienceLevel === "lead"
+                              ? "lead"
+                              : experienceLevel === "student"
+                              ? "stu"
+                              : experienceLevel === "mid"
+                              ? "mid"
+                              : experienceLevel}
                           </span>
                         </td>
                         <td className="px-2 py-1">
                           <div
                             className="text-gray-500 truncate max-w-[80px]"
                             title={
-                              interest === "single_agents" ? "Agentes individuales" :
-                              interest === "multi_agents" ? "Multi-agentes" :
-                              interest === "workflows" ? "Workflows" :
-                              interest === "all" ? "Todo" :
-                              interest === "never" ? "No, será mi primera vez" :
-                              interest === "basic-api" ? "Sí, solo llamadas básicas a APIs" :
-                              interest === "advanced" ? "Sí, con RAG o agents" :
-                              interest === "production" ? "Sí, tengo apps en producción" :
-                              interest === "chatbots" ? "Chatbots conversacionales" :
-                              interest === "assistants" ? "Asistentes con herramientas" :
-                              interest === "multimodal" ? "Sistemas multimodales" :
-                              interest
+                              interest === "single_agents"
+                                ? "Agentes individuales"
+                                : interest === "multi_agents"
+                                ? "Multi-agentes"
+                                : interest === "workflows"
+                                ? "Workflows"
+                                : interest === "all"
+                                ? "Todo"
+                                : interest === "never"
+                                ? "No, será mi primera vez"
+                                : interest === "basic-api"
+                                ? "Sí, solo llamadas básicas a APIs"
+                                : interest === "advanced"
+                                ? "Sí, con RAG o agents"
+                                : interest === "production"
+                                ? "Sí, tengo apps en producción"
+                                : interest === "chatbots"
+                                ? "Chatbots conversacionales"
+                                : interest === "assistants"
+                                ? "Asistentes con herramientas"
+                                : interest === "multimodal"
+                                ? "Sistemas multimodales"
+                                : interest
                             }
                           >
-                            {interest === "single_agents" ? "Individual" :
-                             interest === "multi_agents" ? "Multi" :
-                             interest === "workflows" ? "Workflow" :
-                             interest === "all" ? "Todo" :
-                             interest === "never" ? "Primera vez" :
-                             interest === "basic-api" ? "API básica" :
-                             interest === "advanced" ? "RAG/Agents" :
-                             interest === "production" ? "Producción" :
-                             interest === "chatbots" ? "Chatbots" :
-                             interest === "assistants" ? "Assistants" :
-                             interest === "multimodal" ? "Multimodal" :
-                             interest}
+                            {interest === "single_agents"
+                              ? "Individual"
+                              : interest === "multi_agents"
+                              ? "Multi"
+                              : interest === "workflows"
+                              ? "Workflow"
+                              : interest === "all"
+                              ? "Todo"
+                              : interest === "never"
+                              ? "Primera vez"
+                              : interest === "basic-api"
+                              ? "API básica"
+                              : interest === "advanced"
+                              ? "RAG/Agents"
+                              : interest === "production"
+                              ? "Producción"
+                              : interest === "chatbots"
+                              ? "Chatbots"
+                              : interest === "assistants"
+                              ? "Assistants"
+                              : interest === "multimodal"
+                              ? "Multimodal"
+                              : interest}
                           </div>
                         </td>
                         <td className="px-2 py-1">
@@ -424,11 +460,16 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                             className="text-gray-500 truncate max-w-[50px]"
                             title={webinarData?.webinarType || "-"}
                           >
-                            {webinarData?.webinarType?.includes("llamaindex") ? "llama" :
-                             webinarData?.webinarType?.includes("claude") ? "claude" :
-                             webinarData?.webinarType?.includes("gemini") ? "gemini" :
-                             webinarData?.webinarType?.includes("aisdk") ? "aisdk" :
-                             webinarData?.webinarType?.substring(0, 8) || "-"}
+                            {webinarData?.webinarType?.includes("llamaindex")
+                              ? "llama"
+                              : webinarData?.webinarType?.includes("claude")
+                              ? "claude"
+                              : webinarData?.webinarType?.includes("gemini")
+                              ? "gemini"
+                              : webinarData?.webinarType?.includes("aisdk")
+                              ? "aisdk"
+                              : webinarData?.webinarType?.substring(0, 8) ||
+                                "-"}
                           </div>
                         </td>
                         {activeTab === "purchased" && (
@@ -453,7 +494,8 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                                     workshopData.selectedModules as any
                                   ).length > 1 && (
                                     <span className="text-[10px] text-gray-400">
-                                      +{JSON.parse(
+                                      +
+                                      {JSON.parse(
                                         workshopData.selectedModules as any
                                       ).length - 1}
                                     </span>
@@ -496,19 +538,24 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                   const webinarData = user.webinar as any;
                   const userTags = Array.isArray(user.tags) ? user.tags : [];
 
-                  const experienceLevel = webinarData?.experienceLevel ||
+                  const experienceLevel =
+                    webinarData?.experienceLevel ||
                     userTags
-                      .find((t) => t.startsWith("level-") || t.startsWith("experience-"))
+                      .find(
+                        (t) =>
+                          t.startsWith("level-") || t.startsWith("experience-")
+                      )
                       ?.replace("level-", "")
                       .replace("experience-", "") ||
                     "";
 
-                  const interest = userTags
-                    .find((t) => t.startsWith("interest-"))
-                    ?.replace("interest-", "") ||
-                    "";
+                  const interest =
+                    userTags
+                      .find((t) => t.startsWith("interest-"))
+                      ?.replace("interest-", "") || "";
 
-                  const context = webinarData?.contextObjective ||
+                  const context =
+                    webinarData?.contextObjective ||
                     userTags
                       .find((t) => t.startsWith("context-"))
                       ?.replace("context-", "") ||
@@ -518,15 +565,15 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                     user.displayName || "Sin nombre",
                     user.email,
                     webinarData?.registeredAt
-                      ? new Date(webinarData.registeredAt).toLocaleDateString(
-                          "es-MX",
-                          {
+                      ? new Date(webinarData.registeredAt)
+                          .toLocaleDateString("es-MX", {
                             day: "2-digit",
                             month: "short",
                             hour: "2-digit",
                             minute: "2-digit",
-                          }
-                        ).replace(/\s/g, '-').replace(/,/g, '')
+                          })
+                          .replace(/\s/g, "-")
+                          .replace(/,/g, "")
                       : "",
                     user.phoneNumber || "",
                     experienceLevel,

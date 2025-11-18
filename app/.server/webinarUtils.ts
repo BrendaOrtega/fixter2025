@@ -37,8 +37,8 @@ export async function getWebinarRegistrants() {
   ].filter(Boolean); // Eliminar valores undefined/null
 
   const orConditions = [
-    ...validTags.map(tag => ({ tags: { has: tag } })),
-    { webinar: { not: null } },
+    ...validTags.map((tag) => ({ tags: { has: tag } })),
+    // { webinar: { not: null } },
   ];
 
   const webinarRegistrants = await db.user.findMany({
@@ -69,18 +69,7 @@ export async function getWebinarRegistrants() {
  */
 export function categorizeUsers(users: WebinarUser[]) {
   // Debug: log usuarios con tag aisdk_course
-  const aisdkUsers = users.filter(u => u.tags?.includes("aisdk_course"));
-  if (aisdkUsers.length > 0) {
-    console.log("🔍 DEBUG: Usuarios con tag aisdk_course:", aisdkUsers.length);
-    console.log("🔍 DEBUG: Primer usuario aisdk:", {
-      email: aisdkUsers[0].email,
-      courses: aisdkUsers[0].courses,
-      tags: aisdkUsers[0].tags,
-      hasCourses: aisdkUsers[0].courses !== null && aisdkUsers[0].courses !== undefined,
-      coursesLength: aisdkUsers[0].courses?.length,
-      coursesType: typeof aisdkUsers[0].courses,
-    });
-  }
+  const aisdkUsers = users.filter((u) => u.tags?.includes("aisdk_course"));
 
   const onlyRegistered = users.filter((user) => {
     if (!user.courses || user.courses.length === 0) return true;
@@ -102,15 +91,6 @@ export function categorizeUsers(users: WebinarUser[]) {
     );
   });
 
-  console.log("📊 DEBUG: Categorización completada:", {
-    total: users.length,
-    aisdkTotal: aisdkUsers.length,
-    onlyRegistered: onlyRegistered.length,
-    purchasedWorkshop: purchasedWorkshop.length,
-    aisdkInRegistered: onlyRegistered.filter(u => u.tags?.includes("aisdk_course")).length,
-    aisdkInPurchased: purchasedWorkshop.filter(u => u.tags?.includes("aisdk_course")).length,
-  });
-
   return { onlyRegistered, purchasedWorkshop };
 }
 
@@ -119,16 +99,16 @@ export function categorizeUsers(users: WebinarUser[]) {
  */
 export function getTagsWithCounts(users: WebinarUser[]) {
   const tagCounts = new Map<string, number>();
-  
-  users.forEach(user => {
+
+  users.forEach((user) => {
     if (Array.isArray(user.tags)) {
-      user.tags.forEach(tag => {
+      user.tags.forEach((tag) => {
         const tagStr = String(tag);
         tagCounts.set(tagStr, (tagCounts.get(tagStr) || 0) + 1);
       });
     }
   });
-  
+
   const availableTags = Array.from(tagCounts.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([tag, count]) => ({ tag, count }));
@@ -139,9 +119,12 @@ export function getTagsWithCounts(users: WebinarUser[]) {
 /**
  * Calcula estadísticas de conversión
  */
-export function calculateStats(onlyRegistered: WebinarUser[], purchasedWorkshop: WebinarUser[]) {
+export function calculateStats(
+  onlyRegistered: WebinarUser[],
+  purchasedWorkshop: WebinarUser[]
+) {
   const totalRegistrants = onlyRegistered.length + purchasedWorkshop.length;
-  
+
   return {
     totalRegistrants,
     onlyRegistered: onlyRegistered.length,
@@ -158,8 +141,8 @@ export function calculateStats(onlyRegistered: WebinarUser[], purchasedWorkshop:
  */
 export function filterUsersByTag(users: WebinarUser[], tagFilter: string) {
   if (!tagFilter) return users;
-  
-  return users.filter(user => {
+
+  return users.filter((user) => {
     const userTags = Array.isArray(user.tags) ? user.tags : [];
     return userTags.includes(tagFilter);
   });
@@ -170,7 +153,8 @@ export function filterUsersByTag(users: WebinarUser[], tagFilter: string) {
  */
 export async function getWebinarData() {
   const webinarRegistrants = await getWebinarRegistrants();
-  const { onlyRegistered, purchasedWorkshop } = categorizeUsers(webinarRegistrants);
+  const { onlyRegistered, purchasedWorkshop } =
+    categorizeUsers(webinarRegistrants);
   const availableTags = getTagsWithCounts(webinarRegistrants);
   const stats = calculateStats(onlyRegistered, purchasedWorkshop);
 
