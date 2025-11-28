@@ -578,7 +578,7 @@ export default function AISdkPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Anadiendo un RAG simple</span>
+                  <span>Anadiendo un RAG facilmente</span>
                 </li>
               </ul>
             </div>
