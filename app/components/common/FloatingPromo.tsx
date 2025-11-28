@@ -12,7 +12,7 @@ export const FloatingPromo = () => {
 
   useEffect(() => {
     // Verificar si el usuario ya lo desechó y si aún está vigente
-    const dismissedData = localStorage.getItem('aisdk-promo-dismissed');
+    const dismissedData = localStorage.getItem("aisdk-promo-dismissed");
     if (dismissedData) {
       const { timestamp } = JSON.parse(dismissedData);
       const oneDayInMs = 24 * 60 * 60 * 1000; // 24 horas
@@ -22,7 +22,7 @@ export const FloatingPromo = () => {
         return;
       } else {
         // Ha pasado el tiempo, remover y mostrar de nuevo
-        localStorage.removeItem('aisdk-promo-dismissed');
+        localStorage.removeItem("aisdk-promo-dismissed");
       }
     }
 
@@ -35,15 +35,18 @@ export const FloatingPromo = () => {
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem('aisdk-promo-dismissed', JSON.stringify({
-      timestamp: Date.now()
-    }));
+    localStorage.setItem(
+      "aisdk-promo-dismissed",
+      JSON.stringify({
+        timestamp: Date.now(),
+      })
+    );
     setIsVisible(false);
     setIsDismissed(true);
   };
 
   const handleClick = () => {
-    navigate('/ai-sdk');
+    navigate("/ai-sdk");
   };
 
   if (isDismissed) return null;
@@ -66,7 +69,7 @@ export const FloatingPromo = () => {
             {isExpanded && (
               <div className="absolute bottom-0 left-0 w-80 h-16 bg-transparent pointer-events-auto" />
             )}
-            
+
             {/* Expanded card - se muestra primero para que esté debajo */}
             <AnimatePresence>
               {isExpanded && (
@@ -97,12 +100,12 @@ export const FloatingPromo = () => {
                     </div>
 
                     <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                      Integra IA en tus Proyectos con AI SDK
+                      Integra IA en tus Proyectos web con AI SDK
                     </h4>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Domina retrieval, memory y agents con TypeScript.
-                      4 sesiones prácticas con proyectos incluidos.
+                      Domina retrieval, memory y agents con TypeScript. 4
+                      sesiones prácticas con proyectos incluidos.
                     </p>
 
                     <div className="flex items-center justify-between">
@@ -132,49 +135,52 @@ export const FloatingPromo = () => {
               transition={{ duration: 0.3 }}
               className="relative cursor-pointer"
             >
-            {/* Notification badge */}
-            <motion.div
-              animate={{
-                scale: [1, 1.2, 1],
-                backgroundColor: ["#3b82f6", "#60a5fa", "#3b82f6"]
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse"
-              }}
-              className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center z-30"
-            >
-              <HiSparkles className="w-2 h-2 text-white" />
-            </motion.div>
+              {/* Notification badge */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  backgroundColor: ["#3b82f6", "#60a5fa", "#3b82f6"],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                }}
+                className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center z-30"
+              >
+                <HiSparkles className="w-2 h-2 text-white" />
+              </motion.div>
 
-            {/* Main button */}
-            <motion.div
-              className="relative z-20 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl shadow-2xl border border-blue-500/30"
-              whileHover={{ boxShadow: "0 20px 40px rgba(59, 130, 246, 0.3)" }}
-              onClick={handleClick}
-            >
-              <div className="flex items-center gap-3">
-                <BiRocket className="text-2xl text-white" />
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: "auto", opacity: 1 }}
-                      exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="whitespace-nowrap text-white">
-                        <p className="font-bold text-sm">AI SDK</p>
-                        <p className="text-xs opacity-90">TypeScript • Grabaciones gratis</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-
+              {/* Main button */}
+              <motion.div
+                className="relative z-20 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl shadow-2xl border border-blue-500/30"
+                whileHover={{
+                  boxShadow: "0 20px 40px rgba(59, 130, 246, 0.3)",
+                }}
+                onClick={handleClick}
+              >
+                <div className="flex items-center gap-3">
+                  <BiRocket className="text-2xl text-white" />
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: "auto", opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="whitespace-nowrap text-white">
+                          <p className="font-bold text-sm">AI SDK</p>
+                          <p className="text-xs opacity-90">
+                            TypeScript • Grabaciones gratis
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
             </motion.div>
 
             {/* Floating pulse effect */}
