@@ -4,6 +4,7 @@ import invariant from "tiny-invariant";
 import { data, type ActionFunctionArgs } from "react-router";
 import { successPurchase } from "~/mailSenders/successPurchase";
 import { purchaseCongrats } from "~/mailSenders/purchaseCongrats";
+import { sendAisdkWelcome } from "~/mailSenders/sendAisdkWelcome";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -39,6 +40,49 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       invariant(session.metadata);
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
+
+      // Handle AI SDK workshop - no course required
+      if (session.metadata.type === "aisdk-workshop") {
+        const userName = session.customer_details?.name || session.metadata.name;
+
+        await db.user.upsert({
+          where: { email },
+          create: {
+            email,
+            username: email,
+            displayName: userName,
+            phoneNumber: session.customer_details?.phone,
+            courses: [],
+            tags: ["newsletter", "aisdk-workshop-paid"],
+            metadata: {
+              purchase: {
+                type: "aisdk-workshop",
+                totalPrice: Number(session.metadata.totalPrice || 4990),
+                paidAt: new Date().toISOString(),
+                sessionId: session.id,
+              }
+            },
+            confirmed: true,
+            role: "STUDENT"
+          },
+          update: {
+            displayName: userName || undefined,
+            phoneNumber: session.customer_details?.phone || undefined,
+            tags: { push: ["aisdk-workshop-paid"] },
+          },
+        });
+
+        await sendAisdkWelcome({ to: email, userName });
+        await successPurchase({
+          userName: userName || "Sin nombre",
+          userMail: email,
+          title: "Taller AI SDK",
+          slug: "ai-sdk",
+        });
+
+        console.info("WEBHOOK: AI SDK workshop success");
+        return new Response(null);
+      }
 
       // Handle ALL course purchases - unified logic
       const course = await db.course.findUnique({
