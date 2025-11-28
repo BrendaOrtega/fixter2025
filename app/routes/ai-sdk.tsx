@@ -298,6 +298,11 @@ export default function AISdkPage() {
                       <p className="text-sm text-zinc-400/90">
                         2 sesiones en vivo con ejercicios practicos
                       </p>
+                      <p className="text-sm text-zinc-400/90">
+                        Si ya has tomado cursos con nosotros antes y ya eres
+                        parte de la comunidad: ¡pidele tu cupon de descuento a
+                        Brendi!
+                      </p>
                     </div>
 
                     {/* Precio destacado */}
@@ -623,7 +628,6 @@ export default function AISdkPage() {
             </div>
           </div>
         </section>
-
       </div>
 
       {/* Instructor Section - Full width with LiquidEther background */}
@@ -680,7 +684,9 @@ export default function AISdkPage() {
                       <div className="text-2xl font-bold text-emerald-400">
                         2K+
                       </div>
-                      <div className="text-xs text-zinc-400/90">Estudiantes</div>
+                      <div className="text-xs text-zinc-400/90">
+                        Estudiantes
+                      </div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-emerald-400">
