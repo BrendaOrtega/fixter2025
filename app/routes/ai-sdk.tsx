@@ -26,9 +26,9 @@ const ACCENT = "emerald";
 export const meta = () => {
   const baseMeta = getMetaTags({
     title:
-      "Integra IA en tus Proyectos web con AI SDK | TypeScript | FixterGeek",
+      "Taller AI SDK para Principiantes | TypeScript + React | FixterGeek",
     description:
-      "Domina AI SDK con TypeScript. Aprende retrieval, memory, agents y human-in-the-loop. Crea asistentes inteligentes para tus aplicaciones en 4 sesiones prácticas.",
+      "Aprende a construir aplicaciones con IA usando Vercel AI SDK. Streaming, useChat, archivos, RAG y Tools en 2 sesiones practicas de 3.5 horas.",
     url: "https://www.fixtergeek.com/ai-sdk",
     image: "https://www.fixtergeek.com/courses/ai-sdk.png",
   });
@@ -217,15 +217,15 @@ export default function AISdkPage() {
                       Fundamentos
                     </span>
                     <span>
-                      Sabado 13 de Diciembre · 10:00 AM - 1:30 PM CDMX
+                      Sábado 13 de Diciembre · 10:00 AM - 1:30 PM CDMX
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-zinc-300">
                     <span className="px-2 py-1 bg-emerald-500/20 rounded text-emerald-400 text-xs font-semibold">
-                      Backend y Frontend
+                      Avanzado
                     </span>
                     <span>
-                      Sabado 20 de Diciembre · 10:00 AM - 1:30 PM CDMX
+                      Sábado 20 de Diciembre · 10:00 AM - 1:30 PM CDMX
                     </span>
                   </div>
                 </div>
@@ -324,7 +324,7 @@ export default function AISdkPage() {
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Sabados 13 y 20 de diciembre</span>
+                        <span>Sábados 13 y 20 de diciembre</span>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
@@ -531,6 +531,29 @@ export default function AISdkPage() {
           </div>
         </section>
 
+        {/* Sección Video */}
+        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 tracking-tight">
+              Mira de qué se trata
+            </h2>
+            <p className="text-lg text-zinc-400/90 font-normal leading-relaxed max-w-2xl mx-auto">
+              Una probadita de lo que aprenderás en el taller
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
+              <iframe
+                src="https://www.youtube.com/embed/yGHVRLhiUcQ"
+                title="AI SDK para Principiantes"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Sección Temario Completo */}
         <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
           {/* Header */}
@@ -546,83 +569,99 @@ export default function AISdkPage() {
           {/* Grid de Sesiones */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Sesion 1 */}
-            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
-              <div className="flex items-start gap-3 mb-6">
-                <div className="w-12 h-12 flex items-center justify-center bg-emerald-500/20 rounded-xl flex-shrink-0 border border-emerald-500/30">
-                  <span className="text-emerald-400 font-bold">01</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    Fundamentos y Tu Primer Agente
-                  </h3>
-                  <p className="text-sm text-zinc-500">
-                    Sabado 13 de Diciembre · 10:00 AM - 1:30 PM
-                  </p>
-                </div>
-              </div>
-              <ul className="space-y-3 text-sm text-zinc-400/90">
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Intro al uso de TypeScript</span>
+            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
+              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span className="text-3xl">🚀</span>
+                Sesión 1: Fundamentos
+              </h3>
+              <p className="text-sm text-zinc-500 mb-6">
+                Sábado 13 de Diciembre · 10:00 AM - 1:30 PM CDMX
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">👋</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Introducción</h4>
+                    <p className="text-sm text-zinc-400/90">Bienvenida, setup del entorno y conceptos clave de AI SDK</p>
+                  </div>
                 </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Intro al uso de NodeJS y ES Modules</span>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">⚡</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Streaming básico</h4>
+                    <p className="text-sm text-zinc-400/90">Express + vanilla JS para entender el flujo de datos</p>
+                  </div>
                 </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Hola mundo con AI SDK</span>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">⚛️</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Cliente React</h4>
+                    <p className="text-sm text-zinc-400/90">useChat hook del AI SDK 5 para crear interfaces de chat</p>
+                  </div>
                 </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Generando datos estructurados</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Creando tools para el agente</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Anadiendo un RAG facilmente</span>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">📁</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Subida de archivos</h4>
+                    <p className="text-sm text-zinc-400/90">Añadir contexto a tus conversaciones con documentos</p>
+                  </div>
                 </li>
               </ul>
             </div>
 
             {/* Sesion 2 */}
-            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
-              <div className="flex items-start gap-3 mb-6">
-                <div className="w-12 h-12 flex items-center justify-center bg-emerald-500/20 rounded-xl flex-shrink-0 border border-emerald-500/30">
-                  <span className="text-emerald-400 font-bold">02</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    Backend, Frontend y Chat
-                  </h3>
-                  <p className="text-sm text-zinc-500">
-                    Sabado 20 de Diciembre · 10:00 AM - 1:30 PM
-                  </p>
-                </div>
-              </div>
-              <ul className="space-y-3 text-sm text-zinc-400/90">
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Intro express a ExpressJS</span>
+            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
+              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span className="text-3xl">🔥</span>
+                Sesión 2: Avanzado
+              </h3>
+              <p className="text-sm text-zinc-500 mb-6">
+                Sábado 20 de Diciembre · 10:00 AM - 1:30 PM CDMX
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">🔄</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Recap</h4>
+                    <p className="text-sm text-zinc-400/90">Repaso rápido de los conceptos de la sesión anterior</p>
+                  </div>
                 </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Conectando nuestro agente IA a un cliente web</span>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">🧠</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">RAG con Embeddings</h4>
+                    <p className="text-sm text-zinc-400/90">Búsqueda por similitud para respuestas contextuales</p>
+                  </div>
                 </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Trabajando con streams end-to-end</span>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">🛠️</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Tools y UI generativa</h4>
+                    <p className="text-sm text-zinc-400/90">Componentes React generados dinámicamente por la IA</p>
+                  </div>
                 </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Creando un chat con React</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <BiCheckCircle className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Usando Tools y RAG</span>
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
+                    <span className="text-emerald-400 font-bold text-sm">🎯</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-base mb-1">Cierre y recursos</h4>
+                    <p className="text-sm text-zinc-400/90">Q&A, próximos pasos y materiales adicionales</p>
+                  </div>
                 </li>
               </ul>
             </div>
