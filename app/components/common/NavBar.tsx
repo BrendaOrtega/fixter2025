@@ -19,7 +19,7 @@ const navigation = [
   { name: "Blog", link: "/blog" },
   { name: "Claude Code", link: "/claude" },
   { name: "Agentes IA", link: "/agentes" },
-  { name: "AI SDK", link: "/ai-sdk" },
+  { name: "Taller sabatino | AI-SDK", link: "/ai-sdk" },
 ];
 
 export const SquigglyUnderline = () => {
@@ -301,7 +301,7 @@ const MobileMenu = ({
           to="/ai-sdk"
           index={5}
           isOpen={isOpen}
-          title="AI SDK"
+          title="Taller sabatino | AI-SDK"
         />
         {user?.email ? (
           <>

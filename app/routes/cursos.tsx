@@ -39,6 +39,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       videoIds: true,
       id: true,
       slug: true,
+      tipo: true,
     },
   });
   return { courses };

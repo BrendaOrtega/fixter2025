@@ -433,7 +433,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
             });
           } catch (error) {
             console.error(`Error sending batch ${i}:`, error);
-            results.push({ success: false, batch, error: error.message });
+            results.push({ success: false, batch, error: error instanceof Error ? error.message : "Error desconocido" });
           }
 
           // Esperar 1 segundo entre lotes para evitar rate limiting

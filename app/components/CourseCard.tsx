@@ -9,10 +9,13 @@ import { useRef } from "react";
 export const CourseCard = ({
   course,
   to,
+  courseSlug,
 }: {
   to?: string;
   course: Partial<Course>;
+  courseSlug?: string;
 }) => {
+  const isProximamente = course.tipo === "proximamente";
   const videosLength = useVideosLength(course.id);
   const z = useSpring(0, { bounce: 0 });
   const {
@@ -35,10 +38,14 @@ export const CourseCard = ({
   const ref = useRef(null);
   const isInview = useInView(ref, { once: true });
 
+  const Wrapper = isProximamente ? "div" : Link;
+  const wrapperProps = isProximamente
+    ? { className: "grid-cols-1 relative w-full h-[480px] cursor-not-allowed" }
+    : { to: to || `/cursos/${course.slug}/detalle`, className: "grid-cols-1 relative w-full h-[480px]" };
+
   return (
-    <Link
-      to={to || `/cursos/${course.slug}/detalle`}
-      className="grid-cols-1 relative w-full h-[480px]"
+    <Wrapper
+      {...wrapperProps as any}
       style={{
         transformStyle: "preserve-3d",
         perspective: 900,
@@ -49,19 +56,24 @@ export const CourseCard = ({
       }}
       ref={ref}
     >
+      {isProximamente && (
+        <div className="absolute -top-2 -right-2 z-20 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+          PRÓXIMAMENTE
+        </div>
+      )}
       <motion.div
         style={{
           rotateX: springX,
           rotateY: springY,
           transformStyle: "preserve-3d",
           perspective: 600,
-          boxShadow: " 0px 0px 24px 0px #37ab93",
+          boxShadow: isProximamente ? "0px 0px 24px 0px #f97316" : "0px 0px 24px 0px #37ab93",
         }}
         ref={containerRef}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="pt-2 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full"
+        onMouseMove={isProximamente ? undefined : handleMouseMove}
+        onMouseEnter={isProximamente ? undefined : handleMouseEnter}
+        onMouseLeave={isProximamente ? undefined : handleMouseLeave}
+        className={`pt-2 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full ${isProximamente ? "opacity-80" : ""}`}
       >
         <motion.img
           style={{ z: imgZ }}
@@ -105,6 +117,6 @@ export const CourseCard = ({
           )}
         </motion.div>
       </motion.div>
-    </Link>
+    </Wrapper>
   );
 };

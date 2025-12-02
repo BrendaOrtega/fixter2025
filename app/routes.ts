@@ -26,14 +26,10 @@ export default [
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
   // Claude Code Workshop
   route("claude", "routes/claude.tsx"),
-  // Gemini CLI Workshop
-  route("gemini", "routes/gemini.tsx"),
   // Agentes IA No-Code Course
   route("agentes", "routes/agentes.tsx"),
   // AI SDK TypeScript Course
   route("ai-sdk", "routes/ai-sdk.tsx"),
-  // LlamaIndex Agent Workflows Course
-  route("llamaindex", "routes/llamaindex.tsx"),
   // Libros
   route("libros", "routes/libros.tsx"),
   // Libro interactivo

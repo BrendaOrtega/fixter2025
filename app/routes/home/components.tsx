@@ -497,17 +497,17 @@ export const HomeHero = () => {
     >
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[95vh] lg:h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
-          {/* Tag de nuevo taller Agentes IA */}
+          {/* Tag de nuevo taller AI-SDK */}
           <div className="flex justify-center md:justify-start mb-6 hidden md:flex ">
-            <Link to="/agentes" className="group">
+            <Link to="/ai-sdk" className="group">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-agentes-primary/10 to-agentes-secondary/10 border border-agentes-primary rounded-full px-4 py-2 hover:from-agentes-primary/30 hover:to-agentes-secondary/30 hover:border-agentes-primary/70 transition-all duration-300"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border border-emerald-500/30 rounded-full px-4 py-2 hover:from-emerald-500/20 hover:to-emerald-600/20 hover:border-emerald-500/50 transition-all duration-300"
               >
-                <span className="text-sm font-semibold text-agentes-primary transition-colors">
-                  ✨ Nuevo taller de Construcción de Agentes IA drag & drop
+                <span className="text-sm font-semibold text-emerald-400 transition-colors">
+                  ✨ Nuevo Taller Sabatino | AI-SDK con TypeScript
                 </span>
               </motion.div>
             </Link>
@@ -530,11 +530,11 @@ export const HomeHero = () => {
             que usan los profesionales de la industria
           </h2>{" "}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
-            <PrimaryButton as="Link" to="/claude" children="Aprender Claude" />
+            <PrimaryButton as="Link" to="/ai-sdk" children="Taller sabatino | AI-SDK" />
             <PrimaryButton
               as="Link"
-              to="/ai-sdk"
-              children="Ir a AI SDK"
+              to="/claude"
+              children="Aprende a usar Claude Code"
               variant="ghost"
             />
             {/* <PrimaryButton

@@ -78,7 +78,7 @@ export const FloatingPromo = () => {
                   animate={{ opacity: 1, y: -10, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute bottom-full left-0 mb-0 w-80 bg-zinc-900 rounded-2xl shadow-xl border border-blue-500/40 p-4 z-10"
+                  className="absolute bottom-full left-0 mb-0 w-80 bg-zinc-900 rounded-2xl shadow-xl border border-emerald-500/40 p-4 z-10"
                 >
                   {/* Close button */}
                   <button
@@ -104,8 +104,8 @@ export const FloatingPromo = () => {
                     </h4>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Domina retrieval, memory y agents con TypeScript. 4
-                      sesiones prácticas con proyectos incluidos.
+                      Aprende streaming, useChat, RAG y Tools con TypeScript. 2
+                      sesiones sabatinas de 3.5 horas cada una.
                     </p>
 
                     <div className="flex items-center justify-between">
@@ -116,7 +116,7 @@ export const FloatingPromo = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleClick}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors"
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
                         Ver Taller →
                       </motion.button>
@@ -135,27 +135,12 @@ export const FloatingPromo = () => {
               transition={{ duration: 0.3 }}
               className="relative cursor-pointer"
             >
-              {/* Notification badge */}
-              <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  backgroundColor: ["#3b82f6", "#60a5fa", "#3b82f6"],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                }}
-                className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center z-30"
-              >
-                <HiSparkles className="w-2 h-2 text-white" />
-              </motion.div>
 
               {/* Main button */}
               <motion.div
-                className="relative z-20 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-2xl shadow-2xl border border-blue-500/30"
+                className="relative z-20 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/30"
                 whileHover={{
-                  boxShadow: "0 20px 40px rgba(59, 130, 246, 0.3)",
+                  boxShadow: "0 20px 40px rgba(16, 185, 129, 0.3)",
                 }}
                 onClick={handleClick}
               >
@@ -194,7 +179,7 @@ export const FloatingPromo = () => {
                 repeat: Infinity,
                 repeatType: "reverse",
               }}
-              className="absolute inset-0 bg-blue-500 rounded-2xl -z-10"
+              className="absolute inset-0 bg-emerald-500 rounded-2xl -z-10"
             />
           </div>
         </motion.div>
