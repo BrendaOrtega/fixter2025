@@ -72,6 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         metadata: {
           type: "aisdk-workshop",
           totalPrice: String(totalPrice),
+          courseSlug: "ai-sdk",
         },
         mode: "payment",
         line_items: [

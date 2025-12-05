@@ -6,9 +6,11 @@ import { successPurchase } from "~/mailSenders/successPurchase";
 import { purchaseCongrats } from "~/mailSenders/purchaseCongrats";
 import { sendAisdkWelcome } from "~/mailSenders/sendAisdkWelcome";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+// Inicialización lazy para evitar error durante build
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const stripe = getStripe();
   if (request.method !== "POST") return;
 
   const webhookSecret = process.env.STRIPE_SIGN as string;
@@ -41,9 +43,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
 
-      // Handle AI SDK workshop - no course required
+      // Handle AI SDK workshop - assigns ai-sdk course
       if (session.metadata.type === "aisdk-workshop") {
-        const userName = session.customer_details?.name || session.metadata.name;
+        const userName =
+          session.customer_details?.name || session.metadata.name;
+
+        // Buscar el curso ai-sdk para asignarlo
+        const aisdkCourse = await db.course.findUnique({
+          where: { slug: "ai-sdk" },
+        });
 
         await db.user.upsert({
           where: { email },
@@ -52,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             username: email,
             displayName: userName,
             phoneNumber: session.customer_details?.phone,
-            courses: [],
+            courses: aisdkCourse ? [aisdkCourse.id] : [],
             tags: ["newsletter", "aisdk-workshop-paid"],
             metadata: {
               purchase: {
@@ -60,15 +68,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 totalPrice: Number(session.metadata.totalPrice || 4990),
                 paidAt: new Date().toISOString(),
                 sessionId: session.id,
-              }
+              },
             },
             confirmed: true,
-            role: "STUDENT"
+            role: "STUDENT",
           },
           update: {
             displayName: userName || undefined,
             phoneNumber: session.customer_details?.phone || undefined,
             tags: { push: ["aisdk-workshop-paid"] },
+            ...(aisdkCourse && { courses: { push: aisdkCourse.id } }), // 🤔😵‍💫
           },
         });
 
@@ -102,18 +111,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
       // Build tags based on metadata
       const tags = ["newsletter"];
-      
+
       // Add purchase-specific tags
-      if (session.metadata.type === "claude-workshop" || session.metadata.type === "claude-workshop-direct") {
+      if (
+        session.metadata.type === "claude-workshop" ||
+        session.metadata.type === "claude-workshop-direct"
+      ) {
         tags.push("claude-course-paid");
         if (session.metadata.type === "claude-workshop-direct") {
           tags.push("direct-purchase");
         } else {
-          if (session.metadata.experienceLevel) tags.push(`level-${session.metadata.experienceLevel}`);
-          if (session.metadata.contextObjective) tags.push(`context-${session.metadata.contextObjective}`);
+          if (session.metadata.experienceLevel)
+            tags.push(`level-${session.metadata.experienceLevel}`);
+          if (session.metadata.contextObjective)
+            tags.push(`context-${session.metadata.contextObjective}`);
         }
       }
-      
+
       // Store any additional purchase metadata
       let purchaseMetadata = {};
       if (session.metadata.selectedModules) {
@@ -122,10 +136,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           totalPrice: Number(session.metadata.totalPrice || 0),
           paidAt: new Date().toISOString(),
           sessionId: session.id,
-          purchaseType: session.metadata.type || "standard"
+          purchaseType: session.metadata.type || "standard",
         };
       }
-      
+
       const user = await db.user.upsert({
         where: {
           email,
@@ -134,22 +148,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           email,
           username: email,
           displayName: session.metadata.name || session.customer_details?.name,
-          phoneNumber: session.metadata.phone || session.customer_details?.phone,
+          phoneNumber:
+            session.metadata.phone || session.customer_details?.phone,
           courses: [course.id],
           tags,
-          metadata: Object.keys(purchaseMetadata).length > 0 ? { purchase: purchaseMetadata } : {},
+          metadata:
+            Object.keys(purchaseMetadata).length > 0
+              ? { purchase: purchaseMetadata }
+              : {},
           confirmed: true,
-          role: "STUDENT"
+          role: "STUDENT",
         },
         update: {
           courses: { push: course.id },
-          displayName: session.metadata.name || session.customer_details?.name || undefined,
+          displayName:
+            session.metadata.name ||
+            session.customer_details?.name ||
+            undefined,
           phoneNumber: session.metadata.phone || undefined,
           tags: { push: tags },
-          metadata: Object.keys(purchaseMetadata).length > 0 ? {
-            ...(await db.user.findUnique({ where: { email }, select: { metadata: true }}))?.metadata,
-            purchase: purchaseMetadata
-          } : undefined
+          metadata:
+            Object.keys(purchaseMetadata).length > 0
+              ? {
+                  ...(
+                    await db.user.findUnique({
+                      where: { email },
+                      select: { metadata: true },
+                    })
+                  )?.metadata,
+                  purchase: purchaseMetadata,
+                }
+              : undefined,
         },
       });
       await successPurchase({
