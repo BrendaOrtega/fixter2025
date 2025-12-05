@@ -25,8 +25,7 @@ const ACCENT = "emerald";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
-    title:
-      "Taller AI SDK para Principiantes | TypeScript + React | FixterGeek",
+    title: "Taller AI SDK para Principiantes | TypeScript + React | FixterGeek",
     description:
       "Aprende a construir aplicaciones con IA usando Vercel AI SDK. Streaming, useChat, archivos, RAG y Tools en 2 sesiones practicas de 3.5 horas.",
     url: "https://www.fixtergeek.com/ai-sdk",
@@ -580,38 +579,62 @@ export default function AISdkPage() {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">👋</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      👋
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">Introducción</h4>
-                    <p className="text-sm text-zinc-400/90">Bienvenida, setup del entorno y conceptos clave de AI SDK</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      Introducción
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      Bienvenida, setup del entorno y conceptos clave de AI SDK
+                    </p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">⚡</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      ⚡
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">Streaming básico</h4>
-                    <p className="text-sm text-zinc-400/90">Express + vanilla JS para entender el flujo de datos</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      Streaming básico
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      Express + vanilla JS para entender el flujo de datos
+                    </p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">⚛️</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      ⚛️
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">Cliente React</h4>
-                    <p className="text-sm text-zinc-400/90">useChat hook del AI SDK 5 para crear interfaces de chat</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      Cliente React
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      useChat hook del AI SDK 5 para crear interfaces de chat
+                    </p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">📁</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      🛠️
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">Subida de archivos</h4>
-                    <p className="text-sm text-zinc-400/90">Añadir contexto a tus conversaciones con documentos</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      Tools y UI generativa
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      Componentes React generados dinámicamente por la IA
+                    </p>
                   </div>
                 </li>
               </ul>
@@ -629,38 +652,63 @@ export default function AISdkPage() {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">🔄</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      🔄
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">Recap</h4>
-                    <p className="text-sm text-zinc-400/90">Repaso rápido de los conceptos de la sesión anterior</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      Recap
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      Repaso rápido de los conceptos de la sesión anterior
+                    </p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">🧠</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      📁
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">RAG con Embeddings</h4>
-                    <p className="text-sm text-zinc-400/90">Búsqueda por similitud para respuestas contextuales</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      Subida de archivos
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      Añadir contexto a tus conversaciones con documentos
+                    </p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">🛠️</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      🧠
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">Tools y UI generativa</h4>
-                    <p className="text-sm text-zinc-400/90">Componentes React generados dinámicamente por la IA</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      RAG con Embeddings
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      Búsqueda por similitud para respuestas contextuales
+                    </p>
                   </div>
                 </li>
+
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">🎯</span>
+                    <span className="text-emerald-400 font-bold text-sm">
+                      🎯
+                    </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-base mb-1">Cierre y recursos</h4>
-                    <p className="text-sm text-zinc-400/90">Q&A, próximos pasos y materiales adicionales</p>
+                    <h4 className="font-semibold text-white text-base mb-1">
+                      Cierre y recursos
+                    </h4>
+                    <p className="text-sm text-zinc-400/90">
+                      Q&A, próximos pasos y materiales adicionales
+                    </p>
                   </div>
                 </li>
               </ul>
