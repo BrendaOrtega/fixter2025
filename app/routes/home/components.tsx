@@ -8,7 +8,7 @@ import { JackPotSection } from "~/components/Jackpot";
 import { useEffect, useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
-import type { Course } from "@prisma/client";
+import type { Course } from "~/types/models";
 import { useFetcher, Link } from "react-router";
 import { Footer } from "~/components/Footer";
 import { Banner } from "~/components/common/Banner";

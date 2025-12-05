@@ -1,6 +1,6 @@
 import { db } from "~/.server/db";
 import type { Route } from "./+types/postList";
-import type { Post } from "@prisma/client";
+import type { Post } from "~/types/models";
 import { PostForm } from "~/components/forms/PostForm";
 import slugify from "slugify";
 import { z } from "zod";

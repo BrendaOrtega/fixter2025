@@ -1,4 +1,4 @@
-import type { User } from "@prisma/client";
+import type { User } from "~/types/models";
 import { useEffect } from "react";
 import { useFetcher, useLocation } from "react-router";
 

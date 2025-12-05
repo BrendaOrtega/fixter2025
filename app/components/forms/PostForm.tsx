@@ -1,7 +1,7 @@
 import { useFetcher } from "react-router";
 import { Input } from "./CourseForm";
 import Spinner from "../common/Spinner";
-import type { Post } from "@prisma/client";
+import type { Post } from "~/types/models";
 import { SelectInput } from "./SelectInput";
 
 export const PostForm = ({

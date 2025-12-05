@@ -1,7 +1,7 @@
 import { db } from "~/.server/db";
 import { redirect } from "react-router";
 import type { Route } from "../+types/cursos";
-import type { Course } from "@prisma/client";
+import type { Course } from "~/types/models";
 import { useState } from "react";
 import { Drawer } from "~/components/viewer/SimpleDrawer";
 import { CourseForm } from "~/components/forms/CourseForm";

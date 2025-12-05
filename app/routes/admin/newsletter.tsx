@@ -1,4 +1,4 @@
-import type { Newsletter } from "@prisma/client";
+import type { Newsletter } from "~/types/models";
 import { db } from "~/.server/db";
 import type { Route } from "./+types/newsletter";
 import slugify from "slugify";

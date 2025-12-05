@@ -1,4 +1,4 @@
-import type { Post } from "@prisma/client";
+import type { Post } from "~/types/models";
 import { IoArrowForward, IoClose } from "react-icons/io5";
 import { Link } from "react-router";
 

@@ -8,7 +8,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Spinner from "../common/Spinner";
 import { FaTrash } from "react-icons/fa6";
 import { useFetcher, useSubmit } from "react-router";
-import type { Course, Video } from "@prisma/client";
+import type { Course, Video } from "~/types/models";
 import { Drawer } from "../viewer/SimpleDrawer";
 
 export const CourseForm = ({

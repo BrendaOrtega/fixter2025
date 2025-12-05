@@ -1,4 +1,4 @@
-import type { Post } from "@prisma/client";
+import type { Post } from "~/types/models";
 import { db } from "~/.server/db";
 
 export const postSearch = async (search: string) => {

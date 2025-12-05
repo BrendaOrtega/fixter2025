@@ -6,7 +6,7 @@ import SimpleFooter from "~/components/common/SimpleFooter";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { useSearchParams, type LoaderFunctionArgs } from "react-router";
 
-import type { Course } from "@prisma/client";
+import type { Course } from "~/types/models";
 import type { Route } from "./+types/mis-cursos";
 import getMetaTags from "~/utils/getMetaTags";
 

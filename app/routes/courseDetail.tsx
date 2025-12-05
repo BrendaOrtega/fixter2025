@@ -6,7 +6,7 @@ import { data, Form, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { useVideosLength } from "~/hooks/useVideosLength";
 import { formatDuration } from "./cursos";
-import type { Course, Video } from "@prisma/client";
+import type { Course, Video } from "~/types/models";
 import { getVideoTitles } from "~/.server/dbGetters";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
 import { motion, useSpring, useTransform } from "motion/react";

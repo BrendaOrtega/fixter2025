@@ -1,4 +1,4 @@
-import type { Post } from "@prisma/client";
+import type { Post } from "~/types/models";
 
 export const Autor = ({
   photoUrl,

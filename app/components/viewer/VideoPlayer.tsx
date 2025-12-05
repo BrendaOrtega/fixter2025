@@ -1,4 +1,4 @@
-import { type Video } from "@prisma/client";
+import type { Video } from "~/types/models";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { FaGooglePlay } from "react-icons/fa6";

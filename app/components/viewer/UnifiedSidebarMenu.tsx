@@ -1,4 +1,4 @@
-import { type Video } from "@prisma/client";
+import type { Video } from "~/types/models";
 import { Link } from "react-router";
 import {
   AnimatePresence,

@@ -4,7 +4,7 @@ import { Footer } from "~/components/Footer";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import type { Route } from "./+types/cursos";
-import type { Course } from "@prisma/client";
+import type { Course } from "~/types/models";
 import { Header } from "~/components/common/Header";
 import { CourseCard } from "~/components/CourseCard";
 import { cn } from "~/utils/cn";

@@ -6,7 +6,7 @@ import { Link, useLocation, useNavigate, type To } from "react-router";
 import { AiFillInstagram } from "react-icons/ai";
 import { BsLinkedin } from "react-icons/bs";
 import { useEffect, useState } from "react";
-import type { User } from "@prisma/client";
+import type { User } from "~/types/models";
 import { Youtube } from "../icons/Youtube";
 import { useSelf } from "~/hooks/useSelf";
 import { cn } from "~/utils/cn";
