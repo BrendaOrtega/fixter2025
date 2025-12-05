@@ -72,14 +72,32 @@ export const CourseForm = ({
 
   const [show, setShow] = useState(false);
 
+  const [pendingVideoAction, setPendingVideoAction] = useState<
+    "add" | "edit" | null
+  >(null);
+
   const onVideoFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setVideoErrors({});
+
     const fd = new FormData(event.currentTarget);
     const form = Object.fromEntries(fd);
-    form.courseIds = [course.id]; // @todo improve
+    form.courseIds = [course.id];
+
+    // Validación frontend
+    const errors: Record<string, string> = {};
+    if (!form.title || String(form.title).trim() === "") {
+      errors.title = "El título es requerido";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setVideoErrors(errors);
+      return;
+    }
 
     // edit
     if (editingVideo) {
+      setPendingVideoAction("edit");
       fetcher.submit(
         {
           intent: "admin_update_video",
@@ -87,26 +105,49 @@ export const CourseForm = ({
         },
         { method: "POST", action: "/api/course" }
       );
-      setShow(false);
-      onSubmit?.();
       return;
     }
 
-    // validation @todo
-    if (form.title && form.storageLink) {
-      // submit
-      fetcher.submit(
-        { intent: "admin_add_video", data: JSON.stringify(form) },
-        { method: "POST", action: "/api/course" }
-      );
-      setShow(false);
-      location.reload(); // @todo
-    } else {
-      alert("Checa los datos");
-    }
+    // crear nuevo
+    setPendingVideoAction("add");
+    fetcher.submit(
+      { intent: "admin_add_video", data: JSON.stringify(form) },
+      { method: "POST", action: "/api/course" }
+    );
   };
 
+  // Manejar respuesta del servidor para videos
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data && pendingVideoAction) {
+      const response = fetcher.data as {
+        success?: boolean;
+        errors?: Record<string, string>;
+      };
+
+      if (response.success === false && response.errors) {
+        setVideoErrors(response.errors);
+        setPendingVideoAction(null);
+        return;
+      }
+
+      // Éxito - cerrar y refrescar lista
+      if (response.success === true || response.video) {
+        setShow(false);
+        setEditingVideo(undefined);
+        setPendingVideoAction(null);
+        // Refrescar lista de videos
+        if (course.id) {
+          fetcher.submit(
+            { intent: "admin_get_videos_for_course", courseId: course.id },
+            { method: "POST", action: "/api/course" }
+          );
+        }
+      }
+    }
+  }, [fetcher.state, fetcher.data, pendingVideoAction]);
+
   const [editingVideo, setEditingVideo] = useState<Partial<Video>>();
+  const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
   const onVideoClick = (vid: Partial<Video>) => {
     setShow(true);
     setEditingVideo(vid);
@@ -115,6 +156,8 @@ export const CourseForm = ({
   const handleVideoFormClose = () => {
     setShow(false);
     setEditingVideo(undefined);
+    setVideoErrors({});
+    setPendingVideoAction(null);
   };
 
   return (
@@ -126,6 +169,11 @@ export const CourseForm = ({
         onClose={handleVideoFormClose}
       >
         {/* Video form */}
+        {videoErrors._form && (
+          <p className="text-red-500 text-sm mb-2 p-2 bg-red-500/10 rounded">
+            {videoErrors._form}
+          </p>
+        )}
         <fetcher.Form
           onSubmit={onVideoFormSubmit}
           className="flex flex-col h-full"
@@ -146,6 +194,7 @@ export const CourseForm = ({
             label="Título"
             name="title"
             placeholder="Título del video"
+            error={videoErrors.title}
           />
           <Input
             defaultValue={editingVideo?.storageLink}
@@ -197,12 +246,14 @@ export const CourseForm = ({
           />
           <button
             type="submit"
+            disabled={pendingVideoAction !== null}
             className={cn(
               "bg-black mt-auto border rounded-xl py-3 font-bold text-2xl hover:bg-gray-900 active:bg-black",
-              "absolute bottom-0 left-0 right-0"
+              "absolute bottom-0 left-0 right-0",
+              pendingVideoAction !== null && "opacity-50 cursor-not-allowed"
             )}
           >
-            Guardar
+            {pendingVideoAction !== null ? "Guardando..." : "Guardar"}
           </button>
         </fetcher.Form>
       </Drawer>
@@ -379,12 +430,16 @@ export const Input = ({
       <Element
         defaultValue={defaultValue || undefined}
         placeholder={placeholder}
-        className={cn("rounded-lg text-black", className)}
+        className={cn(
+          "rounded-lg text-black",
+          error && "ring-2 ring-red-500 border-red-500",
+          className
+        )}
         type={type}
         name={name}
         {...register?.(name, registerOptions)}
       />
-      <p>{error}</p>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
     </label>
   );
 };

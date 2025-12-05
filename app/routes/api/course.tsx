@@ -38,17 +38,37 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   if (intent === "admin_add_video") {
     const data = JSON.parse(formData.get("data") as string);
-    const slug = slugify(data.title) + "-" + randomUUID();
-    const isPublic = data.isPublic === "on" ? true : undefined;
-    const index = Number(data.index);
-    return await db.video.create({
-      data: {
-        ...data,
-        slug,
-        index,
-        isPublic,
-      },
-    });
+
+    // Validación
+    const errors: Record<string, string> = {};
+    if (!data.title || String(data.title).trim() === "") {
+      errors.title = "El título es requerido";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return { success: false, errors };
+    }
+
+    try {
+      const slug = slugify(data.title) + "-" + randomUUID();
+      const isPublic = data.isPublic === "on" ? true : undefined;
+      const index = Number(data.index);
+      const video = await db.video.create({
+        data: {
+          ...data,
+          slug,
+          index,
+          isPublic,
+        },
+      });
+      return { success: true, video };
+    } catch (error) {
+      console.error("Error creando video:", error);
+      return {
+        success: false,
+        errors: { _form: "Error al guardar el video. Intenta de nuevo." },
+      };
+    }
   }
 
   if (intent === "admin_get_videos_for_course") {

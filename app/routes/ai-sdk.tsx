@@ -27,7 +27,7 @@ export const meta = () => {
   const baseMeta = getMetaTags({
     title: "Taller AI SDK para Principiantes | TypeScript + React | FixterGeek",
     description:
-      "Aprende a construir aplicaciones con IA usando Vercel AI SDK. Streaming, useChat, archivos, RAG y Tools en 2 sesiones practicas de 3.5 horas.",
+      "El AI SDK es la biblioteca open source de Vercel para integrar IA en apps web. Aprende streaming, useChat, RAG y Tools en 2 sesiones prácticas.",
     url: "https://www.fixtergeek.com/ai-sdk",
     image: "https://www.fixtergeek.com/courses/ai-sdk.png",
   });
@@ -181,10 +181,20 @@ export default function AISdkPage() {
 
               {/* Subtítulo - Tipografía mejorada */}
               <h2 className="text-lg sm:text-xl lg:text-2xl font-normal text-zinc-400/90 mt-6 leading-[1.6] max-w-2xl">
-                Aprende a construir aplicaciones con IA usando TypeScript y AI
-                SDK. Ideal para principiantes que quieren crear su primer agente
-                inteligente.
+                El AI SDK es la biblioteca open source de Vercel que está
+                revolucionando cómo los desarrolladores integran inteligencia
+                artificial en aplicaciones web. Con soporte nativo para
+                TypeScript, streaming en tiempo real y una API elegante, es la
+                herramienta que equipos de todo el mundo eligen para construir
+                experiencias de IA en producción.
               </h2>
+              <p className="text-base sm:text-lg text-zinc-500 mt-4 leading-relaxed max-w-2xl">
+                En este taller aprenderás paso a paso a crear tu primer chat
+                inteligente, implementar respuestas en streaming que se sienten
+                instantáneas, y construir tools que permiten a tu modelo
+                ejecutar acciones automáticamente. Todo con código que puedes
+                llevar directo a tus proyectos.
+              </p>
 
               {/* Detalles */}
               <div className="flex flex-wrap gap-4 mt-10 text-sm text-zinc-400/90">

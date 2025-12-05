@@ -10,6 +10,7 @@ import type { Course, Video } from "~/types/models";
 import { getVideoTitles } from "~/.server/dbGetters";
 import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
 import { motion, useSpring, useTransform } from "motion/react";
+import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { use3DHover } from "~/hooks/use3DHover";
@@ -46,7 +47,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
   if (!course) throw data("Course Not Found", { status: 404 });
   const videos = await getVideoTitles(course.id);
-  const hasPublicVideos = videos.some(video => video.isPublic);
+  const hasPublicVideos = videos.some((video) => video.isPublic);
   return { course, videos, hasPublicVideos };
 };
 
@@ -111,90 +112,131 @@ const CourseContent = ({
 };
 
 export const Teacher = ({ course }: { course: Partial<Course> }) => {
+  const isHectorBliss =
+    !course.authorName || course.authorName === "Héctor Bliss";
+
   return (
-    <section className="mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto my-[160px]  ">
-      <div className="bg-backface rounded-3xl md:py-10 xl:py-16 md:pl-10 xl:pl-16 pt-6 px-6 w-full relative pb-64 md:pb-16 ">
-        <div className="w-full md:w-[60%]">
-          <span className="text-colorParagraph/50 font-light">
-            ¿Quien es tu instructor?
-          </span>
-          <h3 className="text-white text-3xl font-bold mt-4">
-            {course.authorName ? course.authorName : "Héctor Bliss"}
-          </h3>{" "}
-          {course.authorName === "Héctor Bliss" ? (
-            <div>
-              {" "}
-              <p className="text-colorParagraph font-light mt-8 text-base md:text-lg">
-                Con más de 10 años de experiencia como desarrollador de software
-                profesional e instructor tecnológico, Héctor Bliss disfruta de
-                simplificar temas complejos para que sus estudiantes
-                puedan aprender de la forma más práctica, rápida y
-                divertida. Héctor ha sido instructor en diferentes bootcamps
-                internacionales, y ha grabado infinidad de cursos en línea. Por
-                medio de su canal de youtube enseña los temas más actualizados
-                de la industria tecnológica, acercando las herramientas que usan
-                los profesionales a nivel mundial a sus estudiantes de habla
-                hispana.
-              </p>
-              <p className="text-colorParagraph font-light mt-4 text-base md:text-lg">
-                Si no has experimentado una clase con Héctor Bliss, es tu
-                momento de comprobar que aprender no tiene que ser ni díficil ni
-                aburrido.
-              </p>{" "}
+    <section className="py-10 lg:py-20 relative overflow-hidden bg-background">
+      {/* LiquidEther Background */}
+      <div className="absolute inset-0 z-0">
+        <LiquidEther
+          colors={["#85DDCB", "#37AB93", "#186656"]}
+          mouseForce={50}
+          cursorSize={150}
+          isViscous={false}
+          viscous={30}
+          iterationsViscous={32}
+          iterationsPoisson={32}
+          resolution={0.3}
+          isBounce={false}
+          autoDemo={true}
+          autoSpeed={0.3}
+          autoIntensity={1.5}
+          takeoverDuration={0.1}
+          autoResumeDelay={2000}
+          autoRampDuration={0.3}
+        />
+      </div>
+      <div className="relative container mx-auto px-4 z-10 pointer-events-none">
+        <div className="max-w-4xl mx-auto pointer-events-auto">
+          <div className="rounded-3xl p-8 md:p-12 relative overflow-hidden bg-backface/90 backdrop-blur-sm">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <span className="font-light text-colorParagraph">
+                  Tu instructor
+                </span>
+                <h3 className="text-3xl font-bold mt-2 mb-4 text-brand-500">
+                  {isHectorBliss ? "Héctor Bliss" : course.authorName}
+                </h3>
+                {isHectorBliss ? (
+                  <>
+                    <p className="mb-6 text-colorParagraph">
+                      Pionero en hacer la tecnología accesible para todos, con
+                      más de 10 años enseñando desarrollo de software y una
+                      comunidad de más de 2,000 estudiantes activos.
+                    </p>
+                    <p className="mb-6 text-colorParagraph">
+                      Especializado en simplificar temas complejos de forma
+                      práctica y divertida. Ha sido instructor en bootcamps
+                      internacionales y creador de infinidad de cursos en línea.
+                    </p>
+                  </>
+                ) : (
+                  <p className="mb-6 text-colorParagraph">
+                    {course.authorDescription}
+                  </p>
+                )}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-2xl font-bold text-brand-500">10+</div>
+                    <div className="text-xs text-colorCaption">
+                      Años enseñando
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-brand-500">2K+</div>
+                    <div className="text-xs text-colorCaption">Estudiantes</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-brand-500">
+                      100%
+                    </div>
+                    <div className="text-xs text-colorCaption">Práctico</div>
+                  </div>
+                </div>
+                {/* Social Links */}
+                <div className="flex gap-4 mt-6">
+                  <a
+                    href={
+                      isHectorBliss
+                        ? "https://www.linkedin.com/in/hectorbliss/"
+                        : course.authorSocial || "#"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-colorCaption hover:text-brand-500 transition-colors"
+                  >
+                    <BsLinkedin className="text-2xl" />
+                  </a>
+                  <a
+                    href={
+                      isHectorBliss
+                        ? "https://github.com/blissito"
+                        : course.authorSocial || "#"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-colorCaption hover:text-brand-500 transition-colors"
+                  >
+                    <BsGithub className="text-2xl" />
+                  </a>
+                  <a
+                    href={
+                      isHectorBliss
+                        ? "https://x.com/HectorBlisS"
+                        : course.authorSocial || "#"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-colorCaption hover:text-brand-500 transition-colors"
+                  >
+                    <BsTwitter className="text-2xl" />
+                  </a>
+                </div>
+              </div>
+              <div className="relative">
+                <div
+                  className="absolute inset-0 rounded-full blur-3xl opacity-20"
+                  style={{ backgroundColor: "#85DDCB" }}
+                ></div>
+                <img
+                  className="w-full rounded-2xl relative z-10"
+                  src={isHectorBliss ? "/courses/titor.png" : course.photoUrl}
+                  alt={isHectorBliss ? "Héctor Bliss" : course.authorName}
+                />
+              </div>
             </div>
-          ) : (
-            <p className="text-colorParagraph font-light mt-8 text-base md:text-lg">
-              {" "}
-              {course.authorDescription}
-            </p>
-          )}
-        </div>
-        <div className=" absolute -bottom-16 -right-8 md:-right-16">
-          <a
-            href={
-              course.authorName === "Héctor Bliss"
-                ? "https://www.linkedin.com/in/hectorbliss/"
-                : course.authorSocial
-            }
-            target="_blank"
-          >
-            <motion.span>
-              <BsLinkedin className="text-3xl absolute -top-1 md:top-2 text-colorCaption/50" />
-            </motion.span>
-          </a>
-          <a
-            href={
-              course.authorName === "Héctor Bliss"
-                ? "https://github.com/blissito"
-                : course.authorSocial
-            }
-            target="_blank"
-          >
-            <motion.span style={{}}>
-              <BsGithub className="text-3xl absolute top-16 -left-12 text-colorCaption/50" />
-            </motion.span>
-          </a>
-          <a
-            href={
-              course.authorName === "Héctor Bliss"
-                ? "https://x.com/HectorBlisS"
-                : course.authorSocial
-            }
-            target="_blank"
-          >
-            <motion.span>
-              <BsTwitter className="text-3xl absolute -top-10 left-16 text-colorCaption/50" />
-            </motion.span>
-          </a>
-          <img
-            className="w-60 md:w-[320px] rounded-full"
-            src={
-              course.authorName === "Héctor Bliss"
-                ? "/courses/titor.png"
-                : course.photoUrl
-            }
-            alt={course.authorName ? course.authorName : "Héctor Bliss"}
-          />
+          </div>
         </div>
       </div>
     </section>
