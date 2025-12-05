@@ -531,7 +531,7 @@ export default function AISdkPage() {
           </div>
         </section>
 
-        {/* Sección Video */}
+        {/* Sección Videos */}
         <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
           <div className="text-center mb-10">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 tracking-tight">
@@ -541,11 +541,20 @@ export default function AISdkPage() {
               Una probadita de lo que aprenderás en el taller
             </p>
           </div>
-          <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
               <iframe
                 src="https://www.youtube.com/embed/yGHVRLhiUcQ"
                 title="AI SDK para Principiantes"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
+              <iframe
+                src="https://www.youtube.com/embed/ZQrLmP11DCo"
+                title="AI SDK Demo"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
