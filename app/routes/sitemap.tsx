@@ -1,8 +1,16 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 
+// Helper para formatear fecha ISO correctamente
+const formatDate = (date: Date | null | undefined): string => {
+  if (!date) return new Date().toISOString().split("T")[0];
+  return new Date(date).toISOString().split("T")[0];
+};
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
+  const baseUrl = "https://www.fixtergeek.com";
+
   const allPosts = await db.post.findMany({
     where: { published: true },
   });
@@ -11,44 +19,57 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     where: { published: true },
   });
 
+  // Cursos dinámicos - URL corregida: /cursos/{slug}/detalle
   const courseItems = courses.map((course) => {
     return [
       `<url>`,
-      `<loc>${url.origin}/courses/${course.slug}/detail</loc>`,
-      `<lastmod>${course.updatedAt}</lastmod>`,
+      `<loc>${baseUrl}/cursos/${course.slug}/detalle</loc>`,
+      `<lastmod>${formatDate(course.updatedAt)}</lastmod>`,
       `<changefreq>monthly</changefreq>`,
       `<priority>0.8</priority>`,
       `</url>`,
     ].join("");
   });
 
+  // Posts del blog
   const postItems = allPosts.map((post) => {
     return [
       `<url>`,
-      `<loc>${url.origin}/blog/${post.slug}</loc>`,
-      `<lastmod>${post.updatedAt || post.createdAt}</lastmod>`,
+      `<loc>${baseUrl}/blog/${post.slug}</loc>`,
+      `<lastmod>${formatDate(post.updatedAt || post.createdAt)}</lastmod>`,
       `<changefreq>monthly</changefreq>`,
       `<priority>0.7</priority>`,
       `</url>`,
     ].join("");
   });
 
+  // Páginas estáticas incluyendo landing pages de talleres
   const staticPages = [
     { path: "", priority: "1.0", changefreq: "weekly" },
     { path: "/blog", priority: "0.9", changefreq: "daily" },
     { path: "/cursos", priority: "0.9", changefreq: "weekly" },
-    { path: "/eventos", priority: "0.6", changefreq: "monthly" },
+    // Landing pages de talleres (importantes para LLMs)
+    { path: "/ai-sdk", priority: "0.9", changefreq: "weekly" },
+    { path: "/claude", priority: "0.9", changefreq: "weekly" },
+    { path: "/agentes", priority: "0.9", changefreq: "weekly" },
+    // Libros
+    { path: "/libros", priority: "0.8", changefreq: "monthly" },
+    { path: "/libros/domina_claude_code", priority: "0.8", changefreq: "weekly" },
+    { path: "/libros/llamaindex", priority: "0.8", changefreq: "weekly" },
+    // Otras páginas
     { path: "/faq", priority: "0.5", changefreq: "monthly" },
     { path: "/guides", priority: "0.6", changefreq: "monthly" },
     { path: "/tutoriales", priority: "0.6", changefreq: "monthly" },
     { path: "/subscribe", priority: "0.4", changefreq: "yearly" },
   ];
 
+  const today = new Date().toISOString().split("T")[0];
+
   const staticItems = staticPages.map(({ path, priority, changefreq }) =>
     [
       `<url>`,
-      `<loc>${url.origin}${path}</loc>`,
-      `<lastmod>${new Date().toISOString()}</lastmod>`,
+      `<loc>${baseUrl}${path}</loc>`,
+      `<lastmod>${today}</lastmod>`,
       `<changefreq>${changefreq}</changefreq>`,
       `<priority>${priority}</priority>`,
       `</url>`,

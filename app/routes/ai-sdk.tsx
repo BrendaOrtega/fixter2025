@@ -30,10 +30,120 @@ export const meta = () => {
       "El AI SDK es la biblioteca open source de Vercel para integrar IA en apps web. Aprende streaming, useChat, RAG y Tools en 2 sesiones prácticas.",
     url: "https://www.fixtergeek.com/ai-sdk",
     image: "https://www.fixtergeek.com/courses/ai-sdk.png",
+    keywords:
+      "AI SDK, Vercel AI SDK, TypeScript, React, inteligencia artificial, streaming, useChat, RAG, embeddings, curso IA, taller programación",
   });
+
+  // Schema.org JSON-LD para LLMs y SEO
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Course",
+        "@id": "https://www.fixtergeek.com/ai-sdk#course",
+        name: "Taller AI SDK para Principiantes",
+        description:
+          "El AI SDK es la biblioteca open source de Vercel para integrar IA en apps web. Aprende streaming, useChat, RAG y Tools en 2 sesiones prácticas con TypeScript y React.",
+        url: "https://www.fixtergeek.com/ai-sdk",
+        provider: {
+          "@type": "Organization",
+          "@id": "https://www.fixtergeek.com/#organization",
+          name: "FixterGeek",
+          url: "https://www.fixtergeek.com",
+          logo: "https://www.fixtergeek.com/logo.png",
+          sameAs: [
+            "https://www.linkedin.com/company/fixtergeek",
+            "https://github.com/FixterGeek",
+            "https://x.com/FixterGeek",
+          ],
+        },
+        instructor: {
+          "@type": "Person",
+          name: "Héctor Bliss",
+          url: "https://www.linkedin.com/in/hectorbliss/",
+          sameAs: [
+            "https://github.com/blissito",
+            "https://x.com/HectorBlisS",
+          ],
+        },
+        offers: {
+          "@type": "Offer",
+          price: "4990",
+          priceCurrency: "MXN",
+          availability: "https://schema.org/InStock",
+          validFrom: "2025-12-01",
+          url: "https://www.fixtergeek.com/ai-sdk",
+        },
+        hasCourseInstance: {
+          "@type": "CourseInstance",
+          courseMode: "Online",
+          courseWorkload: "PT7H",
+          startDate: "2025-12-13",
+          endDate: "2025-12-20",
+          instructor: {
+            "@type": "Person",
+            name: "Héctor Bliss",
+          },
+        },
+        inLanguage: "es",
+        coursePrerequisites: "Conocimientos básicos de JavaScript",
+        educationalLevel: "Beginner",
+        teaches: [
+          "Integración de IA en aplicaciones web",
+          "Streaming con AI SDK",
+          "useChat hook de React",
+          "RAG con embeddings",
+          "Tools y UI generativa",
+        ],
+        image: "https://www.fixtergeek.com/courses/ai-sdk.png",
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://www.fixtergeek.com/ai-sdk#webpage",
+        url: "https://www.fixtergeek.com/ai-sdk",
+        name: "Taller AI SDK para Principiantes | FixterGeek",
+        description:
+          "Aprende a integrar inteligencia artificial en tus aplicaciones web con el AI SDK de Vercel.",
+        isPartOf: {
+          "@id": "https://www.fixtergeek.com/#website",
+        },
+        about: {
+          "@id": "https://www.fixtergeek.com/ai-sdk#course",
+        },
+        inLanguage: "es",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.fixtergeek.com/ai-sdk#breadcrumb",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Inicio",
+            item: "https://www.fixtergeek.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Cursos",
+            item: "https://www.fixtergeek.com/cursos",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "AI SDK",
+            item: "https://www.fixtergeek.com/ai-sdk",
+          },
+        ],
+      },
+    ],
+  };
 
   return [
     ...baseMeta,
+    {
+      "script:ld+json": schemaOrg,
+    },
     {
       rel: "preconnect",
       href: "https://fonts.googleapis.com",

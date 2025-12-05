@@ -1,0 +1,81 @@
+# FixterGeek - Cursos de Programación e Inteligencia Artificial
+
+> Plataforma educativa en español especializada en desarrollo web e inteligencia artificial para desarrolladores hispanohablantes.
+
+## Sobre FixterGeek
+
+FixterGeek es una escuela de tecnología fundada por Héctor Bliss, con más de 10 años enseñando desarrollo de software y una comunidad activa de más de 2,000 estudiantes. Nos especializamos en hacer la tecnología accesible para todos, con un enfoque 100% práctico.
+
+## Cursos y Talleres Destacados
+
+### AI SDK con TypeScript
+- **URL**: https://www.fixtergeek.com/ai-sdk
+- **Precio**: $4,990 MXN
+- **Formato**: 2 sesiones en vivo de 3.5 horas cada una
+- **Descripción**: Aprende a integrar inteligencia artificial en aplicaciones web usando el AI SDK de Vercel. Cubre streaming, useChat hook, RAG con embeddings, y tools para UI generativa.
+- **Nivel**: Principiantes
+- **Tecnologías**: TypeScript, React, Node.js, AI SDK 5
+
+### Claude Code - Automatización con IA
+- **URL**: https://www.fixtergeek.com/claude
+- **Descripción**: Taller modular para dominar Claude Code, la CLI oficial de Anthropic. Aprende context management, SDK, subagentes, MCP y automatización.
+- **Formato**: 3 sesiones de 2 horas + sesión bonus privada
+
+### Agentes IA No-Code
+- **URL**: https://www.fixtergeek.com/agentes
+- **Precio**: $4,900 MXN
+- **Descripción**: Construye agentes de IA con herramientas drag-and-drop. Desde chatbots con memoria hasta sistemas RAG empresariales.
+
+## Libros Gratuitos
+
+### Dominando Claude Code
+- **URL**: https://www.fixtergeek.com/libros/domina_claude_code
+- **Formato**: Libro interactivo online + EPUB descargable
+- **Descripción**: Guía completa para desarrolladores que quieren dominar Claude Code en proyectos de producción.
+
+### LlamaIndex Agent Workflows
+- **URL**: https://www.fixtergeek.com/libros/llamaindex
+- **Descripción**: Aprende a construir flujos de trabajo con agentes usando LlamaIndex.
+
+## Blog Técnico
+
+- **URL**: https://www.fixtergeek.com/blog
+- **Temas**: Desarrollo web, TypeScript, React, Node.js, Inteligencia Artificial, Claude, Vercel AI SDK, automatización
+
+## Información de Contacto
+
+- **Email**: brenda@fixter.org
+- **Website**: https://www.fixtergeek.com
+- **Instructor principal**: Héctor Bliss
+- **Redes sociales**:
+  - LinkedIn: https://www.linkedin.com/in/hectorbliss/
+  - GitHub: https://github.com/blissito
+  - Twitter/X: https://x.com/HectorBlisS
+
+## Características de los Cursos
+
+- Sesiones en vivo (no videos pregrabados)
+- Grupos limitados para atención personalizada
+- Código fuente completo incluido
+- Acceso a grabaciones después de las sesiones
+- Comunidad activa de estudiantes
+- Soporte directo con el instructor
+
+## Público Objetivo
+
+- Desarrolladores principiantes que quieren aprender IA
+- Programadores que buscan integrar IA en sus proyectos
+- Profesionales que quieren automatizar tareas con herramientas de IA
+- Estudiantes hispanohablantes de tecnología
+
+## Tecnologías que Enseñamos
+
+- TypeScript / JavaScript
+- React / React Router
+- Node.js
+- Vercel AI SDK
+- Claude / Anthropic API
+- OpenAI API
+- LlamaIndex
+- Embeddings y RAG
+- MCP (Model Context Protocol)

@@ -17,11 +17,122 @@ import { use3DHover } from "~/hooks/use3DHover";
 import Markdown from "~/components/common/Markdown";
 
 export function meta({ data }: Route.MetaArgs) {
-  return getMetaTags({
-    title: data.course.title,
-    description: data.course.description?.slice(0, 50),
-    image: data.course.icon || undefined,
+  const course = data.course;
+  const baseUrl = "https://www.fixtergeek.com";
+  const courseUrl = `${baseUrl}/cursos/${course.slug}/detalle`;
+
+  // Generar descripción optimizada (155 caracteres para SEO)
+  const description = course.summary
+    ? course.summary.slice(0, 155)
+    : course.description
+    ? course.description.replace(/[#*`]/g, "").slice(0, 155)
+    : `Aprende ${course.title} con FixterGeek. Curso práctico en español.`;
+
+  const baseMeta = getMetaTags({
+    title: `${course.title} | Curso Online | FixterGeek`,
+    description,
+    image: course.icon || `${baseUrl}/cover.png`,
+    url: courseUrl,
+    type: "website",
+    keywords: `${
+      course.title
+    }, curso online, programación, FixterGeek, desarrollo web, ${
+      course.level || "principiante"
+    }`,
   });
+
+  // Schema.org JSON-LD para LLMs y SEO
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Course",
+        "@id": `${courseUrl}#course`,
+        name: course.title,
+        description: description,
+        url: courseUrl,
+        image: course.icon || `${baseUrl}/cover.png`,
+        provider: {
+          "@type": "Organization",
+          "@id": `${baseUrl}/#organization`,
+          name: "FixterGeek",
+          url: baseUrl,
+          logo: `${baseUrl}/logo.png`,
+        },
+        instructor: {
+          "@type": "Person",
+          name: course.authorName || "Héctor Bliss",
+        },
+        offers: course.isFree
+          ? {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "MXN",
+              availability: "https://schema.org/InStock",
+            }
+          : {
+              "@type": "Offer",
+              price: String(course.basePrice || 499),
+              priceCurrency: "MXN",
+              availability: "https://schema.org/InStock",
+              url: courseUrl,
+            },
+        inLanguage: "es",
+        educationalLevel:
+          course.level === "avanzado"
+            ? "Advanced"
+            : course.level === "intermedio"
+            ? "Intermediate"
+            : "Beginner",
+        timeRequired: course.duration ? `PT${course.duration}M` : undefined,
+      },
+      {
+        "@type": "WebPage",
+        "@id": `${courseUrl}#webpage`,
+        url: courseUrl,
+        name: `${course.title} | FixterGeek`,
+        description: description,
+        isPartOf: {
+          "@id": `${baseUrl}/#website`,
+        },
+        about: {
+          "@id": `${courseUrl}#course`,
+        },
+        inLanguage: "es",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${courseUrl}#breadcrumb`,
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Inicio",
+            item: baseUrl,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Cursos",
+            item: `${baseUrl}/cursos`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: course.title,
+            item: courseUrl,
+          },
+        ],
+      },
+    ],
+  };
+
+  return [
+    ...baseMeta,
+    {
+      "script:ld+json": schemaOrg, // The elegant way
+    },
+  ];
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -55,8 +166,7 @@ export default function Route({
   loaderData: { course, videos, hasPublicVideos },
 }: Route.ComponentProps) {
   return (
-    // <article className="pt-40">
-    <article>
+    <article className="pt-40">
       <CourseHeader course={course} hasPublicVideos={hasPublicVideos} />
       <CourseContent course={course} videos={videos} />
       <Teacher course={course} />
