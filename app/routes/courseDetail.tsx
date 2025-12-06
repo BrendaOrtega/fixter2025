@@ -8,7 +8,7 @@ import { useVideosLength } from "~/hooks/useVideosLength";
 import { formatDuration } from "./cursos";
 import type { Course, Video } from "~/types/models";
 import { getVideoTitles } from "~/.server/dbGetters";
-import { BsGithub, BsLinkedin, BsTwitter } from "react-icons/bs";
+import { BsGithub, BsLinkedin, BsFacebook } from "react-icons/bs";
 import { motion, useSpring, useTransform } from "motion/react";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
@@ -323,14 +323,14 @@ export const Teacher = ({ course }: { course: Partial<Course> }) => {
                   <a
                     href={
                       isHectorBliss
-                        ? "https://x.com/HectorBlisS"
+                        ? "https://www.facebook.com/blissito"
                         : course.authorSocial || "#"
                     }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-colorCaption hover:text-brand-500 transition-colors"
                   >
-                    <BsTwitter className="text-2xl" />
+                    <BsFacebook className="text-2xl" />
                   </a>
                 </div>
               </div>

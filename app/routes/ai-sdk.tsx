@@ -13,6 +13,7 @@ import {
   BiLayer,
   BiTime,
 } from "react-icons/bi";
+import { BsGithub, BsLinkedin, BsFacebook } from "react-icons/bs";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 
 // ===========================================
@@ -22,6 +23,79 @@ import LiquidEther from "~/components/backgrounds/LiquidEther";
 // El verde FixterGeek (#83F3D3) es cercano a emerald
 // ===========================================
 const ACCENT = "emerald";
+
+// Fecha del taller (13 de diciembre 2025, 10:00 AM CDMX = UTC-6)
+const WORKSHOP_DATE = new Date("2025-12-13T10:00:00-06:00");
+
+// Componente de Countdown
+const CountdownTimer = () => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const difference = WORKSHOP_DATE.getTime() - now.getTime();
+
+      if (difference <= 0) {
+        setIsExpired(true);
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / (1000 * 60)) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  if (isExpired) {
+    return null;
+  }
+
+  const TimeBlock = ({ value, label }: { value: number; label: string }) => (
+    <div className="flex flex-col items-center">
+      <span className="text-2xl sm:text-3xl font-bold text-white tabular-nums">
+        {value.toString().padStart(2, "0")}
+      </span>
+      <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider mt-1">
+        {label}
+      </span>
+    </div>
+  );
+
+  return (
+    <div className="mb-4 p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl">
+      <p className="text-sm text-zinc-300 text-center mb-3 font-medium">
+        El taller comienza en:
+      </p>
+      <div className="flex justify-center items-center gap-3 sm:gap-4">
+        <TimeBlock value={timeLeft.days} label="Días" />
+        <span className="text-xl text-zinc-600 font-light">:</span>
+        <TimeBlock value={timeLeft.hours} label="Horas" />
+        <span className="text-xl text-zinc-600 font-light">:</span>
+        <TimeBlock value={timeLeft.minutes} label="Min" />
+        <span className="text-xl text-zinc-600 font-light">:</span>
+        <TimeBlock value={timeLeft.seconds} label="Seg" />
+      </div>
+    </div>
+  );
+};
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -424,6 +498,9 @@ export default function AISdkPage() {
                         Brendi!
                       </p>
                     </div>
+
+                    {/* Countdown Timer */}
+                    <CountdownTimer />
 
                     {/* Precio destacado */}
                     <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
@@ -911,6 +988,33 @@ export default function AISdkPage() {
                       </div>
                       <div className="text-xs text-zinc-400/90">Práctico</div>
                     </div>
+                  </div>
+                  {/* Social Links */}
+                  <div className="flex gap-4 mt-6">
+                    <a
+                      href="https://www.linkedin.com/in/hectorbliss/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-emerald-400 transition-colors"
+                    >
+                      <BsLinkedin className="text-2xl" />
+                    </a>
+                    <a
+                      href="https://github.com/blissito"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-emerald-400 transition-colors"
+                    >
+                      <BsGithub className="text-2xl" />
+                    </a>
+                    <a
+                      href="https://www.facebook.com/blissito"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-emerald-400 transition-colors"
+                    >
+                      <BsFacebook className="text-2xl" />
+                    </a>
                   </div>
                 </div>
                 <div className="relative">
