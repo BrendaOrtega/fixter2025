@@ -525,7 +525,14 @@ export default function AISdkPage() {
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Codigo fuente de todos los ejercicios</span>
+                        <a
+                          href="https://github.com/blissito/taller-ai-sdk-para-principiantes"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-emerald-400 underline underline-offset-2 transition-colors"
+                        >
+                          Codigo fuente de todos los ejercicios
+                        </a>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
