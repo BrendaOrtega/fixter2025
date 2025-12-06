@@ -214,7 +214,7 @@ const UnifiedMenuButton = ({
       style={{ x }}
       onClick={onToggle}
       className={cn(
-        "fixed bg-[#0C1115] border border-gray-600/40 text-4xl w-14 h-14 text-white top-20 p-2 z-[70] flex items-center justify-center hover:bg-gray-800/80 transition-colors shadow-lg",
+        "fixed bg-[#0C1115] border border-gray-600/40 text-4xl w-14 h-14 text-white top-20 p-2 z-[220] flex items-center justify-center hover:bg-gray-800/80 transition-colors shadow-lg",
         {
           "rounded-r-2xl left-0": !isOpen,
           "rounded-2xl": isOpen,
@@ -271,7 +271,7 @@ const UnifiedMenuContainer = ({
         width: menuWidth,
       }}
       className={cn(
-        "fixed z-[60] h-screen bg-[#0C1115]/95 backdrop-blur-sm top-0 left-0 flex flex-col",
+        "fixed z-[215] h-screen bg-[#0C1115]/95 backdrop-blur-sm top-0 left-0 flex flex-col",
         "shadow-2xl border-r border-gray-700/50"
       )}
     >
