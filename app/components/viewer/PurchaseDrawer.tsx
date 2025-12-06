@@ -29,8 +29,7 @@ export const PurchaseDrawer = ({ courseSlug }: { courseSlug: string }) => {
           comenzando 🚀
         </h3>
         <p className="text-lg md:text-xl font-light mt-4 text-metal text-colorParagraph">
-          ¡Desbloquea el curso completo y conviértete en un PRO del desarrollo
-          web! 🫶🏻 . <br />
+          ¡Desbloquea el curso completo y conviértete en un web hacker! 🫶🏻 . <br />
         </p>
         <Form method="POST" action="/api/stripe">
           <input type="hidden" name="courseSlug" value={courseSlug} />
