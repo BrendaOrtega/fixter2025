@@ -10,7 +10,6 @@ import { MdEdit } from "react-icons/md";
 import { redirect, useSearchParams, Link } from "react-router";
 import { HiOutlineChartBar } from "react-icons/hi";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
-import { nanoid } from "nanoid";
 
 export const createPostSchema = z.object({
   title: z.string().min(3),
@@ -26,6 +25,32 @@ export const createPostSchema = z.object({
   mainTag: z.string().optional(),
   published: z.boolean().default(true),
 });
+
+// Genera un slug único, agregando sufijo numérico si ya existe
+async function generateUniqueSlug(title: string): Promise<string> {
+  const baseSlug = slugify(title, { lower: true, strict: true });
+
+  // Verificar si el slug base ya existe
+  const existing = await db.post.findUnique({ where: { slug: baseSlug } });
+  if (!existing) return baseSlug;
+
+  // Buscar slugs similares para encontrar el siguiente número
+  const similarSlugs = await db.post.findMany({
+    where: { slug: { startsWith: baseSlug } },
+    select: { slug: true },
+  });
+
+  // Extraer números de sufijos existentes (-2, -3, etc.)
+  const numbers = similarSlugs
+    .map(p => {
+      const match = p.slug.match(new RegExp(`^${baseSlug}-(\\d+)$`));
+      return match ? parseInt(match[1], 10) : 0;
+    })
+    .filter(n => n > 0);
+
+  const nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 2;
+  return `${baseSlug}-${nextNumber}`;
+}
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData();
@@ -52,7 +77,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
           };
 
     const payload = {
-      slug: slugify(title) + "_" + nanoid(3),
+      slug: await generateUniqueSlug(title),
       title,
       youtubeLink,
       body,
