@@ -423,13 +423,13 @@ const CourseHeader = ({
                 {level}
               </p>
               <span className="flex gap-2">
-                {level === "avanzado" ? (
+                {level?.toLowerCase() === "avanzado" ? (
                   <span className="flex gap-2">
                     <img src="/thunder.svg" className="w-3" />
                     <img src="/thunder.svg" className="w-3" />
                     <img src="/thunder.svg" className="w-3" />
                   </span>
-                ) : level === "intermedio" ? (
+                ) : level?.toLowerCase() === "intermedio" ? (
                   <span className="flex gap-2">
                     <img src="/thunder.svg" className="w-3" />
                     <img src="/thunder.svg" className="w-3" />
