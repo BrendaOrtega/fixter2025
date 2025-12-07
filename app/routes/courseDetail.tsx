@@ -79,9 +79,9 @@ export function meta({ data }: Route.MetaArgs) {
             },
         inLanguage: "es",
         educationalLevel:
-          course.level === "avanzado"
+          course.level?.toLowerCase() === "avanzado"
             ? "Advanced"
-            : course.level === "intermedio"
+            : course.level?.toLowerCase() === "intermedio"
             ? "Intermediate"
             : "Beginner",
         timeRequired: course.duration ? `PT${course.duration}M` : undefined,
