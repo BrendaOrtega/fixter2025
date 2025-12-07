@@ -142,11 +142,12 @@ export const meta = () => {
         },
         offers: {
           "@type": "Offer",
-          price: "4990",
+          price: "3742.50",
           priceCurrency: "MXN",
           availability: "https://schema.org/InStock",
           validFrom: "2025-12-01",
           url: "https://www.fixtergeek.com/ai-sdk",
+          priceValidUntil: "2025-12-13",
         },
         hasCourseInstance: {
           "@type": "CourseInstance",
@@ -239,7 +240,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "direct_checkout") {
-    const totalPrice = 4990;
+    const totalPrice = 3742.5;
 
     try {
       const stripe = new (await import("stripe")).default(
@@ -394,9 +395,10 @@ export default function AISdkPage() {
                   <BiTime className="text-emerald-400 text-base" />
                   <span>Para principiantes</span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                   <BiStar className="text-emerald-400 text-base" />
-                  <span className="font-semibold text-white">$4,990 MXN</span>
+                  <span className="text-zinc-500 line-through text-sm">$4,990</span>
+                  <span className="font-semibold text-emerald-400">$3,742.50 MXN</span>
                 </div>
               </div>
 
@@ -502,13 +504,19 @@ export default function AISdkPage() {
                     {/* Countdown Timer */}
                     <CountdownTimer />
 
-                    {/* Precio destacado */}
-                    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
+                    {/* Precio destacado con descuento */}
+                    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center relative overflow-hidden">
+                      <div className="absolute top-2 right-2 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        -25%
+                      </div>
                       <p className="text-sm text-emerald-400 mb-1">
                         Precio del taller
                       </p>
+                      <p className="text-lg text-zinc-500 line-through mb-1">
+                        $4,990 MXN
+                      </p>
                       <p className="text-4xl font-bold text-white">
-                        $4,990{" "}
+                        $3,742.50{" "}
                         <span className="text-lg text-zinc-400">MXN</span>
                       </p>
                     </div>
