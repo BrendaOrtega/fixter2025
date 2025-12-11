@@ -753,24 +753,40 @@ export default function AISdkPage() {
               Una probadita de lo que aprenderás en el taller
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
+          <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto">
+            {/* Video Destacado */}
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-emerald-500/50 shadow-2xl shadow-emerald-500/10">
+              <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                DESTACADO
+              </div>
               <iframe
-                src="https://www.youtube.com/embed/yGHVRLhiUcQ"
-                title="AI SDK para Principiantes"
+                src="https://www.youtube.com/embed/amY0p-TppHo"
+                title="AI SDK Tutorial Destacado"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
               />
             </div>
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
-              <iframe
-                src="https://www.youtube.com/embed/ZQrLmP11DCo"
-                title="AI SDK Demo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-              />
+            {/* Videos secundarios */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
+                <iframe
+                  src="https://www.youtube.com/embed/yGHVRLhiUcQ"
+                  title="AI SDK para Principiantes"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
+                <iframe
+                  src="https://www.youtube.com/embed/ZQrLmP11DCo"
+                  title="AI SDK Demo"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
             </div>
           </div>
         </section>
