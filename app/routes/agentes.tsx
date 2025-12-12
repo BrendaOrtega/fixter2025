@@ -30,12 +30,124 @@ import { HiSparkles } from "react-icons/hi";
 import { RiRobot2Line } from "react-icons/ri";
 import "~/styles/agentes-ia.css";
 
-export const meta = () =>
-  getMetaTags({
-    title: "Agentes de IA Sin Código | Taller Completo | FixterGeek",
+export const meta = () => {
+  const baseMeta = getMetaTags({
+    title: "Curso Agentes de IA Sin Código | No-Code AI Agents | FixterGeek",
     description:
-      "Aprende a crear agentes de IA inteligentes sin programar. Construye chatbots, asistentes virtuales y automatizaciones complejas usando herramientas visuales no-code. Taller 100% práctico.",
+      "Aprende a crear agentes de IA inteligentes sin programar. Construye chatbots, asistentes virtuales y automatizaciones complejas usando herramientas visuales no-code. Taller premium por $4,900 MXN.",
+    url: "https://www.fixtergeek.com/agentes",
+    image: "https://www.fixtergeek.com/courses/agentes-ia.png",
+    keywords:
+      "agentes ia, chatbot sin código, no code ia, crear agente inteligente, automatización sin programar, asistente virtual, rag sin código, curso ia español",
   });
+
+  // Schema.org JSON-LD para GEO
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Course",
+        "@id": "https://www.fixtergeek.com/agentes#course",
+        name: "Curso Agentes de IA Sin Código",
+        description:
+          "Taller premium para crear agentes de IA inteligentes sin programar. Aprende a construir chatbots con memoria, asistentes de restaurante, estudios fotográficos automáticos con IA generativa, y sistemas RAG empresariales. Todo usando herramientas visuales drag-and-drop.",
+        url: "https://www.fixtergeek.com/agentes",
+        provider: {
+          "@type": "Organization",
+          "@id": "https://www.fixtergeek.com/#organization",
+          name: "FixterGeek",
+          url: "https://www.fixtergeek.com",
+          logo: "https://www.fixtergeek.com/logo.png",
+          sameAs: [
+            "https://www.linkedin.com/company/fixtergeek",
+            "https://github.com/FixterGeek",
+            "https://x.com/FixterGeek",
+          ],
+        },
+        instructor: {
+          "@type": "Person",
+          name: "Héctor Bliss",
+          url: "https://www.linkedin.com/in/hectorbliss/",
+          sameAs: [
+            "https://github.com/blissito",
+            "https://x.com/HectorBlisS",
+          ],
+        },
+        offers: {
+          "@type": "Offer",
+          price: "4900",
+          priceCurrency: "MXN",
+          availability: "https://schema.org/InStock",
+          validFrom: "2025-01-01",
+          url: "https://www.fixtergeek.com/agentes",
+        },
+        hasCourseInstance: {
+          "@type": "CourseInstance",
+          courseMode: "Online",
+          courseWorkload: "PT8H",
+        },
+        inLanguage: "es",
+        coursePrerequisites: "No requiere conocimientos de programación",
+        educationalLevel: "Beginner",
+        teaches: [
+          "Creación de chatbots con memoria conversacional",
+          "Asistentes virtuales para negocios",
+          "Herramientas visuales drag-and-drop para IA",
+          "Estudio fotográfico automático con IA generativa",
+          "RAG (Retrieval Augmented Generation) sin código",
+          "Automatización de procesos empresariales",
+        ],
+        image: "https://www.fixtergeek.com/courses/agentes-ia.png",
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://www.fixtergeek.com/agentes#webpage",
+        url: "https://www.fixtergeek.com/agentes",
+        name: "Curso Agentes de IA Sin Código | FixterGeek",
+        description:
+          "Crea agentes de IA inteligentes sin programar. Taller 100% práctico con herramientas visuales.",
+        isPartOf: {
+          "@id": "https://www.fixtergeek.com/#website",
+        },
+        about: {
+          "@id": "https://www.fixtergeek.com/agentes#course",
+        },
+        inLanguage: "es",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.fixtergeek.com/agentes#breadcrumb",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Inicio",
+            item: "https://www.fixtergeek.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Cursos",
+            item: "https://www.fixtergeek.com/cursos",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "Agentes IA",
+            item: "https://www.fixtergeek.com/agentes",
+          },
+        ],
+      },
+    ],
+  };
+
+  return [
+    ...baseMeta,
+    {
+      "script:ld+json": schemaOrg,
+    },
+  ];
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();

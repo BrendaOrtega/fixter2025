@@ -14,12 +14,125 @@ import { RiFlowChart } from "react-icons/ri";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import { FaWhatsapp } from "react-icons/fa";
 
-export const meta = () =>
-  getMetaTags({
-    title: "Conviértete en Power User de Claude Code | FixterGeek",
+export const meta = () => {
+  const baseMeta = getMetaTags({
+    title: "Curso Claude Code Power User | SDK, MCP y Automatización | FixterGeek",
     description:
-      "Domina Claude Code como un experto: SDK, MCP, GitHub integration, subagentes y trucos avanzados. Webinar gratis y taller modular desde $1,490 MXN",
+      "Domina Claude Code como un experto: SDK, MCP, GitHub integration, subagentes y trucos avanzados. Curso completo por $1,490 MXN con acceso inmediato.",
+    url: "https://www.fixtergeek.com/claude",
+    image: "https://www.fixtergeek.com/courses/claude-code.png",
+    keywords:
+      "claude code, curso claude, mcp tutorial, claude sdk, subagentes ia, automatización claude, anthropic claude, curso ia español",
   });
+
+  // Schema.org JSON-LD para GEO (Generative Engine Optimization)
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Course",
+        "@id": "https://www.fixtergeek.com/claude#course",
+        name: "Curso Claude Code Power User",
+        description:
+          "Curso completo para dominar Claude Code: SDK para Python/TypeScript, MCP (Model Context Protocol), GitHub integration, subagentes y técnicas avanzadas de automatización. Aprende a multiplicar tu productividad 10x.",
+        url: "https://www.fixtergeek.com/claude",
+        provider: {
+          "@type": "Organization",
+          "@id": "https://www.fixtergeek.com/#organization",
+          name: "FixterGeek",
+          url: "https://www.fixtergeek.com",
+          logo: "https://www.fixtergeek.com/logo.png",
+          sameAs: [
+            "https://www.linkedin.com/company/fixtergeek",
+            "https://github.com/FixterGeek",
+            "https://x.com/FixterGeek",
+          ],
+        },
+        instructor: {
+          "@type": "Person",
+          name: "Héctor Bliss",
+          url: "https://www.linkedin.com/in/hectorbliss/",
+          sameAs: [
+            "https://github.com/blissito",
+            "https://x.com/HectorBlisS",
+          ],
+        },
+        offers: {
+          "@type": "Offer",
+          price: "1490",
+          priceCurrency: "MXN",
+          availability: "https://schema.org/InStock",
+          validFrom: "2025-01-01",
+          url: "https://www.fixtergeek.com/claude",
+        },
+        hasCourseInstance: {
+          "@type": "CourseInstance",
+          courseMode: "Online",
+          courseWorkload: "PT8H",
+        },
+        inLanguage: "es",
+        coursePrerequisites: "Conocimientos básicos de terminal y programación",
+        educationalLevel: "Intermediate",
+        teaches: [
+          "Configuración profesional de Claude Code",
+          "Gestión avanzada de contexto",
+          "Claude SDK para Python y TypeScript",
+          "Subagentes y delegación de tareas",
+          "MCP (Model Context Protocol)",
+          "Automatización con GitHub Actions",
+          "Orquestación de sistemas multi-agente",
+        ],
+        image: "https://www.fixtergeek.com/courses/claude-code.png",
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://www.fixtergeek.com/claude#webpage",
+        url: "https://www.fixtergeek.com/claude",
+        name: "Curso Claude Code Power User | FixterGeek",
+        description:
+          "Aprende a dominar Claude Code con SDK, MCP, subagentes y automatización. Curso completo en español.",
+        isPartOf: {
+          "@id": "https://www.fixtergeek.com/#website",
+        },
+        about: {
+          "@id": "https://www.fixtergeek.com/claude#course",
+        },
+        inLanguage: "es",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.fixtergeek.com/claude#breadcrumb",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Inicio",
+            item: "https://www.fixtergeek.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Cursos",
+            item: "https://www.fixtergeek.com/cursos",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "Claude Code",
+            item: "https://www.fixtergeek.com/claude",
+          },
+        ],
+      },
+    ],
+  };
+
+  return [
+    ...baseMeta,
+    {
+      "script:ld+json": schemaOrg,
+    },
+  ];
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();

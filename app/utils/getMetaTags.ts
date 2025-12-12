@@ -7,30 +7,46 @@ export type GetBasicMetaTagsPros = {
   type?: "website" | "article" | "book";
   fbAppId?: string;
   keywords?: string;
+  author?: string;
+  locale?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
 };
 
 export default function getMetaTags({
   title,
-  description = "Cursos y recursos de programación y diseño web",
-  image = "https://fixtergeek.com/cover.png",
+  description = "Cursos de IA, Claude Code, AI SDK y programación en español. Plataforma educativa mexicana con más de 2,000 estudiantes.",
+  image = "https://www.fixtergeek.com/cover.png",
   url = "https://www.fixtergeek.com",
   twitterCard = "summary_large_image",
   type = "website",
-  fbAppId = "1234567890", // Placeholder App ID - should be replaced with real FB App ID
+  fbAppId = "1234567890",
   keywords,
+  author = "Héctor Bliss",
+  locale = "es_MX",
+  publishedTime,
+  modifiedTime,
 }: GetBasicMetaTagsPros) {
   if (!title) {
     return [
       {
-        title: "Fixtergeek",
+        title: "FixterGeek | Cursos de IA y Programación en Español",
       },
       {
         name: "description",
-        content: "Cursos y recursos de programación y diseño web",
+        content: description,
       },
       {
         property: "fb:app_id",
         content: fbAppId,
+      },
+      {
+        property: "og:locale",
+        content: locale,
+      },
+      {
+        name: "author",
+        content: author,
       },
       ...(keywords ? [{
         name: "keywords",
@@ -43,6 +59,11 @@ export default function getMetaTags({
     {
       name: "description",
       content: description,
+    },
+    // Author meta (importante para GEO)
+    {
+      name: "author",
+      content: author,
     },
     ...(keywords ? [{
       name: "keywords",
@@ -75,17 +96,43 @@ export default function getMetaTags({
     },
     {
       property: "og:site_name",
-      content: "Fixtergeek",
+      content: "FixterGeek",
     },
-    // Facebook App ID (required by Facebook)
+    // Locale (importante para GEO - indica idioma y región)
+    {
+      property: "og:locale",
+      content: locale,
+    },
+    // Facebook App ID
     {
       property: "fb:app_id",
       content: fbAppId,
     },
+    // Article timestamps (si aplica)
+    ...(publishedTime ? [{
+      property: "article:published_time",
+      content: publishedTime,
+    }] : []),
+    ...(modifiedTime ? [{
+      property: "article:modified_time",
+      content: modifiedTime,
+    }] : []),
+    ...(type === "article" ? [{
+      property: "article:author",
+      content: author,
+    }] : []),
     // Twitter
     {
       name: "twitter:card",
       content: twitterCard,
+    },
+    {
+      name: "twitter:site",
+      content: "@FixterGeek",
+    },
+    {
+      name: "twitter:creator",
+      content: "@HectorBlisS",
     },
     {
       name: "twitter:title",
@@ -98,6 +145,11 @@ export default function getMetaTags({
     {
       name: "twitter:image",
       content: image,
+    },
+    // Robots meta (asegura indexación)
+    {
+      name: "robots",
+      content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
     },
   ];
 }

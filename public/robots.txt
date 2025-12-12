@@ -2,3 +2,7 @@ User-agent: *
 Allow: /
 
 Sitemap: https://www.fixtergeek.com/sitemap.xml
+
+# LLM-specific content
+# See https://llmstxt.org/ for more information
+LLMs-txt: https://www.fixtergeek.com/llms.txt

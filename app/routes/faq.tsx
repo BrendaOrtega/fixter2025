@@ -5,11 +5,64 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import getMetaTags from "~/utils/getMetaTags";
 
-export const meta = () =>
-  getMetaTags({
-    title: " Preguntas frecuentes",
-    description: "Encuentra las respuestas a todas tus preguntas",
+// Helper para limpiar HTML de las respuestas para Schema.org
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
+export const meta = () => {
+  const baseMeta = getMetaTags({
+    title: "Preguntas Frecuentes | FixterGeek - Cursos de IA y Programación",
+    description:
+      "Encuentra respuestas sobre cursos online, pagos, certificados, reembolsos y más. Todo lo que necesitas saber sobre FixterGeek.",
+    url: "https://www.fixtergeek.com/faq",
+    keywords:
+      "preguntas frecuentes fixtergeek, faq cursos online, pagos cursos programación, certificado cursos ia",
   });
+
+  // FAQPage Schema - Crítico para GEO
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": "https://www.fixtergeek.com/faq#faqpage",
+    mainEntity: questions.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: stripHtml(q.answer),
+      },
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "@id": "https://www.fixtergeek.com/faq#breadcrumb",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Inicio",
+        item: "https://www.fixtergeek.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Preguntas Frecuentes",
+        item: "https://www.fixtergeek.com/faq",
+      },
+    ],
+  };
+
+  return [
+    ...baseMeta,
+    {
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@graph": [faqSchema, breadcrumbSchema],
+      },
+    },
+  ];
+};
 
 export default function Route({}: Route.ComponentProps) {
   useEffect(() => {

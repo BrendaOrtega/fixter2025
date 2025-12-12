@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useGoogleTM();
   useHotjar();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
