@@ -59,9 +59,9 @@ export const googleHandler = async (request: Request, nextURL: string) => {
 };
 
 const location =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://www.fixtergeek.com";
+  process.env.NODE_ENV === "production"
+    ? "https://www.fixtergeek.com"
+    : "http://localhost:3000";
 // step 1
 export const getGoogleURL = () => {
   const url = new URL("https://accounts.google.com/o/oauth2/auth");
