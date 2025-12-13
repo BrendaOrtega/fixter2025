@@ -10,7 +10,7 @@ import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { scheduleResend } from "~/.server/agenda";
 
-// Cargar templates disponibles
+// @TODO: Load templates from DB?
 async function loadTemplates() {
   const templatesDir = path.join(process.cwd(), "app/mailSenders/templates");
   try {
@@ -388,7 +388,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
             });
           } catch (error) {
             console.error(`Error sending batch ${i}:`, error);
-            results.push({ success: false, batch, error: error instanceof Error ? error.message : "Error desconocido" });
+            results.push({
+              success: false,
+              batch,
+              error:
+                error instanceof Error ? error.message : "Error desconocido",
+            });
           }
 
           // Esperar 1 segundo entre lotes para evitar rate limiting
@@ -432,7 +437,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
       } catch (error) {
         console.error("Error scheduling resend:", error);
         return {
-          error: error instanceof Error ? error.message : "Error al programar reenvío",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Error al programar reenvío",
         };
       }
     }
@@ -822,7 +830,9 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
           ? {
               ...prev,
               active: false,
-              status: `Error: ${error instanceof Error ? error.message : "Error desconocido"}`,
+              status: `Error: ${
+                error instanceof Error ? error.message : "Error desconocido"
+              }`,
             }
           : null
       );
@@ -889,7 +899,6 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
             Copiar URL con filtros
           </button>
         </div>
-
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Editor de Template */}
@@ -1023,8 +1032,7 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                         className="flex items-center justify-between py-1"
                       >
                         <span className="text-sm">
-                          {tag}{" "}
-                          <span className="text-gray-500">({count})</span>
+                          {tag} <span className="text-gray-500">({count})</span>
                         </span>
                         <button
                           onClick={() => addGroup(activeSource, tag, emails)}
@@ -1226,8 +1234,7 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                 </div>
 
                 {/* Desglose */}
-                {(audience.groups.length > 0 ||
-                  audience.manual.length > 0) && (
+                {(audience.groups.length > 0 || audience.manual.length > 0) && (
                   <div className="text-xs text-gray-500 mb-2 space-y-0.5">
                     {audience.groups.map((g, i) => (
                       <p key={i}>
@@ -1532,46 +1539,71 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                       {newsletter.recipients.length}
                     </td>
                     <td className="py-2 px-3">
-                      {newsletter.status === "SENT" ? (() => {
-                        const total = newsletter.recipients.length;
-                        const delivered = newsletter.delivered.length;
-                        const opened = newsletter.opened.length;
-                        const clicked = newsletter.clicked.length;
-                        const deliveryRate = total > 0 ? Math.round((delivered / total) * 100) : 0;
-                        const openRate = delivered > 0 ? Math.round((opened / delivered) * 100) : 0;
-                        const clickRate = opened > 0 ? Math.round((clicked / opened) * 100) : 0;
+                      {newsletter.status === "SENT" ? (
+                        (() => {
+                          const total = newsletter.recipients.length;
+                          const delivered = newsletter.delivered.length;
+                          const opened = newsletter.opened.length;
+                          const clicked = newsletter.clicked.length;
+                          const deliveryRate =
+                            total > 0
+                              ? Math.round((delivered / total) * 100)
+                              : 0;
+                          const openRate =
+                            delivered > 0
+                              ? Math.round((opened / delivered) * 100)
+                              : 0;
+                          const clickRate =
+                            opened > 0
+                              ? Math.round((clicked / opened) * 100)
+                              : 0;
 
-                        return (
-                          <div className="space-y-1">
-                            {/* Barra de entrega */}
-                            <div className="flex items-center gap-2">
-                              <div className="w-20 bg-gray-700 rounded-full h-2">
-                                <div
+                          return (
+                            <div className="space-y-1">
+                              {/* Barra de entrega */}
+                              <div className="flex items-center gap-2">
+                                <div className="w-20 bg-gray-700 rounded-full h-2">
+                                  <div
+                                    className={cn(
+                                      "h-2 rounded-full",
+                                      deliveryRate >= 95
+                                        ? "bg-green-500"
+                                        : deliveryRate >= 80
+                                        ? "bg-yellow-500"
+                                        : "bg-red-500"
+                                    )}
+                                    style={{ width: `${deliveryRate}%` }}
+                                  />
+                                </div>
+                                <span
                                   className={cn(
-                                    "h-2 rounded-full",
-                                    deliveryRate >= 95 ? "bg-green-500" :
-                                    deliveryRate >= 80 ? "bg-yellow-500" : "bg-red-500"
+                                    "text-xs font-mono",
+                                    deliveryRate >= 95
+                                      ? "text-green-400"
+                                      : deliveryRate >= 80
+                                      ? "text-yellow-400"
+                                      : "text-red-400"
                                   )}
-                                  style={{ width: `${deliveryRate}%` }}
-                                />
+                                >
+                                  {deliveryRate}%
+                                </span>
                               </div>
-                              <span className={cn(
-                                "text-xs font-mono",
-                                deliveryRate >= 95 ? "text-green-400" :
-                                deliveryRate >= 80 ? "text-yellow-400" : "text-red-400"
-                              )}>
-                                {deliveryRate}%
-                              </span>
+                              {/* Números compactos */}
+                              <div className="flex gap-2 text-[10px]">
+                                <span className="text-blue-400">
+                                  {delivered}/{total}
+                                </span>
+                                <span className="text-green-400">
+                                  {openRate}% abr
+                                </span>
+                                <span className="text-yellow-400">
+                                  {clickRate}% clk
+                                </span>
+                              </div>
                             </div>
-                            {/* Números compactos */}
-                            <div className="flex gap-2 text-[10px]">
-                              <span className="text-blue-400">{delivered}/{total}</span>
-                              <span className="text-green-400">{openRate}% abr</span>
-                              <span className="text-yellow-400">{clickRate}% clk</span>
-                            </div>
-                          </div>
-                        );
-                      })() : (
+                          );
+                        })()
+                      ) : (
                         <span className="text-gray-500">-</span>
                       )}
                     </td>
@@ -1648,11 +1680,15 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
             {/* Header */}
             <div className="p-4 border-b border-gray-800 flex justify-between items-center">
               <div>
-                <h3 className="font-semibold">{detailsModal.newsletter.title}</h3>
+                <h3 className="font-semibold">
+                  {detailsModal.newsletter.title}
+                </h3>
                 <p className="text-xs text-gray-500">
                   Enviado:{" "}
                   {detailsModal.newsletter.sentAt
-                    ? new Date(detailsModal.newsletter.sentAt).toLocaleString("es-MX")
+                    ? new Date(detailsModal.newsletter.sentAt).toLocaleString(
+                        "es-MX"
+                      )
                     : "-"}
                 </p>
               </div>
@@ -1673,34 +1709,48 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                 const opened = n.opened.length;
                 const clicked = n.clicked.length;
                 const notDelivered = detailsModal.notDelivered;
-                const deliveryRate = total > 0 ? Math.round((delivered / total) * 100) : 0;
-                const openRate = delivered > 0 ? Math.round((opened / delivered) * 100) : 0;
-                const clickRate = opened > 0 ? Math.round((clicked / opened) * 100) : 0;
+                const deliveryRate =
+                  total > 0 ? Math.round((delivered / total) * 100) : 0;
+                const openRate =
+                  delivered > 0 ? Math.round((opened / delivered) * 100) : 0;
+                const clickRate =
+                  opened > 0 ? Math.round((clicked / opened) * 100) : 0;
 
                 return (
                   <div className="space-y-6">
                     {/* Resumen de métricas */}
                     <div className="grid grid-cols-4 gap-4">
                       <div className="bg-gray-800 rounded-lg p-3 text-center">
-                        <div className="text-2xl font-bold text-gray-100">{total}</div>
+                        <div className="text-2xl font-bold text-gray-100">
+                          {total}
+                        </div>
                         <div className="text-xs text-gray-500">Enviados</div>
                       </div>
                       <div className="bg-gray-800 rounded-lg p-3 text-center">
-                        <div className={cn(
-                          "text-2xl font-bold",
-                          deliveryRate >= 95 ? "text-green-400" :
-                          deliveryRate >= 80 ? "text-yellow-400" : "text-red-400"
-                        )}>
+                        <div
+                          className={cn(
+                            "text-2xl font-bold",
+                            deliveryRate >= 95
+                              ? "text-green-400"
+                              : deliveryRate >= 80
+                              ? "text-yellow-400"
+                              : "text-red-400"
+                          )}
+                        >
                           {deliveryRate}%
                         </div>
                         <div className="text-xs text-gray-500">Entregados</div>
                       </div>
                       <div className="bg-gray-800 rounded-lg p-3 text-center">
-                        <div className="text-2xl font-bold text-green-400">{openRate}%</div>
+                        <div className="text-2xl font-bold text-green-400">
+                          {openRate}%
+                        </div>
                         <div className="text-xs text-gray-500">Abiertos</div>
                       </div>
                       <div className="bg-gray-800 rounded-lg p-3 text-center">
-                        <div className="text-2xl font-bold text-yellow-400">{clickRate}%</div>
+                        <div className="text-2xl font-bold text-yellow-400">
+                          {clickRate}%
+                        </div>
                         <div className="text-xs text-gray-500">Clicks</div>
                       </div>
                     </div>
@@ -1709,11 +1759,16 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                     <div>
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-gray-400">Tasa de entrega</span>
-                        <span className={cn(
-                          "font-mono",
-                          deliveryRate >= 95 ? "text-green-400" :
-                          deliveryRate >= 80 ? "text-yellow-400" : "text-red-400"
-                        )}>
+                        <span
+                          className={cn(
+                            "font-mono",
+                            deliveryRate >= 95
+                              ? "text-green-400"
+                              : deliveryRate >= 80
+                              ? "text-yellow-400"
+                              : "text-red-400"
+                          )}
+                        >
                           {delivered} / {total} ({deliveryRate}%)
                         </span>
                       </div>
@@ -1721,8 +1776,11 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                         <div
                           className={cn(
                             "h-4 rounded-full transition-all",
-                            deliveryRate >= 95 ? "bg-green-500" :
-                            deliveryRate >= 80 ? "bg-yellow-500" : "bg-red-500"
+                            deliveryRate >= 95
+                              ? "bg-green-500"
+                              : deliveryRate >= 80
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
                           )}
                           style={{ width: `${deliveryRate}%` }}
                         />
@@ -1760,15 +1818,19 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                         <div className="bg-red-900/20 border border-red-800 rounded-lg p-3 max-h-40 overflow-y-auto">
                           <div className="grid grid-cols-2 gap-1 text-xs">
                             {notDelivered.map((email) => (
-                              <div key={email} className="text-red-300 truncate">
+                              <div
+                                key={email}
+                                className="text-red-300 truncate"
+                              >
                                 {email}
                               </div>
                             ))}
                           </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                          Estos emails pueden haber rebotado, estar mal escritos, o aún no
-                          haber confirmado entrega (espera ~5 min para eventos de SES).
+                          Estos emails pueden haber rebotado, estar mal
+                          escritos, o aún no haber confirmado entrega (espera ~5
+                          min para eventos de SES).
                         </p>
                       </div>
                     ) : (
@@ -1788,7 +1850,10 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                         <div className="mt-2 bg-gray-800 rounded-lg p-3 max-h-40 overflow-y-auto">
                           <div className="grid grid-cols-2 gap-1 text-xs">
                             {n.opened.map((email) => (
-                              <div key={email} className="text-green-300 truncate">
+                              <div
+                                key={email}
+                                className="text-green-300 truncate"
+                              >
                                 {email}
                               </div>
                             ))}
@@ -1806,7 +1871,10 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                         <div className="mt-2 bg-gray-800 rounded-lg p-3 max-h-40 overflow-y-auto">
                           <div className="grid grid-cols-2 gap-1 text-xs">
                             {n.clicked.map((email) => (
-                              <div key={email} className="text-yellow-300 truncate">
+                              <div
+                                key={email}
+                                className="text-yellow-300 truncate"
+                              >
                                 {email}
                               </div>
                             ))}
