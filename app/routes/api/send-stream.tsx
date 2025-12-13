@@ -14,16 +14,40 @@ export const action = async ({ request }: { request: Request }) => {
     });
   }
 
-  const recipientsList = recipients
+  const rawRecipientsList = recipients
     .split(",")
     .map((e) => e.trim())
     .filter(Boolean);
 
-  if (recipientsList.length === 0) {
+  if (rawRecipientsList.length === 0) {
     return new Response(JSON.stringify({ error: "No hay destinatarios" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  // Filtrar emails en blacklist
+  const blacklisted = await db.emailBlacklist.findMany({
+    where: { email: { in: rawRecipientsList } },
+    select: { email: true },
+  });
+
+  const blacklistedSet = new Set(blacklisted.map((b) => b.email));
+  const recipientsList = rawRecipientsList.filter(
+    (e) => !blacklistedSet.has(e)
+  );
+
+  if (blacklistedSet.size > 0) {
+    console.log(
+      `🚫 Excluidos ${blacklistedSet.size} emails en blacklist de ${rawRecipientsList.length} total`
+    );
+  }
+
+  if (recipientsList.length === 0) {
+    return new Response(
+      JSON.stringify({ error: "Todos los destinatarios están en blacklist" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   // Crear newsletter

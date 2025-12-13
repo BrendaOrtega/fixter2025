@@ -1,13 +1,14 @@
 import { db } from "~/.server/db";
 import type { Route } from "./+types/send";
 import { useState, useEffect, useMemo } from "react";
-import { useFetcher, useSearchParams } from "react-router";
+import { useFetcher, useSearchParams, useRevalidator } from "react-router";
 import { cn } from "~/utils/cn";
 import { AdminNav } from "~/components/admin/AdminNav";
 import fs from "fs/promises";
 import path from "path";
 import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
+import { scheduleResend } from "~/.server/agenda";
 
 // Cargar templates disponibles
 async function loadTemplates() {
@@ -420,6 +421,22 @@ export const action = async ({ request }: Route.ActionArgs) => {
       }
     }
 
+    case "resend": {
+      try {
+        const newsletterId = formData.get("newsletterId") as string;
+        if (!newsletterId) {
+          return { error: "Newsletter ID requerido" };
+        }
+        await scheduleResend(newsletterId);
+        return { queued: true, newsletterId };
+      } catch (error) {
+        console.error("Error scheduling resend:", error);
+        return {
+          error: error instanceof Error ? error.message : "Error al programar reenvío",
+        };
+      }
+    }
+
     default:
       return { error: "Invalid intent" };
   }
@@ -473,6 +490,63 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
     newsletter: (typeof newsletters)[0];
     notDelivered: string[];
   } | null>(null);
+
+  // Estado para reenvío con Agenda (resiliente)
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [initialPending, setInitialPending] = useState<number>(0);
+  const revalidator = useRevalidator();
+  const resendFetcher = useFetcher();
+
+  // Polling cuando hay reenvío activo
+  useEffect(() => {
+    if (resendingId) {
+      const interval = setInterval(() => {
+        revalidator.revalidate();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [resendingId]);
+
+  // Actualizar progreso dinámicamente basado en delivered
+  useEffect(() => {
+    if (resendingId && initialPending > 0) {
+      const newsletter = newsletters.find((n) => n.id === resendingId);
+      if (newsletter) {
+        const currentPending =
+          newsletter.recipients.length - newsletter.delivered.length;
+        const sent = initialPending - currentPending;
+        const percent = Math.round((sent / initialPending) * 100);
+
+        if (currentPending <= 0) {
+          // Terminado
+          setResendingId(null);
+          setInitialPending(0);
+          setSendProgress({
+            active: false,
+            percent: 100,
+            batch: 0,
+            totalBatches: 0,
+            sent: newsletter.delivered.length,
+            failed: 0,
+            status: "¡Reenvío completado!",
+            newsletterId: resendingId,
+          });
+        } else {
+          // En progreso - actualizar barra
+          setSendProgress((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  percent,
+                  sent,
+                  status: `Procesando en segundo plano... ${sent}/${initialPending} enviados`,
+                }
+              : null
+          );
+        }
+      }
+    }
+  }, [newsletters, resendingId, initialPending]);
 
   // Estado para construir audiencia - EMPIEZA VACÍO
   const [audience, setAudience] = useState<AudienceState>({
@@ -753,6 +827,47 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
           : null
       );
     }
+  };
+
+  // Reenviar newsletter a emails pendientes (usa Agenda - resiliente)
+  const handleResendPending = (
+    newsletter: { id: string; title: string; content: string | null },
+    pendingEmails: string[]
+  ) => {
+    if (!newsletter.content) {
+      alert("Este newsletter no tiene contenido guardado");
+      return;
+    }
+
+    if (
+      !confirm(
+        `¿Reenviar "${newsletter.title}" a ~${pendingEmails.length} emails pendientes?\n\n` +
+          "El proceso continuará en segundo plano aunque cierres el navegador."
+      )
+    ) {
+      return;
+    }
+
+    // Cerrar modal y mostrar progreso
+    setDetailsModal(null);
+    setInitialPending(pendingEmails.length);
+    setSendProgress({
+      active: true,
+      percent: 0,
+      batch: 0,
+      totalBatches: Math.ceil(pendingEmails.length / 14), // batch size 14
+      sent: 0,
+      failed: 0,
+      status: "Encolando reenvío con Agenda...",
+      newsletterId: newsletter.id,
+    });
+
+    // Encolar job con Agenda
+    setResendingId(newsletter.id);
+    resendFetcher.submit(
+      { intent: "resend", newsletterId: newsletter.id },
+      { method: "post" }
+    );
   };
 
   const copyShareableUrl = () => {
@@ -1621,14 +1736,26 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
                           <h4 className="text-sm font-medium text-red-400">
                             No entregados ({notDelivered.length})
                           </h4>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(notDelivered.join(", "));
-                            }}
-                            className="text-xs text-gray-400 hover:text-gray-300"
-                          >
-                            Copiar lista
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(
+                                  notDelivered.join(", ")
+                                );
+                              }}
+                              className="text-xs text-gray-400 hover:text-gray-300"
+                            >
+                              Copiar lista
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleResendPending(n, notDelivered)
+                              }
+                              className="text-xs px-2 py-1 bg-brand-500 text-white rounded hover:bg-brand-600"
+                            >
+                              Reenviar a {notDelivered.length}
+                            </button>
+                          </div>
                         </div>
                         <div className="bg-red-900/20 border border-red-800 rounded-lg p-3 max-h-40 overflow-y-auto">
                           <div className="grid grid-cols-2 gap-1 text-xs">

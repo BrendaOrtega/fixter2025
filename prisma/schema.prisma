@@ -519,3 +519,14 @@ model HeatmapData {
   @@unique([postId, date])
 }
 
+// Suppression list - emails que nunca deben recibir correos
+model EmailBlacklist {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  reason    String   // "hard_bounce", "complaint", "manual"
+  details   String?  // Diagnóstico de SES
+  createdAt DateTime @default(now())
+
+  @@map("email_blacklist")
+}
+

@@ -1,5 +1,6 @@
 import type { Newsletter } from "@prisma/client";
 import { sendSESTEST } from "~/mailSenders/sendSESTEST";
+import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
 import { db } from "./db";
 import Agenda from "agenda";
 
@@ -57,6 +58,149 @@ getAgenda().define(
       },
     });
     console.info("::JOB_FINISHED_SUCCESSFULLY::", job.attrs.name);
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════
+// Job para reenviar newsletter a pendientes (resiliente)
+// ═══════════════════════════════════════════════════════════════
+
+export const scheduleResend = async (newsletterId: string) => {
+  const agenda = getAgenda();
+  await agenda.start();
+  await agenda.now("send_newsletter_resend", { newsletterId });
+  console.info(`📧 Job encolado: reenvío de ${newsletterId}`);
+};
+
+getAgenda().define(
+  "send_newsletter_resend",
+  async (job: { attrs: { name: string; data: { newsletterId: string } } }) => {
+    const { newsletterId } = job.attrs.data;
+    console.info(`📧 [RESEND] Iniciando job para newsletter ${newsletterId}`);
+
+    // Obtener newsletter
+    const newsletter = await db.newsletter.findUnique({
+      where: { id: newsletterId },
+      select: {
+        id: true,
+        recipients: true,
+        delivered: true,
+        content: true,
+        title: true,
+      },
+    });
+
+    if (!newsletter || !newsletter.content) {
+      console.error(`❌ Newsletter ${newsletterId} no encontrado o sin contenido`);
+      return;
+    }
+
+    // Calcular pendientes
+    const deliveredSet = new Set(newsletter.delivered || []);
+    const pending = (newsletter.recipients || []).filter(
+      (e) => !deliveredSet.has(e)
+    );
+
+    // Filtrar blacklist
+    const blacklist = await db.emailBlacklist.findMany({
+      select: { email: true },
+    });
+    const blacklistSet = new Set(blacklist.map((b) => b.email));
+
+    // Filtrar patrones sospechosos (bots)
+    const suspicious = [".q@", "rightbliss", "silesia"];
+    const toSend = pending.filter(
+      (e) =>
+        !blacklistSet.has(e) && !suspicious.some((pattern) => e.includes(pattern))
+    );
+
+    const excluded = pending.length - toSend.length;
+    console.info(
+      `📧 [RESEND] ${toSend.length} emails a enviar (${excluded} excluidos: blacklist/bots)`
+    );
+
+    if (toSend.length === 0) {
+      console.info("📧 [RESEND] No hay emails para enviar");
+      return;
+    }
+
+    // Preparar transporte
+    const transporter = getSesTransport();
+    const from = getSesRemitent();
+    const configurationSet = process.env.SES_CONFIGURATION_SET;
+
+    // Preparar HTML con tracking
+    let html = newsletter.content;
+    if (!html.includes("{{ses:openTracker}}")) {
+      if (html.includes("<body")) {
+        html = html.replace(/<body[^>]*>/i, "$&\n{{ses:openTracker}}");
+      } else {
+        html = "{{ses:openTracker}}\n" + html;
+      }
+    }
+
+    // Enviar en lotes de 14 (SES default rate limit)
+    const batchSize = 14;
+    const totalBatches = Math.ceil(toSend.length / batchSize);
+
+    for (let i = 0; i < toSend.length; i += batchSize) {
+      const batchNum = Math.floor(i / batchSize) + 1;
+      const batch = toSend.slice(i, i + batchSize);
+
+      // Retry con backoff para rate limits
+      let retries = 0;
+      const maxRetries = 3;
+
+      while (retries <= maxRetries) {
+        try {
+          const result = await transporter.sendMail({
+            from,
+            subject: newsletter.title,
+            bcc: batch,
+            html,
+            ses: {
+              ConfigurationSetName: configurationSet || undefined,
+              Tags: [{ Name: "newsletter_id", Value: newsletter.id }],
+            },
+          });
+
+          // Actualizar delivered después de cada lote
+          await db.newsletter.update({
+            where: { id: newsletterId },
+            data: {
+              delivered: { push: batch },
+              messageIds: { push: result.messageId || "" },
+            },
+          });
+
+          console.info(
+            `✅ [RESEND] Lote ${batchNum}/${totalBatches}: ${batch.length} enviados`
+          );
+          break; // Éxito, salir del while
+        } catch (error) {
+          const errMsg = error instanceof Error ? error.message : String(error);
+
+          if (errMsg.includes("rate exceeded") && retries < maxRetries) {
+            retries++;
+            const waitTime = Math.pow(2, retries) * 2000; // 4s, 8s, 16s
+            console.warn(
+              `⏳ [RESEND] Rate limit lote ${batchNum}, retry ${retries}/${maxRetries} en ${waitTime / 1000}s`
+            );
+            await new Promise((r) => setTimeout(r, waitTime));
+          } else {
+            console.error(`❌ [RESEND] Error lote ${batchNum}: ${errMsg}`);
+            break; // Error no recuperable o max retries
+          }
+        }
+      }
+
+      // Rate limiting: 2 segundos entre lotes
+      if (i + batchSize < toSend.length) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    }
+
+    console.info(`🎉 [RESEND] Job completado para newsletter ${newsletterId}`);
   }
 );
 
