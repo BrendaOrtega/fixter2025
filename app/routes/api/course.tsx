@@ -300,6 +300,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       status: video?.processingStatus || "unknown",
       error: video?.processingError,
       hasHLS: !!video?.m3u8,
+      hlsUrl: video?.m3u8,
       hasDirectLink: !!video?.storageLink,
       directLink: video?.storageLink
     });

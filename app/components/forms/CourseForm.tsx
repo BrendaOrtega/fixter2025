@@ -4,6 +4,7 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { cn } from "~/utils/cn";
+import { VideoPreview } from "~/components/viewer/VideoPreview";
 import { useEffect, useState, type FormEvent, useRef } from "react";
 import Spinner from "../common/Spinner";
 import { FaTrash, FaUpload } from "react-icons/fa6";
@@ -15,9 +16,7 @@ import { Drawer } from "../viewer/SimpleDrawer";
 // Component to show video processing status
 const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
   const fetcher = useFetcher();
-  const previewFetcher = useFetcher();
   const [status, setStatus] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Check status on mount and periodically
@@ -37,22 +36,8 @@ const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
   useEffect(() => {
     if (fetcher.data && fetcher.data.success) {
       setStatus(fetcher.data.status);
-      
-      // If video has direct link but no preview URL yet, get presigned URL
-      if (fetcher.data.hasDirectLink && !previewUrl) {
-        previewFetcher.submit(
-          { intent: "get_video_preview_url", videoId },
-          { method: "POST", action: "/api/course" }
-        );
-      }
     }
-  }, [fetcher.data, previewUrl, status, videoId]);
-
-  useEffect(() => {
-    if (previewFetcher.data && previewFetcher.data.success) {
-      setPreviewUrl(previewFetcher.data.previewUrl);
-    }
-  }, [previewFetcher.data]);
+  }, [fetcher.data, status, videoId]);
 
   if (!status || status === "unknown") return null;
 
@@ -95,23 +80,18 @@ const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
         <span className="text-sm">{statusConfig.text}</span>
       </div>
       
-      {/* Preview del video original */}
-      {fetcher.data?.hasDirectLink && previewUrl && (
+      {/* Preview del video como lo verá el usuario */}
+      {(fetcher.data?.hasHLS || fetcher.data?.hasDirectLink) && (
         <div className="mt-3">
-          <p className="text-xs text-gray-400 mb-2">📹 Preview (video original):</p>
-          <video 
-            src={previewUrl}
-            controls 
-            className="w-full max-w-md rounded border border-gray-600"
-            style={{ maxHeight: "200px" }}
+          <p className="text-xs text-gray-400 mb-2">
+            📹 Preview (como lo verá el usuario):
+          </p>
+          <VideoPreview 
+            video={{
+              m3u8: fetcher.data?.hlsUrl,
+              storageLink: fetcher.data?.directLink
+            }}
           />
-        </div>
-      )}
-      
-      {/* Loading indicator for preview URL */}
-      {fetcher.data?.hasDirectLink && !previewUrl && previewFetcher.state === "loading" && (
-        <div className="mt-3">
-          <p className="text-xs text-gray-400">⏳ Generando preview...</p>
         </div>
       )}
       
