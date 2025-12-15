@@ -39,7 +39,7 @@ const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
       setStatus(fetcher.data.status);
       
       // If video has direct link but no preview URL yet, get presigned URL
-      if (fetcher.data.hasDirectLink && !previewUrl && status !== "ready") {
+      if (fetcher.data.hasDirectLink && !previewUrl) {
         previewFetcher.submit(
           { intent: "get_video_preview_url", videoId },
           { method: "POST", action: "/api/course" }
@@ -95,8 +95,8 @@ const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
         <span className="text-sm">{statusConfig.text}</span>
       </div>
       
-      {/* Preview del video original mientras se procesa */}
-      {fetcher.data?.hasDirectLink && status !== "ready" && previewUrl && (
+      {/* Preview del video original */}
+      {fetcher.data?.hasDirectLink && previewUrl && (
         <div className="mt-3">
           <p className="text-xs text-gray-400 mb-2">📹 Preview (video original):</p>
           <video 
@@ -109,7 +109,7 @@ const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
       )}
       
       {/* Loading indicator for preview URL */}
-      {fetcher.data?.hasDirectLink && status !== "ready" && !previewUrl && previewFetcher.state === "loading" && (
+      {fetcher.data?.hasDirectLink && !previewUrl && previewFetcher.state === "loading" && (
         <div className="mt-3">
           <p className="text-xs text-gray-400">⏳ Generando preview...</p>
         </div>
