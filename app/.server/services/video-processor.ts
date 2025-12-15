@@ -177,7 +177,7 @@ export const VideoProcessorServiceLive: VideoProcessorService = {
 
           console.log(`  🎯 Processing ${config.name}...`);
 
-          // FFmpeg command for HLS conversion - optimizado para Mac
+          // FFmpeg command for HLS conversion - configuración ultra-simple para Mac
           const [width, height] = config.resolution.split('x');
           console.log(`    📐 Target resolution: ${width}x${height}`);
           
@@ -185,24 +185,16 @@ export const VideoProcessorServiceLive: VideoProcessorService = {
             "-i", inputPath,
             "-c:v", "libx264",
             "-c:a", "aac",
-            // Video settings compatibles con Mac - escalar manteniendo aspect ratio
-            "-vf", `scale='min(${width},iw)':'min(${height},ih)':force_original_aspect_ratio=decrease`,
+            // Video settings ultra-simples - solo scale básico sin expresiones complejas
+            "-vf", `scale=${width}:${height}`,
             "-b:v", config.videoBitrate,
-            "-maxrate", config.maxrate,
-            "-bufsize", config.bufsize,
             "-b:a", config.audioBitrate,
-            // HLS settings optimizados para Mac
+            // HLS settings mínimos
             "-f", "hls",
-            "-hls_time", "6",
+            "-hls_time", "10", // segmentos más largos para menos complejidad
             "-hls_list_size", "0",
-            "-hls_segment_filename", path.join(outputDir, "segment_%03d.ts"),
-            "-preset", "medium", // medium es más compatible que fast en Mac
-            "-profile:v", "baseline", // baseline profile para máxima compatibilidad
-            "-level", "3.0",
-            "-pix_fmt", "yuv420p", // formato de pixel explícito
-            "-g", "48",
-            "-sc_threshold", "0",
-            "-movflags", "+faststart", // optimización para streaming
+            "-hls_segment_filename", path.join(outputDir, "seg_%03d.ts"),
+            "-preset", "ultrafast", // fastest preset para menos procesamiento
             outputPath,
           ];
 

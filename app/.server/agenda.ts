@@ -344,54 +344,49 @@ getAgenda().define(
     console.info(`🎬 [HLS] Iniciando procesamiento para video ${videoId}`);
     console.info(`📋 [HLS] Datos: courseId=${courseId}, videoS3Key=${videoS3Key}`);
 
-    // Use atomic transaction for all DB operations
+    // Sequential operations without transactions to avoid deadlock
     try {
-      await db.$transaction(async (tx) => {
-        // 1. Update video status to processing (atomic)
-        await tx.video.update({
-          where: { id: videoId },
-          data: { 
-            processingStatus: "processing",
-            processingStartedAt: new Date()
-          }
-        });
-
-        // 2. Process video to HLS (this is the heavy operation)
-        const result = await Effect.runPromise(
-          videoProcessorService.processVideoToHLS(courseId, videoId, videoS3Key)
-        );
-
-        // 3. Update video with final results (atomic with step 1)
-        await tx.video.update({
-          where: { id: videoId },
-          data: {
-            m3u8: result.masterPlaylistUrl,
-            storageLink: s3VideoService.getVideoUrl(videoS3Key),
-            duration: result.duration.toString(),
-            processingStatus: "ready",
-            processingCompletedAt: new Date(),
-            processingMetadata: {
-              qualities: result.qualities,
-              processingTime: result.processingTime,
-              processedAt: new Date().toISOString(),
-            }
-          }
-        });
-
-        console.info(`✅ [HLS] Procesamiento completado para video ${videoId}`);
-        console.info(`  - Master playlist: ${result.masterPlaylistUrl}`);
-        console.info(`  - Calidades: ${result.qualities.map(q => q.resolution).join(", ")}`);
-        console.info(`  - Duración: ${result.duration}s`);
-        console.info(`  - Tiempo de procesamiento: ${result.processingTime}s`);
-      }, {
-        maxWait: 30000, // 30s max wait for transaction
-        timeout: 600000, // 10 min timeout for the whole transaction (video processing can be long)
+      // 1. Update video status to processing
+      await db.video.update({
+        where: { id: videoId },
+        data: { 
+          processingStatus: "processing",
+          processingStartedAt: new Date()
+        }
       });
+
+      // 2. Process video to HLS (this is the heavy operation)
+      const result = await Effect.runPromise(
+        videoProcessorService.processVideoToHLS(courseId, videoId, videoS3Key)
+      );
+
+      // 3. Update video with final results
+      await db.video.update({
+        where: { id: videoId },
+        data: {
+          m3u8: result.masterPlaylistUrl,
+          storageLink: s3VideoService.getVideoUrl(videoS3Key),
+          duration: result.duration.toString(),
+          processingStatus: "ready",
+          processingCompletedAt: new Date(),
+          processingMetadata: {
+            qualities: result.qualities,
+            processingTime: result.processingTime,
+            processedAt: new Date().toISOString(),
+          }
+        }
+      });
+
+      console.info(`✅ [HLS] Procesamiento completado para video ${videoId}`);
+      console.info(`  - Master playlist: ${result.masterPlaylistUrl}`);
+      console.info(`  - Calidades: ${result.qualities.map(q => q.resolution).join(", ")}`);
+      console.info(`  - Duración: ${result.duration}s`);
+      console.info(`  - Tiempo de procesamiento: ${result.processingTime}s`);
 
     } catch (error) {
       console.error(`❌ [HLS] Error procesando video ${videoId}:`, error);
       
-      // Update video status to failed (separate transaction for error handling)
+      // Update video status to failed (simple operation without transaction)
       try {
         await db.video.update({
           where: { id: videoId },

@@ -244,25 +244,20 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
       const courseId = video.courses[0].id;
 
-      // Use transaction to atomically update video and schedule processing
-      await db.$transaction(async (tx) => {
-        // Update video with temporary URL and mark as pending processing
-        await tx.video.update({
-          where: { id: videoId },
-          data: {
-            storageLink: s3VideoService.getVideoUrl(s3Key),
-            processingStatus: "pending",
-            processingStartedAt: null, // Reset any previous processing attempt
-            processingCompletedAt: null,
-            processingFailedAt: null,
-            processingError: null
-          }
-        });
-
-        // Schedule HLS processing job (this is async, so it happens after transaction commits)
+      // Update video with temporary URL and mark as pending processing (no transaction to avoid deadlock)
+      await db.video.update({
+        where: { id: videoId },
+        data: {
+          storageLink: s3VideoService.getVideoUrl(s3Key),
+          processingStatus: "pending",
+          processingStartedAt: null, // Reset any previous processing attempt
+          processingCompletedAt: null,
+          processingFailedAt: null,
+          processingError: null
+        }
       });
       
-      // Schedule job outside transaction to avoid blocking
+      // Schedule job
       await scheduleVideoProcessing({
         courseId,
         videoId,
