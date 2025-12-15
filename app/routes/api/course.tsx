@@ -2,6 +2,9 @@ import { db } from "~/.server/db";
 import type { Route } from "./+types/course";
 import slugify from "slugify";
 import { randomUUID } from "crypto";
+import { Effect } from "effect";
+import { s3VideoService } from "~/.server/services/s3-video";
+import { scheduleVideoProcessing } from "~/.server/agenda";
 
 export const action = async ({ request }: Route.ActionArgs) => {
   // await getAdminOrRedirect(request); @todo move to admin api
@@ -23,16 +26,72 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   if (intent === "admin_delete_video") {
     const videoId = formData.get("videoId") as string;
-    return await db.video.delete({ where: { id: videoId } });
+    
+    try {
+      // Get video with course info before deletion
+      const video = await db.video.findUnique({
+        where: { id: videoId },
+        include: { courses: { select: { id: true } } }
+      });
+      
+      if (video && video.courses.length > 0) {
+        const courseId = video.courses[0].id;
+        
+        // Delete S3 files (original + HLS) in parallel with DB deletion
+        const deleteS3Promise = Effect.runPromise(
+          s3VideoService.deleteVideoFiles(courseId, videoId)
+        ).catch(error => {
+          console.error(`⚠️ S3 deletion failed for video ${videoId}:`, error);
+          // Continue with DB deletion even if S3 fails
+        });
+        
+        const deleteDBPromise = db.video.delete({ where: { id: videoId } });
+        
+        // Execute both operations
+        await Promise.all([deleteS3Promise, deleteDBPromise]);
+        
+        return Response.json({ 
+          success: true, 
+          message: "Video y archivos eliminados exitosamente" 
+        });
+      } else {
+        // No S3 files to delete, just delete from DB
+        await db.video.delete({ where: { id: videoId } });
+        return Response.json({ 
+          success: true, 
+          message: "Video eliminado de la base de datos" 
+        });
+      }
+    } catch (error) {
+      console.error("Error eliminando video:", error);
+      return Response.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Error al eliminar video"
+      });
+    }
   }
 
   if (intent === "admin_update_video") {
     const data = JSON.parse(formData.get("data") as string);
     const index = Number(data.index);
     const isPublic = data.isPublic === "on" ? true : undefined; // @todo validate
+    
+    // Use upsert with simplified conflict resolution (no extra queries = no deadlock)
     return await db.video.update({
       where: { id: data.id },
-      data: { ...data, index, isPublic, id: undefined },
+      data: { 
+        title: data.title,
+        index, 
+        isPublic, 
+        duration: data.duration,
+        moduleName: data.moduleName,
+        description: data.description,
+        authorName: data.authorName,
+        photoUrl: data.photoUrl,
+        // Only update video links if explicitly provided (preserve upload-generated ones)
+        ...(data.storageLink && { storageLink: data.storageLink }),
+        ...(data.m3u8 && { m3u8: data.m3u8 }),
+      },
     });
   }
 
@@ -46,7 +105,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     }
 
     if (Object.keys(errors).length > 0) {
-      return { success: false, errors };
+      return Response.json({ success: false, errors });
     }
 
     try {
@@ -61,13 +120,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
           isPublic,
         },
       });
-      return { success: true, video };
+      return Response.json({ success: true, video });
     } catch (error) {
       console.error("Error creando video:", error);
-      return {
+      return Response.json({
         success: false,
         errors: { _form: "Error al guardar el video. Intenta de nuevo." },
-      };
+      });
     }
   }
 
@@ -79,7 +138,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
         courseIds: { has: courseId },
       },
     });
-    return { videos: allVideosForCourse };
+    return Response.json({ videos: allVideosForCourse });
   }
 
   if (intent === "videos_length") {
@@ -89,11 +148,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
         courseIds: { has: courseId },
       },
     });
-    return { videosLength };
+    return Response.json({ videosLength });
   }
 
   if (intent === "get_top_courses") {
-    return await db.course.findMany({
+    const courses = await db.course.findMany({
       orderBy: { createdAt: "desc" },
       where: { published: true },
       take: 3,
@@ -106,7 +165,249 @@ export const action = async ({ request }: Route.ActionArgs) => {
         slug: true,
       },
     });
+    return Response.json(courses);
   }
 
-  return null;
+  // Get presigned URL for video upload
+  if (intent === "get_video_upload_url") {
+    const videoId = formData.get("videoId") as string;
+    const fileName = decodeURIComponent(formData.get("fileName") as string);
+    
+    if (!videoId || !fileName) {
+      return Response.json({ 
+        success: false, 
+        error: "videoId y fileName son requeridos" 
+      });
+    }
+
+    try {
+      // Get video with course relationship
+      const video = await db.video.findUnique({
+        where: { id: videoId },
+        include: { courses: { select: { id: true } } }
+      });
+
+      if (!video || video.courses.length === 0) {
+        return Response.json({ 
+          success: false, 
+          error: "Video no encontrado o sin curso asociado" 
+        });
+      }
+
+      const courseId = video.courses[0].id;
+
+      // Generate presigned upload URL
+      const uploadInfo = await Effect.runPromise(
+        s3VideoService.getUploadUrl(courseId, videoId, fileName)
+      );
+
+      return Response.json({
+        success: true,
+        uploadUrl: uploadInfo.uploadUrl,
+        key: uploadInfo.key,
+        publicUrl: uploadInfo.publicUrl
+      });
+    } catch (error) {
+      console.error("Error generando URL de upload:", error);
+      return Response.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Error al generar URL"
+      });
+    }
+  }
+
+  // Confirm video upload and start processing
+  if (intent === "confirm_video_upload") {
+    const videoId = formData.get("videoId") as string;
+    const s3Key = formData.get("s3Key") as string;
+    
+    if (!videoId || !s3Key) {
+      return Response.json({ 
+        success: false, 
+        error: "videoId y s3Key son requeridos" 
+      });
+    }
+
+    try {
+      // Get video with course
+      const video = await db.video.findUnique({
+        where: { id: videoId },
+        include: { courses: { select: { id: true } } }
+      });
+
+      if (!video || video.courses.length === 0) {
+        return Response.json({ 
+          success: false, 
+          error: "Video no encontrado o sin curso asociado" 
+        });
+      }
+
+      const courseId = video.courses[0].id;
+
+      // Use transaction to atomically update video and schedule processing
+      await db.$transaction(async (tx) => {
+        // Update video with temporary URL and mark as pending processing
+        await tx.video.update({
+          where: { id: videoId },
+          data: {
+            storageLink: s3VideoService.getVideoUrl(s3Key),
+            processingStatus: "pending",
+            processingStartedAt: null, // Reset any previous processing attempt
+            processingCompletedAt: null,
+            processingFailedAt: null,
+            processingError: null
+          }
+        });
+
+        // Schedule HLS processing job (this is async, so it happens after transaction commits)
+      });
+      
+      // Schedule job outside transaction to avoid blocking
+      await scheduleVideoProcessing({
+        courseId,
+        videoId,
+        videoS3Key: s3Key
+      });
+
+      return Response.json({
+        success: true,
+        message: "Video subido exitosamente. Procesamiento HLS iniciado."
+      });
+    } catch (error) {
+      console.error("Error confirmando upload:", error);
+      return Response.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Error al confirmar upload"
+      });
+    }
+  }
+
+  // Get video processing status
+  if (intent === "get_video_status") {
+    const videoId = formData.get("videoId") as string;
+    
+    if (!videoId) {
+      return Response.json({ success: false, error: "videoId es requerido" });
+    }
+
+    const video = await db.video.findUnique({
+      where: { id: videoId },
+      select: {
+        processingStatus: true,
+        processingError: true,
+        m3u8: true,
+        storageLink: true
+      }
+    });
+
+    return Response.json({
+      success: true,
+      status: video?.processingStatus || "unknown",
+      error: video?.processingError,
+      hasHLS: !!video?.m3u8,
+      hasDirectLink: !!video?.storageLink,
+      directLink: video?.storageLink
+    });
+  }
+
+  // Delete only S3 files (keep video record in DB)
+  if (intent === "delete_video_files") {
+    const videoId = formData.get("videoId") as string;
+    
+    if (!videoId) {
+      return Response.json({ success: false, error: "videoId es requerido" });
+    }
+
+    try {
+      // Get video with course info
+      const video = await db.video.findUnique({
+        where: { id: videoId },
+        include: { courses: { select: { id: true } } }
+      });
+      
+      if (!video || video.courses.length === 0) {
+        return Response.json({ 
+          success: false, 
+          error: "Video no encontrado o sin curso asociado" 
+        });
+      }
+
+      const courseId = video.courses[0].id;
+
+      // Delete S3 files and clear links in DB
+      await Promise.all([
+        Effect.runPromise(s3VideoService.deleteVideoFiles(courseId, videoId)),
+        db.video.update({
+          where: { id: videoId },
+          data: {
+            storageLink: null,
+            m3u8: null,
+            processingStatus: null,
+            processingStartedAt: null,
+            processingCompletedAt: null,
+            processingFailedAt: null,
+            processingError: null,
+            processingMetadata: null
+          }
+        })
+      ]);
+
+      return Response.json({
+        success: true,
+        message: "Archivos S3 eliminados y enlaces limpiados"
+      });
+    } catch (error) {
+      console.error("Error eliminando archivos S3:", error);
+      return Response.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Error al eliminar archivos"
+      });
+    }
+  }
+
+  // Get presigned preview URL for private video
+  if (intent === "get_video_preview_url") {
+    const videoId = formData.get("videoId") as string;
+    
+    if (!videoId) {
+      return Response.json({ success: false, error: "videoId es requerido" });
+    }
+
+    try {
+      // Get video's storageLink to extract S3 key
+      const video = await db.video.findUnique({
+        where: { id: videoId },
+        select: { storageLink: true }
+      });
+      
+      if (!video?.storageLink) {
+        return Response.json({ 
+          success: false, 
+          error: "Video no tiene archivo asociado" 
+        });
+      }
+
+      // Extract S3 key from storageLink URL
+      const url = new URL(video.storageLink);
+      const s3Key = url.pathname.substring(1); // Remove leading slash
+      
+      // Generate presigned URL
+      const previewUrl = await Effect.runPromise(
+        s3VideoService.getVideoPreviewUrl(s3Key, 3600) // 1 hour expiry
+      );
+
+      return Response.json({
+        success: true,
+        previewUrl
+      });
+    } catch (error) {
+      console.error("Error generando preview URL:", error);
+      return Response.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Error al generar preview URL"
+      });
+    }
+  }
+
+  return Response.json(null);
 };

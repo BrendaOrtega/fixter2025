@@ -19,12 +19,14 @@ WORKDIR /app
 RUN npm run build
 
 FROM node:20.11.1-alpine
-# RUN apk update && apk add openssl
+# Install openssl and system deps
 RUN apk update && apk add openssl
 COPY ./package.json package-lock.json /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
 COPY --from=build-env /app/app/content /app/app/content
+# Ensure ffmpeg binary from npm package is executable
+RUN chmod +x /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg || true
 WORKDIR /app
 ENV HOST=0.0.0.0
 ENV PORT=3000

@@ -380,6 +380,15 @@ model Video {
   courses     Course[] @relation(fields: [courseIds], references: [id])
   courseIds   String[] @db.ObjectId
   v           Int?     @map("__v")
+  
+  // Video processing status
+  processingStatus      String?   // "pending", "processing", "ready", "failed"
+  processingStartedAt   DateTime?
+  processingCompletedAt DateTime?
+  processingFailedAt    DateTime?
+  processingError       String?
+  processingMetadata    Json?     // Store quality info, processing time, etc.
+  
   //dates
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

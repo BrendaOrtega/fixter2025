@@ -3,6 +3,9 @@ import { sendSESTEST } from "~/mailSenders/sendSESTEST";
 import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
 import { db } from "./db";
 import Agenda from "agenda";
+import { Effect } from "effect";
+import { videoProcessorService } from "./services/video-processor";
+import { s3VideoService } from "./services/s3-video";
 
 let agenda: Agenda;
 const getAgenda = () => {
@@ -298,3 +301,112 @@ export const startSequenceProcessor = async () => {
   await agenda.every('5 minutes', 'process_sequences');
   console.info('Sequence processor started - runs every 5 minutes');
 };
+
+// ═══════════════════════════════════════════════════════════════
+// Job para procesar videos a HLS
+// ═══════════════════════════════════════════════════════════════
+
+export const scheduleVideoProcessing = async ({
+  courseId,
+  videoId,
+  videoS3Key,
+}: {
+  courseId: string;
+  videoId: string;
+  videoS3Key: string;
+}) => {
+  try {
+    const agenda = getAgenda();
+    console.info(`🔄 [AGENDA] Starting agenda for video processing...`);
+    await agenda.start();
+    console.info(`📤 [AGENDA] Scheduling HLS job for video ${videoId}...`);
+    const job = await agenda.now("process_video_hls", { courseId, videoId, videoS3Key });
+    console.info(`🎬 Job encolado: procesamiento HLS para video ${videoId}`, { jobId: job.attrs._id });
+  } catch (error) {
+    console.error(`❌ [AGENDA] Error scheduling video processing:`, error);
+    throw error;
+  }
+};
+
+getAgenda().define(
+  "process_video_hls",
+  async (job: {
+    attrs: { 
+      name: string; 
+      data: { 
+        courseId: string;
+        videoId: string;
+        videoS3Key: string;
+      } 
+    };
+  }) => {
+    const { courseId, videoId, videoS3Key } = job.attrs.data;
+    console.info(`🎬 [HLS] Iniciando procesamiento para video ${videoId}`);
+    console.info(`📋 [HLS] Datos: courseId=${courseId}, videoS3Key=${videoS3Key}`);
+
+    // Use atomic transaction for all DB operations
+    try {
+      await db.$transaction(async (tx) => {
+        // 1. Update video status to processing (atomic)
+        await tx.video.update({
+          where: { id: videoId },
+          data: { 
+            processingStatus: "processing",
+            processingStartedAt: new Date()
+          }
+        });
+
+        // 2. Process video to HLS (this is the heavy operation)
+        const result = await Effect.runPromise(
+          videoProcessorService.processVideoToHLS(courseId, videoId, videoS3Key)
+        );
+
+        // 3. Update video with final results (atomic with step 1)
+        await tx.video.update({
+          where: { id: videoId },
+          data: {
+            m3u8: result.masterPlaylistUrl,
+            storageLink: s3VideoService.getVideoUrl(videoS3Key),
+            duration: result.duration.toString(),
+            processingStatus: "ready",
+            processingCompletedAt: new Date(),
+            processingMetadata: {
+              qualities: result.qualities,
+              processingTime: result.processingTime,
+              processedAt: new Date().toISOString(),
+            }
+          }
+        });
+
+        console.info(`✅ [HLS] Procesamiento completado para video ${videoId}`);
+        console.info(`  - Master playlist: ${result.masterPlaylistUrl}`);
+        console.info(`  - Calidades: ${result.qualities.map(q => q.resolution).join(", ")}`);
+        console.info(`  - Duración: ${result.duration}s`);
+        console.info(`  - Tiempo de procesamiento: ${result.processingTime}s`);
+      }, {
+        maxWait: 30000, // 30s max wait for transaction
+        timeout: 600000, // 10 min timeout for the whole transaction (video processing can be long)
+      });
+
+    } catch (error) {
+      console.error(`❌ [HLS] Error procesando video ${videoId}:`, error);
+      
+      // Update video status to failed (separate transaction for error handling)
+      try {
+        await db.video.update({
+          where: { id: videoId },
+          data: {
+            processingStatus: "failed",
+            processingError: error instanceof Error ? error.message : String(error),
+            processingFailedAt: new Date()
+          }
+        });
+      } catch (updateError) {
+        console.error(`❌ [HLS] Failed to update error status for video ${videoId}:`, updateError);
+      }
+
+      throw error; // Re-throw to mark job as failed
+    }
+  }
+  // Remove concurrency/lockLifetime options for now to debug
+);

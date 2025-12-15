@@ -4,12 +4,144 @@ import {
   type UseFormRegister,
 } from "react-hook-form";
 import { cn } from "~/utils/cn";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, useRef } from "react";
 import Spinner from "../common/Spinner";
-import { FaTrash } from "react-icons/fa6";
+import { FaTrash, FaUpload } from "react-icons/fa6";
+import { FaExclamationCircle, FaCheckCircle, FaSpinner } from "react-icons/fa";
 import { useFetcher, useSubmit } from "react-router";
 import type { Course, Video } from "~/types/models";
 import { Drawer } from "../viewer/SimpleDrawer";
+
+// Component to show video processing status
+const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
+  const fetcher = useFetcher();
+  const previewFetcher = useFetcher();
+  const [status, setStatus] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check status on mount and periodically
+    const checkStatus = () => {
+      fetcher.submit(
+        { intent: "get_video_status", videoId },
+        { method: "POST", action: "/api/course" }
+      );
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [videoId]);
+
+  useEffect(() => {
+    if (fetcher.data && fetcher.data.success) {
+      setStatus(fetcher.data.status);
+      
+      // If video has direct link but no preview URL yet, get presigned URL
+      if (fetcher.data.hasDirectLink && !previewUrl && status !== "ready") {
+        previewFetcher.submit(
+          { intent: "get_video_preview_url", videoId },
+          { method: "POST", action: "/api/course" }
+        );
+      }
+    }
+  }, [fetcher.data, previewUrl, status, videoId]);
+
+  useEffect(() => {
+    if (previewFetcher.data && previewFetcher.data.success) {
+      setPreviewUrl(previewFetcher.data.previewUrl);
+    }
+  }, [previewFetcher.data]);
+
+  if (!status || status === "unknown") return null;
+
+  const statusConfig = {
+    pending: {
+      icon: FaSpinner,
+      text: "Video pendiente de procesamiento",
+      color: "text-yellow-500",
+      bg: "bg-yellow-500/10",
+    },
+    processing: {
+      icon: FaSpinner,
+      text: "Procesando video a HLS...",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      animate: true,
+    },
+    ready: {
+      icon: FaCheckCircle,
+      text: "Video listo para reproducción",
+      color: "text-green-500",
+      bg: "bg-green-500/10",
+    },
+    failed: {
+      icon: FaExclamationCircle,
+      text: fetcher.data?.error || "Error en procesamiento",
+      color: "text-red-500",
+      bg: "bg-red-500/10",
+    },
+  }[status];
+
+  if (!statusConfig) return null;
+
+  const Icon = statusConfig.icon;
+
+  return (
+    <div className={`p-3 rounded-lg mb-4 ${statusConfig.bg}`}>
+      <div className={`flex items-center gap-2 ${statusConfig.color}`}>
+        <Icon className={statusConfig.animate ? "animate-spin" : ""} />
+        <span className="text-sm">{statusConfig.text}</span>
+      </div>
+      
+      {/* Preview del video original mientras se procesa */}
+      {fetcher.data?.hasDirectLink && status !== "ready" && previewUrl && (
+        <div className="mt-3">
+          <p className="text-xs text-gray-400 mb-2">📹 Preview (video original):</p>
+          <video 
+            src={previewUrl}
+            controls 
+            className="w-full max-w-md rounded border border-gray-600"
+            style={{ maxHeight: "200px" }}
+          />
+        </div>
+      )}
+      
+      {/* Loading indicator for preview URL */}
+      {fetcher.data?.hasDirectLink && status !== "ready" && !previewUrl && previewFetcher.state === "loading" && (
+        <div className="mt-3">
+          <p className="text-xs text-gray-400">⏳ Generando preview...</p>
+        </div>
+      )}
+      
+      {fetcher.data?.hasHLS && (
+        <p className="text-xs text-gray-400 mt-1">✅ HLS disponible</p>
+      )}
+      {fetcher.data?.hasDirectLink && (
+        <p className="text-xs text-gray-400">✅ Video directo disponible</p>
+      )}
+      
+      {/* Botón para limpiar archivos S3 */}
+      {(fetcher.data?.hasDirectLink || fetcher.data?.hasHLS) && (
+        <button
+          type="button"
+          onClick={() => {
+            if (confirm("¿Estás seguro de eliminar todos los archivos de video (original + HLS)? Esto no se puede deshacer.")) {
+              fetcher.submit(
+                { intent: "delete_video_files", videoId },
+                { method: "POST", action: "/api/course" }
+              );
+            }
+          }}
+          className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
+        >
+          🗑️ Eliminar archivos S3
+        </button>
+      )}
+    </div>
+  );
+};
 
 export const CourseForm = ({
   course = {},
@@ -131,7 +263,7 @@ export const CourseForm = ({
       }
 
       // Éxito - cerrar y refrescar lista
-      if (response.success === true || response.video) {
+      if (response.success === true || (response as any).video) {
         setShow(false);
         setEditingVideo(undefined);
         setPendingVideoAction(null);
@@ -148,6 +280,11 @@ export const CourseForm = ({
 
   const [editingVideo, setEditingVideo] = useState<Partial<Video>>();
   const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const onVideoClick = (vid: Partial<Video>) => {
     setShow(true);
     setEditingVideo(vid);
@@ -158,6 +295,103 @@ export const CourseForm = ({
     setEditingVideo(undefined);
     setVideoErrors({});
     setPendingVideoAction(null);
+    setVideoFile(null);
+    setUploadProgress(0);
+    setIsUploading(false);
+  };
+
+  // Handle video file upload to S3
+  const handleVideoUpload = async (file?: File) => {
+    const uploadFile = file || videoFile;
+    if (!uploadFile) {
+      setVideoErrors({ _form: "Por favor selecciona un archivo de video" });
+      return;
+    }
+    
+    // For new videos, we need to save first to get an ID
+    if (!editingVideo?.id) {
+      setVideoErrors({ 
+        _form: "Primero guarda el video con el botón 'Guardar' para obtener un ID, luego sube el archivo" 
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(10);
+
+    try {
+      // Step 1: Get presigned URL from backend using fetch directly
+      const formData = new FormData();
+      formData.append('intent', 'get_video_upload_url');
+      formData.append('videoId', editingVideo.id);
+      formData.append('fileName', uploadFile.name);
+      
+      const response = await fetch('/api/course', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const urlData = await response.json();
+      
+      if (!urlData?.success) {
+        throw new Error(urlData?.error || "Error obteniendo URL de subida");
+      }
+
+      setUploadProgress(30);
+
+      // Step 2: Upload file directly to S3
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 70) + 30;
+          setUploadProgress(percentComplete);
+        }
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            resolve();
+          } else {
+            reject(new Error(`Upload failed: ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+
+        xhr.open("PUT", urlData.uploadUrl);
+        xhr.setRequestHeader("Content-Type", uploadFile.type || "video/mp4");
+        xhr.send(uploadFile);
+      });
+
+      setUploadProgress(100);
+
+      // Step 3: Confirm upload and start processing
+      const confirmData = new FormData();
+      confirmData.append('intent', 'confirm_video_upload');
+      confirmData.append('videoId', editingVideo.id);
+      confirmData.append('s3Key', urlData.key);
+      
+      await fetch('/api/course', {
+        method: 'POST',
+        body: confirmData
+      });
+
+      // Success feedback
+      setTimeout(() => {
+        setIsUploading(false);
+        setVideoFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }, 1000);
+
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      setVideoErrors({ 
+        _form: error instanceof Error ? error.message : "Error al subir el video" 
+      });
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -184,8 +418,8 @@ export const CourseForm = ({
             name="index"
             placeholder="índice"
             defaultValue={
-              (editingVideo?.index == "0" ? "0" : editingVideo?.index) ||
-              videos.length ||
+              editingVideo?.index?.toString() ||
+              videos.length.toString() ||
               "0"
             }
           />
@@ -196,18 +430,126 @@ export const CourseForm = ({
             placeholder="Título del video"
             error={videoErrors.title}
           />
-          <Input
-            defaultValue={editingVideo?.storageLink}
-            label="Link"
-            name="storageLink"
-            placeholder="Link del video"
-          />
-          <Input
-            defaultValue={editingVideo?.m3u8}
-            label="Playlist"
-            name="m3u8"
-            placeholder="Link de la playlist"
-          />
+          
+          {/* Video Upload Section */}
+          {editingVideo?.id ? (
+            <>
+              <div className="mb-4 p-4 border border-gray-600 rounded-lg bg-gray-800/50">
+                <label className="block text-sm font-medium mb-2">
+                  📹 Subir Video (MP4)
+                </label>
+                
+                {/* File input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/mp4,video/quicktime"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setVideoFile(file);
+                      setUploadProgress(0);
+                      // Auto-upload when file is selected
+                      await handleVideoUpload(file);
+                    }
+                  }}
+                  className="hidden"
+                />
+                
+                {/* Upload UI */}
+                {!videoFile ? (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full p-4 border-2 border-dashed border-gray-600 rounded-lg hover:border-gray-400 transition-colors flex flex-col items-center justify-center gap-2"
+                  >
+                    <FaUpload className="text-2xl text-gray-400" />
+                    <span className="text-sm text-gray-300">Click para seleccionar video</span>
+                    <span className="text-xs text-gray-500">MP4 o MOV (máx 2GB)</span>
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
+                      <span className="text-sm truncate flex-1">{videoFile.name}</span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </span>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    {(isUploading || uploadProgress > 0) && (
+                      <div className="space-y-1">
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-center text-gray-400">
+                          {isUploading ? `Subiendo... ${uploadProgress}%` : '✅ Video subido'}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Status or change button */}
+                    {!isUploading ? (
+                      uploadProgress === 100 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVideoFile(null);
+                            setUploadProgress(0);
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          className="text-xs text-gray-400 hover:text-gray-300 text-center w-full"
+                        >
+                          Seleccionar otro archivo
+                        </button>
+                      ) : (
+                        <p className="text-xs text-center text-yellow-400">
+                          ⚠️ El archivo se subirá automáticamente
+                        </p>
+                      )
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              
+              {/* Processing Status */}
+              <VideoProcessingStatus videoId={editingVideo.id} />
+            </>
+          ) : (
+            <div className="mb-4 p-4 border border-yellow-600 rounded-lg bg-yellow-600/10">
+              <p className="text-sm text-yellow-300">
+                ⚠️ Primero guarda el video para poder subir el archivo MP4
+              </p>
+            </div>
+          )}
+          
+          {/* Legacy fields (hidden when uploading) */}
+          {!videoFile && (
+            <>
+              <details className="mb-4">
+                <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-300">
+                  Enlaces manuales (opcional)
+                </summary>
+                <div className="mt-2 space-y-2">
+                  <Input
+                    defaultValue={editingVideo?.storageLink}
+                    label="Link directo"
+                    name="storageLink"
+                    placeholder="https://..."
+                  />
+                  <Input
+                    defaultValue={editingVideo?.m3u8}
+                    label="Playlist HLS"
+                    name="m3u8"
+                    placeholder="https://.../master.m3u8"
+                  />
+                </div>
+              </details>
+            </>
+          )}
           <Input
             defaultValue={editingVideo?.duration}
             label="Duración en segundos"
@@ -246,14 +588,19 @@ export const CourseForm = ({
           />
           <button
             type="submit"
-            disabled={pendingVideoAction !== null}
+            disabled={pendingVideoAction !== null || isUploading}
             className={cn(
               "bg-black mt-auto border rounded-xl py-3 font-bold text-2xl hover:bg-gray-900 active:bg-black",
               "absolute bottom-0 left-0 right-0",
-              pendingVideoAction !== null && "opacity-50 cursor-not-allowed"
+              (pendingVideoAction !== null || isUploading) && "opacity-50 cursor-not-allowed"
             )}
           >
-            {pendingVideoAction !== null ? "Guardando..." : "Guardar"}
+            {isUploading 
+              ? `Subiendo video... ${uploadProgress}%`
+              : pendingVideoAction !== null 
+              ? "Guardando..." 
+              : "Guardar"
+            }
           </button>
         </fetcher.Form>
       </Drawer>
@@ -295,12 +642,14 @@ export const CourseForm = ({
         <hr className="my-10 border-none" />
         <button
           type="submit"
+          disabled={isUploading}
           className={cn(
             "bg-black mt-auto border rounded-xl py-3 font-bold text-2xl hover:bg-gray-900 active:bg-black",
-            "absolute bottom-0 left-0 right-0"
+            "absolute bottom-0 left-0 right-0",
+            isUploading && "opacity-50 cursor-not-allowed bg-gray-600"
           )}
         >
-          Guardar
+          {isUploading ? `Subiendo video... ${uploadProgress}%` : "Guardar"}
         </button>
       </fetcher.Form>
     </>

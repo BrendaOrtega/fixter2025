@@ -1,0 +1,518 @@
+import {
+  useForm,
+  type RegisterOptions,
+  type UseFormRegister,
+} from "react-hook-form";
+import { cn } from "~/utils/cn";
+import { useEffect, useState, type FormEvent } from "react";
+import Spinner from "../common/Spinner";
+import { FaTrash } from "react-icons/fa6";
+import { useFetcher, useSubmit } from "react-router";
+import type { Course, Video } from "~/types/models";
+import { Drawer } from "../viewer/SimpleDrawer";
+
+export const CourseForm = ({
+  course = {},
+  onDirty,
+  onSubmit,
+}: {
+  onSubmit?: () => void;
+  onDirty?: (arg0: boolean) => void;
+  course: Partial<Course>;
+}) => {
+  const fetcher = useFetcher<typeof action>();
+  const {
+    handleSubmit,
+    register,
+    formState: { isDirty },
+  } = useForm({
+    defaultValues: {
+      title: course.title,
+      id: course.id,
+      published: course.published,
+      isFree: course.isFree,
+      icon: course.icon,
+    },
+  });
+
+  // Video upload states
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
+
+  useEffect(() => {
+    onDirty?.(isDirty);
+  }, [isDirty]);
+
+  const submitHandler = (values: Partial<Course>) => {
+    // @todo create new
+    if (!values.id) return;
+    fetcher.submit(
+      {
+        intent: "admin_update_course",
+        data: JSON.stringify(values),
+      },
+      { method: "POST", action: "/api/course" }
+    );
+    onSubmit?.();
+  };
+
+  const addVideo = () => {
+    setShow(true);
+  };
+
+  useEffect(() => {
+    if (!course.id) return;
+    fetcher.submit(
+      { intent: "admin_get_videos_for_course", courseId: course.id },
+      {
+        method: "POST",
+        action: "/api/course",
+      }
+    );
+  }, []);
+
+  const videos: Video[] = fetcher.data?.videos || [];
+  const isLoading = fetcher.state !== "idle";
+
+  const [show, setShow] = useState(false);
+
+  const [pendingVideoAction, setPendingVideoAction] = useState<
+    "add" | "edit" | null
+  >(null);
+
+  const onVideoFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setVideoErrors({});
+
+    const fd = new FormData(event.currentTarget);
+    const form = Object.fromEntries(fd);
+    form.courseIds = [course.id];
+
+    // Validación frontend
+    const errors: Record<string, string> = {};
+    if (!form.title || String(form.title).trim() === "") {
+      errors.title = "El título es requerido";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setVideoErrors(errors);
+      return;
+    }
+
+    // edit
+    if (editingVideo) {
+      setPendingVideoAction("edit");
+      fetcher.submit(
+        {
+          intent: "admin_update_video",
+          data: JSON.stringify({ ...form, id: editingVideo.id }),
+        },
+        { method: "POST", action: "/api/course" }
+      );
+      return;
+    }
+
+    // crear nuevo
+    setPendingVideoAction("add");
+    fetcher.submit(
+      { intent: "admin_add_video", data: JSON.stringify(form) },
+      { method: "POST", action: "/api/course" }
+    );
+  };
+
+  // Manejar respuesta del servidor para videos
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data && pendingVideoAction) {
+      const response = fetcher.data as {
+        success?: boolean;
+        errors?: Record<string, string>;
+      };
+
+      if (response.success === false && response.errors) {
+        setVideoErrors(response.errors);
+        setPendingVideoAction(null);
+        return;
+      }
+
+      // Éxito - cerrar y refrescar lista
+      if (response.success === true || response.video) {
+        setShow(false);
+        setEditingVideo(undefined);
+        setPendingVideoAction(null);
+        // Refrescar lista de videos
+        if (course.id) {
+          fetcher.submit(
+            { intent: "admin_get_videos_for_course", courseId: course.id },
+            { method: "POST", action: "/api/course" }
+          );
+        }
+      }
+    }
+  }, [fetcher.state, fetcher.data, pendingVideoAction]);
+
+  const [editingVideo, setEditingVideo] = useState<Partial<Video>>();
+  const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const onVideoClick = (vid: Partial<Video>) => {
+    setShow(true);
+    setEditingVideo(vid);
+  };
+
+  const handleVideoFormClose = () => {
+    setShow(false);
+    setEditingVideo(undefined);
+    setVideoErrors({});
+    setPendingVideoAction(null);
+  };
+
+  return (
+    <>
+      <Drawer
+        isOpen={show}
+        cta={<></>}
+        title="Nuevo video"
+        onClose={handleVideoFormClose}
+      >
+        {/* Video form */}
+        {videoErrors._form && (
+          <p className="text-red-500 text-sm mb-2 p-2 bg-red-500/10 rounded">
+            {videoErrors._form}
+          </p>
+        )}
+        <fetcher.Form
+          onSubmit={onVideoFormSubmit}
+          className="flex flex-col h-full"
+        >
+          <Input
+            label="Índice"
+            className="w-20"
+            name="index"
+            placeholder="índice"
+            defaultValue={
+              (editingVideo?.index == "0" ? "0" : editingVideo?.index) ||
+              videos.length ||
+              "0"
+            }
+          />
+          <Input
+            defaultValue={editingVideo?.title}
+            label="Título"
+            name="title"
+            placeholder="Título del video"
+            error={videoErrors.title}
+          />
+          {/* Video Upload Section */}
+          <div className="border-2 border-dashed border-gray-600 rounded-lg p-4">
+            <label className="block mb-2 text-sm font-medium">
+              Subir Video (MP4)
+            </label>
+            <input
+              type="file"
+              accept="video/mp4,video/quicktime,video/x-m4v"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setSelectedFile(file);
+                  setUploadStatus(`Archivo seleccionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+                }
+              }}
+              className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+            />
+            {selectedFile && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-gray-400">{uploadStatus}</p>
+                {isUploading && (
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-violet-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Keep original fields for manual input if needed */}
+          <details className="cursor-pointer">
+            <summary className="text-sm text-gray-400 mb-2">
+              O usar URLs directas (avanzado)
+            </summary>
+            <div className="space-y-2 mt-2">
+              <Input
+                defaultValue={editingVideo?.storageLink}
+                label="Link directo"
+                name="storageLink"
+                placeholder="Link del video"
+              />
+              <Input
+                defaultValue={editingVideo?.m3u8}
+                label="HLS Playlist"
+                name="m3u8"
+                placeholder="Link de la playlist .m3u8"
+              />
+            </div>
+          </details>
+          
+          {/* Processing Status */}
+          {editingVideo?.processingStatus && (
+            <div className="p-3 rounded-lg bg-gray-800 border border-gray-700">
+              <p className="text-sm font-medium mb-1">Estado del video:</p>
+              <div className="flex items-center gap-2">
+                {editingVideo.processingStatus === "processing" && (
+                  <>
+                    <Spinner className="w-4 h-4" />
+                    <span className="text-yellow-400">Procesando HLS...</span>
+                  </>
+                )}
+                {editingVideo.processingStatus === "ready" && (
+                  <span className="text-green-400">✅ Listo para reproducir</span>
+                )}
+                {editingVideo.processingStatus === "failed" && (
+                  <span className="text-red-400">❌ Error en procesamiento</span>
+                )}
+                {editingVideo.processingStatus === "pending" && (
+                  <span className="text-gray-400">⏳ En cola para procesar</span>
+                )}
+              </div>
+              {editingVideo.processingError && (
+                <p className="text-xs text-red-400 mt-2">{editingVideo.processingError}</p>
+              )}
+            </div>
+          )}
+          <Input
+            defaultValue={editingVideo?.duration}
+            label="Duración en segundos"
+            name="duration"
+            placeholder="360"
+          />
+          <Input
+            defaultValue={editingVideo?.moduleName}
+            label="Nombre del módulo"
+            name="moduleName"
+            placeholder="Módulo ..."
+          />
+          <CheckBox
+            defaultChecked={editingVideo?.isPublic}
+            label="Es gratis"
+            name="isPublic"
+          />
+          <Input
+            label="Descripción"
+            name="description"
+            placeholder="Markdown"
+            type="textarea"
+            defaultValue={editingVideo?.description}
+          />
+          <Input
+            label="Nombre del autor"
+            name="authorName"
+            placeholder="blissmo"
+            defaultValue={editingVideo?.authorName}
+          />
+          <Input
+            defaultValue={editingVideo?.photoUrl}
+            label="Foto del autor"
+            name="photoUrl"
+            className="mb-10"
+          />
+          <button
+            type="submit"
+            disabled={pendingVideoAction !== null}
+            className={cn(
+              "bg-black mt-auto border rounded-xl py-3 font-bold text-2xl hover:bg-gray-900 active:bg-black",
+              "absolute bottom-0 left-0 right-0",
+              pendingVideoAction !== null && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {pendingVideoAction !== null ? "Guardando..." : "Guardar"}
+          </button>
+        </fetcher.Form>
+      </Drawer>
+      <fetcher.Form onSubmit={handleSubmit(submitHandler)}>
+        <Input
+          placeholder="Título"
+          label="Título del curso"
+          register={register}
+          name="title"
+        />
+        <CheckBox label="Es gratis" name="isFree" register={register} />
+        <CheckBox label="Publicado" name="published" register={register} />
+        <Input
+          placeholder="pega un link"
+          label="Icono del curso"
+          register={register}
+          name="icon"
+        />
+        <button
+          type="button"
+          onClick={addVideo}
+          className="border border-gray-500 rounded-lg p-2 hover:border-gray-100 hover:shadow-md active:border-gray-500"
+        >
+          Añadir video +{" "}
+        </button>
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          <div>
+            {videos.map((video) => (
+              <VideoCard
+                video={video}
+                key={video.id}
+                onClick={() => onVideoClick(video)}
+              />
+            ))}
+          </div>
+        )}
+        <hr className="my-10 border-none" />
+        <button
+          type="submit"
+          className={cn(
+            "bg-black mt-auto border rounded-xl py-3 font-bold text-2xl hover:bg-gray-900 active:bg-black",
+            "absolute bottom-0 left-0 right-0"
+          )}
+        >
+          Guardar
+        </button>
+      </fetcher.Form>
+    </>
+  );
+};
+
+const CheckBox = ({
+  name,
+  label,
+  error,
+  placeholder,
+  register,
+  registerOptions,
+  defaultChecked,
+}: {
+  defaultChecked?: boolean;
+  registerOptions?: RegisterOptions;
+  register?: (arg0: any, arg1: any) => Object;
+  placeholder?: string;
+  name?: string;
+  error?: string;
+  label?: string;
+}) => {
+  return (
+    <>
+      <label className="cursor-pointer mb-1 border rounded p-3 block">
+        <div className="flex justify-between items-center">
+          <span className="select-none">{label}</span>
+          <input
+            placeholder={placeholder}
+            name={name}
+            className="text-brand-700 focus:ring-brand-500"
+            type="checkbox"
+            defaultChecked={defaultChecked}
+            {...register?.(name, registerOptions)}
+          />
+        </div>
+        <p>{error}</p>
+      </label>
+    </>
+  );
+};
+
+const VideoCard = ({
+  video,
+  onTrashClick,
+  onClick,
+}: {
+  onClick?: () => void;
+  onTrashClick?: () => void;
+  video: Partial<Video>;
+}) => {
+  const fetcher = useFetcher();
+  const confirmDeletion = () => {
+    if (!confirm("Esto no es reversible")) return;
+    fetcher.submit(
+      {
+        intent: "admin_delete_video",
+        videoId: video.id as string,
+      },
+      { method: "DELETE", action: "/api/course" }
+    );
+    onTrashClick?.();
+  };
+
+  return (
+    <div
+      role="button"
+      onClick={onClick}
+      className="flex my-2 rounded-xl p-3 border relative gap-4 group"
+    >
+      <img
+        className="w-40 rounded-lg"
+        src={video.poster || "/cover.png"}
+        alt="poster"
+      />
+      <button
+        onClick={confirmDeletion}
+        className={cn(
+          "invisible group-hover:visible absolute top-4 right-6",
+          "hover:scale-110 active:scale-100"
+        )}
+      >
+        <FaTrash />
+      </button>
+      <div className="grid">
+        <div>
+          <h3 className="">{video.title}</h3>
+          <p className="text-xs">
+            Módulo: <strong>{video.moduleName}</strong>
+          </p>
+        </div>
+        <p className="text-xs">
+          Índice: <strong className="text-xl">{video.index}</strong>
+        </p>
+        <p className="text-xs truncate">{video.storageLink}</p>
+      </div>
+    </div>
+  );
+};
+
+export const Input = ({
+  error,
+  label,
+  placeholder,
+  register,
+  registerOptions = {},
+  name,
+  className,
+  type = "text",
+  defaultValue,
+}: {
+  defaultValue?: string | number | null;
+  type?: "text" | "textarea";
+  name: string;
+  registerOptions?: RegisterOptions;
+  register?: UseFormRegister<{ [x: string]: string }>; // @todo fix it
+  placeholder?: string;
+  error?: string;
+  label?: string;
+  className?: string;
+}) => {
+  const Element = type === "textarea" ? "textarea" : "input";
+  return (
+    <label className="grid gap-2 mb-px text-white w-full">
+      <span>{label}</span>
+      <Element
+        defaultValue={defaultValue || undefined}
+        placeholder={placeholder}
+        className={cn(
+          "rounded-lg text-black",
+          error && "ring-2 ring-red-500 border-red-500",
+          className
+        )}
+        type={type}
+        name={name}
+        {...register?.(name, registerOptions)}
+      />
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+    </label>
+  );
+};
