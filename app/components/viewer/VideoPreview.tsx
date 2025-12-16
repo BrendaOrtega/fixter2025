@@ -15,6 +15,7 @@ interface VideoPreviewProps {
 export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Memorizar las URLs del video para evitar re-renders innecesarios
   const videoUrls = useMemo(() => ({
@@ -22,14 +23,17 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
     storageLink: video?.storageLink
   }), [video?.m3u8, video?.storageLink]);
   
-  // Hook for secure HLS URLs (backward compatible)
-  const { interceptHLSUrl } = useSecureHLS({
+  // Hook for secure HLS URLs (backward compatible) - memorizar con las props exactas
+  const secureHLSOptions = useMemo(() => ({
     courseId,
     onError: setError,
-  });
+  }), [courseId]);
+  
+  const { interceptHLSUrl } = useSecureHLS(secureHLSOptions);
 
   useEffect(() => {
-    if (!videoRef.current || !videoUrls.m3u8 && !videoUrls.storageLink) return;
+    // Solo inicializar UNA VEZ - nunca volver a ejecutar este efecto
+    if (!videoRef.current || !videoUrls.m3u8 && !videoUrls.storageLink || isInitialized) return;
 
     const setupPreview = async () => {
       const videoElement = videoRef.current!;
@@ -86,11 +90,16 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
       }
     };
 
-    setupPreview().catch(err => {
-      console.error("Error setting up video preview:", err);
-      setError("Error al configurar preview");
-    });
-  }, [videoUrls, courseId]); // Removemos interceptHLSUrl de las dependencias
+    setupPreview()
+      .then(() => {
+        setIsInitialized(true); // Marcar como inicializado para NUNCA reinicializar
+        console.log("🎬 [PREVIEW] Video preview successfully initialized and locked");
+      })
+      .catch(err => {
+        console.error("Error setting up video preview:", err);
+        setError("Error al configurar preview");
+      });
+  }, [videoUrls.m3u8, videoUrls.storageLink, isInitialized]); // Solo depender de las URLs y el flag
 
   return (
     <div className={className}>

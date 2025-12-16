@@ -5,13 +5,68 @@ import {
 } from "react-hook-form";
 import { cn } from "~/utils/cn";
 import { VideoPreview } from "~/components/viewer/VideoPreview";
-import { useEffect, useState, type FormEvent, useRef } from "react";
+import { useEffect, useState, useMemo, type FormEvent, useRef } from "react";
 import Spinner from "../common/Spinner";
 import { FaTrash, FaUpload } from "react-icons/fa6";
 import { FaExclamationCircle, FaCheckCircle, FaSpinner } from "react-icons/fa";
 import { useFetcher, useSubmit } from "react-router";
 import type { Course, Video } from "~/types/models";
 import { Drawer } from "../viewer/SimpleDrawer";
+
+// Component independiente para el video preview que NO se re-renderiza con el polling
+const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: string }) => {
+  const [videoUrls, setVideoUrls] = useState<{m3u8?: string; storageLink?: string} | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  
+  // Memorizar las props para evitar cualquier re-render
+  const memoizedProps = useMemo(() => ({ videoId, courseId }), [videoId, courseId]);
+
+  useEffect(() => {
+    // Solo cargar UNA VEZ al montar - NUNCA VOLVER A EJECUTAR
+    if (hasLoaded) return;
+    
+    const loadVideoData = async () => {
+      const formData = new FormData();
+      formData.append("intent", "get_video_status");
+      formData.append("videoId", memoizedProps.videoId);
+      
+      try {
+        const response = await fetch("/api/course", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+        
+        if (data.success && (data.hasHLS || data.hasDirectLink)) {
+          setVideoUrls({
+            m3u8: data.hlsUrl,
+            storageLink: data.directLinkPresigned || data.directLink
+          });
+          setHasLoaded(true); // Marcar como cargado para NUNCA volver a cargar
+        }
+      } catch (error) {
+        console.error("Error loading video data for preview:", error);
+      }
+    };
+
+    loadVideoData();
+  }, [memoizedProps.videoId, hasLoaded]);
+
+  if (!videoUrls) {
+    return (
+      <div className="text-gray-400 text-xs">
+        🔄 Cargando preview...
+      </div>
+    );
+  }
+
+  return (
+    <VideoPreview 
+      video={videoUrls}
+      courseId={memoizedProps.courseId}
+    />
+  );
+};
 
 // Component to show video processing status
 const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: Partial<Course> }) => {
@@ -99,21 +154,16 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
         <span className="text-sm">{statusConfig.text}</span>
       </div>
       
-      {/* Preview del video como lo verá el usuario */}
-      {(videoData?.hasHLS || videoData?.hasDirectLink) && (
-        <div className="mt-3">
-          <p className="text-xs text-gray-400 mb-2">
-            📹 Preview (como lo verá el usuario):
-          </p>
-          <VideoPreview 
-            video={{
-              m3u8: videoData?.hlsUrl,
-              storageLink: videoData?.directLinkPresigned || videoData?.directLink
-            }}
-            courseId={course?.id || ""}
-          />
-        </div>
-      )}
+      {/* Preview del video como lo verá el usuario - COMPLETAMENTE INDEPENDIENTE del polling */}
+      <div className="mt-3">
+        <p className="text-xs text-gray-400 mb-2">
+          📹 Preview (como lo verá el usuario):
+        </p>
+        <StableVideoPreview 
+          videoId={videoId}
+          courseId={course?.id || ""}
+        />
+      </div>
       
       {videoData?.hasHLS && (
         <p className="text-xs text-gray-400 mt-1">✅ HLS disponible</p>
