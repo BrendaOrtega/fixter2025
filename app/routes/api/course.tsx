@@ -77,23 +77,38 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const index = Number(data.index);
     const isPublic = data.isPublic === "on" ? true : undefined; // @todo validate
     
-    // Use upsert with simplified conflict resolution (no extra queries = no deadlock)
-    return await db.video.update({
-      where: { id: data.id },
-      data: { 
-        title: data.title,
-        index, 
-        isPublic, 
-        duration: data.duration,
-        moduleName: data.moduleName,
-        description: data.description,
-        authorName: data.authorName,
-        photoUrl: data.photoUrl,
-        // Only update video links if explicitly provided (preserve upload-generated ones)
-        ...(data.storageLink && { storageLink: data.storageLink }),
-        ...(data.m3u8 && { m3u8: data.m3u8 }),
-      },
-    });
+    // Retry logic for deadlock resolution
+    const updateVideoWithRetry = async (retries = 3): Promise<any> => {
+      try {
+        return await db.video.update({
+          where: { id: data.id },
+          data: { 
+            title: data.title,
+            index, 
+            isPublic, 
+            duration: data.duration,
+            moduleName: data.moduleName,
+            description: data.description,
+            authorName: data.authorName,
+            photoUrl: data.photoUrl,
+            // Only update video links if explicitly provided (preserve upload-generated ones)
+            ...(data.storageLink && { storageLink: data.storageLink }),
+            ...(data.m3u8 && { m3u8: data.m3u8 }),
+          },
+        });
+      } catch (error: any) {
+        // Check if it's a deadlock error (P2034)
+        if (error.code === 'P2034' && retries > 0) {
+          console.log(`Deadlock detected, retrying... (${retries} attempts left)`);
+          // Wait a random amount (10-100ms) before retry
+          await new Promise(resolve => setTimeout(resolve, Math.random() * 90 + 10));
+          return updateVideoWithRetry(retries - 1);
+        }
+        throw error;
+      }
+    };
+    
+    return await updateVideoWithRetry();
   }
 
   if (intent === "admin_add_video") {

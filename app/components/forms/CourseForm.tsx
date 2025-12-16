@@ -91,7 +91,7 @@ const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
               m3u8: fetcher.data?.hlsUrl,
               storageLink: fetcher.data?.directLink
             }}
-            courseId={course.id}
+            courseId={course?.id || ""}
           />
         </div>
       )}
@@ -140,11 +140,11 @@ export const CourseForm = ({
     formState: { isDirty },
   } = useForm({
     defaultValues: {
-      title: course.title,
-      id: course.id,
-      published: course.published,
-      isFree: course.isFree,
-      icon: course.icon,
+      title: course?.title || "",
+      id: course?.id || "",
+      published: course?.published || false,
+      isFree: course?.isFree || false,
+      icon: course?.icon || "",
     },
   });
 
@@ -170,9 +170,9 @@ export const CourseForm = ({
   };
 
   useEffect(() => {
-    if (!course.id) return;
+    if (!course?.id) return;
     fetcher.submit(
-      { intent: "admin_get_videos_for_course", courseId: course.id },
+      { intent: "admin_get_videos_for_course", courseId: course?.id || "" },
       {
         method: "POST",
         action: "/api/course",
@@ -195,7 +195,7 @@ export const CourseForm = ({
 
     const fd = new FormData(event.currentTarget);
     const form = Object.fromEntries(fd);
-    form.courseIds = [course.id];
+    form.courseIds = [course?.id || ""];
 
     // Validación frontend
     const errors: Record<string, string> = {};
@@ -249,9 +249,9 @@ export const CourseForm = ({
         setEditingVideo(undefined);
         setPendingVideoAction(null);
         // Refrescar lista de videos
-        if (course.id) {
+        if (course?.id) {
           fetcher.submit(
-            { intent: "admin_get_videos_for_course", courseId: course.id },
+            { intent: "admin_get_videos_for_course", courseId: course?.id || "" },
             { method: "POST", action: "/api/course" }
           );
         }

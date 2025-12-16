@@ -60,7 +60,7 @@ const QUALITY_CONFIGS = [
   },
   {
     name: "480p",
-    resolution: "854x480",
+    resolution: "852x480",
     videoBitrate: "1400k",
     audioBitrate: "128k",
     maxrate: "1500k",

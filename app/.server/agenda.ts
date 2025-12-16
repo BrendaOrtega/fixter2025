@@ -290,7 +290,7 @@ getAgenda().define(
   }
 );
 
-// Schedule sequence processing every 5 minutes
+// Schedule sequence processing - optimized frequency for development
 export const startSequenceProcessor = async () => {
   const agenda = getAgenda();
   await agenda.start();
@@ -298,8 +298,10 @@ export const startSequenceProcessor = async () => {
   // Clear any existing job to avoid duplicates
   await agenda.cancel({ name: 'process_sequences' });
   
-  await agenda.every('5 minutes', 'process_sequences');
-  console.info('Sequence processor started - runs every 5 minutes');
+  // Use different intervals based on environment
+  const interval = process.env.NODE_ENV === 'development' ? '15 minutes' : '5 minutes';
+  await agenda.every(interval, 'process_sequences');
+  console.info(`Sequence processor started - runs every ${interval}`);
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -319,6 +321,23 @@ export const scheduleVideoProcessing = async ({
     const agenda = getAgenda();
     console.info(`🔄 [AGENDA] Starting agenda for video processing...`);
     await agenda.start();
+    
+    // Check if there's already a running job for this video
+    const existingJobs = await agenda.jobs({ 
+      name: "process_video_hls",
+      "data.videoId": videoId,
+      nextRunAt: { $exists: true },
+      $or: [
+        { lockedAt: { $exists: true } },
+        { lastFinishedAt: { $exists: false } }
+      ]
+    });
+    
+    if (existingJobs.length > 0) {
+      console.info(`⏭️ [AGENDA] Job already exists for video ${videoId}, skipping...`);
+      return;
+    }
+    
     console.info(`📤 [AGENDA] Scheduling HLS job for video ${videoId}...`);
     const job = await agenda.now("process_video_hls", { courseId, videoId, videoS3Key });
     console.info(`🎬 Job encolado: procesamiento HLS para video ${videoId}`, { jobId: job.attrs._id });
