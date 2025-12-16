@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Hls from "hls.js";
 import { useSecureHLS } from "~/hooks/useSecureHLS";
 
@@ -16,6 +16,12 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   
+  // Memorizar las URLs del video para evitar re-renders innecesarios
+  const videoUrls = useMemo(() => ({
+    m3u8: video?.m3u8,
+    storageLink: video?.storageLink
+  }), [video?.m3u8, video?.storageLink]);
+  
   // Hook for secure HLS URLs (backward compatible)
   const { interceptHLSUrl } = useSecureHLS({
     courseId,
@@ -23,15 +29,15 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
   });
 
   useEffect(() => {
-    if (!videoRef.current || !video) return;
+    if (!videoRef.current || !videoUrls.m3u8 && !videoUrls.storageLink) return;
 
     const setupPreview = async () => {
       const videoElement = videoRef.current!;
       
       // Debug: log received video data
-      console.log("🎬 VideoPreview - Received video data:", {
-        m3u8: video.m3u8,
-        storageLink: video.storageLink,
+      console.log("🎬 VideoPreview - Setting up video with URLs:", {
+        m3u8: videoUrls.m3u8,
+        storageLink: videoUrls.storageLink,
         courseId
       });
       
@@ -41,18 +47,18 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
       
       if (hlsSupport(videoElement)) {
         // Navegador soporta HLS nativo
-        if (video.m3u8) {
-          const secureUrl = await interceptHLSUrl(video.m3u8);
+        if (videoUrls.m3u8) {
+          const secureUrl = await interceptHLSUrl(videoUrls.m3u8);
           videoElement.src = secureUrl;
-          console.info("🎬 [PREVIEW] Using native HLS with presigned:", secureUrl !== video.m3u8 ? 'PRESIGNED' : 'PUBLIC');
-        } else if (video.storageLink) {
-          const secureUrl = await interceptHLSUrl(video.storageLink);
+          console.info("🎬 [PREVIEW] Using native HLS with presigned:", secureUrl !== videoUrls.m3u8 ? 'PRESIGNED' : 'PUBLIC');
+        } else if (videoUrls.storageLink) {
+          const secureUrl = await interceptHLSUrl(videoUrls.storageLink);
           videoElement.src = secureUrl;
-          console.info("🎬 [PREVIEW] Using direct link with presigned:", secureUrl !== video.storageLink ? 'PRESIGNED' : 'PUBLIC');
+          console.info("🎬 [PREVIEW] Using direct link with presigned:", secureUrl !== videoUrls.storageLink ? 'PRESIGNED' : 'PUBLIC');
         }
       } else {
         // Usar HLS.js para navegadores que no soportan HLS nativo
-        if (video.m3u8) {
+        if (videoUrls.m3u8) {
           const hls = new Hls({
             xhrSetup: async (xhr, url) => {
               // Intercept all HLS requests to use presigned URLs
@@ -61,10 +67,10 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
             }
           });
           
-          const secureUrl = await interceptHLSUrl(video.m3u8);
+          const secureUrl = await interceptHLSUrl(videoUrls.m3u8);
           hls.loadSource(secureUrl);
           hls.attachMedia(videoElement);
-          console.info("🎬 [PREVIEW] Using HLS.js with presigned:", secureUrl !== video.m3u8 ? 'PRESIGNED' : 'PUBLIC');
+          console.info("🎬 [PREVIEW] Using HLS.js with presigned:", secureUrl !== videoUrls.m3u8 ? 'PRESIGNED' : 'PUBLIC');
           
           hls.on(Hls.Events.ERROR, (event, data) => {
             console.error('HLS error in preview:', data);
@@ -72,10 +78,10 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
               setError("Error al cargar preview del video");
             }
           });
-        } else if (video.storageLink) {
-          const secureUrl = await interceptHLSUrl(video.storageLink);
+        } else if (videoUrls.storageLink) {
+          const secureUrl = await interceptHLSUrl(videoUrls.storageLink);
           videoElement.src = secureUrl;
-          console.info("🎬 [PREVIEW] Using direct link fallback with presigned:", secureUrl !== video.storageLink ? 'PRESIGNED' : 'PUBLIC');
+          console.info("🎬 [PREVIEW] Using direct link fallback with presigned:", secureUrl !== videoUrls.storageLink ? 'PRESIGNED' : 'PUBLIC');
         }
       }
     };
@@ -84,7 +90,7 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
       console.error("Error setting up video preview:", err);
       setError("Error al configurar preview");
     });
-  }, [video, interceptHLSUrl]);
+  }, [videoUrls, courseId]); // Removemos interceptHLSUrl de las dependencias
 
   return (
     <div className={className}>

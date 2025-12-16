@@ -56,7 +56,7 @@ Para responder al cliente usamos `res`.
 
 ## ¿Cómo consume el cliente este endpoint?
 
-Si vamos a `client.js` veremos que hemos detectado el clic en el botón y que detonamos un loop infinito. Pero, antes del _loop_, hemos colocado dos herramientas que necesitaremos: el `reader`, que ya viene en la respuesta; solo lo sacamos; y al `decoder`, para convertir a texto. 🕹️
+Si vamos a `client.js` veremos que hemos detectado el clic en el botón y que detonamos un _loop_ infinito. Pero, antes del _loop_, hemos colocado dos herramientas que necesitaremos: el `reader`, que ya viene en la respuesta; solo lo sacamos; y al `decoder`, para convertir a texto. 🕹️
 
 ```ts
 while (true) {

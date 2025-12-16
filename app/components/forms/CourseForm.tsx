@@ -17,6 +17,9 @@ import { Drawer } from "../viewer/SimpleDrawer";
 const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: Partial<Course> }) => {
   const fetcher = useFetcher();
   const [status, setStatus] = useState<string | null>(null);
+  
+  // Estado separado para los datos del video para evitar re-renders del VideoPreview
+  const [videoData, setVideoData] = useState<any>(null);
 
   useEffect(() => {
     // Check status on mount and periodically
@@ -36,17 +39,24 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
   useEffect(() => {
     if (fetcher.data && fetcher.data.success) {
       setStatus(fetcher.data.status);
-      // Debug: log response data
-      console.log("🔍 VideoProcessingStatus - Response data:", {
-        status: fetcher.data.status,
+      
+      // Solo actualizar los datos del video si realmente han cambiado
+      const newVideoData = {
         hasHLS: fetcher.data.hasHLS,
         hasDirectLink: fetcher.data.hasDirectLink,
         directLink: fetcher.data.directLink,
         directLinkPresigned: fetcher.data.directLinkPresigned,
         hlsUrl: fetcher.data.hlsUrl
-      });
+      };
+      
+      // Comparar con los datos previos para evitar actualizaciones innecesarias
+      const hasChanged = JSON.stringify(newVideoData) !== JSON.stringify(videoData);
+      if (hasChanged) {
+        setVideoData(newVideoData);
+        console.log("🔍 VideoProcessingStatus - Video data updated:", newVideoData);
+      }
     }
-  }, [fetcher.data, status, videoId]);
+  }, [fetcher.data, videoId]);
 
   if (!status || status === "unknown") return null;
 
@@ -90,25 +100,25 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
       </div>
       
       {/* Preview del video como lo verá el usuario */}
-      {(fetcher.data?.hasHLS || fetcher.data?.hasDirectLink) && (
+      {(videoData?.hasHLS || videoData?.hasDirectLink) && (
         <div className="mt-3">
           <p className="text-xs text-gray-400 mb-2">
             📹 Preview (como lo verá el usuario):
           </p>
           <VideoPreview 
             video={{
-              m3u8: fetcher.data?.hlsUrl,
-              storageLink: fetcher.data?.directLinkPresigned || fetcher.data?.directLink
+              m3u8: videoData?.hlsUrl,
+              storageLink: videoData?.directLinkPresigned || videoData?.directLink
             }}
             courseId={course?.id || ""}
           />
         </div>
       )}
       
-      {fetcher.data?.hasHLS && (
+      {videoData?.hasHLS && (
         <p className="text-xs text-gray-400 mt-1">✅ HLS disponible</p>
       )}
-      {fetcher.data?.hasDirectLink && (
+      {videoData?.hasDirectLink && (
         <p className="text-xs text-gray-400">✅ Video directo disponible</p>
       )}
       

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 interface UseSecureHLSOptions {
   courseId?: string;
@@ -17,10 +17,13 @@ const hlsUrlCache: HLSUrlCache = {};
 
 export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
   
+  // Memorizar las opciones para evitar recreaciones innecesarias
+  const options = useMemo(() => ({ courseId, onError }), [courseId, onError]);
+  
   const getPresignedUrl = useCallback(async (originalUrl: string, isHLS: boolean = true): Promise<string> => {
     try {
       // Skip if no courseId provided (backward compatibility)
-      if (!courseId) {
+      if (!options.courseId) {
         return originalUrl;
       }
 
@@ -40,12 +43,12 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
       if (isHLS) {
         formData.append("intent", "get_hls_presigned_url");
         formData.append("hlsKey", s3Key);
-        formData.append("courseId", courseId);
+        formData.append("courseId", options.courseId);
       } else {
         // For original video files
         formData.append("intent", "get_original_video_presigned_url");
         formData.append("s3Key", s3Key);
-        formData.append("courseId", courseId);
+        formData.append("courseId", options.courseId);
       }
 
       const response = await fetch("/api/course", {
@@ -69,10 +72,10 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
       
     } catch (error) {
       console.error("Error getting presigned HLS URL:", error);
-      onError?.(error instanceof Error ? error.message : "Error de autenticación HLS");
+      options.onError?.(error instanceof Error ? error.message : "Error de autenticación HLS");
       return originalUrl; // Fallback to original URL
     }
-  }, [courseId, onError]);
+  }, [options]);
 
   const interceptHLSUrl = useCallback(async (url: string): Promise<string> => {
     // Intercept S3 URLs from our bucket for both HLS and original videos
