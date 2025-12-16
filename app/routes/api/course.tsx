@@ -307,9 +307,66 @@ export const action = async ({ request }: Route.ActionArgs) => {
         processingStatus: true,
         processingError: true,
         m3u8: true,
-        storageLink: true
+        storageLink: true,
+        courses: {
+          select: { id: true }
+        }
       }
     });
+
+    if (!video) {
+      return Response.json({ success: false, error: "Video no encontrado" });
+    }
+
+    let directLinkPresigned: string | undefined;
+    
+    // Generate presigned URL for original video if it exists and is pending/processing
+    if (video.storageLink && video.courses.length > 0 && 
+        (video.processingStatus === "pending" || video.processingStatus === "processing")) {
+      
+      try {
+        const courseId = video.courses[0].id;
+        
+        console.log("🔍 Generating presigned URL for video:", {
+          videoId,
+          courseId,
+          processingStatus: video.processingStatus,
+          storageLink: video.storageLink
+        });
+        
+        // Find original video files in S3 using secure method
+        const videoFiles = await Effect.runPromise(
+          s3VideoService.listVideoFiles(courseId, videoId)
+        );
+        
+        console.log("📁 Found video files in S3:", videoFiles);
+        
+        // Look for original video file (in /original/ subfolder)
+        const originalFile = videoFiles.find(file => file.includes('/original/'));
+        
+        console.log("🎯 Original file found:", originalFile);
+        
+        if (originalFile) {
+          directLinkPresigned = await Effect.runPromise(
+            s3VideoService.getVideoPreviewUrl(originalFile, 3600) // 1 hour expiry
+          );
+          
+          console.log("✅ Generated presigned URL:", directLinkPresigned ? "SUCCESS" : "FAILED");
+        } else {
+          console.log("❌ No original file found in S3");
+        }
+      } catch (error) {
+        console.error("❌ Error generating presigned URL for original video:", error);
+        // Continue without presigned URL - don't break the response
+      }
+    } else {
+      console.log("⏭️ Skipping presigned URL generation:", {
+        hasStorageLink: !!video.storageLink,
+        hasCourses: video.courses.length > 0,
+        status: video.processingStatus,
+        shouldGenerate: video.processingStatus === "pending" || video.processingStatus === "processing"
+      });
+    }
 
     return Response.json({
       success: true,
@@ -318,7 +375,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
       hasHLS: !!video?.m3u8,
       hlsUrl: video?.m3u8,
       hasDirectLink: !!video?.storageLink,
-      directLink: video?.storageLink
+      directLink: video?.storageLink,
+      directLinkPresigned
     });
   }
 

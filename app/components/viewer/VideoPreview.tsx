@@ -28,6 +28,13 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
     const setupPreview = async () => {
       const videoElement = videoRef.current!;
       
+      // Debug: log received video data
+      console.log("🎬 VideoPreview - Received video data:", {
+        m3u8: video.m3u8,
+        storageLink: video.storageLink,
+        courseId
+      });
+      
       // Misma lógica que VideoPlayer: HLS primero, luego directo
       const hlsSupport = (videoNode: HTMLVideoElement) =>
         videoNode.canPlayType("application/vnd.apple.mpegURL");

@@ -36,6 +36,15 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
   useEffect(() => {
     if (fetcher.data && fetcher.data.success) {
       setStatus(fetcher.data.status);
+      // Debug: log response data
+      console.log("🔍 VideoProcessingStatus - Response data:", {
+        status: fetcher.data.status,
+        hasHLS: fetcher.data.hasHLS,
+        hasDirectLink: fetcher.data.hasDirectLink,
+        directLink: fetcher.data.directLink,
+        directLinkPresigned: fetcher.data.directLinkPresigned,
+        hlsUrl: fetcher.data.hlsUrl
+      });
     }
   }, [fetcher.data, status, videoId]);
 
@@ -89,7 +98,7 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
           <VideoPreview 
             video={{
               m3u8: fetcher.data?.hlsUrl,
-              storageLink: fetcher.data?.directLink
+              storageLink: fetcher.data?.directLinkPresigned || fetcher.data?.directLink
             }}
             courseId={course?.id || ""}
           />
