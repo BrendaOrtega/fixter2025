@@ -13,7 +13,9 @@
     "test": "vitest",
     "newsletter:check": "npx tsx scripts/check-newsletter-migration.ts",
     "newsletter:migrate": "npx tsx scripts/migrate-newsletter-data.ts",
-    "sequences:create": "npx tsx scripts/create-sample-sequences.ts"
+    "sequences:create": "npx tsx scripts/create-sample-sequences.ts",
+    "agenda:bootstrap": "npx tsx scripts/bootstrap-agenda.ts",
+    "agenda:start": "npm run agenda:bootstrap"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.850.0",

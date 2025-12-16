@@ -17,7 +17,7 @@ const hlsUrlCache: HLSUrlCache = {};
 
 export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
   
-  const getPresignedUrl = useCallback(async (originalUrl: string): Promise<string> => {
+  const getPresignedUrl = useCallback(async (originalUrl: string, isHLS: boolean = true): Promise<string> => {
     try {
       // Skip if no courseId provided (backward compatibility)
       if (!courseId) {
@@ -26,19 +26,27 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
 
       // Extract S3 key from the original URL
       const url = new URL(originalUrl);
-      const hlsKey = url.pathname.substring(1); // Remove leading slash
+      const s3Key = url.pathname.substring(1); // Remove leading slash
       
       // Check cache first
-      const cached = hlsUrlCache[hlsKey];
+      const cached = hlsUrlCache[s3Key];
       if (cached && Date.now() < cached.expiresAt) {
         return cached.url;
       }
 
-      // Request new presigned URL
+      // Request new presigned URL based on content type
       const formData = new FormData();
-      formData.append("intent", "get_hls_presigned_url");
-      formData.append("hlsKey", hlsKey);
-      formData.append("courseId", courseId);
+      
+      if (isHLS) {
+        formData.append("intent", "get_hls_presigned_url");
+        formData.append("hlsKey", s3Key);
+        formData.append("courseId", courseId);
+      } else {
+        // For original video files
+        formData.append("intent", "get_original_video_presigned_url");
+        formData.append("s3Key", s3Key);
+        formData.append("courseId", courseId);
+      }
 
       const response = await fetch("/api/course", {
         method: "POST",
@@ -48,13 +56,13 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
       const result = await response.json();
       
       if (!result.success) {
-        throw new Error(result.error || "Error al obtener URL HLS");
+        throw new Error(result.error || "Error al obtener URL segura");
       }
 
       // Cache the result
-      hlsUrlCache[hlsKey] = {
+      hlsUrlCache[s3Key] = {
         url: result.presignedUrl,
-        expiresAt: Date.now() + (result.expiresIn * 1000 * 0.9), // Renew at 90% of expiry
+        expiresAt: Date.now() + ((result.expiresIn || 3600) * 1000 * 0.9), // Renew at 90% of expiry
       };
 
       return result.presignedUrl;
@@ -67,12 +75,21 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
   }, [courseId, onError]);
 
   const interceptHLSUrl = useCallback(async (url: string): Promise<string> => {
-    // Only intercept HLS URLs from our S3 bucket that are in the /hls/ path
-    // This way we don't break existing public videos
-    if (url.includes('.s3.') && url.includes('/hls/') && (url.includes('.m3u8') || url.includes('.ts'))) {
-      return getPresignedUrl(url);
+    // Intercept S3 URLs from our bucket for both HLS and original videos
+    if (url.includes('.s3.') && url.includes('fixtergeek/videos/')) {
+      // Check if it's HLS content
+      const isHLS = url.includes('/hls/') && (url.includes('.m3u8') || url.includes('.ts'));
+      
+      // Check if it's an original video file  
+      const isOriginalVideo = url.includes('/original/') && url.includes('.mp4');
+      
+      if (isHLS) {
+        return getPresignedUrl(url, true);
+      } else if (isOriginalVideo) {
+        return getPresignedUrl(url, false);
+      }
     }
-    return url; // Return original URL for public videos or non-HLS content
+    return url; // Return original URL for public videos or non-S3 content
   }, [getPresignedUrl]);
 
   return {

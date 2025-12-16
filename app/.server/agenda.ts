@@ -8,7 +8,7 @@ import { videoProcessorService } from "./services/video-processor";
 import { s3VideoService } from "./services/s3-video";
 
 let agenda: Agenda;
-const getAgenda = () => {
+export const getAgenda = () => {
   agenda ??= new Agenda({ db: { address: process.env.DATABASE_URL! } });
   return agenda as typeof agenda;
 };
@@ -302,6 +302,22 @@ export const startSequenceProcessor = async () => {
   const interval = process.env.NODE_ENV === 'development' ? '15 minutes' : '5 minutes';
   await agenda.every(interval, 'process_sequences');
   console.info(`Sequence processor started - runs every ${interval}`);
+};
+
+// Initialize Agenda with all job definitions
+export const initializeAgenda = async () => {
+  const agenda = getAgenda();
+  
+  console.info("🔄 Initializing Agenda with all job definitions...");
+  
+  // Start agenda to load all job definitions
+  await agenda.start();
+  
+  // Start sequence processor
+  await startSequenceProcessor();
+  
+  console.info("✅ Agenda initialized with all processors running");
+  return agenda;
 };
 
 // ═══════════════════════════════════════════════════════════════

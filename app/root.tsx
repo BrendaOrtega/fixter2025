@@ -13,6 +13,7 @@ import { MainLayout } from "./routes/Layout";
 
 import type { Route } from "./+types/root";
 import getMetaTags from "./utils/getMetaTags";
+import { initializeAgenda } from "./.server/agenda";
 
 export const meta = () =>
   getMetaTags({
@@ -63,6 +64,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />;
+}
+
+// Initialize Agenda when server starts (only server-side)
+if (typeof window === "undefined") {
+  initializeAgenda().catch((error) => {
+    console.error("Failed to initialize Agenda:", error);
+  });
 }
 
 export function ErrorBoundary() {
