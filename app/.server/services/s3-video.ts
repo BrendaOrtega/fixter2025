@@ -40,6 +40,12 @@ export interface S3VideoService {
     key: string, 
     expiresIn?: number
   ) => Effect.Effect<string, S3VideoError>;
+  
+  // Generate presigned URL for HLS content (master.m3u8 or .ts segments)
+  getHLSPresignedUrl: (
+    key: string,
+    expiresIn?: number
+  ) => Effect.Effect<string, S3VideoError>;
 
   // Download video for processing
   downloadVideo: (key: string) => Effect.Effect<ArrayBuffer, S3VideoError>;
@@ -267,9 +273,10 @@ export const S3VideoServiceLive: S3VideoService = {
               Key: fullKey,
               Body: file.content,
               ContentType: contentType,
+              // Remove public cache headers - files are now private by default
               CacheControl: file.key.endsWith(".m3u8")
                 ? "no-cache" // Playlists should not be cached
-                : "public, max-age=31536000", // Segments can be cached forever
+                : "private, max-age=1800", // Segments cached 30min via presigned URLs
             });
             await s3Client.send(command);
             uploadedFiles.push(fullKey);
@@ -326,6 +333,30 @@ export const S3VideoServiceLive: S3VideoService = {
       });
 
       return previewUrl;
+    }),
+
+  // Generate presigned URL for HLS content (master.m3u8 or .ts segments)
+  getHLSPresignedUrl: (key: string, expiresIn: number = 1800) => // 30 minutes default
+    Effect.gen(function* () {
+      const s3Client = yield* createS3Client();
+      const config = getS3VideoConfig();
+      const command = new GetObjectCommand({
+        Bucket: config.bucketName,
+        Key: key,
+      });
+      const presignedUrl = yield* Effect.tryPromise({
+        try: () => getSignedUrl(s3Client, command, { expiresIn }),
+        catch: (error) =>
+          new S3VideoError(
+            `Failed to generate HLS presigned URL: ${
+              error instanceof Error ? error.message : "Unknown"
+            }`,
+            "HLS_PRESIGNED_URL_ERROR",
+            error
+          ),
+      });
+
+      return presignedUrl;
     }),
 
   downloadVideo: (key: string) =>

@@ -91,6 +91,7 @@ const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
               m3u8: fetcher.data?.hlsUrl,
               storageLink: fetcher.data?.directLink
             }}
+            courseId={course.id}
           />
         </div>
       )}

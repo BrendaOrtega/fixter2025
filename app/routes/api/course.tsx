@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import { Effect } from "effect";
 import { s3VideoService } from "~/.server/services/s3-video";
 import { scheduleVideoProcessing } from "~/.server/agenda";
+import { getUserOrNull } from "~/.server/dbGetters";
 
 export const action = async ({ request }: Route.ActionArgs) => {
   // await getAdminOrRedirect(request); @todo move to admin api
@@ -401,6 +402,65 @@ export const action = async ({ request }: Route.ActionArgs) => {
       return Response.json({
         success: false,
         error: error instanceof Error ? error.message : "Error al generar preview URL"
+      });
+    }
+  }
+
+  // Get presigned URL for HLS content with authentication check
+  if (intent === "get_hls_presigned_url") {
+    const hlsKey = formData.get("hlsKey") as string;
+    const courseId = formData.get("courseId") as string;
+    
+    if (!hlsKey || !courseId) {
+      return Response.json({ 
+        success: false, 
+        error: "hlsKey y courseId son requeridos" 
+      });
+    }
+
+    try {
+      // Get user and verify authentication
+      const user = await getUserOrNull(request);
+      
+      // Get course to check if it's free or user has access
+      const course = await db.course.findUnique({
+        where: { id: courseId },
+        select: { id: true, isFree: true, title: true }
+      });
+
+      if (!course) {
+        return Response.json({ 
+          success: false, 
+          error: "Curso no encontrado" 
+        });
+      }
+
+      // Check access permissions
+      const hasAccess = course.isFree || (user && user.courses.includes(courseId));
+      
+      if (!hasAccess) {
+        return Response.json({ 
+          success: false, 
+          error: "Acceso denegado - curso no adquirido" 
+        });
+      }
+
+      // Generate presigned URL for HLS content
+      const presignedUrl = await Effect.runPromise(
+        s3VideoService.getHLSPresignedUrl(hlsKey, 1800) // 30 minutes
+      );
+
+      return Response.json({
+        success: true,
+        presignedUrl,
+        expiresIn: 1800
+      });
+
+    } catch (error) {
+      console.error("Error generando HLS presigned URL:", error);
+      return Response.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Error al generar URL HLS"
       });
     }
   }

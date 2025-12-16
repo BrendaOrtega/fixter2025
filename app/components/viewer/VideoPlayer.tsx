@@ -6,10 +6,12 @@ import { IoIosClose } from "react-icons/io";
 import { Link } from "react-router";
 import { nanoid } from "nanoid";
 import Hls from "hls.js";
+import { useSecureHLS } from "~/hooks/useSecureHLS";
 
 export const VideoPlayer = ({
   src,
   video,
+  courseId,
   type = "video/mov",
   onPlay,
   onPause,
@@ -22,6 +24,7 @@ export const VideoPlayer = ({
 }: {
   nextVideoLink?: string;
   video?: Partial<Video>;
+  courseId?: string;
   slug: string;
   nextVideo?: Partial<Video>;
   poster?: string;
@@ -36,6 +39,13 @@ export const VideoPlayer = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Hook for secure HLS URLs (only works when courseId is provided)
+  const { interceptHLSUrl } = useSecureHLS({
+    courseId,
+    onError: setError,
+  });
 
   const togglePlay = () => {
     const controls = videoRef.current || null;
@@ -78,31 +88,65 @@ export const VideoPlayer = ({
   useEffect(() => {
     if (!videoRef.current || !video) return;
 
-    // detecting HLS support
-    const hlsSupport = (videoNode: HTMLVideoElement) =>
-      videoNode.canPlayType("application/vnd.apple.mpegURL");
-    console.info(
-      hlsSupport(videoRef.current)
-        ? `::NATIVE_HLS_SUPPORTED::✅:: ${hlsSupport(videoRef.current)}`
-        : "::HLS_NOT_SUPPORTED 📵::"
-    );
-    if (hlsSupport(videoRef.current)) {
-      if (video.m3u8) {
-        videoRef.current.src = video.storageLink!;
-      }
-    } else {
-      // hls
-      if (video.m3u8) {
-        const hls = new Hls();
-        hls.loadSource(video.m3u8);
-        hls.attachMedia(videoRef.current);
-        console.info("::FALLBACKING_TO_HLS.JS::🪄::");
+    const setupVideo = async () => {
+      const videoElement = videoRef.current!;
+      
+      // detecting HLS support
+      const hlsSupport = (videoNode: HTMLVideoElement) =>
+        videoNode.canPlayType("application/vnd.apple.mpegURL");
+      
+      console.info(
+        hlsSupport(videoElement)
+          ? `::NATIVE_HLS_SUPPORTED::✅:: ${hlsSupport(videoElement)}`
+          : "::HLS_NOT_SUPPORTED 📵::"
+      );
+
+      if (hlsSupport(videoElement)) {
+        // Native HLS support (Safari)
+        if (video.m3u8) {
+          const secureUrl = await interceptHLSUrl(video.m3u8);
+          videoElement.src = secureUrl;
+          console.info("::USING_NATIVE_HLS_WITH_PRESIGNED::✅::");
+        } else if (video.storageLink) {
+          const secureUrl = await interceptHLSUrl(video.storageLink);
+          videoElement.src = secureUrl;
+          console.info("::USING_DIRECT_LINK_WITH_PRESIGNED::⚡::");
+        }
       } else {
-        videoRef.current.src = video.storageLink!;
-        console.info("::FALLBACKING_TO_STORAGEKEY::⚽️::");
+        // HLS.js fallback (Chrome, Firefox, etc.)
+        if (video.m3u8) {
+          const hls = new Hls({
+            xhrSetup: async (xhr, url) => {
+              // Intercept all HLS requests to use presigned URLs
+              const secureUrl = await interceptHLSUrl(url);
+              xhr.open('GET', secureUrl, true);
+            }
+          });
+          
+          const secureUrl = await interceptHLSUrl(video.m3u8);
+          hls.loadSource(secureUrl);
+          hls.attachMedia(videoElement);
+          console.info("::USING_HLS.JS_WITH_PRESIGNED::🪄::");
+          
+          hls.on(Hls.Events.ERROR, (event, data) => {
+            console.error('HLS error:', data);
+            if (data.fatal) {
+              setError("Error al cargar el video. Por favor intenta de nuevo.");
+            }
+          });
+        } else if (video.storageLink) {
+          const secureUrl = await interceptHLSUrl(video.storageLink);
+          videoElement.src = secureUrl;
+          console.info("::FALLBACK_TO_DIRECT_LINK::⚽️::");
+        }
       }
-    }
-  }, []);
+    };
+
+    setupVideo().catch(err => {
+      console.error("Error setting up video:", err);
+      setError("Error al configurar el video");
+    });
+  }, [video, interceptHLSUrl]);
 
   return (
     <section

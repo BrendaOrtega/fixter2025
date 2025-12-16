@@ -130,6 +130,7 @@ export default function Route({
       <article className="bg-dark relative overflow-x-hidden pt-20">
         <VideoPlayer
           video={video}
+          courseId={course.id}
           src={video.storageLink || undefined}
           type={"video/mp4"}
           nextVideo={nextVideo || undefined}
