@@ -14,7 +14,7 @@ import type { Course, Video } from "~/types/models";
 import { Drawer } from "../viewer/SimpleDrawer";
 
 // Component to show video processing status
-const VideoProcessingStatus = ({ videoId }: { videoId: string }) => {
+const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: Partial<Course> }) => {
   const fetcher = useFetcher();
   const [status, setStatus] = useState<string | null>(null);
 
@@ -497,7 +497,7 @@ export const CourseForm = ({
               </div>
               
               {/* Processing Status */}
-              <VideoProcessingStatus videoId={editingVideo.id} />
+              <VideoProcessingStatus videoId={editingVideo.id} course={course} />
             </>
           ) : (
             <div className="mb-4 p-4 border border-yellow-600 rounded-lg bg-yellow-600/10">
