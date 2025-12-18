@@ -9,52 +9,42 @@ interface VideoPreviewProps {
   };
   courseId?: string;
   className?: string;
-  videoId?: string; // Added for reprocessing
+  videoId?: string;
 }
 
-// Mini reproductor para preview en admin que usa la misma lógica que el VideoPlayer principal
+// Mini reproductor para preview en admin
 export const VideoPreview = ({ video, courseId, className = "", videoId }: VideoPreviewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReprocessing, setIsReprocessing] = useState(false);
-  
-  // Memorizar las URLs del video para evitar re-renders innecesarios
+
   const videoUrls = useMemo(() => ({
     m3u8: video?.m3u8,
     storageLink: video?.storageLink
   }), [video?.m3u8, video?.storageLink]);
-  
-  // Hook for secure HLS URLs (backward compatible) - memorizar con las props exactas
+
   const secureHLSOptions = useMemo(() => ({
     courseId,
     onError: setError,
   }), [courseId]);
-  
+
   const { interceptHLSUrl } = useSecureHLS(secureHLSOptions);
 
-  // Function to trigger video reprocessing
   const handleReprocess = async () => {
     if (!videoId) return;
-    
     setIsReprocessing(true);
     setError(null);
-    
     try {
       const formData = new FormData();
       formData.append("intent", "trigger_video_processing");
       formData.append("videoId", videoId);
-      
-      const response = await fetch("/api/course", {
-        method: "POST",
-        body: formData,
-      });
-      
+      const response = await fetch("/api/course", { method: "POST", body: formData });
       const result = await response.json();
       if (!result.success) {
         setError(`Error al reprocesar: ${result.error}`);
       }
-    } catch (err) {
+    } catch {
       setError("Error al solicitar reprocesamiento");
     } finally {
       setIsReprocessing(false);
@@ -62,196 +52,108 @@ export const VideoPreview = ({ video, courseId, className = "", videoId }: Video
   };
 
   useEffect(() => {
-    // Solo inicializar UNA VEZ - nunca volver a ejecutar este efecto
-    if (!videoRef.current || !videoUrls.m3u8 && !videoUrls.storageLink || isInitialized) return;
+    if (!videoRef.current || (!videoUrls.m3u8 && !videoUrls.storageLink) || isInitialized) return;
 
     const setupPreview = async () => {
       const videoElement = videoRef.current!;
-      
-      // Debug: log received video data
-      console.log("🎬 VideoPreview - Setting up video with URLs:", {
+
+      console.log("🎬 VideoPreview - Setting up:", {
         m3u8: videoUrls.m3u8,
         storageLink: videoUrls.storageLink,
         courseId
       });
-      
-      // Helper functions (copy from VideoPlayer)
-      const hlsSupport = (videoNode: HTMLVideoElement) =>
-        videoNode.canPlayType("application/vnd.apple.mpegURL");
-      const isNewFormat = (url: string) => url.includes('fixtergeek/videos/') && (url.includes('.s3.') || url.includes('storage.tigris.dev'));
-      
-      console.info(
-        hlsSupport(videoElement)
-          ? `🎬 [PREVIEW] Native HLS supported: ${hlsSupport(videoElement)}`
-          : "🎬 [PREVIEW] HLS not supported, using HLS.js"
-      );
 
-      // Always use HLS.js for admin preview (more reliable than native HLS for presigned URLs)
-      // Removed native HLS path to simplify and fix type issues
-      {
-        // HLS.js for all video playback - with proper null checks
-        if (videoUrls.m3u8) {
-          if (isNewFormat(videoUrls.m3u8)) {
-            // New format - use presigned URLs
-            const hls = new Hls({
-              xhrSetup: async (xhr, url) => {
-                const secureUrl = await interceptHLSUrl(url);
-                xhr.open('GET', secureUrl, true);
+      // Helper to check URL types
+      const isProxyUrl = (url: string) => url.startsWith('/api/hls-proxy');
+      const isStorageUrl = (url: string) =>
+        url.includes('fixtergeek/videos/') &&
+        (url.includes('.s3.') || url.includes('storage.tigris.dev'));
+
+      if (videoUrls.m3u8) {
+        if (isProxyUrl(videoUrls.m3u8)) {
+          // PROXY URL - server handles all presigning
+          console.info("🎬 [PREVIEW] Using HLS proxy URL 🔄");
+          const hls = new Hls();
+          hls.loadSource(videoUrls.m3u8);
+          hls.attachMedia(videoElement);
+
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            console.error('🚨 [PREVIEW] HLS error:', data);
+            if (data.fatal) {
+              hls.destroy();
+              if (videoUrls.storageLink) {
+                videoElement.src = videoUrls.storageLink;
+              } else {
+                setError(`Error HLS: ${data.details || 'Unknown'}`);
               }
-            });
-            
-            const secureUrl = await interceptHLSUrl(videoUrls.m3u8);
-            hls.loadSource(secureUrl);
-            hls.attachMedia(videoElement);
-            console.info("🎬 [PREVIEW] Using HLS.js with presigned URLs🪄");
-            
-            hls.on(Hls.Events.ERROR, (_, data) => {
-              console.error('🚨 [PREVIEW] HLS error:', data);
-              if (data.fatal) {
-                if (data.details === 'manifestLoadError') {
-                  // Fallback: intenta cargar el video original si está disponible
-                  if (videoUrls.storageLink) {
-                    console.log('🔄 [PREVIEW] Fallback to direct video link');
-                    hls.destroy();
-                    setError("HLS no encontrado, intentando video directo...");
-                    
-                    // Clear error after 2 seconds if video loads successfully
-                    const clearErrorTimeout = setTimeout(() => {
-                      if (videoElement && !videoElement.error) {
-                        setError(null);
-                      }
-                    }, 2000);
-                    
-                    const setupFallback = async () => {
-                      try {
-                        if (isNewFormat(videoUrls.storageLink)) {
-                          const finalUrl = await interceptHLSUrl(videoUrls.storageLink);
-                          videoElement.src = finalUrl;
-                          console.log('✅ [PREVIEW] Using presigned direct video');
-                        } else {
-                          videoElement.src = videoUrls.storageLink;
-                          console.log('✅ [PREVIEW] Using legacy direct video');
-                        }
-                        
-                        // Listen for successful load
-                        videoElement.addEventListener('loadeddata', () => {
-                          clearTimeout(clearErrorTimeout);
-                          setError(null);
-                          console.log('✅ [PREVIEW] Fallback video loaded successfully');
-                        }, { once: true });
-                        
-                        // Listen for video errors
-                        videoElement.addEventListener('error', () => {
-                          clearTimeout(clearErrorTimeout);
-                          setError("Error: No se pudo cargar ni HLS ni video directo.");
-                        }, { once: true });
-                        
-                      } catch (err) {
-                        clearTimeout(clearErrorTimeout);
-                        setError("Error al cargar video directo.");
-                        console.error('❌ [PREVIEW] Fallback failed:', err);
-                      }
-                    };
-                    
-                    setupFallback();
-                  } else {
-                    setError("HLS no disponible (archivo no encontrado). Intenta con video directo.");
-                  }
-                } else {
-                  setError(`Error HLS: ${data.details || 'Unknown'}`);
-                }
+            }
+          });
+        } else if (isStorageUrl(videoUrls.m3u8)) {
+          // STORAGE URL - need presigning (fallback path)
+          console.info("🎬 [PREVIEW] Using presigned HLS 🔐");
+          const hls = new Hls();
+          const secureUrl = await interceptHLSUrl(videoUrls.m3u8);
+          hls.loadSource(secureUrl);
+          hls.attachMedia(videoElement);
+
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            console.error('🚨 [PREVIEW] HLS error:', data);
+            if (data.fatal) {
+              hls.destroy();
+              // Fallback to direct video
+              if (videoUrls.storageLink) {
+                interceptHLSUrl(videoUrls.storageLink).then(url => {
+                  videoElement.src = url;
+                }).catch(() => {
+                  setError("Error al cargar video");
+                });
+              } else {
+                setError(`Error HLS: ${data.details || 'Unknown'}`);
               }
-            });
-          } else {
-            // Legacy format - use direct URLs
-            const hls = new Hls();
-            hls.loadSource(videoUrls.m3u8);
-            hls.attachMedia(videoElement);
-            console.info("🎬 [PREVIEW] Using HLS.js legacy direct📺");
-            
-            hls.on(Hls.Events.ERROR, (_, data) => {
-              console.error('🚨 [PREVIEW] HLS error:', data);
-              if (data.fatal) {
-                if (data.details === 'manifestLoadError') {
-                  // Fallback: intenta cargar el video original si está disponible
-                  if (videoUrls.storageLink) {
-                    console.log('🔄 [PREVIEW] Fallback to direct video link');
-                    hls.destroy();
-                    setError("HLS no encontrado, intentando video directo...");
-                    
-                    // Clear error after 2 seconds if video loads successfully
-                    const clearErrorTimeout = setTimeout(() => {
-                      if (videoElement && !videoElement.error) {
-                        setError(null);
-                      }
-                    }, 2000);
-                    
-                    const setupFallback = async () => {
-                      try {
-                        if (isNewFormat(videoUrls.storageLink)) {
-                          const finalUrl = await interceptHLSUrl(videoUrls.storageLink);
-                          videoElement.src = finalUrl;
-                          console.log('✅ [PREVIEW] Using presigned direct video');
-                        } else {
-                          videoElement.src = videoUrls.storageLink;
-                          console.log('✅ [PREVIEW] Using legacy direct video');
-                        }
-                        
-                        // Listen for successful load
-                        videoElement.addEventListener('loadeddata', () => {
-                          clearTimeout(clearErrorTimeout);
-                          setError(null);
-                          console.log('✅ [PREVIEW] Fallback video loaded successfully');
-                        }, { once: true });
-                        
-                        // Listen for video errors
-                        videoElement.addEventListener('error', () => {
-                          clearTimeout(clearErrorTimeout);
-                          setError("Error: No se pudo cargar ni HLS ni video directo.");
-                        }, { once: true });
-                        
-                      } catch (err) {
-                        clearTimeout(clearErrorTimeout);
-                        setError("Error al cargar video directo.");
-                        console.error('❌ [PREVIEW] Fallback failed:', err);
-                      }
-                    };
-                    
-                    setupFallback();
-                  } else {
-                    setError("HLS no disponible (archivo no encontrado). Intenta con video directo.");
-                  }
-                } else {
-                  setError(`Error HLS: ${data.details || 'Unknown'}`);
-                }
+            }
+          });
+        } else {
+          // LEGACY URL - use directly
+          console.info("🎬 [PREVIEW] Using legacy HLS 📺");
+          const hls = new Hls();
+          hls.loadSource(videoUrls.m3u8);
+          hls.attachMedia(videoElement);
+
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            if (data.fatal) {
+              hls.destroy();
+              if (videoUrls.storageLink) {
+                videoElement.src = videoUrls.storageLink;
+              } else {
+                setError(`Error HLS: ${data.details || 'Unknown'}`);
               }
-            });
-          }
-        } else if (videoUrls.storageLink) {
-          if (isNewFormat(videoUrls.storageLink)) {
-            const finalUrl = await interceptHLSUrl(videoUrls.storageLink);
-            videoElement.src = finalUrl;
-            console.info("🎬 [PREVIEW] Using presigned direct link⚡");
-          } else {
-            videoElement.src = videoUrls.storageLink;
-            console.info("🎬 [PREVIEW] Using legacy direct link🔗");
-          }
+            }
+          });
+        }
+      } else if (videoUrls.storageLink) {
+        // Direct video only (no HLS)
+        if (isStorageUrl(videoUrls.storageLink)) {
+          const finalUrl = await interceptHLSUrl(videoUrls.storageLink);
+          videoElement.src = finalUrl;
+          console.info("🎬 [PREVIEW] Using presigned direct link ⚡");
+        } else {
+          videoElement.src = videoUrls.storageLink;
+          console.info("🎬 [PREVIEW] Using direct link 🔗");
         }
       }
     };
 
     setupPreview()
       .then(() => {
-        setIsInitialized(true); // Marcar como inicializado para NUNCA reinicializar
-        console.log("🎬 [PREVIEW] Video preview successfully initialized and locked");
+        setIsInitialized(true);
+        console.log("🎬 [PREVIEW] Initialized");
       })
       .catch(err => {
         console.error("Error setting up video preview:", err);
         setError("Error al configurar preview");
       });
-  }, [videoUrls.m3u8, videoUrls.storageLink, isInitialized]); // Solo depender de las URLs y el flag
+  }, [videoUrls.m3u8, videoUrls.storageLink, isInitialized, courseId, interceptHLSUrl]);
 
-  // No mostrar nada si no hay URLs válidas
   if (!videoUrls.m3u8 && !videoUrls.storageLink) {
     return (
       <div className={className}>
@@ -268,8 +170,7 @@ export const VideoPreview = ({ video, courseId, className = "", videoId }: Video
         <div className="text-red-400 text-xs mb-2 p-2 bg-red-900/20 rounded">
           <div className="flex items-center justify-between">
             <span>{error}</span>
-            {/* Mostrar botón de reprocesar solo para errores HLS y si tenemos videoId */}
-            {error.includes("HLS no disponible") && videoId && (
+            {error.includes("HLS") && videoId && (
               <button
                 onClick={handleReprocess}
                 disabled={isReprocessing}

@@ -103,24 +103,45 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
   }, [options]);
 
   const interceptHLSUrl = useCallback(async (url: string): Promise<string> => {
+    // Clean URL: remove any inherited signature params (they're invalid for this file)
+    // This happens when HLS.js resolves relative URLs from a presigned master.m3u8
+    let cleanUrl = url;
+    if (url.includes('X-Amz-')) {
+      try {
+        const urlObj = new URL(url);
+        // Remove all AWS signature params
+        urlObj.searchParams.delete('X-Amz-Algorithm');
+        urlObj.searchParams.delete('X-Amz-Credential');
+        urlObj.searchParams.delete('X-Amz-Date');
+        urlObj.searchParams.delete('X-Amz-Expires');
+        urlObj.searchParams.delete('X-Amz-SignedHeaders');
+        urlObj.searchParams.delete('X-Amz-Signature');
+        urlObj.searchParams.delete('X-Amz-Security-Token');
+        cleanUrl = urlObj.toString();
+      } catch (e) {
+        // If URL parsing fails, use original
+        cleanUrl = url;
+      }
+    }
+
     // Check if it's a storage URL that needs presigned access
     const isStorageUrl = (
-      url.includes('.s3.') || 
-      url.includes('storage.tigris.dev') || 
-      url.includes('t3.storage.dev')
-    ) && url.includes('fixtergeek/videos/');
-    
+      cleanUrl.includes('.s3.') ||
+      cleanUrl.includes('storage.tigris.dev') ||
+      cleanUrl.includes('t3.storage.dev')
+    ) && cleanUrl.includes('fixtergeek/videos/');
+
     if (isStorageUrl) {
       // Check if it's HLS content
-      const isHLS = url.includes('/hls/') && (url.includes('.m3u8') || url.includes('.ts'));
-      
-      // Check if it's an original video file  
-      const isOriginalVideo = url.includes('/original/') && (url.includes('.mp4') || url.includes('.mov'));
-      
+      const isHLS = cleanUrl.includes('/hls/') && (cleanUrl.includes('.m3u8') || cleanUrl.includes('.ts'));
+
+      // Check if it's an original video file
+      const isOriginalVideo = cleanUrl.includes('/original/') && (cleanUrl.includes('.mp4') || cleanUrl.includes('.mov'));
+
       if (isHLS) {
-        return getPresignedUrl(url, true);
+        return getPresignedUrl(cleanUrl, true);
       } else if (isOriginalVideo) {
-        return getPresignedUrl(url, false);
+        return getPresignedUrl(cleanUrl, false);
       }
     }
     return url; // Return original URL for public videos or non-storage content

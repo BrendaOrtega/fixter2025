@@ -76,6 +76,7 @@ export default [
     route("sequences/start", "routes/api.sequences.start.ts"),
     route("sequences/process", "routes/api.sequences.process.ts"),
     route("video-preview-dynamic", "routes/api/video-preview-dynamic.tsx"),
+    route("hls-proxy", "routes/api/hls-proxy.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

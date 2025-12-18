@@ -165,6 +165,29 @@ export const generateHLSKey = (
   return `fixtergeek/videos/${courseId}/${videoId}/hls/${quality}/${filename}`;
 };
 
+// Helper function to prevent bucket name duplication in URLs
+export const fixBucketDuplication = (url: string, bucketName: string = "wild-bird-2039"): string => {
+  if (!url) return url;
+  
+  // Handle multiple patterns of bucket duplication
+  const duplicatedPattern = `${bucketName}/${bucketName}/`;
+  
+  if (url.includes(duplicatedPattern)) {
+    // Fix: replace duplicated bucket name with single instance
+    let fixedUrl = url.replace(duplicatedPattern, `${bucketName}/`);
+    
+    // Ensure we only replace the first occurrence to avoid over-correction
+    // Handle cases like: /bucket/bucket/bucket/ -> /bucket/
+    while (fixedUrl.includes(duplicatedPattern)) {
+      fixedUrl = fixedUrl.replace(duplicatedPattern, `${bucketName}/`);
+    }
+    
+    return fixedUrl;
+  }
+  
+  return url;
+};
+
 // S3 Video Service implementation
 export const S3VideoServiceLive: S3VideoService = {
   getUploadUrl: (courseId: string, videoId: string, filename: string) =>
@@ -298,9 +321,11 @@ export const S3VideoServiceLive: S3VideoService = {
       }
 
       const masterPlaylistKey = `fixtergeek/videos/${courseId}/${videoId}/hls/master.m3u8`;
-      // Use consistent Tigris URL format (same as getVideoUrl)
+      // Use consistent Tigris URL format (same as getVideoUrl) - ensure no bucket duplication
       const endpoint = process.env.AWS_ENDPOINT_URL_S3 || "https://fly.storage.tigris.dev";
-      const masterPlaylistUrl = `${endpoint}/${config.bucketName}/${masterPlaylistKey}`;
+      
+      const rawUrl = `${endpoint}/${config.bucketName}/${masterPlaylistKey}`;
+      const masterPlaylistUrl = fixBucketDuplication(rawUrl, config.bucketName);
 
       return {
         masterPlaylistUrl,

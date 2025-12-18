@@ -56,12 +56,9 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
         console.log(`🔍 [StableVideoPreview] API response for ${videoId}:`, {
           success: data.success,
           hasHLS: data.hasHLS,
-          hlsUrl: data.hlsUrl ? 'PRESENT' : 'MISSING',
-          hlsUrlActual: data.hlsUrl, // Show actual URL for debugging
+          hlsProxyUrl: data.hlsProxyUrl ? 'PROXY' : 'MISSING',
           hasDirectLink: data.hasDirectLink,
-          directLink: data.directLink ? 'PRESENT' : 'MISSING',
-          directLinkPresigned: data.directLinkPresigned ? 'PRESENT' : 'MISSING',
-          directLinkPresignedActual: data.directLinkPresigned, // Show actual URL for debugging
+          directLinkPresigned: data.directLinkPresigned ? 'PRESIGNED' : 'MISSING',
           status: data.status
         });
         
@@ -71,9 +68,9 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
         }
         
         if (data.success && (data.hasHLS || data.hasDirectLink || data.directLinkPresigned)) {
-          // Simplificado: usa lo que venga del API
+          // Usar HLS proxy URL que maneja presignado internamente (reusable para cualquier curso)
           const videoData = {
-            m3u8: data.hlsUrl,
+            m3u8: data.hlsProxyUrl || data.hlsUrl,
             storageLink: data.directLinkPresigned || data.directLink
           };
           

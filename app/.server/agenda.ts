@@ -5,7 +5,7 @@ import { db } from "./db";
 import Agenda from "agenda";
 import { Effect } from "effect";
 import { videoProcessorService } from "./services/video-processor";
-import { s3VideoService } from "./services/s3-video";
+import { s3VideoService, fixBucketDuplication } from "./services/s3-video";
 
 let agenda: Agenda;
 export const getAgenda = () => {
@@ -404,10 +404,13 @@ getAgenda().define(
       );
 
       // 3. Update video with final results
+      // Fix potential bucket name duplication in HLS URL using helper function
+      const hlsUrl = fixBucketDuplication(result.masterPlaylistUrl);
+      
       await db.video.update({
         where: { id: videoId },
         data: {
-          m3u8: result.masterPlaylistUrl,
+          m3u8: hlsUrl,
           storageLink: s3VideoService.getVideoUrl(videoS3Key),
           duration: result.duration.toString(),
           processingStatus: "ready",
