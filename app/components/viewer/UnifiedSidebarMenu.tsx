@@ -412,7 +412,6 @@ const VideoListItem = ({
 
   return (
     <Link
-      reloadDocument
       ref={ref}
       to={`/cursos/${courseSlug}/viewer?videoSlug=${slug}`}
       className={cn(

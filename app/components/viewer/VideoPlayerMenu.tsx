@@ -168,7 +168,6 @@ const ListItem = ({
 
   return (
     <Link
-      reloadDocument
       ref={ref}
       to={`/cursos/${courseSlug}/viewer?videoSlug=${slug}`}
       // reloadDocument

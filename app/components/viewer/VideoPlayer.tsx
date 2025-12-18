@@ -1,7 +1,7 @@
 import type { Video } from "~/types/models";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { FaGooglePlay } from "react-icons/fa6";
+import { ImPlay } from "react-icons/im";
 import { IoIosClose } from "react-icons/io";
 import { Link } from "react-router";
 import { nanoid } from "nanoid";
@@ -58,24 +58,43 @@ export const VideoPlayer = ({
       controls.pause();
     }
     setIsPlaying(!controls.paused);
-    // listeners
-    controls.onplaying = () => setIsPlaying(true);
-    controls.onplay = () => setIsPlaying(true);
-    controls.onpause = () => {
+  };
+
+  // Setup video event listeners
+  useEffect(() => {
+    const controls = videoRef.current;
+    if (!controls) return;
+
+    const handlePlaying = () => setIsPlaying(true);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => {
       setIsPlaying(false);
       onPause?.();
     };
-    controls.onended = () => onEnd?.();
-    controls.ontimeupdate = () => {
+    const handleEnded = () => onEnd?.();
+    const handleTimeUpdate = () => {
       if (controls.duration - controls.currentTime < 15) {
         setIsEnding(true);
-        // save watched videos
         updateWatchedList();
       } else {
         setIsEnding(false);
       }
     };
-  };
+
+    controls.addEventListener('playing', handlePlaying);
+    controls.addEventListener('play', handlePlay);
+    controls.addEventListener('pause', handlePause);
+    controls.addEventListener('ended', handleEnded);
+    controls.addEventListener('timeupdate', handleTimeUpdate);
+
+    return () => {
+      controls.removeEventListener('playing', handlePlaying);
+      controls.removeEventListener('play', handlePlay);
+      controls.removeEventListener('pause', handlePause);
+      controls.removeEventListener('ended', handleEnded);
+      controls.removeEventListener('timeupdate', handleTimeUpdate);
+    };
+  }, [onPause, onEnd, slug]);
 
   const updateWatchedList = () => {
     if (typeof window === "undefined") return;
@@ -191,7 +210,18 @@ export const VideoPlayer = ({
       }
     };
 
-    setupVideo().catch(err => {
+    setupVideo().then(() => {
+      // Autoplay after video is set up
+      const videoElement = videoRef.current;
+      if (videoElement) {
+        videoElement.play().then(() => {
+          setIsPlaying(true);
+        }).catch((err) => {
+          // Autoplay blocked by browser policy - user will need to click play
+          console.info("::AUTOPLAY_BLOCKED::", err.message);
+        });
+      }
+    }).catch(err => {
       console.error("Error setting up video:", err);
       setError("Error al configurar el video");
     });
@@ -213,13 +243,13 @@ export const VideoPlayer = ({
             key="play_button"
             className="absolute inset-0 bottom-16 flex justify-center items-center cursor-pointer z-10"
           >
-            <span className=" bg-white/10 backdrop-blur	 flex items-center justify-center text-6xl text-white rounded-full  w-[120px] h-[90px]">
-              <FaGooglePlay />
+            <span className="bg-white/10 backdrop-blur flex items-center justify-center text-5xl text-white rounded-full w-24 h-24">
+              <ImPlay />
             </span>
           </motion.button>
         )}
         {nextVideo && isEnding && (
-          <Link reloadDocument to={nextVideoLink}>
+          <Link to={nextVideoLink}>
             <motion.div
               // onClick={onClickNextVideo}
               key={nanoid()}
