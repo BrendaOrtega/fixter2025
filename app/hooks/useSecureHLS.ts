@@ -22,8 +22,25 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
   
   const getPresignedUrl = useCallback(async (originalUrl: string, isHLS: boolean = true): Promise<string> => {
     try {
-      // Skip if no courseId provided (backward compatibility)
+      // Skip if no courseId provided (backward compatibility) - but try dynamic for storage URLs
       if (!options.courseId) {
+        // For storage URLs, try dynamic presigned URL generation
+        if (originalUrl.includes('storage') && originalUrl.includes('fixtergeek/videos/')) {
+          try {
+            // Use dynamic function via direct API call (temporary solution)
+            const response = await fetch('/api/video-preview-dynamic', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ originalUrl, expiresIn: 3600 })
+            });
+            const result = await response.json();
+            if (result.success) {
+              return result.presignedUrl;
+            }
+          } catch (err) {
+            console.warn('Dynamic presigned URL failed, using original:', err);
+          }
+        }
         return originalUrl;
       }
 
@@ -78,13 +95,19 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
   }, [options]);
 
   const interceptHLSUrl = useCallback(async (url: string): Promise<string> => {
-    // Intercept S3 URLs from our bucket for both HLS and original videos
-    if (url.includes('.s3.') && url.includes('fixtergeek/videos/')) {
+    // Check if it's a storage URL that needs presigned access
+    const isStorageUrl = (
+      url.includes('.s3.') || 
+      url.includes('storage.tigris.dev') || 
+      url.includes('t3.storage.dev')
+    ) && url.includes('fixtergeek/videos/');
+    
+    if (isStorageUrl) {
       // Check if it's HLS content
       const isHLS = url.includes('/hls/') && (url.includes('.m3u8') || url.includes('.ts'));
       
       // Check if it's an original video file  
-      const isOriginalVideo = url.includes('/original/') && url.includes('.mp4');
+      const isOriginalVideo = url.includes('/original/') && (url.includes('.mp4') || url.includes('.mov'));
       
       if (isHLS) {
         return getPresignedUrl(url, true);
@@ -92,7 +115,7 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
         return getPresignedUrl(url, false);
       }
     }
-    return url; // Return original URL for public videos or non-S3 content
+    return url; // Return original URL for public videos or non-storage content
   }, [getPresignedUrl]);
 
   return {

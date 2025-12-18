@@ -40,6 +40,12 @@ export interface S3VideoService {
     key: string, 
     expiresIn?: number
   ) => Effect.Effect<string, S3VideoError>;
+
+  // Generate presigned URL dynamically based on original storage URL
+  getVideoPreviewUrlDynamic: (
+    originalUrl: string,
+    expiresIn?: number
+  ) => Effect.Effect<string, S3VideoError>;
   
   // Generate presigned URL for HLS content (master.m3u8 or .ts segments)
   getHLSPresignedUrl: (
@@ -98,12 +104,12 @@ export class S3VideoError extends Error {
   }
 }
 
-// S3 Configuration
+// S3 Configuration (Tigris-compatible)
 const getS3VideoConfig = () => {
-  const region = process.env.AWS_REGION || "us-east-1";
+  const region = process.env.AWS_REGION || "auto"; // Tigris uses "auto" region
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-  const bucketName = process.env.AWS_S3_BUCKET || "wild-bird-2039";
+  const bucketName = process.env.AWS_S3_BUCKET || process.env.BUCKET_NAME || "wild-bird-2039";
 
   if (!accessKeyId || !secretAccessKey) {
     throw new S3VideoError(
@@ -133,11 +139,10 @@ const createS3Client = () =>
       },
     };
 
-    // Use custom endpoint if provided
-    if (process.env.AWS_ENDPOINT_URL_S3) {
-      clientConfig.endpoint = process.env.AWS_ENDPOINT_URL_S3;
-      clientConfig.forcePathStyle = true;
-    }
+    // Use custom endpoint - Tigris storage by default
+    const endpoint = process.env.AWS_ENDPOINT_URL_S3 || "https://fly.storage.tigris.dev";
+    clientConfig.endpoint = endpoint;
+    clientConfig.forcePathStyle = true;
 
     return new S3Client(clientConfig);
   });
@@ -303,10 +308,9 @@ export const S3VideoServiceLive: S3VideoService = {
 
   getVideoUrl: (key: string) => {
     const config = getS3VideoConfig();
-    // Use custom endpoint for Tigris or default to AWS S3
-    return process.env.AWS_ENDPOINT_URL_S3
-      ? `${process.env.AWS_ENDPOINT_URL_S3}/${config.bucketName}/${key}`
-      : `https://${config.bucketName}.s3.${config.region}.amazonaws.com/${key}`;
+    // Use Tigris storage by default
+    const endpoint = process.env.AWS_ENDPOINT_URL_S3 || "https://fly.storage.tigris.dev";
+    return `${endpoint}/${config.bucketName}/${key}`;
   },
 
   // Generate presigned URL for video preview (temporary access)
@@ -333,6 +337,58 @@ export const S3VideoServiceLive: S3VideoService = {
       });
 
       return previewUrl;
+    }),
+
+  // Generate presigned URL dynamically based on original storage URL
+  getVideoPreviewUrlDynamic: (originalUrl: string, expiresIn: number = 3600) =>
+    Effect.gen(function* () {
+      try {
+        const url = new URL(originalUrl);
+        
+        // Extract storage endpoint and bucket from original URL
+        const storageEndpoint = `${url.protocol}//${url.hostname}`;
+        const pathParts = url.pathname.split('/').filter(Boolean);
+        const bucketName = pathParts[0];
+        const s3Key = pathParts.slice(1).join('/');
+
+        console.log(`🔍 Dynamic presigned URL: endpoint=${storageEndpoint}, bucket=${bucketName}, key=${s3Key}`);
+
+        // Create S3 client with the correct endpoint
+        const s3Client = new S3Client({
+          region: "auto",
+          endpoint: storageEndpoint,
+          forcePathStyle: true,
+          credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+          }
+        });
+
+        const command = new GetObjectCommand({
+          Bucket: bucketName,
+          Key: s3Key,
+        });
+
+        const previewUrl = yield* Effect.tryPromise({
+          try: () => getSignedUrl(s3Client, command, { expiresIn }),
+          catch: (error) =>
+            new S3VideoError(
+              `Failed to generate dynamic preview URL: ${
+                error instanceof Error ? error.message : "Unknown"
+              }`,
+              "DYNAMIC_PREVIEW_URL_ERROR",
+              error
+            ),
+        });
+
+        return previewUrl;
+      } catch (error) {
+        throw new S3VideoError(
+          `Failed to parse storage URL: ${originalUrl}`,
+          "URL_PARSE_ERROR",
+          error
+        );
+      }
     }),
 
   // Generate presigned URL for HLS content (master.m3u8 or .ts segments)

@@ -101,43 +101,67 @@ export const VideoPlayer = ({
           : "::HLS_NOT_SUPPORTED 📵::"
       );
 
+      // Helper to check if URL is new format (needs presigned) or legacy (use direct)
+      const isNewFormat = (url: string) => url.includes('fixtergeek/videos/') && (url.includes('.s3.') || url.includes('storage.tigris.dev'));
+      
       if (hlsSupport(videoElement)) {
         // Native HLS support (Safari)
         if (video.m3u8) {
-          const secureUrl = await interceptHLSUrl(video.m3u8);
-          videoElement.src = secureUrl;
-          console.info("::USING_NATIVE_HLS_WITH_PRESIGNED::✅::");
+          const finalUrl = isNewFormat(video.m3u8)
+            ? await interceptHLSUrl(video.m3u8)
+            : video.m3u8;
+          videoElement.src = finalUrl;
+          console.info("::USING_NATIVE_HLS::", isNewFormat(video.m3u8) ? "PRESIGNED✅" : "LEGACY_DIRECT🔗");
         } else if (video.storageLink) {
-          const secureUrl = await interceptHLSUrl(video.storageLink);
-          videoElement.src = secureUrl;
-          console.info("::USING_DIRECT_LINK_WITH_PRESIGNED::⚡::");
+          const finalUrl = isNewFormat(video.storageLink)
+            ? await interceptHLSUrl(video.storageLink)
+            : video.storageLink;
+          videoElement.src = finalUrl;
+          console.info("::USING_DIRECT_LINK::", isNewFormat(video.storageLink) ? "PRESIGNED⚡" : "LEGACY_DIRECT🔗");
         }
       } else {
         // HLS.js fallback (Chrome, Firefox, etc.)
         if (video.m3u8) {
-          const hls = new Hls({
-            xhrSetup: async (xhr, url) => {
-              // Intercept all HLS requests to use presigned URLs
-              const secureUrl = await interceptHLSUrl(url);
-              xhr.open('GET', secureUrl, true);
-            }
-          });
-          
-          const secureUrl = await interceptHLSUrl(video.m3u8);
-          hls.loadSource(secureUrl);
-          hls.attachMedia(videoElement);
-          console.info("::USING_HLS.JS_WITH_PRESIGNED::🪄::");
-          
-          hls.on(Hls.Events.ERROR, (event, data) => {
-            console.error('HLS error:', data);
-            if (data.fatal) {
-              setError("Error al cargar el video. Por favor intenta de nuevo.");
-            }
-          });
+          if (isNewFormat(video.m3u8)) {
+            // New format - use presigned URLs
+            const hls = new Hls({
+              xhrSetup: async (xhr, url) => {
+                const secureUrl = await interceptHLSUrl(url);
+                xhr.open('GET', secureUrl, true);
+              }
+            });
+            
+            const secureUrl = await interceptHLSUrl(video.m3u8);
+            hls.loadSource(secureUrl);
+            hls.attachMedia(videoElement);
+            console.info("::USING_HLS.JS_WITH_PRESIGNED::🪄::");
+            
+            hls.on(Hls.Events.ERROR, (event, data) => {
+              console.error('HLS error:', data);
+              if (data.fatal) {
+                setError("Error al cargar el video. Por favor intenta de nuevo.");
+              }
+            });
+          } else {
+            // Legacy format - use direct URLs
+            const hls = new Hls();
+            hls.loadSource(video.m3u8);
+            hls.attachMedia(videoElement);
+            console.info("::USING_HLS.JS_LEGACY_DIRECT::📺::");
+            
+            hls.on(Hls.Events.ERROR, (event, data) => {
+              console.error('HLS error:', data);
+              if (data.fatal) {
+                setError("Error al cargar el video. Por favor intenta de nuevo.");
+              }
+            });
+          }
         } else if (video.storageLink) {
-          const secureUrl = await interceptHLSUrl(video.storageLink);
-          videoElement.src = secureUrl;
-          console.info("::FALLBACK_TO_DIRECT_LINK::⚽️::");
+          const finalUrl = isNewFormat(video.storageLink)
+            ? await interceptHLSUrl(video.storageLink)
+            : video.storageLink;
+          videoElement.src = finalUrl;
+          console.info("::FALLBACK_TO_DIRECT_LINK::", isNewFormat(video.storageLink) ? "PRESIGNED⚽" : "LEGACY_DIRECT🔗");
         }
       }
     };

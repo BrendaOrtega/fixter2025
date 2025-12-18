@@ -75,6 +75,7 @@ export default [
     route("analytics", "routes/api.analytics.tsx"),
     route("sequences/start", "routes/api.sequences.start.ts"),
     route("sequences/process", "routes/api.sequences.process.ts"),
+    route("video-preview-dynamic", "routes/api/video-preview-dynamic.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

@@ -49,43 +49,67 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
       const hlsSupport = (videoNode: HTMLVideoElement) =>
         videoNode.canPlayType("application/vnd.apple.mpegURL");
       
+      // Helper to check if URL is new format (needs presigned) or legacy (use direct)
+      const isNewFormat = (url: string) => url.includes('fixtergeek/videos/') && (url.includes('.s3.') || url.includes('storage.tigris.dev'));
+      
       if (hlsSupport(videoElement)) {
         // Navegador soporta HLS nativo
         if (videoUrls.m3u8) {
-          const secureUrl = await interceptHLSUrl(videoUrls.m3u8);
-          videoElement.src = secureUrl;
-          console.info("🎬 [PREVIEW] Using native HLS with presigned:", secureUrl !== videoUrls.m3u8 ? 'PRESIGNED' : 'PUBLIC');
+          const finalUrl = isNewFormat(videoUrls.m3u8) 
+            ? await interceptHLSUrl(videoUrls.m3u8)
+            : videoUrls.m3u8;
+          videoElement.src = finalUrl;
+          console.info("🎬 [PREVIEW] Using native HLS:", isNewFormat(videoUrls.m3u8) ? 'PRESIGNED' : 'LEGACY_DIRECT');
         } else if (videoUrls.storageLink) {
-          const secureUrl = await interceptHLSUrl(videoUrls.storageLink);
-          videoElement.src = secureUrl;
-          console.info("🎬 [PREVIEW] Using direct link with presigned:", secureUrl !== videoUrls.storageLink ? 'PRESIGNED' : 'PUBLIC');
+          const finalUrl = isNewFormat(videoUrls.storageLink)
+            ? await interceptHLSUrl(videoUrls.storageLink)
+            : videoUrls.storageLink;
+          videoElement.src = finalUrl;
+          console.info("🎬 [PREVIEW] Using direct link:", isNewFormat(videoUrls.storageLink) ? 'PRESIGNED' : 'LEGACY_DIRECT');
         }
       } else {
         // Usar HLS.js para navegadores que no soportan HLS nativo
         if (videoUrls.m3u8) {
-          const hls = new Hls({
-            xhrSetup: async (xhr, url) => {
-              // Intercept all HLS requests to use presigned URLs
-              const secureUrl = await interceptHLSUrl(url);
-              xhr.open('GET', secureUrl, true);
-            }
-          });
-          
-          const secureUrl = await interceptHLSUrl(videoUrls.m3u8);
-          hls.loadSource(secureUrl);
-          hls.attachMedia(videoElement);
-          console.info("🎬 [PREVIEW] Using HLS.js with presigned:", secureUrl !== videoUrls.m3u8 ? 'PRESIGNED' : 'PUBLIC');
-          
-          hls.on(Hls.Events.ERROR, (event, data) => {
-            console.error('HLS error in preview:', data);
-            if (data.fatal) {
-              setError("Error al cargar preview del video");
-            }
-          });
+          if (isNewFormat(videoUrls.m3u8)) {
+            // New format - use presigned URLs
+            const hls = new Hls({
+              xhrSetup: async (xhr, url) => {
+                const secureUrl = await interceptHLSUrl(url);
+                xhr.open('GET', secureUrl, true);
+              }
+            });
+            
+            const secureUrl = await interceptHLSUrl(videoUrls.m3u8);
+            hls.loadSource(secureUrl);
+            hls.attachMedia(videoElement);
+            console.info("🎬 [PREVIEW] Using HLS.js with presigned URLs");
+            
+            hls.on(Hls.Events.ERROR, (event, data) => {
+              console.error('HLS error in preview:', data);
+              if (data.fatal) {
+                setError("Error al cargar preview del video");
+              }
+            });
+          } else {
+            // Legacy format - use direct URLs
+            const hls = new Hls();
+            hls.loadSource(videoUrls.m3u8);
+            hls.attachMedia(videoElement);
+            console.info("🎬 [PREVIEW] Using HLS.js with legacy direct URLs");
+            
+            hls.on(Hls.Events.ERROR, (event, data) => {
+              console.error('HLS error in preview:', data);
+              if (data.fatal) {
+                setError("Error al cargar preview del video");
+              }
+            });
+          }
         } else if (videoUrls.storageLink) {
-          const secureUrl = await interceptHLSUrl(videoUrls.storageLink);
-          videoElement.src = secureUrl;
-          console.info("🎬 [PREVIEW] Using direct link fallback with presigned:", secureUrl !== videoUrls.storageLink ? 'PRESIGNED' : 'PUBLIC');
+          const finalUrl = isNewFormat(videoUrls.storageLink)
+            ? await interceptHLSUrl(videoUrls.storageLink)
+            : videoUrls.storageLink;
+          videoElement.src = finalUrl;
+          console.info("🎬 [PREVIEW] Using direct link fallback:", isNewFormat(videoUrls.storageLink) ? 'PRESIGNED' : 'LEGACY_DIRECT');
         }
       }
     };
