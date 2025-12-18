@@ -277,11 +277,11 @@ export const VideoPlayer = ({
               </div>
               <img
                 alt="poster"
-                src={nextVideo.poster || "/public/spaceman.svg"}
+                src={nextVideo.poster || "/spaceman.svg"}
                 onError={({ currentTarget }) => {
                   console.log("WTF?");
                   currentTarget.onerror = null;
-                  currentTarget.src = "/public/spaceman.svg";
+                  currentTarget.src = "/spaceman.svg";
                 }}
                 className="aspect-video w-40 rounded-xl object-cover"
               />
