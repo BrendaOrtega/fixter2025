@@ -296,6 +296,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   // Get video processing status
   if (intent === "get_video_status") {
     const videoId = formData.get("videoId") as string;
+    const skipPresigned = formData.get("skipPresigned") === "true"; // Para preview, evitar generar presigned URLs
     
     if (!videoId) {
       return Response.json({ success: false, error: "videoId es requerido" });
@@ -320,9 +321,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     let directLinkPresigned: string | undefined;
     
-    // Generate presigned URL for original video if it exists and is pending/processing
-    if (video.storageLink && video.courses.length > 0 && 
-        (video.processingStatus === "pending" || video.processingStatus === "processing")) {
+    // Only generate presigned URL if explicitly requested (not skipped) 
+    // AND for videos that need preview (pending, processing, or failed for admin debugging)
+    if (!skipPresigned && video.storageLink && video.courses.length > 0 && 
+        (video.processingStatus === "pending" || video.processingStatus === "processing" || video.processingStatus === "failed")) {
       
       try {
         const courseId = video.courses[0].id;
@@ -361,10 +363,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
       }
     } else {
       console.log("⏭️ Skipping presigned URL generation:", {
+        skipPresigned,
         hasStorageLink: !!video.storageLink,
         hasCourses: video.courses.length > 0,
         status: video.processingStatus,
-        shouldGenerate: video.processingStatus === "pending" || video.processingStatus === "processing"
+        shouldGenerate: video.processingStatus === "pending" || video.processingStatus === "processing" || video.processingStatus === "failed"
       });
     }
 
@@ -508,8 +511,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         });
       }
 
-      // Check access permissions
-      const hasAccess = course.isFree || (user && user.courses.includes(courseId));
+      // Check access permissions - ADMIN has full access for preview purposes
+      const isAdmin = user?.role === "ADMIN";
+      const hasAccess = isAdmin || course.isFree || (user && user.courses.includes(courseId));
       
       if (!hasAccess) {
         return Response.json({ 
@@ -567,8 +571,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         });
       }
 
-      // Check access permissions
-      const hasAccess = course.isFree || (user && user.courses.includes(courseId));
+      // Check access permissions - ADMIN has full access for preview purposes
+      const isAdmin = user?.role === "ADMIN";
+      const hasAccess = isAdmin || course.isFree || (user && user.courses.includes(courseId));
       
       if (!hasAccess) {
         return Response.json({ 
@@ -593,6 +598,91 @@ export const action = async ({ request }: Route.ActionArgs) => {
       return Response.json({
         success: false,
         error: error instanceof Error ? error.message : "Error al generar URL del video"
+      });
+    }
+  }
+
+  // Trigger manual video processing for admin
+  if (intent === "trigger_video_processing") {
+    const videoId = formData.get("videoId") as string;
+    
+    if (!videoId) {
+      return Response.json({ success: false, error: "videoId es requerido" });
+    }
+
+    try {
+      // Get video with course info
+      const video = await db.video.findUnique({
+        where: { id: videoId },
+        select: {
+          id: true,
+          storageLink: true,
+          processingStatus: true,
+          courses: { select: { id: true } }
+        }
+      });
+      
+      if (!video || video.courses.length === 0) {
+        return Response.json({ 
+          success: false, 
+          error: "Video no encontrado o sin curso asociado" 
+        });
+      }
+
+      if (!video.storageLink) {
+        return Response.json({ 
+          success: false, 
+          error: "Video no tiene archivo subido. Sube primero el archivo MP4." 
+        });
+      }
+
+      if (video.processingStatus === "processing") {
+        return Response.json({ 
+          success: false, 
+          error: "El video ya está siendo procesado" 
+        });
+      }
+
+      const courseId = video.courses[0].id;
+
+      // Extract S3 key from storage link (remove bucket name and leading slash)
+      const url = new URL(video.storageLink);
+      const fullPath = url.pathname.substring(1); // Remove leading slash
+      
+      // Remove bucket name from path if present (e.g. wild-bird-2039/)
+      const s3Key = fullPath.includes('/') && !fullPath.startsWith('fixtergeek/') 
+        ? fullPath.substring(fullPath.indexOf('/') + 1)
+        : fullPath;
+
+      // Reset processing status and trigger processing
+      await db.video.update({
+        where: { id: videoId },
+        data: {
+          processingStatus: "pending",
+          processingStartedAt: null,
+          processingCompletedAt: null,
+          processingFailedAt: null,
+          processingError: null
+        }
+      });
+      
+      // Schedule processing job with force=true for manual trigger
+      await scheduleVideoProcessing({
+        courseId,
+        videoId,
+        videoS3Key: s3Key,
+        force: true
+      });
+
+      return Response.json({
+        success: true,
+        message: "Procesamiento iniciado manualmente"
+      });
+    } catch (error) {
+      console.error("Error triggering manual video processing:", error);
+      return Response.json({
+        success: false,
+        error: error instanceof Error ? error.message : "Error al iniciar procesamiento"
       });
     }
   }

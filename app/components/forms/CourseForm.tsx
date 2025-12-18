@@ -5,7 +5,7 @@ import {
 } from "react-hook-form";
 import { cn } from "~/utils/cn";
 import { VideoPreview } from "~/components/viewer/VideoPreview";
-import { useEffect, useState, useMemo, type FormEvent, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, type FormEvent } from "react";
 import Spinner from "../common/Spinner";
 import { FaTrash, FaUpload } from "react-icons/fa6";
 import { FaExclamationCircle, FaCheckCircle, FaSpinner } from "react-icons/fa";
@@ -13,22 +13,30 @@ import { useFetcher, useSubmit } from "react-router";
 import type { Course, Video } from "~/types/models";
 import { Drawer } from "../viewer/SimpleDrawer";
 
-// Component independiente para el video preview que NO se re-renderiza con el polling
-const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: string }) => {
-  const [videoUrls, setVideoUrls] = useState<{m3u8?: string; storageLink?: string} | null>(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  
-  // Memorizar las props para evitar cualquier re-render
-  const memoizedProps = useMemo(() => ({ videoId, courseId }), [videoId, courseId]);
+// Cache global para evitar re-fetching de datos de video
+const videoDataCache = new Map<string, {m3u8?: string; storageLink?: string}>();
 
+// Component independiente para el video preview que NO se re-renderiza con el polling  
+const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: string }) => {
+  const [videoUrls, setVideoUrls] = useState<{m3u8?: string; storageLink?: string} | null>(
+    () => videoDataCache.get(videoId) || null
+  );
+  
   useEffect(() => {
-    // Solo cargar UNA VEZ al montar - NUNCA VOLVER A EJECUTAR
-    if (hasLoaded) return;
+    // Si ya tenemos datos en cache, no hacer fetch
+    if (videoDataCache.has(videoId)) {
+      const cachedData = videoDataCache.get(videoId)!;
+      setVideoUrls(cachedData);
+      console.log(`🎬 [StableVideoPreview] Using cached data for ${videoId}`);
+      return;
+    }
+    
+    console.log(`🎬 [StableVideoPreview] Loading video data for ${videoId} - ONE TIME ONLY`);
     
     const loadVideoData = async () => {
       const formData = new FormData();
       formData.append("intent", "get_video_status");
-      formData.append("videoId", memoizedProps.videoId);
+      formData.append("videoId", videoId);
       
       try {
         const response = await fetch("/api/course", {
@@ -38,19 +46,32 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
         const data = await response.json();
         
         if (data.success && (data.hasHLS || data.hasDirectLink)) {
-          setVideoUrls({
+          // Usar directLinkPresigned si está disponible (ya es una URL firmada)
+          const videoUrl = data.directLinkPresigned || data.directLink;
+          
+          const videoData = {
             m3u8: data.hlsUrl,
-            storageLink: data.directLinkPresigned || data.directLink
+            storageLink: videoUrl
+          };
+          
+          // Guardar en cache para evitar re-fetches
+          videoDataCache.set(videoId, videoData);
+          setVideoUrls(videoData);
+          
+          console.log(`✅ [StableVideoPreview] Video data loaded and cached for ${videoId}:`, {
+            hasHLS: data.hasHLS,
+            hasDirectLink: data.hasDirectLink, 
+            hasPresignedLink: !!data.directLinkPresigned,
+            usingUrl: videoUrl
           });
-          setHasLoaded(true); // Marcar como cargado para NUNCA volver a cargar
         }
       } catch (error) {
-        console.error("Error loading video data for preview:", error);
+        console.error(`❌ [StableVideoPreview] Error loading video data for ${videoId}:`, error);
       }
     };
 
     loadVideoData();
-  }, [memoizedProps.videoId, hasLoaded]);
+  }, [videoId]);
 
   if (!videoUrls) {
     return (
@@ -63,7 +84,7 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
   return (
     <VideoPreview 
       video={videoUrls}
-      courseId={memoizedProps.courseId}
+      courseId={courseId}
     />
   );
 };
@@ -77,19 +98,30 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
   const [videoData, setVideoData] = useState<any>(null);
 
   useEffect(() => {
-    // Check status on mount and periodically
-    const checkStatus = () => {
-      fetcher.submit(
-        { intent: "get_video_status", videoId },
-        { method: "POST", action: "/api/course" }
-      );
+    // Check status on mount and periodically - but only poll when actually processing
+    const checkStatus = (skipPresigned = false) => {
+      const formData = new FormData();
+      formData.append("intent", "get_video_status");
+      formData.append("videoId", videoId);
+      if (skipPresigned) {
+        formData.append("skipPresigned", "true");
+      }
+      
+      fetcher.submit(formData, { method: "POST", action: "/api/course" });
     };
 
-    checkStatus();
-    const interval = setInterval(checkStatus, 5000); // Check every 5 seconds
+    checkStatus(); // Initial check (con presigned URLs)
+    
+    // Solo hacer polling si está procesando, pero SIN generar presigned URLs cada vez
+    let interval: NodeJS.Timeout | null = null;
+    if (status === "processing") {
+      interval = setInterval(() => checkStatus(true), 5000); // Skip presigned en polling
+    }
 
-    return () => clearInterval(interval);
-  }, [videoId]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [videoId, status]); // Depender también del status
 
   useEffect(() => {
     if (fetcher.data && fetcher.data.success) {
@@ -172,23 +204,44 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
         <p className="text-xs text-gray-400">✅ Video directo disponible</p>
       )}
       
-      {/* Botón para limpiar archivos S3 */}
-      {(fetcher.data?.hasDirectLink || fetcher.data?.hasHLS) && (
-        <button
-          type="button"
-          onClick={() => {
-            if (confirm("¿Estás seguro de eliminar todos los archivos de video (original + HLS)? Esto no se puede deshacer.")) {
-              fetcher.submit(
-                { intent: "delete_video_files", videoId },
-                { method: "POST", action: "/api/course" }
-              );
-            }
-          }}
-          className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
-        >
-          🗑️ Eliminar archivos S3
-        </button>
-      )}
+      {/* Botones de acción */}
+      <div className="flex gap-2 mt-2">
+        {/* Botón para procesar manualmente */}
+        {(status === "pending" || status === "failed") && (
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm("¿Detonar el procesamiento del video manualmente?")) {
+                fetcher.submit(
+                  { intent: "trigger_video_processing", videoId },
+                  { method: "POST", action: "/api/course" }
+                );
+              }
+            }}
+            className="text-xs text-blue-400 hover:text-blue-300 underline"
+          >
+            🚀 Procesar ahora
+          </button>
+        )}
+        
+        {/* Botón para limpiar archivos S3 */}
+        {(fetcher.data?.hasDirectLink || fetcher.data?.hasHLS) && (
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm("¿Estás seguro de eliminar todos los archivos de video (original + HLS)? Esto no se puede deshacer.")) {
+                fetcher.submit(
+                  { intent: "delete_video_files", videoId },
+                  { method: "POST", action: "/api/course" }
+                );
+              }
+            }}
+            className="text-xs text-red-400 hover:text-red-300 underline"
+          >
+            🗑️ Eliminar archivos S3
+          </button>
+        )}
+      </div>
     </div>
   );
 };

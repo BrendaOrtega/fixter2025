@@ -328,10 +328,12 @@ export const scheduleVideoProcessing = async ({
   courseId,
   videoId,
   videoS3Key,
+  force = false,
 }: {
   courseId: string;
   videoId: string;
   videoS3Key: string;
+  force?: boolean;
 }) => {
   try {
     const agenda = getAgenda();
@@ -350,11 +352,17 @@ export const scheduleVideoProcessing = async ({
     });
     
     if (existingJobs.length > 0) {
-      console.info(`⏭️ [AGENDA] Job already exists for video ${videoId}, skipping...`);
-      return;
+      if (force) {
+        console.info(`🔥 [AGENDA] Force=true - Canceling ${existingJobs.length} existing jobs for video ${videoId}...`);
+        await Promise.all(existingJobs.map(job => job.remove()));
+        console.info(`✅ [AGENDA] Existing jobs canceled for video ${videoId}`);
+      } else {
+        console.info(`⏭️ [AGENDA] Job already exists for video ${videoId}, skipping...`);
+        return;
+      }
     }
     
-    console.info(`📤 [AGENDA] Scheduling HLS job for video ${videoId}...`);
+    console.info(`📤 [AGENDA] Scheduling HLS job for video ${videoId}${force ? ' (FORCED)' : ''}...`);
     const job = await agenda.now("process_video_hls", { courseId, videoId, videoS3Key });
     console.info(`🎬 Job encolado: procesamiento HLS para video ${videoId}`, { jobId: job.attrs._id });
   } catch (error) {

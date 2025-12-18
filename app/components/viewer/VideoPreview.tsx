@@ -49,23 +49,28 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
       const hlsSupport = (videoNode: HTMLVideoElement) =>
         videoNode.canPlayType("application/vnd.apple.mpegURL");
       
+      // Helper to check if URL is already presigned (has signature)
+      const isAlreadyPresigned = (url: string) => url.includes('X-Amz-Signature');
+      
       // Helper to check if URL is new format (needs presigned) or legacy (use direct)
       const isNewFormat = (url: string) => url.includes('fixtergeek/videos/') && (url.includes('.s3.') || url.includes('storage.tigris.dev'));
       
       if (hlsSupport(videoElement)) {
         // Navegador soporta HLS nativo
         if (videoUrls.m3u8) {
-          const finalUrl = isNewFormat(videoUrls.m3u8) 
-            ? await interceptHLSUrl(videoUrls.m3u8)
-            : videoUrls.m3u8;
+          let finalUrl = videoUrls.m3u8;
+          if (isNewFormat(videoUrls.m3u8) && !isAlreadyPresigned(videoUrls.m3u8)) {
+            finalUrl = await interceptHLSUrl(videoUrls.m3u8);
+          }
           videoElement.src = finalUrl;
-          console.info("🎬 [PREVIEW] Using native HLS:", isNewFormat(videoUrls.m3u8) ? 'PRESIGNED' : 'LEGACY_DIRECT');
+          console.info("🎬 [PREVIEW] Using native HLS:", isAlreadyPresigned(finalUrl) ? 'ALREADY_PRESIGNED' : isNewFormat(videoUrls.m3u8) ? 'PRESIGNED' : 'LEGACY_DIRECT');
         } else if (videoUrls.storageLink) {
-          const finalUrl = isNewFormat(videoUrls.storageLink)
-            ? await interceptHLSUrl(videoUrls.storageLink)
-            : videoUrls.storageLink;
+          let finalUrl = videoUrls.storageLink;
+          if (isNewFormat(videoUrls.storageLink) && !isAlreadyPresigned(videoUrls.storageLink)) {
+            finalUrl = await interceptHLSUrl(videoUrls.storageLink);
+          }
           videoElement.src = finalUrl;
-          console.info("🎬 [PREVIEW] Using direct link:", isNewFormat(videoUrls.storageLink) ? 'PRESIGNED' : 'LEGACY_DIRECT');
+          console.info("🎬 [PREVIEW] Using direct link:", isAlreadyPresigned(finalUrl) ? 'ALREADY_PRESIGNED' : isNewFormat(videoUrls.storageLink) ? 'PRESIGNED' : 'LEGACY_DIRECT');
         }
       } else {
         // Usar HLS.js para navegadores que no soportan HLS nativo
@@ -105,11 +110,12 @@ export const VideoPreview = ({ video, courseId, className = "" }: VideoPreviewPr
             });
           }
         } else if (videoUrls.storageLink) {
-          const finalUrl = isNewFormat(videoUrls.storageLink)
-            ? await interceptHLSUrl(videoUrls.storageLink)
-            : videoUrls.storageLink;
+          let finalUrl = videoUrls.storageLink;
+          if (isNewFormat(videoUrls.storageLink) && !isAlreadyPresigned(videoUrls.storageLink)) {
+            finalUrl = await interceptHLSUrl(videoUrls.storageLink);
+          }
           videoElement.src = finalUrl;
-          console.info("🎬 [PREVIEW] Using direct link fallback:", isNewFormat(videoUrls.storageLink) ? 'PRESIGNED' : 'LEGACY_DIRECT');
+          console.info("🎬 [PREVIEW] Using direct link fallback:", isAlreadyPresigned(finalUrl) ? 'ALREADY_PRESIGNED' : isNewFormat(videoUrls.storageLink) ? 'PRESIGNED' : 'LEGACY_DIRECT');
         }
       }
     };

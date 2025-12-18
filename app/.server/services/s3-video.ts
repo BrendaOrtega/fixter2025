@@ -420,9 +420,12 @@ export const S3VideoServiceLive: S3VideoService = {
       const s3Client = yield* createS3Client();
       const config = getS3VideoConfig();
 
+      // Decode URL-encoded characters in key (e.g., %CC%81 for tildes)
+      const decodedKey = decodeURIComponent(key);
+
       const command = new GetObjectCommand({
         Bucket: config.bucketName,
-        Key: key,
+        Key: decodedKey,
       });
 
       const response = yield* Effect.tryPromise({
