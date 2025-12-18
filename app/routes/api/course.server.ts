@@ -189,6 +189,19 @@ export const courseServerActions = {
     return { videos: cleanVideos };
   },
 
+  admin_reorder_videos: async (updates: { id: string; index: number }[]) => {
+    // Actualizar índices de videos en batch
+    const updatePromises = updates.map(({ id, index }) =>
+      db.video.update({
+        where: { id },
+        data: { index },
+      })
+    );
+
+    await Promise.all(updatePromises);
+    return { success: true, updated: updates.length };
+  },
+
   videos_length: async (courseId: string) => {
     const videosLength = await db.video.count({
       where: {

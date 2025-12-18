@@ -7,11 +7,12 @@ import { cn } from "~/utils/cn";
 import { VideoPreview } from "~/components/viewer/VideoPreview";
 import { useEffect, useState, useMemo, useRef, type FormEvent } from "react";
 import Spinner from "../common/Spinner";
-import { FaTrash, FaUpload } from "react-icons/fa6";
+import { FaTrash, FaUpload, FaGripVertical } from "react-icons/fa6";
 import { FaExclamationCircle, FaCheckCircle, FaSpinner } from "react-icons/fa";
 import { useFetcher, useSubmit } from "react-router";
 import type { Course, Video } from "~/types/models";
 import { Drawer } from "../viewer/SimpleDrawer";
+import { Reorder, useDragControls } from "motion/react";
 
 // Cache global para evitar re-fetching de datos de video
 const videoDataCache = new Map<string, {m3u8?: string; storageLink?: string}>();
@@ -380,8 +381,41 @@ export const CourseForm = ({
     );
   }, []);
 
-  const videos: Video[] = fetcher.data?.videos || [];
+  const fetchedVideos: Video[] = fetcher.data?.videos || [];
   const isLoading = fetcher.state !== "idle";
+
+  // Estado local para reordenamiento
+  const [orderedVideos, setOrderedVideos] = useState<Video[]>([]);
+  const reorderFetcher = useFetcher();
+
+  // Sincronizar videos del fetch con estado local
+  useEffect(() => {
+    if (fetchedVideos.length > 0) {
+      // Ordenar por index ascendente
+      const sorted = [...fetchedVideos].sort((a, b) => (a.index || 0) - (b.index || 0));
+      setOrderedVideos(sorted);
+    }
+  }, [fetchedVideos]);
+
+  // Manejar reordenamiento
+  const handleReorder = (newOrder: Video[]) => {
+    setOrderedVideos(newOrder);
+
+    // Crear array con nuevos índices
+    const updates = newOrder.map((video, idx) => ({
+      id: video.id,
+      index: idx + 1
+    }));
+
+    // Guardar en DB
+    reorderFetcher.submit(
+      {
+        intent: "admin_reorder_videos",
+        updates: JSON.stringify(updates)
+      },
+      { method: "POST", action: "/api/course" }
+    );
+  };
 
   const [show, setShow] = useState(false);
 
@@ -622,8 +656,8 @@ export const CourseForm = ({
             placeholder="índice"
             defaultValue={
               editingVideo?.index?.toString() ||
-              videos.length.toString() ||
-              "0"
+              (orderedVideos.length + 1).toString() ||
+              "1"
             }
           />
           <Input
@@ -845,15 +879,20 @@ export const CourseForm = ({
         {isLoading ? (
           <Spinner />
         ) : (
-          <div>
-            {videos.map((video) => (
+          <Reorder.Group
+            axis="y"
+            values={orderedVideos}
+            onReorder={handleReorder}
+            className="space-y-1"
+          >
+            {orderedVideos.map((video) => (
               <VideoCard
                 video={video}
                 key={video.id}
                 onClick={() => onVideoClick(video)}
               />
             ))}
-          </div>
+          </Reorder.Group>
         )}
         <hr className="my-10 border-none" />
         <button
@@ -919,7 +958,10 @@ const VideoCard = ({
   video: Partial<Video>;
 }) => {
   const fetcher = useFetcher();
-  const confirmDeletion = () => {
+  const dragControls = useDragControls();
+
+  const confirmDeletion = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!confirm("Esto no es reversible")) return;
     fetcher.submit(
       {
@@ -932,38 +974,52 @@ const VideoCard = ({
   };
 
   return (
-    <div
-      role="button"
+    <Reorder.Item
+      value={video}
+      dragListener={false}
+      dragControls={dragControls}
+      className="flex items-center gap-3 p-2 border rounded-lg bg-gray-900 group cursor-pointer hover:border-gray-600 transition-colors"
       onClick={onClick}
-      className="flex my-2 rounded-xl p-3 border relative gap-4 group"
     >
+      {/* Drag handle */}
+      <div
+        onPointerDown={(e) => dragControls.start(e)}
+        className="cursor-grab active:cursor-grabbing p-1 text-gray-500 hover:text-gray-300 touch-none"
+      >
+        <FaGripVertical />
+      </div>
+
+      {/* Index badge */}
+      <span className="w-6 h-6 flex items-center justify-center bg-gray-700 rounded text-xs font-bold text-gray-300">
+        {video.index}
+      </span>
+
+      {/* Thumbnail */}
       <img
-        className="w-40 rounded-lg"
+        className="w-16 h-10 object-cover rounded"
         src={video.poster || "/cover.png"}
         alt="poster"
       />
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-medium truncate">{video.title}</h3>
+        <p className="text-xs text-gray-500 truncate">
+          {video.moduleName || "Sin módulo"} • {video.duration || "0:00"}
+        </p>
+      </div>
+
+      {/* Delete button */}
       <button
         onClick={confirmDeletion}
         className={cn(
-          "invisible group-hover:visible absolute top-4 right-6",
-          "hover:scale-110 active:scale-100"
+          "opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-red-400",
+          "transition-opacity"
         )}
       >
-        <FaTrash />
+        <FaTrash className="w-3 h-3" />
       </button>
-      <div className="grid">
-        <div>
-          <h3 className="">{video.title}</h3>
-          <p className="text-xs">
-            Módulo: <strong>{video.moduleName}</strong>
-          </p>
-        </div>
-        <p className="text-xs">
-          Índice: <strong className="text-xl">{video.index}</strong>
-        </p>
-        <p className="text-xs truncate">{video.storageLink}</p>
-      </div>
-    </div>
+    </Reorder.Item>
   );
 };
 

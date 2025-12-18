@@ -36,6 +36,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return Response.json(result);
   }
 
+  if (intent === "admin_reorder_videos") {
+    const updates = JSON.parse(formData.get("updates") as string);
+    const result = await courseServerActions.admin_reorder_videos(updates);
+    return Response.json(result);
+  }
+
   if (intent === "videos_length") {
     const courseId = formData.get("courseId") as string;
     const result = await courseServerActions.videos_length(courseId);
