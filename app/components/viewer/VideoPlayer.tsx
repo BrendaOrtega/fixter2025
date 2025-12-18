@@ -271,7 +271,10 @@ export const VideoPlayer = ({
                 <p className="text-left dark:text-metal text-iron">
                   Siguiente video
                 </p>
-                <h4 className="text-2xl text-dark md:w-[280px] md:truncate text-left">
+                <h4
+                  className="text-2xl text-dark md:w-[280px] md:truncate text-left"
+                  title={nextVideo.title}
+                >
                   {nextVideo.title}
                 </h4>
               </div>

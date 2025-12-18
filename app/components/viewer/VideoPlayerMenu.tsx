@@ -196,7 +196,9 @@ const ListItem = ({
           <MdOutlineRadioButtonUnchecked />
         )}
       </span>
-      <div className="capitalize text-sm pl-4 z-20">{title}</div>
+      <div className="capitalize text-sm pl-4 z-20" title={title}>
+        {title}
+      </div>
       {isLocked ? (
         <span className="ml-auto pr-8">
           <IoMdLock />
