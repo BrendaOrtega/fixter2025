@@ -20,7 +20,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   if (intent === "admin_update_video") {
     const data = JSON.parse(formData.get("data") as string);
-    return await courseServerActions.admin_update_video(data);
+    const video = await courseServerActions.admin_update_video(data);
+    return Response.json({ success: true, video });
   }
 
   if (intent === "admin_add_video") {

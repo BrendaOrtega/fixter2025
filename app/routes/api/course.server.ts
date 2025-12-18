@@ -65,7 +65,7 @@ export const courseServerActions = {
 
   admin_update_video: async (data: any) => {
     const index = Number(data.index);
-    const isPublic = data.isPublic === "on" ? true : undefined;
+    const isPublic = data.isPublic === "on"; // false cuando desmarcado, true cuando marcado
     
     // Retry logic for deadlock resolution
     const updateVideoWithRetry = async (retries = 3): Promise<any> => {
@@ -114,7 +114,7 @@ export const courseServerActions = {
 
     try {
       const slug = slugify(data.title) + "-" + randomUUID();
-      const isPublic = data.isPublic === "on" ? true : undefined;
+      const isPublic = data.isPublic === "on";
       const index = Number(data.index);
       const video = await db.video.create({
         data: {

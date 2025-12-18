@@ -103,15 +103,45 @@ export const VideoPlayer = ({
 
       // Helper to check if URL is new format (needs presigned) or legacy (use direct)
       const isNewFormat = (url: string) => url.includes('fixtergeek/videos/') && (url.includes('.s3.') || url.includes('storage.tigris.dev'));
-      
+
+      // Helper to extract S3 key from URL for HLS proxy
+      const extractS3Key = (url: string): string | null => {
+        try {
+          const urlObj = new URL(url);
+          let path = urlObj.pathname.substring(1); // Remove leading slash
+          // Handle bucket name prefix (e.g., /wild-bird-2039/fixtergeek/... -> fixtergeek/...)
+          const parts = path.split('/');
+          const bucketIdx = parts.findIndex(p => p === 'fixtergeek');
+          if (bucketIdx > 0) {
+            path = parts.slice(bucketIdx).join('/');
+          }
+          return path;
+        } catch {
+          return null;
+        }
+      };
+
       if (hlsSupport(videoElement)) {
         // Native HLS support (Safari)
         if (video.m3u8) {
-          const finalUrl = isNewFormat(video.m3u8)
-            ? await interceptHLSUrl(video.m3u8)
-            : video.m3u8;
-          videoElement.src = finalUrl;
-          console.info("::USING_NATIVE_HLS::", isNewFormat(video.m3u8) ? "PRESIGNED✅" : "LEGACY_DIRECT🔗");
+          if (isNewFormat(video.m3u8)) {
+            // New format: use HLS proxy to rewrite relative URLs
+            const s3Key = extractS3Key(video.m3u8);
+            if (s3Key) {
+              const proxyUrl = `/api/hls-proxy?path=${encodeURIComponent(s3Key)}`;
+              videoElement.src = proxyUrl;
+              console.info("::USING_NATIVE_HLS_WITH_PROXY::🔄::", s3Key);
+            } else {
+              // Fallback to presigned if key extraction fails
+              const finalUrl = await interceptHLSUrl(video.m3u8);
+              videoElement.src = finalUrl;
+              console.info("::USING_NATIVE_HLS:: PRESIGNED_FALLBACK⚠️");
+            }
+          } else {
+            // Legacy format: use direct URL
+            videoElement.src = video.m3u8;
+            console.info("::USING_NATIVE_HLS:: LEGACY_DIRECT🔗");
+          }
         } else if (video.storageLink) {
           const finalUrl = isNewFormat(video.storageLink)
             ? await interceptHLSUrl(video.storageLink)
@@ -122,40 +152,35 @@ export const VideoPlayer = ({
       } else {
         // HLS.js fallback (Chrome, Firefox, etc.)
         if (video.m3u8) {
+          const hls = new Hls();
+
           if (isNewFormat(video.m3u8)) {
-            // New format - use presigned URLs
-            const hls = new Hls({
-              xhrSetup: async (xhr, url) => {
-                const secureUrl = await interceptHLSUrl(url);
-                xhr.open('GET', secureUrl, true);
-              }
-            });
-            
-            const secureUrl = await interceptHLSUrl(video.m3u8);
-            hls.loadSource(secureUrl);
-            hls.attachMedia(videoElement);
-            console.info("::USING_HLS.JS_WITH_PRESIGNED::🪄::");
-            
-            hls.on(Hls.Events.ERROR, (event, data) => {
-              console.error('HLS error:', data);
-              if (data.fatal) {
-                setError("Error al cargar el video. Por favor intenta de nuevo.");
-              }
-            });
+            // New format: use HLS proxy to rewrite all URLs
+            const s3Key = extractS3Key(video.m3u8);
+            if (s3Key) {
+              const proxyUrl = `/api/hls-proxy?path=${encodeURIComponent(s3Key)}`;
+              hls.loadSource(proxyUrl);
+              console.info("::USING_HLS.JS_WITH_PROXY::🔄::", s3Key);
+            } else {
+              // Fallback to direct presigned if key extraction fails
+              const secureUrl = await interceptHLSUrl(video.m3u8);
+              hls.loadSource(secureUrl);
+              console.info("::USING_HLS.JS_PRESIGNED_FALLBACK::⚠️::");
+            }
           } else {
             // Legacy format - use direct URLs
-            const hls = new Hls();
             hls.loadSource(video.m3u8);
-            hls.attachMedia(videoElement);
             console.info("::USING_HLS.JS_LEGACY_DIRECT::📺::");
-            
-            hls.on(Hls.Events.ERROR, (event, data) => {
-              console.error('HLS error:', data);
-              if (data.fatal) {
-                setError("Error al cargar el video. Por favor intenta de nuevo.");
-              }
-            });
           }
+
+          hls.attachMedia(videoElement);
+
+          hls.on(Hls.Events.ERROR, (_, data) => {
+            console.error('HLS error:', data);
+            if (data.fatal) {
+              setError("Error al cargar el video. Por favor intenta de nuevo.");
+            }
+          });
         } else if (video.storageLink) {
           const finalUrl = isNewFormat(video.storageLink)
             ? await interceptHLSUrl(video.storageLink)
@@ -236,7 +261,7 @@ export const VideoPlayer = ({
       </AnimatePresence>
       <video
         poster={
-          video?.storageLink ? poster || video.poster : "/video-blocked.png"
+          video?.storageLink ? poster || video.poster || undefined : "/video-blocked.png"
         }
         controlsList="nodownload"
         ref={videoRef}

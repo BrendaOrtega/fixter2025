@@ -126,10 +126,19 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
 };
 
 // Component to show video processing status
-const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: Partial<Course> }) => {
+const VideoProcessingStatus = ({
+  videoId,
+  course,
+  onDurationDetected
+}: {
+  videoId: string;
+  course: Partial<Course>;
+  onDurationDetected?: (duration: number) => void;
+}) => {
   const fetcher = useFetcher();
   const [status, setStatus] = useState<string | null>(null);
-  
+  const [durationDetected, setDurationDetected] = useState(false);
+
   // Estado separado para los datos del video para evitar re-renders del VideoPreview
   const [videoData, setVideoData] = useState<any>(null);
 
@@ -180,6 +189,39 @@ const VideoProcessingStatus = ({ videoId, course }: { videoId: string; course: P
       }
     }
   }, [fetcher.data, videoId]);
+
+  // Detectar duración del video cuando hay URL disponible
+  useEffect(() => {
+    if (durationDetected || !videoData?.directLinkPresigned || !onDurationDetected) return;
+
+    const detectDuration = async () => {
+      try {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+
+        video.onloadedmetadata = () => {
+          const duration = Math.round(video.duration);
+          if (duration > 0 && !isNaN(duration)) {
+            console.log(`⏱️ Duración detectada del preview: ${duration}s`);
+            onDurationDetected(duration);
+            setDurationDetected(true);
+          }
+          URL.revokeObjectURL(video.src);
+        };
+
+        video.onerror = () => {
+          console.warn('No se pudo detectar duración del preview');
+          URL.revokeObjectURL(video.src);
+        };
+
+        video.src = videoData.directLinkPresigned;
+      } catch (err) {
+        console.warn('Error detectando duración:', err);
+      }
+    };
+
+    detectDuration();
+  }, [videoData?.directLinkPresigned, durationDetected, onDurationDetected]);
 
   if (!status || status === "unknown") return null;
 
@@ -422,8 +464,29 @@ export const CourseForm = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
+  // Detectar duración del video usando HTML5 Video API
+  const detectVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(Math.round(video.duration));
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        reject(new Error('Error al leer metadata del video'));
+      };
+
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const onVideoClick = (vid: Partial<Video>) => {
     setShow(true);
     setEditingVideo(vid);
@@ -437,6 +500,7 @@ export const CourseForm = ({
     setVideoFile(null);
     setUploadProgress(0);
     setIsUploading(false);
+    setDetectedDuration(null);
   };
 
   // Handle video file upload to S3
@@ -588,6 +652,14 @@ export const CourseForm = ({
                     if (file) {
                       setVideoFile(file);
                       setUploadProgress(0);
+                      // Detectar duración del video
+                      try {
+                        const duration = await detectVideoDuration(file);
+                        setDetectedDuration(duration);
+                        console.log(`⏱️ Duración detectada: ${duration}s`);
+                      } catch (err) {
+                        console.warn('No se pudo detectar la duración:', err);
+                      }
                       // Auto-upload when file is selected
                       await handleVideoUpload(file);
                     }
@@ -655,7 +727,11 @@ export const CourseForm = ({
               </div>
               
               {/* Processing Status */}
-              <VideoProcessingStatus videoId={editingVideo.id} course={course} />
+              <VideoProcessingStatus
+                videoId={editingVideo.id}
+                course={course}
+                onDurationDetected={(duration) => setDetectedDuration(duration)}
+              />
             </>
           ) : (
             <div className="mb-4 p-4 border border-yellow-600 rounded-lg bg-yellow-600/10">
@@ -690,8 +766,9 @@ export const CourseForm = ({
             </>
           )}
           <Input
-            defaultValue={editingVideo?.duration}
-            label="Duración en segundos"
+            key={`duration-${detectedDuration || editingVideo?.duration || 'empty'}`}
+            defaultValue={detectedDuration || editingVideo?.duration}
+            label={`Duración en segundos${detectedDuration ? ' ✅ (detectada)' : ''}`}
             name="duration"
             placeholder="360"
           />
