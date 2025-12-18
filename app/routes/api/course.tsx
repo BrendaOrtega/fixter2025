@@ -321,10 +321,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     let directLinkPresigned: string | undefined;
     
-    // Only generate presigned URL if explicitly requested (not skipped) 
-    // AND for videos that need preview (pending, processing, or failed for admin debugging)
-    if (!skipPresigned && video.storageLink && video.courses.length > 0 && 
-        (video.processingStatus === "pending" || video.processingStatus === "processing" || video.processingStatus === "failed")) {
+    // Generate presigned URL for admin preview in all cases where we have a video file
+    // This ensures admin can always preview videos regardless of processing status
+    if (!skipPresigned && video.storageLink && video.courses.length > 0) {
       
       try {
         const courseId = video.courses[0].id;
@@ -371,16 +370,55 @@ export const action = async ({ request }: Route.ActionArgs) => {
       });
     }
 
-    return Response.json({
+    // Fix duplicated bucket name in stored URLs (legacy issue)
+    let hlsUrl = video?.m3u8;
+    if (hlsUrl && hlsUrl.includes('wild-bird-2039/wild-bird-2039/')) {
+      hlsUrl = hlsUrl.replace('wild-bird-2039/wild-bird-2039/', 'wild-bird-2039/');
+      console.log('🔧 [get_video_status] Fixed duplicated bucket name in HLS URL');
+      
+      // Update the video in DB with corrected URL
+      await db.video.update({
+        where: { id: videoId },
+        data: { m3u8: hlsUrl }
+      }).catch(err => console.error('Failed to update corrected HLS URL:', err));
+    }
+
+    // Fix HLS URL endpoint - replace AWS standard endpoint with Tigris endpoint
+    if (hlsUrl && hlsUrl.includes('.s3.auto.amazonaws.com/')) {
+      const fixedHlsUrl = hlsUrl.replace(
+        'https://wild-bird-2039.s3.auto.amazonaws.com/',
+        'https://fly.storage.tigris.dev/wild-bird-2039/'
+      );
+      console.log('🔧 [get_video_status] Fixed HLS URL endpoint from AWS to Tigris');
+      hlsUrl = fixedHlsUrl;
+      
+      // Update the video in DB with corrected endpoint
+      await db.video.update({
+        where: { id: videoId },
+        data: { m3u8: fixedHlsUrl }
+      }).catch(err => console.error('Failed to update corrected HLS endpoint:', err));
+    }
+
+    const response = {
       success: true,
       status: video?.processingStatus || "unknown",
       error: video?.processingError,
-      hasHLS: !!video?.m3u8,
-      hlsUrl: video?.m3u8,
+      hasHLS: !!hlsUrl,
+      hlsUrl,
       hasDirectLink: !!video?.storageLink,
       directLink: video?.storageLink,
       directLinkPresigned
+    };
+
+    console.log(`📤 [get_video_status] Response for video ${videoId}:`, {
+      status: response.status,
+      hasHLS: response.hasHLS,
+      hlsUrl: response.hlsUrl ? 'PRESENT' : 'MISSING',
+      hasDirectLink: response.hasDirectLink,
+      directLinkPresigned: response.directLinkPresigned ? 'PRESENT' : 'MISSING'
     });
+
+    return Response.json(response);
   }
 
   // Delete only S3 files (keep video record in DB)

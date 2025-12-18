@@ -46,7 +46,15 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
 
       // Extract S3 key from the original URL
       const url = new URL(originalUrl);
-      const s3Key = url.pathname.substring(1); // Remove leading slash
+      let s3Key = url.pathname.substring(1); // Remove leading slash
+      
+      // Fix: Remove bucket name prefix if it's duplicated in the path
+      // (handles URLs like https://fly.storage.tigris.dev/wild-bird-2039/wild-bird-2039/fixtergeek/...)
+      const bucketName = s3Key.split('/')[0];
+      if (s3Key.startsWith(`${bucketName}/${bucketName}/`)) {
+        s3Key = s3Key.substring(bucketName.length + 1); // Remove first bucket name + slash
+        console.log(`🔧 [useSecureHLS] Fixed duplicated bucket name: ${bucketName}/${bucketName}/ -> corrected s3Key: ${s3Key}`);
+      }
       
       // Check cache first
       const cached = hlsUrlCache[s3Key];

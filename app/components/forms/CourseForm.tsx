@@ -33,6 +33,8 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
     
     console.log(`🎬 [StableVideoPreview] Loading video data for ${videoId} - ONE TIME ONLY`);
     
+    let cancelled = false;
+    
     const loadVideoData = async () => {
       const formData = new FormData();
       formData.append("intent", "get_video_status");
@@ -43,34 +45,61 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
           method: "POST",
           body: formData,
         });
+        
+        if (cancelled) {
+          console.log(`🚫 [StableVideoPreview] Request cancelled for ${videoId}`);
+          return;
+        }
+        
         const data = await response.json();
         
-        if (data.success && (data.hasHLS || data.hasDirectLink)) {
-          // Usar directLinkPresigned si está disponible (ya es una URL firmada)
-          const videoUrl = data.directLinkPresigned || data.directLink;
-          
+        console.log(`🔍 [StableVideoPreview] API response for ${videoId}:`, {
+          success: data.success,
+          hasHLS: data.hasHLS,
+          hlsUrl: data.hlsUrl ? 'PRESENT' : 'MISSING',
+          hlsUrlActual: data.hlsUrl, // Show actual URL for debugging
+          hasDirectLink: data.hasDirectLink,
+          directLink: data.directLink ? 'PRESENT' : 'MISSING',
+          directLinkPresigned: data.directLinkPresigned ? 'PRESENT' : 'MISSING',
+          directLinkPresignedActual: data.directLinkPresigned, // Show actual URL for debugging
+          status: data.status
+        });
+        
+        // Si el video no está listo, mostrar información de estado
+        if (!data.hasHLS && !data.hasDirectLink && !data.directLinkPresigned) {
+          console.warn(`⚠️ [StableVideoPreview] No video URLs available for ${videoId}. Status: ${data.status}`);
+        }
+        
+        if (data.success && (data.hasHLS || data.hasDirectLink || data.directLinkPresigned)) {
+          // Simplificado: usa lo que venga del API
           const videoData = {
             m3u8: data.hlsUrl,
-            storageLink: videoUrl
+            storageLink: data.directLinkPresigned || data.directLink
           };
           
           // Guardar en cache para evitar re-fetches
           videoDataCache.set(videoId, videoData);
-          setVideoUrls(videoData);
-          
-          console.log(`✅ [StableVideoPreview] Video data loaded and cached for ${videoId}:`, {
-            hasHLS: data.hasHLS,
-            hasDirectLink: data.hasDirectLink, 
-            hasPresignedLink: !!data.directLinkPresigned,
-            usingUrl: videoUrl
-          });
+          if (!cancelled) {
+            setVideoUrls(videoData);
+            
+            console.log(`✅ [StableVideoPreview] Video data loaded for ${videoId}:`, {
+              finalVideoData: videoData,
+              willShowPreview: !!(videoData.m3u8 || videoData.storageLink)
+            });
+          }
         }
       } catch (error) {
-        console.error(`❌ [StableVideoPreview] Error loading video data for ${videoId}:`, error);
+        if (!cancelled) {
+          console.error(`❌ [StableVideoPreview] Error loading video data for ${videoId}:`, error);
+        }
       }
     };
 
     loadVideoData();
+    
+    return () => {
+      cancelled = true;
+    };
   }, [videoId]);
 
   if (!videoUrls) {
@@ -81,10 +110,20 @@ const StableVideoPreview = ({ videoId, courseId }: { videoId: string; courseId: 
     );
   }
 
+  // Debug: verificar si las URLs están vacías o no válidas
+  if (!videoUrls.m3u8 && !videoUrls.storageLink) {
+    return (
+      <div className="text-yellow-400 text-xs p-2 bg-yellow-500/10 rounded border border-yellow-600">
+        ⚠️ Video sin procesar: Sube un archivo MP4 para generar preview
+      </div>
+    );
+  }
+
   return (
     <VideoPreview 
       video={videoUrls}
       courseId={courseId}
+      videoId={videoId}
     />
   );
 };

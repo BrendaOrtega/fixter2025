@@ -298,7 +298,9 @@ export const S3VideoServiceLive: S3VideoService = {
       }
 
       const masterPlaylistKey = `fixtergeek/videos/${courseId}/${videoId}/hls/master.m3u8`;
-      const masterPlaylistUrl = `https://${config.bucketName}.s3.${config.region}.amazonaws.com/${masterPlaylistKey}`;
+      // Use consistent Tigris URL format (same as getVideoUrl)
+      const endpoint = process.env.AWS_ENDPOINT_URL_S3 || "https://fly.storage.tigris.dev";
+      const masterPlaylistUrl = `${endpoint}/${config.bucketName}/${masterPlaylistKey}`;
 
       return {
         masterPlaylistUrl,
