@@ -30,7 +30,7 @@ const ACCENT = "emerald";
 // ===========================================
 // FECHAS Y CONFIGURACIÓN DE EVENTOS
 // ===========================================
-const WEBINAR_DATE = new Date("2025-01-17T19:00:00-06:00"); // Viernes 17 enero, 7PM CDMX
+const WEBINAR_DATE = new Date("2025-01-16T19:00:00-06:00"); // Jueves 16 enero, 7PM CDMX
 const TALLER_1_DATE = new Date("2025-01-24T10:00:00-06:00"); // Sábado 24 enero, 10AM CDMX
 const TALLER_2_DATE = new Date("2025-01-31T10:00:00-06:00"); // Sábado 31 enero, 10AM CDMX
 
@@ -49,7 +49,7 @@ const PRODUCT_CONFIG: Record<
   webinar: {
     type: "aisdk-webinar",
     price: WEBINAR_PRICE,
-    name: "Webinar AI SDK - 17 Enero 2025",
+    name: "Webinar AI SDK - 16 Enero 2025",
     description: "Demo gratuita del AI SDK de Vercel",
   },
   "taller-1": {
@@ -144,7 +144,7 @@ export const meta = () => {
     title:
       "Introducción a la IA aplicada con TypeScript | Webinar + Taller | FixterGeek",
     description:
-      "Webinar gratuito 17 enero + Talleres prácticos. Construye interfaces generativas con streaming y el AI SDK de Vercel. Desde $999 MXN.",
+      "Webinar gratuito 16 enero + Talleres prácticos. Construye interfaces generativas con streaming y el AI SDK de Vercel. Desde $999 MXN.",
     url: "https://www.fixtergeek.com/ai-sdk",
     image: "https://www.fixtergeek.com/courses/ai-sdk.png",
     keywords:
@@ -447,7 +447,7 @@ export default function AISdkPage() {
               <div className="mb-6">
                 <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 border border-emerald-500/30 rounded-full text-sm font-semibold text-emerald-400 hover:bg-emerald-600/15 transition-colors">
                   <BiRocket className="text-base" />
-                  Webinar Gratuito · 17 Enero
+                  Webinar Gratuito · 16 Enero
                 </span>
               </div>
 
@@ -477,7 +477,7 @@ export default function AISdkPage() {
               <div className="flex flex-wrap gap-4 mt-10 text-sm text-zinc-400/90">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiTime className="text-emerald-400 text-base" />
-                  <span>Viernes 17 Enero</span>
+                  <span>Jueves 16 Enero</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiLayer className="text-emerald-400 text-base" />
@@ -611,7 +611,7 @@ export default function AISdkPage() {
                         Webinar Gratuito
                       </h3>
                       <p className="text-sm text-zinc-400/90">
-                        Viernes 17 de Enero · 7:00 PM CDMX
+                        Jueves 16 de Enero · 7:00 PM CDMX
                       </p>
                     </div>
 
