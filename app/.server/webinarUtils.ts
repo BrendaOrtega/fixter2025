@@ -94,7 +94,13 @@ export async function getWebinarRegistrants() {
     phoneNumber: null,
     createdAt: sub.createdAt,
     tags: sub.tags,
-    webinar: { confirmed: sub.confirmed },
+    webinar: {
+      confirmed: sub.confirmed,
+      registeredAt: sub.createdAt.toISOString(),
+      webinarType: sub.tags.includes(WEBINAR_TAGS.AISDK_WEBINAR_REGISTERED)
+        ? "aisdk-webinar-confirmed"
+        : "aisdk-webinar-pending",
+    },
     courses: [],
     metadata: null,
   }));
