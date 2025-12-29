@@ -5,6 +5,8 @@ import { data, type ActionFunctionArgs } from "react-router";
 import { successPurchase } from "~/mailSenders/successPurchase";
 import { purchaseCongrats } from "~/mailSenders/purchaseCongrats";
 import { sendAisdkWelcome } from "~/mailSenders/sendAisdkWelcome";
+import { sendAisdkWebinarConfirmation } from "~/mailSenders/sendAisdkWebinarConfirmation";
+import { sendAisdkTaller1Welcome } from "~/mailSenders/sendAisdkTaller1Welcome";
 
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -90,6 +92,64 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         });
 
         console.info("WEBHOOK: AI SDK workshop success");
+        return new Response(null);
+      }
+
+      // Handle AI SDK Webinar (gratuito) - solo registra subscriber
+      if (session.metadata.type === "aisdk-webinar") {
+        const userName =
+          session.customer_details?.name || session.metadata.name;
+
+        // Registrar en Subscriber (no User) con patrón getOrCreate
+        await db.subscriber.upsert({
+          where: { email },
+          create: {
+            email,
+            name: userName,
+            tags: ["aisdk-webinar-registered"],
+            confirmed: true,
+          },
+          update: {
+            name: userName || undefined,
+            tags: { push: ["aisdk-webinar-registered"] },
+          },
+        });
+
+        await sendAisdkWebinarConfirmation({ to: email, userName });
+
+        console.info("WEBHOOK: AI SDK webinar registration success");
+        return new Response(null);
+      }
+
+      // Handle AI SDK Taller 1 - registra subscriber y envía bienvenida
+      if (session.metadata.type === "aisdk-taller-1") {
+        const userName =
+          session.customer_details?.name || session.metadata.name;
+
+        // Registrar en Subscriber con tag de compra
+        await db.subscriber.upsert({
+          where: { email },
+          create: {
+            email,
+            name: userName,
+            tags: ["aisdk-taller-1-paid"],
+            confirmed: true,
+          },
+          update: {
+            name: userName || undefined,
+            tags: { push: ["aisdk-taller-1-paid"] },
+          },
+        });
+
+        await sendAisdkTaller1Welcome({ to: email, userName });
+        await successPurchase({
+          userName: userName || "Sin nombre",
+          userMail: email,
+          title: "Taller 1: IA aplicada con TypeScript",
+          slug: "ai-sdk",
+        });
+
+        console.info("WEBHOOK: AI SDK Taller 1 success");
         return new Response(null);
       }
 

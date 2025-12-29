@@ -374,16 +374,33 @@ export const scheduleVideoProcessing = async ({
 getAgenda().define(
   "process_video_hls",
   async (job: {
-    attrs: { 
-      name: string; 
-      data: { 
+    attrs: {
+      name: string;
+      data: {
         courseId: string;
         videoId: string;
         videoS3Key: string;
-      } 
+      }
     };
   }) => {
     const { courseId, videoId, videoS3Key } = job.attrs.data;
+
+    // TEMPORALMENTE DESHABILITADO - procesamiento causa OOM en Fly.io
+    // TODO: Migrar a servidor de procesamiento dedicado
+    console.info(`⏸️ [HLS] Procesamiento DESHABILITADO temporalmente para video ${videoId}`);
+    console.info(`📋 [HLS] Video pendiente: courseId=${courseId}, videoS3Key=${videoS3Key}`);
+
+    // Marcar como pendiente en vez de procesar
+    await db.video.update({
+      where: { id: videoId },
+      data: {
+        processingStatus: "pending",
+        processingError: "Procesamiento deshabilitado temporalmente - migración a servidor dedicado"
+      }
+    });
+    return; // Salir sin procesar
+
+    // === CÓDIGO ORIGINAL (DESHABILITADO) ===
     console.info(`🎬 [HLS] Iniciando procesamiento para video ${videoId}`);
     console.info(`📋 [HLS] Datos: courseId=${courseId}, videoS3Key=${videoS3Key}`);
 

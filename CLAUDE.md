@@ -393,6 +393,90 @@ El agente se invoca automáticamente cuando Claude detecta cambios en el conteni
 
 Los porcentajes indican qué tan bien el modelo resuelve cada tipo de problema comparado con el máximo posible.
 
+## TODO: Sistema de Lead Magnets (Próxima Sesión)
+
+Sistema para capturar leads con recursos descargables (PDFs, EPUBs) estilo Lemon Squeezy.
+
+### Concepto
+- Landing minimalista `/download/:slug` → usuario deja email → descarga inmediata + email con link
+- Modelo `LeadMagnet` con archivo en S3, tag automático, y sequence opcional de nurturing
+- Si tiene sequence asignada → inscribe automático; si no → solo tag (backfill después)
+
+### Modelo Prisma (agregar a schema.prisma)
+```prisma
+model LeadMagnet {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug                String   @unique
+  title               String
+  description         String?
+  coverImage          String?
+  s3Key               String                  // fixtergeek/leadmagnets/slug/file.pdf
+  fileName            String?
+  fileType            String?                 // pdf, epub, zip
+  urlExpirationHours  Int      @default(24)
+  tagOnDownload       String                  // Tag automático al suscriptor
+  sequenceId          String?  @db.ObjectId   // Sequence de nurturing (opcional)
+  isFree              Boolean  @default(true) // Extensible para pagos
+  price               Int?                    // Centavos MXN (futuro)
+  downloadCount       Int      @default(0)
+  isActive            Boolean  @default(true)
+  downloads           LeadMagnetDownload[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  @@map("lead_magnets")
+}
+
+model LeadMagnetDownload {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  leadMagnetId  String      @db.ObjectId
+  leadMagnet    LeadMagnet  @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  subscriberId  String?     @db.ObjectId
+  email         String
+  name          String?
+  downloadedAt  DateTime    @default(now())
+  presignedUrl  String?
+  urlExpiresAt  DateTime?
+  @@index([leadMagnetId, email])
+  @@map("lead_magnet_downloads")
+}
+```
+
+### Archivos a Crear
+1. `app/.server/services/s3-leadmagnet.ts` - Presigned URLs (basado en `s3-video.ts`)
+2. `app/.server/services/sequence-enrollment.ts` - Enrollar + backfill por tag
+3. `app/routes/download.$slug.tsx` - Landing pública
+4. `app/routes/download.$slug.gracias.tsx` - Thank you + descarga
+5. `app/routes/admin/leadmagnets.tsx` - Dashboard admin (basado en `admin/sequences.tsx`)
+6. `app/mailSenders/sendLeadMagnetDownload.ts` - Email con link
+
+### Flujo
+```
+/download/guia-claude → Form email → Action:
+  1. Upsert Subscriber + añadir tag
+  2. Generar presigned URL (24h)
+  3. Crear LeadMagnetDownload record
+  4. Si sequenceId → enrollInSequence()
+  5. Enviar email con link
+  6. Redirect a /gracias?token=presignedUrl
+```
+
+### Admin Features
+- CRUD lead magnets con upload a S3
+- Asignar/cambiar sequence
+- Botón "Backfill" → inscribir usuarios con tag en sequence
+- Stats de descargas
+
+### Referencia de patrones existentes
+- Presigned URLs: `app/.server/services/s3-video.ts`
+- Admin UI: `app/routes/admin/sequences.tsx`
+- Landing forms: `app/routes/claude.tsx`
+- reCAPTCHA: `app/lib/useRecaptcha.tsx`
+
+### Plan completo
+Ver `/Users/bliss/.claude/plans/humble-toasting-nebula.md`
+
+---
+
 ## Guía de Estilo para Claude Code
 
 ### Audiencia y Tono
