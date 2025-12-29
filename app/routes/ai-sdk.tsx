@@ -6,7 +6,7 @@ import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/.server/db";
-import { sendAisdkWebinarConfirmationRequest } from "~/mailSenders/sendAisdkWebinarConfirmationRequest";
+import { sendConfirmationRequest } from "~/mailSenders/sendConfirmationRequest";
 import {
   BiChevronRight,
   BiCheckCircle,
@@ -375,7 +375,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
 
       // Enviar email de confirmación
-      await sendAisdkWebinarConfirmationRequest({ email, name });
+      await sendConfirmationRequest({ email, name, type: "aisdk-webinar" });
 
       return data({ success: true, pending: true });
     } catch (error) {

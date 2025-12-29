@@ -5,8 +5,43 @@ import { GoogleLoginLink } from "~/components/GoogleLoginLink";
 import { GiMagicBroom } from "react-icons/gi";
 import Spinner from "~/components/common/Spinner";
 import { BsMailboxFlag } from "react-icons/bs";
-import { useState } from "react";
 import type { Route } from "./+types/login";
+
+// Configuración de UI por tipo de confirmación
+const CONFIRMATION_CONFIG: Record<string, {
+  title: string;
+  subtitle: string;
+  details?: string;
+  emoji: string;
+  cta: { text: string; href: string };
+}> = {
+  "aisdk-webinar": {
+    title: "¡Tu lugar está confirmado!",
+    subtitle: "Webinar: Introducción a la IA aplicada",
+    details: "Viernes 17 de Enero · 7:00 PM CDMX",
+    emoji: "🎉",
+    cta: { text: "Ver detalles del webinar", href: "/ai-sdk" },
+  },
+  "aisdk-taller-1": {
+    title: "¡Inscripción confirmada!",
+    subtitle: "Taller 1: IA aplicada con TypeScript",
+    details: "Sábado 24 de Enero · 10:00 AM CDMX",
+    emoji: "🚀",
+    cta: { text: "Ver temario", href: "/ai-sdk" },
+  },
+  newsletter: {
+    title: "¡Suscripción confirmada!",
+    subtitle: "Ya eres parte de la comunidad FixterGeek",
+    emoji: "✨",
+    cta: { text: "Explorar cursos", href: "/cursos" },
+  },
+  default: {
+    title: "¡Confirmación exitosa!",
+    subtitle: "Gracias por confirmar tu email",
+    emoji: "✅",
+    cta: { text: "Ir al inicio", href: "/" },
+  },
+};
 import {
   getOrCreateUser,
   placeSession,
@@ -15,6 +50,8 @@ import {
 import { commitSession } from "~/sessions";
 import { validateUserToken } from "~/utils/tokens";
 import { googleHandler } from "~/.server/google";
+import { db } from "~/.server/db";
+import { sendWelcomeEmail } from "~/mailSenders/sendWelcomeEmail";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
@@ -38,6 +75,43 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       };
     }
     console.log("Decoded: ,", decoded);
+
+    // Acción: confirmar subscriber (genérico para cualquier evento)
+    if (decoded.action === "confirm-subscriber") {
+      // Actualizar subscriber a confirmado
+      const subscriber = await db.subscriber.upsert({
+        where: { email: decoded.email },
+        create: {
+          email: decoded.email,
+          tags: decoded.tags || [],
+          confirmed: true,
+          confirmedAt: new Date(),
+        },
+        update: {
+          confirmed: true,
+          confirmedAt: new Date(),
+          tags: decoded.tags ? { push: decoded.tags } : undefined,
+        },
+      });
+
+      // Enviar email de bienvenida si se especificó tipo
+      if (decoded.welcomeType) {
+        await sendWelcomeEmail({
+          type: decoded.welcomeType,
+          to: decoded.email,
+          userName: subscriber.name || undefined,
+        });
+      }
+
+      // Devolver datos para mostrar UI de confirmación (sin redirect)
+      return {
+        confirmed: true,
+        confirmationType: decoded.welcomeType || "default",
+        subscriberName: subscriber.name,
+        status: 200,
+      };
+    }
+
     // user => //@todo maybe this is not necessary?
     await getOrCreateUser(decoded.email, {
       confirmed: true, // because of token
@@ -65,8 +139,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 };
 
 export default function Page() {
-  const { success, message, status, error } = useLoaderData(); 
+  const data = useLoaderData();
   const fetchers = useFetchers(); // hack for Form (not working very well 😡)
+
+  // Si es confirmación de subscriber, mostrar UI especial
+  if (data.confirmed) {
+    return (
+      <ConfirmedSubscriber
+        type={data.confirmationType}
+        name={data.subscriberName}
+      />
+    );
+  }
+
+  const { success, message, status, error } = data;
 
   if (String(status).includes("4")) {
     return <BadToken message={message} />;
@@ -162,6 +248,40 @@ function BadToken({ message = "Bad Token" }: { message?: string }) {
       <Link className="border rounded-xl bg-gray-300 px-4 py-2" to="/login">
         Solicita otro aquí
       </Link>
+    </section>
+  );
+}
+
+function ConfirmedSubscriber({
+  type,
+  name,
+}: {
+  type: string;
+  name?: string | null;
+}) {
+  const config = CONFIRMATION_CONFIG[type] || CONFIRMATION_CONFIG.default;
+
+  return (
+    <section className="flex flex-col items-center justify-center min-h-screen px-4 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black">
+      <EmojiConfetti emojis={["🎉", "✨", "🚀", "💫"]} />
+
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-8 max-w-md text-center">
+        <span className="text-6xl mb-4 block">{config.emoji}</span>
+        <h1 className="text-3xl font-bold text-white mb-2">{config.title}</h1>
+        <p className="text-xl text-zinc-300 mb-2">{config.subtitle}</p>
+        {config.details && (
+          <p className="text-zinc-400 mb-6">{config.details}</p>
+        )}
+        {name && (
+          <p className="text-emerald-400 mb-4">¡Gracias, {name}!</p>
+        )}
+        <Link
+          to={config.cta.href}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors"
+        >
+          {config.cta.text}
+        </Link>
+      </div>
     </section>
   );
 }
