@@ -3,12 +3,12 @@ import { useState } from "react";
 import { cn } from "~/utils/cn";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { getWebinarData } from "~/.server/webinarUtils";
-// import { getAdminOrRedirect } from "~/.server/dbGetters";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { COURSE_IDS } from "~/constants/webinar";
 import { BiCopy, BiLogoWhatsapp } from "react-icons/bi";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  // await getAdminOrRedirect(request);
+  await getAdminOrRedirect(request);
 
   // Obtener toda la data procesada del webinar
   const webinarData = await getWebinarData();
