@@ -465,9 +465,8 @@ export default function AISdkPage() {
 
               {/* Subtítulo */}
               <h2 className="text-lg sm:text-xl lg:text-2xl font-normal text-zinc-400/90 mt-6 leading-[1.6] max-w-2xl">
-                Construye interfaces generativas que responden en tiempo real
-                con streaming y herramientas de IA. Aprende a crear experiencias
-                como v0.dev o Claude Artifacts con el AI SDK de Vercel.
+                De prompt a interfaz en tiempo real. Streaming, herramientas y
+                componentes dinámicos con el AI SDK de Vercel.
               </h2>
               <p className="text-base sm:text-lg text-zinc-500 mt-4 leading-relaxed max-w-2xl">
                 Te mostraré cómo funciona con demos en vivo. Sin teoría
@@ -760,8 +759,8 @@ export default function AISdkPage() {
                 </div>
               </div>
               <p className="text-sm text-zinc-400/90">
-                Function calling básico. Cómo darle "superpoderes" a la IA para
-                que ejecute acciones en tu app.
+                Function calling básico. Cómo hacer que la IA renderice
+                componentes React en tiempo real.
               </p>
             </div>
 
