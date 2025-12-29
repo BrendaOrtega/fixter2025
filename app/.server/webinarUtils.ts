@@ -9,6 +9,9 @@ export const WEBINAR_TAGS = {
   GEMINI_SEPTIEMBRE: "webinar_gemini_septiembre",
   LLAMAINDEX_COURSE: "llamaindex_course",
   AISDK_COURSE: "aisdk_course",
+  // Tags de AI SDK en Subscriber
+  AISDK_WEBINAR_PENDING: "aisdk-webinar-pending",
+  AISDK_WEBINAR_REGISTERED: "aisdk-webinar-registered",
 } as const;
 
 export interface WebinarUser {
@@ -41,6 +44,7 @@ export async function getWebinarRegistrants() {
     // { webinar: { not: null } },
   ];
 
+  // Buscar en User (sistema antiguo)
   const webinarRegistrants = await db.user.findMany({
     where: {
       OR: orConditions,
@@ -61,7 +65,50 @@ export async function getWebinarRegistrants() {
     },
   });
 
-  return webinarRegistrants;
+  // Buscar en Subscriber (sistema nuevo para AI SDK webinar)
+  const aisdkSubscribers = await db.subscriber.findMany({
+    where: {
+      OR: [
+        { tags: { has: WEBINAR_TAGS.AISDK_WEBINAR_PENDING } },
+        { tags: { has: WEBINAR_TAGS.AISDK_WEBINAR_REGISTERED } },
+      ],
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      createdAt: true,
+      tags: true,
+      confirmed: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  // Convertir subscribers a formato WebinarUser
+  const subscribersAsUsers: WebinarUser[] = aisdkSubscribers.map((sub) => ({
+    id: sub.id,
+    email: sub.email,
+    displayName: sub.name,
+    phoneNumber: null,
+    createdAt: sub.createdAt,
+    tags: sub.tags,
+    webinar: { confirmed: sub.confirmed },
+    courses: [],
+    metadata: null,
+  }));
+
+  // Combinar y eliminar duplicados por email
+  const allUsers = [...webinarRegistrants, ...subscribersAsUsers];
+  const uniqueByEmail = allUsers.reduce((acc, user) => {
+    if (!acc.find((u) => u.email === user.email)) {
+      acc.push(user);
+    }
+    return acc;
+  }, [] as WebinarUser[]);
+
+  return uniqueByEmail;
 }
 
 /**
