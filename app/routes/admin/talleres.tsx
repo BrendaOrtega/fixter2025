@@ -1,4 +1,11 @@
 import { cn } from "~/utils/cn";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
+import type { Route } from "./+types/talleres";
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  await getAdminOrRedirect(request);
+  return null;
+};
 
 export default function Page() {
   return (

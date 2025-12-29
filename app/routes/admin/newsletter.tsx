@@ -2,7 +2,7 @@ import type { Newsletter } from "~/types/models";
 import { db } from "~/.server/db";
 import type { Route } from "./+types/newsletter";
 import slugify from "slugify";
-import { getUserOrRedirect } from "~/.server/dbGetters";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { Form, useFetcher } from "react-router";
 import { type FormEvent, type ReactNode } from "react";
 import { cn } from "~/utils/cn";
@@ -10,7 +10,8 @@ import Spinner from "~/components/common/Spinner";
 import { scheduleNewsletterSend } from "~/.server/agenda";
 import { nanoid } from "nanoid";
 
-export const loader = async () => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  await getAdminOrRedirect(request);
   const newsletters = await db.newsletter.findMany({
     orderBy: { createdAt: "desc" },
   });
@@ -18,7 +19,7 @@ export const loader = async () => {
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const user = await getUserOrRedirect(request);
+  await getAdminOrRedirect(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
 
