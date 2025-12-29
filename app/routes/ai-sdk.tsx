@@ -4,6 +4,9 @@ import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
+import { z } from "zod";
+import { db } from "~/.server/db";
+import { sendAisdkWebinarConfirmationRequest } from "~/mailSenders/sendAisdkWebinarConfirmationRequest";
 import {
   BiChevronRight,
   BiCheckCircle,
@@ -24,8 +27,47 @@ import LiquidEther from "~/components/backgrounds/LiquidEther";
 // ===========================================
 const ACCENT = "emerald";
 
-// Fecha del taller (13 de diciembre 2025, 10:00 AM CDMX = UTC-6)
-const WORKSHOP_DATE = new Date("2025-12-13T10:00:00-06:00");
+// ===========================================
+// FECHAS Y CONFIGURACIÓN DE EVENTOS
+// ===========================================
+const WEBINAR_DATE = new Date("2025-01-17T19:00:00-06:00"); // Viernes 17 enero, 7PM CDMX
+const TALLER_1_DATE = new Date("2025-01-24T10:00:00-06:00"); // Sábado 24 enero, 10AM CDMX
+const TALLER_2_DATE = new Date("2025-01-31T10:00:00-06:00"); // Sábado 31 enero, 10AM CDMX
+
+// Precios en centavos MXN para Stripe
+const WEBINAR_PRICE = 0; // Gratis
+const TALLER_1_PRICE = 99900; // $999 MXN
+const TALLER_2_PRICE = 99900; // $999 MXN
+
+// Configuración de productos
+type ProductType = "webinar" | "taller-1" | "taller-2";
+
+const PRODUCT_CONFIG: Record<
+  ProductType,
+  { type: string; price: number; name: string; description: string }
+> = {
+  webinar: {
+    type: "aisdk-webinar",
+    price: WEBINAR_PRICE,
+    name: "Webinar AI SDK - 17 Enero 2025",
+    description: "Demo gratuita del AI SDK de Vercel",
+  },
+  "taller-1": {
+    type: "aisdk-taller-1",
+    price: TALLER_1_PRICE,
+    name: "Taller 1: Introducción a la IA aplicada con TypeScript",
+    description: "Sábado 24 de Enero 2025 (10am-1:30pm CDMX)",
+  },
+  "taller-2": {
+    type: "aisdk-taller-2",
+    price: TALLER_2_PRICE,
+    name: "Taller 2: RAG y Agentes con AI SDK",
+    description: "Sábado 31 de Enero 2025 (10am-1:30pm CDMX)",
+  },
+};
+
+// Para compatibilidad con countdown actual - usar fecha del webinar
+const WORKSHOP_DATE = WEBINAR_DATE;
 
 // Componente de Countdown
 const CountdownTimer = () => {
@@ -99,13 +141,14 @@ const CountdownTimer = () => {
 
 export const meta = () => {
   const baseMeta = getMetaTags({
-    title: "Taller AI SDK para Principiantes | TypeScript + React | FixterGeek",
+    title:
+      "Introducción a la IA aplicada con TypeScript | Webinar + Taller | FixterGeek",
     description:
-      "El AI SDK es la biblioteca open source de Vercel para integrar IA en apps web. Aprende streaming, useChat, RAG y Tools en 2 sesiones prácticas.",
+      "Webinar gratuito 17 enero + Talleres prácticos. Construye interfaces generativas con streaming y el AI SDK de Vercel. Desde $999 MXN.",
     url: "https://www.fixtergeek.com/ai-sdk",
     image: "https://www.fixtergeek.com/courses/ai-sdk.png",
     keywords:
-      "AI SDK, Vercel AI SDK, TypeScript, React, inteligencia artificial, streaming, useChat, RAG, embeddings, curso IA, taller programación",
+      "AI SDK, Vercel AI SDK, TypeScript, React, inteligencia artificial, streaming, useChat, UI generativa, curso IA, taller programación",
   });
 
   // Schema.org JSON-LD para LLMs y SEO
@@ -115,9 +158,9 @@ export const meta = () => {
       {
         "@type": "Course",
         "@id": "https://www.fixtergeek.com/ai-sdk#course",
-        name: "Taller AI SDK para Principiantes",
+        name: "Introducción a la IA aplicada con TypeScript",
         description:
-          "El AI SDK es la biblioteca open source de Vercel para integrar IA en apps web. Aprende streaming, useChat, RAG y Tools en 2 sesiones prácticas con TypeScript y React.",
+          "Construye interfaces generativas con streaming y el AI SDK de Vercel. Webinar gratuito + talleres prácticos.",
         url: "https://www.fixtergeek.com/ai-sdk",
         provider: {
           "@type": "Organization",
@@ -135,26 +178,23 @@ export const meta = () => {
           "@type": "Person",
           name: "Héctor Bliss",
           url: "https://www.linkedin.com/in/hectorbliss/",
-          sameAs: [
-            "https://github.com/blissito",
-            "https://x.com/HectorBlisS",
-          ],
+          sameAs: ["https://github.com/blissito", "https://x.com/HectorBlisS"],
         },
         offers: {
           "@type": "Offer",
-          price: "3742.50",
+          price: "999",
           priceCurrency: "MXN",
           availability: "https://schema.org/InStock",
-          validFrom: "2025-12-01",
+          validFrom: "2025-01-01",
           url: "https://www.fixtergeek.com/ai-sdk",
-          priceValidUntil: "2025-12-13",
+          priceValidUntil: "2025-01-24",
         },
         hasCourseInstance: {
           "@type": "CourseInstance",
           courseMode: "Online",
-          courseWorkload: "PT7H",
-          startDate: "2025-12-13",
-          endDate: "2025-12-20",
+          courseWorkload: "PT3H30M",
+          startDate: "2025-01-24",
+          endDate: "2025-01-24",
           instructor: {
             "@type": "Person",
             name: "Héctor Bliss",
@@ -164,11 +204,10 @@ export const meta = () => {
         coursePrerequisites: "Conocimientos básicos de JavaScript",
         educationalLevel: "Beginner",
         teaches: [
-          "Integración de IA en aplicaciones web",
           "Streaming con AI SDK",
           "useChat hook de React",
-          "RAG con embeddings",
-          "Tools y UI generativa",
+          "UI generativa en tiempo real",
+          "Doble stream para artefactos",
         ],
         image: "https://www.fixtergeek.com/courses/ai-sdk.png",
       },
@@ -239,8 +278,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  if (intent === "direct_checkout") {
-    const totalPrice = 3742.5;
+  if (intent === "checkout") {
+    const productType = formData.get("productType") as ProductType;
+
+    if (!productType || !PRODUCT_CONFIG[productType]) {
+      return data({ success: false, error: "Producto no válido" });
+    }
+
+    const config = PRODUCT_CONFIG[productType];
 
     try {
       const stripe = new (await import("stripe")).default(
@@ -255,9 +300,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       const session = await stripe.checkout.sessions.create({
         metadata: {
-          type: "aisdk-workshop",
-          totalPrice: String(totalPrice),
+          type: config.type,
+          totalPrice: String(config.price),
           courseSlug: "ai-sdk",
+          productType,
         },
         mode: "payment",
         line_items: [
@@ -265,16 +311,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             price_data: {
               currency: "mxn",
               product_data: {
-                name: "Taller AI SDK con TypeScript",
-                description:
-                  "2 sesiones en vivo: 13 y 20 de diciembre 2025 (10am-1:30pm CDMX)",
+                name: config.name,
+                description: config.description,
               },
-              unit_amount: totalPrice * 100,
+              unit_amount: config.price, // Ya está en centavos
             },
             quantity: 1,
           },
         ],
-        success_url: `${location}/ai-sdk?success=1&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${location}/ai-sdk?success=1&product=${productType}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${location}/ai-sdk?cancel=1`,
         allow_promotion_codes: true,
         billing_address_collection: "required",
@@ -297,6 +342,51 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
+  // Registro al webinar gratuito (sin Stripe)
+  if (intent === "webinar-register") {
+    const email = String(formData.get("email") || "").trim();
+    const name = String(formData.get("name") || "").trim();
+
+    // Validar email
+    const emailSchema = z.string().email("Email no válido");
+    const result = emailSchema.safeParse(email);
+    if (!result.success) {
+      return data({ success: false, error: "Por favor ingresa un email válido" });
+    }
+
+    // Validar nombre
+    if (!name || name.length < 2) {
+      return data({ success: false, error: "Por favor ingresa tu nombre" });
+    }
+
+    try {
+      // Crear subscriber con confirmed: false
+      await db.subscriber.upsert({
+        where: { email },
+        create: {
+          email,
+          name,
+          tags: ["aisdk-webinar-pending"],
+          confirmed: false,
+        },
+        update: {
+          name: name || undefined,
+        },
+      });
+
+      // Enviar email de confirmación
+      await sendAisdkWebinarConfirmationRequest({ email, name });
+
+      return data({ success: true, pending: true });
+    } catch (error) {
+      console.error("Error registering for webinar:", error);
+      return data({
+        success: false,
+        error: "Hubo un error al registrarte. Intenta de nuevo.",
+      });
+    }
+  }
+
   return data({ success: false });
 };
 
@@ -304,8 +394,10 @@ export default function AISdkPage() {
   const fetcher = useFetcher();
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
+  const [showPending, setShowPending] = useState(false);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const cancelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check for payment result in URL params
   useEffect(() => {
@@ -326,9 +418,14 @@ export default function AISdkPage() {
         setShowCancel(false);
       }, 5000);
     }
+    if (urlParams.get("pending") === "1") {
+      setShowPending(true);
+      window.history.replaceState({}, "", "/ai-sdk");
+    }
     return () => {
       if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
       if (cancelTimeoutRef.current) clearTimeout(cancelTimeoutRef.current);
+      if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
     };
   }, []);
 
@@ -350,79 +447,72 @@ export default function AISdkPage() {
               <div className="mb-6">
                 <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 border border-emerald-500/30 rounded-full text-sm font-semibold text-emerald-400 hover:bg-emerald-600/15 transition-colors">
                   <BiRocket className="text-base" />
-                  Taller Práctico
+                  Webinar Gratuito · 17 Enero
                 </span>
               </div>
 
-              {/* Título principal - Tipografía mejorada */}
+              {/* Título principal */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-balance leading-[1.1] mb-6 tracking-tight">
+                Introducción a la{" "}
                 <span className="bg-gradient-to-r from-emerald-500 to-emerald-400 bg-clip-text text-transparent">
-                  Integra IA
+                  IA aplicada
                 </span>{" "}
-                en tus Proyectos web
-                <br />
-                con el AI SDK
+                con TypeScript y{" "}
+                <span className="bg-gradient-to-r from-emerald-500 to-emerald-400 bg-clip-text text-transparent">
+                  React
+                </span>
               </h1>
 
-              {/* Subtítulo - Tipografía mejorada */}
+              {/* Subtítulo */}
               <h2 className="text-lg sm:text-xl lg:text-2xl font-normal text-zinc-400/90 mt-6 leading-[1.6] max-w-2xl">
-                El AI SDK es la biblioteca open source de Vercel que está
-                revolucionando cómo los desarrolladores integran inteligencia
-                artificial en aplicaciones web. Con soporte nativo para
-                TypeScript, streaming en tiempo real y una API elegante, es la
-                herramienta que equipos de todo el mundo eligen para construir
-                experiencias de IA en producción.
+                Construye interfaces generativas que responden en tiempo real
+                con streaming y herramientas de IA. Aprende a crear experiencias
+                como v0.dev o Claude Artifacts con el AI SDK de Vercel.
               </h2>
               <p className="text-base sm:text-lg text-zinc-500 mt-4 leading-relaxed max-w-2xl">
-                En este taller aprenderás paso a paso a crear tu primer chat
-                inteligente, implementar respuestas en streaming que se sienten
-                instantáneas, y construir tools que permiten a tu modelo
-                ejecutar acciones automáticamente. Todo con código que puedes
-                llevar directo a tus proyectos.
+                Te mostraré cómo funciona con demos en vivo. Sin teoría
+                aburrida, puro código que puedes llevar directo a tus proyectos.
               </p>
 
-              {/* Detalles */}
+              {/* Detalles del Webinar */}
               <div className="flex flex-wrap gap-4 mt-10 text-sm text-zinc-400/90">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
+                  <BiTime className="text-emerald-400 text-base" />
+                  <span>Viernes 17 Enero</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiLayer className="text-emerald-400 text-base" />
-                  <span>2 sesiones × 3.5h</span>
+                  <span>7:00 PM CDMX</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiCode className="text-emerald-400 text-base" />
-                  <span>TypeScript</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
-                  <BiTime className="text-emerald-400 text-base" />
-                  <span>Para principiantes</span>
+                  <span>Online</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                   <BiStar className="text-emerald-400 text-base" />
-                  <span className="text-zinc-500 line-through text-sm">$4,990</span>
-                  <span className="font-semibold text-emerald-400">$3,742.50 MXN</span>
+                  <span className="font-semibold text-emerald-400">GRATIS</span>
                 </div>
               </div>
 
-              {/* Fechas del Taller */}
-              <div className="mt-8 p-5 bg-gradient-to-b from-emerald-900/20 to-emerald-900/10 border border-emerald-500/30 rounded-xl">
-                <h3 className="text-sm font-semibold text-emerald-400 mb-3 uppercase tracking-wide">
-                  Fechas del Taller
+              {/* Preview de talleres */}
+              <div className="mt-8 p-5 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
+                <h3 className="text-sm font-semibold text-zinc-400 mb-3 uppercase tracking-wide">
+                  Después del webinar: taller práctico de 3.5 horas
                 </h3>
                 <div className="grid grid-cols-1 gap-3 text-sm">
                   <div className="flex items-center gap-3 text-zinc-300">
                     <span className="px-2 py-1 bg-emerald-500/20 rounded text-emerald-400 text-xs font-semibold">
-                      Fundamentos
+                      Taller 1
                     </span>
                     <span>
-                      Sábado 13 de Diciembre · 10:00 AM - 1:30 PM CDMX
+                      Sábado 24 Enero · IA aplicada con TypeScript · $999
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-zinc-300">
-                    <span className="px-2 py-1 bg-emerald-500/20 rounded text-emerald-400 text-xs font-semibold">
-                      Avanzado
+                  <div className="flex items-center gap-3 text-zinc-500">
+                    <span className="px-2 py-1 bg-zinc-700/50 rounded text-zinc-500 text-xs font-semibold">
+                      Taller 2
                     </span>
-                    <span>
-                      Sábado 20 de Diciembre · 10:00 AM - 1:30 PM CDMX
-                    </span>
+                    <span>RAG y Agentes · Próximamente</span>
                   </div>
                 </div>
               </div>
@@ -479,6 +569,36 @@ export default function AISdkPage() {
                       No te preocupes, puedes intentar de nuevo cuando quieras.
                     </p>
                   </motion.div>
+                ) : showPending || fetcher.data?.pending ? (
+                  <motion.div
+                    key="pending"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 backdrop-blur-sm border border-zinc-800/60 rounded-2xl p-8 shadow-2xl text-center"
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-emerald-500/30">
+                      <span className="text-4xl">📧</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-3">
+                      ¡Casi listo!
+                    </h3>
+                    <p className="text-zinc-400/90 mb-4 text-sm leading-relaxed">
+                      Te enviamos un email de confirmación.
+                    </p>
+                    <p className="text-zinc-300 mb-6 text-base font-medium">
+                      Haz click en el enlace para confirmar tu lugar.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
+                      <BiCheckCircle className="text-lg" />
+                      <span className="text-sm font-medium">
+                        Revisa tu bandeja de entrada
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-4">
+                      El enlace expira en 1 hora. Si no lo ves, revisa spam.
+                    </p>
+                  </motion.div>
                 ) : (
                   <motion.div
                     key="cta"
@@ -489,70 +609,61 @@ export default function AISdkPage() {
                   >
                     <div className="mb-6">
                       <h3 className="text-2xl font-bold text-white mb-2">
-                        Inscribete al Taller
+                        Webinar Gratuito
                       </h3>
                       <p className="text-sm text-zinc-400/90">
-                        2 sesiones en vivo con ejercicios practicos
-                      </p>
-                      <p className="text-sm text-zinc-400/90">
-                        Si ya has tomado cursos con nosotros antes y ya eres
-                        parte de la comunidad: ¡pidele tu cupon de descuento a
-                        Brendi!
+                        Viernes 17 de Enero · 7:00 PM CDMX
                       </p>
                     </div>
 
                     {/* Countdown Timer */}
                     <CountdownTimer />
 
-                    {/* Precio destacado con descuento */}
+                    {/* Precio destacado - GRATIS */}
                     <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center relative overflow-hidden">
-                      <div className="absolute top-2 right-2 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        -25%
-                      </div>
                       <p className="text-sm text-emerald-400 mb-1">
-                        Precio del taller
+                        Reserva tu lugar
                       </p>
-                      <p className="text-lg text-zinc-500 line-through mb-1">
-                        $4,990 MXN
-                      </p>
-                      <p className="text-4xl font-bold text-white">
-                        $3,742.50{" "}
-                        <span className="text-lg text-zinc-400">MXN</span>
+                      <p className="text-4xl font-bold text-emerald-400">
+                        GRATIS
                       </p>
                     </div>
 
-                    {/* Incluye */}
+                    {/* Qué verás en el webinar - 45 min */}
                     <ul className="space-y-3 mb-6">
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>2 sesiones en vivo (3.5h cada una)</span>
+                        <span>Mensajes, prompts y razonamiento</span>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Sábados 13 y 20 de diciembre</span>
+                        <span>Tokens y ventana de contexto</span>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <a
-                          href="https://github.com/blissito/taller-ai-sdk-para-principiantes"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-emerald-400 underline underline-offset-2 transition-colors"
-                        >
-                          Codigo fuente de todos los ejercicios
-                        </a>
+                        <span>Herramientas y agentes</span>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
                         <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Acceso a grabaciones</span>
+                        <span>Demo: UI generativa en tiempo real</span>
                       </li>
                     </ul>
 
-                    <fetcher.Form method="post">
+                    <fetcher.Form method="post" className="space-y-3">
+                      <input type="hidden" name="intent" value="webinar-register" />
                       <input
-                        type="hidden"
-                        name="intent"
-                        value="direct_checkout"
+                        name="name"
+                        type="text"
+                        required
+                        placeholder="Tu nombre"
+                        className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
+                      />
+                      <input
+                        name="email"
+                        type="email"
+                        required
+                        placeholder="tu@email.com"
+                        className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-colors"
                       />
                       <button
                         type="submit"
@@ -560,10 +671,10 @@ export default function AISdkPage() {
                         className="w-full h-12 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
                       >
                         {fetcher.state === "submitting" ? (
-                          <span>Procesando...</span>
+                          <span>Enviando...</span>
                         ) : (
                           <>
-                            <span>Inscribirme Ahora</span>
+                            <span>Reservar mi lugar</span>
                             <BiChevronRight className="text-xl" />
                           </>
                         )}
@@ -577,12 +688,367 @@ export default function AISdkPage() {
                     )}
 
                     <p className="text-xs text-zinc-500 text-center mt-4">
-                      Pago seguro con Stripe. Aceptamos tarjetas de credito y
-                      debito.
+                      Te enviaremos un email para confirmar tu registro.
                     </p>
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
+          </div>
+        </section>
+
+        {/* Sección Temario Webinar - 45 min */}
+        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
+          <div className="text-center mb-14">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+              Qué verás en el{" "}
+              <span className="bg-gradient-to-r from-emerald-500 to-emerald-400 bg-clip-text text-transparent">
+                Webinar
+              </span>
+            </h2>
+            <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
+              45 minutos de conceptos clave + demo en vivo
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Bloque 1 - Mensajes y Prompts */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <span className="text-emerald-400 font-bold">💬</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Mensajes y Prompts</h4>
+                  <p className="text-xs text-zinc-500">~10 min</p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-400/90">
+                Cómo estructurar mensajes para la IA. Sistema de roles: user,
+                assistant y system prompts.
+              </p>
+            </div>
+
+            {/* Bloque 2 - Tokens y Contexto */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <span className="text-emerald-400 font-bold">🔢</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Tokens y Contexto</h4>
+                  <p className="text-xs text-zinc-500">~10 min</p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-400/90">
+                Qué son los tokens y por qué importan. Ventana de contexto: sus
+                límites y estrategias para aprovecharla.
+              </p>
+            </div>
+
+            {/* Bloque 3 - Herramientas y Agentes */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <span className="text-emerald-400 font-bold">🔧</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">
+                    Herramientas y Agentes
+                  </h4>
+                  <p className="text-xs text-zinc-500">~15 min</p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-400/90">
+                Function calling básico. Cómo darle "superpoderes" a la IA para
+                que ejecute acciones en tu app.
+              </p>
+            </div>
+
+            {/* Bloque 4 - Demo en Vivo */}
+            <div className="p-6 bg-gradient-to-b from-emerald-900/20 to-emerald-900/10 border-2 border-emerald-500/30 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/20 rounded-lg border border-emerald-500/30">
+                  <span className="text-emerald-400 font-bold">🎥</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Demo en Vivo</h4>
+                  <p className="text-xs text-emerald-400">~10 min</p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-300">
+                UI generativa en tiempo real. Preview de lo que construirás en
+                el taller práctico.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Sección Temario Taller 1 */}
+        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+              Temario del Taller
+            </h2>
+            <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
+              3.5 horas intensivas de código en vivo
+            </p>
+          </div>
+
+          {/* Grid de Bloques */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Bloque 1 */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <span className="text-emerald-400 font-bold">👋</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">
+                    Setup y Fundamentos
+                  </h4>
+                  <p className="text-xs text-zinc-500">~30 min</p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-400/90">
+                Configuración del entorno, instalación del AI SDK y conceptos
+                clave. Tu primer "hola mundo" con IA.
+              </p>
+            </div>
+
+            {/* Bloque 2 */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <span className="text-emerald-400 font-bold">⚡</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Streaming Básico</h4>
+                  <p className="text-xs text-zinc-500">~45 min</p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-400/90">
+                Express + vanilla JS para entender el flujo de datos en tiempo
+                real. Cómo funciona el streaming por dentro.
+              </p>
+            </div>
+
+            {/* Bloque 3 */}
+            <div className="p-6 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                  <span className="text-emerald-400 font-bold">⚛️</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Cliente React</h4>
+                  <p className="text-xs text-zinc-500">~45 min</p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-400/90">
+                El hook useChat del AI SDK para crear interfaces de chat.
+                Estado, mensajes y UX fluida.
+              </p>
+            </div>
+
+            {/* Bloque 4 */}
+            <div className="p-6 bg-gradient-to-b from-emerald-900/20 to-emerald-900/10 border-2 border-emerald-500/30 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-emerald-500/20 rounded-lg border border-emerald-500/30">
+                  <span className="text-emerald-400 font-bold">🎨</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">
+                    Doble Stream / Artefactos
+                  </h4>
+                  <p className="text-xs text-emerald-400">
+                    ~1.5h · Proyecto final
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-300">
+                El plato fuerte: genera UI en tiempo real estilo v0.dev. Dos
+                streams simultáneos para chat y código generado.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Sección Videos */}
+        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 tracking-tight">
+              Mira de qué se trata
+            </h2>
+            <p className="text-lg text-zinc-400/90 font-normal leading-relaxed max-w-2xl mx-auto">
+              Una probadita de lo que aprenderás en el taller
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto">
+            {/* Video Destacado */}
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-emerald-500/50 shadow-2xl shadow-emerald-500/10">
+              <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                DESTACADO
+              </div>
+              <iframe
+                src="https://www.youtube.com/embed/amY0p-TppHo"
+                title="AI SDK Tutorial Destacado"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+            {/* Videos secundarios */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
+                <iframe
+                  src="https://www.youtube.com/embed/yGHVRLhiUcQ"
+                  title="AI SDK para Principiantes"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
+                <iframe
+                  src="https://www.youtube.com/embed/ZQrLmP11DCo"
+                  title="AI SDK Demo"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sección Los Talleres - Cards lado a lado */}
+        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+              Los Talleres
+            </h2>
+            <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
+              Talleres prácticos para dominar el AI SDK
+            </p>
+          </div>
+
+          {/* Grid de Talleres */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Taller 1 - Activo */}
+            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border-2 border-emerald-500/30 rounded-2xl relative">
+              <div className="absolute -top-3 left-6">
+                <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                  SÁBADO 24 ENERO
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3 mt-2">
+                <span className="text-3xl">🚀</span>
+                Introducción a la IA aplicada con TypeScript
+              </h3>
+              <p className="text-sm text-zinc-500 mb-6">
+                10:00 AM - 1:30 PM CDMX
+              </p>
+
+              {/* Qué construirás */}
+              <h4 className="text-sm font-semibold text-emerald-400 mb-3 uppercase tracking-wide">
+                Qué construirás
+              </h4>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2 text-sm text-zinc-300">
+                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
+                  <span>Tu primer chat con streaming</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-300">
+                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
+                  <span>Interfaz React con useChat</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-300">
+                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
+                  <span>Sistema de doble stream (artefactos)</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-300">
+                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
+                  <span>Código fuente completo</span>
+                </li>
+              </ul>
+
+              {/* Precio y CTA */}
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center mb-4">
+                <p className="text-3xl font-bold text-white">
+                  $999 <span className="text-lg text-zinc-400">MXN</span>
+                </p>
+              </div>
+
+              <fetcher.Form method="post">
+                <input type="hidden" name="intent" value="checkout" />
+                <input type="hidden" name="productType" value="taller-1" />
+                <button
+                  type="submit"
+                  disabled={fetcher.state === "submitting"}
+                  className="w-full h-12 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+                >
+                  {fetcher.state === "submitting" ? (
+                    <span>Procesando...</span>
+                  ) : (
+                    <>
+                      <span>Inscribirme al Taller 1</span>
+                      <BiChevronRight className="text-xl" />
+                    </>
+                  )}
+                </button>
+              </fetcher.Form>
+            </div>
+
+            {/* Taller 2 - Próximamente (Deshabilitado) */}
+            <div className="p-8 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/40 rounded-2xl relative opacity-60">
+              <div className="absolute -top-3 left-6">
+                <span className="px-3 py-1 bg-zinc-700 text-zinc-400 text-xs font-bold rounded-full">
+                  PRÓXIMAMENTE
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold text-zinc-500 mb-6 flex items-center gap-3 mt-2">
+                <span className="text-3xl grayscale">🔥</span>
+                RAG y Agentes con AI SDK
+              </h3>
+
+              {/* Preview contenido */}
+              <h4 className="text-sm font-semibold text-zinc-600 mb-3 uppercase tracking-wide">
+                Qué aprenderás
+              </h4>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2 text-sm text-zinc-500">
+                  <span className="text-zinc-600">•</span>
+                  <span>Embeddings y búsqueda semántica</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-500">
+                  <span className="text-zinc-600">•</span>
+                  <span>RAG con base de datos</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-500">
+                  <span className="text-zinc-600">•</span>
+                  <span>Agentes con herramientas</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-500">
+                  <span className="text-zinc-600">•</span>
+                  <span>Proyecto completo funcional</span>
+                </li>
+              </ul>
+
+              {/* Precio */}
+              <div className="p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl text-center mb-4">
+                <p className="text-3xl font-bold text-zinc-600">
+                  $999 <span className="text-lg text-zinc-700">MXN</span>
+                </p>
+              </div>
+
+              <button
+                disabled
+                className="w-full h-12 px-4 py-2 bg-zinc-800 text-zinc-500 rounded-lg font-semibold text-base cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <span>Disponible después del Taller 1</span>
+              </button>
             </div>
           </div>
         </section>
@@ -592,10 +1058,10 @@ export default function AISdkPage() {
           {/* Header */}
           <div className="text-center mb-14">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-              Formato diferente a cursos grabados
+              No es otro curso que vas a dejar a medias
             </h2>
             <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
-              Sesiones en vivo con práctica hands-on y grupos limitados
+              3.5 horas de código en vivo → resultado funcional que te llevas
             </p>
           </div>
 
@@ -739,217 +1205,6 @@ export default function AISdkPage() {
                   </li>
                 </ul>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Sección Videos */}
-        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 tracking-tight">
-              Mira de qué se trata
-            </h2>
-            <p className="text-lg text-zinc-400/90 font-normal leading-relaxed max-w-2xl mx-auto">
-              Una probadita de lo que aprenderás en el taller
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto">
-            {/* Video Destacado */}
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-emerald-500/50 shadow-2xl shadow-emerald-500/10">
-              <div className="absolute top-3 left-3 z-10 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
-                DESTACADO
-              </div>
-              <iframe
-                src="https://www.youtube.com/embed/amY0p-TppHo"
-                title="AI SDK Tutorial Destacado"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-              />
-            </div>
-            {/* Videos secundarios */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
-                <iframe
-                  src="https://www.youtube.com/embed/yGHVRLhiUcQ"
-                  title="AI SDK para Principiantes"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-zinc-800/60 shadow-2xl">
-                <iframe
-                  src="https://www.youtube.com/embed/ZQrLmP11DCo"
-                  title="AI SDK Demo"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Sección Temario Completo */}
-        <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
-          {/* Header */}
-          <div className="text-center mb-14">
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-              Temario del Taller
-            </h2>
-            <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
-              2 sesiones intensivas de 3.5 horas cada una
-            </p>
-          </div>
-
-          {/* Grid de Sesiones */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Sesion 1 */}
-            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
-              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-                <span className="text-3xl">🚀</span>
-                Sesión 1: Fundamentos
-              </h3>
-              <p className="text-sm text-zinc-500 mb-6">
-                Sábado 13 de Diciembre · 10:00 AM - 1:30 PM CDMX
-              </p>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      👋
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      Introducción
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      Bienvenida, setup del entorno y conceptos clave de AI SDK
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      ⚡
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      Streaming básico
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      Express + vanilla JS para entender el flujo de datos
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      ⚛️
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      Cliente React
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      useChat hook del AI SDK 5 para crear interfaces de chat
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      🛠️
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      Tools y UI generativa
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      Componentes React generados dinámicamente por la IA
-                    </p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
-            {/* Sesion 2 */}
-            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-2xl">
-              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-                <span className="text-3xl">🔥</span>
-                Sesión 2: Avanzado
-              </h3>
-              <p className="text-sm text-zinc-500 mb-6">
-                Sábado 20 de Diciembre · 10:00 AM - 1:30 PM CDMX
-              </p>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      🔄
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      Recap
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      Repaso rápido de los conceptos de la sesión anterior
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      📁
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      Subida de archivos
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      Añadir contexto a tus conversaciones con documentos
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      🧠
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      RAG con Embeddings
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      Búsqueda por similitud para respuestas contextuales
-                    </p>
-                  </div>
-                </li>
-
-                <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 flex items-center justify-center bg-emerald-500/10 rounded-lg flex-shrink-0 border border-emerald-500/20 mt-0.5">
-                    <span className="text-emerald-400 font-bold text-sm">
-                      🎯
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white text-base mb-1">
-                      Cierre y recursos
-                    </h4>
-                    <p className="text-sm text-zinc-400/90">
-                      Q&A, próximos pasos y materiales adicionales
-                    </p>
-                  </div>
-                </li>
-              </ul>
             </div>
           </div>
         </section>
