@@ -119,8 +119,6 @@ export const VideoPlayer = ({
         className="w-full h-full"
         controls
         preload="metadata"
-        playsInline
-        webkit-playsinline=""
       >
         <track kind="captions" />
       </video>
