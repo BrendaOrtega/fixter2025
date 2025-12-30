@@ -74,6 +74,8 @@ export const useSecureHLS = ({ courseId, onError }: UseSecureHLSOptions) => {
         formData.append("intent", "get_original_video_presigned_url");
         formData.append("s3Key", s3Key);
         formData.append("courseId", options.courseId);
+        // Send original URL for dynamic endpoint detection (supports both tigris and t3 domains)
+        formData.append("originalUrl", originalUrl);
       }
 
       const response = await fetch("/api/course", {

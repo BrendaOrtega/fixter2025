@@ -635,18 +635,18 @@ export const courseServerActions = {
     }
   },
 
-  get_original_video_presigned_url: async (request: Request, s3Key: string, courseId: string) => {
+  get_original_video_presigned_url: async (request: Request, s3Key: string, courseId: string, originalUrl?: string) => {
     if (!s3Key || !courseId) {
-      return { 
-        success: false, 
-        error: "s3Key y courseId son requeridos" 
+      return {
+        success: false,
+        error: "s3Key y courseId son requeridos"
       };
     }
 
     try {
       // Get user and verify authentication
       const user = await getUserOrNull(request);
-      
+
       // Get course to check if it's free or user has access
       const course = await db.course.findUnique({
         where: { id: courseId },
@@ -654,27 +654,36 @@ export const courseServerActions = {
       });
 
       if (!course) {
-        return { 
-          success: false, 
-          error: "Curso no encontrado" 
+        return {
+          success: false,
+          error: "Curso no encontrado"
         };
       }
 
       // Check access permissions - ADMIN has full access for preview purposes
       const isAdmin = user?.role === "ADMIN";
       const hasAccess = isAdmin || course.isFree || (user && user.courses.includes(courseId));
-      
+
       if (!hasAccess) {
-        return { 
-          success: false, 
-          error: "Acceso denegado - curso no adquirido" 
+        return {
+          success: false,
+          error: "Acceso denegado - curso no adquirido"
         };
       }
 
       // Generate presigned URL for original video content
-      const presignedUrl = await Effect.runPromise(
-        s3VideoService.getVideoPreviewUrl(s3Key, 3600) // 1 hour for original videos
-      );
+      // Use dynamic endpoint detection if originalUrl is provided (supports both tigris and t3 domains)
+      let presignedUrl: string;
+      if (originalUrl) {
+        presignedUrl = await Effect.runPromise(
+          s3VideoService.getVideoPreviewUrlDynamic(originalUrl, 3600)
+        );
+      } else {
+        // Fallback to static endpoint (for backwards compatibility)
+        presignedUrl = await Effect.runPromise(
+          s3VideoService.getVideoPreviewUrl(s3Key, 3600)
+        );
+      }
 
       return {
         success: true,

@@ -99,11 +99,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return Response.json(result);
   }
 
-  // Get presigned URL for original video content with authentication check  
+  // Get presigned URL for original video content with authentication check
   if (intent === "get_original_video_presigned_url") {
     const s3Key = formData.get("s3Key") as string;
     const courseId = formData.get("courseId") as string;
-    const result = await courseServerActions.get_original_video_presigned_url(request, s3Key, courseId);
+    const originalUrl = formData.get("originalUrl") as string | undefined;
+    const result = await courseServerActions.get_original_video_presigned_url(request, s3Key, courseId, originalUrl);
     return Response.json(result);
   }
 
