@@ -6,7 +6,29 @@ import { s3VideoService } from "~/.server/services/s3-video";
  *
  * This endpoint fetches m3u8 playlists from S3 and rewrites relative URLs
  * to absolute presigned URLs, solving the HLS playback issue with private buckets.
+ *
+ * Supports Range Requests for iOS Safari compatibility.
  */
+
+// CORS headers for all responses
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+  'Access-Control-Allow-Headers': 'Range, Content-Type',
+  'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges',
+};
+
+// Handle CORS preflight for iOS Safari
+export const action = async ({ request }: { request: Request }) => {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
+  return new Response('Method not allowed', { status: 405 });
+};
+
 export const loader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
   const hlsPath = url.searchParams.get("path");
@@ -16,6 +38,45 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 
   try {
+    // Check if this is a segment request (.ts file)
+    if (hlsPath.endsWith('.ts')) {
+      // Stream the segment directly
+      const presignedUrl = await Effect.runPromise(
+        s3VideoService.getHLSPresignedUrl(hlsPath, 3600) // 1 hour for segments
+      );
+
+      // Forward Range header if present (critical for iOS Safari)
+      const fetchHeaders: HeadersInit = {};
+      const rangeHeader = request.headers.get('Range');
+      if (rangeHeader) {
+        fetchHeaders['Range'] = rangeHeader;
+      }
+
+      const response = await fetch(presignedUrl, { headers: fetchHeaders });
+      if (!response.ok && response.status !== 206) {
+        throw new Error(`Failed to fetch segment: ${response.status}`);
+      }
+
+      // Build response headers - pass through important ones from S3
+      const responseHeaders = new Headers({
+        'Content-Type': 'video/MP2T',
+        'Cache-Control': 'private, max-age=1800',
+        'Access-Control-Allow-Origin': '*',
+        'Accept-Ranges': 'bytes',
+      });
+
+      // Pass through size headers for proper seeking
+      const contentLength = response.headers.get('Content-Length');
+      const contentRange = response.headers.get('Content-Range');
+      if (contentLength) responseHeaders.set('Content-Length', contentLength);
+      if (contentRange) responseHeaders.set('Content-Range', contentRange);
+
+      return new Response(response.body, {
+        status: response.status, // 200 or 206 for partial content
+        headers: responseHeaders,
+      });
+    }
+
     // Get presigned URL and fetch the m3u8 content
     const presignedUrl = await Effect.runPromise(
       s3VideoService.getHLSPresignedUrl(hlsPath, 300) // 5 min expiry for proxy
@@ -50,27 +111,14 @@ export const loader = async ({ request }: { request: Request }) => {
       );
     } else {
       // Media playlist: rewrite segment references (e.g., seg_001.ts)
-      // For segments, we generate presigned URLs directly (more efficient)
-      const lines = m3u8Content.split('\n');
-      const rewrittenLines = await Promise.all(
-        lines.map(async (line) => {
-          if (line.startsWith('#') || line.trim() === '') {
-            return line;
-          }
-          // This is a segment reference
-          const segmentPath = basePath + line.trim();
-          try {
-            const presignedUrl = await Effect.runPromise(
-              s3VideoService.getHLSPresignedUrl(segmentPath, 3600)
-            );
-            return presignedUrl;
-          } catch (err) {
-            console.error(`Failed to presign segment: ${segmentPath}`, err);
-            return line;
-          }
-        })
+      // Route segments through proxy too (Safari has issues with long presigned URLs)
+      rewrittenContent = m3u8Content.replace(
+        /^([^#\s].+\.ts)$/gm,
+        (match) => {
+          const fullPath = basePath + match;
+          return `${proxyBaseUrl}${encodeURIComponent(fullPath)}`;
+        }
       );
-      rewrittenContent = rewrittenLines.join('\n');
     }
 
     return new Response(rewrittenContent, {
