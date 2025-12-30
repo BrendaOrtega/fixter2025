@@ -121,7 +121,7 @@ export const VideoPlayer = ({
       );
 
       // Helper to check if URL is new format (needs presigned) or legacy (use direct)
-      const isNewFormat = (url: string) => url.includes('fixtergeek/videos/') && (url.includes('.s3.') || url.includes('storage.tigris.dev'));
+      const isNewFormat = (url: string) => url.includes('fixtergeek/videos/') && (url.includes('.s3.') || url.includes('storage.tigris.dev') || url.includes('t3.storage.dev'));
 
       // Helper to extract S3 key from URL for HLS proxy
       const extractS3Key = (url: string): string | null => {
