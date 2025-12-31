@@ -458,7 +458,7 @@ const CourseHeader = ({
                 as="Link"
                 to={`/cursos/${slug}/viewer`}
                 variant="fill"
-                title="Ver trailer"
+                title="Empezar gratis"
               />
             ) : slug === "power-user-en-claude-code" ? (
               <PrimaryButton
