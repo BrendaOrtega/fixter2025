@@ -14,7 +14,7 @@ import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { use3DHover } from "~/hooks/use3DHover";
-import Markdown from "~/components/common/Markdown";
+import { Streamdown } from "streamdown";
 
 export function meta({ data }: Route.MetaArgs) {
   const course = data.course;
@@ -192,7 +192,7 @@ const CourseContent = ({
   return (
     <section className=" mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ">
       <div className="prose prose-lg prose-invert max-w-none text-colorParagraph">
-        <Markdown>{course.description}</Markdown>
+        <Streamdown>{course.description}</Streamdown>
       </div>
       <div className="border-[1px] my-20 border-brand-500 rounded-3xl p-6 md:p-10 xl:p-16 relative">
         <img
@@ -407,7 +407,7 @@ const CourseHeader = ({
           <h2 className="text-4xl md:text-5xl xl:text-5xl font-bold text-white !leading-snug">
             {title}
           </h2>
-          <p className="text-colorParagraph text-base md:text-lg mt-6 font-light">
+          <p className="text-colorParagraph text-base md:text-lg mt-6 font-light whitespace-pre-line">
             {summary}
           </p>
           <div className="flex items-center mt-6 gap-4">
