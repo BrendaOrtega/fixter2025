@@ -6,6 +6,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Streamdown CSS variables (shadcn/ui style) */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+    --radius: 0.5rem;
+  }
+}
+
 html,
 body {
   @apply bg-background;

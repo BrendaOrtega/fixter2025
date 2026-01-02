@@ -14,6 +14,7 @@ interface TableOfContentsProps {
   onClose?: () => void;
   isMobile?: boolean;
   readingMode?: boolean;
+  accentColor?: string;
 }
 
 export default function TableOfContents({
@@ -23,6 +24,7 @@ export default function TableOfContents({
   onClose,
   isMobile = false,
   readingMode = false,
+  accentColor = "#9333ea",
 }: TableOfContentsProps) {
   const handleChapterClick = () => {
     if (isMobile && onClose) {
@@ -58,6 +60,7 @@ export default function TableOfContents({
                   chapters={chapters}
                   currentChapter={currentChapter}
                   onChapterClick={handleChapterClick}
+                  accentColor={accentColor}
                 />
               </nav>
             </motion.aside>
@@ -77,7 +80,7 @@ export default function TableOfContents({
         <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-6">
           Tabla de Contenidos
         </h3>
-        <ChapterList chapters={chapters} currentChapter={currentChapter} />
+        <ChapterList chapters={chapters} currentChapter={currentChapter} accentColor={accentColor} />
       </div>
     </aside>
   );
@@ -87,10 +90,12 @@ function ChapterList({
   chapters,
   currentChapter,
   onChapterClick,
+  accentColor = "#9333ea",
 }: {
   chapters: Chapter[];
   currentChapter: Chapter;
   onChapterClick?: () => void;
+  accentColor?: string;
 }) {
   return (
     <ul className="space-y-1">
@@ -101,9 +106,14 @@ function ChapterList({
             onClick={onChapterClick}
             className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
               currentChapter.slug === chapter.slug
-                ? "bg-purple-600 text-white font-medium shadow-lg shadow-purple-600/20"
+                ? "text-white font-medium shadow-lg"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             }`}
+            style={
+              currentChapter.slug === chapter.slug
+                ? { backgroundColor: accentColor, boxShadow: `0 10px 15px -3px ${accentColor}33` }
+                : undefined
+            }
           >
             <span className="text-xs opacity-60">
               {chapter.id === "prólogo" || chapter.id === "intro"

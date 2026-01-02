@@ -827,6 +827,7 @@ export const CourseForm = ({
                   name="description"
                   placeholder="Markdown"
                   type="textarea"
+                  className="min-h-[200px]"
                   defaultValue={editingVideo?.description}
                 />
                 <div className="grid grid-cols-2 gap-4">
@@ -834,10 +835,10 @@ export const CourseForm = ({
                     label="Nombre del autor"
                     name="authorName"
                     placeholder="blissmo"
-                    defaultValue={editingVideo?.authorName}
+                    defaultValue={editingVideo?.authorName || "blissmo"}
                   />
                   <Input
-                    defaultValue={editingVideo?.photoUrl}
+                    defaultValue={editingVideo?.photoUrl || "https://i.imgur.com/OtuQ5J8.png"}
                     label="Foto del autor"
                     name="photoUrl"
                   />
@@ -880,6 +881,7 @@ export const CourseForm = ({
                 name="description"
                 placeholder="Markdown"
                 type="textarea"
+                className="min-h-[200px]"
                 defaultValue={editingVideo?.description}
               />
             </div>

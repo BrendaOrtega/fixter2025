@@ -561,6 +561,13 @@ export const HomeHero = () => {
             >
               LlamaIndex desde Cero
             </Link>
+            {" "}y{" "}
+            <Link
+              to="/libros/ai_sdk"
+              className="text-sm text-[#3178C6] hover:underline transition-all duration-200"
+            >
+              AI SDK con React Router
+            </Link>
           </p>
         </div>
         <img className="scale-75 lg:scale-100" src="/robot.svg" alt="robot" />

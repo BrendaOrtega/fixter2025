@@ -115,6 +115,97 @@ Cada vez que añadas o refactorices un capítulo, sigue estos pasos:
 5. **Mantener estilo**: Seguir la filosofía y tono establecidos en el prólogo
 6. **Regenerar EPUB**: Ejecutar `python3 app/scripts/generate_epub.py` para actualizar el archivo descargable
 
+## El Libro de AI SDK
+
+**Versión: AI SDK v6** - Todo el libro usa la versión 6 del AI SDK de Vercel (la más reciente). No usar código de versiones anteriores (4.x o 5.x).
+
+### Estrategia: Mucho más profundo que el taller
+
+El libro complementa el taller siendo **significativamente más profundo**:
+
+- **Taller**: Ejercicios prácticos paso a paso (el "cómo")
+- **Libro**: Fundamentos, arquitectura, internals y trade-offs (el "por qué")
+
+Cada capítulo incluye:
+1. Teoría profunda que el taller omite (cómo funciona internamente)
+2. Contexto arquitectural y decisiones de diseño
+3. Edge cases, patrones avanzados y optimización
+4. Matemáticas y conceptos técnicos cuando aplica (embeddings, tokens, etc.)
+
+### Orden del libro (diferente al taller)
+
+| Capítulo | Tema | Profundidad extra |
+|----------|------|-------------------|
+| 1 | Streams básicos | Tokens, context window, costos |
+| 2 | React + useChat | Internals del hook, protocolo de mensajes, optimización |
+| 3 | Backend Hono | HTTP streaming, Transfer-Encoding, SSE vs WebSocket |
+| 4+ | Tools, Embeddings, Agentes | ... |
+
+### Proceso para el libro AI SDK
+
+1. **INDISPENSABLE - Leer docs con Context7 MCP**: Antes de escribir cualquier capítulo, SIEMPRE consultar la documentación oficial del AI SDK usando el MCP de Context7 para obtener la sintaxis más actualizada de v6
+2. **Leer prólogo**: Recordar el enfoque TypeScript-first, sin Python
+3. **Consultar estructura del taller**: Ver `https://github.com/blissito/taller-ai-sdk-para-principiantes`
+4. **Ir más profundo**: Cada tema del taller se expande con teoría y fundamentos
+5. **Archivos**: Los capítulos están en `app/content/ai-sdk/`
+6. **Ruta del libro**: `app/routes/libros/ai_sdk.tsx`
+7. **Regenerar EPUB**: `python3 app/scripts/generate_ai_sdk_epub.py`
+
+### Cambios críticos en AI SDK v6 (vs versiones anteriores)
+
+| Antes (v4/v5) | Ahora (v6) |
+|---------------|------------|
+| `useChat({ api: "/api/chat" })` | `useChat()` (default) o con `transport` |
+| `handleInputChange`, `handleSubmit` | Manejar input con `useState` manualmente |
+| `append(message)` | `sendMessage({ text: input })` |
+| `reload()` | `regenerate()` |
+| `isLoading` | `status` ('ready', 'submitted', 'streaming', 'error') |
+| `message.content` | `message.parts` (array con `type` y `text`) |
+| `generateObject({ schema })` | `generateText({ output: Output.object({ schema }) })` |
+| `streamObject({ schema })` | `streamText({ output: Output.object({ schema }) })` |
+| `convertToCoreMessages()` | `await convertToModelMessages()` (async) |
+| `toDataStreamResponse()` | `toUIMessageStreamResponse()` |
+
+### Guía de tono y estilo para el libro AI SDK
+
+**Audiencia objetivo:**
+- Desarrolladores latinoamericanos hispanohablantes
+- Principiantes en React y TypeScript
+- Personas que quieren integrar IA en sus proyectos
+
+**Lenguaje:**
+- **Sin anglicismos innecesarios**: Evitar "game-changer", "approach", "leverage", etc.
+- **Español natural**: Preferir "valioso" sobre "game-changer", "enfoque" sobre "approach"
+- **Tono profesional**: Evitar frases como "rezar que funcione" o jerga demasiado coloquial
+- **Directo pero amigable**: No condescendiente, pero tampoco intimidante
+
+**Explicaciones para principiantes:**
+- Cuando uses `for await...of`, explica brevemente qué es un async iterator
+- Cuando uses `process.stdout.write`, explica por qué no `console.log`
+- Antes de usar Zod, introduce qué es y para qué sirve
+- Si un concepto de TypeScript es avanzado (generics, types complejos), añade una nota
+
+**Estructura de cada capítulo:**
+1. Código primero - mostrar el ejemplo funcionando
+2. Explicar qué pasó - desglosar cada parte
+3. Profundizar en conceptos - tokens, context window, etc.
+4. Casos de uso prácticos - ejemplos latinos relevantes (tacos, enchiladas, facturas en pesos)
+5. Resumen con tabla comparativa
+
+**Ejemplos culturalmente relevantes:**
+- Recetas mexicanas (tacos al pastor, enchiladas)
+- Moneda en pesos mexicanos cuando aplique
+- Contextos latinoamericanos (facturación, RFC, etc.)
+
+**Frases a evitar:**
+| Evitar | Usar en su lugar |
+|--------|------------------|
+| "game-changer" | "valioso", "poderoso", "útil" |
+| "rezar que funcione" | "esperar que funcione" |
+| "approach" | "enfoque", "método" |
+| "leverage" | "aprovechar", "usar" |
+| "Suficiente teoría" | (eliminar, empezar directo) |
+
 ## Información de Contacto
 
 - **Email de contacto**: brenda@fixter.org

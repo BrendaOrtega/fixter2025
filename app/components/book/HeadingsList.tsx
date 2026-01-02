@@ -9,6 +9,7 @@ interface HeadingsListProps {
   activeHeading: string;
   onHeadingClick: (headingId: string) => void;
   readingMode?: boolean;
+  accentColor?: string;
 }
 
 export default function HeadingsList({
@@ -16,6 +17,7 @@ export default function HeadingsList({
   activeHeading,
   onHeadingClick,
   readingMode = false,
+  accentColor = "#9333ea",
 }: HeadingsListProps) {
   if (readingMode) {
     return null;
@@ -45,9 +47,9 @@ export default function HeadingsList({
                       e.preventDefault();
                       onHeadingClick(heading.id);
                     }}
-                    className={`group block text-left w-full px-3 py-1.5 text-sm rounded-md transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 ${
+                    className={`group block text-left w-full px-3 py-1.5 text-sm rounded-md transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
                       activeHeading === heading.id
-                        ? "bg-purple-100 text-purple-700 font-medium border-l-2 border-purple-500 shadow-sm"
+                        ? "font-medium border-l-2 shadow-sm"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     }`}
                     style={{
@@ -55,6 +57,15 @@ export default function HeadingsList({
                         (heading.level - 1) * 8 + 12,
                         12
                       )}px`,
+                      ...(activeHeading === heading.id
+                        ? {
+                            backgroundColor: `${accentColor}1a`,
+                            color: accentColor,
+                            borderColor: accentColor,
+                          }
+                        : {}),
+                      // @ts-ignore - focus ring color
+                      "--tw-ring-color": accentColor,
                     }}
                     title={heading.text}
                   >
