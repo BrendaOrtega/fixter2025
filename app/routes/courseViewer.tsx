@@ -267,11 +267,12 @@ export default function Route({
       {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
       {showSubscriptionDrawer && (
         <SubscriptionDrawer
+          key={video.id}
           courseSlug={course.slug}
           subscriberVideos={subscriberVideos}
         />
       )}
-      {showPurchaseDrawer && <PurchaseDrawer courseSlug={course.slug} />}
+      {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} />}
     </>
   );
 }
