@@ -4,17 +4,31 @@ import type { Route } from "./+types/ai_sdk";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import { motion } from "motion/react";
-import BookMarkdown from "~/components/common/BookMarkdown";
+import { Streamdown } from "streamdown";
 import getMetaTags from "~/utils/getMetaTags";
 import TableOfContents from "~/components/book/TableOfContents";
 import HeadingsList from "~/components/book/HeadingsList";
 import BookLayout from "~/components/book/BookLayout";
 
-// Lista de capítulos - se irán añadiendo en Fase 2
+// Helper para generar IDs desde texto
+function generateId(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\sáéíóúñü-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "heading";
+}
+
+// Lista de capítulos
 const chapters = [
   { id: "prólogo", title: "Prólogo", slug: "prologo" },
   { id: "intro", title: "Introducción", slug: "introduccion" },
-  // Capítulos se añadirán aquí después de planearlos
+  { id: "01", title: "Tu Primera Inferencia con IA", slug: "capitulo-01" },
+  { id: "02", title: "React y el Hook useChat", slug: "capitulo-02" },
+  { id: "03", title: "Dentro del Streaming", slug: "capitulo-03" },
+  { id: "04", title: "El Atajo", slug: "capitulo-04" },
 ];
 
 export const meta = ({ location }: Route.MetaArgs) => {
@@ -117,7 +131,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentChapter.slug]);
 
-  // Extraer headings y manejar scroll
+  // Extraer headings, asignar IDs y manejar scroll
   useEffect(() => {
     const extractHeadings = () => {
       const headingElements = document.querySelectorAll(
@@ -128,9 +142,13 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
         (heading, index) => {
           const text = heading.textContent || "";
           const level = parseInt(heading.tagName.charAt(1));
-          const id = heading.id || `heading-${index}`;
 
-          return { id, text, level };
+          // Generar y asignar ID si no tiene
+          if (!heading.id) {
+            heading.id = generateId(text) || `heading-${index}`;
+          }
+
+          return { id: heading.id, text, level };
         }
       );
 
@@ -391,6 +409,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
             chapters={chapters}
             currentChapter={currentChapter}
             readingMode={readingMode}
+            accentColor="#3178C6"
           />
         }
         headingsList={
@@ -399,6 +418,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
             activeHeading={activeHeading}
             onHeadingClick={scrollToHeading}
             readingMode={readingMode}
+            accentColor="#3178C6"
           />
         }
       >
@@ -408,6 +428,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           isMobile
+          accentColor="#3178C6"
         />
 
         <article className="prose prose-lg max-w-none">
@@ -417,7 +438,20 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
             transition={{ duration: 0.5 }}
             className="pt-4"
           >
-            <BookMarkdown readingMode={readingMode}>{content}</BookMarkdown>
+            <div className={`prose prose-lg max-w-none
+              prose-headings:text-gray-900 prose-p:text-gray-700
+              prose-a:text-[#3178C6] prose-strong:text-gray-900
+              prose-blockquote:border-[#3178C6] prose-blockquote:bg-blue-50/50
+              prose-code:text-[#3178C6] prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+              prose-table:border-collapse prose-th:bg-gray-100 prose-th:border prose-th:border-gray-300 prose-th:px-4 prose-th:py-2
+              prose-td:border prose-td:border-gray-300 prose-td:px-4 prose-td:py-2
+              ${readingMode ? "prose-2xl [&_p]:text-2xl [&_p]:leading-relaxed [&_li]:text-xl [&_h1]:text-5xl [&_h2]:text-4xl [&_h3]:text-3xl" : ""}
+            `}>
+              <Streamdown
+                shikiTheme={["github-light", "github-dark"]}
+                controls={{ table: false, code: true }}
+              >{content}</Streamdown>
+            </div>
           </motion.div>
 
           {/* Navegación entre capítulos */}

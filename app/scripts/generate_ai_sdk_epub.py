@@ -119,7 +119,10 @@ def create_epub():
     chapters_info = [
         {"id": "prologo", "title": "Prólogo", "slug": "prologo"},
         {"id": "intro", "title": "Introducción", "slug": "introduccion"},
-        # Capítulos se añadirán aquí conforme se creen
+        {"id": "01", "title": "Tu Primera Inferencia con IA", "slug": "capitulo-01"},
+        {"id": "02", "title": "React y el Hook useChat", "slug": "capitulo-02"},
+        {"id": "03", "title": "Dentro del Streaming", "slug": "capitulo-03"},
+        {"id": "04", "title": "El Atajo", "slug": "capitulo-04"},
     ]
 
     # Directorio donde están los archivos markdown

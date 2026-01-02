@@ -44,68 +44,87 @@ const result = streamText({
 ```
 
 ### 4. React hooks listos
-`useChat` y `useCompletion` manejan todo el estado y streaming por ti.
+`useChat` maneja el streaming y estado de mensajes por ti.
 
 ```tsx
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
+import { useState } from "react";
 
 export function Chat() {
-  const { messages, input, handleSubmit, handleInputChange } = useChat();
+  const [input, setInput] = useState("");
+  const { messages, sendMessage, status } = useChat();
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      sendMessage({ text: input });
+      setInput("");
+    }}>
       {messages.map((m) => (
-        <div key={m.id}>{m.content}</div>
+        <div key={m.id}>
+          {m.parts.map((part, i) =>
+            part.type === "text" ? <span key={i}>{part.text}</span> : null
+          )}
+        </div>
       ))}
-      <input value={input} onChange={handleInputChange} />
+      <input value={input} onChange={(e) => setInput(e.target.value)} />
     </form>
   );
 }
 ```
 
+> **Nota para principiantes:** En v6, el hook ya no maneja el input internamente. Usamos `useState` de React para controlar el campo de texto, y `sendMessage` para enviar. Los mensajes ahora tienen `parts` en lugar de `content`.
+
 ## Estructura del libro
 
 Este libro está organizado en capítulos progresivos:
 
-1. **Fundamentos** - Entender prompts, tokens, y contexto
-2. **Streaming básico** - Tu primera inferencia con `streamText`
-3. **Structured output** - Datos tipados con `generateObject` y Zod
-4. **Backend** - Servidores Express y Hono
-5. **React** - El hook `useChat` y patrones de UI
-6. **React Router v7** - Integración full-stack
-7. **Tools** - Cuando el modelo ejecuta acciones
-8. **Agentes** - Sistemas autónomos
+1. **Tu primera inferencia** - Streaming, tokens, context window y datos estructurados con Zod
+2. **React** - El hook `useChat`, internals y patrones de UI
+3. **Backend** - Servidores Express y Hono, HTTP streaming
+4. **React Router v7** - Integración full-stack
+5. **Tools** - Cuando el modelo ejecuta acciones
+6. **Agentes** - Sistemas autónomos
 
 Cada capítulo incluye ejemplos que puedes ejecutar inmediatamente.
 
 ## Requisitos previos
 
-- Node.js 18+
+- Node.js 20+
 - Conocimiento básico de TypeScript
 - Familiaridad con React
 - Una API key de OpenAI, Anthropic, o Google (tienen tiers gratuitos)
 
+> **Versión del AI SDK:** Este libro está escrito para **AI SDK v6** (la versión más reciente de Vercel). Si encuentras código en internet con `toDataStreamResponse()`, es de versiones anteriores (4.x/5.x). Nosotros usamos `toUIMessageStreamResponse()` y el formato `UIMessage` exclusivamente.
+
+> **Fecha de escritura:** Este libro fue escrito en **Enero 2026**. El AI SDK evoluciona rápido—si algo no funciona, revisa el [changelog oficial](https://github.com/vercel/ai/releases).
+
 ## Setup inicial
 
+Usaremos el repositorio oficial del taller que ya tiene todo configurado:
+
 ```bash
-# Crear proyecto
-mkdir ai-sdk-demo && cd ai-sdk-demo
-npm init -y
+# Clonar el repo
+git clone https://github.com/blissito/taller-ai-sdk-para-principiantes.git
+cd taller-ai-sdk-para-principiantes
 
 # Instalar dependencias
-npm install ai @ai-sdk/openai zod
-
-# Para ejecutar TypeScript directamente
-npm install -D tsx typescript
+npm install
 ```
 
-Crea un archivo `.env`:
+Crea un archivo `.env` en la raíz del proyecto:
 
 ```
 OPENAI_API_KEY=sk-...
 ```
 
-Y tu primer script `index.ts`:
+> **Branches del taller:**
+> - `ejercicio/00-basic_inference` hasta `ejercicio/06-sending_custom_data` — Flujo principal
+> - `ejercicio/bonus-migrate_to_hono` — Usado en el Capítulo 3 para entender streaming
+>
+> Las branches del libro siguen el patrón `book/capitulo-*` para diferenciarse.
+
+Tu primer script ya está listo en `index.ts`:
 
 ```typescript
 import { generateText } from "ai";
@@ -122,11 +141,11 @@ console.log(text);
 Ejecuta con:
 
 ```bash
-npx tsx index.ts
+npm run dev
 ```
 
 Si ves "Hola desde TypeScript!" (o algo similar), estás listo para continuar.
 
 ---
 
-En el próximo capítulo exploraremos los fundamentos: cómo funcionan los LLMs, qué son los tokens, y cómo manejar el contexto efectivamente.
+En el próximo capítulo haremos tu primera inferencia: verás streaming en acción, entenderás qué son los tokens y el context window, y generarás datos estructurados con Zod.
