@@ -156,7 +156,9 @@ export const getAdminOrRedirect = async (
   request: Request,
   config?: { redirectURL?: string; next?: string }
 ) => {
-  const { redirectURL = "/login", next = "/" } = config || {};
+  // Usar la URL actual como default para next (en lugar de "/")
+  const currentPath = new URL(request.url).pathname;
+  const { redirectURL = "/login", next = currentPath } = config || {};
   const searchParams = createSearchParams([["next", next]]);
   const cookie = request.headers.get("cookie");
   const session = await getSession(cookie);

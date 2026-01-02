@@ -24,7 +24,22 @@ export const googleHandler = async (request: Request, nextURL: string) => {
     searchParams.has("code") &&
     searchParams.get("auth") === "google"
   ) {
-    const next = searchParams.get("next") || nextURL || "/mis-cursos";
+    // Decodificar state que viene de Google (contiene el next URL)
+    const stateParam = searchParams.get("state");
+    let next = nextURL || "/mis-cursos";
+
+    if (stateParam) {
+      try {
+        const state = JSON.parse(atob(stateParam));
+        // Validar que next sea URL relativa segura (evitar open redirect)
+        if (state.next && state.next.startsWith("/") && !state.next.startsWith("//")) {
+          next = state.next;
+        }
+      } catch (e) {
+        console.warn("Failed to parse OAuth state:", e);
+      }
+    }
+
     const code = searchParams.get("code")!;
     
     try {

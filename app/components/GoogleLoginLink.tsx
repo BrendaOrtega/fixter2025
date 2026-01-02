@@ -17,11 +17,19 @@ export function GoogleLoginLink() {
       ? "http://localhost:3000"
       : "https://www.fixtergeek.com";
 
+    // Leer next de la URL actual (/login?next=/admin/webinar)
+    const next = new URLSearchParams(window.location.search).get("next") || "/mis-cursos";
+
+    // Crear state con next (base64 para evitar caracteres especiales)
+    // Google devuelve el state intacto en el callback
+    const state = btoa(JSON.stringify({ next }));
+
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth?` +
       `client_id=${GOOGLE_CLIENT_ID}&` +
       `redirect_uri=${encodeURIComponent(location + "/login?auth=google")}&` +
       `response_type=code&` +
-      `scope=${encodeURIComponent("https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile")}`;
+      `scope=${encodeURIComponent("https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile")}&` +
+      `state=${encodeURIComponent(state)}`;
 
     window.location.href = googleAuthUrl;
   };
