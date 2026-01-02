@@ -637,7 +637,8 @@ export const CourseForm = ({
       <Drawer
         isOpen={show}
         cta={<></>}
-        title="Nuevo video"
+        mode={editingVideo?.id ? "big" : undefined}
+        title={editingVideo?.id ? "Editar video" : "Nuevo video"}
         onClose={handleVideoFormClose}
       >
         {/* Video form */}
@@ -648,221 +649,259 @@ export const CourseForm = ({
         )}
         <fetcher.Form
           onSubmit={onVideoFormSubmit}
-          className="flex flex-col h-full"
+          className="pb-4"
         >
-          <Input
-            label="Índice"
-            className="w-20"
+          {/* Hidden index field - se maneja automáticamente con drag & drop */}
+          <input
+            type="hidden"
             name="index"
-            placeholder="índice"
-            defaultValue={
+            value={
               editingVideo?.index?.toString() ||
               (orderedVideos.length + 1).toString() ||
               "1"
             }
           />
-          <Input
-            defaultValue={editingVideo?.title}
-            label="Título"
-            name="title"
-            placeholder="Título del video"
-            error={videoErrors.title}
-          />
-          
-          {/* Video Upload Section */}
+
+          {/* Layout: dos columnas para edición, una columna para nuevo */}
           {editingVideo?.id ? (
-            <>
-              <div className="mb-4 p-4 border border-gray-600 rounded-lg bg-gray-800/50">
-                <label className="block text-sm font-medium mb-2">
-                  📹 Subir Video (MP4)
-                </label>
-                
-                {/* File input */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/mp4,video/quicktime"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setVideoFile(file);
-                      setUploadProgress(0);
-                      // Detectar duración del video
-                      try {
-                        const duration = await detectVideoDuration(file);
-                        setDetectedDuration(duration);
-                        console.log(`⏱️ Duración detectada: ${duration}s`);
-                      } catch (err) {
-                        console.warn('No se pudo detectar la duración:', err);
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Columna izquierda: Preview y Upload */}
+              <div className="space-y-4">
+                {/* Video Upload Section */}
+                <div className="p-4 border border-gray-600 rounded-lg bg-gray-800/50">
+                  <label className="block text-sm font-medium mb-2">
+                    📹 Subir Video (MP4)
+                  </label>
+
+                  {/* File input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/mp4,video/quicktime"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setVideoFile(file);
+                        setUploadProgress(0);
+                        // Detectar duración del video
+                        try {
+                          const duration = await detectVideoDuration(file);
+                          setDetectedDuration(duration);
+                          console.log(`⏱️ Duración detectada: ${duration}s`);
+                        } catch (err) {
+                          console.warn('No se pudo detectar la duración:', err);
+                        }
+                        // Auto-upload when file is selected
+                        await handleVideoUpload(file);
                       }
-                      // Auto-upload when file is selected
-                      await handleVideoUpload(file);
-                    }
-                  }}
-                  className="hidden"
-                />
-                
-                {/* Upload UI */}
-                {!videoFile ? (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full p-4 border-2 border-dashed border-gray-600 rounded-lg hover:border-gray-400 transition-colors flex flex-col items-center justify-center gap-2"
-                  >
-                    <FaUpload className="text-2xl text-gray-400" />
-                    <span className="text-sm text-gray-300">Click para seleccionar video</span>
-                    <span className="text-xs text-gray-500">MP4 o MOV (máx 2GB)</span>
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
-                      <span className="text-sm truncate flex-1">{videoFile.name}</span>
-                      <span className="text-xs text-gray-400 ml-2">
-                        {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                    
-                    {/* Progress bar */}
-                    {(isUploading || uploadProgress > 0) && (
-                      <div className="space-y-1">
-                        <div className="w-full bg-gray-700 rounded-full h-2">
-                          <div 
-                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${uploadProgress}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-center text-gray-400">
-                          {isUploading ? `Subiendo... ${uploadProgress}%` : '✅ Video subido'}
-                        </p>
+                    }}
+                    className="hidden"
+                  />
+
+                  {/* Upload UI */}
+                  {!videoFile ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full p-6 border-2 border-dashed border-gray-600 rounded-lg hover:border-gray-400 transition-colors flex flex-col items-center justify-center gap-2"
+                    >
+                      <FaUpload className="text-3xl text-gray-400" />
+                      <span className="text-sm text-gray-300">Click para seleccionar video</span>
+                      <span className="text-xs text-gray-500">MP4 o MOV (máx 2GB)</span>
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-2 bg-gray-700 rounded">
+                        <span className="text-sm truncate flex-1">{videoFile.name}</span>
+                        <span className="text-xs text-gray-400 ml-2">
+                          {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
                       </div>
-                    )}
-                    
-                    {/* Status or change button */}
-                    {!isUploading ? (
-                      uploadProgress === 100 ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setVideoFile(null);
-                            setUploadProgress(0);
-                            if (fileInputRef.current) fileInputRef.current.value = '';
-                          }}
-                          className="text-xs text-gray-400 hover:text-gray-300 text-center w-full"
-                        >
-                          Seleccionar otro archivo
-                        </button>
-                      ) : (
-                        <p className="text-xs text-center text-yellow-400">
-                          ⚠️ El archivo se subirá automáticamente
-                        </p>
-                      )
-                    ) : null}
-                  </div>
+
+                      {/* Progress bar */}
+                      {(isUploading || uploadProgress > 0) && (
+                        <div className="space-y-1">
+                          <div className="w-full bg-gray-700 rounded-full h-2">
+                            <div
+                              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${uploadProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-center text-gray-400">
+                            {isUploading ? `Subiendo... ${uploadProgress}%` : '✅ Video subido'}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Status or change button */}
+                      {!isUploading ? (
+                        uploadProgress === 100 ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVideoFile(null);
+                              setUploadProgress(0);
+                              if (fileInputRef.current) fileInputRef.current.value = '';
+                            }}
+                            className="text-xs text-gray-400 hover:text-gray-300 text-center w-full"
+                          >
+                            Seleccionar otro archivo
+                          </button>
+                        ) : (
+                          <p className="text-xs text-center text-yellow-400">
+                            ⚠️ El archivo se subirá automáticamente
+                          </p>
+                        )
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+
+                {/* Processing Status con Preview */}
+                <VideoProcessingStatus
+                  videoId={editingVideo.id}
+                  course={course}
+                  onDurationDetected={(duration) => setDetectedDuration(duration)}
+                />
+
+                {/* Legacy fields */}
+                {!videoFile && (
+                  <details className="p-4 border border-gray-700 rounded-lg">
+                    <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-300">
+                      Enlaces manuales (opcional)
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      <Input
+                        defaultValue={editingVideo?.storageLink}
+                        label="Link directo"
+                        name="storageLink"
+                        placeholder="https://..."
+                      />
+                      <Input
+                        defaultValue={editingVideo?.m3u8}
+                        label="Playlist HLS"
+                        name="m3u8"
+                        placeholder="https://.../master.m3u8"
+                      />
+                    </div>
+                  </details>
                 )}
               </div>
-              
-              {/* Processing Status */}
-              <VideoProcessingStatus
-                videoId={editingVideo.id}
-                course={course}
-                onDurationDetected={(duration) => setDetectedDuration(duration)}
-              />
-            </>
-          ) : (
-            <div className="mb-4 p-4 border border-yellow-600 rounded-lg bg-yellow-600/10">
-              <p className="text-sm text-yellow-300">
-                ⚠️ Primero guarda el video para poder subir el archivo MP4
-              </p>
-            </div>
-          )}
-          
-          {/* Legacy fields (hidden when uploading) */}
-          {!videoFile && (
-            <>
-              <details className="mb-4">
-                <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-300">
-                  Enlaces manuales (opcional)
-                </summary>
-                <div className="mt-2 space-y-2">
+
+              {/* Columna derecha: Campos del formulario */}
+              <div className="space-y-4">
+                <Input
+                  defaultValue={editingVideo?.title}
+                  label="Título"
+                  name="title"
+                  placeholder="Título del video"
+                  error={videoErrors.title}
+                />
+                <Input
+                  defaultValue={editingVideo?.moduleName}
+                  label="Nombre del módulo"
+                  name="moduleName"
+                  placeholder="Módulo ..."
+                />
+                <div className="grid grid-cols-2 gap-4">
                   <Input
-                    defaultValue={editingVideo?.storageLink}
-                    label="Link directo"
-                    name="storageLink"
-                    placeholder="https://..."
+                    key={`duration-${detectedDuration || editingVideo?.duration || 'empty'}`}
+                    defaultValue={detectedDuration || editingVideo?.duration}
+                    label={`Duración (seg)${detectedDuration ? ' ✅' : ''}`}
+                    name="duration"
+                    placeholder="360"
                   />
-                  <Input
-                    defaultValue={editingVideo?.m3u8}
-                    label="Playlist HLS"
-                    name="m3u8"
-                    placeholder="https://.../master.m3u8"
+                  <SelectInput
+                    name="accessLevel"
+                    label="Nivel de acceso"
+                    defaultValue={editingVideo?.accessLevel || "paid"}
+                    options={[
+                      { value: "public", label: "Público" },
+                      { value: "subscriber", label: "Suscriptor" },
+                      { value: "paid", label: "Pagado" },
+                    ]}
                   />
                 </div>
-              </details>
-            </>
+                <Input
+                  label="Descripción"
+                  name="description"
+                  placeholder="Markdown"
+                  type="textarea"
+                  defaultValue={editingVideo?.description}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Nombre del autor"
+                    name="authorName"
+                    placeholder="blissmo"
+                    defaultValue={editingVideo?.authorName}
+                  />
+                  <Input
+                    defaultValue={editingVideo?.photoUrl}
+                    label="Foto del autor"
+                    name="photoUrl"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Layout simple para nuevo video */
+            <div className="space-y-4">
+              <Input
+                defaultValue={editingVideo?.title}
+                label="Título"
+                name="title"
+                placeholder="Título del video"
+                error={videoErrors.title}
+              />
+              <div className="p-4 border border-yellow-600 rounded-lg bg-yellow-600/10">
+                <p className="text-sm text-yellow-300">
+                  ⚠️ Primero guarda el video para poder subir el archivo MP4
+                </p>
+              </div>
+              <Input
+                defaultValue={editingVideo?.moduleName}
+                label="Nombre del módulo"
+                name="moduleName"
+                placeholder="Módulo ..."
+              />
+              <SelectInput
+                name="accessLevel"
+                label="Nivel de acceso"
+                defaultValue={editingVideo?.accessLevel || "paid"}
+                options={[
+                  { value: "public", label: "Público (sin cuenta)" },
+                  { value: "subscriber", label: "Suscriptor (requiere email)" },
+                  { value: "paid", label: "Pagado (requiere compra)" },
+                ]}
+              />
+              <Input
+                label="Descripción"
+                name="description"
+                placeholder="Markdown"
+                type="textarea"
+                defaultValue={editingVideo?.description}
+              />
+            </div>
           )}
-          <Input
-            key={`duration-${detectedDuration || editingVideo?.duration || 'empty'}`}
-            defaultValue={detectedDuration || editingVideo?.duration}
-            label={`Duración en segundos${detectedDuration ? ' ✅ (detectada)' : ''}`}
-            name="duration"
-            placeholder="360"
-          />
-          <Input
-            defaultValue={editingVideo?.moduleName}
-            label="Nombre del módulo"
-            name="moduleName"
-            placeholder="Módulo ..."
-          />
-          <CheckBox
-            defaultChecked={editingVideo?.isPublic}
-            label="Es gratis"
-            name="isPublic"
-          />
-          <SelectInput
-            name="accessLevel"
-            label="Nivel de acceso"
-            defaultValue={editingVideo?.accessLevel || "paid"}
-            options={[
-              { value: "public", label: "Público (sin cuenta)" },
-              { value: "subscriber", label: "Suscriptor (requiere email)" },
-              { value: "paid", label: "Pagado (requiere compra)" },
-            ]}
-          />
-          <Input
-            label="Descripción"
-            name="description"
-            placeholder="Markdown"
-            type="textarea"
-            defaultValue={editingVideo?.description}
-          />
-          <Input
-            label="Nombre del autor"
-            name="authorName"
-            placeholder="blissmo"
-            defaultValue={editingVideo?.authorName}
-          />
-          <Input
-            defaultValue={editingVideo?.photoUrl}
-            label="Foto del autor"
-            name="photoUrl"
-            className="mb-10"
-          />
-          <button
-            type="submit"
-            disabled={pendingVideoAction !== null || isUploading}
-            className={cn(
-              "bg-black mt-auto border rounded-xl py-3 font-bold text-2xl hover:bg-gray-900 active:bg-black",
-              "absolute bottom-0 left-0 right-0",
-              (pendingVideoAction !== null || isUploading) && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {isUploading 
-              ? `Subiendo video... ${uploadProgress}%`
-              : pendingVideoAction !== null 
-              ? "Guardando..." 
-              : "Guardar"
-            }
-          </button>
+
+          <div className="sticky bottom-0 left-0 right-0 bg-background pt-4 -mx-6 px-6 md:-mx-12 md:px-12 border-t border-white/10">
+            <button
+              type="submit"
+              disabled={pendingVideoAction !== null || isUploading}
+              className={cn(
+                "w-full bg-indigo-600 border border-indigo-500 rounded-xl py-3 font-bold text-xl hover:bg-indigo-700 active:bg-indigo-800 transition-colors",
+                (pendingVideoAction !== null || isUploading) && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {isUploading
+                ? `Subiendo video... ${uploadProgress}%`
+                : pendingVideoAction !== null
+                ? "Guardando..."
+                : "Guardar video"
+              }
+            </button>
+          </div>
         </fetcher.Form>
       </Drawer>
       <fetcher.Form onSubmit={handleSubmit(submitHandler)}>

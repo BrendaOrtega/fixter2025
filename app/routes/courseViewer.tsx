@@ -42,27 +42,31 @@ export function meta({ data }: Route.MetaArgs) {
   });
 }
 
+// Cookie name for subscriber email
+const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
+
 // Action for handling subscription
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  console.log("📧 Action called:", { intent });
-
   if (intent === "subscribe-free") {
     const email = formData.get("email") as string;
     const courseSlug = formData.get("courseSlug") as string;
-
-    console.log("📧 Subscribe request:", { email, courseSlug });
 
     if (!email || !courseSlug) {
       return data({ error: "Email requerido" }, { status: 400 });
     }
 
     try {
-      const subscriber = await subscribeForFreeAccess(email, courseSlug);
-      console.log("📧 Subscriber created:", { id: subscriber.id, tags: subscriber.tags });
-      return data({ success: true, email });
+      await subscribeForFreeAccess(email, courseSlug);
+
+      // Set cookie and redirect to reload with access
+      return redirect(request.url, {
+        headers: {
+          "Set-Cookie": `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
+        },
+      });
     } catch (error) {
       console.error("📧 Error:", error);
       return data({ error: "Error al suscribirse" }, { status: 500 });
@@ -77,12 +81,17 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const searchParams = url.searchParams;
   const user = await getUserOrNull(request);
 
-  // Check subscription from query param (sent from client localStorage)
-  const subscriberEmail = searchParams.get("subscriberEmail");
+  // Check subscription from cookie
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const subscriberEmail = cookieHeader
+    .split(";")
+    .find((c) => c.trim().startsWith(`${SUBSCRIBER_COOKIE}=`))
+    ?.split("=")[1];
+
   let isSubscribed = false;
   if (subscriberEmail) {
     isSubscribed = await checkSubscriptionByEmail(
-      subscriberEmail,
+      decodeURIComponent(subscriberEmail),
       params.courseSlug as string
     );
   }
@@ -191,13 +200,6 @@ export default function Route({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(serverIsSubscribed);
 
-  // Check localStorage for subscription on mount
-  useEffect(() => {
-    const savedEmail = localStorage.getItem("fixtergeek_subscriber_email");
-    if (savedEmail) {
-      setIsSubscribed(true);
-    }
-  }, []);
 
   // Determine which drawer to show based on accessLevel
   const hasAccess =
@@ -227,11 +229,6 @@ export default function Route({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleSubscribed = (email: string) => {
-    setIsSubscribed(true);
-    // Reload to get access to the video
-    window.location.reload();
-  };
 
   return (
     <>
@@ -271,7 +268,6 @@ export default function Route({
       {showSubscriptionDrawer && (
         <SubscriptionDrawer
           courseSlug={course.slug}
-          onSubscribed={handleSubscribed}
           subscriberVideos={subscriberVideos}
         />
       )}

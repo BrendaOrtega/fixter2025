@@ -1,41 +1,20 @@
-import { Form, useFetcher } from "react-router";
-import { useState, useEffect } from "react";
+import { useFetcher } from "react-router";
+import { useState } from "react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
-const STORAGE_KEY = "fixtergeek_subscriber_email";
-
 export const SubscriptionDrawer = ({
   courseSlug,
-  onSubscribed,
   subscriberVideos = [],
 }: {
   courseSlug: string;
-  onSubscribed?: (email: string) => void;
   subscriberVideos?: string[];
 }) => {
   const [show, setShow] = useState(true);
   const [email, setEmail] = useState("");
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
-
-  // Check if already subscribed
-  useEffect(() => {
-    const savedEmail = localStorage.getItem(STORAGE_KEY);
-    if (savedEmail) {
-      setShow(false);
-      onSubscribed?.(savedEmail);
-    }
-  }, [onSubscribed]);
-
-  // Handle successful subscription
-  useEffect(() => {
-    if (fetcher.data?.success && email) {
-      localStorage.setItem(STORAGE_KEY, email);
-      setShow(false);
-      onSubscribed?.(email);
-    }
-  }, [fetcher.data, email, onSubscribed]);
+  // Server redirects after setting cookie, no client handling needed
 
   return (
     <Drawer
@@ -112,10 +91,4 @@ export const SubscriptionDrawer = ({
       </div>
     </Drawer>
   );
-};
-
-// Helper to check subscription from localStorage (client-side)
-export const getSubscribedEmail = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(STORAGE_KEY);
 };
