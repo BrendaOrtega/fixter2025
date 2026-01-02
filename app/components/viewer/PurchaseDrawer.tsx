@@ -11,7 +11,7 @@ export const PurchaseDrawer = ({ courseSlug }: { courseSlug: string }) => {
       noOverlay
       header={<></>}
       cta={<></>}
-      className="z-[100] "
+      className="z-[300]"
       title="Desbloquea todo el curso"
       isOpen={show}
     >

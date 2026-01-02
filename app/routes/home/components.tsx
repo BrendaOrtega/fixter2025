@@ -530,11 +530,12 @@ export const HomeHero = () => {
             que usan los profesionales de la industria
           </h2>{" "}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
-            <PrimaryButton as="Link" to="/ai-sdk" children="Taller sabatino | AI-SDK" />
+            <PrimaryButton as="Link" to="/cursos/ai-sdk/viewer?videoSlug=Introduccion-al-AI-SDK-c1b068e6-aab3-431a-a294-ace9e6ead6af" children="Nuevo curso: AI + React" />
+            <PrimaryButton as="Link" to="/ai-sdk" children="Taller sabatino" variant="ghost" />
             <PrimaryButton
               as="Link"
               to="/claude"
-              children="Aprende a usar Claude Code"
+              children="Claude Code"
               variant="ghost"
             />
             {/* <PrimaryButton
@@ -546,7 +547,7 @@ export const HomeHero = () => {
           </div>
           {/* Links sutiles a los libros */}
           <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
-            📖 Libro gratuito:{" "}
+            📖 Libros gratuitos:{" "}
             <Link
               to="/libros"
               className="text-sm  text-orange-300  hover:underline transition-all duration-200  "

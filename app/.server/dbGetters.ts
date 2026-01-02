@@ -47,6 +47,7 @@ const getAllVideos = async (courseId: string) => {
       module: true,
       isPublic: true,
       moduleName: true,
+      accessLevel: true,
     },
   });
   return nakedVideos.map((v, i) =>
@@ -313,6 +314,51 @@ export const updateOrCreateSuscription = async (
       email,
       tags: [...(tags || [])], // @todo improve
       confirmed: confirmed ? confirmed : undefined,
+    },
+  });
+};
+
+// Check if email is subscribed with course-specific tag
+export const checkSubscriptionByEmail = async (
+  email: string,
+  courseSlug: string
+): Promise<boolean> => {
+  const tag = `${courseSlug}-free-access`;
+  const subscriber = await db.subscriber.findFirst({
+    where: {
+      email,
+      tags: { has: tag },
+    },
+  });
+  return !!subscriber;
+};
+
+// Create or update subscription for free course access
+export const subscribeForFreeAccess = async (
+  email: string,
+  courseSlug: string
+) => {
+  const tag = `${courseSlug}-free-access`;
+  const existing = await db.subscriber.findUnique({ where: { email } });
+
+  if (existing) {
+    // Check if already has the tag
+    if (existing.tags.includes(tag)) {
+      return existing;
+    }
+    // Add the tag
+    return await db.subscriber.update({
+      where: { email },
+      data: { tags: { push: tag } },
+    });
+  }
+
+  // Create new subscriber with the tag
+  return await db.subscriber.create({
+    data: {
+      email,
+      tags: [tag],
+      confirmed: true, // Auto-confirm for free access
     },
   });
 };

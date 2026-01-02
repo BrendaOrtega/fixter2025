@@ -46,7 +46,7 @@ export const FloatingPromo = () => {
   };
 
   const handleClick = () => {
-    navigate("/ai-sdk");
+    navigate("/cursos/ai-sdk/viewer?videoSlug=Introduccion-al-AI-SDK-c1b068e6-aab3-431a-a294-ace9e6ead6af");
   };
 
   if (isDismissed) return null;
@@ -93,24 +93,24 @@ export const FloatingPromo = () => {
 
                   <div className="pr-8">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">🚀</span>
+                      <span className="text-2xl">🎁</span>
                       <h3 className="font-bold text-gray-900 dark:text-white">
-                        Nuevo Taller
+                        Acceso Gratis
                       </h3>
                     </div>
 
                     <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                      Integra IA en tus Proyectos web con AI SDK
+                      Nuevo curso: AI + React
                     </h4>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Aprende streaming, useChat, RAG y Tools con TypeScript. 2
-                      sesiones sabatinas de 3.5 horas cada una.
+                      Míralo completo mientras lo construimos. Sin costo, sin
+                      registro. Nuevas lecciones cada semana.
                     </p>
 
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        🎁 Grabaciones gratis
+                        🚧 En desarrollo
                       </div>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -118,7 +118,7 @@ export const FloatingPromo = () => {
                         onClick={handleClick}
                         className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
-                        Ver Taller →
+                        Ver ahora →
                       </motion.button>
                     </div>
                   </div>
@@ -156,9 +156,9 @@ export const FloatingPromo = () => {
                         className="overflow-hidden"
                       >
                         <div className="whitespace-nowrap text-white">
-                          <p className="font-bold text-sm">AI SDK</p>
+                          <p className="font-bold text-sm">AI + React</p>
                           <p className="text-xs opacity-90">
-                            TypeScript • Grabaciones gratis
+                            Curso gratis • En desarrollo
                           </p>
                         </div>
                       </motion.div>

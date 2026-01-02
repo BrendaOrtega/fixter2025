@@ -13,6 +13,7 @@ import { useFetcher, useSubmit } from "react-router";
 import type { Course, Video } from "~/types/models";
 import { Drawer } from "../viewer/SimpleDrawer";
 import { Reorder, useDragControls } from "motion/react";
+import { SelectInput } from "./SelectInput";
 
 // Cache global para evitar re-fetching de datos de video
 const videoDataCache = new Map<string, {m3u8?: string; storageLink?: string}>();
@@ -816,6 +817,16 @@ export const CourseForm = ({
             defaultChecked={editingVideo?.isPublic}
             label="Es gratis"
             name="isPublic"
+          />
+          <SelectInput
+            name="accessLevel"
+            label="Nivel de acceso"
+            defaultValue={editingVideo?.accessLevel || "paid"}
+            options={[
+              { value: "public", label: "Público (sin cuenta)" },
+              { value: "subscriber", label: "Suscriptor (requiere email)" },
+              { value: "paid", label: "Pagado (requiere compra)" },
+            ]}
           />
           <Input
             label="Descripción"

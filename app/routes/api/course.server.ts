@@ -81,6 +81,7 @@ export const courseServerActions = {
             description: data.description,
             authorName: data.authorName,
             photoUrl: data.photoUrl,
+            accessLevel: data.accessLevel,
             // Only update video links if explicitly provided (preserve upload-generated ones)
             ...(data.storageLink && { storageLink: data.storageLink }),
             ...(data.m3u8 && { m3u8: data.m3u8 }),

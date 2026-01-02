@@ -362,6 +362,7 @@ model Video {
   slug        String   @unique
   title       String
   isPublic    Boolean  @default(false)
+  accessLevel String   @default("paid") // "public" | "subscriber" | "paid"
   //optionals
   moduleName  String?
   storageLink String?

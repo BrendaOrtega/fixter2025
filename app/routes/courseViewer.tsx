@@ -1,11 +1,17 @@
-import { redirect } from "react-router";
+import { redirect, data } from "react-router";
 import { useState, useEffect } from "react";
 import { db } from "~/.server/db";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
 import { UnifiedSidebarMenu } from "~/components/viewer/UnifiedSidebarMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
-import { getFreeOrEnrolledCourseFor, getUserOrNull } from "~/.server/dbGetters";
+import { SubscriptionDrawer } from "~/components/viewer/SubscriptionDrawer";
+import {
+  getFreeOrEnrolledCourseFor,
+  getUserOrNull,
+  checkSubscriptionByEmail,
+  subscribeForFreeAccess,
+} from "~/.server/dbGetters";
 import type { Route } from "./+types/courseViewer";
 import getMetaTags from "~/utils/getMetaTags";
 
@@ -36,16 +42,58 @@ export function meta({ data }: Route.MetaArgs) {
   });
 }
 
+// Action for handling subscription
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  console.log("📧 Action called:", { intent });
+
+  if (intent === "subscribe-free") {
+    const email = formData.get("email") as string;
+    const courseSlug = formData.get("courseSlug") as string;
+
+    console.log("📧 Subscribe request:", { email, courseSlug });
+
+    if (!email || !courseSlug) {
+      return data({ error: "Email requerido" }, { status: 400 });
+    }
+
+    try {
+      const subscriber = await subscribeForFreeAccess(email, courseSlug);
+      console.log("📧 Subscriber created:", { id: subscriber.id, tags: subscriber.tags });
+      return data({ success: true, email });
+    } catch (error) {
+      console.error("📧 Error:", error);
+      return data({ error: "Error al suscribirse" }, { status: 500 });
+    }
+  }
+
+  return data({ error: "Intent no válido" }, { status: 400 });
+};
+
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const user = await getUserOrNull(request);
 
-  const { course, videos } = await getFreeOrEnrolledCourseFor(
+  // Check subscription from query param (sent from client localStorage)
+  const subscriberEmail = searchParams.get("subscriberEmail");
+  let isSubscribed = false;
+  if (subscriberEmail) {
+    isSubscribed = await checkSubscriptionByEmail(
+      subscriberEmail,
+      params.courseSlug as string
+    );
+  }
+
+  const result = await getFreeOrEnrolledCourseFor(
     user,
     params.courseSlug as string
   );
-  const isPurchased = user ? user.courses.includes(course.id) : false;
+  if (!result) throw redirect("/404");
+  const { course, videos } = result;
+  const isPurchased = user ? user.courses.includes(course.id as string) : false;
   let video;
   if (searchParams.has("videoSlug")) {
     video = await db.video.findUnique({
@@ -73,19 +121,52 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       slug: true,
       id: true,
       poster: true,
+      accessLevel: true,
     },
   });
 
   const moduleNames = ["nomodules"];
-  const removeStorageLink = !isPurchased && !video.isPublic && !course.isFree;
+
+  // Determine access based on accessLevel
+  const accessLevel = (video as any).accessLevel || "paid";
+
+  // Debug log
+  console.log("🔐 Access check:", {
+    videoTitle: video.title,
+    accessLevel,
+    rawAccessLevel: (video as any).accessLevel,
+    isSubscribed,
+    isPurchased,
+    courseFree: course.isFree,
+  });
+
+  const hasAccess =
+    course.isFree ||
+    isPurchased ||
+    accessLevel === "public" ||
+    (accessLevel === "subscriber" && isSubscribed);
+
+  const removeStorageLink = !hasAccess;
+
+  const videoToReturn = removeStorageLink ? { ...video, storageLink: "", m3u8: "" } : video;
+  console.log("🔐 Result:", { hasAccess, removeStorageLink, returnedLink: videoToReturn.storageLink });
+
+  // Get subscriber video titles for the drawer
+  const subscriberVideos = videos
+    .filter((v: any) => v.accessLevel === "subscriber")
+    .map((v: any) => v.title);
+
   return {
     course,
     nextVideo,
     user,
     isPurchased,
-    video: removeStorageLink ? { ...video, storageLink: "" } : video,
+    isSubscribed,
+    accessLevel,
+    video: videoToReturn,
     videos,
     moduleNames,
+    subscriberVideos,
     searchParams: {
       success: searchParams.get("success") === "1",
     },
@@ -96,16 +177,37 @@ export default function Route({
   loaderData: {
     nextVideo,
     isPurchased,
+    isSubscribed: serverIsSubscribed,
+    accessLevel,
     video,
     videos,
     searchParams,
     moduleNames,
     course,
+    subscriberVideos,
   },
 }: Route.ComponentProps) {
   const [successIsOpen, setSuccessIsOpen] = useState(searchParams.success);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const showPurchaseDrawer = !isPurchased && !video.isPublic && !course.isFree;
+  const [isSubscribed, setIsSubscribed] = useState(serverIsSubscribed);
+
+  // Check localStorage for subscription on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("fixtergeek_subscriber_email");
+    if (savedEmail) {
+      setIsSubscribed(true);
+    }
+  }, []);
+
+  // Determine which drawer to show based on accessLevel
+  const hasAccess =
+    course.isFree ||
+    isPurchased ||
+    accessLevel === "public" ||
+    (accessLevel === "subscriber" && isSubscribed);
+
+  const showSubscriptionDrawer = !hasAccess && accessLevel === "subscriber";
+  const showPurchaseDrawer = !hasAccess && accessLevel === "paid";
 
   // Set initial menu state based on screen size
   useEffect(() => {
@@ -124,6 +226,12 @@ export default function Route({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleSubscribed = (email: string) => {
+    setIsSubscribed(true);
+    // Reload to get access to the video
+    window.location.reload();
+  };
 
   return (
     <>
@@ -160,6 +268,13 @@ export default function Route({
         />
       </article>
       {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
+      {showSubscriptionDrawer && (
+        <SubscriptionDrawer
+          courseSlug={course.slug}
+          onSubscribed={handleSubscribed}
+          subscriberVideos={subscriberVideos}
+        />
+      )}
       {showPurchaseDrawer && <PurchaseDrawer courseSlug={course.slug} />}
     </>
   );

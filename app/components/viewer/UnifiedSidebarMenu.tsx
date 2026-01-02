@@ -12,7 +12,8 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { BsMenuButtonWide, BsMarkdown } from "react-icons/bs";
 import { FaPlay, FaVideo } from "react-icons/fa6";
-import { IoMdLock, IoMdClose } from "react-icons/io";
+import { IoMdLock, IoMdClose, IoMdMail } from "react-icons/io";
+import { IoCheckmarkCircle } from "react-icons/io5";
 import {
   MdMenuOpen,
   MdOutlineRadioButtonChecked,
@@ -334,6 +335,7 @@ const VideosContent = ({
                   title={v?.title || ""}
                   duration={v?.duration || 60}
                   courseSlug={courseSlug}
+                  accessLevel={(v as any)?.accessLevel || "paid"}
                 />
               ))}
           </div>
@@ -385,6 +387,7 @@ const VideoListItem = ({
   isCurrent,
   slug,
   isLocked,
+  accessLevel,
 }: {
   courseSlug?: string;
   isLocked?: boolean;
@@ -393,6 +396,7 @@ const VideoListItem = ({
   duration: number | string;
   isCompleted?: boolean;
   title: string;
+  accessLevel?: string;
 }) => {
   const formatDuration = (mins: number | string) => {
     mins = +mins / 60;
@@ -447,13 +451,21 @@ const VideoListItem = ({
         </div>
       </div>
 
-      {isLocked ? (
-        <IoMdLock className="text-gray-500 ml-2" />
-      ) : (
-        <div className="text-xs text-gray-500 ml-2">
+      {/* Access level indicator */}
+      <div className="flex items-center gap-1.5 ml-2">
+        {accessLevel === "public" && (
+          <IoCheckmarkCircle className="text-green-500 text-sm" title="Gratis" />
+        )}
+        {accessLevel === "subscriber" && (
+          <IoMdMail className="text-emerald-400 text-sm" title="Gratis con email" />
+        )}
+        {(accessLevel === "paid" || (!accessLevel && isLocked)) && (
+          <IoMdLock className={isLocked ? "text-gray-500 text-sm" : "text-green-500/50 text-sm"} title={isLocked ? "Requiere compra" : "Desbloqueado"} />
+        )}
+        <span className="text-xs text-gray-500">
           {formatDuration(duration)}
-        </div>
-      )}
+        </span>
+      </div>
     </Link>
   );
 };
