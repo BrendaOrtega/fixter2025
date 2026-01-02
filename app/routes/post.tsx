@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import type { Route } from "./+types/post";
 import { IoIosArrowBack, IoLogoWhatsapp } from "react-icons/io";
 import { Autor } from "~/components/common/Autor";
-import Markdown from "~/components/common/Markdown";
+import { Streamdown } from "streamdown";
 import { CourseBanner } from "~/components/CourseBanner";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
 import { SubscriptionModal } from "~/components/SubscriptionModal";
@@ -306,9 +306,10 @@ export default function Page({
                 )}
 
                 <div className={twMerge(
-                  readingMode && "prose prose-2xl max-w-none prose-white [&_p]:text-3xl [&_p]:leading-relaxed [&_li]:text-2xl [&_h2]:text-5xl [&_h3]:text-4xl [&_pre]:text-xl [&_blockquote]:text-2xl"
+                  "prose prose-lg prose-invert max-w-none",
+                  readingMode && "prose-2xl [&_p]:text-3xl [&_p]:leading-relaxed [&_li]:text-2xl [&_h2]:text-5xl [&_h3]:text-4xl [&_pre]:text-xl [&_blockquote]:text-2xl"
                 )}>
-                  <Markdown>{post.body}</Markdown>
+                  <Streamdown>{post.body}</Streamdown>
                 </div>
               </motion.div>
             </section>
