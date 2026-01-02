@@ -15,15 +15,16 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
 
   const user = fetcher.data?.user;
 
-  // Ocultar navbar en rutas de libros y admin
+  // Ocultar navbar en rutas de libros, admin y viewer
   const isBookRoute = location.pathname.startsWith('/libros/');
   const isAdminRoute = location.pathname.startsWith('/admin/');
+  const isViewerRoute = location.pathname.includes('/viewer');
 
   return (
     <>
       {!isBookRoute && !isAdminRoute && <NavBar user={user} />}
       {children}
-      {!isBookRoute && !isAdminRoute && <FloatingPromo />}
+      {!isBookRoute && !isAdminRoute && !isViewerRoute && <FloatingPromo />}
       {/* <WebinarBanner /> */}
       {/* <GlobalBanner /> */}
     </>
