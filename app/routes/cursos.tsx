@@ -72,19 +72,52 @@ export default function Route({
   );
 }
 
-export const CousesList = ({ courses }: { courses: Course[] }) => {
-  // special courses
-  const ids = ["645d3dbd668b73b34443789c"];
-  //
+// Cursos próximamente (estáticos, sin temario todavía)
+const proximamenteCourses: Partial<Course>[] = [
+  {
+    id: "proximamente-rag-typescript",
+    slug: "rag-typescript",
+    title: "RAG práctico con TypeScript",
+    icon: "/courses/code.svg",
+    duration: "120 min",
+    level: "avanzado",
+    tipo: "proximamente",
+  },
+  {
+    id: "proximamente-cookies-patterns",
+    slug: "cookies-patterns",
+    title: "Experiencias y patterns web con cookies",
+    icon: "/courses/code.svg",
+    duration: "90 min",
+    level: "intermedio",
+    tipo: "proximamente",
+  },
+];
+
+export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
+  // special courses (external links)
+  const externalIds = ["645d3dbd668b73b34443789c"];
+
+  // Separar AI SDK para destacarlo primero
+  const aiSdkCourse = courses.find((c) => c.slug === "ai-sdk");
+  const otherCourses = courses.filter((c) => c.slug !== "ai-sdk");
+
+  // Orden: AI SDK (destacado) -> próximamente -> resto de cursos
+  const orderedCourses = [
+    ...(aiSdkCourse ? [aiSdkCourse] : []),
+    ...proximamenteCourses,
+    ...otherCourses,
+  ];
+
   return (
     <div className="grid gap-10 xl:gap-20 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-16 lg:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto">
-      {courses.map((course) => (
+      {orderedCourses.map((course) => (
         <CourseCard
           courseSlug={course.slug}
           key={course.id}
           course={course}
           to={
-            ids.includes(course.id)
+            externalIds.includes(course.id || "")
               ? "http://animaciones.fixtergeek.com"
               : undefined
           }
@@ -99,10 +132,13 @@ export const formatDuration = (secs?: string | number | null) => {
   if (typeof secs === "string" && secs.includes("min")) {
     return secs;
   }
-  
+
+  let numSecs: number;
   if (typeof secs === "string") {
-    secs = Number(secs);
+    numSecs = Number(secs);
+  } else {
+    numSecs = secs ?? 0;
   }
-  if (isNaN(secs) || !secs) return "60 mins";
-  return (secs / 60).toFixed(0) + " mins";
+  if (isNaN(numSecs) || !numSecs) return "60 mins";
+  return (numSecs / 60).toFixed(0) + " mins";
 };

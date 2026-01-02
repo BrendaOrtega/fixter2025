@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 
-export const useVideosLength = (courseId: string) => {
+export const useVideosLength = (courseId?: string, skip?: boolean) => {
   const fetcher = useFetcher();
 
   const videosLength = useMemo(() => fetcher.data?.videosLength, [fetcher]) as
@@ -9,6 +9,9 @@ export const useVideosLength = (courseId: string) => {
     | null;
 
   useEffect(() => {
+    // Skip if no courseId or explicitly skipped
+    if (!courseId || skip) return;
+
     // getting number of lessons
     fetcher.submit(
       {
@@ -17,6 +20,6 @@ export const useVideosLength = (courseId: string) => {
       },
       { method: "POST", action: "/api/course" }
     );
-  }, []);
+  }, [courseId, skip]);
   return videosLength;
 };
