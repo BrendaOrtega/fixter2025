@@ -446,14 +446,7 @@ const CourseHeader = ({
             </div>
           </div>
           <div className="gap-6 flex mt-10">
-            {course.isFree ? (
-              <PrimaryButton
-                as="Link"
-                to={`/cursos/${slug}/viewer`}
-                variant="fill"
-                title="Empezar gratis"
-              />
-            ) : hasPublicVideos ? (
+            {course.isFree || hasPublicVideos || slug === "ai-sdk" ? (
               <PrimaryButton
                 as="Link"
                 to={`/cursos/${slug}/viewer`}
