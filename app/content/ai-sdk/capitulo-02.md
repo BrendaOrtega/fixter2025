@@ -474,7 +474,9 @@ function Chat() {
 const Message = React.memo(function Message({ message }: { message: Message }) {
   return (
     <div className={message.role === "user" ? "user-msg" : "assistant-msg"}>
-      {message.content}
+      {message.parts.map((part, i) =>
+        part.type === "text" ? <span key={i}>{part.text}</span> : null
+      )}
     </div>
   );
 });

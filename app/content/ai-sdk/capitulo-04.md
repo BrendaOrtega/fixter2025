@@ -1,4 +1,4 @@
-# Capítulo 4: El Atajo
+# Capítulo 4: React Router v7 — Tu Chat Full-Stack
 
 Ya entiendes el streaming. Viste cada `text-delta`, cada `finish-step`, cada byte viajando por el wire.
 
@@ -120,23 +120,25 @@ Un `fly deploy` y tu app está en producción. El mismo código corre en desarro
 
 ## useChat apuntando a tu action
 
-En el cliente, `useChat` se conecta al action:
+En el cliente, `useChat` se conecta al action mediante `transport`:
 
 ```typescript
 // app/routes/chat.tsx
-import { useChat } from '@ai-sdk/react';
+import { useChat, DefaultChatTransport } from '@ai-sdk/react';
 import { useState } from 'react';
 
 export default function ChatPage() {
   const [input, setInput] = useState('');
   const { messages, sendMessage, status } = useChat({
-    api: '/api/chat',
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+    }),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      sendMessage({ content: input });
+      sendMessage({ text: input });
       setInput('');
     }
   };
@@ -178,7 +180,12 @@ export default function ChatPage() {
 }
 ```
 
-> **Nota AI SDK v6:** El hook ya no maneja el input internamente. Usamos `useState` de React para el campo de texto, y `sendMessage({ content })` para enviar. Los mensajes tienen `parts` en lugar de `content`.
+> **Nota AI SDK v6:** El hook usa `transport` con `DefaultChatTransport` para configurar el endpoint. Usamos `useState` de React para el input, y `sendMessage({ text })` para enviar. Los mensajes tienen `parts` en lugar de `content`.
+>
+> Si tu endpoint es exactamente `/api/chat` (el default), puedes omitir `transport` completamente:
+> ```typescript
+> const { messages, sendMessage, status } = useChat();
+> ```
 
 ## Callbacks en el servidor RRv7
 
@@ -314,13 +321,15 @@ Y el cliente:
 
 ```typescript
 // app/routes/chat.tsx
-import { useChat } from '@ai-sdk/react';
+import { useChat, DefaultChatTransport } from '@ai-sdk/react';
 import { useState } from 'react';
 
 export default function ChatPage() {
   const [input, setInput] = useState('');
   const { messages, sendMessage, status } = useChat({
-    api: '/api/chat',
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+    }),
   });
 
   return (
@@ -367,7 +376,7 @@ export default function ChatPage() {
           onSubmit={(e) => {
             e.preventDefault();
             if (input.trim()) {
-              sendMessage({ content: input });
+              sendMessage({ text: input });
               setInput('');
             }
           }}

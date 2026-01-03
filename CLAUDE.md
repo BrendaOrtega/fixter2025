@@ -151,13 +151,75 @@ Cada capítulo incluye:
 6. **Ruta del libro**: `app/routes/libros/ai_sdk.tsx`
 7. **Regenerar EPUB**: `python3 app/scripts/generate_ai_sdk_epub.py`
 
-### Cambios críticos en AI SDK v6 (vs versiones anteriores)
+### ⚠️ CHECKLIST OBLIGATORIO - AI SDK v6
+
+**ANTES de escribir cualquier código con `useChat`, verificar:**
+
+- [ ] Import incluye `DefaultChatTransport`: `import { useChat, DefaultChatTransport } from '@ai-sdk/react'`
+- [ ] Usar `transport` en lugar de `api`: `useChat({ transport: new DefaultChatTransport({ api: '/api/chat' }) })`
+- [ ] Enviar mensajes con `text`: `sendMessage({ text: input })` — NO `{ content: input }`
+- [ ] Renderizar con `parts`: `message.parts.map(part => part.type === 'text' ? part.text : null)`
+- [ ] Usar `status` para estados: `status === 'streaming'` — NO `isLoading`
+
+### Código de referencia v6 (COPIAR ESTE)
+
+```typescript
+// ✅ CORRECTO - AI SDK v6
+import { useChat, DefaultChatTransport } from '@ai-sdk/react';
+import { useState } from 'react';
+
+export default function Chat() {
+  const [input, setInput] = useState('');
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+    }),
+  });
+
+  return (
+    <>
+      {messages.map((m) => (
+        <div key={m.id}>
+          {m.parts.map((part, i) =>
+            part.type === 'text' ? <span key={i}>{part.text}</span> : null
+          )}
+        </div>
+      ))}
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        sendMessage({ text: input });
+        setInput('');
+      }}>
+        <input value={input} onChange={(e) => setInput(e.target.value)} />
+        <button disabled={status === 'streaming'}>Enviar</button>
+      </form>
+    </>
+  );
+}
+```
+
+### ❌ Código INCORRECTO (v4/v5 - NO USAR)
+
+```typescript
+// ❌ INCORRECTO - Esto es v4/v5
+import { useChat } from '@ai-sdk/react';
+
+const { messages, append, isLoading, handleInputChange, input } = useChat({
+  api: '/api/chat',  // ❌ Usar transport
+});
+
+append({ content: input });  // ❌ Usar sendMessage({ text: })
+messages.map(m => m.content);  // ❌ Usar m.parts
+```
+
+### Tabla de cambios v6
 
 | Antes (v4/v5) | Ahora (v6) |
 |---------------|------------|
-| `useChat({ api: "/api/chat" })` | `useChat()` (default) o con `transport` |
+| `useChat({ api: "/api/chat" })` | `useChat({ transport: new DefaultChatTransport({ api }) })` |
+| `import { useChat }` | `import { useChat, DefaultChatTransport }` |
 | `handleInputChange`, `handleSubmit` | Manejar input con `useState` manualmente |
-| `append(message)` | `sendMessage({ text: input })` |
+| `append({ content: input })` | `sendMessage({ text: input })` |
 | `reload()` | `regenerate()` |
 | `isLoading` | `status` ('ready', 'submitted', 'streaming', 'error') |
 | `message.content` | `message.parts` (array con `type` y `text`) |
