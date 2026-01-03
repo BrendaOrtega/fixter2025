@@ -32,6 +32,7 @@ const chapters = [
   { id: "05", title: "Structured Output — Respuestas Tipadas", slug: "capitulo-05" },
   { id: "06", title: "Tools — Dándole Manos al Modelo", slug: "capitulo-06" },
   { id: "07", title: "Agentes — El Modelo Toma el Control", slug: "capitulo-07" },
+  { id: "08", title: "Generación de Imágenes — De Texto a Visual", slug: "capitulo-08" },
 ];
 
 export const meta = ({ location }: Route.MetaArgs) => {
