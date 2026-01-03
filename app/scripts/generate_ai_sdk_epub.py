@@ -127,6 +127,7 @@ def create_epub():
         {"id": "06", "title": "Tools — Dándole Manos al Modelo", "slug": "capitulo-06"},
         {"id": "07", "title": "Agentes — Encapsulando la Inteligencia", "slug": "capitulo-07"},
         {"id": "08", "title": "generateImage — Creando Imágenes con Código", "slug": "capitulo-08"},
+        {"id": "09", "title": "Embeddings — Búsqueda Semántica", "slug": "capitulo-09"},
     ]
 
     # Directorio donde están los archivos markdown

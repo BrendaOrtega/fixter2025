@@ -228,7 +228,7 @@ async function generarPreviews(titulo: string) {
 }
 
 // Uso
-const previews = await generarPreviews('Domina TypeScript en 2025');
+const previews = await generarPreviews('Domina TypeScript en 2026');
 console.log(`Generadas ${previews.length} variantes`);
 ```
 
@@ -444,7 +444,7 @@ function descargarImagen(base64: string, nombreArchivo: string) {
 
 ## Costos y Consideraciones
 
-### Precio por Imagen (OpenAI, enero 2025)
+### Precio por Imagen (OpenAI, enero 2026)
 
 | Modelo | 1024x1024 | 1536x1024 / 1024x1536 |
 |--------|-----------|------------------------|

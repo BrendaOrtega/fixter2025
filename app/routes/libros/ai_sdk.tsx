@@ -33,6 +33,12 @@ const chapters = [
   { id: "06", title: "Tools — Dándole Manos al Modelo", slug: "capitulo-06" },
   { id: "07", title: "Agentes — Encapsulando la Inteligencia", slug: "capitulo-07" },
   { id: "08", title: "generateImage — Creando Imágenes con Código", slug: "capitulo-08" },
+  { id: "09", title: "Embeddings — Búsqueda Semántica", slug: "capitulo-09" },
+  // Próximos capítulos (deshabilitados)
+  { id: "10", title: "RAG — Retrieval Augmented Generation", slug: "capitulo-10", disabled: true },
+  { id: "11", title: "Agentic RAG — Agentes con Conocimiento", slug: "capitulo-11", disabled: true },
+  { id: "12", title: "Audio y Speech — Voz e IA", slug: "capitulo-12", disabled: true },
+  { id: "13", title: "Multi-Provider — Usando Diferentes Modelos", slug: "capitulo-13", disabled: true },
 ];
 
 export const meta = ({ location }: Route.MetaArgs) => {
@@ -65,12 +71,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     );
     const content = await fs.readFile(filePath, "utf-8");
 
-    // Encontrar el capítulo actual y los adyacentes
+    // Encontrar el capítulo actual y los adyacentes (excluyendo deshabilitados)
     const currentIndex = chapters.findIndex((c) => c.slug === chapterSlug);
     const currentChapter = chapters[currentIndex] || chapters[0];
     const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
-    const nextChapter =
-      currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
+    // Solo mostrar siguiente si no está deshabilitado
+    const potentialNext = currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
+    const nextChapter = potentialNext && !potentialNext.disabled ? potentialNext : null;
 
     return {
       content,
