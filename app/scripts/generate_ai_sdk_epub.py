@@ -122,7 +122,9 @@ def create_epub():
         {"id": "01", "title": "Tu Primera Inferencia con IA", "slug": "capitulo-01"},
         {"id": "02", "title": "React y el Hook useChat", "slug": "capitulo-02"},
         {"id": "03", "title": "Dentro del Streaming", "slug": "capitulo-03"},
-        {"id": "04", "title": "El Atajo", "slug": "capitulo-04"},
+        {"id": "04", "title": "React Router v7 — Tu Chat Full-Stack", "slug": "capitulo-04"},
+        {"id": "05", "title": "Tools — Dándole Manos al Modelo", "slug": "capitulo-05"},
+        {"id": "06", "title": "Agentes — El Modelo Toma el Control", "slug": "capitulo-06"},
     ]
 
     # Directorio donde están los archivos markdown
