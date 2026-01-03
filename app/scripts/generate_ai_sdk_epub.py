@@ -125,8 +125,8 @@ def create_epub():
         {"id": "04", "title": "React Router v7 — Tu Chat Full-Stack", "slug": "capitulo-04"},
         {"id": "05", "title": "Structured Output — Respuestas Tipadas", "slug": "capitulo-05"},
         {"id": "06", "title": "Tools — Dándole Manos al Modelo", "slug": "capitulo-06"},
-        {"id": "07", "title": "Agentes — El Modelo Toma el Control", "slug": "capitulo-07"},
-        {"id": "08", "title": "Generación de Imágenes — De Texto a Visual", "slug": "capitulo-08"},
+        {"id": "07", "title": "Agentes — Encapsulando la Inteligencia", "slug": "capitulo-07"},
+        {"id": "08", "title": "generateImage — Creando Imágenes con Código", "slug": "capitulo-08"},
     ]
 
     # Directorio donde están los archivos markdown

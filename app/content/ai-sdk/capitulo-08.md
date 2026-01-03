@@ -1,4 +1,4 @@
-# Capítulo 8: Generación de Imágenes — De Texto a Visual
+# Capítulo 8: generateImage — Creando Imágenes con Código
 
 Hasta ahora todo ha sido texto: prompts, respuestas, structured output, herramientas. Pero el AI SDK también puede generar imágenes. En este capítulo construiremos un generador de thumbnails para YouTube que demuestra el poder de combinar generación de texto con generación de imágenes.
 
