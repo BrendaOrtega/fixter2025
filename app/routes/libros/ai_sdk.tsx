@@ -47,6 +47,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const chapterSlug = url.searchParams.get("chapter") || "prologo";
 
+  console.log(`[AI SDK Book] Loading chapter: "${chapterSlug}" from URL: ${url.pathname}${url.search}`);
+
   try {
     // Leer el archivo MD del capítulo
     const fs = await import("fs").then((m) => m.promises);
@@ -76,6 +78,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     };
   } catch (error) {
     // Si no se encuentra el capítulo, cargar el primero
+    console.error(`[AI SDK Book] Error loading chapter "${chapterSlug}":`, error);
     const fs = await import("fs").then((m) => m.promises);
     const path = await import("path");
     const filePath = path.join(
