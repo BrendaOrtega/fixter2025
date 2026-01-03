@@ -5,6 +5,7 @@ interface Chapter {
   id: string;
   title: string;
   slug: string;
+  disabled?: boolean;
 }
 
 interface TableOfContentsProps {
@@ -101,27 +102,45 @@ function ChapterList({
     <ul className="space-y-1">
       {chapters.map((chapter) => (
         <li key={chapter.id}>
-          <Link
-            to={`?chapter=${chapter.slug}`}
-            onClick={onChapterClick}
-            className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
-              currentChapter.slug === chapter.slug
-                ? "text-white font-medium shadow-lg"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            }`}
-            style={
-              currentChapter.slug === chapter.slug
-                ? { backgroundColor: accentColor, boxShadow: `0 10px 15px -3px ${accentColor}33` }
-                : undefined
-            }
-          >
-            <span className="text-xs opacity-60">
-              {chapter.id === "prólogo" || chapter.id === "intro"
-                ? ""
-                : `Capítulo ${chapter.id}`}
-            </span>
-            <div className="font-medium mt-1">{chapter.title}</div>
-          </Link>
+          {chapter.disabled ? (
+            <div
+              className="block px-4 py-3 rounded-lg bg-gray-50 border border-dashed border-gray-200 cursor-not-allowed opacity-60"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">
+                  {chapter.id === "prólogo" || chapter.id === "intro"
+                    ? ""
+                    : `Capítulo ${chapter.id}`}
+                </span>
+                <span className="text-[10px] font-semibold text-gray-400 bg-gray-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Próximamente
+                </span>
+              </div>
+              <div className="font-medium mt-1 text-gray-400">{chapter.title}</div>
+            </div>
+          ) : (
+            <Link
+              to={`?chapter=${chapter.slug}`}
+              onClick={onChapterClick}
+              className={`block px-4 py-3 rounded-lg transition-all duration-200 ${
+                currentChapter.slug === chapter.slug
+                  ? "text-white font-medium shadow-lg"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              }`}
+              style={
+                currentChapter.slug === chapter.slug
+                  ? { backgroundColor: accentColor, boxShadow: `0 10px 15px -3px ${accentColor}33` }
+                  : undefined
+              }
+            >
+              <span className="text-xs opacity-60">
+                {chapter.id === "prólogo" || chapter.id === "intro"
+                  ? ""
+                  : `Capítulo ${chapter.id}`}
+              </span>
+              <div className="font-medium mt-1">{chapter.title}</div>
+            </Link>
+          )}
         </li>
       ))}
     </ul>
