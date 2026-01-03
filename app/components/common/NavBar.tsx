@@ -104,7 +104,7 @@ export const NavBar = ({ user }: { user?: User }) => {
         </Link>
         <div className="md:flex items-center gap-8 hidden ">
           <a
-            href="https://www.youtube.com/@fixtergeek8057"
+            href="https://www.youtube.com/@fixtergeek"
             rel="noreferrer"
             target="_blank"
             className="place-content-center hover:scale-105 transition-all sm:grid text-white hidden"
@@ -364,7 +364,7 @@ const MobileMenu = ({
           </a>
           <a
             rel="noreferrer"
-            href="https://www.youtube.com/channel/UC2cNZUym14-K-yGgOEAFh6g"
+            href="https://www.youtube.com/@fixtergeek"
             target="_blank"
           >
             <FaYoutube className="text-white text-4xl hover:opacity-40" />
