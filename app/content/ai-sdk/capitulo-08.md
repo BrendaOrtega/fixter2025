@@ -68,20 +68,24 @@ const { image, images } = await generateImage({
 
   // === OPCIONALES ===
   n: 1,                    // Cantidad de imágenes (default: 1)
-  size: '1024x1024',       // Dimensiones
+  size: '1024x1024',       // Dimensiones (no usar aspectRatio con OpenAI)
+  seed: 12345,             // Para resultados reproducibles
 
   // === OPCIONES DEL PROVEEDOR ===
   providerOptions: {
     openai: {
-      quality: 'hd',       // 'standard' | 'hd'
-      style: 'vivid',      // 'vivid' | 'natural'
+      quality: 'high',              // 'low' | 'medium' | 'high'
+      background: 'transparent',    // 'transparent' | 'opaque' (solo gpt-image-1)
     }
   },
 
   // === CONTROL ===
-  abortSignal: controller.signal,  // Para cancelar
+  maxRetries: 2,                    // Reintentos si falla (default: 2)
+  abortSignal: controller.signal,   // Para cancelar
 });
 ```
+
+> **Nota**: Los modelos DALL-E no soportan `aspectRatio`. Usa `size` en su lugar.
 
 ### Tamaños Disponibles
 
