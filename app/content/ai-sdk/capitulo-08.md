@@ -9,8 +9,9 @@ import { generateImage } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
 const { image } = await generateImage({
-  model: openai.image('dall-e-3'),
-  prompt: 'Un programador mexicano celebrando frente a su computadora, estilo ilustración moderna, colores vibrantes, fondo de código',
+  model: openai.image('gpt-image-1'),
+  prompt: 'Un programador mexicano celebrando frente a su computadora, estilo ilustración moderna, colores vibrantes',
+  size: '1024x1024',
 });
 
 // La imagen está en base64
@@ -19,7 +20,7 @@ console.log(image.base64.slice(0, 50) + '...');
 
 // O como Uint8Array para guardar en archivo
 import { writeFileSync } from 'fs';
-writeFileSync('thumbnail.png', image.uint8Array);
+writeFileSync('thumbnail.png', Buffer.from(image.base64, 'base64'));
 ```
 
 Ejecuta esto y tendrás una imagen PNG en tu directorio.
@@ -27,19 +28,76 @@ Ejecuta esto y tendrás una imagen PNG en tu directorio.
 ## ¿Qué Acaba de Pasar?
 
 1. **`generateImage`** — Función del AI SDK para generar imágenes
-2. **`openai.image('dall-e-3')`** — Especifica el modelo de imagen (no de texto)
+2. **`openai.image('gpt-image-1')`** — Especifica el modelo de imagen (no de texto)
 3. **`prompt`** — Descripción textual de la imagen deseada
-4. **`image.base64`** — La imagen codificada en base64
-5. **`image.uint8Array`** — Bytes raw para guardar como archivo
+4. **`size`** — Dimensiones de la imagen
+5. **`image.base64`** — La imagen codificada en base64
 
 A diferencia de `generateText` que retorna strings, `generateImage` retorna objetos con la imagen en múltiples formatos.
+
+## Modelos de Imagen Disponibles
+
+```typescript
+import { openai } from '@ai-sdk/openai';
+
+// GPT Image 1 - El más reciente de OpenAI
+const modelo = openai.image('gpt-image-1');
+
+// Versión mini - más rápida y económica
+const modeloMini = openai.image('gpt-image-1-mini');
+
+// DALL-E 3 - Modelo anterior, aún disponible
+const dalleModel = openai.image('dall-e-3');
+```
+
+### Comparativa de Modelos OpenAI
+
+| Modelo | Velocidad | Costo | Uso recomendado |
+|--------|-----------|-------|-----------------|
+| `gpt-image-1` | Media | Mayor | Producción, calidad máxima |
+| `gpt-image-1-mini` | Rápida | Menor | Previews, iteración rápida |
+| `dall-e-3` | Media | Medio | Compatibilidad con código existente |
+
+## Parámetros de generateImage
+
+```typescript
+const { image, images } = await generateImage({
+  // === REQUERIDOS ===
+  model: openai.image('gpt-image-1'),
+  prompt: 'Descripción de la imagen',
+
+  // === OPCIONALES ===
+  n: 1,                    // Cantidad de imágenes (default: 1)
+  size: '1024x1024',       // Dimensiones
+
+  // === OPCIONES DEL PROVEEDOR ===
+  providerOptions: {
+    openai: {
+      quality: 'hd',       // 'standard' | 'hd'
+      style: 'vivid',      // 'vivid' | 'natural'
+    }
+  },
+
+  // === CONTROL ===
+  abortSignal: controller.signal,  // Para cancelar
+});
+```
+
+### Tamaños Disponibles
+
+| Size | Aspecto | Uso típico |
+|------|---------|------------|
+| `1024x1024` | Cuadrado | Instagram, perfil |
+| `1536x1024` | Horizontal | YouTube thumbnail |
+| `1024x1536` | Vertical | Stories, Pinterest |
 
 ## Anatomía de la Respuesta
 
 ```typescript
 const resultado = await generateImage({
-  model: openai.image('dall-e-3'),
+  model: openai.image('gpt-image-1'),
   prompt: 'Logo minimalista de una taquería',
+  size: '1024x1024',
 });
 
 // Una sola imagen
@@ -47,70 +105,14 @@ console.log(resultado.image);
 // {
 //   base64: "iVBORw0KGgo...",
 //   uint8Array: Uint8Array [...],
-//   mediaType: "image/png"
 // }
 
-// Array de imágenes (cuando generas múltiples)
+// Si pediste múltiples (n > 1)
 console.log(resultado.images);
-// [{ base64, uint8Array, mediaType }, ...]
+// [{ base64, uint8Array }, ...]
 ```
 
 El objeto `image` siempre es la primera imagen generada. El array `images` contiene todas.
-
-## Parámetros de generateImage
-
-```typescript
-const { images } = await generateImage({
-  // === REQUERIDOS ===
-  model: openai.image('dall-e-3'),
-  prompt: 'Descripción de la imagen',
-
-  // === OPCIONALES ===
-  n: 3,                    // Cantidad de imágenes (default: 1)
-  size: '1024x1024',       // Dimensiones: '256x256', '512x512', '1024x1024', '1792x1024', '1024x1792'
-  aspectRatio: '16:9',     // Alternativa a size (algunos providers)
-  seed: 42,                // Para resultados reproducibles
-
-  // === CONTROL ===
-  maxRetries: 2,           // Reintentos si falla (default: 2)
-  abortSignal: controller.signal,  // Para cancelar
-});
-```
-
-### Tamaños y Aspect Ratios
-
-| Size | Uso típico |
-|------|------------|
-| `1024x1024` | Cuadrado, Instagram |
-| `1792x1024` | Horizontal, YouTube thumbnail |
-| `1024x1792` | Vertical, Stories, Pinterest |
-
-> **Nota**: Los tamaños disponibles dependen del modelo. DALL-E 3 tiene opciones específicas. Otros modelos pueden soportar dimensiones arbitrarias.
-
-## Modelos de Imagen Disponibles
-
-```typescript
-import { openai } from '@ai-sdk/openai';
-
-// DALL-E 3 - Mayor calidad, más caro
-const modeloPremium = openai.image('dall-e-3');
-
-// DALL-E 2 - Más rápido, más económico
-const modeloEconomico = openai.image('dall-e-2');
-
-// GPT Image (nuevo) - Balance calidad/costo
-const modeloBalanceado = openai.image('gpt-image-1');
-```
-
-### Comparativa de Modelos OpenAI
-
-| Modelo | Calidad | Velocidad | Costo aprox. |
-|--------|---------|-----------|--------------|
-| dall-e-3 | Excelente | ~20s | $0.04-0.08 USD |
-| dall-e-2 | Buena | ~10s | $0.02 USD |
-| gpt-image-1 | Muy buena | ~15s | $0.03 USD |
-
-Los precios son aproximados por imagen 1024x1024.
 
 ## Pipeline Inteligente: Texto + Imagen
 
@@ -140,9 +142,9 @@ Solo responde con el prompt, sin explicaciones.`
 
   // Paso 2: Generar imagen con prompt optimizado
   const { image } = await generateImage({
-    model: openai.image('dall-e-3'),
+    model: openai.image('gpt-image-1'),
     prompt: promptOptimizado,
-    size: '1792x1024', // Formato YouTube
+    size: '1536x1024', // Formato YouTube
   });
 
   return {
@@ -154,10 +156,6 @@ Solo responde con el prompt, sin explicaciones.`
 // Uso
 const resultado = await generarThumbnail('Aprende React Router v7 en 30 minutos');
 console.log('Prompt:', resultado.promptUsado);
-// "Ilustración vibrante de un desarrollador con expresión emocionada,
-//  rodeado de íconos de React flotantes en tonos azul y cyan,
-//  texto grande 'REACT ROUTER' en blanco con sombra, fondo degradado
-//  púrpura a azul oscuro, estilo cartoon moderno, alta saturación"
 ```
 
 Este patrón de **pipeline** es fundamental: el LLM entiende el contexto y genera prompts visuales mucho mejores que los que escribiríamos manualmente.
@@ -191,9 +189,9 @@ Solo el prompt, sin explicaciones.`
   });
 
   const { image } = await generateImage({
-    model: openai.image('dall-e-3'),
+    model: openai.image('gpt-image-1-mini'), // Mini para previews rápidos
     prompt,
-    size: '1792x1024',
+    size: '1024x1024',
   });
 
   return { estilo, prompt, imagen: image.base64 };
@@ -222,7 +220,7 @@ async function generarPreviews(titulo: string) {
       console.error(`Error en estilo ${estilos[i]}:`, resultado.reason);
       return null;
     })
-    .filter(Boolean);
+    .filter((r): r is NonNullable<typeof r> => r !== null);
 }
 
 // Uso
@@ -232,39 +230,49 @@ console.log(`Generadas ${previews.length} variantes`);
 
 Usamos `Promise.allSettled` en lugar de `Promise.all` para que un error en una imagen no cancele las demás.
 
-## Múltiples Formatos: YouTube, Instagram, Stories
+## Redimensionando con el Cliente OpenAI
 
-Cada plataforma tiene dimensiones óptimas diferentes:
+Para generar la misma imagen en diferentes formatos (YouTube, Instagram, Stories), usamos el cliente OpenAI directamente con `images.edit()`:
 
 ```typescript
+import { generateImage } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import OpenAI, { toFile } from 'openai';
+
+// Cliente OpenAI para edición de imágenes
+const openaiClient = new OpenAI();
+
 const FORMATOS = {
-  youtube: { size: '1792x1024', nombre: 'YouTube Thumbnail' },
-  instagram: { size: '1024x1024', nombre: 'Instagram Post' },
-  stories: { size: '1024x1792', nombre: 'Instagram Stories' },
-} as const;
+  youtube: { size: '1536x1024' as const, nombre: 'YouTube' },
+  instagram: { size: '1024x1024' as const, nombre: 'Instagram' },
+  stories: { size: '1024x1536' as const, nombre: 'Stories' },
+};
 
 type Formato = keyof typeof FORMATOS;
 
-async function generarFormatos(
-  promptBase: string,
-  formatos: Formato[] = ['youtube', 'instagram', 'stories']
-) {
+async function generarFormatos(imagenBase64: string, promptOriginal: string) {
+  // Convertir base64 a File para la API de OpenAI
+  const buffer = Buffer.from(imagenBase64, 'base64');
+  const file = await toFile(buffer, 'imagen.png', { type: 'image/png' });
+
+  const formatos: Formato[] = ['youtube', 'instagram', 'stories'];
+
   const resultados = await Promise.all(
     formatos.map(async (formato) => {
       const config = FORMATOS[formato];
 
-      const { image } = await generateImage({
-        model: openai.image('dall-e-3'),
-        prompt: `${promptBase}. Optimizado para formato ${config.nombre}, composición ${
-          formato === 'stories' ? 'vertical' : formato === 'youtube' ? 'horizontal' : 'cuadrada'
-        }.`,
+      // Usar images.edit para redimensionar manteniendo el estilo
+      const response = await openaiClient.images.edit({
+        model: 'gpt-image-1',
+        image: file,
+        prompt: `${promptOriginal}. Mantén el mismo estilo y composición, adaptado a formato ${config.nombre}.`,
         size: config.size,
       });
 
       return {
         formato,
         nombre: config.nombre,
-        imagen: image.base64,
+        imagen: response.data[0].b64_json,
       };
     })
   );
@@ -273,15 +281,16 @@ async function generarFormatos(
 }
 ```
 
+> **Nota**: `images.edit()` requiere el cliente OpenAI nativo (`openai` package), no el AI SDK. Esto es porque el AI SDK aún no expone esta funcionalidad directamente.
+
 ## Proyecto Completo: Generador de Thumbnails
 
-Combinemos todo en una función robusta:
+Combinemos todo en un módulo reutilizable:
 
 ```typescript
-// thumbnail-generator.ts
+// lib/thumbnail-generator.ts
 import { generateText, generateImage } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { writeFileSync, mkdirSync } from 'fs';
 
 const ESTILOS = {
   vibrant: 'Colores audaces, alto contraste, energético',
@@ -292,108 +301,61 @@ const ESTILOS = {
 
 type Estilo = keyof typeof ESTILOS;
 
-interface ThumbnailConfig {
-  titulo: string;
-  estilo?: Estilo;
-  formato?: 'youtube' | 'instagram' | 'stories';
-  guardarArchivo?: boolean;
+interface ThumbnailResult {
+  estilo: Estilo;
+  prompt: string;
+  imagen: string; // base64
 }
 
-export async function generarThumbnail(config: ThumbnailConfig) {
-  const {
-    titulo,
-    estilo = 'vibrant',
-    formato = 'youtube',
-    guardarArchivo = false
-  } = config;
-
-  // Dimensiones según formato
-  const sizes = {
-    youtube: '1792x1024',
-    instagram: '1024x1024',
-    stories: '1024x1792'
-  };
-
-  // Paso 1: Crear prompt optimizado
-  const { text: promptVisual } = await generateText({
+async function crearPromptVisual(titulo: string, estilo: Estilo): Promise<string> {
+  const { text } = await generateText({
     model: openai('gpt-4o-mini'),
-    prompt: `Genera un prompt de imagen (máx 80 palabras) para thumbnail de ${formato}.
+    prompt: `Genera un prompt de imagen (máx 80 palabras) para thumbnail de YouTube.
 
-Título del video: "${titulo}"
-Estilo visual: ${ESTILOS[estilo]}
+Título: "${titulo}"
+Estilo: ${ESTILOS[estilo]}
 
 Requisitos:
 - Sujeto central que capture atención
 - Composición clara para verse en miniatura
-- Texto integrado: versión corta del título
 - Sin personas reales, usar ilustraciones
 
 Solo el prompt, directo.`
   });
 
-  console.log('Prompt generado:', promptVisual);
+  return text;
+}
 
-  // Paso 2: Generar imagen
+export async function generarThumbnail(
+  titulo: string,
+  estilo: Estilo = 'vibrant'
+): Promise<ThumbnailResult> {
+  const prompt = await crearPromptVisual(titulo, estilo);
+
   const { image } = await generateImage({
-    model: openai.image('dall-e-3'),
-    prompt: promptVisual,
-    size: sizes[formato],
+    model: openai.image('gpt-image-1-mini'),
+    prompt,
+    size: '1024x1024',
   });
 
-  // Paso 3: Guardar si se solicita
-  if (guardarArchivo) {
-    const nombreArchivo = `thumbnail-${estilo}-${formato}-${Date.now()}.png`;
-    mkdirSync('thumbnails', { recursive: true });
-    writeFileSync(`thumbnails/${nombreArchivo}`, image.uint8Array);
-    console.log('Guardado:', nombreArchivo);
-  }
-
   return {
-    titulo,
     estilo,
-    formato,
-    prompt: promptVisual,
-    base64: image.base64,
-    mediaType: image.mediaType
+    prompt,
+    imagen: image.base64,
   };
 }
 
-// Generar todas las variantes
-export async function generarTodosLosEstilos(titulo: string) {
+export async function generarTodosLosEstilos(titulo: string): Promise<ThumbnailResult[]> {
   const estilos: Estilo[] = ['vibrant', 'minimal', 'dramatic', 'tech'];
 
   const resultados = await Promise.allSettled(
-    estilos.map(estilo =>
-      generarThumbnail({ titulo, estilo, guardarArchivo: true })
-    )
+    estilos.map(estilo => generarThumbnail(titulo, estilo))
   );
 
-  const exitosos = resultados
-    .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof generarThumbnail>>> =>
-      r.status === 'fulfilled'
-    )
+  return resultados
+    .filter((r): r is PromiseFulfilledResult<ThumbnailResult> => r.status === 'fulfilled')
     .map(r => r.value);
-
-  console.log(`\nGenerados ${exitosos.length}/${estilos.length} thumbnails`);
-  return exitosos;
 }
-```
-
-### Uso del Generador
-
-```typescript
-// Generar un thumbnail específico
-const thumbnail = await generarThumbnail({
-  titulo: 'Cómo hacer $50,000 MXN con IA en tu tiempo libre',
-  estilo: 'dramatic',
-  formato: 'youtube',
-  guardarArchivo: true
-});
-
-// O generar los 4 estilos de una vez
-const variantes = await generarTodosLosEstilos(
-  'React Router v7: La Guía Definitiva'
-);
 ```
 
 ## Integrando con React Router v7
@@ -404,22 +366,15 @@ import type { Route } from "./+types/api.thumbnails";
 import { generarThumbnail, generarTodosLosEstilos } from '~/lib/thumbnail-generator';
 
 export async function action({ request }: Route.ActionArgs) {
-  const { titulo, estilo, formato, modo } = await request.json();
+  const { titulo, estilo, modo } = await request.json();
 
   try {
     if (modo === 'previews') {
-      // Generar los 4 estilos
       const resultados = await generarTodosLosEstilos(titulo);
       return Response.json({ previews: resultados });
     }
 
-    // Generar un thumbnail específico
-    const resultado = await generarThumbnail({
-      titulo,
-      estilo: estilo || 'vibrant',
-      formato: formato || 'youtube'
-    });
-
+    const resultado = await generarThumbnail(titulo, estilo || 'vibrant');
     return Response.json(resultado);
   } catch (error) {
     console.error('Error generando thumbnail:', error);
@@ -428,38 +383,19 @@ export async function action({ request }: Route.ActionArgs) {
 }
 ```
 
-Desde el cliente:
-
-```typescript
-// Llamar desde un componente
-const response = await fetch('/api/thumbnails', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    titulo: 'Mi video de React',
-    estilo: 'vibrant',
-    formato: 'youtube'
-  })
-});
-
-const { base64, prompt } = await response.json();
-```
-
 ## Mostrando Imágenes Base64 en React
 
 ```tsx
-// components/ThumbnailPreview.tsx
-interface Props {
+interface ThumbnailPreviewProps {
   base64: string;
-  mediaType: string;
   estilo: string;
 }
 
-export function ThumbnailPreview({ base64, mediaType, estilo }: Props) {
+export function ThumbnailPreview({ base64, estilo }: ThumbnailPreviewProps) {
   return (
     <div className="relative group">
       <img
-        src={`data:${mediaType};base64,${base64}`}
+        src={`data:image/png;base64,${base64}`}
         alt={`Thumbnail estilo ${estilo}`}
         className="rounded-lg shadow-lg w-full"
       />
@@ -470,15 +406,14 @@ export function ThumbnailPreview({ base64, mediaType, estilo }: Props) {
   );
 }
 
-// Uso con múltiples previews
-function ThumbnailGrid({ previews }) {
+// Grid de previews
+function ThumbnailGrid({ previews }: { previews: ThumbnailResult[] }) {
   return (
     <div className="grid grid-cols-2 gap-4">
       {previews.map((preview) => (
         <ThumbnailPreview
           key={preview.estilo}
-          base64={preview.base64}
-          mediaType={preview.mediaType}
+          base64={preview.imagen}
           estilo={preview.estilo}
         />
       ))}
@@ -491,29 +426,14 @@ function ThumbnailGrid({ previews }) {
 
 ```typescript
 function descargarImagen(base64: string, nombreArchivo: string) {
-  // Convertir base64 a blob
-  const byteCharacters = atob(base64);
-  const byteNumbers = new Array(byteCharacters.length);
-
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-
-  const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], { type: 'image/png' });
-
-  // Crear link y descargar
-  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = url;
+  link.href = `data:image/png;base64,${base64}`;
   link.download = nombreArchivo;
   link.click();
-
-  URL.revokeObjectURL(url);
 }
 
-// Uso
-<button onClick={() => descargarImagen(preview.base64, `thumbnail-${preview.estilo}.png`)}>
+// Uso en un botón
+<button onClick={() => descargarImagen(preview.imagen, `thumbnail-${preview.estilo}.png`)}>
   Descargar
 </button>
 ```
@@ -522,60 +442,39 @@ function descargarImagen(base64: string, nombreArchivo: string) {
 
 ### Precio por Imagen (OpenAI, enero 2025)
 
-| Modelo | 1024x1024 | 1792x1024 / 1024x1792 |
+| Modelo | 1024x1024 | 1536x1024 / 1024x1536 |
 |--------|-----------|------------------------|
-| DALL-E 3 Standard | $0.040 USD | $0.080 USD |
-| DALL-E 3 HD | $0.080 USD | $0.120 USD |
-| DALL-E 2 | $0.020 USD | - |
+| gpt-image-1 | ~$0.04 USD | ~$0.08 USD |
+| gpt-image-1-mini | ~$0.02 USD | ~$0.04 USD |
 
-**Ejemplo de costo**: Generar 4 variantes de thumbnail en formato YouTube:
-- 4 imágenes × $0.08 = **$0.32 USD** (~$6 MXN)
-- Más el costo de optimización de prompts: ~$0.01 USD
-
-### Derechos de Uso
-
-Las imágenes generadas con DALL-E son tuyas para uso comercial según los términos de OpenAI. Sin embargo:
-
-- No puedes generar imágenes de personas reales identificables
-- No puedes generar contenido que viole políticas de uso
-- OpenAI puede revisar imágenes generadas
+**Ejemplo de costo**: Generar 4 variantes de thumbnail:
+- 4 imágenes con mini × $0.02 = **$0.08 USD** (~$1.50 MXN)
+- Más optimización de prompts: ~$0.01 USD
 
 ### Límites de Rate
 
-| Plan | Imágenes por minuto |
-|------|---------------------|
-| Tier 1 | 7 |
-| Tier 2 | 7 |
-| Tier 3 | 7 |
-| Tier 4 | 15 |
-| Tier 5 | 50 |
-
-Para aplicaciones de producción con alto volumen, considera implementar una cola de procesamiento.
+OpenAI tiene límites por minuto según tu tier. Para aplicaciones con alto volumen, implementa una cola de procesamiento.
 
 ## Manejo de Errores
 
 ```typescript
-import { generateImage } from 'ai';
-
 async function generarConReintentos(prompt: string, intentos = 3) {
   for (let i = 0; i < intentos; i++) {
     try {
       const { image } = await generateImage({
-        model: openai.image('dall-e-3'),
+        model: openai.image('gpt-image-1-mini'),
         prompt,
-        maxRetries: 1, // Manejamos reintentos manualmente
+        size: '1024x1024',
       });
       return image;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Intento ${i + 1} fallido:`, error.message);
 
-      // Errores específicos de OpenAI
-      if (error.message.includes('content_policy_violation')) {
+      if (error.message?.includes('content_policy')) {
         throw new Error('El prompt viola las políticas de contenido');
       }
 
-      if (error.message.includes('rate_limit')) {
-        // Esperar antes de reintentar
+      if (error.message?.includes('rate_limit')) {
         await new Promise(r => setTimeout(r, 60000));
         continue;
       }
@@ -591,13 +490,12 @@ async function generarConReintentos(prompt: string, intentos = 3) {
 | Concepto | Qué aprendiste |
 |----------|----------------|
 | `generateImage()` | Genera imágenes desde texto |
-| `openai.image()` | Especifica modelo de imagen |
+| `openai.image('gpt-image-1')` | Modelo de imagen de OpenAI |
+| `openai.image('gpt-image-1-mini')` | Versión rápida y económica |
 | `image.base64` | Imagen codificada para web |
-| `image.uint8Array` | Bytes para guardar archivo |
 | Pipeline texto→imagen | Optimizar prompts con LLM antes de generar |
-| Estilos predefinidos | Variantes visuales consistentes |
-| Formatos múltiples | YouTube, Instagram, Stories |
 | `Promise.allSettled` | Generación paralela tolerante a fallos |
+| Cliente OpenAI nativo | Para `images.edit()` y redimensionado |
 
 ### ¿Cuándo usar generateImage?
 
@@ -605,10 +503,8 @@ async function generarConReintentos(prompt: string, intentos = 3) {
 |-------------------|----------------------|
 | Thumbnails, banners, ilustraciones | Fotos de personas reales |
 | Contenido de marketing | Logos con texto preciso |
-| Variantes de producto | Edición de fotos existentes* |
-| Visualizaciones de conceptos | Alto volumen (>50/min) sin cola |
-
-*Para edición de imágenes existentes, algunos providers ofrecen funciones específicas como `openai.images.edit()`.
+| Variantes de producto | Alto volumen sin cola |
+| Visualizaciones de conceptos | Edición compleja de fotos |
 
 ---
 
