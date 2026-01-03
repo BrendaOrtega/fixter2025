@@ -425,4 +425,4 @@ export default function ChatPage() {
 
 ---
 
-Hasta ahora el modelo solo genera texto. En el próximo capítulo le daremos manos: herramientas que puede ejecutar para buscar datos, llamar APIs, y tomar acciones reales.
+Hasta ahora el modelo solo genera texto plano. En el próximo capítulo veremos cómo obtener datos estructurados: objetos tipados que tu código puede consumir directamente, sin parsear strings.

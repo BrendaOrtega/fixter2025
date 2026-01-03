@@ -29,8 +29,9 @@ const chapters = [
   { id: "02", title: "React y el Hook useChat", slug: "capitulo-02" },
   { id: "03", title: "Dentro del Streaming", slug: "capitulo-03" },
   { id: "04", title: "React Router v7 — Tu Chat Full-Stack", slug: "capitulo-04" },
-  { id: "05", title: "Tools — Dándole Manos al Modelo", slug: "capitulo-05" },
-  { id: "06", title: "Agentes — El Modelo Toma el Control", slug: "capitulo-06" },
+  { id: "05", title: "Structured Output — Respuestas Tipadas", slug: "capitulo-05" },
+  { id: "06", title: "Tools — Dándole Manos al Modelo", slug: "capitulo-06" },
+  { id: "07", title: "Agentes — El Modelo Toma el Control", slug: "capitulo-07" },
 ];
 
 export const meta = ({ location }: Route.MetaArgs) => {

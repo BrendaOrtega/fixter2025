@@ -151,6 +151,15 @@ Cada capítulo incluye:
 6. **Ruta del libro**: `app/routes/libros/ai_sdk.tsx`
 7. **Regenerar EPUB**: `python3 app/scripts/generate_ai_sdk_epub.py`
 
+### TODO: Publicación en Amazon
+
+Cuando el libro esté completo y listo para producción:
+- Investigar los lineamientos de Amazon KDP para publicar EPUBs
+- Ajustar metadatos del EPUB según requerimientos de Amazon
+- Generar versión .mobi si es necesario
+- Crear portada con dimensiones correctas (1600x2560 px recomendado)
+- Configurar pricing y royalties
+
 ### ⚠️ CHECKLIST OBLIGATORIO - AI SDK v6
 
 **ANTES de escribir cualquier código con `useChat`, verificar:**
