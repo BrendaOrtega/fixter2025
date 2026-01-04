@@ -35,10 +35,9 @@ const chapters = [
   { id: "08", title: "generateImage — Creando Imágenes con Código", slug: "capitulo-08" },
   { id: "09", title: "Embeddings — Búsqueda Semántica", slug: "capitulo-09" },
   { id: "10", title: "RAG — Retrieval Augmented Generation", slug: "capitulo-10" },
-  // Próximos capítulos (deshabilitados)
-  { id: "11", title: "Agentic RAG — Agentes con Conocimiento", slug: "capitulo-11", disabled: true },
-  { id: "12", title: "Audio y Speech — Voz e IA", slug: "capitulo-12", disabled: true },
-  { id: "13", title: "Multi-Provider — Usando Diferentes Modelos", slug: "capitulo-13", disabled: true },
+  { id: "11", title: "Agentic RAG — Agentes con Conocimiento", slug: "capitulo-11" },
+  { id: "12", title: "Audio y Speech — Voz e IA", slug: "capitulo-12" },
+  { id: "13", title: "Multi-Provider — Usando Diferentes Modelos", slug: "capitulo-13" },
 ];
 
 export const meta = ({ location }: Route.MetaArgs) => {
