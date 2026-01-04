@@ -337,4 +337,23 @@ async function transcribirSeguro(audioBuffer: Buffer): Promise<string> {
 
 ---
 
-En el próximo capítulo exploraremos **Multi-Provider**: cómo usar diferentes modelos (OpenAI, Anthropic, Google) en la misma aplicación y elegir el mejor para cada tarea.
+## Cierre del Libro
+
+Has recorrido el camino completo del AI SDK: desde tu primera inferencia hasta agentes autónomos con RAG y voz.
+
+Lo que aprendiste:
+- **Fundamentos**: Streaming, tokens, context window
+- **Frontend**: useChat, optimización de renders, UI patterns
+- **Backend**: React Router v7, endpoints de chat
+- **Structured Output**: Respuestas tipadas con Zod
+- **Tools**: Darle manos al modelo para ejecutar acciones
+- **Agentes**: Loops autónomos que resuelven tareas complejas
+- **Imágenes**: Generación con DALL-E y otros modelos
+- **Embeddings y RAG**: Búsqueda semántica sobre tus documentos
+- **Audio**: Transcripción y síntesis de voz
+
+El AI SDK abstrae la complejidad de trabajar con múltiples proveedores de IA. Ya sea que uses OpenAI, Anthropic, Google o modelos open source, la API es consistente.
+
+Ahora tienes las herramientas para construir aplicaciones de IA en producción. El siguiente paso es tuyo: elige un proyecto, empieza pequeño, e itera.
+
+¡Buena suerte!
