@@ -34,8 +34,8 @@ const chapters = [
   { id: "07", title: "Agentes — Encapsulando la Inteligencia", slug: "capitulo-07" },
   { id: "08", title: "generateImage — Creando Imágenes con Código", slug: "capitulo-08" },
   { id: "09", title: "Embeddings — Búsqueda Semántica", slug: "capitulo-09" },
+  { id: "10", title: "RAG — Retrieval Augmented Generation", slug: "capitulo-10" },
   // Próximos capítulos (deshabilitados)
-  { id: "10", title: "RAG — Retrieval Augmented Generation", slug: "capitulo-10", disabled: true },
   { id: "11", title: "Agentic RAG — Agentes con Conocimiento", slug: "capitulo-11", disabled: true },
   { id: "12", title: "Audio y Speech — Voz e IA", slug: "capitulo-12", disabled: true },
   { id: "13", title: "Multi-Provider — Usando Diferentes Modelos", slug: "capitulo-13", disabled: true },
