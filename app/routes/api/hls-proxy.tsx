@@ -96,7 +96,11 @@ export const loader = async ({ request }: { request: Request }) => {
     const basePath = hlsPath.substring(0, hlsPath.lastIndexOf('/') + 1);
 
     // Rewrite relative URLs to use the proxy
-    const proxyBaseUrl = `${url.origin}/api/hls-proxy?path=`;
+    // IMPORTANT: Always use HTTPS to avoid Mixed Content errors
+    // In production (Fly.io), SSL terminates at load balancer, so request may come as HTTP
+    const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    const protocol = isLocalhost ? url.protocol : 'https:';
+    const proxyBaseUrl = `${protocol}//${url.host}/api/hls-proxy?path=`;
 
     let rewrittenContent = m3u8Content;
 
