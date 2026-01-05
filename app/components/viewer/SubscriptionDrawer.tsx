@@ -3,12 +3,17 @@ import { useState } from "react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
+type SubscriberVideo = {
+  title: string;
+  slug: string;
+};
+
 export const SubscriptionDrawer = ({
   courseSlug,
   subscriberVideos = [],
 }: {
   courseSlug: string;
-  subscriberVideos?: string[];
+  subscriberVideos?: SubscriberVideo[];
 }) => {
   const [show, setShow] = useState(true);
   const [email, setEmail] = useState("");
@@ -47,10 +52,10 @@ export const SubscriptionDrawer = ({
         </p>
         {subscriberVideos.length > 0 && (
           <ul className="mt-4 space-y-2">
-            {subscriberVideos.map((title, i) => (
+            {subscriberVideos.map((video, i) => (
               <li key={i} className="flex items-center gap-2 text-brand-400">
                 <span className="text-green-400">✓</span>
-                <span className="text-gray-200">{title}</span>
+                <span className="text-gray-200">{video.title}</span>
               </li>
             ))}
           </ul>

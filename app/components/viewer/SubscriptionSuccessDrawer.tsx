@@ -1,16 +1,35 @@
+import { useNavigate } from "react-router";
 import { EmojiConfetti } from "../common/EmojiConfetti";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
+
+type SubscriberVideo = {
+  title: string;
+  slug: string;
+};
 
 export const SubscriptionSuccessDrawer = ({
   isOpen,
   onClose,
   subscriberVideos = [],
+  courseSlug,
 }: {
   isOpen?: boolean;
   onClose?: () => void;
-  subscriberVideos?: string[];
+  subscriberVideos?: SubscriberVideo[];
+  courseSlug?: string;
 }) => {
+  const navigate = useNavigate();
+
+  const handleViewNow = () => {
+    // Navigate to first unlocked video
+    if (subscriberVideos.length > 0 && courseSlug) {
+      const firstVideo = subscriberVideos[0];
+      navigate(`/cursos/${courseSlug}/viewer?videoSlug=${firstVideo.slug}`);
+    }
+    onClose?.();
+  };
+
   return (
     <>
       <EmojiConfetti emojis={["🎉", "🚀", "📖", "✨", "🎊"]} />
@@ -46,13 +65,13 @@ export const SubscriptionSuccessDrawer = ({
                   Lecciones desbloqueadas:
                 </p>
                 <ul className="space-y-2">
-                  {subscriberVideos.map((title, i) => (
+                  {subscriberVideos.map((video, i) => (
                     <li
                       key={i}
                       className="flex items-center gap-2 text-sm"
                     >
                       <span className="text-green-400">✓</span>
-                      <span className="text-gray-200">{title}</span>
+                      <span className="text-gray-200">{video.title}</span>
                     </li>
                   ))}
                 </ul>
@@ -66,7 +85,7 @@ export const SubscriptionSuccessDrawer = ({
             <div className="w-full flex mt-10">
               <PrimaryButton
                 variant="fill"
-                onClick={onClose}
+                onClick={handleViewNow}
                 className="mx-auto"
               >
                 Ver ahora

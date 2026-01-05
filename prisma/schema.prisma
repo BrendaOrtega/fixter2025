@@ -199,7 +199,11 @@ model Subscriber {
   confirmed     Boolean          @default(false)
   confirmedAt   DateTime?
   validToken    Boolean          @default(true)  // Backward compatibility
-  
+
+  // OTP verification
+  verificationCode  String?
+  codeExpiresAt     DateTime?
+
   // Segmentación simple
   tags              String[]
   

@@ -11,8 +11,8 @@ import {
   getFreeOrEnrolledCourseFor,
   getUserOrNull,
   checkSubscriptionByEmail,
-  subscribeForFreeAccess,
 } from "~/.server/dbGetters";
+import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
 import type { Route } from "./+types/courseViewer";
 import getMetaTags from "~/utils/getMetaTags";
 
@@ -46,35 +46,113 @@ export function meta({ data }: Route.MetaArgs) {
 // Cookie name for subscriber email
 const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
 
-// Action for handling subscription
+// Action for handling subscription with OTP verification
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
+  const email = (formData.get("email") as string)?.toLowerCase().trim();
+  const courseSlug = formData.get("courseSlug") as string;
+  const tag = `${courseSlug}-free-access`;
 
-  if (intent === "subscribe-free") {
-    const email = formData.get("email") as string;
-    const courseSlug = formData.get("courseSlug") as string;
+  if (!email || !courseSlug) {
+    return data({ error: "Email requerido" }, { status: 400 });
+  }
 
-    if (!email || !courseSlug) {
-      return data({ error: "Email requerido" }, { status: 400 });
+  // INTENT: send-code - Envía código OTP o da acceso directo si ya está confirmado
+  if (intent === "send-code") {
+    try {
+      const existing = await db.subscriber.findUnique({ where: { email } });
+
+      // CASO: Ya confirmado → acceso directo sin OTP
+      if (existing?.confirmed) {
+        // Añadir tag si no lo tiene
+        if (!existing.tags.includes(tag)) {
+          await db.subscriber.update({
+            where: { email },
+            data: { tags: { push: tag } },
+          });
+        }
+        // Set cookie + redirect (sin pedir código)
+        const redirectUrl = new URL(request.url);
+        redirectUrl.searchParams.set("subscribed", "1");
+        return redirect(redirectUrl.toString(), {
+          headers: {
+            "Set-Cookie": `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
+          },
+        });
+      }
+
+      // CASO: No confirmado o no existe → enviar código
+      const code = Math.random().toString().slice(2, 8); // 6 dígitos
+      const codeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+      await db.subscriber.upsert({
+        where: { email },
+        create: {
+          email,
+          verificationCode: code,
+          codeExpiresAt,
+          confirmed: false,
+        },
+        update: {
+          verificationCode: code,
+          codeExpiresAt,
+        },
+      });
+
+      await sendVerificationCode({ email, code });
+      return data({ codeSent: true, email });
+    } catch (error) {
+      console.error("📧 Error sending code:", error);
+      return data({ error: "Error al enviar código" }, { status: 500 });
+    }
+  }
+
+  // INTENT: verify-code - Verifica el código OTP
+  if (intent === "verify-code") {
+    const code = formData.get("code") as string;
+
+    if (!code) {
+      return data({ error: "Código requerido" }, { status: 400 });
     }
 
     try {
-      await subscribeForFreeAccess(email, courseSlug);
+      const subscriber = await db.subscriber.findUnique({ where: { email } });
 
-      // Build redirect URL with subscribed=1 param
+      if (
+        !subscriber ||
+        subscriber.verificationCode !== code ||
+        !subscriber.codeExpiresAt ||
+        subscriber.codeExpiresAt < new Date()
+      ) {
+        return data({ error: "Código inválido o expirado" }, { status: 400 });
+      }
+
+      // Código válido → confirmar + añadir tag + limpiar código
+      await db.subscriber.update({
+        where: { email },
+        data: {
+          confirmed: true,
+          confirmedAt: new Date(),
+          tags: subscriber.tags.includes(tag)
+            ? undefined
+            : { push: tag },
+          verificationCode: null,
+          codeExpiresAt: null,
+        },
+      });
+
+      // Set cookie + redirect
       const redirectUrl = new URL(request.url);
       redirectUrl.searchParams.set("subscribed", "1");
-
-      // Set cookie and redirect to reload with access + celebration
       return redirect(redirectUrl.toString(), {
         headers: {
           "Set-Cookie": `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
         },
       });
     } catch (error) {
-      console.error("📧 Error:", error);
-      return data({ error: "Error al suscribirse" }, { status: 500 });
+      console.error("📧 Error verifying code:", error);
+      return data({ error: "Error al verificar código" }, { status: 500 });
     }
   }
 
@@ -165,10 +243,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const videoToReturn = removeStorageLink ? { ...video, storageLink: "", m3u8: "" } : video;
   console.log("🔐 Result:", { hasAccess, removeStorageLink, returnedLink: videoToReturn.storageLink });
 
-  // Get subscriber video titles for the drawer
+  // Get subscriber videos for the drawer (with title and slug for navigation)
   const subscriberVideos = videos
     .filter((v: any) => v.accessLevel === "subscriber")
-    .map((v: any) => v.title);
+    .map((v: any) => ({ title: v.title, slug: v.slug }));
 
   return {
     course,
@@ -277,6 +355,7 @@ export default function Route({
           isOpen={subscribedIsOpen}
           onClose={() => setSubscribedIsOpen(false)}
           subscriberVideos={subscriberVideos}
+          courseSlug={course.slug}
         />
       )}
       {showSubscriptionDrawer && (
