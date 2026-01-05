@@ -278,6 +278,7 @@ export default function Route({
     moduleNames,
     course,
     subscriberVideos,
+    user,
   },
 }: Route.ComponentProps) {
   const [successIsOpen, setSuccessIsOpen] = useState(searchParams.success);
@@ -363,6 +364,7 @@ export default function Route({
           key={video.id}
           courseSlug={course.slug}
           subscriberVideos={subscriberVideos}
+          userEmail={user?.email}
         />
       )}
       {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} />}
