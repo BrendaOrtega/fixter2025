@@ -6,6 +6,7 @@ import { UnifiedSidebarMenu } from "~/components/viewer/UnifiedSidebarMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { SubscriptionDrawer } from "~/components/viewer/SubscriptionDrawer";
+import { SubscriptionSuccessDrawer } from "~/components/viewer/SubscriptionSuccessDrawer";
 import {
   getFreeOrEnrolledCourseFor,
   getUserOrNull,
@@ -61,8 +62,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     try {
       await subscribeForFreeAccess(email, courseSlug);
 
-      // Set cookie and redirect to reload with access
-      return redirect(request.url, {
+      // Build redirect URL with subscribed=1 param
+      const redirectUrl = new URL(request.url);
+      redirectUrl.searchParams.set("subscribed", "1");
+
+      // Set cookie and redirect to reload with access + celebration
+      return redirect(redirectUrl.toString(), {
         headers: {
           "Set-Cookie": `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
         },
@@ -178,6 +183,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     subscriberVideos,
     searchParams: {
       success: searchParams.get("success") === "1",
+      subscribed: searchParams.get("subscribed") === "1",
     },
   };
 };
@@ -197,6 +203,7 @@ export default function Route({
   },
 }: Route.ComponentProps) {
   const [successIsOpen, setSuccessIsOpen] = useState(searchParams.success);
+  const [subscribedIsOpen, setSubscribedIsOpen] = useState(searchParams.subscribed);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(serverIsSubscribed);
 
@@ -265,6 +272,13 @@ export default function Route({
         />
       </article>
       {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
+      {searchParams.subscribed && (
+        <SubscriptionSuccessDrawer
+          isOpen={subscribedIsOpen}
+          onClose={() => setSubscribedIsOpen(false)}
+          subscriberVideos={subscriberVideos}
+        />
+      )}
       {showSubscriptionDrawer && (
         <SubscriptionDrawer
           key={video.id}
