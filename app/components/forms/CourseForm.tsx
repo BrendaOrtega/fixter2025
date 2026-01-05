@@ -466,7 +466,8 @@ export const CourseForm = ({
 
   // Manejar respuesta del servidor para videos
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data && pendingVideoAction) {
+    // NO cerrar el drawer si hay un upload en progreso - esto evita que se interrumpa la subida
+    if (fetcher.state === "idle" && fetcher.data && pendingVideoAction && !isUploading) {
       const response = fetcher.data as {
         success?: boolean;
         errors?: Record<string, string>;
@@ -478,7 +479,7 @@ export const CourseForm = ({
         return;
       }
 
-      // Éxito - cerrar y refrescar lista
+      // Éxito - cerrar y refrescar lista (solo si no hay upload en progreso)
       if (response.success === true || (response as any).video) {
         setShow(false);
         setEditingVideo(undefined);
@@ -492,7 +493,7 @@ export const CourseForm = ({
         }
       }
     }
-  }, [fetcher.state, fetcher.data, pendingVideoAction]);
+  }, [fetcher.state, fetcher.data, pendingVideoAction, isUploading]);
 
   const [editingVideo, setEditingVideo] = useState<Partial<Video>>();
   const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
