@@ -1,4 +1,4 @@
-import { redirect, data } from "react-router";
+import { redirect, data, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { db } from "~/.server/db";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
@@ -60,11 +60,14 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
   // INTENT: send-code - Envía código OTP o da acceso directo si ya está confirmado
   if (intent === "send-code") {
+    console.log("📧 send-code intent received for:", email);
     try {
       const existing = await db.subscriber.findUnique({ where: { email } });
+      console.log("📧 Existing subscriber:", existing?.email, "confirmed:", existing?.confirmed);
 
       // CASO: Ya confirmado → acceso directo sin OTP
       if (existing?.confirmed) {
+        console.log("📧 User already confirmed, redirecting directly");
         // Añadir tag si no lo tiene
         if (!existing.tags.includes(tag)) {
           await db.subscriber.update({
@@ -101,6 +104,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       });
 
       await sendVerificationCode({ email, code });
+      console.log("📧 Code sent successfully, returning codeSent: true");
       return data({ codeSent: true, email });
     } catch (error) {
       console.error("📧 Error sending code:", error);
@@ -281,21 +285,25 @@ export default function Route({
     user,
   },
 }: Route.ComponentProps) {
-  const [successIsOpen, setSuccessIsOpen] = useState(searchParams.success);
-  const [subscribedIsOpen, setSubscribedIsOpen] = useState(searchParams.subscribed);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(serverIsSubscribed);
-
+  const navigate = useNavigate();
 
   // Determine which drawer to show based on accessLevel
   const hasAccess =
     course.isFree ||
     isPurchased ||
     accessLevel === "public" ||
-    (accessLevel === "subscriber" && isSubscribed);
+    (accessLevel === "subscriber" && serverIsSubscribed);
 
   const showSubscriptionDrawer = !hasAccess && accessLevel === "subscriber";
   const showPurchaseDrawer = !hasAccess && accessLevel === "paid";
+
+  // Bloquear autoplay cuando hay drawer abierto
+  const hasDrawerOpen =
+    searchParams.success ||
+    searchParams.subscribed ||
+    showSubscriptionDrawer ||
+    showPurchaseDrawer;
 
   // Set initial menu state based on screen size
   useEffect(() => {
@@ -332,6 +340,7 @@ export default function Route({
               : undefined
           }
           slug={video.slug}
+          disabled={hasDrawerOpen}
           onPause={() => {
             // setIsMenuOpen(true);// @todo consider this
           }}
@@ -346,15 +355,16 @@ export default function Route({
           videos={videos}
           moduleNames={moduleNames.filter((n) => typeof n === "string")}
           isLocked={course.isFree ? false : !isPurchased}
+          isSubscribed={serverIsSubscribed}
           markdownBody={video.description || undefined}
           defaultTab="videos"
         />
       </article>
-      {searchParams.success && <SuccessDrawer isOpen={successIsOpen} />}
+      {searchParams.success && <SuccessDrawer isOpen />}
       {searchParams.subscribed && (
         <SubscriptionSuccessDrawer
-          isOpen={subscribedIsOpen}
-          onClose={() => setSubscribedIsOpen(false)}
+          isOpen
+          onClose={() => navigate(`/cursos/${course.slug}/viewer?videoSlug=${video.slug}`, { replace: true })}
           subscriberVideos={subscriberVideos}
           courseSlug={course.slug}
         />

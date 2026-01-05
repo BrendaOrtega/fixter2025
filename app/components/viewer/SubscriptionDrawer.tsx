@@ -27,12 +27,14 @@ export const SubscriptionDrawer = ({
 
   // Detectar respuesta del server
   useEffect(() => {
+    console.log("🔐 Fetcher data:", fetcher.data, "state:", fetcher.state);
     if (fetcher.data?.codeSent) {
+      console.log("✅ Code sent, switching to OTP step");
       setStep("code");
       // Focus en el input de código
       setTimeout(() => codeInputRef.current?.focus(), 100);
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, fetcher.state]);
 
   const handleResendCode = () => {
     setCode("");

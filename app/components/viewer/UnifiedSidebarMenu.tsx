@@ -30,6 +30,7 @@ interface UnifiedSidebarProps {
   courseSlug: string;
   courseTitle?: string;
   isLocked?: boolean;
+  isSubscribed?: boolean;
   currentVideoSlug?: string;
   moduleNames: string[];
   videos: Partial<Video>[];
@@ -45,6 +46,7 @@ export const UnifiedSidebarMenu = ({
   courseSlug,
   courseTitle,
   isLocked,
+  isSubscribed,
   currentVideoSlug,
   moduleNames,
   videos,
@@ -170,6 +172,7 @@ export const UnifiedSidebarMenu = ({
                   courseTitle={courseTitle}
                   currentVideoSlug={currentVideoSlug}
                   isLocked={isLocked}
+                  isSubscribed={isSubscribed}
                   completed={completed}
                   videosCompleted={videosCompleted}
                   checkIfWatched={checkIfWatched}
@@ -289,6 +292,7 @@ const VideosContent = ({
   courseTitle,
   currentVideoSlug,
   isLocked,
+  isSubscribed,
   completed,
   videosCompleted,
   checkIfWatched,
@@ -299,6 +303,7 @@ const VideosContent = ({
   courseTitle?: string;
   currentVideoSlug?: string;
   isLocked?: boolean;
+  isSubscribed?: boolean;
   completed: string[];
   videosCompleted: string[];
   checkIfWatched: (slug: string) => boolean;
@@ -325,19 +330,28 @@ const VideosContent = ({
                   : vid.moduleName === moduleName
               )
               .sort((a, b) => (a.index < b.index ? -1 : 1))
-              .map((v) => (
-                <VideoListItem
-                  key={v?.id}
-                  isLocked={v?.isPublic ? false : isLocked}
-                  isCompleted={videosCompleted.includes(v?.slug)}
-                  isCurrent={currentVideoSlug === v?.slug}
-                  slug={v?.slug || ""}
-                  title={v?.title || ""}
-                  duration={v?.duration || 60}
-                  courseSlug={courseSlug}
-                  accessLevel={(v as any)?.accessLevel || "paid"}
-                />
-              ))}
+              .map((v) => {
+                const accessLevel = (v as any)?.accessLevel || "paid";
+                // Determinar si el video está bloqueado según accessLevel
+                const videoIsLocked =
+                  accessLevel === "public" ? false :
+                  accessLevel === "subscriber" ? !isSubscribed :
+                  isLocked; // paid
+
+                return (
+                  <VideoListItem
+                    key={v?.id}
+                    isLocked={videoIsLocked}
+                    isCompleted={videosCompleted.includes(v?.slug)}
+                    isCurrent={currentVideoSlug === v?.slug}
+                    slug={v?.slug || ""}
+                    title={v?.title || ""}
+                    duration={v?.duration || 0}
+                    courseSlug={courseSlug}
+                    accessLevel={accessLevel}
+                  />
+                );
+              })}
           </div>
         </div>
       ))}

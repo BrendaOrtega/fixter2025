@@ -118,7 +118,7 @@ export const VideosMenu = ({
                     slug={v?.slug || ""}
                     key={v?.id}
                     title={v?.title || ""}
-                    duration={v?.duration || 60}
+                    duration={v?.duration || 0}
                     courseSlug={courseSlug}
                   />
                 ))}

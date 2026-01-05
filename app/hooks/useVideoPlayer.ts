@@ -10,6 +10,7 @@ interface UseVideoPlayerOptions {
   onPlay?: () => void;
   onPause?: () => void;
   onEnd?: () => void;
+  disabled?: boolean; // Bloquea autoplay (ej: cuando hay drawer abierto)
 }
 
 interface UseVideoPlayerReturn {
@@ -50,6 +51,7 @@ export function useVideoPlayer({
   onPlay,
   onPause,
   onEnd,
+  disabled = false,
 }: UseVideoPlayerOptions): UseVideoPlayerReturn {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -59,6 +61,7 @@ export function useVideoPlayer({
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const prevDisabledRef = useRef(disabled);
 
   const { interceptHLSUrl } = useSecureHLS({
     courseId,
@@ -73,6 +76,18 @@ export function useVideoPlayer({
     );
     setIsReady(true);
   }, []);
+
+  // Auto-play cuando drawer se cierra (disabled: true → false)
+  useEffect(() => {
+    if (prevDisabledRef.current && !disabled && videoRef.current && !isMobile) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
+    }
+    prevDisabledRef.current = disabled;
+  }, [disabled, isMobile]);
 
   // Toggle play/pause
   const togglePlay = useCallback(() => {
@@ -150,7 +165,10 @@ export function useVideoPlayer({
     if (!isReady || !videoRef.current || !video) return;
 
     const el = videoRef.current;
-    const hasNativeHLS = !!el.canPlayType("application/vnd.apple.mpegURL");
+    // Solo Safari/iOS tienen HLS nativo confiable. Chrome puede devolver "maybe" pero no funciona bien.
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const hasNativeHLS = (isSafari || isIOS) && !!el.canPlayType("application/vnd.apple.mpegURL");
 
     const setupVideo = async () => {
       // Cleanup previous HLS instance
@@ -159,8 +177,16 @@ export function useVideoPlayer({
         hlsRef.current = null;
       }
 
+      console.log("🎬 Video setup:", {
+        hasNativeHLS,
+        hasM3U8: !!video.m3u8,
+        hasStorageLink: !!video.storageLink,
+        isNewFormat: video.m3u8 ? isNewFormat(video.m3u8) : video.storageLink ? isNewFormat(video.storageLink) : false,
+      });
+
       if (hasNativeHLS) {
         // Safari, iOS - native HLS
+        console.log("🎬 Using Native HLS (Safari/iOS)");
         if (video.m3u8) {
           if (isNewFormat(video.m3u8)) {
             const s3Key = extractS3Key(video.m3u8);
@@ -179,6 +205,7 @@ export function useVideoPlayer({
         }
       } else {
         // Chrome, Firefox - HLS.js
+        console.log("🎬 Using HLS.js (Chrome/Firefox)");
         if (video.m3u8) {
           const hls = new Hls();
           hlsRef.current = hls;
@@ -212,8 +239,8 @@ export function useVideoPlayer({
       .then(() => {
         if (!videoRef.current) return;
 
-        // Skip autoplay on mobile
-        if (isMobile) {
+        // Skip autoplay on mobile or when disabled (drawer open)
+        if (isMobile || disabled) {
           setIsPlaying(false);
           return;
         }
@@ -236,7 +263,7 @@ export function useVideoPlayer({
         hlsRef.current = null;
       }
     };
-  }, [video, interceptHLSUrl, isMobile, isReady]);
+  }, [video, interceptHLSUrl, isMobile, isReady, disabled]);
 
   return {
     videoRef,

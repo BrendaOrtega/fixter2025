@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router";
 import { EmojiConfetti } from "../common/EmojiConfetti";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
@@ -12,21 +11,14 @@ export const SubscriptionSuccessDrawer = ({
   isOpen,
   onClose,
   subscriberVideos = [],
-  courseSlug,
 }: {
   isOpen?: boolean;
   onClose?: () => void;
   subscriberVideos?: SubscriberVideo[];
   courseSlug?: string;
 }) => {
-  const navigate = useNavigate();
-
+  // Solo cerrar el drawer - el onClose ya maneja la navegación limpia
   const handleViewNow = () => {
-    // Navigate to first unlocked video
-    if (subscriberVideos.length > 0 && courseSlug) {
-      const firstVideo = subscriberVideos[0];
-      navigate(`/cursos/${courseSlug}/viewer?videoSlug=${firstVideo.slug}`);
-    }
     onClose?.();
   };
 

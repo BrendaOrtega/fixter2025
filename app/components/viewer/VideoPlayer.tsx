@@ -19,6 +19,7 @@ interface VideoPlayerProps {
   onClickNextVideo?: () => void;
   src?: string;
   type?: string;
+  disabled?: boolean; // Bloquea autoplay cuando hay drawer
 }
 
 export const VideoPlayer = ({
@@ -31,6 +32,7 @@ export const VideoPlayer = ({
   onPlay,
   onPause,
   onEnd,
+  disabled,
 }: VideoPlayerProps) => {
   const {
     videoRef,
@@ -45,6 +47,7 @@ export const VideoPlayer = ({
     onPlay,
     onPause,
     onEnd,
+    disabled,
   });
 
   return (
