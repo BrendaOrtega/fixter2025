@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import type { Course } from "~/types/models";
 import { useVideosLength } from "~/hooks/useVideosLength";
-import { motion, useInView, useSpring, useTransform } from "framer-motion";
+import { motion, useInView, useSpring, useTransform } from "motion/react";
 import { use3DHover } from "~/hooks/use3DHover";
 import { formatDuration } from "~/routes/cursos";
 import { useRef } from "react";

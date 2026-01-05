@@ -307,15 +307,20 @@ export const startSequenceProcessor = async () => {
 // Initialize Agenda with all job definitions
 export const initializeAgenda = async () => {
   const agenda = getAgenda();
-  
+
   console.info("🔄 Initializing Agenda with all job definitions...");
-  
+
   // Start agenda to load all job definitions
   await agenda.start();
-  
+
   // Start sequence processor
   await startSequenceProcessor();
-  
+
+  // Start video cleanup job (cada 15 min)
+  await agenda.cancel({ name: "cleanup_stuck_videos" });
+  await agenda.every("15 minutes", "cleanup_stuck_videos");
+  console.info("🧹 Video cleanup job scheduled (every 15 min)");
+
   console.info("✅ Agenda initialized with all processors running");
   return agenda;
 };
@@ -371,8 +376,38 @@ export const scheduleVideoProcessing = async ({
   }
 };
 
+// Job de limpieza: detecta videos stuck en "processing" por más de 15 min
+getAgenda().define("cleanup_stuck_videos", async () => {
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+  const stuckVideos = await db.video.findMany({
+    where: {
+      processingStatus: "processing",
+      processingStartedAt: { lt: fifteenMinutesAgo }
+    },
+    select: { id: true, title: true }
+  });
+
+  for (const video of stuckVideos) {
+    console.warn(`⚠️ [CLEANUP] Video stuck detectado: ${video.title} (${video.id})`);
+    await db.video.update({
+      where: { id: video.id },
+      data: {
+        processingStatus: "failed",
+        processingError: "Timeout: el procesamiento excedió 15 minutos",
+        processingFailedAt: new Date()
+      }
+    });
+  }
+
+  if (stuckVideos.length > 0) {
+    console.info(`🧹 [CLEANUP] ${stuckVideos.length} videos marcados como failed`);
+  }
+});
+
 getAgenda().define(
   "process_video_hls",
+  { lockLifetime: 10 * 60 * 1000 }, // 10 min - si excede, Agenda lo considera stuck
   async (job: {
     attrs: {
       name: string;

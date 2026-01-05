@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
 import { BiRocket, BiX } from "react-icons/bi";
 import { HiSparkles } from "react-icons/hi";

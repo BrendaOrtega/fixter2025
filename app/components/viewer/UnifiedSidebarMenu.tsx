@@ -8,7 +8,7 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
-} from "framer-motion";
+} from "motion/react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { BsMenuButtonWide, BsMarkdown } from "react-icons/bs";
 import { FaPlay, FaVideo } from "react-icons/fa6";

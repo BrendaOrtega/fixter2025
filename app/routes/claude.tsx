@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { NavBar } from "~/components/common/NavBar";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
