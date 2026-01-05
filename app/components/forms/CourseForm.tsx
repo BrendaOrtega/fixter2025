@@ -424,6 +424,15 @@ export const CourseForm = ({
     "add" | "edit" | null
   >(null);
 
+  // Mover todos los useState antes del useEffect que los usa
+  const [editingVideo, setEditingVideo] = useState<Partial<Video>>();
+  const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const onVideoFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setVideoErrors({});
@@ -494,14 +503,6 @@ export const CourseForm = ({
       }
     }
   }, [fetcher.state, fetcher.data, pendingVideoAction, isUploading]);
-
-  const [editingVideo, setEditingVideo] = useState<Partial<Video>>();
-  const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Detectar duración del video usando HTML5 Video API
   const detectVideoDuration = (file: File): Promise<number> => {
