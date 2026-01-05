@@ -70,7 +70,7 @@ export const SubscriptionDrawer = ({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
-              className="w-full mt-2 px-4 py-3 bg-dark border border-colorOutline rounded-lg text-white placeholder:text-colorCaption focus:border-brand-500 focus:outline-none"
+              className="w-full mt-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
           {fetcher.data?.error && (
