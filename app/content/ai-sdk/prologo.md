@@ -28,9 +28,8 @@ Este libro te llevará desde los fundamentos hasta técnicas avanzadas:
 8. **Generación de Imágenes**: Crear visuales con código
 9. **Embeddings**: Búsqueda semántica y vectores
 10. **RAG**: Retrieval Augmented Generation para chatbots con conocimiento
-11. **Agentic RAG**: Agentes que deciden qué buscar (próximamente)
-12. **Audio y Speech**: Voz e IA (próximamente)
-13. **Multi-Provider**: Usando diferentes modelos (próximamente)
+11. **Agentic RAG**: Agentes que deciden qué buscar
+12. **Audio y Speech**: Voz e IA
 
 ## Para quién es este libro
 
@@ -43,4 +42,4 @@ No necesitas experiencia previa con IA o machine learning. Solo necesitas saber 
 ---
 
 *Héctorbliss*
-*FixterGeek*
+*[FixterGeek](https://fixtergeek.com)*

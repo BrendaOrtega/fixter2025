@@ -357,3 +357,8 @@ El AI SDK abstrae la complejidad de trabajar con múltiples proveedores de IA. Y
 Ahora tienes las herramientas para construir aplicaciones de IA en producción. El siguiente paso es tuyo: elige un proyecto, empieza pequeño, e itera.
 
 ¡Buena suerte!
+
+---
+
+*Héctorbliss*
+*[FixterGeek](https://fixtergeek.com)*

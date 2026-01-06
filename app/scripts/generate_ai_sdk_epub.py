@@ -29,15 +29,15 @@ def create_epub():
 
     # Metadatos
     book.set_identifier('ai-sdk-react-router-001')
-    book.set_title('Introducción al AI-SDK con React Router v7')
+    book.set_title('AI SDK con React Router v7')
     book.set_language('es')
     book.add_author('Héctorbliss')
     book.add_metadata('DC', 'publisher', 'FixterGeek')
     book.add_metadata('DC', 'creator', 'Héctorbliss')
     book.add_metadata('DC', 'source', 'fixtergeek.com')
     book.add_metadata('DC', 'description',
-                      'Aprende a integrar inteligencia artificial en tus aplicaciones TypeScript con el AI SDK de Vercel. '
-                      'Sin Python, solo TypeScript. Desde streaming básico hasta agentes avanzados.')
+                      'Integra IA en tus apps TypeScript con el AI SDK de Vercel. '
+                      'Sin Python, solo TypeScript. Desde streaming hasta agentes con RAG y voz.')
 
     # ========== PORTADA ==========
     # La imagen debe estar en: public/covers/ai-sdk-cover.png
@@ -48,26 +48,12 @@ def create_epub():
         with open(cover_path, 'rb') as cover_file:
             cover_content = cover_file.read()
 
-        # Agregar imagen de portada
+        # Agregar imagen de portada (set_cover crea cover.xhtml automáticamente)
+        # El segundo parámetro create_page=True es el default
         book.set_cover("cover.png", cover_content)
 
-        # Crear página de portada
-        cover_page = epub.EpubHtml(title='Portada', file_name='cover.xhtml', lang='es')
-        cover_page.content = '''
-        <html xmlns="http://www.w3.org/1999/xhtml">
-        <head>
-            <title>Portada</title>
-            <style>
-                body { margin: 0; padding: 0; text-align: center; }
-                img { max-width: 100%; max-height: 100%; }
-            </style>
-        </head>
-        <body>
-            <img src="cover.png" alt="Portada"/>
-        </body>
-        </html>
-        '''
-        book.add_item(cover_page)
+        # Obtener referencia a la página de portada creada por set_cover
+        cover_page = book.get_item_with_id('cover')
     else:
         print(f"⚠️  Portada no encontrada en: {cover_path}")
         print(f"   Genera la imagen y colócala en: public/covers/ai-sdk-cover.png")
@@ -213,6 +199,7 @@ def create_epub():
                                    uid=chapter_id)
 
             # Envolver el HTML con estructura adecuada
+            # NOTA: No añadimos <h1> aquí porque el markdown ya lo contiene
             chapter.content = f'''
             <html xmlns="http://www.w3.org/1999/xhtml">
             <head>
@@ -220,7 +207,6 @@ def create_epub():
                 <link rel="stylesheet" type="text/css" href="style/nav.css"/>
             </head>
             <body>
-                <h1>{chapter_info['title']}</h1>
                 {html_content}
             </body>
             </html>

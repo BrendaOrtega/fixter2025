@@ -155,6 +155,7 @@ def create_epub():
                                    uid=chapter_id)
 
             # Envolver el HTML con estructura adecuada
+            # NOTA: No añadimos <h1> aquí porque el markdown ya lo contiene
             chapter.content = f'''
             <html xmlns="http://www.w3.org/1999/xhtml">
             <head>
@@ -162,7 +163,6 @@ def create_epub():
                 <link rel="stylesheet" type="text/css" href="style/nav.css"/>
             </head>
             <body>
-                <h1>{chapter_info['title']}</h1>
                 {html_content}
             </body>
             </html>
