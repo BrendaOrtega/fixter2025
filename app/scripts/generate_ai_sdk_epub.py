@@ -39,6 +39,40 @@ def create_epub():
                       'Aprende a integrar inteligencia artificial en tus aplicaciones TypeScript con el AI SDK de Vercel. '
                       'Sin Python, solo TypeScript. Desde streaming básico hasta agentes avanzados.')
 
+    # ========== PORTADA ==========
+    # La imagen debe estar en: public/covers/ai-sdk-cover.png
+    cover_path = Path(__file__).parent.parent.parent / "public" / "covers" / "ai-sdk-cover.png"
+
+    if cover_path.exists():
+        print(f"📖 Agregando portada: {cover_path}")
+        with open(cover_path, 'rb') as cover_file:
+            cover_content = cover_file.read()
+
+        # Agregar imagen de portada
+        book.set_cover("cover.png", cover_content)
+
+        # Crear página de portada
+        cover_page = epub.EpubHtml(title='Portada', file_name='cover.xhtml', lang='es')
+        cover_page.content = '''
+        <html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+            <title>Portada</title>
+            <style>
+                body { margin: 0; padding: 0; text-align: center; }
+                img { max-width: 100%; max-height: 100%; }
+            </style>
+        </head>
+        <body>
+            <img src="cover.png" alt="Portada"/>
+        </body>
+        </html>
+        '''
+        book.add_item(cover_page)
+    else:
+        print(f"⚠️  Portada no encontrada en: {cover_path}")
+        print(f"   Genera la imagen y colócala en: public/covers/ai-sdk-cover.png")
+        cover_page = None
+
     # CSS personalizado - Azul TypeScript (#3178C6)
     css = '''
     @namespace epub "http://www.idpf.org/2007/ops";
@@ -153,7 +187,8 @@ def create_epub():
 
     # Procesar cada capítulo
     epub_chapters = []
-    spine = ['nav']
+    # Si hay portada, ponerla primero en el spine
+    spine = [cover_page, 'nav'] if cover_page else ['nav']
 
     for i, chapter_info in enumerate(chapters_info):
         # Leer archivo markdown
