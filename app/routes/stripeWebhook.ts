@@ -8,7 +8,7 @@ import { sendAisdkWelcome } from "~/mailSenders/sendAisdkWelcome";
 import { sendAisdkWebinarConfirmation } from "~/mailSenders/sendAisdkWebinarConfirmation";
 import { sendAisdkTaller1Welcome } from "~/mailSenders/sendAisdkTaller1Welcome";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
-import { type BookSlug } from "~/.server/services/book-access.server";
+import type { BookSlug } from "~/.server/services/book-access.server";
 
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
