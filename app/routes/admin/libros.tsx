@@ -11,8 +11,10 @@ import { FaBook, FaLock, FaEnvelope, FaGlobe, FaSave, FaExternalLinkAlt } from "
 import { Link } from "react-router";
 import { motion } from "motion/react";
 
-// Definición de libros y sus capítulos (títulos desde BOOK_CONFIG)
-const BOOKS = [
+type AccessLevel = "public" | "subscriber" | "paid";
+
+// Definición de libros con capítulos (se construye en el loader con títulos de BOOK_CONFIG)
+const getBooksConfig = () => [
   {
     slug: "ai-sdk" as const,
     title: BOOK_CONFIG["ai-sdk"].title,
@@ -73,8 +75,6 @@ const BOOKS = [
   },
 ];
 
-type AccessLevel = "public" | "subscriber" | "paid";
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await getAdminOrRedirect(request);
 
@@ -87,7 +87,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     accessMap[`${a.bookSlug}:${a.chapterSlug}`] = a.accessLevel as AccessLevel;
   });
 
-  return { accessMap };
+  // Pasar BOOKS desde el servidor para evitar importar .server en cliente
+  const books = getBooksConfig();
+
+  return { accessMap, books };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -154,13 +157,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AdminLibros({ loaderData }: Route.ComponentProps) {
-  const { accessMap } = loaderData;
+  const { accessMap, books } = loaderData;
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
   const [localAccess, setLocalAccess] = useState<Record<string, AccessLevel>>({});
   const [hasChanges, setHasChanges] = useState(false);
   const fetcher = useFetcher();
 
-  const book = BOOKS.find((b) => b.slug === selectedBook);
+  const book = books.find((b) => b.slug === selectedBook);
 
   const getAccessLevel = (bookSlug: string, chapterSlug: string): AccessLevel => {
     const key = `${bookSlug}:${chapterSlug}`;
@@ -233,7 +236,7 @@ export default function AdminLibros({ loaderData }: Route.ComponentProps) {
 
         {/* Selector de libro */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {BOOKS.map((b) => (
+          {books.map((b) => (
             <div
               key={b.slug}
               className={cn(

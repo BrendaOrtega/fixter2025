@@ -22,9 +22,6 @@ import {
   handleBookSubscribe,
   handleBookVerify,
 } from "~/.server/services/book-access.server";
-
-// Usar configuración centralizada
-const AI_SDK_CONFIG = BOOK_CONFIG["ai-sdk"];
 import { db } from "~/.server/db";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
 import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
@@ -60,11 +57,15 @@ const chapters = [
   { id: "12", title: "Audio y Speech — Voz e IA", slug: "capitulo-12" },
 ];
 
+// Título hardcodeado para meta (no puede acceder a BOOK_CONFIG en cliente)
+// Si cambia, actualizar también en BOOK_CONFIG["ai-sdk"].title
+const BOOK_TITLE = "IA aplicada con React y TypeScript";
+
 export const meta = ({ location }: Route.MetaArgs) => {
   const url = `https://www.fixtergeek.com${location.pathname}`;
 
   return getMetaTags({
-    title: `${AI_SDK_CONFIG.title} | FixterGeek`,
+    title: `${BOOK_TITLE} | FixterGeek`,
     description:
       "Aprende a integrar IA en tus aplicaciones TypeScript con el AI SDK de Vercel. Sin Python, solo TypeScript.",
     url,
