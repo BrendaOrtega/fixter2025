@@ -7,10 +7,11 @@ import { PrimaryButton } from "~/components/common/PrimaryButton";
 interface BookPurchaseDrawerProps {
   bookSlug: string;
   bookTitle: string;
-  bookPrice: number; // en centavos MXN
+  bookPrice: number; // en centavos
   chaptersCount: number;
   onClose?: () => void;
   forEpub?: boolean;
+  currency?: "USD" | "MXN";
 }
 
 /**
@@ -24,6 +25,7 @@ export function BookPurchaseDrawer({
   chaptersCount,
   onClose,
   forEpub = false,
+  currency = "USD",
 }: BookPurchaseDrawerProps) {
   const [show, setShow] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,9 +37,9 @@ export function BookPurchaseDrawer({
 
   if (!show) return null;
 
-  const priceFormatted = new Intl.NumberFormat("es-MX", {
+  const priceFormatted = new Intl.NumberFormat(currency === "USD" ? "en-US" : "es-MX", {
     style: "currency",
-    currency: "MXN",
+    currency: currency,
     minimumFractionDigits: 0,
   }).format(bookPrice / 100);
 
@@ -78,7 +80,7 @@ export function BookPurchaseDrawer({
               {bookTitle}
             </span>
             <span className="text-[#3178C6] font-bold text-xl">
-              {priceFormatted}
+              {priceFormatted} {currency}
             </span>
           </div>
           <ul className="mt-3 space-y-2 text-sm text-gray-400">
@@ -95,7 +97,7 @@ export function BookPurchaseDrawer({
           </ul>
         </div>
 
-        <Form method="POST" className="mt-6">
+        <Form method="POST" className="mt-6 space-y-3">
           <input type="hidden" name="intent" value="checkout" />
           <PrimaryButton
             type="submit"
@@ -106,6 +108,19 @@ export function BookPurchaseDrawer({
             Comprar ahora
           </PrimaryButton>
         </Form>
+
+        {currency === "USD" && (
+          <Form method="POST">
+            <input type="hidden" name="intent" value="checkout" />
+            <input type="hidden" name="currency" value="mxn" />
+            <button
+              type="submit"
+              className="w-full text-center text-sm text-gray-400 hover:text-white transition-colors py-2"
+            >
+              Comprar en MXN ($249)
+            </button>
+          </Form>
+        )}
       </motion.div>
     </motion.div>
   );

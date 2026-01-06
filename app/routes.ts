@@ -80,6 +80,7 @@ export default [
     route("sequences/process", "routes/api.sequences.process.ts"),
     route("video-preview-dynamic", "routes/api/video-preview-dynamic.tsx"),
     route("hls-proxy", "routes/api/hls-proxy.tsx"),
+    route("book-epub", "routes/api/book-epub.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

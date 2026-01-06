@@ -6,6 +6,20 @@ import sys
 from ebooklib import epub
 import markdown
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
+
+# S3 Configuration
+S3_BUCKET = os.getenv("AWS_S3_BUCKET", "wild-bird-2039")
+S3_REGION = os.getenv("AWS_REGION", "auto")
+S3_ENDPOINT = os.getenv("AWS_ENDPOINT_URL_S3")
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+# S3 key for the EPUB (single version, always overwritten)
+EPUB_S3_KEY = "fixtergeek/books/ai-sdk.epub"
 
 def create_epub():
     """Genera un archivo EPUB del libro AI SDK con React Router v7"""
@@ -116,6 +130,7 @@ def create_epub():
     book.add_item(nav_css)
 
     # Lista de capítulos - se sincroniza con app/routes/libros/ai_sdk.tsx
+    # 12 capítulos + prólogo + introducción
     chapters_info = [
         {"id": "prologo", "title": "Prólogo", "slug": "prologo"},
         {"id": "intro", "title": "Introducción", "slug": "introduccion"},
@@ -131,7 +146,6 @@ def create_epub():
         {"id": "10", "title": "RAG — Retrieval Augmented Generation", "slug": "capitulo-10"},
         {"id": "11", "title": "Agentic RAG — Agentes con Conocimiento", "slug": "capitulo-11"},
         {"id": "12", "title": "Audio y Speech — Voz e IA", "slug": "capitulo-12"},
-        {"id": "13", "title": "Multi-Provider — Usando Diferentes Modelos", "slug": "capitulo-13"},
     ]
 
     # Directorio donde están los archivos markdown
@@ -156,7 +170,7 @@ def create_epub():
             # Crear capítulo EPUB con ID único para navegación
             chapter_id = f"chapter_{chapter_info['id']}"
             # Usar el título completo como nombre de archivo (sin caracteres especiales)
-            safe_title = chapter_info['title'].replace('?', '').replace('¿', '').replace(' ', '_').replace(':', '').replace(',', '').replace('-', '_')
+            safe_title = chapter_info['title'].replace('?', '').replace('¿', '').replace(' ', '_').replace(':', '').replace(',', '').replace('-', '_').replace('—', '_')
             safe_filename = f"{safe_title}.xhtml"
             chapter = epub.EpubHtml(title=chapter_info['title'],
                                    file_name=safe_filename,
@@ -209,18 +223,69 @@ def create_epub():
     # Definir spine (orden de lectura)
     book.spine = spine
 
-    # Generar el archivo EPUB
-    output_path = Path(__file__).parent.parent.parent / "public" / "ai-sdk-react-router.epub"
+    # Generar el archivo EPUB en directorio temporal
+    output_path = Path(__file__).parent.parent.parent / "tmp" / "ai-sdk.epub"
+    output_path.parent.mkdir(exist_ok=True)
     epub.write_epub(output_path, book, {})
 
-    print(f"\n✅ EPUB generado exitosamente: {output_path}")
+    print(f"\n✅ EPUB generado localmente: {output_path}")
     print(f"   Tamaño: {output_path.stat().st_size / 1024:.2f} KB")
 
     return str(output_path)
 
+
+def upload_to_s3(local_path: str) -> str:
+    """Sube el EPUB a S3 (sobrescribe si existe)"""
+    import boto3
+    from botocore.config import Config
+
+    if not AWS_ACCESS_KEY or not AWS_SECRET_KEY:
+        raise ValueError("AWS credentials not configured")
+
+    print(f"\n📤 Subiendo a S3...")
+    print(f"   Bucket: {S3_BUCKET}")
+    print(f"   Key: {EPUB_S3_KEY}")
+
+    # Configure S3 client
+    client_config = Config(
+        signature_version='s3v4',
+        s3={'addressing_style': 'path'}
+    )
+
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=S3_ENDPOINT,
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_SECRET_KEY,
+        region_name=S3_REGION,
+        config=client_config
+    )
+
+    # Upload with proper content type
+    with open(local_path, 'rb') as f:
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=EPUB_S3_KEY,
+            Body=f.read(),
+            ContentType='application/epub+zip',
+            ContentDisposition='attachment; filename="ai-sdk-react-router.epub"'
+        )
+
+    # Build the URL (private, needs presigned URL to access)
+    if S3_ENDPOINT:
+        s3_url = f"{S3_ENDPOINT}/{S3_BUCKET}/{EPUB_S3_KEY}"
+    else:
+        s3_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{EPUB_S3_KEY}"
+
+    print(f"✅ Subido exitosamente a S3")
+    print(f"   URL (privada): {s3_url}")
+
+    return s3_url
+
+
 if __name__ == "__main__":
     try:
-        # Instalar markdown si no está instalado
+        # Instalar dependencias si no están instaladas
         try:
             import markdown
         except ImportError:
@@ -228,11 +293,36 @@ if __name__ == "__main__":
             os.system("pip3 install markdown")
             import markdown
 
+        try:
+            import boto3
+        except ImportError:
+            print("Instalando boto3...")
+            os.system("pip3 install boto3")
+            import boto3
+
+        try:
+            from dotenv import load_dotenv
+        except ImportError:
+            print("Instalando python-dotenv...")
+            os.system("pip3 install python-dotenv")
+            from dotenv import load_dotenv
+
+        # Generate EPUB locally
         epub_path = create_epub()
 
-        # Si se pasa como argumento, devolver la ruta
-        if len(sys.argv) > 1 and sys.argv[1] == "--return-path":
+        # Upload to S3 (unless --local-only flag)
+        if "--local-only" not in sys.argv:
+            s3_url = upload_to_s3(epub_path)
+            print(f"\n🎉 EPUB disponible en S3 (requiere presigned URL para acceder)")
+        else:
+            print(f"\n📁 EPUB generado solo localmente: {epub_path}")
+
+        # Return path if requested
+        if "--return-path" in sys.argv:
             print(epub_path)
+
     except Exception as e:
         print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)

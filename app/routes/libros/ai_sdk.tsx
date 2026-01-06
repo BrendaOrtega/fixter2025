@@ -71,7 +71,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const email = (formData.get("email") as string)?.toLowerCase().trim();
 
   if (intent === "checkout") {
-    return handleBookCheckout(request, BOOK_SLUG);
+    const currency = formData.get("currency") as string | null;
+    return handleBookCheckout(request, BOOK_SLUG, currency || undefined);
   }
 
   if (intent === "subscribe") {
@@ -577,7 +578,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
               <LockedContentPlaceholder
                 accessLevel={accessLevel}
                 bookTitle={bookConfig.title}
-                bookPrice={bookConfig.price}
+                bookPrice={bookConfig.priceUSD}
               />
             )}
           </motion.div>
@@ -640,8 +641,9 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
           <BookPurchaseDrawer
             bookSlug={bookSlug}
             bookTitle={bookConfig.title}
-            bookPrice={bookConfig.price}
+            bookPrice={bookConfig.priceUSD}
             chaptersCount={bookConfig.chaptersCount}
+            currency="USD"
           />
         )}
       </AnimatePresence>
@@ -652,10 +654,11 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
           <BookPurchaseDrawer
             bookSlug={bookSlug}
             bookTitle={bookConfig.title}
-            bookPrice={bookConfig.price}
+            bookPrice={bookConfig.priceUSD}
             chaptersCount={bookConfig.chaptersCount}
             onClose={() => setShowEpubPurchaseDrawer(false)}
             forEpub
+            currency="USD"
           />
         )}
       </AnimatePresence>
@@ -691,7 +694,7 @@ function LockedContentPlaceholder({
             Desbloquea todo el contenido de <strong>{bookTitle}</strong> incluyendo
             todos los capítulos, código descargable y el EPUB completo por solo{" "}
             <span className="font-bold text-[#3178C6]">
-              ${(bookPrice / 100).toLocaleString("es-MX")} MXN
+              ${(bookPrice / 100).toLocaleString("en-US")} USD
             </span>
           </p>
           <form method="post">

@@ -10,10 +10,10 @@ from pathlib import Path
 
 def create_epub():
     """Genera un archivo EPUB del libro Dominando Claude Code"""
-    
+
     # Crear el libro
     book = epub.EpubBook()
-    
+
     # Metadatos
     book.set_identifier('dominando-claude-code-001')
     book.set_title('Dominando Claude Code para Desarrolladores')
@@ -22,10 +22,10 @@ def create_epub():
     book.add_metadata('DC', 'publisher', 'FixterGeek')
     book.add_metadata('DC', 'creator', 'Héctorbliss')
     book.add_metadata('DC', 'source', 'fixtergeek.com')
-    book.add_metadata('DC', 'description', 
+    book.add_metadata('DC', 'description',
                       'La guía definitiva para dominar Claude Code como desarrollador profesional. '
                       'Desde fundamentos hasta técnicas avanzadas de automatización con MCP y subagentes.')
-    
+
     # CSS personalizado
     css = '''
     @namespace epub "http://www.idpf.org/2007/ops";
@@ -99,14 +99,14 @@ def create_epub():
         font-style: italic;
     }
     '''
-    
+
     # Añadir CSS
     nav_css = epub.EpubItem(uid="style_nav",
                             file_name="style/nav.css",
                             media_type="text/css",
                             content=css)
     book.add_item(nav_css)
-    
+
     # Lista de capítulos
     chapters_info = [
         {"id": "prologo", "title": "Prólogo", "slug": "prologo"},
@@ -124,26 +124,26 @@ def create_epub():
         {"id": "11", "title": "SubAgentes Avanzados", "slug": "capitulo-11"},
         {"id": "12", "title": "El Camino Hacia Adelante", "slug": "capitulo-12"},
     ]
-    
+
     # Directorio donde están los archivos markdown
     content_dir = Path(__file__).parent.parent / "content" / "libro"
-    
+
     # Procesar cada capítulo
     epub_chapters = []
     spine = ['nav']
-    
+
     for i, chapter_info in enumerate(chapters_info):
         # Leer archivo markdown
         md_file = content_dir / f"{chapter_info['slug']}.md"
-        
+
         try:
             with open(md_file, 'r', encoding='utf-8') as f:
                 md_content = f.read()
-            
+
             # Convertir markdown a HTML
-            html_content = markdown.markdown(md_content, 
+            html_content = markdown.markdown(md_content,
                                            extensions=['fenced_code', 'tables', 'nl2br'])
-            
+
             # Crear capítulo EPUB con ID único para navegación
             chapter_id = f"chapter_{chapter_info['id']}"
             # Usar el título completo como nombre de archivo (sin caracteres especiales)
@@ -153,7 +153,7 @@ def create_epub():
                                    file_name=safe_filename,
                                    lang='es',
                                    uid=chapter_id)
-            
+
             # Envolver el HTML con estructura adecuada
             chapter.content = f'''
             <html xmlns="http://www.w3.org/1999/xhtml">
@@ -167,22 +167,22 @@ def create_epub():
             </body>
             </html>
             '''
-            
+
             # Añadir CSS al capítulo
             chapter.add_item(nav_css)
-            
+
             # Añadir capítulo al libro
             book.add_item(chapter)
             epub_chapters.append(chapter)
             spine.append(chapter)
-            
+
             print(f"✓ Procesado: {chapter_info['title']}")
-            
+
         except FileNotFoundError:
             print(f"⚠ Archivo no encontrado: {md_file}")
         except Exception as e:
             print(f"✗ Error procesando {chapter_info['slug']}: {e}")
-    
+
     # Crear tabla de contenidos explícita con títulos correctos
     toc_entries = []
     for i, chapter in enumerate(epub_chapters):
@@ -192,21 +192,21 @@ def create_epub():
         toc_entries.append(toc_entry)
 
     book.toc = toc_entries
-    
+
     # Añadir navegación
     book.add_item(epub.EpubNcx())
     book.add_item(epub.EpubNav())
-    
+
     # Definir spine (orden de lectura)
     book.spine = spine
-    
+
     # Generar el archivo EPUB
     output_path = Path(__file__).parent.parent.parent / "public" / "dominando-claude-code.epub"
     epub.write_epub(output_path, book, {})
-    
+
     print(f"\n✅ EPUB generado exitosamente: {output_path}")
     print(f"   Tamaño: {output_path.stat().st_size / 1024:.2f} KB")
-    
+
     return str(output_path)
 
 if __name__ == "__main__":
@@ -218,9 +218,9 @@ if __name__ == "__main__":
             print("Instalando markdown...")
             os.system("pip3 install markdown")
             import markdown
-        
+
         epub_path = create_epub()
-        
+
         # Si se pasa como argumento, devolver la ruta
         if len(sys.argv) > 1 and sys.argv[1] == "--return-path":
             print(epub_path)
