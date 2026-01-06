@@ -22,6 +22,9 @@ import {
   handleBookSubscribe,
   handleBookVerify,
 } from "~/.server/services/book-access.server";
+import { db } from "~/.server/db";
+import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
+import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
 
 const BOOK_SLUG = "ai-sdk" as const;
 
@@ -93,6 +96,84 @@ export const action = async ({ request }: Route.ActionArgs) => {
       return data({ success: true, verified: true }, { headers: result.headers });
     }
     return result;
+  }
+
+  // Reenviar link de descarga para compradores
+  if (intent === "resend-link") {
+    if (!email) {
+      return data({ error: "Email requerido" }, { status: 400 });
+    }
+
+    // Verificar si el email tiene compra del libro
+    const user = await db.user.findFirst({
+      where: {
+        email: { equals: email, mode: "insensitive" },
+        books: { has: BOOK_SLUG },
+      },
+    });
+
+    if (user) {
+      // Usuario compró el libro - enviar magic link
+      try {
+        await sendBookDownloadLink({
+          to: email,
+          bookSlug: BOOK_SLUG,
+          userName: user.displayName || undefined,
+        });
+        return data({
+          success: true,
+          purchased: true,
+          message: "Te enviamos un email con el enlace de descarga",
+        });
+      } catch (error) {
+        console.error("[Resend Link] Error enviando email:", error);
+        return data(
+          { error: "Error enviando el email. Intenta de nuevo." },
+          { status: 500 }
+        );
+      }
+    }
+
+    // No compró - verificar si es suscriptor
+    const subscriber = await db.subscriber.findUnique({ where: { email } });
+
+    if (subscriber) {
+      // Ya es suscriptor pero no compró
+      return data({
+        success: false,
+        purchased: false,
+        isSubscriber: true,
+        message:
+          "No encontramos una compra con este email. Puedes comprar el libro para obtener acceso completo y el EPUB.",
+      });
+    }
+
+    // No es suscriptor ni compró - ofrecer suscribirse
+    // Crear suscriptor y enviar código de verificación
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await db.subscriber.upsert({
+      where: { email },
+      create: {
+        email,
+        confirmed: false,
+        verificationCode: code,
+        tags: [`${BOOK_SLUG}-interested`],
+      },
+      update: {
+        verificationCode: code,
+      },
+    });
+
+    await sendVerificationCode(email, code);
+
+    return data({
+      success: false,
+      purchased: false,
+      isSubscriber: false,
+      needsVerification: true,
+      message:
+        "No encontramos una compra con este email. Te enviamos un código para suscribirte gratis y acceder a capítulos de muestra.",
+    });
   }
 
   return null;
@@ -625,6 +706,9 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
               )}
             </div>
           </nav>
+
+          {/* Sección para solicitar reenvío de link de descarga */}
+          {!hasFullAccess && <ResendDownloadLink />}
         </article>
       </BookLayout>
 
@@ -813,6 +897,147 @@ function SubscriptionForm() {
               </div>
             </fetcher.Form>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Componente para solicitar reenvío del link de descarga
+function ResendDownloadLink() {
+  const [email, setEmail] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [showVerify, setShowVerify] = useState(false);
+  const fetcher = useFetcher();
+  const isLoading = fetcher.state !== "idle";
+
+  const result = fetcher.data as {
+    success?: boolean;
+    purchased?: boolean;
+    isSubscriber?: boolean;
+    needsVerification?: boolean;
+    message?: string;
+    error?: string;
+    verified?: boolean;
+  } | null;
+
+  // Si se verificó exitosamente, recargar
+  useEffect(() => {
+    if (result?.verified) {
+      window.location.reload();
+    }
+  }, [result?.verified]);
+
+  // Mostrar formulario de verificación si lo requiere
+  useEffect(() => {
+    if (result?.needsVerification) {
+      setShowVerify(true);
+    }
+  }, [result?.needsVerification]);
+
+  return (
+    <div className="border-t border-gray-200 pt-8 mt-8">
+      <div className="bg-gray-50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          ¿Ya compraste el libro?
+        </h3>
+        <p className="text-gray-600 text-sm mb-4">
+          Si compraste el libro y no encuentras tu email de descarga, ingresa tu
+          email y te enviamos un nuevo enlace.
+        </p>
+
+        {!showVerify ? (
+          <fetcher.Form method="POST" className="space-y-4">
+            <input type="hidden" name="intent" value="resend-link" />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#3178C6] focus:ring-2 focus:ring-[#3178C6]/20"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-2 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50"
+              >
+                {isLoading ? "Verificando..." : "Reenviar enlace"}
+              </button>
+            </div>
+          </fetcher.Form>
+        ) : (
+          <fetcher.Form method="POST" className="space-y-4">
+            <input type="hidden" name="intent" value="verify" />
+            <input type="hidden" name="email" value={email} />
+            <p className="text-sm text-gray-600">
+              Te enviamos un código a <strong>{email}</strong>
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                name="code"
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value)}
+                placeholder="123456"
+                maxLength={6}
+                className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#3178C6] focus:ring-2 focus:ring-[#3178C6]/20 text-center tracking-widest"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-2 bg-[#3178C6] text-white font-medium rounded-lg hover:bg-[#2563eb] transition-all disabled:opacity-50"
+              >
+                {isLoading ? "Verificando..." : "Verificar"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowVerify(false);
+                setVerifyCode("");
+              }}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Usar otro email
+            </button>
+          </fetcher.Form>
+        )}
+
+        {/* Mensajes de resultado */}
+        {result?.message && (
+          <div
+            className={`mt-4 p-4 rounded-lg text-sm ${
+              result.success
+                ? "bg-green-50 text-green-800 border border-green-200"
+                : result.purchased === false && !result.needsVerification
+                ? "bg-amber-50 text-amber-800 border border-amber-200"
+                : "bg-blue-50 text-blue-800 border border-blue-200"
+            }`}
+          >
+            {result.message}
+            {result.isSubscriber && (
+              <form method="post" className="mt-3">
+                <input type="hidden" name="intent" value="checkout" />
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#3178C6] text-white text-sm font-medium rounded-lg hover:bg-[#2563eb] transition-all"
+                >
+                  <FaShoppingCart className="w-4 h-4" />
+                  Comprar libro completo
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
+        {result?.error && (
+          <div className="mt-4 p-4 rounded-lg text-sm bg-red-50 text-red-800 border border-red-200">
+            {result.error}
+          </div>
         )}
       </div>
     </div>

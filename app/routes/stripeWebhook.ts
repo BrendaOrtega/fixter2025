@@ -7,6 +7,8 @@ import { purchaseCongrats } from "~/mailSenders/purchaseCongrats";
 import { sendAisdkWelcome } from "~/mailSenders/sendAisdkWelcome";
 import { sendAisdkWebinarConfirmation } from "~/mailSenders/sendAisdkWebinarConfirmation";
 import { sendAisdkTaller1Welcome } from "~/mailSenders/sendAisdkTaller1Welcome";
+import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
+import { type BookSlug } from "~/.server/services/book-access.server";
 
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -157,30 +159,72 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (session.metadata.type === "book-purchase") {
         const bookSlug = session.metadata.bookSlug;
         const userName = session.customer_details?.name || "Lector";
+        const paidTag = `book-${bookSlug}-paid`;
 
         if (!bookSlug) {
           console.error("WEBHOOK: book-purchase missing bookSlug");
           return new Response("Missing bookSlug", { status: 400 });
         }
 
-        // Create or update user with the book
-        await db.user.upsert({
-          where: { email },
-          create: {
-            email,
-            username: email,
-            displayName: userName,
-            books: [bookSlug],
-            tags: ["newsletter", `book-${bookSlug}-paid`],
-            confirmed: true,
-            role: "STUDENT",
-          },
-          update: {
-            displayName: userName || undefined,
-            books: { push: bookSlug },
-            tags: { push: `book-${bookSlug}-paid` },
-          },
-        });
+        // Check if user exists to avoid duplicates
+        const existingUser = await db.user.findUnique({ where: { email } });
+
+        if (existingUser) {
+          // Only add book/tag if not already present
+          const newBooks = existingUser.books?.includes(bookSlug)
+            ? existingUser.books
+            : [...(existingUser.books || []), bookSlug];
+          const newTags = existingUser.tags?.includes(paidTag)
+            ? existingUser.tags
+            : [...(existingUser.tags || []), paidTag];
+
+          await db.user.update({
+            where: { email },
+            data: {
+              displayName: userName || undefined,
+              books: newBooks,
+              tags: newTags,
+            },
+          });
+        } else {
+          await db.user.create({
+            data: {
+              email,
+              username: email,
+              displayName: userName,
+              books: [bookSlug],
+              tags: ["newsletter", paidTag],
+              confirmed: true,
+              role: "STUDENT",
+            },
+          });
+        }
+
+        // Also confirm subscriber if exists (buyer gets full access)
+        const subscriberTag = `${bookSlug}-free-access`;
+        const existingSubscriber = await db.subscriber.findUnique({ where: { email } });
+
+        if (existingSubscriber) {
+          const newSubTags = existingSubscriber.tags.includes(subscriberTag)
+            ? existingSubscriber.tags
+            : [...existingSubscriber.tags, subscriberTag];
+
+          await db.subscriber.update({
+            where: { email },
+            data: {
+              confirmed: true,
+              tags: newSubTags,
+            },
+          });
+        } else {
+          await db.subscriber.create({
+            data: {
+              email,
+              confirmed: true,
+              tags: [subscriberTag],
+            },
+          });
+        }
 
         await successPurchase({
           userName,
@@ -188,6 +232,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           title: `Libro: ${bookSlug}`,
           slug: bookSlug,
         });
+
+        // Enviar email con magic link para descarga del EPUB
+        try {
+          await sendBookDownloadLink({
+            to: email,
+            bookSlug: bookSlug as BookSlug,
+            userName,
+          });
+          console.info(`WEBHOOK: Book download email sent to ${email}`);
+        } catch (emailError) {
+          console.error(`WEBHOOK: Error sending book download email:`, emailError);
+          // No fallar el webhook por error de email
+        }
 
         console.info(`WEBHOOK: Book purchase success - ${bookSlug}`);
         return new Response(null);

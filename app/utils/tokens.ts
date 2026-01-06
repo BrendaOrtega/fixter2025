@@ -39,3 +39,75 @@ export const validateUserToken = (token: string) => {
     };
   }
 };
+
+// ==========================================
+// Magic Link para descarga de libros (EPUB)
+// ==========================================
+
+export type BookDownloadTokenData = {
+  email: string;
+  bookSlug: string;
+  action: "book-download";
+};
+
+/**
+ * Genera un token firmado para descarga de libro
+ * Válido por 30 días
+ */
+export const generateBookDownloadToken = (
+  email: string,
+  bookSlug: string
+): string => {
+  const data: BookDownloadTokenData = {
+    email,
+    bookSlug,
+    action: "book-download",
+  };
+  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+    expiresIn: "30d",
+  });
+};
+
+/**
+ * Valida un token de descarga de libro
+ * Retorna los datos del token o error
+ */
+export const validateBookDownloadToken = (
+  token: string
+): {
+  isValid: boolean;
+  decoded?: BookDownloadTokenData;
+  error?: string;
+} => {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "fixtergeek"
+    ) as BookDownloadTokenData;
+
+    // Verificar que sea un token de descarga de libro
+    if (decoded.action !== "book-download") {
+      return {
+        isValid: false,
+        error: "Token inválido: no es un token de descarga",
+      };
+    }
+
+    return {
+      isValid: true,
+      decoded,
+    };
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.name === "TokenExpiredError") {
+      return {
+        isValid: false,
+        error: "El enlace ha expirado. Solicita uno nuevo.",
+      };
+    }
+    return {
+      isValid: false,
+      error: "Enlace inválido",
+    };
+  }
+};

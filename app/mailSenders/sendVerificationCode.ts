@@ -44,13 +44,13 @@ const verificationCodeTemplate = ({ code }: { code: string }) => `
 </html>
 `;
 
-export const sendVerificationCode = async ({ email, code }: Props) => {
+export const sendVerificationCode = async (email: string, code: string) => {
   const htmlContent = verificationCodeTemplate({ code });
 
   return getSesTransport()
     .sendMail({
       from: getSesRemitent(),
-      bcc: email,
+      to: email,
       subject: `Tu codigo: ${code}`,
       html: htmlContent,
     })

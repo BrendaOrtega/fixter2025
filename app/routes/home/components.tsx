@@ -549,7 +549,7 @@ export const HomeHero = () => {
           <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
             📖 Libros gratuitos:{" "}
             <Link
-              to="/libros"
+              to="/libros/domina_claude_code"
               className="text-sm  text-orange-300  hover:underline transition-all duration-200  "
             >
               Dominando Claude Code
