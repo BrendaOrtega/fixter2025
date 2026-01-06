@@ -46,6 +46,7 @@ export default [
     route("talleres", "routes/admin/talleres.tsx"),
     route("webinar", "routes/admin/webinar.tsx"),
     route("sequences", "routes/admin/sequences.tsx"),
+    route("libros", "routes/admin/libros.tsx"),
     route("newsletter", "routes/admin/newsletter.tsx"),
     route("analytics", "routes/admin/analytics.tsx"),
     route("heatmap/:postId", "routes/admin/heatmap.$postId.tsx"),

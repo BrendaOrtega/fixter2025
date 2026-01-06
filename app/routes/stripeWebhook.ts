@@ -153,6 +153,46 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return new Response(null);
       }
 
+      // Handle book purchases - adds book slug to user.books array
+      if (session.metadata.type === "book-purchase") {
+        const bookSlug = session.metadata.bookSlug;
+        const userName = session.customer_details?.name || "Lector";
+
+        if (!bookSlug) {
+          console.error("WEBHOOK: book-purchase missing bookSlug");
+          return new Response("Missing bookSlug", { status: 400 });
+        }
+
+        // Create or update user with the book
+        await db.user.upsert({
+          where: { email },
+          create: {
+            email,
+            username: email,
+            displayName: userName,
+            books: [bookSlug],
+            tags: ["newsletter", `book-${bookSlug}-paid`],
+            confirmed: true,
+            role: "STUDENT",
+          },
+          update: {
+            displayName: userName || undefined,
+            books: { push: bookSlug },
+            tags: { push: `book-${bookSlug}-paid` },
+          },
+        });
+
+        await successPurchase({
+          userName,
+          userMail: email,
+          title: `Libro: ${bookSlug}`,
+          slug: bookSlug,
+        });
+
+        console.info(`WEBHOOK: Book purchase success - ${bookSlug}`);
+        return new Response(null);
+      }
+
       // Handle ALL course purchases - unified logic
       const course = await db.course.findUnique({
         where: {

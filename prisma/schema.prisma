@@ -445,8 +445,23 @@ model User {
   tags        String[]
   metadata    Json?
   webinar     Json? // Información del webinar con las 3 preguntas
+  books       String[] // Libros comprados: ["ai-sdk", "domina-claude-code", "llamaindex"]
 
   @@map("users")
+}
+
+// Control de acceso por capítulo de libro
+model BookChapterAccess {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  bookSlug    String // "domina-claude-code", "ai-sdk", "llamaindex"
+  chapterSlug String // "prologo", "capitulo-01", etc.
+  accessLevel String @default("public") // "public" | "subscriber" | "paid"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bookSlug, chapterSlug])
+  @@map("book_chapter_access")
 }
 
 model AudioCache {

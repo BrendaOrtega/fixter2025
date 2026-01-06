@@ -1,14 +1,29 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, data, useFetcher } from "react-router";
 import type { Route } from "./+types/ai_sdk";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
-import { motion } from "motion/react";
+import { FaShoppingCart } from "react-icons/fa";
+import { motion, AnimatePresence } from "motion/react";
 import { Streamdown } from "streamdown";
 import getMetaTags from "~/utils/getMetaTags";
-import TableOfContents from "~/components/book/TableOfContents";
-import HeadingsList from "~/components/book/HeadingsList";
-import BookLayout from "~/components/book/BookLayout";
+import {
+  TableOfContents,
+  HeadingsList,
+  BookLayout,
+  BookSubscriptionDrawer,
+  BookPurchaseDrawer,
+} from "~/components/book";
+import {
+  BOOK_CONFIG,
+  getBookAccessData,
+  getAllChaptersAccessInfo,
+  handleBookCheckout,
+  handleBookSubscribe,
+  handleBookVerify,
+} from "~/.server/services/book-access.server";
+
+const BOOK_SLUG = "ai-sdk" as const;
 
 // Helper para generar IDs desde texto
 function generateId(text: string): string {
@@ -50,11 +65,48 @@ export const meta = ({ location }: Route.MetaArgs) => {
   });
 };
 
+export const action = async ({ request }: Route.ActionArgs) => {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  const email = (formData.get("email") as string)?.toLowerCase().trim();
+
+  if (intent === "checkout") {
+    return handleBookCheckout(request, BOOK_SLUG);
+  }
+
+  if (intent === "subscribe") {
+    const result = await handleBookSubscribe(email, BOOK_SLUG);
+    if (result.error) {
+      return data({ error: result.error }, { status: 400 });
+    }
+    return result;
+  }
+
+  if (intent === "verify") {
+    const code = formData.get("code") as string;
+    const result = await handleBookVerify(email, code, BOOK_SLUG);
+    if (result.error) {
+      return data({ error: result.error }, { status: 400 });
+    }
+    if (result.headers) {
+      return data({ success: true, verified: true }, { headers: result.headers });
+    }
+    return result;
+  }
+
+  return null;
+};
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const chapterSlug = url.searchParams.get("chapter") || "prologo";
 
-  console.log(`[AI SDK Book] Loading chapter: "${chapterSlug}" from URL: ${url.pathname}${url.search}`);
+  // Get access data using the centralized service
+  const accessData = await getBookAccessData(request, BOOK_SLUG, chapterSlug);
+  const bookConfig = BOOK_CONFIG[BOOK_SLUG];
+
+  // Get access info for ALL chapters (for showing locks in TOC)
+  const chaptersAccessInfo = await getAllChaptersAccessInfo(request, BOOK_SLUG);
 
   try {
     // Leer el archivo MD del capítulo
@@ -64,18 +116,23 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       process.cwd(),
       "app",
       "content",
-      "ai-sdk",
+      bookConfig.contentPath,
       `${chapterSlug}.md`
     );
-    const content = await fs.readFile(filePath, "utf-8");
+    const rawContent = await fs.readFile(filePath, "utf-8");
+
+    // Si no tiene acceso, no enviar contenido
+    const content = accessData.hasAccess ? rawContent : "";
 
     // Encontrar el capítulo actual y los adyacentes (excluyendo deshabilitados)
     const currentIndex = chapters.findIndex((c) => c.slug === chapterSlug);
     const currentChapter = chapters[currentIndex] || chapters[0];
     const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     // Solo mostrar siguiente si no está deshabilitado
-    const potentialNext = currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
-    const nextChapter = potentialNext && !potentialNext.disabled ? potentialNext : null;
+    const potentialNext =
+      currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
+    const nextChapter =
+      potentialNext && !(potentialNext as any).disabled ? potentialNext : null;
 
     return {
       content,
@@ -83,17 +140,29 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       prevChapter,
       nextChapter,
       chapters,
+      // Access control from service
+      ...accessData,
+      chaptersAccessInfo,
+      bookSlug: BOOK_SLUG,
+      bookConfig,
+      searchParams: {
+        success: url.searchParams.get("success") === "1",
+        subscribed: url.searchParams.get("subscribed") === "1",
+      },
     };
   } catch (error) {
     // Si no se encuentra el capítulo, cargar el primero
-    console.error(`[AI SDK Book] Error loading chapter "${chapterSlug}":`, error);
+    console.error(
+      `[AI SDK Book] Error loading chapter "${chapterSlug}":`,
+      error
+    );
     const fs = await import("fs").then((m) => m.promises);
     const path = await import("path");
     const filePath = path.join(
       process.cwd(),
       "app",
       "content",
-      "ai-sdk",
+      bookConfig.contentPath,
       "prologo.md"
     );
     const content = await fs.readFile(filePath, "utf-8");
@@ -104,13 +173,43 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       prevChapter: null,
       nextChapter: chapters[1] || null,
       chapters,
+      // Access control defaults
+      hasAccess: true,
+      accessLevel: "public",
+      isSubscribed: false,
+      isPurchased: false,
+      hasFullAccess: false,
+      showSubscriptionDrawer: false,
+      showPurchaseDrawer: false,
+      userEmail: null,
+      chaptersAccessInfo,
+      bookSlug: BOOK_SLUG,
+      bookConfig,
+      searchParams: {
+        success: false,
+        subscribed: false,
+      },
     };
   }
 };
 
 export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
-  const { content, currentChapter, prevChapter, nextChapter, chapters } =
-    loaderData;
+  const {
+    content,
+    currentChapter,
+    prevChapter,
+    nextChapter,
+    chapters,
+    hasAccess,
+    accessLevel,
+    showSubscriptionDrawer,
+    showPurchaseDrawer,
+    hasFullAccess,
+    chaptersAccessInfo,
+    bookSlug,
+    bookConfig,
+    searchParams,
+  } = loaderData;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeHeading, setActiveHeading] = useState("");
@@ -119,8 +218,15 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
   >([]);
   const [readingMode, setReadingMode] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showEpubPurchaseDrawer, setShowEpubPurchaseDrawer] = useState(false);
 
   const handleDownloadEpub = async () => {
+    // Si no tiene acceso completo, mostrar drawer de compra
+    if (!hasFullAccess) {
+      setShowEpubPurchaseDrawer(true);
+      return;
+    }
+
     try {
       setIsDownloading(true);
 
@@ -422,6 +528,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
             currentChapter={currentChapter}
             readingMode={readingMode}
             accentColor="#3178C6"
+            chaptersAccessInfo={chaptersAccessInfo}
           />
         }
         headingsList={
@@ -441,6 +548,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
           onClose={() => setSidebarOpen(false)}
           isMobile
           accentColor="#3178C6"
+          chaptersAccessInfo={chaptersAccessInfo}
         />
 
         <article className="prose prose-lg max-w-none">
@@ -450,20 +558,28 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
             transition={{ duration: 0.5 }}
             className="pt-4"
           >
-            <div className={`prose prose-lg max-w-none
-              prose-headings:text-gray-900 prose-p:text-gray-700
-              prose-a:text-[#3178C6] prose-strong:text-gray-900
-              prose-blockquote:border-[#3178C6] prose-blockquote:bg-blue-50/50
-              prose-code:text-[#3178C6] prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-              prose-table:border-collapse prose-th:bg-gray-100 prose-th:border prose-th:border-gray-300 prose-th:px-4 prose-th:py-2
-              prose-td:border prose-td:border-gray-300 prose-td:px-4 prose-td:py-2
-              ${readingMode ? "prose-2xl [&_p]:text-2xl [&_p]:leading-relaxed [&_li]:text-xl [&_h1]:text-5xl [&_h2]:text-4xl [&_h3]:text-3xl" : ""}
-            `}>
-              <Streamdown
-                shikiTheme={["github-light", "github-dark"]}
-                controls={{ table: false, code: true }}
-              >{content}</Streamdown>
-            </div>
+            {hasAccess ? (
+              <div className={`prose prose-lg max-w-none
+                prose-headings:text-gray-900 prose-p:text-gray-700
+                prose-a:text-[#3178C6] prose-strong:text-gray-900
+                prose-blockquote:border-[#3178C6] prose-blockquote:bg-blue-50/50
+                prose-code:text-[#3178C6] prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                prose-table:border-collapse prose-th:bg-gray-100 prose-th:border prose-th:border-gray-300 prose-th:px-4 prose-th:py-2
+                prose-td:border prose-td:border-gray-300 prose-td:px-4 prose-td:py-2
+                ${readingMode ? "prose-2xl [&_p]:text-2xl [&_p]:leading-relaxed [&_li]:text-xl [&_h1]:text-5xl [&_h2]:text-4xl [&_h3]:text-3xl" : ""}
+              `}>
+                <Streamdown
+                  shikiTheme={["github-light", "github-dark"]}
+                  controls={{ table: false, code: true }}
+                >{content}</Streamdown>
+              </div>
+            ) : (
+              <LockedContentPlaceholder
+                accessLevel={accessLevel}
+                bookTitle={bookConfig.title}
+                bookPrice={bookConfig.price}
+              />
+            )}
           </motion.div>
 
           {/* Navegación entre capítulos */}
@@ -510,6 +626,192 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
           </nav>
         </article>
       </BookLayout>
+
+      {/* Subscription Drawer - Para capítulos con accessLevel="subscriber" */}
+      <AnimatePresence>
+        {showSubscriptionDrawer && (
+          <BookSubscriptionDrawer bookSlug={bookSlug} />
+        )}
+      </AnimatePresence>
+
+      {/* Purchase Drawer - Para capítulos con accessLevel="paid" */}
+      <AnimatePresence>
+        {showPurchaseDrawer && (
+          <BookPurchaseDrawer
+            bookSlug={bookSlug}
+            bookTitle={bookConfig.title}
+            bookPrice={bookConfig.price}
+            chaptersCount={bookConfig.chaptersCount}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* EPUB Purchase Drawer - Para descargar EPUB sin haberlo comprado */}
+      <AnimatePresence>
+        {showEpubPurchaseDrawer && (
+          <BookPurchaseDrawer
+            bookSlug={bookSlug}
+            bookTitle={bookConfig.title}
+            bookPrice={bookConfig.price}
+            chaptersCount={bookConfig.chaptersCount}
+            onClose={() => setShowEpubPurchaseDrawer(false)}
+            forEpub
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Componente para mostrar contenido bloqueado
+function LockedContentPlaceholder({
+  accessLevel,
+  bookTitle,
+  bookPrice,
+}: {
+  accessLevel: string;
+  bookTitle: string;
+  bookPrice: number;
+}) {
+  const isPaid = accessLevel === "paid";
+
+  if (isPaid) {
+    return (
+      <div className="flex items-start gap-8 py-12 px-4">
+        <img
+          src="/icons/colorRobot.svg"
+          alt="Contenido bloqueado"
+          className="w-32 h-32 opacity-80 flex-shrink-0 hidden sm:block"
+        />
+        <div className="max-w-lg">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Este capítulo requiere comprar el libro
+          </h2>
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            Desbloquea todo el contenido de <strong>{bookTitle}</strong> incluyendo
+            todos los capítulos, código descargable y el EPUB completo por solo{" "}
+            <span className="font-bold text-[#3178C6]">
+              ${(bookPrice / 100).toLocaleString("es-MX")} MXN
+            </span>
+          </p>
+          <form method="post">
+            <input type="hidden" name="intent" value="checkout" />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#3178C6] text-white font-semibold rounded-xl hover:bg-[#2563eb] transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              <FaShoppingCart className="w-5 h-5" />
+              Comprar libro completo
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Para suscriptores: mostrar formulario de suscripción
+  return <SubscriptionForm />;
+}
+
+// Formulario de suscripción inline para capítulos de suscriptor
+function SubscriptionForm() {
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"email" | "code">("email");
+  const fetcher = useFetcher();
+  const isLoading = fetcher.state !== "idle";
+
+  useEffect(() => {
+    if (fetcher.data?.success && fetcher.data?.step === "verify") {
+      setStep("code");
+    }
+    if (fetcher.data?.verified) {
+      window.location.reload();
+    }
+  }, [fetcher.data]);
+
+  return (
+    <div className="flex items-start gap-8 py-12 px-4">
+      <img
+        src="/icons/colorRobot.svg"
+        alt="Suscríbete"
+        className="w-32 h-32 opacity-80 flex-shrink-0 hidden sm:block"
+      />
+      <div className="max-w-md">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          {step === "email"
+            ? "Suscríbete gratis para leer este capítulo"
+            : "Ingresa el código de verificación"}
+        </h2>
+
+        {step === "email" ? (
+          <>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Ingresa tu email para desbloquear este capítulo y recibir contenido
+              exclusivo sobre desarrollo con IA.
+            </p>
+            <fetcher.Form method="POST" className="space-y-4">
+              <input type="hidden" name="intent" value="subscribe" />
+              <input
+                type="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#3178C6] focus:ring-2 focus:ring-[#3178C6]/20"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#3178C6] text-white font-semibold rounded-xl hover:bg-[#2563eb] transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+              >
+                {isLoading ? "Enviando..." : "Suscribirme gratis"}
+              </button>
+            </fetcher.Form>
+          </>
+        ) : (
+          <>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Enviamos un código de 6 dígitos a{" "}
+              <strong className="text-gray-900">{email}</strong>
+            </p>
+            <fetcher.Form method="POST" className="space-y-4">
+              <input type="hidden" name="intent" value="verify" />
+              <input type="hidden" name="email" value={email} />
+              <input
+                type="text"
+                name="code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="123456"
+                maxLength={6}
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#3178C6] focus:ring-2 focus:ring-[#3178C6]/20 text-center text-2xl tracking-widest"
+                required
+              />
+              {fetcher.data?.error && (
+                <p className="text-red-500 text-sm">{fetcher.data.error}</p>
+              )}
+              <div className="flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#3178C6] text-white font-semibold rounded-xl hover:bg-[#2563eb] transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+                >
+                  {isLoading ? "Verificando..." : "Verificar código"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep("email")}
+                  className="text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  Usar otro email
+                </button>
+              </div>
+            </fetcher.Form>
+          </>
+        )}
+      </div>
     </div>
   );
 }
