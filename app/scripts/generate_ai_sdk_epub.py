@@ -28,16 +28,16 @@ def create_epub():
     book = epub.EpubBook()
 
     # Metadatos
-    book.set_identifier('ai-sdk-react-router-001')
-    book.set_title('AI SDK con React Router v7')
+    book.set_identifier('ia-aplicada-react-typescript-001')
+    book.set_title('IA aplicada con React y TypeScript')
     book.set_language('es')
     book.add_author('Héctorbliss')
     book.add_metadata('DC', 'publisher', 'FixterGeek')
     book.add_metadata('DC', 'creator', 'Héctorbliss')
     book.add_metadata('DC', 'source', 'fixtergeek.com')
     book.add_metadata('DC', 'description',
-                      'Integra IA en tus apps TypeScript con el AI SDK de Vercel. '
-                      'Sin Python, solo TypeScript. Desde streaming hasta agentes con RAG y voz.')
+                      'Aprende a aplicar inteligencia artificial en tus proyectos web con React y TypeScript. '
+                      'Desde streaming hasta agentes con RAG y voz, usando el AI SDK de Vercel.')
 
     # ========== PORTADA ==========
     # La imagen debe estar en: public/covers/ai-sdk-cover.png

@@ -22,6 +22,9 @@ import {
   handleBookSubscribe,
   handleBookVerify,
 } from "~/.server/services/book-access.server";
+
+// Usar configuración centralizada
+const AI_SDK_CONFIG = BOOK_CONFIG["ai-sdk"];
 import { db } from "~/.server/db";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
 import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
@@ -61,7 +64,7 @@ export const meta = ({ location }: Route.MetaArgs) => {
   const url = `https://www.fixtergeek.com${location.pathname}`;
 
   return getMetaTags({
-    title: "AI SDK con React Router v7 | FixterGeek",
+    title: `${AI_SDK_CONFIG.title} | FixterGeek`,
     description:
       "Aprende a integrar IA en tus aplicaciones TypeScript con el AI SDK de Vercel. Sin Python, solo TypeScript.",
     url,
@@ -516,7 +519,7 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
                 <img src="/logo.png" alt="FixterGeek" className="h-7" />
                 <div className="text-sm">
                   <div className="font-semibold text-gray-900">
-                    AI SDK con React Router v7
+                    {bookConfig.title}
                   </div>
                   <div className="text-xs text-gray-500">
                     IA con TypeScript, sin Python

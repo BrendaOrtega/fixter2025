@@ -4,17 +4,18 @@ import type { Route } from "./+types/libros";
 import { useFetcher } from "react-router";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
+import { BOOK_CONFIG } from "~/.server/services/book-access.server";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { cn } from "~/utils/cn";
 import { FaBook, FaLock, FaEnvelope, FaGlobe, FaSave, FaExternalLinkAlt } from "react-icons/fa";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 
-// Definición de libros y sus capítulos
+// Definición de libros y sus capítulos (títulos desde BOOK_CONFIG)
 const BOOKS = [
   {
-    slug: "ai-sdk",
-    title: "AI SDK con React Router v7",
+    slug: "ai-sdk" as const,
+    title: BOOK_CONFIG["ai-sdk"].title,
     url: "/libros/ai_sdk",
     chapters: [
       { slug: "prologo", title: "Prólogo" },
@@ -34,8 +35,8 @@ const BOOKS = [
     ],
   },
   {
-    slug: "domina-claude-code",
-    title: "Dominando Claude Code",
+    slug: "domina-claude-code" as const,
+    title: BOOK_CONFIG["domina-claude-code"].title,
     url: "/libros/domina_claude_code",
     chapters: [
       { slug: "prologo", title: "Prólogo" },
@@ -55,8 +56,8 @@ const BOOKS = [
     ],
   },
   {
-    slug: "llamaindex",
-    title: "LlamaIndex en TypeScript",
+    slug: "llamaindex" as const,
+    title: BOOK_CONFIG["llamaindex"].title,
     url: "/libros/llamaindex",
     chapters: [
       { slug: "prologo", title: "Prólogo" },

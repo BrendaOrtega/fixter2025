@@ -11,7 +11,7 @@ export const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
 // Configuración centralizada de libros
 export const BOOK_CONFIG = {
   "ai-sdk": {
-    title: "AI SDK con React Router v7",
+    title: "IA aplicada con React y TypeScript",
     priceUSD: 1500, // centavos USD ($15)
     priceMXN: 24900, // centavos MXN ($249)
     chaptersCount: 12, // 12 capítulos + prólogo + intro
