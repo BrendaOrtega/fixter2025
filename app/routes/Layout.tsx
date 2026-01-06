@@ -17,7 +17,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
 
   // Ocultar navbar en rutas de libros, admin y viewer
   const isBookRoute = location.pathname.startsWith('/libros/');
-  const isAdminRoute = location.pathname.startsWith('/admin/');
+  const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isViewerRoute = location.pathname.includes('/viewer');
 
   return (

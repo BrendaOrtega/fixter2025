@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router";
 import {
   Benefits,
   HomeHero,
@@ -7,8 +8,10 @@ import {
   Why,
 } from "./home/components";
 import { db } from "~/.server/db";
+import { getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/home";
 import getMetaTags from "~/utils/getMetaTags";
+import { FaCog } from "react-icons/fa";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -103,8 +106,12 @@ export const meta = () => {
 };
 
 // esto es para prerender, si no: evitar.
-export const loader = async () => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const user = await getUserOrNull(request);
+  const isAdmin = user?.role === "ADMIN";
+
   return {
+    isAdmin,
     topCourses: await db.course.findMany({
       orderBy: { createdAt: "desc" },
       where: { published: true },
@@ -122,7 +129,7 @@ export const loader = async () => {
 };
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const { topCourses } = loaderData || {};
+  const { topCourses, isAdmin } = loaderData || {};
 
   useEffect(() => {
     window.scrollTo({
@@ -134,6 +141,18 @@ export default function Page({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="overflow-hidden">
+      {/* Admin Quick Access - Solo visible para admins */}
+      {isAdmin && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <Link
+            to="/admin"
+            className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 text-lg font-semibold"
+          >
+            <FaCog className="w-6 h-6" />
+            <span>Admin Panel</span>
+          </Link>
+        </div>
+      )}
       <HomeHero />
       <Why />
       <Benefits />

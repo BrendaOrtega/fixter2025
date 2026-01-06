@@ -321,6 +321,7 @@ export const updateOrCreateSuscription = async (
 };
 
 // Check if email is subscribed with course-specific tag
+// IMPORTANTE: Solo retorna true si el subscriber está CONFIRMADO
 export const checkSubscriptionByEmail = async (
   email: string,
   courseSlug: string
@@ -329,6 +330,7 @@ export const checkSubscriptionByEmail = async (
   const subscriber = await db.subscriber.findFirst({
     where: {
       email,
+      confirmed: true, // Solo subscribers confirmados tienen acceso
       tags: { has: tag },
     },
   });
