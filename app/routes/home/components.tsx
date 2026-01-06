@@ -566,7 +566,7 @@ export const HomeHero = () => {
               to="/libros/ai_sdk"
               className="text-sm text-[#3178C6] hover:underline transition-all duration-200"
             >
-              AI SDK con React Router
+              IA aplicada con React y TypeScript
             </Link>
           </p>
         </div>

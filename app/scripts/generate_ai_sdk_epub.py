@@ -22,7 +22,7 @@ AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 EPUB_S3_KEY = "fixtergeek/books/ai-sdk.epub"
 
 def create_epub():
-    """Genera un archivo EPUB del libro AI SDK con React Router v7"""
+    """Genera un archivo EPUB del libro IA aplicada con React y TypeScript"""
 
     # Crear el libro
     book = epub.EpubBook()

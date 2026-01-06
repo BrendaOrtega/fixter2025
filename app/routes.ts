@@ -36,7 +36,7 @@ export default [
   route("libros/domina_claude_code", "routes/libros/domina_claude_code.tsx"),
   // Libro LlamaIndex Agent Workflows
   route("libros/llamaindex", "routes/libros/llamaindex.tsx"),
-  // Libro AI SDK con React Router v7
+  // Libro IA aplicada con React y TypeScript
   route("libros/ai_sdk", "routes/libros/ai_sdk.tsx"),
   // groups
   ...prefix("admin", [
