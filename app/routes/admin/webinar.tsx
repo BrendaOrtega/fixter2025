@@ -96,7 +96,7 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                   Fecha
                 </th>
                 <th className="px-4 py-3 text-center font-medium text-gray-600">
-                  OK
+                  Confirmado
                 </th>
               </tr>
             </thead>
@@ -141,9 +141,9 @@ export default function WebinarAdmin({ loaderData }: Route.ComponentProps) {
                     </td>
                     <td className="px-4 py-2 text-center">
                       {sub.confirmed ? (
-                        <span className="text-green-600">✓</span>
+                        <span className="text-green-600 font-medium">Sí</span>
                       ) : (
-                        <span className="text-gray-300">–</span>
+                        <span className="text-gray-400">No</span>
                       )}
                     </td>
                   </tr>

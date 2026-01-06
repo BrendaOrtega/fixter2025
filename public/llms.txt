@@ -38,7 +38,7 @@
   - Estudio fotográfico automático con IA generativa
   - Cerebro maestro empresarial con RAG
 
-### AI SDK con TypeScript ($4,990 MXN)
+### AI SDK con TypeScript ($1,490 MXN)
 - **URL**: https://www.fixtergeek.com/ai-sdk
 - **Descripción**: El AI SDK es la biblioteca open source de Vercel para integrar IA en apps web. Aprende streaming, useChat, RAG y Tools en 2 sesiones prácticas con TypeScript y React.
 - **Duración**: 2 sesiones de 3.5 horas (sábados)

@@ -67,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             metadata: {
               purchase: {
                 type: "aisdk-workshop",
-                totalPrice: Number(session.metadata.totalPrice || 4990),
+                totalPrice: Number(session.metadata.totalPrice || 1490),
                 paidAt: new Date().toISOString(),
                 sessionId: session.id,
               },
