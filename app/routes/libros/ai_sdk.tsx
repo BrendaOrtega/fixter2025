@@ -770,7 +770,7 @@ function LockedContentPlaceholder({
           <p className="text-gray-600 mb-6 leading-relaxed">
             Desbloquea todo el contenido de <strong>{bookTitle}</strong> incluyendo
             todos los capítulos, código descargable y el EPUB completo por solo{" "}
-            <span className="font-bold text-[#3178C6]">
+            <span className="font-bold text-[#83F3D3]">
               ${(bookPrice / 100).toLocaleString("en-US")} USD
             </span>
           </p>

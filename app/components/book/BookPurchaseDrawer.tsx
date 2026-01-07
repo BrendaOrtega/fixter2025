@@ -79,7 +79,7 @@ export function BookPurchaseDrawer({
             <span className="text-white font-medium">
               {bookTitle}
             </span>
-            <span className="text-[#3178C6] font-bold text-xl">
+            <span className="text-[#83F3D3] font-bold text-xl">
               {priceFormatted} {currency}
             </span>
           </div>
