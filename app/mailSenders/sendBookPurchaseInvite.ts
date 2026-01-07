@@ -99,7 +99,7 @@ export const sendBookPurchaseInvite = async ({
   return getSesTransport()
     .sendMail({
       from: getSesRemitent(),
-      bcc: to,
+      to: to,
       subject: `No encontramos tu compra de "${config.title}"`,
       html: htmlContent,
     })
