@@ -522,8 +522,8 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
                   <div className="font-semibold text-gray-900">
                     {bookConfig.title}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    IA con TypeScript, sin Python
+                  <div className="text-xs text-[#83F3D3] font-semibold">
+                    $15 USD
                   </div>
                 </div>
               </div>
