@@ -24,7 +24,7 @@ import {
 } from "~/.server/services/book-access.server";
 import { db } from "~/.server/db";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
-import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
+import { sendBookPurchaseInvite } from "~/mailSenders/sendBookPurchaseInvite";
 
 const BOOK_SLUG = "ai-sdk" as const;
 
@@ -147,46 +147,26 @@ export const action = async ({ request }: Route.ActionArgs) => {
       }
     }
 
-    // No compró - verificar si es suscriptor
-    const subscriber = await db.subscriber.findUnique({ where: { email } });
-
-    if (subscriber) {
-      // Ya es suscriptor pero no compró
-      return data({
-        success: false,
-        purchased: false,
-        isSubscriber: true,
-        message:
-          "No encontramos una compra con este email. Puedes comprar el libro para obtener acceso completo y el EPUB.",
+    // No compró - enviar email invitando a comprar
+    try {
+      await sendBookPurchaseInvite({
+        to: email,
+        bookSlug: BOOK_SLUG,
       });
+
+      return data({
+        success: true,
+        purchased: false,
+        message:
+          "No encontramos una compra con este email. Te enviamos un email con información para obtener el libro completo.",
+      });
+    } catch (error) {
+      console.error("[Resend Link] Error enviando email de invitación:", error);
+      return data(
+        { error: "Error enviando el email. Intenta de nuevo." },
+        { status: 500 }
+      );
     }
-
-    // No es suscriptor ni compró - ofrecer suscribirse
-    // Crear suscriptor y enviar código de verificación
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await db.subscriber.upsert({
-      where: { email },
-      create: {
-        email,
-        confirmed: false,
-        verificationCode: code,
-        tags: [`${BOOK_SLUG}-interested`],
-      },
-      update: {
-        verificationCode: code,
-      },
-    });
-
-    await sendVerificationCode(email, code);
-
-    return data({
-      success: false,
-      purchased: false,
-      isSubscriber: false,
-      needsVerification: true,
-      message:
-        "No encontramos una compra con este email. Te enviamos un código para suscribirte gratis y acceder a capítulos de muestra.",
-    });
   }
 
   return null;
