@@ -87,6 +87,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
     if (result.error) {
       return data({ error: result.error }, { status: 400 });
     }
+    // Si ya está suscrito, setear cookie y dar acceso directo
+    if (result.alreadySubscribed) {
+      const headers = new Headers();
+      headers.append(
+        "Set-Cookie",
+        `fixtergeek_subscriber=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`
+      );
+      return data({ success: true, alreadySubscribed: true }, { headers });
+    }
     return result;
   }
 
@@ -816,7 +825,8 @@ function SubscriptionForm() {
     if (fetcher.data?.success && fetcher.data?.step === "verify") {
       setStep("code");
     }
-    if (fetcher.data?.verified) {
+    // Si ya está suscrito o verificó, recargar para dar acceso
+    if (fetcher.data?.verified || fetcher.data?.alreadySubscribed) {
       window.location.reload();
     }
   }, [fetcher.data]);

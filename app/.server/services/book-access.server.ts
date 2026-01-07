@@ -240,12 +240,22 @@ export async function handleBookCheckout(
 export async function handleBookSubscribe(
   email: string,
   bookSlug: BookSlug
-): Promise<{ success: boolean; step?: string; error?: string }> {
+): Promise<{ success: boolean; step?: string; alreadySubscribed?: boolean; error?: string }> {
   if (!email) {
     return { success: false, error: "Email requerido" };
   }
 
   const tag = `${bookSlug}-free-access`;
+
+  // Verificar si ya está suscrito y confirmado
+  const existingSubscriber = await db.subscriber.findUnique({
+    where: { email },
+  });
+
+  if (existingSubscriber?.confirmed && existingSubscriber.tags.includes(tag)) {
+    // Ya está suscrito y confirmado - no enviar email
+    return { success: true, alreadySubscribed: true };
+  }
 
   // Create or update subscriber
   await db.subscriber.upsert({
@@ -255,8 +265,18 @@ export async function handleBookSubscribe(
       confirmed: false,
       tags: [tag],
     },
-    update: {},
+    update: {
+      // Agregar tag si no lo tiene
+      tags: existingSubscriber?.tags.includes(tag)
+        ? existingSubscriber.tags
+        : [...(existingSubscriber?.tags || []), tag],
+    },
   });
+
+  // Si ya está confirmado pero no tenía el tag, no necesita verificar de nuevo
+  if (existingSubscriber?.confirmed) {
+    return { success: true, alreadySubscribed: true };
+  }
 
   // Generate and save verification code
   const code = Math.floor(100000 + Math.random() * 900000).toString();
