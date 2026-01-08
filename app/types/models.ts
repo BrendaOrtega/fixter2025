@@ -67,6 +67,7 @@ export type Video = {
   moduleName?: string | null;
   storageLink?: string | null;
   m3u8?: string | null;
+  youtubeUrl?: string | null; // URL de YouTube (alternativa a S3)
   index?: number | null;
   authorName?: string | null;
   photoUrl?: string | null;

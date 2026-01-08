@@ -30,6 +30,7 @@ const getAllVideos = async (courseId: string) => {
       },
       isPublic: true,
     },
+    orderBy: { index: "asc" },
   });
   const nakedVideos = await db.video.findMany({
     where: {
@@ -48,7 +49,9 @@ const getAllVideos = async (courseId: string) => {
       isPublic: true,
       moduleName: true,
       accessLevel: true,
+      youtubeUrl: true,
     },
+    orderBy: { index: "asc" },
   });
   return nakedVideos.map((v, i) =>
     freeVideos.find((fv) => fv.id === v.id)
@@ -100,6 +103,7 @@ export const getFreeOrEnrolledCourseFor = async (
             has: course.id,
           },
         },
+        orderBy: { index: "asc" },
       });
       return { course, videos: videosForFreeCourse };
     }

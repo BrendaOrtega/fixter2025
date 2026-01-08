@@ -11,6 +11,7 @@ interface UseVideoPlayerOptions {
   onPause?: () => void;
   onEnd?: () => void;
   disabled?: boolean; // Bloquea autoplay (ej: cuando hay drawer abierto)
+  skip?: boolean; // Skip toda la lógica (ej: para videos de YouTube)
 }
 
 interface UseVideoPlayerReturn {
@@ -52,6 +53,7 @@ export function useVideoPlayer({
   onPause,
   onEnd,
   disabled = false,
+  skip = false,
 }: UseVideoPlayerOptions): UseVideoPlayerReturn {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -70,12 +72,15 @@ export function useVideoPlayer({
 
   // Client-side detection (avoids hydration mismatch)
   useEffect(() => {
+    // Skip si es video de YouTube
+    if (skip) return;
+
     setIsMobile(
       /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
         "ontouchstart" in window
     );
     setIsReady(true);
-  }, []);
+  }, [skip]);
 
   // Auto-play cuando drawer se cierra (disabled: true → false)
   useEffect(() => {

@@ -85,6 +85,8 @@ export const courseServerActions = {
             // Only update video links if explicitly provided (preserve upload-generated ones)
             ...(data.storageLink && { storageLink: data.storageLink }),
             ...(data.m3u8 && { m3u8: data.m3u8 }),
+            // YouTube URL (alternativa a S3)
+            ...(data.youtubeUrl !== undefined && { youtubeUrl: data.youtubeUrl || null }),
           },
         });
       } catch (error: any) {

@@ -371,6 +371,7 @@ model Video {
   moduleName  String?
   storageLink String?
   m3u8        String?
+  youtubeUrl  String?  // URL de YouTube (alternativa a S3)
   index       Int?
   authorName  String?  @default("blissmo")
   photoUrl    String?

@@ -432,6 +432,8 @@ export const CourseForm = ({
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [detectedDuration, setDetectedDuration] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [videoType, setVideoType] = useState<"s3" | "youtube">("s3");
+  const [youtubeUrl, setYoutubeUrl] = useState<string>("");
 
   const onVideoFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -455,10 +457,16 @@ export const CourseForm = ({
     // edit
     if (editingVideo) {
       setPendingVideoAction("edit");
+      // Incluir youtubeUrl si es tipo YouTube
+      const videoData = {
+        ...form,
+        id: editingVideo.id,
+        youtubeUrl: videoType === "youtube" ? youtubeUrl : "",
+      };
       fetcher.submit(
         {
           intent: "admin_update_video",
-          data: JSON.stringify({ ...form, id: editingVideo.id }),
+          data: JSON.stringify(videoData),
         },
         { method: "POST", action: "/api/course" }
       );
@@ -527,6 +535,14 @@ export const CourseForm = ({
   const onVideoClick = (vid: Partial<Video>) => {
     setShow(true);
     setEditingVideo(vid);
+    // Detectar tipo de video según datos existentes
+    if (vid.youtubeUrl) {
+      setVideoType("youtube");
+      setYoutubeUrl(vid.youtubeUrl);
+    } else {
+      setVideoType("s3");
+      setYoutubeUrl("");
+    }
   };
 
   const handleVideoFormClose = () => {
@@ -538,6 +554,8 @@ export const CourseForm = ({
     setUploadProgress(0);
     setIsUploading(false);
     setDetectedDuration(null);
+    setVideoType("s3");
+    setYoutubeUrl("");
   };
 
   // Handle video file upload to S3
@@ -669,7 +687,77 @@ export const CourseForm = ({
             <div className="grid md:grid-cols-2 gap-6">
               {/* Columna izquierda: Preview y Upload */}
               <div className="space-y-4">
-                {/* Video Upload Section */}
+                {/* Selector de tipo de video */}
+                <div className="p-4 border border-gray-600 rounded-lg bg-gray-800/50">
+                  <label className="block text-sm font-medium mb-3">
+                    Tipo de video
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="videoType"
+                        value="s3"
+                        checked={videoType === "s3"}
+                        onChange={() => setVideoType("s3")}
+                        className="text-indigo-600"
+                      />
+                      <span className="text-sm">Subir archivo (S3)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="videoType"
+                        value="youtube"
+                        checked={videoType === "youtube"}
+                        onChange={() => setVideoType("youtube")}
+                        className="text-red-600"
+                      />
+                      <span className="text-sm">YouTube</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* YouTube URL Input */}
+                {videoType === "youtube" && (
+                  <div className="p-4 border border-red-600/50 rounded-lg bg-red-900/20">
+                    <label className="block text-sm font-medium mb-2">
+                      🎬 URL de YouTube
+                    </label>
+                    <input
+                      type="url"
+                      value={youtubeUrl}
+                      onChange={(e) => setYoutubeUrl(e.target.value)}
+                      placeholder="https://youtube.com/watch?v=... o https://youtu.be/..."
+                      className="w-full rounded-lg text-black p-2"
+                    />
+                    {/* YouTube Preview */}
+                    {youtubeUrl && (() => {
+                      const match = youtubeUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+                      const videoId = match?.[1];
+                      if (!videoId) return (
+                        <p className="text-yellow-400 text-xs mt-2">⚠️ URL de YouTube no válida</p>
+                      );
+                      return (
+                        <div className="mt-3">
+                          <p className="text-xs text-gray-400 mb-2">Preview:</p>
+                          <div className="aspect-video rounded-lg overflow-hidden">
+                            <iframe
+                              src={`https://www.youtube.com/embed/${videoId}`}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Video Upload Section - Solo mostrar si tipo es S3 */}
+                {videoType === "s3" && (
+                <>
                 <div className="p-4 border border-gray-600 rounded-lg bg-gray-800/50">
                   <label className="block text-sm font-medium mb-2">
                     📹 Subir Video (MP4)
@@ -787,6 +875,8 @@ export const CourseForm = ({
                       />
                     </div>
                   </details>
+                )}
+                </>
                 )}
               </div>
 

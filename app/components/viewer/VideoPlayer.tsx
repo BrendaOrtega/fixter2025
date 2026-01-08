@@ -6,6 +6,18 @@ import { Link } from "react-router";
 import { nanoid } from "nanoid";
 import { useVideoPlayer } from "~/hooks/useVideoPlayer";
 
+// Helper para extraer el ID de YouTube
+function extractYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 interface VideoPlayerProps {
   video?: Partial<Video>;
   courseId?: string;
@@ -34,6 +46,9 @@ export const VideoPlayer = ({
   onEnd,
   disabled,
 }: VideoPlayerProps) => {
+  // Detectar si es video de YouTube
+  const youtubeId = video?.youtubeUrl ? extractYouTubeId(video.youtubeUrl) : null;
+
   const {
     videoRef,
     isPlaying,
@@ -48,8 +63,26 @@ export const VideoPlayer = ({
     onPause,
     onEnd,
     disabled,
+    // Skip hook logic si es YouTube
+    skip: !!youtubeId,
   });
 
+  // Render para YouTube
+  if (youtubeId) {
+    return (
+      <section className="h-[calc(100vh-80px)] relative overflow-x-hidden bg-black">
+        <iframe
+          src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          title={video?.title || "Video"}
+        />
+      </section>
+    );
+  }
+
+  // Render para S3/HLS (comportamiento original)
   return (
     <section className="h-[calc(100vh-80px)] relative overflow-x-hidden">
       <AnimatePresence>
