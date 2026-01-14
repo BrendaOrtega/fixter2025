@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
-import { data, redirect, type ActionFunctionArgs } from "react-router";
+import { data, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/.server/db";
-import { sendConfirmationRequest } from "~/mailSenders/sendConfirmationRequest";
 import {
   BiChevronRight,
   BiCheckCircle,
@@ -28,123 +26,19 @@ import LiquidEther from "~/components/backgrounds/LiquidEther";
 const ACCENT = "emerald";
 
 // ===========================================
-// FECHAS Y CONFIGURACIÓN DE EVENTOS
+// INSCRIPCIONES CERRADAS - FECHAS POR ANUNCIAR
 // ===========================================
-const WEBINAR_DATE = new Date("2025-01-16T19:00:00-06:00"); // Jueves 16 enero, 7PM CDMX
-const TALLER_1_DATE = new Date("2025-01-24T10:00:00-06:00"); // Sábado 24 enero, 10AM CDMX
-const TALLER_2_DATE = new Date("2025-01-31T10:00:00-06:00"); // Sábado 31 enero, 10AM CDMX
+// Precios en centavos MXN para Stripe (referencia)
+const TALLER_PRICE = 99900; // $999 MXN
 
-// Precios en centavos MXN para Stripe
-const WEBINAR_PRICE = 0; // Gratis
-const TALLER_1_PRICE = 99900; // $999 MXN
-const TALLER_2_PRICE = 99900; // $999 MXN
-
-// Configuración de productos
-type ProductType = "webinar" | "taller-1" | "taller-2";
-
-const PRODUCT_CONFIG: Record<
-  ProductType,
-  { type: string; price: number; name: string; description: string }
-> = {
-  webinar: {
-    type: "aisdk-webinar",
-    price: WEBINAR_PRICE,
-    name: "Webinar AI SDK - 16 Enero 2025",
-    description: "Demo gratuita del AI SDK de Vercel",
-  },
-  "taller-1": {
-    type: "aisdk-taller-1",
-    price: TALLER_1_PRICE,
-    name: "Taller 1: Introducción a la IA aplicada con TypeScript",
-    description: "Sábado 24 de Enero 2025 (10am-1:30pm CDMX)",
-  },
-  "taller-2": {
-    type: "aisdk-taller-2",
-    price: TALLER_2_PRICE,
-    name: "Taller 2: RAG y Agentes con AI SDK",
-    description: "Sábado 31 de Enero 2025 (10am-1:30pm CDMX)",
-  },
-};
-
-// Para compatibilidad con countdown actual - usar fecha del webinar
-const WORKSHOP_DATE = WEBINAR_DATE;
-
-// Componente de Countdown
-const CountdownTimer = () => {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-  const [isExpired, setIsExpired] = useState(false);
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const difference = WORKSHOP_DATE.getTime() - now.getTime();
-
-      if (difference <= 0) {
-        setIsExpired(true);
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      }
-
-      return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / (1000 * 60)) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      };
-    };
-
-    setTimeLeft(calculateTimeLeft());
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  if (isExpired) {
-    return null;
-  }
-
-  const TimeBlock = ({ value, label }: { value: number; label: string }) => (
-    <div className="flex flex-col items-center">
-      <span className="text-2xl sm:text-3xl font-bold text-white tabular-nums">
-        {value.toString().padStart(2, "0")}
-      </span>
-      <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider mt-1">
-        {label}
-      </span>
-    </div>
-  );
-
-  return (
-    <div className="mb-4 p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl">
-      <p className="text-sm text-zinc-300 text-center mb-3 font-medium">
-        El taller comienza en:
-      </p>
-      <div className="flex justify-center items-center gap-3 sm:gap-4">
-        <TimeBlock value={timeLeft.days} label="Días" />
-        <span className="text-xl text-zinc-600 font-light">:</span>
-        <TimeBlock value={timeLeft.hours} label="Horas" />
-        <span className="text-xl text-zinc-600 font-light">:</span>
-        <TimeBlock value={timeLeft.minutes} label="Min" />
-        <span className="text-xl text-zinc-600 font-light">:</span>
-        <TimeBlock value={timeLeft.seconds} label="Seg" />
-      </div>
-    </div>
-  );
-};
+// Countdown removido - inscripciones cerradas
 
 export const meta = () => {
   const baseMeta = getMetaTags({
     title:
-      "Introducción a la IA aplicada con TypeScript | Webinar + Taller | FixterGeek",
+      "Taller de AI SDK | Aprende IA aplicada con TypeScript | FixterGeek",
     description:
-      "Webinar gratuito 16 enero + Talleres prácticos. Construye interfaces generativas con streaming y el AI SDK de Vercel. Desde $999 MXN.",
+      "Aprende a construir interfaces generativas con streaming y el AI SDK de Vercel. Talleres prácticos desde $999 MXN.",
     url: "https://www.fixtergeek.com/ai-sdk",
     image: "https://www.fixtergeek.com/courses/ai-sdk.png",
     keywords:
@@ -158,9 +52,9 @@ export const meta = () => {
       {
         "@type": "Course",
         "@id": "https://www.fixtergeek.com/ai-sdk#course",
-        name: "Introducción a la IA aplicada con TypeScript",
+        name: "Taller de AI SDK - IA aplicada con TypeScript",
         description:
-          "Construye interfaces generativas con streaming y el AI SDK de Vercel. Webinar gratuito + talleres prácticos.",
+          "Construye interfaces generativas con streaming y el AI SDK de Vercel. Talleres prácticos.",
         url: "https://www.fixtergeek.com/ai-sdk",
         provider: {
           "@type": "Organization",
@@ -184,17 +78,13 @@ export const meta = () => {
           "@type": "Offer",
           price: "999",
           priceCurrency: "MXN",
-          availability: "https://schema.org/InStock",
-          validFrom: "2025-01-01",
+          availability: "https://schema.org/PreOrder",
           url: "https://www.fixtergeek.com/ai-sdk",
-          priceValidUntil: "2025-01-24",
         },
         hasCourseInstance: {
           "@type": "CourseInstance",
           courseMode: "Online",
           courseWorkload: "PT3H30M",
-          startDate: "2025-01-24",
-          endDate: "2025-01-24",
           instructor: {
             "@type": "Person",
             name: "Héctor Bliss",
@@ -278,72 +168,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  if (intent === "checkout") {
-    const productType = formData.get("productType") as ProductType;
-
-    if (!productType || !PRODUCT_CONFIG[productType]) {
-      return data({ success: false, error: "Producto no válido" });
-    }
-
-    const config = PRODUCT_CONFIG[productType];
-
-    try {
-      const stripe = new (await import("stripe")).default(
-        process.env.STRIPE_SECRET_KEY as string,
-        {}
-      );
-
-      const isDev = process.env.NODE_ENV === "development";
-      const location = isDev
-        ? "http://localhost:3000"
-        : "https://www.fixtergeek.com";
-
-      const session = await stripe.checkout.sessions.create({
-        metadata: {
-          type: config.type,
-          totalPrice: String(config.price),
-          courseSlug: "ai-sdk",
-          productType,
-        },
-        mode: "payment",
-        line_items: [
-          {
-            price_data: {
-              currency: "mxn",
-              product_data: {
-                name: config.name,
-                description: config.description,
-              },
-              unit_amount: config.price, // Ya está en centavos
-            },
-            quantity: 1,
-          },
-        ],
-        success_url: `${location}/ai-sdk?success=1&product=${productType}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${location}/ai-sdk?cancel=1`,
-        allow_promotion_codes: true,
-        billing_address_collection: "required",
-        phone_number_collection: {
-          enabled: true,
-        },
-      });
-
-      if (!session.url) {
-        throw new Error("Failed to create checkout session");
-      }
-
-      return redirect(session.url);
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
-      return data({
-        success: false,
-        error: "Error al procesar el pago. Intenta nuevamente.",
-      });
-    }
-  }
-
-  // Registro al webinar gratuito (sin Stripe)
-  if (intent === "webinar-register") {
+  // Lista de espera para próximas fechas
+  if (intent === "waitlist") {
     const email = String(formData.get("email") || "").trim();
     const name = String(formData.get("name") || "").trim();
 
@@ -360,29 +186,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     try {
-      // Crear subscriber con confirmed: false
+      // Agregar a lista de espera
       await db.subscriber.upsert({
         where: { email },
         create: {
           email,
           name,
-          tags: ["aisdk-webinar-pending"],
-          confirmed: false,
+          tags: ["aisdk-waitlist"],
+          confirmed: true, // No requiere confirmación, solo lista de espera
         },
         update: {
           name: name || undefined,
+          tags: { push: ["aisdk-waitlist"] },
         },
       });
 
-      // Enviar email de confirmación
-      await sendConfirmationRequest({ email, name, type: "aisdk-webinar" });
-
-      return data({ success: true, pending: true });
+      return data({ success: true, waitlist: true });
     } catch (error) {
-      console.error("Error registering for webinar:", error);
+      console.error("Error adding to waitlist:", error);
       return data({
         success: false,
-        error: "Hubo un error al registrarte. Intenta de nuevo.",
+        error: "Hubo un error. Intenta de nuevo.",
       });
     }
   }
@@ -392,42 +216,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function AISdkPage() {
   const fetcher = useFetcher();
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showCancel, setShowCancel] = useState(false);
-  const [showPending, setShowPending] = useState(false);
-  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const cancelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Check for payment result in URL params
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("success") === "1") {
-      setShowSuccess(true);
-      // Clean URL without reload
-      window.history.replaceState({}, "", "/ai-sdk");
-      // Auto-hide after 10 seconds
-      successTimeoutRef.current = setTimeout(() => {
-        setShowSuccess(false);
-      }, 10000);
-    }
-    if (urlParams.get("cancel") === "1") {
-      setShowCancel(true);
-      window.history.replaceState({}, "", "/ai-sdk");
-      cancelTimeoutRef.current = setTimeout(() => {
-        setShowCancel(false);
-      }, 5000);
-    }
-    if (urlParams.get("pending") === "1") {
-      setShowPending(true);
-      window.history.replaceState({}, "", "/ai-sdk");
-    }
-    return () => {
-      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
-      if (cancelTimeoutRef.current) clearTimeout(cancelTimeoutRef.current);
-      if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
-    };
-  }, []);
 
   return (
     <div
@@ -447,7 +235,7 @@ export default function AISdkPage() {
               <div className="mb-6">
                 <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600/10 border border-emerald-500/30 rounded-full text-sm font-semibold text-emerald-400 hover:bg-emerald-600/15 transition-colors">
                   <BiRocket className="text-base" />
-                  Webinar Gratuito · 16 Enero
+                  Taller AI SDK · Próximamente
                 </span>
               </div>
 
@@ -473,30 +261,30 @@ export default function AISdkPage() {
                 aburrida, puro código que puedes llevar directo a tus proyectos.
               </p>
 
-              {/* Detalles del Webinar */}
+              {/* Detalles del taller */}
               <div className="flex flex-wrap gap-4 mt-10 text-sm text-zinc-400/90">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiTime className="text-emerald-400 text-base" />
-                  <span>Jueves 16 Enero</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
-                  <BiLayer className="text-emerald-400 text-base" />
-                  <span>7:00 PM CDMX</span>
+                  <span>3.5 horas intensivas</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
                   <BiCode className="text-emerald-400 text-base" />
-                  <span>Online</span>
+                  <span>100% Online</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
+                  <BiLayer className="text-emerald-400 text-base" />
+                  <span>Código incluido</span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                   <BiStar className="text-emerald-400 text-base" />
-                  <span className="font-semibold text-emerald-400">GRATIS</span>
+                  <span className="font-semibold text-emerald-400">$999 MXN</span>
                 </div>
               </div>
 
               {/* Preview de talleres */}
               <div className="mt-8 p-5 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border border-zinc-800/60 rounded-xl">
                 <h3 className="text-sm font-semibold text-zinc-400 mb-3 uppercase tracking-wide">
-                  Después del webinar: taller práctico de 3.5 horas
+                  Dos talleres prácticos de 3.5 horas cada uno
                 </h3>
                 <div className="grid grid-cols-1 gap-3 text-sm">
                   <div className="flex items-center gap-3 text-zinc-300">
@@ -504,25 +292,25 @@ export default function AISdkPage() {
                       Taller 1
                     </span>
                     <span>
-                      Sábado 24 Enero · IA aplicada con TypeScript · $999
+                      IA aplicada con TypeScript · Streaming y useChat
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-zinc-500">
-                    <span className="px-2 py-1 bg-zinc-700/50 rounded text-zinc-500 text-xs font-semibold">
+                  <div className="flex items-center gap-3 text-zinc-300">
+                    <span className="px-2 py-1 bg-emerald-500/20 rounded text-emerald-400 text-xs font-semibold">
                       Taller 2
                     </span>
-                    <span>RAG y Agentes · Próximamente</span>
+                    <span>RAG y Agentes · Herramientas avanzadas</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Columna Derecha - CTA de Compra */}
+            {/* Columna Derecha - Lista de Espera */}
             <div className="w-full lg:w-1/2 mt-10 lg:mt-0 lg:pl-10">
               <AnimatePresence mode="wait">
-                {showSuccess ? (
+                {fetcher.data?.waitlist ? (
                   <motion.div
-                    key="success"
+                    key="waitlist-success"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
@@ -533,70 +321,22 @@ export default function AISdkPage() {
                       small={true}
                     />
 
-                    <div className="w-20 h-20 bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-500/30">
-                      <BiCheckCircle className="text-green-400 text-4xl" />
-                    </div>
-                    <h3 className="text-3xl font-bold text-white mb-3">
-                      ¡Pago Exitoso!
-                    </h3>
-                    <p className="text-zinc-400/90 mb-6 text-sm leading-relaxed">
-                      Tu inscripcion al taller esta confirmada. Revisa tu email
-                      para los detalles de las sesiones.
-                    </p>
-                    <div className="flex items-center justify-center gap-2 text-green-400 bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20">
-                      <BiCheckCircle className="text-lg" />
-                      <span className="text-sm font-medium">
-                        Nos vemos el 13 de diciembre
-                      </span>
-                    </div>
-                  </motion.div>
-                ) : showCancel ? (
-                  <motion.div
-                    key="cancel"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 backdrop-blur-sm border border-zinc-800/60 rounded-2xl p-8 shadow-2xl text-center"
-                  >
-                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-yellow-500/30">
-                      <span className="text-4xl">🤔</span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-white mb-3">
-                      Pago cancelado
-                    </h3>
-                    <p className="text-zinc-400/90 mb-6 text-sm leading-relaxed">
-                      No te preocupes, puedes intentar de nuevo cuando quieras.
-                    </p>
-                  </motion.div>
-                ) : showPending || fetcher.data?.pending ? (
-                  <motion.div
-                    key="pending"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 backdrop-blur-sm border border-zinc-800/60 rounded-2xl p-8 shadow-2xl text-center"
-                  >
                     <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-emerald-500/30">
-                      <span className="text-4xl">📧</span>
+                      <BiCheckCircle className="text-emerald-400 text-4xl" />
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-3">
-                      ¡Casi listo!
+                      ¡Estás en la lista!
                     </h3>
-                    <p className="text-zinc-400/90 mb-4 text-sm leading-relaxed">
-                      Te enviamos un email de confirmación.
-                    </p>
-                    <p className="text-zinc-300 mb-6 text-base font-medium">
-                      Haz click en el enlace para confirmar tu lugar.
+                    <p className="text-zinc-400/90 mb-6 text-sm leading-relaxed">
+                      Te avisaremos cuando abramos nuevas fechas para el taller
+                      de AI SDK.
                     </p>
                     <div className="flex items-center justify-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
                       <BiCheckCircle className="text-lg" />
                       <span className="text-sm font-medium">
-                        Revisa tu bandeja de entrada
+                        Serás de los primeros en enterarte
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-500 mt-4">
-                      El enlace expira en 1 hora. Si no lo ves, revisa spam.
-                    </p>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -608,48 +348,45 @@ export default function AISdkPage() {
                   >
                     <div className="mb-6">
                       <h3 className="text-2xl font-bold text-white mb-2">
-                        Webinar Gratuito
+                        Próximas fechas por anunciar
                       </h3>
                       <p className="text-sm text-zinc-400/90">
-                        Jueves 16 de Enero · 7:00 PM CDMX
+                        Únete a la lista de espera para ser notificado
                       </p>
                     </div>
 
-                    {/* Countdown Timer */}
-                    <CountdownTimer />
-
-                    {/* Precio destacado - GRATIS */}
-                    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center relative overflow-hidden">
-                      <p className="text-sm text-emerald-400 mb-1">
-                        Reserva tu lugar
+                    {/* Precio referencia */}
+                    <div className="mb-6 p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl text-center relative overflow-hidden">
+                      <p className="text-sm text-zinc-400 mb-1">
+                        Precio por taller
                       </p>
-                      <p className="text-4xl font-bold text-emerald-400">
-                        GRATIS
+                      <p className="text-3xl font-bold text-white">
+                        $999 <span className="text-lg text-zinc-500">MXN</span>
                       </p>
                     </div>
 
-                    {/* Qué verás en el webinar - 45 min */}
+                    {/* Qué aprenderás */}
                     <ul className="space-y-3 mb-6">
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
-                        <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Mensajes, prompts y razonamiento</span>
+                        <BiCheckCircle className="text-emerald-400 flex-shrink-0" />
+                        <span>Streaming con AI SDK de Vercel</span>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
-                        <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Tokens y ventana de contexto</span>
+                        <BiCheckCircle className="text-emerald-400 flex-shrink-0" />
+                        <span>Hook useChat para interfaces de chat</span>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
-                        <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Herramientas y agentes</span>
+                        <BiCheckCircle className="text-emerald-400 flex-shrink-0" />
+                        <span>Doble stream para artefactos (estilo v0)</span>
                       </li>
                       <li className="flex items-center gap-2 text-sm text-zinc-300">
-                        <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                        <span>Demo: UI generativa en tiempo real</span>
+                        <BiCheckCircle className="text-emerald-400 flex-shrink-0" />
+                        <span>RAG y agentes con herramientas</span>
                       </li>
                     </ul>
 
                     <fetcher.Form method="post" className="space-y-3">
-                      <input type="hidden" name="intent" value="webinar-register" />
+                      <input type="hidden" name="intent" value="waitlist" />
                       <input
                         name="name"
                         type="text"
@@ -673,7 +410,7 @@ export default function AISdkPage() {
                           <span>Enviando...</span>
                         ) : (
                           <>
-                            <span>Reservar mi lugar</span>
+                            <span>Avisarme cuando abran fechas</span>
                             <BiChevronRight className="text-xl" />
                           </>
                         )}
@@ -687,7 +424,7 @@ export default function AISdkPage() {
                     )}
 
                     <p className="text-xs text-zinc-500 text-center mt-4">
-                      Te enviaremos un email para confirmar tu registro.
+                      Sin spam. Solo te avisaremos cuando haya nuevas fechas.
                     </p>
                   </motion.div>
                 )}
@@ -696,17 +433,17 @@ export default function AISdkPage() {
           </div>
         </section>
 
-        {/* Sección Temario Webinar - 45 min */}
+        {/* Sección Conceptos Fundamentales */}
         <section className="max-w-7xl mx-auto border-t border-zinc-800/30 mt-24 pt-16">
           <div className="text-center mb-14">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-              Qué verás en el{" "}
+              Conceptos{" "}
               <span className="bg-gradient-to-r from-emerald-500 to-emerald-400 bg-clip-text text-transparent">
-                Webinar
+                Fundamentales
               </span>
             </h2>
             <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
-              45 minutos de conceptos clave + demo en vivo
+              Los pilares de IA aplicada que dominarás
             </p>
           </div>
 
@@ -929,116 +666,51 @@ export default function AISdkPage() {
               Los Talleres
             </h2>
             <p className="text-lg sm:text-xl lg:text-2xl text-zinc-400/90 font-normal leading-relaxed max-w-3xl mx-auto">
-              Talleres prácticos para dominar el AI SDK
+              Próximamente nuevas fechas · Únete a la lista de espera
             </p>
           </div>
 
           {/* Grid de Talleres */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Taller 1 - Activo */}
-            <div className="p-8 bg-gradient-to-b from-zinc-900/60 to-zinc-900/40 border-2 border-emerald-500/30 rounded-2xl relative">
-              <div className="absolute -top-3 left-6">
-                <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
-                  SÁBADO 24 ENERO
-                </span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3 mt-2">
-                <span className="text-3xl">🚀</span>
-                Introducción a la IA aplicada con TypeScript
-              </h3>
-              <p className="text-sm text-zinc-500 mb-6">
-                10:00 AM - 1:30 PM CDMX
-              </p>
-
-              {/* Qué construirás */}
-              <h4 className="text-sm font-semibold text-emerald-400 mb-3 uppercase tracking-wide">
-                Qué construirás
-              </h4>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-center gap-2 text-sm text-zinc-300">
-                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                  <span>Tu primer chat con streaming</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm text-zinc-300">
-                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                  <span>Interfaz React con useChat</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm text-zinc-300">
-                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                  <span>Sistema de doble stream (artefactos)</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm text-zinc-300">
-                  <BiCheckCircle className="text-green-400 flex-shrink-0" />
-                  <span>Código fuente completo</span>
-                </li>
-              </ul>
-
-              {/* Precio y CTA */}
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center mb-4">
-                <p className="text-3xl font-bold text-white">
-                  $999 <span className="text-lg text-zinc-400">MXN</span>
-                </p>
-              </div>
-
-              <fetcher.Form method="post">
-                <input type="hidden" name="intent" value="checkout" />
-                <input type="hidden" name="productType" value="taller-1" />
-                <button
-                  type="submit"
-                  disabled={fetcher.state === "submitting"}
-                  className="w-full h-12 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
-                >
-                  {fetcher.state === "submitting" ? (
-                    <span>Procesando...</span>
-                  ) : (
-                    <>
-                      <span>Inscribirme al Taller 1</span>
-                      <BiChevronRight className="text-xl" />
-                    </>
-                  )}
-                </button>
-              </fetcher.Form>
-            </div>
-
-            {/* Taller 2 - Próximamente (Deshabilitado) */}
-            <div className="p-8 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/40 rounded-2xl relative opacity-60">
+            {/* Taller 1 - Próximamente */}
+            <div className="p-8 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/40 rounded-2xl relative opacity-70">
               <div className="absolute -top-3 left-6">
                 <span className="px-3 py-1 bg-zinc-700 text-zinc-400 text-xs font-bold rounded-full">
                   PRÓXIMAMENTE
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-zinc-500 mb-6 flex items-center gap-3 mt-2">
-                <span className="text-3xl grayscale">🔥</span>
-                RAG y Agentes con AI SDK
+              <h3 className="text-2xl font-bold text-zinc-300 mb-6 flex items-center gap-3 mt-2">
+                <span className="text-3xl">🚀</span>
+                Introducción a la IA aplicada con TypeScript
               </h3>
 
-              {/* Preview contenido */}
-              <h4 className="text-sm font-semibold text-zinc-600 mb-3 uppercase tracking-wide">
-                Qué aprenderás
+              {/* Qué construirás */}
+              <h4 className="text-sm font-semibold text-zinc-500 mb-3 uppercase tracking-wide">
+                Qué construirás
               </h4>
               <ul className="space-y-3 mb-6">
-                <li className="flex items-center gap-2 text-sm text-zinc-500">
-                  <span className="text-zinc-600">•</span>
-                  <span>Embeddings y búsqueda semántica</span>
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>Tu primer chat con streaming</span>
                 </li>
-                <li className="flex items-center gap-2 text-sm text-zinc-500">
-                  <span className="text-zinc-600">•</span>
-                  <span>RAG con base de datos</span>
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>Interfaz React con useChat</span>
                 </li>
-                <li className="flex items-center gap-2 text-sm text-zinc-500">
-                  <span className="text-zinc-600">•</span>
-                  <span>Agentes con herramientas</span>
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>Sistema de doble stream (artefactos)</span>
                 </li>
-                <li className="flex items-center gap-2 text-sm text-zinc-500">
-                  <span className="text-zinc-600">•</span>
-                  <span>Proyecto completo funcional</span>
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>Código fuente completo</span>
                 </li>
               </ul>
 
               {/* Precio */}
               <div className="p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl text-center mb-4">
-                <p className="text-3xl font-bold text-zinc-600">
-                  $999 <span className="text-lg text-zinc-700">MXN</span>
+                <p className="text-3xl font-bold text-zinc-500">
+                  $999 <span className="text-lg text-zinc-600">MXN</span>
                 </p>
               </div>
 
@@ -1046,7 +718,57 @@ export default function AISdkPage() {
                 disabled
                 className="w-full h-12 px-4 py-2 bg-zinc-800 text-zinc-500 rounded-lg font-semibold text-base cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <span>Disponible después del Taller 1</span>
+                <span>Fechas por anunciar</span>
+              </button>
+            </div>
+
+            {/* Taller 2 - Próximamente */}
+            <div className="p-8 bg-gradient-to-b from-zinc-900/40 to-zinc-900/20 border border-zinc-800/40 rounded-2xl relative opacity-70">
+              <div className="absolute -top-3 left-6">
+                <span className="px-3 py-1 bg-zinc-700 text-zinc-400 text-xs font-bold rounded-full">
+                  PRÓXIMAMENTE
+                </span>
+              </div>
+              <h3 className="text-2xl font-bold text-zinc-300 mb-6 flex items-center gap-3 mt-2">
+                <span className="text-3xl">🔥</span>
+                RAG y Agentes con AI SDK
+              </h3>
+
+              {/* Preview contenido */}
+              <h4 className="text-sm font-semibold text-zinc-500 mb-3 uppercase tracking-wide">
+                Qué aprenderás
+              </h4>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>Embeddings y búsqueda semántica</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>RAG con base de datos</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>Agentes con herramientas</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-zinc-400">
+                  <span className="text-zinc-500">•</span>
+                  <span>Proyecto completo funcional</span>
+                </li>
+              </ul>
+
+              {/* Precio */}
+              <div className="p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl text-center mb-4">
+                <p className="text-3xl font-bold text-zinc-500">
+                  $999 <span className="text-lg text-zinc-600">MXN</span>
+                </p>
+              </div>
+
+              <button
+                disabled
+                className="w-full h-12 px-4 py-2 bg-zinc-800 text-zinc-500 rounded-lg font-semibold text-base cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <span>Fechas por anunciar</span>
               </button>
             </div>
           </div>
@@ -1199,7 +921,7 @@ export default function AISdkPage() {
                   <li className="text-sm text-zinc-400/90 flex items-start gap-2">
                     <span className="text-emerald-400 mt-0.5">•</span>
                     <span>
-                      Las sesiones son sabados en la manana (10am CDMX)
+                      Las sesiones se programan en horarios accesibles
                     </span>
                   </li>
                 </ul>
