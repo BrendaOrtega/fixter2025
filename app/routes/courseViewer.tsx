@@ -263,6 +263,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     videos,
     moduleNames,
     subscriberVideos,
+    subscriberEmail: subscriberEmail ? decodeURIComponent(subscriberEmail) : null,
     searchParams: {
       success: searchParams.get("success") === "1",
       subscribed: searchParams.get("subscribed") === "1",
@@ -282,6 +283,7 @@ export default function Route({
     moduleNames,
     course,
     subscriberVideos,
+    subscriberEmail,
     user,
   },
 }: Route.ComponentProps) {
@@ -341,6 +343,8 @@ export default function Route({
           }
           slug={video.slug}
           disabled={hasDrawerOpen}
+          userId={user?.id}
+          userEmail={user?.email || subscriberEmail || undefined}
           onPause={() => {
             // setIsMenuOpen(true);// @todo consider this
           }}

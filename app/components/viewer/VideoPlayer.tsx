@@ -5,6 +5,7 @@ import { IoIosClose } from "react-icons/io";
 import { Link } from "react-router";
 import { nanoid } from "nanoid";
 import { useVideoPlayer } from "~/hooks/useVideoPlayer";
+import { useVideoTracking } from "~/hooks/useVideoTracking";
 
 // Helper para extraer el ID de YouTube
 function extractYouTubeId(url: string): string | null {
@@ -32,6 +33,9 @@ interface VideoPlayerProps {
   src?: string;
   type?: string;
   disabled?: boolean; // Bloquea autoplay cuando hay drawer
+  // Para video tracking
+  userId?: string;
+  userEmail?: string;
 }
 
 export const VideoPlayer = ({
@@ -45,9 +49,21 @@ export const VideoPlayer = ({
   onPause,
   onEnd,
   disabled,
+  userId,
+  userEmail,
 }: VideoPlayerProps) => {
   // Detectar si es video de YouTube
   const youtubeId = video?.youtubeUrl ? extractYouTubeId(video.youtubeUrl) : null;
+
+  // Video tracking (solo para S3/HLS, no YouTube)
+  const { trackStart, trackProgress, trackComplete } = useVideoTracking({
+    videoId: video?.id || "",
+    videoSlug: slug,
+    courseId,
+    userId,
+    email: userEmail,
+    duration: video?.duration,
+  });
 
   const {
     videoRef,
@@ -59,9 +75,20 @@ export const VideoPlayer = ({
     video,
     courseId,
     slug,
-    onPlay,
-    onPause,
-    onEnd,
+    onPlay: () => {
+      if (!youtubeId) trackStart();
+      onPlay?.();
+    },
+    onPause: () => {
+      if (!youtubeId && videoRef.current) {
+        trackProgress(videoRef.current.currentTime);
+      }
+      onPause?.();
+    },
+    onEnd: () => {
+      if (!youtubeId) trackComplete();
+      onEnd?.();
+    },
     disabled,
     // Skip hook logic si es YouTube
     skip: !!youtubeId,

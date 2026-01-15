@@ -560,3 +560,30 @@ model EmailBlacklist {
   @@map("email_blacklist")
 }
 
+// Video analytics - tracking minimalista de visualizaciones
+model VideoView {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  videoId       String    @db.ObjectId
+  videoSlug     String
+  courseId      String?   @db.ObjectId
+
+  // Identificación flexible
+  userId        String?   @db.ObjectId  // Si está autenticado
+  email         String?                  // Para análisis sin auth
+  sessionId     String                   // Siempre presente (anónimos)
+
+  // Métricas clave
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?                // null = no terminó
+  watchedSeconds Int      @default(0)    // Tiempo real visto
+  videoDuration  Int?                    // Duración total del video
+
+  // Contexto útil
+  deviceType    String?                  // mobile/tablet/desktop
+
+  @@index([videoId])
+  @@index([courseId])
+  @@index([userId])
+  @@index([startedAt])
+  @@map("video_views")
+}

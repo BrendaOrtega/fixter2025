@@ -124,7 +124,10 @@ export function useVideoPlayer({
     const el = videoRef.current;
     if (!el) return;
 
-    const handlePlaying = () => setIsPlaying(true);
+    const handlePlaying = () => {
+      setIsPlaying(true);
+      onPlay?.(); // Llamar onPlay cuando realmente empieza a reproducir
+    };
     const handlePlay = () => {
       setTimeout(() => {
         if (el && !el.paused) setIsPlaying(true);
@@ -163,7 +166,7 @@ export function useVideoPlayer({
       el.removeEventListener("timeupdate", handleTimeUpdate);
       el.removeEventListener("error", handleError);
     };
-  }, [onPause, onEnd, updateWatchedList]);
+  }, [onPlay, onPause, onEnd, updateWatchedList]);
 
   // Video source setup
   useEffect(() => {
