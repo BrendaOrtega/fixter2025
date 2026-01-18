@@ -24,6 +24,15 @@ interface UseVideoPlayerReturn {
 }
 
 // Helpers
+const isFullUrl = (str: string) => str.startsWith("http");
+
+const isInternalRoute = (str: string) => str.startsWith("/");
+
+const isS3Key = (str: string) =>
+  !isFullUrl(str) &&
+  !isInternalRoute(str) &&
+  (str.includes("fixtergeek/") || str.endsWith(".m3u8") || str.endsWith(".mp4"));
+
 const isNewFormat = (url: string) =>
   url.includes("fixtergeek/videos/") &&
   (url.includes(".s3.") ||
@@ -190,45 +199,56 @@ export function useVideoPlayer({
         hasM3U8: !!video.m3u8,
         hasStorageLink: !!video.storageLink,
         isNewFormat: video.m3u8 ? isNewFormat(video.m3u8) : video.storageLink ? isNewFormat(video.storageLink) : false,
+        isS3Key: video.storageLink ? isS3Key(video.storageLink) : false,
       });
+
+      // Helper to resolve source URL based on format
+      const resolveSource = async (source: string): Promise<string> => {
+        // Case 1: Direct S3 key (new format) -> use proxy
+        if (isS3Key(source)) {
+          console.log("🎬 Using S3 key via proxy:", source);
+          return `/api/hls-proxy?path=${encodeURIComponent(source)}`;
+        }
+
+        // Case 2: Internal route (legacy) -> use as-is
+        if (isInternalRoute(source)) {
+          console.log("🎬 Using internal route:", source);
+          return source;
+        }
+
+        // Case 3: Full URL - check if new format needs presigned
+        if (isFullUrl(source)) {
+          if (isNewFormat(source)) {
+            const s3Key = extractS3Key(source);
+            if (s3Key) {
+              console.log("🎬 Extracted S3 key from URL:", s3Key);
+              return `/api/hls-proxy?path=${encodeURIComponent(s3Key)}`;
+            }
+            return await interceptHLSUrl(source);
+          }
+          return source;
+        }
+
+        return source;
+      };
 
       if (hasNativeHLS) {
         // Safari, iOS - native HLS
         console.log("🎬 Using Native HLS (Safari/iOS)");
         if (video.m3u8) {
-          if (isNewFormat(video.m3u8)) {
-            const s3Key = extractS3Key(video.m3u8);
-            if (s3Key) {
-              el.src = `/api/hls-proxy?path=${encodeURIComponent(s3Key)}`;
-            } else {
-              el.src = await interceptHLSUrl(video.m3u8);
-            }
-          } else {
-            el.src = video.m3u8;
-          }
+          el.src = await resolveSource(video.m3u8);
         } else if (video.storageLink) {
-          el.src = isNewFormat(video.storageLink)
-            ? await interceptHLSUrl(video.storageLink)
-            : video.storageLink;
+          el.src = await resolveSource(video.storageLink);
         }
       } else {
         // Chrome, Firefox - HLS.js
         console.log("🎬 Using HLS.js (Chrome/Firefox)");
-        if (video.m3u8) {
+        const hlsSource = video.m3u8 || (video.storageLink?.includes('.m3u8') ? video.storageLink : null);
+
+        if (hlsSource) {
           const hls = new Hls();
           hlsRef.current = hls;
-
-          if (isNewFormat(video.m3u8)) {
-            const s3Key = extractS3Key(video.m3u8);
-            if (s3Key) {
-              hls.loadSource(`/api/hls-proxy?path=${encodeURIComponent(s3Key)}`);
-            } else {
-              hls.loadSource(await interceptHLSUrl(video.m3u8));
-            }
-          } else {
-            hls.loadSource(video.m3u8);
-          }
-
+          hls.loadSource(await resolveSource(hlsSource));
           hls.attachMedia(el);
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
@@ -236,9 +256,8 @@ export function useVideoPlayer({
             }
           });
         } else if (video.storageLink) {
-          el.src = isNewFormat(video.storageLink)
-            ? await interceptHLSUrl(video.storageLink)
-            : video.storageLink;
+          // Non-HLS video (mp4, etc.)
+          el.src = await resolveSource(video.storageLink);
         }
       }
     };

@@ -38,6 +38,28 @@ export const loader = async ({ request }: { request: Request }) => {
   }
 
   try {
+    // Check if this is a direct video file (.mp4, .webm, etc.) - not HLS
+    const isDirectVideo = /\.(mp4|webm|mov|avi)$/i.test(hlsPath) ||
+      // Also handle paths without extension (legacy video-xxx format)
+      (!hlsPath.includes('.') && hlsPath.includes('video-'));
+
+    if (isDirectVideo) {
+      // Generate presigned URL and redirect to it
+      const presignedUrl = await Effect.runPromise(
+        s3VideoService.getHLSPresignedUrl(hlsPath, 3600) // 1 hour
+      );
+
+      // For videos, redirect to presigned URL directly
+      // This allows the browser to handle range requests properly
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': presignedUrl,
+        },
+      });
+    }
+
     // Check if this is a segment request (.ts file)
     if (hlsPath.endsWith('.ts')) {
       // Stream the segment directly

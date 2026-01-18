@@ -196,6 +196,21 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       where: {
         slug: searchParams.get("videoSlug") as string,
       },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        index: true,
+        duration: true,
+        description: true,
+        poster: true,
+        isPublic: true,
+        moduleName: true,
+        accessLevel: true,
+        storageLink: true,
+        youtubeUrl: true,
+        // m3u8 excluido - algunos videos tienen datos corruptos
+      },
     });
   } else {
     // Si no hay videoSlug, usar el primer video y redireccionar
@@ -221,7 +236,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     },
   });
 
-  const moduleNames = ["nomodules"];
+  // Extraer módulos únicos de los videos, manteniendo el orden de aparición
+  const moduleNames = videos.reduce((acc: string[], video: any) => {
+    const name = video.moduleName || "nomodules";
+    if (!acc.includes(name)) acc.push(name);
+    return acc;
+  }, []);
 
   // Determine access based on accessLevel
   const accessLevel = (video as any).accessLevel || "paid";

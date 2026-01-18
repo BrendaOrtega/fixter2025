@@ -93,16 +93,11 @@ const Empty = () => {
 };
 
 const CourseList = ({ courses }: { courses: Course[] }) => {
-  const ids = ["645d3dbd668b73b34443789c"];
   return (
     <div className="grid gap-20 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 mt-16 lg:mt-32 w-full  max-w-7xl mx-auto px-8 md:px-[5%] xl:px-0">
       {courses.map((course) => (
         <CourseCard
-          to={
-            ids.includes(course.id)
-              ? "http://animaciones.fixtergeek.com"
-              : `/cursos/${course.slug}/viewer`
-          }
+          to={`/cursos/${course.slug}/viewer`}
           courseSlug={course.slug}
           key={course.id}
           course={course}

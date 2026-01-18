@@ -12,7 +12,7 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { BsMenuButtonWide, BsMarkdown } from "react-icons/bs";
 import { FaPlay, FaVideo } from "react-icons/fa6";
-import { IoMdLock, IoMdClose, IoMdMail } from "react-icons/io";
+import { IoMdLock, IoMdClose, IoMdMail, IoMdConstruct } from "react-icons/io";
 import { IoCheckmarkCircle } from "react-icons/io5";
 import {
   MdMenuOpen,
@@ -349,6 +349,7 @@ const VideosContent = ({
                     duration={v?.duration || 0}
                     courseSlug={courseSlug}
                     accessLevel={accessLevel}
+                    hasContent={!!(v as any)?.storageLink || !!(v as any)?.youtubeUrl}
                   />
                 );
               })}
@@ -402,6 +403,7 @@ const VideoListItem = ({
   slug,
   isLocked,
   accessLevel,
+  hasContent = true,
 }: {
   courseSlug?: string;
   isLocked?: boolean;
@@ -411,10 +413,14 @@ const VideoListItem = ({
   isCompleted?: boolean;
   title: string;
   accessLevel?: string;
+  hasContent?: boolean;
 }) => {
-  const formatDuration = (mins: number | string) => {
-    mins = +mins / 60;
-    return Number(mins).toFixed(0) + "m";
+  const formatDuration = (mins: number | string | null | undefined) => {
+    const totalMins = +(mins || 0);
+    if (!totalMins || isNaN(totalMins)) return "";
+    const m = Math.floor(totalMins);
+    const s = Math.round((totalMins - m) * 60);
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
   };
 
   const ref = useRef<HTMLAnchorElement>(null);
@@ -428,16 +434,19 @@ const VideoListItem = ({
     }
   }, [isCurrent]);
 
+  const isDisabled = isLocked || !hasContent;
+
   return (
     <Link
       ref={ref}
-      to={`/cursos/${courseSlug}/viewer?videoSlug=${slug}`}
+      to={hasContent ? `/cursos/${courseSlug}/viewer?videoSlug=${slug}` : "#"}
+      onClick={!hasContent ? (e) => e.preventDefault() : undefined}
       className={cn(
         "group relative flex items-center p-3 rounded-lg transition-all hover:bg-gray-800/50",
         {
           "bg-[#1a2332] ring-1 ring-brand-500/30": isCurrent,
-          "cursor-pointer": !isLocked,
-          "cursor-not-allowed opacity-60": isLocked,
+          "cursor-pointer": !isDisabled,
+          "cursor-not-allowed opacity-60": isDisabled,
         }
       )}
     >
@@ -467,14 +476,17 @@ const VideoListItem = ({
 
       {/* Access level indicator */}
       <div className="flex items-center gap-1.5 ml-2">
-        {accessLevel === "public" && (
+        {!hasContent && (
+          <IoMdConstruct className="text-yellow-500 text-sm" title="En construcción" />
+        )}
+        {hasContent && accessLevel === "public" && (
           <IoCheckmarkCircle className="text-green-500 text-sm" title="Gratis" />
         )}
-        {accessLevel === "subscriber" && (
+        {hasContent && accessLevel === "subscriber" && (
           <IoMdMail className="text-emerald-400 text-sm" title="Gratis con email" />
         )}
-        {(accessLevel === "paid" || (!accessLevel && isLocked)) && (
-          <IoMdLock className={isLocked ? "text-gray-500 text-sm" : "text-green-500/50 text-sm"} title={isLocked ? "Requiere compra" : "Desbloqueado"} />
+        {hasContent && isLocked && (accessLevel === "paid" || !accessLevel) && (
+          <IoMdLock className="text-gray-500 text-sm" title="Requiere compra" />
         )}
         <span className="text-xs text-gray-500">
           {formatDuration(duration)}

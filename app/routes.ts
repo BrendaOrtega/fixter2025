@@ -20,6 +20,11 @@ export default [
   route("aviso-de-privacidad", "routes/aviso.tsx"),
   route("terminos-y-condiciones", "routes/terms.tsx"),
   route("sitemap.xml", "routes/sitemap.tsx"),
+  // Video streaming endpoint (legacy format)
+  route("videos", "routes/videos.tsx"),
+  // Playlist routes for animaciones course (HLS streaming)
+  route("playlist/:storageKey.m3u8", "routes/playlist.$storageKey.m3u8.tsx"),
+  route("playlist/:storageKey/:segment", "routes/playlist.$storageKey.$segment.tsx"),
   //stripe webhook
   route("stripe/webhook", "routes/stripeWebhook.ts"),
   // xmas

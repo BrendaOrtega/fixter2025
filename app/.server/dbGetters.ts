@@ -30,6 +30,21 @@ const getAllVideos = async (courseId: string) => {
       },
       isPublic: true,
     },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      index: true,
+      duration: true,
+      description: true,
+      poster: true,
+      isPublic: true,
+      moduleName: true,
+      accessLevel: true,
+      storageLink: true,
+      youtubeUrl: true,
+      // m3u8 excluido - algunos videos tienen datos corruptos
+    },
     orderBy: { index: "asc" },
   });
   const nakedVideos = await db.video.findMany({
@@ -50,6 +65,7 @@ const getAllVideos = async (courseId: string) => {
       moduleName: true,
       accessLevel: true,
       youtubeUrl: true,
+      storageLink: true,
     },
     orderBy: { index: "asc" },
   });
@@ -102,6 +118,21 @@ export const getFreeOrEnrolledCourseFor = async (
           courseIds: {
             has: course.id,
           },
+        },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          index: true,
+          duration: true,
+          description: true,
+          poster: true,
+          isPublic: true,
+          moduleName: true,
+          accessLevel: true,
+          storageLink: true,
+          youtubeUrl: true,
+          // m3u8 excluido - algunos videos tienen datos corruptos
         },
         orderBy: { index: "asc" },
       });

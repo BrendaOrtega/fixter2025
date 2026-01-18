@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { PrimaryButton } from "./common/PrimaryButton";
 
 export const CourseBanner = () => {
@@ -11,13 +12,12 @@ export const CourseBanner = () => {
           <h3 className="text-2xl md:text-3xl  xl:text-4xl text-white mt-2 font-bold mb-6 leading-snug">
             Animaciones web con React + Motion 🧙🏻{" "}
           </h3>{" "}
-          <a
-            href="https://animaciones.fixtergeek.com/"
-            target="_blank"
+          <Link
+            to="/cursos/construye-mas-de-14-componentes-animados-con-react-y-motion/viewer"
             title="curso animaciones"
           >
             <PrimaryButton variant="fill" title="Ver curso" />
-          </a>
+          </Link>
         </div>
       </div>{" "}
     </div>

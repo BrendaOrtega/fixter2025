@@ -97,7 +97,7 @@ export const GlobalBanner = ({
                 </p>{" "}
                 <PrimaryButton
                   as="Link"
-                  to="https://animaciones.fixtergeek.com/"
+                  to="/cursos/construye-mas-de-14-componentes-animados-con-react-y-motion/viewer"
                   variant="fill"
                   className="bg-white text-sm border-none h-8 mt-6"
                 >

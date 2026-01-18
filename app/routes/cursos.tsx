@@ -83,21 +83,9 @@ const proximamenteCourses: Partial<Course>[] = [
     level: "avanzado",
     tipo: "proximamente",
   },
-  {
-    id: "proximamente-cookies-patterns",
-    slug: "cookies-patterns",
-    title: "Experiencias y patterns web con cookies",
-    icon: "/courses/code.svg",
-    duration: "90 min",
-    level: "intermedio",
-    tipo: "proximamente",
-  },
 ];
 
 export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
-  // special courses (external links)
-  const externalIds = ["645d3dbd668b73b34443789c"];
-
   // Separar AI SDK para destacarlo primero
   const aiSdkCourse = courses.find((c) => c.slug === "ai-sdk");
   const otherCourses = courses.filter((c) => c.slug !== "ai-sdk");
@@ -116,11 +104,6 @@ export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
           courseSlug={course.slug}
           key={course.id}
           course={course}
-          to={
-            externalIds.includes(course.id || "")
-              ? "http://animaciones.fixtergeek.com"
-              : undefined
-          }
         />
       ))}
     </div>

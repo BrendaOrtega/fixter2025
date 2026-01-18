@@ -149,10 +149,12 @@ const ListItem = ({
   isCompleted?: boolean;
   title: string;
 }) => {
-  const formatDuration = (mins: number | string) => {
-    // @todo use seconds if version < 0.0.2 (2025)
-    mins = +mins / 60;
-    return Number(mins).toFixed(0) + "m";
+  const formatDuration = (mins: number | string | null | undefined) => {
+    const totalMins = +(mins || 0);
+    if (!totalMins || isNaN(totalMins)) return "";
+    const m = Math.floor(totalMins);
+    const s = Math.round((totalMins - m) * 60);
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
   };
   const ref = useRef<HTMLAnchorElement>(null);
 

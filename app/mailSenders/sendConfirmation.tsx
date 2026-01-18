@@ -11,7 +11,7 @@ export const generateURL = (options: {
   const uri = new URL(
     process.env.NODE_ENV === "development"
       ? "http://localhost:3000"
-      : "https://animaciones.fixtergeek.com"
+      : "https://fixter2025.fly.dev"
   );
   uri.pathname = options.pathname || "";
   options.token && uri.searchParams.set("token", options.token);
