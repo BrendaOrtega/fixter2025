@@ -17,6 +17,14 @@ Este archivo contiene información útil para Claude Code sobre el proyecto y pr
   - Servidor configurado para escuchar en 0.0.0.0:3000
   - Variables ENV HOST=0.0.0.0 y PORT=3000 necesarias
 
+## TODO: Regenerar chunks de video de animaciones
+
+- **Video ID**: `video-6760a7e680d28dce1a1fd71c`
+- **Problema**: Faltan segmentos HLS 049-071 (solo existen 000-048)
+- **Ubicación S3**: `animaciones/chunks/video-6760a7e680d28dce1a1fd71c/`
+- **Acción**: Re-procesar el video original con ffmpeg para generar los chunks faltantes
+- **Estado**: Video funciona ~68% (primeros 8 minutos aprox), falla al final
+
 ## Lo nuevo
 
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
