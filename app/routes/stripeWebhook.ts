@@ -250,6 +250,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return new Response(null);
       }
 
+      // Si llegamos aquí sin courseSlug, es un evento de otra app Stripe
+      if (!session.metadata.courseSlug) {
+        console.info("WEBHOOK: Evento sin courseSlug, ignorando (otra app)");
+        return new Response(null);
+      }
+
       // Handle ALL course purchases - unified logic
       const course = await db.course.findUnique({
         where: {
