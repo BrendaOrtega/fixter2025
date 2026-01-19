@@ -38,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       
       console.error("Error real en checkout:", error);
       // Solo redirigir con error si es un error real
-      throw redirect(`/cursos/${formData.get("courseSlug")}?error=checkout_failed`);
+      throw redirect(`/cursos/${formData.get("courseSlug")}/viewer?error=checkout_failed`);
     }
   }
   return null;

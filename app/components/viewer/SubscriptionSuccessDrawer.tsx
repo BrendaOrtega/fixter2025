@@ -24,7 +24,7 @@ export const SubscriptionSuccessDrawer = ({
 
   return (
     <>
-      <EmojiConfetti emojis={["🎉", "🚀", "📖", "✨", "🎊"]} />
+      <EmojiConfetti emojis={["🎉", "👾", "💿", "🕹️", "🚀", "💻", "⌨️", "🤖", "📟", "👨‍💻"]} small />
       <Drawer
         header={<></>}
         cta={<></>}

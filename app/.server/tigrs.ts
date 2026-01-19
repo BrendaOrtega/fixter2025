@@ -69,6 +69,21 @@ export const getReadURL = async (
     { expiresIn }
   );
 
+// Genera presigned URL para cualquier bucket de Tigris
+export const getReadURLForBucket = async (
+  bucket: string,
+  key: string,
+  expiresIn = 3600
+) =>
+  await getSignedUrl(
+    S3,
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    }),
+    { expiresIn }
+  );
+
 export const getImageURL = async (key: string, expiresIn = 900) =>
   await getSignedUrl(
     S3,

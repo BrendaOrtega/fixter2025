@@ -103,7 +103,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         },
       });
 
-      await sendVerificationCode({ email, code });
+      await sendVerificationCode(email, code);
       console.log("📧 Code sent successfully, returning codeSent: true");
       return data({ codeSent: true, email });
     } catch (error) {
@@ -164,6 +164,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  const { getReadURLForBucket } = await import("~/.server/tigrs");
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const user = await getUserOrNull(request);
@@ -257,15 +258,44 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   });
 
   const hasAccess =
-    course.isFree ||
     isPurchased ||
     accessLevel === "public" ||
     (accessLevel === "subscriber" && isSubscribed);
 
   const removeStorageLink = !hasAccess;
 
-  const videoToReturn = removeStorageLink ? { ...video, storageLink: "", m3u8: "" } : video;
-  console.log("🔐 Result:", { hasAccess, removeStorageLink, returnedLink: videoToReturn.storageLink });
+  // Generar presigned URL para videos de Tigris (bucket privado)
+  let finalStorageLink = (video as any).storageLink || "";
+  console.log("🎬 Original storageLink:", finalStorageLink);
+  if (hasAccess && finalStorageLink) {
+    try {
+      // Formato 1: bucket.fly.storage.tigris.dev/key (virtual-hosted style)
+      const virtualMatch = finalStorageLink.match(/https?:\/\/([^.]+)\.fly\.storage\.tigris\.dev\/(.+)/);
+      // Formato 2: fly.storage.tigris.dev/bucket/key (path style)
+      const pathMatch = !virtualMatch && finalStorageLink.match(/fly\.storage\.tigris\.dev\/([^/]+)\/(.+)/);
+
+      console.log("🎬 virtualMatch:", virtualMatch);
+      console.log("🎬 pathMatch:", pathMatch);
+
+      if (virtualMatch) {
+        const [, bucket, key] = virtualMatch;
+        console.log("🎬 Using virtual style - bucket:", bucket, "key:", key);
+        finalStorageLink = await getReadURLForBucket(bucket, key, 3600);
+      } else if (pathMatch) {
+        const [, bucket, key] = pathMatch;
+        console.log("🎬 Using path style - bucket:", bucket, "key:", key);
+        finalStorageLink = await getReadURLForBucket(bucket, key, 3600);
+      }
+    } catch (err) {
+      console.error("❌ Error generating presigned URL:", err);
+      finalStorageLink = ""; // Fallback a vacío si falla S3
+    }
+  }
+
+  const videoToReturn = removeStorageLink
+    ? { ...video, storageLink: "", m3u8: "" }
+    : { ...video, storageLink: finalStorageLink };
+  console.log("🔐 Result:", { hasAccess, removeStorageLink, returnedLink: videoToReturn.storageLink?.substring(0, 80) });
 
   // Get subscriber videos for the drawer (with title and slug for navigation)
   const subscriberVideos = videos
@@ -312,7 +342,6 @@ export default function Route({
 
   // Determine which drawer to show based on accessLevel
   const hasAccess =
-    course.isFree ||
     isPurchased ||
     accessLevel === "public" ||
     (accessLevel === "subscriber" && serverIsSubscribed);
@@ -378,7 +407,7 @@ export default function Route({
           currentVideoSlug={video.slug || undefined}
           videos={videos}
           moduleNames={moduleNames.filter((n) => typeof n === "string")}
-          isLocked={course.isFree ? false : !isPurchased}
+          isLocked={!isPurchased}
           isSubscribed={serverIsSubscribed}
           markdownBody={video.description || undefined}
           defaultTab="videos"

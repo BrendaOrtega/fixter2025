@@ -18,13 +18,13 @@ export const EmojiConfetti = ({
     if (emojis) {
       jsConfetti.addConfetti({
         emojis: Array.isArray(emojis) ? emojis : initial,
-        confettiNumber: small ? 8 : 100,
+        confettiNumber: small ? 80 : 100,
         emojiSize: small ? 50 : 100,
       });
       setTimeout(() => {
         jsConfetti.addConfetti({
           emojis: Array.isArray(emojis) ? emojis : initial,
-          confettiNumber: small ? 5 : 80,
+          confettiNumber: small ? 70 : 80,
           emojiSize: small ? 50 : 100,
         });
       }, 2000);
