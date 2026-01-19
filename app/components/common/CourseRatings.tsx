@@ -9,6 +9,8 @@ interface Rating {
   rating: number;
   comment: string | null;
   displayName: string | null;
+  title: string | null;
+  avatarUrl: string | null;
   createdAt: string;
   featured: boolean;
 }
@@ -47,10 +49,10 @@ const AVATAR_URLS = [
   "https://randomuser.me/api/portraits/men/29.jpg",
 ];
 
-function getAvatarUrl(id: string, index: number): string {
-  // Generar índice consistente basado en el id
-  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return AVATAR_URLS[(hash + index) % AVATAR_URLS.length];
+// Avatar aleatorio que cambia en cada render (sin consistencia)
+function getRandomAvatarUrl(): string {
+  const randomIndex = Math.floor(Math.random() * AVATAR_URLS.length);
+  return AVATAR_URLS[randomIndex];
 }
 
 export function CourseRatings({
@@ -194,7 +196,8 @@ function TestimonialCard({
 }) {
   if (!rating.comment) return null;
 
-  const avatarUrl = getAvatarUrl(rating.id, index);
+  // Usa el avatar del usuario si existe, sino fallback aleatorio
+  const avatarUrl = rating.avatarUrl || getRandomAvatarUrl();
 
   return (
     <motion.article
@@ -234,7 +237,7 @@ function TestimonialCard({
             <p className="text-white font-medium">
               {rating.displayName || "Estudiante verificado"}
             </p>
-            <p className="text-gray-500 text-sm">Estudiante</p>
+            <p className="text-gray-500 text-sm">{rating.title || "Estudiante"}</p>
           </div>
         </div>
       </div>

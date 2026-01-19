@@ -193,8 +193,19 @@ const CourseContent = ({
   }, []);
   return (
     <section className=" mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ">
-      <div className="prose prose-lg prose-invert max-w-none text-colorParagraph">
-        <Streamdown>{course.description}</Streamdown>
+      <div className="prose prose-lg prose-invert max-w-none text-colorParagraph
+        [&_h2]:text-brand-500 [&_h2]:font-bold [&_h2]:mt-10 [&_h2]:mb-4
+        [&_h3]:text-white [&_h3]:font-semibold [&_h3]:mt-8 [&_h3]:mb-3
+        [&_a]:text-brand-500 [&_a]:no-underline hover:[&_a]:underline
+        [&_strong]:text-white [&_strong]:font-semibold
+        [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-brand-500 [&_code]:text-sm
+        [&_pre]:bg-[#1e1e1e] [&_pre]:border [&_pre]:border-white/10 [&_pre]:rounded-xl [&_pre]:p-4 [&_pre]:overflow-x-auto
+        [&_blockquote]:border-l-4 [&_blockquote]:border-brand-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-400
+        [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
+        [&_li]:marker:text-brand-500 [&_li]:mb-2">
+        <Streamdown shikiTheme={["one-dark-pro", "one-dark-pro"]}>
+          {course.description}
+        </Streamdown>
       </div>
       <div className="border-[1px] my-20 border-brand-500 rounded-3xl p-6 md:p-10 xl:p-16 relative">
         <img

@@ -2,6 +2,35 @@
 
 Este archivo contiene información útil para Claude Code sobre el proyecto y procedimientos comunes.
 
+## ⛔ PROHIBIDO - NUNCA EJECUTAR (CRÍTICO)
+
+**NUNCA, BAJO NINGUNA CIRCUNSTANCIA, ejecutar estos comandos:**
+
+```bash
+# ❌ PROHIBIDO - Borra TODA la base de datos
+prisma db push --force-reset
+
+# ❌ PROHIBIDO - Puede borrar datos
+prisma migrate reset
+
+# ❌ PROHIBIDO - Destructivo
+db.dropDatabase()
+
+# ❌ PROHIBIDO - Borra colecciones
+db.collection.drop()
+```
+
+**Historia (19 Enero 2026):** Se ejecutó `prisma db push --force-reset` intentando sincronizar un campo nuevo y SE PERDIERON TODOS LOS DATOS: usuarios, cursos, videos, subscribers, ratings - TODO. Los archivos de video en S3/Tigris sobrevivieron pero los metadatos en MongoDB se perdieron.
+
+**Si hay conflictos con Prisma:**
+1. NUNCA usar `--force-reset` o `--accept-data-loss`
+2. Investigar el error específico primero
+3. Preguntar al usuario antes de cualquier acción en la DB
+4. Si hay índices duplicados, arreglarlos manualmente en MongoDB Atlas
+5. En caso de duda, NO HACER NADA y consultar
+
+**Incluso con backup, NO ejecutar comandos destructivos.** La restauración nunca es perfecta.
+
 ## Estructura del Proyecto
 
 - **Framework**: React Router v7 (no Remix, nunca usar import remix) sobre Vite y su ecosistema de plugins

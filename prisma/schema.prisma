@@ -598,6 +598,8 @@ model CourseRating {
   rating      Int                    // 1-5 estrellas
   comment     String?                // Testimonial opcional
   displayName String?                // Nombre a mostrar (opcional)
+  title       String?                // Título/rol del usuario (ej: "Desarrollador", "Estudiante")
+  avatarUrl   String?                // Avatar en base64
 
   approved    Boolean  @default(false)
   featured    Boolean  @default(false)

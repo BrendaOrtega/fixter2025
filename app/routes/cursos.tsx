@@ -73,25 +73,18 @@ export default function Route({
 }
 
 // Cursos próximamente (estáticos, sin temario todavía)
-const proximamenteCourses: Partial<Course>[] = [
-  {
-    id: "proximamente-rag-typescript",
-    slug: "rag-typescript",
-    title: "RAG práctico con TypeScript",
-    icon: "/courses/code.svg",
-    duration: "120 min",
-    level: "avanzado",
-    tipo: "proximamente",
-  },
-];
+const proximamenteCourses: Partial<Course>[] = [];
 
 export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
-  // Separar AI SDK para destacarlo primero
+  // Ordenar: Pong primero, AI SDK segundo, luego el resto
+  const pongCourse = courses.find((c) => c.slug === "pong-vanilla-js");
   const aiSdkCourse = courses.find((c) => c.slug === "ai-sdk");
-  const otherCourses = courses.filter((c) => c.slug !== "ai-sdk");
+  const otherCourses = courses.filter(
+    (c) => c.slug !== "pong-vanilla-js" && c.slug !== "ai-sdk"
+  );
 
-  // Orden: AI SDK (destacado) -> próximamente -> resto de cursos
   const orderedCourses = [
+    ...(pongCourse ? [pongCourse] : []),
     ...(aiSdkCourse ? [aiSdkCourse] : []),
     ...proximamenteCourses,
     ...otherCourses,

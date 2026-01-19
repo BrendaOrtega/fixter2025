@@ -18,6 +18,8 @@ export async function action({ request }: Route.ActionArgs) {
       const rating = parseInt(formData.get("rating") as string, 10);
       const comment = (formData.get("comment") as string) || null;
       const displayName = (formData.get("displayName") as string) || null;
+      const title = (formData.get("title") as string) || null;
+      const avatarUrl = (formData.get("avatarUrl") as string) || null;
       const email = formData.get("email") as string;
 
       if (!courseId || !rating || !email) {
@@ -77,11 +79,15 @@ export async function action({ request }: Route.ActionArgs) {
           rating,
           comment,
           displayName,
+          title,
+          avatarUrl,
         },
         update: {
           rating,
           comment,
           displayName,
+          title,
+          avatarUrl,
           approved: false, // Reset para re-moderación si se actualiza
         },
       });
@@ -185,6 +191,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       rating: true,
       comment: true,
       displayName: true,
+      title: true,
+      avatarUrl: true,
       createdAt: true,
       featured: true,
     },

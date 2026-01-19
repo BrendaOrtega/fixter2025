@@ -8,6 +8,7 @@ export const AdminNav = () => {
     { href: "/admin", label: "Dashboard" },
     { href: "/admin/libros", label: "Libros" },
     { href: "/admin/cursos", label: "Cursos" },
+    { href: "/admin/ratings", label: "Ratings" },
     { href: "/admin/sequences", label: "Sequences" },
     { href: "/admin/webinar", label: "Webinar" },
     { href: "/admin/posts", label: "Posts" },
