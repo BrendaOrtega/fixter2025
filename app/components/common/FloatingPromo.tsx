@@ -46,9 +46,7 @@ export const FloatingPromo = () => {
   };
 
   const handleClick = () => {
-    navigate(
-      "/cursos/ai-sdk/viewer?videoSlug=Introduccion-al-AI-SDK-c1b068e6-aab3-431a-a294-ace9e6ead6af",
-    );
+    navigate("/cursos/ai-sdk/viewer");
   };
 
   if (isDismissed) return null;
