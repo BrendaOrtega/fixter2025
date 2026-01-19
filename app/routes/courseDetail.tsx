@@ -160,15 +160,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!course) throw data("Course Not Found", { status: 404 });
   const videos = await getVideoTitles(course.id);
   const hasPublicVideos = videos.some((video) => video.isPublic);
-  return { course, videos, hasPublicVideos };
+  const hasSubscriberVideos = videos.some((video) => video.accessLevel === "subscriber");
+  const hasFreeAccess = hasPublicVideos || hasSubscriberVideos;
+  return { course, videos, hasPublicVideos, hasFreeAccess };
 };
 
 export default function Route({
-  loaderData: { course, videos, hasPublicVideos },
+  loaderData: { course, videos, hasPublicVideos, hasFreeAccess },
 }: Route.ComponentProps) {
   return (
     <article className="pt-40">
-      <CourseHeader course={course} hasPublicVideos={hasPublicVideos} />
+      <CourseHeader course={course} hasFreeAccess={hasFreeAccess} />
       <CourseContent course={course} videos={videos} />
       <CourseRatings courseSlug={course.slug} />
       <Teacher course={course} />
@@ -381,11 +383,11 @@ const Lesson = ({ title, isFree }: { title: string; isFree?: boolean }) => {
 const CourseHeader = ({
   className,
   course,
-  hasPublicVideos,
+  hasFreeAccess,
 }: {
   className?: string;
   course: Course;
-  hasPublicVideos?: boolean;
+  hasFreeAccess?: boolean;
 }) => {
   const { title, id, summary, duration, level, slug, basePrice, icon } = course;
 
@@ -459,7 +461,7 @@ const CourseHeader = ({
             </div>
           </div>
           <div className="gap-6 flex mt-10">
-            {course.isFree || hasPublicVideos || slug === "ai-sdk" ? (
+            {course.isFree || hasFreeAccess || slug === "ai-sdk" ? (
               <PrimaryButton
                 as="Link"
                 to={`/cursos/${slug}/viewer`}

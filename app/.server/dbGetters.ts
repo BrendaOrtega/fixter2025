@@ -86,6 +86,7 @@ export const getVideoTitles = async (courseId: string) => {
       slug: true,
       title: true,
       isPublic: true,
+      accessLevel: true,
     },
   });
 };
