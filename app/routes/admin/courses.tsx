@@ -1,5 +1,5 @@
 import { db } from "~/.server/db";
-import { redirect } from "react-router";
+import { redirect, Link } from "react-router";
 import type { Route } from "../+types/cursos";
 import type { Course } from "~/types/models";
 import { useState } from "react";
@@ -59,6 +59,24 @@ export default function Page({ loaderData }: Route.ComponentProps) {
         title="Administra el curso"
         isOpen={show}
       >
+        {current?.slug && (
+          <div className="mb-4 flex gap-2">
+            <Link
+              to={`/cursos/${current.slug}/viewer`}
+              target="_blank"
+              className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white py-1.5 px-3 rounded-lg"
+            >
+              Ver en reproductor
+            </Link>
+            <Link
+              to={`/cursos/${current.slug}/detalle`}
+              target="_blank"
+              className="text-sm bg-gray-600 hover:bg-gray-700 text-white py-1.5 px-3 rounded-lg"
+            >
+              Ver detalle
+            </Link>
+          </div>
+        )}
         <CourseForm
           onDirty={(dirty) => setDirty(dirty)}
           course={current || {}}
