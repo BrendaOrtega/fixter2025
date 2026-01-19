@@ -189,7 +189,7 @@ function TestimonialCard({
           <p className="text-white font-medium text-sm">
             {rating.displayName || "Estudiante verificado"}
           </p>
-          <p className="text-gray-500 text-xs">Estudiante del curso</p>
+          <p className="text-gray-500 text-xs">Estudiante</p>
         </div>
       </div>
     </motion.div>
