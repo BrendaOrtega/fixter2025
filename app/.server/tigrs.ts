@@ -105,6 +105,29 @@ export const getReadURLForT3Bucket = async (
     { expiresIn }
   );
 
+// Genera presigned URL dinámicamente desde cualquier URL de Tigris
+export const getPresignedFromUrl = async (
+  originalUrl: string,
+  expiresIn = 3600
+) => {
+  const url = new URL(originalUrl);
+  const storageEndpoint = `${url.protocol}//${url.hostname}`;
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const bucket = pathParts[0];
+  const key = pathParts.slice(1).join('/');
+
+  const client = new S3Client({
+    region: "auto",
+    endpoint: storageEndpoint,
+  });
+
+  return await getSignedUrl(
+    client,
+    new GetObjectCommand({ Bucket: bucket, Key: key }),
+    { expiresIn }
+  );
+};
+
 export const getImageURL = async (key: string, expiresIn = 900) =>
   await getSignedUrl(
     S3,
