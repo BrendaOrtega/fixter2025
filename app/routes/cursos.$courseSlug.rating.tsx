@@ -161,9 +161,9 @@ export default function CourseRatingPage({
 
   if (error === "no_email") {
     return (
-      <main className="bg-dark min-h-screen">
+      <main className="bg-dark min-h-screen flex flex-col">
         <NavBar />
-        <section className="max-w-lg mx-auto px-4 py-20 text-center">
+        <section className="max-w-lg mx-auto px-4 py-20 text-center flex-1">
           <h1 className="text-2xl font-bold text-white mb-4">
             Inicia sesión para calificar
           </h1>
@@ -184,9 +184,9 @@ export default function CourseRatingPage({
 
   if (error === "no_access") {
     return (
-      <main className="bg-dark min-h-screen">
+      <main className="bg-dark min-h-screen flex flex-col">
         <NavBar />
-        <section className="max-w-lg mx-auto px-4 py-20 text-center">
+        <section className="max-w-lg mx-auto px-4 py-20 text-center flex-1">
           <h1 className="text-2xl font-bold text-white mb-4">
             Acceso no disponible
           </h1>
@@ -207,9 +207,9 @@ export default function CourseRatingPage({
   }
 
   return (
-    <main className="bg-dark min-h-screen">
+    <main className="bg-dark min-h-screen flex flex-col">
       <NavBar />
-      <section className="max-w-lg mx-auto px-4 py-20">
+      <section className="max-w-lg mx-auto px-4 py-20 flex-1">
         {isSuccess ? (
           <div className="text-center">
             <div className="text-6xl mb-4">🎉</div>
