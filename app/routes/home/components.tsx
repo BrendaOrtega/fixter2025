@@ -497,17 +497,17 @@ export const HomeHero = () => {
     >
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[95vh] lg:h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
-          {/* Tag de nuevo taller AI-SDK */}
+          {/* Tag de curso Pong gratis */}
           <div className="flex justify-center md:justify-start mb-6 hidden md:flex ">
-            <Link to="/ai-sdk" className="group">
+            <Link to="/pong" className="group">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border border-emerald-500/30 rounded-full px-4 py-2 hover:from-emerald-500/20 hover:to-emerald-600/20 hover:border-emerald-500/50 transition-all duration-300"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30 rounded-full px-4 py-2 hover:from-green-500/20 hover:to-green-600/20 hover:border-green-500/50 transition-all duration-300"
               >
-                <span className="text-sm font-semibold text-emerald-400 transition-colors">
-                  ✨ Nuevo Taller Sabatino | AI-SDK con TypeScript
+                <span className="text-sm font-semibold text-green-400 transition-colors">
+                  🎮 Curso Gratis | Pong con Vanilla JavaScript
                 </span>
               </motion.div>
             </Link>
@@ -531,7 +531,7 @@ export const HomeHero = () => {
           </h2>{" "}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
             <PrimaryButton as="Link" to="/cursos/ai-sdk/viewer?videoSlug=Introduccion-al-AI-SDK-c1b068e6-aab3-431a-a294-ace9e6ead6af" children="Nuevo curso: AI + React" />
-            <PrimaryButton as="Link" to="/ai-sdk" children="Taller sabatino" variant="ghost" />
+            <PrimaryButton as="Link" to="/pong" children="Pong gratis" variant="ghost" />
             <PrimaryButton
               as="Link"
               to="/claude"

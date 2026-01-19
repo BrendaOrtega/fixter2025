@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFetcher, Link } from "react-router";
-import { data, type ActionFunctionArgs } from "react-router";
+import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import getMetaTags from "~/utils/getMetaTags";
 import {
@@ -11,10 +11,17 @@ import {
   BiJoystick,
   BiTime,
   BiGroup,
+  BiStar,
 } from "react-icons/bi";
+import type { Route } from "./+types/pong";
 import { BsLinkedin, BsGithub, BsFacebook } from "react-icons/bs";
 import { SiJavascript } from "react-icons/si";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
+import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
+
+// Cookie name - mismo que usa book-access.server.ts
+const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
+const PONG_TAG = "pong-course";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -71,52 +78,174 @@ export const meta = () => {
   ];
 };
 
+export const links: Route.LinksFunction = () => [
+  {
+    rel: "icon",
+    href: "/courses/pong.png",
+    type: "image/png",
+  },
+  {
+    rel: "apple-touch-icon",
+    href: "/courses/pong.png",
+  },
+];
+
+// Helper para extraer email del cookie
+function getSubscriberEmailFromCookie(request: Request): string | null {
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader
+    .split(";")
+    .find((c) => c.trim().startsWith(`${SUBSCRIBER_COOKIE}=`));
+  if (!match) return null;
+  const encoded = match.split("=")[1];
+  return encoded ? decodeURIComponent(encoded) : null;
+}
+
+// Loader para verificar si ya tiene acceso
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const subscriberEmail = getSubscriberEmailFromCookie(request);
+
+  if (subscriberEmail) {
+    // Verificar si tiene el tag de pong-course
+    const subscriber = await db.subscriber.findUnique({
+      where: { email: subscriberEmail },
+    });
+
+    if (subscriber?.confirmed && subscriber.tags.includes(PONG_TAG)) {
+      return { hasAccess: true, email: subscriberEmail };
+    }
+  }
+
+  return { hasAccess: false, email: null };
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  if (intent === "subscribe") {
-    const email = String(formData.get("email"));
-    const name = String(formData.get("name") || "");
+  // PASO 1: Enviar código OTP
+  if (intent === "send-code") {
+    const email = String(formData.get("email")).toLowerCase().trim();
+    const name = String(formData.get("name") || "").trim();
 
     if (!email || !email.includes("@")) {
-      return data({
-        success: false,
-        error: "Email inválido",
-      });
+      return data({ success: false, error: "Email inválido" });
     }
 
     try {
+      // Verificar si ya está suscrito y confirmado con el tag
+      const existingSubscriber = await db.subscriber.findUnique({
+        where: { email },
+      });
+
+      if (existingSubscriber?.confirmed && existingSubscriber.tags.includes(PONG_TAG)) {
+        // Ya tiene acceso - setear cookie y retornar
+        const headers = new Headers();
+        headers.append(
+          "Set-Cookie",
+          `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`
+        );
+        return data({ success: true, alreadyVerified: true }, { headers });
+      }
+
+      // Crear o actualizar subscriber
+      await db.subscriber.upsert({
+        where: { email },
+        create: {
+          email,
+          name: name || undefined,
+          confirmed: false,
+          tags: [PONG_TAG, "newsletter"],
+        },
+        update: {
+          name: name || existingSubscriber?.name || undefined,
+          tags: existingSubscriber?.tags.includes(PONG_TAG)
+            ? existingSubscriber.tags
+            : [...(existingSubscriber?.tags || []), PONG_TAG],
+        },
+      });
+
+      // Generar código de 6 dígitos
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Guardar código en DB
+      await db.subscriber.update({
+        where: { email },
+        data: { verificationCode: code },
+      });
+
+      // Enviar email con código
+      await sendVerificationCode(email, code);
+
+      return data({ success: true, codeSent: true });
+    } catch (error) {
+      console.error("Error sending code:", error);
+      return data({ success: false, error: "Error al enviar código. Intenta de nuevo." });
+    }
+  }
+
+  // PASO 2: Verificar código OTP
+  if (intent === "verify-code") {
+    const email = String(formData.get("email")).toLowerCase().trim();
+    const code = String(formData.get("code")).trim();
+
+    if (!email || !code) {
+      return data({ success: false, error: "Email y código requeridos" });
+    }
+
+    try {
+      const subscriber = await db.subscriber.findUnique({
+        where: { email },
+      });
+
+      if (!subscriber || subscriber.verificationCode !== code) {
+        return data({ success: false, error: "Código inválido" });
+      }
+
+      // Confirmar suscripción y agregar tag
+      const newTags = subscriber.tags.includes(PONG_TAG)
+        ? subscriber.tags
+        : [...subscriber.tags, PONG_TAG];
+
+      await db.subscriber.update({
+        where: { email },
+        data: {
+          confirmed: true,
+          verificationCode: null,
+          tags: newTags,
+        },
+      });
+
+      // También crear/actualizar en User para consistencia
       await db.user.upsert({
         where: { email },
         create: {
           email,
-          username: name || email.split("@")[0],
-          displayName: name || undefined,
+          username: email.split("@")[0],
           courses: [],
           editions: [],
           roles: [],
-          tags: ["pong-course", "newsletter", "subscriber"],
+          tags: [PONG_TAG, "newsletter", "subscriber"],
           confirmed: true,
           role: "GUEST",
         },
         update: {
-          displayName: name || undefined,
-          tags: { push: ["pong-course"] },
+          tags: { push: [PONG_TAG] },
           confirmed: true,
         },
       });
 
-      return data({
-        success: true,
-        message: "¡Listo! Ya tienes acceso al curso",
-      });
+      // Setear cookie de acceso
+      const headers = new Headers();
+      headers.append(
+        "Set-Cookie",
+        `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`
+      );
+
+      return data({ success: true, verified: true }, { headers });
     } catch (error) {
-      console.error("Error subscribing:", error);
-      return data({
-        success: false,
-        error: "Error al registrarte. Intenta de nuevo.",
-      });
+      console.error("Error verifying code:", error);
+      return data({ success: false, error: "Error al verificar. Intenta de nuevo." });
     }
   }
 
@@ -170,21 +299,36 @@ const RetroText = ({ children, delay = 0 }: { children: string; delay?: number }
   );
 };
 
-export default function PongLanding() {
-  const [showSuccess, setShowSuccess] = useState(false);
+export default function PongLanding({ loaderData }: Route.ComponentProps) {
+  const { hasAccess } = loaderData || {};
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"email" | "code" | "success">(hasAccess ? "success" : "email");
   const fetcher = useFetcher();
-  const formRef = useRef<HTMLFormElement>(null);
+  const codeInputRef = useRef<HTMLInputElement>(null);
 
-  const isSuccess = fetcher.data?.success;
   const error = fetcher.data?.error;
   const isLoading = fetcher.state !== "idle";
 
+  // Detectar respuesta del server
   useEffect(() => {
-    if (isSuccess) {
-      setShowSuccess(true);
-      formRef.current?.reset();
+    if (fetcher.data?.codeSent) {
+      setStep("code");
+      setTimeout(() => codeInputRef.current?.focus(), 100);
     }
-  }, [isSuccess]);
+    if (fetcher.data?.verified || fetcher.data?.alreadyVerified) {
+      setStep("success");
+    }
+  }, [fetcher.data]);
+
+  const handleResendCode = () => {
+    setCode("");
+    fetcher.submit(
+      { intent: "send-code", email, name },
+      { method: "POST" }
+    );
+  };
 
   const topics = [
     "Intro a Canvas - configuración inicial",
@@ -260,6 +404,10 @@ export default function PongLanding() {
                 <span>+800 estudiantes</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-2 bg-green-950/50 border border-green-800/50 rounded">
+                <BiStar className="text-yellow-400" />
+                <span>4.8 ★</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-950/50 border border-green-800/50 rounded">
                 <BiTime className="text-green-400" />
                 <span>~1 hora</span>
               </div>
@@ -269,10 +417,11 @@ export default function PongLanding() {
               </div>
             </div>
 
-            {/* CTA - Subscription Form */}
+            {/* CTA - Subscription Form con OTP */}
             <AnimatePresence mode="wait">
-              {showSuccess ? (
+              {step === "success" ? (
                 <motion.div
+                  key="success"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="p-6 border-2 border-green-500 bg-green-950/30 rounded-lg"
@@ -292,18 +441,22 @@ export default function PongLanding() {
                     INICIAR CURSO
                   </Link>
                 </motion.div>
-              ) : (
+              ) : step === "email" ? (
                 <motion.div
+                  key="email"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                 >
-                  <fetcher.Form ref={formRef} method="post" className="space-y-4">
-                    <input type="hidden" name="intent" value="subscribe" />
+                  <fetcher.Form method="post" className="space-y-4">
+                    <input type="hidden" name="intent" value="send-code" />
 
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input
                         type="text"
                         name="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         placeholder="Tu nombre (opcional)"
                         className="flex-1 px-4 py-3 bg-black border-2 border-green-700 rounded focus:border-green-400 focus:outline-none text-green-300 placeholder-green-700"
                       />
@@ -311,6 +464,8 @@ export default function PongLanding() {
                         type="email"
                         name="email"
                         required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         placeholder="tu@email.com"
                         className="flex-1 px-4 py-3 bg-black border-2 border-green-700 rounded focus:border-green-400 focus:outline-none text-green-300 placeholder-green-700"
                       />
@@ -318,7 +473,7 @@ export default function PongLanding() {
 
                     <button
                       type="submit"
-                      disabled={isLoading}
+                      disabled={isLoading || !email.includes("@")}
                       className="w-full sm:w-auto px-8 py-4 bg-green-500 text-black font-bold text-lg rounded hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isLoading ? (
@@ -328,7 +483,7 @@ export default function PongLanding() {
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                             className="inline-block w-5 h-5 border-2 border-black border-t-transparent rounded-full"
                           />
-                          PROCESANDO...
+                          ENVIANDO CÓDIGO...
                         </>
                       ) : (
                         <>
@@ -338,13 +493,89 @@ export default function PongLanding() {
                       )}
                     </button>
 
-                    {error && (
+                    {error && step === "email" && (
                       <p className="text-red-400 text-sm">{error}</p>
                     )}
 
                     <p className="text-green-700 text-xs">
-                      Solo usamos tu email para darte acceso. Sin spam.
+                      Te enviaremos un código de verificación. Sin spam.
                     </p>
+                  </fetcher.Form>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="code"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <fetcher.Form method="post" className="space-y-4">
+                    <input type="hidden" name="intent" value="verify-code" />
+                    <input type="hidden" name="email" value={email} />
+
+                    <p className="text-green-300 text-sm mb-2">
+                      Enviamos un código de 6 dígitos a{" "}
+                      <span className="text-green-400 font-semibold">{email}</span>
+                    </p>
+
+                    <input
+                      ref={codeInputRef}
+                      type="text"
+                      name="code"
+                      required
+                      maxLength={6}
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                      placeholder="123456"
+                      className="w-full px-4 py-3 bg-black border-2 border-green-700 rounded focus:border-green-400 focus:outline-none text-green-300 placeholder-green-700 text-center text-2xl tracking-[0.5em] font-mono"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={isLoading || code.length !== 6}
+                      className="w-full sm:w-auto px-8 py-4 bg-green-500 text-black font-bold text-lg rounded hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isLoading ? (
+                        <>
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="inline-block w-5 h-5 border-2 border-black border-t-transparent rounded-full"
+                          />
+                          VERIFICANDO...
+                        </>
+                      ) : (
+                        <>
+                          <BiCheckCircle className="text-xl" />
+                          VERIFICAR CÓDIGO
+                        </>
+                      )}
+                    </button>
+
+                    {error && step === "code" && (
+                      <p className="text-red-400 text-sm">{error}</p>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStep("email");
+                          setCode("");
+                        }}
+                        className="text-green-600 hover:text-green-400 transition-colors"
+                      >
+                        ← Cambiar email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleResendCode}
+                        disabled={isLoading}
+                        className="text-green-600 hover:text-green-400 transition-colors disabled:opacity-50"
+                      >
+                        Reenviar código
+                      </button>
+                    </div>
                   </fetcher.Form>
                 </motion.div>
               )}
@@ -357,31 +588,29 @@ export default function PongLanding() {
               {/* Center line */}
               <div className="absolute left-1/2 top-0 bottom-0 w-1 border-l-4 border-dashed border-green-700/50" />
 
-              {/* Left paddle */}
+              {/* Left paddle - pegado al borde */}
               <motion.div
-                className="absolute left-4 w-3 h-20 bg-green-400 rounded shadow-[0_0_10px_#4ade80]"
-                animate={{ y: [40, 120, 40] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-
-              {/* Right paddle */}
-              <motion.div
-                className="absolute right-4 w-3 h-20 bg-green-400 rounded shadow-[0_0_10px_#4ade80]"
-                animate={{ y: [100, 40, 100] }}
+                className="absolute left-2 w-2 h-16 bg-green-400 rounded-sm shadow-[0_0_10px_#4ade80]"
+                animate={{ top: ["20%", "60%", "20%"] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
               />
 
-              {/* Ball - rebote realista de Pong */}
+              {/* Right paddle - pegado al borde */}
               <motion.div
-                className="absolute w-4 h-4 bg-green-400 rounded shadow-[0_0_15px_#4ade80]"
+                className="absolute right-2 w-2 h-16 bg-green-400 rounded-sm shadow-[0_0_10px_#4ade80]"
+                animate={{ top: ["50%", "15%", "50%"] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+              />
+
+              {/* Ball - rebote realista de Pong usando porcentajes */}
+              <motion.div
+                className="absolute w-3 h-3 bg-green-400 rounded-sm shadow-[0_0_15px_#4ade80]"
                 animate={{
-                  // Rebote horizontal de paleta a paleta (20px a 350px aprox)
-                  x: [24, 350, 24, 350, 24],
-                  // Rebote vertical en bordes superior (10px) e inferior (180px)
-                  y: [90, 10, 170, 50, 90],
+                  left: ["5%", "92%", "5%", "92%", "5%"],
+                  top: ["35%", "5%", "85%", "25%", "35%"],
                 }}
                 transition={{
-                  duration: 4,
+                  duration: 3.5,
                   repeat: Infinity,
                   ease: "linear",
                   times: [0, 0.25, 0.5, 0.75, 1],
@@ -399,7 +628,7 @@ export default function PongLanding() {
             </div>
 
             <p className="text-center text-green-600 text-sm mt-4">
-              [ Esto es lo que vas a construir ]
+              [ Construiremos algo similar ]
             </p>
           </div>
         </div>
@@ -584,30 +813,12 @@ export default function PongLanding() {
             <span className="text-green-400">¿LISTO PARA JUGAR?</span>
           </h2>
           <p className="text-green-500 mb-8 text-lg">
-            Regístrate gratis y empieza a construir Pong ahora mismo.
+            {step === "success"
+              ? "Ya tienes acceso. ¡Que comience el juego!"
+              : "Regístrate gratis y empieza a construir Pong ahora mismo."}
           </p>
 
-          {!showSuccess && (
-            <fetcher.Form method="post" className="max-w-md mx-auto space-y-4">
-              <input type="hidden" name="intent" value="subscribe" />
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="tu@email.com"
-                className="w-full px-4 py-3 bg-black border-2 border-green-700 rounded focus:border-green-400 focus:outline-none text-green-300 placeholder-green-700 text-center"
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full px-8 py-4 bg-green-500 text-black font-bold text-lg rounded hover:bg-green-400 transition-all disabled:opacity-50"
-              >
-                {isLoading ? "PROCESANDO..." : "COMENZAR GRATIS"}
-              </button>
-            </fetcher.Form>
-          )}
-
-          {showSuccess && (
+          {step === "success" ? (
             <Link
               to="/cursos/pong-vanilla-js/viewer"
               className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 text-black font-bold text-lg rounded hover:bg-green-400 transition-colors"
@@ -615,6 +826,76 @@ export default function PongLanding() {
               <BiPlay className="text-xl" />
               IR AL CURSO
             </Link>
+          ) : step === "email" ? (
+            <fetcher.Form method="post" className="max-w-md mx-auto space-y-4">
+              <input type="hidden" name="intent" value="send-code" />
+              <input
+                type="text"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Tu nombre (opcional)"
+                className="w-full px-4 py-3 bg-black border-2 border-green-700 rounded focus:border-green-400 focus:outline-none text-green-300 placeholder-green-700 text-center"
+              />
+              <input
+                type="email"
+                name="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                className="w-full px-4 py-3 bg-black border-2 border-green-700 rounded focus:border-green-400 focus:outline-none text-green-300 placeholder-green-700 text-center"
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !email.includes("@")}
+                className="w-full px-8 py-4 bg-green-500 text-black font-bold text-lg rounded hover:bg-green-400 transition-all disabled:opacity-50"
+              >
+                {isLoading ? "ENVIANDO CÓDIGO..." : "COMENZAR GRATIS"}
+              </button>
+            </fetcher.Form>
+          ) : (
+            <fetcher.Form method="post" className="max-w-md mx-auto space-y-4">
+              <input type="hidden" name="intent" value="verify-code" />
+              <input type="hidden" name="email" value={email} />
+              <p className="text-green-300 text-sm">
+                Código enviado a <span className="text-green-400 font-semibold">{email}</span>
+              </p>
+              <input
+                type="text"
+                name="code"
+                required
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="123456"
+                className="w-full px-4 py-3 bg-black border-2 border-green-700 rounded focus:border-green-400 focus:outline-none text-green-300 placeholder-green-700 text-center text-2xl tracking-[0.5em] font-mono"
+              />
+              <button
+                type="submit"
+                disabled={isLoading || code.length !== 6}
+                className="w-full px-8 py-4 bg-green-500 text-black font-bold text-lg rounded hover:bg-green-400 transition-all disabled:opacity-50"
+              >
+                {isLoading ? "VERIFICANDO..." : "VERIFICAR CÓDIGO"}
+              </button>
+              <div className="flex justify-center gap-4 text-xs">
+                <button
+                  type="button"
+                  onClick={() => { setStep("email"); setCode(""); }}
+                  className="text-green-600 hover:text-green-400"
+                >
+                  ← Cambiar email
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={isLoading}
+                  className="text-green-600 hover:text-green-400 disabled:opacity-50"
+                >
+                  Reenviar código
+                </button>
+              </div>
+            </fetcher.Form>
           )}
         </div>
       </section>

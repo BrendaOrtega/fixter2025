@@ -19,7 +19,7 @@ const navigation = [
   { name: "Blog", link: "/blog" },
   { name: "Claude Code", link: "/claude" },
   { name: "Agentes IA", link: "/agentes" },
-  { name: "Taller sabatino | AI-SDK", link: "/ai-sdk" },
+  { name: "Pong gratis", link: "/pong" },
 ];
 
 export const SquigglyUnderline = () => {
@@ -298,10 +298,10 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/ai-sdk"
+          to="/pong"
           index={5}
           isOpen={isOpen}
-          title="Taller sabatino | AI-SDK"
+          title="Pong gratis"
         />
         {user?.email ? (
           <>
