@@ -211,7 +211,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         accessLevel: true,
         storageLink: true,
         youtubeUrl: true,
-        // m3u8 excluido - algunos videos tienen datos corruptos
+        m3u8: true,
       },
     });
   } else {
