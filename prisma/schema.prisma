@@ -587,3 +587,24 @@ model VideoView {
   @@index([startedAt])
   @@map("video_views")
 }
+
+// Course ratings - Sistema de social proof
+model CourseRating {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String   @db.ObjectId
+  userId      String?  @db.ObjectId
+  email       String
+
+  rating      Int                    // 1-5 estrellas
+  comment     String?                // Testimonial opcional
+  displayName String?                // Nombre a mostrar (opcional)
+
+  approved    Boolean  @default(false)
+  featured    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([courseId, email])        // Un rating por persona por curso
+  @@index([courseId, approved])
+  @@map("course_ratings")
+}

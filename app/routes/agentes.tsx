@@ -5,6 +5,7 @@ import { FaSquareXTwitter } from "react-icons/fa6";
 import { BsLinkedin, BsYoutube } from "react-icons/bs";
 import { AiFillInstagram } from "react-icons/ai";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
+import { CourseRatings } from "~/components/common/CourseRatings";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
@@ -1648,8 +1649,21 @@ export default function IAVisualLanding() {
               </motion.div>
             </div>
 
+            {/* Real student ratings - shown below hardcoded testimonials */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              viewport={{ once: true }}
+              className="mt-12"
+            >
+              <CourseRatings
+                courseSlug="agentes"
+                limit={3}
+                className="max-w-6xl mx-auto"
+              />
+            </motion.div>
 
-          
           </div>
         </section>
 

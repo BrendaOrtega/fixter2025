@@ -57,6 +57,7 @@ export default [
     route("newsletter", "routes/admin/newsletter.tsx"),
     route("analytics", "routes/admin/analytics.tsx"),
     route("heatmap/:postId", "routes/admin/heatmap.$postId.tsx"),
+    route("ratings", "routes/admin/ratings.tsx"),
     route("send", "routes/admin/send.tsx"),
   ]),
   // Analytics moved to admin section
@@ -66,6 +67,7 @@ export default [
     index("routes/cursos.tsx"),
     route(":courseSlug/viewer", "routes/courseViewer.tsx"),
     route(":courseSlug/detalle", "routes/courseDetail.tsx"),
+    route(":courseSlug/rating", "routes/cursos.$courseSlug.rating.tsx"),
   ]),
   ...prefix("blog", [
     index("routes/blog.tsx"),
@@ -89,6 +91,7 @@ export default [
     route("video-preview-dynamic", "routes/api/video-preview-dynamic.tsx"),
     route("hls-proxy", "routes/api/hls-proxy.tsx"),
     route("book-epub", "routes/api/book-epub.tsx"),
+    route("ratings", "routes/api/ratings.ts"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

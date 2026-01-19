@@ -1,5 +1,5 @@
 import { redirect, data, useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { db } from "~/.server/db";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
 import { UnifiedSidebarMenu } from "~/components/viewer/UnifiedSidebarMenu";
@@ -7,6 +7,7 @@ import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { SubscriptionDrawer } from "~/components/viewer/SubscriptionDrawer";
 import { SubscriptionSuccessDrawer } from "~/components/viewer/SubscriptionSuccessDrawer";
+import { RatingDrawer } from "~/components/viewer/RatingDrawer";
 import {
   getFreeOrEnrolledCourseFor,
   getUserOrNull,
@@ -321,6 +322,52 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   };
 };
 
+// Helper para obtener videos completados del localStorage
+function getWatchedVideos(courseId: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const key = `watched_videos_${courseId}`;
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Helper para marcar video como visto
+function markVideoAsWatched(courseId: string, videoId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const key = `watched_videos_${courseId}`;
+    const watched = getWatchedVideos(courseId);
+    if (!watched.includes(videoId)) {
+      watched.push(videoId);
+      localStorage.setItem(key, JSON.stringify(watched));
+    }
+  } catch {
+    // Silently fail
+  }
+}
+
+// Helper para verificar si ya se mostró el rating drawer
+function hasShownRatingDrawer(courseId: string): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return localStorage.getItem(`rating_shown_${courseId}`) === "true";
+  } catch {
+    return true;
+  }
+}
+
+function setRatingDrawerShown(courseId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`rating_shown_${courseId}`, "true");
+  } catch {
+    // Silently fail
+  }
+}
+
 export default function Route({
   loaderData: {
     nextVideo,
@@ -338,6 +385,7 @@ export default function Route({
   },
 }: Route.ComponentProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showRatingDrawer, setShowRatingDrawer] = useState(false);
   const navigate = useNavigate();
 
   // Determine which drawer to show based on accessLevel
@@ -374,6 +422,44 @@ export default function Route({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Handle video completion - check if course is complete and show rating
+  const handleVideoEnd = useCallback(() => {
+    const courseId = course.id as string | undefined;
+    const videoId = video.id as string | undefined;
+    if (!courseId || !videoId) return;
+
+    // Mark current video as watched
+    markVideoAsWatched(courseId, videoId);
+
+    // Check if this is the last video (no nextVideo)
+    const isLastVideo = !nextVideo;
+
+    // Get watched videos count
+    const watchedVideos = getWatchedVideos(courseId);
+    const totalVideos = videos.length;
+    const watchedPercentage = totalVideos > 0 ? (watchedVideos.length / totalVideos) * 100 : 0;
+
+    // Show rating drawer if:
+    // 1. This is the last video OR user has watched 80%+ of videos
+    // 2. User has access (purchased or subscribed)
+    // 3. Rating drawer hasn't been shown before
+    // 4. User is logged in or has email
+    const hasEmail = user?.email || subscriberEmail;
+    const shouldShowRating =
+      (isLastVideo || watchedPercentage >= 80) &&
+      hasAccess &&
+      !hasShownRatingDrawer(courseId) &&
+      hasEmail;
+
+    if (shouldShowRating) {
+      // Small delay for better UX
+      setTimeout(() => {
+        setShowRatingDrawer(true);
+        setRatingDrawerShown(courseId);
+      }, 1500);
+    }
+  }, [course.id, video.id, nextVideo, videos.length, hasAccess, user?.email, subscriberEmail]);
+
 
   return (
     <>
@@ -397,6 +483,7 @@ export default function Route({
           onPause={() => {
             // setIsMenuOpen(true);// @todo consider this
           }}
+          onEnd={handleVideoEnd}
         />
 
         <UnifiedSidebarMenu
@@ -431,6 +518,16 @@ export default function Route({
         />
       )}
       {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} />}
+      {showRatingDrawer && (user?.email || subscriberEmail) && course.id && (
+        <RatingDrawer
+          isOpen={showRatingDrawer}
+          onClose={() => setShowRatingDrawer(false)}
+          courseId={course.id as string}
+          courseTitle={course.title as string}
+          userEmail={user?.email || subscriberEmail || ""}
+          userName={user?.displayName || undefined}
+        />
+      )}
     </>
   );
 }
