@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { StarRating, StarRatingDisplay } from "./StarRating";
-import { FaQuoteLeft, FaStar } from "react-icons/fa";
+import { FaStar } from "react-icons/fa";
+import { cn } from "~/utils/cn";
 
 interface Rating {
   id: string;
@@ -30,6 +31,26 @@ interface CourseRatingsProps {
     comment: string;
     image?: string;
   }>;
+}
+
+// Avatares de personas reales de randomuser.me
+const AVATAR_URLS = [
+  "https://randomuser.me/api/portraits/women/44.jpg",
+  "https://randomuser.me/api/portraits/men/32.jpg",
+  "https://randomuser.me/api/portraits/women/68.jpg",
+  "https://randomuser.me/api/portraits/men/75.jpg",
+  "https://randomuser.me/api/portraits/women/90.jpg",
+  "https://randomuser.me/api/portraits/men/43.jpg",
+  "https://randomuser.me/api/portraits/women/26.jpg",
+  "https://randomuser.me/api/portraits/men/86.jpg",
+  "https://randomuser.me/api/portraits/women/63.jpg",
+  "https://randomuser.me/api/portraits/men/29.jpg",
+];
+
+function getAvatarUrl(id: string, index: number): string {
+  // Generar índice consistente basado en el id
+  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return AVATAR_URLS[(hash + index) % AVATAR_URLS.length];
 }
 
 export function CourseRatings({
@@ -74,7 +95,7 @@ export function CourseRatings({
 
   if (loading) {
     return (
-      <section className="mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto">
+      <section className="py-20 md:py-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto">
         <div className="animate-pulse">
           <div className="h-10 w-64 bg-gray-700 rounded mb-8 mx-auto" />
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -91,37 +112,67 @@ export function CourseRatings({
     return null;
   }
 
+  const ratingsWithComments = data.ratings.filter(r => r.comment);
+  const ratingsCount = ratingsWithComments.length;
+
   return (
-    <section className={`mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ${className}`}>
+    <section className={`py-20 md:py-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ${className}`}>
       {/* Header */}
-      <div className="text-center mb-12">
-        <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
+      <div className="text-center mb-16">
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-brand-500 font-medium mb-3 tracking-wide uppercase text-sm"
+        >
+          Testimonios
+        </motion.p>
+        <motion.h3
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="text-3xl md:text-5xl font-bold text-white mb-8"
+        >
           {title}
-        </h3>
+        </motion.h3>
         {/* Promedio destacado */}
-        <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-6 py-3">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="inline-flex items-center gap-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-6 py-3"
+        >
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <FaStar
                 key={star}
-                className={`w-5 h-5 ${
-                  star <= Math.round(data.average)
-                    ? "text-yellow-400"
-                    : "text-gray-600"
-                }`}
+                className={cn(
+                  "w-5 h-5",
+                  star <= Math.round(data.average) ? "text-yellow-400" : "text-gray-600"
+                )}
               />
             ))}
           </div>
-          <span className="text-white font-semibold text-lg">{data.average}</span>
-          <span className="text-gray-400">•</span>
-          <span className="text-gray-400">{data.total} opiniones</span>
-        </div>
+          <div className="flex items-center gap-2 text-base">
+            <span className="text-white font-bold">{data.average}</span>
+            <span className="text-gray-500">/5</span>
+            <span className="text-gray-600 mx-1">•</span>
+            <span className="text-gray-400">{data.total} {data.total === 1 ? 'opinión' : 'opiniones'}</span>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Grid de testimonios */}
-      {data.ratings.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {data.ratings.map((rating, index) => (
+      {/* Grid de testimonios - centrado cuando hay pocos */}
+      {ratingsCount > 0 && (
+        <div className={cn(
+          "grid gap-8 justify-center",
+          ratingsCount === 1 && "max-w-lg mx-auto",
+          ratingsCount === 2 && "md:grid-cols-2 max-w-4xl mx-auto",
+          ratingsCount >= 3 && "md:grid-cols-2 lg:grid-cols-3"
+        )}>
+          {ratingsWithComments.map((rating, index) => (
             <TestimonialCard
               key={rating.id}
               rating={rating}
@@ -143,56 +194,51 @@ function TestimonialCard({
 }) {
   if (!rating.comment) return null;
 
-  // Generar iniciales para avatar
-  const initials = (rating.displayName || "E")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  // Color aleatorio pero consistente basado en el nombre
-  const colors = ["bg-brand-500", "bg-brand_blue", "bg-purple-500", "bg-pink-500", "bg-orange-500"];
-  const colorIndex = (rating.displayName || "").length % colors.length;
+  const avatarUrl = getAvatarUrl(rating.id, index);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
+    <motion.article
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1, duration: 0.4 }}
-      className="bg-gradient-to-br from-white/[0.07] to-white/[0.03] border border-white/10 rounded-2xl p-6 hover:border-brand-500/30 hover:from-white/[0.09] hover:to-white/[0.05] transition-all duration-300"
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+      className="group"
     >
-      {/* Stars */}
-      <div className="flex items-center gap-1 mb-4">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <FaStar
-            key={star}
-            className={`w-4 h-4 ${
-              star <= rating.rating ? "text-yellow-400" : "text-gray-600"
-            }`}
+      <div className="relative h-full bg-gradient-to-b from-white/[0.08] to-transparent border border-white/[0.08] rounded-2xl p-8 transition-all duration-300 hover:border-brand-500/30 hover:from-white/[0.12]">
+        {/* Stars */}
+        <div className="flex items-center gap-1 mb-6">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <FaStar
+              key={star}
+              className={cn(
+                "w-4 h-4",
+                star <= rating.rating ? "text-yellow-400" : "text-gray-700"
+              )}
+            />
+          ))}
+        </div>
+
+        {/* Comment */}
+        <blockquote className="text-gray-300 leading-relaxed mb-8 text-[15px]">
+          "{rating.comment}"
+        </blockquote>
+
+        {/* Author */}
+        <div className="flex items-center gap-4">
+          <img
+            src={avatarUrl}
+            alt={rating.displayName || "Estudiante"}
+            className="w-11 h-11 rounded-full object-cover ring-2 ring-white/10"
           />
-        ))}
-      </div>
-
-      {/* Comment */}
-      <p className="text-gray-300 text-sm leading-relaxed mb-6 line-clamp-4">
-        "{rating.comment}"
-      </p>
-
-      {/* Author */}
-      <div className="flex items-center gap-3 pt-4 border-t border-white/10">
-        <div className={`w-10 h-10 rounded-full ${colors[colorIndex]} flex items-center justify-center text-white font-semibold text-sm`}>
-          {initials}
-        </div>
-        <div>
-          <p className="text-white font-medium text-sm">
-            {rating.displayName || "Estudiante verificado"}
-          </p>
-          <p className="text-gray-500 text-xs">Estudiante</p>
+          <div>
+            <p className="text-white font-medium">
+              {rating.displayName || "Estudiante verificado"}
+            </p>
+            <p className="text-gray-500 text-sm">Estudiante</p>
+          </div>
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }
 
@@ -212,67 +258,73 @@ function FallbackTestimonials({
   className?: string;
 }) {
   return (
-    <section className={`mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ${className}`}>
+    <section className={`py-20 md:py-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ${className}`}>
       {/* Header */}
-      <div className="text-center mb-12">
-        <h3 className="text-3xl md:text-4xl font-bold text-white">
+      <div className="text-center mb-16">
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-brand-500 font-medium mb-3 tracking-wide uppercase text-sm"
+        >
+          Testimonios
+        </motion.p>
+        <motion.h3
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="text-3xl md:text-5xl font-bold text-white"
+        >
           {title}
-        </h3>
+        </motion.h3>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className={cn(
+        "grid gap-8 justify-center",
+        testimonials.length === 1 && "max-w-lg mx-auto",
+        testimonials.length === 2 && "md:grid-cols-2 max-w-4xl mx-auto",
+        testimonials.length >= 3 && "md:grid-cols-2 lg:grid-cols-3"
+      )}>
         {testimonials.map((testimonial, index) => {
-          const initials = testimonial.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
-          const colors = ["bg-brand-500", "bg-brand_blue", "bg-purple-500", "bg-pink-500", "bg-orange-500"];
-          const colorIndex = testimonial.name.length % colors.length;
+          const avatarUrl = testimonial.image || AVATAR_URLS[index % AVATAR_URLS.length];
 
           return (
-            <motion.div
+            <motion.article
               key={index}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.4 }}
-              className="bg-gradient-to-br from-white/[0.07] to-white/[0.03] border border-white/10 rounded-2xl p-6 hover:border-brand-500/30 hover:from-white/[0.09] hover:to-white/[0.05] transition-all duration-300"
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+              className="group"
             >
-              {/* Stars */}
-              <div className="flex items-center gap-1 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <FaStar key={star} className="w-4 h-4 text-yellow-400" />
-                ))}
-              </div>
+              <div className="relative h-full bg-gradient-to-b from-white/[0.08] to-transparent border border-white/[0.08] rounded-2xl p-8 transition-all duration-300 hover:border-brand-500/30 hover:from-white/[0.12]">
+                {/* Stars */}
+                <div className="flex items-center gap-1 mb-6">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FaStar key={star} className="w-4 h-4 text-yellow-400" />
+                  ))}
+                </div>
 
-              {/* Comment */}
-              <p className="text-gray-300 text-sm leading-relaxed mb-6">
-                "{testimonial.comment}"
-              </p>
+                {/* Comment */}
+                <blockquote className="text-gray-300 leading-relaxed mb-8 text-[15px]">
+                  "{testimonial.comment}"
+                </blockquote>
 
-              {/* Author */}
-              <div className="flex items-center gap-3 pt-4 border-t border-white/10">
-                {testimonial.image ? (
+                {/* Author */}
+                <div className="flex items-center gap-4">
                   <img
-                    src={testimonial.image}
+                    src={avatarUrl}
                     alt={testimonial.name}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-11 h-11 rounded-full object-cover ring-2 ring-white/10"
                   />
-                ) : (
-                  <div className={`w-10 h-10 rounded-full ${colors[colorIndex]} flex items-center justify-center text-white font-semibold text-sm`}>
-                    {initials}
+                  <div>
+                    <p className="text-white font-medium">{testimonial.name}</p>
+                    <p className="text-gray-500 text-sm">{testimonial.role}</p>
                   </div>
-                )}
-                <div>
-                  <p className="text-white font-medium text-sm">
-                    {testimonial.name}
-                  </p>
-                  <p className="text-gray-500 text-xs">{testimonial.role}</p>
                 </div>
               </div>
-            </motion.div>
+            </motion.article>
           );
         })}
       </div>
