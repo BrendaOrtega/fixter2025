@@ -18,7 +18,7 @@ const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
   { name: "Claude Code", link: "/claude" },
-  { name: "Agentes IA", link: "/agentes" },
+  { name: "AI SDK", link: "https://www.fixtergeek.com/ai-sdk", external: true },
   { name: "Pong gratis", link: "/pong" },
 ];
 
@@ -30,24 +30,15 @@ export const SquigglyUnderline = () => {
     <div className="flex gap-3 md:gap-6 lg:gap-8">
       {navigation.map((item, i) => {
         const isCurrent = isHover === i;
-        const isCurrentRoute = location.pathname.includes(item.link);
-        return (
-          <Link
-            key={item.name}
-            to={item.link}
-            className={`relative text-sm leading-6 no-underline ${
-              isCurrent || isCurrentRoute
-                ? "font-semibold text-white"
-                : "text-white"
-            }`}
-            onClick={() => setSelectedLink(item.name)}
-            onMouseEnter={() => {
-              setIsHover(i);
-            }}
-            onMouseLeave={() => {
-              setIsHover(null);
-            }}
-          >
+        const isCurrentRoute = !item.external && location.pathname.includes(item.link);
+        const linkClasses = `relative text-sm leading-6 no-underline ${
+          isCurrent || isCurrentRoute
+            ? "font-semibold text-white"
+            : "text-white"
+        }`;
+
+        const content = (
+          <>
             {item.name}
             {isCurrent || isCurrentRoute ? (
               <motion.div className="absolute -bottom-[1px] left-0 right-0 h-[1px]">
@@ -72,6 +63,36 @@ export const SquigglyUnderline = () => {
                 </svg>
               </motion.div>
             ) : null}
+          </>
+        );
+
+        if (item.external) {
+          return (
+            <a
+              key={item.name}
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkClasses}
+              onClick={() => setSelectedLink(item.name)}
+              onMouseEnter={() => setIsHover(i)}
+              onMouseLeave={() => setIsHover(null)}
+            >
+              {content}
+            </a>
+          );
+        }
+
+        return (
+          <Link
+            key={item.name}
+            to={item.link}
+            className={linkClasses}
+            onClick={() => setSelectedLink(item.name)}
+            onMouseEnter={() => setIsHover(i)}
+            onMouseLeave={() => setIsHover(null)}
+          >
+            {content}
           </Link>
         );
       })}
@@ -289,11 +310,12 @@ const MobileMenu = ({
         />
         <NavItem
           onClick={toggleMenu}
-          as="Link"
-          to="/agentes"
+          as="a"
+          to="https://www.fixtergeek.com/ai-sdk"
           index={4}
           isOpen={isOpen}
-          title="Agentes IA"
+          title="AI SDK"
+          external
         />
         <NavItem
           onClick={toggleMenu}
@@ -423,6 +445,7 @@ const NavItem = ({
   onClick,
   as = "button",
   to = "",
+  external,
 }: {
   title: string;
   isOpen?: boolean;
@@ -430,8 +453,9 @@ const NavItem = ({
   reloadDocument?: boolean;
   className?: string;
   onClick?: () => void;
-  as?: "button" | "Link";
+  as?: "button" | "Link" | "a";
   to?: string;
+  external?: boolean;
 }) => {
   const [scope, animate] = useAnimate();
   useEffect(() => {
@@ -446,6 +470,29 @@ const NavItem = ({
     }
   }, [isOpen]);
 
+  const baseStyles = {
+    opacity: 0,
+    transform: "translateY(20px)",
+    filter: "blur(9px)",
+  };
+  const baseClassName = cn("text-3xl my-4 font-light ", className);
+
+  if (as === "a" || external) {
+    return (
+      <a
+        href={to}
+        target="_blank"
+        rel="noopener noreferrer"
+        ref={scope}
+        style={baseStyles}
+        className={baseClassName}
+        onClick={onClick}
+      >
+        {title}
+      </a>
+    );
+  }
+
   const Element = as === "Link" ? Link : "button";
 
   return (
@@ -453,12 +500,8 @@ const NavItem = ({
       reloadDocument={reloadDocument}
       to={to}
       ref={scope}
-      style={{
-        opacity: 0,
-        transform: "translateY(20px)",
-        filter: "blur(9px)",
-      }}
-      className={cn("text-3xl my-4 font-light ", className)}
+      style={baseStyles}
+      className={baseClassName}
       onClick={onClick}
     >
       {title}
