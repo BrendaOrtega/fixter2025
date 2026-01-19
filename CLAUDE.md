@@ -81,6 +81,14 @@ db.collection.drop()
 - **Datos críticos a respaldar**: users, courses, videos, subscribers, ratings, sequences
 - **Bonus**: Notificación por email si el backup falla
 
+## TODO: Corregir títulos de videos de Animaciones
+
+- **Curso**: Construye más de 14 componentes animados con React y Motion
+- **Problema**: Los títulos de los videos se perdieron en el incidente de la DB y se restauraron con títulos genéricos
+- **Acción**: Ir a la otra app (fixtergeek original) y copiar los títulos reales de cada video
+- **Videos afectados**: 31 videos del curso de Animaciones
+- **Nota**: Ya se corrigieron los videos 2 y 3 a "Fundamentos de Motion" y "Fundamentos de Vite"
+
 ## Lo nuevo
 
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
