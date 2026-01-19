@@ -65,6 +65,22 @@ db.collection.drop()
   3. Incluir `m3u8: true` en el select del loader
 - **Contexto**: Videos legacy (como Pong) pueden procesarse a HLS desde admin, pero sin este fix no se reproducirán con HLS-first
 
+## TODO: Cron de backup automático de MongoDB
+
+- **Prioridad**: ALTA (después del incidente del 19 Enero 2026)
+- **Objetivo**: Backup automático diario de la base de datos MongoDB
+- **Opciones a evaluar**:
+  1. **MongoDB Atlas Backup** (si el plan lo incluye) - backups automáticos en la nube
+  2. **Cron en Fly.io** - script que exporta con `mongodump` y sube a S3/Tigris
+  3. **GitHub Action programada** - workflow nocturno que hace backup
+- **Implementación sugerida**:
+  - Script: `scripts/backup-mongodb.ts`
+  - Destino: Bucket de Tigris (`fixtergeek-backups/`)
+  - Frecuencia: Diario a las 3:00 AM CDMX
+  - Retención: Últimos 30 días
+- **Datos críticos a respaldar**: users, courses, videos, subscribers, ratings, sequences
+- **Bonus**: Notificación por email si el backup falla
+
 ## Lo nuevo
 
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
