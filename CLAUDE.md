@@ -25,6 +25,17 @@ Este archivo contiene información útil para Claude Code sobre el proyecto y pr
 - **Acción**: Re-procesar el video original con ffmpeg para generar los chunks faltantes
 - **Estado**: Video funciona ~68% (primeros 8 minutos aprox), falla al final
 
+## TODO: Habilitar HLS en courseViewer
+
+- **Archivo**: `app/routes/courseViewer.tsx` (línea ~213)
+- **Problema**: El campo `m3u8` está excluido del select con comentario "algunos videos tienen datos corruptos"
+- **Impacto**: Aunque se procesen videos a HLS, el player siempre usa `storageLink` (MP4 directo)
+- **Acciones necesarias**:
+  1. Identificar qué videos tienen `m3u8` corrupto en la DB
+  2. Limpiar/corregir esos datos
+  3. Incluir `m3u8: true` en el select del loader
+- **Contexto**: Videos legacy (como Pong) pueden procesarse a HLS desde admin, pero sin este fix no se reproducirán con HLS-first
+
 ## Lo nuevo
 
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.

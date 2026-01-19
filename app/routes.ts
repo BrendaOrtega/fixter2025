@@ -35,6 +35,8 @@ export default [
   route("agentes", "routes/agentes.tsx"),
   // AI SDK TypeScript Course
   route("ai-sdk", "routes/ai-sdk.tsx"),
+  // Pong con Vanilla JS - Classic Course
+  route("pong", "routes/pong.tsx"),
   // Libros
   route("libros", "routes/libros.tsx"),
   // Libro interactivo

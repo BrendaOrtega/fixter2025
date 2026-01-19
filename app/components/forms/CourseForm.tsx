@@ -225,7 +225,39 @@ const VideoProcessingStatus = ({
     detectDuration();
   }, [videoData?.directLinkPresigned, durationDetected, onDurationDetected]);
 
-  if (!status || status === "unknown") return null;
+  // Si no hay status pero hay video con storageLink, mostrar solo el preview
+  if (!status || status === "unknown") {
+    if (!videoData?.hasDirectLink) return null;
+
+    return (
+      <div className="p-3 rounded-lg mb-4 bg-gray-500/10">
+        <div className="flex items-center gap-2 text-gray-400">
+          <FaCheckCircle />
+          <span className="text-sm">Video disponible (sin procesar HLS)</span>
+        </div>
+        <div className="mt-3">
+          <p className="text-xs text-gray-400 mb-2">📹 Preview:</p>
+          <StableVideoPreview videoId={videoId} courseId={course?.id || ""} />
+        </div>
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm("¿Procesar este video a HLS para mejor streaming?")) {
+                fetcher.submit(
+                  { intent: "trigger_video_processing", videoId },
+                  { method: "POST", action: "/api/course" }
+                );
+              }
+            }}
+            className="text-xs text-blue-400 hover:text-blue-300 underline"
+          >
+            🚀 Procesar a HLS
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const statusConfig = {
     pending: {
@@ -1149,7 +1181,16 @@ const VideoCard = ({
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-medium truncate">{video.title}</h3>
         <p className="text-xs text-gray-500 truncate">
-          {video.moduleName || "Sin módulo"} • {video.duration || "0:00"}
+          {video.duration || "0:00"} •{" "}
+          <span className={
+            video.accessLevel === "public" ? "text-green-400" :
+            video.accessLevel === "subscriber" ? "text-blue-400" :
+            "text-yellow-400"
+          }>
+            {video.accessLevel === "public" ? "🌐 público" :
+             video.accessLevel === "subscriber" ? "📧 suscriptor" :
+             "💰 pago"}
+          </span>
         </p>
       </div>
 

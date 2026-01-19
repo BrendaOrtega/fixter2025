@@ -386,10 +386,21 @@ export const courseServerActions = {
           directLinkPresigned = await Effect.runPromise(
             s3VideoService.getVideoPreviewUrl(originalFile, 3600) // 1 hour expiry
           );
-          
+
           console.log("✅ Generated presigned URL:", directLinkPresigned ? "SUCCESS" : "FAILED");
         } else {
-          console.log("❌ No original file found in S3");
+          console.log("⚠️ No original file found in S3, trying direct Tigris URL fallback");
+
+          // Fallback: Si el storageLink es una URL de Tigris, generar presigned URL directamente
+          const tigrisMatch = video.storageLink?.match(/fly\.storage\.tigris\.dev\/[^/]+\/(.+)/);
+          if (tigrisMatch) {
+            const key = tigrisMatch[1];
+            const { getReadURL } = await import("~/.server/tigrs");
+            directLinkPresigned = await getReadURL(key, 3600, false);
+            console.log("✅ Generated presigned URL from Tigris fallback:", directLinkPresigned ? "SUCCESS" : "FAILED");
+          } else {
+            console.log("❌ No Tigris URL found in storageLink");
+          }
         }
       } catch (error) {
         console.error("❌ Error generating presigned URL for original video:", error);
