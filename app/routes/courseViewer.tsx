@@ -279,12 +279,20 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         console.log("🎬 Generating Tigris presigned URL for:", finalStorageLink.substring(0, 80));
         finalStorageLink = await getPresignedFromUrl(finalStorageLink, 3600);
       } else if (isFirebaseUrl) {
-        console.log("🔥 Generating Firebase signed URL for:", finalStorageLink.substring(0, 80));
-        finalStorageLink = await getFirebaseSignedUrl(finalStorageLink, 3600000);
+        // Firebase URLs públicas funcionan sin signed URL
+        // Solo intentar firmar si hay credenciales configuradas
+        if (process.env.FIREBASE_CREDENTIALS_BASE64) {
+          console.log("🔥 Generating Firebase signed URL for:", finalStorageLink.substring(0, 80));
+          finalStorageLink = await getFirebaseSignedUrl(finalStorageLink, 3600000);
+        } else {
+          console.log("🔥 Using Firebase URL directly (no credentials):", finalStorageLink.substring(0, 80));
+          // Usar la URL original - es pública
+        }
       }
     } catch (err) {
       console.error("❌ Error generating presigned URL:", err);
-      finalStorageLink = ""; // Fallback a vacío si falla
+      // Mantener la URL original como fallback en lugar de vacío
+      console.log("⚠️ Using original URL as fallback");
     }
   }
 
