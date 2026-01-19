@@ -39,14 +39,16 @@ export const FloatingPromo = () => {
       "aisdk-promo-dismissed",
       JSON.stringify({
         timestamp: Date.now(),
-      })
+      }),
     );
     setIsVisible(false);
     setIsDismissed(true);
   };
 
   const handleClick = () => {
-    navigate("/cursos/ai-sdk/viewer?videoSlug=Introduccion-al-AI-SDK-c1b068e6-aab3-431a-a294-ace9e6ead6af");
+    navigate(
+      "/cursos/ai-sdk/viewer?videoSlug=Introduccion-al-AI-SDK-c1b068e6-aab3-431a-a294-ace9e6ead6af",
+    );
   };
 
   if (isDismissed) return null;
@@ -135,7 +137,6 @@ export const FloatingPromo = () => {
               transition={{ duration: 0.3 }}
               className="relative cursor-pointer"
             >
-
               {/* Main button */}
               <motion.div
                 className="relative z-20 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/30"

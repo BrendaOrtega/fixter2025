@@ -247,7 +247,7 @@ export const CommentCard = ({
       }}
       className={twMerge(
         "hover:scale-95 flex flex-col justify-between bg-[#1A2229] col-span-1  rounded-2xl px-4 pt-4 pb-6 relative cursor-pointer hover:shadow-[0_16px_16px_rgba(0,0,0,0.05)] dark:hover:shadow-lg transition-all",
-        className
+        className,
       )}
       ref={ref}
     >
@@ -302,7 +302,7 @@ export const TopCourses = ({ courses }: { courses?: Partial<Course>[] }) => {
 
     fetcher.submit(
       { intent: "get_top_courses" },
-      { method: "POST", action: "/api/course" }
+      { method: "POST", action: "/api/course" },
     );
   }, [courses]);
 
@@ -530,8 +530,17 @@ export const HomeHero = () => {
             que usan los profesionales de la industria
           </h2>{" "}
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
-            <PrimaryButton as="Link" to="/cursos/ai-sdk/viewer?videoSlug=Introduccion-al-AI-SDK-c1b068e6-aab3-431a-a294-ace9e6ead6af" children="Nuevo curso: AI + React" />
-            <PrimaryButton as="Link" to="/pong" children="Pong gratis" variant="ghost" />
+            <PrimaryButton
+              as="Link"
+              to="/cursos/ai-sdk/viewer?videoSlug=ai-sdk-1"
+              children="Nuevo curso: AI + React"
+            />
+            <PrimaryButton
+              as="Link"
+              to="/pong"
+              children="Pong gratis"
+              variant="ghost"
+            />
             <PrimaryButton
               as="Link"
               to="/claude"
@@ -560,8 +569,8 @@ export const HomeHero = () => {
               className="text-sm text-llamaindex-purple hover:underline transition-all duration-200  "
             >
               LlamaIndex desde Cero
-            </Link>
-            {" "}y{" "}
+            </Link>{" "}
+            y{" "}
             <Link
               to="/libros/ai_sdk"
               className="text-sm text-[#3178C6] hover:underline transition-all duration-200"
