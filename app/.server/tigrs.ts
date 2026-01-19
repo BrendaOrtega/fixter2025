@@ -115,8 +115,22 @@ export const getFirebaseSignedUrl = async (
 
   // Inicializar Firebase Admin si no está inicializado
   if (getApps().length === 0) {
+    // Usar credenciales de variable de entorno (base64) o archivo local
+    const credentialsBase64 = process.env.FIREBASE_CREDENTIALS_BASE64;
+    let credential;
+
+    if (credentialsBase64) {
+      const credentialsJson = JSON.parse(
+        Buffer.from(credentialsBase64, "base64").toString("utf-8")
+      );
+      credential = cert(credentialsJson);
+    } else {
+      // Fallback para desarrollo local
+      credential = cert("/tmp/firebase-creds.json");
+    }
+
     initializeApp({
-      credential: cert("/tmp/firebase-creds.json"),
+      credential,
       storageBucket: "fixter-67253.appspot.com",
     });
   }
