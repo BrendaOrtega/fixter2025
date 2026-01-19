@@ -165,7 +165,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const { getPresignedFromUrl } = await import("~/.server/tigrs");
+  const { getPresignedFromUrl, getFirebaseSignedUrl } = await import("~/.server/tigrs");
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const user = await getUserOrNull(request);
@@ -272,14 +272,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     try {
       // Detectar URLs de Tigris (cualquier formato)
       const isTigrisUrl = finalStorageLink.includes('tigris.dev') || finalStorageLink.includes('t3.storage.dev');
+      // Detectar URLs de Firebase Storage
+      const isFirebaseUrl = finalStorageLink.includes('firebasestorage.googleapis.com');
 
       if (isTigrisUrl) {
-        console.log("🎬 Generating presigned URL for:", finalStorageLink.substring(0, 80));
+        console.log("🎬 Generating Tigris presigned URL for:", finalStorageLink.substring(0, 80));
         finalStorageLink = await getPresignedFromUrl(finalStorageLink, 3600);
+      } else if (isFirebaseUrl) {
+        console.log("🔥 Generating Firebase signed URL for:", finalStorageLink.substring(0, 80));
+        finalStorageLink = await getFirebaseSignedUrl(finalStorageLink, 3600000);
       }
     } catch (err) {
       console.error("❌ Error generating presigned URL:", err);
-      finalStorageLink = ""; // Fallback a vacío si falla S3
+      finalStorageLink = ""; // Fallback a vacío si falla
     }
   }
 

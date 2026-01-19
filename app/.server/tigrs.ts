@@ -105,6 +105,41 @@ export const getReadURLForT3Bucket = async (
     { expiresIn }
   );
 
+// Genera signed URL para Firebase Storage
+export const getFirebaseSignedUrl = async (
+  firebaseUrl: string,
+  expiresInMs = 3600000 // 1 hora
+) => {
+  const { initializeApp, cert, getApps } = await import("firebase-admin/app");
+  const { getStorage } = await import("firebase-admin/storage");
+
+  // Inicializar Firebase Admin si no está inicializado
+  if (getApps().length === 0) {
+    initializeApp({
+      credential: cert("/tmp/firebase-creds.json"),
+      storageBucket: "fixter-67253.appspot.com",
+    });
+  }
+
+  // Extraer el path del archivo de la URL de Firebase
+  // URL formato: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/ENCODED_PATH?alt=media
+  const match = firebaseUrl.match(/\/o\/([^?]+)/);
+  if (!match) {
+    throw new Error("Invalid Firebase Storage URL");
+  }
+
+  const filePath = decodeURIComponent(match[1]);
+  const bucket = getStorage().bucket();
+  const file = bucket.file(filePath);
+
+  const [signedUrl] = await file.getSignedUrl({
+    action: "read",
+    expires: Date.now() + expiresInMs,
+  });
+
+  return signedUrl;
+};
+
 // Genera presigned URL dinámicamente desde cualquier URL de Tigris
 export const getPresignedFromUrl = async (
   originalUrl: string,
