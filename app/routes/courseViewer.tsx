@@ -165,7 +165,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const { getReadURLForBucket } = await import("~/.server/tigrs");
+  const { getReadURLForBucket, getReadURLForT3Bucket } = await import("~/.server/tigrs");
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const user = await getUserOrNull(request);
@@ -274,9 +274,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       const virtualMatch = finalStorageLink.match(/https?:\/\/([^.]+)\.fly\.storage\.tigris\.dev\/(.+)/);
       // Formato 2: fly.storage.tigris.dev/bucket/key (path style)
       const pathMatch = !virtualMatch && finalStorageLink.match(/fly\.storage\.tigris\.dev\/([^/]+)\/(.+)/);
+      // Formato 3: t3.storage.dev/bucket/key (Tigris path style)
+      const t3Match = !virtualMatch && !pathMatch && finalStorageLink.match(/https?:\/\/t3\.storage\.dev\/([^/]+)\/(.+)/);
 
       console.log("🎬 virtualMatch:", virtualMatch);
       console.log("🎬 pathMatch:", pathMatch);
+      console.log("🎬 t3Match:", t3Match);
 
       if (virtualMatch) {
         const [, bucket, key] = virtualMatch;
@@ -286,6 +289,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         const [, bucket, key] = pathMatch;
         console.log("🎬 Using path style - bucket:", bucket, "key:", key);
         finalStorageLink = await getReadURLForBucket(bucket, key, 3600);
+      } else if (t3Match) {
+        const [, bucket, key] = t3Match;
+        console.log("🎬 Using t3 style - bucket:", bucket, "key:", key);
+        finalStorageLink = await getReadURLForT3Bucket(bucket, key, 3600);
       }
     } catch (err) {
       console.error("❌ Error generating presigned URL:", err);

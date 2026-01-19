@@ -18,6 +18,12 @@ const S3 = new S3Client({
   endpoint: "https://fly.storage.tigris.dev",
 });
 
+// Cliente S3 para t3.storage.dev (mismo Tigris, diferente endpoint)
+const S3_T3 = new S3Client({
+  region: "auto",
+  endpoint: "https://t3.storage.dev",
+});
+
 // es mejor configurarlo desde acá en vez dle control panel. (tiene prioridad el panel)
 const setCors = async () => {
   const input = {
@@ -77,6 +83,21 @@ export const getReadURLForBucket = async (
 ) =>
   await getSignedUrl(
     S3,
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    }),
+    { expiresIn }
+  );
+
+// Genera presigned URL para buckets en t3.storage.dev
+export const getReadURLForT3Bucket = async (
+  bucket: string,
+  key: string,
+  expiresIn = 3600
+) =>
+  await getSignedUrl(
+    S3_T3,
     new GetObjectCommand({
       Bucket: bucket,
       Key: key,
