@@ -159,7 +159,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
   if (!course) throw data("Course Not Found", { status: 404 });
   const videos = await getVideoTitles(course.id);
-  const hasPublicVideos = videos.some((video) => video.isPublic);
+  const hasPublicVideos = videos.some(
+    (video) => video.isPublic || video.accessLevel === "public"
+  );
   const hasSubscriberVideos = videos.some((video) => video.accessLevel === "subscriber");
   const hasFreeAccess = hasPublicVideos || hasSubscriberVideos;
   return { course, videos, hasPublicVideos, hasFreeAccess };
@@ -226,7 +228,7 @@ const CourseContent = ({
             <Lesson
               key={video.id}
               title={video.title || "Sin título"}
-              isFree={video.isPublic}
+              isFree={video.isPublic || video.accessLevel === "public"}
             />
           ))}
           {/* <Lesson title="Pollitos a la naranja" /> */}

@@ -8,6 +8,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getStorage } from "firebase-admin/storage";
 
 const PREFIX = "fixtergeek/";
 
@@ -110,9 +112,6 @@ export const getFirebaseSignedUrl = async (
   firebaseUrl: string,
   expiresInMs = 3600000 // 1 hora
 ) => {
-  const { initializeApp, cert, getApps } = await import("firebase-admin/app");
-  const { getStorage } = await import("firebase-admin/storage");
-
   // Inicializar Firebase Admin si no está inicializado
   if (getApps().length === 0) {
     // Usar credenciales de variable de entorno (base64) o archivo local
