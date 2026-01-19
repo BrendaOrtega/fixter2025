@@ -9,6 +9,7 @@ import { formatDuration } from "./cursos";
 import type { Course, Video } from "~/types/models";
 import { getVideoTitles } from "~/.server/dbGetters";
 import { BsGithub, BsLinkedin, BsFacebook } from "react-icons/bs";
+import { CourseRatings } from "~/components/common/CourseRatings";
 import { motion, useSpring, useTransform } from "motion/react";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
@@ -169,6 +170,7 @@ export default function Route({
     <article className="pt-40">
       <CourseHeader course={course} hasPublicVideos={hasPublicVideos} />
       <CourseContent course={course} videos={videos} />
+      <CourseRatings courseSlug={course.slug} />
       <Teacher course={course} />
       <Footer />
     </article>
