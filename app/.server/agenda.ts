@@ -6,6 +6,18 @@ import Agenda from "agenda";
 import { Effect } from "effect";
 import { videoProcessorService } from "./services/video-processor";
 import { s3VideoService, fixBucketDuplication } from "./services/s3-video";
+import { exec } from "child_process";
+import { promisify } from "util";
+import fs from "fs";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { sendBackupNotification } from "~/mailSenders/sendBackupNotification";
+
+const execPromise = promisify(exec);
 
 let agenda: Agenda;
 export const getAgenda = () => {
@@ -321,6 +333,9 @@ export const initializeAgenda = async () => {
   await agenda.every("15 minutes", "cleanup_stuck_videos");
   console.info("🧹 Video cleanup job scheduled (every 15 min)");
 
+  // Start backup scheduler (Domingos 3:00 AM)
+  await startBackupScheduler();
+
   console.info("✅ Agenda initialized with all processors running");
   return agenda;
 };
@@ -428,7 +443,7 @@ getAgenda().define(
       // 1. Update video status to processing
       await db.video.update({
         where: { id: videoId },
-        data: { 
+        data: {
           processingStatus: "processing",
           processingStartedAt: new Date()
         }
@@ -442,7 +457,7 @@ getAgenda().define(
       // 3. Update video with final results
       // Fix potential bucket name duplication in HLS URL using helper function
       const hlsUrl = fixBucketDuplication(result.masterPlaylistUrl);
-      
+
       await db.video.update({
         where: { id: videoId },
         data: {
@@ -467,7 +482,7 @@ getAgenda().define(
 
     } catch (error) {
       console.error(`❌ [HLS] Error procesando video ${videoId}:`, error);
-      
+
       // Update video status to failed (simple operation without transaction)
       try {
         await db.video.update({
@@ -487,3 +502,195 @@ getAgenda().define(
   }
   // Remove concurrency/lockLifetime options for now to debug
 );
+
+// ═══════════════════════════════════════════════════════════════
+// BACKUP SEMANAL - MongoDB a S3/Tigris
+// ═══════════════════════════════════════════════════════════════
+
+const BACKUP_BUCKET = process.env.BUCKET_NAME || "fixtergeek";
+const BACKUP_PREFIX = "backups/fixtergeek/";
+const BACKUP_NOTIFICATION_EMAILS = ["brenda@fixter.org", "contacto@fixter.org"];
+
+// Cliente S3 específico para backups
+function getBackupS3Client(): S3Client {
+  return new S3Client({
+    region: "auto",
+    endpoint: "https://fly.storage.tigris.dev",
+  });
+}
+
+// Subir archivo a S3
+async function uploadBackupToS3(localPath: string, s3Key: string): Promise<void> {
+  const s3Client = getBackupS3Client();
+  const fileBuffer = fs.readFileSync(localPath);
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: BACKUP_BUCKET,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: "application/gzip",
+    })
+  );
+}
+
+// Generar presigned URL para descarga (7 días)
+async function generateBackupDownloadUrl(s3Key: string): Promise<string> {
+  const s3Client = getBackupS3Client();
+  return getSignedUrl(
+    s3Client,
+    new GetObjectCommand({
+      Bucket: BACKUP_BUCKET,
+      Key: s3Key,
+    }),
+    { expiresIn: 604800 } // 7 días
+  );
+}
+
+// Formatear bytes a humano
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+}
+
+// Programar backup manual
+export const scheduleBackupNow = async () => {
+  const agenda = getAgenda();
+  await agenda.start();
+  await agenda.now("weekly-backup", {});
+  console.info("💾 [BACKUP] Job encolado: backup manual");
+};
+
+// Definición del job de backup semanal
+getAgenda().define(
+  "weekly-backup",
+  { priority: 20, lockLifetime: 30 * 60 * 1000 }, // 30 min timeout, priority 20 = high
+  async (job: { attrs: { name: string } }) => {
+    const now = new Date();
+    const date = now.toISOString().split("T")[0];
+    const time = now.toTimeString().slice(0, 5).replace(":", "");
+    const filename = `backup_${date}_${time}.gz`;
+    const localPath = `/tmp/${filename}`;
+    const s3Key = `${BACKUP_PREFIX}${filename}`;
+
+    console.info(`💾 [BACKUP] Iniciando backup: ${filename}`);
+
+    // Crear registro como RUNNING
+    const backupRecord = await db.backup.create({
+      data: {
+        filename,
+        s3Key,
+        sizeBytes: 0,
+        status: "RUNNING",
+      },
+    });
+
+    try {
+      // 1. Ejecutar mongodump
+      const mongoUri = process.env.DATABASE_URL;
+      if (!mongoUri) {
+        throw new Error("DATABASE_URL no configurada");
+      }
+
+      console.info(`💾 [BACKUP] Ejecutando mongodump...`);
+      const startTime = Date.now();
+
+      await execPromise(
+        `mongodump --uri="${mongoUri}" --archive=${localPath} --gzip`,
+        { maxBuffer: 100 * 1024 * 1024 } // 100MB buffer
+      );
+
+      const dumpTime = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.info(`💾 [BACKUP] mongodump completado en ${dumpTime}s`);
+
+      // 2. Verificar archivo
+      if (!fs.existsSync(localPath)) {
+        throw new Error("El archivo de backup no se creó");
+      }
+      const stats = fs.statSync(localPath);
+      console.info(`💾 [BACKUP] Tamaño: ${formatBytes(stats.size)}`);
+
+      // 3. Subir a S3
+      console.info(`💾 [BACKUP] Subiendo a S3: ${s3Key}`);
+      await uploadBackupToS3(localPath, s3Key);
+      console.info(`💾 [BACKUP] Upload completado`);
+
+      // 4. Actualizar registro
+      await db.backup.update({
+        where: { id: backupRecord.id },
+        data: {
+          sizeBytes: stats.size,
+          status: "COMPLETED",
+        },
+      });
+
+      // 5. Limpiar archivo local
+      fs.unlinkSync(localPath);
+
+      // 6. Enviar notificación con link de descarga
+      const downloadUrl = await generateBackupDownloadUrl(s3Key);
+
+      for (const email of BACKUP_NOTIFICATION_EMAILS) {
+        await sendBackupNotification({
+          to: email,
+          status: "success",
+          filename,
+          s3Key,
+          sizeBytes: stats.size,
+          downloadUrl,
+        });
+      }
+
+      console.info(`✅ [BACKUP] Backup completado exitosamente: ${filename}`);
+      console.info(`  - Tamaño: ${formatBytes(stats.size)}`);
+      console.info(`  - S3 Key: ${s3Key}`);
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error(`❌ [BACKUP] Error en backup: ${errorMsg}`);
+
+      // Actualizar registro como FAILED
+      await db.backup.update({
+        where: { id: backupRecord.id },
+        data: {
+          status: "FAILED",
+          error: errorMsg,
+        },
+      });
+
+      // Limpiar archivo local si existe
+      if (fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+      }
+
+      // Notificar error
+      for (const email of BACKUP_NOTIFICATION_EMAILS) {
+        await sendBackupNotification({
+          to: email,
+          status: "failed",
+          filename,
+          s3Key,
+          errorMessage: errorMsg,
+        });
+      }
+
+      throw error; // Re-throw para marcar job como failed
+    }
+  }
+);
+
+// Registrar backup semanal (Domingos 3:00 AM)
+export const startBackupScheduler = async () => {
+  const agenda = getAgenda();
+  await agenda.start();
+
+  // Cancelar jobs existentes para evitar duplicados
+  await agenda.cancel({ name: "weekly-backup" });
+
+  // Programar: Domingos 3:00 AM (cron: minuto hora día-mes mes día-semana)
+  await agenda.every("0 3 * * 0", "weekly-backup");
+  console.info("💾 [BACKUP] Scheduler iniciado - Domingos 3:00 AM");
+};

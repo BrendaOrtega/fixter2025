@@ -59,6 +59,7 @@ export default [
     route("heatmap/:postId", "routes/admin/heatmap.$postId.tsx"),
     route("ratings", "routes/admin/ratings.tsx"),
     route("send", "routes/admin/send.tsx"),
+    route("backups", "routes/admin/backups.tsx"),
   ]),
   // Analytics moved to admin section
   // testing WebRTC
@@ -92,6 +93,7 @@ export default [
     route("hls-proxy", "routes/api/hls-proxy.tsx"),
     route("book-epub", "routes/api/book-epub.tsx"),
     route("ratings", "routes/api/ratings.ts"),
+    route("backup-download", "routes/api/backup-download.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

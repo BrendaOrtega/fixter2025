@@ -560,6 +560,30 @@ model EmailBlacklist {
   @@map("email_blacklist")
 }
 
+// ============================
+// BACKUP SYSTEM
+// ============================
+
+enum BackupStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Backup {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  filename  String       // backup_2026-01-20_0300.gz
+  s3Key     String       // backups/fixtergeek/backup_2026-01-20_0300.gz
+  sizeBytes Int          @default(0)
+  status    BackupStatus @default(RUNNING)
+  error     String?
+  createdAt DateTime     @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("backups")
+}
+
 // Video analytics - tracking minimalista de visualizaciones
 model VideoView {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
