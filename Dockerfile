@@ -26,8 +26,8 @@ RUN npm run build
 
 # Stage 5: Production
 FROM node:20.11.1-alpine
-# Install openssl, libc6-compat (for mongodump), and system deps
-RUN apk update && apk add openssl libc6-compat
+# Install openssl, libc6-compat, and krb5-libs (for mongodump with MongoDB Atlas)
+RUN apk update && apk add openssl libc6-compat krb5-libs
 # Copy mongodump from MongoDB image
 COPY --from=mongo-tools /usr/bin/mongodump /usr/local/bin/mongodump
 COPY ./package.json package-lock.json /app/
