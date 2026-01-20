@@ -151,19 +151,25 @@ export default function Admin404s() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600">
-                          {new Date(log.lastSeenAt).toLocaleDateString("es-MX", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {new Date(log.lastSeenAt).toLocaleTimeString("es-MX", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
+                        {log.lastSeenAt ? (
+                          <>
+                            <div className="text-sm text-gray-600">
+                              {new Date(log.lastSeenAt).toLocaleDateString("es-MX", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {new Date(log.lastSeenAt).toLocaleTimeString("es-MX", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <fetcher.Form method="post" className="inline">

@@ -637,11 +637,11 @@ model CourseRating {
 
 // 404 tracking - Captura URLs que dan 404 para identificar posts a recuperar
 model NotFoundLog {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  path       String   @unique          // /blog/post-que-no-existe
-  count      Int      @default(1)
-  lastSeenAt DateTime @default(now())
-  createdAt  DateTime @default(now())
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  path       String    @unique          // /blog/post-que-no-existe
+  count      Int       @default(1)
+  lastSeenAt DateTime?                  // Opcional para datos legacy
+  createdAt  DateTime  @default(now())
 
   @@index([count])
   @@map("not_found_logs")
