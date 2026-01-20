@@ -54,10 +54,10 @@ export default function Admin404s() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <FaExclamationTriangle className="text-amber-500" />
-              404s del Blog
+              404s
             </h1>
             <p className="text-gray-600 mt-1">
-              URLs de /blog/ que no existen - posibles posts a recuperar
+              URLs que no existen - identificar contenido a recuperar o redireccionar
             </p>
           </div>
 
@@ -124,7 +124,7 @@ export default function Admin404s() {
                       <FaExclamationTriangle className="text-4xl text-gray-300 mx-auto mb-3" />
                       <p>No hay 404s registrados</p>
                       <p className="text-sm mt-1">
-                        Las URLs de /blog/ que no existan se registrarán aquí
+                        Las URLs que den 404 se registrarán aquí automáticamente
                       </p>
                     </td>
                   </tr>
@@ -196,10 +196,10 @@ export default function Admin404s() {
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
           <h3 className="font-semibold text-blue-800 mb-2">Cómo usar estos datos</h3>
           <ul className="text-sm text-blue-700 space-y-1">
-            <li>Las URLs con mayor count son las más solicitadas - prioriza recuperarlas.</li>
-            <li>Haz clic en el ícono de enlace externo para buscar el contenido en Wayback Machine.</li>
-            <li>Una vez recuperado un post, elimina el registro correspondiente.</li>
-            <li>Solo se capturan URLs que empiezan con <code className="bg-blue-100 px-1 rounded">/blog/</code>.</li>
+            <li>URLs con alto count indican tráfico real - considera recuperar el contenido o crear un redirect.</li>
+            <li>Haz clic en el ícono de enlace externo para buscar en Wayback Machine.</li>
+            <li>Una vez resuelto (contenido recuperado o redirect creado), elimina el registro.</li>
+            <li>Se capturan todas las URLs que dan 404 en el sitio.</li>
           </ul>
         </div>
       </div>

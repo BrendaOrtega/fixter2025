@@ -19,24 +19,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     );
   }
 
-  // Solo capturar rutas de /blog/ para identificar posts perdidos
-  if (pathname.startsWith("/blog/")) {
-    try {
-      await db.notFoundLog.upsert({
-        where: { path: pathname },
-        update: {
-          count: { increment: 1 },
-          lastSeenAt: new Date(),
-        },
-        create: {
-          path: pathname,
-          count: 1,
-        },
-      });
-    } catch (e) {
-      // Silenciar errores - no queremos que un error de logging rompa la página 404
-      console.error("Error logging 404:", e);
-    }
+  // Capturar todos los 404s para identificar contenido perdido
+  try {
+    await db.notFoundLog.upsert({
+      where: { path: pathname },
+      update: {
+        count: { increment: 1 },
+        lastSeenAt: new Date(),
+      },
+      create: {
+        path: pathname,
+        count: 1,
+      },
+    });
+  } catch (e) {
+    // Silenciar errores - no queremos que un error de logging rompa la página 404
+    console.error("Error logging 404:", e);
   }
 
   return null;
