@@ -19,6 +19,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     );
   }
 
+  // Ignorar assets - no son contenido relevante para recuperar
+  const assetExtensions = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map|webp|mp4|webm|json)$/i;
+  if (assetExtensions.test(pathname)) {
+    return null;
+  }
+
   // Capturar todos los 404s para identificar contenido perdido
   try {
     await db.notFoundLog.upsert({

@@ -37,6 +37,8 @@ export default [
   route("ai-sdk", "routes/ai-sdk.tsx"),
   // Pong con Vanilla JS - Classic Course
   route("pong", "routes/pong.tsx"),
+  // Testing con Jest - Redirect to course detail
+  route("testing", "routes/testing.tsx"),
   // Libros
   route("libros", "routes/libros.tsx"),
   // Libro interactivo
