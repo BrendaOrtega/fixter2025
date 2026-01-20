@@ -2,6 +2,7 @@ import { PrimaryButton } from "~/components/common/PrimaryButton";
 import type { Route } from "./+types/404";
 import { redirect } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
+import { db } from "~/.server/db";
 
 export const meta = () =>
   getMetaTags({
@@ -9,7 +10,7 @@ export const meta = () =>
     description: "Página no encontrada",
   });
 
-export const loader = ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const pathname = url.pathname;
   if (pathname.includes("react-router")) {
@@ -17,6 +18,27 @@ export const loader = ({ request }: Route.LoaderArgs) => {
       "/cursos/Introduccion-al-desarrollo-web-full-stack-con-React-Router/detalle"
     );
   }
+
+  // Solo capturar rutas de /blog/ para identificar posts perdidos
+  if (pathname.startsWith("/blog/")) {
+    try {
+      await db.notFoundLog.upsert({
+        where: { path: pathname },
+        update: {
+          count: { increment: 1 },
+          lastSeenAt: new Date(),
+        },
+        create: {
+          path: pathname,
+          count: 1,
+        },
+      });
+    } catch (e) {
+      // Silenciar errores - no queremos que un error de logging rompa la página 404
+      console.error("Error logging 404:", e);
+    }
+  }
+
   return null;
 };
 

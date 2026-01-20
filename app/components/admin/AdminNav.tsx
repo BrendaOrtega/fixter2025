@@ -16,6 +16,7 @@ export const AdminNav = () => {
     { href: "/admin/newsletter", label: "Newsletter" },
     { href: "/admin/analytics", label: "Analytics" },
     { href: "/admin/backups", label: "Backups" },
+    { href: "/admin/404s", label: "404s" },
   ];
 
   return (

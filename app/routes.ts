@@ -60,6 +60,7 @@ export default [
     route("ratings", "routes/admin/ratings.tsx"),
     route("send", "routes/admin/send.tsx"),
     route("backups", "routes/admin/backups.tsx"),
+    route("404s", "routes/admin/404s.tsx"),
   ]),
   // Analytics moved to admin section
   // testing WebRTC
