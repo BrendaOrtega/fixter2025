@@ -1,10 +1,11 @@
 import { type LoaderFunctionArgs, type ActionFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { useEffect } from "react";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { scheduleBackupNow } from "~/.server/agenda";
-import { FaDatabase, FaDownload, FaPlay, FaCheck, FaTimes, FaSpinner, FaClock } from "react-icons/fa";
+import { FaDatabase, FaDownload, FaPlay, FaCheck, FaTimes, FaSpinner, FaClock, FaSync } from "react-icons/fa";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -92,8 +93,34 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function AdminBackups() {
   const { backups, stats, nextBackupAt } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
+  const revalidator = useRevalidator();
   const isTriggering = fetcher.state === "submitting";
   const hasRunningBackup = backups.some((b) => b.status === "RUNNING");
+  const isRevalidating = revalidator.state === "loading";
+
+  // Auto-refresh cada 3 segundos cuando hay un backup en progreso
+  useEffect(() => {
+    if (!hasRunningBackup) return;
+
+    const interval = setInterval(() => {
+      if (revalidator.state === "idle") {
+        revalidator.revalidate();
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [hasRunningBackup, revalidator]);
+
+  // También refrescar después de disparar un backup
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      // Esperar un momento y refrescar para ver el nuevo backup
+      const timeout = setTimeout(() => {
+        revalidator.revalidate();
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [fetcher.state, fetcher.data, revalidator]);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -209,8 +236,24 @@ export default function AdminBackups() {
 
         {/* Backup History */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Historial de Backups</h2>
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">Historial de Backups</h2>
+              {hasRunningBackup && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                  Actualizando cada 3s
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => revalidator.revalidate()}
+              disabled={isRevalidating}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <FaSync className={isRevalidating ? "animate-spin" : ""} />
+              {isRevalidating ? "Actualizando..." : "Actualizar"}
+            </button>
           </div>
 
           <div className="overflow-x-auto">
