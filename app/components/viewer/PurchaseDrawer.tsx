@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
-export const PurchaseDrawer = ({ courseSlug }: { courseSlug: string }) => {
+export const PurchaseDrawer = ({ courseSlug, price }: { courseSlug: string; price?: number }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [show, setShow] = useState(true);
   return (
@@ -29,8 +29,13 @@ export const PurchaseDrawer = ({ courseSlug }: { courseSlug: string }) => {
           comenzando 🚀
         </h3>
         <p className="text-lg md:text-xl font-light mt-4 text-metal text-colorParagraph">
-          ¡Desbloquea el curso completo y conviértete en un web hacker! 🫶🏻 . <br />
+          ¡Desbloquea el curso completo y conviértete en un web hacker! 🫶🏻
         </p>
+        {price && (
+          <p className="text-2xl font-bold mt-4 text-brand-500">
+            ${price} MXN
+          </p>
+        )}
         <Form method="POST" action="/api/stripe">
           <input type="hidden" name="courseSlug" value={courseSlug} />
           <PrimaryButton

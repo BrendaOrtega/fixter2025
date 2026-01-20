@@ -520,7 +520,7 @@ export default function Route({
           userEmail={user?.email}
         />
       )}
-      {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} />}
+      {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} price={course.basePrice} />}
       {showRatingDrawer && (user?.email || subscriberEmail) && course.id && (
         <RatingDrawer
           isOpen={showRatingDrawer}
