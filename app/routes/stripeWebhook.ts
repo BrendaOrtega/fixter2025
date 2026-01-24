@@ -47,12 +47,67 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
 
-      // Handle AI SDK workshop - assigns ai-sdk course
-      if (session.metadata.type === "aisdk-workshop") {
+      // ============================================================
+      // CURSOS ON-DEMAND - El único flujo de compra activo
+      // Talleres/webinars van a lista de espera (manejado en landing pages)
+      // ============================================================
+
+      // Handle AI SDK Curso On-Demand - crea User con acceso al curso de videos
+      if (session.metadata.type === "aisdk-curso-ondemand") {
         const userName =
           session.customer_details?.name || session.metadata.name;
 
         // Buscar el curso ai-sdk para asignarlo
+        const aisdkCourse = await db.course.findUnique({
+          where: { slug: "ai-sdk" },
+        });
+
+        await db.user.upsert({
+          where: { email },
+          create: {
+            email,
+            username: email,
+            displayName: userName,
+            phoneNumber: session.customer_details?.phone,
+            courses: aisdkCourse ? [aisdkCourse.id] : [],
+            tags: ["newsletter", "aisdk-curso-ondemand"],
+            metadata: {
+              purchase: {
+                type: "aisdk-curso-ondemand",
+                totalPrice: Number(session.metadata.totalPrice || 999),
+                paidAt: new Date().toISOString(),
+                sessionId: session.id,
+              },
+            },
+            confirmed: true,
+            role: "STUDENT",
+          },
+          update: {
+            displayName: userName || undefined,
+            phoneNumber: session.customer_details?.phone || undefined,
+            tags: { push: ["aisdk-curso-ondemand"] },
+            ...(aisdkCourse && { courses: { push: aisdkCourse.id } }),
+          },
+        });
+
+        await sendAisdkWelcome({ to: email, userName });
+        await successPurchase({
+          userName: userName || "Sin nombre",
+          userMail: email,
+          title: "Curso AI SDK (on-demand)",
+          slug: "ai-sdk",
+        });
+
+        console.info("WEBHOOK: AI SDK curso on-demand success");
+        return new Response(null);
+      }
+
+      // LEGACY: Handle AI SDK workshop (mantener compatibilidad con compras anteriores)
+      // Usuarios que compraron con aisdk-workshop MANTIENEN acceso al curso
+      if (session.metadata.type === "aisdk-workshop") {
+        const userName =
+          session.customer_details?.name || session.metadata.name;
+
         const aisdkCourse = await db.course.findUnique({
           where: { slug: "ai-sdk" },
         });
@@ -81,7 +136,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             displayName: userName || undefined,
             phoneNumber: session.customer_details?.phone || undefined,
             tags: { push: ["aisdk-workshop-paid"] },
-            ...(aisdkCourse && { courses: { push: aisdkCourse.id } }), // 🤔😵‍💫
+            ...(aisdkCourse && { courses: { push: aisdkCourse.id } }),
           },
         });
 
@@ -89,15 +144,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         await successPurchase({
           userName: userName || "Sin nombre",
           userMail: email,
-          title: "Taller AI SDK",
+          title: "Taller AI SDK (legacy)",
           slug: "ai-sdk",
         });
 
-        console.info("WEBHOOK: AI SDK workshop success");
+        console.info("WEBHOOK: AI SDK workshop (legacy) success");
         return new Response(null);
       }
 
-      // Handle AI SDK Webinar (gratuito) - solo registra subscriber
+      // LEGACY: Handle AI SDK Webinar - ahora se usa lista de espera en landing
       if (session.metadata.type === "aisdk-webinar") {
         const userName =
           session.customer_details?.name || session.metadata.name;
@@ -123,7 +178,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return new Response(null);
       }
 
-      // Handle AI SDK Taller 1 - registra subscriber y envía bienvenida
+      // LEGACY: Handle AI SDK Taller 1 - ahora se usa lista de espera en landing
       if (session.metadata.type === "aisdk-taller-1") {
         const userName =
           session.customer_details?.name || session.metadata.name;
@@ -274,22 +329,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
       // Build tags based on metadata
       const tags = ["newsletter"];
-
-      // Add purchase-specific tags
-      if (
-        session.metadata.type === "claude-workshop" ||
-        session.metadata.type === "claude-workshop-direct"
-      ) {
-        tags.push("claude-course-paid");
-        if (session.metadata.type === "claude-workshop-direct") {
-          tags.push("direct-purchase");
-        } else {
-          if (session.metadata.experienceLevel)
-            tags.push(`level-${session.metadata.experienceLevel}`);
-          if (session.metadata.contextObjective)
-            tags.push(`context-${session.metadata.contextObjective}`);
-        }
-      }
 
       // Store any additional purchase metadata
       let purchaseMetadata = {};
