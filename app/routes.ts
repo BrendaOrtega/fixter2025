@@ -37,6 +37,7 @@ export default [
   route("ai-sdk", "routes/ai-sdk.tsx"),
   // Pong con Vanilla JS - Classic Course
   route("pong", "routes/pong.tsx"),
+  route("pong/viewer", "routes/pong-viewer.tsx"),
   // Testing con Jest - Redirect to course detail
   route("testing", "routes/testing.tsx"),
   // Libros
@@ -69,6 +70,9 @@ export default [
   route("live_session", "routes/talleres/live_session.tsx"),
   ...prefix("cursos", [
     index("routes/cursos.tsx"),
+    route("pong-vanilla-js", "routes/cursos.pong-vanilla-js._index.tsx"),
+    route("testing-en-react-con-jest-y-testing-library/detail", "routes/cursos.testing-en-react-con-jest-y-testing-library.detail.tsx"),
+    route("minimo-js-para-react/detail", "routes/cursos.minimo-js-para-react.detail.tsx"),
     route(":courseSlug/viewer", "routes/courseViewer.tsx"),
     route(":courseSlug/detalle", "routes/courseDetail.tsx"),
     route(":courseSlug/rating", "routes/cursos.$courseSlug.rating.tsx"),

@@ -102,8 +102,8 @@ const COURSES_CONFIG = [
     ],
   },
   {
-    slug: "prisma-orm",
-    title: "Prisma ORM Completo",
+    slug: "construye-un-backend-con-prisma-typescript-y-express-en-nodejs",
+    title: "Construye un Backend con Prisma, TypeScript y Express en Node.js",
     icon: "/icons/prisma.svg",
     description:
       "Domina Prisma, el ORM moderno para Node.js. Aprende esquemas, migraciones, queries y relaciones.",
