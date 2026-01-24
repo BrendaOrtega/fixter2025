@@ -711,6 +711,68 @@ Ver `/Users/bliss/.claude/plans/humble-toasting-nebula.md`
 
 ---
 
+## Creación de Posts del Blog
+
+### Proceso Rápido para Crear Posts
+
+Para crear posts rápidamente, usar el script en `scripts/create-post-template.ts` como plantilla:
+
+```bash
+npx tsx scripts/create-post.ts
+```
+
+**Campos requeridos del Post:**
+```typescript
+{
+  slug: "url-amigable-del-post",
+  title: "Título del Post",
+  body: "Contenido en Markdown",
+  published: true,
+  authorName: "Héctorbliss",
+  authorAt: "@blissito",
+  photoUrl: "https://i.imgur.com/TaDTihr.png",
+  authorAtLink: "https://www.hectorbliss.com",
+  tags: ["tag1", "tag2"],
+  mainTag: "tag-principal",
+  // Para SEO/OG (importante para redes sociales):
+  coverImage: "URL de imagen 1200x630",
+  metaImage: "URL de imagen 1200x630",
+}
+```
+
+### 📺 TEMPORADA ACTUAL: Promoción del Canal de YouTube
+
+**IMPORTANTE (Enero 2026):** Por esta temporada, SIEMPRE incluir una invitación al canal de YouTube **a la mitad del post**:
+
+```markdown
+---
+
+🎬 **¿Te está gustando este contenido?** Tenemos más tutoriales en video en nuestro canal de YouTube. [Suscríbete aquí](https://www.youtube.com/@fixtergeek) para no perderte ninguno.
+
+---
+```
+
+**Variaciones permitidas:**
+- "Si prefieres aprender en video, visita nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek)"
+- "📺 Más contenido como este en [YouTube @fixtergeek](https://www.youtube.com/@fixtergeek)"
+
+### Imágenes para OG/Twitter
+
+Usar imágenes de Unsplash (libres de derechos) con dimensiones 1200x630:
+
+```
+https://images.unsplash.com/photo-XXXXX?w=1200&h=630&fit=crop
+```
+
+### Firma del Post
+
+Siempre terminar con:
+```
+Abrazo. bliss.
+```
+
+---
+
 ## Guía de Estilo para Claude Code
 
 ### Audiencia y Tono
