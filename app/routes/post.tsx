@@ -15,7 +15,7 @@ import { PiLinkSimpleBold } from "react-icons/pi";
 import { useToast } from "~/hooks/useToaster";
 import { twMerge } from "tailwind-merge";
 import getMetaTags from "~/utils/getMetaTags";
-import { AudioPlayer } from "~/components/AudioPlayer";
+import { AudioButton } from "~/components/AudioButton";
 import useAnalytics from "~/hooks/use-analytics";
 import { motion } from "motion/react";
 
@@ -264,6 +264,14 @@ export default function Page({
                   <div className="flex justify-between items-center flex-wrap gap-y-4 mb-6">
                     <div className="flex items-center gap-4">
                       <Autor {...post} />
+                      {post.body && (
+                        <AudioButton
+                          postId={post.id}
+                          postTitle={post.title}
+                          postBody={post.body}
+                          audioData={audioData}
+                        />
+                      )}
                       <button
                         onClick={() => setReadingMode(!readingMode)}
                         className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-800 text-gray-300 hover:text-purple-400 border border-gray-700"
@@ -293,17 +301,6 @@ export default function Page({
                 </div>
 
                 <YoutubeComponent url={post.youtubeLink as string} />
-
-                {/* Audio Player */}
-                {post.body && (
-                  <AudioPlayer
-                    postId={post.id}
-                    postTitle={post.title}
-                    postBody={post.body}
-                    className="my-6"
-                    audioData={audioData}
-                  />
-                )}
 
                 <div className={twMerge(
                   "prose prose-lg prose-invert max-w-none",
