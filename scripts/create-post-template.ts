@@ -149,7 +149,7 @@ async function main() {
 
       // Autor
       authorName: "Héctorbliss",
-      authorAt: "@blissito",
+      authorAt: "@hectorbliss",
       photoUrl: "https://i.imgur.com/TaDTihr.png",
       authorAtLink: "https://www.hectorbliss.com",
 

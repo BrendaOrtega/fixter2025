@@ -12,7 +12,6 @@ export const AdminNav = () => {
     { href: "/admin/sequences", label: "Sequences" },
     { href: "/admin/webinar", label: "Webinar" },
     { href: "/admin/posts", label: "Posts" },
-    { href: "/admin/talleres", label: "Talleres" },
     { href: "/admin/newsletter", label: "Newsletter" },
     { href: "/admin/analytics", label: "Analytics" },
     { href: "/admin/backups", label: "Backups" },
@@ -22,7 +21,7 @@ export const AdminNav = () => {
   return (
     <nav className="bg-gray-900 border-b border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-4 overflow-x-auto py-3">
+        <div className="flex gap-4 flex-wrap py-3">
           {links.map((link) => (
             <Link
               key={link.href}

@@ -729,7 +729,7 @@ npx tsx scripts/create-post.ts
   body: "Contenido en Markdown",
   published: true,
   authorName: "Héctorbliss",
-  authorAt: "@blissito",
+  authorAt: "@hectorbliss",
   photoUrl: "https://i.imgur.com/TaDTihr.png",
   authorAtLink: "https://www.hectorbliss.com",
   tags: ["tag1", "tag2"],
@@ -742,19 +742,38 @@ npx tsx scripts/create-post.ts
 
 ### 📺 TEMPORADA ACTUAL: Promoción del Canal de YouTube
 
-**IMPORTANTE (Enero 2026):** Por esta temporada, SIEMPRE incluir una invitación al canal de YouTube **a la mitad del post**:
+**IMPORTANTE (Enero 2026):** Por esta temporada, incluir invitación al canal de YouTube siguiendo la estrategia **"Value-First + Natural Breaks"**.
 
-```markdown
----
+#### Principio
 
-🎬 **¿Te está gustando este contenido?** Tenemos más tutoriales en video en nuestro canal de YouTube. [Suscríbete aquí](https://www.youtube.com/@fixtergeek) para no perderte ninguno.
+Pedir suscripción **después** de demostrar valor, en momentos de transición natural. Basado en patrones de creadores exitosos (Fireship, Theo, The Primeagen).
 
----
-```
+#### Ubicaciones efectivas (flexibles)
 
-**Variaciones permitidas:**
-- "Si prefieres aprender en video, visita nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek)"
-- "📺 Más contenido como este en [YouTube @fixtergeek](https://www.youtube.com/@fixtergeek)"
+| Momento | Por qué funciona |
+|---------|------------------|
+| Después del primer tip/valor | Ya ganaste credibilidad |
+| En transiciones entre secciones | Pausa natural |
+| Antes del cierre (no al final-final) | Lector aún atento |
+
+#### Formatos de CTA (variar entre posts)
+
+1. **Inline sutil**: "...y si quieres ver esto en acción, lo explico en [este video del canal](https://www.youtube.com/@fixtergeek)"
+2. **Caja destacada** (con separadores `---`):
+   ```markdown
+   ---
+   🎬 **¿Te está gustando este contenido?** Tenemos más tutoriales en video en nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek).
+
+   ---
+   ```
+3. **Pregunta retórica**: "¿Prefieres aprender en video? Visita nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek)"
+4. **Mención contextual**: "Como explico en [el canal](https://www.youtube.com/@fixtergeek)..." (si hay video relacionado)
+
+#### Lo que NO funciona
+- ❌ CTAs al inicio (no has dado valor)
+- ❌ Siempre en el mismo lugar (se vuelve invisible)
+- ❌ Tono desesperado o suplicante
+- ❌ Múltiples CTAs de YouTube en el mismo post
 
 ### Imágenes para OG/Twitter
 

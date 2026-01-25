@@ -4,12 +4,13 @@ import type { Post } from "~/types/models";
 import { PostForm } from "~/components/forms/PostForm";
 import slugify from "slugify";
 import { z } from "zod";
-import { AiOutlineDeliveredProcedure } from "react-icons/ai";
+import { AiOutlineDeliveredProcedure, AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useEffect, useState, type ReactNode } from "react";
 import { MdEdit } from "react-icons/md";
-import { redirect, useSearchParams, Link } from "react-router";
+import { redirect, useFetcher, Link } from "react-router";
 import { HiOutlineChartBar } from "react-icons/hi";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
+import { AdminNav } from "~/components/admin/AdminNav";
 
 export const createPostSchema = z.object({
   title: z.string().min(3),
@@ -70,7 +71,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
             authorName: "BrendaGo",
           }
         : {
-            authorAt: "@blissito",
+            authorAt: "@hectorbliss",
             photoUrl: "https://i.imgur.com/TaDTihr.png",
             authorAtLink: "https://www.hectorbliss.com",
             authorName: "Héctorbliss",
@@ -112,16 +113,26 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   await getAdminOrRedirect(request);
 
   const url = new URL(request.url);
+  const skip = url.searchParams.get("skip")
+    ? Number(url.searchParams.get("skip"))
+    : 0;
+
   const posts = await db.post.findMany({
-    take: 5,
+    take: 12,
+    skip,
     orderBy: { createdAt: "desc" },
   });
-  return { posts, hasSuccess: url.searchParams.has("success") };
+
+  const totalCount = await db.post.count();
+
+  return { posts, hasSuccess: url.searchParams.has("success"), totalCount };
 };
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const { posts, hasSuccess } = loaderData;
+  const { posts, hasSuccess, totalCount } = loaderData;
   const [showform, setShowForm] = useState(false);
   const [current, setCurrent] = useState<Post | null>(null);
+  const [items, setItems] = useState(posts);
+  const fetcher = useFetcher();
 
   const onOpen = (post: Post) => {
     setCurrent(post);
@@ -137,48 +148,95 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     onClose();
   }, [hasSuccess]);
 
+  // Sincronizar posts iniciales
+  useEffect(() => {
+    setItems(posts);
+  }, [posts]);
+
+  // Agregar posts cuando se cargan más
+  useEffect(() => {
+    if (fetcher.data?.posts) {
+      setItems((prev) => [...prev, ...fetcher.data.posts]);
+    }
+  }, [fetcher.data]);
+
+  const handleLoadMore = () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("skip", String(items.length));
+    fetcher.submit(searchParams, { method: "get" });
+  };
+
+  const isLoading = fetcher.state !== "idle";
+  const showLoadMore = items.length < totalCount;
+
   return (
-    <article className="py-20 text-white px-10 mx-auto max-w-5xl">
-      <h1 className="text-4xl font-bold tracking-tighter">Posts</h1>
-      <section className="grid grid-cols-3 gap-4 my-6">
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            extraButtons={
-              <>
-                <Link
-                  to={`/admin/heatmap/${post.id}`}
-                  className="p-1 hover rounded-lg hover:bg-gray-800 group"
-                >
-                  <HiOutlineChartBar />
-                  <span className="text-xs p-1 bg-gray-800 rounded text-gray-400 translate-x-[-20px] block invisible group-hover:visible absolute w-max bottom-10">
-                    Ver Heatmap
-                  </span>
-                </Link>
-                <button
-                  onClick={() => onOpen(post)}
-                  className="p-1 hover rounded-lg hover:bg-gray-800 group"
-                >
-                  <MdEdit />
-                  <span className="text-xs p-1 bg-gray-800 rounded text-gray-400 translate-x-[-10px] block invisible group-hover:visible absolute w-max bottom-10">
-                    Editar
-                  </span>
-                </button>
-              </>
-            }
-            post={post}
-          />
-        ))}
-        <CubeButton onClick={!!current ? onClose : onOpen}>
-          {!!current || showform ? "-" : "+"}
-        </CubeButton>
-      </section>
-      {showform && (
-        <section>
-          <PostForm onCancel={onClose} current={current} />
+    <>
+      <AdminNav />
+      <article className="py-20 text-white px-10 mx-auto max-w-5xl">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-4xl font-bold tracking-tighter">Posts</h1>
+          <span className="text-gray-400">
+            {items.length} de {totalCount} posts
+          </span>
+        </div>
+        <section className="grid grid-cols-3 gap-4 my-6">
+          {items.map((post) => (
+            <PostCard
+              key={post.id}
+              extraButtons={
+                <>
+                  <Link
+                    to={`/admin/heatmap/${post.id}`}
+                    className="p-1 hover rounded-lg hover:bg-gray-800 group"
+                  >
+                    <HiOutlineChartBar />
+                    <span className="text-xs p-1 bg-gray-800 rounded text-gray-400 translate-x-[-20px] block invisible group-hover:visible absolute w-max bottom-10">
+                      Ver Heatmap
+                    </span>
+                  </Link>
+                  <button
+                    onClick={() => onOpen(post)}
+                    className="p-1 hover rounded-lg hover:bg-gray-800 group"
+                  >
+                    <MdEdit />
+                    <span className="text-xs p-1 bg-gray-800 rounded text-gray-400 translate-x-[-10px] block invisible group-hover:visible absolute w-max bottom-10">
+                      Editar
+                    </span>
+                  </button>
+                </>
+              }
+              post={post}
+            />
+          ))}
+          <CubeButton onClick={!!current ? onClose : onOpen}>
+            {!!current || showform ? "-" : "+"}
+          </CubeButton>
         </section>
-      )}
-    </article>
+
+        {showLoadMore && (
+          <button
+            onClick={handleLoadMore}
+            disabled={isLoading}
+            className="py-2 px-6 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white rounded-full font-semibold block mx-auto my-8 transition-all"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <AiOutlineLoading3Quarters className="animate-spin" />
+                Cargando...
+              </span>
+            ) : (
+              "Cargar más"
+            )}
+          </button>
+        )}
+
+        {showform && (
+          <section>
+            <PostForm onCancel={onClose} current={current} />
+          </section>
+        )}
+      </article>
+    </>
   );
 }
 

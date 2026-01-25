@@ -19,9 +19,32 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     );
   }
 
-  // Ignorar assets - no son contenido relevante para recuperar
+  // Redirecciones de contenido antiguo
+  const redirects: Record<string, string> = {
+    "/guias/custom-hooks": "/blog",
+    "/meetup": "/",
+    "/books": "/libros",
+    "/cursos/pong-vanilla-js/": "/cursos/pong-vanilla-js",
+    "/cursos-en-vivo/desarrollo-web-para-principiantes-en-vivo": "/cursos",
+  };
+
+  if (redirects[pathname]) {
+    throw redirect(redirects[pathname]);
+  }
+
+  // Ignorar la página 404 misma y assets
+  if (pathname === "/404") {
+    return null;
+  }
+
   const assetExtensions = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map|webp|mp4|webm|json)$/i;
   if (assetExtensions.test(pathname)) {
+    return null;
+  }
+
+  // Ignorar rutas de scanners de seguridad (WordPress, PHP, etc.)
+  const securityScannerPatterns = /\/(wp-content|wp-admin|wp-includes|\.env|phpinfo|\.php$|xmlrpc)/i;
+  if (securityScannerPatterns.test(pathname)) {
     return null;
   }
 

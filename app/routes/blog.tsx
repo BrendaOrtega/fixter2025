@@ -69,7 +69,7 @@ export default function Page({
   loaderData: { posts, search },
 }: Route.ComponentProps) {
   // TODO: Quitar mantenimiento cuando se recupere el blog
-  const EN_MANTENIMIENTO = true;
+  const EN_MANTENIMIENTO = false;
 
   const fetcher = useFetcher();
   const [items, setItems] = useState(posts);
