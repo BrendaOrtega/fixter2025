@@ -5,6 +5,10 @@ import type { Route } from "./+types/post";
 import { IoIosArrowBack, IoLogoWhatsapp } from "react-icons/io";
 import { Autor } from "~/components/common/Autor";
 import { Streamdown } from "streamdown";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import LinkExt from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
 import { CourseBanner } from "~/components/CourseBanner";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
 import { SubscriptionModal } from "~/components/SubscriptionModal";
@@ -84,6 +88,36 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   };
 };
 
+function TiptapRenderer({ content }: { content: any }) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      LinkExt.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-600 underline cursor-pointer hover:text-blue-800',
+        },
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded',
+        },
+      }),
+    ],
+    content,
+    editable: false,
+    immediatelyRender: false,
+  });
+
+  if (!editor) return <div>Cargando...</div>;
+
+  return (
+    <div className="prose prose-lg prose-invert max-w-none">
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+
 export default function Page({
   loaderData: { post, posts, audioData },
 }: Route.ComponentProps) {
@@ -96,6 +130,8 @@ export default function Page({
   const [headings, setHeadings] = useState<
     Array<{ id: string; text: string; level: number }>
   >([]);
+  
+  const contentFormat = (post as any).contentFormat || "markdown";
 
   useEffect(() => {
     // Scroll suave al principio del post
@@ -306,7 +342,11 @@ export default function Page({
                   "prose prose-lg prose-invert max-w-none",
                   readingMode && "prose-2xl [&_p]:text-3xl [&_p]:leading-relaxed [&_li]:text-2xl [&_h2]:text-5xl [&_h3]:text-4xl [&_pre]:text-xl [&_blockquote]:text-2xl"
                 )}>
-                  <Streamdown shikiTheme={["one-dark-pro", "one-dark-pro"]}>{post.body}</Streamdown>
+                  {contentFormat === "tiptap" && (post as any).content ? (
+                    <TiptapRenderer content={(post as any).content} />
+                  ) : (
+                    <Streamdown shikiTheme={["one-dark-pro", "one-dark-pro"]}>{post.body}</Streamdown>
+                  )}
                 </div>
               </motion.div>
             </section>
