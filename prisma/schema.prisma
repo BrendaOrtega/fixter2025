@@ -273,9 +273,13 @@ model Post {
   // defaults
   published Boolean @default(false)
 
+  // Content (Markdown or Tiptap JSON)
+  body           String?  // Backward compatibility (Markdown)
+  content        Json?    // Tiptap JSON AST (new posts)
+  contentFormat  String?  @default("markdown")  // "markdown" | "tiptap"
+
   // Miscelanius
   coverImage   String?
-  body         String?
   authorAt     String?
   photoUrl     String?
   isFeatured   Boolean? @default(false)

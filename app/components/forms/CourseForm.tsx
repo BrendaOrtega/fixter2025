@@ -1218,6 +1218,9 @@ export const Input = ({
   className,
   type = "text",
   defaultValue,
+  value,
+  onChange,
+  required,
 }: {
   defaultValue?: string | number | null;
   type?: "text" | "textarea";
@@ -1228,13 +1231,18 @@ export const Input = ({
   error?: string;
   label?: string;
   className?: string;
+  value?: string | number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  required?: boolean;
 }) => {
   const Element = type === "textarea" ? "textarea" : "input";
   return (
     <label className="grid gap-2 mb-px text-white w-full">
       <span>{label}</span>
       <Element
-        defaultValue={defaultValue || undefined}
+        defaultValue={!value && !onChange ? (defaultValue || undefined) : undefined}
+        value={value || ""}
+        onChange={onChange}
         placeholder={placeholder}
         className={cn(
           "rounded-lg text-black",
@@ -1243,7 +1251,8 @@ export const Input = ({
         )}
         type={type}
         name={name}
-        {...register?.(name, registerOptions)}
+        required={required}
+        {...(register ? register(name, registerOptions) : {})}
       />
       {error && <p className="text-red-400 text-sm">{error}</p>}
     </label>

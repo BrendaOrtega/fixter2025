@@ -21,11 +21,34 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   // Redirecciones de contenido antiguo
   const redirects: Record<string, string> = {
-    "/guias/custom-hooks": "/blog",
+    "/guias/custom-hooks": "/blog/custom-hooks-react-guia-completa",
     "/meetup": "/",
     "/books": "/libros",
     "/cursos/pong-vanilla-js/": "/cursos/pong-vanilla-js",
     "/cursos-en-vivo/desarrollo-web-para-principiantes-en-vivo": "/cursos",
+    "/blog/aprende-en-5-minutos-que-es-html-y-cuando-utilizar-cada-una-de-sus-etiquetas/blog":
+      "/blog",
+    "/cursos/aprende-desarrollo-web-full-stack-con-react-y-remix/viewer/blog":
+      "/blog",
+    // Redirecciones de blog posts con tráfico (auditoría Enero 2026)
+    "/blog/las-5-mejores-herramientas-para-diseno-de-interfaces-2022":
+      "/blog/5-herramientas-para-Diseno-de-Interfaces-en-2025",
+    "/blog/Como-anadir-una-llave-SSH-a-Github_7X8":
+      "/blog/como-configurar-ssh-keys-github",
+    // Posts recreados (alta prioridad - >50 visitas)
+    "/blog/OpenCode:-5-Razones-por-las-que-este-Repositorio":
+      "/blog/OpenCode-5-Razones-por-las-que-este-Repositorio-te-Interesa",
+    "/blog/Claude-Code-vs-GitHub-Copilot-vs-Cursor":
+      "/blog/Claude-Code-vs-GitHub-Copilot-vs-Cursor-Cual-Elegir",
+    // Posts recreados (media prioridad - 20-50 visitas)
+    "/blog/Mis-7-Hacks-para-Claude-Code_8gk":
+      "/blog/Mis-7-Hacks-para-Claude-Code",
+    "/blog/Los-3-Subagentes-Esenciales-de-Claude-Code":
+      "/blog/Los-3-Subagentes-Esenciales-de-Claude-Code",
+    "/blog/Agent-Workflow-Patterns":
+      "/blog/Agent-Workflow-Patterns-Patrones-para-Agentes-IA",
+    "/blog/por-que-estudiar-minimo-3-horas-a-la-semana":
+      "/blog/por-que-estudiar-3-horas-a-la-semana",
   };
 
   if (redirects[pathname]) {

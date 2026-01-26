@@ -175,9 +175,17 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       <article className="py-20 text-white px-10 mx-auto max-w-5xl">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold tracking-tighter">Posts</h1>
-          <span className="text-gray-400">
-            {items.length} de {totalCount} posts
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-gray-400">
+              {items.length} de {totalCount} posts
+            </span>
+            <Link
+              to="/admin/blog-editor/new"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition"
+            >
+              ✨ Nuevo (Tiptap)
+            </Link>
+          </div>
         </div>
         <section className="grid grid-cols-3 gap-4 my-6">
           {items.map((post) => (
@@ -194,15 +202,15 @@ export default function Page({ loaderData }: Route.ComponentProps) {
                       Ver Heatmap
                     </span>
                   </Link>
-                  <button
-                    onClick={() => onOpen(post)}
+                  <Link
+                    to={`/admin/blog-editor/${post.id}`}
                     className="p-1 hover rounded-lg hover:bg-gray-800 group"
                   >
                     <MdEdit />
                     <span className="text-xs p-1 bg-gray-800 rounded text-gray-400 translate-x-[-10px] block invisible group-hover:visible absolute w-max bottom-10">
-                      Editar
+                      Editar con {(post as any).contentFormat === "tiptap" ? "Tiptap" : "Markdown"}
                     </span>
-                  </button>
+                  </Link>
                 </>
               }
               post={post}
@@ -256,6 +264,9 @@ const PostCard = ({
   extraButtons?: ReactNode;
   post: Post;
 }) => {
+  const format = (post as any).contentFormat || "markdown";
+  const isTiptap = format === "tiptap";
+
   return (
     <section
       style={
@@ -266,7 +277,18 @@ const PostCard = ({
       }
       className="flex flex-col border rounded-xl py-3 px-6 hover:scale-105 transition-all"
     >
-      <h2>{post.title}</h2>
+      <div className="flex justify-between items-start mb-2">
+        <h2 className="flex-1">{post.title}</h2>
+        <span
+          className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ml-2 ${
+            isTiptap
+              ? "bg-blue-900 text-blue-200"
+              : "bg-gray-700 text-gray-300"
+          }`}
+        >
+          {isTiptap ? "✨ Tiptap" : "📝 Markdown"}
+        </span>
+      </div>
       <nav className="mt-auto flex justify-end gap-4">
         <a
           rel="noreferrer"

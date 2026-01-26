@@ -785,10 +785,122 @@ https://images.unsplash.com/photo-XXXXX?w=1200&h=630&fit=crop
 
 ### Firma del Post
 
-Siempre terminar con:
+**Solo para posts de Héctorbliss/bliss**, terminar con:
 ```
 Abrazo. bliss.
 ```
+
+⚠️ **No usar esta firma para otros autores** (ej: Brenda Ortega). Cada autor tiene su propio estilo de cierre o simplemente termina con el contenido.
+
+---
+
+## Script de Importación de Blog Posts desde Wayback Machine
+
+**Ubicación:** `app/subagents/import-blog-post.ts`
+
+**Propósito:** Importar blog posts desde HTML archivado en Wayback Machine directamente a MongoDB, parseando el JSON embebido en React Router.
+
+### Uso Básico
+
+```bash
+npx tsx app/subagents/import-blog-post.ts /ruta/a/archivo.html
+```
+
+O puedes pasar HTML como string directo (si no es archivo):
+
+```bash
+npx tsx app/subagents/import-blog-post.ts '<window.__reactRouterContext...'
+```
+
+### ¿Cuándo usar?
+
+- Cuando necesites rescatar posts antiguos de Wayback Machine
+- Para migrar contenido entre instancias
+- Cuando tengas HTML archivado con todos los metadatos embebidos
+
+### Características
+
+✅ **Parsing inteligente**: Extrae JSON de React Router serializado (`window.__reactRouterContext.streamController.enqueue()`)
+
+✅ **Validación automática**: Verifica que tenga slug, title, body y published antes de insertar
+
+✅ **SKIP si existe**: No reemplaza posts con el mismo slug - útil para evitar duplicados
+
+✅ **Resolución de índices**: Convierte referencias de números a strings (tags, category)
+
+✅ **Reportes detallados**: Muestra cada paso en consola con emojis para claridad
+
+### Flujo del Script
+
+1. **Lectura**: Abre archivo HTML o usa string directo
+2. **Extracción**: Busca `streamController.enqueue("...")` y extrae JSON
+3. **Parsing**: Desescapea y parsea el array serializado de React Router
+4. **Mapeo**: Convierte el array plano a objeto Post
+5. **Validación**: Verifica campos requeridos
+6. **Duplicados**: Checa si el slug ya existe en DB
+7. **Inserción**: Si todo OK, crea el post en MongoDB
+8. **Reporte**: Muestra ID, URL, y estado final
+
+### Ejemplo de Salida
+
+```
+📖 Reading from file: /tmp/wayback.html
+
+🚀 Starting blog post import...
+
+📄 Parsing HTML JSON...
+✅ Parsed post: "¡Ya no uses create-react-app!, por favor."
+   Slug: ya-no-uses-create-react-app-por-favor-2022
+
+🔍 Validating post data...
+✅ Validation passed
+
+🔎 Checking if post already exists...
+✅ Post is new (not in database)
+
+💾 Inserting post into database...
+✅ Post created successfully!
+   ID: 69762f0ab60d92a7810dfd50
+   URL: https://www.fixtergeek.com/blog/ya-no-uses-create-react-app-por-favor-2022
+
+🎉 Import complete!
+```
+
+### Campos Soportados
+
+El script importa automáticamente:
+
+- `slug` - URL-friendly identifier
+- `title` - Título del post
+- `published` - Boolean de publicación
+- `coverImage` - URL de imagen cover
+- `metaImage` - URL para OG tags
+- `body` - Contenido en Markdown
+- `authorName` - Nombre del autor
+- `authorAt` - Handle del autor (@username)
+- `photoUrl` - Avatar del autor
+- `authorAtLink` - Link al perfil del autor
+- `youtubeLink` - Link a video asociado (si aplica)
+- `mainTag` - Tag principal para filtrado
+- `tags` - Array de tags
+- `category` - Array de categorías
+- `isFeatured` - Boolean si es featured
+
+### Casos de Uso
+
+**Rescatar un post antiguo:**
+
+```bash
+# Descargar HTML de Wayback Machine
+wget https://web.archive.org/web/20250810221123/https://www.fixtergeek.com/blog/ya-no-uses-create-react-app-por-favor-2022 -O /tmp/post.html
+
+# Importar
+npx tsx app/subagents/import-blog-post.ts /tmp/post.html
+```
+
+**Verificar qué sucedería sin insertar:**
+
+El script siempre valida primero, así que puedes revisar la salida antes de que inserte. Si quieres hacer pruebas sin afectar DB, modifica temporalmente el script para comentar la línea `create()`.
 
 ---
 

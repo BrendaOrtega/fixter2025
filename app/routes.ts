@@ -53,6 +53,7 @@ export default [
     index("routes/admin/dash.tsx"),
     route("cursos", "routes/admin/courses.tsx"),
     route("posts", "routes/admin/postList.tsx"),
+    route("blog-editor/:postId", "routes/admin/blog-editor.tsx"),
     route("talleres", "routes/admin/talleres.tsx"),
     route("webinar", "routes/admin/webinar.tsx"),
     route("sequences", "routes/admin/sequences.tsx"),
@@ -100,6 +101,8 @@ export default [
     route("book-epub", "routes/api/book-epub.tsx"),
     route("ratings", "routes/api/ratings.ts"),
     route("backup-download", "routes/api/backup-download.tsx"),
+    route("blog.save-post", "routes/api/blog.save-post.ts"),
+    route("ai.text-command", "routes/api/ai.text-command.ts"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?
