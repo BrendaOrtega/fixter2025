@@ -1,167 +1,210 @@
 import { db } from "../app/.server/db";
 
-const postContent = `En mi canal ya tengo [un video](https://youtu.be/AbU5AYIOeU0?si=2VS5kc_vYcC2o0b5) en el que te muestro cómo usar Fabric.js. 📺
+const fabricjsPostContent = `
+El canvas de HTML es muy potente por sí solo, pero a veces se torna difícil de programar. Fabric te permite multiplicar el poder de la etiqueta canvas, porque te ayuda a administrar los elementos que colocas dentro, como objetos. Puedes modificar sus atributos e interactuar por medio de vértices, entre muchas más opciones muy potentes.
 
-[Fabric.js](https://fabricjs.com/) es una *library* *open source* que le agrega controles y opciones muy útiles al *canvas* de HTML5.
+Vamos, pues, en este post, a inicializar nuestro \`canvas\` con habilidades especiales, agregar una imagen desde nuestra computadora y de paso a generar un descargable \`PNG\` desde nuestro navegador. ¡Bueno, vamos allá! 🍿
 
-En este componente utilizo Fabric.js para crear un selector de imagen de perfil, así recorto la imagen desde el cliente y mando la versión más pequeña posible directo a mi *bucket* S3, para luego actualizar el modelo de mi usuario. 🤓
+## Inicializando el proyecto
 
-Mi código está simplificado con fines educativos, no se recomienda su uso en producción.
+Para este proyecto vamos a utilizar únicamente un archivo: \`index.html\`
 
-\`\`\`jsx
-const CanvasModal = forwardRef<HTMLCanvasElement>(
-  ({ onClose, visible }: { visible?: boolean; onClose?: () => void }, ref) => {
-    return (
-      <div
-        className={cn(
-          "fixed inset-0 hidden place-content-center bg-gray-500/70 backdrop-blur-sm z-10",
-          {
-            grid: visible,
-          }
-        )}
-      >
-        <canvas ref={ref} className="" />
-        <button
-          onClick={onClose}
-          className="py-2 px-4 bg-brand-700 text-white rounded-xl mt-12"
-        >
-          Aceptar
-        </button>
-      </div>
-    );
-  }
-);
+\`\`\`html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
+    <style>
+      canvas {
+        border: 4px solid #323232;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Fabric.Canvas demo</h2>
+    <canvas id="canvas"></canvas>
+    <script>
+      const canvas = new fabric.Canvas("canvas");
+    </script>
+  </body>
+</html>
 \`\`\`
 
-Ese es el componente que renderiza el canvas.
+Observa cómo producimos un objeto \`canvas\` a partir de la clase \`fabric.Canvas\` con una instancia, y pasando el \`id\` del nodo. También puedes no seleccionarlo y generar el nodo directamente, pero este método es el más sencillo.
 
-\`\`\`jsx
-  const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    if (!event.currentTarget.files?.length || !canvasRef.current) return; //@todo files
-    setIsEditing(true);
+Antes de pasar directo a la construcción de nuestro editor de imágenes, quiero que veas cómo ya estamos listos para agregar \`objetos\` al canvas:
 
-    const imageURL = URL.createObjectURL(event.currentTarget.files[0]);
-    const img = await fabric.FabricImage.fromURL(imageURL);
-    img.selectable = true;
-    img.scaleToHeight(320);
-    canvasObj.current?.dispose();
-    canvasObj.current = new fabric.Canvas(canvasRef.current, {
-      width: innerWidth,
-      height: innerHeight - 220,
-      backgroundColor: "black",
-    });
-    const center = canvasObj.current.getCenterPoint();
-    img.left = center.x - 160;
-    img.top = center.y - 160;
-    canvasObj.current.add(img);
-    const clipPath = new fabric.Circle({
-      radius: 160,
-      top: center.y - 160,
-      left: center.x - 160,
-      borderColor: "red",
-    });
-    canvasObj.current.clipPath = clipPath;
-    canvasObj.current.setActiveObject(canvasObj.current.item(0));
-  };
+\`\`\`javascript
+const canvas = new fabric.Canvas("canvas");
+var rect = new fabric.Rect({
+  left: 100,
+  top: 100,
+  fill: "red",
+  width: 50,
+  height: 50,
+});
+canvas.add(rect); // Lo agregamos después de crearlo
 \`\`\`
 
-Esta es la función que usa \`fabric.Canvas\`
+De esta forma, tienes total control del objeto que has agregado al canvas. Ahora es sumamente simple cambiarlo, rotarlo o incluso eliminarlo programáticamente. ¡Pero ahora también puedes interactuar con el elemento usando el mouse!
+
+![Interacción con rect en canvas](https://i.imgur.com/QQTxSgC.gif)
+
+¿Genial, no? 🤯
 
 ---
 
-🎬 **¿Te está gustando este contenido?** Tenemos más tutoriales en video en nuestro canal de YouTube. [Suscríbete aquí](https://www.youtube.com/@fixtergeek) para no perderte ninguno.
+🎬 **¿Te está gustando este contenido?** Tenemos más tutoriales en video en nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek).
 
 ---
 
-\`\`\`jsx
-  const onClose = async () => {
-    setIsEditing(false);
-    const center = canvasObj.current?.getCenterPoint();
-    canvasObj.current?.setDimensions({
-      width: 160,
-      height: 160,
-    });
-    const resultImage = canvasObj.current?.toDataURL({
-      // top: center.y,
-      top: center.y - 160,
-      left: center.x - 160,
-      width: 320,
-      height: 320,
-      multiplier: 1,
-      format: "png",
-      // quality: 0.2,
-    });
-    const file = await fetch(resultImage).then((r) => r.blob());
-    setImageSrc(resultImage);
-    const a = document.createElement("a");
-    a.href = resultImage;
-    a.download = true;
-    a.click();
-    if (!file) return;
-    await fetch(putURL, {
-      method: "PUT",
-      body: file,
-      headers: {
-        "content-type": file.type,
-        "content-length": file.size,
-      },
-    }).catch((e) => console.error(e));
-  };
+## Vamos ahora a permitir que el usuario agregue una imagen
+
+Agreguemos un input de tipo \`file\` para que nuestro usuario pueda colocar una imagen en el \`canvas\`.
+
+\`\`\`html
+<h2>Fabric.Canvas demo</h2>
+<input type="file" name="image" id="input" />
+<canvas id="canvas"></canvas>
 \`\`\`
 
-\`onClose\` es la función que realmente genera la imagen. 🌉
+Y de paso agregamos un listener para manipular la imagen que el usuario subió, una vez lista.
 
-Ahí está. Te dejo de todas formas el [link](https://github.com/BrendaOrtega/fixter2025) al código.
+\`\`\`javascript
+input.onchange = (evnt) => {
+  const file = evnt.target.files[0];
+  const url = URL.createObjectURL(file);
+  const imgNode = new Image();
+  imgNode.src = url;
+  imgNode.onload = () => {
+    const img = new fabric.Image(imgNode, {
+      left: 100,
+      top: 100,
+      angle: 30,
+      opacity: 1,
+    });
+    canvas.add(img); // esta es la magia
+  };
+};
+\`\`\`
 
-Abrazo. bliss.`;
+Pasan varias cosas aquí:
+
+1. Dentro de \`onchange\` tomamos el archivo y generamos un objeto URL a partir de él. Antes hacíamos esto con \`FileReader\`, pero gracias a la clase \`URL\` ahora es más fácil. ✅
+2. Creamos el nodo \`img\` para cargar la visualización.
+3. Una vez que la imagen ha cargado, generamos una instancia con \`fabric.Image\` con ciertos atributos como la rotación.
+4. Finalmente, agregamos nuestro objeto al \`canvas\`.
+
+👀 Rotar elementos en el canvas con Fabric es inmensamente fácil y útil. Esto sería muy difícil de hacer con el canvas nativo.
+
+![Subir y rotar imágenes](https://i.imgur.com/iCc8SVO.gif)
+
+## Una última adición: Generar una imagen a partir del canvas
+
+Para terminar, vamos a agregar un botón que genere nuestra imagen compuesta en formato \`PNG\` y detone una descarga.
+
+Primero, añadimos un botón y su respectivo listener.
+
+\`\`\`html
+<button id="btn">Generar imagen</button>
+
+<script>
+btn.onclick = () => {
+  const dataURL = canvas.toDataURL("image/png");
+  const a = document.createElement("a");
+  a.download = "true";
+  a.href = dataURL;
+  a.click();
+};
+</script>
+\`\`\`
+
+Para lograrlo hay que solicitar la imagen al canvas con una pequeña configuración y posteriormente asignarla a una etiqueta \`<a>\` que nos permita detonar la descarga.
+
+![Generar PNG desde canvas](https://i.imgur.com/WfuyPN9.gif)
+
+💥 Lo lograste. Es hora de dejar volar tus ideas, tu creatividad y usar \`fabric\` para construir experiencias modernas en tus aplicaciones.
+
+## Conclusión
+
+Fabric es muy poderoso y su documentación tiene una infinidad de ejemplos y tutoriales, seguro encuentras cómo hacer aquello que necesitas para modificar imágenes dentro de tu app.
+
+![Fabric.js en acción](https://i.imgur.com/8h6jtN1.gif)
+
+No dejes de echarle un vistazo a su [documentación oficial](http://fabricjs.com/). 🤓
+
+Recuerda que puedes aprender a usar canvas con puro JS [aquí](https://videogames.offers.hectorbliss.com/).
+
+Abrazo. bliss.
+`;
 
 async function main() {
   console.log("Importando post de Fabric.js...");
 
   // Verificar si ya existe
   const existing = await db.post.findUnique({
-    where: { slug: "como-crear-un-recortador-de-imagen-de-perfil-con-fabricjs" },
+    where: { slug: "fabricjs-para-manipular-y-generar-imagenes-con-canvas-2023" },
   });
 
   if (existing) {
-    console.log("⚠️  El post ya existe con ID:", existing.id);
+    console.log("⚠️  El post ya existe. Actualizando...");
+    const post = await db.post.update({
+      where: { slug: "fabricjs-para-manipular-y-generar-imagenes-con-canvas-2023" },
+      data: {
+        title: "Fabric.js para manipular y generar imágenes con canvas",
+        body: fabricjsPostContent.trim(),
+        published: true,
+        youtubeLink: "https://youtu.be/xd5-j7_NfCM",
+        authorName: "Héctorbliss",
+        authorAt: "@blissmo",
+        photoUrl: "https://i.imgur.com/TaDTihr.png",
+        authorAtLink: "https://twitter.com/HectorBlisS",
+        tags: ["fabric", "libreria", "html", "ejemplo", "imagenes"],
+        mainTag: "Canvas",
+      },
+    });
+    console.log("✅ Post actualizado exitosamente!");
+    console.log(`   ID: ${post.id}`);
+    console.log(`   URL: /blog/${post.slug}`);
     return;
   }
 
+  // Crear el post con fechas originales
   const post = await db.post.create({
     data: {
-      slug: "como-crear-un-recortador-de-imagen-de-perfil-con-fabricjs",
-      title: "Cómo crear un recortador de imagen de perfil con Fabric.js",
-      body: postContent.trim(),
+      slug: "fabricjs-para-manipular-y-generar-imagenes-con-canvas-2023",
+      title: "Fabric.js para manipular y generar imágenes con canvas",
+      body: fabricjsPostContent.trim(),
       published: true,
+
+      // YouTube
+      youtubeLink: "https://youtu.be/xd5-j7_NfCM",
 
       // Autor
       authorName: "Héctorbliss",
-      authorAt: "@hectorbliss",
+      authorAt: "@blissmo",
       photoUrl: "https://i.imgur.com/TaDTihr.png",
-      authorAtLink: "https://www.hectorbliss.com",
-
-      // Imágenes
-      coverImage: "https://i.imgur.com/W0LAuMg.jpg",
-      metaImage: "https://i.imgur.com/W0LAuMg.jpg",
-
-      // Video
-      youtubeLink: "https://youtu.be/ArzLI6Cb4jg",
+      authorAtLink: "https://twitter.com/HectorBlisS",
 
       // Clasificación
-      tags: ["fabricjs", "canvas", "react", "s3", "images"],
-      mainTag: "fabricjs",
+      tags: ["fabric", "libreria", "html", "ejemplo", "imagenes"],
+      mainTag: "Canvas",
 
-      // Fecha original del post (29 Diciembre 2024, basado en createdAt del HTML)
-      createdAt: new Date(1735502348061),
-      updatedAt: new Date(),
+      // Fechas originales (13 Junio 2023)
+      createdAt: new Date(1686682850990),
+      updatedAt: new Date(1686682850990),
     },
   });
 
   console.log("✅ Post importado exitosamente!");
   console.log(`   ID: ${post.id}`);
   console.log(`   Slug: ${post.slug}`);
-  console.log(`   Fecha original: ${post.createdAt.toLocaleDateString("es-MX")}`);
+  console.log(`   Fecha original: ${post.createdAt}`);
   console.log(`   URL: /blog/${post.slug}`);
 }
 
