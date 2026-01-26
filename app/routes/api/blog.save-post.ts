@@ -1,6 +1,7 @@
 import type { Route } from "./+types/blog.save-post";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
+import { tiptapToMarkdown } from "~/.server/utils/tiptap-to-markdown";
 
 export const action = async ({ request }: Route.ActionArgs) => {
   if (request.method !== "POST") {
@@ -47,6 +48,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         };
     }
 
+    // Convertir Tiptap JSON a Markdown para el campo body
+    const bodyMarkdown = content ? tiptapToMarkdown(content) : "";
+
     let post;
 
     if (postId) {
@@ -56,6 +60,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
           title,
           slug,
           content,
+          body: bodyMarkdown, // Siempre generar body desde Tiptap
           contentFormat: contentFormat || "tiptap",
           youtubeLink: youtubeLink || undefined,
           metaImage: metaImage || undefined,
@@ -71,6 +76,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
           title,
           slug,
           content,
+          body: bodyMarkdown, // Siempre generar body desde Tiptap
           contentFormat: contentFormat || "tiptap",
           youtubeLink: youtubeLink || undefined,
           metaImage: metaImage || undefined,

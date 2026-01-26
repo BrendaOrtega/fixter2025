@@ -27,22 +27,24 @@ function markdownToTiptap(markdown: string) {
   while (i < lines.length) {
     const line = lines[i];
 
-    // Heading
-    if (line.startsWith("## ")) {
+    // Headings (H1-H6)
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const text = headingMatch[2];
       content.push({
         type: "heading",
-        attrs: { level: 2 },
-        content: [{ type: "text", text: line.slice(3) }],
+        attrs: { level },
+        content: parseInlineMarks(text),
       });
-    } else if (line.startsWith("### ")) {
-      content.push({
-        type: "heading",
-        attrs: { level: 3 },
-        content: [{ type: "text", text: line.slice(4) }],
-      });
+      i++;
+      continue;
     }
+
     // Code block
-    else if (line.startsWith("```")) {
+    if (line.startsWith("```")) {
+      const langMatch = line.match(/^```(\w*)$/);
+      const language = langMatch?.[1] || "";
       const codeLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].startsWith("```")) {
@@ -51,54 +53,106 @@ function markdownToTiptap(markdown: string) {
       }
       content.push({
         type: "codeBlock",
-        content: [{ type: "text", text: codeLines.join("\n") }],
+        attrs: { language },
+        content: codeLines.length > 0 ? [{ type: "text", text: codeLines.join("\n") }] : [],
       });
+      i++;
+      continue;
     }
-    // Blockquote
-    else if (line.startsWith("> ")) {
+
+    // Blockquote (puede ser multi-línea)
+    if (line.startsWith("> ")) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].startsWith("> ")) {
+        quoteLines.push(lines[i].slice(2));
+        i++;
+      }
       content.push({
         type: "blockquote",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: line.slice(2) }],
-          },
-        ],
+        content: quoteLines.map((ql) => ({
+          type: "paragraph",
+          content: parseInlineMarks(ql),
+        })),
       });
+      continue;
     }
-    // Bullet list
-    else if (line.startsWith("- ") || line.startsWith("* ")) {
+
+    // Ordered list
+    if (/^\d+\.\s/.test(line)) {
       const items: any[] = [];
-      while (
-        i < lines.length &&
-        (lines[i].startsWith("- ") || lines[i].startsWith("* "))
-      ) {
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        const itemText = lines[i].replace(/^\d+\.\s/, "");
         items.push({
           type: "listItem",
           content: [
             {
               type: "paragraph",
-              content: [{ type: "text", text: lines[i].slice(2) }],
+              content: parseInlineMarks(itemText),
             },
           ],
         });
         i++;
       }
-      i--;
+      content.push({
+        type: "orderedList",
+        content: items,
+      });
+      continue;
+    }
+
+    // Bullet list
+    if (line.startsWith("- ") || line.startsWith("* ")) {
+      const items: any[] = [];
+      while (
+        i < lines.length &&
+        (lines[i].startsWith("- ") || lines[i].startsWith("* "))
+      ) {
+        const itemText = lines[i].slice(2);
+        items.push({
+          type: "listItem",
+          content: [
+            {
+              type: "paragraph",
+              content: parseInlineMarks(itemText),
+            },
+          ],
+        });
+        i++;
+      }
       content.push({
         type: "bulletList",
         content: items,
       });
+      continue;
     }
+
+    // Image
+    const imageMatch = line.match(/^!\[(.*?)\]\((.*?)(?:\s+"(.*?)")?\)$/);
+    if (imageMatch) {
+      content.push({
+        type: "image",
+        attrs: {
+          src: imageMatch[2],
+          alt: imageMatch[1] || "",
+          title: imageMatch[3] || null,
+        },
+      });
+      i++;
+      continue;
+    }
+
     // Horizontal rule
-    else if (line === "---") {
+    if (line === "---" || line === "***" || line === "___") {
       content.push({ type: "horizontalRule" });
+      i++;
+      continue;
     }
+
     // Regular paragraph
-    else if (line.trim()) {
+    if (line.trim()) {
       content.push({
         type: "paragraph",
-        content: [{ type: "text", text: line }],
+        content: parseInlineMarks(line),
       });
     }
 
@@ -106,6 +160,83 @@ function markdownToTiptap(markdown: string) {
   }
 
   return { type: "doc", content };
+}
+
+// Parsear marks inline: **bold**, *italic*, `code`, [link](url), ~~strike~~
+function parseInlineMarks(text: string): any[] {
+  if (!text) return [];
+
+  const result: any[] = [];
+  let remaining = text;
+
+  // Regex para detectar patrones inline
+  const patterns = [
+    // Links: [text](url)
+    { regex: /\[([^\]]+)\]\(([^)]+)\)/, type: "link" },
+    // Bold: **text** o __text__
+    { regex: /\*\*([^*]+)\*\*|__([^_]+)__/, type: "bold" },
+    // Italic: *text* o _text_
+    { regex: /\*([^*]+)\*|_([^_]+)_/, type: "italic" },
+    // Code: `text`
+    { regex: /`([^`]+)`/, type: "code" },
+    // Strike: ~~text~~
+    { regex: /~~([^~]+)~~/, type: "strike" },
+  ];
+
+  while (remaining.length > 0) {
+    let earliestMatch: { index: number; length: number; content: string; type: string; href?: string } | null = null;
+
+    for (const pattern of patterns) {
+      const match = remaining.match(pattern.regex);
+      if (match && match.index !== undefined) {
+        const matchContent = match[1] || match[2];
+        if (!earliestMatch || match.index < earliestMatch.index) {
+          earliestMatch = {
+            index: match.index,
+            length: match[0].length,
+            content: matchContent,
+            type: pattern.type,
+            href: pattern.type === "link" ? match[2] : undefined,
+          };
+        }
+      }
+    }
+
+    if (earliestMatch) {
+      // Añadir texto antes del match
+      if (earliestMatch.index > 0) {
+        result.push({ type: "text", text: remaining.slice(0, earliestMatch.index) });
+      }
+
+      // Añadir el texto con mark
+      const marks: any[] = [];
+      if (earliestMatch.type === "bold") {
+        marks.push({ type: "bold" });
+      } else if (earliestMatch.type === "italic") {
+        marks.push({ type: "italic" });
+      } else if (earliestMatch.type === "code") {
+        marks.push({ type: "code" });
+      } else if (earliestMatch.type === "strike") {
+        marks.push({ type: "strike" });
+      } else if (earliestMatch.type === "link") {
+        marks.push({ type: "link", attrs: { href: earliestMatch.href } });
+      }
+
+      result.push({
+        type: "text",
+        text: earliestMatch.content,
+        marks,
+      });
+
+      remaining = remaining.slice(earliestMatch.index + earliestMatch.length);
+    } else {
+      // No más matches, añadir el resto como texto plano
+      result.push({ type: "text", text: remaining });
+      break;
+    }
+  }
+
+  return result.length > 0 ? result : [{ type: "text", text: "" }];
 }
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {

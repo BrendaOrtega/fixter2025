@@ -89,6 +89,19 @@ db.collection.drop()
 - **Videos afectados**: 31 videos del curso de Animaciones
 - **Nota**: Ya se corrigieron los videos 2 y 3 a "Fundamentos de Motion" y "Fundamentos de Vite"
 
+## TODO: Arreglar toolbar del Blog Editor (Tiptap)
+
+- **Archivo**: `app/components/blog/ModernEditor.tsx`
+- **Problema**: La barra de herramientas del editor Tiptap no funciona
+- **Síntomas**: Los botones de formato (bold, italic, etc.) no aplican estilos al texto
+- **Contexto**: El editor usa Tiptap con el sistema híbrido:
+  - Edición: Tiptap WYSIWYG
+  - Guardado: Se convierte a markdown (`body`) + se preserva JSON (`content`)
+  - Display: Siempre Streamdown/Shiki
+- **Archivos relacionados**:
+  - `app/routes/admin/blog-editor.tsx` - Página del editor
+  - `app/.server/utils/tiptap-to-markdown.ts` - Convertidor Tiptap → Markdown
+
 ## Lo nuevo
 
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
