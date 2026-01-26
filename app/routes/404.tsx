@@ -35,20 +35,39 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       "/blog/5-herramientas-para-Diseno-de-Interfaces-en-2025",
     "/blog/Como-anadir-una-llave-SSH-a-Github_7X8":
       "/blog/como-configurar-ssh-keys-github",
-    // Posts recreados (alta prioridad - >50 visitas)
-    "/blog/OpenCode:-5-Razones-por-las-que-este-Repositorio":
+    // Posts con sufijo hash → slug actual
+    "/blog/OpenCode:-5-Razones-por-las-que-este-Repositorio-es-una-Clase-Magistral-sobre-el-Futuro-del-Codigo-Agentico_1aA":
       "/blog/OpenCode-5-Razones-por-las-que-este-Repositorio-te-Interesa",
-    "/blog/Claude-Code-vs-GitHub-Copilot-vs-Cursor":
+    "/blog/Claude-Code-vs-GitHub-Copilot-vs-Cursor:-La-Guia-Definitiva-que-Necesitas_9P3":
       "/blog/Claude-Code-vs-GitHub-Copilot-vs-Cursor-Cual-Elegir",
+    "/blog/Los-3-Subagentes-Esenciales-de-Claude-Code:-IA-Especializada_tnj":
+      "/blog/Los-3-Subagentes-Esenciales-de-Claude-Code",
+    "/blog/Como-hacer-que-ChatGPT-recomiende-tu-sitio-web:-Guia-practica-de-Schema-Markup-para-GEO_ZLQ":
+      "/blog/Como-hacer-que-ChatGPT-recomiende-tu-sitio-web",
+    "/blog/Agent-Workflow-Patterns:-The-Essential-Guide-to-AI-Orchestration-in-2025_5BQ":
+      "/blog/Agent-Workflow-Patterns-Patrones-para-Agentes-IA",
+    "/blog/primer_vistazo_a_react_router_v7_1zfd9":
+      "/blog/react-router-v7-o-remix-v3-2024",
+    "/blog/Como-anadir-Cloudflare-Turnstile-a-tu-proyecto-con-React-Router-Framework_Q8l":
+      "/blog/cloudflare-turnstile-react-router",
+    "/blog/Integrando-MongoDB-Vector-Search-con-Effect-TS:-Una-Guia-para-Principiantes_i5L":
+      "/blog/integrando-mongodb-vector-search-con-effect-ts",
+    "/blog/Asi-se-publica-una-pagina-web-HTML-en-Github-Pages_l0J":
+      "/blog/astro_github_pages_lcerp",
+    // Posts perdidos → redirigir al blog principal
+    "/blog/Kimi-K2:-La-Revolucion-Silenciosa-que-Multiplica-tu-Productividad-por-4_921":
+      "/blog",
+    "/blog/Me-he-improvisado-una-clasificacion-de-5-niveles-de-agentes-IA_W1a":
+      "/blog",
+    "/blog/Componentes-inteligentes-con-Ollama-y-React_Bf1":
+      "/blog",
     // Posts recreados (media prioridad - 20-50 visitas)
     "/blog/Mis-7-Hacks-para-Claude-Code_8gk":
       "/blog/Mis-7-Hacks-para-Claude-Code",
-    "/blog/Los-3-Subagentes-Esenciales-de-Claude-Code":
-      "/blog/Los-3-Subagentes-Esenciales-de-Claude-Code",
-    "/blog/Agent-Workflow-Patterns":
-      "/blog/Agent-Workflow-Patterns-Patrones-para-Agentes-IA",
     "/blog/por-que-estudiar-minimo-3-horas-a-la-semana":
       "/blog/por-que-estudiar-3-horas-a-la-semana",
+    // Trailing slash cursos
+    "/cursos/": "/cursos",
   };
 
   if (redirects[pathname]) {
