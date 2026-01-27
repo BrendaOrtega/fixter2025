@@ -753,6 +753,36 @@ npx tsx scripts/create-post.ts
 }
 ```
 
+### 📖 OBLIGATORIO: Storytelling en Posts
+
+**IMPORTANTE (Enero 2026):** Los posts del blog DEBEN seguir un formato de storytelling, NO listas frías de tips.
+
+#### Principios de storytelling
+
+| ❌ Evitar | ✅ Preferir |
+|-----------|-------------|
+| Lista numerada de tips genéricos | Narrativa con arco: problema → investigación → hallazgos |
+| "Haz esto, haz aquello" | "Probé esto y funcionó/no funcionó" |
+| Introducción genérica | Apertura con historia personal o frustración real |
+| Cierre con resumen de bullets | Cierre con experimento futuro o llamado a acción concreto |
+| Solo información | Contexto emocional y honestidad sobre fracasos |
+
+#### Estructura recomendada
+
+1. **Apertura con gancho**: Historia personal, frustración, o descubrimiento que enganche
+2. **Contexto del problema**: ¿Por qué esto importa? ¿Qué cambió?
+3. **Patrones/hallazgos**: Lo que funcionó (con evidencia personal)
+4. **Honestidad**: Lo que NO funcionó (genera confianza)
+5. **Cierre con acción**: Experimento futuro, invitación a probar, o pregunta al lector
+
+#### Ejemplo de referencia
+
+Ver el post `Como-hacer-que-ChatGPT-recomiende-tu-sitio-web` como modelo de storytelling bien ejecutado:
+- Abre con frustración real (ChatGPT no recomendó FixterGeek)
+- Desarrolla como investigación personal
+- Incluye sección de "lo que no funcionó"
+- Cierra con experimento a futuro
+
 ### 📺 TEMPORADA ACTUAL: Promoción del Canal de YouTube
 
 **IMPORTANTE (Enero 2026):** Por esta temporada, incluir invitación al canal de YouTube siguiendo la estrategia **"Value-First + Natural Breaks"**.
