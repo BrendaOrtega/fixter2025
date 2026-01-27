@@ -41,8 +41,8 @@ const COURSES_TO_RESTORE = [
     ],
   },
   {
-    slug: "javascript-minimo-react",
-    title: "JavaScript Mínimo para React",
+    slug: "minimo-js-para-react",
+    title: "Mínimo JS para React",
     icon: "/icons/javascript.svg",
     description:
       "Aprende el JavaScript esencial que necesitas antes de empezar con React. Arrays, funciones, async/await, DOM y más.",
