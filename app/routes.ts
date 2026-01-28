@@ -48,6 +48,11 @@ export default [
   route("libros/llamaindex", "routes/libros/llamaindex.tsx"),
   // Libro IA aplicada con React y TypeScript
   route("libros/ai_sdk", "routes/libros/ai_sdk.tsx"),
+  // Lead Magnets
+  route("descarga/:slug", "routes/descarga.$slug.tsx"),
+  route("descarga/:slug/gracias", "routes/descarga.$slug.gracias.tsx"),
+  // Redirect corto para moltbot
+  route("moltbot", "routes/moltbot.tsx"),
   // groups
   ...prefix("admin", [
     index("routes/admin/dash.tsx"),
@@ -57,6 +62,7 @@ export default [
     route("talleres", "routes/admin/talleres.tsx"),
     route("webinar", "routes/admin/webinar.tsx"),
     route("sequences", "routes/admin/sequences.tsx"),
+    route("magnetos", "routes/admin/magnetos.tsx"),
     route("libros", "routes/admin/libros.tsx"),
     route("newsletter", "routes/admin/newsletter.tsx"),
     route("analytics", "routes/admin/analytics.tsx"),
@@ -103,6 +109,7 @@ export default [
     route("backup-download", "routes/api/backup-download.tsx"),
     route("blog.save-post", "routes/api/blog.save-post.ts"),
     route("ai.text-command", "routes/api/ai.text-command.ts"),
+    route("leadmagnets", "routes/api/leadmagnets.ts"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?
