@@ -10,6 +10,7 @@ import { useFetcher, useRevalidator } from "react-router";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
 import { getLeadMagnetUploadUrl } from "~/.server/services/s3-leadmagnet";
+import { tiptapToMarkdown } from "~/.server/utils/tiptap-to-markdown";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { cn } from "~/utils/cn";
 import {
@@ -63,12 +64,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const type = (formData.get("type") as string) || "download";
     const eventDateStr = formData.get("eventDate") as string;
     const descriptionContentStr = formData.get("descriptionContent") as string;
+    const descriptionContentParsed = descriptionContentStr ? JSON.parse(descriptionContentStr) : null;
 
     const magnetData = {
       slug: formData.get("slug") as string,
       title: formData.get("title") as string,
-      description: (formData.get("description") as string) || null,
-      descriptionContent: descriptionContentStr ? JSON.parse(descriptionContentStr) : null,
+      description: descriptionContentParsed ? tiptapToMarkdown(descriptionContentParsed) : null,
+      descriptionContent: descriptionContentParsed,
       type,
       s3Key: (formData.get("s3Key") as string) || null,
       fileName: (formData.get("fileName") as string) || null,
@@ -124,12 +126,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const type = (formData.get("type") as string) || "download";
     const eventDateStr = formData.get("eventDate") as string;
     const descriptionContentStr = formData.get("descriptionContent") as string;
+    const descriptionContentParsed = descriptionContentStr ? JSON.parse(descriptionContentStr) : null;
 
     const magnetData = {
       slug: formData.get("slug") as string,
       title: formData.get("title") as string,
-      description: (formData.get("description") as string) || null,
-      descriptionContent: descriptionContentStr ? JSON.parse(descriptionContentStr) : null,
+      description: descriptionContentParsed ? tiptapToMarkdown(descriptionContentParsed) : null,
+      descriptionContent: descriptionContentParsed,
       type,
       s3Key: (formData.get("s3Key") as string) || null,
       fileName: (formData.get("fileName") as string) || null,
@@ -528,21 +531,6 @@ function MagnetForm({
   const isEditing = !!magnet;
   const isWaitlist = magnetType === "waitlist";
 
-  // Convertir JSON de Tiptap a texto plano para el campo description
-  const getPlainTextFromTiptap = (content: Record<string, any> | null): string => {
-    if (!content || !content.content) return "";
-    const extractText = (nodes: any[]): string => {
-      return nodes
-        .map((node) => {
-          if (node.type === "text") return node.text || "";
-          if (node.content) return extractText(node.content);
-          return "";
-        })
-        .join(" ");
-    };
-    return extractText(content.content).trim();
-  };
-
   // AI Command handler
   const handleAICommand = useCallback(
     async (command: string, text: string): Promise<string> => {
@@ -750,11 +738,6 @@ function MagnetForm({
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Descripción
           </label>
-          <input
-            type="hidden"
-            name="description"
-            value={getPlainTextFromTiptap(descriptionContent)}
-          />
           <input
             type="hidden"
             name="descriptionContent"
