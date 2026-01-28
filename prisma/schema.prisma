@@ -650,3 +650,73 @@ model NotFoundLog {
   @@index([count])
   @@map("not_found_logs")
 }
+
+// ============================
+// LEAD MAGNETS SYSTEM
+// ============================
+
+model LeadMagnet {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug                String   @unique
+  title               String
+  description         String?           // Texto plano/markdown para display
+  descriptionContent  Json?             // JSON de Tiptap para edición
+
+  // Tipo de lead magnet
+  type                String   @default("download")  // "download" | "waitlist"
+
+  // Archivo S3 (solo para type: "download")
+  s3Key               String?
+  fileName            String?
+  fileType            String?   // pdf, epub, zip
+
+  // Info del evento (solo para type: "waitlist")
+  eventName           String?   // "Taller: Monta tu MoltBot"
+  eventDate           DateTime? // Fecha del evento
+  eventTime           String?   // "7:00 PM CDMX"
+  eventLink           String?   // Link de Zoom/Meet (se envía post-confirmación)
+  eventDescription    String?   // Descripción del evento
+
+  // Landing personalizable
+  heroTitle           String
+  heroSubtitle        String?
+  coverImage          String?
+  primaryColor        String   @default("#CA9B77")
+  secondaryColor      String?  @default("#845A8F")
+  bgPattern           String   @default("gradient")  // dots, grid, gradient, none
+  layout              String   @default("centered")  // centered, split, minimal
+  ctaText             String   @default("Descargar ahora")
+  inputPlaceholder    String   @default("tu@email.com")
+  successTitle        String   @default("¡Listo!")
+  successMessage      String   @default("Revisa tu email para descargar")
+  showFooter          Boolean  @default(true)
+  footerText          String?
+
+  // Comportamiento
+  tagOnDownload       String
+  sequenceId          String?  @db.ObjectId
+  urlExpirationHours  Int      @default(24)
+
+  // Métricas
+  downloadCount       Int      @default(0)
+  isActive            Boolean  @default(true)
+
+  downloads           LeadMagnetDownload[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("lead_magnets")
+}
+
+model LeadMagnetDownload {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  leadMagnetId  String      @db.ObjectId
+  leadMagnet    LeadMagnet  @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  subscriberId  String?     @db.ObjectId
+  email         String
+  name          String?
+  downloadedAt  DateTime    @default(now())
+
+  @@index([leadMagnetId, email])
+  @@map("lead_magnet_downloads")
+}

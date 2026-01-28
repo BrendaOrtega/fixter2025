@@ -111,3 +111,75 @@ export const validateBookDownloadToken = (
     };
   }
 };
+
+// ==========================================
+// Magic Link para Lead Magnets (descarga de recursos)
+// ==========================================
+
+export type LeadMagnetTokenData = {
+  email: string;
+  slug: string;
+  action: "leadmagnet-download";
+};
+
+/**
+ * Genera un token firmado para descarga de lead magnet
+ * Válido por 7 días
+ */
+export const generateLeadMagnetToken = (
+  email: string,
+  slug: string
+): string => {
+  const data: LeadMagnetTokenData = {
+    email,
+    slug,
+    action: "leadmagnet-download",
+  };
+  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+    expiresIn: "7d",
+  });
+};
+
+/**
+ * Valida un token de descarga de lead magnet
+ * Retorna los datos del token o error
+ */
+export const validateLeadMagnetToken = (
+  token: string
+): {
+  isValid: boolean;
+  decoded?: LeadMagnetTokenData;
+  error?: string;
+} => {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "fixtergeek"
+    ) as LeadMagnetTokenData;
+
+    // Verificar que sea un token de lead magnet
+    if (decoded.action !== "leadmagnet-download") {
+      return {
+        isValid: false,
+        error: "Token inválido: no es un token de descarga",
+      };
+    }
+
+    return {
+      isValid: true,
+      decoded,
+    };
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.name === "TokenExpiredError") {
+      return {
+        isValid: false,
+        error: "El enlace ha expirado. Solicita uno nuevo.",
+      };
+    }
+    return {
+      isValid: false,
+      error: "Enlace inválido",
+    };
+  }
+};

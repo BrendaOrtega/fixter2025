@@ -10,6 +10,7 @@ export const AdminNav = () => {
     { href: "/admin/cursos", label: "Cursos" },
     { href: "/admin/ratings", label: "Ratings" },
     { href: "/admin/sequences", label: "Sequences" },
+    { href: "/admin/magnetos", label: "Magnetos" },
     { href: "/admin/webinar", label: "Webinar" },
     { href: "/admin/posts", label: "Posts" },
     { href: "/admin/newsletter", label: "Newsletter" },
