@@ -11,6 +11,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import { Extension } from '@tiptap/core';
 import { AIAutocomplete, AIAutocompletePluginKey } from './extensions/AIAutocomplete';
 import { useCallback, useState, useEffect, useRef } from 'react';
+import { marked } from 'marked';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Bold,
@@ -338,6 +339,7 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
       // Tab to accept AI suggestion
       if (event.key === 'Tab' && aiSuggestion) {
         event.preventDefault();
+        event.stopPropagation();
         editor.chain().focus().insertContent(aiSuggestion).run();
         setAISuggestion(null);
         return;
@@ -550,7 +552,17 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
 
       try {
         const result = await onAICommand(commandId, selectedText);
-        editor.chain().focus().deleteSelection().insertContent(result).run();
+        // Convertir markdown a HTML
+        const html = marked.parse(result);
+        // Insertar HTML - Tiptap lo parsea usando DOMParser internamente
+        editor
+          .chain()
+          .focus()
+          .deleteSelection()
+          .insertContent(html, {
+            parseOptions: { preserveWhitespace: false },
+          })
+          .run();
       } catch (error) {
         console.error('AI error:', error);
       } finally {
@@ -571,7 +583,16 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
 
       try {
         const result = await onAICommand('generate', aiPromptText);
-        editor.chain().focus().insertContent(result).run();
+        // Convertir markdown a HTML
+        const html = marked.parse(result);
+        // Insertar HTML - Tiptap lo parsea usando DOMParser internamente
+        editor
+          .chain()
+          .focus()
+          .insertContent(html, {
+            parseOptions: { preserveWhitespace: false },
+          })
+          .run();
       } catch (error) {
         console.error('AI error:', error);
       } finally {
@@ -666,6 +687,7 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
                   <div className="w-px h-5 bg-gray-700 mx-1" />
                   <div className="relative">
                     <button
+                      type="button"
                       onClick={() => setShowAIDropdown(!showAIDropdown)}
                       className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all ${
                         showAIDropdown
@@ -689,6 +711,7 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
                           {AI_INLINE_COMMANDS.map((cmd) => (
                             <button
                               key={cmd.id}
+                              type="button"
                               onClick={() => handleAICommand(cmd.id)}
                               className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 transition flex items-center gap-2.5"
                             >
@@ -744,6 +767,7 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
                 filteredCommands.map((cmd, index) => (
                   <button
                     key={cmd.id}
+                    type="button"
                     onClick={() => executeSlashCommand(cmd.id)}
                     className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-all ${
                       index === selectedSlashIndex
@@ -801,6 +825,7 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
                   <span className="font-medium text-white">Generar con IA</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowAIPrompt(false)}
                   className="p-1.5 hover:bg-gray-800 rounded-lg transition"
                 >
@@ -953,6 +978,7 @@ function ToolbarButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       title={title}
       className={`p-2 rounded-lg transition-all ${
