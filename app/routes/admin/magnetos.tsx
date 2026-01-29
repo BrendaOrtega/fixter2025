@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { ModernEditor } from "~/components/blog/ModernEditor";
 import {
   type LoaderFunctionArgs,
@@ -646,12 +646,21 @@ function MagnetForm({
     [handleFileUpload]
   );
 
-  if (fetcher.data?.success) {
-    setTimeout(() => {
-      onSuccess();
-      revalidator.revalidate();
-    }, 500);
-  }
+  // Usar useEffect para manejar el success del fetcher
+  const hasHandledSuccess = useRef(false);
+  useEffect(() => {
+    if (fetcher.data?.success && !hasHandledSuccess.current) {
+      hasHandledSuccess.current = true;
+      setTimeout(() => {
+        onSuccess();
+        revalidator.revalidate();
+      }, 500);
+    }
+    // Reset cuando el fetcher vuelve a idle sin success
+    if (fetcher.state === "idle" && !fetcher.data?.success) {
+      hasHandledSuccess.current = false;
+    }
+  }, [fetcher.data, fetcher.state, onSuccess, revalidator]);
 
   return (
     <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
@@ -1107,21 +1116,23 @@ function MagnetForm({
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Expiración URL (horas)
-              </label>
-              <input
-                type="number"
-                name="urlExpirationHours"
-                min="1"
-                max="168"
-                defaultValue={magnet?.urlExpirationHours || 24}
-                className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            {!isWaitlist && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Expiración URL (horas)
+                </label>
+                <input
+                  type="number"
+                  name="urlExpirationHours"
+                  min="1"
+                  max="168"
+                  defaultValue={magnet?.urlExpirationHours || 24}
+                  className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
 
-            <div className="flex items-center gap-4 pt-6">
+            <div className={cn("flex items-center gap-4", !isWaitlist ? "pt-6" : "")}>
               <label className="flex items-center">
                 <input
                   type="checkbox"

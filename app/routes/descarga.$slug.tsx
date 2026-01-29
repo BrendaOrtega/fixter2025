@@ -299,7 +299,7 @@ export default function LeadMagnetLanding({ loaderData }: Route.ComponentProps) 
       <div className={cn("fixed inset-0 -z-10", getBackgroundPattern())} />
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 pt-24 pb-12">
         <div className="max-w-lg w-full">
           {/* Logo */}
           <div className="text-center mb-8">
