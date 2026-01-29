@@ -300,7 +300,6 @@ export default function AdminMagnetos({ loaderData }: Route.ComponentProps) {
         {view === "create" && (
           <MagnetForm
             sequences={sequences}
-            fetcher={fetcher}
             revalidator={revalidator}
             onSuccess={() => setView("list")}
           />
@@ -308,9 +307,9 @@ export default function AdminMagnetos({ loaderData }: Route.ComponentProps) {
 
         {view === "edit" && editingMagnet && (
           <MagnetForm
+            key={editingMagnet.id}
             magnet={editingMagnet}
             sequences={sequences}
-            fetcher={fetcher}
             revalidator={revalidator}
             onSuccess={() => {
               setView("list");
@@ -507,16 +506,16 @@ function MagnetsList({
 function MagnetForm({
   magnet,
   sequences,
-  fetcher,
   revalidator,
   onSuccess,
 }: {
   magnet?: any;
   sequences: any[];
-  fetcher: any;
   revalidator: any;
   onSuccess: () => void;
 }) {
+  // Fetcher propio para este form - evita conflictos de estado entre operaciones
+  const fetcher = useFetcher();
   const [magnetType, setMagnetType] = useState(magnet?.type || "download");
   const [s3Key, setS3Key] = useState(magnet?.s3Key || "");
   const [fileName, setFileName] = useState(magnet?.fileName || "");
@@ -646,21 +645,15 @@ function MagnetForm({
     [handleFileUpload]
   );
 
-  // Usar useEffect para manejar el success del fetcher
-  const hasHandledSuccess = useRef(false);
+  // Manejar success del fetcher
   useEffect(() => {
-    if (fetcher.data?.success && !hasHandledSuccess.current) {
-      hasHandledSuccess.current = true;
+    if (fetcher.data?.success) {
       setTimeout(() => {
         onSuccess();
         revalidator.revalidate();
       }, 500);
     }
-    // Reset cuando el fetcher vuelve a idle sin success
-    if (fetcher.state === "idle" && !fetcher.data?.success) {
-      hasHandledSuccess.current = false;
-    }
-  }, [fetcher.data, fetcher.state, onSuccess, revalidator]);
+  }, [fetcher.data?.success]);
 
   return (
     <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
