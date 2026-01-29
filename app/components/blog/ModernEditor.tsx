@@ -124,6 +124,9 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
   const [hasAISuggestion, setHasAISuggestion] = useState(false);
   const [isAIAutocompleteLoading, setIsAIAutocompleteLoading] = useState(false);
 
+  // Track if content change came from internal editor updates
+  const isInternalUpdate = useRef(false);
+
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const slashMenuRef = useRef<HTMLDivElement>(null);
   const aiPromptInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +271,7 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
       },
     },
     onUpdate: ({ editor }) => {
+      isInternalUpdate.current = true;
       onChange?.(editor.getJSON());
       updateStats(editor);
 
@@ -436,14 +440,15 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
     }
   }, [showAIPrompt]);
 
-  // Sync content
+  // Sync content from external sources (e.g., loading a post)
+  // Skip if the change came from the editor itself to avoid reset loops
   useEffect(() => {
+    if (isInternalUpdate.current) {
+      isInternalUpdate.current = false;
+      return;
+    }
     if (editor && content && typeof content === 'object') {
-      const currentJSON = JSON.stringify(editor.getJSON());
-      const newJSON = JSON.stringify(content);
-      if (currentJSON !== newJSON) {
-        editor.commands.setContent(content);
-      }
+      editor.commands.setContent(content);
     }
   }, [content, editor]);
 
