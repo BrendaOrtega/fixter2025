@@ -14,7 +14,7 @@ export const PostForm = ({
   const fetcher = useFetcher();
   return (
     <fetcher.Form action="/admin/posts" method="post">
-      <input type="hidden" name="slug" value={current?.slug} />
+      <input type="hidden" name="slug" defaultValue={current?.slug} />
       <div className="flex gap-2">
         <Input
           defaultValue={current?.title}
@@ -45,12 +45,11 @@ export const PostForm = ({
       </div>
       <SelectInput
         name="author"
-        defaultValue="brendi"
         className="w-[220px]"
         label="Autor"
         options={[
-          { value: "brendi", label: "Brendi" },
           { value: "bliss", label: "Bliss" },
+          { value: "brendi", label: "Brendi" },
         ]}
       />
       <Input

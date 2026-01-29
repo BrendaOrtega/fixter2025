@@ -568,6 +568,14 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
         </div>
       </main>
 
+      {/* Backdrop when panel is open - DEBE estar ANTES del MetadataPanel para z-index correcto */}
+      {isPanelOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsPanelOpen(false)}
+        />
+      )}
+
       {/* Metadata Panel */}
       <MetadataPanel
         isOpen={isPanelOpen}
@@ -587,14 +595,6 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
         mainTag={mainTag}
         setMainTag={setMainTag}
       />
-
-      {/* Backdrop when panel is open */}
-      {isPanelOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30"
-          onClick={() => setIsPanelOpen(false)}
-        />
-      )}
 
       {/* Keyboard Shortcuts Help */}
       <div className="fixed bottom-4 right-4 z-20">

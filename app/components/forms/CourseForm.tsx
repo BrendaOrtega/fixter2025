@@ -1236,13 +1236,17 @@ export const Input = ({
   required?: boolean;
 }) => {
   const Element = type === "textarea" ? "textarea" : "input";
+  // Determinar si es controlado o no controlado
+  const isControlled = value !== undefined && onChange !== undefined;
+
   return (
     <label className="grid gap-2 mb-px text-white w-full">
       <span>{label}</span>
       <Element
-        defaultValue={!value && !onChange ? (defaultValue || undefined) : undefined}
-        value={value || ""}
-        onChange={onChange}
+        {...(isControlled
+          ? { value, onChange }
+          : { defaultValue: defaultValue ?? undefined }
+        )}
         placeholder={placeholder}
         className={cn(
           "rounded-lg text-black",

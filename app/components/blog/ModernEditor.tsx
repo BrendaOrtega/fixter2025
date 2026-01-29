@@ -340,6 +340,29 @@ export function ModernEditor({ content, onChange, onAICommand }: ModernEditorPro
     if (!editor) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // CRÍTICO: Ignorar eventos que no vienen del editor
+      // Esto evita que el slash menu se abra al escribir "/" en otros inputs
+      const target = event.target as HTMLElement;
+      const isInEditor = editorContainerRef.current?.contains(target);
+      const isInProseMirror = target.closest('.ProseMirror');
+
+      // Si el evento no viene del editor, no procesar (excepto para cerrar modales con Escape)
+      if (!isInEditor && !isInProseMirror) {
+        // Permitir Escape para cerrar el slash menu o AI prompt desde cualquier lugar
+        if (event.key === 'Escape') {
+          if (showSlashMenu) {
+            setShowSlashMenu(false);
+            return;
+          }
+          if (showAIPrompt) {
+            setShowAIPrompt(false);
+            setAIPromptText('');
+            return;
+          }
+        }
+        return; // No procesar otros eventos de otros inputs
+      }
+
       // Tab to accept AI suggestion
       if (event.key === 'Tab' && aiSuggestion) {
         event.preventDefault();

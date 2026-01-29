@@ -17,17 +17,20 @@ export const SelectInput = ({
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }) => {
+  const isControlled = value !== undefined && onChange !== undefined;
+
   return (
     <label className={cn("grid gap-2 mb-2", className)}>
       <span>{label}</span>
       <select
         name={name}
-        defaultValue={!value && !onChange ? (defaultValue || "") : undefined}
-        value={value || ""}
-        onChange={onChange}
+        {...(isControlled
+          ? { value, onChange }
+          : { defaultValue: defaultValue ?? "" }
+        )}
         className="rounded-lg text-black"
       >
-        <option value="">Selecciona un autor</option>
+        <option value="">Selecciona una opción</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
