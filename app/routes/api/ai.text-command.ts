@@ -1,6 +1,6 @@
 import type { Route } from "./+types/ai.text-command";
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 
 const SYSTEM_PROMPT = `Eres un asistente de escritura para un blog técnico en español.
 
@@ -34,7 +34,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     }
 
     const { text: result } = await generateText({
-      model: anthropic("claude-sonnet-4-20250514"),
+      model: openai("gpt-4o-mini"),
       system: SYSTEM_PROMPT,
       prompt,
       temperature: 0.7,
