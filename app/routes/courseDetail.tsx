@@ -1,8 +1,8 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Footer } from "~/components/Footer";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import type { Route } from "./+types/courseDetail";
-import { data, Form, type LoaderFunctionArgs } from "react-router";
+import { data, Form, useFetcher, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { useVideosLength } from "~/hooks/useVideosLength";
 import { formatDuration } from "./cursos";
@@ -155,6 +155,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       authorName: true,
       photoUrl: true,
       basePrice: true,
+      tipo: true,
     },
   });
   if (!course) throw data("Course Not Found", { status: 404 });
@@ -170,16 +171,90 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export default function Route({
   loaderData: { course, videos, hasPublicVideos, hasFreeAccess },
 }: Route.ComponentProps) {
+  const isProximamente = course.tipo === "proximamente";
+
   return (
     <article className="pt-40">
-      <CourseHeader course={course} hasFreeAccess={hasFreeAccess} />
-      <CourseContent course={course} videos={videos} />
-      <CourseRatings courseSlug={course.slug} />
+      <CourseHeader
+        course={course}
+        hasFreeAccess={hasFreeAccess}
+        isProximamente={isProximamente}
+      />
+      {isProximamente ? (
+        <>
+          <CourseContent course={course} videos={videos} />
+          <WaitlistSection courseSlug={course.slug} />
+        </>
+      ) : (
+        <>
+          <CourseContent course={course} videos={videos} />
+          <CourseRatings courseSlug={course.slug} />
+        </>
+      )}
       <Teacher course={course} />
       <Footer />
     </article>
   );
 }
+
+const WaitlistSection = ({ courseSlug }: { courseSlug: string }) => {
+  const fetcher = useFetcher<{ success?: boolean; error?: string }>();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const isLoading = fetcher.state !== "idle";
+  const success = fetcher.data?.success;
+  const error = fetcher.data?.error;
+
+  return (
+    <section className="py-20 px-4 max-w-2xl mx-auto text-center">
+      <div
+        className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10
+                      border border-emerald-500/30 rounded-3xl p-8 md:p-12"
+      >
+        <span className="text-5xl mb-4 block">📬</span>
+        <h2 className="text-3xl font-bold text-white mb-4">
+          Este curso está en desarrollo
+        </h2>
+        <p className="text-colorParagraph mb-8">
+          Déjanos tu email y te avisamos cuando esté listo. Sin spam, solo el
+          aviso.
+        </p>
+
+        {success ? (
+          <div className="text-emerald-400 font-medium text-lg">
+            ✅ ¡Listo! Te avisaremos cuando lancemos.
+          </div>
+        ) : (
+          <fetcher.Form method="POST" action="/api/waitlist">
+            <input type="hidden" name="courseSlug" value={courseSlug} />
+            <div className="flex gap-3 max-w-md mx-auto flex-col sm:flex-row">
+              <input
+                ref={inputRef}
+                type="email"
+                name="email"
+                required
+                placeholder="tu@email.com"
+                className="flex-1 px-4 py-3 rounded-lg bg-white/10 border
+                           border-white/20 text-white placeholder-white/50
+                           focus:outline-none focus:border-emerald-500/50"
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600
+                           text-white font-bold rounded-lg transition-colors
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "..." : "Avísame"}
+              </button>
+            </div>
+            {error && <p className="text-red-400 mt-3 text-sm">{error}</p>}
+          </fetcher.Form>
+        )}
+      </div>
+    </section>
+  );
+};
 
 const CourseContent = ({
   videos,
@@ -386,10 +461,12 @@ const CourseHeader = ({
   className,
   course,
   hasFreeAccess,
+  isProximamente,
 }: {
   className?: string;
   course: Course;
   hasFreeAccess?: boolean;
+  isProximamente?: boolean;
 }) => {
   const { title, id, summary, duration, level, slug, basePrice, icon } = course;
 
@@ -463,33 +540,46 @@ const CourseHeader = ({
             </div>
           </div>
           <div className="gap-6 flex mt-10">
-            {course.isFree || hasFreeAccess || slug === "ai-sdk" ? (
-              <PrimaryButton
-                as="Link"
-                to={`/cursos/${slug}/viewer`}
-                variant="fill"
-                title="Empezar gratis"
-              />
-            ) : slug === "power-user-en-claude-code" ? (
-              <PrimaryButton
-                as="a"
-                to="https://youtu.be/EkH82XjN45w"
-                target="_blank"
-                variant="fill"
-                title="Ver demo"
-              />
-            ) : null}
-            {!course.isFree && (
-              <Form method="POST" action="/api/stripe">
-                <input type="hidden" name="courseSlug" value={slug} />
-                <PrimaryButton
-                  variant="ghost"
-                  name="intent"
-                  value="checkout"
-                  type="submit"
-                  title={`Comprar $${basePrice || 499} mxn`}
-                />
-              </Form>
+            {isProximamente ? (
+              <div className="flex items-center gap-3">
+                <span className="px-4 py-2 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-full text-sm font-medium">
+                  🚀 Próximamente
+                </span>
+                <span className="text-colorParagraph text-sm">
+                  Únete a la lista de espera abajo
+                </span>
+              </div>
+            ) : (
+              <>
+                {course.isFree || hasFreeAccess || slug === "ai-sdk" ? (
+                  <PrimaryButton
+                    as="Link"
+                    to={`/cursos/${slug}/viewer`}
+                    variant="fill"
+                    title="Empezar gratis"
+                  />
+                ) : slug === "power-user-en-claude-code" ? (
+                  <PrimaryButton
+                    as="a"
+                    to="https://youtu.be/EkH82XjN45w"
+                    target="_blank"
+                    variant="fill"
+                    title="Ver demo"
+                  />
+                ) : null}
+                {!course.isFree && (
+                  <Form method="POST" action="/api/stripe">
+                    <input type="hidden" name="courseSlug" value={slug} />
+                    <PrimaryButton
+                      variant="ghost"
+                      name="intent"
+                      value="checkout"
+                      type="submit"
+                      title={`Comprar $${basePrice || 499} mxn`}
+                    />
+                  </Form>
+                )}
+              </>
             )}
           </div>
         </div>

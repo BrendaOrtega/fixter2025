@@ -38,14 +38,16 @@ export const CourseCard = ({
   const ref = useRef(null);
   const isInview = useInView(ref, { once: true });
 
-  const Wrapper = isProximamente ? "div" : Link;
-  const wrapperProps = isProximamente
-    ? { className: "grid-cols-1 relative w-full h-[480px] cursor-not-allowed" }
-    : { to: to || `/cursos/${course.slug}/detalle`, className: "grid-cols-1 relative w-full h-[480px]" };
+  // Proximamente courses are clickable (they have waitlist on detail page)
+  const Wrapper = Link;
+  const wrapperProps = {
+    to: to || `/cursos/${course.slug}/detalle`,
+    className: "grid-cols-1 relative w-full h-[480px]",
+  };
 
   return (
     <Wrapper
-      {...wrapperProps as any}
+      {...wrapperProps}
       style={{
         transformStyle: "preserve-3d",
         perspective: 900,
@@ -55,9 +57,9 @@ export const CourseCard = ({
         transition: "all 1s ease",
       }}
       ref={ref}
-      onMouseMove={isProximamente ? undefined : handleMouseMove}
-      onMouseEnter={isProximamente ? undefined : handleMouseEnter}
-      onMouseLeave={isProximamente ? undefined : handleMouseLeave}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {isProximamente && (
         <div className="absolute -top-2 -right-2 z-20 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
@@ -70,10 +72,10 @@ export const CourseCard = ({
           rotateY: springY,
           transformStyle: "preserve-3d",
           perspective: 600,
-          boxShadow: isProximamente ? "0px 0px 24px 0px #f97316" : "0px 0px 24px 0px #37ab93",
+          boxShadow: isProximamente ? "0px 0px 24px 0px #10b981" : "0px 0px 24px 0px #37ab93",
         }}
         ref={containerRef}
-        className={`pt-2 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full ${isProximamente ? "opacity-80" : ""}`}
+        className="pt-2 absolute top-0 rounded-3xl border bg-cover border-white/20 bg-card w-full h-full"
       >
         <motion.img
           style={{ z: imgZ }}

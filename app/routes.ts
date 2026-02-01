@@ -110,6 +110,7 @@ export default [
     route("blog.save-post", "routes/api/blog.save-post.ts"),
     route("ai.text-command", "routes/api/ai.text-command.ts"),
     route("leadmagnets", "routes/api/leadmagnets.ts"),
+    route("waitlist", "routes/api/waitlist.ts"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?
