@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
-import rehypePrettyCode from "rehype-pretty-code";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github-dark.css";
 
 interface MarkdownRendererProps {
   children: string;
@@ -8,15 +9,7 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({ children }: MarkdownRendererProps) {
   return (
     <ReactMarkdown
-      rehypePlugins={[
-        [
-          rehypePrettyCode,
-          {
-            theme: "github-dark",
-            keepBackground: true,
-          },
-        ],
-      ]}
+      rehypePlugins={[rehypeHighlight]}
     >
       {children}
     </ReactMarkdown>
