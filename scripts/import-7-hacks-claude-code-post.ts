@@ -139,6 +139,26 @@ Ahora puedes decir: "Lee la documentación actual de React Router v7 y migra est
 
 ---
 
+## Bonus: --dangerously-skip-permissions
+
+Para automatización total sin interrupciones de permisos:
+
+\`\`\`bash
+claude --dangerously-skip-permissions
+\`\`\`
+
+Claude ejecuta todo sin pedir confirmación. **Úsalo solo en entornos controlados** (CI/CD, scripts automatizados, desarrollo local).
+
+Combinado con \`--chrome\` es poderoso para skills que interactúan con el navegador:
+
+\`\`\`bash
+claude --chrome --dangerously-skip-permissions
+\`\`\`
+
+👉 Ejemplo real: Mi skill [figma-to-code](https://github.com/blissito/figma-to-code) usa este flag para convertir diseños de Figma a código pixel-perfect sin interrupciones.
+
+---
+
 ## Bonus: Variables de entorno ocultas
 
 \`\`\`bash
