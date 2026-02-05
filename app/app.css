@@ -56,25 +56,43 @@ body {
 .dark [data-streamdown="code-block-header"] {
   background-color: #21222c !important;
   color: #f8f8f2 !important;
+  border: none !important;
   border-bottom: 1px solid #44475a !important;
 }
 
 .dark [data-streamdown="code-block-body"] {
   background-color: #282a36 !important;
+  border: none !important;
 }
 
 .dark [data-streamdown="code-block-body"] pre {
   margin: 0 !important;
+  padding: 1rem !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.dark [data-streamdown="code-block-body"] code {
+  border: none !important;
   background: transparent !important;
 }
 
-/* Prevent prose from overriding Shiki colors */
+/* Prevent prose from overriding Shiki colors and adding borders */
+.prose [data-streamdown="code-block"],
+.prose [data-streamdown="code-block"] *,
+.prose-invert [data-streamdown="code-block"],
+.prose-invert [data-streamdown="code-block"] * {
+  border-color: transparent !important;
+}
+
 .prose [data-streamdown="code-block"] code,
 .prose [data-streamdown="code-block"] pre,
 .prose-invert [data-streamdown="code-block"] code,
 .prose-invert [data-streamdown="code-block"] pre {
   color: inherit !important;
   background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .prose [data-streamdown="code-block"] span[style],
