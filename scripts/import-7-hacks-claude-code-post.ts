@@ -42,14 +42,18 @@ Claude Code puede conectarse a herramientas externas via MCP. En \`~/.claude/set
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@anthropic/mcp-server-filesystem", "/ruta/a/docs"]
+    },
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "figma-developer-mcp", "--stdio"]
     }
   }
 }
 \`\`\`
 
-Ahora Claude puede leer archivos fuera de tu proyecto. Otros MCPs útiles: GitHub, PostgreSQL, Figma.
+Con **filesystem** Claude lee archivos fuera de tu proyecto. Con **Figma** puedes decir: "Extrae los colores del diseño y crea variables CSS". Otros MCPs útiles: GitHub, PostgreSQL, Slack.
 
-👉 [Ver tutorial: Diseños en Figma con IA usando MCP](/blog/como-crear-disenos-en-figma-con-ia-usando-talk-to-figma-mcp)
+👉 [Tutorial completo: Diseños en Figma con IA usando MCP](/blog/como-crear-disenos-en-figma-con-ia-usando-talk-to-figma-mcp)
 
 ---
 
