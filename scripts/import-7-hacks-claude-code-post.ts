@@ -1,69 +1,21 @@
 import { db } from "../app/.server/db";
 
 const hacksContent = `
-Después de meses usando Claude Code diariamente, descubrí patrones que no están en la documentación oficial.
+Estos no son los tips básicos que encuentras en cualquier tutorial. Son técnicas avanzadas que descubrí después de meses de uso intensivo.
 
-## 1. CLAUDE.md estratégico
+## 1. --max-budget-usd: El seguro contra sustos
 
-Claude lee automáticamente \`CLAUDE.md\` en la raíz de tu proyecto. No pongas reglas genéricas—incluye **decisiones ya tomadas**:
+En CI/CD o tareas largas, limita cuánto puede gastar Claude:
 
-\`\`\`markdown
-# CLAUDE.md
-
-## Decisiones FINALES (no cambiar)
-- Auth: JWT en httpOnly cookies (NO localStorage)
-- ORM: Prisma (NO TypeORM, NO Drizzle)
-- Estilos: Tailwind (NO CSS modules)
-
-## Errores comunes en este proyecto
-- El middleware de auth está en /lib, no en /middleware
-- Los tests usan vitest, no jest
+\`\`\`bash
+claude -p "Refactoriza todo el módulo de auth" --max-budget-usd 5.00
 \`\`\`
 
-Esto evita que Claude cuestione decisiones o proponga alternativas que ya descartaste.
+Claude se detiene automáticamente si alcanza el presupuesto. **Crítico** para pipelines automatizados donde un loop infinito puede costarte cientos de dólares.
 
-## 2. /compact antes de perder contexto
+## 2. Async Hooks: Tests en background
 
-Cuando Claude empieza a olvidar lo que hicieron juntos:
-
-\`\`\`
-/compact
-\`\`\`
-
-Comprime la conversación a ~30% manteniendo decisiones clave y archivos modificados. Úsalo cada 20-30 interacciones en sesiones largas.
-
-## 3. MCP servers: el multiplicador
-
-Claude Code puede conectarse a herramientas externas via MCP. En \`~/.claude/settings.json\`:
-
-\`\`\`json
-{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@anthropic/mcp-server-filesystem", "/ruta/a/docs"]
-    },
-    "figma": {
-      "command": "npx",
-      "args": ["-y", "figma-developer-mcp", "--stdio"]
-    }
-  }
-}
-\`\`\`
-
-Con **filesystem** Claude lee archivos fuera de tu proyecto. Con **Figma** puedes decir: "Extrae los colores del diseño y crea variables CSS". Otros MCPs útiles: GitHub, PostgreSQL, Slack.
-
-👉 [Tutorial completo: Diseños en Figma con IA usando MCP](/blog/como-crear-disenos-en-figma-con-ia-usando-talk-to-figma-mcp)
-
----
-
-📚 **¿Quieres dominar estas técnicas?** Escribí un libro completo sobre Claude Code. [Descárgalo gratis aquí](/libros/domina_claude_code).
-
----
-
-## 4. Hooks para automatizar
-
-Los hooks se configuran dentro de \`settings.json\` (no en archivo separado). Ejemplo para formatear código automáticamente:
+Los hooks pueden correr **sin bloquear** a Claude. Mientras él sigue trabajando, tus tests corren en paralelo:
 
 \`\`\`json
 {
@@ -74,7 +26,8 @@ Los hooks se configuran dentro de \`settings.json\` (no en archivo separado). Ej
         "hooks": [
           {
             "type": "command",
-            "command": "npx prettier --write $FILE_PATH"
+            "command": "npm test &",
+            "async": true
           }
         ]
       }
@@ -83,51 +36,102 @@ Los hooks se configuran dentro de \`settings.json\` (no en archivo separado). Ej
 }
 \`\`\`
 
-Eventos disponibles: \`PreToolUse\`, \`PostToolUse\`, \`UserPromptSubmit\`, \`Notification\`, y más. Usa \`/hooks\` para configurarlos interactivamente.
+El resultado se inyecta en el siguiente turno. Claude se entera si los tests fallan sin haber esperado.
 
-## 5. Subagentes para tareas paralelas
+## 3. PreCompact Hook: Backup antes de olvidar
 
-Para tareas independientes que pueden correr en paralelo:
+Claude comprime el contexto automáticamente. Con este hook, guardas una copia **antes** de que olvide:
 
-\`\`\`
-Necesito:
-1. Migrar la base de datos (puede tardar)
-2. Actualizar los tests
-3. Regenerar los tipos
-
-Lanza subagentes para las tareas independientes y repórtame cuando terminen.
-\`\`\`
-
-Claude lanzará agentes en paralelo. Útil para operaciones lentas como búsquedas extensas o procesamiento de múltiples archivos.
-
-## 6. El patrón "lee → planea → ejecuta"
-
-Para cambios grandes, fuerza este orden explícitamente:
-
-\`\`\`
-1. Lee auth.ts y todos los archivos que importa
-2. Planea cómo añadir refresh tokens (muéstrame el plan, sin código)
-3. Espera mi aprobación antes de escribir cualquier código
+\`\`\`json
+{
+  "hooks": {
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cp ~/.claude/transcript.md ~/backups/transcript-$(date +%s).md"
+          }
+        ]
+      }
+    ]
+  }
+}
 \`\`\`
 
-Esto evita que Claude escriba código que no encaja con tu arquitectura existente.
+Útil para auditoría o para recuperar contexto que Claude "olvidó".
 
-## 7. Debugging con trazabilidad
+---
 
-En lugar de "el login no funciona", da contexto estructurado:
+📚 **¿Quieres dominar estas técnicas?** Escribí un libro completo sobre Claude Code. [Descárgalo gratis aquí](/libros/domina_claude_code).
 
+---
+
+## 4. --fork-session: Explorar sin miedo
+
+¿Quieres probar un approach diferente sin perder tu progreso actual?
+
+\`\`\`bash
+claude --resume abc123 --fork-session
 \`\`\`
-Bug: El login devuelve 200 pero req.user es undefined.
 
-Traza el flujo:
-1. ¿El token se genera correctamente en /login?
-2. ¿Se envía en el header Authorization?
-3. ¿El middleware lo decodifica?
+Crea una **rama** de tu sesión. Puedes explorar una solución alternativa y si no funciona, volver al original intacto.
 
-Lee los archivos relevantes y dime dónde se rompe.
+## 5. Agent Hooks: Verificación inteligente
+
+En lugar de un simple comando, usa un **subagente** para verificar antes de terminar:
+
+\`\`\`json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Verifica que todos los tests pasen y no hay errores de TypeScript. Si hay problemas, repórtalos.",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}
 \`\`\`
 
-Esto guía a Claude a investigar sistemáticamente en lugar de adivinar.
+El subagente inspecciona el estado real del proyecto antes de que Claude declare "listo".
+
+## 6. JSON Schema Output: Automatización robusta
+
+Para scripts que consumen la salida de Claude, fuerza un schema:
+
+\`\`\`bash
+claude -p "Lista las funciones exportadas de auth.ts" \\
+  --output-format json \\
+  --json-schema '{"type":"object","properties":{"functions":{"type":"array","items":{"type":"string"}}},"required":["functions"]}'
+\`\`\`
+
+La salida **siempre** cumple el schema. Perfecto para pipelines donde necesitas parsear la respuesta.
+
+## 7. Context7 MCP: Documentación actualizada
+
+El MCP más útil que nadie menciona. Claude puede leer la documentación **actual** de cualquier librería:
+
+\`\`\`json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/context7-mcp"]
+    }
+  }
+}
+\`\`\`
+
+Ahora puedes decir: "Lee la documentación actual de React Router v7 y migra este componente". Sin alucinaciones sobre APIs deprecadas.
+
+👉 [Tutorial: Diseños en Figma con MCP](/blog/como-crear-disenos-en-figma-con-ia-usando-talk-to-figma-mcp)
 
 ---
 
@@ -135,13 +139,26 @@ Esto guía a Claude a investigar sistemáticamente en lugar de adivinar.
 
 ---
 
+## Bonus: Variables de entorno ocultas
+
+\`\`\`bash
+# Fuerza compactación más agresiva (50% en vez de 95%)
+export CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=50
+
+# Ejecuta herramientas en paralelo (más rápido)
+export CLAUDE_PARALLEL_TOOLS=true
+
+# Desactiva llamadas no esenciales (ahorra tokens)
+export DISABLE_NON_ESSENTIAL_MODEL_CALLS=1
+\`\`\`
+
 ## ¿Quieres profundizar?
 
 En el **Taller de Claude Code** cubrimos:
 
-- Gestión de contexto en proyectos grandes
-- SDK para automatización programática
-- Configuración avanzada de MCP servers
+- Hooks avanzados y automatización
+- SDK para integración programática
+- MCPs para multiplicar capacidades
 
 👉 [Ver temario del taller](/claude)
 
