@@ -460,7 +460,7 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
                   <Streamdown
                     key={previewBody.slice(0, 50)}
                     plugins={{ code }}
-                    shikiTheme={["github-light", "github-dark"]}
+                    shikiTheme={["dracula", "dracula"]}
                   >
                     {previewBody}
                   </Streamdown>

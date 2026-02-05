@@ -45,24 +45,40 @@ body {
   --brand-100: #dae8e5;
 }
 
-/* Streamdown code blocks - dark theme with proper contrast */
+/* Streamdown code blocks - Dracula theme */
 .dark [data-streamdown="code-block"] {
-  --shiki-dark-bg: #24292e;
-  background-color: #24292e !important;
-  border-color: #444d56 !important;
+  background-color: #282a36 !important;
+  border: none !important;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 .dark [data-streamdown="code-block-header"] {
-  background-color: #1f2428 !important;
-  color: #e1e4e8 !important;
+  background-color: #21222c !important;
+  color: #f8f8f2 !important;
+  border-bottom: 1px solid #44475a !important;
 }
 
 .dark [data-streamdown="code-block-body"] {
-  background-color: #24292e !important;
+  background-color: #282a36 !important;
 }
 
-/* Force dark theme colors on code spans */
-.dark [data-streamdown="code-block-body"] span[style] {
+.dark [data-streamdown="code-block-body"] pre {
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+/* Prevent prose from overriding Shiki colors */
+.prose [data-streamdown="code-block"] code,
+.prose [data-streamdown="code-block"] pre,
+.prose-invert [data-streamdown="code-block"] code,
+.prose-invert [data-streamdown="code-block"] pre {
+  color: inherit !important;
+  background: transparent !important;
+}
+
+.prose [data-streamdown="code-block"] span[style],
+.prose-invert [data-streamdown="code-block"] span[style] {
   color: var(--shiki-dark, inherit) !important;
 }
 
