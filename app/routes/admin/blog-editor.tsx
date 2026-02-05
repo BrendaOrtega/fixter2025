@@ -449,18 +449,18 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
           <div className={`flex flex-col ${viewMode === "split" ? "w-1/2" : "w-full"} bg-gray-900`}>
             <div className="p-4 border-b border-gray-800 flex items-center justify-between">
               <span className="text-sm text-gray-500 font-medium">Preview</span>
-              <span className="text-xs text-gray-600">Shiki + One Dark Pro</span>
+              <span className="text-xs text-gray-600">Shiki + GitHub Light</span>
             </div>
             <div className="flex-1 overflow-auto p-6">
               <article className="max-w-3xl mx-auto">
                 {title && (
                   <h1 className="text-4xl font-bold text-white mb-6">{title}</h1>
                 )}
-                <div className="prose prose-lg prose-invert max-w-none">
+                <div className="dark prose prose-lg prose-invert max-w-none">
                   <Streamdown
                     key={previewBody.slice(0, 50)}
                     plugins={{ code }}
-                    shikiTheme={["one-dark-pro", "one-dark-pro"]}
+                    shikiTheme={["github-light", "github-dark"]}
                   >
                     {previewBody}
                   </Streamdown>

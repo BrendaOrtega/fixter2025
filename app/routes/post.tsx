@@ -308,10 +308,10 @@ export default function Page({
                 <YoutubeComponent url={post.youtubeLink as string} />
 
                 <div className={twMerge(
-                  "prose prose-lg prose-invert max-w-none",
+                  "dark prose prose-lg prose-invert max-w-none",
                   readingMode && "prose-2xl [&_p]:text-3xl [&_p]:leading-relaxed [&_li]:text-2xl [&_h2]:text-5xl [&_h3]:text-4xl [&_pre]:text-xl [&_blockquote]:text-2xl"
                 )}>
-                  <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>{post.body}</Streamdown>
+                  <Streamdown plugins={{ code }} shikiTheme={["github-light", "github-dark"]}>{post.body}</Streamdown>
                 </div>
               </motion.div>
             </section>

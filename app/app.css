@@ -45,21 +45,25 @@ body {
   --brand-100: #dae8e5;
 }
 
-/* Streamdown code blocks in dark contexts */
-.prose-invert [data-streamdown="code-block"] {
-  --background: 222.2 84% 4.9%;
-  --muted: 217.2 32.6% 17.5%;
-  --border: 217.2 32.6% 25%;
-  background-color: hsl(220 13% 18%) !important;
-  border-color: hsl(217 32% 25%) !important;
+/* Streamdown code blocks - dark theme with proper contrast */
+.dark [data-streamdown="code-block"] {
+  --shiki-dark-bg: #24292e;
+  background-color: #24292e !important;
+  border-color: #444d56 !important;
 }
 
-.prose-invert [data-streamdown="code-block-header"] {
-  background-color: hsl(220 13% 14%) !important;
+.dark [data-streamdown="code-block-header"] {
+  background-color: #1f2428 !important;
+  color: #e1e4e8 !important;
 }
 
-.prose-invert [data-streamdown="code-block-body"] {
-  background-color: hsl(220 13% 18%) !important;
+.dark [data-streamdown="code-block-body"] {
+  background-color: #24292e !important;
+}
+
+/* Force dark theme colors on code spans */
+.dark [data-streamdown="code-block-body"] span[style] {
+  color: var(--shiki-dark, inherit) !important;
 }
 
 *:focus-visible {
