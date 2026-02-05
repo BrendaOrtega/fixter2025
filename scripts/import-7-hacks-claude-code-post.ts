@@ -1,131 +1,126 @@
 import { db } from "../app/.server/db";
 
 const hacksContent = `
-Después de meses usando Claude Code diariamente, he descubierto trucos que multiplicaron mi productividad. Estos no están en la documentación oficial, son patrones que emergen de la práctica constante.
+Después de meses usando Claude Code diariamente, descubrí patrones que no están en la documentación oficial.
 
-## 1. El archivo CLAUDE.md como memoria externa
+## 1. CLAUDE.md estratégico
 
-Claude Code lee automáticamente el archivo \`CLAUDE.md\` en la raíz de tu proyecto. Úsalo como una "memoria persistente":
+No solo pongas reglas genéricas. Incluye **decisiones ya tomadas** para evitar que Claude las cuestione:
 
 \`\`\`markdown
 # CLAUDE.md
 
-## Reglas del proyecto
-- Usar TypeScript estricto
-- Componentes funcionales con hooks
-- Tailwind para estilos
+## Decisiones FINALES (no cambiar)
+- Auth: JWT en httpOnly cookies (NO localStorage)
+- ORM: Prisma (NO TypeORM, NO Drizzle)
+- Estilos: Tailwind (NO CSS modules)
 
-## Decisiones de arquitectura
-- Auth con JWT, tokens en httpOnly cookies
-- Prisma para ORM
-- Zod para validación
+## Errores comunes en este proyecto
+- El middleware de auth está en /lib, no en /middleware
+- Los tests usan vitest, no jest
+\`\`\`
 
-## Patrones establecidos
-- Fetch en server loaders, nunca en cliente
-- Errores con toast, nunca alerts
+## 2. /compact antes de perder contexto
+
+Cuando Claude empieza a olvidar lo que hicieron juntos:
+
+\`\`\`
+/compact
+\`\`\`
+
+Comprime la conversación manteniendo lo esencial. Úsalo cada 20-30 interacciones en sesiones largas.
+
+## 3. MCP servers: el multiplicador
+
+Claude Code puede conectarse a herramientas externas via MCP. Ejemplo con Figma:
+
+\`\`\`json
+// ~/.claude/settings.json
+{
+  "mcpServers": {
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "figma-developer-mcp", "--stdio"]
+    }
+  }
+}
+\`\`\`
+
+Después puedes decir: "Extrae los colores del archivo de Figma y crea variables CSS".
+
+👉 [Ver tutorial completo: Diseños en Figma con IA usando MCP](/blog/como-crear-disenos-en-figma-con-ia-usando-talk-to-figma-mcp)
+
+---
+
+📚 **¿Quieres dominar estas técnicas?** Escribí un libro completo sobre Claude Code. [Descárgalo gratis aquí](/libros/domina_claude_code).
+
+---
+
+## 4. Hooks para automatizar
+
+Crea \`~/.claude/hooks.json\` para ejecutar comandos automáticamente:
+
+\`\`\`json
+{
+  "pre-commit": "npm run lint && npm run test"
+}
+\`\`\`
+
+Claude ejecutará lint y tests antes de cada commit que haga.
+
+## 5. Subagentes para tareas paralelas
+
+Para tareas que pueden correr en paralelo:
+
+\`\`\`
+Necesito:
+1. Migrar la base de datos (puede tardar)
+2. Actualizar los tests
+3. Regenerar los tipos
+
+Usa subagentes para las tareas independientes.
+\`\`\`
+
+Claude lanzará agentes paralelos y te reportará cuando terminen.
+
+## 6. El patrón "lee → planea → ejecuta"
+
+Para cambios grandes, fuerza este orden:
+
+\`\`\`
+1. Lee auth.ts y sus dependencias
+2. Planea cómo añadir refresh tokens (sin código aún)
+3. Espera mi aprobación antes de escribir
+\`\`\`
+
+## 7. Debugging con trazabilidad
+
+\`\`\`
+Bug: El login devuelve 200 pero req.user es undefined.
+
+Traza el flujo:
+1. ¿El token se genera correctamente en /login?
+2. ¿Se envía en el header Authorization?
+3. ¿El middleware lo decodifica?
+
+Lee los archivos relevantes y dime dónde se rompe.
 \`\`\`
 
 ---
 
-🎬 **¿Te está gustando este contenido?** Tenemos más tutoriales en video en nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek).
+🎬 **¿Prefieres video?** Tutoriales en nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek).
 
 ---
 
-## 2. Pide que lea antes de escribir
+## ¿Quieres profundizar?
 
-Antes de pedir cambios, haz que Claude explore:
+En el **Taller de Claude Code** cubrimos:
 
-\`\`\`
-Lee el archivo auth.ts y todos los archivos que importa.
-Después propón cómo añadir refresh tokens.
-\`\`\`
+- Gestión de contexto en proyectos grandes
+- SDK para automatización programática
+- Configuración avanzada de MCP servers
 
-Esto evita que invente implementaciones que no encajan con tu código existente.
-
-## 3. Usa el modo "plan" para tareas grandes
-
-Para refactorizaciones o features complejas:
-
-\`\`\`
-/plan Migrar de Redux a Zustand
-\`\`\`
-
-Claude primero explorará, planificará y te pedirá aprobación antes de cambiar nada. Esto evita sorpresas.
-
-## 4. Commits atómicos con contexto
-
-\`\`\`
-Haz commit de los cambios relacionados con autenticación.
-Mensaje: "feat(auth): implementar refresh tokens"
-\`\`\`
-
-Claude agrupará los cambios relevantes y creará un commit limpio.
-
-## 5. Tests primero, implementación después
-
-\`\`\`
-Escribe tests para un hook useDebounce que:
-- Debounce un valor por X ms
-- Cancele al desmontar
-- Permita cambiar el delay
-
-Después implementa el hook para que pasen los tests.
-\`\`\`
-
-TDD con IA funciona sorprendentemente bien.
-
-## 6. El patrón "como lo haría X"
-
-\`\`\`
-Implementa validación de formularios como lo haría React Hook Form.
-\`\`\`
-
-Esto le da a Claude un marco de referencia claro sin tener que explicar cada detalle.
-
-## 7. Debugging con contexto completo
-
-En lugar de:
-\`\`\`
-El login no funciona
-\`\`\`
-
-Haz:
-\`\`\`
-Al hacer login:
-1. Veo el POST en network con status 200
-2. Pero req.user es undefined en el middleware
-3. El token está en localStorage
-
-Lee el middleware de auth y el route de login.
-¿Dónde se rompe el flujo?
-\`\`\`
-
-## Bonus: Combinaciones poderosas
-
-### Para explorar un codebase nuevo:
-\`\`\`
-Dame un resumen de la arquitectura de este proyecto.
-Enfócate en: autenticación, rutas principales, y patrones de estado.
-\`\`\`
-
-### Para refactorizar sin romper:
-\`\`\`
-Quiero renombrar UserContext a AuthContext.
-Primero lista todos los archivos que lo usan.
-Después haz los cambios garantizando que los tests siguen pasando.
-\`\`\`
-
-### Para documentar:
-\`\`\`
-Genera JSDoc para todas las funciones públicas en utils/
-Sigue el estilo de los JSDoc que ya existen en el proyecto.
-\`\`\`
-
-## Conclusión
-
-La clave es darle a Claude contexto suficiente y tareas específicas. No es magia, es saber comunicarse con la herramienta.
-
-Practica estos patrones y tu velocidad de desarrollo se multiplicará.
+👉 [Ver temario del taller](/claude)
 
 Abrazo. bliss.
 `;

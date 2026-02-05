@@ -311,7 +311,7 @@ export default function Page({
                   "dark prose prose-lg prose-invert max-w-none",
                   readingMode && "prose-2xl [&_p]:text-3xl [&_p]:leading-relaxed [&_li]:text-2xl [&_h2]:text-5xl [&_h3]:text-4xl [&_pre]:text-xl [&_blockquote]:text-2xl"
                 )}>
-                  <Streamdown plugins={{ code }} shikiTheme={["dracula", "dracula"]}>{post.body}</Streamdown>
+                  <Streamdown plugins={{ code }} shikiTheme={["dracula", "dracula"]} linkSafety={{ enabled: false }}>{post.body}</Streamdown>
                 </div>
               </motion.div>
             </section>
