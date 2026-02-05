@@ -17,6 +17,15 @@
     --border: 214.3 31.8% 91.4%;
     --radius: 0.5rem;
   }
+
+  /* Dark mode variables for Streamdown code blocks */
+  .dark, .prose-invert {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --border: 217.2 32.6% 17.5%;
+  }
 }
 
 html,
@@ -34,6 +43,23 @@ body {
   --brand-800: #186656;
   --brand-900: #19262a;
   --brand-100: #dae8e5;
+}
+
+/* Streamdown code blocks in dark contexts */
+.prose-invert [data-streamdown="code-block"] {
+  --background: 222.2 84% 4.9%;
+  --muted: 217.2 32.6% 17.5%;
+  --border: 217.2 32.6% 25%;
+  background-color: hsl(220 13% 18%) !important;
+  border-color: hsl(217 32% 25%) !important;
+}
+
+.prose-invert [data-streamdown="code-block-header"] {
+  background-color: hsl(220 13% 14%) !important;
+}
+
+.prose-invert [data-streamdown="code-block-body"] {
+  background-color: hsl(220 13% 18%) !important;
 }
 
 *:focus-visible {

@@ -11,10 +11,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
   await getAdminOrRedirect(request);
 
   try {
-    const body = await request.json();
-    const { postId, title, slug, content, contentFormat, youtubeLink, metaImage, author, tags, mainTag } = body;
+    const data = await request.json();
+    const { postId, title, slug, content, body: bodyMarkdownInput, contentFormat, youtubeLink, metaImage, author, tags, mainTag } = data;
 
-    if (!title || !slug || !content) {
+    // Para formato markdown, usamos body directamente
+    // Para formato tiptap, usamos content
+    const hasContent = contentFormat === "markdown" ? bodyMarkdownInput : content;
+
+    if (!title || !slug || !hasContent) {
       return Response.json(
         { error: "title, slug, and content are required" },
         { status: 400 }
@@ -48,8 +52,17 @@ export const action = async ({ request }: Route.ActionArgs) => {
         };
     }
 
-    // Convertir Tiptap JSON a Markdown para el campo body
-    const bodyMarkdown = content ? tiptapToMarkdown(content) : "";
+    // Si es markdown directo, usar body; si es tiptap, convertir
+    let bodyMarkdown: string;
+    let contentToSave: any;
+
+    if (contentFormat === "markdown") {
+      bodyMarkdown = bodyMarkdownInput;
+      contentToSave = null; // No guardar content JSON para markdown puro
+    } else {
+      bodyMarkdown = content ? tiptapToMarkdown(content) : "";
+      contentToSave = content;
+    }
 
     let post;
 
@@ -59,9 +72,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         data: {
           title,
           slug,
-          content,
-          body: bodyMarkdown, // Siempre generar body desde Tiptap
-          contentFormat: contentFormat || "tiptap",
+          content: contentToSave,
+          body: bodyMarkdown,
+          contentFormat: contentFormat || "markdown",
           youtubeLink: youtubeLink || undefined,
           metaImage: metaImage || undefined,
           tags: tags || [],
@@ -75,9 +88,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
         data: {
           title,
           slug,
-          content,
-          body: bodyMarkdown, // Siempre generar body desde Tiptap
-          contentFormat: contentFormat || "tiptap",
+          content: contentToSave,
+          body: bodyMarkdown,
+          contentFormat: contentFormat || "markdown",
           youtubeLink: youtubeLink || undefined,
           metaImage: metaImage || undefined,
           tags: tags || [],

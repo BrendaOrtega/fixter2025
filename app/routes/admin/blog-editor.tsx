@@ -2,9 +2,8 @@ import { redirect } from "react-router";
 import type { Route } from "./+types/blog-editor";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
-import { ModernEditor } from "~/components/blog/ModernEditor";
 import { MetadataPanel } from "~/components/blog/MetadataPanel";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Settings,
   ArrowLeft,
@@ -13,231 +12,12 @@ import {
   Loader2,
   Check,
   Clock,
-  Sparkles,
+  Columns,
+  Maximize2,
+  Code,
 } from "lucide-react";
-
-// Convertir markdown a Tiptap JSON
-function markdownToTiptap(markdown: string) {
-  if (!markdown) return null;
-
-  const lines = markdown.split("\n");
-  const content: any[] = [];
-
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Headings (H1-H6)
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const text = headingMatch[2];
-      content.push({
-        type: "heading",
-        attrs: { level },
-        content: parseInlineMarks(text),
-      });
-      i++;
-      continue;
-    }
-
-    // Code block
-    if (line.startsWith("```")) {
-      const langMatch = line.match(/^```(\w*)$/);
-      const language = langMatch?.[1] || "";
-      const codeLines: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i].startsWith("```")) {
-        codeLines.push(lines[i]);
-        i++;
-      }
-      content.push({
-        type: "codeBlock",
-        attrs: { language },
-        content: codeLines.length > 0 ? [{ type: "text", text: codeLines.join("\n") }] : [],
-      });
-      i++;
-      continue;
-    }
-
-    // Blockquote (puede ser multi-línea)
-    if (line.startsWith("> ")) {
-      const quoteLines: string[] = [];
-      while (i < lines.length && lines[i].startsWith("> ")) {
-        quoteLines.push(lines[i].slice(2));
-        i++;
-      }
-      content.push({
-        type: "blockquote",
-        content: quoteLines.map((ql) => ({
-          type: "paragraph",
-          content: parseInlineMarks(ql),
-        })),
-      });
-      continue;
-    }
-
-    // Ordered list
-    if (/^\d+\.\s/.test(line)) {
-      const items: any[] = [];
-      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
-        const itemText = lines[i].replace(/^\d+\.\s/, "");
-        items.push({
-          type: "listItem",
-          content: [
-            {
-              type: "paragraph",
-              content: parseInlineMarks(itemText),
-            },
-          ],
-        });
-        i++;
-      }
-      content.push({
-        type: "orderedList",
-        content: items,
-      });
-      continue;
-    }
-
-    // Bullet list
-    if (line.startsWith("- ") || line.startsWith("* ")) {
-      const items: any[] = [];
-      while (
-        i < lines.length &&
-        (lines[i].startsWith("- ") || lines[i].startsWith("* "))
-      ) {
-        const itemText = lines[i].slice(2);
-        items.push({
-          type: "listItem",
-          content: [
-            {
-              type: "paragraph",
-              content: parseInlineMarks(itemText),
-            },
-          ],
-        });
-        i++;
-      }
-      content.push({
-        type: "bulletList",
-        content: items,
-      });
-      continue;
-    }
-
-    // Image
-    const imageMatch = line.match(/^!\[(.*?)\]\((.*?)(?:\s+"(.*?)")?\)$/);
-    if (imageMatch) {
-      content.push({
-        type: "image",
-        attrs: {
-          src: imageMatch[2],
-          alt: imageMatch[1] || "",
-          title: imageMatch[3] || null,
-        },
-      });
-      i++;
-      continue;
-    }
-
-    // Horizontal rule
-    if (line === "---" || line === "***" || line === "___") {
-      content.push({ type: "horizontalRule" });
-      i++;
-      continue;
-    }
-
-    // Regular paragraph
-    if (line.trim()) {
-      content.push({
-        type: "paragraph",
-        content: parseInlineMarks(line),
-      });
-    }
-
-    i++;
-  }
-
-  return { type: "doc", content };
-}
-
-// Parsear marks inline: **bold**, *italic*, `code`, [link](url), ~~strike~~
-function parseInlineMarks(text: string): any[] {
-  if (!text) return [];
-
-  const result: any[] = [];
-  let remaining = text;
-
-  // Regex para detectar patrones inline
-  const patterns = [
-    // Links: [text](url)
-    { regex: /\[([^\]]+)\]\(([^)]+)\)/, type: "link" },
-    // Bold: **text** o __text__
-    { regex: /\*\*([^*]+)\*\*|__([^_]+)__/, type: "bold" },
-    // Italic: *text* o _text_
-    { regex: /\*([^*]+)\*|_([^_]+)_/, type: "italic" },
-    // Code: `text`
-    { regex: /`([^`]+)`/, type: "code" },
-    // Strike: ~~text~~
-    { regex: /~~([^~]+)~~/, type: "strike" },
-  ];
-
-  while (remaining.length > 0) {
-    let earliestMatch: { index: number; length: number; content: string; type: string; href?: string } | null = null;
-
-    for (const pattern of patterns) {
-      const match = remaining.match(pattern.regex);
-      if (match && match.index !== undefined) {
-        const matchContent = match[1] || match[2];
-        if (!earliestMatch || match.index < earliestMatch.index) {
-          earliestMatch = {
-            index: match.index,
-            length: match[0].length,
-            content: matchContent,
-            type: pattern.type,
-            href: pattern.type === "link" ? match[2] : undefined,
-          };
-        }
-      }
-    }
-
-    if (earliestMatch) {
-      // Añadir texto antes del match
-      if (earliestMatch.index > 0) {
-        result.push({ type: "text", text: remaining.slice(0, earliestMatch.index) });
-      }
-
-      // Añadir el texto con mark
-      const marks: any[] = [];
-      if (earliestMatch.type === "bold") {
-        marks.push({ type: "bold" });
-      } else if (earliestMatch.type === "italic") {
-        marks.push({ type: "italic" });
-      } else if (earliestMatch.type === "code") {
-        marks.push({ type: "code" });
-      } else if (earliestMatch.type === "strike") {
-        marks.push({ type: "strike" });
-      } else if (earliestMatch.type === "link") {
-        marks.push({ type: "link", attrs: { href: earliestMatch.href } });
-      }
-
-      result.push({
-        type: "text",
-        text: earliestMatch.content,
-        marks,
-      });
-
-      remaining = remaining.slice(earliestMatch.index + earliestMatch.length);
-    } else {
-      // No más matches, añadir el resto como texto plano
-      result.push({ type: "text", text: remaining });
-      break;
-    }
-  }
-
-  return result.length > 0 ? result : [{ type: "text", text: "" }];
-}
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   await getAdminOrRedirect(request);
@@ -261,11 +41,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 export default function BlogEditor({ loaderData }: Route.ComponentProps) {
   const { post } = loaderData;
 
-  // Si es post antiguo con markdown, convertir a Tiptap
-  const contentToUse =
-    post?.content || (post?.body ? markdownToTiptap(post.body) : null);
-
-  const [content, setContent] = useState(contentToUse);
+  const [body, setBody] = useState(post?.body || "");
   const [title, setTitle] = useState(post?.title || "");
   const [slug, setSlug] = useState(post?.slug || "");
   const [youtubeLink, setYoutubeLink] = useState(
@@ -289,16 +65,24 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
-    "idle"
-  );
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [viewMode, setViewMode] = useState<"split" | "editor" | "preview">("split");
+  const [previewBody, setPreviewBody] = useState(post?.body || "");
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Debounce preview update
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setPreviewBody(body);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [body]);
 
   // Sincronizar datos del post cuando se carga
   useEffect(() => {
     if (post) {
-      const contentData =
-        post.content || (post.body ? markdownToTiptap(post.body) : null);
-      setContent(contentData);
+      setBody(post.body || "");
       setTitle(post.title || "");
       setSlug(post.slug || "");
       setYoutubeLink(
@@ -319,17 +103,17 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
 
   // Auto-save (debounced)
   useEffect(() => {
-    if (!content || !title || !slug) return;
+    if (!body || !title || !slug) return;
 
     const timeoutId = setTimeout(() => {
       handleSave(true); // silent save
     }, 30000); // 30 segundos
 
     return () => clearTimeout(timeoutId);
-  }, [content, title, slug]);
+  }, [body, title, slug]);
 
   const handleSave = async (silent = false) => {
-    if (!content || !title || !slug) {
+    if (!body || !title || !slug) {
       if (!silent) alert("Título, slug y contenido son requeridos");
       return;
     }
@@ -345,8 +129,8 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
           postId: post?.id || null,
           title,
           slug,
-          content,
-          contentFormat: "tiptap",
+          body, // Markdown directo
+          contentFormat: "markdown",
           youtubeLink: youtubeLink || null,
           metaImage: metaImage || null,
           author,
@@ -384,43 +168,48 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
     }
   };
 
-  // AI Command handler
-  const handleAICommand = useCallback(
-    async (command: string, text: string): Promise<string> => {
-      const prompts: Record<string, string> = {
-        continue: `Continúa escribiendo este texto de manera natural y coherente. Mantén el mismo tono y estilo:\n\n${text}\n\nContinuación:`,
-        improve: `Mejora este texto sin cambiar el significado. Enfócate en claridad, tono profesional y fluidez:\n\n${text}`,
-        expand: `Expande este párrafo con más detalles, ejemplos prácticos y contexto:\n\n${text}`,
-        shorten: `Condensa este texto manteniendo la idea principal. Sé conciso:\n\n${text}`,
-        translate: `Traduce este texto del inglés al español de manera natural:\n\n${text}`,
-      };
-
-      const response = await fetch("/api/ai.text-command", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          command,
-          text,
-          prompt: prompts[command] || text,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave(false);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+        e.preventDefault();
+        setIsPanelOpen((prev) => !prev);
+      }
+    };
 
-      const { result } = await response.json();
-      return result;
-    },
-    []
-  );
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [body, title, slug]);
+
+  // Insert markdown helper
+  const insertMarkdown = (before: string, after: string = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = body.slice(start, end);
+
+    const newText = body.slice(0, start) + before + selectedText + after + body.slice(end);
+    setBody(newText);
+
+    // Set cursor position
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + before.length + selectedText.length + after.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
 
   return (
     <div className="min-h-screen bg-gray-950">
-      {/* Top Bar - Minimal */}
+      {/* Top Bar */}
       <header className="fixed top-0 left-0 right-0 z-30 bg-gray-950/90 backdrop-blur-sm border-b border-gray-800/50">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-[1800px] mx-auto px-4 h-14 flex items-center justify-between">
           {/* Left - Back + Breadcrumb */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <a
@@ -439,6 +228,43 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
                 </span>
               </>
             )}
+          </div>
+
+          {/* Center - View Mode Toggle */}
+          <div className="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode("editor")}
+              className={`p-1.5 rounded transition ${
+                viewMode === "editor"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              title="Solo editor"
+            >
+              <Code size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("split")}
+              className={`p-1.5 rounded transition ${
+                viewMode === "split"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              title="Editor + Preview"
+            >
+              <Columns size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("preview")}
+              className={`p-1.5 rounded transition ${
+                viewMode === "preview"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+              title="Solo preview"
+            >
+              <Maximize2 size={16} />
+            </button>
           </div>
 
           {/* Right - Actions */}
@@ -470,14 +296,14 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
               )}
             </div>
 
-            {/* Preview */}
+            {/* Preview link */}
             {slug && (
               <a
                 href={`/blog/${slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"
-                title="Preview"
+                title="Ver en sitio"
               >
                 <Eye size={18} />
               </a>
@@ -513,62 +339,139 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
         </div>
       </header>
 
-      {/* Main Editor */}
-      <main className="pt-20 pb-20 px-4">
-        <div className="max-w-3xl mx-auto">
-          {/* Title - Large */}
-          <textarea
-            rows={1}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título del post..."
-            className="w-full bg-transparent text-white text-4xl md:text-5xl font-bold placeholder-gray-700 focus:outline-none mb-8 leading-tight resize-none overflow-hidden"
-            onInput={(e) => {
-              const target = e.currentTarget;
-              target.style.height = 'auto';
-              target.style.height = target.scrollHeight + 'px';
-            }}
-          />
+      {/* Main Content */}
+      <main className="pt-14 h-screen flex">
+        {/* Editor Panel */}
+        {(viewMode === "editor" || viewMode === "split") && (
+          <div className={`flex flex-col ${viewMode === "split" ? "w-1/2" : "w-full"} border-r border-gray-800`}>
+            {/* Title Input */}
+            <div className="p-4 border-b border-gray-800">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Título del post..."
+                className="w-full bg-transparent text-white text-2xl font-bold placeholder-gray-600 focus:outline-none"
+              />
+            </div>
 
-          {/* Subtitle/Meta line */}
-          <div className="flex items-center gap-4 mb-8 text-sm text-gray-500">
-            <span>
-              Por{" "}
-              <span className="text-gray-400">
-                {author === "bliss" ? "Héctorbliss" : author === "david" ? "David Zavala" : "BrendaGo"}
-              </span>
-            </span>
-            {tags.length > 0 && (
-              <>
-                <span>•</span>
-                <span className="text-indigo-400">#{mainTag || tags[0]}</span>
-              </>
-            )}
-            {!slug && (
-              <>
-                <span>•</span>
-                <button
-                  onClick={() => setIsPanelOpen(true)}
-                  className="text-orange-400 hover:text-orange-300"
-                >
-                  Configura el slug para publicar →
-                </button>
-              </>
-            )}
-          </div>
+            {/* Markdown Toolbar */}
+            <div className="flex items-center gap-1 px-4 py-2 border-b border-gray-800 bg-gray-900/50">
+              <button
+                onClick={() => insertMarkdown("**", "**")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm font-bold"
+                title="Bold (⌘B)"
+              >
+                B
+              </button>
+              <button
+                onClick={() => insertMarkdown("*", "*")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm italic"
+                title="Italic (⌘I)"
+              >
+                I
+              </button>
+              <button
+                onClick={() => insertMarkdown("[", "](url)")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm underline"
+                title="Link"
+              >
+                Link
+              </button>
+              <div className="w-px h-4 bg-gray-700 mx-1" />
+              <button
+                onClick={() => insertMarkdown("## ")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm"
+                title="Heading 2"
+              >
+                H2
+              </button>
+              <button
+                onClick={() => insertMarkdown("### ")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm"
+                title="Heading 3"
+              >
+                H3
+              </button>
+              <div className="w-px h-4 bg-gray-700 mx-1" />
+              <button
+                onClick={() => insertMarkdown("```\n", "\n```")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm font-mono"
+                title="Code Block"
+              >
+                {"</>"}
+              </button>
+              <button
+                onClick={() => insertMarkdown("`", "`")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm font-mono"
+                title="Inline Code"
+              >
+                code
+              </button>
+              <div className="w-px h-4 bg-gray-700 mx-1" />
+              <button
+                onClick={() => insertMarkdown("- ")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm"
+                title="List"
+              >
+                • List
+              </button>
+              <button
+                onClick={() => insertMarkdown("> ")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm"
+                title="Quote"
+              >
+                " Quote
+              </button>
+              <button
+                onClick={() => insertMarkdown("| Col 1 | Col 2 | Col 3 |\n|-------|-------|-------|\n| A | B | C |\n")}
+                className="px-2 py-1 text-gray-400 hover:text-white hover:bg-gray-800 rounded text-sm"
+                title="Table"
+              >
+                ⊞ Table
+              </button>
+            </div>
 
-          {/* Editor */}
-          <div className="prose-container">
-            <ModernEditor
-              content={content || undefined}
-              onChange={setContent}
-              onAICommand={handleAICommand}
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Escribe en markdown..."
+              className="flex-1 w-full p-4 bg-gray-950 text-gray-300 font-mono text-sm leading-relaxed resize-none focus:outline-none"
+              spellCheck={false}
             />
           </div>
-        </div>
+        )}
+
+        {/* Preview Panel */}
+        {(viewMode === "preview" || viewMode === "split") && (
+          <div className={`flex flex-col ${viewMode === "split" ? "w-1/2" : "w-full"} bg-gray-900`}>
+            <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+              <span className="text-sm text-gray-500 font-medium">Preview</span>
+              <span className="text-xs text-gray-600">Shiki + One Dark Pro</span>
+            </div>
+            <div className="flex-1 overflow-auto p-6">
+              <article className="max-w-3xl mx-auto">
+                {title && (
+                  <h1 className="text-4xl font-bold text-white mb-6">{title}</h1>
+                )}
+                <div className="prose prose-lg prose-invert max-w-none">
+                  <Streamdown
+                    key={previewBody.slice(0, 50)}
+                    plugins={{ code }}
+                    shikiTheme={["one-dark-pro", "one-dark-pro"]}
+                  >
+                    {previewBody}
+                  </Streamdown>
+                </div>
+              </article>
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* Backdrop when panel is open - DEBE estar ANTES del MetadataPanel para z-index correcto */}
+      {/* Backdrop when panel is open */}
       {isPanelOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30"
@@ -596,163 +499,10 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
         setMainTag={setMainTag}
       />
 
-      {/* Keyboard Shortcuts Help */}
-      <div className="fixed bottom-4 right-4 z-20">
-        <button
-          onClick={() => {}}
-          className="group relative p-2 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition text-gray-500 hover:text-gray-300"
-          title="Atajos de teclado"
-        >
-          <Sparkles size={16} />
-          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
-            <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl text-xs text-left whitespace-nowrap">
-              <div className="font-medium text-white mb-2">Atajos</div>
-              <div className="space-y-1 text-gray-400">
-                <div>
-                  <kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300">
-                    /
-                  </kbd>{" "}
-                  Insertar bloque
-                </div>
-                <div>
-                  <kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300">
-                    ⌘B
-                  </kbd>{" "}
-                  Bold
-                </div>
-                <div>
-                  <kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300">
-                    ⌘I
-                  </kbd>{" "}
-                  Italic
-                </div>
-                <div>
-                  <kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300">
-                    ⌘K
-                  </kbd>{" "}
-                  Link
-                </div>
-              </div>
-            </div>
-          </div>
-        </button>
+      {/* Keyboard shortcuts hint */}
+      <div className="fixed bottom-4 left-4 text-xs text-gray-600">
+        <span className="hidden md:inline">⌘S guardar • ⌘, configuración</span>
       </div>
-
-      {/* Custom styles for the editor */}
-      <style>{`
-        .prose-container {
-          font-size: 1.125rem;
-          line-height: 1.75;
-        }
-
-        .prose-container h2 {
-          font-size: 1.875rem;
-          font-weight: 700;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-          color: white;
-        }
-
-        .prose-container h3 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
-          color: white;
-        }
-
-        .prose-container p {
-          color: #d1d5db;
-          margin-bottom: 1rem;
-        }
-
-        .prose-container a {
-          color: #818cf8;
-          text-decoration: underline;
-        }
-
-        .prose-container code {
-          background: #1f2937;
-          padding: 0.125rem 0.375rem;
-          border-radius: 0.25rem;
-          font-size: 0.875em;
-        }
-
-        .prose-container pre {
-          background: #111827;
-          padding: 1rem;
-          border-radius: 0.5rem;
-          overflow-x: auto;
-        }
-
-        .prose-container pre code {
-          background: transparent;
-          padding: 0;
-        }
-
-        .prose-container blockquote {
-          border-left: 4px solid #6366f1;
-          padding-left: 1rem;
-          font-style: italic;
-          color: #9ca3af;
-        }
-
-        .prose-container ul,
-        .prose-container ol {
-          padding-left: 1.5rem;
-          color: #d1d5db;
-        }
-
-        .prose-container li {
-          margin-bottom: 0.25rem;
-        }
-
-        .prose-container hr {
-          border-color: #374151;
-          margin: 2rem 0;
-        }
-
-        .prose-container img {
-          border-radius: 0.5rem;
-          margin: 1.5rem 0;
-        }
-
-        /* Task list styles */
-        .prose-container ul[data-type="taskList"] {
-          list-style: none;
-          padding-left: 0;
-        }
-
-        .prose-container li[data-type="taskItem"] {
-          display: flex;
-          align-items: flex-start;
-          gap: 0.5rem;
-        }
-
-        .prose-container li[data-type="taskItem"] input[type="checkbox"] {
-          margin-top: 0.25rem;
-          accent-color: #6366f1;
-        }
-
-        /* Placeholder styles */
-        .ProseMirror p.is-editor-empty:first-child::before {
-          content: attr(data-placeholder);
-          float: left;
-          color: #4b5563;
-          pointer-events: none;
-          height: 0;
-        }
-
-        /* Focus styles */
-        .ProseMirror:focus {
-          outline: none;
-        }
-
-        /* Selection highlight */
-        .ProseMirror ::selection {
-          background: rgba(99, 102, 241, 0.3);
-        }
-      `}</style>
     </div>
   );
 }
