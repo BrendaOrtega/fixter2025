@@ -5,7 +5,8 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import { FaShoppingCart } from "react-icons/fa";
 import { motion, AnimatePresence } from "motion/react";
-import { MarkdownRenderer } from "~/components/blog/MarkdownRenderer";
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 import getMetaTags from "~/utils/getMetaTags";
 import {
   TableOfContents,
@@ -643,7 +644,11 @@ export default function LibroAiSdk({ loaderData }: Route.ComponentProps) {
                 prose-td:border prose-td:border-gray-300 prose-td:px-4 prose-td:py-2
                 ${readingMode ? "prose-2xl [&_p]:text-2xl [&_p]:leading-relaxed [&_li]:text-xl [&_h1]:text-5xl [&_h2]:text-4xl [&_h3]:text-3xl" : ""}
               `}>
-                <MarkdownRenderer>{content}</MarkdownRenderer>
+                <Streamdown
+                  plugins={{ code }}
+                  shikiTheme={["github-light", "github-dark"]}
+                  controls={{ table: false, code: true }}
+                >{content}</Streamdown>
               </div>
             ) : (
               <LockedContentPlaceholder

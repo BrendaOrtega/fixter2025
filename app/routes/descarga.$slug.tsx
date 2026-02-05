@@ -18,7 +18,8 @@ import {
 import getMetaTags from "~/utils/getMetaTags";
 import useRecaptcha from "~/lib/useRecaptcha";
 import { cn } from "~/utils/cn";
-import { MarkdownRenderer } from "~/components/blog/MarkdownRenderer";
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 
 export const meta = ({ data }: Route.MetaArgs) => {
   if (!data?.leadMagnet) {
@@ -426,7 +427,7 @@ export default function LeadMagnetLanding({ loaderData }: Route.ComponentProps) 
           {/* Description */}
           {leadMagnet.description && (
             <div className="mt-8 prose prose-invert prose-sm max-w-none text-white/80 prose-headings:text-white prose-strong:text-white prose-a:text-white/90 prose-a:underline">
-              <MarkdownRenderer>{leadMagnet.description}</MarkdownRenderer>
+              <Streamdown plugins={{ code }}>{leadMagnet.description}</Streamdown>
             </div>
           )}
         </div>
