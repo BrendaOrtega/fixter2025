@@ -15,8 +15,7 @@ import LiquidEther from "~/components/backgrounds/LiquidEther";
 import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { use3DHover } from "~/hooks/use3DHover";
-import { Streamdown } from "streamdown";
-import { code } from "@streamdown/code";
+import { MarkdownRenderer } from "~/components/blog/MarkdownRenderer";
 
 export function meta({ data }: Route.MetaArgs) {
   const course = data.course;
@@ -283,9 +282,7 @@ const CourseContent = ({
         [&_blockquote]:border-l-4 [&_blockquote]:border-brand-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-400
         [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6
         [&_li]:marker:text-brand-500 [&_li]:mb-2">
-        <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
-          {course.description}
-        </Streamdown>
+        <MarkdownRenderer>{course.description}</MarkdownRenderer>
       </div>
       <div className="border-[1px] my-20 border-brand-500 rounded-3xl p-6 md:p-10 xl:p-16 relative">
         <img

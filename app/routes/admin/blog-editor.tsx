@@ -16,8 +16,7 @@ import {
   Maximize2,
   Code,
 } from "lucide-react";
-import { Streamdown } from "streamdown";
-import { code } from "@streamdown/code";
+import { MarkdownRenderer } from "~/components/blog/MarkdownRenderer";
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   await getAdminOrRedirect(request);
@@ -457,13 +456,9 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
                   <h1 className="text-4xl font-bold text-white mb-6">{title}</h1>
                 )}
                 <div className="dark prose prose-lg prose-invert max-w-none">
-                  <Streamdown
-                    key={previewBody.slice(0, 50)}
-                    plugins={{ code }}
-                    shikiTheme={["github-light", "github-dark"]}
-                  >
+                  <MarkdownRenderer key={previewBody.slice(0, 50)}>
                     {previewBody}
-                  </Streamdown>
+                  </MarkdownRenderer>
                 </div>
               </article>
             </div>
