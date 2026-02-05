@@ -14,12 +14,15 @@ export default [
   route("mis-cursos", "routes/mis-cursos.tsx"),
   route("subscribe", "routes/subscribe.tsx"),
   route("newsletters", "routes/newsletters.tsx"),
+  route("newsletter", "routes/newsletter.tsx"), // redirect → /newsletters
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
+  route("tutoriales/*", "routes/tutoriales.$.tsx"), // redirect legacy → /tutoriales
   route("audio-demo", "routes/audio-demo.tsx"),
   route("aviso-de-privacidad", "routes/aviso.tsx"),
   route("terminos-y-condiciones", "routes/terms.tsx"),
   route("sitemap.xml", "routes/sitemap.tsx"),
+  route("sitemap", "routes/sitemap.redirect.tsx"), // redirect → /sitemap.xml
   // Video streaming endpoint (legacy format)
   route("videos", "routes/videos.tsx"),
   // Playlist routes for animaciones course (HLS streaming)
