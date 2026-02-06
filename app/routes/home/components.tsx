@@ -547,12 +547,12 @@ export const HomeHero = () => {
               children="Claude Code"
               variant="ghost"
             />
-            {/* <PrimaryButton
+            <PrimaryButton
               as="Link"
-              to="/blog"
-              children="Explorar el blog"
+              to="/integraciones"
+              children="Integraciones 2026"
               variant="ghost"
-            /> */}
+            />
           </div>
           {/* Links sutiles a los libros */}
           <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">

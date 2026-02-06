@@ -32,8 +32,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "suscription") {
     const tags = ["newsletter", "blog"];
+    const extraTags = formData.getAll("tags").map(String).filter(Boolean);
+    if (extraTags.length) tags.push(...extraTags);
     const email = String(formData.get("email"));
-    const name = String(formData.get("name"));
+    const name = String(formData.get("name") || "");
     const { success, error } = emailSchema.safeParse(email);
     if (!success) {
       return data({

@@ -102,6 +102,19 @@ db.collection.drop()
   - `app/routes/admin/blog-editor.tsx` - Página del editor
   - `app/.server/utils/tiptap-to-markdown.ts` - Convertidor Tiptap → Markdown
 
+## TODO: Crear sequence de nurturing para /integraciones
+
+- **Prioridad**: Media
+- **Contexto**: La ruta `/integraciones` tiene un mini footer con form de suscripción que usa el tag `"integraciones"`
+- **Objetivo**: Crear una email sequence enfocada en IA, MCP y observabilidad para los suscritos desde esa página
+- **Frecuencia**: Sin compromiso fijo, cuando haya contenido relevante
+- **Acciones pendientes**:
+  1. Crear la sequence en `/newsletters` con trigger TAG_ADDED + tag `"integraciones"`
+  2. Escribir los emails de la secuencia (análisis estratégicos mensuales)
+  3. Conectar el `sequenceId` en el form de `/integraciones` o usar backfill por tag
+- **Archivo**: `app/routes/integraciones.tsx` — el form ya envía `tags: "integraciones"` al API
+- **Referencia**: El API `/api/user` ya acepta tags extra via `formData.getAll("tags")`
+
 ## Lo nuevo
 
 Siempre intentamos añadir solo una ruta nueva, no añadir más de una. Interactiva y organizada con componentes reusables para que este modelo de ruta sea pequeña y legible, usando react router v7, ya no remix y nunca colocando utilidades del backend en ella, esas utilidades, si necesarias, existirá en sus propios archivos .server.tsx.
