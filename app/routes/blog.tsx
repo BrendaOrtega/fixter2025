@@ -160,6 +160,37 @@ export default function Page({
           </div>
         </section>
 
+        {/* Featured document banner */}
+        <div className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 mt-16 md:mt-24">
+          <Link
+            to="/integraciones"
+            className="group block relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] hover:border-brand-500/40 transition-all"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
+              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-brand-500/20 flex items-center justify-center text-3xl">
+                📄
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <span className="inline-block text-xs font-semibold uppercase tracking-wider text-brand-500 mb-1">
+                  Documento destacado
+                </span>
+                <h3 className="text-xl md:text-2xl font-bold text-white">
+                  Guia Estrategica 2026 — Observabilidad, Integraciones y
+                  Plataformas
+                </h3>
+                <p className="text-gray-400 mt-1 text-sm md:text-base">
+                  Datadog, consultoria independiente, MCP y el futuro de las
+                  plataformas de integraciones.
+                </p>
+              </div>
+              <div className="flex-shrink-0 text-brand-500 group-hover:translate-x-1 transition-transform text-2xl">
+                →
+              </div>
+            </div>
+          </Link>
+        </div>
+
         {posts.length < 1 && <Empty />}
         <List items={items} isLoading={isLoading} />
         {showLoadMore && (
