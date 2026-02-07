@@ -103,6 +103,7 @@ export default [
     route("sockets", "routes/api/sockets.tsx"),
     route("audio", "routes/api/audio.tsx"),
     route("analytics", "routes/api.analytics.tsx"),
+    route("heatmap/:postId", "routes/api/heatmap.$postId.ts"),
     route("video-analytics", "routes/api/video-analytics.ts"),
     route("sequences/start", "routes/api.sequences.start.ts"),
     route("sequences/process", "routes/api.sequences.process.ts"),
