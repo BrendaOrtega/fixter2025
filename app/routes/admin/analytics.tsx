@@ -1,9 +1,34 @@
 import type { Route } from "./+types/analytics";
 import { db } from "~/.server/db";
 import React, { useState } from "react";
-import { Form, Link } from "react-router";
+import { Form, Link, useFetcher } from "react-router";
 import { HeatmapVisualization } from "~/components/HeatmapVisualization";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
+import { Prisma } from "@prisma/client";
+
+export const action = async ({ request }: Route.ActionArgs) => {
+  await getAdminOrRedirect(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "update-banner") {
+    const postId = formData.get("postId") as string;
+    const bannerImg = (formData.get("bannerImg") as string)?.trim();
+    const bannerLink = (formData.get("bannerLink") as string)?.trim();
+
+    await db.post.update({
+      where: { id: postId },
+      data: {
+        banner: bannerImg
+          ? { img: bannerImg, link: bannerLink || "" }
+          : Prisma.DbNull,
+      },
+    });
+    return { ok: true };
+  }
+
+  return { error: "Unknown intent" };
+};
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await getAdminOrRedirect(request);
@@ -37,7 +62,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // Posts with per-post analytics
   const posts = await db.post.findMany({
     where: { published: true },
-    select: { id: true, title: true, slug: true, createdAt: true },
+    select: { id: true, title: true, slug: true, createdAt: true, banner: true },
     orderBy: { createdAt: "desc" },
     take: 20,
   });
@@ -74,6 +99,115 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     },
   };
 };
+
+function BannerCell({
+  postId,
+  banner,
+}: {
+  postId: string;
+  banner: { img: string; link: string } | null;
+}) {
+  const fetcher = useFetcher();
+  const [editing, setEditing] = useState(false);
+  const [img, setImg] = useState(banner?.img || "");
+  const [link, setLink] = useState(banner?.link || "");
+
+  const optimisticBanner =
+    fetcher.formData?.get("intent") === "update-banner"
+      ? fetcher.formData.get("bannerImg")
+        ? {
+            img: fetcher.formData.get("bannerImg") as string,
+            link: fetcher.formData.get("bannerLink") as string,
+          }
+        : null
+      : banner;
+
+  const save = () => {
+    fetcher.submit(
+      { intent: "update-banner", postId, bannerImg: img, bannerLink: link },
+      { method: "post" }
+    );
+    setEditing(false);
+  };
+
+  const remove = () => {
+    fetcher.submit(
+      { intent: "update-banner", postId, bannerImg: "", bannerLink: "" },
+      { method: "post" }
+    );
+    setImg("");
+    setLink("");
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-1.5 min-w-[200px]">
+        <input
+          type="text"
+          placeholder="URL imagen"
+          value={img}
+          onChange={(e) => setImg(e.target.value)}
+          className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs w-full"
+        />
+        <input
+          type="text"
+          placeholder="URL destino"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs w-full"
+        />
+        <div className="flex gap-1">
+          <button
+            onClick={save}
+            className="bg-blue-600 hover:bg-blue-700 px-2 py-0.5 rounded text-xs"
+          >
+            Guardar
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            className="bg-gray-700 hover:bg-gray-600 px-2 py-0.5 rounded text-xs"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (optimisticBanner?.img) {
+    return (
+      <div className="flex items-center gap-2">
+        <img
+          src={optimisticBanner.img}
+          alt="banner"
+          className="w-10 h-5 object-cover rounded border border-gray-600"
+        />
+        <button
+          onClick={() => setEditing(true)}
+          className="text-blue-400 hover:text-blue-300 text-xs"
+        >
+          Editar
+        </button>
+        <button
+          onClick={remove}
+          className="text-red-400 hover:text-red-300 text-xs"
+        >
+          Quitar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      className="text-gray-500 hover:text-gray-300 text-xs"
+    >
+      + Agregar
+    </button>
+  );
+}
 
 export default function AnalyticsPage({
   loaderData: { stats, postsWithAnalytics, dateRange },
@@ -184,6 +318,7 @@ export default function AnalyticsPage({
                     Clicks{arrow("clicks")}
                   </button>
                 </th>
+                <th className="px-4 py-3">Banner</th>
                 <th className="px-4 py-3 text-right">Heatmap</th>
               </tr>
             </thead>
@@ -208,6 +343,9 @@ export default function AnalyticsPage({
                     <td className="px-4 py-3 text-right text-gray-300">
                       {post.clickCount}
                     </td>
+                    <td className="px-4 py-3">
+                      <BannerCell postId={post.id} banner={post.banner ?? null} />
+                    </td>
                     <td className="px-4 py-3 text-right">
                       {post.clickCount > 0 ? (
                         <button
@@ -227,7 +365,7 @@ export default function AnalyticsPage({
                   </tr>
                   {expandedPost === post.id && (
                     <tr>
-                      <td colSpan={4} className="p-4 bg-gray-850">
+                      <td colSpan={5} className="p-4 bg-gray-850">
                         <div
                           className="relative bg-gray-700 rounded border border-gray-600 overflow-hidden"
                           style={{ height: 300 }}

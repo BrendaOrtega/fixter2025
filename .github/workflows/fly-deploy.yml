@@ -1,4 +1,6 @@
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+# TODO: Agregar Biome (linter/formatter) al proyecto
+# TODO: Crear check action (biome lint + build) que corra solo en PRs, no en push a main
 
 name: Fly Deploy
 on:
