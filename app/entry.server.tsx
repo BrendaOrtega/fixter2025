@@ -20,6 +20,18 @@ export default function handleRequest(
   routerContext: EntryContext,
   loadContext: AppLoadContext
 ) {
+  // Redirect animaciones.fixtergeek.com → curso viewer
+  const url = new URL(request.url);
+  if (url.hostname === "animaciones.fixtergeek.com") {
+    return new Response(null, {
+      status: 301,
+      headers: {
+        Location:
+          "https://www.fixtergeek.com/cursos/construye-mas-de-14-componentes-animados-con-react-y-motion/viewer",
+      },
+    });
+  }
+
   return isbot(request.headers.get("user-agent") || "")
     ? handleBotRequest(
         request,
