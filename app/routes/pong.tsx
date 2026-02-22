@@ -27,7 +27,7 @@ export const meta = () => {
   const baseMeta = getMetaTags({
     title: "Pong con Vanilla JS | Curso Gratis | FixterGeek",
     description:
-      "Aprende JavaScript construyendo el clásico Pong desde cero. Sin frameworks, sin librerías - solo tú, JavaScript y el Canvas API. Curso gratuito con +800 estudiantes.",
+      "Vamos a construir juntos el juego que inició todo — y de paso, vas a entender JavaScript de verdad. Sin React. Sin frameworks. Solo tú, yo, y el poder del Canvas API. Curso gratuito con +800 estudiantes.",
     url: "https://www.fixtergeek.com/pong",
     image: "https://www.fixtergeek.com/courses/pong-banner.png",
     keywords:
@@ -394,8 +394,9 @@ export default function PongLanding({ loaderData }: Route.ComponentProps) {
             </h1>
 
             <p className="text-green-300/80 text-lg mb-8 max-w-xl leading-relaxed">
-              Aprende JavaScript de verdad construyendo el juego que inició todo.
-              Sin React. Sin frameworks. Solo tú, JavaScript y el poder del Canvas API.
+              Vamos a construir juntos el juego que inició todo — y de paso, vas a
+              entender JavaScript de verdad. Sin React. Sin frameworks. Solo tú, yo,
+              y el poder del Canvas API.
             </p>
 
             <div className="flex flex-wrap gap-4 mb-8 text-sm">
