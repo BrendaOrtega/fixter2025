@@ -8,7 +8,7 @@ React Router v7 (NUNCA Remix ni imports de remix) sobre Vite, MongoDB con Prisma
 
 **Modelos de datos**: `LearnerProfile` (programación, 5 dims), `InterviewProfile` (entrevistas, 5 dims STAR), `SessionCredit` (paquetes de sesiones), `CoachingSession` (con campo `mode`: programming | interview).
 
-**Créditos**: 1 sesión gratis sin login, 2 para anónimos, luego paquetes Stripe MXN (5/$149, 15/$399, 50/$999). Se consume al terminar sesión >5 min.
+**Créditos**: Anónimos: 2 sesiones gratis por día (sin login, sin registro). Autenticados: 1 sesión gratis, luego paquetes Stripe MXN (5/$149, 15/$399, 50/$999). Se consume al terminar sesión >5 min. **Fase beta**: MentorIA es gratuito y anónimo para beta testers — el límite diario existe para controlar abuso, no para monetizar aún.
 
 **Principios de diseño de prompts para voice coaching** (aplicar siempre que se editen prompts de MentorIA):
 1. **Primer turno específico, no genérico** — "¿Qué construiste que te dio problemas?" > "¿En qué te ayudo?". El 40% de usuarios abandonan en los primeros 2 min si el agent no engancha con algo concreto.
