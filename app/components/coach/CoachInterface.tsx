@@ -321,11 +321,12 @@ export function CoachInterface({
     setLoading(true);
 
     try {
+      const streamIntent = mode === "interview" ? "stream_interview_message" : "stream_message";
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          intent: "stream_message",
+          intent: streamIntent,
           sessionId,
           message: text,
         }),
@@ -436,7 +437,7 @@ export function CoachInterface({
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: "end_session", sessionId }),
+        body: JSON.stringify({ intent: mode === "interview" ? "end_interview_session" : "end_session", sessionId }),
       });
       const data = await res.json();
 

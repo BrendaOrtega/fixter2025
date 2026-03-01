@@ -681,6 +681,40 @@ model LearnerProfile {
   @@map("learner_profiles")
 }
 
+model SessionCredit {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId
+  total      Int       // sesiones compradas
+  used       Int       @default(0)
+  purchaseId String?   // Stripe payment intent / session ID
+  package    String    // "5", "15", "50"
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime? // null = no expira
+
+  @@index([userId])
+  @@map("session_credits")
+}
+
+model InterviewProfile {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @unique @db.ObjectId
+  targetRole      String?  // "frontend", "fullstack", "backend", etc.
+  seniority       String?  // "junior", "mid", "senior"
+  substance       Int      @default(50)
+  structure       Int      @default(50)
+  relevance       Int      @default(50)
+  credibility     Int      @default(50)
+  differentiation Int      @default(50)
+  directness      Int      @default(3) // 1-5
+  storybank       Json[]   // STAR stories
+  drillStage      Int      @default(1) // 1-4: Foundation, Practice, Mock, Challenge
+  totalSessions   Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("interview_profiles")
+}
+
 enum CoachingPhase {
   KICKOFF
   ASSESSMENT
@@ -695,6 +729,7 @@ model CoachingSession {
   profile   LearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   phase      CoachingPhase @default(KICKOFF)
+  mode       String        @default("programming") // "programming" | "interview"
   topic      String? // topic de la sesión
   exerciseId String? @db.ObjectId
 

@@ -119,6 +119,7 @@ export default [
     route("leadmagnets", "routes/api/leadmagnets.ts"),
     route("waitlist", "routes/api/waitlist.ts"),
     route("coach", "routes/api/coach.tsx"),
+    route("coach/checkout", "routes/api/coach.checkout.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

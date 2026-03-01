@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { getUserOrNull, getOrCreateAnonId } from "~/.server/dbGetters";
 import { getOrCreateLearnerProfile } from "~/.server/services/coach.server";
+import { getCredits } from "~/.server/services/coach-credits.server";
 import { db } from "~/.server/db";
 import { commitSession } from "~/sessions";
 import { CoachInterface } from "~/components/coach/CoachInterface";
@@ -88,11 +89,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         }
       : null,
     isAnonymous: !user,
+    credits: user ? await getCredits(user.id) : { remaining: 0, total: 0, used: 0 },
   }, { headers });
 };
 
 export default function CoachPage() {
-  const { profile, activeSession, exercise, lastSession, formmyConfig, isAnonymous } =
+  const { profile, activeSession, exercise, lastSession, formmyConfig, isAnonymous, credits } =
     useLoaderData<typeof loader>();
 
   return (
@@ -105,6 +107,7 @@ export default function CoachPage() {
           lastSession={lastSession}
           formmyConfig={formmyConfig}
           isAnonymous={isAnonymous}
+          credits={credits}
         />
       </div>
     </FormmyProvider>

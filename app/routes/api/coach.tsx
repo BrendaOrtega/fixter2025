@@ -15,6 +15,13 @@ import {
 } from "~/.server/services/coach.server";
 import { TTSServiceLive } from "~/.server/services/tts";
 import { Effect } from "effect";
+import { getCredits, consumeSession, hasCredits } from "~/.server/services/coach-credits.server";
+import {
+  startInterviewSession,
+  prepareInterviewStream,
+  finalizeInterviewResponse,
+  endInterviewSession,
+} from "~/.server/services/interview-coach.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUserOrNull(request);
@@ -26,6 +33,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (intent === "progress") {
     const profile = await getOrCreateLearnerProfile(userId);
     return Response.json({ success: true, data: profile });
+  }
+
+  if (intent === "credits") {
+    if (!user) return Response.json({ success: true, data: { remaining: 0, total: 0, used: 0 } });
+    const credits = await getCredits(user.id);
+    return Response.json({ success: true, data: credits });
   }
 
   return Response.json({ error: "Invalid intent" }, { status: 400 });
@@ -42,11 +55,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (intent === "start_session") {
       const profile = await getOrCreateLearnerProfile(userId);
 
+      // Anonymous: 2 free sessions
       if (!user && profile.totalSessions >= 2) {
         return Response.json(
           { error: "Límite de sesiones gratuitas alcanzado. Inicia sesión para continuar." },
           { status: 403 }
         );
+      }
+
+      // Authenticated: first session free, then need credits
+      if (user && profile.totalSessions >= 1) {
+        const credits = await hasCredits(user.id);
+        if (!credits) {
+          return Response.json(
+            { error: "no_credits", message: "Necesitas comprar sesiones para continuar." },
+            { status: 402 }
+          );
+        }
       }
 
       const result = await startSession(profile.id, body.topic);
@@ -286,6 +311,113 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (intent === "end_session") {
       const { sessionId } = body;
       const result = await endSession(sessionId);
+
+      // Consume a credit if authenticated user and session lasted > 5 min
+      if (user) {
+        const session = await db.coachingSession.findUnique({ where: { id: sessionId } });
+        if (session) {
+          const durationMs = new Date().getTime() - session.startedAt.getTime();
+          const fiveMinMs = 5 * 60 * 1000;
+          if (durationMs > fiveMinMs) {
+            await consumeSession(user.id);
+          }
+        }
+      }
+
+      return Response.json({ success: true, data: result });
+    }
+
+    // === INTERVIEW MODE INTENTS ===
+
+    if (intent === "start_interview_session") {
+      const profile = await getOrCreateLearnerProfile(userId);
+
+      // Same credit checks as programming mode
+      if (!user && profile.totalSessions >= 2) {
+        return Response.json(
+          { error: "Límite de sesiones gratuitas alcanzado. Inicia sesión para continuar." },
+          { status: 403 }
+        );
+      }
+      if (user && profile.totalSessions >= 1) {
+        const credits = await hasCredits(user.id);
+        if (!credits) {
+          return Response.json(
+            { error: "no_credits", message: "Necesitas comprar sesiones para continuar." },
+            { status: 402 }
+          );
+        }
+      }
+
+      const result = await startInterviewSession(profile.id, body.topic, userId);
+      return Response.json({
+        success: true,
+        data: {
+          session: result.session,
+          exercise: null,
+          triage: null,
+        },
+      });
+    }
+
+    if (intent === "stream_interview_message") {
+      const { sessionId, message } = body;
+      if (!sessionId || !message) {
+        return Response.json({ error: "sessionId and message required" }, { status: 400 });
+      }
+
+      await addMessage(sessionId, "user", message);
+
+      const { result } = await prepareInterviewStream(sessionId, message, userId);
+      let fullText = "";
+      const textStream = result.textStream;
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of textStream) {
+              fullText += chunk;
+              controller.enqueue(new TextEncoder().encode(chunk));
+            }
+
+            const finalData = await finalizeInterviewResponse(
+              sessionId, fullText, message, userId
+            );
+
+            controller.enqueue(
+              new TextEncoder().encode("\n__META__" + JSON.stringify(finalData))
+            );
+            controller.close();
+          } catch (err) {
+            console.error("Interview stream error:", err);
+            controller.error(err);
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Transfer-Encoding": "chunked",
+          "Cache-Control": "no-cache",
+        },
+      });
+    }
+
+    if (intent === "end_interview_session") {
+      const { sessionId } = body;
+      const result = await endInterviewSession(sessionId, userId);
+
+      if (user) {
+        const session = await db.coachingSession.findUnique({ where: { id: sessionId } });
+        if (session) {
+          const durationMs = new Date().getTime() - session.startedAt.getTime();
+          if (durationMs > 5 * 60 * 1000) {
+            await consumeSession(user.id);
+          }
+        }
+      }
+
       return Response.json({ success: true, data: result });
     }
 

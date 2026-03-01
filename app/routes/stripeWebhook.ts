@@ -9,6 +9,7 @@ import { sendAisdkWebinarConfirmation } from "~/mailSenders/sendAisdkWebinarConf
 import { sendAisdkTaller1Welcome } from "~/mailSenders/sendAisdkTaller1Welcome";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
 import type { BookSlug } from "~/.server/services/book-access.server";
+import { grantCredits, type PackageKey } from "~/.server/services/coach-credits.server";
 
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -302,6 +303,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
 
         console.info(`WEBHOOK: Book purchase success - ${bookSlug}`);
+        return new Response(null);
+      }
+
+      // Handle MentorIA coach session purchases
+      if (session.metadata.type === "coach-sessions") {
+        const packageKey = session.metadata.package as PackageKey;
+        const userId = session.metadata.userId;
+
+        if (!userId || !packageKey) {
+          console.error("WEBHOOK: coach-sessions missing userId or package");
+          return new Response("Missing data", { status: 400 });
+        }
+
+        await grantCredits(userId, packageKey, session.id);
+
+        console.info(`WEBHOOK: Coach sessions granted - ${packageKey} sessions to ${userId}`);
         return new Response(null);
       }
 
