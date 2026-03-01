@@ -197,12 +197,13 @@ export function CoachInterface({
     voiceId: "carlos",
   });
 
-  // Sync final transcripts into chat messages
-  const lastTranscriptCount = useRef(0);
+  // Sync final transcripts into chat messages — track by total length, not filtered
+  const lastTranscriptLen = useRef(0);
   useEffect(() => {
-    const finals = voice.transcripts.filter((t) => t.isFinal);
-    if (finals.length > lastTranscriptCount.current) {
-      const newOnes = finals.slice(lastTranscriptCount.current);
+    const all = voice.transcripts;
+    if (all.length === lastTranscriptLen.current) return;
+    const newOnes = all.slice(lastTranscriptLen.current).filter((t) => t.isFinal);
+    if (newOnes.length > 0) {
       setMessages((prev) => [
         ...prev,
         ...newOnes.map((t) => ({
@@ -211,17 +212,40 @@ export function CoachInterface({
           timestamp: new Date().toISOString(),
         })),
       ]);
-      lastTranscriptCount.current = finals.length;
     }
+    lastTranscriptLen.current = all.length;
   }, [voice.transcripts]);
 
+  // Cleanup voice on unmount
+  useEffect(() => {
+    return () => {
+      if (voice.status !== "idle") {
+        voice.stop();
+      }
+    };
+  }, []);
+
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceActive = voice.status !== "idle" && voice.status !== "error";
 
   const handleVoiceToggle = async () => {
+    setVoiceError(null);
     if (voiceActive) {
       voice.stop();
     } else {
-      await voice.start();
+      const timeout = setTimeout(() => {
+        if (voice.status === "connecting") {
+          voice.stop();
+          setVoiceError("No se pudo conectar. Intenta de nuevo.");
+        }
+      }, 10_000);
+      try {
+        await voice.start();
+      } catch {
+        setVoiceError("Error al iniciar modo voz.");
+      } finally {
+        clearTimeout(timeout);
+      }
     }
   };
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -637,11 +661,15 @@ export function CoachInterface({
 
           {/* Input area */}
           <div className="border-t border-zinc-800 p-4 shrink-0">
-            {voiceActive ? (
+            {voiceError && !voiceActive ? (
+              <div className="flex items-center justify-center gap-3 py-2">
+                <span className="text-sm text-red-400">{voiceError}</span>
+              </div>
+          ) : voiceActive ? (
               <div className="flex items-center justify-center gap-3 py-2">
                 <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${voice.status === "connecting" ? "bg-amber-400" : "bg-emerald-400"}`} />
+                  <span className={`relative inline-flex rounded-full h-3 w-3 ${voice.status === "connecting" ? "bg-amber-500" : "bg-emerald-500"}`} />
                 </span>
                 <span className="text-sm text-zinc-400">
                   {voice.status === "connecting"
