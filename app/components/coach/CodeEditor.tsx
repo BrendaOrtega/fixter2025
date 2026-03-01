@@ -1,62 +1,94 @@
-import { useState, useRef } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import { EditorView, keymap } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
+import { basicSetup } from "codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { python } from "@codemirror/lang-python";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { indentWithTab } from "@codemirror/commands";
 
 interface CodeEditorProps {
   onSubmit: (code: string) => void;
   language?: string;
 }
 
+const languageExtension = (lang: string) => {
+  switch (lang) {
+    case "python":
+      return python();
+    case "javascript":
+    case "react":
+    case "node":
+    default:
+      return javascript({ jsx: true, typescript: true });
+  }
+};
+
 export function CodeEditor({ onSubmit, language = "javascript" }: CodeEditorProps) {
-  const [code, setCode] = useState("");
-  const [height, setHeight] = useState(200);
-  const resizeRef = useRef<{ startY: number; startHeight: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const code = view.state.doc.toString();
     if (!code.trim()) return;
-    onSubmit(code);
-    setCode("");
-  };
+    onSubmitRef.current(code);
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: "" } });
+  }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Tab support
-    if (e.key === "Tab") {
-      e.preventDefault();
-      const target = e.target as HTMLTextAreaElement;
-      const start = target.selectionStart;
-      const end = target.selectionEnd;
-      const newCode = code.substring(0, start) + "  " + code.substring(end);
-      setCode(newCode);
-      // Set cursor position after the inserted spaces
-      setTimeout(() => {
-        target.selectionStart = target.selectionEnd = start + 2;
-      }, 0);
-    }
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-    // Cmd/Ctrl + Enter to submit
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
+    const submitKeymap = keymap.of([
+      {
+        key: "Ctrl-Enter",
+        run: () => { handleSubmit(); return true; },
+      },
+      {
+        key: "Mod-Enter",
+        run: () => { handleSubmit(); return true; },
+      },
+    ]);
 
-  const handleResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    resizeRef.current = { startY: e.clientY, startHeight: height };
+    const theme = EditorView.theme({
+      "&": {
+        height: "200px",
+        fontSize: "13px",
+        backgroundColor: "rgb(9 9 11)", // zinc-950
+      },
+      ".cm-scroller": { overflow: "auto" },
+      ".cm-gutters": {
+        backgroundColor: "rgb(24 24 27)", // zinc-900
+        borderRight: "1px solid rgb(39 39 42)", // zinc-800
+      },
+      ".cm-content": { padding: "8px 0" },
+      "&.cm-focused": { outline: "none" },
+    });
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!resizeRef.current) return;
-      const diff = e.clientY - resizeRef.current.startY;
-      setHeight(Math.max(100, Math.min(500, resizeRef.current.startHeight + diff)));
+    const state = EditorState.create({
+      doc: "",
+      extensions: [
+        basicSetup,
+        keymap.of([indentWithTab]),
+        submitKeymap,
+        languageExtension(language),
+        oneDark,
+        theme,
+        EditorView.lineWrapping,
+      ],
+    });
+
+    const view = new EditorView({ state, parent: containerRef.current });
+    viewRef.current = view;
+
+    return () => {
+      view.destroy();
+      viewRef.current = null;
     };
-
-    const handleMouseUp = () => {
-      resizeRef.current = null;
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
+  }, [language, handleSubmit]);
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
@@ -67,21 +99,7 @@ export function CodeEditor({ onSubmit, language = "javascript" }: CodeEditorProp
         <span className="text-[10px] text-zinc-600 font-mono">{language}</span>
       </div>
 
-      <textarea
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Escribe tu código aquí..."
-        spellCheck={false}
-        style={{ height }}
-        className="w-full bg-zinc-950 text-zinc-200 text-sm font-mono p-3 resize-none focus:outline-none placeholder-zinc-700 leading-relaxed"
-      />
-
-      {/* Resize handle */}
-      <div
-        onMouseDown={handleResizeStart}
-        className="h-1.5 bg-zinc-900 cursor-row-resize hover:bg-zinc-700 transition"
-      />
+      <div ref={containerRef} />
 
       <div className="flex items-center justify-between px-3 py-2 border-t border-zinc-800">
         <span className="text-[10px] text-zinc-600">
@@ -89,10 +107,9 @@ export function CodeEditor({ onSubmit, language = "javascript" }: CodeEditorProp
         </span>
         <button
           onClick={handleSubmit}
-          disabled={!code.trim()}
-          className="text-xs px-3 py-1.5 rounded-lg bg-[#CA9B77]/10 border border-[#CA9B77]/20 text-[#CA9B77] hover:bg-[#CA9B77]/20 transition disabled:opacity-30 disabled:cursor-not-allowed"
+          className="text-xs px-3 py-1.5 rounded-lg bg-[#CA9B77]/10 border border-[#CA9B77]/20 text-[#CA9B77] hover:bg-[#CA9B77]/20 transition"
         >
-          Enviar código
+          Enviar codigo
         </button>
       </div>
     </div>

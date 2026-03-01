@@ -93,6 +93,66 @@ const PHASE_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
+const TOPIC_SUGGESTIONS: Record<string, Record<string, string[]>> = {
+  KICKOFF: {
+    _default: PHASE_SUGGESTIONS.KICKOFF,
+  },
+  ASSESSMENT: {
+    _default: PHASE_SUGGESTIONS.ASSESSMENT,
+  },
+  PRACTICE: {
+    _default: PHASE_SUGGESTIONS.PRACTICE,
+    javascript: [
+      "Dame una pista",
+      "¿Puedo usar arrow functions aquí?",
+      "¿Esto se puede resolver con reduce?",
+      "¿Debería usar destructuring?",
+      "Ya terminé, revisa mi código",
+    ],
+    react: [
+      "Dame una pista",
+      "¿Debería usar useState o useReducer?",
+      "¿Esto se resuelve con un useEffect?",
+      "¿Necesito un custom hook?",
+      "Ya terminé, revisa mi código",
+    ],
+    node: [
+      "Dame una pista",
+      "¿Debo usar async/await aquí?",
+      "¿Esto se puede hacer con streams?",
+      "¿Cómo manejo el error handling?",
+      "Ya terminé, revisa mi código",
+    ],
+    python: [
+      "Dame una pista",
+      "¿Puedo usar list comprehension?",
+      "¿Esto se resuelve con un dict?",
+      "¿Debería usar una clase aquí?",
+      "Ya terminé, revisa mi código",
+    ],
+    "ai-ml": [
+      "Dame una pista",
+      "¿Qué modelo es mejor para esto?",
+      "¿Debo normalizar los datos primero?",
+      "¿Cómo evalúo el resultado?",
+      "Ya terminé, revisa mi código",
+    ],
+    "system-design": [
+      "Dame una pista",
+      "¿Cómo escalo este componente?",
+      "¿Necesito un load balancer?",
+      "¿Qué base de datos me conviene?",
+      "Ya terminé, revisa mi código",
+    ],
+  },
+  REVIEW: {
+    _default: PHASE_SUGGESTIONS.REVIEW,
+  },
+  SUMMARY: {
+    _default: PHASE_SUGGESTIONS.SUMMARY,
+  },
+};
+
 const PHASE_LABELS: Record<string, string> = {
   KICKOFF: "Kickoff",
   ASSESSMENT: "Assessment",
@@ -124,6 +184,7 @@ export function CoachInterface({
   const [sessionId, setSessionId] = useState(activeSession?.id || null);
   const [currentPhase, setCurrentPhase] = useState(activeSession?.phase || "KICKOFF");
   const [currentExercise, setCurrentExercise] = useState(exercise);
+  const [usedSuggestions, setUsedSuggestions] = useState<Set<string>>(new Set());
   const [scores, setScores] = useState({
     algorithms: profile.algorithms,
     syntaxFluency: profile.syntaxFluency,
@@ -530,28 +591,35 @@ export function CoachInterface({
               </motion.div>
             ))}
             {/* Quick reply suggestions — always show when last message is from assistant */}
-            {!loading &&
-              messages.length > 0 &&
-              messages[messages.length - 1].role === "assistant" && (
+            {(() => {
+              if (loading || messages.length === 0 || messages[messages.length - 1].role !== "assistant") return null;
+              const topic = activeSession?.topic || currentExercise?.topic || "";
+              const phaseMap = TOPIC_SUGGESTIONS[currentPhase] || TOPIC_SUGGESTIONS.KICKOFF;
+              const raw = phaseMap[topic] || phaseMap._default || PHASE_SUGGESTIONS[currentPhase] || PHASE_SUGGESTIONS.KICKOFF;
+              const filtered = raw.filter((s) => !usedSuggestions.has(s));
+              if (filtered.length === 0) return null;
+              return (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                   className="flex flex-wrap gap-2 px-2"
                 >
-                  {(PHASE_SUGGESTIONS[currentPhase] || PHASE_SUGGESTIONS.KICKOFF).map(
-                    (suggestion) => (
-                      <button
-                        key={suggestion}
-                        onClick={() => sendMessage(suggestion)}
-                        className="text-sm px-4 py-2 rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-[#CA9B77] hover:text-[#CA9B77] transition-all"
-                      >
-                        {suggestion}
-                      </button>
-                    )
-                  )}
+                  {filtered.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => {
+                        setUsedSuggestions((prev) => new Set(prev).add(suggestion));
+                        sendMessage(suggestion);
+                      }}
+                      className="text-sm px-4 py-2 rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-[#CA9B77] hover:text-[#CA9B77] transition-all"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
                 </motion.div>
-              )}
+              );
+            })()}
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-zinc-800 rounded-2xl px-4 py-3 text-base text-zinc-400">
