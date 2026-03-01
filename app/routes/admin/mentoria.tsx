@@ -3,23 +3,11 @@ import type { Route } from "./+types/mentoria";
 import { db } from "~/.server/db";
 import { Form, useActionData } from "react-router";
 import { AdminNav } from "~/components/admin/AdminNav";
-import {
-  grantCredits,
-  PACKAGES,
-  type PackageKey,
-} from "~/.server/services/coach-credits.server";
-
-const PACKAGE_OPTIONS = [
-  { value: "5", label: "5 sesiones" },
-  { value: "15", label: "15 sesiones" },
-  { value: "50", label: "50 sesiones" },
-];
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await getAdminOrRedirect(request);
 
-  const [allCredits, allSessions, allProfiles] = await Promise.all([
-    db.sessionCredit.findMany({ orderBy: { createdAt: "desc" } }),
+  const [allSessions, allProfiles] = await Promise.all([
     db.coachingSession.findMany({
       orderBy: { startedAt: "desc" },
       select: {
@@ -45,6 +33,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         systemDesign: true,
         debugging: true,
         communication: true,
+        dailyBonusSessions: true,
+        dailyBonusDate: true,
       },
     }),
   ]);
@@ -54,11 +44,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const userProfileMap = new Map(allProfiles.map((p) => [p.userId, p]));
 
   // Get all relevant user IDs
-  const creditUserIds = allCredits.map((c) => c.userId);
   const sessionUserIds = allSessions
     .map((s) => profileUserMap.get(s.profileId))
     .filter(Boolean) as string[];
-  const allUserIds = [...new Set([...creditUserIds, ...sessionUserIds])];
+  const allUserIds = [...new Set(sessionUserIds)];
 
   const users = await db.user.findMany({
     where: { id: { in: allUserIds } },
@@ -67,83 +56,72 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const userMap = new Map(users.map((u) => [u.id, u]));
 
   // --- Stats globales ---
-  const totalCreditsGranted = allCredits.reduce((s, c) => s + c.total, 0);
-  const totalCreditsUsed = allCredits.reduce((s, c) => s + c.used, 0);
-  const adminGrants = allCredits.filter(
-    (c) => c.purchaseId === "admin-grant"
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todaySessions = allSessions.filter(
+    (s) => new Date(s.startedAt) >= todayStart
   );
-  const stripeCredits = allCredits.filter(
-    (c) => c.purchaseId !== "admin-grant"
-  );
-  const completedSessions = allSessions.filter((s) => s.endedAt);
-  const avgDurationMs =
-    completedSessions.length > 0
-      ? completedSessions.reduce(
-          (sum, s) =>
-            sum +
-            (new Date(s.endedAt!).getTime() - new Date(s.startedAt).getTime()),
-          0
-        ) / completedSessions.length
-      : 0;
+
+  const completedAll = allSessions.filter((s) => s.endedAt);
+  const avgDurAll = completedAll.length
+    ? Math.round(
+        completedAll.reduce((sum, s) => {
+          const ms = new Date(s.endedAt!).getTime() - new Date(s.startedAt).getTime();
+          return sum + Math.min(ms, 3600000);
+        }, 0) / completedAll.length / 60000
+      )
+    : 0;
+
+  const bonusToday = allProfiles.reduce((sum, p) => {
+    if (p.dailyBonusDate && new Date(p.dailyBonusDate) >= todayStart) {
+      return sum + p.dailyBonusSessions;
+    }
+    return sum;
+  }, 0);
 
   const stats = {
     totalUsers: allUserIds.length,
     totalSessions: allSessions.length,
-    completedSessions: completedSessions.length,
-    avgDurationMin: Math.round(avgDurationMs / 60000),
-    totalCreditsGranted,
-    totalCreditsUsed,
-    creditsRemaining: totalCreditsGranted - totalCreditsUsed,
-    adminGrantCount: adminGrants.length,
-    adminGrantSessions: adminGrants.reduce((s, c) => s + c.total, 0),
-    stripeCount: stripeCredits.length,
-    stripeSessions: stripeCredits.reduce((s, c) => s + c.total, 0),
-    programmingSessions: allSessions.filter((s) => s.mode === "programming")
-      .length,
-    interviewSessions: allSessions.filter((s) => s.mode === "interview")
-      .length,
+    completedSessions: completedAll.length,
+    sessionsToday: todaySessions.length,
+    programmingToday: todaySessions.filter((s) => s.mode === "programming").length,
+    interviewToday: todaySessions.filter((s) => s.mode === "interview").length,
+    avgDurationMins: avgDurAll,
+    bonusToday,
   };
 
-  // --- Sesiones por día (últimos 30 días) para gráfica ---
-  const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const sessionsByDay: { date: string; programming: number; interview: number }[] = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    const key = d.toISOString().slice(0, 10);
-    const daySessions = allSessions.filter(
-      (s) => new Date(s.startedAt).toISOString().slice(0, 10) === key
-    );
-    sessionsByDay.push({
-      date: key,
-      programming: daySessions.filter((s) => s.mode === "programming").length,
-      interview: daySessions.filter((s) => s.mode === "interview").length,
-    });
-  }
 
   // --- Tabla de usuarios con historial ---
   const userRows = allUserIds.map((userId) => {
     const user = userMap.get(userId);
     const profile = userProfileMap.get(userId);
-    const credits = allCredits.filter((c) => c.userId === userId);
     const sessions = allSessions.filter(
       (s) => profileUserMap.get(s.profileId) === userId
     );
     const completed = sessions.filter((s) => s.endedAt);
-    const adminSes = credits
-      .filter((c) => c.purchaseId === "admin-grant")
-      .reduce((s, c) => s + c.total, 0);
-    const stripeSes = credits
-      .filter((c) => c.purchaseId !== "admin-grant")
-      .reduce((s, c) => s + c.total, 0);
-    const totalUsed = credits.reduce((s, c) => s + c.used, 0);
-    const totalTotal = credits.reduce((s, c) => s + c.total, 0);
     const lastSession = sessions[0];
+
+    const sessionsToday = profile
+      ? allSessions.filter(
+          (s) =>
+            s.profileId === profile.id &&
+            new Date(s.startedAt) >= todayStart
+        ).length
+      : 0;
+
+    const isAnon = !user;
+    const bonusToday = profile?.dailyBonusDate && new Date(profile.dailyBonusDate) >= todayStart
+      ? profile.dailyBonusSessions
+      : 0;
+    const dailyLimit = isAnon ? 2 + bonusToday : (bonusToday > 0 ? bonusToday : null);
 
     return {
       userId,
+      profileId: profile?.id || null,
       email: user?.email || userId,
       displayName: user?.displayName || null,
+      isAnon,
+      dailyLimit,
       level: profile?.level || null,
       scores: profile
         ? {
@@ -154,14 +132,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
             communication: profile.communication,
           }
         : null,
-      creditsAdmin: adminSes,
-      creditsStripe: stripeSes,
-      creditsUsed: totalUsed,
-      creditsTotal: totalTotal,
       sessionsCount: sessions.length,
       completedCount: completed.length,
+      sessionsToday,
+      bonusToday,
       lastSessionAt: lastSession?.startedAt || null,
       lastMode: lastSession?.mode || null,
+      avgDurationMins: completed.length
+        ? Math.round(
+            completed.reduce((sum, s) => {
+              const ms = new Date(s.endedAt!).getTime() - new Date(s.startedAt).getTime();
+              return sum + Math.min(ms, 3600000); // cap 60min per session
+            }, 0) /
+              completed.length /
+              60000
+          )
+        : null,
     };
   });
 
@@ -176,38 +162,39 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     );
   });
 
-  // Recent credits for the grants table
-  const recentCredits = allCredits.slice(0, 30).map((c) => ({
-    ...c,
-    user: userMap.get(c.userId) || null,
-  }));
-
-  return { stats, sessionsByDay, userRows, recentCredits };
+  return { stats, userRows };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
   await getAdminOrRedirect(request);
   const formData = await request.formData();
-  const email = (formData.get("email") as string)?.trim();
-  const packageKey = formData.get("package") as string;
+  const intent = formData.get("intent") as string;
 
-  if (!email) return { error: "Email requerido" };
-  if (!["5", "15", "50"].includes(packageKey))
-    return { error: "Paquete inválido" };
+  if (intent === "grant_daily_sessions") {
+    const profileId = (formData.get("profileId") as string)?.trim();
+    const amount = parseInt(formData.get("amount") as string) || 5;
+    if (!profileId) return { error: "profileId requerido" };
 
-  const user = await db.user.findFirst({ where: { email } });
-  if (!user) return { error: `No se encontró usuario con email: ${email}` };
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-  const credit = await grantCredits(
-    user.id,
-    packageKey as PackageKey,
-    "admin-grant"
-  );
+    const profile = await db.learnerProfile.findUnique({ where: { id: profileId } });
+    if (!profile) return { error: "Perfil no encontrado" };
 
-  return {
-    success: `Se otorgaron ${PACKAGES[packageKey as PackageKey].sessions} sesiones a ${email}`,
-    creditId: credit.id,
-  };
+    const isToday = profile.dailyBonusDate && new Date(profile.dailyBonusDate) >= todayStart;
+    const newBonus = isToday ? profile.dailyBonusSessions + amount : amount;
+
+    await db.learnerProfile.update({
+      where: { id: profileId },
+      data: { dailyBonusSessions: newBonus, dailyBonusDate: new Date() },
+    });
+
+    return {
+      success: `+${amount} sesiones otorgadas (total bonus hoy: ${newBonus})`,
+    };
+  }
+
+  return { error: "Intent no reconocido" };
 };
 
 function timeAgo(date: string | Date) {
@@ -223,53 +210,9 @@ function timeAgo(date: string | Date) {
   return `${Math.floor(days / 30)}mo`;
 }
 
-// Mini bar chart using divs
-function SparkBars({
-  data,
-}: {
-  data: { date: string; programming: number; interview: number }[];
-}) {
-  const max = Math.max(
-    1,
-    ...data.map((d) => d.programming + d.interview)
-  );
-  return (
-    <div className="flex items-end gap-px h-16">
-      {data.map((d) => {
-        const total = d.programming + d.interview;
-        const pH = (d.programming / max) * 100;
-        const iH = (d.interview / max) * 100;
-        return (
-          <div
-            key={d.date}
-            className="flex-1 flex flex-col justify-end group relative"
-            title={`${d.date}: ${d.programming}p + ${d.interview}i = ${total}`}
-          >
-            {d.interview > 0 && (
-              <div
-                className="bg-orange-500 rounded-t-sm w-full min-h-[1px]"
-                style={{ height: `${iH}%` }}
-              />
-            )}
-            {d.programming > 0 && (
-              <div
-                className="bg-purple-500 w-full min-h-[1px]"
-                style={{
-                  height: `${pH}%`,
-                  borderRadius:
-                    d.interview > 0 ? undefined : "2px 2px 0 0",
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function MentoriaAdmin({
-  loaderData: { stats, sessionsByDay, userRows, recentCredits },
+  loaderData: { stats, userRows },
 }: Route.ComponentProps) {
   const actionData = useActionData<typeof action>();
 
@@ -277,135 +220,61 @@ export default function MentoriaAdmin({
     <div className="min-h-screen bg-gray-950 ml-48">
       <AdminNav />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h1 className="text-lg font-semibold text-white mb-4">
+      <div className="max-w-6xl mx-auto px-6 lg:px-10 py-10">
+        <h1 className="text-2xl font-bold text-white mb-8">
           MentorIA
         </h1>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-4">
-          <MiniStat label="Usuarios" value={`${stats.totalUsers}`} />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <MiniStat label="Usuarios" value={`${stats.totalUsers}`} sub="total" />
           <MiniStat
-            label="Sesiones"
-            value={`${stats.completedSessions}`}
-            sub={`${stats.totalSessions} iniciadas`}
+            label="Sesiones hoy"
+            value={`${stats.sessionsToday}`}
+            sub={`${stats.programmingToday} prog · ${stats.interviewToday} entrev`}
           />
           <MiniStat
-            label="Duración prom"
-            value={`${stats.avgDurationMin}min`}
+            label="Total sesiones"
+            value={`${stats.totalSessions}`}
+            sub={`${stats.completedSessions} completadas`}
           />
           <MiniStat
-            label="Credits"
-            value={`${stats.creditsRemaining}`}
-            sub={`${stats.creditsUsed}/${stats.totalCreditsGranted} usados`}
-          />
-          <MiniStat
-            label="Admin grants"
-            value={`${stats.adminGrantSessions}`}
-            sub={`${stats.adminGrantCount} paquetes`}
-          />
-          <MiniStat
-            label="Stripe"
-            value={`${stats.stripeSessions}`}
-            sub={`${stats.stripeCount} compras`}
-          />
-          <MiniStat
-            label="Modo"
-            value={`${stats.programmingSessions}p / ${stats.interviewSessions}i`}
+            label="Promedio"
+            value={`${stats.avgDurationMins}m`}
+            sub={`bonus hoy: ${stats.bonusToday}`}
           />
         </div>
 
-        {/* Spark chart - sessions last 30 days */}
-        <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-medium text-gray-400">
-              Sesiones últimos 30 días
-            </h2>
-            <div className="flex items-center gap-3 text-[10px] text-gray-500">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-sm bg-purple-500 inline-block" />
-                programming
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" />
-                interview
-              </span>
-            </div>
+        {/* Action feedback */}
+        {actionData?.error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-5 py-3 mb-6">
+            <p className="text-sm text-red-400">{actionData.error}</p>
           </div>
-          <SparkBars data={sessionsByDay} />
-          <div className="flex justify-between mt-1 text-[9px] text-gray-600">
-            <span>{sessionsByDay[0]?.date.slice(5)}</span>
-            <span>{sessionsByDay[sessionsByDay.length - 1]?.date.slice(5)}</span>
+        )}
+        {actionData?.success && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg px-5 py-3 mb-6">
+            <p className="text-sm text-green-400">{actionData.success}</p>
           </div>
-        </div>
-
-        {/* Grant form */}
-        <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-4 mb-4">
-          <h2 className="text-sm font-medium text-gray-300 mb-3">
-            Otorgar sesiones
-          </h2>
-          <Form method="post" className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
-                Email del usuario
-              </label>
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="usuario@email.com"
-                className="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">
-                Paquete
-              </label>
-              <select
-                name="package"
-                className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500"
-              >
-                {PACKAGE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg transition-colors"
-            >
-              Otorgar
-            </button>
-          </Form>
-          {actionData?.error && (
-            <p className="mt-2 text-xs text-red-400">{actionData.error}</p>
-          )}
-          {actionData?.success && (
-            <p className="mt-2 text-xs text-green-400">{actionData.success}</p>
-          )}
-        </div>
+        )}
 
         {/* User history table */}
-        <div className="bg-gray-900/50 rounded-xl border border-gray-800 overflow-hidden mb-4">
-          <div className="px-4 py-3 border-b border-gray-800">
-            <h2 className="text-sm font-semibold text-white">
+        <div className="bg-gray-900/50 rounded-xl border border-gray-800 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-800">
+            <h2 className="text-lg font-semibold text-white">
               Usuarios ({userRows.length})
             </h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="sticky top-0 bg-gray-900 z-10">
-                <tr className="text-left text-[10px] text-gray-500 uppercase tracking-wider">
-                  <th className="px-3 py-2 font-medium">Usuario</th>
-                  <th className="px-3 py-2 font-medium">Nivel</th>
-                  <th className="px-3 py-2 font-medium">Sesiones</th>
-                  <th className="px-3 py-2 font-medium">Credits admin</th>
-                  <th className="px-3 py-2 font-medium">Credits stripe</th>
-                  <th className="px-3 py-2 font-medium">Usados</th>
-                  <th className="px-3 py-2 font-medium">Scores</th>
-                  <th className="px-3 py-2 font-medium text-right">Última</th>
+                <tr className="text-left text-sm text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 font-medium">Usuario</th>
+                  <th className="px-4 py-3 font-medium">Nivel</th>
+                  <th className="px-4 py-3 font-medium">Sesiones</th>
+                  <th className="px-4 py-3 font-medium">Hoy</th>
+                  <th className="px-4 py-3 font-medium">Duración</th>
+                  <th className="px-4 py-3 font-medium">Scores</th>
+                  <th className="px-4 py-3 font-medium text-right">Última</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800/50">
@@ -414,64 +283,90 @@ export default function MentoriaAdmin({
                     key={row.userId}
                     className="hover:bg-gray-800/30 transition-colors"
                   >
-                    <td className="px-3 py-2">
-                      <p className="text-xs text-gray-300 truncate max-w-[180px]">
-                        {row.displayName || row.email}
-                      </p>
-                      {row.displayName && (
-                        <p className="text-[10px] text-gray-600 truncate max-w-[180px]">
-                          {row.email}
-                        </p>
-                      )}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <p className="text-base text-gray-200 truncate max-w-[240px]">
+                            {row.displayName || row.email}
+                          </p>
+                          {row.displayName && (
+                            <p className="text-sm text-gray-500 truncate max-w-[240px]">
+                              {row.email}
+                            </p>
+                          )}
+                        </div>
+                        {row.isAnon && (
+                          <span className="px-2 py-1 rounded text-xs bg-gray-500/10 text-gray-500 border border-gray-500/20">
+                            anon
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-gray-400">
+                    <td className="px-4 py-3">
+                      <span className="text-base text-gray-400">
                         {row.level || "—"}
                       </span>
                     </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-gray-300">
-                        {row.completedCount}
-                        <span className="text-gray-600">
-                          /{row.sessionsCount}
-                        </span>
-                      </span>
-                      {row.lastMode && (
-                        <span
-                          className={`ml-1 px-1 py-0.5 rounded text-[9px] ${
-                            row.lastMode === "programming"
-                              ? "bg-purple-500/10 text-purple-400"
-                              : "bg-orange-500/10 text-orange-400"
-                          }`}
-                        >
-                          {row.lastMode === "programming" ? "prog" : "int"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-purple-400">
-                        {row.creditsAdmin || "—"}
+                    <td className="px-4 py-3">
+                      <span className="text-base text-gray-300">
+                        {row.completedCount}/{row.sessionsCount}
                       </span>
                     </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-gray-400">
-                        {row.creditsStripe || "—"}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {row.dailyLimit ? (
+                          <span
+                            className={`text-base font-mono ${
+                              row.sessionsToday >= row.dailyLimit
+                                ? "text-red-400"
+                                : "text-green-400"
+                            }`}
+                            title={row.bonusToday > 0 ? `2 + ${row.bonusToday} otorgadas` : undefined}
+                          >
+                            {row.sessionsToday}/{row.dailyLimit}
+                            {row.bonusToday > 0 && (
+                              <span className="text-sm text-purple-400 ml-1">+{row.bonusToday}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-base text-gray-500">
+                            {row.sessionsToday || "—"}
+                          </span>
+                        )}
+                        {row.profileId && (
+                          <Form method="post" className="inline">
+                            <input type="hidden" name="intent" value="grant_daily_sessions" />
+                            <input type="hidden" name="profileId" value={row.profileId} />
+                            <input type="hidden" name="amount" value="5" />
+                            <button
+                              type="submit"
+                              className="px-3 py-1.5 rounded text-sm font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                              title="Otorgar 5 sesiones extra hoy"
+                            >
+                              +5
+                            </button>
+                          </Form>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-base text-gray-400">
+                        {row.avgDurationMins != null
+                          ? row.avgDurationMins >= 60
+                            ? `${Math.floor(row.avgDurationMins / 60)}h ${row.avgDurationMins % 60}m`
+                            : `${row.avgDurationMins}m`
+                          : "—"}
                       </span>
                     </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-gray-400">
-                        {row.creditsUsed}/{row.creditsTotal}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
+                    <td className="px-4 py-3">
                       {row.scores ? (
                         <MiniScores scores={row.scores} />
                       ) : (
-                        <span className="text-[10px] text-gray-700">—</span>
+                        <span className="text-sm text-gray-700">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className="text-[10px] text-gray-500">
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-base text-gray-500">
                         {row.lastSessionAt
                           ? timeAgo(row.lastSessionAt)
                           : "—"}
@@ -482,8 +377,8 @@ export default function MentoriaAdmin({
                 {userRows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={8}
-                      className="px-3 py-8 text-center text-xs text-gray-600"
+                      colSpan={7}
+                      className="px-4 py-12 text-center text-sm text-gray-600"
                     >
                       No hay usuarios con MentorIA aún
                     </td>
@@ -494,81 +389,6 @@ export default function MentoriaAdmin({
           </div>
         </div>
 
-        {/* Recent credits */}
-        <div className="bg-gray-900/50 rounded-xl border border-gray-800 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-800">
-            <h2 className="text-sm font-semibold text-white">
-              Credits recientes
-            </h2>
-          </div>
-          <div className="overflow-y-auto max-h-[320px]">
-            <table className="w-full">
-              <thead className="sticky top-0 bg-gray-900 z-10">
-                <tr className="text-left text-[10px] text-gray-500 uppercase tracking-wider">
-                  <th className="px-3 py-2 font-medium">Usuario</th>
-                  <th className="px-3 py-2 font-medium">Paquete</th>
-                  <th className="px-3 py-2 font-medium">Usadas</th>
-                  <th className="px-3 py-2 font-medium">Origen</th>
-                  <th className="px-3 py-2 font-medium text-right">Hace</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/50">
-                {recentCredits.map((credit) => (
-                  <tr
-                    key={credit.id}
-                    className="hover:bg-gray-800/30 transition-colors"
-                  >
-                    <td className="px-3 py-2">
-                      <p className="text-xs text-gray-300 truncate max-w-[180px]">
-                        {credit.user?.displayName ||
-                          credit.user?.email ||
-                          credit.userId}
-                      </p>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-gray-300">
-                        {credit.total} ses
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className="text-xs text-gray-400">
-                        {credit.used}/{credit.total}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] ${
-                          credit.purchaseId === "admin-grant"
-                            ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-                            : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
-                        }`}
-                      >
-                        {credit.purchaseId === "admin-grant"
-                          ? "admin"
-                          : "stripe"}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className="text-[10px] text-gray-500">
-                        {timeAgo(credit.createdAt)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {recentCredits.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-3 py-8 text-center text-xs text-gray-600"
-                    >
-                      No hay credits aún
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -584,12 +404,12 @@ function MiniStat({
   sub?: string;
 }) {
   return (
-    <div className="bg-gray-900/40 rounded-lg border border-gray-800/50 px-3 py-2">
-      <p className="text-[10px] text-gray-500 uppercase tracking-wider">
+    <div className="bg-gray-900/40 rounded-xl border border-gray-800/50 px-6 py-5">
+      <p className="text-sm text-gray-500 uppercase tracking-wider">
         {label}
       </p>
-      <p className="text-sm font-semibold text-white mt-0.5">{value}</p>
-      {sub && <p className="text-[10px] text-gray-600">{sub}</p>}
+      <p className="text-3xl font-bold text-white mt-2">{value}</p>
+      {sub && <p className="text-sm text-gray-500 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -607,13 +427,13 @@ function MiniScores({
     { key: "communication", label: "Com", color: "bg-pink-500" },
   ];
   return (
-    <div className="flex gap-0.5 items-end h-4">
+    <div className="flex gap-1 items-end h-6">
       {dims.map((d) => {
         const val = scores[d.key] || 0;
         return (
           <div
             key={d.key}
-            className={`w-1.5 rounded-t-sm ${d.color}`}
+            className={`w-2.5 rounded-t-sm ${d.color}`}
             style={{ height: `${Math.max(val, 2)}%` }}
             title={`${d.label}: ${val}`}
           />

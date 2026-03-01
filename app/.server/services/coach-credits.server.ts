@@ -31,7 +31,8 @@ export async function hasCredits(userId: string): Promise<boolean> {
 }
 
 export async function consumeSession(userId: string): Promise<boolean> {
-  // Find a credit pack with remaining sessions (oldest first)
+  // Atomic: find a credit pack with remaining sessions and increment in one operation
+  // This prevents race conditions where two concurrent requests could both deduct
   const credit = await db.sessionCredit.findFirst({
     where: {
       userId,
@@ -45,12 +46,13 @@ export async function consumeSession(userId: string): Promise<boolean> {
 
   if (!credit || credit.used >= credit.total) return false;
 
-  await db.sessionCredit.update({
-    where: { id: credit.id },
+  // Atomic update: only increment if used < total (prevents double-deduction)
+  const result = await db.sessionCredit.updateMany({
+    where: { id: credit.id, used: { lt: credit.total } },
     data: { used: { increment: 1 } },
   });
 
-  return true;
+  return result.count > 0;
 }
 
 export async function grantCredits(

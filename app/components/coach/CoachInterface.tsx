@@ -143,20 +143,23 @@ export function CoachInterface({
 
   // Auto-connect voice when session starts
   const voiceInitialized = useRef(false);
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
   useEffect(() => {
-    if (sessionId && !voiceInitialized.current && voice.status === "idle" && !voiceDisabledForMode) {
+    const v = voiceRef.current;
+    if (sessionId && !voiceInitialized.current && v.status === "idle" && !voiceDisabledForMode) {
       voiceInitialized.current = true;
-      voice.start().catch((err) => {
+      v.start().catch((err) => {
         console.warn("[MentorIA Voice] auto-connect failed:", err?.message || err);
       });
     }
     if (!sessionId && voiceInitialized.current) {
       voiceInitialized.current = false;
-      if (voice.status !== "idle") {
-        voice.stop();
+      if (v.status !== "idle") {
+        v.stop();
       }
     }
-  }, [sessionId]);
+  }, [sessionId, voiceDisabledForMode]);
 
   // Release mic on unmount (SPA navigation)
   useEffect(() => {
@@ -243,9 +246,12 @@ export function CoachInterface({
     }
   };
 
+  const [closing, setClosing] = useState(false);
+
   // === End session: close DB + stop voice ===
   const handleEndSession = async () => {
-    if (!sessionId) return;
+    if (!sessionId || closing) return;
+    setClosing(true);
     const endedId = sessionId;
 
     if (voice.status !== "idle") {
@@ -254,13 +260,19 @@ export function CoachInterface({
     voiceInitialized.current = false;
 
     try {
-      await fetch("/api/coach", {
+      const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ intent: "close_session", sessionId }),
       });
+      const data = await res.json();
+      if (data.credits) {
+        setCredits(data.credits);
+      }
     } catch (err) {
       console.error("Error closing session:", err);
+    } finally {
+      setClosing(false);
     }
 
     setSessionId(null);
@@ -394,7 +406,8 @@ export function CoachInterface({
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleSelectMode("programming")}
-              className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm p-6 sm:p-8 text-left transition-all hover:border-zinc-700 hover:bg-zinc-900/60"
+              disabled={loading}
+              className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm p-6 sm:p-8 text-left transition-all hover:border-zinc-700 hover:bg-zinc-900/60 disabled:opacity-50 disabled:pointer-events-none"
             >
               <div className="w-10 h-10 rounded-xl bg-[#CA9B77]/10 flex items-center justify-center mb-4 group-hover:bg-[#CA9B77]/15 transition">
                 <svg className="w-5 h-5 text-[#CA9B77]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -416,7 +429,8 @@ export function CoachInterface({
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleSelectMode("interview")}
-              className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm p-6 sm:p-8 text-left transition-all hover:border-zinc-700 hover:bg-zinc-900/60"
+              disabled={loading}
+              className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm p-6 sm:p-8 text-left transition-all hover:border-zinc-700 hover:bg-zinc-900/60 disabled:opacity-50 disabled:pointer-events-none"
             >
               <div className="w-10 h-10 rounded-xl bg-[#845A8F]/10 flex items-center justify-center mb-4 group-hover:bg-[#845A8F]/15 transition">
                 <svg className="w-5 h-5 text-[#845A8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -452,10 +466,12 @@ export function CoachInterface({
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-10 h-10 border-2 border-[#CA9B77]/30 border-t-[#CA9B77] rounded-full"
-        />
+          animate={{ opacity: [0.4, 1, 0.4], filter: ["blur(8px)", "blur(0px)", "blur(8px)"] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="text-4xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent"
+        >
+          MentorIA
+        </motion.div>
         <p className="text-base text-zinc-400">Conectando...</p>
       </div>
     );
@@ -464,6 +480,13 @@ export function CoachInterface({
   // === ACTIVE SESSION: Voice chat ===
   return (
     <div className="flex flex-col h-[calc(100vh-80px)]">
+      {/* Banner de construcción */}
+      <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center shrink-0">
+        <p className="text-xs text-amber-400">
+          🚧 MentorIA está en construcción — puede comportarse raro o fallar.
+          Estamos mejorándolo.
+        </p>
+      </div>
       {/* Header */}
       <div className="border-b border-zinc-800 px-4 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -491,9 +514,10 @@ export function CoachInterface({
           )}
           <button
             onClick={handleEndSession}
-            className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition"
+            disabled={closing}
+            className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition disabled:opacity-50 disabled:pointer-events-none"
           >
-            Terminar
+            {closing ? "Cerrando..." : "Terminar"}
           </button>
         </div>
       </div>

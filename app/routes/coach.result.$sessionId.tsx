@@ -227,12 +227,6 @@ export default function ScorecardPage() {
 
 /** Simple radar for interview dims (5-point scale) */
 function InterviewRadar({ scores }: { scores: Record<string, number> }) {
-  // Reuse ScoreRadar but scale 1-5 → 0-100
-  const scaled: Record<string, number> = {};
-  for (const dim of INTERVIEW_DIMS) {
-    scaled[dim.key] = ((scores[dim.key] || 0) / 5) * 100;
-  }
-
   return (
     <div className="relative">
       <InterviewRadarSVG scores={scores} size={260} />

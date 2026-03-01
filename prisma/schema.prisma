@@ -673,6 +673,10 @@ model LearnerProfile {
   currentTopic    String? // "javascript", "react", "node", "python", "ai-ml", "system-design"
   totalSessions   Int    @default(0)
 
+  // Bonus sesiones otorgadas por admin (expiran si dailyBonusDate ≠ hoy)
+  dailyBonusSessions Int       @default(0)
+  dailyBonusDate     DateTime?
+
   sessions CoachingSession[]
 
   createdAt DateTime @default(now())
