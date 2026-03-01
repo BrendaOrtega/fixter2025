@@ -6,6 +6,7 @@ import { ScoreRadar } from "./ScoreRadar";
 import { ExerciseCard } from "./ExerciseCard";
 import { CodeEditor } from "./CodeEditor";
 import { VoiceButton, useFormmyVoice } from "./VoiceButton";
+import { SessionPurchase } from "./SessionPurchase";
 
 interface Message {
   role: "user" | "assistant";
@@ -51,15 +52,33 @@ interface CoachInterfaceProps {
     agentId: string;
   };
   isAnonymous?: boolean;
+  credits?: { remaining: number; total: number; used: number };
 }
 
+type CoachMode = "programming" | "interview";
+
+const INTERVIEW_ROLES = [
+  { value: "frontend", label: "Frontend" },
+  { value: "backend", label: "Backend" },
+  { value: "fullstack", label: "Full Stack" },
+  { value: "mobile", label: "Mobile" },
+  { value: "data", label: "Data / ML" },
+  { value: "devops", label: "DevOps / SRE" },
+];
+
+const SENIORITY_LEVELS = [
+  { value: "junior", label: "Junior" },
+  { value: "mid", label: "Mid-level" },
+  { value: "senior", label: "Senior" },
+];
+
 const TOPICS = [
-  { value: "javascript", label: "JavaScript", icon: "JS" },
-  { value: "react", label: "React", icon: "Re" },
-  { value: "node", label: "Node.js", icon: "No" },
-  { value: "python", label: "Python", icon: "Py" },
-  { value: "ai-ml", label: "AI / ML", icon: "AI" },
-  { value: "system-design", label: "System Design", icon: "SD" },
+  { value: "javascript", label: "JavaScript", icon: "JS", color: "from-yellow-500/20 to-yellow-600/5" },
+  { value: "react", label: "React", icon: "Re", color: "from-cyan-500/20 to-cyan-600/5" },
+  { value: "node", label: "Node.js", icon: "No", color: "from-green-500/20 to-green-600/5" },
+  { value: "python", label: "Python", icon: "Py", color: "from-blue-500/20 to-blue-600/5" },
+  { value: "ai-ml", label: "AI / ML", icon: "AI", color: "from-purple-500/20 to-purple-600/5" },
+  { value: "system-design", label: "System Design", icon: "SD", color: "from-orange-500/20 to-orange-600/5" },
 ];
 
 const PHASE_SUGGESTIONS: Record<string, string[]> = {
@@ -177,7 +196,11 @@ export function CoachInterface({
   lastSession,
   formmyConfig,
   isAnonymous,
+  credits: initialCredits,
 }: CoachInterfaceProps) {
+  const [mode, setMode] = useState<CoachMode | null>(null);
+  const [showPurchase, setShowPurchase] = useState(false);
+  const [credits, setCredits] = useState(initialCredits || { remaining: 0, total: 0, used: 0 });
   const [messages, setMessages] = useState<Message[]>(
     (activeSession?.messages as Message[]) || []
   );
@@ -218,8 +241,15 @@ export function CoachInterface({
     lastTranscriptLen.current = all.length;
   }, [voice.transcripts]);
 
-  // Cleanup voice on unmount
+  // Auto-connect voice on mount
+  const voiceInitialized = useRef(false);
   useEffect(() => {
+    if (!voiceInitialized.current && voice.status === "idle") {
+      voiceInitialized.current = true;
+      voice.start().catch(() => {
+        // Silently fail — user can retry with button
+      });
+    }
     return () => {
       if (voice.status !== "idle") {
         voice.stop();
@@ -366,15 +396,22 @@ export function CoachInterface({
     }
   };
 
-  const startNewSession = async (topic: string) => {
+  const startNewSession = async (topic: string, sessionMode: CoachMode = "programming") => {
     setLoading(true);
     try {
+      const intent = sessionMode === "interview" ? "start_interview_session" : "start_session";
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: "start_session", topic }),
+        body: JSON.stringify({ intent, topic, mode: sessionMode }),
       });
       const data = await res.json();
+
+      if (res.status === 402) {
+        setShowPurchase(true);
+        setLoading(false);
+        return;
+      }
 
       if (data.success) {
         setSessionId(data.data.session.id);
@@ -435,95 +472,104 @@ export function CoachInterface({
   // === ANON LIMIT REACHED ===
   if (hitLimit) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4">
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full space-y-6 text-center"
+          transition={{ duration: 0.5 }}
+          className="max-w-lg w-full space-y-10 text-center"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent">
-            MentorIA
-          </h1>
-          <p className="text-zinc-400">
-            Completaste tus {FREE_SESSION_LIMIT} sesiones gratuitas.
-          </p>
-          <div className="mx-auto w-48">
-            <ScoreRadar scores={scores} size={192} />
+          <div className="space-y-4">
+            <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent">
+              MentorIA
+            </h1>
+            <p className="text-xl text-zinc-300">
+              Completaste tus {FREE_SESSION_LIMIT} sesiones gratuitas
+            </p>
           </div>
-          <p className="text-sm text-zinc-500">
-            Inicia sesión para seguir entrenando y guardar tu progreso.
-          </p>
-          <a
-            href="/login"
-            className="inline-block rounded-xl bg-[#CA9B77] px-8 py-3 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition"
-          >
-            Iniciar sesión
-          </a>
+          <div className="mx-auto w-56">
+            <ScoreRadar scores={scores} size={224} animated />
+          </div>
+          <div className="space-y-4">
+            <p className="text-zinc-500 text-lg">
+              Crea tu cuenta para seguir entrenando y guardar tu progreso.
+            </p>
+            <a
+              href="/login"
+              className="inline-block rounded-2xl bg-[#CA9B77] px-10 py-4 text-base font-semibold text-zinc-900 hover:bg-[#b8895f] transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Crear cuenta gratis
+            </a>
+          </div>
         </motion.div>
       </div>
     );
   }
 
-  // === ONBOARDING: New user, no session ===
-  if (isNewUser && !sessionId) {
+  // === PURCHASE SCREEN ===
+  if (showPurchase) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <SessionPurchase onClose={() => setShowPurchase(false)} />
+      </div>
+    );
+  }
+
+  // === MODE SELECTION (before topic, when no active session) ===
+  if (!sessionId && mode === null && !hitLimit) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl w-full space-y-8"
+          transition={{ duration: 0.5 }}
+          className="max-w-2xl w-full space-y-12 text-center"
         >
-          <div className="text-center space-y-3">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent">
+          <div className="space-y-4">
+            <h1 className="text-5xl sm:text-7xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent">
               MentorIA
             </h1>
-            <p className="text-zinc-400 text-lg max-w-md mx-auto">
-              Tu coach de programación adaptativo. Te hace preguntas, te reta
-              con ejercicios, y se adapta a tu nivel.
+            <p className="text-xl sm:text-2xl text-zinc-400 max-w-lg mx-auto leading-relaxed">
+              No es un chatbot. Es tu mentor.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {DIMENSIONS.map((dim, i) => (
-              <motion.div
-                key={dim.key}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * i }}
-                className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
-              >
-                <div className="text-sm font-medium text-zinc-200">{dim.label}</div>
-                <div className="text-xs text-zinc-500 mt-1">{dim.desc}</div>
-              </motion.div>
-            ))}
-          </div>
-
-          {loading ? (
-            <div className="flex flex-col items-center gap-3 py-4">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-8 h-8 border-2 border-[#CA9B77]/30 border-t-[#CA9B77] rounded-full"
-              />
-              <p className="text-sm text-zinc-400">Preparando tu sesión...</p>
-            </div>
-          ) : (
-            <div className="space-y-3 text-center">
-              <p className="text-sm text-zinc-500">Elige un tema para empezar:</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {TOPICS.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => startNewSession(t.value)}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-200 hover:border-[#CA9B77] hover:text-[#CA9B77] transition flex items-center justify-center gap-2"
-                  >
-                    <span className="text-xs font-mono text-zinc-500">{t.icon}</span>
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {!isAnonymous && credits.total > 0 && (
+            <p className="text-sm text-zinc-500">
+              {credits.remaining} de {credits.total} sesiones disponibles
+            </p>
           )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-xl mx-auto">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setMode("programming")}
+              className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-left hover:border-[#CA9B77]/50 transition-all group"
+            >
+              <div className="text-4xl mb-3">💻</div>
+              <div className="text-xl font-semibold text-zinc-100 group-hover:text-[#CA9B77] transition">
+                Programación
+              </div>
+              <p className="text-base text-zinc-500 mt-2">
+                Ejercicios, debugging, system design
+              </p>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setMode("interview")}
+              className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-left hover:border-[#845A8F]/50 transition-all group"
+            >
+              <div className="text-4xl mb-3">🎤</div>
+              <div className="text-xl font-semibold text-zinc-100 group-hover:text-[#845A8F] transition">
+                Entrevistas
+              </div>
+              <p className="text-base text-zinc-500 mt-2">
+                Mock interviews, STAR stories, scoring
+              </p>
+            </motion.button>
+          </div>
 
           {isAnonymous && <AnonCTA />}
         </motion.div>
@@ -531,67 +577,99 @@ export function CoachInterface({
     );
   }
 
-  // === RETURNING USER: Has history, no active session ===
-  if (isReturningUser && !sessionId) {
+  // === INTERVIEW MODE: Role/seniority selection ===
+  if (mode === "interview" && !sessionId) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4">
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
+        <InterviewSetup
+          loading={loading}
+          onStart={(role, seniority) => startNewSession(`${role}-${seniority}`, "interview")}
+          onBack={() => setMode(null)}
+          isAnonymous={isAnonymous}
+        />
+      </div>
+    );
+  }
+
+  // === TOPIC SELECTION (programming mode — new & returning users) ===
+  if (!sessionId) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-lg w-full space-y-8 text-center"
+          transition={{ duration: 0.5 }}
+          className="max-w-3xl w-full space-y-10"
         >
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-100">MentorIA</h1>
-            <p className="mt-2 text-zinc-400">
-              {profile.streak > 1
-                ? `Racha de ${profile.streak} sesiones`
-                : "Bienvenido de vuelta"}
+          <div className="text-center space-y-4">
+            <button
+              onClick={() => setMode(null)}
+              className="text-sm text-zinc-600 hover:text-zinc-400 transition mb-2 inline-flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Volver
+            </button>
+            <h1 className="text-4xl sm:text-5xl font-bold text-zinc-100">
+              {isReturningUser ? "Siguiente sesión" : "Elige un tema"}
+            </h1>
+            <p className="text-lg text-zinc-500">
+              {isReturningUser && profile.streak > 1
+                ? `Racha de ${profile.streak} sesiones — ${profile.level}`
+                : "Tu mentor se adapta a tu nivel en cada sesión"}
             </p>
           </div>
 
-          <div className="mx-auto w-56">
-            <ScoreRadar scores={scores} size={224} />
-          </div>
-
-          <div className="text-xs text-zinc-500">
-            {profile.level} · {profile.totalSessions} sesiones
-          </div>
+          {isReturningUser && !allScoresZero && (
+            <div className="flex justify-center">
+              <div className="w-56">
+                <ScoreRadar scores={scores} size={224} animated />
+              </div>
+            </div>
+          )}
 
           {lastSession?.summary && (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-left">
-              <div className="text-xs text-zinc-500 uppercase tracking-wider mb-2">
+            <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/40 p-5 max-w-xl mx-auto">
+              <div className="text-xs text-zinc-600 uppercase tracking-wider mb-2">
                 Última sesión {lastSession.topic ? `· ${lastSession.topic}` : ""}
               </div>
-              <p className="text-sm text-zinc-300 leading-relaxed">
+              <p className="text-base text-zinc-400 leading-relaxed">
                 {lastSession.summary}
               </p>
             </div>
           )}
 
           {loading ? (
-            <div className="flex flex-col items-center gap-3 py-4">
+            <div className="flex flex-col items-center gap-4 py-8">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-8 h-8 border-2 border-[#CA9B77]/30 border-t-[#CA9B77] rounded-full"
+                className="w-10 h-10 border-2 border-[#CA9B77]/30 border-t-[#CA9B77] rounded-full"
               />
-              <p className="text-sm text-zinc-400">Preparando tu sesión...</p>
+              <p className="text-base text-zinc-400">Preparando tu sesión...</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-zinc-500">Elige un tema:</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {TOPICS.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => startNewSession(t.value)}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-200 hover:border-[#CA9B77] hover:text-[#CA9B77] transition flex items-center justify-center gap-2"
-                  >
-                    <span className="text-xs font-mono text-zinc-500">{t.icon}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {TOPICS.map((t, i) => (
+                <motion.button
+                  key={t.value}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 * i }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => startNewSession(t.value, "programming")}
+                  className={`rounded-2xl border border-zinc-800 bg-gradient-to-br ${t.color} px-5 py-6 text-left hover:border-zinc-600 transition-all group`}
+                >
+                  <span className="text-sm font-mono text-zinc-600 group-hover:text-zinc-400 transition">
+                    {t.icon}
+                  </span>
+                  <div className="text-lg font-medium text-zinc-200 mt-2 group-hover:text-white transition">
                     {t.label}
-                  </button>
-                ))}
-              </div>
+                  </div>
+                </motion.button>
+              ))}
             </div>
           )}
 
@@ -624,6 +702,11 @@ export function CoachInterface({
           )}
         </div>
         <div className="flex items-center gap-2">
+          {!isAnonymous && credits.total > 0 && (
+            <span className="text-xs text-zinc-500 px-2">
+              {credits.remaining} sesiones
+            </span>
+          )}
           <VoiceButton status={voice.status} onToggle={handleVoiceToggle} />
           <button
             onClick={handleEndSession}
@@ -800,14 +883,14 @@ export function CoachInterface({
 
 function AnonCTA() {
   return (
-    <div className="rounded-xl border border-[#CA9B77]/20 bg-[#CA9B77]/5 px-4 py-3 flex items-center justify-between gap-4">
-      <p className="text-sm text-zinc-400">
+    <div className="rounded-2xl border border-[#CA9B77]/15 bg-gradient-to-r from-[#CA9B77]/5 to-[#845A8F]/5 px-6 py-4 flex items-center justify-between gap-6">
+      <p className="text-base text-zinc-400">
         <span className="text-[#CA9B77] font-medium">Sesión de prueba.</span>{" "}
         Inicia sesión para guardar tu progreso y desbloquear más sesiones.
       </p>
       <a
         href="/login"
-        className="shrink-0 rounded-lg bg-[#CA9B77] px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition"
+        className="shrink-0 rounded-xl bg-[#CA9B77] px-6 py-3 text-sm font-semibold text-zinc-900 hover:bg-[#b8895f] transition-all hover:scale-[1.02] active:scale-[0.98]"
       >
         Iniciar sesión
       </a>
@@ -880,4 +963,105 @@ function MicButton({ onTranscript }: { onTranscript: (text: string) => void }) {
 
 function clamp(val: number) {
   return Math.max(0, Math.min(100, val));
+}
+
+function InterviewSetup({
+  loading,
+  onStart,
+  onBack,
+  isAnonymous,
+}: {
+  loading: boolean;
+  onStart: (role: string, seniority: string) => void;
+  onBack: () => void;
+  isAnonymous?: boolean;
+}) {
+  const [role, setRole] = useState("");
+  const [seniority, setSeniority] = useState("");
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-lg w-full space-y-8"
+    >
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#845A8F] to-[#CA9B77] bg-clip-text text-transparent">
+          Coach de Entrevistas
+        </h1>
+        <p className="text-zinc-400">
+          Practica con mock interviews, mejora tus respuestas STAR y recibe scoring en 5 dimensiones.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm text-zinc-500 mb-2 block">Rol objetivo</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {INTERVIEW_ROLES.map((r) => (
+              <button
+                key={r.value}
+                onClick={() => setRole(r.value)}
+                className={`rounded-xl border px-4 py-2 text-sm transition ${
+                  role === r.value
+                    ? "border-[#845A8F] bg-[#845A8F]/10 text-[#845A8F]"
+                    : "border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm text-zinc-500 mb-2 block">Seniority</label>
+          <div className="grid grid-cols-3 gap-2">
+            {SENIORITY_LEVELS.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => setSeniority(s.value)}
+                className={`rounded-xl border px-4 py-2 text-sm transition ${
+                  seniority === s.value
+                    ? "border-[#845A8F] bg-[#845A8F]/10 text-[#845A8F]"
+                    : "border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-8 h-8 border-2 border-[#845A8F]/30 border-t-[#845A8F] rounded-full"
+          />
+          <p className="text-sm text-zinc-400">Preparando tu entrevista...</p>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            onClick={onBack}
+            className="rounded-xl border border-zinc-800 px-5 py-3 text-sm text-zinc-400 hover:text-zinc-200 transition"
+          >
+            Volver
+          </button>
+          <button
+            onClick={() => onStart(role || "fullstack", seniority || "mid")}
+            disabled={!role || !seniority}
+            className="flex-1 rounded-xl bg-[#845A8F] py-3 text-sm font-medium text-white hover:bg-[#6e4a78] transition disabled:opacity-50"
+          >
+            Iniciar entrevista
+          </button>
+        </div>
+      )}
+
+      {isAnonymous && <AnonCTA />}
+    </motion.div>
+  );
 }
