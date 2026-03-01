@@ -50,6 +50,7 @@ interface CoachInterfaceProps {
     publishableKey: string;
     agentId: string;
   };
+  isAnonymous?: boolean;
 }
 
 const TOPICS = [
@@ -175,6 +176,7 @@ export function CoachInterface({
   exercise,
   lastSession,
   formmyConfig,
+  isAnonymous,
 }: CoachInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>(
     (activeSession?.messages as Message[]) || []
@@ -478,6 +480,8 @@ export function CoachInterface({
               </div>
             </div>
           )}
+
+          {isAnonymous && <AnonCTA />}
         </motion.div>
       </div>
     );
@@ -546,6 +550,8 @@ export function CoachInterface({
               </div>
             </div>
           )}
+
+          {isAnonymous && <AnonCTA />}
         </motion.div>
       </div>
     );
@@ -585,6 +591,19 @@ export function CoachInterface({
         </div>
       </div>
 
+      {isAnonymous && (
+        <div className="border-b border-[#CA9B77]/10 bg-[#CA9B77]/5 px-4 py-2 flex items-center justify-between shrink-0">
+          <p className="text-xs text-zinc-400">
+            <span className="text-[#CA9B77]">Sesión de prueba</span> — Inicia sesión para más sesiones
+          </p>
+          <a
+            href="/login"
+            className="text-xs font-medium text-[#CA9B77] hover:underline"
+          >
+            Iniciar sesión
+          </a>
+        </div>
+      )}
       <div className="flex flex-1 min-h-0">
         {/* Chat area */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -734,6 +753,23 @@ export function CoachInterface({
 }
 
 // === Sub-components ===
+
+function AnonCTA() {
+  return (
+    <div className="rounded-xl border border-[#CA9B77]/20 bg-[#CA9B77]/5 px-4 py-3 flex items-center justify-between gap-4">
+      <p className="text-sm text-zinc-400">
+        <span className="text-[#CA9B77] font-medium">Sesión de prueba.</span>{" "}
+        Inicia sesión para guardar tu progreso y desbloquear más sesiones.
+      </p>
+      <a
+        href="/login"
+        className="shrink-0 rounded-lg bg-[#CA9B77] px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition"
+      >
+        Iniciar sesión
+      </a>
+    </div>
+  );
+}
 
 function MicButton({ onTranscript }: { onTranscript: (text: string) => void }) {
   const [listening, setListening] = useState(false);

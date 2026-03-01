@@ -87,11 +87,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           endedAt: lastSession.endedAt?.toISOString() || null,
         }
       : null,
+    isAnonymous: !user,
   }, { headers });
 };
 
 export default function CoachPage() {
-  const { profile, activeSession, exercise, lastSession, formmyConfig } =
+  const { profile, activeSession, exercise, lastSession, formmyConfig, isAnonymous } =
     useLoaderData<typeof loader>();
 
   return (
@@ -103,6 +104,7 @@ export default function CoachPage() {
           exercise={exercise}
           lastSession={lastSession}
           formmyConfig={formmyConfig}
+          isAnonymous={isAnonymous}
         />
       </div>
     </FormmyProvider>
