@@ -591,7 +591,7 @@ export function CoachInterface({
           )}
           <div className="space-y-6">
             <p className="text-zinc-500 text-lg">
-              Regresa mañana para más sesiones gratis, o inicia sesión para acceso ilimitado.
+              Regresa mañana para más sesiones gratis, o inicia sesión para desbloquear más sesiones.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
