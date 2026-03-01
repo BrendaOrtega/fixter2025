@@ -163,7 +163,7 @@ export default function AdminRatings({
   };
 
   return (
-    <main className="bg-dark min-h-screen">
+    <main className="bg-dark min-h-screen ml-48">
       <AdminNav />
       <section className="max-w-7xl mx-auto px-4 py-8">
         <header className="mb-8">

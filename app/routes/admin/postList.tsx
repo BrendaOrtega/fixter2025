@@ -170,7 +170,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
   const showLoadMore = items.length < totalCount;
 
   return (
-    <>
+    <div className="ml-48">
       <AdminNav />
       <article className="py-20 text-white px-10 mx-auto max-w-5xl">
         <div className="flex justify-between items-center mb-6">
@@ -244,7 +244,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
           </section>
         )}
       </article>
-    </>
+    </div>
   );
 }
 

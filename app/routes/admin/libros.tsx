@@ -220,7 +220,7 @@ export default function AdminLibros({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 ml-48">
       <AdminNav />
 
       <div className="max-w-6xl mx-auto px-4 py-8">

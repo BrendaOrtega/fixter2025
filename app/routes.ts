@@ -33,6 +33,7 @@ export default [
   route("stripe/webhook", "routes/stripeWebhook.ts"),
   // Coach de programación
   route("coach", "routes/coach.tsx"),
+  route("coach/result/:sessionId", "routes/coach.result.$sessionId.tsx"),
   // xmas
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
   // Claude Code Workshop
@@ -77,6 +78,7 @@ export default [
     route("send", "routes/admin/send.tsx"),
     route("backups", "routes/admin/backups.tsx"),
     route("404s", "routes/admin/404s.tsx"),
+    route("mentoria", "routes/admin/mentoria.tsx"),
   ]),
   // Analytics moved to admin section
   // testing WebRTC

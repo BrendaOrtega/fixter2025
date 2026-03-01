@@ -323,9 +323,8 @@ export const CoachHighlight = () => {
                 MentorIA
               </h2>
               <p className="text-lg text-zinc-400 mt-4 leading-relaxed">
-                Un coach de programación con IA que se adapta a tu nivel. Te hace
-                preguntas, te reta con ejercicios y te da feedback en tiempo real
-                — con voz en español mexicano.
+                Un coach de entrevistas que te acompaña desde la primera revisión
+                de CV hasta la negociación de tu oferta.
               </p>
               <div className="flex flex-wrap gap-3 mt-6">
                 {["Adaptativo", "Con voz", "Ejercicios", "5 dimensiones"].map((tag) => (

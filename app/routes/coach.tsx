@@ -3,7 +3,6 @@ import { data, useLoaderData } from "react-router";
 import { getUserOrNull, getOrCreateAnonId } from "~/.server/dbGetters";
 import { getOrCreateLearnerProfile } from "~/.server/services/coach.server";
 import { getCredits } from "~/.server/services/coach-credits.server";
-import { db } from "~/.server/db";
 import { commitSession } from "~/sessions";
 import { CoachInterface } from "~/components/coach/CoachInterface";
 import { FormmyProvider } from "@formmy.app/chat/react";
@@ -14,37 +13,10 @@ export const meta: MetaFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-  const initialMode = url.searchParams.get("mode") as "programming" | "interview" | null;
-  const initialTopic = url.searchParams.get("topic");
-  const initialRole = url.searchParams.get("role");
-  const initialSeniority = url.searchParams.get("seniority");
-
   const user = await getUserOrNull(request);
   const { anonId, session, isNew } = await getOrCreateAnonId(request);
   const userId = user?.id || anonId;
   const profile = await getOrCreateLearnerProfile(userId);
-
-  // Check for active session (no endedAt)
-  const activeSession = await db.coachingSession.findFirst({
-    where: { profileId: profile.id, endedAt: null },
-    orderBy: { startedAt: "desc" },
-  });
-
-  // Get exercise if session has one
-  let exercise = null;
-  if (activeSession?.exerciseId) {
-    exercise = await db.exercise.findUnique({
-      where: { id: activeSession.exerciseId },
-    });
-  }
-
-  // Get last completed session summary
-  const lastSession = await db.coachingSession.findFirst({
-    where: { profileId: profile.id, endedAt: { not: null } },
-    orderBy: { endedAt: "desc" },
-    select: { summary: true, topic: true, endedAt: true },
-  });
 
   const headers: HeadersInit = {};
   if (isNew && !user) {
@@ -55,6 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     formmyConfig: {
       publishableKey: process.env.FORMMY_API_KEY || "",
       agentId: process.env.FORMMY_AGENT_ID || "6962b02ec232df8a06a9b7d6",
+      interviewAgentId: process.env.FORMMY_INTERVIEW_AGENT_ID || "",
     },
     profile: {
       id: profile.id,
@@ -69,61 +42,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       currentTopic: profile.currentTopic,
       totalSessions: profile.totalSessions,
     },
-    activeSession: activeSession
-      ? {
-          id: activeSession.id,
-          phase: activeSession.phase,
-          topic: activeSession.topic,
-          messages: activeSession.messages as any[],
-          exerciseId: activeSession.exerciseId,
-        }
-      : null,
-    exercise: exercise
-      ? {
-          prompt: exercise.prompt,
-          difficulty: exercise.difficulty,
-          dimension: exercise.dimension,
-          hints: exercise.hints,
-          topic: exercise.topic,
-        }
-      : null,
-    lastSession: lastSession
-      ? {
-          summary: lastSession.summary,
-          topic: lastSession.topic,
-          endedAt: lastSession.endedAt?.toISOString() || null,
-        }
-      : null,
     isAnonymous: !user,
     credits: user ? await getCredits(user.id) : { remaining: 0, total: 0, used: 0 },
-    initialMode,
-    initialTopic,
-    initialRole,
-    initialSeniority,
   }, { headers });
 };
 
 export default function CoachPage() {
-  const {
-    profile, activeSession, exercise, lastSession, formmyConfig,
-    isAnonymous, credits, initialMode, initialTopic, initialRole, initialSeniority,
-  } = useLoaderData<typeof loader>();
+  const { profile, formmyConfig, isAnonymous, credits } = useLoaderData<typeof loader>();
 
   return (
     <FormmyProvider publishableKey={formmyConfig.publishableKey}>
       <div className="min-h-screen bg-zinc-950 text-zinc-100 pt-20">
         <CoachInterface
           profile={profile}
-          activeSession={activeSession}
-          exercise={exercise}
-          lastSession={lastSession}
           formmyConfig={formmyConfig}
           isAnonymous={isAnonymous}
           credits={credits}
-          initialMode={initialMode}
-          initialTopic={initialTopic}
-          initialRole={initialRole}
-          initialSeniority={initialSeniority}
         />
       </div>
     </FormmyProvider>

@@ -886,7 +886,7 @@ export default function AdminSend({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="min-h-screen bg-gray-950 text-gray-100 ml-48">
       <AdminNav />
 
       <div className="max-w-7xl mx-auto p-4 pt-20">
