@@ -15,6 +15,7 @@ import { FiLogOut } from "react-icons/fi";
 import { IoIosVideocam } from "react-icons/io";
 
 const navigation = [
+  { name: "MentorIA", link: "/coach", highlight: true },
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
   { name: "Claude Code", link: "/claude" },
@@ -32,7 +33,9 @@ export const SquigglyUnderline = () => {
         const isCurrent = isHover === i;
         const isCurrentRoute = !item.external && location.pathname.includes(item.link);
         const linkClasses = `relative text-sm leading-6 no-underline ${
-          isCurrent || isCurrentRoute
+          item.highlight
+            ? "font-semibold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent"
+            : isCurrent || isCurrentRoute
             ? "font-semibold text-white"
             : "text-white"
         }`;
@@ -287,8 +290,16 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/cursos"
+          to="/coach"
           index={1}
+          isOpen={isOpen}
+          title="MentorIA"
+        />
+        <NavItem
+          onClick={toggleMenu}
+          as="Link"
+          to="/cursos"
+          index={2}
           isOpen={isOpen}
           title="Cursos"
         />

@@ -243,23 +243,30 @@ export function CoachInterface({
     lastTranscriptLen.current = all.length;
   }, [voice.transcripts]);
 
-  // Auto-connect voice on mount
+  // Connect voice only when there's an active session
   const voiceInitialized = useRef(false);
   useEffect(() => {
-    if (!voiceInitialized.current && voice.status === "idle") {
+    if (sessionId && !voiceInitialized.current && voice.status === "idle") {
       voiceInitialized.current = true;
       voice.start().catch((err) => {
         console.warn("[MentorIA Voice] auto-connect failed:", err?.message || err);
-        // User can retry with the voice button
       });
     }
-    return () => {
+    if (!sessionId && voiceInitialized.current) {
       voiceInitialized.current = false;
       if (voice.status !== "idle") {
         voice.stop();
       }
+    }
+    return () => {
+      if (voiceInitialized.current) {
+        voiceInitialized.current = false;
+        if (voice.status !== "idle") {
+          voice.stop();
+        }
+      }
     };
-  }, []);
+  }, [sessionId]);
 
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceActive = voice.status !== "idle" && voice.status !== "error";
@@ -931,9 +938,9 @@ export function CoachInterface({
 
           {/* Input area — voice-first design */}
           <div className="border-t border-zinc-800 p-4 shrink-0">
-            {voiceError && !voiceActive ? (
-              <div className="flex flex-col items-center gap-3 py-2">
-                <span className="text-sm text-red-400">{voiceError}</span>
+            {voiceError && !voiceActive && (
+              <div className="flex items-center gap-2 px-2 pb-2">
+                <span className="text-xs text-red-400">{voiceError}</span>
                 <button
                   onClick={handleVoiceToggle}
                   className="text-xs text-zinc-500 hover:text-zinc-300 transition"
@@ -941,98 +948,75 @@ export function CoachInterface({
                   Reintentar
                 </button>
               </div>
-            ) : voiceActive ? (
-              <div className="flex flex-col items-center gap-4 py-3">
-                {/* Voice visualization */}
-                <button
-                  onClick={handleVoiceToggle}
-                  className="group relative"
-                >
-                  <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
-                    voice.status === "speaking"
+            )}
+            {/* Input area — voice + text always available */}
+            <div className="flex items-center gap-3">
+              {/* Voice button */}
+              <button
+                onClick={handleVoiceToggle}
+                className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all relative ${
+                  voiceActive
+                    ? voice.status === "speaking"
                       ? "bg-emerald-500/20 border-2 border-emerald-500/40"
                       : voice.status === "connecting"
                       ? "bg-amber-500/20 border-2 border-amber-500/40"
                       : "bg-emerald-500/10 border-2 border-emerald-500/30"
-                  }`}>
-                    {voice.status === "speaking" ? (
-                      <VoiceWaves color="emerald" />
-                    ) : voice.status === "connecting" ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                        className="w-6 h-6 border-2 border-amber-400/30 border-t-amber-400 rounded-full"
-                      />
-                    ) : (
-                      <VoiceWaves color="emerald" />
-                    )}
-                  </div>
-                  {/* Pulse ring when speaking */}
-                  {voice.status === "speaking" && (
+                    : "bg-gradient-to-br from-[#CA9B77] to-[#845A8F] hover:scale-105 active:scale-95 shadow-lg shadow-[#CA9B77]/20"
+                }`}
+                title={voiceActive ? "Desactivar voz" : "Hablar con MentorIA"}
+              >
+                {voiceActive ? (
+                  voice.status === "connecting" ? (
                     <motion.div
-                      className="absolute inset-0 rounded-full border-2 border-emerald-500/30"
-                      animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-amber-400/30 border-t-amber-400 rounded-full"
                     />
-                  )}
-                </button>
-                <span className="text-sm text-zinc-400">
-                  {voice.status === "connecting"
-                    ? "Conectando..."
-                    : voice.status === "speaking"
-                    ? "Escuchando — puedes interrumpir"
-                    : "Habla cuando quieras"}
-                </span>
-                <button
-                  onClick={handleVoiceToggle}
-                  className="text-xs text-zinc-600 hover:text-zinc-400 transition"
-                >
-                  Desactivar voz
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {/* Voice CTA — primary action */}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleVoiceToggle}
-                    className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#CA9B77] to-[#845A8F] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-[#CA9B77]/20"
-                    title="Hablar con MentorIA"
-                  >
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                      />
-                    </svg>
-                  </button>
-                  {/* Text input — secondary */}
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && !e.shiftKey && sendMessage(input)
-                    }
-                    aria-label="Escribe tu respuesta"
-                    placeholder="o escribe aquí..."
-                    disabled={loading}
-                    className="flex-1 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#CA9B77] disabled:opacity-50"
+                  ) : (
+                    <VoiceWaves color="emerald" />
+                  )
+                ) : (
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                )}
+                {/* Pulse ring when speaking */}
+                {voice.status === "speaking" && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-2 border-emerald-500/30"
+                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
                   />
-                  {input.trim() && (
-                    <button
-                      onClick={() => sendMessage(input)}
-                      disabled={loading}
-                      className="shrink-0 rounded-xl bg-[#CA9B77] px-4 py-3 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition disabled:opacity-50"
-                    >
-                      Enviar
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+                )}
+              </button>
+              {/* Text input — always available alongside voice */}
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && !e.shiftKey && sendMessage(input)
+                }
+                aria-label="Escribe tu respuesta"
+                placeholder={voiceActive ? "Habla o escribe aquí..." : "Escribe aquí..."}
+                disabled={loading}
+                className="flex-1 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#CA9B77] disabled:opacity-50"
+              />
+              {input.trim() && (
+                <button
+                  onClick={() => sendMessage(input)}
+                  disabled={loading}
+                  className="shrink-0 rounded-xl bg-[#CA9B77] px-4 py-3 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition disabled:opacity-50"
+                >
+                  Enviar
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
