@@ -419,6 +419,40 @@ export function CoachInterface({
   const isNewUser = profile.totalSessions === 0 && !sessionId;
   const isReturningUser = profile.totalSessions > 0 && !sessionId;
   const allScoresZero = Object.values(scores).every((s) => s === 0);
+  const FREE_SESSION_LIMIT = 2;
+  const hitLimit = isAnonymous && profile.totalSessions >= FREE_SESSION_LIMIT && !sessionId;
+
+  // === ANON LIMIT REACHED ===
+  if (hitLimit) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full space-y-6 text-center"
+        >
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent">
+            MentorIA
+          </h1>
+          <p className="text-zinc-400">
+            Completaste tus {FREE_SESSION_LIMIT} sesiones gratuitas.
+          </p>
+          <div className="mx-auto w-48">
+            <ScoreRadar scores={scores} size={192} />
+          </div>
+          <p className="text-sm text-zinc-500">
+            Inicia sesión para seguir entrenando y guardar tu progreso.
+          </p>
+          <a
+            href="/login"
+            className="inline-block rounded-xl bg-[#CA9B77] px-8 py-3 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition"
+          >
+            Iniciar sesión
+          </a>
+        </motion.div>
+      </div>
+    );
+  }
 
   // === ONBOARDING: New user, no session ===
   if (isNewUser && !sessionId) {

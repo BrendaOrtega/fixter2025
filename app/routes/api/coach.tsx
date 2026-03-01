@@ -41,6 +41,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     if (intent === "start_session") {
       const profile = await getOrCreateLearnerProfile(userId);
+
+      if (!user && profile.totalSessions >= 2) {
+        return Response.json(
+          { error: "Límite de sesiones gratuitas alcanzado. Inicia sesión para continuar." },
+          { status: 403 }
+        );
+      }
+
       const result = await startSession(profile.id, body.topic);
 
       // Return session with greeting already included
