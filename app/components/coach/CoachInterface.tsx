@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Link } from "react-router";
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 import { ScoreRadar } from "./ScoreRadar";
 import { useFormmyVoice } from "./VoiceButton";
 import { SessionPurchase } from "./SessionPurchase";
@@ -559,13 +561,17 @@ export function CoachInterface({
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-xl leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[80%] rounded-2xl px-4 py-3 text-xl leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-[#CA9B77] text-zinc-900"
-                      : "bg-zinc-800 text-zinc-200"
+                      ? "bg-[#CA9B77] text-zinc-900 whitespace-pre-wrap"
+                      : "bg-zinc-800 text-zinc-200 prose prose-invert prose-sm max-w-none"
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? (
+                    <Streamdown plugins={{ code }} shikiTheme={["dracula", "dracula"]}>{msg.content}</Streamdown>
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </motion.div>
             ))}
