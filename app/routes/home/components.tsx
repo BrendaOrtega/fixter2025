@@ -3,13 +3,12 @@ import { useCounter } from "~/hooks/useCounter";
 import { motion, useInView } from "motion/react";
 import { TridiLayers } from "~/components/card3d";
 import { FlipWords } from "~/components/FlipWords";
-import { CourseCard } from "~/components/CourseCard";
+
 import { JackPotSection } from "~/components/Jackpot";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
-import type { Course } from "~/types/models";
-import { useFetcher, Link } from "react-router";
+import { Link } from "react-router";
 import { Footer } from "~/components/Footer";
 import { Banner } from "~/components/common/Banner";
 
@@ -294,29 +293,92 @@ export const formatDuration = (secs: number) => {
   return (secs / 60).toFixed(0) + " mins";
 };
 
-export const TopCourses = ({ courses }: { courses?: Partial<Course>[] }) => {
-  const fetcher = useFetcher();
-
-  useEffect(() => {
-    if (courses) return;
-
-    fetcher.submit(
-      { intent: "get_top_courses" },
-      { method: "POST", action: "/api/course" },
-    );
-  }, [courses]);
-
-  const c: Partial<Course>[] = courses || fetcher.data || [];
+export const CoachHighlight = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
 
   return (
-    <motion.section className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32  md:my-[160px]">
-      <h2 className="text-3xl md:text-4xl xl:text-5xl  font-bold text-white leading-snug text-center">
-        Cursos más recientes
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-20 mt-20 px-4 md:px-0">
-        {c.map((course) => (
-          <CourseCard key={course.id} course={course} />
-        ))}
+    <motion.section
+      ref={ref}
+      className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32 md:my-[160px]"
+    >
+      <div
+        className="relative rounded-3xl border border-[#CA9B77]/20 overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(202,155,119,0.05) 0%, rgba(132,90,143,0.08) 100%)",
+        }}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 p-8 md:p-12 lg:p-16">
+          {/* Left: Content */}
+          <div className="flex flex-col justify-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6 }}
+            >
+              <span className="inline-block text-xs font-semibold uppercase tracking-widest text-[#CA9B77] mb-4">
+                Nuevo
+              </span>
+              <h2 className="text-3xl md:text-4xl xl:text-5xl font-bold text-white !leading-snug">
+                MentorIA
+              </h2>
+              <p className="text-lg text-zinc-400 mt-4 leading-relaxed">
+                Un coach de programación con IA que se adapta a tu nivel. Te hace
+                preguntas, te reta con ejercicios y te da feedback en tiempo real
+                — con voz en español mexicano.
+              </p>
+              <div className="flex flex-wrap gap-3 mt-6">
+                {["Adaptativo", "Con voz", "Ejercicios", "5 dimensiones"].map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-3 py-1.5 rounded-full border border-zinc-700 text-zinc-300 bg-zinc-900/50"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-8">
+                <PrimaryButton as="Link" to="/coach" title="Probar MentorIA" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right: Visual */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="flex items-center justify-center"
+          >
+            <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950/80 p-6 space-y-4 backdrop-blur">
+              {/* Fake chat preview */}
+              <div className="flex justify-start">
+                <div className="bg-zinc-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-zinc-200 max-w-[85%]">
+                  Vamos a evaluar tu conocimiento de closures en JavaScript. ¿Puedes explicarme qué es un closure?
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <div className="bg-[#CA9B77] rounded-2xl rounded-br-md px-4 py-2.5 text-sm text-zinc-900 max-w-[85%]">
+                  Es cuando una función recuerda las variables de su scope padre...
+                </div>
+              </div>
+              <div className="flex justify-start">
+                <div className="bg-zinc-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-zinc-200 max-w-[85%]">
+                  Exacto. Ahora un reto: escribe una función counter usando closures.
+                </div>
+              </div>
+              {/* Radar mini preview */}
+              <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                <div className="flex gap-2">
+                  {["Algoritmos", "Sintaxis", "Debug"].map((d) => (
+                    <span key={d} className="text-[10px] text-zinc-500">{d}</span>
+                  ))}
+                </div>
+                <span className="text-[10px] text-[#CA9B77] font-medium">En vivo</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </motion.section>
   );
@@ -497,17 +559,17 @@ export const HomeHero = () => {
     >
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[95vh] lg:h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
-          {/* Tag de curso Pong gratis */}
+          {/* Tag de MentorIA */}
           <div className="flex justify-center md:justify-start mb-6 hidden md:flex ">
-            <Link to="/pong" className="group">
+            <Link to="/coach" className="group">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30 rounded-full px-4 py-2 hover:from-green-500/20 hover:to-green-600/20 hover:border-green-500/50 transition-all duration-300"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-[#CA9B77]/10 to-[#845A8F]/10 border border-[#CA9B77]/30 rounded-full px-4 py-2 hover:from-[#CA9B77]/20 hover:to-[#845A8F]/20 hover:border-[#CA9B77]/50 transition-all duration-300"
               >
-                <span className="text-sm font-semibold text-green-400 transition-colors">
-                  🎮 Curso Gratis | Pong con Vanilla JavaScript
+                <span className="text-sm font-semibold text-[#CA9B77] transition-colors">
+                  Nuevo: MentorIA — tu mentor de programación con IA y voz
                 </span>
               </motion.div>
             </Link>
@@ -532,25 +594,13 @@ export const HomeHero = () => {
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
             <PrimaryButton
               as="Link"
-              to="/cursos/ai-sdk/viewer?videoSlug=ai-sdk-1"
-              children="Nuevo curso: AI + React"
+              to="/coach"
+              children="Probar MentorIA"
             />
             <PrimaryButton
               as="Link"
               to="/pong"
               children="Pong gratis"
-              variant="ghost"
-            />
-            <PrimaryButton
-              as="Link"
-              to="/claude"
-              children="Claude Code"
-              variant="ghost"
-            />
-            <PrimaryButton
-              as="Link"
-              to="/integraciones"
-              children="Integraciones 2026"
               variant="ghost"
             />
           </div>

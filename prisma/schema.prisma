@@ -652,6 +652,87 @@ model NotFoundLog {
 }
 
 // ============================
+// COACHING SYSTEM (Speak)
+// ============================
+
+model LearnerProfile {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+
+  // 5 dimensiones (0-100)
+  algorithms      Int @default(0)
+  syntaxFluency   Int @default(0)
+  systemDesign    Int @default(0)
+  debugging       Int @default(0)
+  communication   Int @default(0)
+
+  // Meta
+  level           String @default("beginner") // beginner, intermediate, advanced
+  streak          Int    @default(0)
+  directnessLevel Int    @default(3) // 1=muy alentador, 5=directo y retador
+  currentTopic    String? // "javascript", "react", "node", "python", "ai-ml", "system-design"
+  totalSessions   Int    @default(0)
+
+  sessions CoachingSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("learner_profiles")
+}
+
+enum CoachingPhase {
+  KICKOFF
+  ASSESSMENT
+  PRACTICE
+  REVIEW
+  SUMMARY
+}
+
+model CoachingSession {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  profileId String @db.ObjectId
+  profile   LearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  phase      CoachingPhase @default(KICKOFF)
+  topic      String? // topic de la sesión
+  exerciseId String? @db.ObjectId
+
+  // Conversación
+  messages   Json[] // {role, content, timestamp}
+
+  // Code response
+  codeResponse String? // Último código enviado por el usuario
+
+  // Scoring
+  scoreDeltas Json? // {algorithms: +5, debugging: -2, ...}
+  summary     String? // Resumen generado por AI
+
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+
+  @@index([profileId])
+  @@map("coaching_sessions")
+}
+
+model Exercise {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  topic      String // "javascript", "react", etc.
+  dimension  String // "algorithms", "syntaxFluency", etc.
+  difficulty Int    @default(3) // 1-5
+  prompt     String
+  hints      String[]
+  solutionGuide String?
+  tags       String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([topic, dimension, difficulty])
+  @@map("exercises")
+}
+
+// ============================
 // LEAD MAGNETS SYSTEM
 // ============================
 

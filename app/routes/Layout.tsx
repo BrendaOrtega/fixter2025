@@ -19,12 +19,13 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
   const isBookRoute = location.pathname.startsWith('/libros/');
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isViewerRoute = location.pathname.includes('/viewer');
+  const isCoachRoute = location.pathname.startsWith('/coach');
 
   return (
     <>
       {!isBookRoute && !isAdminRoute && <NavBar user={user} />}
       {children}
-      {!isBookRoute && !isAdminRoute && !isViewerRoute && <FloatingPromo />}
+      {!isBookRoute && !isAdminRoute && !isViewerRoute && !isCoachRoute && <FloatingPromo />}
       {/* <WebinarBanner /> */}
       {/* <GlobalBanner /> */}
     </>

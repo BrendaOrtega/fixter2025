@@ -31,6 +31,8 @@ export default [
   route("playlist/:storageKey/:segment", "routes/playlist.$storageKey.$segment.tsx"),
   //stripe webhook
   route("stripe/webhook", "routes/stripeWebhook.ts"),
+  // Coach de programación
+  route("coach", "routes/coach.tsx"),
   // xmas
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
   // Claude Code Workshop
@@ -116,6 +118,7 @@ export default [
     route("ai.text-command", "routes/api/ai.text-command.ts"),
     route("leadmagnets", "routes/api/leadmagnets.ts"),
     route("waitlist", "routes/api/waitlist.ts"),
+    route("coach", "routes/api/coach.tsx"),
     // route("clean", "routes/api/cleaun_up.tsx"), // dev only
   ]),
   // @todo remove?

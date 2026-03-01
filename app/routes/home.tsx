@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import { Link } from "react-router";
 import {
   Benefits,
+  CoachHighlight,
   HomeHero,
   SocialPlanet,
-  TopCourses,
   Why,
 } from "./home/components";
 import { db } from "~/.server/db";
@@ -110,26 +110,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await getUserOrNull(request);
   const isAdmin = user?.role === "ADMIN";
 
-  return {
-    isAdmin,
-    topCourses: await db.course.findMany({
-      orderBy: { createdAt: "desc" },
-      where: { published: true },
-      take: 3,
-      select: {
-        id: true,
-        title: true,
-        icon: true,
-        duration: true,
-        level: true,
-        slug: true,
-      },
-    }),
-  };
+  return { isAdmin };
 };
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const { topCourses, isAdmin } = loaderData || {};
+  const { isAdmin } = loaderData || {};
 
   useEffect(() => {
     window.scrollTo({
@@ -154,9 +139,9 @@ export default function Page({ loaderData }: Route.ComponentProps) {
         </div>
       )}
       <HomeHero />
+      <CoachHighlight />
       <Why />
       <Benefits />
-      <TopCourses courses={topCourses} />
       <SocialPlanet />
     </main>
   );
