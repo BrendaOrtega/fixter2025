@@ -708,7 +708,15 @@ export function CoachInterface({
               {credits.remaining} sesiones
             </span>
           )}
-          <VoiceButton status={voice.status} onToggle={handleVoiceToggle} />
+          {voiceActive && (
+            <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              Voz
+            </span>
+          )}
           <button
             onClick={handleEndSession}
             disabled={loading}
@@ -806,49 +814,107 @@ export function CoachInterface({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input area */}
+          {/* Input area — voice-first design */}
           <div className="border-t border-zinc-800 p-4 shrink-0">
             {voiceError && !voiceActive ? (
-              <div className="flex items-center justify-center gap-3 py-2">
+              <div className="flex flex-col items-center gap-3 py-2">
                 <span className="text-sm text-red-400">{voiceError}</span>
+                <button
+                  onClick={handleVoiceToggle}
+                  className="text-xs text-zinc-500 hover:text-zinc-300 transition"
+                >
+                  Reintentar
+                </button>
               </div>
-          ) : voiceActive ? (
-              <div className="flex items-center justify-center gap-3 py-2">
-                <span className="relative flex h-3 w-3">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${voice.status === "connecting" ? "bg-amber-400" : "bg-emerald-400"}`} />
-                  <span className={`relative inline-flex rounded-full h-3 w-3 ${voice.status === "connecting" ? "bg-amber-500" : "bg-emerald-500"}`} />
-                </span>
+            ) : voiceActive ? (
+              <div className="flex flex-col items-center gap-4 py-3">
+                {/* Voice visualization */}
+                <button
+                  onClick={handleVoiceToggle}
+                  className="group relative"
+                >
+                  <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
+                    voice.status === "speaking"
+                      ? "bg-emerald-500/20 border-2 border-emerald-500/40"
+                      : voice.status === "connecting"
+                      ? "bg-amber-500/20 border-2 border-amber-500/40"
+                      : "bg-emerald-500/10 border-2 border-emerald-500/30"
+                  }`}>
+                    {voice.status === "speaking" ? (
+                      <VoiceWaves color="emerald" />
+                    ) : voice.status === "connecting" ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                        className="w-6 h-6 border-2 border-amber-400/30 border-t-amber-400 rounded-full"
+                      />
+                    ) : (
+                      <VoiceWaves color="emerald" />
+                    )}
+                  </div>
+                  {/* Pulse ring when speaking */}
+                  {voice.status === "speaking" && (
+                    <motion.div
+                      className="absolute inset-0 rounded-full border-2 border-emerald-500/30"
+                      animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                  )}
+                </button>
                 <span className="text-sm text-zinc-400">
                   {voice.status === "connecting"
-                    ? "Conectando micrófono..."
+                    ? "Conectando..."
                     : voice.status === "speaking"
-                    ? "MentorIA está hablando — puedes interrumpir"
-                    : "Modo voz activo — habla cuando quieras"}
+                    ? "Escuchando — puedes interrumpir"
+                    : "Habla cuando quieras"}
                 </span>
+                <button
+                  onClick={handleVoiceToggle}
+                  className="text-xs text-zinc-600 hover:text-zinc-400 transition"
+                >
+                  Desactivar voz
+                </button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <MicButton
-                  onTranscript={(text) => setInput((prev) => prev + text)}
-                />
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && !e.shiftKey && sendMessage(input)
-                  }
-                  placeholder="Escribe tu respuesta..."
-                  disabled={loading}
-                  className="flex-1 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#CA9B77] disabled:opacity-50"
-                />
-                <button
-                  onClick={() => sendMessage(input)}
-                  disabled={loading || !input.trim()}
-                  className="rounded-xl bg-[#CA9B77] px-5 py-3 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition disabled:opacity-50"
-                >
-                  Enviar
-                </button>
+              <div className="flex flex-col gap-3">
+                {/* Voice CTA — primary action */}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleVoiceToggle}
+                    className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#CA9B77] to-[#845A8F] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-[#CA9B77]/20"
+                    title="Hablar con MentorIA"
+                  >
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                      />
+                    </svg>
+                  </button>
+                  {/* Text input — secondary */}
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && !e.shiftKey && sendMessage(input)
+                    }
+                    placeholder="o escribe aquí..."
+                    disabled={loading}
+                    className="flex-1 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#CA9B77] disabled:opacity-50"
+                  />
+                  {input.trim() && (
+                    <button
+                      onClick={() => sendMessage(input)}
+                      disabled={loading}
+                      className="shrink-0 rounded-xl bg-[#CA9B77] px-4 py-3 text-sm font-medium text-zinc-900 hover:bg-[#b8895f] transition disabled:opacity-50"
+                    >
+                      Enviar
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -959,6 +1025,27 @@ function MicButton({ onTranscript }: { onTranscript: (text: string) => void }) {
         />
       </svg>
     </button>
+  );
+}
+
+function VoiceWaves({ color }: { color: "emerald" | "amber" }) {
+  const c = color === "emerald" ? "bg-emerald-400" : "bg-amber-400";
+  return (
+    <div className="flex items-center gap-1 h-6">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <motion.div
+          key={i}
+          className={`w-1 rounded-full ${c}`}
+          animate={{ height: ["8px", "20px", "8px"] }}
+          transition={{
+            duration: 0.8,
+            repeat: Infinity,
+            delay: i * 0.12,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
   );
 }
 
