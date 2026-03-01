@@ -224,6 +224,36 @@ export function CoachInterface({
     voiceId: "carlos",
   });
 
+  // === DEBUG: Voice latency profiling ===
+  const voiceDebugRef = useRef({ lastUserSpeech: 0, lastStatus: "" });
+  useEffect(() => {
+    const prev = voiceDebugRef.current.lastStatus;
+    const now = voice.status;
+    if (prev !== now) {
+      console.log(`[Voice Latency] status: ${prev} → ${now} @ ${Date.now()}ms (${new Date().toISOString()})`);
+      voiceDebugRef.current.lastStatus = now;
+    }
+  }, [voice.status]);
+
+  useEffect(() => {
+    if (voice.transcripts.length > 0) {
+      const latest = voice.transcripts[voice.transcripts.length - 1];
+      const now = Date.now();
+      const tag = latest.isFinal ? "FINAL" : "partial";
+      console.log(`[Voice Latency] transcript ${tag} (${latest.role}): "${latest.text.slice(0, 60)}..." @ ${now}ms`);
+      if (latest.role === "user" && latest.isFinal) {
+        voiceDebugRef.current.lastUserSpeech = now;
+        console.log(`[Voice Latency] ⏱ User finished speaking @ ${now}ms — waiting for agent response...`);
+      }
+      if (latest.role === "assistant") {
+        const waited = voiceDebugRef.current.lastUserSpeech
+          ? now - voiceDebugRef.current.lastUserSpeech
+          : 0;
+        console.log(`[Voice Latency] ⏱ Agent response ${tag} arrived — ${waited}ms after user speech`);
+      }
+    }
+  }, [voice.transcripts]);
+
   // Sync final transcripts into chat messages — track by total length, not filtered
   const lastTranscriptLen = useRef(0);
   useEffect(() => {
