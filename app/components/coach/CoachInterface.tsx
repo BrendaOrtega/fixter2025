@@ -575,58 +575,116 @@ export function CoachInterface({
   // === MODE SELECTION (before topic, when no active session) ===
   if (!sessionId && mode === null && !hitLimit) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-6">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        {/* Subtle ambient glow */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#CA9B77]/[0.03] rounded-full blur-[120px] pointer-events-none" />
+
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-2xl w-full space-y-12 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-xl w-full space-y-16 text-center relative z-10"
         >
-          <div className="space-y-4">
-            <h1 className="text-5xl sm:text-7xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent">
-              MentorIA
-            </h1>
-            <p className="text-xl sm:text-2xl text-zinc-400 max-w-lg mx-auto leading-relaxed">
-              No es un chatbot. Es tu mentor.
-            </p>
+          {/* Hero — voice-first identity */}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <h1 className="text-6xl sm:text-8xl font-bold tracking-tight">
+                <span className="bg-gradient-to-b from-zinc-100 to-zinc-400 bg-clip-text text-transparent">Mentor</span>
+                <span className="bg-gradient-to-b from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent">IA</span>
+              </h1>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="text-lg text-zinc-500 max-w-sm mx-auto"
+            >
+              Háblale. Te escucha, te reta, y se adapta.
+            </motion.p>
+
+            {/* Voice indicator — shows it's a voice product */}
+            {voiceActive && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center justify-center gap-2 text-sm text-emerald-400/70"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                Voz conectada
+              </motion.div>
+            )}
           </div>
 
           {!isAnonymous && credits.total > 0 && (
-            <p className="text-sm text-zinc-500">
-              {credits.remaining} de {credits.total} sesiones disponibles
+            <p className="text-xs text-zinc-600">
+              {credits.remaining}/{credits.total} sesiones
             </p>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-xl mx-auto">
+          {/* Mode cards — clean, minimal */}
+          <div className="grid grid-cols-2 gap-4">
             <motion.button
-              whileHover={{ scale: 1.02 }}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleSetMode("programming")}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-left hover:border-[#CA9B77]/50 transition-all group"
+              className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm p-6 sm:p-8 text-left transition-all hover:border-zinc-700 hover:bg-zinc-900/60"
             >
-              <div className="text-4xl mb-3">💻</div>
-              <div className="text-xl font-semibold text-zinc-100 group-hover:text-[#CA9B77] transition">
+              <div className="w-10 h-10 rounded-xl bg-[#CA9B77]/10 flex items-center justify-center mb-4 group-hover:bg-[#CA9B77]/15 transition">
+                <svg className="w-5 h-5 text-[#CA9B77]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
+                </svg>
+              </div>
+              <div className="text-base font-medium text-zinc-200 group-hover:text-white transition">
                 Programación
               </div>
-              <p className="text-base text-zinc-500 mt-2">
-                Ejercicios, debugging, system design
+              <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
+                Ejercicios adaptativos, code review, system design
               </p>
             </motion.button>
+
             <motion.button
-              whileHover={{ scale: 1.02 }}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleSetMode("interview")}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-left hover:border-[#845A8F]/50 transition-all group"
+              className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm p-6 sm:p-8 text-left transition-all hover:border-zinc-700 hover:bg-zinc-900/60"
             >
-              <div className="text-4xl mb-3">🎤</div>
-              <div className="text-xl font-semibold text-zinc-100 group-hover:text-[#845A8F] transition">
+              <div className="w-10 h-10 rounded-xl bg-[#845A8F]/10 flex items-center justify-center mb-4 group-hover:bg-[#845A8F]/15 transition">
+                <svg className="w-5 h-5 text-[#845A8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                </svg>
+              </div>
+              <div className="text-base font-medium text-zinc-200 group-hover:text-white transition">
                 Entrevistas
               </div>
-              <p className="text-base text-zinc-500 mt-2">
-                Mock interviews, STAR stories, scoring
+              <p className="text-sm text-zinc-600 mt-1.5 leading-relaxed">
+                Mock interviews, historias STAR, scorecard
               </p>
             </motion.button>
           </div>
+
+          {/* Social proof whisper */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-xs text-zinc-700"
+          >
+            Coaching por voz en tiempo real con IA adaptativa
+          </motion.p>
 
           {isAnonymous && <AnonCTA />}
         </motion.div>
