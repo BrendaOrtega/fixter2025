@@ -1,8 +1,9 @@
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { useLoaderData } from "react-router";
-import { getUserOrRedirect } from "~/.server/dbGetters";
+import { data, useLoaderData } from "react-router";
+import { getUserOrNull, getOrCreateAnonId } from "~/.server/dbGetters";
 import { getOrCreateLearnerProfile } from "~/.server/services/coach.server";
 import { db } from "~/.server/db";
+import { commitSession } from "~/sessions";
 import { CoachInterface } from "~/components/coach/CoachInterface";
 import { FormmyProvider } from "@formmy.app/chat/react";
 
@@ -12,8 +13,10 @@ export const meta: MetaFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUserOrRedirect(request);
-  const profile = await getOrCreateLearnerProfile(user.id);
+  const user = await getUserOrNull(request);
+  const { anonId, session, isNew } = await getOrCreateAnonId(request);
+  const userId = user?.id || anonId;
+  const profile = await getOrCreateLearnerProfile(userId);
 
   // Check for active session (no endedAt)
   const activeSession = await db.coachingSession.findFirst({
@@ -36,7 +39,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     select: { summary: true, topic: true, endedAt: true },
   });
 
-  return {
+  const headers: HeadersInit = {};
+  if (isNew && !user) {
+    headers["Set-Cookie"] = await commitSession(session);
+  }
+
+  return data({
     formmyConfig: {
       publishableKey: process.env.FORMMY_API_KEY || "",
       agentId: process.env.FORMMY_AGENT_ID || "6962b02ec232df8a06a9b7d6",
@@ -79,7 +87,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           endedAt: lastSession.endedAt?.toISOString() || null,
         }
       : null,
-  };
+  }, { headers });
 };
 
 export default function CoachPage() {

@@ -5,6 +5,7 @@ import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { sendWelcome } from "~/mailSenders/sendWelcome";
 import { commitSession, getSession } from "~/sessions";
 import { generateUserToken } from "~/utils/tokens";
+import crypto from "crypto";
 
 // welcome or not
 export const createAndWelcomeUser = async (data: User) => {
@@ -166,6 +167,18 @@ export const getUserOrNull = async (request: Request) => {
   });
   if (!user) return null;
   return user;
+};
+
+export const getOrCreateAnonId = async (request: Request) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  let anonId = session.get("anonId") as string | undefined;
+  let isNew = false;
+  if (!anonId) {
+    anonId = crypto.randomBytes(12).toString("hex");
+    session.set("anonId", anonId);
+    isNew = true;
+  }
+  return { anonId, session, isNew };
 };
 
 export const getUserOrRedirect = async (

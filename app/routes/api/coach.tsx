@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
-import { getUserOrRedirect } from "~/.server/dbGetters";
+import { getUserOrNull, getOrCreateAnonId } from "~/.server/dbGetters";
 import {
   getOrCreateLearnerProfile,
   startSession,
@@ -17,12 +17,14 @@ import { TTSServiceLive } from "~/.server/services/tts";
 import { Effect } from "effect";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUserOrRedirect(request);
+  const user = await getUserOrNull(request);
+  const { anonId } = await getOrCreateAnonId(request);
+  const userId = user?.id || anonId;
   const url = new URL(request.url);
   const intent = url.searchParams.get("intent");
 
   if (intent === "progress") {
-    const profile = await getOrCreateLearnerProfile(user.id);
+    const profile = await getOrCreateLearnerProfile(userId);
     return Response.json({ success: true, data: profile });
   }
 
@@ -30,13 +32,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await getUserOrRedirect(request);
+  const user = await getUserOrNull(request);
+  const { anonId } = await getOrCreateAnonId(request);
+  const userId = user?.id || anonId;
   const body = await request.json();
   const { intent } = body;
 
   try {
     if (intent === "start_session") {
-      const profile = await getOrCreateLearnerProfile(user.id);
+      const profile = await getOrCreateLearnerProfile(userId);
       const result = await startSession(profile.id, body.topic);
 
       // Return session with greeting already included
@@ -59,7 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
       }
 
-      const profile = await getOrCreateLearnerProfile(user.id);
+      const profile = await getOrCreateLearnerProfile(userId);
 
       // Save user message
       await addMessage(sessionId, "user", message);
@@ -154,7 +158,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
       }
 
-      const profile = await getOrCreateLearnerProfile(user.id);
+      const profile = await getOrCreateLearnerProfile(userId);
       await addMessage(sessionId, "user", message);
 
       // Handle commands (non-streaming)
@@ -240,7 +244,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (intent === "evaluate") {
       const { sessionId, response } = body;
-      const profile = await getOrCreateLearnerProfile(user.id);
+      const profile = await getOrCreateLearnerProfile(userId);
 
       const evaluation = await evaluateResponse(sessionId, response);
 
