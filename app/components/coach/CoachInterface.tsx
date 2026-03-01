@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useSearchParams } from "react-router";
 import { Streamdown } from "streamdown";
 import { code } from "@streamdown/code";
 import { ScoreRadar } from "./ScoreRadar";
@@ -53,6 +54,10 @@ interface CoachInterfaceProps {
   };
   isAnonymous?: boolean;
   credits?: { remaining: number; total: number; used: number };
+  initialMode?: CoachMode | null;
+  initialTopic?: string | null;
+  initialRole?: string | null;
+  initialSeniority?: string | null;
 }
 
 type CoachMode = "programming" | "interview";
@@ -181,14 +186,6 @@ const PHASE_LABELS: Record<string, string> = {
   SUMMARY: "Summary",
 };
 
-const DIMENSIONS = [
-  { key: "algorithms", label: "Algoritmos", desc: "Estructuras de datos y complejidad" },
-  { key: "syntaxFluency", label: "Fluidez Sintáctica", desc: "Dominio del lenguaje" },
-  { key: "systemDesign", label: "Diseño de Sistemas", desc: "Arquitectura y escalabilidad" },
-  { key: "debugging", label: "Debugging", desc: "Diagnóstico y troubleshooting" },
-  { key: "communication", label: "Comunicación", desc: "Explicar conceptos técnicos" },
-];
-
 export function CoachInterface({
   profile,
   activeSession,
@@ -197,8 +194,13 @@ export function CoachInterface({
   formmyConfig,
   isAnonymous,
   credits: initialCredits,
+  initialMode = null,
+  initialTopic = null,
+  initialRole = null,
+  initialSeniority = null,
 }: CoachInterfaceProps) {
-  const [mode, setMode] = useState<CoachMode | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [mode, setMode] = useState<CoachMode | null>(initialMode);
   const [showPurchase, setShowPurchase] = useState(false);
   const [credits, setCredits] = useState(initialCredits || { remaining: 0, total: 0, used: 0 });
   const [messages, setMessages] = useState<Message[]>(
@@ -246,11 +248,13 @@ export function CoachInterface({
   useEffect(() => {
     if (!voiceInitialized.current && voice.status === "idle") {
       voiceInitialized.current = true;
-      voice.start().catch(() => {
-        // Silently fail — user can retry with button
+      voice.start().catch((err) => {
+        console.warn("[MentorIA Voice] auto-connect failed:", err?.message || err);
+        // User can retry with the voice button
       });
     }
     return () => {
+      voiceInitialized.current = false;
       if (voice.status !== "idle") {
         voice.stop();
       }
@@ -266,6 +270,51 @@ export function CoachInterface({
       setVoiceError(voice.error.message);
     }
   }, [voice.error]);
+
+  // Sync mode/topic state → URL search params
+  const updateURL = useCallback(
+    (newMode: CoachMode | null, topic?: string | null) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (newMode) {
+          next.set("mode", newMode);
+        } else {
+          next.delete("mode");
+        }
+        if (topic) {
+          next.set("topic", topic);
+        } else {
+          next.delete("topic");
+        }
+        return next;
+      }, { replace: true });
+    },
+    [setSearchParams]
+  );
+
+  // Wrap setMode to also update URL
+  const handleSetMode = useCallback(
+    (newMode: CoachMode | null) => {
+      setMode(newMode);
+      updateURL(newMode);
+    },
+    [updateURL]
+  );
+
+  // Auto-start session from URL params (initialTopic)
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current || sessionId) return;
+    if (initialMode === "interview" && initialRole && initialSeniority) {
+      autoStarted.current = true;
+      setMode("interview");
+      startNewSession(`${initialRole}-${initialSeniority}`, "interview");
+    } else if (initialMode === "programming" && initialTopic) {
+      autoStarted.current = true;
+      setMode("programming");
+      startNewSession(initialTopic, "programming");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleVoiceToggle = async () => {
     console.log("[MentorIA Voice] toggle clicked, status:", voice.status, "active:", voiceActive);
@@ -334,6 +383,10 @@ export function CoachInterface({
 
       if (!res.ok || !res.body) {
         console.error("Stream request failed:", res.status);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "Error al enviar el mensaje. Intenta de nuevo.", timestamp: new Date().toISOString() },
+        ]);
         setLoading(false);
         return;
       }
@@ -388,7 +441,9 @@ export function CoachInterface({
             };
             setMessages((prev) => [...prev, evalMsg]);
           }
-        } catch {}
+        } catch (parseErr) {
+          console.warn("[MentorIA] Failed to parse stream metadata:", parseErr);
+        }
       }
 
     } catch (err) {
@@ -399,6 +454,7 @@ export function CoachInterface({
 
   const startNewSession = async (topic: string, sessionMode: CoachMode = "programming") => {
     setLoading(true);
+    updateURL(sessionMode, topic);
     try {
       const intent = sessionMode === "interview" ? "start_interview_session" : "start_session";
       const res = await fetch("/api/coach", {
@@ -545,7 +601,7 @@ export function CoachInterface({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setMode("programming")}
+              onClick={() => handleSetMode("programming")}
               className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-left hover:border-[#CA9B77]/50 transition-all group"
             >
               <div className="text-4xl mb-3">💻</div>
@@ -559,7 +615,7 @@ export function CoachInterface({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setMode("interview")}
+              onClick={() => handleSetMode("interview")}
               className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-left hover:border-[#845A8F]/50 transition-all group"
             >
               <div className="text-4xl mb-3">🎤</div>
@@ -585,7 +641,7 @@ export function CoachInterface({
         <InterviewSetup
           loading={loading}
           onStart={(role, seniority) => startNewSession(`${role}-${seniority}`, "interview")}
-          onBack={() => setMode(null)}
+          onBack={() => handleSetMode(null)}
           isAnonymous={isAnonymous}
         />
       </div>
@@ -604,7 +660,8 @@ export function CoachInterface({
         >
           <div className="text-center space-y-4">
             <button
-              onClick={() => setMode(null)}
+              onClick={() => handleSetMode(null)}
+              aria-label="Volver"
               className="text-sm text-zinc-600 hover:text-zinc-400 transition mb-2 inline-flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -709,7 +766,7 @@ export function CoachInterface({
             </span>
           )}
           {voiceActive && (
-            <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+            <span className="flex items-center gap-1.5 text-xs text-emerald-400" aria-live="polite">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -901,6 +958,7 @@ export function CoachInterface({
                     onKeyDown={(e) =>
                       e.key === "Enter" && !e.shiftKey && sendMessage(input)
                     }
+                    aria-label="Escribe tu respuesta"
                     placeholder="o escribe aquí..."
                     disabled={loading}
                     className="flex-1 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#CA9B77] disabled:opacity-50"
@@ -965,69 +1023,6 @@ function AnonCTA() {
   );
 }
 
-function MicButton({ onTranscript }: { onTranscript: (text: string) => void }) {
-  const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
-  const toggleListening = () => {
-    if (listening) {
-      recognitionRef.current?.stop();
-      setListening(false);
-      return;
-    }
-
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "es-MX";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      onTranscript(transcript);
-      setListening(false);
-    };
-
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
-  };
-
-  // Check if speech recognition is available
-  const isAvailable =
-    typeof window !== "undefined" &&
-    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-
-  if (!isAvailable) return null;
-
-  return (
-    <button
-      onClick={toggleListening}
-      className={`rounded-xl px-3 py-3 transition ${
-        listening
-          ? "bg-red-500/20 text-red-400 border border-red-500/30"
-          : "bg-zinc-900 text-zinc-500 border border-zinc-800 hover:text-zinc-300"
-      }`}
-      title={listening ? "Detener" : "Hablar"}
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-        />
-      </svg>
-    </button>
-  );
-}
-
 function VoiceWaves({ color }: { color: "emerald" | "amber" }) {
   const c = color === "emerald" ? "bg-emerald-400" : "bg-amber-400";
   return (
@@ -1047,10 +1042,6 @@ function VoiceWaves({ color }: { color: "emerald" | "amber" }) {
       ))}
     </div>
   );
-}
-
-function clamp(val: number) {
-  return Math.max(0, Math.min(100, val));
 }
 
 function InterviewSetup({

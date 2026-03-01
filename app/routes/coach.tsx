@@ -14,6 +14,12 @@ export const meta: MetaFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const initialMode = url.searchParams.get("mode") as "programming" | "interview" | null;
+  const initialTopic = url.searchParams.get("topic");
+  const initialRole = url.searchParams.get("role");
+  const initialSeniority = url.searchParams.get("seniority");
+
   const user = await getUserOrNull(request);
   const { anonId, session, isNew } = await getOrCreateAnonId(request);
   const userId = user?.id || anonId;
@@ -90,12 +96,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       : null,
     isAnonymous: !user,
     credits: user ? await getCredits(user.id) : { remaining: 0, total: 0, used: 0 },
+    initialMode,
+    initialTopic,
+    initialRole,
+    initialSeniority,
   }, { headers });
 };
 
 export default function CoachPage() {
-  const { profile, activeSession, exercise, lastSession, formmyConfig, isAnonymous, credits } =
-    useLoaderData<typeof loader>();
+  const {
+    profile, activeSession, exercise, lastSession, formmyConfig,
+    isAnonymous, credits, initialMode, initialTopic, initialRole, initialSeniority,
+  } = useLoaderData<typeof loader>();
 
   return (
     <FormmyProvider publishableKey={formmyConfig.publishableKey}>
@@ -108,6 +120,10 @@ export default function CoachPage() {
           formmyConfig={formmyConfig}
           isAnonymous={isAnonymous}
           credits={credits}
+          initialMode={initialMode}
+          initialTopic={initialTopic}
+          initialRole={initialRole}
+          initialSeniority={initialSeniority}
         />
       </div>
     </FormmyProvider>

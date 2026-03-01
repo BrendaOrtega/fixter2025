@@ -10,9 +10,11 @@ const PACKAGES = [
 export function SessionPurchase({ onClose }: { onClose?: () => void }) {
   const [selected, setSelected] = useState<string>("15");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePurchase = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/coach/checkout", {
         method: "POST",
@@ -22,9 +24,12 @@ export function SessionPurchase({ onClose }: { onClose?: () => void }) {
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        setError("No se pudo iniciar el checkout. Intenta de nuevo.");
       }
     } catch (err) {
       console.error("Checkout error:", err);
+      setError("Error de conexión. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -82,6 +87,10 @@ export function SessionPurchase({ onClose }: { onClose?: () => void }) {
           </button>
         ))}
       </div>
+
+      {error && (
+        <p className="text-sm text-red-400 text-center">{error}</p>
+      )}
 
       <button
         onClick={handlePurchase}
