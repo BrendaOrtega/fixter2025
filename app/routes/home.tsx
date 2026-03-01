@@ -7,7 +7,6 @@ import {
   SocialPlanet,
   Why,
 } from "./home/components";
-import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/home";
 import getMetaTags from "~/utils/getMetaTags";
