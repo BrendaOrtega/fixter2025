@@ -44,6 +44,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return Response.json({ error: "Invalid intent" }, { status: 400 });
 };
 
+const ANON_DAILY_LIMIT = 2;
+
+async function getAnonSessionsToday(profileId: string): Promise<number> {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return db.coachingSession.count({
+    where: { profileId, startedAt: { gte: todayStart } },
+  });
+}
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await getUserOrNull(request);
   const { anonId } = await getOrCreateAnonId(request);
@@ -55,12 +65,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (intent === "start_session") {
       const profile = await getOrCreateLearnerProfile(userId);
 
-      // Anonymous: 2 free sessions
-      if (!user && profile.totalSessions >= 20) {
-        return Response.json(
-          { error: "Límite de sesiones gratuitas alcanzado. Inicia sesión para continuar." },
-          { status: 403 }
-        );
+      // Anonymous: 2 free sessions per day
+      if (!user) {
+        const todayCount = await getAnonSessionsToday(profile.id);
+        if (todayCount >= ANON_DAILY_LIMIT) {
+          return Response.json(
+            { error: "daily_limit", message: `Límite de ${ANON_DAILY_LIMIT} sesiones diarias alcanzado. Regresa mañana o inicia sesión.` },
+            { status: 403 }
+          );
+        }
       }
 
       // Authenticated: first session free, then need credits
@@ -333,11 +346,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const profile = await getOrCreateLearnerProfile(userId);
 
       // Same credit checks as programming mode
-      if (!user && profile.totalSessions >= 20) {
-        return Response.json(
-          { error: "Límite de sesiones gratuitas alcanzado. Inicia sesión para continuar." },
-          { status: 403 }
-        );
+      if (!user) {
+        const todayCount = await getAnonSessionsToday(profile.id);
+        if (todayCount >= ANON_DAILY_LIMIT) {
+          return Response.json(
+            { error: "daily_limit", message: `Límite de ${ANON_DAILY_LIMIT} sesiones diarias alcanzado. Regresa mañana o inicia sesión.` },
+            { status: 403 }
+          );
+        }
       }
       if (user && profile.totalSessions >= 1) {
         const credits = await hasCredits(user.id);

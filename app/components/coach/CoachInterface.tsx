@@ -202,6 +202,7 @@ export function CoachInterface({
   const [searchParams, setSearchParams] = useSearchParams();
   const [mode, setMode] = useState<CoachMode | null>(initialMode);
   const [showPurchase, setShowPurchase] = useState(false);
+  const [dailyLimitHit, setDailyLimitHit] = useState(false);
   const [credits, setCredits] = useState(initialCredits || { remaining: 0, total: 0, used: 0 });
   const [messages, setMessages] = useState<Message[]>(
     (activeSession?.messages as Message[]) || []
@@ -501,6 +502,11 @@ export function CoachInterface({
       });
       const data = await res.json();
 
+      if (res.status === 403 && data.error === "daily_limit") {
+        setDailyLimitHit(true);
+        setLoading(false);
+        return;
+      }
       if (res.status === 402) {
         setShowPurchase(true);
         setLoading(false);
@@ -560,12 +566,8 @@ export function CoachInterface({
   const isNewUser = profile.totalSessions === 0 && !sessionId;
   const isReturningUser = profile.totalSessions > 0 && !sessionId;
   const allScoresZero = Object.values(scores).every((s) => s === 0);
-  // Beta phase: generous free limit for anonymous users
-  const FREE_SESSION_LIMIT = 20;
-  const hitLimit = isAnonymous && profile.totalSessions >= FREE_SESSION_LIMIT && !sessionId;
-
-  // === ANON LIMIT REACHED ===
-  if (hitLimit) {
+  // === DAILY LIMIT REACHED (anon, 2/day) ===
+  if (dailyLimitHit) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-6">
         <motion.div
@@ -579,7 +581,7 @@ export function CoachInterface({
               MentorIA
             </h1>
             <p className="text-xl text-zinc-300">
-              Tus {FREE_SESSION_LIMIT} sesiones de prueba se agotaron
+              Usaste tus 2 sesiones gratuitas de hoy
             </p>
           </div>
           {!allScoresZero && (
@@ -589,7 +591,7 @@ export function CoachInterface({
           )}
           <div className="space-y-6">
             <p className="text-zinc-500 text-lg">
-              Inicia sesión para comprar más sesiones y guardar tu progreso.
+              Regresa mañana para más sesiones gratis, o inicia sesión para acceso ilimitado.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
@@ -598,12 +600,6 @@ export function CoachInterface({
               >
                 Iniciar sesión
               </a>
-              <button
-                onClick={() => setShowPurchase(true)}
-                className="inline-block rounded-2xl border border-zinc-700 px-10 py-4 text-base font-medium text-zinc-300 hover:border-zinc-500 transition-all"
-              >
-                Ver paquetes
-              </button>
             </div>
           </div>
         </motion.div>
