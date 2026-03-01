@@ -230,7 +230,15 @@ export function CoachInterface({
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceActive = voice.status !== "idle" && voice.status !== "error";
 
+  // Surface voice SDK errors in our UI
+  useEffect(() => {
+    if (voice.error) {
+      setVoiceError(voice.error.message);
+    }
+  }, [voice.error]);
+
   const handleVoiceToggle = async () => {
+    console.log("[MentorIA Voice] toggle clicked, status:", voice.status, "active:", voiceActive);
     setVoiceError(null);
     if (voiceActive) {
       voice.stop();
@@ -243,8 +251,10 @@ export function CoachInterface({
       }, 10_000);
       try {
         await voice.start();
-      } catch {
-        setVoiceError("Error al iniciar modo voz.");
+        console.log("[MentorIA Voice] start() resolved, status:", voice.status);
+      } catch (err) {
+        console.error("[MentorIA Voice] start() threw:", err);
+        setVoiceError(err instanceof Error ? err.message : "Error al iniciar modo voz.");
       } finally {
         clearTimeout(timeout);
       }
