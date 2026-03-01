@@ -560,7 +560,8 @@ export function CoachInterface({
   const isNewUser = profile.totalSessions === 0 && !sessionId;
   const isReturningUser = profile.totalSessions > 0 && !sessionId;
   const allScoresZero = Object.values(scores).every((s) => s === 0);
-  const FREE_SESSION_LIMIT = 2;
+  // Beta phase: generous free limit for anonymous users
+  const FREE_SESSION_LIMIT = 20;
   const hitLimit = isAnonymous && profile.totalSessions >= FREE_SESSION_LIMIT && !sessionId;
 
   // === ANON LIMIT REACHED ===
@@ -578,22 +579,32 @@ export function CoachInterface({
               MentorIA
             </h1>
             <p className="text-xl text-zinc-300">
-              Completaste tus {FREE_SESSION_LIMIT} sesiones gratuitas
+              Tus {FREE_SESSION_LIMIT} sesiones de prueba se agotaron
             </p>
           </div>
-          <div className="mx-auto w-56">
-            <ScoreRadar scores={scores} size={224} animated />
-          </div>
-          <div className="space-y-4">
+          {!allScoresZero && (
+            <div className="mx-auto w-56">
+              <ScoreRadar scores={scores} size={224} animated />
+            </div>
+          )}
+          <div className="space-y-6">
             <p className="text-zinc-500 text-lg">
-              Crea tu cuenta para seguir entrenando y guardar tu progreso.
+              Inicia sesión para comprar más sesiones y guardar tu progreso.
             </p>
-            <a
-              href="/login"
-              className="inline-block rounded-2xl bg-[#CA9B77] px-10 py-4 text-base font-semibold text-zinc-900 hover:bg-[#b8895f] transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Crear cuenta gratis
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href="/login"
+                className="inline-block rounded-2xl bg-[#CA9B77] px-10 py-4 text-base font-semibold text-zinc-900 hover:bg-[#b8895f] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Iniciar sesión
+              </a>
+              <button
+                onClick={() => setShowPurchase(true)}
+                className="inline-block rounded-2xl border border-zinc-700 px-10 py-4 text-base font-medium text-zinc-300 hover:border-zinc-500 transition-all"
+              >
+                Ver paquetes
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
