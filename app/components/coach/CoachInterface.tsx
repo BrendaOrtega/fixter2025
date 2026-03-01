@@ -617,7 +617,7 @@ export function CoachInterface({
   }
 
   // === MODE SELECTION (before topic, when no active session) ===
-  if (!sessionId && mode === null && !hitLimit) {
+  if (!sessionId && mode === null) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 relative overflow-hidden">
         {/* Subtle ambient glow */}
