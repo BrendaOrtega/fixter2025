@@ -56,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const profile = await getOrCreateLearnerProfile(userId);
 
       // Anonymous: 2 free sessions
-      if (!user && profile.totalSessions >= 2) {
+      if (!user && profile.totalSessions >= 20) {
         return Response.json(
           { error: "Límite de sesiones gratuitas alcanzado. Inicia sesión para continuar." },
           { status: 403 }
@@ -333,7 +333,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const profile = await getOrCreateLearnerProfile(userId);
 
       // Same credit checks as programming mode
-      if (!user && profile.totalSessions >= 2) {
+      if (!user && profile.totalSessions >= 20) {
         return Response.json(
           { error: "Límite de sesiones gratuitas alcanzado. Inicia sesión para continuar." },
           { status: 403 }
