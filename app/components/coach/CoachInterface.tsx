@@ -60,6 +60,10 @@ export function CoachInterface({
     debugging: profile.debugging,
     communication: profile.communication,
   });
+  const [voiceId, setVoiceId] = useState(() => {
+    if (typeof window === "undefined") return "carlos";
+    return localStorage.getItem("mentoria_voice") || "carlos";
+  });
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (typeof window === "undefined") return false;
     return !localStorage.getItem("mentoria_onboarded");
@@ -158,7 +162,7 @@ export function CoachInterface({
 
   const voice = useFormmyVoice({
     agentId: activeAgentId,
-    voiceId: "carlos",
+    voiceId,
     systemPrompt: voiceSystemPrompt,
     tools: activeTools,
     onToolUse: handleToolUse,
@@ -613,6 +617,41 @@ export function CoachInterface({
               </p>
             </motion.button>
           </div>
+
+          {/* Voice selector */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+            className="space-y-2"
+          >
+            <p className="text-xs text-zinc-600">Voz del coach</p>
+            <div className="flex items-center justify-center gap-2 overflow-x-auto pb-1">
+              {([
+                { id: "carlos", label: "Carlos", lang: "ES-MX" },
+                { id: "lupe", label: "Lupe", lang: "ES-MX" },
+                { id: "tiffany", label: "Tiffany", lang: "EN-US" },
+                { id: "matthew", label: "Matthew", lang: "EN-US" },
+                { id: "amy", label: "Amy", lang: "EN-GB" },
+              ] as const).map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => {
+                    setVoiceId(v.id);
+                    localStorage.setItem("mentoria_voice", v.id);
+                  }}
+                  className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-all ${
+                    voiceId === v.id
+                      ? "bg-[#CA9B77]/15 border border-[#CA9B77] text-[#CA9B77]"
+                      : "bg-zinc-900/60 border border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400"
+                  }`}
+                >
+                  <span className="font-medium">{v.label}</span>
+                  <span className="text-[10px] opacity-60">{v.lang}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
 
           <motion.p
             initial={{ opacity: 0 }}
@@ -1166,7 +1205,15 @@ function ProfileCapture({
               <option value="fullstack">Full Stack</option>
               <option value="mobile">Mobile</option>
               <option value="devops">DevOps / SRE</option>
-              <option value="data">Data / ML Engineer</option>
+              <option value="data">Data / ML</option>
+              <option value="qa">QA / Automation</option>
+              <option value="cloud">Cloud / Platform</option>
+              <option value="cybersecurity">Cybersecurity</option>
+              <option value="ai">AI / LLM Engineer</option>
+              <option value="techlead">Tech Lead / Eng Manager</option>
+              <option value="pm">Product Manager</option>
+              <option value="scrum">Scrum Master / Agile</option>
+              <option value="erp">ERP / SAP</option>
               <option value="other">Otro</option>
             </select>
           </div>
