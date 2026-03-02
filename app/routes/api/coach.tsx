@@ -9,6 +9,9 @@ import {
   updateProfileScores,
   advanceDrillStage,
   addStoriesToBank,
+  getSessionHistorySummary,
+  getProfileSummary,
+  getStorybankSummary,
 } from "~/.server/services/coach.server";
 import { buildProgrammingPrompt, buildInterviewPrompt } from "~/.server/services/coach-prompts.server";
 import { getCredits, consumeSession, hasCredits } from "~/.server/services/coach-credits.server";
@@ -247,8 +250,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     // === STORYBANK CRUD ===
     if (intent === "get_storybank") {
-      const interview = await getOrCreateInterviewProfile(userId);
-      return Response.json({ success: true, data: interview.storybank });
+      const summary = await getStorybankSummary(userId);
+      return Response.json({ success: true, data: summary });
     }
 
     if (intent === "update_story") {
@@ -279,6 +282,54 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         data: { storybank: stories },
       });
       return Response.json({ success: true });
+    }
+
+    // === VOICE TOOL: get_story_detail ===
+    if (intent === "get_story_detail") {
+      const { storyId } = body;
+      if (!storyId) return Response.json({ error: "storyId required" }, { status: 400 });
+      const interview = await getOrCreateInterviewProfile(userId);
+      const stories = (interview.storybank as any[]) || [];
+      const story = stories.find((s: any) => s.id === storyId);
+      if (!story) return Response.json({ error: "Story not found" }, { status: 404 });
+      const { situation, task, action, result, earnedSecret } = story;
+      return Response.json({ success: true, data: { situation, task, action, result, earnedSecret } });
+    }
+
+    // === VOICE TOOL: save_story ===
+    if (intent === "save_story") {
+      const { title, situation, task, action, result, earnedSecret, primarySkill, strength } = body;
+      if (!title || !situation || !primarySkill) {
+        return Response.json({ error: "title, situation, and primarySkill required" }, { status: 400 });
+      }
+      await addStoriesToBank(userId, [{
+        title,
+        situation: situation || "",
+        task: task || "",
+        action: action || "",
+        result: result || "",
+        earnedSecret: earnedSecret || "",
+        primarySkill,
+        strength: strength || 3,
+      }]);
+      const updated = await getOrCreateInterviewProfile(userId);
+      const bank = (updated.storybank as any[]) || [];
+      const last = bank[bank.length - 1];
+      return Response.json({ success: true, data: { storyId: last?.id } });
+    }
+
+    // === VOICE TOOL: get_session_history ===
+    if (intent === "get_session_history") {
+      const limit = body.limit || 3;
+      const result = await getSessionHistorySummary(userId, limit);
+      return Response.json({ success: true, data: result });
+    }
+
+    // === VOICE TOOL: get_profile ===
+    if (intent === "get_profile") {
+      const profileMode = body.mode || "programming";
+      const result = await getProfileSummary(userId, profileMode);
+      return Response.json({ success: true, data: result });
     }
 
     // === TRACK EVENT ===

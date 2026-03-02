@@ -218,6 +218,21 @@ export async function addStoriesToBank(
   });
 }
 
+// === Storybank Summary (for voice tools, ≤2000 chars) ===
+
+export async function getStorybankSummary(userId: string): Promise<string> {
+  const interview = await getOrCreateInterviewProfile(userId);
+  const stories = (interview.storybank as any[]) || [];
+  const compact = stories.map((s: any) => ({
+    id: s.id,
+    title: s.title,
+    primarySkill: s.primarySkill,
+    strength: s.strength,
+    useCount: s.useCount ?? 0,
+  }));
+  return JSON.stringify({ stories: compact }).slice(0, 2000);
+}
+
 // === Scorecard ===
 
 export async function getSessionScorecard(sessionId: string) {
@@ -309,6 +324,68 @@ export async function getSessionHistory(
       endedAt: true,
       messages: true,
     },
+  });
+}
+
+// === Session History Summary (for voice tools, ≤2000 chars) ===
+
+export async function getSessionHistorySummary(
+  userId: string,
+  limit = 3
+): Promise<string> {
+  const profile = await db.learnerProfile.findUnique({ where: { userId } });
+  if (!profile) return JSON.stringify({ sessions: [] });
+
+  const sessions = await db.coachingSession.findMany({
+    where: { profileId: profile.id, endedAt: { not: null } },
+    orderBy: { startedAt: "desc" },
+    take: limit,
+    select: {
+      mode: true,
+      summary: true,
+      scoreDeltas: true,
+      startedAt: true,
+    },
+  });
+
+  const compact = sessions.map((s) => ({
+    date: s.startedAt.toISOString().slice(0, 10),
+    mode: s.mode,
+    summary: s.summary ? String(s.summary).slice(0, 200) : null,
+    scoreDeltas: s.scoreDeltas || {},
+  }));
+
+  return JSON.stringify({ sessions: compact }).slice(0, 2000);
+}
+
+// === Profile Summary (for voice tools, ≤2000 chars) ===
+
+export async function getProfileSummary(
+  userId: string,
+  mode: "programming" | "interview"
+): Promise<string> {
+  if (mode === "interview") {
+    const ip = await getOrCreateInterviewProfile(userId);
+    return JSON.stringify({
+      substance: ip.substance,
+      structure: ip.structure,
+      relevance: ip.relevance,
+      credibility: ip.credibility,
+      differentiation: ip.differentiation,
+      drillStage: ip.drillStage,
+      targetRole: ip.targetRole,
+      seniority: ip.seniority,
+    });
+  }
+  const lp = await getOrCreateLearnerProfile(userId);
+  return JSON.stringify({
+    algorithms: lp.algorithms,
+    syntaxFluency: lp.syntaxFluency,
+    systemDesign: lp.systemDesign,
+    debugging: lp.debugging,
+    communication: lp.communication,
+    currentTopic: lp.currentTopic,
+    totalSessions: lp.totalSessions,
   });
 }
 

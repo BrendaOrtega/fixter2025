@@ -72,10 +72,96 @@ export function CoachInterface({
   const voiceDisabledForMode = mode === "interview" && !formmyConfig.interviewAgentId;
   const [voiceSystemPrompt, setVoiceSystemPrompt] = useState<string | undefined>();
 
+  // === Client-side tools for voice agent ===
+  const COACH_TOOLS_INTERVIEW = [
+    {
+      name: "getStorybank",
+      description: "Get user's STAR story bank summary (titles, skills, strength)",
+      inputSchema: { type: "object" as const, properties: {} },
+    },
+    {
+      name: "getStoryDetail",
+      description: "Get full detail of a specific story by ID",
+      inputSchema: {
+        type: "object" as const,
+        properties: { storyId: { type: "string", description: "Story ID like S001" } },
+        required: ["storyId"],
+      },
+    },
+    {
+      name: "saveStory",
+      description: "Save a new STAR story extracted from conversation",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          title: { type: "string", description: "Short title" },
+          situation: { type: "string", description: "STAR Situation" },
+          task: { type: "string", description: "STAR Task" },
+          action: { type: "string", description: "STAR Action" },
+          result: { type: "string", description: "STAR Result" },
+          earnedSecret: { type: "string", description: "Non-obvious insight" },
+          primarySkill: { type: "string", description: "Main skill demonstrated" },
+          strength: { type: "number", description: "Quality 1-5" },
+        },
+        required: ["title", "situation", "primarySkill"],
+      },
+    },
+    {
+      name: "getSessionHistory",
+      description: "Get recent session summaries with score deltas",
+      inputSchema: {
+        type: "object" as const,
+        properties: { limit: { type: "number", description: "Number of sessions (default 3)" } },
+      },
+    },
+    {
+      name: "getProfile",
+      description: "Get current dimension scores",
+      inputSchema: {
+        type: "object" as const,
+        properties: { mode: { type: "string", enum: ["programming", "interview"] } },
+      },
+    },
+  ];
+
+  const COACH_TOOLS_PROGRAMMING = [
+    COACH_TOOLS_INTERVIEW.find((t) => t.name === "getSessionHistory")!,
+    COACH_TOOLS_INTERVIEW.find((t) => t.name === "getProfile")!,
+  ];
+
+  const activeTools = mode === "interview" ? COACH_TOOLS_INTERVIEW : COACH_TOOLS_PROGRAMMING;
+
+  const handleToolUse = useCallback(async (_toolUseId: string, toolName: string, input: string) => {
+    try {
+      const toolArgs: Record<string, unknown> = input ? JSON.parse(input) : {};
+      let intent = toolName;
+      // Map tool names to API intents
+      if (toolName === "getStorybank") intent = "get_storybank";
+      else if (toolName === "getStoryDetail") intent = "get_story_detail";
+      else if (toolName === "saveStory") intent = "save_story";
+      else if (toolName === "getSessionHistory") intent = "get_session_history";
+      else if (toolName === "getProfile") intent = "get_profile";
+
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent, ...toolArgs }),
+      });
+      const json = await res.json();
+      const result = json.data ?? json;
+      return typeof result === "string" ? result : JSON.stringify(result).slice(0, 2000);
+    } catch (err) {
+      console.error(`[Tool ${toolName}] Error:`, err);
+      return JSON.stringify({ error: "Tool execution failed" });
+    }
+  }, []);
+
   const voice = useFormmyVoice({
     agentId: activeAgentId,
     voiceId: "carlos",
     systemPrompt: voiceSystemPrompt,
+    tools: activeTools,
+    onToolUse: handleToolUse,
   });
 
   // === Voice latency profiling ===
