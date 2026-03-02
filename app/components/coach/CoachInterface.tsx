@@ -215,9 +215,38 @@ export function CoachInterface({
     }
   };
 
-  // === Select mode → create session immediately ===
+  const [showProfileCapture, setShowProfileCapture] = useState(false);
+  const [pendingMode, setPendingMode] = useState<CoachMode | null>(null);
+
+  // === Analytics event tracking ===
+  const trackEvent = useCallback((event: string, metadata?: Record<string, unknown>) => {
+    fetch("/api/coach", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        intent: "track_event",
+        event,
+        sessionId,
+        metadata,
+      }),
+    }).catch(() => {});
+  }, [sessionId]);
+
+  // === Select mode → optionally capture profile, then create session ===
   const handleSelectMode = async (selectedMode: CoachMode) => {
+    trackEvent("mode_selected", { mode: selectedMode });
+    // For interview mode, show profile capture first
+    if (selectedMode === "interview") {
+      setPendingMode(selectedMode);
+      setShowProfileCapture(true);
+      return;
+    }
+    await createSession(selectedMode);
+  };
+
+  const createSession = async (selectedMode: CoachMode) => {
     setMode(selectedMode);
+    setShowProfileCapture(false);
     setLoading(true);
     try {
       const res = await fetch("/api/coach", {
@@ -240,6 +269,7 @@ export function CoachInterface({
         setSessionId(data.data.sessionId);
         setMessages([]);
         setEndedSessionId(null);
+        trackEvent("session_started", { mode: selectedMode, sessionId: data.data.sessionId });
       }
     } catch (err) {
       console.error("Error creating session:", err);
@@ -249,23 +279,39 @@ export function CoachInterface({
   };
 
   const [closing, setClosing] = useState(false);
+  const [showSelfAssessment, setShowSelfAssessment] = useState(false);
+  const [pendingEndSessionId, setPendingEndSessionId] = useState<string | null>(null);
 
-  // === End session: close DB + stop voice ===
+  // === End session: show self-assessment first, then close ===
   const handleEndSession = async () => {
     if (!sessionId || closing) return;
-    setClosing(true);
-    const endedId = sessionId;
 
     if (voice.status !== "idle") {
       voice.stop();
     }
     voiceInitialized.current = false;
 
+    setPendingEndSessionId(sessionId);
+    setShowSelfAssessment(true);
+  };
+
+  const handleSelfAssessmentSubmit = async (rating: number | null) => {
+    const sid = pendingEndSessionId;
+    if (!sid) return;
+
+    setShowSelfAssessment(false);
+    setClosing(true);
+
     try {
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: "close_session", sessionId }),
+        body: JSON.stringify({
+          intent: "close_session",
+          sessionId: sid,
+          messages,
+          selfAssessment: rating,
+        }),
       });
       const data = await res.json();
       if (data.credits) {
@@ -277,8 +323,10 @@ export function CoachInterface({
       setClosing(false);
     }
 
+    trackEvent("session_completed", { sessionId: sid, messageCount: messages.length, selfAssessment: rating });
     setSessionId(null);
-    setEndedSessionId(endedId);
+    setEndedSessionId(sid);
+    setPendingEndSessionId(null);
   };
 
   // Send text to Formmy voice agent
@@ -356,6 +404,28 @@ export function CoachInterface({
           localStorage.setItem("mentoria_onboarded", "1");
           setShowOnboarding(false);
         }}
+      />
+    );
+  }
+
+  // === PROFILE CAPTURE (interview mode) ===
+  if (showProfileCapture && pendingMode === "interview") {
+    return (
+      <ProfileCapture
+        onSubmit={async (profileData) => {
+          // Save profile data
+          await fetch("/api/coach", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              intent: "update_profile",
+              mode: "interview",
+              ...profileData,
+            }),
+          }).catch(() => {});
+          await createSession("interview");
+        }}
+        onSkip={() => createSession("interview")}
       />
     );
   }
@@ -476,6 +546,16 @@ export function CoachInterface({
         </motion.div>
         <p className="text-base text-zinc-400">Conectando...</p>
       </div>
+    );
+  }
+
+  // === SELF ASSESSMENT MODAL ===
+  if (showSelfAssessment) {
+    return (
+      <SelfAssessmentModal
+        onSubmit={handleSelfAssessmentSubmit}
+        onSkip={() => handleSelfAssessmentSubmit(null)}
+      />
     );
   }
 
@@ -660,9 +740,10 @@ export function CoachInterface({
                 onKeyDown={(e) =>
                   e.key === "Enter" && !e.shiftKey && sendText(input)
                 }
+                disabled={!voiceActive}
                 aria-label="Escribe tu respuesta"
-                placeholder={voiceActive ? "Habla o escribe aquí..." : "Escribe aquí..."}
-                className="flex-1 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#CA9B77]"
+                placeholder={voiceActive ? "Habla o escribe aquí..." : "Inicia una sesión para chatear"}
+                className="flex-1 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-[#CA9B77] disabled:opacity-40 disabled:cursor-not-allowed"
               />
               {input.trim() && (
                 <button
@@ -759,7 +840,10 @@ function Onboarding({
     }
   };
 
-  const steps = [
+  const totalSteps = 3;
+  const effectiveStep = step === 1 && micStatus === "granted" ? 2 : step;
+
+  const stepContent = [
     {
       icon: (
         <svg className="w-12 h-12 text-[#CA9B77]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -793,8 +877,7 @@ function Onboarding({
     },
   ];
 
-  const effectiveStep = step === 1 && micStatus === "granted" ? 2 : step;
-  const current = steps[effectiveStep];
+  const current = stepContent[effectiveStep];
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6 relative overflow-hidden">
@@ -806,7 +889,7 @@ function Onboarding({
         className="max-w-md w-full space-y-10 text-center relative z-10"
       >
         <div className="flex items-center justify-center gap-2">
-          {[0, 1, 2].map((i) => (
+          {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}
               className={`h-1 rounded-full transition-all ${
@@ -867,6 +950,163 @@ function Onboarding({
             </button>
           )}
 
+          <button
+            onClick={onSkip}
+            className="text-sm text-zinc-600 hover:text-zinc-400 transition"
+          >
+            Saltar
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function SelfAssessmentModal({
+  onSubmit,
+  onSkip,
+}: {
+  onSubmit: (rating: number) => void;
+  onSkip: () => void;
+}) {
+  const [selected, setSelected] = useState<number | null>(null);
+
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full space-y-8 text-center"
+      >
+        <div className="space-y-3">
+          <h2 className="text-2xl font-bold text-zinc-100">
+            ¿Cómo sientes que te fue?
+          </h2>
+          <p className="text-sm text-zinc-500">
+            Tu auto-evaluación se compara con el scoring del coach
+          </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              onClick={() => setSelected(n)}
+              className={`w-14 h-14 rounded-2xl text-lg font-semibold transition-all ${
+                selected === n
+                  ? "bg-[#CA9B77] text-zinc-900 scale-110"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-zinc-600 px-2">
+          <span>Necesito mejorar</span>
+          <span>Excelente</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 pt-4">
+          <button
+            onClick={() => selected && onSubmit(selected)}
+            disabled={!selected}
+            className="rounded-2xl bg-[#CA9B77] px-8 py-3.5 text-sm font-semibold text-zinc-900 hover:bg-[#b8895f] transition disabled:opacity-30 disabled:pointer-events-none"
+          >
+            Enviar
+          </button>
+          <button
+            onClick={onSkip}
+            className="text-sm text-zinc-600 hover:text-zinc-400 transition"
+          >
+            Saltar
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function ProfileCapture({
+  onSubmit,
+  onSkip,
+}: {
+  onSubmit: (data: { targetRole?: string; seniority?: string }) => void;
+  onSkip: () => void;
+}) {
+  const [targetRole, setTargetRole] = useState("");
+  const [seniority, setSeniority] = useState("");
+
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full space-y-8"
+      >
+        <div className="text-center space-y-3">
+          <h2 className="text-2xl font-bold text-zinc-100">
+            Preparemos tu sesión
+          </h2>
+          <p className="text-sm text-zinc-500">
+            Esto ayuda al coach a hacer preguntas relevantes para ti
+          </p>
+        </div>
+
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <label className="block text-sm text-zinc-400">
+              ¿Para qué rol te preparas?
+            </label>
+            <select
+              value={targetRole}
+              onChange={(e) => setTargetRole(e.target.value)}
+              className="w-full rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 focus:outline-none focus:border-[#CA9B77]"
+            >
+              <option value="">Selecciona...</option>
+              <option value="frontend">Frontend</option>
+              <option value="backend">Backend</option>
+              <option value="fullstack">Full Stack</option>
+              <option value="mobile">Mobile</option>
+              <option value="devops">DevOps / SRE</option>
+              <option value="data">Data / ML Engineer</option>
+              <option value="other">Otro</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm text-zinc-400">
+              ¿Qué nivel buscas?
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {(["junior", "mid", "senior"] as const).map((level) => (
+                <button
+                  key={level}
+                  onClick={() => setSeniority(level)}
+                  className={`rounded-xl py-3 text-sm font-medium transition-all ${
+                    seniority === level
+                      ? "bg-[#CA9B77] text-zinc-900"
+                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
+                  }`}
+                >
+                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 pt-4">
+          <button
+            onClick={() => onSubmit({
+              ...(targetRole ? { targetRole } : {}),
+              ...(seniority ? { seniority } : {}),
+            })}
+            className="w-full rounded-2xl bg-[#CA9B77] px-8 py-3.5 text-sm font-semibold text-zinc-900 hover:bg-[#b8895f] transition"
+          >
+            Empezar sesión
+          </button>
           <button
             onClick={onSkip}
             className="text-sm text-zinc-600 hover:text-zinc-400 transition"

@@ -1,8 +1,10 @@
+import { useState } from "react";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData, Link } from "react-router";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { getSessionScorecard } from "~/.server/services/coach.server";
 import { ScoreRadar } from "~/components/coach/ScoreRadar";
+import { CoachNav } from "~/components/coach/CoachNav";
 
 export const meta: MetaFunction<typeof loader> = ({ data: loaderData }) => {
   if (!loaderData?.scorecard) {
@@ -50,6 +52,10 @@ export default function ScorecardPage() {
   const dims = isInterview ? INTERVIEW_DIMS : PROGRAMMING_DIMS;
   const deltas = (scorecard.scoreDeltas || {}) as Record<string, number>;
   const scores = scorecard.scores as unknown as Record<string, number>;
+  const dimensionFeedback = (scorecard.dimensionFeedback || {}) as Record<string, string | null>;
+  const previousDeltas = (scorecard.previousScoreDeltas || {}) as Record<string, number>;
+  const [expandedDim, setExpandedDim] = useState<string | null>(null);
+  const [shared, setShared] = useState(false);
 
   const duration = scorecard.startedAt && scorecard.endedAt
     ? Math.round(
@@ -67,6 +73,7 @@ export default function ScorecardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <CoachNav active="session" />
       <div className="max-w-2xl mx-auto px-6 py-12 space-y-10">
         {/* Header */}
         <motion.div
@@ -99,6 +106,35 @@ export default function ScorecardPage() {
           </div>
         </motion.div>
 
+        {/* Self-assessment vs AI */}
+        {scorecard.selfAssessment && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="flex items-center justify-center gap-8"
+          >
+            <div className="text-center">
+              <p className="text-xs text-zinc-600 mb-1">Tu rating</p>
+              <div className="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center text-xl font-bold text-zinc-200">
+                {scorecard.selfAssessment}
+              </div>
+            </div>
+            <div className="text-zinc-700">vs</div>
+            <div className="text-center">
+              <p className="text-xs text-zinc-600 mb-1">Coach rating</p>
+              <div className="w-14 h-14 rounded-2xl bg-[#CA9B77]/10 border border-[#CA9B77]/20 flex items-center justify-center text-xl font-bold text-[#CA9B77]">
+                {Object.values(deltas).length > 0
+                  ? Math.round(
+                      Object.values(deltas).reduce((a, b) => a + b, 0) /
+                      Object.values(deltas).length + 3
+                    )
+                  : "—"}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Radar chart */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -113,7 +149,7 @@ export default function ScorecardPage() {
           )}
         </motion.div>
 
-        {/* Dimension deltas */}
+        {/* Dimension deltas with expandable feedback */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -123,51 +159,112 @@ export default function ScorecardPage() {
           {dims.map((dim, i) => {
             const score = scores[dim.key] || 0;
             const delta = deltas[dim.key] || 0;
+            const prevDelta = previousDeltas[dim.key] || 0;
             const maxScore = isInterview ? 5 : 100;
             const pct = (score / maxScore) * 100;
+            const feedback = dimensionFeedback[dim.key];
+            const isExpanded = expandedDim === dim.key;
+            const improvement = delta - prevDelta;
 
             return (
-              <motion.div
-                key={dim.key}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 + i * 0.05 }}
-                className="flex items-center gap-4 rounded-xl border border-zinc-800/60 bg-zinc-900/40 px-4 py-3"
-              >
-                <span className="text-lg">{dim.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-zinc-300">{dim.label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-zinc-200">
-                        {score}{isInterview ? "/5" : "/100"}
-                      </span>
-                      {delta !== 0 && (
-                        <span className={`text-xs font-medium ${
-                          delta > 0 ? "text-emerald-400" : "text-red-400"
-                        }`}>
-                          {delta > 0 ? "+" : ""}{delta}
+              <div key={dim.key}>
+                <motion.button
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 + i * 0.05 }}
+                  onClick={() => feedback && setExpandedDim(isExpanded ? null : dim.key)}
+                  className={`w-full flex items-center gap-4 rounded-xl border bg-zinc-900/40 px-4 py-3 text-left transition ${
+                    feedback ? "cursor-pointer hover:bg-zinc-900/60" : "cursor-default"
+                  } ${isExpanded ? "border-[#CA9B77]/30" : "border-zinc-800/60"}`}
+                >
+                  <span className="text-lg">{dim.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-zinc-300">{dim.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-zinc-200">
+                          {score}{isInterview ? "/5" : "/100"}
                         </span>
-                      )}
+                        {delta !== 0 && (
+                          <span className={`text-xs font-medium ${
+                            delta > 0 ? "text-emerald-400" : "text-red-400"
+                          }`}>
+                            {delta > 0 ? "+" : ""}{delta}
+                          </span>
+                        )}
+                        {improvement !== 0 && Object.keys(previousDeltas).length > 0 && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            improvement > 0
+                              ? "bg-emerald-500/10 text-emerald-400"
+                              : "bg-red-500/10 text-red-400"
+                          }`}>
+                            {improvement > 0 ? "+" : ""}{improvement} vs anterior
+                          </span>
+                        )}
+                        {feedback && (
+                          <svg className={`w-3.5 h-3.5 text-zinc-600 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ delay: 0.5 + i * 0.05, duration: 0.6, ease: "easeOut" }}
+                        className={`h-full rounded-full ${
+                          isInterview
+                            ? "bg-gradient-to-r from-[#845A8F] to-[#CA9B77]"
+                            : "bg-gradient-to-r from-[#CA9B77] to-[#845A8F]"
+                        }`}
+                      />
                     </div>
                   </div>
-                  <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                </motion.button>
+                <AnimatePresence>
+                  {isExpanded && feedback && (
                     <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ delay: 0.5 + i * 0.05, duration: 0.6, ease: "easeOut" }}
-                      className={`h-full rounded-full ${
-                        isInterview
-                          ? "bg-gradient-to-r from-[#845A8F] to-[#CA9B77]"
-                          : "bg-gradient-to-r from-[#CA9B77] to-[#845A8F]"
-                      }`}
-                    />
-                  </div>
-                </div>
-              </motion.div>
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="text-sm text-zinc-400 px-4 py-3 pl-14 leading-relaxed">
+                        {feedback}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             );
           })}
         </motion.div>
+
+        {/* Next steps */}
+        {scorecard.nextSteps && scorecard.nextSteps.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="rounded-2xl border border-zinc-800/60 bg-zinc-900/40 p-6 space-y-3"
+          >
+            <h2 className="text-sm text-zinc-500 uppercase tracking-wider">
+              Siguientes pasos
+            </h2>
+            <ul className="space-y-2">
+              {scorecard.nextSteps.map((step: string, i: number) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-zinc-300">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-[#CA9B77]/10 text-[#CA9B77] flex items-center justify-center text-xs font-medium mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span className="leading-relaxed">{step}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
 
         {/* AI Summary */}
         {scorecard.summary && (
@@ -199,6 +296,12 @@ export default function ScorecardPage() {
           >
             Nueva sesión
           </Link>
+          <Link
+            to="/coach/history"
+            className="rounded-2xl border border-zinc-700 px-8 py-3.5 text-sm text-zinc-400 hover:text-zinc-200 hover:border-zinc-600 transition"
+          >
+            Ver historial
+          </Link>
           <button
             onClick={() => {
               if (navigator.share) {
@@ -208,15 +311,16 @@ export default function ScorecardPage() {
                 });
               } else {
                 navigator.clipboard.writeText(window.location.href);
+                setShared(true);
+                setTimeout(() => setShared(false), 2000);
               }
             }}
             className="rounded-2xl border border-zinc-700 px-8 py-3.5 text-sm text-zinc-400 hover:text-zinc-200 hover:border-zinc-600 transition"
           >
-            Compartir
+            {shared ? "Copiado" : "Compartir"}
           </button>
         </motion.div>
 
-        {/* Branding */}
         <p className="text-center text-xs text-zinc-700">
           MentorIA por FixterGeek
         </p>
@@ -225,7 +329,6 @@ export default function ScorecardPage() {
   );
 }
 
-/** Simple radar for interview dims (5-point scale) */
 function InterviewRadar({ scores }: { scores: Record<string, number> }) {
   return (
     <div className="relative">

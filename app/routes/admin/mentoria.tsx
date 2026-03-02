@@ -3,6 +3,7 @@ import type { Route } from "./+types/mentoria";
 import { db } from "~/.server/db";
 import { Form, useActionData } from "react-router";
 import { AdminNav } from "~/components/admin/AdminNav";
+import { getCoachAnalytics } from "~/.server/services/coach.server";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await getAdminOrRedirect(request);
@@ -162,7 +163,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     );
   });
 
-  return { stats, userRows };
+  const analytics = await getCoachAnalytics();
+
+  return { stats, userRows, analytics };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -212,7 +215,7 @@ function timeAgo(date: string | Date) {
 
 
 export default function MentoriaAdmin({
-  loaderData: { stats, userRows },
+  loaderData: { stats, userRows, analytics },
 }: Route.ComponentProps) {
   const actionData = useActionData<typeof action>();
 
@@ -243,6 +246,32 @@ export default function MentoriaAdmin({
             value={`${stats.avgDurationMins}m`}
             sub={`bonus hoy: ${stats.bonusToday}`}
           />
+        </div>
+
+        {/* Analytics Funnel (30 days) */}
+        <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 mb-8">
+          <h2 className="text-lg font-semibold text-white mb-4">
+            Funnel (30 días)
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <MiniStat label="Completion rate" value={`${analytics.completionRate}%`} sub={`${analytics.completedSessions}/${analytics.totalSessions}`} />
+            <MiniStat label="Return rate (7d)" value={`${analytics.returnRate}%`} sub={`${analytics.returningUsers}/${analytics.totalUsers} usuarios`} />
+          </div>
+          {Object.keys(analytics.eventCounts).length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm text-gray-500 uppercase tracking-wider">Eventos</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {Object.entries(analytics.eventCounts)
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([event, count]) => (
+                    <div key={event} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-800/40">
+                      <span className="text-xs text-gray-400 truncate">{event}</span>
+                      <span className="text-sm font-mono text-gray-300 ml-2">{count}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action feedback */}

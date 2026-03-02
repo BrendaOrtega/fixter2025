@@ -1,15 +1,17 @@
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { data, useLoaderData } from "react-router";
+import { data, useLoaderData, useSearchParams } from "react-router";
 import { getUserOrNull, getOrCreateAnonId } from "~/.server/dbGetters";
 import { getOrCreateLearnerProfile } from "~/.server/services/coach.server";
 import { getCredits } from "~/.server/services/coach-credits.server";
 import { commitSession } from "~/sessions";
 import { CoachInterface } from "~/components/coach/CoachInterface";
+import { CoachLanding } from "~/components/coach/CoachLanding";
 import { FormmyProvider } from "@formmy.app/chat/react";
+import { db } from "~/.server/db";
 
 export const meta: MetaFunction = () => [
   { title: "MentorIA | FixterGeek" },
-  { name: "description", content: "Tu mentor de programación con IA y voz" },
+  { name: "description", content: "Tu coach de voz para programación y entrevistas técnicas con IA" },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -22,6 +24,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (isNew && !user) {
     headers["Set-Cookie"] = await commitSession(session);
   }
+
+  const url = new URL(request.url);
+  const start = url.searchParams.get("start");
+
+  // Count completed sessions for social proof on landing
+  const sessionCount = await db.coachingSession.count({
+    where: { endedAt: { not: null } },
+  });
 
   return data({
     formmyConfig: {
@@ -44,11 +54,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
     isAnonymous: !user,
     credits: user ? await getCredits(user.id) : { remaining: 0, total: 0, used: 0 },
+    showLanding: profile.totalSessions === 0 && !start,
+    sessionCount,
   }, { headers });
 };
 
 export default function CoachPage() {
-  const { profile, formmyConfig, isAnonymous, credits } = useLoaderData<typeof loader>();
+  const { profile, formmyConfig, isAnonymous, credits, showLanding, sessionCount } =
+    useLoaderData<typeof loader>();
+  const [searchParams] = useSearchParams();
+
+  // Show landing if first-time user and no ?start param
+  if (showLanding && !searchParams.get("start")) {
+    return <CoachLanding sessionCount={sessionCount} />;
+  }
 
   return (
     <FormmyProvider publishableKey={formmyConfig.publishableKey}>

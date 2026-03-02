@@ -34,6 +34,8 @@ export default [
   // Coach de programación
   route("coach", "routes/coach.tsx"),
   route("coach/result/:sessionId", "routes/coach.result.$sessionId.tsx"),
+  route("coach/history", "routes/coach.history.tsx"),
+  route("coach/stories", "routes/coach.stories.tsx"),
   // xmas
   route("feliz_2025/:nombre?", "routes/feliz_2025.tsx"),
   // Claude Code Workshop

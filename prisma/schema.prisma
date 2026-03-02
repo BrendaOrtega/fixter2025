@@ -747,11 +747,28 @@ model CoachingSession {
   scoreDeltas Json? // {algorithms: +5, debugging: -2, ...}
   summary     String? // Resumen generado por AI
 
+  // Post-session scoring
+  selfAssessment    Int?     // 1-5 user self-rating
+  nextSteps         String[] // AI-generated action items
+  dimensionFeedback Json?    // {dimension: "feedback string"}
+
   startedAt   DateTime  @default(now())
   endedAt     DateTime?
 
   @@index([profileId])
   @@map("coaching_sessions")
+}
+
+model CoachEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  event     String   // session_started, session_completed, mode_selected, etc.
+  sessionId String?  @db.ObjectId
+  userId    String?  @db.ObjectId
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([event, createdAt])
+  @@map("coach_events")
 }
 
 model Exercise {
