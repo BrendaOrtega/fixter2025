@@ -10,6 +10,7 @@ import {
   advanceDrillStage,
   addStoriesToBank,
 } from "~/.server/services/coach.server";
+import { buildProgrammingPrompt, buildInterviewPrompt } from "~/.server/services/coach-prompts.server";
 import { getCredits, consumeSession, hasCredits } from "~/.server/services/coach-credits.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -85,19 +86,53 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
       }
 
+      const sessionMode = body.mode || "programming";
       const session = await db.coachingSession.create({
         data: {
           profileId: profile.id,
           topic: body.topic || null,
-          mode: body.mode || "programming",
+          mode: sessionMode,
           phase: "KICKOFF",
           messages: [],
         },
       });
 
+      // Generate per-session system prompt based on user profile
+      let systemPrompt: string;
+      if (sessionMode === "interview") {
+        const interviewProfile = await getOrCreateInterviewProfile(userId);
+        const storybank = (interviewProfile.storybank as any[]) || [];
+        systemPrompt = buildInterviewPrompt({
+          drillStage: interviewProfile.drillStage,
+          targetRole: interviewProfile.targetRole || undefined,
+          seniority: interviewProfile.seniority || undefined,
+          dimensions: {
+            substance: interviewProfile.substance,
+            structure: interviewProfile.structure,
+            relevance: interviewProfile.relevance,
+            credibility: interviewProfile.credibility,
+            differentiation: interviewProfile.differentiation,
+          },
+          totalSessions: profile.totalSessions,
+          storyCount: storybank.length,
+        });
+      } else {
+        systemPrompt = buildProgrammingPrompt({
+          dimensions: {
+            algorithms: profile.algorithms,
+            syntaxFluency: profile.syntaxFluency,
+            systemDesign: profile.systemDesign,
+            debugging: profile.debugging,
+            communication: profile.communication,
+          },
+          currentTopic: profile.currentTopic || undefined,
+          totalSessions: profile.totalSessions,
+        });
+      }
+
       return Response.json({
         success: true,
-        data: { sessionId: session.id },
+        data: { sessionId: session.id, systemPrompt },
       });
     }
 

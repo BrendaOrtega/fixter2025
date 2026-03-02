@@ -70,10 +70,12 @@ export function CoachInterface({
     ? formmyConfig.interviewAgentId
     : formmyConfig.agentId;
   const voiceDisabledForMode = mode === "interview" && !formmyConfig.interviewAgentId;
+  const [voiceSystemPrompt, setVoiceSystemPrompt] = useState<string | undefined>();
 
   const voice = useFormmyVoice({
     agentId: activeAgentId,
     voiceId: "carlos",
+    systemPrompt: voiceSystemPrompt,
   });
 
   // === Voice latency profiling ===
@@ -182,17 +184,24 @@ export function CoachInterface({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const userScrolledUp = useRef(false);
 
-  const scrollToBottom = useCallback(() => {
+  useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    if (scrollHeight - scrollTop - clientHeight < 150) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      userScrolledUp.current = scrollHeight - scrollTop - clientHeight > 150;
+    };
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
+  useEffect(() => {
+    if (!userScrolledUp.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const handleVoiceToggle = async () => {
     setVoiceError(null);
@@ -267,6 +276,7 @@ export function CoachInterface({
 
       if (data.success) {
         setSessionId(data.data.sessionId);
+        setVoiceSystemPrompt(data.data.systemPrompt);
         setMessages([]);
         setEndedSessionId(null);
         trackEvent("session_started", { mode: selectedMode, sessionId: data.data.sessionId });
