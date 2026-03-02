@@ -399,9 +399,6 @@ export function CoachInterface({
     const sid = pendingEndSessionId;
     if (!sid) return;
 
-    setShowSelfAssessment(false);
-    setClosing(true);
-
     try {
       const res = await fetch("/api/coach", {
         method: "POST",
@@ -419,11 +416,10 @@ export function CoachInterface({
       }
     } catch (err) {
       console.error("Error closing session:", err);
-    } finally {
-      setClosing(false);
     }
 
     trackEvent("session_completed", { sessionId: sid, messageCount: messages.length, selfAssessment: rating });
+    setShowSelfAssessment(false);
     setSessionId(null);
     setEndedSessionId(sid);
     setPendingEndSessionId(null);
@@ -673,7 +669,7 @@ export function CoachInterface({
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
         <motion.div
-          animate={{ opacity: [0.4, 1, 0.4], filter: ["blur(8px)", "blur(0px)", "blur(8px)"] }}
+          animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           className="text-4xl font-bold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent"
         >
@@ -1104,8 +1100,6 @@ function SelfAssessmentModal({
   onSubmit: (rating: number) => void;
   onSkip: () => void;
 }) {
-  const [selected, setSelected] = useState<number | null>(null);
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-6">
       <motion.div
@@ -1126,12 +1120,8 @@ function SelfAssessmentModal({
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}
-              onClick={() => setSelected(n)}
-              className={`w-14 h-14 rounded-2xl text-lg font-semibold transition-all ${
-                selected === n
-                  ? "bg-[#CA9B77] text-zinc-900 scale-110"
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
-              }`}
+              onClick={() => onSubmit(n)}
+              className="w-14 h-14 rounded-2xl text-lg font-semibold transition-all bg-zinc-800 text-zinc-400 hover:bg-[#CA9B77] hover:text-zinc-900 hover:scale-110"
             >
               {n}
             </button>
@@ -1144,13 +1134,6 @@ function SelfAssessmentModal({
         </div>
 
         <div className="flex flex-col items-center gap-3 pt-4">
-          <button
-            onClick={() => selected && onSubmit(selected)}
-            disabled={!selected}
-            className="rounded-2xl bg-[#CA9B77] px-8 py-3.5 text-sm font-semibold text-zinc-900 hover:bg-[#b8895f] transition disabled:opacity-30 disabled:pointer-events-none"
-          >
-            Enviar
-          </button>
           <button
             onClick={onSkip}
             className="text-sm text-zinc-600 hover:text-zinc-400 transition"
