@@ -1,0 +1,31 @@
+name: Publish Blog Post
+
+on:
+  # Cada lunes a las 10am CDMX (UTC-6)
+  schedule:
+    - cron: "0 16 * * 1"
+  # Detonar manualmente desde GitHub Actions
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Generate & publish next post
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Generate and publish post
+        run: npx tsx scripts/generate-blog-post.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
