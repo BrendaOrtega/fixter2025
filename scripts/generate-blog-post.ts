@@ -19,6 +19,7 @@ const SERIES_POSTS = [
       "Tres letras separan a los diseñadores que usan IA de los que quedarán obsoletos: MCP",
     tags: ["IA", "MCP", "diseño", "carrera", "easybits"],
     mainTag: "IA",
+    coverImage: "https://images.pexels.com/photos/17483870/pexels-photo-17483870.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
     prompt: `Escribe el post 3 de una serie de 5 sobre MCP para diseñadores.
 
 **Título**: "Tres letras separan a los diseñadores que usan IA de los que quedarán obsoletos: MCP"
@@ -35,6 +36,7 @@ const SERIES_POSTS = [
       "Por qué algunos diseñadores ya no necesitan developers (y qué es MCP)",
     tags: ["MCP", "diseño", "autonomía", "productividad", "easybits"],
     mainTag: "diseño",
+    coverImage: "https://images.pexels.com/photos/18069514/pexels-photo-18069514.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
     prompt: `Escribe el post 4 de una serie de 5 sobre MCP para diseñadores.
 
 **Título**: "Por qué algunos diseñadores ya no necesitan developers (y qué es MCP)"
@@ -51,6 +53,7 @@ const SERIES_POSTS = [
     title: "Diseñadores que publican sin pedir permiso a nadie. Así funciona MCP.",
     tags: ["MCP", "diseño", "publicación", "agentes", "easybits"],
     mainTag: "MCP",
+    coverImage: "https://images.pexels.com/photos/18068462/pexels-photo-18068462.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
     prompt: `Escribe el post 5 (final) de una serie de 5 sobre MCP para diseñadores.
 
 **Título**: "Diseñadores que publican sin pedir permiso a nadie. Así funciona MCP."
@@ -137,6 +140,8 @@ async function main() {
       authorAtLink: "https://twitter.com/HectorBlisS",
       tags: nextPost.tags,
       mainTag: nextPost.mainTag,
+      coverImage: nextPost.coverImage,
+      metaImage: nextPost.coverImage,
       createdAt: new Date(),
       updatedAt: new Date(),
     },
