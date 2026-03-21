@@ -213,6 +213,14 @@ export default function Page({
     }
   };
 
+  if (post.contentFormat === "html") {
+    return (
+      <div className="min-h-screen bg-postbg bg-bottom bg-contain bg-no-repeat">
+        <div dangerouslySetInnerHTML={{ __html: post.body }} />
+      </div>
+    );
+  }
+
   return (
     <>
       <SubscriptionModal />

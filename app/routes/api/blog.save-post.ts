@@ -16,7 +16,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     // Para formato markdown, usamos body directamente
     // Para formato tiptap, usamos content
-    const hasContent = contentFormat === "markdown" ? bodyMarkdownInput : content;
+    const hasContent = contentFormat === "markdown" || contentFormat === "html" ? bodyMarkdownInput : content;
 
     if (!title || !slug || !hasContent) {
       return Response.json(
@@ -56,9 +56,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
     let bodyMarkdown: string;
     let contentToSave: any;
 
-    if (contentFormat === "markdown") {
+    if (contentFormat === "markdown" || contentFormat === "html") {
       bodyMarkdown = bodyMarkdownInput;
-      contentToSave = null; // No guardar content JSON para markdown puro
+      contentToSave = null;
     } else {
       bodyMarkdown = content ? tiptapToMarkdown(content) : "";
       contentToSave = content;
