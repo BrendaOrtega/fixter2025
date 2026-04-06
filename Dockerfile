@@ -3,41 +3,39 @@ FROM mongo:7 AS mongo-tools
 
 # Stage 2: Development dependencies
 FROM node:20.11.1-alpine AS development-dependencies-env
-COPY . /app
 WORKDIR /app
+COPY package.json package-lock.json ./
 RUN npm ci
+COPY prisma ./prisma/
+RUN npx prisma generate
 
 # Stage 3: Production dependencies
 FROM node:20.11.1-alpine AS production-dependencies-env
-COPY ./prisma /app/
-COPY ./package.json package-lock.json /app/
 WORKDIR /app
+COPY package.json package-lock.json ./
+COPY prisma ./prisma/
 RUN npm ci --omit=dev
-# Install openssl for Prisma
 RUN apk update && apk add openssl
 RUN npx prisma generate
 
 # Stage 4: Build
 FROM node:20.11.1-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app
+COPY --from=development-dependencies-env /app/node_modules ./node_modules
+COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Stage 5: Production
 FROM node:20.11.1-alpine
-# Install openssl, libc6-compat, and krb5-libs (for mongodump with MongoDB Atlas)
 RUN apk update && apk add openssl libc6-compat krb5-libs
-# Copy mongodump from MongoDB image
 COPY --from=mongo-tools /usr/bin/mongodump /usr/local/bin/mongodump
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
-COPY --from=build-env /app/app/content /app/app/content
-# Ensure ffmpeg binary from npm package is executable
-RUN chmod +x /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg || true
 WORKDIR /app
+COPY package.json package-lock.json ./
+COPY --from=production-dependencies-env /app/node_modules ./node_modules
+COPY --from=build-env /app/build ./build
+COPY --from=build-env /app/app/content ./app/content
+RUN chmod +x /app/node_modules/@ffmpeg-installer/linux-x64/ffmpeg || true
 ENV HOST=0.0.0.0
 ENV PORT=3000
 EXPOSE 3000

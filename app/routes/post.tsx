@@ -10,6 +10,7 @@ import { CourseBanner } from "~/components/CourseBanner";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
 import { SubscriptionModal } from "~/components/SubscriptionModal";
 import { NextPost } from "~/components/common/NextPost";
+import { AuthorSignature } from "~/components/blog/AuthorSignature";
 import { FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { PiLinkSimpleBold } from "react-icons/pi";
@@ -325,6 +326,9 @@ export default function Page({
             </section>
           </div>
 
+          {post.body?.includes("<!-- author-signature -->") && (
+            <AuthorSignature />
+          )}
           <NextPost posts={posts} />
           <CourseBanner />
         </article>

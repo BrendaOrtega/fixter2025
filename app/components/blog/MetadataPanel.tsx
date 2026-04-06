@@ -29,6 +29,8 @@ interface MetadataPanelProps {
   setTags: (tags: string[]) => void;
   mainTag: string;
   setMainTag: (tag: string) => void;
+  contentFormat: "markdown" | "html";
+  setContentFormat: (format: "markdown" | "html") => void;
 }
 
 const AVAILABLE_TAGS = [
@@ -61,6 +63,8 @@ export function MetadataPanel({
   setTags,
   mainTag,
   setMainTag,
+  contentFormat,
+  setContentFormat,
 }: MetadataPanelProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>('seo');
 
@@ -133,6 +137,25 @@ export function MetadataPanel({
                   placeholder="Un título que enganche"
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Formato</label>
+                <div className="flex gap-2">
+                  {(["markdown", "html"] as const).map((fmt) => (
+                    <button
+                      key={fmt}
+                      onClick={() => setContentFormat(fmt)}
+                      className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                        contentFormat === fmt
+                          ? "bg-indigo-600 text-white"
+                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      }`}
+                    >
+                      {fmt.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>

@@ -61,6 +61,9 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
     Array.isArray(post?.tags) ? post.tags : []
   );
   const [mainTag, setMainTag] = useState(post?.mainTag || "");
+  const [contentFormat, setContentFormat] = useState<"markdown" | "html">(
+    (post as any)?.contentFormat === "html" ? "html" : "markdown"
+  );
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -130,7 +133,7 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
           title,
           slug,
           body, // Markdown directo
-          contentFormat: "markdown",
+          contentFormat,
           youtubeLink: youtubeLink || null,
           metaImage: metaImage || null,
           author,
@@ -497,6 +500,8 @@ export default function BlogEditor({ loaderData }: Route.ComponentProps) {
         setTags={setTags}
         mainTag={mainTag}
         setMainTag={setMainTag}
+        contentFormat={contentFormat}
+        setContentFormat={setContentFormat}
       />
 
       {/* Keyboard shortcuts hint */}
