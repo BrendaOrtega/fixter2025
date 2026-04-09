@@ -384,7 +384,7 @@ export const courseServerActions = {
         
         if (originalFile) {
           directLinkPresigned = await Effect.runPromise(
-            s3VideoService.getVideoPreviewUrl(originalFile, 3600) // 1 hour expiry
+            s3VideoService.getVideoPreviewUrl(originalFile, 14400) // 4 hours expiry
           );
 
           console.log("✅ Generated presigned URL:", directLinkPresigned ? "SUCCESS" : "FAILED");
@@ -396,7 +396,7 @@ export const courseServerActions = {
           if (tigrisMatch) {
             const key = tigrisMatch[1];
             const { getReadURL } = await import("~/.server/tigrs");
-            directLinkPresigned = await getReadURL(key, 3600, false);
+            directLinkPresigned = await getReadURL(key, 14400, false);
             console.log("✅ Generated presigned URL from Tigris fallback:", directLinkPresigned ? "SUCCESS" : "FAILED");
           } else {
             console.log("❌ No Tigris URL found in storageLink");
@@ -577,7 +577,7 @@ export const courseServerActions = {
       
       // Generate presigned URL
       const previewUrl = await Effect.runPromise(
-        s3VideoService.getVideoPreviewUrl(s3Key, 3600) // 1 hour expiry
+        s3VideoService.getVideoPreviewUrl(s3Key, 14400) // 4 hours expiry
       );
 
       return {
@@ -690,19 +690,19 @@ export const courseServerActions = {
       let presignedUrl: string;
       if (originalUrl) {
         presignedUrl = await Effect.runPromise(
-          s3VideoService.getVideoPreviewUrlDynamic(originalUrl, 3600)
+          s3VideoService.getVideoPreviewUrlDynamic(originalUrl, 14400)
         );
       } else {
         // Fallback to static endpoint (for backwards compatibility)
         presignedUrl = await Effect.runPromise(
-          s3VideoService.getVideoPreviewUrl(s3Key, 3600)
+          s3VideoService.getVideoPreviewUrl(s3Key, 14400)
         );
       }
 
       return {
         success: true,
         presignedUrl,
-        expiresIn: 3600
+        expiresIn: 14400
       };
 
     } catch (error) {

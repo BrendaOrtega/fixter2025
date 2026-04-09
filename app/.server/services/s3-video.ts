@@ -212,7 +212,7 @@ export const S3VideoServiceLive: S3VideoService = {
       });
 
       const uploadUrl = yield* Effect.tryPromise({
-        try: () => getSignedUrl(s3Client, command, { expiresIn: 3600 }), // 1 hour
+        try: () => getSignedUrl(s3Client, command, { expiresIn: 14400 }), // 4 hours
         catch: (error) =>
           new S3VideoError(
             `Failed to generate upload URL: ${
@@ -341,7 +341,7 @@ export const S3VideoServiceLive: S3VideoService = {
   },
 
   // Generate presigned URL for video preview (temporary access)
-  getVideoPreviewUrl: (key: string, expiresIn: number = 3600) =>
+  getVideoPreviewUrl: (key: string, expiresIn: number = 14400) =>
     Effect.gen(function* () {
       const s3Client = yield* createS3Client();
       const config = getS3VideoConfig();
@@ -367,7 +367,7 @@ export const S3VideoServiceLive: S3VideoService = {
     }),
 
   // Generate presigned URL dynamically based on original storage URL
-  getVideoPreviewUrlDynamic: (originalUrl: string, expiresIn: number = 3600) =>
+  getVideoPreviewUrlDynamic: (originalUrl: string, expiresIn: number = 14400) =>
     Effect.gen(function* () {
       try {
         const url = new URL(originalUrl);
