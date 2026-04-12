@@ -6,6 +6,7 @@ import { code } from "@streamdown/code";
 import { ScoreRadar } from "./ScoreRadar";
 import { useFormmyVoice } from "./VoiceButton";
 import { SessionPurchase } from "./SessionPurchase";
+import { CoachOnboarding } from "./CoachOnboarding";
 
 interface Message {
   role: "user" | "assistant";
@@ -316,6 +317,8 @@ export function CoachInterface({
 
   const [showProfileCapture, setShowProfileCapture] = useState(false);
   const [pendingMode, setPendingMode] = useState<CoachMode | null>(null);
+  const [showNewOnboarding, setShowNewOnboarding] = useState(false);
+  const [focusTopic, setFocusTopic] = useState<string | null>(null);
 
   // === Analytics event tracking ===
   const trackEvent = useCallback((event: string, metadata?: Record<string, unknown>) => {
@@ -334,16 +337,19 @@ export function CoachInterface({
   // === Select mode → optionally capture profile, then create session ===
   const handleSelectMode = async (selectedMode: CoachMode) => {
     trackEvent("mode_selected", { mode: selectedMode });
-    // For interview mode, show profile capture first
-    if (selectedMode === "interview") {
-      setPendingMode(selectedMode);
-      setShowProfileCapture(true);
-      return;
-    }
-    await createSession(selectedMode);
+    setPendingMode(selectedMode);
+    setShowNewOnboarding(true);
   };
 
-  const createSession = async (selectedMode: CoachMode) => {
+  const handleOnboardingStart = async (focus: string) => {
+    if (!pendingMode) return;
+    setFocusTopic(focus);
+    trackEvent("focus_selected", { mode: pendingMode, focus });
+    setShowNewOnboarding(false);
+    await createSession(pendingMode, focus);
+  };
+
+  const createSession = async (selectedMode: CoachMode, focus?: string) => {
     setMode(selectedMode);
     setShowProfileCapture(false);
     setLoading(true);
@@ -351,7 +357,7 @@ export function CoachInterface({
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: "create_session", mode: selectedMode }),
+        body: JSON.stringify({ intent: "create_session", mode: selectedMode, focus }),
       });
       const data = await res.json();
 
@@ -366,7 +372,11 @@ export function CoachInterface({
 
       if (data.success) {
         setSessionId(data.data.sessionId);
-        setVoiceSystemPrompt(data.data.systemPrompt);
+        const basePrompt: string = data.data.systemPrompt || "";
+        const prompt = focus && focus !== "No estoy seguro aún"
+          ? `FOCO DE LA SESIÓN: ${focus}. Arranca el primer turno con una pregunta específica sobre ${focus.toLowerCase()}, en una sola oración, sin preámbulos.\n\n${basePrompt}`
+          : basePrompt;
+        setVoiceSystemPrompt(prompt);
         setMessages([]);
         setEndedSessionId(null);
         trackEvent("session_started", { mode: selectedMode, sessionId: data.data.sessionId });
@@ -522,6 +532,22 @@ export function CoachInterface({
           await createSession("interview");
         }}
         onSkip={() => createSession("interview")}
+      />
+    );
+  }
+
+  // === NEW ONBOARDING (HubSpot-style): profile card + focus chips ===
+  if (!sessionId && !loading && showNewOnboarding && pendingMode) {
+    return (
+      <CoachOnboarding
+        mode={pendingMode}
+        isAnonymous={isAnonymous}
+        profile={profile}
+        onStart={handleOnboardingStart}
+        onBack={() => {
+          setShowNewOnboarding(false);
+          setPendingMode(null);
+        }}
       />
     );
   }
