@@ -33,7 +33,7 @@ export function meta({ data }: Route.MetaArgs) {
   const baseMeta = getMetaTags({
     title: `${course.title} | Curso Online | FixterGeek`,
     description,
-    image: course.icon || `${baseUrl}/cover.png`,
+    image: course.meta || course.poster || course.banner || `${baseUrl}/cover.png`,
     url: courseUrl,
     type: "website",
     keywords: `${
@@ -53,7 +53,7 @@ export function meta({ data }: Route.MetaArgs) {
         name: course.title,
         description: description,
         url: courseUrl,
-        image: course.icon || `${baseUrl}/cover.png`,
+        image: course.meta || course.poster || course.banner || `${baseUrl}/cover.png`,
         provider: {
           "@type": "Organization",
           "@id": `${baseUrl}/#organization`,
