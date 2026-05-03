@@ -2,6 +2,8 @@ export type GetBasicMetaTagsPros = {
   title?: string;
   description?: string;
   image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   url?: string;
   twitterCard?: "summary" | "summary_large_image";
   type?: "website" | "article" | "book";
@@ -13,10 +15,21 @@ export type GetBasicMetaTagsPros = {
   modifiedTime?: string;
 };
 
+function inferImageMime(url: string): string {
+  const lower = url.split("?")[0].toLowerCase();
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".gif")) return "image/gif";
+  if (lower.endsWith(".svg")) return "image/svg+xml";
+  return "image/png";
+}
+
 export default function getMetaTags({
   title,
   description = "Cursos de IA, Claude Code, AI SDK y programación en español. Plataforma educativa mexicana con más de 2,000 estudiantes.",
   image = "https://www.fixtergeek.com/cover.png",
+  imageWidth = 1200,
+  imageHeight = 630,
   url = "https://www.fixtergeek.com",
   twitterCard = "summary_large_image",
   type = "website",
@@ -85,6 +98,26 @@ export default function getMetaTags({
     {
       property: "og:image",
       content: image,
+    },
+    {
+      property: "og:image:secure_url",
+      content: image,
+    },
+    {
+      property: "og:image:type",
+      content: inferImageMime(image),
+    },
+    {
+      property: "og:image:width",
+      content: String(imageWidth),
+    },
+    {
+      property: "og:image:height",
+      content: String(imageHeight),
+    },
+    {
+      property: "og:image:alt",
+      content: title,
     },
     {
       property: "og:type",
