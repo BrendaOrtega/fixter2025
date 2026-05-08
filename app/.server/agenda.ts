@@ -257,16 +257,26 @@ getAgenda().define(
       }
 
       try {
-        // Send email
-        await sendSESTEST(subscriber.email, {
+        const sendResult = await sendSESTEST(subscriber.email, {
           subject: nextEmail.subject,
           html: nextEmail.content,
+          trackOpens: true,
+          to: true,
+          tags: [
+            { Name: "sequence_id", Value: sequence.id },
+            { Name: "enrollment_id", Value: enrollment.id },
+            { Name: "sequence_email_id", Value: nextEmail.id },
+          ],
         });
 
-        // Update enrollment
+        const messageId = sendResult?.messageId;
+        if (!messageId) {
+          throw new Error("SES did not return a messageId");
+        }
+
         const nextIndex = enrollment.currentEmailIndex + 1;
         const hasMoreEmails = nextIndex < sequence.emails.length;
-        
+
         let nextEmailAt = null;
         if (hasMoreEmails) {
           const nextEmailInSequence = sequence.emails[nextIndex];
@@ -284,12 +294,13 @@ getAgenda().define(
             emailsSent: enrollment.emailsSent + 1,
             nextEmailAt,
             status: hasMoreEmails ? 'active' : 'completed',
-            completedAt: hasMoreEmails ? null : new Date()
+            completedAt: hasMoreEmails ? null : new Date(),
+            messageIds: { push: messageId },
           }
         });
 
-        console.info(`Sent email ${nextEmail.order} to ${subscriber.email} for sequence ${sequence.name}`);
-        
+        console.info(`Sent email ${nextEmail.order} to ${subscriber.email} for sequence ${sequence.name} (${messageId.slice(-12)})`);
+
       } catch (error) {
         console.error(`Failed to send email to ${subscriber.email}:`, error);
       }

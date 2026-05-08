@@ -110,9 +110,17 @@ model SequenceEnrollment {
   enrolledAt       DateTime  @default(now())
   completedAt      DateTime?
   emailsSent       Int       @default(0)
-  
+
+  // SES event tracking (paralelo al patrón de Newsletter)
+  messageIds       String[]                      // SES MessageId por cada email enviado
+  delivered        String[]                      // emails con Delivery confirmado
+  opened           String[]                      // emails que abrieron al menos 1 vez
+  clicked          String[]                      // emails que clickearon al menos 1 vez
+  bounced          String[]                      // emails con Bounce permanente
+
   @@unique([sequenceId, subscriberId])           // Un usuario solo puede estar una vez en cada secuencia
   @@index([status, nextEmailAt])                 // Para encontrar emails a enviar
+  @@index([messageIds])                          // Lookup desde SNS webhook
 }
 
 // ============================

@@ -118,6 +118,29 @@ async function addToArrayAtomic(
   });
 }
 
+async function addToSequenceArrayAtomic(
+  enrollmentId: string,
+  field: "delivered" | "opened" | "clicked" | "bounced",
+  emails: string[]
+) {
+  await db.$runCommandRaw({
+    update: "SequenceEnrollment",
+    updates: [
+      {
+        q: { _id: { $oid: enrollmentId } },
+        u: { $addToSet: { [field]: { $each: emails } } },
+      },
+    ],
+  });
+}
+
+async function pauseSequenceEnrollment(enrollmentId: string) {
+  await db.sequenceEnrollment.update({
+    where: { id: enrollmentId },
+    data: { status: "paused" },
+  });
+}
+
 // Helper para manejar hard bounces y complaints
 // SOLO se ejecuta después de verificar firma SNS
 async function handleBadEmail(
@@ -214,27 +237,59 @@ export const action = async ({ request }: { request: Request }) => {
       newsletterId = newsletter?.id;
     }
 
+    // Si no es Newsletter, intentar resolver SequenceEnrollment
+    let enrollmentId: string | undefined;
     if (!newsletterId) {
-      console.warn(`⚠️ Newsletter not found for: ${messageId.slice(-12)}`);
+      const tagEnrollmentId = message.mail.tags?.enrollment_id?.[0];
+      if (tagEnrollmentId) {
+        const exists = await db.sequenceEnrollment.findUnique({
+          where: { id: tagEnrollmentId },
+          select: { id: true },
+        });
+        if (exists) enrollmentId = tagEnrollmentId;
+      }
+      if (!enrollmentId) {
+        const enrollment = await db.sequenceEnrollment.findFirst({
+          where: { messageIds: { has: messageId } },
+          select: { id: true },
+        });
+        enrollmentId = enrollment?.id;
+      }
+    }
+
+    if (!newsletterId && !enrollmentId) {
+      console.warn(`⚠️ No newsletter/sequence match for: ${messageId.slice(-12)}`);
       return new Response(null);
     }
 
     // Procesar según tipo de evento
     switch (eventType) {
       case "Delivery": {
-        await addToArrayAtomic(newsletterId, "delivered", destination);
+        if (newsletterId) {
+          await addToArrayAtomic(newsletterId, "delivered", destination);
+        } else if (enrollmentId) {
+          await addToSequenceArrayAtomic(enrollmentId, "delivered", destination);
+        }
         console.log(`✅ Delivery: +${destination.length}`);
         break;
       }
 
       case "Open": {
-        await addToArrayAtomic(newsletterId, "opened", destination);
+        if (newsletterId) {
+          await addToArrayAtomic(newsletterId, "opened", destination);
+        } else if (enrollmentId) {
+          await addToSequenceArrayAtomic(enrollmentId, "opened", destination);
+        }
         console.log(`✅ Open: ${destination.join(", ")}`);
         break;
       }
 
       case "Click": {
-        await addToArrayAtomic(newsletterId, "clicked", destination);
+        if (newsletterId) {
+          await addToArrayAtomic(newsletterId, "clicked", destination);
+        } else if (enrollmentId) {
+          await addToSequenceArrayAtomic(enrollmentId, "clicked", destination);
+        }
         console.log(
           `✅ Click: ${destination.join(", ")} - ${message.click?.link?.slice(0, 50)}`
         );
@@ -246,6 +301,13 @@ export const action = async ({ request }: { request: Request }) => {
         const details = message.bounce?.bouncedRecipients?.[0]?.diagnosticCode;
 
         console.warn(`⚠️ Bounce [${bounceType}]: ${destination.join(", ")}`);
+
+        if (enrollmentId) {
+          await addToSequenceArrayAtomic(enrollmentId, "bounced", destination);
+          if (bounceType === "Permanent") {
+            await pauseSequenceEnrollment(enrollmentId);
+          }
+        }
 
         // Solo eliminar en hard bounces (Permanent)
         if (bounceType === "Permanent") {
@@ -260,6 +322,10 @@ export const action = async ({ request }: { request: Request }) => {
         const complaintType =
           message.complaint?.complaintFeedbackType || "abuse";
         console.warn(`🚨 Complaint [${complaintType}]: ${destination.join(", ")}`);
+
+        if (enrollmentId) {
+          await pauseSequenceEnrollment(enrollmentId);
+        }
 
         for (const email of destination) {
           await handleBadEmail(email, "complaint", complaintType);
