@@ -19,6 +19,8 @@ export default [
   route("tutoriales", "routes/tutoriales.tsx"),
   route("tutoriales/*", "routes/tutoriales.$.tsx"), // redirect legacy → /tutoriales
   route("audio-demo", "routes/audio-demo.tsx"),
+  route("excalidraw-demo", "routes/excalidraw-demo.tsx"),
+  route("api/excalidraw-scene", "routes/api.excalidraw-scene.ts"),
   route("integraciones", "routes/integraciones.tsx"),
   route("aviso-de-privacidad", "routes/aviso.tsx"),
   route("terminos-y-condiciones", "routes/terms.tsx"),

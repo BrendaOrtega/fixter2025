@@ -6,7 +6,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   // build: { rollupOptions: { external: ["peerjs"] } },
-  ssr: { noExternal: ["@formmy.app/chat"] },
+  ssr: { noExternal: ["@formmy.app/chat", "@excalidraw/excalidraw"] },
   server: { port: 3000 },
   css: {
     postcss: {

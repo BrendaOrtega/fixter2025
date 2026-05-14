@@ -32,6 +32,7 @@
     "@codemirror/view": "^6.39.15",
     "@effect/platform": "^0.90.0",
     "@effect/platform-node": "^0.94.0",
+    "@excalidraw/excalidraw": "^0.18.1",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@formmy.app/chat": "^0.0.16",
     "@google-cloud/text-to-speech": "^6.2.0",
