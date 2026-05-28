@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -18,6 +19,8 @@ import {
   FaEye,
   FaArrowUp,
   FaTimes,
+  FaPen,
+  FaEnvelope,
 } from "react-icons/fa";
 
 // Verifica que la secuencia exista y sea del user logueado.
@@ -86,17 +89,26 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       (formData.get("schedulingType") as string) || "delay";
     const delayDays = parseInt(formData.get("delayDays") as string) || 0;
     const specificDateRaw = formData.get("specificDate") as string;
-    const fromName = (formData.get("fromName") as string) || "FixterGeek";
-    const fromEmail =
-      (formData.get("fromEmail") as string) || "contacto@fixter.org";
+    const afterOrderRaw = formData.get("afterOrder") as string | null;
 
     if (!subject) return { error: "El asunto es obligatorio" };
 
-    const count = await db.sequenceEmail.count({ where: { sequenceId } });
+    // Por defecto se agrega al final; si viene `afterOrder`, se inserta en esa
+    // posición corriendo los siguientes +1 para mantener el orden contiguo.
+    let order = (await db.sequenceEmail.count({ where: { sequenceId } })) + 1;
+    if (afterOrderRaw !== null && afterOrderRaw !== "") {
+      const after = parseInt(afterOrderRaw) || 0;
+      await db.sequenceEmail.updateMany({
+        where: { sequenceId, order: { gt: after } },
+        data: { order: { increment: 1 } },
+      });
+      order = after + 1;
+    }
+
     await db.sequenceEmail.create({
       data: {
         sequenceId,
-        order: count + 1,
+        order,
         subject,
         content,
         schedulingType,
@@ -105,8 +117,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           schedulingType === "specific_date" && specificDateRaw
             ? new Date(specificDateRaw)
             : null,
-        fromName,
-        fromEmail,
+        fromName: "FixterGeek",
+        fromEmail: "contacto@fixter.org",
       },
     });
     return { success: true, message: "Email agregado" };
@@ -120,9 +132,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       (formData.get("schedulingType") as string) || "delay";
     const delayDays = parseInt(formData.get("delayDays") as string) || 0;
     const specificDateRaw = formData.get("specificDate") as string;
-    const fromName = (formData.get("fromName") as string) || "FixterGeek";
-    const fromEmail =
-      (formData.get("fromEmail") as string) || "contacto@fixter.org";
 
     // Verificar que el email pertenezca a esta secuencia
     const email = await db.sequenceEmail.findUnique({ where: { id: emailId } });
@@ -142,8 +151,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           schedulingType === "specific_date" && specificDateRaw
             ? new Date(specificDateRaw)
             : null,
-        fromName,
-        fromEmail,
       },
     });
     return { success: true, message: "Email actualizado" };
@@ -154,6 +161,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     await db.sequenceEmail.deleteMany({
       where: { id: emailId, sequenceId },
     });
+    // Renumerar para mantener el orden contiguo (1..n)
+    const remaining = await db.sequenceEmail.findMany({
+      where: { sequenceId },
+      orderBy: { order: "asc" },
+      select: { id: true },
+    });
+    await Promise.all(
+      remaining.map((e, i) =>
+        db.sequenceEmail.update({ where: { id: e.id }, data: { order: i + 1 } })
+      )
+    );
     return { success: true, message: "Email eliminado" };
   }
 
@@ -235,8 +253,11 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [detail, setDetail] = useState<any>(null);
   const [preview, setPreview] = useState<any>(null);
-  const [editingEmail, setEditingEmail] = useState<string | null>(null);
-  const [showAddEmail, setShowAddEmail] = useState(false);
+  const [drawer, setDrawer] = useState<
+    | { mode: "add"; afterOrder?: number; prevSubject?: string; isFirst: boolean }
+    | { mode: "edit"; email: any; prevSubject?: string; isFirst: boolean }
+    | null
+  >(null);
   const [copied, setCopied] = useState(false);
 
   const copyShareLink = () => {
@@ -363,10 +384,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
           <EmailsTab
             sequence={sequence}
             fetcher={fetcher}
-            editingEmail={editingEmail}
-            setEditingEmail={setEditingEmail}
-            showAddEmail={showAddEmail}
-            setShowAddEmail={setShowAddEmail}
+            onOpen={setDrawer}
             onPreview={setPreview}
           />
         )}
@@ -386,6 +404,18 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
       {preview && (
         <EmailPreviewModal email={preview} onClose={() => setPreview(null)} />
       )}
+
+      <AnimatePresence>
+        {drawer && (
+          <EmailDrawer
+            key="email-drawer"
+            drawer={drawer}
+            sequence={sequence}
+            fetcher={fetcher}
+            onClose={() => setDrawer(null)}
+          />
+        )}
+      </AnimatePresence>
     </article>
   );
 }
@@ -533,156 +563,401 @@ function MonitorTab({
   );
 }
 
-function EmailsTab({
-  sequence,
-  fetcher,
-  editingEmail,
-  setEditingEmail,
-  showAddEmail,
-  setShowAddEmail,
-  onPreview,
-}: any) {
+// ── Riel vertical de la secuence (estilo Loops/Attio, contenido, no fullscreen) ──
+
+// Etiqueta de la espera que antecede a un email.
+function waitLabel(email: any) {
+  if (email.schedulingType === "specific_date") return "en fecha fija";
+  const d = email.delayDays || 0;
+  return d === 0 ? "inmediato" : `espera ${d} ${d === 1 ? "día" : "días"}`;
+}
+
+// Día acumulado por email, anclado a la suscripción (Día 0).
+function cumulativeDays(emails: any[]) {
+  let acc = 0;
+  return emails.map((e) => {
+    if (e.schedulingType === "specific_date") {
+      return e.specificDate
+        ? new Date(e.specificDate).toLocaleDateString("es-MX", {
+            day: "numeric",
+            month: "short",
+          })
+        : "fecha sin definir";
+    }
+    acc += e.delayDays || 0;
+    return `Día ${acc}`;
+  });
+}
+
+function EmailsTab({ sequence, fetcher, onOpen, onPreview }: any) {
+  const emails = sequence.emails;
+  const days = cumulativeDays(emails);
+  const lastOrder = emails.length ? emails[emails.length - 1].order : 0;
+  const lastSubject = emails.length
+    ? emails[emails.length - 1].subject
+    : undefined;
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <button
-          onClick={() => setShowAddEmail((s: boolean) => !s)}
-          className="flex items-center gap-2 bg-brand-500 text-brand-900 px-4 py-2 rounded-full text-sm font-medium hover:bg-brand-400 transition-colors"
-        >
-          <FaPlus className="w-3 h-3" />
-          Agregar email
-        </button>
+    <div className="max-w-xl mx-auto pb-4">
+      {/* Trigger */}
+      <div className="flex items-center gap-3 pl-1">
+        <span className="w-9 h-9 rounded-full bg-brand-500/15 border border-brand-500/40 flex items-center justify-center flex-shrink-0">
+          <span className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+        </span>
+        <div>
+          <div className="text-white text-sm font-medium">Se suscribe</div>
+          <div className="text-brand-100 text-xs">Inicio · Día 0</div>
+        </div>
       </div>
 
-      {showAddEmail && (
-        <EmailForm
-          fetcher={fetcher}
-          intent="add_email"
-          sequenceId={sequence.id}
-          onDone={() => setShowAddEmail(false)}
-        />
-      )}
-
-      {sequence.emails.length === 0 ? (
-        !showAddEmail && (
-          <div className="bg-brand-900/40 border border-dashed border-brand-100/20 rounded-lg p-10 text-center">
-            <div className="text-4xl mb-4">✉️</div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              Crea tu primer email
-            </h3>
-            <p className="text-brand-100 text-sm mb-6 max-w-md mx-auto">
-              Escríbelo tú o genéralo con IA, agrega imágenes y programa cuándo
-              se envía. Es lo único que falta para activar tu secuence.
-            </p>
-            <button
-              onClick={() => setShowAddEmail(true)}
-              className="inline-flex items-center gap-2 bg-brand-500 text-brand-900 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-brand-400 transition-colors"
-            >
-              <FaPlus className="w-3 h-3" />
-              Crear primer email
-            </button>
-          </div>
-        )
-      ) : (
-        sequence.emails.map((email: any) => (
-          <div
-            key={email.id}
-            className="bg-brand-900/40 border border-brand-100/10 rounded-lg p-4"
+      {emails.length === 0 ? (
+        <>
+          <Connector first onInsert={() => onOpen({ mode: "add", isFirst: true })} />
+          <button
+            onClick={() => onOpen({ mode: "add", isFirst: true })}
+            className="w-full text-left bg-brand-900/40 border border-dashed border-brand-100/20 rounded-xl p-5 hover:border-brand-500/50 transition-colors group"
           >
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="w-7 h-7 rounded-full bg-brand-500/20 text-brand-100 text-sm flex items-center justify-center flex-shrink-0">
-                  {email.order}
-                </span>
-                <div className="min-w-0">
-                  <div className="text-white font-medium truncate">
-                    {email.subject}
-                  </div>
-                  <div className="text-brand-100 text-xs">
-                    {email.schedulingType === "delay"
-                      ? `Espera ${email.delayDays || 0} días`
-                      : email.specificDate
-                      ? `Fecha: ${new Date(email.specificDate).toLocaleDateString("es-MX")}`
-                      : "Sin programar"}
-                  </div>
+            <div className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-100 group-hover:text-brand-500 flex-shrink-0">
+                <FaPlus className="w-3.5 h-3.5" />
+              </span>
+              <div>
+                <div className="text-white text-sm font-medium">
+                  Crea tu primer email
+                </div>
+                <div className="text-brand-100 text-xs">
+                  Escríbelo o genéralo con IA · agrega imágenes · programa el
+                  envío
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <fetcher.Form method="post">
-                  <input type="hidden" name="intent" value="move_email_up" />
-                  <input type="hidden" name="emailId" value={email.id} />
-                  <button
-                    type="submit"
-                    disabled={email.order <= 1}
-                    className="p-2 text-brand-100 hover:text-white disabled:opacity-30"
-                    title="Subir"
-                  >
-                    <FaArrowUp className="w-3 h-3" />
-                  </button>
-                </fetcher.Form>
-                <button
-                  onClick={() => onPreview(email)}
-                  className="p-2 text-brand-100 hover:text-white"
-                  title="Previsualizar"
-                >
-                  <FaEye className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() =>
-                    setEditingEmail(editingEmail === email.id ? null : email.id)
-                  }
-                  className="px-3 py-1 text-brand-100 hover:text-white text-sm"
-                >
-                  Editar
-                </button>
-                <fetcher.Form
-                  method="post"
-                  onSubmit={(e: any) => {
-                    if (!confirm("¿Eliminar este email?")) e.preventDefault();
-                  }}
-                >
-                  <input type="hidden" name="intent" value="delete_email" />
-                  <input type="hidden" name="emailId" value={email.id} />
-                  <button
-                    type="submit"
-                    className="p-2 text-red-400 hover:text-red-300"
-                    title="Eliminar"
-                  >
-                    <FaTrash className="w-3 h-3" />
-                  </button>
-                </fetcher.Form>
-              </div>
             </div>
-
-            {editingEmail === email.id && (
-              <div className="mt-4 pt-4 border-t border-brand-100/10">
-                <EmailForm
-                  fetcher={fetcher}
-                  intent="edit_email"
-                  email={email}
-                  sequenceId={sequence.id}
-                  onDone={() => setEditingEmail(null)}
-                />
-              </div>
-            )}
-          </div>
+          </button>
+        </>
+      ) : (
+        emails.map((email: any, i: number) => (
+          <Fragment key={email.id}>
+            <Connector
+              first={i === 0}
+              label={waitLabel(email)}
+              onInsert={() =>
+                onOpen({
+                  mode: "add",
+                  afterOrder: email.order - 1,
+                  isFirst: i === 0,
+                  prevSubject: i === 0 ? undefined : emails[i - 1].subject,
+                })
+              }
+            />
+            <RailEmailNode
+              email={email}
+              dayLabel={days[i]}
+              fetcher={fetcher}
+              onEdit={() =>
+                onOpen({
+                  mode: "edit",
+                  email,
+                  isFirst: email.order === 1,
+                  prevSubject: i === 0 ? undefined : emails[i - 1].subject,
+                })
+              }
+              onPreview={() => onPreview(email)}
+            />
+          </Fragment>
         ))
+      )}
+
+      {emails.length > 0 && (
+        <>
+          <Connector
+            onInsert={() =>
+              onOpen({
+                mode: "add",
+                afterOrder: lastOrder,
+                isFirst: false,
+                prevSubject: lastSubject,
+              })
+            }
+          />
+          <button
+            onClick={() =>
+              onOpen({
+                mode: "add",
+                afterOrder: lastOrder,
+                isFirst: false,
+                prevSubject: lastSubject,
+              })
+            }
+            className="flex items-center gap-2 text-brand-100 hover:text-white text-sm pl-1 py-1"
+          >
+            <FaPlus className="w-3 h-3" /> Agregar email
+          </button>
+        </>
       )}
     </div>
   );
 }
 
-function EmailForm({ fetcher, intent, email, sequenceId, onDone }: any) {
+// Conector vertical con chip de espera + botón "+" para insertar en posición.
+function Connector({ label, onInsert }: any) {
+  return (
+    <div className="relative flex flex-col items-center py-1 group">
+      <div className="w-px h-4 bg-brand-100/20" />
+      {label && (
+        <span className="text-[11px] text-brand-100 bg-brand-900/60 border border-brand-100/10 rounded-full px-2.5 py-0.5 my-1">
+          ⏳ {label}
+        </span>
+      )}
+      <div className="w-px h-4 bg-brand-100/20" />
+      <button
+        type="button"
+        onClick={onInsert}
+        title="Insertar email aquí"
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-brand-800 border border-brand-100/20 text-brand-100 opacity-0 group-hover:opacity-100 hover:text-brand-500 hover:border-brand-500/50 transition-all flex items-center justify-center"
+      >
+        <FaPlus className="w-2.5 h-2.5" />
+      </button>
+    </div>
+  );
+}
+
+function RailEmailNode({ email, dayLabel, fetcher, onEdit, onPreview }: any) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="group relative"
+    >
+      <button
+        type="button"
+        onClick={onEdit}
+        className="w-full text-left bg-brand-900/50 border border-brand-100/10 rounded-xl p-4 pr-28 hover:border-brand-500/40 transition-colors flex items-center gap-3"
+      >
+        <span className="w-9 h-9 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-100 flex-shrink-0">
+          <FaEnvelope className="w-3.5 h-3.5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-white font-medium truncate">{email.subject}</div>
+          <div className="text-brand-100 text-xs mt-0.5">{dayLabel}</div>
+        </div>
+      </button>
+      <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <fetcher.Form method="post">
+          <input type="hidden" name="intent" value="move_email_up" />
+          <input type="hidden" name="emailId" value={email.id} />
+          <button
+            type="submit"
+            disabled={email.order <= 1}
+            className="p-2 text-brand-100 hover:text-white disabled:opacity-30"
+            title="Subir"
+          >
+            <FaArrowUp className="w-3 h-3" />
+          </button>
+        </fetcher.Form>
+        <button
+          type="button"
+          onClick={onPreview}
+          className="p-2 text-brand-100 hover:text-white"
+          title="Previsualizar"
+        >
+          <FaEye className="w-3 h-3" />
+        </button>
+        <fetcher.Form
+          method="post"
+          onSubmit={(e: any) => {
+            if (!confirm("¿Eliminar este email?")) e.preventDefault();
+          }}
+        >
+          <input type="hidden" name="intent" value="delete_email" />
+          <input type="hidden" name="emailId" value={email.id} />
+          <button
+            type="submit"
+            className="p-2 text-red-400 hover:text-red-300"
+            title="Eliminar"
+          >
+            <FaTrash className="w-3 h-3" />
+          </button>
+        </fetcher.Form>
+      </div>
+    </motion.div>
+  );
+}
+
+function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
+  const email = drawer.mode === "edit" ? drawer.email : undefined;
+  const intent = drawer.mode === "edit" ? "edit_email" : "add_email";
+  const { isFirst, prevSubject } = drawer;
+
   const [schedulingType, setSchedulingType] = useState(
     email?.schedulingType || "delay"
   );
   const [subject, setSubject] = useState(email?.subject || "");
   const [content, setContent] = useState(email?.content || "");
-  const [delayDays, setDelayDays] = useState<number>(email?.delayDays ?? 0);
+  const [delayDays, setDelayDays] = useState<number>(
+    email?.delayDays ?? (isFirst ? 0 : 1)
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/50 z-50"
+      />
+      <motion.aside
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 280 }}
+        className="fixed top-0 right-0 h-full w-full max-w-lg bg-brand-900 border-l border-brand-100/10 z-50 overflow-y-auto"
+      >
+        <div className="flex items-center justify-between p-5 border-b border-brand-100/10 sticky top-0 bg-brand-900 z-10">
+          <h3 className="text-white font-semibold">
+            {email ? "Editar email" : "Nuevo email"}
+          </h3>
+          <button onClick={onClose} className="text-brand-100 hover:text-white">
+            <FaTimes />
+          </button>
+        </div>
+
+        <fetcher.Form
+          method="post"
+          className="p-5 space-y-4"
+          onSubmit={() => setTimeout(onClose, 150)}
+        >
+          <input type="hidden" name="intent" value={intent} />
+          {email && <input type="hidden" name="emailId" value={email.id} />}
+          {drawer.mode === "add" && drawer.afterOrder !== undefined && (
+            <input type="hidden" name="afterOrder" value={drawer.afterOrder} />
+          )}
+          <input type="hidden" name="schedulingType" value={schedulingType} />
+
+          <div>
+            <label className="block text-xs text-brand-100 mb-1">Asunto</label>
+            <input
+              type="text"
+              name="subject"
+              required
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Asunto del email"
+              className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
+            />
+          </div>
+
+          {/* ¿Cuándo se envía? — con ancla */}
+          <div>
+            <label className="block text-xs text-brand-100 mb-1.5">
+              ¿Cuándo se envía?
+            </label>
+            <div className="flex gap-2 mb-2">
+              {[
+                { id: "delay", label: "Espera relativa" },
+                { id: "specific_date", label: "Fecha fija" },
+              ].map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => setSchedulingType(o.id)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                    schedulingType === o.id
+                      ? "bg-brand-500 text-brand-900 border-brand-500"
+                      : "text-brand-100 border-brand-100/20 hover:text-white"
+                  )}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+
+            {schedulingType === "delay" ? (
+              <div className="bg-brand-800/30 border border-brand-100/10 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-sm text-white flex-wrap">
+                  <span>{isFirst ? "Al suscribirse, esperar" : "Esperar"}</span>
+                  <input
+                    type="number"
+                    name="delayDays"
+                    min="0"
+                    value={delayDays}
+                    onChange={(e) => setDelayDays(parseInt(e.target.value) || 0)}
+                    className="w-16 px-2 py-1 bg-brand-900/60 border border-brand-100/20 rounded text-white text-sm text-center focus:outline-none focus:border-brand-500"
+                  />
+                  <span>
+                    {isFirst
+                      ? "días"
+                      : `días después de «${prevSubject || "el email anterior"}»`}
+                  </span>
+                </div>
+                <p className="text-brand-100 text-xs mt-2">
+                  🕒{" "}
+                  {isFirst
+                    ? delayDays > 0
+                      ? `Se envía el Día ${delayDays}.`
+                      : "Se envía inmediatamente al suscribirse (Día 0)."
+                    : `Se envía ${delayDays} ${delayDays === 1 ? "día" : "días"} después del email anterior.`}
+                </p>
+              </div>
+            ) : (
+              <input
+                type="datetime-local"
+                name="specificDate"
+                defaultValue={
+                  email?.specificDate
+                    ? new Date(email.specificDate).toISOString().slice(0, 16)
+                    : ""
+                }
+                className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
+              />
+            )}
+          </div>
+
+          <EmailBody
+            content={content}
+            setContent={setContent}
+            subject={subject}
+            sequenceId={sequence.id}
+            error={error}
+            setError={setError}
+          />
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-brand-100 hover:text-white text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="bg-brand-500 text-brand-900 px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-400"
+            >
+              Guardar
+            </button>
+          </div>
+        </fetcher.Form>
+      </motion.aside>
+    </>
+  );
+}
+
+// Área de contenido del email — AISLADA para enchufar el editor de easybits
+// después (hoy: IA + HTML + imagen + preview; mañana: modo easybits/Section3).
+function EmailBody({
+  content,
+  setContent,
+  subject,
+  sequenceId,
+  error,
+  setError,
+}: any) {
   const [aiPrompt, setAiPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"edit" | "preview">("edit");
 
   async function generateWithAI() {
     if (!aiPrompt.trim() || generating) return;
@@ -728,52 +1003,24 @@ function EmailForm({ fetcher, intent, email, sequenceId, onDone }: any) {
     }
   }
 
-  const scheduleText =
-    schedulingType === "delay"
-      ? delayDays > 0
-        ? `Se enviará ${delayDays} ${delayDays === 1 ? "día" : "días"} después del email anterior.`
-        : "Se enviará inmediatamente después del email anterior."
-      : "Se enviará en la fecha y hora que elijas.";
-
   return (
-    <fetcher.Form
-      method="post"
-      className="bg-brand-900/40 border border-brand-100/10 rounded-lg p-4 space-y-3"
-      onSubmit={() => onDone && setTimeout(onDone, 100)}
-    >
-      <input type="hidden" name="intent" value={intent} />
-      {email && <input type="hidden" name="emailId" value={email.id} />}
-
-      <div>
-        <label className="block text-xs text-brand-100 mb-1">Asunto</label>
-        <input
-          type="text"
-          name="subject"
-          required
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
-        />
-      </div>
-
+    <div className="space-y-2">
       {/* Generar con IA */}
       <div className="bg-brand-800/30 border border-brand-100/10 rounded-lg p-3 space-y-2">
-        <label className="block text-xs text-brand-100">
-          ✨ Generar con IA
-        </label>
+        <label className="block text-xs text-brand-100">✨ Generar con IA</label>
         <div className="flex gap-2">
           <input
             type="text"
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="Ej. invita a un taller de React el próximo sábado"
+            placeholder="Ej. invita a un taller de React el sábado"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 generateWithAI();
               }
             }}
-            className="flex-1 px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white placeholder-brand-300 text-sm focus:outline-none focus:border-brand-500"
+            className="flex-1 px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white placeholder-brand-100/50 text-sm focus:outline-none focus:border-brand-500"
           />
           <button
             type="button"
@@ -786,86 +1033,29 @@ function EmailForm({ fetcher, intent, email, sequenceId, onDone }: any) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs text-brand-100 mb-1">
-            Programación
-          </label>
-          <select
-            name="schedulingType"
-            value={schedulingType}
-            onChange={(e) => setSchedulingType(e.target.value)}
-            className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
-          >
-            <option value="delay">Espera (días)</option>
-            <option value="specific_date">Fecha específica</option>
-          </select>
-        </div>
-        <div>
-          {schedulingType === "delay" ? (
-            <>
-              <label className="block text-xs text-brand-100 mb-1">Días</label>
-              <input
-                type="number"
-                name="delayDays"
-                min="0"
-                value={delayDays}
-                onChange={(e) => setDelayDays(parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
-              />
-            </>
-          ) : (
-            <>
-              <label className="block text-xs text-brand-100 mb-1">
-                Fecha y hora
-              </label>
-              <input
-                type="datetime-local"
-                name="specificDate"
-                defaultValue={
-                  email?.specificDate
-                    ? new Date(email.specificDate).toISOString().slice(0, 16)
-                    : ""
-                }
-                className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
-              />
-            </>
-          )}
-        </div>
-      </div>
-      <p className="text-brand-100 text-xs -mt-1">🕒 {scheduleText}</p>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs text-brand-100 mb-1">
-            Nombre remitente
-          </label>
-          <input
-            type="text"
-            name="fromName"
-            defaultValue={email?.fromName || "FixterGeek"}
-            className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-brand-100 mb-1">
-            Email remitente
-          </label>
-          <input
-            type="email"
-            name="fromEmail"
-            defaultValue={email?.fromEmail || "contacto@fixter.org"}
-            className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
-          />
-        </div>
-      </div>
-
-      {/* Contenido + preview en vivo */}
+      {/* Contenido: toggle Editar | Vista previa + subir imagen */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="block text-xs text-brand-100">
-            Contenido (HTML)
-          </label>
+          <div className="flex gap-1 text-xs">
+            {[
+              { id: "edit", label: "Editar" },
+              { id: "preview", label: "Vista previa" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setView(t.id as any)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md transition-colors",
+                  view === t.id
+                    ? "bg-brand-800 text-white"
+                    : "text-brand-100 hover:text-white"
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
           <label className="text-xs text-brand-100 hover:text-white cursor-pointer">
             {uploading ? "Subiendo…" : "📎 Subir imagen"}
             <input
@@ -881,21 +1071,27 @@ function EmailForm({ fetcher, intent, email, sequenceId, onDone }: any) {
             />
           </label>
         </div>
-        <div className="grid md:grid-cols-2 gap-3">
-          <textarea
-            name="content"
-            rows={12}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="HTML del email, o genéralo con IA arriba…"
-            className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-brand-500"
-          />
+
+        {/* El textarea siempre montado (name=content) para que se envíe; se
+            oculta en preview sin desmontarse. */}
+        <textarea
+          name="content"
+          rows={14}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="HTML del email, o genéralo con IA arriba…"
+          className={cn(
+            "w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-brand-500",
+            view === "preview" && "hidden"
+          )}
+        />
+        {view === "preview" && (
           <div className="border border-brand-100/20 rounded-lg overflow-hidden bg-white">
             <div className="text-[10px] text-gray-500 px-3 py-1 bg-gray-50 border-b border-gray-200">
               Vista previa
             </div>
             <div
-              className="p-3 overflow-y-auto max-h-[260px] text-sm text-gray-900"
+              className="p-3 overflow-y-auto max-h-[360px] text-sm text-gray-900"
               dangerouslySetInnerHTML={{
                 __html:
                   content ||
@@ -903,27 +1099,11 @@ function EmailForm({ fetcher, intent, email, sequenceId, onDone }: any) {
               }}
             />
           </div>
-        </div>
+        )}
       </div>
 
       {error && <p className="text-red-400 text-xs">{error}</p>}
-
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onDone}
-          className="px-4 py-2 text-brand-100 hover:text-white text-sm"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="bg-brand-500 text-brand-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-400"
-        >
-          Guardar
-        </button>
-      </div>
-    </fetcher.Form>
+    </div>
   );
 }
 
