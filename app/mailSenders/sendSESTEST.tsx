@@ -8,6 +8,8 @@ export type SendSESTESTOptions = {
   tags?: SesTag[];
   trackOpens?: boolean;
   to?: boolean;
+  from?: string;
+  headers?: Record<string, string>;
 };
 
 export type SendSESTESTResult = {
@@ -33,6 +35,8 @@ export const sendSESTEST = async (
     tags,
     trackOpens = false,
     to: useTo = false,
+    from,
+    headers,
   } = data || {};
 
   const configurationSet = process.env.SES_CONFIGURATION_SET;
@@ -52,10 +56,11 @@ export const sendSESTEST = async (
 
   try {
     const result = await getSesTransport().sendMail({
-      from: getSesRemitent(),
+      from: from || getSesRemitent(),
       subject,
       ...(useTo ? { to: email } : { bcc: email }),
       html: finalHtml,
+      ...(headers ? { headers } : {}),
       ...sesOptions,
     });
     return {

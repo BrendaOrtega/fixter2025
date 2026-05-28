@@ -25,9 +25,13 @@ ${preheader}
       <tr><td style="padding:16px 32px 32px 32px;color:#19262A;font-size:16px;line-height:1.6;">
 ${innerHtml}
       </td></tr>
-      <tr><td style="padding:20px 32px;background:#19262A;color:#DAE8E5;font-size:12px;line-height:1.5;">
+      <tr><td style="padding:18px 32px;background:#0f1a1d;text-align:center;color:#DAE8E5;font-size:13px;line-height:1.5;">
+        ¿Quieres crear una secuencia de correo como esta?<br/>
+        <a href="https://www.fixtergeek.com/secuencias" style="color:#85DDCB;text-decoration:none;font-weight:bold;">Créala gratis en FixterGeek →</a>
+      </td></tr>
+      <tr><td style="padding:14px 32px;background:#19262A;color:#7e9499;font-size:11px;line-height:1.5;text-align:center;">
         Enviado con <strong style="color:#85DDCB;">Secuencias</strong> · FixterGeek<br/>
-        <a href="https://www.fixtergeek.com/secuencias" style="color:#85DDCB;text-decoration:none;">Administra tus suscripciones</a>
+        <a href="{{unsubscribe}}" style="color:#7e9499;text-decoration:underline;">Cancelar suscripción</a>
       </td></tr>
     </table>
   </td></tr>

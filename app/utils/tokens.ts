@@ -221,6 +221,48 @@ export const validateSequenceVideoToken = (
 };
 
 // ==========================================
+// Token de baja (unsubscribe) de una secuencia
+// ==========================================
+
+export type SequenceUnsubscribeTokenData = {
+  enrollmentId: string;
+  action: "sequence-unsubscribe";
+};
+
+export const generateSequenceUnsubscribeToken = (
+  enrollmentId: string
+): string => {
+  const data: SequenceUnsubscribeTokenData = {
+    enrollmentId,
+    action: "sequence-unsubscribe",
+  };
+  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+    expiresIn: "365d",
+  });
+};
+
+export const validateSequenceUnsubscribeToken = (
+  token: string
+): {
+  isValid: boolean;
+  decoded?: SequenceUnsubscribeTokenData;
+  error?: string;
+} => {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "fixtergeek"
+    ) as SequenceUnsubscribeTokenData;
+    if (decoded.action !== "sequence-unsubscribe") {
+      return { isValid: false, error: "Token inválido" };
+    }
+    return { isValid: true, decoded };
+  } catch (e: unknown) {
+    return { isValid: false, error: "Enlace inválido" };
+  }
+};
+
+// ==========================================
 // Magic Link para Lead Magnets (descarga de recursos)
 // ==========================================
 

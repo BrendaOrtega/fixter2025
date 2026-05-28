@@ -1,6 +1,8 @@
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
-import { sendSesEmailDirect, getSesRemitent } from "~/utils/sesTransport";
+import { sendSesEmailDirect } from "~/utils/sesTransport";
 import { generateSequenceSubscribeToken } from "~/utils/tokens";
+
+const SEQUENCE_FROM = "FixterGeek <secuencias@fixtergeek.com>";
 
 const baseUrl =
   process.env.NODE_ENV === "development"
@@ -41,12 +43,16 @@ export async function sendSequenceConfirmation({
       Si no solicitaste esto, ignora este correo. El enlace expira en 7 días.
     </p>`;
 
+  // El correo de confirmación es opt-in (aún no hay enrollment) → el placeholder
+  // de baja apunta a la gestión de suscripciones.
+  const htmlBody = wrapEmailHtml(inner, {
+    preheader: `Confirma tu suscripción a ${sequenceName}`,
+  }).replace(/\{\{unsubscribe\}\}/g, `${baseUrl}/secuencias`);
+
   return sendSesEmailDirect({
     to: email,
-    from: getSesRemitent(),
+    from: SEQUENCE_FROM,
     subject: `Confirma tu suscripción a ${sequenceName}`,
-    htmlBody: wrapEmailHtml(inner, {
-      preheader: `Confirma tu suscripción a ${sequenceName}`,
-    }),
+    htmlBody,
   });
 }

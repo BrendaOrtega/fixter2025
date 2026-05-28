@@ -94,24 +94,27 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const subject = (formData.get("subject") as string) || "(sin asunto)";
     const content = (formData.get("content") as string) || "";
     const videoSlug = (formData.get("videoSlug") as string) || null;
+    const base =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3000"
+        : "https://www.fixtergeek.com";
     let html = content;
     if (videoSlug) {
-      const base =
-        process.env.NODE_ENV === "development"
-          ? "http://localhost:3000"
-          : "https://www.fixtergeek.com";
       // En prueba no hay enrollment → link de ejemplo (solo para ver el render).
       html += `<div style="text-align:center;margin:16px 0">${emailButton(
         "▶ Ver el video",
         `${base}/s/${sequenceId}`
       )}</div>`;
     }
+    // En prueba no hay token de baja real → apunta a la gestión de suscripciones.
+    html = html.replace(/\{\{unsubscribe\}\}/g, `${base}/secuencias`);
     const dest = (formData.get("testEmail") as string)?.trim();
     const to = dest && dest.includes("@") ? dest : user.email;
     const { sendSESTEST } = await import("~/mailSenders/sendSESTEST");
     const result = await sendSESTEST(to, {
       subject: `[PRUEBA] ${subject}`,
       html,
+      from: "FixterGeek <secuencias@fixtergeek.com>",
       to: true,
     });
     if (!result?.messageId) {

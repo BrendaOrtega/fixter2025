@@ -1,12 +1,19 @@
 import { db } from "~/.server/db";
 import { sendSESTEST } from "~/mailSenders/sendSESTEST";
 import { emailButton } from "~/utils/emailShell";
-import { generateSequenceVideoToken } from "~/utils/tokens";
+import {
+  generateSequenceVideoToken,
+  generateSequenceUnsubscribeToken,
+} from "~/utils/tokens";
 
 const baseUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
     : "https://www.fixtergeek.com";
+
+// Remitente de las secuencias (dominio verificado en SES → buena entregabilidad,
+// a diferencia de enviar como @gmail.com que rompe DMARC).
+export const SEQUENCE_FROM = "FixterGeek <secuencias@fixtergeek.com>";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -102,10 +109,21 @@ export async function processDueEnrollments(): Promise<{
         : `${html}\n<div style="text-align:center;margin:16px 0">${button}</div>`;
     }
 
+    // Link de baja tokenizado por suscriptor (footer + header List-Unsubscribe).
+    const unsubscribeUrl = `${baseUrl}/s/baja?token=${generateSequenceUnsubscribeToken(
+      enrollment.id
+    )}`;
+    html = html.replace(/\{\{unsubscribe\}\}/g, unsubscribeUrl);
+
     try {
       const sendResult = await sendSESTEST(subscriber.email, {
         subject: nextEmail.subject,
         html,
+        from: SEQUENCE_FROM,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
         trackOpens: true,
         to: true,
         tags: [
