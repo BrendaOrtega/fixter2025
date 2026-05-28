@@ -128,6 +128,7 @@ export default [
     route("ai.text-command", "routes/api/ai.text-command.ts"),
     route("ai.email", "routes/api/ai.email.ts"),
     route("email-image", "routes/api/email-image.ts"),
+    route("extract-text", "routes/api/extract-text.ts"),
     route("leadmagnets", "routes/api/leadmagnets.ts"),
     route("waitlist", "routes/api/waitlist.ts"),
     route("coach", "routes/api/coach.tsx"),
