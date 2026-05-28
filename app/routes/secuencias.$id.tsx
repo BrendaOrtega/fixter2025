@@ -1676,6 +1676,16 @@ function SettingsTab({ sequence, fetcher }: any) {
   );
 }
 
+// Fecha humana es-MX (sin segundos); con hora si withTime.
+function fmtMX(d: any, withTime = false) {
+  return new Date(d).toLocaleString("es-MX", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    ...(withTime ? { hour: "numeric", minute: "2-digit", hour12: true } : {}),
+  });
+}
+
 function SubscriberModal({ enrollment, sequence, onClose }: any) {
   return (
     <div
@@ -1705,15 +1715,13 @@ function SubscriberModal({ enrollment, sequence, onClose }: any) {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="text-brand-100 text-xs">Suscrito</div>
-              <div className="text-white">
-                {new Date(enrollment.enrolledAt).toLocaleDateString("es-MX")}
-              </div>
+              <div className="text-white">{fmtMX(enrollment.enrolledAt)}</div>
             </div>
             <div>
               <div className="text-brand-100 text-xs">Próximo email</div>
               <div className="text-white">
                 {enrollment.nextEmailAt
-                  ? new Date(enrollment.nextEmailAt).toLocaleString("es-MX")
+                  ? fmtMX(enrollment.nextEmailAt, true)
                   : "—"}
               </div>
             </div>
