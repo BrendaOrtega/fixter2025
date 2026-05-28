@@ -16,7 +16,7 @@ const isValidId = (id?: string) => !!id && /^[0-9a-fA-F]{24}$/.test(id);
 
 export const meta = ({ data: d }: Route.MetaArgs) => {
   if (!d?.sequence) {
-    return getMetaTags({ title: "Secuence no disponible | FixterGeek" });
+    return getMetaTags({ title: "Secuencia no disponible | FixterGeek" });
   }
   return getMetaTags({
     title: `Suscríbete a ${d.sequence.name} | FixterGeek`,
@@ -74,14 +74,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   if (!isValidId(params.id)) {
-    return data({ error: "Secuence no disponible" }, { status: 404 });
+    return data({ error: "Secuencia no disponible" }, { status: 404 });
   }
   const sequence = await db.sequence.findUnique({
     where: { id: params.id as string },
     include: { emails: { orderBy: { order: "asc" }, take: 1 } },
   });
   if (!sequence || !sequence.isActive) {
-    return data({ error: "Secuence no disponible" }, { status: 404 });
+    return data({ error: "Secuencia no disponible" }, { status: 404 });
   }
 
   let subscriber = await db.subscriber.findUnique({ where: { email } });
@@ -162,7 +162,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
         <div className="text-center max-w-md">
           <div className="text-5xl mb-4">📭</div>
           <h1 className="text-2xl font-bold text-white mb-2">
-            Esta secuence no está disponible
+            Esta secuencia no está disponible
           </h1>
           <p className="text-brand-100">
             Es posible que el enlace sea incorrecto o que ya no esté activa.
@@ -205,7 +205,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
               </h2>
               <p className="text-brand-100">
                 {enrolled
-                  ? "Ya quedaste suscrito a esta secuence. Pronto recibirás el primer email."
+                  ? "Ya quedaste suscrito a esta secuencia. Pronto recibirás el primer email."
                   : "Te enviamos un enlace para confirmar tu suscripción. Haz clic en él para empezar a recibir los emails."}
               </p>
             </div>

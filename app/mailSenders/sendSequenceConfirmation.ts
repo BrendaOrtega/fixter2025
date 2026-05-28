@@ -1,4 +1,4 @@
-import { wrapEmailHtml, emailButton } from "~/.server/emailShell";
+import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import { sendSesEmailDirect, getSesRemitent } from "~/utils/sesTransport";
 import { generateSequenceSubscribeToken } from "~/utils/tokens";
 
@@ -8,7 +8,7 @@ const baseUrl =
     : "https://www.fixtergeek.com";
 
 /**
- * Email de doble opt-in: pide confirmar la suscripción a una secuence.
+ * Email de doble opt-in: pide confirmar la suscripción a una secuencia.
  * El link lleva un token firmado que, al abrirse en /s/confirmar, confirma
  * al subscriber y crea el enrollment.
  */

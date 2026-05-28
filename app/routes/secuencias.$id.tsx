@@ -6,11 +6,13 @@ import {
   redirect,
   Link,
 } from "react-router";
-import type { Route } from "./+types/secuences.$id";
+import type { Route } from "./+types/secuencias.$id";
 import { getUserOrRedirect } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
 import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
+import { marked } from "marked";
+import { wrapEmailHtml } from "~/utils/emailShell";
 import { useFetcher } from "react-router";
 import {
   FaArrowLeft,
@@ -26,7 +28,7 @@ import {
 async function requireOwnedSequence(userId: string, sequenceId: string) {
   const sequence = await db.sequence.findUnique({ where: { id: sequenceId } });
   if (!sequence || sequence.ownerId !== userId) {
-    throw redirect("/secuences");
+    throw redirect("/secuencias");
   }
   return sequence;
 }
@@ -47,7 +49,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   });
 
-  if (!sequence) throw redirect("/secuences");
+  if (!sequence) throw redirect("/secuencias");
 
   return { sequence };
 };
@@ -69,7 +71,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       where: { id: sequenceId },
       data: { name, description },
     });
-    return { success: true, message: "Secuence actualizada" };
+    return { success: true, message: "Secuencia actualizada" };
   }
 
   if (intent === "toggle_active") {
@@ -212,7 +214,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export const meta = () =>
-  getMetaTags({ title: "Gestionar secuence — Secuences" });
+  getMetaTags({ title: "Gestionar secuencia — Secuencias" });
 
 // ── Métricas agregadas (arrays SES son 0/1 por enrollment → booleanos) ──
 function aggregate(enrollments: any[]) {
@@ -245,9 +247,7 @@ function aggregate(enrollments: any[]) {
 export default function ManageSequence({ loaderData }: Route.ComponentProps) {
   const { sequence } = loaderData;
   const fetcher = useFetcher();
-  const [tab, setTab] = useState<"monitor" | "emails" | "settings">(
-    sequence.emails.length === 0 ? "emails" : "monitor"
-  );
+  const [tab, setTab] = useState<"monitor" | "emails" | "settings">("emails");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [detail, setDetail] = useState<any>(null);
@@ -282,11 +282,11 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
     <article className="min-h-screen pt-40 pb-32">
       <section className="max-w-5xl mx-auto px-4 md:px-[5%] xl:px-0">
         <Link
-          to="/secuences"
+          to="/secuencias"
           className="inline-flex items-center gap-2 text-brand-100 hover:text-white text-sm mb-8 transition-colors"
         >
           <FaArrowLeft className="w-3 h-3" />
-          Mis Secuences
+          Mis Secuencias
         </Link>
 
         <div className="flex items-start justify-between mb-8">
@@ -329,7 +329,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
                     : "bg-brand-500 text-brand-900 hover:bg-brand-400"
                 )}
               >
-                {sequence.isActive ? "Pausar secuence" : "Activar secuence"}
+                {sequence.isActive ? "Pausar secuencia" : "Activar secuencia"}
               </button>
             </fetcher.Form>
           </div>
@@ -348,8 +348,8 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-brand-100/10">
           {[
-            { id: "monitor", label: "Suscriptores" },
             { id: "emails", label: `Emails (${totalEmails})` },
+            { id: "monitor", label: "Suscriptores" },
             { id: "settings", label: "Ajustes" },
           ].map((t) => (
             <button
@@ -562,7 +562,7 @@ function MonitorTab({
   );
 }
 
-// ── Riel vertical de la secuence (estilo Loops/Attio, contenido, no fullscreen) ──
+// ── Riel vertical de la secuencia (estilo Loops/Attio, contenido, no fullscreen) ──
 
 // Etiqueta de la espera que antecede a un email.
 function waitLabel(email: any) {
@@ -600,15 +600,15 @@ function EmailsTab({ sequence, fetcher, onOpen, onPreview }: any) {
 
   return (
     <div className="max-w-xl mx-auto pb-4">
-      {/* Trigger */}
-      <div className="flex items-center gap-3 pl-1">
-        <span className="w-9 h-9 rounded-full bg-brand-500/15 border border-brand-500/40 flex items-center justify-center flex-shrink-0">
-          <span className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+      {/* Trigger (centrado sobre la línea del tiempo) */}
+      <div className="flex justify-center">
+        <span className="inline-flex items-center gap-2 bg-brand-900/60 border border-brand-500/30 rounded-full pl-2 pr-4 py-1.5">
+          <span className="w-6 h-6 rounded-full bg-brand-500/15 flex items-center justify-center flex-shrink-0">
+            <span className="w-2 h-2 rounded-full bg-brand-500" />
+          </span>
+          <span className="text-white text-sm font-medium">Se suscribe</span>
+          <span className="text-brand-100/60 text-xs">· Día 0</span>
         </span>
-        <div>
-          <div className="text-white text-sm font-medium">Se suscribe</div>
-          <div className="text-brand-100 text-xs">Inicio · Día 0</div>
-        </div>
       </div>
 
       {emails.length === 0 ? (
@@ -692,6 +692,17 @@ function EmailsTab({ sequence, fetcher, onOpen, onPreview }: any) {
           >
             <FaPlus className="w-3 h-3" /> Agregar email
           </button>
+
+          {/* Nodo de finalización — centrado, cierra el riel */}
+          <Connector />
+          <div className="flex justify-center mt-1">
+            <span className="inline-flex items-center gap-2 bg-brand-900/60 border border-brand-100/15 rounded-full px-4 py-1.5">
+              <span className="text-sm">🏁</span>
+              <span className="text-brand-100 text-sm font-medium">
+                Fin de la secuencia
+              </span>
+            </span>
+          </div>
         </>
       )}
     </div>
@@ -709,14 +720,16 @@ function Connector({ label, onInsert }: any) {
         </span>
       )}
       <div className="w-px h-4 bg-brand-100/20" />
-      <button
-        type="button"
-        onClick={onInsert}
-        title="Insertar email aquí"
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-brand-800 border border-brand-100/20 text-brand-100 opacity-0 group-hover:opacity-100 hover:text-brand-500 hover:border-brand-500/50 transition-all flex items-center justify-center"
-      >
-        <FaPlus className="w-2.5 h-2.5" />
-      </button>
+      {onInsert && (
+        <button
+          type="button"
+          onClick={onInsert}
+          title="Insertar email aquí"
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-brand-800 border border-brand-100/20 text-brand-100 opacity-0 group-hover:opacity-100 hover:text-brand-500 hover:border-brand-500/50 transition-all flex items-center justify-center"
+        >
+          <FaPlus className="w-2.5 h-2.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -837,6 +850,15 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [attemptClose]);
+
+  // Bloquea el scroll del fondo mientras el drawer está abierto.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   return (
     <>
@@ -986,6 +1008,31 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
   );
 }
 
+// Chime suave (sin assets) al terminar de generar — dos notas ascendentes.
+function playChime() {
+  try {
+    const Ctx =
+      window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    [659.25, 987.77].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const start = now + i * 0.09;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.12, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.3);
+    });
+    setTimeout(() => ctx.close(), 700);
+  } catch {}
+}
+
 // Área de contenido del email — AISLADA para enchufar el editor de easybits
 // después (hoy: IA + HTML + imagen + preview; mañana: modo easybits/Section3).
 function EmailBody({
@@ -1010,15 +1057,32 @@ function EmailBody({
     if (!aiPrompt.trim() || generating) return;
     setGenerating(true);
     setError(null);
+    setView("preview"); // mostrar el preview mientras el email va apareciendo
     try {
       const res = await fetch("/api/ai.email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: aiPrompt, subject, context }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudo generar el email");
-      setContent(data.html);
+      if (!res.ok || !res.body) {
+        let msg = "No se pudo generar el email";
+        try {
+          const j = await res.json();
+          msg = j.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+      // Lee el stream de markdown y va envolviendo en el shell en vivo.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let md = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        md += decoder.decode(value, { stream: true });
+        setContent(wrapEmailHtml(await marked.parse(md), { preheader: subject }));
+      }
+      playChime(); // sonido al terminar el streaming
     } catch (e: any) {
       setError(e.message);
     } finally {

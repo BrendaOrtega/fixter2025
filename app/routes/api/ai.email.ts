@@ -1,9 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
-import { generateText } from "ai";
+import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { marked } from "marked";
 import { getUserOrRedirect } from "~/.server/dbGetters";
-import { wrapEmailHtml } from "~/.server/emailShell";
 
 const SYSTEM_PROMPT = `Eres un copywriter experto en email marketing para FixterGeek, en español mexicano profesional e internacional (nunca voseo argentino).
 
@@ -25,34 +23,45 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   await getUserOrRedirect(request);
 
-  try {
-    const { prompt, subject, context } = await request.json();
-    if (!prompt || typeof prompt !== "string") {
-      return Response.json({ error: "prompt is required" }, { status: 400 });
-    }
-
-    const ctx =
-      typeof context === "string" && context.trim()
-        ? `CONTEXTO (úsalo como ÚNICA fuente de hechos; no inventes nada fuera de esto):\n"""\n${context.trim().slice(0, 20000)}\n"""\n\n`
-        : "";
-    const fullPrompt =
-      ctx +
-      (subject ? `Asunto del email: "${subject}".\n` : "") +
-      `Genera el cuerpo del email sobre: ${prompt}`;
-
-    const { text: markdown } = await generateText({
-      model: anthropic("claude-haiku-4-5-20251001"),
-      system: SYSTEM_PROMPT,
-      prompt: fullPrompt,
-      temperature: 0.7,
-    });
-
-    const innerHtml = await marked.parse(markdown);
-    const html = wrapEmailHtml(innerHtml, { preheader: subject || undefined });
-
-    return Response.json({ html, markdown });
-  } catch (error) {
-    console.error("ai.email generation failed:", error);
-    return Response.json({ error: "No se pudo generar el email" }, { status: 500 });
+  const { prompt, subject, context } = await request.json();
+  if (!prompt || typeof prompt !== "string") {
+    return Response.json({ error: "prompt is required" }, { status: 400 });
   }
+
+  const ctx =
+    typeof context === "string" && context.trim()
+      ? `CONTEXTO (úsalo como ÚNICA fuente de hechos; no inventes nada fuera de esto):\n"""\n${context.trim().slice(0, 20000)}\n"""\n\n`
+      : "";
+  const fullPrompt =
+    ctx +
+    (subject ? `Asunto del email: "${subject}".\n` : "") +
+    `Genera el cuerpo del email sobre: ${prompt}`;
+
+  const result = streamText({
+    model: anthropic("claude-haiku-4-5-20251001"),
+    system: SYSTEM_PROMPT,
+    prompt: fullPrompt,
+    temperature: 0.7,
+  });
+
+  // Stream del markdown como texto plano; el cliente lo convierte a HTML y lo
+  // envuelve en el shell en vivo para que aparezca en el preview del drawer.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const chunk of result.textStream) {
+          controller.enqueue(encoder.encode(chunk));
+        }
+        controller.close();
+      } catch (e) {
+        console.error("ai.email stream failed:", e);
+        controller.error(e);
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 };

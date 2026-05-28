@@ -5,7 +5,7 @@ import {
   redirect,
   Link,
 } from "react-router";
-import type { Route } from "./+types/secuences";
+import type { Route } from "./+types/secuencias";
 import { getUserOrRedirect, getUserOrNull } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
 import { getOrCreateSubscriberForUser, calculateNextEmailDate } from "~/.server/sequences";
@@ -41,7 +41,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     enrolledSequences = allEnrollments.filter((e) => e.status === "active");
     pausedSequences = allEnrollments.filter((e) => e.status === "paused");
 
-    // Secuences que el user creó (lado creador)
+    // Secuencias que el user creó (lado creador)
     mySequences = await db.sequence.findMany({
       where: { ownerId: user.id },
       include: { _count: { select: { emails: true, enrollments: true } } },
@@ -93,7 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const description = (formData.get("description") as string)?.trim() || null;
 
     if (!name) {
-      return { error: "Ponle un nombre a tu secuence" };
+      return { error: "Ponle un nombre a tu secuencia" };
     }
 
     const created = await db.sequence.create({
@@ -106,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    throw redirect(`/secuences/${created.id}`);
+    throw redirect(`/secuencias/${created.id}`);
   }
 
   if (intent === "pause_sequence") {
@@ -210,9 +210,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export const meta = () =>
   getMetaTags({
-    title: "Secuences — Administra tus newsletters",
+    title: "Secuencias — Administra tus newsletters",
     description:
-      "Crea y administra tus propias secuencias de email, y suscríbete a las de otros. Administra tus newsletters con Secuences.",
+      "Crea y administra tus propias secuencias de email, y suscríbete a las de otros. Administra tus newsletters con Secuencias.",
   });
 
 export default function Route({
@@ -232,7 +232,7 @@ export default function Route({
     "creator" | "subscriptions" | "discover" | "settings"
   >(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("secuences-active-tab");
+      const saved = localStorage.getItem("secuencias-active-tab");
       if (
         saved === "creator" ||
         saved === "subscriptions" ||
@@ -249,7 +249,7 @@ export default function Route({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("secuences-active-tab", activeTab);
+      localStorage.setItem("secuencias-active-tab", activeTab);
     }
   }, [activeTab]);
 
@@ -263,7 +263,7 @@ export default function Route({
               Suscripción eliminada
             </h1>
             <p className="text-brand-100 mb-8">
-              Has sido desuscrito exitosamente de todas tus secuences.
+              Has sido desuscrito exitosamente de todas tus secuencias.
             </p>
           </div>
         </section>
@@ -272,7 +272,7 @@ export default function Route({
   }
 
   const tabs: { id: typeof activeTab; label: string }[] = [
-    { id: "creator", label: "Mis Secuences" },
+    { id: "creator", label: "Mis Secuencias" },
     { id: "subscriptions", label: "Suscripciones" },
     { id: "discover", label: "Descubrir" },
     { id: "settings", label: "Configuración" },
@@ -284,10 +284,10 @@ export default function Route({
         <section className="max-w-4xl mx-auto px-4 md:px-[5%] xl:px-0">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Secuences
+              Secuencias
             </h1>
             <p className="text-xl text-brand-100 font-light">
-              Administra tus newsletters con Secuences
+              Administra tus newsletters con Secuencias
             </p>
           </div>
 
@@ -349,7 +349,7 @@ export default function Route({
                 <div className="text-2xl">📧</div>
                 <div>
                   <h3 className="text-white font-semibold text-lg">
-                    Crea y administra tus newsletters con Secuences
+                    Crea y administra tus newsletters con Secuencias
                   </h3>
                   <p className="text-brand-100 text-sm">
                     Inicia sesión para crear tus propias secuencias de email y
@@ -395,7 +395,7 @@ function CreatorTab({
       <div className="text-center py-16">
         <div className="text-6xl mb-6">✍️</div>
         <h2 className="text-2xl font-bold text-white mb-4">
-          Crea tus propias secuences
+          Crea tus propias secuencias
         </h2>
         <p className="text-brand-100 mb-8">
           Inicia sesión para crear secuencias de email y conseguir suscriptores.
@@ -414,14 +414,14 @@ function CreatorTab({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="text-brand-100 text-sm">
-          Las secuences que tú creas. Súbete suscriptores y mide su engagement.
+          Las secuencias que tú creas. Súbete suscriptores y mide su engagement.
         </p>
         <button
           onClick={() => setShowCreate((s) => !s)}
           className="flex items-center gap-2 bg-brand-500 text-brand-900 px-4 py-2 rounded-full text-sm font-medium hover:bg-brand-400 transition-colors"
         >
           <FaPlus className="w-3 h-3" />
-          Nueva secuence
+          Nueva secuencia
         </button>
       </div>
 
@@ -448,7 +448,7 @@ function CreatorTab({
             <textarea
               name="description"
               rows={2}
-              placeholder="De qué trata tu secuence"
+              placeholder="De qué trata tu secuencia"
               className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white placeholder-brand-300 focus:outline-none focus:border-brand-500"
             />
           </div>
@@ -467,7 +467,7 @@ function CreatorTab({
               {fetcher.state !== "idle" &&
               fetcher.formData?.get("intent") === "create_sequence"
                 ? "Creando..."
-                : "Crear secuence"}
+                : "Crear secuencia"}
             </PrimaryButton>
           </div>
         </fetcher.Form>
@@ -477,10 +477,10 @@ function CreatorTab({
         <div className="text-center py-16">
           <div className="text-6xl mb-6">📝</div>
           <h2 className="text-2xl font-bold text-white mb-4">
-            Aún no tienes secuences
+            Aún no tienes secuencias
           </h2>
           <p className="text-brand-100">
-            Crea tu primera secuence y empieza a sumar suscriptores.
+            Crea tu primera secuencia y empieza a sumar suscriptores.
           </p>
         </div>
       ) : (
@@ -488,7 +488,7 @@ function CreatorTab({
           {mySequences.map((seq) => (
             <Link
               key={seq.id}
-              to={`/secuences/${seq.id}`}
+              to={`/secuencias/${seq.id}`}
               className="block bg-brand-900/40 border border-brand-100/10 rounded-lg p-6 hover:border-brand-500/40 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
@@ -555,7 +555,7 @@ function SequencesTab({
           No tienes suscripciones activas
         </h2>
         <p className="text-brand-100 mb-8">
-          Explora "Descubrir" para encontrar secuences interesantes
+          Explora "Descubrir" para encontrar secuencias interesantes
         </p>
       </div>
     );
@@ -708,7 +708,7 @@ function DiscoverTab({
       <div className="text-center py-16">
         <div className="text-6xl mb-6">🎯</div>
         <h2 className="text-2xl font-bold text-white mb-4">
-          No hay secuences disponibles
+          No hay secuencias disponibles
         </h2>
         <p className="text-brand-100">Pronto habrá más contenido para ti</p>
       </div>
@@ -719,7 +719,7 @@ function DiscoverTab({
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-brand-100">
-          Suscríbete a las secuences de otros creadores
+          Suscríbete a las secuencias de otros creadores
         </p>
       </div>
 
@@ -817,7 +817,7 @@ function SettingsTab({
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-white mb-2">
-          Configuración de Secuences
+          Configuración de Secuencias
         </h2>
         <p className="text-brand-100">Administra tu cuenta y suscripciones</p>
       </div>
@@ -835,7 +835,7 @@ function SettingsTab({
         <div className="border-t border-brand-100/10 pt-8">
           <div className="text-center">
             <p className="text-sm text-white mb-4">
-              ¿Ya no quieres recibir tus secuences?
+              ¿Ya no quieres recibir tus secuencias?
             </p>
             <fetcher.Form method="post" className="inline-block">
               <input type="hidden" name="intent" value="delete_account" />

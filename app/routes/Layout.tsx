@@ -21,8 +21,8 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
   const isViewerRoute = location.pathname.includes('/viewer');
   const isCoachRoute = location.pathname.startsWith('/coach');
   const isExcalidrawDemo = location.pathname === '/excalidraw-demo';
-  const isSecuencesRoute =
-    location.pathname.startsWith('/secuences') ||
+  const isSecuenciasRoute =
+    location.pathname.startsWith('/secuencias') ||
     location.pathname === '/s' ||
     location.pathname.startsWith('/s/');
 
@@ -30,7 +30,7 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
     <>
       {!isBookRoute && !isAdminRoute && !isExcalidrawDemo && <NavBar user={user} />}
       {children}
-      {!isBookRoute && !isAdminRoute && !isViewerRoute && !isCoachRoute && !isExcalidrawDemo && !isSecuencesRoute && <FloatingPromo />}
+      {!isBookRoute && !isAdminRoute && !isViewerRoute && !isCoachRoute && !isExcalidrawDemo && !isSecuenciasRoute && <FloatingPromo />}
       {/* <WebinarBanner /> */}
       {/* <GlobalBanner /> */}
     </>

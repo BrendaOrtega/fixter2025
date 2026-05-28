@@ -13,12 +13,12 @@ export default [
   route("faq", "routes/faq.tsx"),
   route("mis-cursos", "routes/mis-cursos.tsx"),
   route("subscribe", "routes/subscribe.tsx"),
-  route("secuences", "routes/secuences.tsx"),
-  route("secuences/:id", "routes/secuences.$id.tsx"),
+  route("secuencias", "routes/secuencias.tsx"),
+  route("secuencias/:id", "routes/secuencias.$id.tsx"),
   route("s/confirmar", "routes/s.confirmar.tsx"), // confirmación doble opt-in pública
-  route("s/:id", "routes/s.$id.tsx"), // suscripción pública a una secuence
-  route("newsletters", "routes/newsletters.tsx"), // redirect → /secuences
-  route("newsletter", "routes/newsletter.tsx"), // redirect → /secuences
+  route("s/:id", "routes/s.$id.tsx"), // suscripción pública a una secuencia
+  route("newsletters", "routes/newsletters.tsx"), // redirect → /secuencias
+  route("newsletter", "routes/newsletter.tsx"), // redirect → /secuencias
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
   route("tutoriales/*", "routes/tutoriales.$.tsx"), // redirect legacy → /tutoriales

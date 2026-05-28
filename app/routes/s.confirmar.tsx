@@ -22,7 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     include: { emails: { orderBy: { order: "asc" }, take: 1 } },
   });
   if (!sequence || !sequence.isActive) {
-    return { ok: false, error: "La secuence ya no está disponible." };
+    return { ok: false, error: "La secuencia ya no está disponible." };
   }
 
   const subscriber = await db.subscriber.upsert({

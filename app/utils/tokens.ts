@@ -113,7 +113,7 @@ export const validateBookDownloadToken = (
 };
 
 // ==========================================
-// Magic Link para suscripción pública a una Secuence (doble opt-in)
+// Magic Link para suscripción pública a una Secuencia (doble opt-in)
 // ==========================================
 
 export type SequenceSubscribeTokenData = {
@@ -124,7 +124,7 @@ export type SequenceSubscribeTokenData = {
 };
 
 /**
- * Genera un token firmado para confirmar la suscripción a una secuence.
+ * Genera un token firmado para confirmar la suscripción a una secuencia.
  * Válido por 7 días.
  */
 export const generateSequenceSubscribeToken = (
@@ -144,7 +144,7 @@ export const generateSequenceSubscribeToken = (
 };
 
 /**
- * Valida un token de suscripción a secuence.
+ * Valida un token de suscripción a secuencia.
  */
 export const validateSequenceSubscribeToken = (
   token: string

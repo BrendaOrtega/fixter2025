@@ -26,8 +26,8 @@ ${preheader}
 ${innerHtml}
       </td></tr>
       <tr><td style="padding:20px 32px;background:#19262A;color:#DAE8E5;font-size:12px;line-height:1.5;">
-        Enviado con <strong style="color:#85DDCB;">Secuences</strong> · FixterGeek<br/>
-        <a href="https://www.fixtergeek.com/secuences" style="color:#85DDCB;text-decoration:none;">Administra tus suscripciones</a>
+        Enviado con <strong style="color:#85DDCB;">Secuencias</strong> · FixterGeek<br/>
+        <a href="https://www.fixtergeek.com/secuencias" style="color:#85DDCB;text-decoration:none;">Administra tus suscripciones</a>
       </td></tr>
     </table>
   </td></tr>
