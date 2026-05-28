@@ -11,6 +11,7 @@ import { calculateNextEmailDate } from "~/.server/sequences";
 import { sendSequenceConfirmation } from "~/mailSenders/sendSequenceConfirmation";
 import getMetaTags from "~/utils/getMetaTags";
 import useRecaptcha from "~/lib/useRecaptcha";
+import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 
 const isValidId = (id?: string) => !!id && /^[0-9a-fA-F]{24}$/.test(id);
 
@@ -199,14 +200,21 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
         <div className="bg-brand-800/40 border border-brand-100/10 rounded-2xl p-8">
           {done ? (
             <div className="text-center">
+              <EmojiConfetti />
               <div className="text-4xl mb-4">{enrolled ? "✅" : "📬"}</div>
               <h2 className="text-xl font-bold text-white mb-2">
                 {enrolled ? "¡Listo, estás dentro!" : "Revisa tu correo"}
               </h2>
               <p className="text-brand-100">
-                {enrolled
-                  ? "Ya quedaste suscrito a esta secuencia. Pronto recibirás el primer email."
-                  : "Te enviamos un enlace para confirmar tu suscripción. Haz clic en él para empezar a recibir los emails."}
+                {enrolled ? (
+                  <>
+                    Ya quedaste suscrito a esta secuencia.
+                    <br />
+                    Pronto recibirás el primer email.
+                  </>
+                ) : (
+                  "Te enviamos un enlace para confirmar tu suscripción. Haz clic en él para empezar a recibir los emails."
+                )}
               </p>
             </div>
           ) : (
