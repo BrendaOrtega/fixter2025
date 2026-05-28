@@ -1000,6 +1000,11 @@ function EmailBody({
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [view, setView] = useState<"edit" | "preview">("preview");
+  // Contexto/fuente para la generación (opcional). NO se guarda con el email,
+  // es solo material para que la IA no invente.
+  const [context, setContext] = useState("");
+  const [showContext, setShowContext] = useState(false);
+  const [extracting, setExtracting] = useState(false);
 
   async function generateWithAI() {
     if (!aiPrompt.trim() || generating) return;
@@ -1009,7 +1014,7 @@ function EmailBody({
       const res = await fetch("/api/ai.email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: aiPrompt, subject }),
+        body: JSON.stringify({ prompt: aiPrompt, subject, context }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo generar el email");
@@ -1018,6 +1023,27 @@ function EmailBody({
       setError(e.message);
     } finally {
       setGenerating(false);
+    }
+  }
+
+  // Extrae texto de un archivo (md/txt/pdf) SIN almacenarlo y lo pone en el
+  // textarea de contexto, editable, para que el usuario vea qué se obtuvo.
+  async function attachFile(file: File) {
+    if (!file || extracting) return;
+    setExtracting(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/extract-text", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo leer el archivo");
+      setContext((c) => (c ? c + "\n\n" : "") + data.text);
+      setShowContext(true);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setExtracting(false);
     }
   }
 
@@ -1073,6 +1099,45 @@ function EmailBody({
             {generating ? "Generando…" : "Generar"}
           </button>
         </div>
+
+        {/* Contexto / fuente — opcional y colapsado */}
+        <button
+          type="button"
+          onClick={() => setShowContext((s) => !s)}
+          className="text-[11px] text-brand-100 hover:text-white flex items-center gap-1"
+        >
+          <span>{showContext ? "▾" : "▸"}</span>
+          Contexto / fuente (opcional)
+        </button>
+        {showContext && (
+          <div className="space-y-2">
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              rows={4}
+              placeholder="Pega info real (de qué trata, datos, links). La IA usará SOLO esto como fuente; no inventará."
+              className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white placeholder-brand-100/40 text-sm focus:outline-none focus:border-brand-500"
+            />
+            <label className="text-xs text-brand-100 hover:text-white cursor-pointer inline-block">
+              {extracting ? "Leyendo…" : "📎 Adjuntar md / txt / PDF"}
+              <input
+                type="file"
+                accept=".md,.txt,.pdf,text/markdown,text/plain,application/pdf"
+                className="hidden"
+                disabled={extracting}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) attachFile(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <p className="text-brand-100/50 text-[10px]">
+              No se guarda el archivo: se extrae el texto y lo ves aquí para
+              editarlo.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Contenido: toggle Editar | Vista previa + subir imagen */}
