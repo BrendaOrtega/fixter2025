@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   type LoaderFunctionArgs,
@@ -19,7 +19,6 @@ import {
   FaEye,
   FaArrowUp,
   FaTimes,
-  FaPen,
   FaEnvelope,
 } from "react-icons/fa";
 
@@ -567,9 +566,11 @@ function MonitorTab({
 
 // Etiqueta de la espera que antecede a un email.
 function waitLabel(email: any) {
-  if (email.schedulingType === "specific_date") return "en fecha fija";
+  if (email.schedulingType === "specific_date") return "📅 en fecha fija";
   const d = email.delayDays || 0;
-  return d === 0 ? "inmediato" : `espera ${d} ${d === 1 ? "día" : "días"}`;
+  return d === 0
+    ? "⚡ inmediato"
+    : `⏳ espera ${d} ${d === 1 ? "día" : "días"}`;
 }
 
 // Día acumulado por email, anclado a la suscripción (Día 0).
@@ -704,7 +705,7 @@ function Connector({ label, onInsert }: any) {
       <div className="w-px h-4 bg-brand-100/20" />
       {label && (
         <span className="text-[11px] text-brand-100 bg-brand-900/60 border border-brand-100/10 rounded-full px-2.5 py-0.5 my-1">
-          ⏳ {label}
+          {label}
         </span>
       )}
       <div className="w-px h-4 bg-brand-100/20" />
@@ -740,7 +741,7 @@ function RailEmailNode({ email, dayLabel, fetcher, onEdit, onPreview }: any) {
           <div className="text-brand-100 text-xs mt-0.5">{dayLabel}</div>
         </div>
       </button>
-      <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         <fetcher.Form method="post">
           <input type="hidden" name="intent" value="move_email_up" />
           <input type="hidden" name="emailId" value={email.id} />
@@ -787,6 +788,10 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
   const intent = drawer.mode === "edit" ? "edit_email" : "add_email";
   const { isFirst, prevSubject } = drawer;
 
+  const initialSpecificDate = email?.specificDate
+    ? new Date(email.specificDate).toISOString().slice(0, 16)
+    : "";
+
   const [schedulingType, setSchedulingType] = useState(
     email?.schedulingType || "delay"
   );
@@ -795,7 +800,43 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
   const [delayDays, setDelayDays] = useState<number>(
     email?.delayDays ?? (isFirst ? 0 : 1)
   );
+  const [specificDate, setSpecificDate] = useState(initialSpecificDate);
   const [error, setError] = useState<string | null>(null);
+
+  // Snapshot inicial para detectar cambios (dirty).
+  const initial = useRef({
+    subject: email?.subject || "",
+    content: email?.content || "",
+    schedulingType: email?.schedulingType || "delay",
+    delayDays: email?.delayDays ?? (isFirst ? 0 : 1),
+    specificDate: initialSpecificDate,
+  });
+  const dirty =
+    subject !== initial.current.subject ||
+    content !== initial.current.content ||
+    schedulingType !== initial.current.schedulingType ||
+    delayDays !== initial.current.delayDays ||
+    specificDate !== initial.current.specificDate;
+
+  // Cierra confirmando si hay cambios sin guardar.
+  const attemptClose = useCallback(() => {
+    if (
+      dirty &&
+      !window.confirm("Tienes cambios sin guardar. ¿Cerrar de todos modos?")
+    ) {
+      return;
+    }
+    onClose();
+  }, [dirty, onClose]);
+
+  // ESC cierra el drawer (con guarda de dirty).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") attemptClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [attemptClose]);
 
   return (
     <>
@@ -803,21 +844,24 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 bg-black/50 z-50"
+        onClick={attemptClose}
+        className="fixed inset-0 bg-black/50 z-[300]"
       />
       <motion.aside
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 28, stiffness: 280 }}
-        className="fixed top-0 right-0 h-full w-full max-w-lg bg-brand-900 border-l border-brand-100/10 z-50 overflow-y-auto"
+        className="fixed top-0 right-0 h-full w-full max-w-2xl bg-brand-900 border-l border-brand-100/10 z-[300] overflow-y-auto"
       >
         <div className="flex items-center justify-between p-5 border-b border-brand-100/10 sticky top-0 bg-brand-900 z-10">
           <h3 className="text-white font-semibold">
             {email ? "Editar email" : "Nuevo email"}
           </h3>
-          <button onClick={onClose} className="text-brand-100 hover:text-white">
+          <button
+            onClick={attemptClose}
+            className="text-brand-100 hover:text-white"
+          >
             <FaTimes />
           </button>
         </div>
@@ -904,11 +948,8 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
               <input
                 type="datetime-local"
                 name="specificDate"
-                defaultValue={
-                  email?.specificDate
-                    ? new Date(email.specificDate).toISOString().slice(0, 16)
-                    : ""
-                }
+                value={specificDate}
+                onChange={(e) => setSpecificDate(e.target.value)}
                 className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
               />
             )}
@@ -926,14 +967,15 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
-              onClick={onClose}
+              onClick={attemptClose}
               className="px-4 py-2 text-brand-100 hover:text-white text-sm"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="bg-brand-500 text-brand-900 px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-400"
+              disabled={!dirty}
+              className="bg-brand-500 text-brand-900 px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Guardar
             </button>
@@ -957,7 +999,7 @@ function EmailBody({
   const [aiPrompt, setAiPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [view, setView] = useState<"edit" | "preview">("edit");
+  const [view, setView] = useState<"edit" | "preview">("preview");
 
   async function generateWithAI() {
     if (!aiPrompt.trim() || generating) return;
@@ -1038,8 +1080,8 @@ function EmailBody({
         <div className="flex items-center justify-between mb-1">
           <div className="flex gap-1 text-xs">
             {[
-              { id: "edit", label: "Editar" },
               { id: "preview", label: "Vista previa" },
+              { id: "edit", label: "Editar" },
             ].map((t) => (
               <button
                 key={t.id}
@@ -1087,11 +1129,11 @@ function EmailBody({
         />
         {view === "preview" && (
           <div className="border border-brand-100/20 rounded-lg overflow-hidden bg-white">
-            <div className="text-[10px] text-gray-500 px-3 py-1 bg-gray-50 border-b border-gray-200">
+            <div className="text-[10px] text-gray-500 px-3 py-1 bg-gray-50 border-b border-gray-200 sticky top-0">
               Vista previa
             </div>
             <div
-              className="p-3 overflow-y-auto max-h-[360px] text-sm text-gray-900"
+              className="p-3 text-sm text-gray-900"
               dangerouslySetInnerHTML={{
                 __html:
                   content ||
