@@ -22,6 +22,9 @@ import {
   FaArrowUp,
   FaTimes,
   FaEnvelope,
+  FaShareAlt,
+  FaPause,
+  FaPlay,
 } from "react-icons/fa";
 
 // Verifica que la secuencia exista y sea del user logueado.
@@ -31,6 +34,30 @@ async function requireOwnedSequence(userId: string, sequenceId: string) {
     throw redirect("/secuencias");
   }
   return sequence;
+}
+
+// Crea el Video al GUARDAR (no al subir) si el email trae un video recién subido,
+// para no dejar registros huérfanos si se cancela el drawer.
+async function persistUploadedVideo(
+  videoSlug: string | null,
+  formData: FormData
+) {
+  const newVideoStorageLink = formData.get("newVideoStorageLink") as
+    | string
+    | null;
+  if (!videoSlug || !newVideoStorageLink) return;
+  await db.video.upsert({
+    where: { slug: videoSlug },
+    update: {},
+    create: {
+      slug: videoSlug,
+      title: (formData.get("newVideoTitle") as string) || "Video",
+      storageLink: newVideoStorageLink,
+      accessLevel: "subscriber",
+      isPublic: false,
+      processingStatus: "ready",
+    },
+  });
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -51,7 +78,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   if (!sequence) throw redirect("/secuencias");
 
-  return { sequence };
+  // Videos disponibles para adjuntar a un email (selector del drawer).
+  const videos = await db.video.findMany({
+    select: { slug: true, title: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return { sequence, videos };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -106,6 +139,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       order = after + 1;
     }
 
+    const videoSlug = (formData.get("videoSlug") as string) || null;
+    await persistUploadedVideo(videoSlug, formData);
+
     await db.sequenceEmail.create({
       data: {
         sequenceId,
@@ -118,6 +154,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           schedulingType === "specific_date" && specificDateRaw
             ? new Date(specificDateRaw)
             : null,
+        videoSlug,
         fromName: "FixterGeek",
         fromEmail: "contacto@fixter.org",
       },
@@ -141,6 +178,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
     if (!subject) return { error: "El asunto es obligatorio" };
 
+    const videoSlug = (formData.get("videoSlug") as string) || null;
+    await persistUploadedVideo(videoSlug, formData);
+
     await db.sequenceEmail.update({
       where: { id: emailId },
       data: {
@@ -152,6 +192,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           schedulingType === "specific_date" && specificDateRaw
             ? new Date(specificDateRaw)
             : null,
+        videoSlug,
       },
     });
     return { success: true, message: "Email actualizado" };
@@ -245,7 +286,7 @@ function aggregate(enrollments: any[]) {
 }
 
 export default function ManageSequence({ loaderData }: Route.ComponentProps) {
-  const { sequence } = loaderData;
+  const { sequence, videos } = loaderData;
   const fetcher = useFetcher();
   const [tab, setTab] = useState<"monitor" | "emails" | "settings">("emails");
   const [search, setSearch] = useState("");
@@ -291,19 +332,19 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
 
         <div className="flex items-start justify-between mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-white">{sequence.name}</h1>
-              <span
-                className={cn(
-                  "text-xs px-3 py-1 rounded-full font-medium",
-                  sequence.isActive
-                    ? "text-green-400 bg-green-900/60"
-                    : "text-yellow-400 bg-yellow-900/60"
-                )}
-              >
-                {sequence.isActive ? "Activa" : "Borrador"}
-              </span>
-            </div>
+            <span
+              className={cn(
+                "inline-block text-xs px-3 py-1 rounded-full font-medium mb-2",
+                sequence.isActive
+                  ? "text-green-400 bg-green-900/60"
+                  : "text-yellow-400 bg-yellow-900/60"
+              )}
+            >
+              {sequence.isActive ? "Activa" : "Borrador"}
+            </span>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              {sequence.name}
+            </h1>
             <p className="text-brand-100 text-sm">
               {sequence.description || "Sin descripción"}
             </p>
@@ -312,9 +353,10 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
             {sequence.isActive && (
               <button
                 onClick={copyShareLink}
-                className="px-4 py-2 rounded-full text-sm font-medium bg-brand-800/60 text-brand-100 hover:text-white border border-brand-100/20 transition-colors"
                 title="Copiar enlace público de suscripción"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-brand-800/60 text-brand-100 border border-brand-100/20 hover:text-white hover:border-brand-100/40 transition-colors"
               >
+                <FaShareAlt className="w-3 h-3" />
                 {copied ? "¡Copiado!" : "Compartir"}
               </button>
             )}
@@ -323,13 +365,21 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
               <button
                 type="submit"
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors",
                   sequence.isActive
-                    ? "bg-yellow-900/60 text-yellow-300 hover:bg-yellow-900"
+                    ? "bg-brand-800/60 text-brand-100 border border-brand-100/20 hover:text-white hover:border-brand-100/40"
                     : "bg-brand-500 text-brand-900 hover:bg-brand-400"
                 )}
               >
-                {sequence.isActive ? "Pausar secuencia" : "Activar secuencia"}
+                {sequence.isActive ? (
+                  <>
+                    <FaPause className="w-3 h-3" /> Pausar
+                  </>
+                ) : (
+                  <>
+                    <FaPlay className="w-3 h-3" /> Activar
+                  </>
+                )}
               </button>
             </fetcher.Form>
           </div>
@@ -410,6 +460,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
             key="email-drawer"
             drawer={drawer}
             sequence={sequence}
+            videos={videos}
             fetcher={fetcher}
             onClose={() => setDrawer(null)}
           />
@@ -796,7 +847,14 @@ function RailEmailNode({ email, dayLabel, fetcher, onEdit, onPreview }: any) {
   );
 }
 
-function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
+// Borra (fire-and-forget) el objeto de S3 de un video subido pero no guardado.
+function deletePendingVideoObject(storageLink: string) {
+  fetch(`/api/sequence-video?storageLink=${encodeURIComponent(storageLink)}`, {
+    method: "DELETE",
+  }).catch(() => {});
+}
+
+function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
   const email = drawer.mode === "edit" ? drawer.email : undefined;
   const intent = drawer.mode === "edit" ? "edit_email" : "add_email";
   const { isFirst, prevSubject } = drawer;
@@ -814,6 +872,13 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
     email?.delayDays ?? (isFirst ? 0 : 1)
   );
   const [specificDate, setSpecificDate] = useState(initialSpecificDate);
+  const [videoSlug, setVideoSlug] = useState(email?.videoSlug || "");
+  const [videoList, setVideoList] = useState<any[]>(videos || []);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [pendingVideo, setPendingVideo] = useState<any>(null);
+  const [showVideoPreview, setShowVideoPreview] = useState(false);
+  const [videoPreviewSrc, setVideoPreviewSrc] = useState("");
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Snapshot inicial para detectar cambios (dirty).
@@ -823,13 +888,15 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
     schedulingType: email?.schedulingType || "delay",
     delayDays: email?.delayDays ?? (isFirst ? 0 : 1),
     specificDate: initialSpecificDate,
+    videoSlug: email?.videoSlug || "",
   });
   const dirty =
     subject !== initial.current.subject ||
     content !== initial.current.content ||
     schedulingType !== initial.current.schedulingType ||
     delayDays !== initial.current.delayDays ||
-    specificDate !== initial.current.specificDate;
+    specificDate !== initial.current.specificDate ||
+    videoSlug !== initial.current.videoSlug;
 
   // Cierra confirmando si hay cambios sin guardar.
   const attemptClose = useCallback(() => {
@@ -839,8 +906,10 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
     ) {
       return;
     }
+    // Video subido pero no guardado → borra su objeto de S3 (sin basura).
+    if (pendingVideo) deletePendingVideoObject(pendingVideo.storageLink);
     onClose();
-  }, [dirty, onClose]);
+  }, [dirty, onClose, pendingVideo]);
 
   // ESC cierra el drawer (con guarda de dirty).
   useEffect(() => {
@@ -859,6 +928,69 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
       document.body.style.overflow = prev;
     };
   }, []);
+
+  // Sube un video nuevo (suelto) sin salir del drawer y lo deja seleccionado.
+  async function uploadVideo(file: File) {
+    if (!file || uploadingVideo) return;
+    // Si ya había un video subido-en-esta-sesión, borra su objeto (lo reemplaza).
+    if (pendingVideo) deletePendingVideoObject(pendingVideo.storageLink);
+    setUploadingVideo(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/sequence-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name }),
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.error || "No se pudo preparar la subida");
+      const put = await fetch(data.putURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type || "video/mp4" },
+      });
+      if (!put.ok) throw new Error("Falló la subida del video");
+      // Aún NO existe registro en DB; se crea al guardar el email.
+      setPendingVideo({
+        slug: data.slug,
+        title: data.title,
+        storageLink: data.storageLink,
+      });
+      setVideoList((l) => [{ slug: data.slug, title: data.title }, ...l]);
+      setVideoSlug(data.slug);
+      setShowVideoPreview(false);
+      setVideoPreviewSrc("");
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setUploadingVideo(false);
+    }
+  }
+
+  // Carga (o colapsa) el preview del video seleccionado.
+  async function toggleVideoPreview() {
+    if (showVideoPreview) {
+      setShowVideoPreview(false);
+      return;
+    }
+    setShowVideoPreview(true);
+    if (videoPreviewSrc || !videoSlug) return;
+    setLoadingPreview(true);
+    try {
+      const q =
+        pendingVideo && pendingVideo.slug === videoSlug
+          ? `storageLink=${encodeURIComponent(pendingVideo.storageLink)}`
+          : `slug=${encodeURIComponent(videoSlug)}`;
+      const res = await fetch(`/api/sequence-video?${q}`);
+      const data = await res.json();
+      if (data.src) setVideoPreviewSrc(data.src);
+    } catch {
+      // silencioso
+    } finally {
+      setLoadingPreview(false);
+    }
+  }
 
   return (
     <>
@@ -974,6 +1106,100 @@ function EmailDrawer({ drawer, sequence, fetcher, onClose }: any) {
                 onChange={(e) => setSpecificDate(e.target.value)}
                 className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
               />
+            )}
+          </div>
+
+          {/* Video (opcional): se inserta un botón "Ver el video" en el email,
+              con desbloqueo por avance del suscriptor. */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs text-brand-100">
+                Video (opcional)
+              </label>
+              <label className="text-[11px] text-brand-100 hover:text-white cursor-pointer">
+                {uploadingVideo ? "Subiendo video…" : "＋ Subir video nuevo"}
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  disabled={uploadingVideo}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadVideo(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            <select
+              name="videoSlug"
+              value={videoSlug}
+              onChange={(e) => {
+                setVideoSlug(e.target.value);
+                setShowVideoPreview(false);
+                setVideoPreviewSrc("");
+              }}
+              className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
+            >
+              <option value="">Sin video</option>
+              {videoList?.map((v: any) => (
+                <option key={v.slug} value={v.slug}>
+                  {v.title}
+                </option>
+              ))}
+            </select>
+
+            {/* El Video se crea al GUARDAR (no al subir) → sin huérfanos. */}
+            {pendingVideo && videoSlug === pendingVideo.slug && (
+              <>
+                <input
+                  type="hidden"
+                  name="newVideoTitle"
+                  value={pendingVideo.title}
+                />
+                <input
+                  type="hidden"
+                  name="newVideoStorageLink"
+                  value={pendingVideo.storageLink}
+                />
+              </>
+            )}
+
+            {videoSlug && (
+              <div className="mt-1">
+                <p className="text-brand-100/60 text-[11px]">
+                  Se agregará un botón “▶ Ver el video”. Usa{" "}
+                  <code className="text-brand-300">{"{{video}}"}</code> en el
+                  contenido para ubicarlo, o se añade al final.
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleVideoPreview}
+                  className="text-[11px] text-brand-100 hover:text-white flex items-center gap-1 mt-1"
+                >
+                  <span>{showVideoPreview ? "▾" : "▸"}</span>
+                  Ver video
+                </button>
+                {showVideoPreview && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-brand-100/15 bg-black">
+                    {loadingPreview ? (
+                      <p className="text-brand-100/60 text-xs p-4 text-center">
+                        Cargando video…
+                      </p>
+                    ) : videoPreviewSrc ? (
+                      <video
+                        src={videoPreviewSrc}
+                        controls
+                        className="w-full max-h-[260px] bg-black"
+                      />
+                    ) : (
+                      <p className="text-brand-100/60 text-xs p-4 text-center">
+                        No se pudo cargar el preview.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

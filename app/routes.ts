@@ -16,6 +16,7 @@ export default [
   route("secuencias", "routes/secuencias.tsx"),
   route("secuencias/:id", "routes/secuencias.$id.tsx"),
   route("s/confirmar", "routes/s.confirmar.tsx"), // confirmación doble opt-in pública
+  route("s/video", "routes/s.video.tsx"), // reproductor con desbloqueo por secuencia
   route("s/:id", "routes/s.$id.tsx"), // suscripción pública a una secuencia
   route("newsletters", "routes/newsletters.tsx"), // redirect → /secuencias
   route("newsletter", "routes/newsletter.tsx"), // redirect → /secuencias
@@ -129,6 +130,7 @@ export default [
     route("ai.email", "routes/api/ai.email.ts"),
     route("email-image", "routes/api/email-image.ts"),
     route("extract-text", "routes/api/extract-text.ts"),
+    route("sequence-video", "routes/api/sequence-video.ts"),
     route("leadmagnets", "routes/api/leadmagnets.ts"),
     route("waitlist", "routes/api/waitlist.ts"),
     route("coach", "routes/api/coach.tsx"),

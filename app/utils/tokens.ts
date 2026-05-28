@@ -177,6 +177,50 @@ export const validateSequenceSubscribeToken = (
 };
 
 // ==========================================
+// Token para ver videos de una secuencia (gating por avance del suscriptor)
+// ==========================================
+
+export type SequenceVideoTokenData = {
+  enrollmentId: string;
+  action: "sequence-video";
+};
+
+export const generateSequenceVideoToken = (enrollmentId: string): string => {
+  const data: SequenceVideoTokenData = {
+    enrollmentId,
+    action: "sequence-video",
+  };
+  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+    expiresIn: "90d",
+  });
+};
+
+export const validateSequenceVideoToken = (
+  token: string
+): {
+  isValid: boolean;
+  decoded?: SequenceVideoTokenData;
+  error?: string;
+} => {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "fixtergeek"
+    ) as SequenceVideoTokenData;
+    if (decoded.action !== "sequence-video") {
+      return { isValid: false, error: "Token inválido" };
+    }
+    return { isValid: true, decoded };
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.name === "TokenExpiredError") {
+      return { isValid: false, error: "El enlace ha expirado." };
+    }
+    return { isValid: false, error: "Enlace inválido" };
+  }
+};
+
+// ==========================================
 // Magic Link para Lead Magnets (descarga de recursos)
 // ==========================================
 

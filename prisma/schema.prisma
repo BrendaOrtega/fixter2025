@@ -88,7 +88,8 @@ model SequenceEmail {
   // Contenido
   subject    String                     // "¡Bienvenido a FixterGeek!"
   content    String                     // HTML del email
-  
+  videoSlug  String?                    // slug de un Video para adjuntar (desbloqueo por avance)
+
   // Configuración
   fromName   String @default("FixterGeek")
   fromEmail  String @default("contacto@fixter.org")
@@ -123,6 +124,7 @@ model SequenceEnrollment {
   opened           String[]                      // emails que abrieron al menos 1 vez
   clicked          String[]                      // emails que clickearon al menos 1 vez
   bounced          String[]                      // emails con Bounce permanente
+  videosWatched    String[]                      // videoSlugs que este suscriptor abrió
 
   @@unique([sequenceId, subscriberId])           // Un usuario solo puede estar una vez en cada secuencia
   @@index([status, nextEmailAt])                 // Para encontrar emails a enviar

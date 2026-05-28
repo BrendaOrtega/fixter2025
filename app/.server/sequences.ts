@@ -1,5 +1,12 @@
 import { db } from "~/.server/db";
 import { sendSESTEST } from "~/mailSenders/sendSESTEST";
+import { emailButton } from "~/utils/emailShell";
+import { generateSequenceVideoToken } from "~/utils/tokens";
+
+const baseUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://www.fixtergeek.com";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -82,10 +89,23 @@ export async function processDueEnrollments(): Promise<{
       continue;
     }
 
+    // Si el email tiene un video, inyecta el botón con link tokenizado por
+    // suscriptor (reemplaza {{video}} si existe, o lo agrega al final).
+    let html = nextEmail.content;
+    if (nextEmail.videoSlug) {
+      const link = `${baseUrl}/s/video?token=${generateSequenceVideoToken(
+        enrollment.id
+      )}`;
+      const button = emailButton("▶ Ver el video", link);
+      html = html.includes("{{video}}")
+        ? html.replace(/\{\{video\}\}/g, button)
+        : `${html}\n<div style="text-align:center;margin:16px 0">${button}</div>`;
+    }
+
     try {
       const sendResult = await sendSESTEST(subscriber.email, {
         subject: nextEmail.subject,
-        html: nextEmail.content,
+        html,
         trackOpens: true,
         to: true,
         tags: [
