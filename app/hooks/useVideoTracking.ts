@@ -9,6 +9,24 @@ interface VideoTrackingOptions {
   duration?: number;
 }
 
+// ID persistente por navegador para deduplicar viewers anónimos entre sesiones
+function getVisitorId(): string {
+  try {
+    const KEY = "fx_visitor_id";
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Hook minimalista para tracking de visualizaciones de video.
  * Trackea: inicio, progreso (al pausar/cerrar), y completado.
@@ -36,6 +54,7 @@ export function useVideoTracking(options: VideoTrackingOptions) {
           userId: options.userId,
           email: options.email,
           duration: options.duration,
+          sessionId: getVisitorId(),
         }),
       });
       const data = await res.json();

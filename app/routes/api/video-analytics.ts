@@ -56,7 +56,10 @@ export const action: ActionFunction = async ({ request }) => {
         );
       }
 
-      const sessionId = generateSessionId(request);
+      const sessionId =
+        typeof body.sessionId === "string" && body.sessionId.length > 0
+          ? body.sessionId
+          : generateSessionId(request);
       const deviceType = getDeviceType(request);
 
       const view = await db.videoView.create({

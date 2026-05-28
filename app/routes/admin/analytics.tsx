@@ -90,8 +90,81 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     })
   );
 
+  // Video analytics — agregación en memoria (admin-only, volumen acotado por rango)
+  const videoViews = await db.videoView.findMany({
+    where: { startedAt: { gte: startDate, lte: endDate } },
+    select: {
+      videoSlug: true,
+      courseId: true,
+      sessionId: true,
+      completedAt: true,
+    },
+  });
+
+  const totalVideoViews = videoViews.length;
+  const uniqueVideoViewers = new Set(videoViews.map((v) => v.sessionId)).size;
+
+  const byVideo = new Map<string, { views: number; completed: number }>();
+  const byCourse = new Map<string, { views: number; completed: number }>();
+  for (const v of videoViews) {
+    const ve = byVideo.get(v.videoSlug) ?? { views: 0, completed: 0 };
+    ve.views++;
+    if (v.completedAt) ve.completed++;
+    byVideo.set(v.videoSlug, ve);
+    if (v.courseId) {
+      const ce = byCourse.get(v.courseId) ?? { views: 0, completed: 0 };
+      ce.views++;
+      if (v.completedAt) ce.completed++;
+      byCourse.set(v.courseId, ce);
+    }
+  }
+
+  const [videoMetaRows, courseMetaRows] = await Promise.all([
+    byVideo.size
+      ? db.video.findMany({
+          where: { slug: { in: [...byVideo.keys()] } },
+          select: { slug: true, title: true, accessLevel: true },
+        })
+      : Promise.resolve([]),
+    byCourse.size
+      ? db.course.findMany({
+          where: { id: { in: [...byCourse.keys()] } },
+          select: { id: true, title: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const videoMeta = new Map(videoMetaRows.map((v) => [v.slug, v]));
+  const courseMeta = new Map(courseMetaRows.map((c) => [c.id, c]));
+
+  const pct = (part: number, total: number) =>
+    total ? Math.round((part / total) * 100) : 0;
+
+  const topVideos = [...byVideo.entries()]
+    .map(([slug, s]) => ({
+      slug,
+      title: videoMeta.get(slug)?.title ?? slug,
+      accessLevel: videoMeta.get(slug)?.accessLevel ?? "?",
+      views: s.views,
+      completionRate: pct(s.completed, s.views),
+    }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 20);
+
+  const topCourses = [...byCourse.entries()]
+    .map(([id, s]) => ({
+      id,
+      title: courseMeta.get(id)?.title ?? id,
+      views: s.views,
+      completionRate: pct(s.completed, s.views),
+    }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 20);
+
   return {
     stats: { totalSessions, totalPageViews, totalClicks },
+    videoStats: { totalVideoViews, uniqueVideoViewers },
+    topVideos,
+    topCourses,
     postsWithAnalytics,
     dateRange: {
       startDate: startDate.toISOString().split("T")[0],
@@ -210,7 +283,14 @@ function BannerCell({
 }
 
 export default function AnalyticsPage({
-  loaderData: { stats, postsWithAnalytics, dateRange },
+  loaderData: {
+    stats,
+    videoStats,
+    topVideos,
+    topCourses,
+    postsWithAnalytics,
+    dateRange,
+  },
 }: Route.ComponentProps) {
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"date" | "views" | "clicks">("date");
@@ -298,7 +378,105 @@ export default function AnalyticsPage({
           </div>
         </div>
 
+        {/* Video stats row */}
+        <h2 className="text-xl font-bold mb-3">Videos</h2>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 text-center">
+            <p className="text-sm text-gray-400 mb-1">Reproducciones</p>
+            <p className="text-2xl font-bold text-yellow-400">
+              {videoStats.totalVideoViews.toLocaleString()}
+            </p>
+          </div>
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 text-center">
+            <p className="text-sm text-gray-400 mb-1">Viewers únicos</p>
+            <p className="text-2xl font-bold text-pink-400">
+              {videoStats.uniqueVideoViewers.toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Top videos + top courses */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-700 text-gray-300 font-medium">
+              Top videos
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-700 text-left text-gray-400">
+                  <th className="px-4 py-2">Video</th>
+                  <th className="px-4 py-2 text-right">Vistas</th>
+                  <th className="px-4 py-2 text-right">% Compl.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topVideos.map((v) => (
+                  <tr
+                    key={v.slug}
+                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
+                  >
+                    <td className="px-4 py-2">
+                      <span className="text-gray-200">{v.title}</span>
+                      <span className="ml-2 text-[10px] uppercase text-gray-500">
+                        {v.accessLevel}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-right text-gray-300">
+                      {v.views}
+                    </td>
+                    <td className="px-4 py-2 text-right text-gray-300">
+                      {v.completionRate}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {topVideos.length === 0 && (
+              <div className="py-8 text-center text-gray-500 text-sm">
+                Sin reproducciones en este rango.
+              </div>
+            )}
+          </div>
+
+          <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-700 text-gray-300 font-medium">
+              Top cursos
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-700 text-left text-gray-400">
+                  <th className="px-4 py-2">Curso</th>
+                  <th className="px-4 py-2 text-right">Vistas</th>
+                  <th className="px-4 py-2 text-right">% Compl.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topCourses.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="border-b border-gray-700/50 hover:bg-gray-700/30"
+                  >
+                    <td className="px-4 py-2 text-gray-200">{c.title}</td>
+                    <td className="px-4 py-2 text-right text-gray-300">
+                      {c.views}
+                    </td>
+                    <td className="px-4 py-2 text-right text-gray-300">
+                      {c.completionRate}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {topCourses.length === 0 && (
+              <div className="py-8 text-center text-gray-500 text-sm">
+                Sin vistas de curso en este rango.
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Posts table */}
+        <h2 className="text-xl font-bold mb-3">Blog</h2>
         <div className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead>
