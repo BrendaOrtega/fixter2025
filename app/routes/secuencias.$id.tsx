@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, usePresence } from "motion/react";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -36,30 +36,6 @@ async function requireOwnedSequence(userId: string, sequenceId: string) {
   return sequence;
 }
 
-// Crea el Video al GUARDAR (no al subir) si el email trae un video recién subido,
-// para no dejar registros huérfanos si se cancela el drawer.
-async function persistUploadedVideo(
-  videoSlug: string | null,
-  formData: FormData
-) {
-  const newVideoStorageLink = formData.get("newVideoStorageLink") as
-    | string
-    | null;
-  if (!videoSlug || !newVideoStorageLink) return;
-  await db.video.upsert({
-    where: { slug: videoSlug },
-    update: {},
-    create: {
-      slug: videoSlug,
-      title: (formData.get("newVideoTitle") as string) || "Video",
-      storageLink: newVideoStorageLink,
-      accessLevel: "subscriber",
-      isPublic: false,
-      processingStatus: "ready",
-    },
-  });
-}
-
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserOrRedirect(request);
   const sequenceId = params.id as string;
@@ -84,7 +60,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     orderBy: { createdAt: "desc" },
   });
 
-  return { sequence, videos };
+  return { sequence, videos, userEmail: user.email };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -94,6 +70,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
+
+  // Crea el Video al GUARDAR (no al subir) → sin huérfanos si se cancela.
+  // Local al action para que RR no lo arrastre al bundle del cliente.
+  async function persistUploadedVideo(videoSlug: string | null, fd: FormData) {
+    const link = fd.get("newVideoStorageLink") as string | null;
+    if (!videoSlug || !link) return;
+    await db.video.upsert({
+      where: { slug: videoSlug },
+      update: {},
+      create: {
+        slug: videoSlug,
+        title: (fd.get("newVideoTitle") as string) || "Video",
+        storageLink: link,
+        accessLevel: "subscriber",
+        isPublic: false,
+        processingStatus: "ready",
+      },
+    });
+  }
 
   if (intent === "send_test") {
     const subject = (formData.get("subject") as string) || "(sin asunto)";
@@ -111,13 +106,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         `${base}/s/${sequenceId}`
       )}</div>`;
     }
+    const dest = (formData.get("testEmail") as string)?.trim();
+    const to = dest && dest.includes("@") ? dest : user.email;
     const { sendSESTEST } = await import("~/mailSenders/sendSESTEST");
-    await sendSESTEST(user.email, {
+    const result = await sendSESTEST(to, {
       subject: `[PRUEBA] ${subject}`,
       html,
       to: true,
     });
-    return { success: true, message: `Prueba enviada a ${user.email}` };
+    if (!result?.messageId) {
+      return { error: "No se pudo enviar la prueba. Intenta de nuevo." };
+    }
+    return { success: true, message: `Prueba enviada a ${to}` };
   }
 
   if (intent === "update_sequence") {
@@ -311,7 +311,7 @@ function aggregate(enrollments: any[]) {
 }
 
 export default function ManageSequence({ loaderData }: Route.ComponentProps) {
-  const { sequence, videos } = loaderData;
+  const { sequence, videos, userEmail } = loaderData;
   const fetcher = useFetcher();
   const [tab, setTab] = useState<"monitor" | "emails" | "settings">("emails");
   const [search, setSearch] = useState("");
@@ -486,6 +486,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
             drawer={drawer}
             sequence={sequence}
             videos={videos}
+            userEmail={userEmail}
             fetcher={fetcher}
             onClose={() => setDrawer(null)}
           />
@@ -879,10 +880,20 @@ function deletePendingVideoObject(storageLink: string) {
   }).catch(() => {});
 }
 
-function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
+function EmailDrawer({
+  drawer,
+  sequence,
+  videos,
+  userEmail,
+  fetcher,
+  onClose,
+}: any) {
   const email = drawer.mode === "edit" ? drawer.email : undefined;
   const intent = drawer.mode === "edit" ? "edit_email" : "add_email";
   const { isFirst, prevSubject } = drawer;
+  // Al cerrar, el overlay deja de capturar clics de inmediato (la animación de
+  // salida sigue, pero no bloquea el sitio).
+  const [isPresent] = usePresence();
 
   const initialSpecificDate = email?.specificDate
     ? new Date(email.specificDate).toISOString().slice(0, 16)
@@ -905,9 +916,16 @@ function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
   const [videoPreviewSrc, setVideoPreviewSrc] = useState("");
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const testFetcher = useFetcher<{ success?: boolean; message?: string }>();
+  const testFetcher = useFetcher<{
+    success?: boolean;
+    message?: string;
+    error?: string;
+  }>();
+  const [showTest, setShowTest] = useState(false);
+  const [testEmail, setTestEmail] = useState(userEmail || "");
+  const sendingTest = testFetcher.state !== "idle";
 
-  // Envía este email a tu propio correo para ver el render real en la bandeja.
+  // Envía este email a un correo para ver el render real en la bandeja.
   function sendTest() {
     if (!subject.trim()) {
       setError("Ponle un asunto para la prueba");
@@ -917,6 +935,7 @@ function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
     fd.append("intent", "send_test");
     fd.append("subject", subject);
     fd.append("content", content);
+    fd.append("testEmail", testEmail);
     if (videoSlug) fd.append("videoSlug", videoSlug);
     testFetcher.submit(fd, { method: "POST" });
   }
@@ -1039,14 +1058,20 @@ function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={attemptClose}
-        className="fixed inset-0 bg-black/50 z-[300]"
+        className={cn(
+          "fixed inset-0 bg-black/50 z-[300]",
+          !isPresent && "pointer-events-none"
+        )}
       />
       <motion.aside
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 28, stiffness: 280 }}
-        className="fixed top-0 right-0 h-full w-full max-w-2xl bg-brand-900 border-l border-brand-100/10 z-[300] overflow-y-auto"
+        className={cn(
+          "fixed top-0 right-0 h-full w-full max-w-2xl bg-brand-900 border-l border-brand-100/10 z-[300] overflow-y-auto",
+          !isPresent && "pointer-events-none"
+        )}
       >
         <div className="flex items-center justify-between p-5 border-b border-brand-100/10 sticky top-0 bg-brand-900 z-10">
           <h3 className="text-white font-semibold">
@@ -1252,19 +1277,72 @@ function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
             setError={setError}
           />
 
-          <div className="flex items-center justify-between pt-1">
-            <button
-              type="button"
-              onClick={sendTest}
-              disabled={testFetcher.state !== "idle" || !subject.trim()}
-              className="text-sm text-brand-100 hover:text-white disabled:opacity-40"
-              title="Envía este email a tu correo para ver el render"
-            >
-              {testFetcher.state !== "idle"
-                ? "Enviando…"
-                : "✉️ Enviar prueba"}
-            </button>
-            <div className="flex gap-2">
+          <div className="border-t border-brand-100/10 pt-3 space-y-2">
+            {/* Enviar prueba: pide destino + feedback */}
+            <div className="flex items-center gap-2 min-h-[34px]">
+              {!showTest ? (
+                <button
+                  type="button"
+                  onClick={() => setShowTest(true)}
+                  className="text-sm text-brand-100 hover:text-white"
+                >
+                  ✉️ Enviar prueba
+                </button>
+              ) : (
+                <>
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="tu@correo.com"
+                    className="flex-1 px-3 py-1.5 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={sendTest}
+                    disabled={sendingTest || !testEmail.includes("@")}
+                    className="px-3 py-1.5 bg-brand-800 text-brand-100 hover:text-white rounded-lg text-sm border border-brand-100/20 disabled:opacity-40 whitespace-nowrap"
+                  >
+                    {sendingTest ? "Enviando…" : "Enviar"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowTest(false)}
+                    className="text-brand-100/60 hover:text-white text-sm px-1"
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
+
+            <AnimatePresence mode="wait">
+              {testFetcher.data?.success && (
+                <motion.p
+                  key="ok"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-green-400 text-xs"
+                >
+                  ✓ {testFetcher.data.message}
+                </motion.p>
+              )}
+              {testFetcher.data?.error && (
+                <motion.p
+                  key="err"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-red-400 text-xs"
+                >
+                  ✗ {testFetcher.data.error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            {/* Acciones */}
+            <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={attemptClose}
@@ -1281,11 +1359,6 @@ function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
               </button>
             </div>
           </div>
-          {testFetcher.data?.message && (
-            <p className="text-green-400 text-xs text-right">
-              {testFetcher.data.message}
-            </p>
-          )}
         </fetcher.Form>
       </motion.aside>
     </>
