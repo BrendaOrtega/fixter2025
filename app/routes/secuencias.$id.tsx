@@ -12,7 +12,7 @@ import { db } from "~/.server/db";
 import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { marked } from "marked";
-import { wrapEmailHtml } from "~/utils/emailShell";
+import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import { useFetcher } from "react-router";
 import {
   FaArrowLeft,
@@ -94,6 +94,31 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
+
+  if (intent === "send_test") {
+    const subject = (formData.get("subject") as string) || "(sin asunto)";
+    const content = (formData.get("content") as string) || "";
+    const videoSlug = (formData.get("videoSlug") as string) || null;
+    let html = content;
+    if (videoSlug) {
+      const base =
+        process.env.NODE_ENV === "development"
+          ? "http://localhost:3000"
+          : "https://www.fixtergeek.com";
+      // En prueba no hay enrollment → link de ejemplo (solo para ver el render).
+      html += `<div style="text-align:center;margin:16px 0">${emailButton(
+        "▶ Ver el video",
+        `${base}/s/${sequenceId}`
+      )}</div>`;
+    }
+    const { sendSESTEST } = await import("~/mailSenders/sendSESTEST");
+    await sendSESTEST(user.email, {
+      subject: `[PRUEBA] ${subject}`,
+      html,
+      to: true,
+    });
+    return { success: true, message: `Prueba enviada a ${user.email}` };
+  }
 
   if (intent === "update_sequence") {
     const name = (formData.get("name") as string)?.trim();
@@ -880,6 +905,21 @@ function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
   const [videoPreviewSrc, setVideoPreviewSrc] = useState("");
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const testFetcher = useFetcher<{ success?: boolean; message?: string }>();
+
+  // Envía este email a tu propio correo para ver el render real en la bandeja.
+  function sendTest() {
+    if (!subject.trim()) {
+      setError("Ponle un asunto para la prueba");
+      return;
+    }
+    const fd = new FormData();
+    fd.append("intent", "send_test");
+    fd.append("subject", subject);
+    fd.append("content", content);
+    if (videoSlug) fd.append("videoSlug", videoSlug);
+    testFetcher.submit(fd, { method: "POST" });
+  }
 
   // Snapshot inicial para detectar cambios (dirty).
   const initial = useRef({
@@ -1212,22 +1252,40 @@ function EmailDrawer({ drawer, sequence, videos, fetcher, onClose }: any) {
             setError={setError}
           />
 
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex items-center justify-between pt-1">
             <button
               type="button"
-              onClick={attemptClose}
-              className="px-4 py-2 text-brand-100 hover:text-white text-sm"
+              onClick={sendTest}
+              disabled={testFetcher.state !== "idle" || !subject.trim()}
+              className="text-sm text-brand-100 hover:text-white disabled:opacity-40"
+              title="Envía este email a tu correo para ver el render"
             >
-              Cancelar
+              {testFetcher.state !== "idle"
+                ? "Enviando…"
+                : "✉️ Enviar prueba"}
             </button>
-            <button
-              type="submit"
-              disabled={!dirty}
-              className="bg-brand-500 text-brand-900 px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Guardar
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={attemptClose}
+                className="px-4 py-2 text-brand-100 hover:text-white text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={!dirty}
+                className="bg-brand-500 text-brand-900 px-5 py-2 rounded-lg text-sm font-medium hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Guardar
+              </button>
+            </div>
           </div>
+          {testFetcher.data?.message && (
+            <p className="text-green-400 text-xs text-right">
+              {testFetcher.data.message}
+            </p>
+          )}
         </fetcher.Form>
       </motion.aside>
     </>
