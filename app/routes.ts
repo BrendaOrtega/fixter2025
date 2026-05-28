@@ -13,8 +13,10 @@ export default [
   route("faq", "routes/faq.tsx"),
   route("mis-cursos", "routes/mis-cursos.tsx"),
   route("subscribe", "routes/subscribe.tsx"),
-  route("newsletters", "routes/newsletters.tsx"),
-  route("newsletter", "routes/newsletter.tsx"), // redirect → /newsletters
+  route("secuences", "routes/secuences.tsx"),
+  route("secuences/:id", "routes/secuences.$id.tsx"),
+  route("newsletters", "routes/newsletters.tsx"), // redirect → /secuences
+  route("newsletter", "routes/newsletter.tsx"), // redirect → /secuences
   route("guides", "routes/guides.tsx"),
   route("tutoriales", "routes/tutoriales.tsx"),
   route("tutoriales/*", "routes/tutoriales.$.tsx"), // redirect legacy → /tutoriales
@@ -122,6 +124,8 @@ export default [
     route("backup-download", "routes/api/backup-download.tsx"),
     route("blog.save-post", "routes/api/blog.save-post.ts"),
     route("ai.text-command", "routes/api/ai.text-command.ts"),
+    route("ai.email", "routes/api/ai.email.ts"),
+    route("email-image", "routes/api/email-image.ts"),
     route("leadmagnets", "routes/api/leadmagnets.ts"),
     route("waitlist", "routes/api/waitlist.ts"),
     route("coach", "routes/api/coach.tsx"),

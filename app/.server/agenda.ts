@@ -16,6 +16,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { sendBackupNotification } from "~/mailSenders/sendBackupNotification";
+import { processDueEnrollments } from "./sequences";
 
 const execPromise = promisify(exec);
 
@@ -219,96 +220,13 @@ getAgenda().define(
   }
 );
 
-// Process sequences - simple version
+// Process sequences - delega en el service compartido (app/.server/sequences.ts)
 getAgenda().define(
   "process_sequences",
   async (job: { attrs: { name: string } }) => {
     console.info("::SEQUENCE_JOB_WORKING::", job.attrs.name);
-    
-    // Find enrollments ready to receive next email
-    const readyEnrollments = await db.sequenceEnrollment.findMany({
-      where: {
-        status: 'active',
-        nextEmailAt: { lte: new Date() }
-      },
-      include: {
-        sequence: {
-          include: {
-            emails: { orderBy: { order: 'asc' } }
-          }
-        },
-        subscriber: true
-      }
-    });
-
-    console.info(`Found ${readyEnrollments.length} ready enrollments`);
-
-    for (const enrollment of readyEnrollments) {
-      const { sequence, subscriber } = enrollment;
-      const nextEmail = sequence.emails[enrollment.currentEmailIndex];
-      
-      if (!nextEmail) {
-        // No more emails, mark as completed
-        await db.sequenceEnrollment.update({
-          where: { id: enrollment.id },
-          data: { status: 'completed', completedAt: new Date() }
-        });
-        continue;
-      }
-
-      try {
-        const sendResult = await sendSESTEST(subscriber.email, {
-          subject: nextEmail.subject,
-          html: nextEmail.content,
-          trackOpens: true,
-          to: true,
-          tags: [
-            { Name: "sequence_id", Value: sequence.id },
-            { Name: "enrollment_id", Value: enrollment.id },
-            { Name: "sequence_email_id", Value: nextEmail.id },
-          ],
-        });
-
-        const messageId = sendResult?.messageId;
-        if (!messageId) {
-          throw new Error("SES did not return a messageId");
-        }
-
-        const nextIndex = enrollment.currentEmailIndex + 1;
-        const hasMoreEmails = nextIndex < sequence.emails.length;
-
-        let nextEmailAt = null;
-        if (hasMoreEmails) {
-          const nextEmailInSequence = sequence.emails[nextIndex];
-          if (nextEmailInSequence.schedulingType === 'delay') {
-            nextEmailAt = new Date(Date.now() + (nextEmailInSequence.delayDays || 0) * 24 * 60 * 60 * 1000);
-          } else if (nextEmailInSequence.specificDate) {
-            nextEmailAt = new Date(nextEmailInSequence.specificDate);
-          }
-        }
-
-        await db.sequenceEnrollment.update({
-          where: { id: enrollment.id },
-          data: {
-            currentEmailIndex: nextIndex,
-            emailsSent: enrollment.emailsSent + 1,
-            nextEmailAt,
-            status: hasMoreEmails ? 'active' : 'completed',
-            completedAt: hasMoreEmails ? null : new Date(),
-            messageIds: { push: messageId },
-          }
-        });
-
-        console.info(`Sent email ${nextEmail.order} to ${subscriber.email} for sequence ${sequence.name} (${messageId.slice(-12)})`);
-
-      } catch (error) {
-        console.error(`Failed to send email to ${subscriber.email}:`, error);
-      }
-
-      // Rate limiting
-      await new Promise(r => setTimeout(r, 500));
-    }
-
+    const { processed } = await processDueEnrollments();
+    console.info(`Processed ${processed} ready enrollments`);
     console.info("::SEQUENCE_JOB_FINISHED::", job.attrs.name);
   }
 );

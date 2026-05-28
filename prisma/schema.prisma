@@ -47,23 +47,29 @@ model Sequence {
   id          String @id @default(auto()) @map("_id") @db.ObjectId
   name        String                    // "Bienvenida Claude Code"
   description String?                   // Descripción interna
-  
+
+  // Dueño: user que la creó. null = secuencia oficial de FixterGeek
+  ownerId     String? @db.ObjectId
+  owner       User?   @relation(fields: [ownerId], references: [id])
+
   // Trigger
   trigger     SequenceTrigger
   triggerTag  String?                   // Tag específico si trigger es TAG_ADDED
-  
+
   // Estado
   isActive    Boolean @default(false)
   isFeatured  Boolean @default(false)    // Para destacar en la UI
-  
+
   // Emails de la secuencia (ordenados)
   emails      SequenceEmail[]
-  
+
   // Inscripciones de usuarios
   enrollments SequenceEnrollment[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
 }
 
 model SequenceEmail {
@@ -459,6 +465,9 @@ model User {
   metadata    Json?
   webinar     Json? // Información del webinar con las 3 preguntas
   books       String[] // Libros comprados: ["ai-sdk", "domina-claude-code", "llamaindex"]
+
+  // Secuences que el user creó (es dueño)
+  sequences   Sequence[]
 
   @@map("users")
 }

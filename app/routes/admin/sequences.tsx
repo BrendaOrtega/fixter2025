@@ -68,18 +68,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     totalEmails: await db.sequenceEmail.count()
   };
 
-  // Get active enrollments for debug
-  const activeEnrollments = await db.sequenceEnrollment.findMany({
-    where: { status: 'active' },
-    include: {
-      sequence: { select: { name: true } },
-      subscriber: { select: { email: true } }
-    },
-    orderBy: { nextEmailAt: 'asc' },
-    take: 10
-  });
-
-  return { sequences, stats, activeEnrollments };
+  return { sequences, stats };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -128,23 +117,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "update_sequence_name") {
     const sequenceId = formData.get("sequenceId") as string;
     const name = formData.get("name") as string;
-    
-    console.log('DEBUG: Updating sequence name:', { sequenceId, name });
-    
+
     if (!name || name.trim().length === 0) {
       return { error: "El nombre no puede estar vacío" };
     }
-    
+
     try {
       await db.sequence.update({
         where: { id: sequenceId },
         data: { name: name.trim() }
       });
-      
-      console.log('DEBUG: Sequence name updated successfully');
       return { success: true, message: "Nombre actualizado" };
     } catch (error) {
-      console.error('DEBUG: Error updating sequence name:', error);
       return { error: "Error al actualizar el nombre" };
     }
   }
@@ -339,8 +323,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "move_email_up") {
     const emailId = formData.get("emailId") as string;
-    console.log('DEBUG: move_email_up action triggered for emailId:', emailId);
-    
+
     try {
       // Get the email to move
       const emailToMove = await db.sequenceEmail.findUnique({ 
@@ -390,7 +373,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         data: { order: emailAbove.order }
       });
       
-      console.log('DEBUG: Email reordering completed successfully');
       return { success: true, message: `Email movido a posición ${emailAbove.order}` };
       
     } catch (error) {
@@ -403,7 +385,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function AdminSequences({ loaderData }: Route.ComponentProps) {
-  const { sequences, stats, activeEnrollments } = loaderData;
+  const { sequences, stats } = loaderData;
   const [view, setView] = useState<'list' | 'create' | 'emails'>('list');
   const [selectedSequence, setSelectedSequence] = useState<any>(null);
   const [previewEmail, setPreviewEmail] = useState<any>(null);
@@ -443,53 +425,6 @@ export default function AdminSequences({ loaderData }: Route.ComponentProps) {
                 ✅ Procesador automático ejecutándose cada 5 minutos. 
                 Los emails se envían automáticamente según su programación.
               </span>
-            </div>
-          </div>
-        )}
-
-        {/* Active Enrollments Debug */}
-        {activeEnrollments.length > 0 && (
-          <div className="bg-blue-900 border border-blue-700 rounded-lg p-4 mb-6">
-            <h3 className="text-blue-300 font-medium mb-3">🔍 Enrollments Activos (Próximos Envíos)</h3>
-            <div className="space-y-2">
-              {activeEnrollments.map((enrollment: any) => (
-                <div key={enrollment.id} className="flex items-center justify-between text-sm bg-blue-800 p-2 rounded">
-                  <span className="text-blue-200">
-                    {enrollment.subscriber.email} → {enrollment.sequence.name}
-                  </span>
-                  <span className="text-blue-300">
-                    Email #{enrollment.currentEmailIndex + 1} en: {
-                      enrollment.nextEmailAt 
-                        ? new Date(enrollment.nextEmailAt).toLocaleString('es-MX')
-                        : 'Sin programar'
-                    }
-                  </span>
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    new Date(enrollment.nextEmailAt) <= new Date() 
-                      ? 'bg-red-600 text-white' 
-                      : 'bg-yellow-600 text-white'
-                  }`}>
-                    {new Date(enrollment.nextEmailAt) <= new Date() ? 'LISTO PARA ENVÍO' : 'PROGRAMADO'}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 flex justify-end">
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch('/api/sequences/process', { method: 'POST' });
-                    const data = await response.json();
-                    console.log('Manual processing result:', data);
-                    revalidator.revalidate(); // Refresh data
-                  } catch (err) {
-                    console.error('Manual processing failed:', err);
-                  }
-                }}
-                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded"
-              >
-                ⚡ Procesar Ahora (Debug)
-              </button>
             </div>
           </div>
         )}

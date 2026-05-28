@@ -1,10 +1,12 @@
 import type { ActionFunctionArgs } from "react-router";
 import { startSequenceProcessor } from "~/.server/agenda";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   if (request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
+  await getAdminOrRedirect(request);
 
   try {
     await startSequenceProcessor();
