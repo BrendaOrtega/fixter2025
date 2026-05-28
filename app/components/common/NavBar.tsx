@@ -18,6 +18,7 @@ const navigation = [
   { name: "MentorIA", link: "/coach", highlight: true },
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
+  { name: "Secuencias", link: "/secuencias" },
   { name: "Claude Code", link: "/claude" },
   { name: "AI SDK", link: "https://www.fixtergeek.com/ai-sdk", external: true },
   { name: "Pong gratis", link: "/pong" },
@@ -310,6 +311,14 @@ const MobileMenu = ({
           index={2}
           isOpen={isOpen}
           title="Blog"
+        />
+        <NavItem
+          onClick={toggleMenu}
+          as="Link"
+          to="/secuencias"
+          index={2}
+          isOpen={isOpen}
+          title="Secuencias"
         />
         <NavItem
           onClick={toggleMenu}
