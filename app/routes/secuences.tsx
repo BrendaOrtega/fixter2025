@@ -790,13 +790,12 @@ function DiscoverTab({
                   </fetcher.Form>
                 )
               ) : (
-                <button
-                  type="button"
-                  className="w-full px-4 py-2 rounded-lg font-medium border border-brand-500/50 text-brand-300 opacity-60 cursor-not-allowed"
-                  disabled
+                <a
+                  href={`/s/${sequence.id}`}
+                  className="block w-full px-4 py-2 rounded-lg font-medium text-center bg-brand-500 text-brand-900 hover:bg-brand-400 transition-colors"
                 >
-                  Inicia sesión para suscribirte
-                </button>
+                  Suscribirme
+                </a>
               )}
             </div>
           );

@@ -113,6 +113,70 @@ export const validateBookDownloadToken = (
 };
 
 // ==========================================
+// Magic Link para suscripción pública a una Secuence (doble opt-in)
+// ==========================================
+
+export type SequenceSubscribeTokenData = {
+  email: string;
+  sequenceId: string;
+  name?: string;
+  action: "sequence-subscribe";
+};
+
+/**
+ * Genera un token firmado para confirmar la suscripción a una secuence.
+ * Válido por 7 días.
+ */
+export const generateSequenceSubscribeToken = (
+  email: string,
+  sequenceId: string,
+  name?: string
+): string => {
+  const data: SequenceSubscribeTokenData = {
+    email,
+    sequenceId,
+    name,
+    action: "sequence-subscribe",
+  };
+  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+    expiresIn: "7d",
+  });
+};
+
+/**
+ * Valida un token de suscripción a secuence.
+ */
+export const validateSequenceSubscribeToken = (
+  token: string
+): {
+  isValid: boolean;
+  decoded?: SequenceSubscribeTokenData;
+  error?: string;
+} => {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "fixtergeek"
+    ) as SequenceSubscribeTokenData;
+
+    if (decoded.action !== "sequence-subscribe") {
+      return { isValid: false, error: "Token inválido" };
+    }
+
+    return { isValid: true, decoded };
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.name === "TokenExpiredError") {
+      return {
+        isValid: false,
+        error: "El enlace ha expirado. Solicita uno nuevo.",
+      };
+    }
+    return { isValid: false, error: "Enlace inválido" };
+  }
+};
+
+// ==========================================
 // Magic Link para Lead Magnets (descarga de recursos)
 // ==========================================
 

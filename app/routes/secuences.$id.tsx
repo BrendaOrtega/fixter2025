@@ -237,6 +237,15 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
   const [preview, setPreview] = useState<any>(null);
   const [editingEmail, setEditingEmail] = useState<string | null>(null);
   const [showAddEmail, setShowAddEmail] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyShareLink = () => {
+    navigator.clipboard?.writeText(
+      `${window.location.origin}/s/${sequence.id}`
+    );
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const stats = aggregate(sequence.enrollments);
   const totalEmails = sequence.emails.length;
@@ -279,20 +288,31 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
               {sequence.description || "Sin descripción"}
             </p>
           </div>
-          <fetcher.Form method="post">
-            <input type="hidden" name="intent" value="toggle_active" />
-            <button
-              type="submit"
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                sequence.isActive
-                  ? "bg-yellow-900/60 text-yellow-300 hover:bg-yellow-900"
-                  : "bg-brand-500 text-brand-900 hover:bg-brand-400"
-              )}
-            >
-              {sequence.isActive ? "Pausar secuence" : "Activar secuence"}
-            </button>
-          </fetcher.Form>
+          <div className="flex items-center gap-2">
+            {sequence.isActive && (
+              <button
+                onClick={copyShareLink}
+                className="px-4 py-2 rounded-full text-sm font-medium bg-brand-800/60 text-brand-100 hover:text-white border border-brand-100/20 transition-colors"
+                title="Copiar enlace público de suscripción"
+              >
+                {copied ? "¡Copiado!" : "Compartir"}
+              </button>
+            )}
+            <fetcher.Form method="post">
+              <input type="hidden" name="intent" value="toggle_active" />
+              <button
+                type="submit"
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                  sequence.isActive
+                    ? "bg-yellow-900/60 text-yellow-300 hover:bg-yellow-900"
+                    : "bg-brand-500 text-brand-900 hover:bg-brand-400"
+                )}
+              >
+                {sequence.isActive ? "Pausar secuence" : "Activar secuence"}
+              </button>
+            </fetcher.Form>
+          </div>
         </div>
 
         {/* Stat cards */}

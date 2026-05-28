@@ -15,6 +15,8 @@ export default [
   route("subscribe", "routes/subscribe.tsx"),
   route("secuences", "routes/secuences.tsx"),
   route("secuences/:id", "routes/secuences.$id.tsx"),
+  route("s/confirmar", "routes/s.confirmar.tsx"), // confirmación doble opt-in pública
+  route("s/:id", "routes/s.$id.tsx"), // suscripción pública a una secuence
   route("newsletters", "routes/newsletters.tsx"), // redirect → /secuences
   route("newsletter", "routes/newsletter.tsx"), // redirect → /secuences
   route("guides", "routes/guides.tsx"),
