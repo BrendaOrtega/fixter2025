@@ -509,7 +509,7 @@ function CreatorTab({
               <p className="text-brand-100 text-sm mb-6 line-clamp-2">
                 {seq.description || "Sin descripción"}
               </p>
-              <div className="flex items-center gap-6 text-sm text-brand-300">
+              <div className="flex items-center gap-6 text-sm text-brand-100">
                 <span className="flex items-center gap-2">
                   <FaEnvelope className="w-3 h-3" />
                   {seq._count.emails} emails
@@ -589,7 +589,7 @@ function SequencesTab({
             </p>
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-brand-800/30 rounded-lg p-3">
-                <div className="text-brand-300 text-xs font-medium mb-1">
+                <div className="text-brand-100 text-xs font-medium mb-1">
                   Progreso
                 </div>
                 <div className="text-white text-lg font-semibold">
@@ -605,7 +605,7 @@ function SequencesTab({
               </div>
               {enrollment.nextEmailAt && (
                 <div className="bg-brand-800/30 rounded-lg p-3">
-                  <div className="text-brand-300 text-xs font-medium mb-1">
+                  <div className="text-brand-100 text-xs font-medium mb-1">
                     Próximo email
                   </div>
                   <div className="text-white text-sm font-medium">
@@ -759,7 +759,7 @@ function DiscoverTab({
                   {sequence.name}
                 </h3>
               </div>
-              <p className="text-brand-300 text-xs mb-3">por {authorName}</p>
+              <p className="text-brand-100 text-xs mb-3">por {authorName}</p>
               <p className="text-brand-100 mb-6 text-sm">
                 {sequence.description || "Secuencia de emails automatizada"}
               </p>

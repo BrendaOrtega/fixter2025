@@ -437,7 +437,7 @@ function EngagementBadges({ enrollment }: { enrollment: any }) {
           title={i.key}
           className={cn(
             "w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center",
-            i.on ? i.color : "bg-brand-900/40 text-brand-300/30"
+            i.on ? i.color : "bg-brand-900/40 text-brand-100/30"
           )}
         >
           {i.label}
@@ -514,7 +514,7 @@ function MonitorTab({
                     <td className="px-4 py-3">
                       <EngagementBadges enrollment={e} />
                     </td>
-                    <td className="px-4 py-3 text-brand-300">
+                    <td className="px-4 py-3 text-brand-100">
                       {e.nextEmailAt
                         ? new Date(e.nextEmailAt).toLocaleDateString("es-MX", {
                             day: "numeric",
@@ -591,14 +591,14 @@ function EmailsTab({
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="w-7 h-7 rounded-full bg-brand-500/20 text-brand-300 text-sm flex items-center justify-center flex-shrink-0">
+                <span className="w-7 h-7 rounded-full bg-brand-500/20 text-brand-100 text-sm flex items-center justify-center flex-shrink-0">
                   {email.order}
                 </span>
                 <div className="min-w-0">
                   <div className="text-white font-medium truncate">
                     {email.subject}
                   </div>
-                  <div className="text-brand-300 text-xs">
+                  <div className="text-brand-100 text-xs">
                     {email.schedulingType === "delay"
                       ? `Espera ${email.delayDays || 0} días`
                       : email.specificDate
@@ -614,7 +614,7 @@ function EmailsTab({
                   <button
                     type="submit"
                     disabled={email.order <= 1}
-                    className="p-2 text-brand-300 hover:text-white disabled:opacity-30"
+                    className="p-2 text-brand-100 hover:text-white disabled:opacity-30"
                     title="Subir"
                   >
                     <FaArrowUp className="w-3 h-3" />
@@ -622,7 +622,7 @@ function EmailsTab({
                 </fetcher.Form>
                 <button
                   onClick={() => onPreview(email)}
-                  className="p-2 text-brand-300 hover:text-white"
+                  className="p-2 text-brand-100 hover:text-white"
                   title="Previsualizar"
                 >
                   <FaEye className="w-3 h-3" />
@@ -631,7 +631,7 @@ function EmailsTab({
                   onClick={() =>
                     setEditingEmail(editingEmail === email.id ? null : email.id)
                   }
-                  className="px-3 py-1 text-brand-300 hover:text-white text-sm"
+                  className="px-3 py-1 text-brand-100 hover:text-white text-sm"
                 >
                   Editar
                 </button>
@@ -833,7 +833,7 @@ function EmailForm({ fetcher, intent, email, sequenceId, onDone }: any) {
           )}
         </div>
       </div>
-      <p className="text-brand-300 text-xs -mt-1">🕒 {scheduleText}</p>
+      <p className="text-brand-100 text-xs -mt-1">🕒 {scheduleText}</p>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -866,7 +866,7 @@ function EmailForm({ fetcher, intent, email, sequenceId, onDone }: any) {
           <label className="block text-xs text-brand-100">
             Contenido (HTML)
           </label>
-          <label className="text-xs text-brand-300 hover:text-white cursor-pointer">
+          <label className="text-xs text-brand-100 hover:text-white cursor-pointer">
             {uploading ? "Subiendo…" : "📎 Subir imagen"}
             <input
               type="file"
@@ -984,7 +984,7 @@ function SubscriberModal({ enrollment, sequence, onClose }: any) {
           </div>
           <button
             onClick={onClose}
-            className="text-brand-300 hover:text-white"
+            className="text-brand-100 hover:text-white"
           >
             <FaTimes />
           </button>
@@ -993,13 +993,13 @@ function SubscriberModal({ enrollment, sequence, onClose }: any) {
         <div className="p-5 space-y-5">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-brand-300 text-xs">Suscrito</div>
+              <div className="text-brand-100 text-xs">Suscrito</div>
               <div className="text-white">
                 {new Date(enrollment.enrolledAt).toLocaleDateString("es-MX")}
               </div>
             </div>
             <div>
-              <div className="text-brand-300 text-xs">Próximo email</div>
+              <div className="text-brand-100 text-xs">Próximo email</div>
               <div className="text-white">
                 {enrollment.nextEmailAt
                   ? new Date(enrollment.nextEmailAt).toLocaleString("es-MX")
@@ -1009,16 +1009,16 @@ function SubscriberModal({ enrollment, sequence, onClose }: any) {
           </div>
 
           <div>
-            <div className="text-brand-300 text-xs mb-2">Engagement</div>
+            <div className="text-brand-100 text-xs mb-2">Engagement</div>
             <EngagementBadges enrollment={enrollment} />
-            <p className="text-brand-300/60 text-[11px] mt-2">
+            <p className="text-brand-100/60 text-[11px] mt-2">
               D=entregado · O=abrió · C=clic · B=rebote (por suscriptor, no
               conteo)
             </p>
           </div>
 
           <div>
-            <div className="text-brand-300 text-xs mb-2">
+            <div className="text-brand-100 text-xs mb-2">
               Timeline de emails
             </div>
             <div className="space-y-2">
@@ -1045,7 +1045,7 @@ function SubscriberModal({ enrollment, sequence, onClose }: any) {
                     <span className="text-white truncate flex-1">
                       {email.order}. {email.subject}
                     </span>
-                    <span className="text-brand-300 text-xs flex-shrink-0">
+                    <span className="text-brand-100 text-xs flex-shrink-0">
                       {sent ? "Enviado" : next ? "Próximo" : "Pendiente"}
                     </span>
                   </div>

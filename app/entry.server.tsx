@@ -8,10 +8,13 @@ import { initializeAgenda } from "./.server/agenda";
 
 const ABORT_DELAY = 5_000;
 
-// Initialize Agenda when server starts
-initializeAgenda().catch((error) => {
-  console.error("Failed to initialize Agenda:", error);
-});
+// Initialize Agenda when server starts.
+// DISABLE_CRON=true lo apaga (útil en dev: evita correr jobs contra la DB compartida).
+if (process.env.DISABLE_CRON !== "true") {
+  initializeAgenda().catch((error) => {
+    console.error("Failed to initialize Agenda:", error);
+  });
+}
 
 export default function handleRequest(
   request: Request,

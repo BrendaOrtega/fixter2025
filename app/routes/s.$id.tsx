@@ -190,7 +190,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           {sequence.description && (
             <p className="text-lg text-brand-100">{sequence.description}</p>
           )}
-          <p className="text-brand-300 text-sm mt-4">
+          <p className="text-brand-100 text-sm mt-4">
             por {author} · {sequence._count.emails}{" "}
             {sequence._count.emails === 1 ? "email" : "emails"}
           </p>
@@ -244,7 +244,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
               >
                 {isLoading ? "Procesando…" : "Suscribirme"}
               </button>
-              <p className="text-brand-300 text-xs text-center">
+              <p className="text-brand-100 text-xs text-center">
                 Te pediremos confirmar tu correo. Puedes cancelar cuando quieras.
               </p>
             </fetcher.Form>
