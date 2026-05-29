@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useFetcher, Link } from "react-router";
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
+import { checkSignupEmail } from "~/.server/anti-bot";
 import getMetaTags from "~/utils/getMetaTags";
 import {
   BiPlay,
@@ -130,6 +131,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (!email || !email.includes("@")) {
       return data({ success: false, error: "Email inválido" });
+    }
+    if (checkSignupEmail(email).blocked) {
+      return data({ success: true, codeSent: true }); // anti-bot: finge éxito
     }
 
     try {

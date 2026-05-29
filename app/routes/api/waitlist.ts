@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs, data } from "react-router";
 import { db } from "~/.server/db";
+import { checkSignupEmail } from "~/.server/anti-bot";
 
 /**
  * POST /api/waitlist
@@ -22,6 +23,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Validación básica
     if (!email || !email.includes("@")) {
       return data({ error: "Email inválido" }, { status: 400 });
+    }
+    if (checkSignupEmail(email).blocked) {
+      return data({ success: true }); // anti-bot: finge éxito, no crea
     }
 
     if (!courseSlug) {

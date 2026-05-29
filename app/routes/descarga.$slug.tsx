@@ -8,6 +8,7 @@ import {
 import type { Route } from "./+types/descarga.$slug";
 import { useFetcher } from "react-router";
 import { db } from "~/.server/db";
+import { checkSignupEmail } from "~/.server/anti-bot";
 import { getLeadMagnetDownloadUrl } from "~/.server/services/s3-leadmagnet";
 import {
   sendLeadMagnetDownload,
@@ -78,6 +79,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     if (!email || !email.includes("@")) {
       return data({ error: "Email inválido" }, { status: 400 });
+    }
+
+    // Anti-bot: dominio desechable o gmail con truco de puntos → finge "revisa
+    // tu correo" sin crear nada (no le damos pistas al bot).
+    if (checkSignupEmail(email).blocked) {
+      return data({
+        success: true,
+        needsConfirmation: true,
+        message: "Revisa tu email para confirmar.",
+      });
     }
 
     const isWaitlist = leadMagnet.type === "waitlist";

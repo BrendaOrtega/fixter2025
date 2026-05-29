@@ -8,6 +8,7 @@ import {
 import type { Route } from "./+types/s.$id";
 import { db } from "~/.server/db";
 import { calculateNextEmailDate } from "~/.server/sequences";
+import { checkSignupEmail } from "~/.server/anti-bot";
 import { sendSequenceConfirmation } from "~/mailSenders/sendSequenceConfirmation";
 import getMetaTags from "~/utils/getMetaTags";
 import useRecaptcha from "~/lib/useRecaptcha";
@@ -64,6 +65,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (!email || !email.includes("@")) {
     return data({ error: "Email inválido" }, { status: 400 });
+  }
+
+  // Anti-bot: dominio desechable o truco de puntos en gmail → fingir éxito y no crear.
+  if (checkSignupEmail(email).blocked) {
+    return data({ success: true, needsConfirmation: true });
   }
 
   const blocked = await db.emailBlacklist.findUnique({ where: { email } });

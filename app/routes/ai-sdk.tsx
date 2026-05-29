@@ -5,6 +5,7 @@ import { useFetcher } from "react-router";
 import { data, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/.server/db";
+import { checkSignupEmail } from "~/.server/anti-bot";
 import {
   BiChevronRight,
   BiCheckCircle,
@@ -183,6 +184,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Validar nombre
     if (!name || name.length < 2) {
       return data({ success: false, error: "Por favor ingresa tu nombre" });
+    }
+    if (checkSignupEmail(email).blocked) {
+      return data({ success: true, waitlist: true }); // anti-bot: finge éxito
     }
 
     try {
