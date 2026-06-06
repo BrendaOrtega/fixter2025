@@ -18,7 +18,7 @@ const navigation = [
   { name: "MentorIA", link: "/coach", highlight: true },
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
-  { name: "Secuencias", link: "/secuencias" },
+  { name: "Code Mode", link: "/code-mode" },
   { name: "Claude Code", link: "/claude" },
   { name: "AI SDK", link: "https://www.fixtergeek.com/ai-sdk", external: true },
   { name: "Pong gratis", link: "/pong" },
@@ -315,10 +315,10 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/secuencias"
+          to="/code-mode"
           index={2}
           isOpen={isOpen}
-          title="Secuencias"
+          title="Code Mode"
         />
         <NavItem
           onClick={toggleMenu}
