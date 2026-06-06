@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { useFetcher } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
@@ -10,7 +10,7 @@ export const meta = () =>
     description:
       "Tu agente de IA pide una herramienta, espera, pide otra, espera… cientos de veces. El Code Mode lo cambia: escribe un solo programa que hace todo de corrido en una caja segura. Aprende a montarlo con EasyBits.",
     url: "https://www.fixtergeek.com/code-mode",
-    image: "https://www.fixtergeek.com/courses/code-mode.png",
+    image: "https://www.fixtergeek.com/cover.png",
   });
 
 const LEARN = [
@@ -19,6 +19,73 @@ const LEARN = [
   "Aísla su código en un sandbox seguro",
   "Lánzalo production-ready desde la primera línea",
 ];
+
+// Código del ejemplo en tokens (texto + color) para tipearlo a mano
+const CODE_TOKENS: { t: string; c: string }[] = [
+  { t: "// 🧰 eb = tu cliente de Easybits\n", c: "text-zinc-600" },
+  { t: "//    (tus archivos, bases de datos y tools).\n", c: "text-zinc-600" },
+  { t: '// 📁 "ventas-junio.csv" ya está guardado ahí.\n\n', c: "text-zinc-600" },
+  { t: "const", c: "text-fuchsia-400" },
+  { t: " { result } = ", c: "" },
+  { t: "await", c: "text-brand-500" },
+  { t: " eb.", c: "" },
+  { t: "compute", c: "text-brand-500" },
+  { t: "({\n  file: ", c: "" },
+  { t: '"ventas-junio.csv"', c: "text-amber-300" },
+  { t: ",   ", c: "" },
+  { t: "// qué datos usar\n", c: "text-zinc-600" },
+  { t: "  prompt: ", c: "" },
+  {
+    t: "`agrúpalo por ciudad, saca el ticket\n          promedio y dame un reporte.pdf`",
+    c: "text-amber-300",
+  },
+  { t: ",\n})\n\n", c: "" },
+  { t: "// 🧠 el modelo escribe el código y lo ejecuta en un\n", c: "text-zinc-600" },
+  { t: "//    sandbox: una caja aislada y segura. las 80,000\n", c: "text-zinc-600" },
+  { t: "//    filas se procesan ahí, no en tu app ni en el chat.\n\n", c: "text-zinc-600" },
+  { t: "result.url  ", c: "" },
+  { t: "// 📄 el PDF terminado, listo para descargar", c: "text-zinc-600" },
+];
+
+// Typewriter en loop: escribe a mano → pausa → borra rapidísimo → reescribe
+function TypedCode({ tokens }: { tokens: { t: string; c: string }[] }) {
+  const total = tokens.reduce((n, t) => n + t.t.length, 0);
+  const [count, setCount] = useState(0);
+  const [phase, setPhase] = useState<"typing" | "deleting">("typing");
+
+  useEffect(() => {
+    let id: ReturnType<typeof setTimeout>;
+    if (phase === "typing") {
+      if (count < total) id = setTimeout(() => setCount((c) => c + 1), 16);
+      else id = setTimeout(() => setPhase("deleting"), 2800);
+    } else {
+      if (count > 0) id = setTimeout(() => setCount((c) => c - 1), 4);
+      else id = setTimeout(() => setPhase("typing"), 120);
+    }
+    return () => clearTimeout(id);
+  }, [count, phase, total]);
+
+  let remaining = count;
+  const out: ReactNode[] = [];
+  for (let i = 0; i < tokens.length && remaining > 0; i++) {
+    out.push(
+      <span key={i} className={tokens[i].c}>
+        {tokens[i].t.slice(0, remaining)}
+      </span>
+    );
+    remaining -= tokens[i].t.length;
+  }
+
+  return (
+    <>
+      {out}
+      <span
+        className="ml-px inline-block w-[7px] animate-pulse bg-brand-500 align-middle"
+        style={{ height: "1.05em" }}
+      />
+    </>
+  );
+}
 
 export default function CodeModeLanding() {
   const fetcher = useFetcher();
@@ -212,37 +279,8 @@ export default function CodeModeLanding() {
                   código real corriendo dentro de la caja
                 </span>
               </div>
-              <pre className="overflow-hidden p-6 font-mono text-xs leading-relaxed text-zinc-300 lg:text-sm">
-                <span className="text-zinc-600">{"// 🧰 eb = tu cliente de Easybits"}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"//    (tus archivos, bases de datos y tools)."}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"// 📁 \"ventas-junio.csv\" ya está guardado ahí."}</span>
-                {"\n\n"}
-                <span className="text-fuchsia-400">const</span> {"{"} result {"}"} ={" "}
-                <span className="text-brand-500">await</span> eb.
-                <span className="text-brand-500">compute</span>({"{"}
-                {"\n"}
-                {"  "}file:{" "}
-                <span className="text-amber-300">"ventas-junio.csv"</span>,{"   "}
-                <span className="text-zinc-600">{"// qué datos usar"}</span>
-                {"\n"}
-                {"  "}prompt:{" "}
-                <span className="text-amber-300">{"`agrúpalo por ciudad, saca el ticket"}</span>
-                {"\n"}
-                {"          "}
-                <span className="text-amber-300">{"promedio y dame un reporte.pdf`"}</span>,
-                {"\n"}
-                {"}"})
-                {"\n\n"}
-                <span className="text-zinc-600">{"// 🧠 el modelo escribe el código y lo ejecuta en un"}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"//    sandbox: una caja aislada y segura. las 80,000"}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"//    filas se procesan ahí, no en tu app ni en el chat."}</span>
-                {"\n\n"}
-                result.url{"  "}
-                <span className="text-zinc-600">{"// 📄 el PDF terminado, listo para descargar"}</span>
+              <pre className="min-h-[20rem] overflow-hidden whitespace-pre-wrap p-6 font-mono text-xs leading-relaxed text-zinc-300 lg:min-h-[23rem] lg:text-sm">
+                <TypedCode tokens={CODE_TOKENS} />
               </pre>
             </motion.div>
           </div>
