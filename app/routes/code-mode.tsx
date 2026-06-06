@@ -126,22 +126,29 @@ export default function CodeModeLanding() {
           </motion.div>
         </div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.55 }}
-          className="mt-5 text-sm font-medium tracking-wide text-zinc-500"
+          className="mt-5 flex items-center gap-3"
         >
-          Un taller de{" "}
-          <a
-            href="https://www.hectorbliss.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-zinc-300 underline-offset-4 transition hover:text-brand-500 hover:underline"
-          >
-            Héctorbliss
-          </a>
-        </motion.p>
+          <img
+            src="https://i.imgur.com/TaDTihr.png"
+            alt="Héctorbliss"
+            className="h-10 w-10 rounded-full border border-zinc-700 object-cover"
+          />
+          <p className="text-sm font-medium tracking-wide text-zinc-500">
+            Un taller de{" "}
+            <a
+              href="https://www.hectorbliss.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-zinc-300 underline-offset-4 transition hover:text-brand-500 hover:underline"
+            >
+              Héctorbliss
+            </a>
+          </p>
+        </motion.div>
 
         {/* dos columnas: copy a la izquierda · código + CTA a la derecha */}
         <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
