@@ -18,10 +18,8 @@ const navigation = [
   { name: "MentorIA", link: "/coach", highlight: true },
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
-  { name: "Code Mode", link: "/code-mode" },
-  { name: "Claude Code", link: "/claude" },
-  { name: "AI SDK", link: "https://www.fixtergeek.com/ai-sdk", external: true },
   { name: "Pong gratis", link: "/pong" },
+  { name: "Code Mode", link: "/code-mode" },
 ];
 
 export const SquigglyUnderline = () => {
@@ -315,35 +313,18 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/code-mode"
-          index={2}
-          isOpen={isOpen}
-          title="Code Mode"
-        />
-        <NavItem
-          onClick={toggleMenu}
-          as="Link"
-          to="/claude"
-          index={3}
-          isOpen={isOpen}
-          title="Claude Code"
-        />
-        <NavItem
-          onClick={toggleMenu}
-          as="a"
-          to="https://www.fixtergeek.com/ai-sdk"
+          to="/pong"
           index={4}
           isOpen={isOpen}
-          title="AI SDK"
-          external
+          title="Pong gratis"
         />
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/pong"
+          to="/code-mode"
           index={5}
           isOpen={isOpen}
-          title="Pong gratis"
+          title="Code Mode"
         />
         {user?.email ? (
           <>

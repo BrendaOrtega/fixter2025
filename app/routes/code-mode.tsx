@@ -134,52 +134,10 @@ export default function CodeModeLanding() {
                 </li>
               ))}
             </motion.ul>
-
-            {/* CTA waitlist, debajo de los bullets */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.45 }}
-              className="mt-10"
-            >
-              {isSuccess ? (
-                <div className="inline-flex items-center gap-2 rounded-xl border border-brand-500/30 bg-brand-500/10 px-5 py-4 text-base font-medium text-brand-500">
-                  ✓ Listo. Te avisaremos antes que a nadie cuando abramos cupos.
-                </div>
-              ) : (
-                <fetcher.Form
-                  method="post"
-                  action="/api/waitlist"
-                  className="flex w-full flex-col gap-3 sm:flex-row"
-                >
-                  <input type="hidden" name="courseSlug" value="code-mode" />
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
-                    className="h-14 flex-1 rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 text-base text-white outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="h-14 shrink-0 rounded-xl bg-brand-500 px-7 text-base font-bold text-brand-900 transition hover:brightness-110 disabled:opacity-60"
-                  >
-                    {isLoading ? "Anotando…" : "Entrar a la lista →"}
-                  </button>
-                </fetcher.Form>
-              )}
-              <p className="mt-4 text-sm text-zinc-400">
-                <span className="font-semibold text-brand-500">Gratis</span>, pero con lugares
-                limitados. Anótate para apartar el tuyo.
-              </p>
-            </motion.div>
           </div>
 
-          {/* Columna derecha: ejemplo real */}
-          <div>
+          {/* Columna derecha: ejemplo real + CTA debajo */}
+          <div className="space-y-7">
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
@@ -226,6 +184,47 @@ export default function CodeModeLanding() {
                 result.url{"  "}
                 <span className="text-zinc-600">{"// 📄 el PDF terminado, listo para descargar"}</span>
               </pre>
+            </motion.div>
+
+            {/* CTA waitlist, debajo del ejemplo */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.45 }}
+            >
+              {isSuccess ? (
+                <div className="inline-flex items-center gap-2 rounded-xl border border-brand-500/30 bg-brand-500/10 px-5 py-4 text-base font-medium text-brand-500">
+                  ✓ Listo. Te avisaremos antes que a nadie cuando abramos cupos.
+                </div>
+              ) : (
+                <fetcher.Form
+                  method="post"
+                  action="/api/waitlist"
+                  className="flex w-full flex-col gap-3 sm:flex-row"
+                >
+                  <input type="hidden" name="courseSlug" value="code-mode" />
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    className="h-14 flex-1 rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 text-base text-white outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="h-14 shrink-0 rounded-xl bg-brand-500 px-7 text-base font-bold text-brand-900 transition hover:brightness-110 disabled:opacity-60"
+                  >
+                    {isLoading ? "Anotando…" : "Entrar a la lista →"}
+                  </button>
+                </fetcher.Form>
+              )}
+              <p className="mt-4 text-sm text-zinc-400">
+                <span className="font-semibold text-brand-500">Gratis</span>, pero con lugares
+                limitados. Anótate para apartar el tuyo.
+              </p>
             </motion.div>
           </div>
         </div>
