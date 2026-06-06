@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
-import { BiRocket, BiX } from "react-icons/bi";
-import { HiSparkles } from "react-icons/hi";
+import { BiCodeAlt, BiX } from "react-icons/bi";
 
 export const FloatingPromo = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -12,7 +11,7 @@ export const FloatingPromo = () => {
 
   useEffect(() => {
     // Verificar si el usuario ya lo desechó y si aún está vigente
-    const dismissedData = localStorage.getItem("aisdk-promo-dismissed");
+    const dismissedData = localStorage.getItem("codemode-promo-dismissed");
     if (dismissedData) {
       const { timestamp } = JSON.parse(dismissedData);
       const oneDayInMs = 24 * 60 * 60 * 1000; // 24 horas
@@ -36,7 +35,7 @@ export const FloatingPromo = () => {
 
   const handleDismiss = () => {
     localStorage.setItem(
-      "aisdk-promo-dismissed",
+      "codemode-promo-dismissed",
       JSON.stringify({
         timestamp: Date.now(),
       }),
@@ -46,7 +45,7 @@ export const FloatingPromo = () => {
   };
 
   const handleClick = () => {
-    navigate("/cursos/ai-sdk/viewer");
+    navigate("/code-mode");
   };
 
   if (isDismissed) return null;
@@ -93,24 +92,24 @@ export const FloatingPromo = () => {
 
                   <div className="pr-8">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">🎁</span>
+                      <BiCodeAlt className="text-2xl text-emerald-400" />
                       <h3 className="font-bold text-gray-900 dark:text-white">
-                        Acceso Gratis
+                        Nuevo taller gratis
                       </h3>
                     </div>
 
                     <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                      Nuevo curso: AI + React
+                      Code Mode con EasyBits
                     </h4>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Míralo completo mientras lo construimos. Sin costo, sin
-                      registro. Nuevas lecciones cada semana.
+                      Que tus agentes escriban código en vez de llamar
+                      herramientas una por una. Gratis, con lugares limitados.
                     </p>
 
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        🚧 En desarrollo
+                        ✦ Lugares limitados
                       </div>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -118,7 +117,7 @@ export const FloatingPromo = () => {
                         onClick={handleClick}
                         className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
-                        Ver ahora →
+                        Apartar lugar →
                       </motion.button>
                     </div>
                   </div>
@@ -144,7 +143,7 @@ export const FloatingPromo = () => {
                 onClick={handleClick}
               >
                 <div className="flex items-center gap-3">
-                  <BiRocket className="text-2xl text-white" />
+                  <BiCodeAlt className="text-2xl text-white" />
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
@@ -155,9 +154,9 @@ export const FloatingPromo = () => {
                         className="overflow-hidden"
                       >
                         <div className="whitespace-nowrap text-white">
-                          <p className="font-bold text-sm">AI + React</p>
+                          <p className="font-bold text-sm">Code Mode</p>
                           <p className="text-xs opacity-90">
-                            Curso gratis • En desarrollo
+                            Taller gratis • lugares limitados
                           </p>
                         </div>
                       </motion.div>

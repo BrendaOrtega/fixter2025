@@ -52,6 +52,8 @@ export default [
   route("agentes", "routes/agentes.tsx"),
   // AI SDK TypeScript Course
   route("ai-sdk", "routes/ai-sdk.tsx"),
+  // Code Mode — infraestructura para agentes con EasyBits Sandbox
+  route("code-mode", "routes/code-mode.tsx"),
   // Pong con Vanilla JS - Classic Course
   route("pong", "routes/pong.tsx"),
   route("pong/viewer", "routes/pong-viewer.tsx"),
