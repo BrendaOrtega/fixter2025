@@ -28,8 +28,8 @@ export default function CodeModeLanding() {
 
   return (
     <main className="relative flex min-h-screen w-full flex-col justify-center overflow-hidden bg-[#0E1317] px-8 pb-12 pt-28 text-zinc-100 lg:px-12 lg:pt-24">
-      {/* confeti al anotarse: colores de marca + ovni 🛸 */}
-      {isSuccess && <EmojiConfetti emojis={["☕", "🛸", "⚙️", "📄", "✅"]} />}
+      {/* confeti al anotarse: puro ovni 🛸 */}
+      {isSuccess && <EmojiConfetti emojis={["🛸"]} />}
 
       {/* grid de fondo con drift animado */}
       <motion.div
