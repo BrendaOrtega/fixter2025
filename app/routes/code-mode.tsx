@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useFetcher } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
+import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 
 export const meta = () =>
   getMetaTags({
@@ -13,10 +14,10 @@ export const meta = () =>
   });
 
 const LEARN = [
-  "Por qué tu agente gasta de más cuando usa una herramienta a la vez",
-  "Cómo hacer que escriba un solo programa en lugar de cientos de pasos sueltos",
-  "Dónde corre ese código sin que toque tu servidor ni tus datos reales",
-  "Cómo dejarlo listo para producción con el sandbox de EasyBits",
+  "Deja de pagar de más por tus agentes",
+  "Haz que escriban un programa, no 200 pasos",
+  "Aísla su código en un sandbox seguro",
+  "Lánzalo production-ready desde la primera línea",
 ];
 
 export default function CodeModeLanding() {
@@ -27,6 +28,9 @@ export default function CodeModeLanding() {
 
   return (
     <main className="relative flex min-h-screen w-full flex-col justify-center overflow-hidden bg-[#0E1317] px-8 pb-12 pt-28 text-zinc-100 lg:px-12 lg:pt-24">
+      {/* confeti al anotarse: colores de marca + ovni 🛸 */}
+      {isSuccess && <EmojiConfetti emojis={["☕", "🛸", "⚙️", "📄", "✅"]} />}
+
       {/* grid de fondo con drift animado */}
       <motion.div
         className="absolute inset-0 opacity-[0.11]"
@@ -84,7 +88,7 @@ export default function CodeModeLanding() {
           transition={{ duration: 0.7, delay: 0.55 }}
           className="mt-5 text-sm font-medium tracking-wide text-zinc-500"
         >
-          un taller de{" "}
+          Un taller de{" "}
           <a
             href="https://www.hectorbliss.com"
             target="_blank"
@@ -96,20 +100,20 @@ export default function CodeModeLanding() {
         </motion.p>
 
         {/* dos columnas: copy a la izquierda · código + CTA a la derecha */}
-        <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <div className="mt-12 grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
           {/* Columna copy (humano, sin jerga) */}
           <div>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-xl leading-relaxed text-zinc-400 lg:text-2xl"
+              className="text-2xl leading-relaxed text-zinc-400 lg:text-3xl"
             >
               ¿Tu agente se siente lento y caro? Es porque pide una herramienta,
               espera, pide otra, espera… cientos de veces. El{" "}
               <span className="text-zinc-100">Code Mode</span> lo cambia: el agente
               escribe <span className="text-brand-500">un solo programa</span> que
-              hace todo de corrido y lo corre en una caja segura. Menos pasos, menos
+              hace todo de corrido y lo ejecuta en una caja segura y aislada. Menos pasos, menos
               costo, más velocidad — con el sandbox de{" "}
               <span className="text-zinc-100">EasyBits</span>.
             </motion.p>
@@ -123,70 +127,20 @@ export default function CodeModeLanding() {
               {LEARN.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-3 text-lg text-zinc-300 lg:text-xl"
+                  className="flex items-start gap-3 text-xl text-zinc-300 lg:text-2xl"
                 >
                   <span className="mt-0.5 text-brand-500">▸</span>
                   <span>{item}</span>
                 </li>
               ))}
             </motion.ul>
-          </div>
 
-          {/* Columna derecha: ejemplo real + CTA debajo */}
-          <div className="space-y-7">
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 shadow-2xl backdrop-blur"
-            >
-              <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
-                <span className="h-3 w-3 rounded-full bg-red-400/80" />
-                <span className="h-3 w-3 rounded-full bg-yellow-400/80" />
-                <span className="h-3 w-3 rounded-full bg-brand-500/80" />
-                <span className="ml-2 font-mono text-sm text-zinc-500">
-                  una llamada · el modelo escribe y corre el código
-                </span>
-              </div>
-              <pre className="overflow-x-auto p-7 font-mono text-sm leading-loose text-zinc-300 lg:text-base">
-                <span className="text-zinc-600">{"// 🧰 eb = tu cliente de Easybits"}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"//    (tus archivos, bases de datos y tools)."}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"// 📁 \"ventas-junio.csv\" ya está guardado ahí."}</span>
-                {"\n\n"}
-                <span className="text-fuchsia-400">const</span> {"{"} result {"}"} ={" "}
-                <span className="text-brand-500">await</span> eb.
-                <span className="text-brand-500">compute</span>({"{"}
-                {"\n"}
-                {"  "}file:{" "}
-                <span className="text-amber-300">"ventas-junio.csv"</span>,{"   "}
-                <span className="text-zinc-600">{"// qué datos usar"}</span>
-                {"\n"}
-                {"  "}prompt:{" "}
-                <span className="text-amber-300">{"`agrúpalo por ciudad, saca el ticket"}</span>
-                {"\n"}
-                {"          "}
-                <span className="text-amber-300">{"promedio y dame un reporte.pdf`"}</span>,
-                {"\n"}
-                {"}"})
-                {"\n\n"}
-                <span className="text-zinc-600">{"// 🧠 el modelo escribe el código y lo ejecuta en un"}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"//    sandbox: una caja aislada y segura. las 80,000"}</span>
-                {"\n"}
-                <span className="text-zinc-600">{"//    filas se procesan ahí, no en tu app ni en el chat."}</span>
-                {"\n\n"}
-                result.url{"  "}
-                <span className="text-zinc-600">{"// 📄 el PDF terminado, listo para descargar"}</span>
-              </pre>
-            </motion.div>
-
-            {/* CTA waitlist, debajo del ejemplo */}
+            {/* CTA waitlist, debajo de los bullets */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.45 }}
+              className="mt-10"
             >
               {isSuccess ? (
                 <div className="inline-flex items-center gap-2 rounded-xl border border-brand-500/30 bg-brand-500/10 px-5 py-4 text-base font-medium text-brand-500">
@@ -221,6 +175,57 @@ export default function CodeModeLanding() {
                 <span className="font-semibold text-brand-500">Gratis</span>, pero con lugares
                 limitados. Anótate para apartar el tuyo.
               </p>
+            </motion.div>
+          </div>
+
+          {/* Columna derecha: ejemplo real */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 shadow-2xl backdrop-blur"
+            >
+              <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
+                <span className="h-3 w-3 rounded-full bg-red-400/80" />
+                <span className="h-3 w-3 rounded-full bg-yellow-400/80" />
+                <span className="h-3 w-3 rounded-full bg-brand-500/80" />
+                <span className="ml-2 font-mono text-sm text-zinc-500">
+                  código real corriendo dentro de la caja
+                </span>
+              </div>
+              <pre className="overflow-hidden p-6 font-mono text-xs leading-relaxed text-zinc-300 lg:text-sm">
+                <span className="text-zinc-600">{"// 🧰 eb = tu cliente de Easybits"}</span>
+                {"\n"}
+                <span className="text-zinc-600">{"//    (tus archivos, bases de datos y tools)."}</span>
+                {"\n"}
+                <span className="text-zinc-600">{"// 📁 \"ventas-junio.csv\" ya está guardado ahí."}</span>
+                {"\n\n"}
+                <span className="text-fuchsia-400">const</span> {"{"} result {"}"} ={" "}
+                <span className="text-brand-500">await</span> eb.
+                <span className="text-brand-500">compute</span>({"{"}
+                {"\n"}
+                {"  "}file:{" "}
+                <span className="text-amber-300">"ventas-junio.csv"</span>,{"   "}
+                <span className="text-zinc-600">{"// qué datos usar"}</span>
+                {"\n"}
+                {"  "}prompt:{" "}
+                <span className="text-amber-300">{"`agrúpalo por ciudad, saca el ticket"}</span>
+                {"\n"}
+                {"          "}
+                <span className="text-amber-300">{"promedio y dame un reporte.pdf`"}</span>,
+                {"\n"}
+                {"}"})
+                {"\n\n"}
+                <span className="text-zinc-600">{"// 🧠 el modelo escribe el código y lo ejecuta en un"}</span>
+                {"\n"}
+                <span className="text-zinc-600">{"//    sandbox: una caja aislada y segura. las 80,000"}</span>
+                {"\n"}
+                <span className="text-zinc-600">{"//    filas se procesan ahí, no en tu app ni en el chat."}</span>
+                {"\n\n"}
+                result.url{"  "}
+                <span className="text-zinc-600">{"// 📄 el PDF terminado, listo para descargar"}</span>
+              </pre>
             </motion.div>
           </div>
         </div>
