@@ -72,15 +72,59 @@ export default function CodeModeLanding() {
           Nuevo taller · infraestructura para agentes
         </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-6xl font-black leading-[1.02] tracking-tight sm:text-7xl lg:text-8xl xl:text-[7rem]"
-        >
-          Cómo entrar a la era del{" "}
-          <span className="text-brand-500">Code Mode</span>
-        </motion.h1>
+        <div className="relative">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="text-6xl font-black leading-[1.02] tracking-tight sm:text-7xl lg:text-8xl xl:text-[7rem]"
+          >
+            Cómo entrar a la era del{" "}
+            <span className="text-brand-500">Code Mode</span>
+          </motion.h1>
+
+          {/* CTA en el hueco a la derecha de "Code Mode" (desktop); flujo normal en móvil */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+            className="mt-8 lg:absolute lg:bottom-1 lg:right-0 lg:mt-0 lg:w-[50%]"
+          >
+            {isSuccess ? (
+              <div className="inline-flex items-center gap-2 rounded-xl border border-brand-500/30 bg-brand-500/10 px-5 py-4 text-base font-medium text-brand-500">
+                ✓ Listo. Te avisaremos antes que a nadie cuando abramos cupos.
+              </div>
+            ) : (
+              <fetcher.Form
+                method="post"
+                action="/api/waitlist"
+                className="flex w-full flex-col gap-3 sm:flex-row"
+              >
+                <input type="hidden" name="courseSlug" value="code-mode" />
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  className="h-14 flex-1 rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 text-base text-white outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="h-14 shrink-0 rounded-xl bg-brand-500 px-7 text-base font-bold text-brand-900 transition hover:brightness-110 disabled:opacity-60"
+                >
+                  {isLoading ? "Enviando…" : "Solicitar un lugar"}
+                </button>
+              </fetcher.Form>
+            )}
+            <p className="mt-4 text-sm text-zinc-400">
+              <span className="font-semibold text-brand-500">Gratis</span>, pero con lugares
+              limitados. Solicita el tuyo.
+            </p>
+          </motion.div>
+        </div>
 
         <motion.p
           initial={{ opacity: 0 }}
@@ -136,49 +180,8 @@ export default function CodeModeLanding() {
             </motion.ul>
           </div>
 
-          {/* Columna derecha: CTA arriba + ejemplo real */}
-          <div className="space-y-7">
-            {/* CTA waitlist, arriba del ejemplo */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-            >
-              {isSuccess ? (
-                <div className="inline-flex items-center gap-2 rounded-xl border border-brand-500/30 bg-brand-500/10 px-5 py-4 text-base font-medium text-brand-500">
-                  ✓ Listo. Te avisaremos antes que a nadie cuando abramos cupos.
-                </div>
-              ) : (
-                <fetcher.Form
-                  method="post"
-                  action="/api/waitlist"
-                  className="flex w-full flex-col gap-3 sm:flex-row"
-                >
-                  <input type="hidden" name="courseSlug" value="code-mode" />
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
-                    className="h-14 flex-1 rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 text-base text-white outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="h-14 shrink-0 rounded-xl bg-brand-500 px-7 text-base font-bold text-brand-900 transition hover:brightness-110 disabled:opacity-60"
-                  >
-                    {isLoading ? "Enviando…" : "Solicitar un lugar"}
-                  </button>
-                </fetcher.Form>
-              )}
-              <p className="mt-4 text-sm text-zinc-400">
-                <span className="font-semibold text-brand-500">Gratis</span>, pero con lugares
-                limitados. Solicita el tuyo.
-              </p>
-            </motion.div>
-
+          {/* Columna derecha: ejemplo real */}
+          <div>
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
