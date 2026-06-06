@@ -132,11 +132,6 @@ export default function CodeModeLanding() {
           transition={{ duration: 0.7, delay: 0.55 }}
           className="mt-5 flex items-center gap-3"
         >
-          <img
-            src="https://i.imgur.com/TaDTihr.png"
-            alt="Héctorbliss"
-            className="h-10 w-10 rounded-full border border-zinc-700 object-cover"
-          />
           <p className="text-sm font-medium tracking-wide text-zinc-500">
             Un taller de{" "}
             <a
@@ -148,6 +143,20 @@ export default function CodeModeLanding() {
               Héctorbliss
             </a>
           </p>
+          <motion.img
+            src="https://i.imgur.com/TaDTihr.png"
+            alt="Héctorbliss"
+            initial={{ scale: 0, rotate: -25, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1, y: [0, -4, 0] }}
+            transition={{
+              scale: { type: "spring", bounce: 0.6, duration: 0.6, delay: 0.7 },
+              rotate: { duration: 0.5, delay: 0.7 },
+              opacity: { duration: 0.3, delay: 0.7 },
+              y: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1.3 },
+            }}
+            whileHover={{ scale: 1.18, rotate: 6 }}
+            className="h-10 w-10 cursor-pointer rounded-full border border-zinc-700 object-cover"
+          />
         </motion.div>
 
         {/* dos columnas: copy a la izquierda · código + CTA a la derecha */}
