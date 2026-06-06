@@ -77,7 +77,7 @@ export default function CodeModeLanding() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-6xl font-black leading-[1.02] tracking-tight sm:text-7xl lg:text-8xl xl:text-[7rem]"
+            className="text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-8xl lg:leading-[1.02] xl:text-[7rem]"
           >
             Cómo entrar a la era del{" "}
             <span className="text-brand-500">Code Mode</span>
@@ -151,7 +151,7 @@ export default function CodeModeLanding() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-2xl leading-relaxed text-zinc-400 lg:text-3xl"
+              className="text-lg leading-relaxed text-zinc-400 sm:text-xl lg:text-3xl"
             >
               ¿Tu agente se siente lento y caro? Es porque pide una herramienta,
               espera, pide otra, espera… cientos de veces. El{" "}
@@ -171,7 +171,7 @@ export default function CodeModeLanding() {
               {LEARN.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-3 text-xl text-zinc-300 lg:text-2xl"
+                  className="flex items-start gap-3 text-base text-zinc-300 sm:text-lg lg:text-2xl"
                 >
                   <span className="mt-0.5 text-brand-500">▸</span>
                   <span>{item}</span>
