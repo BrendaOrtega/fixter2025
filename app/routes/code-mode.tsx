@@ -234,7 +234,7 @@ export default function CodeModeLanding() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-lg leading-relaxed text-zinc-400 sm:text-xl lg:text-3xl"
+              className="text-base leading-relaxed text-zinc-400 sm:text-lg lg:text-2xl"
             >
               ¿Tu agente se siente lento y caro? Es porque pide una herramienta,
               espera, pide otra, espera… cientos de veces. El{" "}
