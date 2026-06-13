@@ -14,6 +14,7 @@ import {
   checkSubscriptionByEmail,
 } from "~/.server/dbGetters";
 import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
+import Markdown from "~/components/common/Markdown";
 import type { Route } from "./+types/courseViewer";
 import getMetaTags from "~/utils/getMetaTags";
 
@@ -488,6 +489,15 @@ export default function Route({
           }}
           onEnd={handleVideoEnd}
         />
+
+        {/* Lesson content markdown — below the video */}
+        {video.description && video.description.length > 100 && (
+          <section className="max-w-3xl mx-auto px-4 md:px-8 py-12">
+            <div className="markdown">
+              <Markdown>{video.description}</Markdown>
+            </div>
+          </section>
+        )}
 
         <UnifiedSidebarMenu
           courseTitle={course.title}
