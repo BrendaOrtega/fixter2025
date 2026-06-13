@@ -15,7 +15,8 @@ import {
   checkSubscriptionByEmail,
 } from "~/.server/dbGetters";
 import { sendVerificationCode } from "~/mailSenders/sendVerificationCode";
-import Markdown from "~/components/common/Markdown";
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 import type { Route } from "./+types/courseViewer";
 import getMetaTags from "~/utils/getMetaTags";
 
@@ -542,7 +543,9 @@ export default function Route({
                       </button>
                     </div>
                     <div className="prose prose-invert prose-lg max-w-none">
-                      <Markdown>{video.description}</Markdown>
+                      <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
+                        {video.description}
+                      </Streamdown>
                     </div>
                   </div>
                 </motion.section>

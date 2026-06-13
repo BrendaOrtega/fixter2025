@@ -21,7 +21,8 @@ import {
 } from "react-icons/md";
 import { useClickOutside } from "~/hooks/useClickOutside";
 import { cn } from "~/utils/cn";
-import Markdown from "../common/Markdown";
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 
 type TabType = "videos" | "notes";
 
@@ -363,7 +364,9 @@ const VideosContent = ({
 const NotesContent = ({ body }: { body: string }) => {
   return (
     <div className="prose prose-invert prose-sm max-w-none">
-      <Markdown>{body}</Markdown>
+      <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
+        {body}
+      </Streamdown>
     </div>
   );
 };
