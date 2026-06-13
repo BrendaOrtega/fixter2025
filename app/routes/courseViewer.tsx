@@ -1,5 +1,6 @@
 import { redirect, data, useNavigate } from "react-router";
 import { useState, useEffect, useCallback } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { db } from "~/.server/db";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
 import { UnifiedSidebarMenu } from "~/components/viewer/UnifiedSidebarMenu";
@@ -389,6 +390,7 @@ export default function Route({
   },
 }: Route.ComponentProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showLessonContent, setShowLessonContent] = useState(false);
   const [showRatingDrawer, setShowRatingDrawer] = useState(false);
   const navigate = useNavigate();
 
@@ -490,13 +492,52 @@ export default function Route({
           onEnd={handleVideoEnd}
         />
 
-        {/* Lesson content markdown — below the video */}
+        {/* Lesson content — collapsible below video */}
         {video.description && video.description.length > 100 && (
-          <section className="max-w-3xl mx-auto px-4 md:px-8 py-12">
-            <div className="markdown">
-              <Markdown>{video.description}</Markdown>
-            </div>
-          </section>
+          <div className="relative">
+            {/* Toggle button */}
+            {!showLessonContent && (
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute -top-14 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-5 py-2.5 bg-brand-700 hover:bg-brand-600 text-white rounded-full text-sm font-medium shadow-lg transition-colors cursor-pointer"
+                onClick={() => setShowLessonContent(true)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+                </svg>
+                Leer contenido de la lección
+              </motion.button>
+            )}
+
+            {/* Collapsible content */}
+            <AnimatePresence>
+              {showLessonContent && (
+                <motion.section
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.35, ease: "easeInOut" }}
+                  className="overflow-hidden border-t border-white/10 bg-dark"
+                >
+                  <div className="max-w-3xl mx-auto px-4 md:px-8 py-12">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-bold text-white">Contenido de la lección</h2>
+                      <button
+                        onClick={() => setShowLessonContent(false)}
+                        className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer"
+                      >
+                        Ocultar ↑
+                      </button>
+                    </div>
+                    <div className="markdown">
+                      <Markdown>{video.description}</Markdown>
+                    </div>
+                  </div>
+                </motion.section>
+              )}
+            </AnimatePresence>
+          </div>
         )}
 
         <UnifiedSidebarMenu
