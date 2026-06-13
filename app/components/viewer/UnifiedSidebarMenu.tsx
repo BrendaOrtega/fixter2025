@@ -363,7 +363,7 @@ const VideosContent = ({
 
 const NotesContent = ({ body }: { body: string }) => {
   return (
-    <div className="prose prose-invert prose-sm max-w-none">
+    <div className="dark prose prose-invert prose-sm max-w-none">
       <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
         {body}
       </Streamdown>

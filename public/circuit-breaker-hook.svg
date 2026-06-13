@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#0a0a12"/>
+    </linearGradient>
+    <linearGradient id="codeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e1e30"/>
+      <stop offset="100%" stop-color="#121220"/>
+    </linearGradient>
+    <filter id="codeGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg3)"/>
+  <!-- Code window -->
+  <rect x="80" y="30" width="1040" height="530" rx="10" fill="url(#codeGrad)" stroke="#2a2a44" stroke-width="1"/>
+  <rect x="80" y="30" width="1040" height="38" rx="10" fill="#161630"/>
+  <rect x="80" y="58" width="1040" height="10" fill="#161630"/>
+  <circle cx="105" cy="49" r="6" fill="#ff5f56"/>
+  <circle cx="127" cy="49" r="6" fill="#ffbd2e"/>
+  <circle cx="149" cy="49" r="6" fill="#27c93f"/>
+  <text x="600" y="54" text-anchor="middle" font-family="monospace" font-size="12" fill="#666688">PreToolUseHook.ts</text>
+  <!-- Code lines -->
+  <text x="110" y="100" font-family="monospace" font-size="14" fill="#8888bb">if (pre.tool_name !== 'Read') <span fill="#6666aa">return</span> {};</text>
+  <text x="110" y="130" font-family="monospace" font-size="14" fill="#8888bb">const filePath = pre.tool_input?.file_path;</text>
+  <text x="110" y="170" font-family="monospace" font-size="14" fill="#44ff88" filter="url(#codeGlow)">if (/\.pdf$/i.test(filePath)) {</text>
+  <text x="140" y="200" font-family="monospace" font-size="14" fill="#ffcc44">reason = 'No leas PDFs con Read.</text>
+  <text x="140" y="225" font-family="monospace" font-size="14" fill="#ffcc44">Usa pdf-reader extract --layout</text>
+  <text x="140" y="250" font-family="monospace" font-size="14" fill="#ffcc44">&gt; archivo.txt';</text>
+  <text x="110" y="280" font-family="monospace" font-size="14" fill="#44ff88">}</text>
+  <text x="110" y="320" font-family="monospace" font-size="14" fill="#8888bb">return {</text>
+  <text x="140" y="350" font-family="monospace" font-size="14" fill="#ff6688">permissionDecision: 'deny',</text>
+  <text x="140" y="380" font-family="monospace" font-size="14" fill="#66aaff">permissionDecisionReason: reason,</text>
+  <text x="110" y="410" font-family="monospace" font-size="14" fill="#8888bb">};</text>
+  <text x="110" y="460" font-family="monospace" font-size="14" fill="#444466">// Esto es código, no prompt.</text>
+  <text x="110" y="490" font-family="monospace" font-size="14" fill="#444466">// El hook no negocia.</text>
+  <!-- Circuit breaker visual -->
+  <rect x="850" y="140" width="160" height="180" rx="16" fill="none" stroke="#ff6688" stroke-width="3" opacity="0.6"/>
+  <text x="930" y="220" text-anchor="middle" font-family="monospace" font-size="40" fill="#ff4444" filter="url(#codeGlow)">⚡</text>
+  <text x="930" y="280" text-anchor="middle" font-family="monospace" font-size="16" fill="#ff6688">CIRCUIT</text>
+  <text x="930" y="300" text-anchor="middle" font-family="monospace" font-size="16" fill="#ff6688">BREAKER</text>
+  <!-- Title -->
+  <text x="600" y="590" text-anchor="middle" font-family="system-ui,sans-serif" font-size="28" font-weight="700" fill="#e0e0e0">El hook no negocia — el hook ejecuta</text>
+</svg>

@@ -542,7 +542,7 @@ export default function Route({
                         Ocultar ↑
                       </button>
                     </div>
-                    <div className="prose prose-invert prose-lg max-w-none">
+                    <div className="dark prose prose-invert prose-lg max-w-none">
                       <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
                         {video.description}
                       </Streamdown>
