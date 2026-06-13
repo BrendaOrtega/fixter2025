@@ -1,5 +1,5 @@
 import { redirect, data, useNavigate } from "react-router";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { db } from "~/.server/db";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
@@ -392,7 +392,17 @@ export default function Route({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLessonContent, setShowLessonContent] = useState(false);
   const [showRatingDrawer, setShowRatingDrawer] = useState(false);
+  const lessonContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
+
+  // Scroll lesson content into view when expanded
+  useEffect(() => {
+    if (showLessonContent && lessonContentRef.current) {
+      setTimeout(() => {
+        lessonContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100); // wait for expand animation to start
+    }
+  }, [showLessonContent]);
 
   // Determine which drawer to show based on accessLevel
   const hasAccess =
@@ -514,6 +524,7 @@ export default function Route({
             <AnimatePresence>
               {showLessonContent && (
                 <motion.section
+                  ref={lessonContentRef}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -530,7 +541,7 @@ export default function Route({
                         Ocultar ↑
                       </button>
                     </div>
-                    <div className="markdown">
+                    <div className="prose prose-invert prose-lg max-w-none">
                       <Markdown>{video.description}</Markdown>
                     </div>
                   </div>
