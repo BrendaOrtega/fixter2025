@@ -276,7 +276,7 @@ const CourseContent = ({
   }, []);
   return (
     <section className=" mt-20 md:mt-32 w-full px-8 md:px-[5%] xl:px-0 max-w-7xl mx-auto ">
-      <div className="prose prose-lg prose-invert max-w-none text-colorParagraph
+      <div className="dark prose prose-lg prose-invert max-w-none text-colorParagraph
         [&_h2]:text-brand-500 [&_h2]:font-bold [&_h2]:mt-10 [&_h2]:mb-4
         [&_h3]:text-white [&_h3]:font-semibold [&_h3]:mt-8 [&_h3]:mb-3
         [&_a]:text-brand-500 [&_a]:no-underline hover:[&_a]:underline
