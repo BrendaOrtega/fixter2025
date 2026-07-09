@@ -6,9 +6,11 @@ export const postSearch = async (search: string) => {
       published: true,
       OR: [
         { tags: { has: search } },
+        { tags: { has: search.toLowerCase() } },
         { mainTag: { equals: search, mode: "insensitive" } },
         { title: { contains: search, mode: "insensitive" } },
         { authorName: { contains: search, mode: "insensitive" } },
+        { body: { contains: search, mode: "insensitive" } },
       ],
     },
     orderBy: { createdAt: "desc" },

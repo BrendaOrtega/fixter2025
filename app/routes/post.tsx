@@ -25,6 +25,9 @@ export const meta = ({ data, location }: Route.MetaArgs) => {
   const { post } = data;
   const url = `https://www.fixtergeek.com${location.pathname}`;
   const description = post.body?.replace(/[#*`]/g, "").slice(0, 155) + "...";
+  const keywords = [post.mainTag, ...(post.tags ?? [])]
+    .filter(Boolean)
+    .join(", ");
 
   return getMetaTags({
     title: `${post.title} | Fixtergeek`,
@@ -32,6 +35,14 @@ export const meta = ({ data, location }: Route.MetaArgs) => {
     image: post.metaImage || post.coverImage || undefined,
     url,
     type: "article",
+    keywords: keywords || undefined,
+    author: post.authorName || undefined,
+    publishedTime: post.createdAt
+      ? new Date(post.createdAt).toISOString()
+      : undefined,
+    modifiedTime: post.updatedAt
+      ? new Date(post.updatedAt).toISOString()
+      : undefined,
   });
 };
 
