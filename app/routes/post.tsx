@@ -233,10 +233,43 @@ export default function Page({
     );
   }
 
+  const postImage = post.metaImage || post.coverImage || undefined;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    inLanguage: "es",
+    headline: post.title,
+    description: (post.body || "").replace(/[#*`]/g, "").slice(0, 200),
+    image: postImage
+      ? [postImage.startsWith("http") ? postImage : `https://www.fixtergeek.com${postImage}`]
+      : ["https://www.fixtergeek.com/cover.png"],
+    datePublished: post.createdAt ? new Date(post.createdAt).toISOString() : undefined,
+    dateModified: post.updatedAt
+      ? new Date(post.updatedAt).toISOString()
+      : post.createdAt
+      ? new Date(post.createdAt).toISOString()
+      : undefined,
+    author: { "@type": "Person", name: post.authorName || "Héctor Bliss" },
+    publisher: {
+      "@type": "Organization",
+      name: "FixterGeek",
+      logo: { "@type": "ImageObject", url: "https://www.fixtergeek.com/cover.png" },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://www.fixtergeek.com/blog/${post.slug}`,
+    },
+    keywords: [post.mainTag, ...(post.tags ?? [])].filter(Boolean),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <SubscriptionModal />
-      
+
       {/* Barra de progreso */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-700 z-50">
         <motion.div
