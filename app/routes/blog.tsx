@@ -328,7 +328,7 @@ const Searcher = ({
             value="agentes"
             isActive={search === "agentes"}
             onClick={handleFilter}
-            image="/icons/robot.svg"
+            image="/icons/robot-white.svg"
             title="Agentes"
           />
           <Filter
