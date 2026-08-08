@@ -310,8 +310,11 @@ const Searcher = ({
         </button>
       </div>
       <div className="w-full h-[32px] scrollGradient relative mt-8 overflow-hidden">
+        {/* `safe center`: centra cuando los chips caben y cae a flex-start cuando
+            desbordan. Con `center` a secas, el desborde IZQUIERDO queda cortado e
+            inalcanzable (no hay scroll hacia allá) — se comía los filtros nuevos. */}
         <div
-          className="flex  gap-4 justify-start md:justify-center overflow-x-scroll "
+          className="flex gap-4 px-2 justify-start md:[justify-content:safe_center] overflow-x-scroll"
           style={{
             scrollbarWidth: "none", // esto esconde la barra de scroll (es mala práctica 🤷🏻)
           }}
