@@ -55,7 +55,17 @@ Con esas piezas armadas, la **memoria del workspace** que estrenamos hoy costó 
 
 El manual de 126 páginas quedó en 5 notas y una marca nueva lista en el selector, sin activarse sola. La libertad del código dentro de la caja; la autoridad de la firma fuera de ella.
 
-La idea lleva dos años acumulando evidencia — el paper, smolagents, Cloudflare, Anthropic. El trabajo pendiente era llevarla del playground del desarrollador solitario al lugar donde trabaja un equipo real, y en eso andamos. Si quieres verlo con tus manos, entra a [Ghosty Teams](https://ghosty.studio), abre la Memoria de tu workspace y suéltale el manual de marca de un cliente: mira a tu agente destilarlo en conocimiento que todo tu equipo hereda.
+La idea lleva dos años acumulando evidencia — el paper, smolagents, Cloudflare, Anthropic. El trabajo pendiente era llevarla del playground del desarrollador solitario al lugar donde trabaja un equipo real, y en eso andamos.
+
+---
+
+## 🍬 Pruébalo con tu propio manual
+
+Todo lo de este post está corriendo en producción, en **[ghosty.studio](https://www.ghosty.studio)**. Crea tu cuenta gratis, abre la **Memoria** de tu workspace, suelta el manual de marca de un cliente —o el tuyo— y mira a tu agente destilarlo en conocimiento que todo tu equipo hereda. Sin configurar nada.
+
+### → [Crear mi cuenta gratis y probar la memoria](https://www.ghosty.studio/signup)
+
+---
 
 Y si este tipo de arquitectura te prende —agentes en producción, con sus decisiones feas y sus números reales— en [mi canal de YouTube](https://www.youtube.com/@BlissmoHQ) desmenuzo estas piezas con código y sin filtros.
 
