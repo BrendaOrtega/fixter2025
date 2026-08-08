@@ -309,16 +309,10 @@ const Searcher = ({
           )}
         </button>
       </div>
-      <div className="w-full h-[32px] scrollGradient relative mt-8 overflow-hidden">
-        {/* `safe center`: centra cuando los chips caben y cae a flex-start cuando
-            desbordan. Con `center` a secas, el desborde IZQUIERDO queda cortado e
-            inalcanzable (no hay scroll hacia allá) — se comía los filtros nuevos. */}
-        <div
-          className="flex gap-4 px-2 justify-start md:[justify-content:safe_center] overflow-x-scroll"
-          style={{
-            scrollbarWidth: "none", // esto esconde la barra de scroll (es mala práctica 🤷🏻)
-          }}
-        >
+      {/* flex-wrap: los chips se amontonan en filas centradas en vez de esconderse en
+          un scroll horizontal — con 16 filtros el scroll cortaba los de las orillas. */}
+      <div className="w-full relative mt-8">
+        <div className="flex flex-wrap gap-3 px-2 justify-center">
           {/* Los temas nuevos primero: es donde está el contenido reciente. */}
           <Filter
             value="ai"
