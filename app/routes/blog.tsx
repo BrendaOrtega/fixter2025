@@ -316,6 +316,42 @@ const Searcher = ({
             scrollbarWidth: "none", // esto esconde la barra de scroll (es mala práctica 🤷🏻)
           }}
         >
+          {/* Los temas nuevos primero: es donde está el contenido reciente. */}
+          <Filter
+            value="ai"
+            isActive={search === "ai"}
+            onClick={handleFilter}
+            image="/icons/colorRobot.svg"
+            title="IA"
+          />
+          <Filter
+            value="agentes"
+            isActive={search === "agentes"}
+            onClick={handleFilter}
+            image="/icons/robot.svg"
+            title="Agentes"
+          />
+          <Filter
+            value="claude"
+            isActive={search === "claude"}
+            onClick={handleFilter}
+            image="/icons/anthropic.svg"
+            title="Claude"
+          />
+          <Filter
+            value="mcp"
+            isActive={search === "mcp"}
+            onClick={handleFilter}
+            image="/icons/mcp.svg"
+            title="MCP"
+          />
+          <Filter
+            value="typescript"
+            isActive={search === "typescript"}
+            onClick={handleFilter}
+            image="/icons/typescript.svg"
+            title="TypeScript"
+          />
           <Filter
             value="motion"
             isActive={search === "motion"}
