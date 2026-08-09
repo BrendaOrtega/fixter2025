@@ -82,7 +82,7 @@ const INCLUDES = [
   "La UI inicial de tu agente, lista desde la primera sesión",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
-  "Comunidad en Discord con el instructor y el grupo",
+  "Comunidad en Ghosty Teams con el instructor y el grupo",
   "Certificado de finalización",
   "Factura fiscal si tu empresa lo paga",
 ];
