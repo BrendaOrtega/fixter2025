@@ -10,7 +10,7 @@ import { FaWhatsapp } from "react-icons/fa";
 
 // ===========================================
 // Taller: Diseño de sistemas agénticos
-// Cohorte en vivo · 4 sesiones de 2h · Precio de lanzamiento
+// Primera edición · 4 sesiones en vivo de 2h · Septiembre 2026
 // ===========================================
 const PRICE = 2490; // MXN precio de lanzamiento
 const PRICE_REGULAR = 3490; // MXN tachado
@@ -82,7 +82,7 @@ const INCLUDES = [
   "La UI inicial de tu agente, lista desde la primera sesión",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
-  "Comunidad en Discord con el instructor y la cohorte",
+  "Comunidad en Discord con el instructor y el grupo",
   "Certificado de finalización",
   "Factura fiscal si tu empresa lo paga",
 ];
@@ -110,7 +110,7 @@ const FAQS = [
   },
   {
     q: "¿Cuándo son las sesiones?",
-    a: "La primera edición corre durante septiembre de 2026: 4 sesiones en vivo de 2 horas, una por semana, en horario vespertino (CDMX). El calendario exacto se define con la cohorte inscrita y se avisa con anticipación.",
+    a: "La primera edición corre durante septiembre de 2026: 4 sesiones en vivo de 2 horas, una por semana, en horario vespertino (CDMX). El calendario exacto se define con el grupo inscrito y se avisa con anticipación.",
   },
 ];
 
@@ -418,7 +418,7 @@ export default function SistemasAgenticosLanding() {
           className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-sistemas-primary/30 bg-sistemas-primary/10 px-5 py-2 text-sm font-medium text-sistemas-primary"
         >
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-sistemas-primary" />
-          Nuevo taller en vivo · Cohorte de septiembre · Cupo limitado
+          Nuevo taller en vivo · Primera edición · Septiembre 2026
         </motion.div>
 
         <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
@@ -481,7 +481,7 @@ export default function SistemasAgenticosLanding() {
                   Precio de primera edición
                 </span>{" "}
                 — <s className="opacity-60">${PRICE_REGULAR.toLocaleString()}</s>{" "}
-                en cohortes siguientes
+                en siguientes ediciones
               </p>
             </motion.div>
 
@@ -545,7 +545,7 @@ export default function SistemasAgenticosLanding() {
               primeras tools; en la 2, memoria; en la 3 lo despliegas con
               checkpoints y aprobaciones; en la 4 vuelves esa UI agent-native:
               streaming, estados y aprobaciones en vivo. Te llevas el repo completo,
-              corriendo con tu propia API key.
+              corriendo con los tokens de DeepSeek que van incluidos.
             </p>
           </motion.div>
 
@@ -887,8 +887,8 @@ export default function SistemasAgenticosLanding() {
                 <CheckoutButton fetcher={fetcher} />
               </div>
               <p className="mt-4 text-sm leading-relaxed text-sistemas-gray">
-                Precio exclusivo de la primera edición — en las siguientes
-                cohortes sube a ${PRICE_REGULAR.toLocaleString()}.
+                Precio exclusivo de la primera edición — en siguientes
+                ediciones sube a ${PRICE_REGULAR.toLocaleString()}.
               </p>
               <p className="mt-4 text-sm text-sistemas-gray">
                 ¿Dudas? Mándanos un{" "}
