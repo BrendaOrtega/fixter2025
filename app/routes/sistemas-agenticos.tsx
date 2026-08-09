@@ -5,6 +5,7 @@ import { data, redirect, type ActionFunctionArgs } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import SimpleFooter from "~/components/common/SimpleFooter";
+import LiquidEther from "~/components/backgrounds/LiquidEther";
 import { FaWhatsapp } from "react-icons/fa";
 
 // ===========================================
@@ -267,9 +268,9 @@ function SystemDiagram() {
             className="rounded-xl border-2 border-sistemas-primary/60 bg-sistemas-primary/10 px-5 py-4 font-mono text-sm font-bold text-sistemas-primary"
             animate={{
               boxShadow: [
-                "0 0 0px rgba(123,147,255,0)",
-                "0 0 24px rgba(123,147,255,0.35)",
-                "0 0 0px rgba(123,147,255,0)",
+                "0 0 0px rgba(133,221,203,0)",
+                "0 0 24px rgba(133,221,203,0.35)",
+                "0 0 0px rgba(133,221,203,0)",
               ],
             }}
             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
@@ -382,7 +383,7 @@ export default function SistemasAgenticosLanding() {
         className="pointer-events-none absolute inset-0 opacity-[0.07]"
         style={{
           backgroundImage:
-            "linear-gradient(#7B93FF 1px, transparent 1px), linear-gradient(90deg, #7B93FF 1px, transparent 1px)",
+            "linear-gradient(#85DDCB 1px, transparent 1px), linear-gradient(90deg, #85DDCB 1px, transparent 1px)",
           backgroundSize: "48px 48px",
           maskImage:
             "radial-gradient(ellipse 90% 55% at 50% 0%, black 20%, transparent 70%)",
@@ -765,14 +766,34 @@ export default function SistemasAgenticosLanding() {
       </section>
 
       {/* ============ INSTRUCTOR ============ */}
-      <section className="relative z-10 border-t border-sistemas-line/60 bg-sistemas-surface/30">
-        <div className="mx-auto w-full max-w-5xl px-6 py-20 lg:px-10">
+      <section className="relative z-10 overflow-hidden border-t border-sistemas-line/60 bg-sistemas-surface/30">
+        {/* Fondo animado */}
+        <div className="absolute inset-0 z-0">
+          <LiquidEther
+            colors={["#85DDCB", "#37AB93", "#186656"]}
+            mouseForce={50}
+            cursorSize={150}
+            isViscous={false}
+            viscous={30}
+            iterationsViscous={32}
+            iterationsPoisson={32}
+            resolution={0.3}
+            isBounce={false}
+            autoDemo={true}
+            autoSpeed={0.3}
+            autoIntensity={1.5}
+            takeoverDuration={0.1}
+            autoResumeDelay={2000}
+            autoRampDuration={0.3}
+          />
+        </div>
+        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-5xl px-6 py-20 lg:px-10">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="grid items-center gap-10 rounded-3xl border border-sistemas-line bg-sistemas-dark p-8 sm:p-12 md:grid-cols-[1fr_auto]"
+            className="pointer-events-auto grid items-center gap-10 rounded-3xl border border-sistemas-line bg-sistemas-dark/90 p-8 backdrop-blur-sm sm:p-12 md:grid-cols-[1fr_auto]"
           >
             <div>
               <span className="font-mono text-xs uppercase tracking-widest text-sistemas-gray">
@@ -804,9 +825,9 @@ export default function SistemasAgenticosLanding() {
               </div>
             </div>
             <img
-              src="https://i.imgur.com/TaDTihr.png"
+              src="/courses/titor.png"
               alt="Héctor Bliss"
-              className="mx-auto h-40 w-40 rounded-2xl border border-sistemas-line object-cover md:h-52 md:w-52"
+              className="mx-auto w-56 rounded-2xl object-cover md:w-72"
             />
           </motion.div>
         </div>

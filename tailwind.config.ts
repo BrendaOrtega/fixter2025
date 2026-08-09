@@ -43,13 +43,14 @@ export default {
           gray:"#465169",
           onix:"#222933"
         },
+        // Taller sistemas agénticos — colores oficiales FixterGeek
         sistemas: {
-          primary: "#7B93FF",
-          accent: "#FFC46B",
-          dark: "#0A0F1E",
-          surface: "#131A2E",
-          gray: "#8A93AD",
-          line: "#24304F",
+          primary: "#85DDCB",
+          accent: "#8DCF6E",
+          dark: "#0E1317",
+          surface: "#182128",
+          gray: "#B7B9BA",
+          line: "#2C3944",
         },
       },
       backgroundImage: {

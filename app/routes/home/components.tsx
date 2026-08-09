@@ -593,8 +593,8 @@ export const HomeHero = () => {
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
             <PrimaryButton
               as="Link"
-              to="/code-mode"
-              children="Entrar al Code Mode"
+              to="/sistemas-agenticos"
+              children="Nuevo taller: Sistemas agénticos"
             />
           </div>
           {/* Links sutiles a los libros */}
