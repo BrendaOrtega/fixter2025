@@ -180,6 +180,58 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  if (intent === "contact_request") {
+    const phone = String(formData.get("phone") || "").trim();
+    const email = String(formData.get("email") || "")
+      .toLowerCase()
+      .trim();
+    const digits = phone.replace(/\D/g, "");
+
+    if (digits.length < 10) {
+      return data({ error: "Déjanos un teléfono válido (10 dígitos)" });
+    }
+
+    try {
+      const { db } = await import("~/.server/db");
+      const { checkSignupEmail } = await import("~/.server/anti-bot");
+      const tag = "contacto-sistemas-agenticos";
+      const safeEmail =
+        email && !checkSignupEmail(email).blocked
+          ? email
+          : `lead-${digits}@sin-correo.fixtergeek.com`;
+
+      const existing = await db.subscriber.findUnique({
+        where: { email: safeEmail },
+      });
+      if (!existing) {
+        await db.subscriber.create({
+          data: {
+            email: safeEmail,
+            confirmed: true,
+            tags: [tag],
+            customFields: { phone, source: "sistemas-agenticos" },
+          },
+        });
+      } else {
+        await db.subscriber.update({
+          where: { email: safeEmail },
+          data: {
+            ...(existing.tags?.includes(tag) ? {} : { tags: { push: tag } }),
+            customFields: {
+              ...((existing.customFields as object) || {}),
+              phone,
+              source: "sistemas-agenticos",
+            },
+          },
+        });
+      }
+      return data({ success: true, type: "contact" });
+    } catch (error) {
+      console.error("[sistemas-agenticos] contact error:", error);
+      return data({ error: "Error al registrar. Intenta de nuevo." });
+    }
+  }
+
   if (intent === "direct_checkout") {
     try {
       const stripe = new (await import("stripe")).default(
@@ -952,28 +1004,37 @@ export default function SistemasAgenticosLanding() {
             <CheckoutButton fetcher={fetcher} label="Quiero mi lugar" />
           </div>
 
-          {/* Waitlist secundaria */}
+          {/* Contacto directo con el instructor */}
           <div className="mx-auto mt-12 max-w-md">
             {waitlistFetcher.data?.success ? (
               <p className="rounded-xl border border-sistemas-primary/30 bg-sistemas-primary/10 px-5 py-4 text-sm text-sistemas-primary">
-                ✓ Listo. Te avisamos de la próxima cohorte antes que a nadie.
+                ✓ Listo. Héctorbliss te contacta pronto.
               </p>
             ) : (
               <>
-                <p className="mb-3 text-sm text-sistemas-gray">
-                  ¿Esta cohorte no te acomoda? Te avisamos de la siguiente:
-                </p>
+                <div className="mb-4 flex items-center justify-center gap-3">
+                  <img
+                    src="https://i.imgur.com/TaDTihr.png"
+                    alt="Héctorbliss"
+                    className="h-9 w-9 rounded-full border border-sistemas-line object-cover"
+                  />
+                  <p className="text-left text-sm text-sistemas-gray">
+                    ¿Tienes dudas o quieres charlar conmigo de los detalles?
+                    <br />
+                    Deja tu tel y te contacto —{" "}
+                    <span className="text-zinc-200">Héctorbliss</span>
+                  </p>
+                </div>
                 <waitlistFetcher.Form
                   method="post"
-                  action="/api/waitlist"
                   className="flex flex-col gap-3 sm:flex-row"
                 >
-                  <input type="hidden" name="courseSlug" value={COURSE_SLUG} />
+                  <input type="hidden" name="intent" value="contact_request" />
                   <input
-                    name="email"
-                    type="email"
+                    name="phone"
+                    type="tel"
                     required
-                    placeholder="tu@email.com"
+                    placeholder="tu teléfono (WhatsApp)"
                     className="h-12 flex-1 rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
                   />
                   <button
@@ -981,9 +1042,14 @@ export default function SistemasAgenticosLanding() {
                     disabled={waitlistFetcher.state !== "idle"}
                     className="h-12 shrink-0 rounded-xl border border-sistemas-primary/40 bg-sistemas-primary/10 px-6 text-sm font-bold text-sistemas-primary transition hover:bg-sistemas-primary/20 disabled:opacity-60"
                   >
-                    Avisarme
+                    Que me contacte
                   </button>
                 </waitlistFetcher.Form>
+                {waitlistFetcher.data?.error && (
+                  <p className="mt-2 text-xs text-danger">
+                    {waitlistFetcher.data.error}
+                  </p>
+                )}
               </>
             )}
           </div>
