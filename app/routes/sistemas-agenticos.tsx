@@ -217,6 +217,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         allow_promotion_codes: true,
         billing_address_collection: "required",
         phone_number_collection: { enabled: true },
+        payment_method_options: {
+          card: { installments: { enabled: true } },
+        },
       });
 
       if (!session.url) throw new Error("Failed to create checkout session");
@@ -860,7 +863,8 @@ export default function SistemasAgenticosLanding() {
                 </s>
               </div>
               <p className="mt-2 text-sm text-sistemas-gray">
-                Pago único · Factura disponible · Códigos de promoción aceptados
+                3 y 6 meses sin intereses con tarjetas participantes · Factura
+                disponible · Códigos de promoción aceptados
               </p>
               <div className="mt-8">
                 <CheckoutButton fetcher={fetcher} />
