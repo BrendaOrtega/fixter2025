@@ -78,7 +78,6 @@ const SESSIONS = [
 
 const INCLUDES = [
   "4 sesiones en vivo de 2 horas (8 horas totales) en 2 semanas intensivas: martes y jueves",
-  "GhostyCode, nuestro agente de código en terminal, con todos los tokens de DeepSeek v4 Pro que vas a necesitar — sin pagar API aparte",
   "La UI inicial de tu agente, lista desde la primera sesión",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
@@ -912,6 +911,13 @@ export default function SistemasAgenticosLanding() {
             </div>
             <div className="border-t border-sistemas-line bg-sistemas-dark/60 p-8 sm:p-12 md:border-l md:border-t-0">
               <h3 className="font-bold text-zinc-100">Incluye</h3>
+              <div className="mt-4 rounded-xl border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-3.5">
+                <p className="text-sm font-semibold leading-relaxed text-sistemas-accent">
+                  🎁 GhostyCode, nuestro agente de código en terminal, con todos
+                  los tokens de DeepSeek v4 Pro que vas a necesitar — sin pagar
+                  API aparte
+                </p>
+              </div>
               <ul className="mt-5 space-y-3.5">
                 {INCLUDES.map((item) => (
                   <li
