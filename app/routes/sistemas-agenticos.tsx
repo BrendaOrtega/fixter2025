@@ -78,6 +78,8 @@ const SESSIONS = [
 
 const INCLUDES = [
   "4 sesiones en vivo de 2 horas (8 horas totales), una por semana",
+  "Todos los tokens de DeepSeek para construir tu agente — sin pagar API aparte",
+  "La UI inicial de tu agente, lista desde la primera sesión",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
   "Comunidad en Discord con el instructor y la cohorte",
@@ -92,7 +94,7 @@ const FAQS = [
   },
   {
     q: "¿Qué herramientas usamos y cuánto cuestan aparte?",
-    a: "TypeScript y React para el código, y las APIs de modelos (Anthropic u OpenAI). Necesitarás una API key propia; el gasto durante el taller ronda los $5–10 USD en llamadas al modelo. Todo lo demás es open source.",
+    a: "TypeScript y React para el código, y DeepSeek como modelo — con los tokens incluidos: te damos una API key de EasyBits con crédito de sobra para construir el agente completo del curso, así que no pagas ninguna API aparte. La misma key funciona en GhostyCode, nuestro agente de terminal open source. Todo lo demás también es open source.",
   },
   {
     q: "¿Qué pasa si no puedo asistir a una sesión en vivo?",
