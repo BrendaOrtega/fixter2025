@@ -19,7 +19,7 @@ const SESSIONS = [
   {
     number: "01",
     title: "El harness: anatomía de un agente",
-    date: "Martes 8 de septiembre · 7:00 PM CDMX",
+    date: "Sesión en vivo · 2 horas",
     intro:
       "Un agente es un modelo más todo lo que construyes alrededor de él. Claude Code lleva ~500,000 líneas de código y ninguna es el modelo: todas son harness. En esta sesión entiendes qué hay en esas líneas y construyes las tuyas.",
     topics: [
@@ -33,7 +33,7 @@ const SESSIONS = [
   {
     number: "02",
     title: "Context engineering y memoria",
-    date: "Martes 15 de septiembre · 7:00 PM CDMX",
+    date: "Sesión en vivo · 2 horas",
     intro:
       "La ventana de contexto es el recurso más escaso del sistema. Aprendes a tratarla como lo que es: el sistema operativo del agente — qué entra, qué se resume, qué se va a disco y qué se delega.",
     topics: [
@@ -47,7 +47,7 @@ const SESSIONS = [
   {
     number: "03",
     title: "Producción: lo que rompe a los agentes",
-    date: "Martes 22 de septiembre · 7:00 PM CDMX",
+    date: "Sesión en vivo · 2 horas",
     intro:
       "La infraestructura estándar no está hecha para procesos que corren 40 minutos, fallan en el paso 67 de 123 y tocan APIs a nombre de tu usuario. Esta sesión cubre la capa que separa un demo de un sistema.",
     topics: [
@@ -61,7 +61,7 @@ const SESSIONS = [
   {
     number: "04",
     title: "La interfaz del agente",
-    date: "Martes 29 de septiembre · 7:00 PM CDMX",
+    date: "Sesión en vivo · 2 horas",
     intro:
       "Casi nadie enseña esto y es donde tú tienes ventaja: un agente que corre minutos necesita una interfaz que muestre progreso, pida permiso y falle con gracia. Estudiamos los patrones agent-native de Builder.io y cómo los aplicamos en producción en Ghosty Teams y Tasks. Aquí tu experiencia en frontend y diseño vale oro.",
     topics: [
@@ -105,8 +105,8 @@ const FAQS = [
     a: "Sí, emitimos factura fiscal. Muchos asistentes lo pasan como capacitación — escríbenos por WhatsApp y te mandamos la carta descriptiva para tu área de recursos humanos.",
   },
   {
-    q: "¿Y si no me convence?",
-    a: "Toma la primera sesión completa. Si no es para ti, te devolvemos el 100% sin preguntas.",
+    q: "¿Cuándo son las sesiones?",
+    a: "La primera edición corre durante septiembre de 2026: 4 sesiones en vivo de 2 horas, una por semana, en horario vespertino (CDMX). El calendario exacto se define con la cohorte inscrita y se avisa con anticipación.",
   },
 ];
 
@@ -155,8 +155,6 @@ export const meta = () => {
           "@type": "CourseInstance",
           courseMode: "Online",
           courseWorkload: "PT8H",
-          startDate: "2026-09-08",
-          endDate: "2026-09-29",
         },
         inLanguage: "es",
         coursePrerequisites:
@@ -438,7 +436,7 @@ export default function SistemasAgenticosLanding() {
             >
               {[
                 "4 sesiones en vivo · 8 horas",
-                "Martes de septiembre · 7 PM CDMX",
+                "Septiembre 2026",
                 "TypeScript + React",
                 "Grabaciones incluidas",
               ].map((chip) => (
@@ -459,11 +457,11 @@ export default function SistemasAgenticosLanding() {
             >
               <CheckoutButton fetcher={fetcher} />
               <p className="mt-3 text-sm text-sistemas-gray">
-                Precio de lanzamiento —{" "}
-                <s className="opacity-60">${PRICE_REGULAR.toLocaleString()}</s>{" "}
                 <span className="text-sistemas-accent">
-                  garantía: primera sesión o te devolvemos todo
-                </span>
+                  Precio de primera edición
+                </span>{" "}
+                — <s className="opacity-60">${PRICE_REGULAR.toLocaleString()}</s>{" "}
+                en cohortes siguientes
               </p>
             </motion.div>
 
@@ -514,16 +512,17 @@ export default function SistemasAgenticosLanding() {
             className="max-w-3xl"
           >
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Hacer el demo tomó una tarde.{" "}
-              <span className="text-sistemas-primary">¿Y luego?</span>
+              Lo que se rompe con{" "}
+              <span className="text-sistemas-primary">usuarios reales</span>
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-              Conectaste un modelo a unas tools y en dos horas tenías algo que
-              parecía magia. Luego llegó el usuario real: la tarea corrió 40
-              minutos, el contexto se desbordó, el agente alucinó en el paso 67 y
-              hubo que empezar de cero. Nadie vio el progreso porque la UI era un
-              spinner. Ese hueco entre el demo y el sistema tiene nombre: diseño
-              de sistemas.
+              Una tarea de 40 minutos que muere en el paso 67 y toca empezar de
+              cero. Un contexto que se desborda a media investigación. Un agente
+              con permiso de mandar un correo que un día manda mil. Una interfaz
+              que solo muestra un spinner mientras todo eso pasa. Cada uno de
+              esos problemas tiene solución conocida — checkpoints, context
+              engineering, guardrails, streaming — y las cuatro pertenecen al
+              mismo oficio: diseñar el sistema alrededor del modelo.
             </p>
           </motion.div>
 
@@ -539,7 +538,7 @@ export default function SistemasAgenticosLanding() {
               },
               {
                 stat: "500,000",
-                text: "líneas de código tiene el harness de Claude Code. Ninguna es el modelo.",
+                text: "líneas de ingeniería rodean al modelo en Claude Code: contexto, tools, guardrails e interfaz.",
               },
             ].map((item, i) => (
               <motion.div
@@ -621,7 +620,7 @@ export default function SistemasAgenticosLanding() {
               <span className="text-sistemas-primary">sesión</span>
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
-              4 martes seguidos, 2 horas cada uno, en vivo. Del harness a la
+              4 sesiones en vivo de 2 horas, una por semana. Del harness a la
               interfaz.
             </p>
           </motion.div>
@@ -824,7 +823,7 @@ export default function SistemasAgenticosLanding() {
           <div className="grid md:grid-cols-2">
             <div className="p-8 sm:p-12">
               <span className="rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-1.5 text-xs font-bold text-sistemas-accent">
-                COHORTE DE SEPTIEMBRE · PRECIO DE LANZAMIENTO
+                PRIMERA EDICIÓN · SEPTIEMBRE 2026
               </span>
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="text-5xl font-black text-sistemas-primary">
@@ -842,9 +841,8 @@ export default function SistemasAgenticosLanding() {
                 <CheckoutButton fetcher={fetcher} />
               </div>
               <p className="mt-4 text-sm leading-relaxed text-sistemas-gray">
-                <span className="text-sistemas-accent">Garantía:</span> toma la
-                primera sesión completa y si no es para ti, te devolvemos el
-                100%.
+                Precio exclusivo de la primera edición — en las siguientes
+                cohortes sube a ${PRICE_REGULAR.toLocaleString()}.
               </p>
               <p className="mt-4 text-sm text-sistemas-gray">
                 ¿Dudas? Mándanos un{" "}
@@ -942,9 +940,8 @@ export default function SistemasAgenticosLanding() {
             </span>
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-sistemas-gray">
-            Arrancamos el martes 8 de septiembre a las 7:00 PM (CDMX). El cupo
-            es limitado porque las sesiones son en vivo y se trabaja el código
-            de cada quien.
+            Primera edición en septiembre. El cupo es limitado porque las
+            sesiones son en vivo y se trabaja el código de cada quien.
           </p>
           <div className="mt-10 flex justify-center">
             <CheckoutButton fetcher={fetcher} label="Quiero mi lugar" />
