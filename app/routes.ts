@@ -56,6 +56,8 @@ export default [
   route("code-mode", "routes/code-mode.tsx"),
   // Taller: Diseño de sistemas agénticos
   route("sistemas-agenticos", "routes/sistemas-agenticos.tsx"),
+  // Sala del webinar (redirige a WEBINAR_ROOM_URL cuando está configurada)
+  route("webinar-en-vivo", "routes/webinar-en-vivo.tsx"),
   // Pong con Vanilla JS - Classic Course
   route("pong", "routes/pong.tsx"),
   route("pong/viewer", "routes/pong-viewer.tsx"),

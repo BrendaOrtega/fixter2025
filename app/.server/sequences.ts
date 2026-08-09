@@ -66,12 +66,14 @@ export async function getOrCreateSubscriberForUser(user: {
  * inscripción la devuelve sin tocarla. `immediate` fuerza el primer email al
  * siguiente ciclo del cron en vez de respetar su scheduling (delay/fecha).
  * Con specific_date en el pasado, el cron manda los correos vencidos en
- * ráfaga de catch-up — deseable para compradores tardíos.
+ * ráfaga de catch-up — deseable para compradores tardíos, pero indeseable
+ * cuando el correo ya no aplica ("mañana es el webinar" el mismo día): para
+ * eso está `startAtIndex`, que arranca la secuencia más adelante.
  */
 export async function enrollSubscriberInSequence(
   sequenceId: string,
   subscriberId: string,
-  opts?: { immediate?: boolean }
+  opts?: { immediate?: boolean; startAtIndex?: number }
 ) {
   const existing = await db.sequenceEnrollment.findUnique({
     where: { sequenceId_subscriberId: { sequenceId, subscriberId } },
@@ -80,22 +82,41 @@ export async function enrollSubscriberInSequence(
 
   const sequence = await db.sequence.findUnique({
     where: { id: sequenceId },
-    include: { emails: { orderBy: { order: "asc" }, take: 1 } },
+    include: { emails: { orderBy: { order: "asc" } } },
   });
   if (!sequence) return null;
 
-  const firstEmail = sequence.emails[0];
+  const startIndex = Math.min(
+    Math.max(opts?.startAtIndex ?? 0, 0),
+    Math.max(sequence.emails.length - 1, 0)
+  );
+  const startEmail = sequence.emails[startIndex];
+
+  // Ya no queda ningún email por enviar: se marca completada de una vez.
+  if (!startEmail) {
+    return db.sequenceEnrollment.create({
+      data: {
+        sequenceId,
+        subscriberId,
+        status: "completed",
+        currentEmailIndex: startIndex,
+        nextEmailAt: null,
+        enrolledAt: new Date(),
+        completedAt: new Date(),
+        emailsSent: 0,
+      },
+    });
+  }
+
   return db.sequenceEnrollment.create({
     data: {
       sequenceId,
       subscriberId,
       status: "active",
-      currentEmailIndex: 0,
+      currentEmailIndex: startIndex,
       nextEmailAt: opts?.immediate
         ? new Date()
-        : firstEmail
-        ? calculateNextEmailDate(firstEmail)
-        : null,
+        : calculateNextEmailDate(startEmail),
       enrolledAt: new Date(),
       emailsSent: 0,
     },

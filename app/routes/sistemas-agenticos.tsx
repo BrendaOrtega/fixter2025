@@ -7,6 +7,18 @@ import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import { FaWhatsapp } from "react-icons/fa";
+import {
+  WEBINAR_SLOTS,
+  WEBINAR_TITLE,
+  getWebinarSlot,
+} from "~/utils/webinarDates";
+
+// Secuencias de recordatorio por fecha (scripts/create-webinar-sequences.ts)
+const WEBINAR_SEQUENCES: Record<string, string> = {
+  "2026-08-13": "6a790a151d99ed94a4258d63",
+  "2026-08-20": "6a790a151d99ed94a4258d67",
+  "2026-08-27": "6a790a151d99ed94a4258d6b",
+};
 
 // ===========================================
 // Taller: Diseño de sistemas agénticos
@@ -183,6 +195,83 @@ export const meta = () => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  // Registro al webinar gratuito de venta (13, 20 o 27 de agosto)
+  if (intent === "webinar_registration") {
+    const email = String(formData.get("email") || "")
+      .toLowerCase()
+      .trim();
+    const name = String(formData.get("name") || "").trim();
+    const slot = getWebinarSlot(String(formData.get("webinarDate") || ""));
+
+    if (!email.includes("@")) {
+      return data({ error: "Necesitamos un correo válido" });
+    }
+    if (!slot) {
+      return data({ error: "Elige una fecha para el webinar" });
+    }
+
+    try {
+      const { db } = await import("~/.server/db");
+      const { checkSignupEmail } = await import("~/.server/anti-bot");
+      // Anti-bot: finge éxito para no darle señal al bot
+      if (checkSignupEmail(email).blocked) {
+        return data({ success: true, type: "webinar", slotId: slot.id });
+      }
+
+      const tags = ["webinar-sistemas-agenticos", `webinar-${slot.id}`];
+      const existing = await db.subscriber.findUnique({ where: { email } });
+      const subscriber = existing
+        ? await db.subscriber.update({
+            where: { email },
+            data: {
+              name: name || existing.name || undefined,
+              tags: {
+                push: tags.filter((t) => !(existing.tags || []).includes(t)),
+              },
+            },
+          })
+        : await db.subscriber.create({
+            data: { email, name: name || undefined, confirmed: true, tags },
+          });
+
+      // Recordatorios: si ya pasó el "día anterior", arranca más adelante para
+      // no mandar un "mañana nos vemos" el mismo día del webinar.
+      const { enrollSubscriberInSequence } = await import("~/.server/sequences");
+      const webinarStart = new Date(`${slot.id}T20:00:00-06:00`).getTime();
+      const now = Date.now();
+      const startAtIndex =
+        now > webinarStart ? 2 : now > webinarStart - 20 * 60 * 60 * 1000 ? 1 : 0;
+
+      try {
+        await enrollSubscriberInSequence(
+          WEBINAR_SEQUENCES[slot.id],
+          subscriber.id,
+          { startAtIndex }
+        );
+      } catch (error) {
+        console.error("[webinar] error al inscribir a recordatorios:", error);
+      }
+
+      try {
+        const { sendSistemasWebinarConfirmation } = await import(
+          "~/mailSenders/sendSistemasWebinarConfirmation"
+        );
+        await sendSistemasWebinarConfirmation({
+          to: email,
+          userName: name || subscriber.name,
+          slot,
+        });
+      } catch (error) {
+        console.error("[webinar] error al enviar confirmación:", error);
+      }
+
+      return data({ success: true, type: "webinar", slotId: slot.id });
+    } catch (error) {
+      console.error("[webinar] error en registro:", error);
+      return data({ error: "Algo falló al registrarte. Intenta de nuevo." });
+    }
+  }
 
   if (intent === "direct_checkout") {
     try {
@@ -402,6 +491,145 @@ function CheckoutButton({
   );
 }
 
+// Registro al webinar gratuito — visible (no modal) para que el anuncio de
+// Meta pueda apuntar directo a /sistemas-agenticos#webinar
+function WebinarSection() {
+  const webinarFetcher = useFetcher<{
+    success?: boolean;
+    error?: string;
+    slotId?: string;
+  }>();
+  const isLoading = webinarFetcher.state !== "idle";
+  const done = webinarFetcher.data?.success;
+  const confirmedSlot = getWebinarSlot(webinarFetcher.data?.slotId);
+
+  return (
+    <section
+      id="webinar"
+      className="relative z-10 scroll-mt-24 border-y border-sistemas-line/60 bg-sistemas-surface/40"
+    >
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:px-10">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <span className="inline-flex items-center gap-2.5 rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-1.5 text-sm font-bold text-sistemas-accent">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-sistemas-accent" />
+            Webinar gratuito · 1 hora
+          </span>
+          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
+            ¿Prefieres verlo antes?{" "}
+            <span className="text-sistemas-primary">{WEBINAR_TITLE}</span>
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
+            Una hora en vivo, sin costo: te enseño un agente que funciona
+            perfecto y luego se rompe con un usuario real — y las piezas que le
+            faltan. Con sistemas nuestros que hoy corren en producción, por
+            dentro. Q&amp;A al final.
+          </p>
+          <ul className="mt-6 space-y-2.5">
+            {[
+              "El demo que muere en el paso 67, en vivo",
+              "Harness, contexto, checkpoints y aprobación humana",
+              "Cómo se ve una UI agent-native de verdad",
+            ].map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-2.5 text-zinc-300"
+              >
+                <span className="mt-0.5 text-sistemas-accent">▸</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          className="rounded-2xl border border-sistemas-line bg-sistemas-dark p-7 sm:p-8"
+        >
+          {done ? (
+            <div className="text-center">
+              <div className="text-4xl">✅</div>
+              <h3 className="mt-4 text-xl font-bold text-zinc-100">
+                Tu lugar está apartado
+              </h3>
+              <p className="mt-3 leading-relaxed text-sistemas-gray">
+                {confirmedSlot
+                  ? `Nos vemos el ${confirmedSlot.short}.`
+                  : "Nos vemos pronto."}{" "}
+                Te mandé un correo con el link de la sala y te recordaré antes
+                de que empiece.
+              </p>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-lg font-bold text-zinc-100">
+                Aparta tu lugar
+              </h3>
+              <p className="mt-1.5 text-sm text-sistemas-gray">
+                Gratis. Solo necesito saber a dónde mandarte el link.
+              </p>
+              <webinarFetcher.Form method="post" className="mt-5 space-y-3">
+                <input
+                  type="hidden"
+                  name="intent"
+                  value="webinar_registration"
+                />
+                <input
+                  name="name"
+                  type="text"
+                  placeholder="Tu nombre"
+                  className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
+                />
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="tu@email.com"
+                  className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
+                />
+                <select
+                  name="webinarDate"
+                  required
+                  defaultValue={WEBINAR_SLOTS[0].id}
+                  className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
+                >
+                  {WEBINAR_SLOTS.map((slot) => (
+                    <option key={slot.id} value={slot.id}>
+                      {slot.short}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="h-12 w-full rounded-xl bg-sistemas-accent px-6 text-sm font-bold text-sistemas-dark transition hover:brightness-110 disabled:opacity-60"
+                >
+                  {isLoading ? "Apartando…" : "Apartar mi lugar gratis"}
+                </button>
+                {webinarFetcher.data?.error && (
+                  <p className="text-xs text-danger">
+                    {webinarFetcher.data.error}
+                  </p>
+                )}
+                <p className="text-center text-xs text-sistemas-gray">
+                  Sin costo · Te aviso antes de que empiece · Nada de spam
+                </p>
+              </webinarFetcher.Form>
+            </>
+          )}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 export default function SistemasAgenticosLanding() {
   const fetcher = useFetcher();
   const [showConfetti, setShowConfetti] = useState(false);
@@ -536,6 +764,15 @@ export default function SistemasAgenticosLanding() {
                 </span>{" "}
                 — <s className="opacity-60">${PRICE_REGULAR.toLocaleString()}</s>{" "}
                 en siguientes ediciones
+              </p>
+              <p className="mt-4 text-sm text-sistemas-gray">
+                ¿Prefieres verlo antes?{" "}
+                <a
+                  href="#webinar"
+                  className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
+                >
+                  Webinar gratis el jueves 13 →
+                </a>
               </p>
             </motion.div>
 
@@ -682,6 +919,9 @@ export default function SistemasAgenticosLanding() {
           ))}
         </div>
       </section>
+
+      {/* ============ WEBINAR GRATUITO ============ */}
+      <WebinarSection />
 
       {/* ============ TEMARIO ============ */}
       <section className="relative z-10 border-t border-sistemas-line/60 bg-sistemas-surface/30">
