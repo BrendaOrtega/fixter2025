@@ -1,5 +1,8 @@
-import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
+import { getSesTransport } from "~/utils/sendGridTransport";
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
+
+// Dominio verificado en SES — enviar como @gmail.com rompe DMARC y Gmail lo tira
+const FROM = "Héctorbliss de FixterGeek <secuencias@fixtergeek.com>";
 
 type SistemasKeyProps = {
   to: string;
@@ -73,7 +76,7 @@ export const sendSistemasKey = async ({ to, userName, apiKey }: SistemasKeyProps
 
   return getSesTransport()
     .sendMail({
-      from: getSesRemitent(),
+      from: FROM,
       to,
       subject: "🎁 Tu API key del taller — tokens de DeepSeek v4 Pro incluidos",
       html,
