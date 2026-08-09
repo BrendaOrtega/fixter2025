@@ -28,7 +28,7 @@ const SESSIONS = [
       "Middleware y hooks: interceptar al modelo antes y después de cada llamada",
       "La curva confiabilidad vs. agencia y por qué se mueve cada mes",
     ],
-    artifact: "Tu primer agente de investigación con tool calling, corriendo en tu máquina",
+    artifact: "Tu agente personal con sus primeras tools, corriendo en tu máquina",
   },
   {
     number: "02",
@@ -501,7 +501,7 @@ export default function SistemasAgenticosLanding() {
         </div>
       </section>
 
-      {/* ============ EL PROBLEMA ============ */}
+      {/* ============ QUÉ VAS A CONSTRUIR ============ */}
       <section className="relative z-10 border-t border-sistemas-line/60 bg-sistemas-surface/30">
         <div className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
           <motion.div
@@ -512,48 +512,36 @@ export default function SistemasAgenticosLanding() {
             className="max-w-3xl"
           >
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Lo que se rompe con{" "}
-              <span className="text-sistemas-primary">usuarios reales</span>
+              Sales con un sistema completo,{" "}
+              <span className="text-sistemas-primary">no con apuntes</span>
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-              Una tarea de 40 minutos que muere en el paso 67 y toca empezar de
-              cero. Un contexto que se desborda a media investigación. Un agente
-              con permiso de mandar un correo que un día manda mil. Una interfaz
-              que solo muestra un spinner mientras todo eso pasa. Cada uno de
-              esos problemas tiene solución conocida — checkpoints, context
-              engineering, guardrails, streaming — y las cuatro pertenecen al
-              mismo oficio: diseñar el sistema alrededor del modelo.
+              A lo largo de las 4 sesiones construyes tu agente personal
+              production-ready: investiga en la web, redacta reportes, recuerda
+              tus preferencias entre sesiones, sobrevive fallos a media tarea y
+              te pide aprobación antes de acciones sensibles. En la sesión 1 le
+              das sus primeras tools; en la 2, memoria; en la 3 lo despliegas
+              con checkpoints y aprobaciones; en la 4 le construyes su interfaz
+              en React con streaming. Te llevas el repo completo, corriendo con
+              tu propia API key.
             </p>
           </motion.div>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
-            {[
-              {
-                stat: "11%",
-                text: "de las empresas tienen agentes corriendo en producción. El resto se quedó en el demo.",
-              },
-              {
-                stat: "88%",
-                text: "de los pilotos con agentes nunca llegan a usuarios reales.",
-              },
-              {
-                stat: "500,000",
-                text: "líneas de ingeniería rodean al modelo en Claude Code: contexto, tools, guardrails e interfaz.",
-              },
-            ].map((item, i) => (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {SESSIONS.map((s, i) => (
               <motion.div
-                key={item.stat}
-                initial={{ opacity: 0, y: 24 }}
+                key={s.number}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.12 }}
-                className="rounded-2xl border border-sistemas-line bg-sistemas-dark p-7"
+                transition={{ duration: 0.45, delay: i * 0.1 }}
+                className="rounded-xl border border-sistemas-line bg-sistemas-dark p-5"
               >
-                <div className="text-4xl font-black text-sistemas-accent">
-                  {item.stat}
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-sistemas-gray">
-                  {item.text}
+                <span className="font-mono text-xs text-sistemas-accent">
+                  sesión {s.number}
+                </span>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+                  {s.artifact}
                 </p>
               </motion.div>
             ))}
@@ -561,7 +549,7 @@ export default function SistemasAgenticosLanding() {
         </div>
       </section>
 
-      {/* ============ QUÉ VAS A CONSTRUIR ============ */}
+      {/* ============ EL PROBLEMA ============ */}
       <section className="relative z-10 mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -571,34 +559,48 @@ export default function SistemasAgenticosLanding() {
           className="max-w-3xl"
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Sales con un sistema completo,{" "}
-            <span className="text-sistemas-primary">no con apuntes</span>
+            Lo que se rompe con{" "}
+            <span className="text-sistemas-primary">usuarios reales</span>
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-            A lo largo de las 4 sesiones construyes un agente de investigación
-            production-ready: busca en la web, escribe reportes, recuerda a su
-            usuario entre sesiones, sobrevive fallos a media tarea, pide
-            aprobación humana antes de acciones sensibles y tiene una interfaz
-            en React con streaming de progreso. Cada sesión termina con una
-            pieza funcionando; la última las conecta todas.
+            Una tarea de 40 minutos que muere en el paso 67 y toca empezar de
+            cero. Un contexto que se desborda a media investigación. Un agente
+            con permiso de mandar un correo que un día manda mil. Una interfaz
+            que solo muestra un spinner mientras todo eso pasa. Cada uno de
+            esos problemas tiene solución conocida — checkpoints, context
+            engineering, guardrails, streaming — y las cuatro pertenecen al
+            mismo oficio: diseñar el sistema alrededor del modelo.
           </p>
         </motion.div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {SESSIONS.map((s, i) => (
+        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          {[
+            {
+              stat: "11%",
+              text: "de las empresas tienen agentes corriendo en producción. El resto se quedó en el demo.",
+            },
+            {
+              stat: "88%",
+              text: "de los pilotos con agentes nunca llegan a usuarios reales.",
+            },
+            {
+              stat: "500,000",
+              text: "líneas de ingeniería rodean al modelo en Claude Code: contexto, tools, guardrails e interfaz.",
+            },
+          ].map((item, i) => (
             <motion.div
-              key={s.number}
-              initial={{ opacity: 0, y: 20 }}
+              key={item.stat}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: i * 0.1 }}
-              className="rounded-xl border border-sistemas-line bg-sistemas-surface/60 p-5"
+              transition={{ duration: 0.5, delay: i * 0.12 }}
+              className="rounded-2xl border border-sistemas-line bg-sistemas-surface/60 p-7"
             >
-              <span className="font-mono text-xs text-sistemas-accent">
-                sesión {s.number}
-              </span>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-                {s.artifact}
+              <div className="text-4xl font-black text-sistemas-accent">
+                {item.stat}
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-sistemas-gray">
+                {item.text}
               </p>
             </motion.div>
           ))}
