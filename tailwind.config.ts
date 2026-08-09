@@ -43,6 +43,14 @@ export default {
           gray:"#465169",
           onix:"#222933"
         },
+        sistemas: {
+          primary: "#7B93FF",
+          accent: "#FFC46B",
+          dark: "#0A0F1E",
+          surface: "#131A2E",
+          gray: "#8A93AD",
+          line: "#24304F",
+        },
       },
       backgroundImage: {
         'claude-gradient': 'linear-gradient(135deg, #CA9B77 0%, #845A8F 100%)',
