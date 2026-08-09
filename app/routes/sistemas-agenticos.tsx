@@ -20,7 +20,7 @@ const SESSIONS = [
   {
     number: "01",
     title: "El harness: anatomía de un agente",
-    date: "Sesión en vivo · 2 horas",
+    date: "Jueves 3 de septiembre · 7:00 PM CDMX",
     intro:
       "Un agente es un modelo más todo lo que construyes alrededor de él. Claude Code lleva ~500,000 líneas de código y ninguna es el modelo: todas son harness. En esta sesión entiendes qué hay en esas líneas y construyes las tuyas.",
     topics: [
@@ -35,7 +35,7 @@ const SESSIONS = [
   {
     number: "02",
     title: "Context engineering y memoria",
-    date: "Sesión en vivo · 2 horas",
+    date: "Jueves 10 de septiembre · 7:00 PM CDMX",
     intro:
       "La ventana de contexto es el recurso más escaso del sistema. Aprendes a tratarla como lo que es: el sistema operativo del agente — qué entra, qué se resume, qué se va a disco y qué se delega.",
     topics: [
@@ -49,7 +49,7 @@ const SESSIONS = [
   {
     number: "03",
     title: "Producción: lo que rompe a los agentes",
-    date: "Sesión en vivo · 2 horas",
+    date: "Jueves 17 de septiembre · 7:00 PM CDMX",
     intro:
       "La infraestructura estándar no está hecha para procesos que corren 40 minutos, fallan en el paso 67 de 123 y tocan APIs a nombre de tu usuario. Esta sesión cubre la capa que separa un demo de un sistema.",
     topics: [
@@ -63,7 +63,7 @@ const SESSIONS = [
   {
     number: "04",
     title: "La interfaz del agente",
-    date: "Sesión en vivo · 2 horas",
+    date: "Jueves 24 de septiembre · 7:00 PM CDMX",
     intro:
       "Casi nadie enseña esto y es donde tú tienes ventaja: un agente que corre minutos necesita una interfaz que muestre progreso, pida permiso y falle con gracia. Estudiamos los patrones agent-native de Builder.io y cómo los aplicamos en producción en Ghosty Teams y Tasks. Aquí tu experiencia en frontend y diseño vale oro.",
     topics: [
@@ -110,7 +110,7 @@ const FAQS = [
   },
   {
     q: "¿Cuándo son las sesiones?",
-    a: "La primera edición corre durante septiembre de 2026: 4 sesiones en vivo de 2 horas, una por semana, en horario vespertino (CDMX). El calendario exacto se define con el grupo inscrito y se avisa con anticipación.",
+    a: "Los jueves 3, 10, 17 y 24 de septiembre de 2026, de 7:00 a 9:00 PM (CDMX). Todas se graban, así que si un día no puedes, no pierdes nada.",
   },
 ];
 
@@ -159,6 +159,8 @@ export const meta = () => {
           "@type": "CourseInstance",
           courseMode: "Online",
           courseWorkload: "PT8H",
+          startDate: "2026-09-03",
+          endDate: "2026-09-24",
         },
         inLanguage: "es",
         coursePrerequisites:
@@ -450,7 +452,7 @@ export default function SistemasAgenticosLanding() {
             >
               {[
                 "4 sesiones en vivo · 8 horas",
-                "Septiembre 2026",
+                "Jueves de septiembre · 7 PM CDMX",
                 "TypeScript + React",
                 "Grabaciones incluidas",
               ].map((chip) => (
@@ -652,8 +654,8 @@ export default function SistemasAgenticosLanding() {
               <span className="text-sistemas-primary">sesión</span>
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
-              4 sesiones en vivo de 2 horas, una por semana. Del harness a la
-              interfaz.
+              4 jueves seguidos de septiembre, 2 horas en vivo cada uno. Del
+              harness a la interfaz.
             </p>
           </motion.div>
 
@@ -994,8 +996,9 @@ export default function SistemasAgenticosLanding() {
             </span>
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-sistemas-gray">
-            Primera edición en septiembre. El cupo es limitado porque las
-            sesiones son en vivo y se trabaja el código de cada quien.
+            Arrancamos el jueves 3 de septiembre a las 7:00 PM (CDMX). El cupo
+            es limitado porque las sesiones son en vivo y se trabaja el código
+            de cada quien.
           </p>
           <div className="mt-10 flex justify-center">
             <CheckoutButton fetcher={fetcher} label="Quiero mi lugar" />
