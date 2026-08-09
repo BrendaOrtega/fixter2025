@@ -28,7 +28,8 @@ const SESSIONS = [
       "Middleware y hooks: interceptar al modelo antes y después de cada llamada",
       "La curva confiabilidad vs. agencia y por qué se mueve cada mes",
     ],
-    artifact: "Tu agente personal con sus primeras tools, corriendo en tu máquina",
+    artifact:
+      "Tu agente personal con sus primeras tools, respondiendo en la UI inicial que te damos",
   },
   {
     number: "02",
@@ -519,11 +520,13 @@ export default function SistemasAgenticosLanding() {
               A lo largo de las 4 sesiones construyes tu agente personal
               production-ready: investiga en la web, redacta reportes, recuerda
               tus preferencias entre sesiones, sobrevive fallos a media tarea y
-              te pide aprobación antes de acciones sensibles. En la sesión 1 le
-              das sus primeras tools; en la 2, memoria; en la 3 lo despliegas
-              con checkpoints y aprobaciones; en la 4 le construyes su interfaz
-              en React con streaming. Te llevas el repo completo, corriendo con
-              tu propia API key.
+              te pide aprobación antes de acciones sensibles. Desde la primera
+              sesión trabajas sobre una UI inicial que te damos — tu agente se
+              ve y se usa como producto desde el arranque. Ahí le das sus
+              primeras tools; en la 2, memoria; en la 3 lo despliegas con
+              checkpoints y aprobaciones; en la 4 vuelves esa UI agent-native:
+              streaming, estados y aprobaciones en vivo. Te llevas el repo completo,
+              corriendo con tu propia API key.
             </p>
           </motion.div>
 
