@@ -78,7 +78,7 @@ const SESSIONS = [
 
 const INCLUDES = [
   "4 sesiones en vivo de 2 horas (8 horas totales), una por semana",
-  "GhostyCode, nuestro agente de código en terminal, con todos los tokens de DeepSeek — sin pagar API aparte",
+  "GhostyCode, nuestro agente de código en terminal, con todos los tokens de DeepSeek v4 Pro que vas a necesitar — sin pagar API aparte",
   "La UI inicial de tu agente, lista desde la primera sesión",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
@@ -94,7 +94,7 @@ const FAQS = [
   },
   {
     q: "¿Qué herramientas usamos y cuánto cuestan aparte?",
-    a: "TypeScript y React para el código, y DeepSeek como modelo — con los tokens incluidos: te damos una API key de EasyBits con crédito de sobra para construir el agente completo del curso, así que no pagas ninguna API aparte. La misma key funciona en GhostyCode, nuestro agente de terminal open source. Todo lo demás también es open source.",
+    a: "TypeScript y React para el código, y DeepSeek v4 Pro como modelo — con los tokens incluidos: te damos una API key de EasyBits con crédito de sobra para construir el agente completo del curso, así que no pagas ninguna API aparte. La misma key funciona en GhostyCode, nuestro agente de terminal open source. Todo lo demás también es open source.",
   },
   {
     q: "¿Qué pasa si no puedo asistir a una sesión en vivo?",
@@ -476,7 +476,7 @@ export default function SistemasAgenticosLanding() {
               className="mt-6 inline-flex items-center gap-2 rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-2 text-sm font-semibold text-sistemas-accent"
             >
               🎁 Incluye agente de código (GhostyCode) + todos los tokens de
-              DeepSeek
+              DeepSeek v4 Pro que vas a necesitar
             </motion.div>
 
             <motion.div
