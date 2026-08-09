@@ -62,6 +62,47 @@ export async function getOrCreateSubscriberForUser(user: {
 }
 
 /**
+ * Inscribe un subscriber a una secuencia. Idempotente: si ya existe la
+ * inscripción la devuelve sin tocarla. `immediate` fuerza el primer email al
+ * siguiente ciclo del cron en vez de respetar su scheduling (delay/fecha).
+ * Con specific_date en el pasado, el cron manda los correos vencidos en
+ * ráfaga de catch-up — deseable para compradores tardíos.
+ */
+export async function enrollSubscriberInSequence(
+  sequenceId: string,
+  subscriberId: string,
+  opts?: { immediate?: boolean }
+) {
+  const existing = await db.sequenceEnrollment.findUnique({
+    where: { sequenceId_subscriberId: { sequenceId, subscriberId } },
+  });
+  if (existing) return existing;
+
+  const sequence = await db.sequence.findUnique({
+    where: { id: sequenceId },
+    include: { emails: { orderBy: { order: "asc" }, take: 1 } },
+  });
+  if (!sequence) return null;
+
+  const firstEmail = sequence.emails[0];
+  return db.sequenceEnrollment.create({
+    data: {
+      sequenceId,
+      subscriberId,
+      status: "active",
+      currentEmailIndex: 0,
+      nextEmailAt: opts?.immediate
+        ? new Date()
+        : firstEmail
+        ? calculateNextEmailDate(firstEmail)
+        : null,
+      enrolledAt: new Date(),
+      emailsSent: 0,
+    },
+  });
+}
+
+/**
  * Motor de envío: procesa todas las inscripciones activas cuyo próximo email
  * ya vence. Usado por el cron (agenda) y por el endpoint manual de admin.
  * Devuelve un resumen para reportar.

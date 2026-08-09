@@ -331,6 +331,51 @@ function AgentTrace() {
   );
 }
 
+// Paso de instalación con bloque de código copiable
+function InstallStep({
+  step,
+  title,
+  command,
+  note,
+}: {
+  step: string;
+  title: string;
+  command: string;
+  note?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard?.writeText(command).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  };
+  return (
+    <div className="rounded-2xl border border-sistemas-line bg-sistemas-dark p-5 sm:p-6">
+      <div className="flex items-baseline gap-3">
+        <span className="font-mono text-xl font-black text-sistemas-primary/50">
+          {step}
+        </span>
+        <h3 className="font-bold text-zinc-100">{title}</h3>
+      </div>
+      <div className="mt-3 flex items-center gap-2 overflow-hidden rounded-xl border border-sistemas-line bg-zinc-950/80">
+        <pre className="flex-1 overflow-x-auto whitespace-pre px-4 py-3 font-mono text-xs text-sistemas-primary sm:text-sm">
+          {command}
+        </pre>
+        <button
+          onClick={copy}
+          className="mr-2 shrink-0 rounded-lg border border-sistemas-line px-3 py-1.5 text-xs font-bold text-sistemas-gray transition hover:border-sistemas-primary hover:text-sistemas-primary"
+        >
+          {copied ? "✓ Copiado" : "Copiar"}
+        </button>
+      </div>
+      {note && (
+        <p className="mt-3 text-sm leading-relaxed text-sistemas-gray">{note}</p>
+      )}
+    </div>
+  );
+}
+
 function CheckoutButton({
   fetcher,
   label = "Reservar mi lugar",
@@ -791,6 +836,57 @@ export default function SistemasAgenticosLanding() {
           aprendiendo a hacer interfaces. Tú ya sabes hacer producto — te falta
           la capa de sistemas, y eso se aprende en 4 sesiones bien dadas.
         </motion.p>
+      </section>
+
+      {/* ============ INSTALA GHOSTYCODE ============ */}
+      <section
+        id="instalar"
+        className="relative z-10 mx-auto w-full max-w-5xl scroll-mt-24 px-6 py-20 lg:px-10"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mb-10 text-center"
+        >
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Prepara tu entorno en{" "}
+            <span className="text-sistemas-primary">2 minutos</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
+            El taller corre sobre GhostyCode, nuestro agente de código en
+            terminal (open source). La key con tus tokens te la regalamos al
+            inscribirte.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="space-y-4"
+        >
+          <InstallStep
+            step="01"
+            title="Instala GhostyCode"
+            command="curl -fsSL https://formmy.app/ghosty/install.sh | sh"
+            note="Binario precompilado — no necesitas Node ni Rust. También disponible con npm install -g ghostycode."
+          />
+          <InstallStep
+            step="02"
+            title="Conecta tu key de EasyBits"
+            command="ghosty auth set --provider easybits --api-key TU_KEY"
+            note="La key te llega por correo al inscribirte, cargada con todos los tokens de DeepSeek v4 Pro del taller. La misma sirve para el modelo y las tools."
+          />
+          <InstallStep
+            step="03"
+            title="Verifica y arranca"
+            command="ghosty doctor"
+            note="Si sale en verde, corre `ghosty` y pídele algo. Ya estás listo para la sesión 1."
+          />
+        </motion.div>
       </section>
 
       {/* ============ INSTRUCTOR ============ */}
