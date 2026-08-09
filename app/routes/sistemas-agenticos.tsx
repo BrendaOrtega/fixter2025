@@ -488,7 +488,7 @@ export default function SistemasAgenticosLanding() {
                 >
                   Héctorbliss
                 </a>{" "}
-                · +8 años enseñando, +2,000 estudiantes
+                · 10 años enseñando, +2,000 estudiantes
               </p>
             </motion.div>
           </div>
@@ -779,7 +779,7 @@ export default function SistemasAgenticosLanding() {
                 Héctor Bliss
               </h3>
               <p className="mt-4 leading-relaxed text-sistemas-gray">
-                Lleva más de 8 años enseñando a programar y los últimos dos
+                Lleva 10 años enseñando a programar y los últimos dos
                 construyendo y desplegando agentes en producción: coaching por
                 voz con speech-to-speech, automatización de WhatsApp, agentes con
                 sandbox de código. Los sistemas de este taller son los mismos que
@@ -787,7 +787,7 @@ export default function SistemasAgenticosLanding() {
               </p>
               <div className="mt-6 flex flex-wrap gap-6">
                 {[
-                  ["8+", "años enseñando"],
+                  ["10", "años enseñando"],
                   ["2K+", "estudiantes"],
                   ["100%", "en vivo y práctico"],
                 ].map(([stat, label]) => (
