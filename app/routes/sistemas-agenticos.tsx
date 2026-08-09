@@ -63,11 +63,11 @@ const SESSIONS = [
     title: "La interfaz del agente",
     date: "Martes 29 de septiembre · 7:00 PM CDMX",
     intro:
-      "Casi nadie enseña esto y es donde tú tienes ventaja: un agente que corre minutos necesita una interfaz que muestre progreso, pida permiso y falle con gracia. Aquí tu experiencia en frontend y diseño vale oro.",
+      "Casi nadie enseña esto y es donde tú tienes ventaja: un agente que corre minutos necesita una interfaz que muestre progreso, pida permiso y falle con gracia. Estudiamos los patrones agent-native de Builder.io y cómo los aplicamos en producción en Ghosty Teams y Tasks. Aquí tu experiencia en frontend y diseño vale oro.",
     topics: [
       "Streaming de progreso: qué mostrar mientras el agente trabaja y qué callar",
-      "Los estados de un agente: pensando, ejecutando, esperando aprobación, fallando bien",
-      "Mostrar razonamiento sin abrumar: colapsables, artefactos y resultados verificables",
+      "Patrones agent-native (Builder.io): humanizar cada tool call — ninguna acción del agente se esconde",
+      "Caso real: el panel de turnos en vivo de Ghosty Teams — quién trabaja, en qué va, detener, qué entregó",
       "Aprobaciones en vivo desde la UI: el ciclo interrupt → review → resume en React",
     ],
     artifact: "El producto completo: tu agente con interfaz en React, streaming y aprobaciones",

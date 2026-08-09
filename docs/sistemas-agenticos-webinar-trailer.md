@@ -27,7 +27,12 @@ Basado en el flujo de la charla de LangChain "Building Deep Agents and Deploying
    - **Human-in-the-loop + streaming** — interrupt → review → resume. Caso real: Ghosty pide aprobación antes de responder por el negocio.
 
 5. **La pieza que nadie enseña: la interfaz (7 min).**
-   Un agente que corre minutos necesita UI de progreso, estados y aprobaciones. Aquí la audiencia (ex-frontend, diseñadores) tiene ventaja. Demo: streaming de progreso en React.
+   Un agente que corre minutos necesita UI de progreso, estados y aprobaciones. Aquí la audiencia (ex-frontend, diseñadores) tiene ventaja.
+   *Referencia*: [BuilderIO/agent-native](https://github.com/BuilderIO/agent-native) (MIT) y cómo aplicamos sus patrones en **Ghosty Teams y Tasks**:
+   - Ninguna tool desconocida se esconde — se humaniza (`mcp__easybits__generate_image` → "generate image"); un MCP sin etiqueta sale como "Proveedor: acción".
+   - Panel "Trabajando ahora": turnos de agente en vuelo estilo Background Agents — quién trabaja, en qué va, cronómetro, Detener y qué entregó al terminar.
+   - La lección cara: ocultar `Bash`/`Write` por considerarlos "plumbing" dejaba un "Trabajando…" genérico — cuando el trabajo ES eso, mostrarlo es la interfaz.
+   Demo: streaming de progreso en React + el panel de Teams en vivo.
 
 6. **Cierre y pitch (5 min).**
    "Todo esto es diseñable y se aprende. 4 martes de septiembre, construyes el sistema completo." CTA a `/sistemas-agenticos` + código de descuento exclusivo del webinar. Q&A.
