@@ -596,10 +596,10 @@ export default function SistemasAgenticosLanding() {
             Una tarea de 40 minutos que muere en el paso 67 y toca empezar de
             cero. Un contexto que se desborda a media investigación. Un agente
             con permiso de mandar un correo que un día manda mil. Una interfaz
-            que solo muestra un spinner mientras todo eso pasa. Cada uno de
-            esos problemas tiene solución conocida — checkpoints, context
-            engineering, guardrails, streaming — y las cuatro pertenecen al
-            mismo oficio: diseñar el sistema alrededor del modelo.
+            que solo muestra un spinner mientras todo eso pasa. Los cuatro
+            problemas se arreglan con diseño — checkpoints, manejo de contexto,
+            guardrails, streaming — y esas son exactamente las piezas que
+            construyes en este taller.
           </p>
         </motion.div>
 
