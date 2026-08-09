@@ -31,6 +31,55 @@ Aparte (manual, cuando el tracking de consumo esté listo):
   los correos solo la anuncian y dan WhatsApp de rescate.
 - Editar los correos de la secuencia: `/admin/sequences`.
 
+## Webinars de venta (13, 20 y 27 de agosto · 8:00 PM CDMX)
+
+Título: **Por qué tu agente se rompe en producción** · 1 hora · gratis
+Guion completo: `docs/sistemas-agenticos-webinar-trailer.md`
+
+```
+Registro en /sistemas-agenticos#webinar (form visible, no modal)
+  └─ intent webinar_registration
+       ├─ anti-bot (checkSignupEmail)
+       ├─ Subscriber tags: webinar-sistemas-agenticos + webinar-<fecha>
+       ├─ Enroll a la secuencia de ESA fecha (startAtIndex si se registra tarde)
+       └─ Correo inmediato: confirmación + Google Calendar + link de sala
+
+Por cada fecha, 3 recordatorios automáticos:
+  1. Víspera 10:00 AM — "mañana nos vemos"
+  2. Día del webinar 4:00 PM — "hoy a las 8, aquí está tu link"
+  3. Día siguiente 10:00 AM — grabación + oferta del taller ($2,490)
+```
+
+**IDs de las secuencias** (editables en `/admin/sequences`):
+
+| Fecha | Sequence ID |
+|---|---|
+| 13 ago | `6a790a151d99ed94a4258d63` |
+| 20 ago | `6a790a151d99ed94a4258d67` |
+| 27 ago | `6a790a151d99ed94a4258d6b` |
+
+**⚠️ Falta una cosa para que los correos lleven a algún lado:** los correos
+apuntan a `fixtergeek.com/webinar-en-vivo`, que redirige a la variable de
+entorno **`WEBINAR_ROOM_URL`**. Mientras no esté configurada, esa página
+muestra las fechas y un aviso de "la sala aún no abre" (no truena). En cuanto
+tengas la sala de Ghosty Teams / livekit:
+
+```bash
+fly secrets set WEBINAR_ROOM_URL="https://<url-de-la-sala>"
+```
+
+Se hizo así a propósito: los recordatorios ya están programados con fecha fija,
+y cambiar un secret evita reeditar correos que ya salieron.
+
+**Para el anuncio de Meta**: manda el tráfico frío a
+`https://www.fixtergeek.com/sistemas-agenticos#webinar` — cae directo en el
+registro gratis en vez de estrellarse contra el precio.
+
+**Segmentos que quedan listos para email manual** (tags en Subscriber):
+`webinar-sistemas-agenticos` (todos los registrados), `webinar-2026-08-13` /
+`-20` / `-27` (por fecha), `sistemas-agenticos-paid` (ya compraron — excluirlos
+de los correos de venta).
+
 ## Checklist operativo (antes del 26 de agosto)
 
 - [ ] Crear el workspace/canal del taller en Ghosty Teams e invitar a los inscritos
