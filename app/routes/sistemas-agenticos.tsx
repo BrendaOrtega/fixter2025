@@ -78,7 +78,7 @@ const SESSIONS = [
 
 const INCLUDES = [
   "4 sesiones en vivo de 2 horas (8 horas totales), una por semana",
-  "Todos los tokens de DeepSeek para construir tu agente — sin pagar API aparte",
+  "GhostyCode, nuestro agente de código en terminal, con todos los tokens de DeepSeek — sin pagar API aparte",
   "La UI inicial de tu agente, lista desde la primera sesión",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
@@ -472,8 +472,18 @@ export default function SistemasAgenticosLanding() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="mt-6 inline-flex items-center gap-2 rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-2 text-sm font-semibold text-sistemas-accent"
+            >
+              🎁 Incluye agente de código (GhostyCode) + todos los tokens de
+              DeepSeek
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="mt-10"
+              className="mt-8"
             >
               <CheckoutButton fetcher={fetcher} />
               <p className="mt-3 text-sm text-sistemas-gray">
