@@ -11,7 +11,7 @@ export const FloatingPromo = () => {
 
   useEffect(() => {
     // Verificar si el usuario ya lo desechó y si aún está vigente
-    const dismissedData = localStorage.getItem("codemode-promo-dismissed");
+    const dismissedData = localStorage.getItem("sistemas-promo-dismissed");
     if (dismissedData) {
       const { timestamp } = JSON.parse(dismissedData);
       const oneDayInMs = 24 * 60 * 60 * 1000; // 24 horas
@@ -21,7 +21,7 @@ export const FloatingPromo = () => {
         return;
       } else {
         // Ha pasado el tiempo, remover y mostrar de nuevo
-        localStorage.removeItem("aisdk-promo-dismissed");
+        localStorage.removeItem("sistemas-promo-dismissed");
       }
     }
 
@@ -35,7 +35,7 @@ export const FloatingPromo = () => {
 
   const handleDismiss = () => {
     localStorage.setItem(
-      "codemode-promo-dismissed",
+      "sistemas-promo-dismissed",
       JSON.stringify({
         timestamp: Date.now(),
       }),
@@ -45,7 +45,7 @@ export const FloatingPromo = () => {
   };
 
   const handleClick = () => {
-    navigate("/code-mode");
+    navigate("/sistemas-agenticos");
   };
 
   if (isDismissed) return null;
@@ -94,22 +94,23 @@ export const FloatingPromo = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <BiCodeAlt className="text-2xl text-emerald-400" />
                       <h3 className="font-bold text-gray-900 dark:text-white">
-                        Nuevo taller gratis
+                        Nuevo taller en vivo
                       </h3>
                     </div>
 
                     <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                      Code Mode con EasyBits
+                      Diseño de sistemas agénticos
                     </h4>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Que tus agentes escriban código en vez de llamar
-                      herramientas una por una. Gratis, con lugares limitados.
+                      Construye tu agente personal production-ready, del harness
+                      a la interfaz. Incluye GhostyCode y tokens de DeepSeek v4
+                      Pro.
                     </p>
 
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        ✦ Lugares limitados
+                        ✦ Primera edición
                       </div>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -117,7 +118,7 @@ export const FloatingPromo = () => {
                         onClick={handleClick}
                         className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
-                        Apartar lugar →
+                        Quiero mi lugar →
                       </motion.button>
                     </div>
                   </div>
@@ -154,9 +155,9 @@ export const FloatingPromo = () => {
                         className="overflow-hidden"
                       >
                         <div className="whitespace-nowrap text-white">
-                          <p className="font-bold text-sm">Code Mode</p>
+                          <p className="font-bold text-sm">Sistemas agénticos</p>
                           <p className="text-xs opacity-90">
-                            Taller gratis • lugares limitados
+                            Primera edición • Septiembre 2026
                           </p>
                         </div>
                       </motion.div>

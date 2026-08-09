@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFetcher } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
@@ -253,100 +253,80 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 // ===========================================
-// Diagrama de sistema animado (hero)
-// Input → middleware → LLM ⇄ tools → Output
+// Traza de un agente en vivo (hero): se tipea
+// a mano → pausa → se borra rapidísimo → reinicia
 // ===========================================
-function SystemDiagram() {
-  const box =
-    "rounded-lg border border-sistemas-line bg-sistemas-surface px-3 py-2 font-mono text-[11px] text-zinc-300 sm:text-xs";
-  const chip =
-    "rounded-md border border-sistemas-line bg-sistemas-dark px-2.5 py-1.5 font-mono text-[10px] text-sistemas-gray sm:text-[11px]";
+const TRACE_TOKENS: { t: string; c: string }[] = [
+  { t: "$ ", c: "text-sistemas-primary" },
+  {
+    t: 'mi-agente "investiga a la competencia\n            y arma un reporte"\n\n',
+    c: "text-zinc-100",
+  },
+  { t: "⏺ ", c: "text-sistemas-primary" },
+  { t: "plan escrito → plan.md (3 pasos)\n", c: "" },
+  { t: "⏺ ", c: "text-sistemas-primary" },
+  { t: 'tool: web_search("competencia saas mx")\n', c: "" },
+  { t: "⏺ ", c: "text-sistemas-primary" },
+  { t: "tool: fetch → 12 páginas leídas\n", c: "" },
+  { t: "⚠ contexto al 91% → resumen a disco\n", c: "text-amber-300" },
+  { t: "⏺ ", c: "text-sistemas-primary" },
+  { t: "checkpoint #67 guardado\n", c: "" },
+  { t: "⏸ interrupt(): ¿envío el reporte por correo?\n", c: "text-amber-300" },
+  { t: "✓ aprobado por el humano → resume\n", c: "text-sistemas-accent" },
+  { t: "⏺ ", c: "text-sistemas-primary" },
+  { t: "reporte.pdf → streaming a la UI\n\n", c: "" },
+  {
+    t: "// checkpoints, contexto, aprobación humana y una\n// UI que muestra todo: eso es un sistema agéntico",
+    c: "text-zinc-600",
+  },
+];
+
+function AgentTrace() {
+  const total = TRACE_TOKENS.reduce((n, t) => n + t.t.length, 0);
+  const [count, setCount] = useState(0);
+  const [phase, setPhase] = useState<"typing" | "deleting">("typing");
+
+  useEffect(() => {
+    let id: ReturnType<typeof setTimeout>;
+    if (phase === "typing") {
+      if (count < total) id = setTimeout(() => setCount((c) => c + 1), 18);
+      else id = setTimeout(() => setPhase("deleting"), 3200);
+    } else {
+      if (count > 0) id = setTimeout(() => setCount((c) => c - 1), 4);
+      else id = setTimeout(() => setPhase("typing"), 150);
+    }
+    return () => clearTimeout(id);
+  }, [count, phase, total]);
+
+  let remaining = count;
+  const out: ReactNode[] = [];
+  for (let i = 0; i < TRACE_TOKENS.length && remaining > 0; i++) {
+    out.push(
+      <span key={i} className={TRACE_TOKENS[i].c || "text-zinc-300"}>
+        {TRACE_TOKENS[i].t.slice(0, remaining)}
+      </span>
+    );
+    remaining -= TRACE_TOKENS[i].t.length;
+  }
+
   return (
-    <div className="relative rounded-2xl border border-sistemas-line bg-sistemas-dark/80 p-6 shadow-2xl backdrop-blur sm:p-8">
-      <div className="mb-5 flex items-center gap-2 border-b border-sistemas-line pb-4">
+    <div className="overflow-hidden rounded-2xl border border-sistemas-line bg-zinc-950/80 shadow-2xl backdrop-blur">
+      <div className="flex items-center gap-2 border-b border-sistemas-line px-4 py-3">
         <span className="h-3 w-3 rounded-full bg-danger/70" />
-        <span className="h-3 w-3 rounded-full bg-sistemas-accent/70" />
-        <span className="h-3 w-3 rounded-full bg-brand-500/70" />
-        <span className="ml-2 font-mono text-xs text-sistemas-gray">
-          el sistema que vas a diseñar
+        <span className="h-3 w-3 rounded-full bg-amber-300/70" />
+        <span className="h-3 w-3 rounded-full bg-sistemas-primary/70" />
+        <span className="ml-2 font-mono text-sm text-sistemas-gray">
+          tu agente personal, corriendo en producción
         </span>
       </div>
-
-      <div className="flex flex-col items-center gap-3">
-        {/* fila superior: input → middleware → LLM */}
-        <div className="flex w-full items-center justify-between gap-2">
-          <div className={box}>input</div>
-          <Arrow />
-          <div className="flex flex-col gap-1.5">
-            <div className={chip}>guardrail</div>
-            <div className={chip}>planner</div>
-            <div className={chip}>filesystem</div>
-          </div>
-          <Arrow />
-          <motion.div
-            className="rounded-xl border-2 border-sistemas-primary/60 bg-sistemas-primary/10 px-5 py-4 font-mono text-sm font-bold text-sistemas-primary"
-            animate={{
-              boxShadow: [
-                "0 0 0px rgba(133,221,203,0)",
-                "0 0 24px rgba(133,221,203,0.35)",
-                "0 0 0px rgba(133,221,203,0)",
-              ],
-            }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          >
-            LLM
-          </motion.div>
-          <Arrow />
-          <div className={box}>output</div>
-        </div>
-
-        {/* loop de tools */}
-        <motion.div
-          className="flex items-center gap-2 text-sistemas-gray"
-          animate={{ y: [0, 3, 0] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <span className="font-mono text-lg">⇅</span>
-          <span className="font-mono text-[10px] uppercase tracking-widest">
-            tool loop
-          </span>
-          <span className="font-mono text-lg">⇅</span>
-        </motion.div>
-        <div className="flex flex-wrap justify-center gap-1.5">
-          {["websearch", "report", "subagents", "memoria", "human_approval"].map(
-            (t) => (
-              <div key={t} className={chip}>
-                {t}
-              </div>
-            )
-          )}
-        </div>
-
-        {/* capa de persistencia */}
-        <div className="mt-2 flex w-full items-center gap-3 rounded-lg border border-dashed border-sistemas-line px-4 py-2.5">
-          <motion.span
-            className="h-2 w-2 shrink-0 rounded-full bg-sistemas-accent"
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1.6, repeat: Infinity }}
-          />
-          <span className="font-mono text-[10px] text-sistemas-gray sm:text-[11px]">
-            checkpoints · si falla en el paso 67, resume desde el 66
-          </span>
-        </div>
-      </div>
+      <pre className="min-h-[21rem] overflow-hidden whitespace-pre-wrap p-6 font-mono text-xs leading-relaxed lg:min-h-[23rem] lg:text-sm">
+        {out}
+        <span
+          className="ml-px inline-block w-[7px] animate-pulse bg-sistemas-primary align-middle"
+          style={{ height: "1.05em" }}
+        />
+      </pre>
     </div>
-  );
-}
-
-function Arrow() {
-  return (
-    <motion.span
-      className="font-mono text-sistemas-gray"
-      animate={{ x: [0, 3, 0] }}
-      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-    >
-      →
-    </motion.span>
   );
 }
 
@@ -397,16 +377,29 @@ export default function SistemasAgenticosLanding() {
     <main className="relative overflow-hidden bg-sistemas-dark text-zinc-100">
       {showConfetti && <EmojiConfetti emojis={["📐", "🤖", "⚡"]} />}
 
-      {/* grid de fondo tipo blueprint */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+      {/* grid de fondo con drift animado */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 opacity-[0.09]"
         style={{
           backgroundImage:
             "linear-gradient(#85DDCB 1px, transparent 1px), linear-gradient(90deg, #85DDCB 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
+          backgroundSize: "44px 44px",
           maskImage:
             "radial-gradient(ellipse 90% 55% at 50% 0%, black 20%, transparent 70%)",
         }}
+        animate={{ backgroundPosition: ["0px 0px", "44px 44px"] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+      />
+      {/* blobs de glow flotando */}
+      <motion.div
+        className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full bg-sistemas-primary/25 blur-[120px]"
+        animate={{ x: [0, 80, -30, 0], y: [0, 50, -40, 0], scale: [1, 1.2, 0.92, 1] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="pointer-events-none absolute right-0 top-[30rem] h-[24rem] w-[24rem] rounded-full bg-brand-700/20 blur-[120px]"
+        animate={{ x: [0, -70, 40, 0], y: [0, -50, 40, 0], scale: [1, 0.88, 1.25, 1] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
       />
 
       {/* ============ HERO ============ */}
@@ -421,23 +414,24 @@ export default function SistemasAgenticosLanding() {
           Nuevo taller en vivo · Primera edición · Septiembre 2026
         </motion.div>
 
-        <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-16">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
+          className="text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl lg:leading-[1.02] xl:text-[6.5rem]"
+        >
+          Diseño de{" "}
+          <span className="text-sistemas-primary">sistemas agénticos</span>
+        </motion.h1>
+
+        <div className="mt-10 grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl"
-            >
-              Diseño de{" "}
-              <span className="text-sistemas-primary">sistemas agénticos</span>
-            </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-6 max-w-xl text-lg leading-relaxed text-sistemas-gray sm:text-xl"
+              className="max-w-xl text-lg leading-relaxed text-sistemas-gray sm:text-xl"
             >
               Tu agente funciona en tu laptop y se rompe con usuarios reales.
               Este taller cubre lo que falta en medio:{" "}
@@ -524,9 +518,9 @@ export default function SistemasAgenticosLanding() {
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
           >
-            <SystemDiagram />
+            <AgentTrace />
           </motion.div>
         </div>
       </section>

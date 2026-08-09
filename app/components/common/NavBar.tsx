@@ -19,7 +19,12 @@ const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
   { name: "Pong gratis", link: "/pong" },
-  { name: "Code Mode", link: "/code-mode" },
+  {
+    name: "Sistemas agénticos",
+    link: "/sistemas-agenticos",
+    highlight: true,
+    gradient: "from-[#85DDCB] to-[#37AB93]",
+  },
 ];
 
 export const SquigglyUnderline = () => {
@@ -33,7 +38,10 @@ export const SquigglyUnderline = () => {
         const isCurrentRoute = !item.external && location.pathname.includes(item.link);
         const linkClasses = `relative text-sm leading-6 no-underline ${
           item.highlight
-            ? "font-semibold bg-gradient-to-r from-[#CA9B77] to-[#845A8F] bg-clip-text text-transparent"
+            ? `font-semibold bg-gradient-to-r ${
+                (item as { gradient?: string }).gradient ??
+                "from-[#CA9B77] to-[#845A8F]"
+              } bg-clip-text text-transparent`
             : isCurrent || isCurrentRoute
             ? "font-semibold text-white"
             : "text-white"
@@ -321,10 +329,10 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/code-mode"
+          to="/sistemas-agenticos"
           index={5}
           isOpen={isOpen}
-          title="Code Mode"
+          title="Sistemas agénticos"
         />
         {user?.email ? (
           <>

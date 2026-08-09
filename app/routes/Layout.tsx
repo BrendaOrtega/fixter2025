@@ -25,12 +25,14 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
     location.pathname.startsWith('/secuencias') ||
     location.pathname === '/s' ||
     location.pathname.startsWith('/s/');
+  // El promo flotante promociona este taller; no mostrarlo en su propia landing
+  const isSistemasRoute = location.pathname.startsWith('/sistemas-agenticos');
 
   return (
     <>
       {!isBookRoute && !isAdminRoute && !isExcalidrawDemo && <NavBar user={user} />}
       {children}
-      {!isBookRoute && !isAdminRoute && !isViewerRoute && !isCoachRoute && !isExcalidrawDemo && !isSecuenciasRoute && <FloatingPromo />}
+      {!isBookRoute && !isAdminRoute && !isViewerRoute && !isCoachRoute && !isExcalidrawDemo && !isSecuenciasRoute && !isSistemasRoute && <FloatingPromo />}
       {/* <WebinarBanner /> */}
       {/* <GlobalBanner /> */}
     </>
