@@ -467,10 +467,14 @@ export default function SistemasAgenticosLanding() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className="mt-6 inline-flex items-center gap-2 rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-2 text-sm font-semibold text-sistemas-accent"
+              className="mt-6 inline-block rounded-2xl border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-2.5 text-sm font-semibold leading-relaxed text-sistemas-accent"
             >
-              🎁 Incluye agente de código (GhostyCode) + todos los tokens de
-              DeepSeek v4 Pro que vas a necesitar
+              <span className="block">
+                🎁 Incluye agente de código (GhostyCode)
+              </span>
+              <span className="block">
+                + todos los tokens de DeepSeek v4 Pro que vas a necesitar
+              </span>
             </motion.div>
 
             <motion.div
