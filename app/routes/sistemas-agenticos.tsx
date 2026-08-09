@@ -192,6 +192,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ? "http://localhost:3000"
         : "https://www.fixtergeek.com";
 
+      // Cupón de primera edición: el checkout muestra $3,490 tachado → $2,490
+      const COUPON_ID = "primera-edicion-sistemas";
+      try {
+        await stripe.coupons.create({
+          id: COUPON_ID,
+          amount_off: (PRICE_REGULAR - PRICE) * 100,
+          currency: "mxn",
+          duration: "once",
+          name: "Primera edición",
+        });
+      } catch (e: any) {
+        if (e?.code !== "resource_already_exists") throw e;
+      }
+
       const session = await stripe.checkout.sessions.create({
         metadata: {
           type: "sistemas-agenticos-workshop",
@@ -207,14 +221,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 description:
                   "4 sesiones en vivo · Septiembre 2026 · Grabaciones incluidas",
               },
-              unit_amount: PRICE * 100,
+              unit_amount: PRICE_REGULAR * 100,
             },
             quantity: 1,
           },
         ],
+        discounts: [{ coupon: COUPON_ID }],
         success_url: `${location}/sistemas-agenticos?success=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${location}/sistemas-agenticos?cancel=1`,
-        allow_promotion_codes: true,
         billing_address_collection: "required",
         phone_number_collection: { enabled: true },
         payment_method_options: {
@@ -864,7 +878,8 @@ export default function SistemasAgenticosLanding() {
               </div>
               <p className="mt-2 text-sm text-sistemas-gray">
                 3 y 6 meses sin intereses con tarjetas participantes · Factura
-                disponible · Códigos de promoción aceptados
+                disponible · Descuento de primera edición aplicado
+                automáticamente
               </p>
               <div className="mt-8">
                 <CheckoutButton fetcher={fetcher} />
