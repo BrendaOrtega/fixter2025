@@ -938,7 +938,7 @@ export default function SistemasAgenticosLanding() {
             Los agentes ya llegaron.
             <br />
             <span className="text-sistemas-primary">
-              Los sistemas los diseña alguien.
+              Los sistemas los diseña el system thinker.
             </span>
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-sistemas-gray">
