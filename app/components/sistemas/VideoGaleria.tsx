@@ -80,14 +80,6 @@ export default function VideoGaleria() {
             El taller es en vivo y se trabaja escribiendo código: esto es
             material aparte, para orientarte sobre los temas.
           </p>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-sistemas-gray">
-            Al inscribirte llega la{" "}
-            <span className="font-semibold text-zinc-200">
-              secuencia de preparación
-            </span>
-            : cinco entregas, una cada dos días, cada una con un video como
-            estos y la explicación que lo acompaña.
-          </p>
         </motion.div>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -134,6 +126,21 @@ export default function VideoGaleria() {
             </motion.figure>
           ))}
         </div>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto mt-10 max-w-2xl text-center text-base text-sistemas-gray"
+        >
+          Al inscribirte llega la{" "}
+          <span className="font-semibold text-zinc-200">
+            secuencia de preparación
+          </span>
+          : cinco entregas, una cada dos días, cada una con un video como estos y
+          la explicación que lo acompaña.
+        </motion.p>
       </div>
     </section>
   );

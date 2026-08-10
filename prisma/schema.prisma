@@ -384,6 +384,9 @@ model Module {
   Video Video[]
 }
 
+/// posterWide: recorte apaisado para las cards de correo. El `poster` normal
+/// puede ser vertical (las piezas de secuencia son 9:16) y ahí sí conviene,
+/// pero un 9:16 dentro de un email de 600px ocupa la pantalla entera.
 model Video {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   slug        String   @unique
