@@ -79,16 +79,18 @@ export default function Route({
 const proximamenteCourses: Partial<Course>[] = [];
 
 export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
-  // Ordenar: Pong primero, AI SDK segundo, luego el resto
-  const pongCourse = courses.find((c) => c.slug === "pong-vanilla-js");
-  const aiSdkCourse = courses.find((c) => c.slug === "ai-sdk");
+  // Estos van al frente, en este orden; el resto queda como venga del loader.
+  const FEATURED_SLUGS = ["pong-vanilla-js", "sistemas-agenticos", "ai-sdk"];
+
+  const featuredCourses = FEATURED_SLUGS.map((slug) =>
+    courses.find((c) => c.slug === slug)
+  ).filter(Boolean) as Partial<Course>[];
   const otherCourses = courses.filter(
-    (c) => c.slug !== "pong-vanilla-js" && c.slug !== "ai-sdk"
+    (c) => !FEATURED_SLUGS.includes(c.slug as string)
   );
 
   const orderedCourses = [
-    ...(pongCourse ? [pongCourse] : []),
-    ...(aiSdkCourse ? [aiSdkCourse] : []),
+    ...featuredCourses,
     ...proximamenteCourses,
     ...otherCourses,
   ];
