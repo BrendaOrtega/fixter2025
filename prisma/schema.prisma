@@ -97,11 +97,50 @@ model SequenceEmail {
   // Configuración
   fromName   String @default("FixterGeek")
   fromEmail  String @default("contacto@fixter.org")
-  
+
+  /// Contadores de PERSONAS ÚNICAS, no de eventos: quien abre cinco veces
+  /// suma uno. Se mantienen al vuelo desde SequenceEmailEvent para que el
+  /// riel no tenga que agregar nada en cada render.
+  sentCount      Int @default(0)
+  deliveredCount Int @default(0)
+  openedCount    Int @default(0)
+  clickedCount   Int @default(0)
+  bouncedCount   Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([sequenceId, order])
+}
+
+/// Eventos de SES atribuidos AL CORREO que los provocó.
+///
+/// SequenceEnrollment ya guarda delivered/opened/clicked, pero contra la
+/// inscripción completa: sirve para saber si alguien abrió algo, no cuál de
+/// los correos. El tag `sequence_email_id` viaja en cada envío desde hace
+/// tiempo; aquí es donde por fin se usa.
+///
+/// Una fila por (correo, inscripción, tipo) en vez de una por evento crudo:
+/// las aperturas repetidas son lo que más crece, y agregar en la escritura da
+/// idempotencia natural — SES reintenta las notificaciones.
+model SequenceEmailEvent {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId      String   @db.ObjectId
+  sequenceEmailId String   @db.ObjectId
+  enrollmentId    String   @db.ObjectId
+  recipient       String
+  type            String // sent | delivered | open | click | bounce | complaint
+  count           Int      @default(1) // repeticiones de la misma persona
+  firstAt         DateTime @default(now())
+  lastAt          DateTime @default(now())
+  lastEventAt     DateTime // el timestamp que trae SES: ancla de idempotencia
+  messageId       String
+  meta            Json?
+
+  @@unique([sequenceEmailId, enrollmentId, type])
+  @@index([sequenceId, type])
+  @@index([messageId, type]) // mapa messageId → correo, para el fallback
+  @@map("sequence_email_events")
 }
 
 model SequenceEnrollment {

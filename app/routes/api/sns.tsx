@@ -1,4 +1,5 @@
 import { db } from "~/.server/db";
+import { recordSequenceEmailEvent } from "~/.server/sequenceEvents";
 import crypto from "crypto";
 
 // Cache de certificados para no descargarlos en cada petición
@@ -262,6 +263,67 @@ export const action = async ({ request }: { request: Request }) => {
       return new Response(null);
     }
 
+    // A qué CORREO de la secuencia pertenece el evento. Sin esto solo se sabe
+    // que alguien abrió algo, no cuál de los correos — que es justo lo que
+    // hace falta para medir cada paso.
+    let emailRef:
+      | { sequenceId: string; sequenceEmailId: string; enrollmentId: string }
+      | undefined;
+
+    if (enrollmentId) {
+      const tagEmailId = message.mail.tags?.sequence_email_id?.[0];
+      if (tagEmailId && tagEmailId !== "draft") {
+        const email = await db.sequenceEmail.findUnique({
+          where: { id: tagEmailId },
+          select: { id: true, sequenceId: true },
+        });
+        if (email) {
+          emailRef = {
+            sequenceId: email.sequenceId,
+            sequenceEmailId: email.id,
+            enrollmentId,
+          };
+        }
+      }
+      // Sin el tag, el envío registrado da el mapa messageId → correo.
+      if (!emailRef) {
+        const sent = await db.sequenceEmailEvent.findFirst({
+          where: { messageId, type: "sent" },
+          select: { sequenceId: true, sequenceEmailId: true, enrollmentId: true },
+        });
+        if (sent) emailRef = sent;
+      }
+    }
+
+    /**
+     * Las métricas nunca deben tumbar el webhook: un 500 hace que SNS
+     * reintente, y el reintento vuelve a pasar por handleBadEmail, que borra
+     * suscriptores. Perder un evento es barato; perder un suscriptor no.
+     */
+    const track = async (
+      type: "delivered" | "open" | "click" | "bounce" | "complaint",
+      meta?: Record<string, unknown>
+    ) => {
+      if (!emailRef) return;
+      try {
+        await recordSequenceEmailEvent({
+          ...emailRef,
+          recipient: destination[0] || "",
+          type,
+          messageId,
+          eventAt: new Date(
+            message.delivery?.timestamp ||
+              message.open?.timestamp ||
+              message.click?.timestamp ||
+              message.mail.timestamp
+          ),
+          meta,
+        });
+      } catch (error) {
+        console.error("No se pudo registrar la métrica del correo:", error);
+      }
+    };
+
     // Procesar según tipo de evento
     switch (eventType) {
       case "Delivery": {
@@ -269,6 +331,7 @@ export const action = async ({ request }: { request: Request }) => {
           await addToArrayAtomic(newsletterId, "delivered", destination);
         } else if (enrollmentId) {
           await addToSequenceArrayAtomic(enrollmentId, "delivered", destination);
+          await track("delivered");
         }
         console.log(`✅ Delivery: +${destination.length}`);
         break;
@@ -279,6 +342,7 @@ export const action = async ({ request }: { request: Request }) => {
           await addToArrayAtomic(newsletterId, "opened", destination);
         } else if (enrollmentId) {
           await addToSequenceArrayAtomic(enrollmentId, "opened", destination);
+          await track("open");
         }
         console.log(`✅ Open: ${destination.join(", ")}`);
         break;
@@ -289,6 +353,7 @@ export const action = async ({ request }: { request: Request }) => {
           await addToArrayAtomic(newsletterId, "clicked", destination);
         } else if (enrollmentId) {
           await addToSequenceArrayAtomic(enrollmentId, "clicked", destination);
+          await track("click", { link: message.click?.link });
         }
         console.log(
           `✅ Click: ${destination.join(", ")} - ${message.click?.link?.slice(0, 50)}`
@@ -304,6 +369,7 @@ export const action = async ({ request }: { request: Request }) => {
 
         if (enrollmentId) {
           await addToSequenceArrayAtomic(enrollmentId, "bounced", destination);
+          await track("bounce", { bounceType });
           if (bounceType === "Permanent") {
             await pauseSequenceEnrollment(enrollmentId);
           }

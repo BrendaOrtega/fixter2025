@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
-import { motion, AnimatePresence, usePresence } from "motion/react";
+import {
+  motion,
+  AnimatePresence,
+  usePresence,
+  Reorder,
+  useDragControls,
+} from "motion/react";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -25,6 +31,7 @@ import {
   FaShareAlt,
   FaPause,
   FaPlay,
+  FaGripVertical,
 } from "react-icons/fa";
 
 // Verifica que la secuencia exista y sea del user logueado.
@@ -60,7 +67,27 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     orderBy: { createdAt: "desc" },
   });
 
-  return { sequence, videos, userEmail: user.email };
+  // Los contadores viven en SequenceEmail, así que el riel no agrega nada en
+  // cada render. `null` en las tasas distingue "sin datos" de "0%".
+  const statsByEmail = Object.fromEntries(
+    sequence.emails.map((email) => [
+      email.id,
+      {
+        sent: email.sentCount,
+        opened: email.openedCount,
+        clicked: email.clickedCount,
+        bounced: email.bouncedCount,
+        openRate: email.sentCount
+          ? Math.round((email.openedCount / email.sentCount) * 100)
+          : null,
+        clickRate: email.sentCount
+          ? Math.round((email.clickedCount / email.sentCount) * 100)
+          : null,
+      },
+    ])
+  );
+
+  return { sequence, videos, statsByEmail, userEmail: user.email };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -116,6 +143,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         enrollmentId: enrollment.id,
         sequenceId,
         emailId: (formData.get("emailId") as string) || undefined,
+        isTest: true, // una prueba no infla las métricas del correo
       });
       return { success: true, message: `Prueba enviada a ${user.email}` };
     } catch (error) {
@@ -272,6 +300,66 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { success: true, message: "Email eliminado" };
   }
 
+  /**
+   * Reordenar arrastrando: llega la lista completa de ids en su nuevo orden.
+   *
+   * No necesita el swap con `order: -999` que sí usa move_email_up: al
+   * reescribir la lista entera 1..n no hay posiciones intermedias en colisión.
+   */
+  if (intent === "reorder_emails") {
+    const ids = JSON.parse(
+      (formData.get("orderedIds") as string) || "[]"
+    ) as string[];
+    const owned = await db.sequenceEmail.findMany({
+      where: { sequenceId },
+      select: { id: true },
+    });
+
+    // Que sean exactamente los de esta secuencia: ni ajenos, ni de menos.
+    const ownedIds = new Set(owned.map((e) => e.id));
+    if (ids.length !== owned.length || !ids.every((id) => ownedIds.has(id))) {
+      return { error: "Orden inválido" };
+    }
+
+    await Promise.all(
+      ids.map((id, index) =>
+        db.sequenceEmail.update({ where: { id }, data: { order: index + 1 } })
+      )
+    );
+    return { success: true, message: "Orden actualizado" };
+  }
+
+  if (intent === "move_email_down") {
+    const emailId = formData.get("emailId") as string;
+    const emailToMove = await db.sequenceEmail.findUnique({
+      where: { id: emailId },
+      select: { id: true, order: true, sequenceId: true },
+    });
+    if (!emailToMove || emailToMove.sequenceId !== sequenceId) {
+      return { error: "Email no encontrado" };
+    }
+    const emailBelow = await db.sequenceEmail.findFirst({
+      where: { sequenceId, order: emailToMove.order + 1 },
+      select: { id: true, order: true },
+    });
+    if (!emailBelow) return { error: "Ya está en la última posición" };
+
+    // Mismo swap por orden temporal que move_email_up.
+    await db.sequenceEmail.update({
+      where: { id: emailToMove.id },
+      data: { order: -999 },
+    });
+    await db.sequenceEmail.update({
+      where: { id: emailBelow.id },
+      data: { order: emailToMove.order },
+    });
+    await db.sequenceEmail.update({
+      where: { id: emailToMove.id },
+      data: { order: emailBelow.order },
+    });
+    return { success: true, message: "Email reordenado" };
+  }
+
   if (intent === "move_email_up") {
     const emailId = formData.get("emailId") as string;
     const emailToMove = await db.sequenceEmail.findUnique({
@@ -341,7 +429,7 @@ function aggregate(enrollments: any[]) {
 }
 
 export default function ManageSequence({ loaderData }: Route.ComponentProps) {
-  const { sequence, videos, userEmail } = loaderData;
+  const { sequence, videos, statsByEmail, userEmail } = loaderData;
   const fetcher = useFetcher();
   const [tab, setTab] = useState<"monitor" | "emails" | "settings">("emails");
   const [search, setSearch] = useState("");
@@ -489,6 +577,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
 
         {tab === "emails" && (
           <EmailsTab
+            statsByEmail={statsByEmail}
             sequence={sequence}
             fetcher={fetcher}
             onOpen={setDrawer}
@@ -716,10 +805,22 @@ function waitLabel(email: any) {
 }
 
 // Día acumulado por email, anclado a la suscripción (Día 0).
-function cumulativeDays(emails: any[]) {
+/**
+ * Etiqueta de cuándo llega cada correo, contando desde el alta.
+ *
+ * Un correo de fecha fija ROMPE el ancla: después de él nadie puede saber en
+ * qué día de su recorrido va, porque la fecha es la misma para todos mientras
+ * que el día depende de cuándo se suscribió cada quien. Antes se sumaba cero y
+ * se seguía diciendo "Día N", que era mentira para todos los pasos siguientes;
+ * ahora esos se rotulan "+N días", relativo al correo anterior.
+ */
+function scheduleLabels(emails: any[]): string[] {
   let acc = 0;
+  let anchored = true;
+
   return emails.map((e) => {
     if (e.schedulingType === "specific_date") {
+      anchored = false;
       return e.specificDate
         ? new Date(e.specificDate).toLocaleDateString("es-MX", {
             day: "numeric",
@@ -727,22 +828,39 @@ function cumulativeDays(emails: any[]) {
           })
         : "fecha sin definir";
     }
-    acc += e.delayDays || 0;
+    const days = e.delayDays || 0;
+    if (!anchored) return days === 0 ? "enseguida" : `+${days} días`;
+    acc += days;
     return `Día ${acc}`;
   });
 }
 
-function EmailsTab({ sequence, fetcher, onOpen, onPreview }: any) {
-  const emails = sequence.emails;
-  const days = cumulativeDays(emails);
-  const lastOrder = emails.length ? emails[emails.length - 1].order : 0;
-  const lastSubject = emails.length
-    ? emails[emails.length - 1].subject
-    : undefined;
+function EmailsTab({ sequence, fetcher, statsByEmail, onOpen, onPreview }: any) {
+  // Fuente durante el arrastre. Solo se resincroniza con el loader cuando no
+  // hay nada en vuelo: si no, una revalidación pisaría el orden a medio soltar.
+  const [items, setItems] = useState<any[]>(sequence.emails);
+  const reorderFetcher = useFetcher<{ error?: string }>();
+
+  useEffect(() => {
+    if (reorderFetcher.state === "idle") setItems(sequence.emails);
+  }, [sequence.emails, reorderFetcher.state]);
+
+  const labels = scheduleLabels(items);
+  const lastOrder = items.length ? items[items.length - 1].order : 0;
+  const lastSubject = items.length ? items[items.length - 1].subject : undefined;
+
+  const persistOrder = () => {
+    reorderFetcher.submit(
+      {
+        intent: "reorder_emails",
+        orderedIds: JSON.stringify(items.map((e) => e.id)),
+      },
+      { method: "post" }
+    );
+  };
 
   return (
-    <div className="max-w-xl mx-auto pb-4">
-      {/* Trigger (centrado sobre la línea del tiempo) */}
+    <div className="max-w-2xl mx-auto pb-4">
       <div className="flex justify-center">
         <span className="inline-flex items-center gap-2 bg-brand-900/60 border border-brand-500/30 rounded-full pl-2 pr-4 py-1.5">
           <span className="w-6 h-6 rounded-full bg-brand-500/15 flex items-center justify-center flex-shrink-0">
@@ -753,9 +871,9 @@ function EmailsTab({ sequence, fetcher, onOpen, onPreview }: any) {
         </span>
       </div>
 
-      {emails.length === 0 ? (
+      {items.length === 0 ? (
         <>
-          <Connector first onInsert={() => onOpen({ mode: "add", isFirst: true })} />
+          <Connector onInsert={() => onOpen({ mode: "add", isFirst: true })} />
           <button
             onClick={() => onOpen({ mode: "add", isFirst: true })}
             className="w-full text-left bg-brand-900/40 border border-dashed border-brand-100/20 rounded-xl p-5 hover:border-brand-500/50 transition-colors group"
@@ -777,70 +895,69 @@ function EmailsTab({ sequence, fetcher, onOpen, onPreview }: any) {
           </button>
         </>
       ) : (
-        emails.map((email: any, i: number) => (
-          <Fragment key={email.id}>
-            <Connector
-              first={i === 0}
-              label={waitLabel(email)}
-              onInsert={() =>
-                onOpen({
-                  mode: "add",
-                  afterOrder: email.order - 1,
-                  isFirst: i === 0,
-                  prevSubject: i === 0 ? undefined : emails[i - 1].subject,
-                })
-              }
-            />
-            <RailEmailNode
-              email={email}
-              dayLabel={days[i]}
-              fetcher={fetcher}
-              onEdit={() =>
-                onOpen({
-                  mode: "edit",
-                  email,
-                  isFirst: email.order === 1,
-                  prevSubject: i === 0 ? undefined : emails[i - 1].subject,
-                })
-              }
-              onPreview={() => onPreview(email)}
-            />
-          </Fragment>
-        ))
+        /* La línea del riel es un solo elemento continuo detrás de las filas,
+           en vez de tramos por conector: así nunca se ve cortada. */
+        <div className="relative">
+          <span
+            aria-hidden
+            className="absolute left-[19px] top-0 bottom-0 w-px bg-gradient-to-b from-brand-500/30 via-brand-100/10 to-transparent"
+          />
+          <Reorder.Group axis="y" values={items} onReorder={setItems}>
+            {items.map((email: any, i: number) => (
+              <RailEmailNode
+                key={email.id}
+                email={email}
+                index={i}
+                waitText={waitLabel(email)}
+                dayLabel={labels[i]}
+                stats={statsByEmail?.[email.id]}
+                isLast={i === items.length - 1}
+                fetcher={fetcher}
+                onDragEnd={persistOrder}
+                onInsert={() =>
+                  onOpen({
+                    mode: "add",
+                    afterOrder: email.order - 1,
+                    isFirst: i === 0,
+                    prevSubject: i === 0 ? undefined : items[i - 1].subject,
+                  })
+                }
+                onEdit={() =>
+                  onOpen({
+                    mode: "edit",
+                    email,
+                    isFirst: email.order === 1,
+                    prevSubject: i === 0 ? undefined : items[i - 1].subject,
+                  })
+                }
+                onPreview={() => onPreview(email)}
+              />
+            ))}
+          </Reorder.Group>
+        </div>
       )}
 
-      {emails.length > 0 && (
+      {items.length > 0 && (
         <>
           <Connector
             onInsert={() =>
-              onOpen({
-                mode: "add",
-                afterOrder: lastOrder,
-                isFirst: false,
-                prevSubject: lastSubject,
-              })
+              onOpen({ mode: "add", afterOrder: lastOrder, prevSubject: lastSubject })
             }
           />
           <button
             onClick={() =>
-              onOpen({
-                mode: "add",
-                afterOrder: lastOrder,
-                isFirst: false,
-                prevSubject: lastSubject,
-              })
+              onOpen({ mode: "add", afterOrder: lastOrder, prevSubject: lastSubject })
             }
-            className="flex items-center gap-2 text-brand-100 hover:text-white text-sm pl-1 py-1"
+            className="flex items-center gap-2 text-brand-100/60 hover:text-brand-500 text-sm transition-colors pl-2"
           >
-            <FaPlus className="w-3 h-3" /> Agregar email
+            <FaPlus className="w-3 h-3" />
+            Agregar email
           </button>
-
-          {/* Nodo de finalización — centrado, cierra el riel */}
           <Connector />
-          <div className="flex justify-center mt-1">
+          <div className="flex justify-center">
             <span className="inline-flex items-center gap-2 bg-brand-900/60 border border-brand-100/15 rounded-full px-4 py-1.5">
               <span className="text-sm">🏁</span>
-              <span className="text-brand-100 text-sm font-medium">
+              <span className="text-brand-100/70 text-sm">
                 Fin de la secuencia
               </span>
             </span>
@@ -851,23 +968,23 @@ function EmailsTab({ sequence, fetcher, onOpen, onPreview }: any) {
   );
 }
 
-// Conector vertical con chip de espera + botón "+" para insertar en posición.
+/** Espacio entre nodos: solo la píldora y el botón de insertar; la línea la
+    dibuja el riel de fondo. */
 function Connector({ label, onInsert }: any) {
   return (
     <div className="relative flex flex-col items-center py-1 group">
-      <div className="w-px h-4 bg-brand-100/20" />
+      <span className="w-px h-4 bg-brand-100/20" />
       {label && (
         <span className="text-[11px] text-brand-100 bg-brand-900/60 border border-brand-100/10 rounded-full px-2.5 py-0.5 my-1">
           {label}
         </span>
       )}
-      <div className="w-px h-4 bg-brand-100/20" />
+      <span className="w-px h-4 bg-brand-100/20" />
       {onInsert && (
         <button
-          type="button"
           onClick={onInsert}
           title="Insertar email aquí"
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-brand-800 border border-brand-100/20 text-brand-100 opacity-0 group-hover:opacity-100 hover:text-brand-500 hover:border-brand-500/50 transition-all flex items-center justify-center"
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-brand-900 border border-brand-100/20 text-brand-100 opacity-0 group-hover:opacity-100 hover:text-brand-500 hover:border-brand-500/40 transition-all flex items-center justify-center"
         >
           <FaPlus className="w-2.5 h-2.5" />
         </button>
@@ -876,65 +993,163 @@ function Connector({ label, onInsert }: any) {
   );
 }
 
-function RailEmailNode({ email, dayLabel, fetcher, onEdit, onPreview }: any) {
+/**
+ * Una fila del riel: número, asunto y sus métricas.
+ *
+ * Sin tarjeta ni borde permanente — el borde solo aparece en hover. Quitar el
+ * marco de cada fila es lo que baja el ruido y deja leer la columna de un
+ * vistazo. La espera va DENTRO del item arrastrable porque pertenece al correo
+ * que la sigue: así se mueve con él y no queda un conector huérfano.
+ */
+function RailEmailNode({
+  email,
+  index,
+  waitText,
+  dayLabel,
+  stats,
+  isLast,
+  fetcher,
+  onDragEnd,
+  onInsert,
+  onEdit,
+  onPreview,
+}: any) {
+  const dragControls = useDragControls();
+  const sinCuerpo = !email.content?.trim();
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="group relative"
+    <Reorder.Item
+      value={email}
+      dragListener={false}
+      dragControls={dragControls}
+      onDragEnd={onDragEnd}
+      className="relative list-none"
     >
-      <button
-        type="button"
-        onClick={onEdit}
-        className="w-full text-left bg-brand-900/50 border border-brand-100/10 rounded-xl p-4 pr-28 hover:border-brand-500/40 transition-colors flex items-center gap-3"
-      >
-        <span className="w-9 h-9 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-100 flex-shrink-0">
-          <FaEnvelope className="w-3.5 h-3.5" />
+      <div className="relative flex flex-col items-center py-1 group/con">
+        <span className="text-[10px] text-brand-100/60 bg-brand-900 border border-brand-100/10 rounded-full px-2 py-[1px]">
+          {waitText} · {dayLabel}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-white font-medium truncate">{email.subject}</div>
-          <div className="text-brand-100 text-xs mt-0.5">{dayLabel}</div>
-        </div>
-      </button>
-      <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-        <fetcher.Form method="post">
-          <input type="hidden" name="intent" value="move_email_up" />
-          <input type="hidden" name="emailId" value={email.id} />
+        {onInsert && (
           <button
-            type="submit"
-            disabled={email.order <= 1}
-            className="p-2 text-brand-100 hover:text-white disabled:opacity-30"
-            title="Subir"
+            onClick={onInsert}
+            title="Insertar email aquí"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-brand-900 border border-brand-100/20 text-brand-100 opacity-0 group-hover/con:opacity-100 hover:text-brand-500 hover:border-brand-500/40 transition-all flex items-center justify-center"
           >
-            <FaArrowUp className="w-3 h-3" />
+            <FaPlus className="w-2.5 h-2.5" />
           </button>
-        </fetcher.Form>
-        <button
-          type="button"
-          onClick={onPreview}
-          className="p-2 text-brand-100 hover:text-white"
-          title="Previsualizar"
-        >
-          <FaEye className="w-3 h-3" />
-        </button>
-        <fetcher.Form
-          method="post"
-          onSubmit={(e: any) => {
-            if (!confirm("¿Eliminar este email?")) e.preventDefault();
-          }}
-        >
-          <input type="hidden" name="intent" value="delete_email" />
-          <input type="hidden" name="emailId" value={email.id} />
-          <button
-            type="submit"
-            className="p-2 text-red-400 hover:text-red-300"
-            title="Eliminar"
-          >
-            <FaTrash className="w-3 h-3" />
-          </button>
-        </fetcher.Form>
+        )}
       </div>
-    </motion.div>
+
+      <div className="group flex items-center gap-3 rounded-lg px-2 py-2 border border-transparent hover:border-brand-100/15 hover:bg-brand-900/40 transition-colors">
+        {/* Número de orden; al pasar el cursor, el asa de arrastre */}
+        <span
+          onPointerDown={(event) => dragControls.start(event)}
+          title="Arrastra para reordenar"
+          className="relative w-7 h-7 flex-shrink-0 rounded-full bg-brand-900 ring-1 ring-brand-500/30 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+        >
+          <span className="text-[11px] text-brand-100 tabular-nums group-hover:opacity-0 transition-opacity">
+            {index + 1}
+          </span>
+          <FaGripVertical className="w-3 h-3 text-brand-500 absolute opacity-0 group-hover:opacity-100 transition-opacity" />
+        </span>
+
+        <button onClick={onEdit} className="min-w-0 flex-1 text-left">
+          <span className="block text-[13px] text-white truncate leading-tight">
+            {email.subject}
+          </span>
+          <span className="flex items-center gap-2 mt-0.5">
+            {sinCuerpo && (
+              <span className="text-[10px] text-amber-300/80">sin cuerpo</span>
+            )}
+            {email.videoSlug && (
+              <span className="text-[10px] text-brand-500/80">▶ video</span>
+            )}
+          </span>
+        </button>
+
+        <EmailStats stats={stats} />
+
+        <span className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={onPreview}
+            title="Previsualizar"
+            className="w-7 h-7 rounded-md text-brand-100/60 hover:text-white hover:bg-brand-800 flex items-center justify-center"
+          >
+            <FaEye className="w-3 h-3" />
+          </button>
+          <fetcher.Form method="post" className="contents">
+            <input type="hidden" name="intent" value="move_email_up" />
+            <input type="hidden" name="emailId" value={email.id} />
+            <button
+              type="submit"
+              disabled={index === 0}
+              title="Subir"
+              className="w-7 h-7 rounded-md text-brand-100/60 hover:text-white hover:bg-brand-800 disabled:opacity-20 flex items-center justify-center"
+            >
+              <FaArrowUp className="w-3 h-3" />
+            </button>
+          </fetcher.Form>
+          <fetcher.Form method="post" className="contents">
+            <input type="hidden" name="intent" value="move_email_down" />
+            <input type="hidden" name="emailId" value={email.id} />
+            <button
+              type="submit"
+              disabled={isLast}
+              title="Bajar"
+              className="w-7 h-7 rounded-md text-brand-100/60 hover:text-white hover:bg-brand-800 disabled:opacity-20 flex items-center justify-center"
+            >
+              <FaArrowUp className="w-3 h-3 rotate-180" />
+            </button>
+          </fetcher.Form>
+          <fetcher.Form
+            method="post"
+            className="contents"
+            onSubmit={(event: any) => {
+              if (!confirm(`¿Eliminar "${email.subject}"?`)) event.preventDefault();
+            }}
+          >
+            <input type="hidden" name="intent" value="delete_email" />
+            <input type="hidden" name="emailId" value={email.id} />
+            <button
+              type="submit"
+              title="Eliminar"
+              className="w-7 h-7 rounded-md text-brand-100/60 hover:text-danger hover:bg-brand-800 flex items-center justify-center"
+            >
+              <FaTrash className="w-3 h-3" />
+            </button>
+          </fetcher.Form>
+        </span>
+      </div>
+    </Reorder.Item>
+  );
+}
+
+/**
+ * Métricas del correo, siempre visibles para poder escanear la columna.
+ * Con cero envíos va un guion: "0%" haría creer que el correo fracasó cuando
+ * en realidad todavía no ha salido.
+ */
+function EmailStats({ stats }: any) {
+  if (!stats || !stats.sent) {
+    return (
+      <span className="hidden sm:block text-[11px] text-brand-100/25 tabular-nums w-28 text-right">
+        sin envíos
+      </span>
+    );
+  }
+  return (
+    <span className="hidden sm:flex flex-col items-end gap-1 w-28">
+      <span className="text-[11px] text-brand-100/60 tabular-nums">
+        {stats.sent} env · <span className="text-white">{stats.openRate}%</span>{" "}
+        ab · {stats.clickRate}% cl
+      </span>
+      <span className="w-16 h-[3px] rounded-full bg-brand-100/10 overflow-hidden">
+        <span
+          className="block h-full bg-brand-500 rounded-full"
+          style={{ width: `${Math.min(stats.openRate ?? 0, 100)}%` }}
+        />
+      </span>
+    </span>
   );
 }
 

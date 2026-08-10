@@ -1,6 +1,7 @@
 import { db } from "~/.server/db";
 import { sendSESTEST } from "~/mailSenders/sendSESTEST";
 import { emailButton, emailVideoCard } from "~/utils/emailShell";
+import { recordSequenceEmailEvent } from "~/.server/sequenceEvents";
 import {
   generateSequenceVideoToken,
   generateSequenceUnsubscribeToken,
@@ -237,12 +238,15 @@ export async function sendSequenceEmail({
   enrollmentId,
   sequenceId,
   emailId,
+  isTest,
 }: {
   to: string;
   email: RenderableSequenceEmail;
   enrollmentId: string;
   sequenceId: string;
   emailId?: string;
+  /** Prueba del editor: no debe contar como envío en las métricas. */
+  isTest?: boolean;
 }): Promise<{ messageId: string }> {
   const { subject, html, unsubscribeUrl } = await renderSequenceEmail({
     email,
@@ -270,6 +274,26 @@ export async function sendSequenceEmail({
   if (!result?.messageId) {
     throw new Error("SES did not return a messageId");
   }
+
+  // Registrar el envío hace dos cosas: da el denominador de las tasas, y deja
+  // el mapa messageId → correo que necesita el webhook cuando el tag de SES
+  // no llega. Las métricas nunca deben tumbar un envío que ya salió.
+  if (emailId && emailId !== "draft" && !isTest) {
+    try {
+      await recordSequenceEmailEvent({
+        sequenceId,
+        sequenceEmailId: emailId,
+        enrollmentId,
+        recipient: to,
+        type: "sent",
+        messageId: result.messageId,
+        eventAt: new Date(),
+      });
+    } catch (error) {
+      console.error("No se pudo registrar el envío:", error);
+    }
+  }
+
   return { messageId: result.messageId };
 }
 
