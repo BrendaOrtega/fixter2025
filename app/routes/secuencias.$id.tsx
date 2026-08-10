@@ -608,7 +608,9 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
                video) se inicializa una sola vez con useState, así que con una
                key fija React reusaba la instancia y abrir el correo 3 mostraba
                el cuerpo del que se abrió antes. */
-            key={`${drawer.mode}-${drawer.email?.id ?? "nuevo"}`}
+            key={
+              drawer.mode === "edit" ? `edit-${drawer.email.id}` : "nuevo"
+            }
             drawer={drawer}
             sequence={sequence}
             videos={videos}
