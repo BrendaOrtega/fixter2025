@@ -162,13 +162,15 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
   return (
     <main className="min-h-screen bg-brand-900 pt-24 pb-20">
       <div className="max-w-3xl mx-auto px-4">
-        <p className="text-brand-300 text-sm mb-1">{sequenceName}</p>
+        <p className="text-brand-500 text-xs font-bold uppercase tracking-widest mb-2">
+          {sequenceName}
+        </p>
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-6">
           {selected?.title || "Tus videos"}
         </h1>
 
         {selected ? (
-          <div className="rounded-xl overflow-hidden border border-brand-100/10 bg-black">
+          <div className="rounded-xl overflow-hidden">
             {/* Las piezas de las secuencias se graban verticales (9:16). */}
             <VideoPlayer
               vertical
@@ -193,45 +195,51 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
           </p>
         )}
 
-        {/* Lista de videos de la secuencia */}
-        <div className="mt-8 space-y-2">
-          {list.map((item) =>
-            item.unlocked ? (
-              <Link
-                key={item.emailId}
-                to={`/s/video?v=${item.emailId}`}
-                className={
-                  "flex items-center gap-3 rounded-lg p-3 border transition-colors " +
-                  (selected && item.emailId === selected.emailId
-                    ? "border-brand-500/50 bg-brand-500/10"
-                    : "border-brand-100/10 bg-brand-900/50 hover:border-brand-500/40")
-                }
-              >
-                <span className="w-7 h-7 rounded-full bg-brand-500/15 text-brand-100 flex items-center justify-center text-xs flex-shrink-0">
-                  ▶
-                </span>
-                <span className="text-white text-sm truncate">{item.title}</span>
-              </Link>
-            ) : (
-              <div
-                key={item.emailId}
-                className="flex items-center gap-3 rounded-lg p-3 border border-brand-100/5 bg-brand-900/30 opacity-60"
-              >
-                <span className="w-7 h-7 rounded-full bg-brand-900/60 text-brand-100/50 flex items-center justify-center text-xs flex-shrink-0">
-                  🔒
-                </span>
-                <div className="min-w-0">
-                  <div className="text-brand-100/70 text-sm truncate">
-                    {item.title}
+        {/* El video que ya se está viendo no se lista: sería un enlace a la
+            misma página. Solo tiene sentido mostrar a dónde SÍ puedes ir —
+            los otros desbloqueados — y lo que falta por desbloquear. */}
+        {list.some((item) => item.emailId !== selected?.emailId) && (
+          <div className="mt-10 space-y-2">
+            <p className="text-brand-100/50 text-xs uppercase tracking-widest font-bold mb-3">
+              Tu camino
+            </p>
+            {list
+              .filter((item) => item.emailId !== selected?.emailId)
+              .map((item) =>
+                item.unlocked ? (
+                  <Link
+                    key={item.emailId}
+                    to={`/s/video?v=${item.emailId}`}
+                    className="flex items-center gap-3 rounded-lg p-3 border border-brand-100/10 bg-brand-900/50 hover:border-brand-500/40 transition-colors"
+                  >
+                    <span className="w-7 h-7 rounded-full bg-brand-500/15 text-brand-100 flex items-center justify-center text-xs flex-shrink-0">
+                      ▶
+                    </span>
+                    <span className="text-white text-sm truncate">
+                      {item.title}
+                    </span>
+                  </Link>
+                ) : (
+                  <div
+                    key={item.emailId}
+                    className="flex items-center gap-3 rounded-lg p-3 border border-brand-100/5 bg-brand-900/30"
+                  >
+                    <span className="w-7 h-7 rounded-full bg-brand-900/60 text-brand-100/50 flex items-center justify-center text-xs flex-shrink-0">
+                      🔒
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-brand-100/70 text-sm truncate">
+                        {item.title}
+                      </div>
+                      <div className="text-brand-100/40 text-[11px]">
+                        Te llega por correo
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-brand-100/40 text-[11px]">
-                    Disponible al avanzar
-                  </div>
-                </div>
-              </div>
-            )
-          )}
-        </div>
+                )
+              )}
+          </div>
+        )}
       </div>
     </main>
   );
