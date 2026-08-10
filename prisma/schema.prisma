@@ -59,6 +59,10 @@ model Sequence {
   // Estado
   isActive    Boolean @default(false)
   isFeatured  Boolean @default(false)    // Para destacar en la UI
+  /// Sin alta pública: la landing /s/:id la rechaza y solo se entra por
+  /// código (webhook de compra, script). Para secuencias que son un perk
+  /// pagado — si no, cualquiera con el link recibe gratis lo que otros pagaron.
+  isPrivate   Boolean @default(false)
 
   // Emails de la secuencia (ordenados)
   emails      SequenceEmail[]

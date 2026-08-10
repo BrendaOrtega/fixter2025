@@ -38,12 +38,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       name: true,
       description: true,
       isActive: true,
+      isPrivate: true,
       owner: { select: { displayName: true, username: true } },
       _count: { select: { emails: true } },
     },
   });
 
-  if (!sequence || !sequence.isActive) {
+  // Una secuencia privada no tiene alta pública: se entra por código (compra,
+  // script). Sin esto, cualquiera con el link recibe gratis un perk pagado.
+  if (!sequence || !sequence.isActive || sequence.isPrivate) {
     return { sequence: null };
   }
   return { sequence };
@@ -87,7 +90,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     where: { id: params.id as string },
     include: { emails: { orderBy: { order: "asc" }, take: 1 } },
   });
-  if (!sequence || !sequence.isActive) {
+  // El gate que de verdad cuenta: ocultar el formulario en el loader no
+  // impide un POST directo a esta ruta.
+  if (!sequence || !sequence.isActive || sequence.isPrivate) {
     return data({ error: "Secuencia no disponible" }, { status: 404 });
   }
 
