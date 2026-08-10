@@ -7,6 +7,7 @@ import {
 import type { Route } from "./+types/s.video";
 import { db } from "~/.server/db";
 import { getPresignedFromUrl } from "~/.server/tigrs";
+import { estimateUnlockDates } from "~/.server/sequences";
 import { validateSequenceVideoToken } from "~/utils/tokens";
 import { VideoPlayer } from "~/components/viewer/VideoPlayer";
 import getMetaTags from "~/utils/getMetaTags";
@@ -68,23 +69,28 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return data({ ok: false as const, error: "No encontramos tu suscripción." });
   }
 
-  // Emails con video + su índice en la secuencia (para el gating).
-  const videoItems = enrollment.sequence.emails
+  const emails = enrollment.sequence.emails;
+  const videoItems = emails
     .map((e, i) => ({ e, i }))
     .filter(({ e }) => !!e.videoSlug);
-  if (videoItems.length === 0) {
-    return data({ ok: false as const, error: "Esta secuencia aún no tiene videos." });
-  }
 
   const slugs = videoItems.map(({ e }) => e.videoSlug as string);
-  const videos = await db.video.findMany({ where: { slug: { in: slugs } } });
+  const videos = slugs.length
+    ? await db.video.findMany({ where: { slug: { in: slugs } } })
+    : [];
   const bySlug = new Map(videos.map((v) => [v.slug, v]));
 
-  // Lista: títulos siempre; desbloqueado = email ya enviado (i < currentEmailIndex).
-  const list = videoItems.map(({ e, i }) => ({
+  // El camino son TODOS los correos, tengan video o no: ver lo que falta es
+  // la mitad del valor. Desbloqueado = ya se envió (i < currentEmailIndex).
+  const unlockDates = estimateUnlockDates(emails, enrollment);
+  const list = emails.map((e, i) => ({
     emailId: e.id,
-    title: bySlug.get(e.videoSlug as string)?.title || e.subject,
+    title: e.videoSlug
+      ? bySlug.get(e.videoSlug)?.title || e.subject
+      : e.subject,
     unlocked: i < enrollment.currentEmailIndex,
+    hasVideo: !!e.videoSlug,
+    unlocksAt: unlockDates[i]?.toISOString() ?? null,
   }));
 
   // Seleccionado: ?v=<emailId> si está desbloqueado, o el último desbloqueado.
@@ -203,52 +209,144 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
           </p>
         )}
 
-        {/* El video que ya se está viendo no se lista: sería un enlace a la
-            misma página. Solo tiene sentido mostrar a dónde SÍ puedes ir —
-            los otros desbloqueados — y lo que falta por desbloquear. */}
-        {list.some((item) => item.emailId !== selected?.emailId) && (
-          <div className="mt-10 space-y-2">
-            <p className="text-brand-100/50 text-xs uppercase tracking-widest font-bold mb-3">
-              Tu camino
-            </p>
-            {list
-              .filter((item) => item.emailId !== selected?.emailId)
-              .map((item) =>
-                item.unlocked ? (
-                  <Link
-                    key={item.emailId}
-                    to={`/s/video?v=${item.emailId}`}
-                    className="flex items-center gap-3 rounded-lg p-3 border border-brand-100/10 bg-brand-900/50 hover:border-brand-500/40 transition-colors"
-                  >
-                    <span className="w-7 h-7 rounded-full bg-brand-500/15 text-brand-100 flex items-center justify-center text-xs flex-shrink-0">
-                      ▶
-                    </span>
-                    <span className="text-white text-sm truncate">
-                      {item.title}
-                    </span>
-                  </Link>
-                ) : (
-                  <div
-                    key={item.emailId}
-                    className="flex items-center gap-3 rounded-lg p-3 border border-brand-100/5 bg-brand-900/30"
-                  >
-                    <span className="w-7 h-7 rounded-full bg-brand-900/60 text-brand-100/50 flex items-center justify-center text-xs flex-shrink-0">
-                      🔒
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-brand-100/70 text-sm truncate">
-                        {item.title}
-                      </div>
-                      <div className="text-brand-100/40 text-[11px]">
-                        Te llega por correo
-                      </div>
-                    </div>
-                  </div>
-                )
-              )}
-          </div>
-        )}
+        <Camino list={list} selectedId={selected?.emailId} />
       </div>
     </main>
+  );
+}
+
+/** "el jue 14" / "mañana" — el día basta; el cron corre cada 5 minutos. */
+function formatUnlock(iso: string | null) {
+  if (!iso) return null;
+  const date = new Date(iso);
+  const days = Math.round((date.getTime() - Date.now()) / 86_400_000);
+  if (days <= 0) return "hoy";
+  if (days === 1) return "mañana";
+  return `el ${new Intl.DateTimeFormat("es-MX", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "America/Mexico_City",
+  }).format(date)}`;
+}
+
+/**
+ * Camino vertical con un solo hilo: cada correo es un nodo, y se ven todos —
+ * incluidos los que faltan. Duolingo cambió su árbol explorable por un camino
+ * lineal justamente porque saber qué sigue pesa más que poder elegir.
+ *
+ * El nodo actual no es enlace: sería un link a esta misma página.
+ */
+function Camino({
+  list,
+  selectedId,
+}: {
+  list: {
+    emailId: string;
+    title: string;
+    unlocked: boolean;
+    hasVideo: boolean;
+    unlocksAt: string | null;
+  }[];
+  selectedId?: string;
+}) {
+  if (list.length < 2) return null;
+  const done = list.filter((i) => i.unlocked).length;
+
+  return (
+    <section className="mt-14">
+      <div className="flex items-baseline justify-between mb-5">
+        <h2 className="text-brand-100 text-xs uppercase tracking-widest font-bold">
+          Tu camino
+        </h2>
+        <span className="text-brand-500 text-xs font-bold">
+          {done} de {list.length}
+        </span>
+      </div>
+
+      <ol className="relative">
+        {list.map((item, i) => {
+          const isCurrent = item.emailId === selectedId;
+          const isLast = i === list.length - 1;
+          const when = formatUnlock(item.unlocksAt);
+
+          const node = (
+            <>
+              {/* Hilo que une los nodos; se corta en el último. */}
+              {!isLast && (
+                <span
+                  aria-hidden
+                  className={
+                    "absolute left-[15px] top-9 bottom-0 w-px " +
+                    (item.unlocked ? "bg-brand-500/40" : "bg-brand-100/10")
+                  }
+                />
+              )}
+              <span
+                className={
+                  "relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs flex-shrink-0 border " +
+                  (isCurrent
+                    ? "bg-brand-500 text-brand-900 border-brand-500 font-bold"
+                    : item.unlocked
+                      ? "bg-brand-500/15 text-brand-100 border-brand-500/40"
+                      : "bg-brand-900 text-brand-100/40 border-brand-100/10")
+                }
+              >
+                {item.unlocked ? (item.hasVideo ? "▶" : i + 1) : "🔒"}
+              </span>
+              <span className="min-w-0 pb-6">
+                <span
+                  className={
+                    "block text-sm truncate " +
+                    (item.unlocked ? "text-white" : "text-brand-100/60")
+                  }
+                >
+                  {item.title}
+                </span>
+                <span className="block text-[11px] text-brand-100/40">
+                  {isCurrent
+                    ? "Lo estás viendo"
+                    : item.unlocked
+                      ? "Disponible"
+                      : when
+                        ? `Se abre ${when}`
+                        : "Te llega por correo"}
+                </span>
+              </span>
+            </>
+          );
+
+          return (
+            <li key={item.emailId} className="relative">
+              {item.unlocked && item.hasVideo && !isCurrent ? (
+                <Link
+                  to={`/s/video?v=${item.emailId}`}
+                  className="flex gap-4 group hover:opacity-90"
+                >
+                  {node}
+                </Link>
+              ) : (
+                <div className="flex gap-4">{node}</div>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+
+      {/* El destino: lo que todo el camino está preparando. */}
+      <div className="mt-2 flex gap-4">
+        <span className="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-xs flex-shrink-0">
+          🏁
+        </span>
+        <div>
+          <p className="text-white text-sm font-bold">
+            Taller: Diseño de sistemas agénticos
+          </p>
+          <p className="text-brand-100/40 text-[11px]">
+            Arranca el 1 de septiembre · 8:00 PM CDMX
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }

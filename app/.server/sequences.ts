@@ -126,6 +126,37 @@ export async function enrollSubscriberInSequence(
   });
 }
 
+/**
+ * Cuándo se abrirá cada correo de la secuencia para una inscripción concreta.
+ * Los ya enviados devuelven null (no hay nada que esperar).
+ *
+ * Los delays son relativos al correo ANTERIOR, así que hay que acumularlos
+ * desde `nextEmailAt`; los de fecha fija se toman tal cual.
+ */
+export function estimateUnlockDates(
+  emails: {
+    schedulingType: string;
+    delayDays: number | null;
+    specificDate: Date | null;
+  }[],
+  enrollment: { currentEmailIndex: number; nextEmailAt: Date | null }
+): (Date | null)[] {
+  let cursor = enrollment.nextEmailAt
+    ? new Date(enrollment.nextEmailAt)
+    : new Date();
+
+  return emails.map((email, i) => {
+    if (i < enrollment.currentEmailIndex) return null; // ya enviado
+    if (email.schedulingType === "specific_date" && email.specificDate) {
+      return new Date(email.specificDate);
+    }
+    if (i > enrollment.currentEmailIndex) {
+      cursor = new Date(cursor.getTime() + (email.delayDays || 0) * DAY_MS);
+    }
+    return new Date(cursor);
+  });
+}
+
 export type RenderableSequenceEmail = {
   subject: string;
   content: string;
@@ -314,6 +345,20 @@ export async function processDueEnrollments(): Promise<{
         data: { status: "completed", completedAt: new Date() },
       });
       results.push(`${subscriber.email}: secuencia completada`);
+      continue;
+    }
+
+    // Un email sin cuerpo es un borrador: existe para que se vea en el camino,
+    // pero mandarlo sería peor que no mandar nada. Se pospone un día en vez de
+    // saltarlo, para que no se pierda cuando alguien lo escriba.
+    if (!nextEmail.content?.trim()) {
+      await db.sequenceEnrollment.update({
+        where: { id: enrollment.id },
+        data: { nextEmailAt: new Date(Date.now() + DAY_MS) },
+      });
+      results.push(
+        `${subscriber.email}: email ${nextEmail.order} sin contenido, pospuesto`
+      );
       continue;
     }
 

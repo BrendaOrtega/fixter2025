@@ -63,6 +63,21 @@ ${emailTeaser({ title: "Las cuatro piezas de un harness.", when: "En 2 días" })
 `,
 };
 
+/**
+ * Los siguientes cuatro existen desde el día uno aunque su cuerpo esté por
+ * escribirse: sin ellos, "el camino" de /s/video no tiene nada que mostrar
+ * bloqueado, y ver lo que falta es justo lo que hace volver.
+ *
+ * delayDays es relativo al correo ANTERIOR, no al alta: 0, 2, 3, 4, 4 dan
+ * días 0, 2, 5, 9 y 13 desde la compra.
+ */
+const proximos = [
+  { order: 2, delayDays: 2, subject: "Las cuatro piezas de un harness" },
+  { order: 3, delayDays: 3, subject: "Qué NO va en el historial" },
+  { order: 4, delayDays: 4, subject: "Cuánto cuesta de verdad un agente" },
+  { order: 5, delayDays: 4, subject: "Lo que vas a construir" },
+];
+
 async function main() {
   const owner = await db.user.findUnique({ where: { email: OWNER_EMAIL } });
   if (!owner) throw new Error(`No existe el usuario ${OWNER_EMAIL}`);
@@ -113,6 +128,28 @@ async function main() {
     : await db.sequenceEmail.create({
         data: { sequenceId: sequence.id, order: email1.order, ...data },
       });
+
+  // Esqueleto de los siguientes: se crean si faltan, y NUNCA se sobrescriben
+  // (para no borrar el cuerpo cuando ya se haya escrito).
+  for (const next of proximos) {
+    const already = await db.sequenceEmail.findFirst({
+      where: { sequenceId: sequence.id, order: next.order },
+    });
+    if (already) continue;
+    await db.sequenceEmail.create({
+      data: {
+        sequenceId: sequence.id,
+        order: next.order,
+        subject: next.subject,
+        content: "",
+        schedulingType: "delay",
+        delayDays: next.delayDays,
+        fromName: "FixterGeek",
+        fromEmail: "secuencias@fixtergeek.com",
+      },
+    });
+    console.log(`   + borrador ${next.order}: "${next.subject}"`);
+  }
 
   console.log(`${existing ? "♻️  Actualizada" : "✅ Creada"}: ${SEQUENCE_NAME}`);
   console.log(`   sequenceId: ${sequence.id}`);
