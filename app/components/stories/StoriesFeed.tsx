@@ -194,7 +194,11 @@ export function StoriesFeed({
                       onClick={() => setSoundOn(!soundOn)}
                       aria-pressed={soundOn}
                       aria-label={soundOn ? "Silenciar" : "Activar sonido"}
-                      className="absolute top-6 right-3 z-20 w-9 h-9 rounded-full bg-black/50 backdrop-blur text-white text-sm flex items-center justify-center hover:bg-black/70 transition-colors"
+                      // 64px, muy por encima del mínimo táctil de 44: es el
+                      // control que más se usa y se pulsa con el pulgar, a
+                      // ciegas. Fondo sólido porque sobre un video oscuro un
+                      // icono translúcido desaparece.
+                      className="absolute top-9 right-4 z-20 w-16 h-16 rounded-full bg-black/70 backdrop-blur border border-white/20 text-white text-2xl flex items-center justify-center hover:bg-black/85 active:scale-95 transition-all shadow-xl"
                     >
                       {soundOn ? <FaVolumeUp /> : <FaVolumeMute />}
                     </button>
@@ -251,7 +255,7 @@ function StoryProgressBars({
   if (slides.length < 2) return null;
 
   return (
-    <div className="absolute top-3 left-3 right-14 z-20 flex gap-1">
+    <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
       {slides.map((slide, index) => {
         const done = index < activeIndex;
         const isActive = index === activeIndex;
