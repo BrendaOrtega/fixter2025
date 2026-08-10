@@ -30,8 +30,11 @@ export function StoryVideo({
   onToggleSound?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [blocked, setBlocked] = useState(false);
-  const [paused, setPaused] = useState(false);
+
+  // El estado sale de los eventos del <video>, no de banderas propias: si se
+  // marca "reproduciendo" a mano, cualquier camino que se olvide de limpiarla
+  // deja el botón de play encima de un video que ya está corriendo.
+  const [showPlay, setShowPlay] = useState(false);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -40,27 +43,19 @@ export function StoryVideo({
     if (!active) {
       el.pause();
       el.currentTime = 0; // la slide se reencuentra desde el principio
-      setPaused(false);
       return;
     }
 
     // El .catch() no es opcional: al scrollear rápido se pausa un video que
     // aún está arrancando y la promesa se rechaza con AbortError.
-    el.play()
-      .then(() => setBlocked(false))
-      .catch(() => setBlocked(true));
+    el.play().catch(() => setShowPlay(true));
   }, [active, src]);
 
   const togglePlay = () => {
     const el = videoRef.current;
     if (!el) return;
-    if (el.paused) {
-      el.play().catch(() => setBlocked(true));
-      setPaused(false);
-    } else {
-      el.pause();
-      setPaused(true);
-    }
+    if (el.paused) el.play().catch(() => setShowPlay(true));
+    else el.pause();
   };
 
   return (
@@ -76,6 +71,8 @@ export function StoryVideo({
         disablePictureInPicture
         aria-label={title}
         className="w-full h-full object-contain bg-black"
+        onPlay={() => setShowPlay(false)}
+        onPause={() => setShowPlay(true)}
         onTimeUpdate={(event) => {
           const el = event.currentTarget;
           if (el.duration) onProgress?.(el.currentTime / el.duration);
@@ -89,7 +86,7 @@ export function StoryVideo({
         }}
       />
 
-      {(blocked || paused) && (
+      {showPlay && (
         <button
           type="button"
           onClick={togglePlay}
