@@ -217,7 +217,7 @@ export function StoriesFeed({
           onClick={() => goTo(activeIndex - 1, !reduceMotion)}
           disabled={!canGoUp}
           aria-label="Anterior"
-          className="w-10 h-10 rounded-full bg-brand-900/80 border border-brand-100/10 text-white flex items-center justify-center disabled:opacity-30 hover:bg-brand-800 transition-colors"
+          className="w-14 h-14 rounded-full bg-brand-900/80 border border-brand-100/15 text-white text-lg flex items-center justify-center disabled:opacity-30 hover:bg-brand-800 active:scale-95 transition-all shadow-lg"
         >
           <FaChevronUp />
         </button>
@@ -226,7 +226,7 @@ export function StoriesFeed({
           onClick={() => goTo(activeIndex + 1, !reduceMotion)}
           disabled={!canGoDown}
           aria-label="Siguiente"
-          className="w-10 h-10 rounded-full bg-brand-900/80 border border-brand-100/10 text-white flex items-center justify-center disabled:opacity-30 hover:bg-brand-800 transition-colors"
+          className="w-14 h-14 rounded-full bg-brand-900/80 border border-brand-100/15 text-white text-lg flex items-center justify-center disabled:opacity-30 hover:bg-brand-800 active:scale-95 transition-all shadow-lg"
         >
           <FaChevronDown />
         </button>
