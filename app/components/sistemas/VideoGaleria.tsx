@@ -80,10 +80,13 @@ export default function VideoGaleria() {
             El taller es en vivo y se trabaja escribiendo código: esto es
             material aparte, para orientarte sobre los temas.
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-sistemas-gray/90">
-            {/* TODO: confirmar con bliss qué trae exactamente la secuencia */}
-            Al inscribirte recibes una secuencia con material complementario
-            sobre cada sesión.
+          <p className="mx-auto mt-5 max-w-2xl text-base text-sistemas-gray">
+            Al inscribirte llega la{" "}
+            <span className="font-semibold text-zinc-200">
+              secuencia de preparación
+            </span>
+            : cinco entregas, una cada dos días, cada una con un video como
+            estos y la explicación que lo acompaña.
           </p>
         </motion.div>
 

@@ -92,6 +92,7 @@ const SESSIONS = [
 const INCLUDES = [
   "4 sesiones en vivo de 2 horas (8 horas totales) en 2 semanas intensivas: martes y jueves",
   "La UI inicial de tu agente, lista desde la primera sesión",
+  "Secuencia de preparación: 5 entregas con video, una cada 2 días, antes de empezar",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
   "Comunidad en Ghosty Teams con el instructor y el grupo",
