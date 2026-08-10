@@ -70,6 +70,9 @@ export const CourseCard = ({
   const ref = useRef(null);
   const isInview = useInView(ref, { once: true });
   const metaLine = buildMetaLine(course, videosLength, isProximamente);
+  // En la DB conviven "Intermedio" y "intermedio": comparar en crudo mandaba
+  // todos los capitalizados al caso principiante (un solo rayo).
+  const level = course.level?.toLowerCase();
 
   // Proximamente courses are clickable (they have waitlist on detail page)
   const Wrapper = Link;
@@ -136,13 +139,13 @@ export const CourseCard = ({
           className="flex gap-2 mx-auto justify-center text-center mt-6"
         >
           <p className=" text-brand-500 uppercase">{course.level}</p>
-          {course.level === "avanzado" ? (
+          {level === "avanzado" ? (
             <span className="flex gap-2">
               <img src="/thunder.svg" className="w-3" />
               <img src="/thunder.svg" className="w-3" />
               <img src="/thunder.svg" className="w-3" />
             </span>
-          ) : course.level === "intermedio" ? (
+          ) : level === "intermedio" ? (
             <span className="flex gap-2">
               <img src="/thunder.svg" className="w-3" />
               <img src="/thunder.svg" className="w-3" />
