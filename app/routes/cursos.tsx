@@ -40,6 +40,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       id: true,
       slug: true,
       tipo: true,
+      isLive: true,
+      startDate: true,
+      landingUrl: true,
     },
   });
   return { courses };
@@ -97,6 +100,7 @@ export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
           courseSlug={course.slug}
           key={course.id}
           course={course}
+          to={course.landingUrl || undefined}
         />
       ))}
     </div>
@@ -104,8 +108,8 @@ export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
 };
 
 export const formatDuration = (secs?: string | number | null) => {
-  // Si ya viene como string con formato (ej: "120 min"), devolverlo directamente
-  if (typeof secs === "string" && secs.includes("min")) {
+  // Si ya viene redactada por humano ("120 min", "8 horas"), devolverla tal cual.
+  if (typeof secs === "string" && /[a-z]/i.test(secs)) {
     return secs;
   }
 
@@ -115,6 +119,8 @@ export const formatDuration = (secs?: string | number | null) => {
   } else {
     numSecs = secs ?? 0;
   }
-  if (isNaN(numSecs) || !numSecs) return "60 mins";
+  // Sin dato preferimos no decir nada a inventar "60 mins", que era mentira
+  // en cualquier curso cuya duración no viniera en segundos.
+  if (isNaN(numSecs) || !numSecs) return "";
   return (numSecs / 60).toFixed(0) + " mins";
 };

@@ -331,6 +331,9 @@ model Course {
   icon              String?
   poster            String?
   isLive            Boolean   @default(false)
+  // Si está presente, la card del catálogo lleva aquí en vez de a /cursos/{slug}/detalle.
+  // Para talleres en vivo que tienen su propia landing de venta.
+  landingUrl        String?
   summary           String?
   authorAt          String?
   authorDescription String?

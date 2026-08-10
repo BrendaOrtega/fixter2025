@@ -9,6 +9,35 @@ import { useRef } from "react";
 // Sin esto, un curso sin icon renderiza src="" y el navegador dibuja el ícono roto.
 const FALLBACK_ICON = "/logo.png";
 
+// Un taller en vivo todavía sin grabaciones no tiene lecciones que contar:
+// lo que importa ahí es cuándo arranca. Cuando ya existan videos, la card
+// vuelve sola a "N lecciones | duración" sin tocar nada.
+const buildMetaLine = (
+  course: Partial<Course>,
+  videosLength: number | null,
+  isProximamente: boolean
+) => {
+  if (isProximamente) return "Próximamente";
+
+  const isTallerSinVideos =
+    (course.isLive || course.tipo === "taller") && !videosLength;
+
+  if (isTallerSinVideos && course.startDate) {
+    const inicio = new Date(course.startDate).toLocaleDateString("es-MX", {
+      day: "numeric",
+      month: "short",
+      timeZone: "America/Mexico_City",
+    });
+    return `En vivo · Inicia ${inicio.replace(".", "")}`;
+  }
+  if (isTallerSinVideos) return "En vivo";
+
+  const duration = formatDuration(course.duration);
+  return duration
+    ? `${videosLength} lecciones | ${duration}`
+    : `${videosLength} lecciones`;
+};
+
 export const CourseCard = ({
   course,
   to,
@@ -40,6 +69,7 @@ export const CourseCard = ({
   const imgZ = useTransform(z, [0, 30], [0, 50]);
   const ref = useRef(null);
   const isInview = useInView(ref, { once: true });
+  const metaLine = buildMetaLine(course, videosLength, isProximamente);
 
   // Proximamente courses are clickable (they have waitlist on detail page)
   const Wrapper = Link;
@@ -99,7 +129,7 @@ export const CourseCard = ({
           {course.title}
         </motion.h3>
         <p className="mt-3 text-colorCaption font-light text-center">
-          {isProximamente ? "Próximamente" : `${videosLength} lecciones`} | {formatDuration(course.duration)}
+          {metaLine}
         </p>
         <motion.div
           style={{ z: textZ }}

@@ -34,6 +34,7 @@ export type Course = {
   icon?: string | null;
   poster?: string | null;
   isLive: boolean;
+  landingUrl?: string | null;
   summary?: string | null;
   authorAt?: string | null;
   authorDescription?: string | null;
