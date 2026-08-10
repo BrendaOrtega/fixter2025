@@ -5,6 +5,7 @@ import { data, redirect, type ActionFunctionArgs } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import SimpleFooter from "~/components/common/SimpleFooter";
+import VideoGaleria from "~/components/sistemas/VideoGaleria";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import { FaWhatsapp } from "react-icons/fa";
 import {
@@ -996,6 +997,8 @@ export default function SistemasAgenticosLanding() {
           </div>
         </div>
       </section>
+
+      <VideoGaleria />
 
       {/* ============ PARA QUIÉN ============ */}
       <section className="relative z-10 mx-auto w-full max-w-6xl px-6 py-20 lg:px-10">
