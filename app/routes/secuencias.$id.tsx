@@ -124,14 +124,40 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
   }
 
+  // Alta manual: en una secuencia por invitación es el único camino además
+  // del webhook de compra. Sale el primer correo de inmediato.
+  if (intent === "enroll_subscriber") {
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
+    if (!email?.includes("@")) return { error: "Correo inválido" };
+
+    const { enrollSubscriberInSequence } = await import("~/.server/sequences");
+    const subscriber = await db.subscriber.upsert({
+      where: { email },
+      create: { email, confirmed: true, tags: [] },
+      update: {},
+    });
+
+    try {
+      await enrollSubscriberInSequence(sequenceId, subscriber.id, {
+        immediate: true,
+      });
+      return { success: true, message: `${email} inscrito` };
+    } catch (error) {
+      console.error("enroll_subscriber:", error);
+      return { error: "No se pudo inscribir. Revisa los logs." };
+    }
+  }
+
   if (intent === "update_sequence") {
     const name = (formData.get("name") as string)?.trim();
     const description =
       (formData.get("description") as string)?.trim() || null;
     if (!name) return { error: "El nombre no puede estar vacío" };
+    // Un checkbox no marcado no viaja en el form: su ausencia ES el "false".
+    const isPrivate = formData.get("isPrivate") === "on";
     await db.sequence.update({
       where: { id: sequenceId },
-      data: { name, description },
+      data: { name, description, isPrivate },
     });
     return { success: true, message: "Secuencia actualizada" };
   }
@@ -379,7 +405,9 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {sequence.isActive && (
+            {/* Sin alta pública no hay nada que compartir: ese enlace
+                responde 404. Ofrecerlo solo lleva a repartir un link muerto. */}
+            {sequence.isActive && !sequence.isPrivate && (
               <button
                 onClick={copyShareLink}
                 title="Copiar enlace público de suscripción"
@@ -448,6 +476,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
 
         {tab === "monitor" && (
           <MonitorTab
+            fetcher={fetcher}
             enrollments={filtered}
             totalEmails={totalEmails}
             search={search}
@@ -558,6 +587,7 @@ function EngagementBadges({ enrollment }: { enrollment: any }) {
 }
 
 function MonitorTab({
+  fetcher,
   enrollments,
   totalEmails,
   search,
@@ -587,6 +617,37 @@ function MonitorTab({
           <option value="paused">Pausados</option>
         </select>
       </div>
+
+      {/* Alta manual: el reemplazo del formulario público cuando la secuencia
+          es por invitación. El primer correo sale de inmediato, así que el
+          botón dice lo que va a pasar. */}
+      <fetcher.Form
+        method="post"
+        className="flex gap-2 flex-wrap mb-4"
+        onSubmit={(event: React.FormEvent<HTMLFormElement>) => {
+          const input = event.currentTarget.elements.namedItem(
+            "email"
+          ) as HTMLInputElement;
+          if (!confirm(`Se inscribe a ${input.value} y le llega el primer correo ahora. ¿Va?`)) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <input type="hidden" name="intent" value="enroll_subscriber" />
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="Inscribir a alguien: correo@ejemplo.com"
+          className="flex-1 min-w-[240px] px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white placeholder-brand-300 text-sm focus:outline-none focus:border-brand-500"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-lg bg-brand-800 text-brand-100 border border-brand-100/20 text-sm hover:text-white hover:border-brand-100/40 transition-colors whitespace-nowrap"
+        >
+          Inscribir
+        </button>
+      </fetcher.Form>
 
       {enrollments.length === 0 ? (
         <div className="text-center py-16 text-brand-100">
@@ -1663,6 +1724,27 @@ function SettingsTab({ sequence, fetcher }: any) {
           className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white focus:outline-none focus:border-brand-500"
         />
       </div>
+      <div className="border-t border-brand-100/10 pt-4">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name="isPrivate"
+            defaultChecked={sequence.isPrivate}
+            className="mt-1 w-4 h-4 rounded border-brand-100/30 bg-brand-900 text-brand-500 focus:ring-brand-500"
+          />
+          <span>
+            <span className="block text-sm text-white font-medium">
+              Solo por invitación
+            </span>
+            <span className="block text-xs text-brand-100/50 mt-0.5">
+              Nadie puede darse de alta desde el enlace público: se entra solo
+              por compra o inscripción manual. Úsalo cuando la secuencia sea un
+              beneficio de algo pagado.
+            </span>
+          </span>
+        </label>
+      </div>
+
       <div className="flex justify-end">
         <button
           type="submit"
