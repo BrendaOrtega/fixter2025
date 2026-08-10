@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 730" width="680" height="730">
+  <defs>
+    <style>
+      .ink   { fill: #19262A; }
+      .green { fill: #37AB93; }
+      .mint  { fill: #A9DCD0; }
+      .deep  { fill: #124741; }
+    </style>
+    <!-- Carcasa mint sobre visor oscuro: legible tanto en la card oscura como sobre blanco. -->
+    <g id="bot">
+      <!-- antena -->
+      <rect class="mint" x="112" y="18" width="16" height="34" rx="8"/>
+      <circle class="green" cx="120" cy="14" r="16"/>
+      <!-- orejas -->
+      <rect class="green" x="-6" y="96" width="20" height="44" rx="10"/>
+      <rect class="green" x="226" y="96" width="20" height="44" rx="10"/>
+      <!-- cabeza -->
+      <rect class="mint" x="10" y="44" width="220" height="150" rx="44"/>
+      <rect class="ink" x="38" y="72" width="164" height="94" rx="42"/>
+      <circle class="green" cx="88" cy="112" r="18"/>
+      <circle class="green" cx="152" cy="112" r="18"/>
+      <rect class="green" x="100" y="142" width="40" height="10" rx="5"/>
+      <!-- cuello -->
+      <rect class="green" x="102" y="192" width="36" height="20" rx="6"/>
+      <!-- brazos -->
+      <rect class="mint" x="4" y="224" width="24" height="80" rx="12"/>
+      <rect class="mint" x="212" y="224" width="24" height="80" rx="12"/>
+      <!-- cuerpo -->
+      <rect class="mint" x="32" y="208" width="176" height="120" rx="36"/>
+      <rect class="ink" x="62" y="236" width="116" height="64" rx="24"/>
+      <circle class="green" cx="92" cy="268" r="11"/>
+      <circle class="green" cx="120" cy="268" r="11"/>
+      <circle class="green" cx="148" cy="268" r="11"/>
+      <!-- patas -->
+      <rect class="mint" x="62" y="322" width="36" height="24" rx="11"/>
+      <rect class="mint" x="142" y="322" width="36" height="24" rx="11"/>
+    </g>
+  </defs>
+
+  <!-- el orquestador delega en dos sub-agentes -->
+  <path stroke="#37AB93" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 22" fill="none"
+        d="M198 400 C 168 400, 146 394, 126 374"/>
+  <path stroke="#37AB93" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 22" fill="none"
+        d="M484 400 C 514 400, 536 394, 556 374"/>
+
+  <!-- sub-agentes -->
+  <use href="#bot" transform="translate(14 300) scale(0.5)"/>
+  <use href="#bot" transform="translate(544 300) scale(0.5)"/>
+
+  <!-- orquestador -->
+  <use href="#bot" transform="translate(190 210) scale(1.25)"/>
+
+  <!-- destellos -->
+  <g class="green">
+    <path d="M598 168 c4 27, 12 35, 39 39 c-27 4, -35 12, -39 39 c-4 -27, -12 -35, -39 -39 c27 -4, 35 -12, 39 -39z"/>
+    <path d="M540 118 c3 17, 8 22, 25 25 c-17 3, -22 8, -25 25 c-3 -17, -8 -22, -25 -25 c17 -3, 22 -8, 25 -25z"/>
+    <path d="M74 610 c4 27, 12 35, 39 39 c-27 4, -35 12, -39 39 c-4 -27, -12 -35, -39 -39 c27 -4, 35 -12, 39 -39z"/>
+    <path d="M596 640 c3 17, 8 22, 25 25 c-17 3, -22 8, -25 25 c-3 -17, -8 -22, -25 -25 c17 -3, 22 -8, 25 -25z"/>
+  </g>
+
+  <!-- chip -->
+  <g transform="rotate(-8 150 78)">
+    <rect class="green" x="26" y="20" width="248" height="116" rx="46"/>
+    <text text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700" fill="#EAFBF6">
+      <tspan x="150" y="72">sistemas</tspan>
+      <tspan x="150" y="114">agénticos</tspan>
+    </text>
+  </g>
+</svg>

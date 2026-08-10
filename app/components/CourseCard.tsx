@@ -6,6 +6,9 @@ import { use3DHover } from "~/hooks/use3DHover";
 import { formatDuration } from "~/routes/cursos";
 import { useRef } from "react";
 
+// Sin esto, un curso sin icon renderiza src="" y el navegador dibuja el ícono roto.
+const FALLBACK_ICON = "/logo.png";
+
 export const CourseCard = ({
   course,
   to,
@@ -80,8 +83,13 @@ export const CourseCard = ({
         <motion.img
           style={{ z: imgZ }}
           className="mx-auto h-60 "
-          src={course.icon || ""}
+          src={course.icon || FALLBACK_ICON}
           alt={course.title}
+          onError={(event) => {
+            // Guard contra loop si el propio fallback fallara.
+            if (event.currentTarget.src.endsWith(FALLBACK_ICON)) return;
+            event.currentTarget.src = FALLBACK_ICON;
+          }}
         />
         <motion.h3
           style={{ z }}
