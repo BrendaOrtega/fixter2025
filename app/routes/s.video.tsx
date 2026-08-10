@@ -14,6 +14,14 @@ import getMetaTags from "~/utils/getMetaTags";
 export const meta = () =>
   getMetaTags({ title: "Tu video | FixterGeek" });
 
+/**
+ * Los objetos públicos de Tigris (bucket en el host, subidos con ACL
+ * public-read) NO deben firmarse: `getPresignedFromUrl` parsea las URLs como
+ * path-style (`host/bucket/key`), así que en una URL virtual-hosted toma
+ * "videos" como bucket y firma algo que no existe — el video no carga nunca.
+ */
+const needsSigning = (url: string) => !/^https:\/\/[^/]+\.t3\.storage\.dev\//.test(url);
+
 // Cookie de acceso firmada: recuerda el enrollment para volver sin el token.
 const accessCookie = createCookie("secuencia_acceso", {
   httpOnly: true,
@@ -103,7 +111,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (v) {
       // Solo se resuelve la fuente del video DESBLOQUEADO (no se filtran futuros).
       let src = v.storageLink || "";
-      if (src && !v.youtubeUrl) {
+      if (src && !v.youtubeUrl && needsSigning(src)) {
         try {
           src = await getPresignedFromUrl(src, 3600);
         } catch {
