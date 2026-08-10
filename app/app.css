@@ -207,3 +207,13 @@ body {
   line-height: 1.2;
   margin-top: 48px;
 }
+
+/* Feed de stories: el scroll es la navegación, la barra solo estorba.
+   No hay plugin de scrollbar en el proyecto, así que va a mano. */
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge viejos */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}

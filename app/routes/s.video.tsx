@@ -3,13 +3,15 @@ import {
   data,
   createCookie,
   Link,
+  useFetcher,
 } from "react-router";
 import type { Route } from "./+types/s.video";
 import { db } from "~/.server/db";
 import { getPresignedFromUrl } from "~/.server/tigrs";
 import { estimateUnlockDates } from "~/.server/sequences";
 import { validateSequenceVideoToken } from "~/utils/tokens";
-import { VideoPlayer } from "~/components/viewer/VideoPlayer";
+import { StoriesFeed, type Slide } from "~/components/stories/StoriesFeed";
+import { formatUnlock } from "~/utils/formatUnlock";
 import getMetaTags from "~/utils/getMetaTags";
 
 export const meta = () =>
@@ -93,70 +95,115 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     unlocksAt: unlockDates[i]?.toISOString() ?? null,
   }));
 
-  // Seleccionado: ?v=<emailId> si está desbloqueado, o el último desbloqueado.
-  const unlocked = videoItems.filter(({ i }) => i < enrollment.currentEmailIndex);
-  let chosen = unlocked[unlocked.length - 1];
-  if (selectedEmailId) {
-    const found = unlocked.find(({ e }) => e.id === selectedEmailId);
-    if (found) chosen = found;
-  }
+  // Slides del feed. Un correo desbloqueado SIN video no genera slide: sería
+  // un hueco negro en el feed. Sigue apareciendo en el camino de la derecha.
+  const slides: Slide[] = (
+    await Promise.all(
+      emails.map(async (email, i): Promise<Slide | null> => {
+        const unlocked = i < enrollment.currentEmailIndex;
+        const video = email.videoSlug ? bySlug.get(email.videoSlug) : undefined;
 
-  let selected = null as null | {
-    emailId: string;
-    id: string;
-    slug: string;
-    title: string;
-    poster: string | null;
-    youtubeUrl: string | null;
-    m3u8: string | null;
-    storageLink: string | null;
-  };
-
-  if (chosen) {
-    const v = bySlug.get(chosen.e.videoSlug as string);
-    if (v) {
-      // Solo se resuelve la fuente del video DESBLOQUEADO (no se filtran futuros).
-      let src = v.storageLink || "";
-      if (src && !v.youtubeUrl && needsSigning(src)) {
-        try {
-          src = await getPresignedFromUrl(src, 3600);
-        } catch {
-          src = "";
+        // Lo que falta SIEMPRE es slide, tenga video o no: ver lo que viene es
+        // la mitad del valor del camino. El poster viaja (es el anticipo); la
+        // fuente del video, jamás.
+        if (!unlocked) {
+          return {
+            kind: "locked",
+            emailId: email.id,
+            title: video?.title || email.subject,
+            poster: video?.poster || null,
+            unlocksAt: unlockDates[i]?.toISOString() ?? null,
+          };
         }
-      }
-      selected = {
-        emailId: chosen.e.id,
-        id: v.id,
-        slug: v.slug,
-        title: v.title,
-        poster: v.poster || null,
-        youtubeUrl: v.youtubeUrl || null,
-        m3u8: v.m3u8 || null,
-        storageLink: src || null,
-      };
 
-      // Registro: marca el video como visto en el enrollment (sin duplicar).
-      if (!enrollment.videosWatched?.includes(v.slug)) {
-        await db.sequenceEnrollment.update({
-          where: { id: enrollment.id },
-          data: { videosWatched: { push: v.slug } },
-        });
-      }
-    }
-  }
+        // Ya enviado pero sin video: no hay nada que mostrar en un feed.
+        if (!video) return null;
+
+        let src = video.storageLink || "";
+        if (src && !video.youtubeUrl && needsSigning(src)) {
+          try {
+            src = await getPresignedFromUrl(src, 3600);
+          } catch {
+            src = "";
+          }
+        }
+        // Sin fuente utilizable no hay slide de video: un <video> sin src
+        // dispara `error` y ensucia el feed. YouTube tampoco entra: no se
+        // puede pausar un iframe al salir de la slide.
+        if (!src || video.youtubeUrl) return null;
+
+        return {
+          kind: "video",
+          emailId: email.id,
+          videoId: video.id,
+          slug: video.slug,
+          title: video.title || email.subject,
+          poster: video.poster || null,
+          src,
+        };
+      })
+    )
+  ).filter((slide): slide is Slide => slide !== null);
+
+  slides.push({ kind: "outro", emailId: "outro", title: "El taller" });
+
+  // ?v=<emailId> manda; si no, la última pieza desbloqueada.
+  const lastUnlocked = slides.reduce(
+    (acc, slide, i) => (slide.kind === "video" ? i : acc),
+    0
+  );
+  const requested = selectedEmailId
+    ? slides.findIndex((slide) => slide.emailId === selectedEmailId)
+    : -1;
+  const selectedIndex = requested >= 0 ? requested : lastUnlocked;
 
   return data(
     {
       ok: true as const,
       sequenceName: enrollment.sequence.name,
       list,
-      selected,
+      slides,
+      selectedIndex,
     },
     setCookie ? { headers: { "Set-Cookie": setCookie } } : undefined
   );
 };
 
+/**
+ * Marca una pieza como vista. Antes esto vivía en el loader, que es un GET:
+ * se escribía en cada revalidación y, con un feed, el servidor no puede saber
+ * qué se vio de verdad. La identidad sale solo de la cookie.
+ */
+export const action = async ({ request }: LoaderFunctionArgs) => {
+  const parsed = await accessCookie.parse(request.headers.get("Cookie"));
+  const enrollmentId = parsed?.enrollmentId;
+  if (!enrollmentId) return data({ ok: false }, { status: 401 });
+
+  const formData = await request.formData();
+  if (formData.get("intent") !== "watched") return data({ ok: false });
+
+  const slug = formData.get("slug") as string;
+  const enrollment = await db.sequenceEnrollment.findUnique({
+    where: { id: enrollmentId },
+    select: { videosWatched: true },
+  });
+  if (!enrollment || !slug) return data({ ok: false });
+
+  if (!enrollment.videosWatched?.includes(slug)) {
+    await db.sequenceEnrollment.update({
+      where: { id: enrollmentId },
+      data: { videosWatched: { push: slug } },
+    });
+  }
+  return data({ ok: true });
+};
+
 export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
+  // Antes de cualquier return: los hooks no pueden ir tras una condicional.
+  const fetcher = useFetcher();
+  const marcarVisto = (slug: string) =>
+    fetcher.submit({ intent: "watched", slug }, { method: "POST" });
+
   if (!loaderData.ok) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4 bg-brand-900">
@@ -171,63 +218,37 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
     );
   }
 
-  const { sequenceName, list, selected } = loaderData;
+  const { sequenceName, list, slides, selectedIndex } = loaderData;
+
+  if (slides.length === 0) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 bg-brand-900">
+        <p className="text-brand-100 text-center max-w-sm">
+          Aún no tienes piezas desbloqueadas. Te llegan por correo conforme
+          avanza la secuencia.
+        </p>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-brand-900 pt-24 pb-20">
-      <div className="max-w-3xl mx-auto px-4">
-        <p className="text-brand-500 text-xs font-bold uppercase tracking-widest mb-2">
-          {sequenceName}
-        </p>
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-6">
-          {selected?.title || "Tus videos"}
-        </h1>
+    <main className="min-h-dvh bg-brand-900 pt-16 md:pt-24">
+      <div className="md:grid md:grid-cols-[1fr_320px] md:gap-8 md:max-w-6xl md:mx-auto md:px-6">
+        <StoriesFeed
+          slides={slides}
+          initialIndex={selectedIndex}
+          sequenceName={sequenceName}
+          onWatched={marcarVisto}
+        />
 
-        {selected ? (
-          <div className="rounded-xl overflow-hidden">
-            {/* Las piezas de las secuencias se graban verticales (9:16). */}
-            <VideoPlayer
-              vertical
-              video={{
-                id: selected.id,
-                slug: selected.slug,
-                title: selected.title,
-                youtubeUrl: selected.youtubeUrl || undefined,
-                m3u8: selected.m3u8 || undefined,
-                storageLink: selected.storageLink || undefined,
-                poster: selected.poster || undefined,
-              }}
-              slug={selected.slug}
-              src={selected.storageLink || undefined}
-              poster={selected.poster || undefined}
-            />
-          </div>
-        ) : (
-          <p className="text-brand-100">
-            Aún no tienes videos desbloqueados. Te llegarán por correo conforme
-            avances en la secuencia.
-          </p>
-        )}
-
-        <Camino list={list} selectedId={selected?.emailId} />
+        {/* El camino solo en desktop: en móvil el feed ya ES el camino, y las
+            piezas bloqueadas aparecen como slides. */}
+        <aside className="hidden md:block pt-2">
+          <Camino list={list} selectedId={slides[selectedIndex]?.emailId} />
+        </aside>
       </div>
     </main>
   );
-}
-
-/** "el jue 14" / "mañana" — el día basta; el cron corre cada 5 minutos. */
-function formatUnlock(iso: string | null) {
-  if (!iso) return null;
-  const date = new Date(iso);
-  const days = Math.round((date.getTime() - Date.now()) / 86_400_000);
-  if (days <= 0) return "hoy";
-  if (days === 1) return "mañana";
-  return `el ${new Intl.DateTimeFormat("es-MX", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone: "America/Mexico_City",
-  }).format(date)}`;
 }
 
 /**
