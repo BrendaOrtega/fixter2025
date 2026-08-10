@@ -91,36 +91,37 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   if (intent === "send_test") {
-    const subject = (formData.get("subject") as string) || "(sin asunto)";
-    const content = (formData.get("content") as string) || "";
-    const videoSlug = (formData.get("videoSlug") as string) || null;
-    const base =
-      process.env.NODE_ENV === "development"
-        ? "http://localhost:3000"
-        : "https://www.fixtergeek.com";
-    let html = content;
-    if (videoSlug) {
-      // En prueba no hay enrollment → link de ejemplo (solo para ver el render).
-      html += `<div style="text-align:center;margin:16px 0">${emailButton(
-        "▶ Ver el video",
-        `${base}/s/${sequenceId}`
-      )}</div>`;
+    // La prueba pasa por el MISMO código que el envío real (misma card de
+    // video, mismo link tokenizado, mismos headers y tracking). Antes armaba
+    // su propio HTML y ya había divergido del envío de verdad.
+    //
+    // El destino es siempre el admin logueado: aceptar un correo arbitrario
+    // convertía este botón en una forma de mandarle correo a cualquiera.
+    const { sendSequenceEmail, getOrCreateTestEnrollment } = await import(
+      "~/.server/sequences"
+    );
+
+    const email = {
+      subject: (formData.get("subject") as string) || "(sin asunto)",
+      content: (formData.get("content") as string) || "",
+      videoSlug: (formData.get("videoSlug") as string) || null,
+    };
+
+    try {
+      // Pausada y con el índice al final: el cron no la toca y el video se ve.
+      const enrollment = await getOrCreateTestEnrollment(sequenceId, user);
+      await sendSequenceEmail({
+        to: user.email,
+        email,
+        enrollmentId: enrollment.id,
+        sequenceId,
+        emailId: (formData.get("emailId") as string) || undefined,
+      });
+      return { success: true, message: `Prueba enviada a ${user.email}` };
+    } catch (error) {
+      console.error("send_test:", error);
+      return { error: "No se pudo enviar la prueba. Revisa los logs." };
     }
-    // En prueba no hay token de baja real → apunta a la gestión de suscripciones.
-    html = html.replace(/\{\{unsubscribe\}\}/g, `${base}/secuencias`);
-    const dest = (formData.get("testEmail") as string)?.trim();
-    const to = dest && dest.includes("@") ? dest : user.email;
-    const { sendSESTEST } = await import("~/mailSenders/sendSESTEST");
-    const result = await sendSESTEST(to, {
-      subject: `[PRUEBA] ${subject}`,
-      html,
-      from: "FixterGeek <secuencias@fixtergeek.com>",
-      to: true,
-    });
-    if (!result?.messageId) {
-      return { error: "No se pudo enviar la prueba. Intenta de nuevo." };
-    }
-    return { success: true, message: `Prueba enviada a ${to}` };
   }
 
   if (intent === "update_sequence") {
@@ -925,10 +926,9 @@ function EmailDrawer({
     error?: string;
   }>();
   const [showTest, setShowTest] = useState(false);
-  const [testEmail, setTestEmail] = useState(userEmail || "");
   const sendingTest = testFetcher.state !== "idle";
 
-  // Envía este email a un correo para ver el render real en la bandeja.
+  // Se envía por el mismo camino que el envío real, siempre a tu cuenta.
   function sendTest() {
     if (!subject.trim()) {
       setError("Ponle un asunto para la prueba");
@@ -938,8 +938,8 @@ function EmailDrawer({
     fd.append("intent", "send_test");
     fd.append("subject", subject);
     fd.append("content", content);
-    fd.append("testEmail", testEmail);
     if (videoSlug) fd.append("videoSlug", videoSlug);
+    if (email?.id) fd.append("emailId", email.id);
     testFetcher.submit(fd, { method: "POST" });
   }
 
@@ -1293,17 +1293,16 @@ function EmailDrawer({
                 </button>
               ) : (
                 <>
-                  <input
-                    type="email"
-                    value={testEmail}
-                    onChange={(e) => setTestEmail(e.target.value)}
-                    placeholder="tu@correo.com"
-                    className="flex-1 px-3 py-1.5 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
-                  />
+                  {/* Sin destino editable: la prueba va siempre a tu cuenta.
+                      Un campo libre aquí es una forma de mandarle correo a
+                      cualquiera desde el remitente de las secuencias. */}
+                  <span className="flex-1 px-3 py-1.5 bg-brand-900/60 border border-brand-100/20 rounded-lg text-brand-100 text-sm truncate">
+                    {userEmail}
+                  </span>
                   <button
                     type="button"
                     onClick={sendTest}
-                    disabled={sendingTest || !testEmail.includes("@")}
+                    disabled={sendingTest}
                     className="px-3 py-1.5 bg-brand-800 text-brand-100 hover:text-white rounded-lg text-sm border border-brand-100/20 disabled:opacity-40 whitespace-nowrap"
                   >
                     {sendingTest ? "Enviando…" : "Enviar"}

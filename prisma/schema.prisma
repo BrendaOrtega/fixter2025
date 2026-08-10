@@ -404,6 +404,7 @@ model Video {
   description String?
   duration    String?  @default("0") // prefer mins
   poster      String?
+  posterWide  String?
   module      String?  @db.ObjectId
   Module      Module?  @relation(fields: [module], references: [id])
   // moduleId String? @db.ObjectId

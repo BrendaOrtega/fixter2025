@@ -1,6 +1,6 @@
 import { db } from "~/.server/db";
 import { sendSESTEST } from "~/mailSenders/sendSESTEST";
-import { emailButton } from "~/utils/emailShell";
+import { emailButton, emailVideoCard } from "~/utils/emailShell";
 import {
   generateSequenceVideoToken,
   generateSequenceUnsubscribeToken,
@@ -14,6 +14,9 @@ const baseUrl =
 // Remitente de las secuencias (dominio verificado en SES → buena entregabilidad,
 // a diferencia de enviar como @gmail.com que rompe DMARC).
 export const SEQUENCE_FROM = "FixterGeek <secuencias@fixtergeek.com>";
+
+// Nadie lee secuencias@, así que las respuestas se desvían a un buzón real.
+export const SEQUENCE_REPLY_TO = "fixtergeek@gmail.com";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -123,6 +126,162 @@ export async function enrollSubscriberInSequence(
   });
 }
 
+export type RenderableSequenceEmail = {
+  subject: string;
+  content: string;
+  videoSlug?: string | null;
+};
+
+/**
+ * Arma el HTML final de un email de secuencia: card de video con su link
+ * tokenizado y link de baja del suscriptor.
+ *
+ * Es el ÚNICO lugar que sabe hacer esto. Antes el envío real y el botón de
+ * prueba del editor lo hacían por separado y ya habían divergido: la prueba
+ * dejaba el literal {{video}} visible y apuntaba a otra URL, así que validaba
+ * un correo que nunca se enviaba.
+ */
+export async function renderSequenceEmail({
+  email,
+  enrollmentId,
+  baseUrl: base = baseUrl,
+}: {
+  email: RenderableSequenceEmail;
+  enrollmentId: string;
+  baseUrl?: string;
+}): Promise<{
+  subject: string;
+  html: string;
+  unsubscribeUrl: string;
+  videoUrl: string | null;
+}> {
+  let html = email.content;
+  let videoUrl: string | null = null;
+
+  if (email.videoSlug) {
+    videoUrl = `${base}/s/video?token=${generateSequenceVideoToken(
+      enrollmentId
+    )}`;
+
+    const video = await db.video.findUnique({
+      where: { slug: email.videoSlug },
+      select: { title: true, duration: true, poster: true, posterWide: true },
+    });
+
+    // posterWide primero: el poster normal suele ser vertical y en un correo
+    // de 600px se come la pantalla. Sin ninguno, el botón de siempre.
+    const posterUrl = video?.posterWide || video?.poster;
+    const block = posterUrl
+      ? emailVideoCard({
+          posterUrl,
+          href: videoUrl,
+          title: video?.title || "Ver el video",
+          duration: video?.duration,
+        })
+      : emailButton("▶ Ver el video", videoUrl);
+
+    html = html.includes("{{video}}")
+      ? html.replace(/\{\{video\}\}/g, block)
+      : `${html}\n<div style="text-align:center;margin:16px 0">${block}</div>`;
+  }
+
+  const unsubscribeUrl = `${base}/s/baja?token=${generateSequenceUnsubscribeToken(
+    enrollmentId
+  )}`;
+  html = html.replace(/\{\{unsubscribe\}\}/g, unsubscribeUrl);
+
+  return { subject: email.subject, html, unsubscribeUrl, videoUrl };
+}
+
+/**
+ * Envía un email de secuencia. Concentra remitente, headers y tags para que no
+ * exista forma de mandar uno sin List-Unsubscribe o sin tracking.
+ *
+ * Lanza si SES no devuelve messageId: sendSESTEST se traga los errores y
+ * devuelve undefined, y un envío fallido silencioso se ve igual que uno bueno.
+ */
+export async function sendSequenceEmail({
+  to,
+  email,
+  enrollmentId,
+  sequenceId,
+  emailId,
+}: {
+  to: string;
+  email: RenderableSequenceEmail;
+  enrollmentId: string;
+  sequenceId: string;
+  emailId?: string;
+}): Promise<{ messageId: string }> {
+  const { subject, html, unsubscribeUrl } = await renderSequenceEmail({
+    email,
+    enrollmentId,
+  });
+
+  const result = await sendSESTEST(to, {
+    subject,
+    html,
+    from: SEQUENCE_FROM,
+    headers: {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      "Reply-To": SEQUENCE_REPLY_TO,
+    },
+    trackOpens: true,
+    to: true,
+    tags: [
+      { Name: "sequence_id", Value: sequenceId },
+      { Name: "enrollment_id", Value: enrollmentId },
+      { Name: "sequence_email_id", Value: emailId || "draft" },
+    ],
+  });
+
+  if (!result?.messageId) {
+    throw new Error("SES did not return a messageId");
+  }
+  return { messageId: result.messageId };
+}
+
+/**
+ * Inscripción de prueba para que un admin se mande el correo por el camino real.
+ *
+ * Nace `paused` con `nextEmailAt: null` (doble candado: el motor filtra por
+ * ambos) y con el índice al final, porque /s/video desbloquea con
+ * `i < currentEmailIndex` — en 0 el video saldría bloqueado y parecería un
+ * error del correo.
+ */
+export async function getOrCreateTestEnrollment(
+  sequenceId: string,
+  user: { email: string; displayName?: string | null; username?: string | null }
+): Promise<{ id: string }> {
+  const subscriber = await getOrCreateSubscriberForUser(user);
+
+  const existing = await db.sequenceEnrollment.findUnique({
+    where: {
+      sequenceId_subscriberId: { sequenceId, subscriberId: subscriber.id },
+    },
+  });
+
+  // Si ya recibió correos es una inscripción real: no degradarla a pausada.
+  if (existing?.emailsSent) return { id: existing.id };
+
+  const emailCount = await db.sequenceEmail.count({ where: { sequenceId } });
+  const testState = {
+    status: "paused",
+    nextEmailAt: null,
+    currentEmailIndex: emailCount,
+  };
+
+  const enrollment = await db.sequenceEnrollment.upsert({
+    where: {
+      sequenceId_subscriberId: { sequenceId, subscriberId: subscriber.id },
+    },
+    create: { sequenceId, subscriberId: subscriber.id, ...testState },
+    update: testState,
+  });
+  return { id: enrollment.id };
+}
+
 /**
  * Motor de envío: procesa todas las inscripciones activas cuyo próximo email
  * ya vence. Usado por el cron (agenda) y por el endpoint manual de admin.
@@ -158,47 +317,14 @@ export async function processDueEnrollments(): Promise<{
       continue;
     }
 
-    // Si el email tiene un video, inyecta el botón con link tokenizado por
-    // suscriptor (reemplaza {{video}} si existe, o lo agrega al final).
-    let html = nextEmail.content;
-    if (nextEmail.videoSlug) {
-      const link = `${baseUrl}/s/video?token=${generateSequenceVideoToken(
-        enrollment.id
-      )}`;
-      const button = emailButton("▶ Ver el video", link);
-      html = html.includes("{{video}}")
-        ? html.replace(/\{\{video\}\}/g, button)
-        : `${html}\n<div style="text-align:center;margin:16px 0">${button}</div>`;
-    }
-
-    // Link de baja tokenizado por suscriptor (footer + header List-Unsubscribe).
-    const unsubscribeUrl = `${baseUrl}/s/baja?token=${generateSequenceUnsubscribeToken(
-      enrollment.id
-    )}`;
-    html = html.replace(/\{\{unsubscribe\}\}/g, unsubscribeUrl);
-
     try {
-      const sendResult = await sendSESTEST(subscriber.email, {
-        subject: nextEmail.subject,
-        html,
-        from: SEQUENCE_FROM,
-        headers: {
-          "List-Unsubscribe": `<${unsubscribeUrl}>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-        },
-        trackOpens: true,
-        to: true,
-        tags: [
-          { Name: "sequence_id", Value: sequence.id },
-          { Name: "enrollment_id", Value: enrollment.id },
-          { Name: "sequence_email_id", Value: nextEmail.id },
-        ],
+      const { messageId } = await sendSequenceEmail({
+        to: subscriber.email,
+        email: nextEmail,
+        enrollmentId: enrollment.id,
+        sequenceId: sequence.id,
+        emailId: nextEmail.id,
       });
-
-      const messageId = sendResult?.messageId;
-      if (!messageId) {
-        throw new Error("SES did not return a messageId");
-      }
 
       const nextIndex = enrollment.currentEmailIndex + 1;
       const hasMoreEmails = nextIndex < sequence.emails.length;

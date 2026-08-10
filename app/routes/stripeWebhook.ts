@@ -16,6 +16,11 @@ import { grantCredits, type PackageKey } from "~/.server/services/coach-credits.
 // Secuencia "Taller Sistemas Agénticos — 1ª edición" (scripts/create-sistemas-sequence.ts)
 const SISTEMAS_SEQUENCE_ID = "6a790319d7dfe60e8edcb5cd";
 
+// Secuencia de preparación (delays relativos a la compra). Detrás de env var
+// para poder desplegarla apagada: sin la variable esto es un no-op, y se
+// enciende seteándola en producción, sin tocar código.
+const PREPARACION_SEQUENCE_ID = process.env.PREPARACION_SEQUENCE_ID || "";
+
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -110,6 +115,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           await enrollSubscriberInSequence(SISTEMAS_SEQUENCE_ID, subscriber.id);
         } catch (error) {
           console.error("WEBHOOK: error al inscribir a secuencia:", error);
+        }
+        if (PREPARACION_SEQUENCE_ID) {
+          try {
+            await enrollSubscriberInSequence(
+              PREPARACION_SEQUENCE_ID,
+              subscriber.id
+            );
+          } catch (error) {
+            console.error("WEBHOOK: error al inscribir a preparación:", error);
+          }
         }
         try {
           await sendSistemasWelcome({ to: email, userName });
