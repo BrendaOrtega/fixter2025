@@ -73,11 +73,17 @@ export default function VideoGaleria() {
           className="mb-12 text-center"
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Cómo <span className="text-sistemas-primary">explicamos</span>
+            Los temas, <span className="text-sistemas-primary">en corto</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
-            Piezas cortas sobre los temas del taller. Si te sirven estas, la
-            sesión en vivo va por el mismo camino.
+            Piezas de un minuto para que sepas de qué hablamos antes de entrar.
+            El taller es en vivo y se trabaja escribiendo código: esto es
+            material aparte, para orientarte sobre los temas.
+          </p>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-sistemas-gray/90">
+            {/* TODO: confirmar con bliss qué trae exactamente la secuencia */}
+            Al inscribirte recibes una secuencia con material complementario
+            sobre cada sesión.
           </p>
         </motion.div>
 
@@ -105,7 +111,9 @@ export default function VideoGaleria() {
                 preload="metadata"
                 playsInline
                 onPlay={() => alReproducir(v.slug)}
-                className="aspect-[9/16] w-full bg-black object-cover"
+                // contain y no cover: el día que una pieza no sea 9:16, cover
+                // la recorta en silencio en vez de encajarla.
+                className="aspect-[9/16] w-full bg-black object-contain"
               />
               <figcaption className="p-5">
                 <div className="flex items-baseline justify-between gap-3">

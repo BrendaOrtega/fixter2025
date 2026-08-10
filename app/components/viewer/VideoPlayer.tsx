@@ -33,6 +33,11 @@ interface VideoPlayerProps {
   src?: string;
   type?: string;
   disabled?: boolean; // Bloquea autoplay cuando hay drawer
+  /**
+   * Piezas verticales (9:16). Sin esto el video se estira al alto de la
+   * pantalla y en desktop queda una franja diminuta entre dos barras negras.
+   */
+  vertical?: boolean;
   // Para video tracking
   userId?: string;
   userEmail?: string;
@@ -51,7 +56,11 @@ export const VideoPlayer = ({
   disabled,
   userId,
   userEmail,
+  vertical,
 }: VideoPlayerProps) => {
+  const sectionClass = vertical
+    ? "relative overflow-hidden mx-auto w-full max-w-[420px] aspect-[9/16] rounded-xl bg-black"
+    : "h-[calc(100vh-80px)] relative overflow-x-hidden";
   // Detectar si es video de YouTube
   const youtubeId = video?.youtubeUrl ? extractYouTubeId(video.youtubeUrl) : null;
 
@@ -97,7 +106,7 @@ export const VideoPlayer = ({
   // Render para YouTube
   if (youtubeId) {
     return (
-      <section className="h-[calc(100vh-80px)] relative overflow-x-hidden bg-black">
+      <section className={`${sectionClass} bg-black`}>
         <iframe
           src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
           className="w-full h-full"
@@ -111,7 +120,7 @@ export const VideoPlayer = ({
 
   // Render para S3/HLS (comportamiento original)
   return (
-    <section className="h-[calc(100vh-80px)] relative overflow-x-hidden">
+    <section className={sectionClass}>
       <AnimatePresence>
         {!isPlaying && (
           <motion.button
@@ -181,6 +190,7 @@ export const VideoPlayer = ({
         controlsList="nodownload"
         className="w-full h-full"
         controls
+        playsInline
         preload="metadata"
       >
         <track kind="captions" />

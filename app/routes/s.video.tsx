@@ -169,7 +169,9 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
 
         {selected ? (
           <div className="rounded-xl overflow-hidden border border-brand-100/10 bg-black">
+            {/* Las piezas de las secuencias se graban verticales (9:16). */}
             <VideoPlayer
+              vertical
               video={{
                 id: selected.id,
                 slug: selected.slug,
