@@ -281,6 +281,30 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { success: true, message: "Email actualizado" };
   }
 
+  // La espera se edita desde el riel, sin abrir el drawer: es el dato que más
+  // se toquetea al acomodar una secuencia y no merece un viaje al formulario.
+  if (intent === "update_delay") {
+    const emailId = formData.get("emailId") as string;
+    const raw = parseInt(formData.get("delayDays") as string, 10);
+    if (!Number.isFinite(raw) || raw < 0) return { error: "Espera inválida" };
+
+    const email = await db.sequenceEmail.findUnique({ where: { id: emailId } });
+    if (!email || email.sequenceId !== sequenceId) {
+      return { error: "Email no encontrado" };
+    }
+    // Un correo de fecha fija no tiene espera que editar; el riel no ofrece el
+    // control en ese caso, pero el intent se protege igual.
+    if (email.schedulingType === "specific_date") {
+      return { error: "Este email va en fecha fija" };
+    }
+
+    await db.sequenceEmail.update({
+      where: { id: emailId },
+      data: { delayDays: Math.min(raw, 365) },
+    });
+    return { success: true, message: "Espera actualizada" };
+  }
+
   if (intent === "delete_email") {
     const emailId = formData.get("emailId") as string;
     await db.sequenceEmail.deleteMany({
@@ -810,6 +834,76 @@ function waitLabel(email: any) {
     : `⏳ espera ${d} ${d === 1 ? "día" : "días"}`;
 }
 
+/**
+ * El chip de espera del riel, editable en el sitio.
+ *
+ * Acomodar el ritmo de una secuencia es tocar este número muchas veces
+ * seguidas; abrir el drawer para cada ajuste rompía ese flujo. Los correos de
+ * fecha fija se quedan como etiqueta muerta: ahí no hay días que sumar.
+ */
+function WaitChip({ email, waitText, dayLabel }: any) {
+  const fetcher = useFetcher();
+  const [editing, setEditing] = useState(false);
+  const fixedDate = email.schedulingType === "specific_date";
+
+  // Optimista: mientras el POST viaja, el chip ya muestra el valor nuevo.
+  const pending = fetcher.formData?.get("delayDays");
+  const days = pending != null ? Number(pending) : email.delayDays || 0;
+  const label =
+    pending != null
+      ? days === 0
+        ? "⚡ inmediato"
+        : `⏳ espera ${days} ${days === 1 ? "día" : "días"}`
+      : waitText;
+
+  const save = (value: string) => {
+    setEditing(false);
+    const n = parseInt(value, 10);
+    if (!Number.isFinite(n) || n < 0 || n === (email.delayDays || 0)) return;
+    fetcher.submit(
+      {
+        intent: "update_delay",
+        emailId: email.id,
+        delayDays: String(Math.min(n, 365)),
+      },
+      { method: "post" }
+    );
+  };
+
+  if (editing) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] text-brand-100 bg-brand-900 border border-brand-500/40 rounded-full pl-2 pr-1 py-[1px]">
+        <span>⏳ esperar</span>
+        <input
+          type="number"
+          min={0}
+          max={365}
+          autoFocus
+          defaultValue={days}
+          onBlur={(e) => save(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") save(e.currentTarget.value);
+            if (e.key === "Escape") setEditing(false);
+          }}
+          className="w-10 bg-transparent text-white text-center outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+        <span className="pr-1">días</span>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => !fixedDate && setEditing(true)}
+      disabled={fixedDate}
+      title={fixedDate ? "Va en fecha fija" : "Cambiar la espera"}
+      className="text-[10px] text-brand-100/60 bg-brand-900 border border-brand-100/10 rounded-full px-2 py-[1px] enabled:hover:text-white enabled:hover:border-brand-500/40 transition-colors disabled:cursor-default"
+    >
+      {label} · {dayLabel}
+    </button>
+  );
+}
+
 // Día acumulado por email, anclado a la suscripción (Día 0).
 /**
  * Etiqueta de cuándo llega cada correo, contando desde el alta.
@@ -1032,9 +1126,7 @@ function RailEmailNode({
       className="relative list-none"
     >
       <div className="relative flex flex-col items-center py-1 group/con">
-        <span className="text-[10px] text-brand-100/60 bg-brand-900 border border-brand-100/10 rounded-full px-2 py-[1px]">
-          {waitText} · {dayLabel}
-        </span>
+        <WaitChip email={email} waitText={waitText} dayLabel={dayLabel} />
         {onInsert && (
           <button
             onClick={onInsert}
@@ -1190,7 +1282,7 @@ function EmailDrawer({
   );
   const [subject, setSubject] = useState(email?.subject || "");
   const [content, setContent] = useState(email?.content || "");
-  const [delayDays, setDelayDays] = useState<number>(
+  const [delayDays] = useState<number>(
     email?.delayDays ?? (isFirst ? 0 : 1)
   );
   const [specificDate, setSpecificDate] = useState(initialSpecificDate);
@@ -1422,30 +1514,20 @@ function EmailDrawer({
             </div>
 
             {schedulingType === "delay" ? (
+              // El número se edita en el riel, tocando el chip de espera. Aquí
+              // solo viaja como oculto para que guardar el correo no lo pise.
               <div className="bg-brand-800/30 border border-brand-100/10 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-sm text-white flex-wrap">
-                  <span>{isFirst ? "Al suscribirse, esperar" : "Esperar"}</span>
-                  <input
-                    type="number"
-                    name="delayDays"
-                    min="0"
-                    value={delayDays}
-                    onChange={(e) => setDelayDays(parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 bg-brand-900/60 border border-brand-100/20 rounded text-white text-sm text-center focus:outline-none focus:border-brand-500"
-                  />
-                  <span>
-                    {isFirst
-                      ? "días"
-                      : `días después de «${prevSubject || "el email anterior"}»`}
-                  </span>
-                </div>
-                <p className="text-brand-100 text-xs mt-2">
-                  🕒{" "}
+                <input type="hidden" name="delayDays" value={delayDays} />
+                <p className="text-sm text-white">
                   {isFirst
                     ? delayDays > 0
                       ? `Se envía el Día ${delayDays}.`
                       : "Se envía inmediatamente al suscribirse (Día 0)."
-                    : `Se envía ${delayDays} ${delayDays === 1 ? "día" : "días"} después del email anterior.`}
+                    : `Se envía ${delayDays} ${delayDays === 1 ? "día" : "días"} después de «${prevSubject || "el email anterior"}».`}
+                </p>
+                <p className="text-brand-100 text-xs mt-1.5">
+                  🕒 Para cambiar la espera, toca el chip de días en la lista de
+                  la secuencia.
                 </p>
               </div>
             ) : (
