@@ -7,6 +7,7 @@ const links = [
   { href: "/admin/cursos", label: "Cursos" },
   { href: "/admin/ratings", label: "Ratings" },
   { href: "/admin/sequences", label: "Sequences" },
+  { href: "/admin/productos", label: "Productos" },
   { href: "/admin/magnetos", label: "Magnetos" },
   { href: "/admin/webinar", label: "Webinar" },
   { href: "/admin/posts", label: "Posts" },

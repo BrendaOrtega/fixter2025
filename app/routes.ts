@@ -85,6 +85,7 @@ export default [
     route("talleres", "routes/admin/talleres.tsx"),
     route("webinar", "routes/admin/webinar.tsx"),
     route("sequences", "routes/admin/sequences.tsx"),
+    route("productos", "routes/admin/productos.tsx"),
     route("magnetos", "routes/admin/magnetos.tsx"),
     route("libros", "routes/admin/libros.tsx"),
     route("newsletter", "routes/admin/newsletter.tsx"),
