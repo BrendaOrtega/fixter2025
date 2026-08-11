@@ -37,11 +37,16 @@ export function StoriesFeed({
   initialIndex,
   sequenceName,
   onWatched,
+  onActiveChange,
 }: {
   slides: Slide[];
   initialIndex: number;
   sequenceName: string;
   onWatched?: (slug: string) => void;
+  /** Quién se está viendo AHORA. El camino lo necesita para seguir al feed:
+   *  el scroll interno sólo hace replaceState, así que el índice del loader se
+   *  queda congelado en el de la entrada. */
+  onActiveChange?: (emailId: string) => void;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
@@ -65,7 +70,8 @@ export function StoriesFeed({
     const url = new URL(window.location.href);
     url.searchParams.set("v", slide.emailId);
     window.history.replaceState(null, "", url);
-  }, [activeIndex, slides]);
+    onActiveChange?.(slide.emailId);
+  }, [activeIndex, slides, onActiveChange]);
 
   const handleProgress = useCallback(
     (ratio: number) => {

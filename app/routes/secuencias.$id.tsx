@@ -1802,6 +1802,25 @@ function playChime() {
 }
 
 // Área de contenido del email — AISLADA para enchufar el editor de easybits
+/**
+ * Marcadores del motor renderizados como bloques visibles. Sin esto el editor
+ * enseña `{{video}}` en medio del texto y se lee como un error del contenido,
+ * cuando en realidad es la señal de dónde entra la tarjeta al enviar.
+ */
+function previewHtml(content: string) {
+  if (!content) return content;
+  return content
+    .replace(
+      /\{\{video\}\}/g,
+      `<div style="border:2px dashed #85DDCB;border-radius:10px;padding:18px;text-align:center;color:#186656;background:#F2FBF9;margin:12px 0;">
+         <div style="font-size:22px;line-height:1">▶</div>
+         <div style="font-weight:bold;font-size:13px;margin-top:6px;">Tarjeta del video</div>
+         <div style="font-size:11px;opacity:.75;">Se arma al enviar, con el poster y el link del suscriptor</div>
+       </div>`
+    )
+    .replace(/\{\{unsubscribe\}\}/g, "#");
+}
+
 // después (hoy: IA + HTML + imagen + preview; mañana: modo easybits/Section3).
 function EmailBody({
   content,
@@ -2033,7 +2052,7 @@ function EmailBody({
               className="p-3 text-sm text-gray-900"
               dangerouslySetInnerHTML={{
                 __html:
-                  content ||
+                  previewHtml(content) ||
                   '<p style="color:#9ca3af">La vista previa aparecerá aquí.</p>',
               }}
             />

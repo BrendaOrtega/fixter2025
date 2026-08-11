@@ -22,6 +22,14 @@ export function useActiveSlide({
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const slidesRef = useRef(new Map<number, HTMLElement>());
 
+  // Destino de un salto programático. Mientras viaja, el observer va viendo
+  // las slides intermedias y avisaría de cada una: quien pinte el estado
+  // (barras, camino) parpadearía con dos o tres valores antes del bueno. Se
+  // ignoran hasta llegar, con un plazo de gracia por si el snap deja el scroll
+  // a medio pixel y el destino nunca cruza el umbral.
+  const jumpTo = useRef<number | null>(null);
+  const jumpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const registerSlide = useCallback((index: number, el: HTMLElement | null) => {
     if (el) slidesRef.current.set(index, el);
     else slidesRef.current.delete(index);
@@ -43,7 +51,12 @@ export function useActiveSlide({
             best = { index, ratio: entry.intersectionRatio };
           }
         }
-        if (best) setActiveIndex(best.index);
+        if (!best) return;
+        if (jumpTo.current !== null) {
+          if (best.index !== jumpTo.current) return;
+          jumpTo.current = null;
+        }
+        setActiveIndex(best.index);
       },
       { root, threshold: [0.6, 0.9] }
     );
@@ -68,21 +81,38 @@ export function useActiveSlide({
         top: index * scroller.clientHeight,
         behavior: smooth ? "smooth" : "auto",
       });
+      jumpTo.current = index;
+      if (jumpTimer.current) clearTimeout(jumpTimer.current);
+      jumpTimer.current = setTimeout(() => (jumpTo.current = null), 900);
       // Optimista: el observer confirma, pero la UI no espera al scroll.
       setActiveIndex(index);
     },
     [scrollerRef]
   );
 
-  // Posicionar en la slide inicial sin animación, antes del primer pintado.
-  const positioned = useRef(false);
+  // Posicionar en la slide pedida, sin animación.
+  //
+  // Se repite cada vez que llega un índice distinto, no sólo al montar: entrar
+  // desde el camino es una navegación cliente que revalida el loader pero NO
+  // remonta el feed, así que con un flag de "ya posicioné" la URL cambiaba y el
+  // video se quedaba en el anterior. Se compara contra el último índice
+  // aplicado —y no contra un booleano— para que el 0 también cuente.
+  const positionedFor = useRef<number | null>(null);
   useEffect(() => {
-    if (positioned.current || !initialIndex) return;
+    if (positionedFor.current === initialIndex) return;
     const scroller = scrollerRef.current;
     if (!scroller || !scroller.clientHeight) return;
-    positioned.current = true;
+    positionedFor.current = initialIndex;
     scroller.scrollTo({ top: initialIndex * scroller.clientHeight });
+    setActiveIndex(initialIndex);
   }, [initialIndex, scrollerRef]);
+
+  useEffect(
+    () => () => {
+      if (jumpTimer.current) clearTimeout(jumpTimer.current);
+    },
+    []
+  );
 
   return { activeIndex, goTo, registerSlide };
 }

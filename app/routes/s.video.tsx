@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   type LoaderFunctionArgs,
   data,
@@ -26,10 +27,17 @@ export const meta = () =>
 const needsSigning = (url: string) => !/^https:\/\/[^/]+\.t3\.storage\.dev\//.test(url);
 
 // Cookie de acceso firmada: recuerda el enrollment para volver sin el token.
+//
+// El path es "/s" y no "/s/video": React Router pide los loaders de una
+// navegación cliente a "/s/video.data", y por las reglas de cookies ese path
+// NO cae dentro de "/s/video" (el carácter siguiente debe ser "/", y es un
+// punto). Con el path anterior la cookie no viajaba en esas peticiones, así
+// que navegar dentro del camino contestaba "Abre este video desde el enlace de
+// tu correo" aunque el usuario acabara de entrar con su token.
 const accessCookie = createCookie("secuencia_acceso", {
   httpOnly: true,
   sameSite: "lax",
-  path: "/s/video",
+  path: "/s",
   maxAge: 60 * 60 * 24 * 90,
   secrets: [process.env.SECRET || "fixtergeek"],
   secure: process.env.NODE_ENV === "production",
@@ -204,6 +212,16 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
   const markWatched = (slug: string) =>
     fetcher.submit({ intent: "watched", slug }, { method: "POST" });
 
+  // Quién se está viendo, según el feed y no según el loader: al scrollear
+  // dentro del feed la URL cambia con replaceState y el loader no revalida,
+  // así que un índice del servidor deja el camino marcando la pieza de la
+  // entrada para siempre.
+  const initialActiveId = loaderData.ok
+    ? loaderData.slides[loaderData.selectedIndex]?.emailId
+    : undefined;
+  const [activeEmailId, setActiveEmailId] = useState(initialActiveId);
+  useEffect(() => setActiveEmailId(initialActiveId), [initialActiveId]);
+
   if (!loaderData.ok) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4 bg-brand-900">
@@ -239,12 +257,13 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
           initialIndex={selectedIndex}
           sequenceName={sequenceName}
           onWatched={markWatched}
+          onActiveChange={setActiveEmailId}
         />
 
         {/* El camino solo en desktop: en móvil el feed ya ES el camino, y las
             piezas bloqueadas aparecen como slides. */}
         <aside className="hidden md:block pt-2">
-          <Path list={list} selectedId={slides[selectedIndex]?.emailId} />
+          <Path list={list} selectedId={activeEmailId} />
         </aside>
       </div>
     </main>
@@ -305,7 +324,7 @@ function Path({
               )}
               <span
                 className={
-                  "relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs flex-shrink-0 border " +
+                  "relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs flex-shrink-0 border transition-colors duration-300 " +
                   (isCurrent
                     ? "bg-brand-500 text-brand-900 border-brand-500 font-bold"
                     : item.unlocked
@@ -318,7 +337,7 @@ function Path({
               <span className="min-w-0 pb-6">
                 <span
                   className={
-                    "block text-sm truncate " +
+                    "block text-sm truncate transition-colors duration-300 " +
                     (item.unlocked ? "text-white" : "text-brand-100/60")
                   }
                 >
