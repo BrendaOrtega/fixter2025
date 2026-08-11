@@ -153,20 +153,33 @@ export const getFirebaseSignedUrl = async (
   return signedUrl;
 };
 
+// Hosts de Tigris que llevan el bucket en el path (el resto es virtual-hosted).
+const PATH_STYLE_HOSTS = ["fly.storage.tigris.dev", "t3.storage.dev"];
+
 // Genera presigned URL dinámicamente desde cualquier URL de Tigris
 export const getPresignedFromUrl = async (
   originalUrl: string,
   expiresIn = 3600
 ) => {
   const url = new URL(originalUrl);
-  const storageEndpoint = `${url.protocol}//${url.hostname}`;
-  const pathParts = url.pathname.split('/').filter(Boolean);
-  const bucket = pathParts[0];
-  const key = pathParts.slice(1).join('/');
+  const pathParts = url.pathname.split("/").filter(Boolean);
+
+  // Tigris sirve los objetos en dos estilos y ambos conviven en la DB:
+  // path-style   → https://fly.storage.tigris.dev/<bucket>/<key>
+  // virtual-host → https://<bucket>.t3.storage.dev/<key>
+  // Si asumimos path-style siempre, en el segundo caso el primer segmento del
+  // path se toma como bucket y la URL firmada apunta a un objeto inexistente.
+  const isPathStyle = PATH_STYLE_HOSTS.includes(url.hostname);
+  const bucket = isPathStyle ? pathParts[0] : url.hostname.split(".")[0];
+  const key = (isPathStyle ? pathParts.slice(1) : pathParts).join("/");
+  const rootHost = isPathStyle
+    ? url.hostname
+    : url.hostname.split(".").slice(1).join(".");
 
   const client = new S3Client({
     region: "auto",
-    endpoint: storageEndpoint,
+    endpoint: `${url.protocol}//${rootHost}`,
+    forcePathStyle: true,
   });
 
   return await getSignedUrl(

@@ -1292,6 +1292,8 @@ function EmailDrawer({
   const [pendingVideo, setPendingVideo] = useState<any>(null);
   const [showVideoPreview, setShowVideoPreview] = useState(false);
   const [videoPreviewSrc, setVideoPreviewSrc] = useState("");
+  const [videoYoutubeUrl, setVideoYoutubeUrl] = useState("");
+  const [copiedVideoLink, setCopiedVideoLink] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const testFetcher = useFetcher<{
@@ -1411,7 +1413,7 @@ function EmailDrawer({
       return;
     }
     setShowVideoPreview(true);
-    if (videoPreviewSrc || !videoSlug) return;
+    if (videoPreviewSrc || videoYoutubeUrl || !videoSlug) return;
     setLoadingPreview(true);
     try {
       const q =
@@ -1421,6 +1423,7 @@ function EmailDrawer({
       const res = await fetch(`/api/sequence-video?${q}`);
       const data = await res.json();
       if (data.src) setVideoPreviewSrc(data.src);
+      if (data.youtubeUrl) setVideoYoutubeUrl(data.youtubeUrl);
     } catch {
       // silencioso
     } finally {
@@ -1570,6 +1573,8 @@ function EmailDrawer({
                 setVideoSlug(e.target.value);
                 setShowVideoPreview(false);
                 setVideoPreviewSrc("");
+                setVideoYoutubeUrl("");
+                setCopiedVideoLink(false);
               }}
               className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm focus:outline-none focus:border-brand-500"
             >
@@ -1618,10 +1623,23 @@ function EmailDrawer({
                       <p className="text-brand-100/60 text-xs p-4 text-center">
                         Cargando video…
                       </p>
+                    ) : videoYoutubeUrl ? (
+                      <p className="text-brand-100/70 text-xs p-4 text-center">
+                        Video de YouTube:{" "}
+                        <a
+                          href={videoYoutubeUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-brand-300 underline"
+                        >
+                          {videoYoutubeUrl}
+                        </a>
+                      </p>
                     ) : videoPreviewSrc ? (
                       <video
                         src={videoPreviewSrc}
                         controls
+                        preload="metadata"
                         className="w-full max-h-[260px] bg-black"
                       />
                     ) : (
@@ -1629,6 +1647,33 @@ function EmailDrawer({
                         No se pudo cargar el preview.
                       </p>
                     )}
+                  </div>
+                )}
+                {/* El src es una URL firmada (1 h): sirve para compartir rápido
+                    o descargar el archivo, no como enlace permanente. */}
+                {showVideoPreview && videoPreviewSrc && (
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(videoPreviewSrc);
+                        setCopiedVideoLink(true);
+                        setTimeout(() => setCopiedVideoLink(false), 2000);
+                      }}
+                      className="text-[11px] text-brand-100 hover:text-white"
+                    >
+                      {copiedVideoLink ? "✓ Copiado" : "Copiar enlace"}
+                    </button>
+                    <a
+                      href={videoPreviewSrc}
+                      download
+                      className="text-[11px] text-brand-100 hover:text-white"
+                    >
+                      Descargar
+                    </a>
+                    <span className="text-[10px] text-brand-100/40">
+                      el enlace expira en 1 h
+                    </span>
                   </div>
                 )}
               </div>
