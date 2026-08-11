@@ -5,6 +5,7 @@ import SimpleFooter from "~/components/common/SimpleFooter";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 import { useFetcher } from "react-router";
+import { productMetadata } from "~/.server/stripe";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { sendWebinarCongrats } from "~/mailSenders/sendWebinarCongrats";
@@ -226,11 +227,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : "https://www.fixtergeek.com";
 
       const session = await stripe.checkout.sessions.create({
-        metadata: {
+        metadata: await productMetadata("claude-workshop-direct", {
           selectedModules: JSON.stringify(selectedModules),
           totalPrice: String(totalPrice),
-          type: "claude-workshop-direct",
-        },
+        }),
         mode: "payment",
         line_items: [
           {

@@ -166,3 +166,24 @@ export const createProductCheckout = async (
   if (!session.url) throw new Error("Stripe no devolvió URL de checkout");
   return session.url;
 };
+
+/**
+ * Verifica que exista quien sepa cumplir lo que se va a vender, y devuelve la
+ * metadata que debe llevar la sesión.
+ *
+ * Para checkouts con precio dinámico (talleres por módulos), donde
+ * `createProductCheckout` no aplica: la landing arma su sesión, pero no puede
+ * inventar un tipo que nadie atienda. Cinco compras se ignoraron por eso.
+ */
+export const productMetadata = async (
+  key: string,
+  extra: Record<string, string> = {}
+): Promise<Record<string, string>> => {
+  const product = await db.product.findUnique({ where: { key } });
+  if (!product?.active) {
+    throw new Error(
+      `No hay producto activo para "${key}". Créalo en /admin/productos: sin él, la compra se cobra y no se entrega.`
+    );
+  }
+  return { app: "fixtergeek", fulfillmentKey: key, type: key, ...extra };
+};

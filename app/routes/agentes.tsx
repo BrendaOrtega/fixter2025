@@ -30,6 +30,7 @@ import {
 import { HiSparkles } from "react-icons/hi";
 import { RiRobot2Line } from "react-icons/ri";
 import "~/styles/agentes-ia.css";
+import { productMetadata } from "~/.server/stripe";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -243,10 +244,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : "https://www.fixtergeek.com";
 
       const session = await stripe.checkout.sessions.create({
-        metadata: {
-          type: "ia-nocode-course",
+        metadata: await productMetadata("ia-nocode-course", {
           totalPrice: String(totalPrice),
-        },
+        }),
         mode: "payment",
         line_items: [
           {

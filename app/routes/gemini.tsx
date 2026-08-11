@@ -9,6 +9,7 @@ import { data, redirect, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { sendWebinarRegistration } from "~/mailSenders/sendWebinarRegistration";
 import { sendWebinarThresholdNotification } from "~/mailSenders/sendWebinarThresholdNotification";
+import { productMetadata } from "~/.server/stripe";
 
 export const meta = () =>
   getMetaTags({
@@ -167,11 +168,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         : "https://www.fixtergeek.com";
 
       const session = await stripe.checkout.sessions.create({
-        metadata: {
+        metadata: await productMetadata("gemini-workshop-direct", {
           selectedModules: JSON.stringify(selectedModules),
           totalPrice: String(totalPrice),
-          type: "gemini-workshop-direct",
-        },
+        }),
         mode: "payment",
         line_items: [
           {
