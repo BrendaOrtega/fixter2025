@@ -1,5 +1,10 @@
 import Stripe from "stripe";
 import { db } from "~/.server/db";
+import {
+  resolveProduct,
+  fulfillPurchase,
+  recordPurchase,
+} from "~/.server/services/fulfillment.server";
 import invariant from "tiny-invariant";
 import { data, type ActionFunctionArgs } from "react-router";
 import { successPurchase } from "~/mailSenders/successPurchase";
@@ -57,6 +62,60 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       invariant(session.metadata);
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
+
+      // ============================================================
+      // CUMPLIMIENTO POR DATOS
+      //
+      // Si existe un Product para lo que se compró, se entrega según su
+      // descriptor y aquí termina. Si no, siguen los bloques de abajo, que son
+      // la versión vieja: un if por producto. Agregar un taller ya no debería
+      // requerir escribir código.
+      // ============================================================
+      {
+        const metadata = session.metadata as Record<string, string | undefined>;
+        const { product, via } = await resolveProduct(metadata);
+
+        if (product) {
+          const name = session.customer_details?.name || metadata.name;
+          await recordPurchase({
+            sessionId: session.id,
+            email,
+            amountTotal: session.amount_total,
+            currency: session.currency,
+            metadata,
+            status: "received",
+            productKey: product.key,
+            resolvedVia: via,
+          });
+
+          const { ok, steps } = await fulfillPurchase({
+            product,
+            email,
+            name,
+            phone: session.customer_details?.phone,
+            sessionId: session.id,
+            amountTotal: session.amount_total,
+            metadata,
+          });
+
+          await recordPurchase({
+            sessionId: session.id,
+            email,
+            amountTotal: session.amount_total,
+            currency: session.currency,
+            metadata,
+            status: ok ? "fulfilled" : "partial",
+            productKey: product.key,
+            resolvedVia: via,
+            steps,
+          });
+
+          console.info(
+            `WEBHOOK: ${product.key} ${ok ? "cumplido" : "PARCIAL"} (vía ${via})`
+          );
+          return new Response(null);
+        }
+      }
 
       // ============================================================
       // CURSOS ON-DEMAND - El único flujo de compra activo
@@ -417,7 +476,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       // Si llegamos aquí sin courseSlug, es un evento de otra app Stripe
       if (!session.metadata.courseSlug) {
-        console.info("WEBHOOK: Evento sin courseSlug, ignorando (otra app)");
+        // Sin courseSlug puede ser de otro proyecto (la cuenta de Stripe se
+        // comparte) o una compra nuestra que nadie sabe cumplir. La segunda es
+        // la que costó cuatro pagos ignorados, así que ya no se descarta en
+        // silencio: si trae señales de ser nuestra, avisa; si no, queda
+        // registrada como ajena y no molesta.
+        const metadata = session.metadata as Record<string, string | undefined>;
+        const isOurs = metadata.app === "fixtergeek" || !!metadata.type;
+
+        await recordPurchase({
+          sessionId: session.id,
+          email,
+          amountTotal: session.amount_total,
+          currency: session.currency,
+          metadata,
+          status: isOurs ? "orphan" : "foreign",
+          note: isOurs
+            ? `Sin producto para type="${metadata.type ?? "(ninguno)"}"`
+            : "Sin señales de FixterGeek: probablemente de otro proyecto",
+        });
+
+        if (isOurs) {
+          await successPurchase({
+            userName: "⚠️ COMPRA SIN CUMPLIR — crea su producto en /admin/productos",
+            userMail: email,
+            title: metadata.type || "(sin type)",
+            slug: "",
+          });
+          console.warn(`WEBHOOK: compra huérfana type="${metadata.type}" de ${email}`);
+        } else {
+          console.info("WEBHOOK: compra de otro proyecto, registrada sin cumplir");
+        }
         return new Response(null);
       }
 

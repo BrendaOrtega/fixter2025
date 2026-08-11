@@ -1021,7 +1021,7 @@ function RailEmailNode({
   onPreview,
 }: any) {
   const dragControls = useDragControls();
-  const sinCuerpo = !email.content?.trim();
+  const isDraft = !email.content?.trim();
 
   return (
     <Reorder.Item
@@ -1064,7 +1064,7 @@ function RailEmailNode({
             {email.subject}
           </span>
           <span className="flex items-center gap-2 mt-0.5">
-            {sinCuerpo && (
+            {isDraft && (
               <span className="text-[10px] text-amber-300/80">sin cuerpo</span>
             )}
             {email.videoSlug && (

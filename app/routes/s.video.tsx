@@ -201,7 +201,7 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
 export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
   // Antes de cualquier return: los hooks no pueden ir tras una condicional.
   const fetcher = useFetcher();
-  const marcarVisto = (slug: string) =>
+  const markWatched = (slug: string) =>
     fetcher.submit({ intent: "watched", slug }, { method: "POST" });
 
   if (!loaderData.ok) {
@@ -238,13 +238,13 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
           slides={slides}
           initialIndex={selectedIndex}
           sequenceName={sequenceName}
-          onWatched={marcarVisto}
+          onWatched={markWatched}
         />
 
         {/* El camino solo en desktop: en móvil el feed ya ES el camino, y las
             piezas bloqueadas aparecen como slides. */}
         <aside className="hidden md:block pt-2">
-          <Camino list={list} selectedId={slides[selectedIndex]?.emailId} />
+          <Path list={list} selectedId={slides[selectedIndex]?.emailId} />
         </aside>
       </div>
     </main>
@@ -258,7 +258,7 @@ export default function SequenceVideo({ loaderData }: Route.ComponentProps) {
  *
  * El nodo actual no es enlace: sería un link a esta misma página.
  */
-function Camino({
+function Path({
   list,
   selectedId,
 }: {

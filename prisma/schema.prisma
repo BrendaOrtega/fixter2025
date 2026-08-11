@@ -377,6 +377,10 @@ model Course {
   // Si está presente, la card del catálogo lleva aquí en vez de a /cursos/{slug}/detalle.
   // Para talleres en vivo que tienen su propia landing de venta.
   landingUrl        String?
+  /// Secuencia de preparación a la que entra quien compra este curso, además
+  /// de las notificaciones. Vive aquí y no en una variable de entorno: cada
+  /// curso trae la suya, sin tocar el código ni el deploy para encenderla.
+  preparationSequenceId String? @db.ObjectId
   summary           String?
   authorAt          String?
   authorDescription String?
@@ -925,4 +929,80 @@ model LeadMagnetDownload {
 
   @@index([leadMagnetId, email])
   @@map("lead_magnet_downloads")
+}
+
+/// Qué se entrega cuando alguien compra algo.
+///
+/// Antes esto vivía como un `if (metadata.type === "...")` por producto dentro
+/// del webhook de Stripe: agregar un taller obligaba a escribir código, y un
+/// tipo sin su `if` hacía que el pago se ignorara en silencio. Ahora cada cosa
+/// vendible es una fila que se edita desde administración.
+///
+/// `key` es el MISMO string que ya viaja en `metadata.type`, para que los
+/// productos existentes funcionen sin tocar las landings.
+model Product {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  key    String  @unique
+  title  String
+  active Boolean @default(true)
+
+  /// Qué otorga. Vacío es válido y frecuente: un taller en vivo no da acceso
+  /// a nada dentro del sitio.
+  courseSlugs       String[]
+  userTags          String[]
+  subscriberTags    String[]
+  createsUser       Boolean  @default(true)
+  createsSubscriber Boolean  @default(true)
+
+  /// Secuencias a las que entra el comprador, con su configuración de arranque.
+  sequences ProductSequence[]
+
+  /// WelcomeSpec: el correo de bienvenida como datos (bloques), no como una
+  /// plantilla de código por producto. Sin esto se manda el genérico.
+  welcome Json?
+
+  /// Para que la landing no arme la sesión de Stripe a mano. El precio y el
+  /// cupón siguen viviendo en Course cuando el producto es un curso.
+  priceMxn    Int?
+  successPath String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("products")
+}
+
+type ProductSequence {
+  sequenceId   String
+  immediate    Boolean @default(false)
+  startAtIndex Int?
+  label        String?
+}
+
+/// Una fila por sesión de Stripe pagada, escrita ANTES de cumplirla.
+///
+/// Dos cosas a la vez: ninguna compra puede volver a desaparecer sin rastro, y
+/// el índice único sobre la sesión da idempotencia real — hoy un reintento de
+/// Stripe vuelve a otorgar el curso y a remandar los correos.
+model PurchaseEvent {
+  id              String  @id @default(auto()) @map("_id") @db.ObjectId
+  stripeSessionId String  @unique
+  email           String
+  amountTotal     Int?
+  currency        String?
+  productKey      String?
+
+  /// received | fulfilled | partial | orphan | foreign | fulfilled_manually
+  status      String
+  resolvedVia String? // fulfillmentKey | type | courseSlug | none
+  steps       Json? // qué se ejecutó y qué falló, paso por paso
+  note        String?
+  metadata    Json
+
+  createdAt   DateTime  @default(now())
+  fulfilledAt DateTime?
+
+  @@index([status])
+  @@index([email])
+  @@map("purchase_events")
 }
