@@ -5,3 +5,6 @@
 # React Router
 /.react-router/
 /build/
+
+# Proyectos de video (HyperFrames) — assets pesados, no van al repo
+/videos/
