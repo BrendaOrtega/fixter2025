@@ -1,6 +1,10 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
-import { WEBINAR_SLOTS, WEBINAR_TITLE } from "~/utils/webinarDates";
+import {
+  WEBINAR_SLOTS,
+  WEBINAR_SUBTITLE,
+  WEBINAR_TITLE,
+} from "~/utils/webinarDates";
 
 /**
  * URL estable de la sala del webinar. Los correos (confirmación y
@@ -33,6 +37,7 @@ export default function WebinarEnVivo() {
         <h1 className="text-3xl font-black leading-tight sm:text-4xl">
           {WEBINAR_TITLE}
         </h1>
+        <p className="mt-3 text-zinc-400">{WEBINAR_SUBTITLE}.</p>
         <p className="mt-5 leading-relaxed text-zinc-400">
           La sala todavía no abre. Se abre 10 minutos antes de cada sesión:
         </p>

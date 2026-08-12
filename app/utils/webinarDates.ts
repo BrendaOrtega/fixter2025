@@ -16,7 +16,11 @@ export type WebinarSlot = {
   end: string;
 };
 
-export const WEBINAR_TITLE = "Por qué tu agente se rompe en producción";
+export const WEBINAR_TITLE = "Anatomía de un sistema agéntico";
+
+/** Bajada que acompaña al título en la landing y en los correos. */
+export const WEBINAR_SUBTITLE =
+  "Construyendo un agente que sobrevive a producción";
 
 export const WEBINAR_SLOTS: WebinarSlot[] = [
   {

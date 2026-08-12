@@ -10,6 +10,7 @@ import LiquidEther from "~/components/backgrounds/LiquidEther";
 import { FaWhatsapp } from "react-icons/fa";
 import {
   WEBINAR_SLOTS,
+  WEBINAR_SUBTITLE,
   WEBINAR_TITLE,
   getWebinarSlot,
 } from "~/utils/webinarDates";
@@ -519,23 +520,24 @@ function WebinarSection() {
         >
           <span className="inline-flex items-center gap-2.5 rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-1.5 text-sm font-bold text-sistemas-accent">
             <span className="h-2 w-2 animate-pulse rounded-full bg-sistemas-accent" />
-            Webinar gratuito · 1 hora
+            Webinar gratuito · 45 min + Q&amp;A
           </span>
           <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
             ¿Prefieres verlo antes?{" "}
             <span className="text-sistemas-primary">{WEBINAR_TITLE}</span>
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-            Una hora en vivo, sin costo: te enseño un agente que funciona
-            perfecto y luego se rompe con un usuario real — y las piezas que le
-            faltan. Con sistemas nuestros que hoy corren en producción, por
-            dentro. Q&amp;A al final.
+            {WEBINAR_SUBTITLE}. Desarmamos en vivo las seis piezas que separan
+            un agente que funciona en una demo de uno que aguanta usuarios
+            reales, con sistemas nuestros que hoy corren en producción por
+            dentro. Tres demos sobre un mismo agente y Q&amp;A al final.
           </p>
           <ul className="mt-6 space-y-2.5">
             {[
-              "El demo que muere en el paso 67, en vivo",
-              "Harness, contexto, checkpoints y aprobación humana",
-              "Cómo se ve una UI agent-native de verdad",
+              "La ecuación: agente = modelo + harness (y por qué el harness es tuyo)",
+              "Contexto, ejecución durable, memoria y autenticación",
+              "La interfaz: la única pieza que el usuario ve",
+              "🎁 Al minuto 30, el PDF de las seis piezas — gratis, compres o no",
             ].map((item) => (
               <li
                 key={item}
