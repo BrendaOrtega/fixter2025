@@ -8,7 +8,7 @@ Cuando algo va lento uno mira el servidor. Miré:
 
 | Qué medí | Resultado |
 |---|---|
-| La app, desde dentro de la máquina (`localhost`) | **122 MB/s** — el archivo en 1.3 ms |
+| La app, desde dentro de la máquina (localhost) | **122 MB/s** — el archivo en 1.3 ms |
 | Internet, desde dentro de la máquina | 21.5 MB/s |
 | TTFB desde el cliente | 0.5 s, normal |
 | CPU y RAM | de sobra |
