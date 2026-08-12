@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 730" width="680" height="730">
+  <defs>
+    <style>
+      .ink   { fill: #19262A; }
+      .green { fill: #37AB93; }
+      .mint  { fill: #A9DCD0; }
+      .deep  { fill: #124741; }
+
+      /* Todo lo que se mueve usa fill-box para no pelearse con los
+         transform de los &lt;use&gt;, que ya cargan translate/scale. */
+      .float, .eye, .antena, .dot, .sparkle, .chip { transform-box: fill-box; }
+
+      /* Flotar: el orquestador manda, los sub-agentes le siguen desfasados. */
+      .float { animation: flotar 4s ease-in-out infinite; }
+      .float--izq  { animation-duration: 3.4s; animation-delay: -1.1s; }
+      .float--der  { animation-duration: 3.8s; animation-delay: -2.3s; }
+      @keyframes flotar {
+        0%, 100% { transform: translateY(0); }
+        50%      { transform: translateY(-10px); }
+      }
+
+      /* Parpadeo: mucho tiempo abierto, un cierre rápido. */
+      .eye { transform-origin: center; animation: parpadeo 5.5s ease-in-out infinite; }
+      .bot--izq .eye { animation-delay: -2.1s; }
+      .bot--der .eye { animation-delay: -3.7s; }
+      @keyframes parpadeo {
+        0%, 92%, 100% { transform: scaleY(1); }
+        95%           { transform: scaleY(0.08); }
+      }
+
+      /* La antena late: el agente está pensando. */
+      .antena { transform-origin: center; animation: latir 2.4s ease-in-out infinite; }
+      .bot--izq .antena { animation-delay: -0.8s; }
+      .bot--der .antena { animation-delay: -1.6s; }
+      @keyframes latir {
+        0%, 100% { transform: scale(1);    opacity: 1; }
+        50%      { transform: scale(1.18); opacity: 0.75; }
+      }
+
+      /* Los tres puntos del panel se encienden en secuencia, como un "escribiendo…". */
+      .dot { animation: procesar 1.5s ease-in-out infinite; }
+      .dot--2 { animation-delay: 0.18s; }
+      .dot--3 { animation-delay: 0.36s; }
+      @keyframes procesar {
+        0%, 60%, 100% { opacity: 0.35; }
+        30%           { opacity: 1; }
+      }
+
+      /* Las instrucciones viajan del orquestador hacia cada sub-agente. */
+      .flujo { animation: fluir 1.6s linear infinite; }
+      .flujo--der { animation-direction: reverse; }
+      @keyframes fluir { to { stroke-dashoffset: -48; } }
+
+      .sparkle { transform-origin: center; animation: destellar 3s ease-in-out infinite; }
+      .sparkle--2 { animation-delay: -0.7s; }
+      .sparkle--3 { animation-delay: -1.4s; }
+      .sparkle--4 { animation-delay: -2.2s; }
+      @keyframes destellar {
+        0%, 100% { transform: scale(0.82); opacity: 0.55; }
+        50%      { transform: scale(1);    opacity: 1; }
+      }
+
+      .chip { transform-origin: center; animation: chip 5s ease-in-out infinite; }
+      @keyframes chip {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50%      { transform: translateY(-6px) rotate(1.5deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .float, .eye, .antena, .dot, .flujo, .sparkle, .chip { animation: none; }
+      }
+    </style>
+
+    <!-- Carcasa mint sobre visor oscuro: legible en la card oscura y sobre blanco. -->
+    <g id="bot">
+      <rect class="mint" x="112" y="18" width="16" height="34" rx="8"/>
+      <circle class="green antena" cx="120" cy="14" r="16"/>
+      <rect class="green" x="-6" y="96" width="20" height="44" rx="10"/>
+      <rect class="green" x="226" y="96" width="20" height="44" rx="10"/>
+      <rect class="mint" x="10" y="44" width="220" height="150" rx="44"/>
+      <rect class="ink" x="38" y="72" width="164" height="94" rx="42"/>
+      <circle class="green eye" cx="88" cy="112" r="18"/>
+      <circle class="green eye" cx="152" cy="112" r="18"/>
+      <rect class="green" x="100" y="142" width="40" height="10" rx="5"/>
+      <rect class="green" x="102" y="192" width="36" height="20" rx="6"/>
+      <rect class="mint" x="4" y="224" width="24" height="80" rx="12"/>
+      <rect class="mint" x="212" y="224" width="24" height="80" rx="12"/>
+      <rect class="mint" x="32" y="208" width="176" height="120" rx="36"/>
+      <rect class="ink" x="62" y="236" width="116" height="64" rx="24"/>
+      <circle class="green dot" cx="92" cy="268" r="11"/>
+      <circle class="green dot dot--2" cx="120" cy="268" r="11"/>
+      <circle class="green dot dot--3" cx="148" cy="268" r="11"/>
+      <rect class="mint" x="62" y="322" width="36" height="24" rx="11"/>
+      <rect class="mint" x="142" y="322" width="36" height="24" rx="11"/>
+    </g>
+  </defs>
+
+  <!-- el orquestador delega en dos sub-agentes -->
+  <path class="flujo" stroke="#37AB93" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 22" fill="none"
+        d="M198 400 C 168 400, 146 394, 126 374"/>
+  <path class="flujo flujo--der" stroke="#37AB93" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 22" fill="none"
+        d="M484 400 C 514 400, 536 394, 556 374"/>
+
+  <!-- sub-agentes -->
+  <g class="float float--izq"><use class="bot--izq" href="#bot" transform="translate(14 300) scale(0.5)"/></g>
+  <g class="float float--der"><use class="bot--der" href="#bot" transform="translate(544 300) scale(0.5)"/></g>
+
+  <!-- orquestador -->
+  <g class="float"><use href="#bot" transform="translate(190 210) scale(1.25)"/></g>
+
+  <!-- destellos -->
+  <g class="green">
+    <path class="sparkle" d="M598 168 c4 27, 12 35, 39 39 c-27 4, -35 12, -39 39 c-4 -27, -12 -35, -39 -39 c27 -4, 35 -12, 39 -39z"/>
+    <path class="sparkle sparkle--2" d="M540 118 c3 17, 8 22, 25 25 c-17 3, -22 8, -25 25 c-3 -17, -8 -22, -25 -25 c17 -3, 22 -8, 25 -25z"/>
+    <path class="sparkle sparkle--3" d="M74 610 c4 27, 12 35, 39 39 c-27 4, -35 12, -39 39 c-4 -27, -12 -35, -39 -39 c27 -4, 35 -12, 39 -39z"/>
+    <path class="sparkle sparkle--4" d="M596 640 c3 17, 8 22, 25 25 c-17 3, -22 8, -25 25 c-3 -17, -8 -22, -25 -25 c17 -3, 22 -8, 25 -25z"/>
+  </g>
+
+  <!-- el chip con el nombre del taller se quitó: el título de la slide ya lo dice -->
+</svg>

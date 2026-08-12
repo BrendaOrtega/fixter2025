@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Las seis piezas de un sistema agéntico — FixterGeek</title>
+<style>
+  /* ── Impresión ─────────────────────────────────────────────────────────
+     Carta sin márgenes de página: cada .page pinta su propio fondo de borde
+     a borde y mete el aire con padding. Si el margen lo pusiera @page, las
+     portadas oscuras saldrían con un marco blanco. */
+  @page { size: Letter; margin: 0 }
+  * { box-sizing: border-box; margin: 0; padding: 0 }
+
+  :root{
+    --ink:#101820;
+    --ink-2:#080D11;
+    --mint:#1F8C77;        /* menta legible sobre papel */
+    --mint-lite:#85DDCB;   /* menta sobre oscuro */
+    --amber:#A96B12;
+    --amber-lite:#FFC46B;
+    --paper:#FAF7F1;
+    --line:#E3DED2;
+    --text:#161D23;
+    --soft:#5C6870;
+  }
+
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact }
+  body{
+    font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;
+    color:var(--text); background:var(--paper);
+    font-size:11.2pt; line-height:1.62;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .page{
+    width:8.5in; height:11in; padding:0.86in 0.92in 0.9in;
+    background:var(--paper);
+    page-break-after:always; break-after:page;
+    position:relative; overflow:hidden;
+  }
+  .page:last-child{ page-break-after:auto }
+  .page--dark{ background:var(--ink); color:#EDEAE3 }
+
+  /* Barra de marca: 4 tramos de color arriba de cada página. Es la firma
+     visual que amarra el documento; en las oscuras va más brillante. */
+  .page:before{
+    content:""; position:absolute; top:0; left:0; right:0; height:7px;
+    background:linear-gradient(90deg,
+      var(--mint) 0 22%, var(--amber-lite) 22% 34%, var(--ink) 34% 40%, var(--mint-lite) 40% 46%, transparent 46%);
+  }
+  .page--dark:before{
+    background:linear-gradient(90deg,
+      var(--mint-lite) 0 22%, var(--amber-lite) 22% 34%, #EDEAE3 34% 40%, var(--mint-lite) 40% 46%, transparent 46%);
+  }
+
+  .folio{
+    position:absolute; left:0.92in; right:0.92in; bottom:0.5in;
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:8pt; letter-spacing:.12em; text-transform:uppercase;
+    color:#9AA3A9; border-top:1px solid var(--line); padding-top:.09in;
+  }
+  .folio b{ font-size:11pt; letter-spacing:0; color:var(--mint) }
+  .page--dark .folio{ color:#4C5A66; border-color:#1E2A33 }
+
+  h1{ font-size:36pt; line-height:1.02; letter-spacing:-.028em; font-weight:800 }
+  h2{ font-size:21pt; line-height:1.12; letter-spacing:-.018em; font-weight:800; margin-bottom:.26in }
+  h3{ font-size:12.6pt; font-weight:800; margin:.24in 0 .06in; letter-spacing:-.01em }
+  p{ margin-bottom:.14in }
+
+  .kicker{
+    font-size:8.4pt; letter-spacing:.2em; text-transform:uppercase;
+    font-weight:800; color:var(--mint); margin-bottom:.1in; display:block;
+  }
+  .page--dark .kicker{ color:var(--mint-lite) }
+  .lead{ font-size:13.4pt; line-height:1.46; color:#2C3941; letter-spacing:-.008em }
+  .page--dark .lead{ color:#C9CFD3 }
+
+  .rule{ height:4px; width:70px; background:var(--mint); margin:.16in 0 .22in; border-radius:2px }
+
+  /* ── Apertura de pieza: el número es la imagen ── */
+  .hero{ display:flex; flex-direction:column; justify-content:center; height:100% }
+  .hero .num{
+    font-size:150pt; line-height:.8; font-weight:800; letter-spacing:-.06em;
+    color:transparent; -webkit-text-stroke:2.5px var(--mint-lite);
+    margin-bottom:.16in;
+  }
+  .hero h1{ font-size:44pt; letter-spacing:-.035em }
+  .hero .lead{ max-width:5.1in; margin-top:.22in }
+  .hero .tag{
+    position:absolute; top:1.1in; right:.92in; text-align:right;
+    font-size:8.4pt; letter-spacing:.2em; text-transform:uppercase;
+    font-weight:800; color:#4C5A66;
+  }
+
+  /* ── Cita ancla ── */
+  .anchor{
+    border-left:5px solid var(--amber-lite); background:#FAF2E2;
+    padding:.17in .24in; margin:.22in 0; font-size:11.2pt; border-radius:0 7px 7px 0;
+  }
+  .anchor .t{ display:block; font-size:8.2pt; letter-spacing:.18em;
+    text-transform:uppercase; font-weight:800; color:var(--amber); margin-bottom:.05in }
+  .page--dark .anchor{ background:#1A222A; border-color:var(--amber-lite); color:#DDE2E5 }
+  .page--dark .anchor .t{ color:var(--amber-lite) }
+
+  .warn{ border-left:5px solid #C4574F; background:#FAEBEA; padding:.17in .24in;
+    margin:.22in 0; font-size:10.6pt; border-radius:0 7px 7px 0 }
+  .warn .t{ display:block; font-size:8.2pt; letter-spacing:.18em; text-transform:uppercase;
+    font-weight:800; color:#A8433B; margin-bottom:.05in }
+
+  /* ── Frase de golpe: tipografía como imagen ── */
+  .shout{
+    font-size:19pt; line-height:1.24; font-weight:800; letter-spacing:-.02em;
+    color:var(--ink); margin:.26in 0; padding-left:.22in;
+    border-left:5px solid var(--mint);
+  }
+
+  pre{
+    background:var(--ink-2); color:#E4E7E9; border-radius:9px;
+    padding:.17in .21in; margin:.16in 0; font-size:9pt; line-height:1.58;
+    font-family:"SF Mono",Menlo,Consolas,monospace; white-space:pre-wrap;
+    border-left:4px solid var(--mint-lite);
+  }
+  pre .c{ color:#78-8C97; color:#7D8C97 }
+  pre .k{ color:#85DDCB }
+  pre .a{ color:#FFC46B }
+  code{ font-family:"SF Mono",Menlo,Consolas,monospace; font-size:9.4pt;
+    background:#EEE9DD; padding:1px 4px; border-radius:3px }
+  .page--dark code{ background:#1E2A33; color:#DDE2E5 }
+
+  ul,ol{ margin:.08in 0 .16in .26in }
+  li{ margin-bottom:.07in }
+
+  .check{ list-style:none; margin-left:0 }
+  .check li{ position:relative; padding-left:.32in; margin-bottom:.13in }
+  .check li:before{
+    content:""; position:absolute; left:0; top:.05in;
+    width:.17in; height:.17in; border:2.5px solid var(--mint); border-radius:4px;
+  }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:.2in }
+  .card{ border:1.5px solid var(--line); border-radius:10px; padding:.17in .19in; background:#fff }
+  .card h4{ font-size:10.4pt; font-weight:800; margin-bottom:.05in }
+  .card p{ font-size:10pt; margin:0; color:#46525A; line-height:1.5 }
+  .page--dark .card{ background:#161E25; border-color:#26333C }
+  .page--dark .card p{ color:#AEB8BE }
+
+  /* ── Portada ── */
+  .cover-logo{ width:2.6in; display:block; margin-bottom:.55in }
+  .cover-meta{ position:absolute; left:.92in; bottom:.9in; font-size:9.6pt; color:#7E8B94; line-height:1.6 }
+  .badge{
+    display:inline-block; border:2px solid var(--mint-lite); color:var(--mint-lite);
+    border-radius:999px; padding:.05in .17in; font-size:8.4pt; letter-spacing:.18em;
+    text-transform:uppercase; font-weight:800; margin-bottom:.28in;
+  }
+  .bot{ position:absolute; right:.7in; bottom:.8in; width:2.5in; opacity:.95 }
+
+
+  /* ── Apertura de pieza: el número gigante en contorno, arriba a la derecha.
+     Va en contorno y no en sólido porque relleno a ese tamaño compite con el
+     título; vacío se lee como marca de agua tipográfica. ── */
+  .big-num{
+    position:absolute; right:.62in; top:.5in;
+    font-size:132pt; line-height:1; font-weight:800; letter-spacing:-.06em;
+    color:transparent; -webkit-text-stroke:2.5px #2A3A44;
+  }
+  .page--open h2{ font-size:30pt; margin-bottom:.2in }
+  .page--open .rule{ background:var(--amber-lite) }
+  .page--open .check li:before{ border-color:var(--mint-lite) }
+  .page--open pre{ background:#070C10 }
+  .page--open code{ background:#1E2A33; color:#DDE2E5 }
+  .page--open .shout{ color:#EDEAE3; border-color:var(--mint-lite) }
+  .page--open .warn{ background:#26191A; border-color:#C4574F; color:#E8D6D4 }
+  .page--open .warn .t{ color:#F0928A }
+
+  /* ── Índice ── */
+  .toc{ list-style:none; margin:0 }
+  .toc li{ display:flex; align-items:baseline; gap:.16in; padding:.13in 0; border-bottom:1px solid var(--line) }
+  .toc .n{ font-weight:800; color:var(--mint); width:.46in; font-size:17pt; letter-spacing:-.03em }
+  .toc .t{ font-weight:700; flex:1; font-size:12pt }
+  .toc .d{ color:var(--soft); font-size:9.6pt }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ PORTADA ═══════════════ -->
+<section class="page page--dark">
+  <img class="cover-logo" src="logo.png" alt="FixterGeek">
+  <span class="badge">Guía del webinar</span>
+  <h1>Las seis piezas<br>de un sistema<br><span style="color:#85DDCB">agéntico</span></h1>
+  <div class="rule" style="background:#FFC46B"></div>
+  <p class="lead" style="max-width:5in">Lo que hay que construir alrededor del modelo para que un agente aguante usuarios reales. Con ejemplos de código que hoy corren en producción.</p>
+  <svg class="bot" viewBox="-10 -4 266 216" xmlns="http://www.w3.org/2000/svg">
+    <style>.ink{fill:#19262A}.green{fill:#37AB93}.mint{fill:#A9DCD0}</style>
+  <rect class="mint" x="112" y="18" width="16" height="34" rx="8"/>
+      <circle class="green antena" cx="120" cy="14" r="16"/>
+      <rect class="green" x="-6" y="96" width="20" height="44" rx="10"/>
+      <rect class="green" x="226" y="96" width="20" height="44" rx="10"/>
+      <rect class="mint" x="10" y="44" width="220" height="150" rx="44"/>
+      <rect class="ink" x="38" y="72" width="164" height="94" rx="42"/>
+      <circle class="green eye" cx="88" cy="112" r="18"/>
+      <circle class="green eye" cx="152" cy="112" r="18"/>
+      <rect class="green" x="100" y="142" width="40" height="10" rx="5"/>
+  </svg>
+  <div class="cover-meta">
+    Agosto 2026 · Héctorbliss<br>
+    fixtergeek.com/sistemas-agenticos
+  </div>
+</section>
+
+<!-- ═══════════════ ÍNDICE ═══════════════ -->
+<section class="page">
+  <span class="kicker">Índice</span>
+  <h2>Qué vas a encontrar aquí</h2>
+  <p>Esta guía es la versión larga del webinar. El deck son cuarenta minutos hablados; esto es lo que se lee después, con el detalle que no cabe en una pantalla proyectada.</p>
+  <p>Cada pieza ocupa tres páginas: <strong>qué es</strong>, <strong>cómo se rompe en producción</strong> y <strong>qué revisar</strong> en lo que ya construiste.</p>
+  <ol class="toc" style="margin-top:.3in">
+    <li><span class="n">1</span><span class="t">Primitivas del harness</span><span class="d">pág. 4</span></li>
+    <li><span class="n">2</span><span class="t">Contexto</span><span class="d">pág. 7</span></li>
+    <li><span class="n">3</span><span class="t">Ejecución durable</span><span class="d">pág. 10</span></li>
+    <li><span class="n">4</span><span class="t">Memoria</span><span class="d">pág. 13</span></li>
+    <li><span class="n">5</span><span class="t">Autenticación</span><span class="d">pág. 16</span></li>
+    <li><span class="n">6</span><span class="t">Interfaz</span><span class="d">pág. 19</span></li>
+  </ol>
+  <div class="anchor" style="margin-top:.34in">
+    <span class="t">Una nota sobre los ejemplos</span>
+    Todo el código que aparece aquí sale de sistemas que están corriendo: Ghosty Teams y Denik. Está simplificado —sin tipos, sin manejo de errores— pero no está inventado. Cuando algo no lo tenemos implementado, lo digo.
+  </div>
+  <div class="folio"><span>Las seis piezas de un sistema agéntico</span><span>2</span></div>
+</section>
+
+<!-- ═══════════════ LA ECUACIÓN ═══════════════ -->
+<section class="page">
+  <span class="kicker">Antes de empezar</span>
+  <h2>Un agente es un modelo<br>más todo lo demás</h2>
+  <p>El modelo lo contratas por API y es exactamente el mismo que tiene tu competencia. Lo que te distingue es lo que construyes alrededor: dónde vive su memoria, qué puede tocar, quién lo autoriza, cómo se ve lo que hace.</p>
+  <p>A eso le llamamos <strong>harness</strong>. Y es donde vive tu producto.</p>
+  <div class="anchor">
+    <span class="t">La frase</span>
+    Si no eres el modelo, eres el harness. No hay una tercera opción.
+  </div>
+  <h3>Por qué seis piezas y no cuarenta</h3>
+  <p>Porque son las que se rompen. Cada una de las seis corresponde a una clase de falla que aparece cuando el agente deja la demo y entra a producción: se le llena el contexto, se le olvida lo que acordaron, alguien lo usa para actuar a nombre de otro, el usuario no entiende qué está pasando y lo abandona.</p>
+  <p>Un agente que funciona en una demo y uno que aguanta usuarios reales no se diferencian por el modelo. Se diferencian por todo lo que está construido alrededor.</p>
+  <div class="grid2" style="margin-top:.3in">
+    <div class="card"><h4>Lo que compras</h4><p>El modelo. Tokens, latencia, ventana de contexto. Commodity, y cada mes más barato.</p></div>
+    <div class="card"><h4>Lo que construyes</h4><p>Las seis piezas. Ahí está tu criterio, tu producto y lo que nadie te puede copiar con una API key.</p></div>
+  </div>
+  <div class="folio"><span>Las seis piezas de un sistema agéntico</span><span>3</span></div>
+</section>
+
+<!-- ═══════════════ 1 · PRIMITIVAS ═══════════════ -->
+<section class="page page--dark page--open">
+  <span class="big-num">01</span>
+  <span class="kicker">Pieza uno</span>
+  <h2>Primitivas del harness</h2>
+  <p class="lead">Las capacidades de un agente no vienen del modelo. Vienen de lo que le pusiste alrededor.</p>
+  <div class="rule"></div>
+  <p>Son seis primitivas, y conviene nombrarlas por separado porque se diseñan por separado:</p>
+  <h3>Prompts</h3>
+  <p>No solo el system prompt. También lo que inyectas cada turno: la fecha, el contexto de pantalla, quién está hablando. Todo eso es prompt, y todo eso cuesta tokens.</p>
+  <h3>Memorias</h3>
+  <p>Lo que sobrevive a la conversación. Ver la pieza 4.</p>
+  <h3>Tools</h3>
+  <p>Lo único que le permite tocar el mundo. Un modelo sin tools solo puede opinar.</p>
+  <h3>Skills y MCP</h3>
+  <p>Empaquetar capacidades para que se conecten sin reescribir el agente. MCP es el protocolo; una skill es el manual de uso de una capacidad.</p>
+  <h3>Subagentes</h3>
+  <p>Delegar trabajo a un contexto limpio. Sirven cuando la tarea ensucia mucho el contexto del principal —una búsqueda amplia, una lectura larga— y solo te interesa la conclusión.</p>
+  <h3>Hooks</h3>
+  <p>Código tuyo que corre en momentos fijos del ciclo del agente: antes de una tool, antes de compactar, al terminar. Es la pieza que menos se usa y la que más control da, porque no depende de que el modelo obedezca.</p>
+  <div class="folio"><span>1 · Primitivas del harness</span><span>4</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">1 · Cómo se rompe</span>
+  <h2>El error: pedirle al modelo<br>lo que le toca al sistema</h2>
+  <p>La falla más común no es que el modelo sea tonto. Es que le pediste con palabras algo que debiste garantizar con código.</p>
+  <p>Escribir “confirma con el usuario antes de borrar” en el prompt de una tool <strong>no es un control</strong>. Es una petición. El modelo la va a cumplir la mayoría de las veces, la va a poner donde tú no la pediste, y va a omitirla justo el día que importa.</p>
+  <div class="warn">
+    <span class="t">Visto en producción</span>
+    Un asistente al que le pedimos confirmar antes de escribir terminó preguntando “¿Confirmo?” hasta para bloquear una hora en la agenda —una acción aditiva y reversible que el sistema había marcado explícitamente como no sensible. El ruido de confirmar de más entrena a la gente a apretar “sí” sin leer, y ahí se pierde el permiso que sí protegía algo.
+  </div>
+  <h3>La prueba de fuego</h3>
+  <p>Toma tu agente, apágale una herramienta y pídele lo mismo otra vez. Si el comportamiento cambia, esa capacidad la daba el harness, no el modelo. Es un experimento de treinta segundos y reordena la conversación completa sobre qué modelo usar.</p>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Es la diferencia entre validar en el formulario y validar en la base de datos. Lo primero es cortesía; lo segundo es una garantía.
+  </div>
+  <div class="folio"><span>1 · Primitivas del harness</span><span>5</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">1 · Qué revisar</span>
+  <h2>En tu agente, hoy</h2>
+  <ul class="check">
+    <li><strong>¿Puedes listar sus tools sin abrir el código?</strong> Si no, tu usuario tampoco sabe qué puede hacer.</li>
+    <li><strong>¿Cuáles de tus “reglas” viven solo en el prompt?</strong> Haz la lista. Las que protegen datos o dinero tienen que bajar a código.</li>
+    <li><strong>¿Tienes hooks o solo prompt?</strong> Si nunca escribiste un hook, todo tu control depende de que el modelo coopere.</li>
+    <li><strong>¿Las descripciones de tus tools cambian seguido?</strong> Cambiar definiciones de tools invalida el caché de prompt completo. Un set estable con habilitación lógica adentro sale mucho más barato.</li>
+    <li><strong>¿Usas subagentes para lo que ensucia?</strong> Una búsqueda amplia en el contexto principal te cuesta el resto de la conversación.</li>
+  </ul>
+  <div class="anchor">
+    <span class="t">Número que ayuda</span>
+    Leer de caché cuesta cerca de 0.1× del input base; escribirlo, 1.25× a 2×. Si en tus métricas domina la escritura sobre la lectura, tienes algo variable arriba del prompt que debería ir abajo.
+  </div>
+  <div class="folio"><span>1 · Primitivas del harness</span><span>6</span></div>
+</section>
+
+<!-- ═══════════════ 2 · CONTEXTO ═══════════════ -->
+<section class="page page--dark page--open">
+  <span class="big-num">02</span>
+  <span class="kicker">Pieza dos</span>
+  <h2>Contexto</h2>
+  <p class="lead">El contexto es la RAM del agente. Y como toda RAM, el problema nunca es llenarla: es decidir qué se queda.</p>
+  <div class="rule"></div>
+  <p>Un modelo no tiene memoria. Cada llamada lleva todo lo que necesita saber, y por eso una conversación larga viaja completa detrás de cada pregunta corta.</p>
+  <p>Darle acceso a un sistema de archivos —o a una base, o a lo que sea que persista— cambia la ecuación. No evita que los tokens entren: evita que se queden. Lo que vive afuera se puede tirar del historial y recuperar después.</p>
+  <h3>Índice adentro, contenido afuera</h3>
+  <p>El patrón que más rinde: en el contexto va el índice; el contenido se pide solo si hace falta.</p>
+<pre><span class="c">// memoria de workspace: al contexto solo entra el índice</span>
+<span class="k">memoria</span>: [
+  <span class="a">"convenciones-de-deploy"</span> — <span class="c">"siempre en fly, nunca los viernes…"</span>,
+  <span class="a">"clientes-clave"</span>        — <span class="c">"Grupo N tiene SLA de 4h…"</span>
+]
+<span class="c">// y la nota completa se pide con una tool</span>
+<span class="k">memory_read</span>({ nombre: <span class="a">"clientes-clave"</span> })</pre>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Es lo mismo que hace un ZIP: lees el índice, no descomprimes todo. Sabes qué hay adentro y solo abres el archivo si de verdad lo necesitas. Los índices llevan décadas siendo el truco para trabajar con cosas grandes.
+  </div>
+  <div class="folio"><span>2 · Contexto</span><span>7</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">2 · Cómo se rompe</span>
+  <h2>Contexto lleno,<br>respuesta peor</h2>
+  <p>La creencia común es que un contexto grande solo cuesta dinero. Cuesta calidad, y eso el caché no lo arregla: abarata reenviar el historial, no lo hace más inteligente.</p>
+  <p>La evidencia converge desde fuentes independientes. En <strong>NoLiMa</strong> (Adobe Research, ICML 2025), con preguntas que no comparten palabras con la respuesta, once de los modelos evaluados caen por debajo del 50% de su desempeño en contexto corto al llegar a 32K tokens. GPT-4o pasa de 99.3% a 69.7%.</p>
+  <p>En el estudio <strong>Context Rot</strong> de Chroma, sobre 18 modelos, la degradación no tiene un acantilado: es continua desde el principio. Y hay tres hallazgos que le pegan directo a un agente de chat: entre menos se parezcan la pregunta y el dato buscado, más rápido degrada; varios distractores juntos dañan mucho más que uno solo; y los textos <em>estructurados</em> rinden peor que los desordenados. Un log de conversación es exactamente eso.</p>
+  <div class="warn">
+    <span class="t">Cuidado con las cifras de blog</span>
+    No existe un umbral de “% de la ventana” a partir del cual el modelo se degrada. Ese número no sale de ningún paper. El encuadre correcto es de presupuesto de atención: cada token nuevo consume una parte.
+  </div>
+  <h3>Y la compactación no es preventiva</h3>
+  <p>Se dispara cuando ya casi no cabe. Antes de ese punto, una pregunta de una línea viaja con todo lo anterior detrás. En una conversación larga, casi todos los turnos van con el contexto casi lleno: sube, se compacta, vuelve a subir. Curar el contexto no es tacañería; es la única forma de que las respuestas no se degraden.</p>
+  <div class="folio"><span>2 · Contexto</span><span>8</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">2 · Qué revisar</span>
+  <h2>Dos técnicas que valen<br>más que subir de modelo</h2>
+  <h3>Declarar lo que falta</h3>
+  <p>Si recortas el historial, dilo dentro del contexto. Un agente que sabe que le falta información va a buscarla; uno que no lo sabe, responde con confianza sobre una versión truncada.</p>
+<pre><span class="c">[⚠️ Faltan 192 mensajes anteriores a las 09:14 (van 5 personas).</span>
+<span class="c"> Léelos con chat_history({ before: 4471 }). No afirmes que algo</span>
+<span class="c"> "no existe" sin haber ido a buscarlo primero.]</span></pre>
+  <p>Fíjate en el detalle: no dice “hay más mensajes”, dice <strong>cuántos</strong>, <strong>desde cuándo</strong> y <strong>con qué llamada exacta</strong> se recuperan.</p>
+  <h3>Cercar los datos que no controlas</h3>
+  <p>Todo lo que otra persona escribió y entra al contexto es entrada no confiable. Va delimitada, marcada como datos, y hay que neutralizar el propio cerco dentro de los cuerpos para que nadie lo cierre a mano.</p>
+<pre><span class="c">// que nadie pueda cerrar el cerco desde adentro</span>
+<span class="k">const</span> limpio = texto.replace(CERCO, <span class="a">""</span>);</pre>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Esto es escapar entradas. El mismo reflejo de siempre contra inyección SQL o XSS, solo que la entrada no confiable es el mensaje de un compañero y el intérprete es el modelo.
+  </div>
+  <ul class="check" style="margin-top:.2in">
+    <li>¿Tu agente puede <em>ir por</em> el historial, o solo recibe lo que le mandas?</li>
+    <li>¿El recorte declara que es recorte?</li>
+    <li>¿Los mensajes de terceros entran cercados y marcados como datos?</li>
+  </ul>
+  <div class="folio"><span>2 · Contexto</span><span>9</span></div>
+</section>
+
+<!-- ═══════════════ 3 · EJECUCIÓN DURABLE ═══════════════ -->
+<section class="page page--dark page--open">
+  <span class="big-num">03</span>
+  <span class="kicker">Pieza tres</span>
+  <h2>Ejecución durable</h2>
+  <p class="lead">Un agente que trabaja veinte minutos y se cae en el minuto diecinueve no perdió una petición. Perdió el trabajo.</p>
+  <div class="rule"></div>
+  <p>Mientras el agente responde preguntas, el fallo es barato: se reintenta y ya. En cuanto empieza a ejecutar tareas largas —migrar datos, procesar cien archivos, coordinar subagentes— el fallo se vuelve caro, porque a la mitad ya movió cosas en el mundo real.</p>
+  <p>Lo que hace falta es poder decir “iba en el paso 67 de 123” y continuar desde ahí. Eso son checkpoints.</p>
+  <div class="warn">
+    <span class="t">Honestidad</span>
+    De las seis piezas, esta es la única que <strong>no</strong> tenemos implementada. En Ghosty Teams hoy sobrevive la conversación, no el trabajo: si un turno largo se interrumpe, se interrumpió. Lo escribo aquí porque una guía que finge tenerlo todo resuelto no le sirve a nadie.
+  </div>
+  <h3>Las dos escuelas</h3>
+  <p>Cuando vayas a resolverlo, te vas a encontrar dos familias, y la elección define el resto:</p>
+  <div class="grid2" style="margin-top:.14in">
+    <div class="card"><h4>Replay determinista</h4><p>Se guarda el registro de lo que pasó y al reanudar se vuelve a ejecutar el código saltándose lo ya hecho. Exige que tu código sea determinista. Es la escuela de Temporal y Restate.</p></div>
+    <div class="card"><h4>Estado explícito</h4><p>Tú guardas el estado en cada paso y el sistema solo lo carga. Más invasivo de escribir, menos mágico de depurar. Es la escuela de los checkpointers de LangGraph.</p></div>
+  </div>
+  <div class="folio"><span>3 · Ejecución durable</span><span>10</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">3 · Cómo se rompe</span>
+  <h2>La falla silenciosa:<br>el trabajo a medias</h2>
+  <p>El caso feo no es el que truena. Es el que truena <strong>después</strong> de haber hecho la mitad.</p>
+  <p>Si tu agente mandó 40 de 100 correos y se cayó, reintentar completo manda 40 duplicados. No reintentar deja 60 personas sin aviso. Sin checkpoints no tienes forma de saber en cuál se quedó, y la única salida es reconstruirlo a mano leyendo logs.</p>
+  <h3>Lo que hay que guardar</h3>
+  <p>Un checkpoint útil no es una foto del contexto. Es lo mínimo para retomar:</p>
+  <ul>
+    <li><strong>Qué pasos ya se completaron</strong>, con su resultado.</li>
+    <li><strong>Qué efectos externos ya ocurrieron</strong> —correos enviados, filas escritas, pagos hechos—, que es lo que nunca se debe repetir.</li>
+    <li><strong>Dónde se quedó</strong>, con suficiente detalle para que otro proceso lo continúe.</li>
+  </ul>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Es una transacción con savepoints, o el <em>resume</em> de una descarga. Nadie vuelve a bajar el archivo completo porque se cortó el internet al 80%.
+  </div>
+  <h3>Idempotencia primero</h3>
+  <p>Antes de los checkpoints va algo más barato y que sirve solito: que cada efecto externo tenga una llave de idempotencia. Si repetir un paso no duplica nada, la mitad del problema desaparece sin infraestructura nueva.</p>
+  <div class="folio"><span>3 · Ejecución durable</span><span>11</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">3 · Qué revisar</span>
+  <h2>Antes de meter<br>un motor de workflows</h2>
+  <ul class="check">
+    <li><strong>¿Cuánto dura tu tarea más larga?</strong> Si son segundos, esta pieza puede esperar. Si son minutos, ya la necesitas y no lo sabes.</li>
+    <li><strong>¿Qué efectos externos produce?</strong> Haz la lista. Correos, cobros, mensajes, archivos. Esos son los que no se pueden repetir.</li>
+    <li><strong>¿Cada uno tiene llave de idempotencia?</strong> Es el arreglo más barato y el que más rinde.</li>
+    <li><strong>¿Puedes contestar “en qué paso va” sin leer logs?</strong> Si no, tu usuario tampoco puede.</li>
+    <li><strong>¿Qué pasa hoy si se cae a la mitad?</strong> Escribe la respuesta. Si es “no sé”, esa es la prioridad.</li>
+  </ul>
+  <div class="anchor">
+    <span class="t">Consejo de secuencia</span>
+    Idempotencia → registro de pasos → reanudación. En ese orden. Meter un motor de workflows antes de tener idempotencia es comprarse un problema nuevo sin resolver el viejo.
+  </div>
+  <div class="folio"><span>3 · Ejecución durable</span><span>12</span></div>
+</section>
+
+<!-- ═══════════════ 4 · MEMORIA ═══════════════ -->
+<section class="page page--dark page--open">
+  <span class="big-num">04</span>
+  <span class="kicker">Pieza cuatro</span>
+  <h2>Memoria</h2>
+  <p class="lead">El agente decide qué vale la pena recordar. Lo escribe una vez, y sobrevive a la conversación, a la sesión y a la máquina.</p>
+  <div class="rule"></div>
+  <p>Hay que separar dos cosas que suelen confundirse:</p>
+  <h3>Corto plazo</h3>
+  <p>El estado de la sesión en curso. Muere con la tarea, y está bien que muera.</p>
+  <h3>Largo plazo</h3>
+  <p>Lo que el agente aprendió y debe seguir sabiendo mañana: convenciones del equipo, preferencias, hechos del negocio. Vive en un almacén aparte, se consulta y se puede borrar.</p>
+  <h3>Dos alcances, dos comportamientos</h3>
+  <p>En Ghosty Teams la memoria vive en una tabla con dos alcances, y cada uno se trata distinto a propósito:</p>
+<pre><span class="k">memory_write</span>({ scope: <span class="a">"room"</span> })       <span class="c">// esta conversación</span>
+<span class="k">memory_write</span>({ scope: <span class="a">"workspace"</span> })  <span class="c">// toda la empresa</span></pre>
+  <p>El de <code>room</code> se inyecta completo cada turno: es poco y es el que da continuidad inmediata. El de <code>workspace</code> puede crecer sin límite, así que de ese solo entra el índice —título y ochenta caracteres— y la nota completa se pide con una tool.</p>
+  <p>Es la misma decisión de siempre entre precargar y pedir bajo demanda, tomada por tamaño esperado y no por gusto.</p>
+  <div class="folio"><span>4 · Memoria</span><span>13</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">4 · Cómo se rompe</span>
+  <h2>Guardar en el lugar<br>equivocado</h2>
+  <p>Un agente que corre en una caja aislada tiene tres lugares donde escribir, y confundirlos es la falla clásica.</p>
+  <div class="grid2">
+    <div class="card"><h4>El disco de la caja</h4><p>Rápido, cómodo, y <strong>efímero</strong>. La caja se recicla. Sirve para trabajar, no para recordar.</p></div>
+    <div class="card"><h4>La base de datos</h4><p>Buscable, compartida entre conversaciones, sobrevive a todo. Es donde va lo que hay que recordar.</p></div>
+  </div>
+  <div class="card" style="margin-top:.22in"><h4>El almacenamiento de objetos</h4><p>Para cualquier cosa que necesite una URL: un PDF generado, una imagen, un export. Si vas a mandar un link, va aquí.</p></div>
+  <div class="anchor">
+    <span class="t">La regla, en una línea</span>
+    Ejecutar → disco. Recordar o compartir → base de datos. Necesita link → almacenamiento.
+  </div>
+  <h3>¿Y por qué base de datos y no archivos?</h3>
+  <p>Porque es buscable, se comparte entre conversaciones y no se pierde cuando la máquina desaparece. Se comporta como un sistema de archivos, pero con búsqueda. Es una ventaja, no una limitación.</p>
+  <div class="warn">
+    <span class="t">El otro error</span>
+    Guardar todo. Una memoria que crece sin criterio se vuelve ruido, y el ruido en el contexto degrada las respuestas exactamente como vimos en la pieza 2. La memoria necesita presupuesto, no solo persistencia.
+  </div>
+  <div class="folio"><span>4 · Memoria</span><span>14</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">4 · Qué revisar</span>
+  <h2>La memoria de tu agente</h2>
+  <ul class="check">
+    <li><strong>¿El usuario puede ver lo que el agente recordó?</strong> Una memoria invisible es una fuente de sustos.</li>
+    <li><strong>¿Puede borrarla?</strong> Si no, cualquier dato mal guardado es permanente.</li>
+    <li><strong>¿Tiene tope?</strong> Pregunta cuál es el peor caso real, no si hay una constante a la vista. “No tiene un máximo escrito” y “no está acotado” no son lo mismo.</li>
+    <li><strong>¿Lo que se inyecta cada turno es poco y estable?</strong> Si cambia seguido, estás tirando el caché de prompt en cada mensaje.</li>
+    <li><strong>¿Distingues lo de esta conversación de lo del equipo?</strong> Sin esa separación, lo de un cliente termina contaminando al de junto.</li>
+  </ul>
+  <div class="anchor">
+    <span class="t">Detalle que se olvida</span>
+    Si tus conversaciones viven dentro de un espacio compartido pero pertenecen a una persona —un hilo de WhatsApp de un contacto, por ejemplo— necesitan su propio alcance de memoria. Si no, ese contacto comparte memoria con el equipo y con los demás contactos del mismo número.
+  </div>
+  <div class="folio"><span>4 · Memoria</span><span>15</span></div>
+</section>
+
+<!-- ═══════════════ 5 · AUTENTICACIÓN ═══════════════ -->
+<section class="page page--dark page--open">
+  <span class="big-num">05</span>
+  <span class="kicker">Pieza cinco</span>
+  <h2>Autenticación</h2>
+  <p class="lead">Un correo a tu nombre está bien. Mil, no.</p>
+  <div class="rule"></div>
+  <p>Las aplicaciones de siempre son deterministas: das permiso una vez y sabes qué van a hacer con él. Un agente con el mismo permiso puede hacer algo muy distinto cada vez, y esa frontera todavía se está definiendo en toda la industria.</p>
+  <p>Conviene separarla en tres preguntas:</p>
+  <div class="grid2">
+    <div class="card"><h4>Entrante</h4><p>¿Quién le está hablando al agente? En un canal compartido, cualquiera puede escribirle.</p></div>
+    <div class="card"><h4>Saliente</h4><p>¿A nombre de quién actúa cuando toca un sistema externo?</p></div>
+  </div>
+  <div class="card" style="margin-top:.22in"><h4>Permisos</h4><p>¿Qué puede hacer, sobre qué, y cuánto? El “cuánto” es el que se olvida y el que duele.</p></div>
+  <h3>El principio</h3>
+  <p>El agente corre código escrito por un modelo. Eso significa que puede leer todo lo que tenga a la mano, así que <strong>no se le da el secreto maestro</strong>. Se le da un permiso corto, firmado, con todo adentro.</p>
+<pre><span class="c">// Teams firma, el agente solo lo lleva colgado</span>
+<span class="k">mintToolToken</span>(usuario, workspace, { canal }, <span class="a">900</span>)  <span class="c">// 15 min</span></pre>
+  <p><strong>usuario</strong>: a nombre de quién actúa. <strong>workspace</strong>: de qué equipo. <strong>canal</strong>: dónde puede escribir. <strong>900</strong>: segundos de vida.</p>
+  <div class="folio"><span>5 · Autenticación</span><span>16</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">5 · Cómo se rompe</span>
+  <h2>Una historia real,<br>del 4 de agosto</h2>
+  <p>El token llevaba el usuario pero no el espacio de trabajo. Y no hacía falta: un usuario de otra empresa no tenía filas en la tabla de conexiones, así que la consulta devolvía vacío y ahí moría el intento.</p>
+  <p>Hasta que llegaron las conexiones compartidas. La consulta pasó a ser <code>(usuario = ? O compartida = 1)</code>, y con eso un token emitido en la empresa A, mandado al servidor de la empresa B, resolvía la conexión compartida de B y <strong>ejecutaba con las credenciales de B</strong>.</p>
+  <div class="warn">
+    <span class="t">Por qué era alcanzable y no teórico</span>
+    La caja corre código escrito por el modelo, y ese código puede leer su propio token. No hacía falta romper nada: bastaba con reenviarlo a otro host.
+  </div>
+  <h3>El arreglo tiene dos partes, y la segunda es la interesante</h3>
+  <p>La primera es obvia: meter el espacio de trabajo dentro del token firmado y rechazar si no coincide con el que resuelve el servidor.</p>
+  <p>La segunda: hacerlo <strong>obligatorio y en segunda posición</strong>, no opcional al final. Porque el servidor valida el inquilino solo si el dato viene, así que una llamada nueva que lo omitiera —lo más fácil del mundo con un parámetro opcional al final— produciría tokens que se saltan la comprobación por diseño de la firma. Lo pusieron donde el compilador no te deja olvidarlo.</p>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Es hacer la columna <code>NOT NULL</code> en vez de confiar en que la aplicación siempre la llene.
+  </div>
+  <div class="folio"><span>5 · Autenticación</span><span>17</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">5 · Qué revisar</span>
+  <h2>Los permisos de tu agente</h2>
+  <ul class="check">
+    <li><strong>¿El agente puede leer sus propias credenciales?</strong> Asume que sí. Diseña con eso en mente.</li>
+    <li><strong>¿El destino de una acción viaja en los argumentos de la tool?</strong> Si el agente puede elegir a qué canal, a qué correo o a qué cuenta escribe, puede equivocarse de destinatario con toda propiedad. Ese dato va firmado.</li>
+    <li><strong>¿Cuánto vive el permiso?</strong> Si no expira, es una llave, no un permiso.</li>
+    <li><strong>¿Hay límites de cantidad?</strong> Un correo está bien; mil es un incidente. El “cuánto” casi nunca está implementado.</li>
+    <li><strong>¿Los parámetros de seguridad son opcionales en tus funciones?</strong> Uno opcional al final se va a olvidar. Que lo exija el compilador.</li>
+  </ul>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Es el principio de menor privilegio de toda la vida. Lo nuevo es que quien pide el <code>sudo</code> es un modelo, y no siempre sabe lo que está pidiendo.
+  </div>
+  <div class="folio"><span>5 · Autenticación</span><span>18</span></div>
+</section>
+
+<!-- ═══════════════ 6 · INTERFAZ ═══════════════ -->
+<section class="page page--dark page--open">
+  <span class="big-num">06</span>
+  <span class="kicker">Pieza seis</span>
+  <h2>Interfaz</h2>
+  <p class="lead">Es la sexta pieza y la única que el usuario ve. Lo que el agente hace por dentro, dicho en voz alta.</p>
+  <div class="rule"></div>
+  <p>Un agente que trabaja en silencio treinta segundos se siente roto aunque esté funcionando perfecto. La transparencia no es un adorno: es el mecanismo con el que se construye confianza, y sin confianza no hay autonomía.</p>
+  <h3>La gramática mínima</h3>
+  <p>No hace falta un protocolo elaborado. Con cuatro tipos de evento se arma una interfaz completa:</p>
+<pre>{ type: <span class="a">"chunk"</span>, value }  <span class="c">// va escribiendo</span>
+{ type: <span class="a">"done"</span>,  value }  <span class="c">// respuesta final, pisa lo anterior</span>
+{ type: <span class="a">"tool"</span>,  name  }  <span class="c">// está usando una herramienta</span>
+{ type: <span class="a">"error"</span> }</pre>
+  <h3>Nadie avisa cuándo termina una tool</h3>
+  <p>Se infiere: cuando llega una nueva, la anterior quedó lista; cuando empieza a escribir, todas quedaron listas. Esa deducción es toda la lógica detrás de la lista de pasos con palomita que ves en las interfaces buenas.</p>
+<pre><span class="k">const</span> agregar = (nombre) => [...previas.map(marcarLista),
+                              { nombre, lista: <span class="k">false</span> }];</pre>
+  <div class="folio"><span>6 · Interfaz</span><span>19</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">6 · Cómo se rompe</span>
+  <h2>Enseñar nombres de función<br>a quien no programa</h2>
+  <p>Un panel que dice <code>list_events</code> y <code>cancel_event</code> no está informando: está filtrando implementación. La actividad se escribe en lenguaje llano.</p>
+  <p>Y no con un diccionario nombre por nombre, que se desactualiza cada vez que agregas una tool. Las tools suelen llamarse <em>verbo_recurso</em>, así que se traduce por partes y las nuevas ya salen bien solas:</p>
+<pre><span class="k">toolLabel</span>(<span class="a">"cancel_event"</span>)   <span class="c">// → "Cancelando la cita"</span>
+<span class="k">toolLabel</span>(<span class="a">"list_customers"</span>) <span class="c">// → "Consultando los clientes"</span></pre>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Es internacionalización. Nadie escribe una traducción por frase completa; se compone de piezas.
+  </div>
+  <h3>Detener la vista no deshace lo hecho</h3>
+  <p>Cuando el usuario cierra la pestaña o pica “Detener”, el agente ya trabajó y pudo haber movido datos. La respuesta tiene que quedar guardada igual:</p>
+<pre><span class="k">const</span> [aLaPantalla, aGuardar] = respuesta.body.<span class="k">tee</span>();
+<span class="c">// la rama de pantalla puede morir; la de guardar, no</span></pre>
+  <p>Es una distinción que casi nadie hace y que evita el peor reporte de bug: “se canceló pero sí lo mandó”.</p>
+  <div class="folio"><span>6 · Interfaz</span><span>20</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">6 · Aprobar sin congelar</span>
+  <h2>Proponer, confirmar, ejecutar</h2>
+  <p>La cuarta pieza de una interfaz agéntica es la aprobación. Y el error de diseño más común es imaginarla como una pausa: el agente se detiene, espera y luego continúa.</p>
+  <p>No hace falta que nadie espere. En Denik funciona así:</p>
+  <ol>
+    <li>El agente llama la tool. El servidor la revisa <strong>antes</strong> de ejecutarla.</li>
+    <li>Si es sensible, responde <strong>409</strong> y archiva la acción con su payload. El turno del agente <strong>termina normal</strong>.</li>
+    <li>La interfaz muestra una tarjeta con el resumen. Sobrevive a recargar y funciona aunque la petición hubiera llegado por WhatsApp.</li>
+    <li>Al aprobar, <strong>el servidor ejecuta el payload archivado</strong>. El agente ya no está ahí.</li>
+  </ol>
+  <h3>Tres detalles que lo hacen un control de verdad</h3>
+  <ul>
+    <li><strong>Lo aplica la puerta, no el prompt.</strong> El 409 le dice al modelo que no reintente, y no existe ninguna tool que acepte un token de confirmación: no hay por dónde saltárselo.</li>
+    <li><strong>El resumen lo arma la base de datos</strong>, no el modelo. No apruebas lo que el agente <em>dice</em> que va a hacer.</li>
+    <li><strong>El agente no puede auto-aprobarse:</strong> confirmar va por la sesión del usuario, no por la llave del agente.</li>
+  </ul>
+  <p>Y el default correcto: intención desconocida, se pregunta. Fail-closed.</p>
+  <div class="anchor">
+    <span class="t">Ancla</span>
+    Es un carrito de compras, o un pull request. Nada se ejecuta al proponerlo; se apila y alguien confirma.
+  </div>
+  <div class="folio"><span>6 · Interfaz</span><span>21</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker">6 · Qué revisar</span>
+  <h2>La única pieza<br>que tu usuario ve</h2>
+  <ul class="check">
+    <li><strong>¿La actividad está separada de la conversación?</strong> El hilo es para hablar; los pasos, las tools y las aprobaciones van en su propio registro.</li>
+    <li><strong>¿El registro está en español, no en nombres de función?</strong></li>
+    <li><strong>¿Hay un botón de detener siempre visible?</strong> Y si lo pican, ¿qué queda guardado?</li>
+    <li><strong>¿Las acciones peligrosas piden aprobación desde el servidor</strong> o solo porque se lo pediste al prompt?</li>
+    <li><strong>¿La aprobación sobrevive a recargar la página?</strong> Si vive en el hilo, se pierde.</li>
+    <li><strong>¿El detalle técnico existe para quien lo quiera ver</strong> sin que se lo avienten a quien no?</li>
+  </ul>
+  <div class="anchor">
+    <span class="t">El patrón que más rinde de todos</span>
+    Enseñar el plan antes de ejecutar. La gente concede mucha más autonomía cuando revisó el plan una vez, aunque después no mire ni un solo paso intermedio.
+  </div>
+  <div class="folio"><span>6 · Interfaz</span><span>22</span></div>
+</section>
+
+<!-- ═══════════════ CIERRE ═══════════════ -->
+<section class="page page--dark">
+  <span class="kicker">Para cerrar</span>
+  <h1 style="font-size:27pt;margin-bottom:.24in">Ninguna de las seis<br>la resuelve el modelo</h1>
+  <div class="rule" style="background:#FFC46B"></div>
+  <p class="lead" style="max-width:5.4in">Cada una de las seis piezas es código que alguien tiene que escribir, decisiones que alguien tiene que tomar y errores que alguien ya cometió. Esta guía es el mapa; el taller es el recorrido.</p>
+
+  <h3 style="color:#85DDCB;margin-top:.4in">Taller: Diseño de sistemas agénticos</h3>
+  <p style="color:#C9CFD3">Construimos las seis piezas sobre un agente real, con el código en la mano. No son slides: es un sistema que al final corre y que te llevas.</p>
+  <p style="color:#FFC46B;font-weight:700;margin-top:.24in;font-size:12.5pt">fixtergeek.com/sistemas-agenticos</p>
+
+  <p style="color:#C9CFD3;margin-top:.4in">Si prefieres empezar por tu cuenta, en el canal de YouTube subo el desarmado de estas piezas en video, una por una.</p>
+
+  <p style="margin-top:.5in;color:#EDEAE3;font-size:12.5pt">Abrazo.<br><strong>bliss.</strong></p>
+
+  <div class="cover-meta" style="color:#4C5A66">
+    Héctorbliss · FixterGeek · Agosto 2026<br>
+    Los ejemplos salen de Ghosty Teams y Denik, en producción.
+  </div>
+</section>
+
+</body>
+</html>

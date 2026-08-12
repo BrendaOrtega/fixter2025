@@ -1,0 +1,4 @@
+# Salidas del build: se regeneran con scripts/build-webinar-slides.mjs y con
+# Chrome headless sobre pdf-seis-piezas.html. No van al repo.
+slides-standalone.html
+seis-piezas.pdf

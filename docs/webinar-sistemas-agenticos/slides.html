@@ -1,0 +1,1574 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- sin caché: mientras iteramos, cada recarga debe traer los cambios -->
+<meta http-equiv="cache-control" content="no-store">
+<title>Anatomía de un sistema agéntico — Webinar</title>
+<!-- El build lo incrusta como data URI, así que el archivo publicado no depende
+     de nada externo (y en la nube no hay /logo.png que valga). -->
+<link rel="icon" href="favicon.svg">
+<style>
+  /* Paleta oficial FixterGeek / taller sistemas agénticos */
+  :root{
+    --dark:#0E1317; --surface:#182128; --line:#2C3944;
+    --primary:#85DDCB; --accent:#8DCF6E; --gray:#B7B9BA;
+    --warn:#FFC46B; --danger:#F2777A;
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--dark);color:#fff;font-family:var(--sans);overflow:hidden}
+
+  .deck{position:relative;width:100vw;height:100vh}
+  .slide{
+    position:absolute;inset:0;display:none;
+    flex-direction:column;justify-content:center;
+    padding:5vh 5.5vw;gap:2vh;
+  }
+  .slide.on{display:flex}
+  /* La que sale termina de irse ANTES de que entre la siguiente.
+     Nunca coinciden en pantalla: el relevo es secuencial, no un cruce. */
+  .slide.out{display:flex;pointer-events:none;z-index:0;animation:leave .22s ease-in both}
+  .slide.on{z-index:1}
+  @keyframes leave{
+    from{opacity:1;transform:none}
+    to{opacity:0;transform:translateY(-18px)}
+  }
+  .slide.back.out{animation:leave-back .22s ease-in both}
+  @keyframes leave-back{
+    from{opacity:1;transform:none}
+    to{opacity:0;transform:translateY(18px)}
+  }
+
+  /* El vw manda: en pantalla de proyección crece con la sala. */
+  h1{font-size:clamp(2.98rem,7.3vw,6.3rem);line-height:1.03;letter-spacing:-.03em}
+  h2{font-size:clamp(2.3rem,4.93vw,4.08rem);line-height:1.09;letter-spacing:-.02em}
+  h3{font-size:clamp(1.45rem,2.3vw,1.9rem);font-weight:600}
+  p,li{font-size:clamp(1.36rem,2.21vw,1.84rem);line-height:1.44;color:var(--gray)}
+  strong{color:#fff;font-weight:600}
+  .mint{color:var(--primary)}
+  .grass{color:var(--accent)}
+  .amber{color:var(--warn)}
+  code,.mono{font-family:var(--mono);font-size:.9em}
+
+  .kicker{font-size:clamp(.9rem,1.28vw,1.1rem);letter-spacing:.18em;text-transform:uppercase;
+    color:var(--primary);font-weight:600}
+  .lead{font-size:clamp(1.49rem,2.72vw,2.18rem);color:var(--gray);max-width:32ch;line-height:1.34}
+  ul{list-style:none;display:flex;flex-direction:column;gap:1.4vh}
+  ul li{padding-left:1.5em;position:relative}
+  ul li::before{content:"";position:absolute;left:0;top:.6em;width:.5em;height:.5em;
+    border-radius:2px;background:var(--primary);transform:rotate(12deg)}
+
+  /* marca de sección demo */
+  .demo{background:
+    radial-gradient(120% 90% at 50% 0%, rgba(141,207,110,.16), transparent 60%), var(--dark)}
+  .demo .badge{display:inline-flex;align-items:center;gap:.6em;align-self:flex-start;
+    border:2px solid var(--accent);color:var(--accent);border-radius:999px;
+    padding:.5em 1.2em;font-size:.9rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:4vw;align-items:center}
+  .cols.wide-r{grid-template-columns:.85fr 1.15fr}
+
+  .stat{font-size:clamp(4.08rem,13.6vw,10.9rem);font-weight:700;letter-spacing:-.045em;line-height:.88}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:1.1em 1.25em}
+  .grid4{display:grid;grid-template-columns:1fr 1fr;gap:1.6vw}
+  .card h3{margin-bottom:.3em}
+  .card p{font-size:clamp(1.1rem,1.57vw,1.38rem);line-height:1.38}
+
+  svg{width:100%;height:auto;display:block}
+  /* la ilustración del taller: SVG externo con sus propias animaciones */
+  .hero-art{width:100%;max-height:74vh;display:block;justify-self:center}
+
+  /* ── las seis primitivas, en rejilla ── */
+  .pieces{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4vw;margin-top:1vh}
+  .piece{display:flex;flex-direction:column;gap:.35em}
+  .piece .glyph{width:clamp(28px,2.6vw,40px);height:clamp(28px,2.6vw,40px);margin-bottom:.15em}
+  .piece h3{color:#fff}
+  .piece p{color:var(--gray)}
+  /* entran en cascada, leyendo de izquierda a derecha */
+  .slide.on .pieces .piece{animation:pop .5s cubic-bezier(.2,.9,.3,1.05) both}
+  .slide.on .pieces .piece:nth-child(1){animation-delay:.30s}
+  .slide.on .pieces .piece:nth-child(2){animation-delay:.40s}
+  .slide.on .pieces .piece:nth-child(3){animation-delay:.50s}
+  .slide.on .pieces .piece:nth-child(4){animation-delay:.60s}
+  .slide.on .pieces .piece:nth-child(5){animation-delay:.70s}
+  .slide.on .pieces .piece:nth-child(6){animation-delay:.80s}
+  /* hooks: la señal viaja hacia el modelo, cada compuerta la detiene un instante */
+  .slide.on .pieces .glyph .signal{color:#FFC46B;animation:signal 3.4s cubic-bezier(.4,0,.6,1) infinite}
+  @keyframes signal{
+    0%      {transform:translateX(1px);opacity:0}
+    8%      {transform:translateX(1px);opacity:1}
+    26%     {transform:translateX(8px)}
+    40%     {transform:translateX(8px)}      /* retenida en el primer hook */
+    58%     {transform:translateX(18px)}
+    72%     {transform:translateX(18px)}     /* retenida en el segundo */
+    92%     {transform:translateX(27px);opacity:1}
+    100%    {transform:translateX(27px);opacity:0}
+  }
+  .slide.on .pieces .glyph .gate{animation:gate 3.4s ease-in-out infinite}
+  .slide.on .pieces .glyph .gate--2{animation-delay:.32s}
+  @keyframes gate{
+    0%,28%,100%{stroke-width:2;opacity:.55}
+    36%        {stroke-width:3.4;opacity:1}
+    48%        {stroke-width:2;opacity:.55}
+  }
+
+  /* el glifo se dibuja solo, como los diagramas */
+  .slide.on .pieces .glyph path:not(.gate),
+  .slide.on .pieces .glyph circle:not(.signal),
+  .slide.on .pieces .glyph ellipse{animation:none;opacity:1}
+
+  /* ── demo 1: las capas del harness se separan y vuelven ── */
+  .stack{max-height:64vh;justify-self:center}
+  .slide.on .stack .layer{animation:lift 5s ease-in-out infinite}
+  .slide.on .stack .layer--2{animation-delay:.18s}
+  .slide.on .stack .layer--3{animation-delay:.36s}
+  .slide.on .stack .layer--4{animation-delay:.54s}
+  @keyframes lift{
+    0%,100%{transform:translateY(0)}
+    50%    {transform:translateY(-16px)}
+  }
+  /* cada capa se separa un poco más que la de abajo: la pila se abre */
+  .slide.on .stack .layer--2{--sep:-8px}
+  .slide.on .stack .layer--3{--sep:-18px}
+  .slide.on .stack .layer--4{--sep:-30px}
+  .slide.on .stack .layer--2,
+  .slide.on .stack .layer--3,
+  .slide.on .stack .layer--4{animation:lift-sep 5s ease-in-out infinite}
+  @keyframes lift-sep{
+    0%,100%{transform:translateY(0)}
+    50%    {transform:translateY(var(--sep))}
+  }
+  .slide.on .stack .core{animation:core-glow 3.2s ease-in-out infinite}
+  @keyframes core-glow{
+    0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}
+    50%    {filter:drop-shadow(0 0 14px rgba(255,255,255,.5))}
+  }
+  /* los trazos de esta pila no se dibujan: la animación es el movimiento */
+  .slide.on .stack path,.slide.on .stack ellipse{animation:none;opacity:1}
+  .slide.on .stack text{animation:fade .5s ease both .5s}
+
+  /* ── la libreta del agente (demo 2) ──
+     Ilustración, no diagrama: una libreta con lo que ya anotó y una línea
+     escribiéndose ahora. Las líneas viejas ya están cuando entra la slide; la
+     última se traza con el lápiz siguiéndola. */
+  .slide.on .mem .nb{animation:nb-in .55s cubic-bezier(.2,.9,.3,1.05) both .2s}
+  @keyframes nb-in{
+    from{opacity:0;transform:translateY(16px) rotate(-1.5deg)}
+    to  {opacity:1;transform:none}
+  }
+  .slide.on .mem .ink{stroke-dasharray:320;stroke-dashoffset:320;
+    animation:ink-write 1.1s ease-out both}
+  .slide.on .mem .ink--1{animation-delay:.7s}
+  .slide.on .mem .ink--2{animation-delay:1.5s}
+  .slide.on .mem .ink--3{animation-delay:2.3s}
+  @keyframes ink-write{to{stroke-dashoffset:0}}
+  /* El lápiz acompaña al último trazo y luego NO se queda quieto: sigue con el
+     vaivén de escribir a mano, en bucle. Un lápiz detenido lee como error. */
+  .slide.on .mem .pencil{
+    animation:pencil-run 1.1s ease-out both 2.3s,
+              pencil-idle 2.6s ease-in-out infinite 3.4s;
+  }
+  @keyframes pencil-run{
+    from{transform:translateX(-232px)}
+    to  {transform:translateX(0)}
+  }
+  @keyframes pencil-idle{
+    0%,100%{transform:translate(0,0) rotate(0deg)}
+    25%    {transform:translate(3px,-2px) rotate(1.5deg)}
+    50%    {transform:translate(6px,1px) rotate(-1deg)}
+    75%    {transform:translate(2px,-1px) rotate(1deg)}
+  }
+  /* la esquina doblada revela que hay más páginas debajo */
+  .slide.on .mem .glow{animation:nb-glow 4.5s ease-in-out infinite 3.4s}
+  @keyframes nb-glow{
+    0%,100%{opacity:.25}
+    50%    {opacity:.6}
+  }
+
+  /* ── muro de logos del ecosistema ── */
+  .logos{display:flex;flex-wrap:wrap;gap:1.6vw 2.2vw;align-items:center;margin-top:1vh}
+  .logos .logo{display:inline-flex;width:clamp(34px,3.4vw,54px);height:clamp(34px,3.4vw,54px)}
+  .logos .logo svg{width:100%;height:100%;fill:var(--gray);opacity:.55;
+    transition:opacity .3s ease,fill .3s ease}
+  /* cada uno entra por su cuenta y luego flota con su propio ritmo */
+  .slide.on .logos .logo{
+    animation:logo-in .5s cubic-bezier(.2,.9,.3,1.05) both calc(.5s + var(--i) * .07s),
+              drift 6s ease-in-out infinite calc(1.4s + var(--i) * .31s);
+  }
+  @keyframes logo-in{
+    from{opacity:0;transform:translateY(18px) scale(.8)}
+    to  {opacity:1;transform:none}
+  }
+  @keyframes drift{
+    0%,100%{transform:translateY(0)}
+    50%    {transform:translateY(-9px)}
+  }
+  /* uno se ilumina a la vez, recorriendo la fila */
+  .slide.on .logos .logo svg{
+    animation:spotlight 9s ease-in-out infinite calc(var(--i) * .75s);
+  }
+  @keyframes spotlight{
+    0%,88%,100%{fill:var(--gray);opacity:.5}
+    94%        {fill:var(--primary);opacity:1}
+  }
+
+  /* logos con nombre, bajados de los repos oficiales de cada proyecto */
+  .row-label{font-size:clamp(.62rem,.82vw,.76rem);letter-spacing:.14em;text-transform:uppercase;
+    color:#5d6b76;font-weight:600;margin-top:.6vh}
+  .brands{display:flex;flex-wrap:wrap;gap:.34vw .4vw;margin-top:.35vh;max-width:98%}
+  /* la segunda fila, la de frameworks, va más discreta para no competir */
+  .brands--sm .brand{font-size:clamp(.56rem,.74vw,.68rem);padding:.18em .6em .18em .36em;opacity:.85}
+  .brands--sm .brand img,.brands--sm .brand .mark{width:1.25em;height:1.25em}
+  /* los modelos son la capa de abajo: se distinguen del resto del muro */
+  /* los modelos conservan su color: son la capa que todos comparten y debe verse */
+  .brands--models .brand{border-color:#3d5560;background:#1c2830;color:#e8eef0;opacity:1}
+  /* logos de trazo oscuro que se perdían sobre el fondo: se fuerzan a blanco */
+  .brand--dark img{filter:brightness(0) invert(1) !important;opacity:.95 !important}
+  /* vienen en negro y se perdían sobre el fondo: se fuerzan a blanco.
+     Va con !important porque la animación del reflector (brand-color) pisa
+     el filtro y los regresaría a gris oscuro. */
+  .brands--models .brand img{filter:brightness(0) invert(1) !important;opacity:.95 !important}
+  .brand{display:inline-flex;align-items:center;gap:.5em;
+    border:1px solid var(--line);border-radius:999px;background:var(--surface);
+    color:#a7b2bb;padding:.3em .95em .3em .55em;
+    font-size:clamp(.6rem,.8vw,.74rem);white-space:nowrap;
+    transition:color .3s ease,border-color .3s ease}
+  .brand img{width:1.5em;height:1.5em;object-fit:contain;
+    /* los logos vienen en colores muy distintos: se neutralizan para que el muro se vea uno */
+    filter:grayscale(1) brightness(1.9);opacity:.8;transition:filter .3s ease,opacity .3s ease}
+  .brand--own{border-color:var(--primary);color:var(--primary);font-weight:700}
+  /* el de la casa conserva su color: es el único que no se neutraliza */
+  .brand--own img{filter:none;opacity:1}
+  /* los glifos monocromos del catálogo comparten caja con los logos en imagen */
+  .brand .mark{display:inline-flex;width:1.5em;height:1.5em}
+  .brand .mark svg{width:100%;height:100%;fill:#a7b2bb;opacity:.8}
+  .slide.on .brands .brand{
+    animation:logo-in .4s cubic-bezier(.2,.9,.3,1.05) both calc(1.3s + var(--j) * .05s);
+  }
+  /* el reflector recorre el muro y devuelve su color al logo que toca */
+  .slide.on .brands .brand:not(.brand--own){
+    animation:logo-in .4s cubic-bezier(.2,.9,.3,1.05) both calc(1.3s + var(--j) * .05s),
+              brand-light 11s ease-in-out infinite calc(var(--j) * .8s);
+  }
+  .slide.on .brands .brand:not(.brand--own) img{
+    animation:brand-color 11s ease-in-out infinite calc(var(--j) * .8s);
+  }
+  @keyframes brand-light{
+    0%,92%,100%{color:#a7b2bb;border-color:var(--line)}
+    96%        {color:#fff;border-color:var(--primary)}
+  }
+  @keyframes brand-color{
+    0%,92%,100%{filter:grayscale(1) brightness(1.9);opacity:.8}
+    96%        {filter:none;opacity:1}
+  }
+
+  /* ── el PDF del regalo ── */
+  .pdf-art{max-height:62vh;justify-self:center}
+  /* las hojas de atrás respiran, desfasadas, como una pila viva */
+  .slide.on .pdf-art .sheet{transform-box:fill-box;transform-origin:center;
+    animation:sheet 5s ease-in-out infinite}
+  .slide.on .pdf-art .sheet--2{animation-delay:-1.6s}
+  .slide.on .pdf-art .sheet--3{animation-delay:-3.2s}
+  @keyframes sheet{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    50%    {transform:translateY(-6px) rotate(-.7deg)}
+  }
+  /* las seis piezas se encienden una por una y se quedan */
+  .slide.on .pdf-art .row{opacity:0;animation:light-up .5s ease both}
+  .slide.on .pdf-art .row--1{animation-delay:.75s}
+  .slide.on .pdf-art .row--2{animation-delay:.95s}
+  .slide.on .pdf-art .row--3{animation-delay:1.15s}
+  .slide.on .pdf-art .row--4{animation-delay:1.35s}
+  .slide.on .pdf-art .row--5{animation-delay:1.55s}
+  .slide.on .pdf-art .row--6{animation-delay:1.75s}
+  @keyframes light-up{
+    from{opacity:0;transform:translateX(-10px)}
+    to  {opacity:1;transform:none}
+  }
+  /* el sello llega al final, de golpe, y late */
+  .slide.on .pdf-art .stamp{transform-box:fill-box;transform-origin:center;
+    animation:stamp .5s cubic-bezier(.2,1.5,.4,1) both 2s, pulse 2.6s ease-in-out 2.6s infinite}
+  @keyframes stamp{
+    from{opacity:0;transform:scale(1.5) rotate(-14deg)}
+    to  {opacity:1;transform:scale(1) rotate(-8deg)}
+  }
+  @keyframes pulse{
+    0%,100%{transform:scale(1) rotate(-8deg)}
+    50%    {transform:scale(1.06) rotate(-8deg)}
+  }
+  .sk{stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;
+    filter:url(#rough)}
+  text{font-family:var(--sans);fill:#fff}
+
+  /* barra inferior */
+  .bar{position:fixed;left:0;right:0;bottom:0;height:4px;background:var(--line);z-index:5}
+  .bar i{display:block;height:100%;background:var(--primary);transition:width .25s ease}
+  .meta{position:fixed;right:2vw;bottom:2.4vh;font-size:.75rem;color:#4c5a66;
+    letter-spacing:.1em;z-index:5;font-variant-numeric:tabular-nums}
+  .clock{position:fixed;left:2vw;bottom:2.4vh;font-size:.95rem;color:#4c5a66;
+    letter-spacing:.1em;z-index:5}
+
+  /* ───── movimiento ───── */
+  /* entrada escalonada: cada hijo directo de la slide activa entra por su cuenta */
+  .slide.on > *{
+    animation:rise .62s cubic-bezier(.22,.9,.28,1) both;
+  }
+  .slide.on > *:nth-child(1){animation-delay:.04s}
+  .slide.on > *:nth-child(2){animation-delay:.13s}
+  .slide.on > *:nth-child(3){animation-delay:.22s}
+  .slide.on > *:nth-child(4){animation-delay:.31s}
+  .slide.on > *:nth-child(5){animation-delay:.40s}
+  @keyframes rise{
+    from{opacity:0;transform:translateY(22px)}
+    to{opacity:1;transform:none}
+  }
+
+  /* las dos columnas entran con un respiro entre sí */
+  .slide.on .cols > *:nth-child(1){animation:rise .66s cubic-bezier(.22,.9,.28,1) both .18s}
+  .slide.on .cols > *:nth-child(2){animation:rise .66s cubic-bezier(.22,.9,.28,1) both .34s}
+
+  /* tarjetas: cascada diagonal */
+  .slide.on .card{animation:pop .5s cubic-bezier(.2,.9,.3,1.05) both}
+  .slide.on .grid4 .card:nth-child(1){animation-delay:.30s}
+  .slide.on .grid4 .card:nth-child(2){animation-delay:.42s}
+  .slide.on .grid4 .card:nth-child(3){animation-delay:.54s}
+  .slide.on .grid4 .card:nth-child(4){animation-delay:.66s}
+  @keyframes pop{
+    from{opacity:0;transform:translateY(16px) scale(.97)}
+    to{opacity:1;transform:none}
+  }
+
+  /* bullets uno por uno */
+  .slide.on ul li{animation:slide-in .5s cubic-bezier(.22,.9,.28,1) both}
+  .slide.on ul li:nth-child(1){animation-delay:.28s}
+  .slide.on ul li:nth-child(2){animation-delay:.40s}
+  .slide.on ul li:nth-child(3){animation-delay:.52s}
+  .slide.on ul li:nth-child(4){animation-delay:.64s}
+  @keyframes slide-in{
+    from{opacity:0;transform:translateX(-14px)}
+    to{opacity:1;transform:none}
+  }
+
+  /* ── diagramas: los trazos se dibujan solos ── */
+  .slide.on svg path,
+  .slide.on svg rect,
+  .slide.on svg circle{
+    animation:draw 1.05s cubic-bezier(.35,.75,.3,1) both;
+  }
+  @keyframes draw{
+    from{stroke-dashoffset:var(--len,900);opacity:.15}
+    60% {opacity:1}
+    to  {stroke-dashoffset:0;opacity:1}
+  }
+  /* los rellenos y los textos entran después del trazo */
+  .slide.on svg text{animation:fade .5s ease both}
+  /* la punta de flecha aparece cuando la línea ya llegó */
+  .slide.on svg .tip{animation:fade .3s ease both 1.15s}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ── el cuadernillo del regalo ── */
+  /* objetos con relleno: la animación genérica los pinta a medias, así que entran enteros */
+  .slide.on .pdf rect, .slide.on .pdf path, .slide.on .pdf text{animation:none;opacity:1}
+  .slide.on .pdf .stack{transform-box:fill-box;transform-origin:center;
+    animation:pdf-float 5s ease-in-out infinite .6s}
+  @keyframes pdf-float{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    50%    {transform:translateY(-10px) rotate(.8deg)}
+  }
+  /* La hoja se pasa sola: gira sobre el lomo con scaleX de 1 a -1, que en un
+     objeto plano se lee como voltear una página. Al final se apaga para que el
+     regreso a la posición inicial no se vea. */
+  .slide.on .pdf .flip{transform-box:fill-box;transform-origin:left center;
+    animation:pdf-flip 6.5s cubic-bezier(.5,0,.5,1) infinite 2s}
+  @keyframes pdf-flip{
+    0%,52%  {transform:scaleX(1);   opacity:1}
+    78%     {transform:scaleX(-1);  opacity:1}
+    86%,100%{transform:scaleX(-1);  opacity:0}
+  }
+  /* las palomitas de la lista aparecen, no se trazan (a medias son rayas) */
+  .slide.on .pdf .pk{opacity:0;animation:tk-pop .28s cubic-bezier(.2,.9,.3,1.4) forwards}
+  .slide.on .pdf .pk--1{animation-delay:.9s}
+  .slide.on .pdf .pk--2{animation-delay:1.25s}
+  @keyframes tk-pop{
+    from{opacity:0;transform:scale(.6)}
+    to  {opacity:1;transform:none}
+  }
+  /* botón del regalo: relleno ámbar, texto oscuro. Se ve apretable desde la
+     última fila del Zoom, que es de lo que se trata. */
+  a.dl{display:inline-flex;align-items:center;gap:.7rem;
+    background:#FFC46B;color:#101820;text-decoration:none;
+    padding:.85rem 1.6rem;border-radius:999px;
+    font-weight:800;font-size:1.35rem;letter-spacing:-.01em;
+    box-shadow:0 0 0 0 rgba(255,196,107,.5)}
+  a.dl svg{width:1.35rem;height:1.35rem;fill:none;stroke:#101820;
+    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  /* el icono no se traza solo: la regla genérica de diagramas lo dibujaría a medias */
+  .slide.on a.dl svg path{animation:none;opacity:1}
+  /* late despacio: es la única acción de la slide */
+  .slide.on a.dl{animation:dl-pulse 2.8s ease-out infinite 1.2s}
+  @keyframes dl-pulse{
+    0%  {box-shadow:0 0 0 0 rgba(255,196,107,.45)}
+    70% {box-shadow:0 0 0 22px rgba(255,196,107,0)}
+    100%{box-shadow:0 0 0 0 rgba(255,196,107,0)}
+  }
+  /* la flecha del icono baja, como una descarga */
+  .slide.on a.dl svg{animation:dl-arrow 2.8s ease-in-out infinite 1.2s}
+  @keyframes dl-arrow{
+    0%,70%,100%{transform:translateY(0)}
+    82%        {transform:translateY(3px)}
+  }
+
+  /* ── el logo de la slide de cierre ── */
+  /* El halo va en el contenedor y el logo intacto encima: nada de placa de fondo
+     ni de repintarlo. El respiro del halo va en el <img>, no en el <div>, porque
+     el <div> es hijo directo de la slide y la entrada `rise` le pisa el transform. */
+  .fxg{width:fit-content;margin-bottom:1.4vh;
+    filter:drop-shadow(0 0 26px rgba(133,221,203,.42)) drop-shadow(0 0 60px rgba(133,221,203,.18))}
+  /* es un logotipo ancho (894×162), no un ícono: se mide por ancho */
+  .fxg img{display:block;width:clamp(200px,17vw,300px);height:auto}
+  .slide.on .fxg img{animation:mark-breathe 5s ease-in-out infinite 1s}
+  @keyframes mark-breathe{
+    0%,100%{transform:scale(1)}
+    50%    {transform:scale(1.04)}
+  }
+
+  /* ── el buzón: las preguntas siguen llegando ── */
+  /* nada del buzón se traza solo: son objetos con relleno y a medio dibujar se ven rotos */
+  .slide.on .qa .box path, .slide.on .qa .box rect, .slide.on .qa .box circle,
+  .slide.on .qa .plane path{animation:none;opacity:1}
+  /* la estela avanza como hormigas: la ruta se lee aunque el avión aún no pase */
+  .slide.on .qa .trail path{animation:qa-ants 1.4s linear infinite}
+  @keyframes qa-ants{to{stroke-dashoffset:-18}}
+  /* los aviones recorren su propia curva, en bucle y desfasados */
+  .slide.on .qa .plane{offset-rotate:auto;animation:qa-fly 7s linear infinite}
+  .slide.on .qa .plane > g{animation:qa-appear 7s linear infinite}
+  /* también en negativo: la slide abre con el cielo ya ocupado */
+  .slide.on .qa .p1{animation-delay:-2.6s}
+  .slide.on .qa .p1 > g{animation-delay:-2.6s}
+  .slide.on .qa .p2{animation-delay:-4.4s}
+  .slide.on .qa .p2 > g{animation-delay:-4.4s}
+  .slide.on .qa .p3{animation-delay:-.9s}
+  .slide.on .qa .p3 > g{animation-delay:-.9s}
+  /* las respuestas salen del buzón: mismo recorrido, otro ritmo */
+  /* delay NEGATIVO: la animación arranca ya empezada, así que al entrar la slide
+     los aviones de salida ya van en camino en vez de esperar su turno. */
+  .slide.on .qa .p4{animation-delay:-1.6s}
+  .slide.on .qa .p4 > g{animation-delay:-1.6s}
+  .slide.on .qa .p5{animation-delay:-3.4s}
+  .slide.on .qa .p5 > g{animation-delay:-3.4s}
+  /* al salir es al revés: se enciende pegado al buzón y se va apagando lejos */
+  .slide.on .qa .out > g{animation-name:qa-leave}
+  @keyframes qa-leave{0%{opacity:0}6%{opacity:1}72%{opacity:1}100%{opacity:0}}
+  @keyframes qa-fly{from{offset-distance:0%}to{offset-distance:100%}}
+  /* aparece al salir y se apaga al entrar por la ranura */
+  @keyframes qa-appear{0%{opacity:0}7%{opacity:1}88%{opacity:1}97%,100%{opacity:0}}
+  /* la banderita se mueve cada vez que entra una carta */
+  .slide.on .qa .flag{transform-box:fill-box;transform-origin:left bottom;
+    animation:qa-flag 2.3s ease-in-out infinite}
+  @keyframes qa-flag{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-3deg)}}
+  /* la carta asomada se acomoda sola */
+  .slide.on .qa .letter{transform-box:fill-box;transform-origin:center bottom;
+    animation:qa-letter 5s ease-in-out infinite 1s}
+  @keyframes qa-letter{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    50%    {transform:translateY(-5px) rotate(1.5deg)}
+  }
+
+  /* el sello del 409 cae sobre la flecha y luego se queda respirando: es la pieza
+     que sostiene la slide, no puede quedarse muerta. */
+  .slide.on .hitl-stop{
+    transform-box:fill-box;transform-origin:center;
+    animation:hitl-drop .5s cubic-bezier(.2,.9,.3,1.15) both 1.25s,
+              hitl-hold 3.2s ease-in-out infinite 1.9s;
+  }
+  /* el verde entra medio segundo después: primero se frena, luego se ejecuta */
+  .slide.on .hitl-go{
+    transform-box:fill-box;transform-origin:center;
+    animation:hitl-drop .5s cubic-bezier(.2,.9,.3,1.15) both 1.85s,
+              hitl-hold 3.2s ease-in-out infinite 2.5s;
+  }
+  .slide.on .hitl-stop rect, .slide.on .hitl-stop text,
+  .slide.on .hitl-go rect,   .slide.on .hitl-go text{animation:none}
+  @keyframes hitl-drop{
+    from{opacity:0;transform:translateY(-14px) scale(.9)}
+    to  {opacity:1;transform:none}
+  }
+  @keyframes hitl-hold{
+    0%,100%{transform:scale(1)}
+    50%    {transform:scale(1.05)}
+  }
+  /* quien confirma se balancea despacio: hay alguien ahí, no es un icono pegado */
+  .slide.on .hitl-who{
+    transform-box:fill-box;transform-origin:center bottom;
+    animation:hitl-sway 4s ease-in-out infinite 1.8s;
+  }
+  @keyframes hitl-sway{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    50%    {transform:translateY(-3px) rotate(2deg)}
+  }
+
+  /* el modelo al centro late despacio, como si estuviera pensando */
+  .slide.on svg circle[stroke="#85DDCB"]{
+    animation:draw 1.05s cubic-bezier(.35,.75,.3,1) both, breathe 3.6s ease-in-out 1.6s infinite;
+  }
+  @keyframes breathe{
+    0%,100%{filter:url(#rough) drop-shadow(0 0 0 rgba(133,221,203,0))}
+    50%    {filter:url(#rough) drop-shadow(0 0 18px rgba(133,221,203,.45))}
+  }
+
+  /* el punto rojo del paso 67 parpadea: es el momento del error */
+  .slide.on svg circle[fill="#F2777A"]{
+    animation:draw .8s ease both, alarm 1.4s ease-in-out .9s infinite;
+  }
+  @keyframes alarm{
+    0%,100%{opacity:1;transform:scale(1)}
+    50%    {opacity:.55;transform:scale(1.18)}
+  }
+  /* el pulso late sobre su propio centro, no sobre el origen del lienzo */
+  svg circle[fill="#F2777A"]{transform-box:fill-box;transform-origin:center}
+
+  /* badge de demo: pulso de atención */
+  .demo .badge{animation:rise .6s cubic-bezier(.22,.9,.28,1) both, glow 2.4s ease-in-out .8s infinite}
+  @keyframes glow{
+    0%,100%{box-shadow:0 0 0 0 rgba(141,207,110,.35)}
+    50%    {box-shadow:0 0 0 14px rgba(141,207,110,0)}
+  }
+
+  /* el número grande cuenta con peso */
+  .slide.on .stat{animation:weigh .9s cubic-bezier(.2,.85,.25,1) both .1s}
+  @keyframes weigh{
+    from{opacity:0;transform:translateY(30px) scale(.9);letter-spacing:.06em}
+    to  {opacity:1;transform:none;letter-spacing:-.04em}
+  }
+
+  /* transición de fondo entre slide normal y slide de demo */
+  .slide{transition:background .5s ease}
+
+  @media (prefers-reduced-motion:reduce){
+    .slide.on > *,.slide.on .card,.slide.on ul li,.slide.on .cols > *,
+    .slide.on svg path,.slide.on svg rect,.slide.on svg circle,
+    .slide.on svg text,.slide.on .stat,.demo .badge{
+      animation:none !important;stroke-dashoffset:0 !important;opacity:1 !important;transform:none !important
+    }
+  }
+
+  /* notas del presentador */
+  .notes{position:fixed;inset:auto 0 0 0;max-height:42vh;overflow:auto;
+    background:#080b0d;border-top:2px solid var(--primary);padding:1.4em 8vw 2.4em;
+    display:none;z-index:6}
+  body.notes-on .notes.cur{display:block}
+  .notes p{font-size:clamp(1.02rem,1.45vw,1.28rem);line-height:1.47;color:#cfd4d6;max-width:70ch}
+  .notes p+p{margin-top:.6em}
+  .notes .t{color:var(--primary);font-weight:700;font-size:clamp(.9rem,1.1vw,1.05rem);
+    letter-spacing:.16em;text-transform:uppercase;margin-bottom:.7em;display:block}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <filter id="rough">
+    <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<div class="deck">
+
+<!-- 1 · PORTADA -->
+<section class="slide on" data-t="0:00">
+  <div class="cols">
+    <div>
+      <span class="kicker">FixterGeek · Webinar en vivo</span>
+      <h1 style="margin-top:1.5vh">Anatomía de un<br><span class="mint">sistema agéntico</span></h1>
+      <p class="lead" style="margin-top:1.5vh">Construyendo un agente que sobrevive a producción.</p>
+      <p class="mono" style="color:#4c5a66;margin-top:2vh">Héctorbliss · 45 minutos · fixtergeek.com</p>
+    </div>
+    <!-- el orquestador del taller, con sus subagentes flotando -->
+    <object data="sistemas-agenticos.svg" type="image/svg+xml" class="hero-art"
+            aria-label="Un agente orquestador rodeado de subagentes"></object>
+  </div>
+</section>
+
+<!-- 2 · PROMESA -->
+<section class="slide" data-t="0:30">
+  <div class="cols">
+    <div>
+      <span class="kicker">Lo que te llevas hoy</span>
+      <h2>Seis piezas, tres demos<br>y un manual.</h2>
+      <ul style="max-width:44ch;margin-top:1.5vh">
+        <li>La ecuación que ordena todo lo demás</li>
+        <li>Las primitivas que forman un harness</li>
+        <li>Las 4 cosas que rompen agentes en producción</li>
+        <li>La interfaz: la única pieza que el usuario ve</li>
+      </ul>
+    </div>
+    <!-- el PDF que se entrega al minuto 30: hojas que se apilan y sello que late -->
+    <svg viewBox="0 0 420 400" class="pdf-art" aria-label="Un PDF de las seis piezas">
+      <g class="sheet sheet--3">
+        <rect x="118" y="52" width="220" height="292" rx="12" fill="#182128" stroke="#44545F" stroke-width="2"/>
+      </g>
+      <g class="sheet sheet--2">
+        <rect x="104" y="42" width="220" height="292" rx="12" fill="#1d2830" stroke="#44545F" stroke-width="2"/>
+      </g>
+      <g class="sheet sheet--1">
+        <rect x="88" y="30" width="220" height="292" rx="12" fill="#22303a" stroke="#85DDCB" stroke-width="2.5"/>
+        <text x="112" y="72" font-size="17" font-weight="700" fill="#85DDCB">Las seis piezas</text>
+        <g stroke="#3a4a56" stroke-width="6" stroke-linecap="round">
+          <path d="M112 104 H284"/><path d="M112 126 H250"/>
+        </g>
+        <!-- las seis piezas se encienden una por una -->
+        <g stroke-width="7" stroke-linecap="round">
+          <path class="row row--1" d="M112 164 H268" stroke="#8DCF6E"/>
+          <path class="row row--2" d="M112 194 H240" stroke="#8DCF6E"/>
+          <path class="row row--3" d="M112 224 H278" stroke="#8DCF6E"/>
+          <path class="row row--4" d="M112 254 H232" stroke="#8DCF6E"/>
+          <path class="row row--5" d="M112 284 H262" stroke="#8DCF6E"/>
+        </g>
+      </g>
+      <g class="stamp">
+        <circle cx="316" cy="330" r="42" fill="#0E1317" stroke="#FFC46B" stroke-width="3"/>
+        <text x="316" y="326" text-anchor="middle" font-size="20" font-weight="700" fill="#FFC46B">PDF</text>
+        <text x="316" y="348" text-anchor="middle" font-size="12" fill="#B7B9BA">gratis</text>
+      </g>
+    </svg>
+  </div>
+  <p class="grass">🎁 Al minuto 30 dejo el PDF en el chat: las seis piezas explicadas a detalle. Es tuyo, compres o no.</p>
+</section>
+
+<!-- 3 · LA ECUACIÓN -->
+<section class="slide" data-t="2:00">
+  <div class="cols">
+    <div>
+      <span class="kicker">La ecuación</span>
+      <h2>Agente =<br>modelo + <span class="mint">harness</span></h2>
+      <p style="margin-top:1.5vh">El modelo no lo escribes tú. Todo lo demás, sí.</p>
+      <p class="amber" style="margin-top:1vh"><strong>Si no eres el modelo, eres el harness.</strong></p>
+    </div>
+    <svg viewBox="0 0 520 340" aria-label="Modelo al centro rodeado del harness">
+      <g class="sk" fill="none" stroke-width="2.5">
+        <rect x="30" y="30" width="460" height="280" rx="18" stroke="#44545F"/>
+        <circle cx="260" cy="170" r="66" fill="#182128" stroke="#85DDCB" stroke-width="3"/>
+      </g>
+      <text x="260" y="165" text-anchor="middle" font-size="19" font-weight="700">modelo</text>
+      <text x="260" y="190" text-anchor="middle" font-size="13" fill="#B7B9BA">(no lo escribes)</text>
+      <text x="52" y="58" font-size="14" fill="#85DDCB" font-weight="700">harness — todo lo que construyes</text>
+      <g class="sk" fill="none" stroke="#8DCF6E" stroke-width="2" opacity=".75">
+        <path d="M110 120 L190 150"/><path d="M110 230 L190 200"/>
+        <path d="M410 120 L330 150"/><path d="M410 230 L330 200"/>
+      </g>
+      <g font-size="13" fill="#B7B9BA">
+        <text x="60" y="118">prompts</text><text x="60" y="238">tools</text>
+        <text x="415" y="118">memoria</text><text x="415" y="238">subagentes</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 4 · DATO DURO -->
+<section class="slide" data-t="4:00">
+  <span class="kicker">Claude Code se filtró y mostró:</span>
+  <div style="display:flex;align-items:baseline;gap:.4em;flex-wrap:wrap">
+    <span class="stat mint">500,000</span>
+    <span style="font-size:clamp(1.2rem,2.4vw,2rem)">líneas de código</span>
+  </div>
+  <h2 style="margin-top:1.5vh">Ninguna de ellas<br>es el modelo.</h2>
+  <p class="lead" style="margin-top:1vh">Ese medio millón de líneas existe solo para que el modelo rinda lo mejor posible en tu tarea. Eso es un harness.</p>
+  <!-- el ecosistema: glifos de simple-icons (CC0); las marcas son de sus dueños -->
+  <p class="row-label">Harnesses que ya existen</p>
+  <div class="brands">
+      <span class="brand brand--dark"><img src="logos/model-nousresearch.svg" alt="Hermes">Hermes</span>
+      <span class="brand"><i class="mark"><svg viewBox="0 0 24 24" aria-label="Claude Code" role="img"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg></i>Claude Code</span>
+      <span class="brand"><i class="mark"><svg viewBox="0 0 24 24" aria-label="Codex" role="img"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg></i>Codex</span>
+      <span class="brand"><i class="mark"><svg viewBox="0 0 24 24" aria-label="Copilot" role="img"><path d="M23.922 16.997C23.061 18.492 18.063 22.02 12 22.02 5.937 22.02.939 18.492.078 16.997A.641.641 0 0 1 0 16.741v-2.869a.883.883 0 0 1 .053-.22c.372-.935 1.347-2.292 2.605-2.656.167-.429.414-1.055.644-1.517a10.098 10.098 0 0 1-.052-1.086c0-1.331.282-2.499 1.132-3.368.397-.406.89-.717 1.474-.952C7.255 2.937 9.248 1.98 11.978 1.98c2.731 0 4.767.957 6.166 2.093.584.235 1.077.546 1.474.952.85.869 1.132 2.037 1.132 3.368 0 .368-.014.733-.052 1.086.23.462.477 1.088.644 1.517 1.258.364 2.233 1.721 2.605 2.656a.841.841 0 0 1 .053.22v2.869a.641.641 0 0 1-.078.256Zm-11.75-5.992h-.344a4.359 4.359 0 0 1-.355.508c-.77.947-1.918 1.492-3.508 1.492-1.725 0-2.989-.359-3.782-1.259a2.137 2.137 0 0 1-.085-.104L4 11.746v6.585c1.435.779 4.514 2.179 8 2.179 3.486 0 6.565-1.4 8-2.179v-6.585l-.098-.104s-.033.045-.085.104c-.793.9-2.057 1.259-3.782 1.259-1.59 0-2.738-.545-3.508-1.492a4.359 4.359 0 0 1-.355-.508Zm2.328 3.25c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm-5 0c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm3.313-6.185c.136 1.057.403 1.913.878 2.497.442.544 1.134.938 2.344.938 1.573 0 2.292-.337 2.657-.751.384-.435.558-1.15.558-2.361 0-1.14-.243-1.847-.705-2.319-.477-.488-1.319-.862-2.824-1.025-1.487-.161-2.192.138-2.533.529-.269.307-.437.808-.438 1.578v.021c0 .265.021.562.063.893Zm-1.626 0c.042-.331.063-.628.063-.894v-.02c-.001-.77-.169-1.271-.438-1.578-.341-.391-1.046-.69-2.533-.529-1.505.163-2.347.537-2.824 1.025-.462.472-.705 1.179-.705 2.319 0 1.211.175 1.926.558 2.361.365.414 1.084.751 2.657.751 1.21 0 1.902-.394 2.344-.938.475-.584.742-1.44.878-2.497Z"/></svg></i>Copilot</span>
+      <span class="brand"><i class="mark"><svg viewBox="0 0 24 24" aria-label="Cursor" role="img"><path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23"/></svg></i>Cursor</span>
+      <span class="brand"><img src="logos/windsurf.svg" alt="Windsurf">Windsurf</span>
+      <span class="brand brand--dark"><img src="logos/zed.svg" alt="Zed">Zed</span>
+      <span class="brand"><img src="logos/warp.png" alt="Warp">Warp</span>
+      <span class="brand"><img src="logos/amp.svg" alt="Amp">Amp</span>
+      <span class="brand"><img src="logos/aider.svg" alt="Aider">Aider</span>
+      <span class="brand brand--dark"><img src="logos/cline.svg" alt="Cline">Cline</span>
+      <span class="brand brand--dark"><img src="logos/roo-code.svg" alt="Roo Code">Roo Code</span>
+      <span class="brand brand--dark"><img src="logos/kilo-code.svg" alt="Kilo Code">Kilo Code</span>
+      <span class="brand"><img src="logos/continue.svg" alt="Continue">Continue</span>
+      <span class="brand"><img src="logos/openhands.svg" alt="OpenHands">OpenHands</span>
+      <span class="brand brand--dark"><img src="logos/goose.svg" alt="Goose">Goose</span>
+      <span class="brand"><img src="logos/opencode.svg" alt="OpenCode">OpenCode</span>
+      <span class="brand"><img src="logos/crush.png" alt="Crush">Crush</span>
+      <span class="brand"><img src="logos/gemini-cli.svg" alt="Gemini CLI">Gemini CLI</span>
+      <span class="brand"><img src="logos/qwen-code.svg" alt="Qwen Code">Qwen Code</span>
+      <span class="brand"><img src="logos/plandex.png" alt="Plandex">Plandex</span>
+      <span class="brand"><img src="logos/codebuff.png" alt="Codebuff">Codebuff</span>
+      <span class="brand"><img src="logos/octofriend.png" alt="Octofriend">Octofriend</span>
+      <span class="brand"><img src="logos/pi.svg" alt="pi">pi</span>
+      <span class="brand"><img src="logos/codewhale.svg" alt="CodeWhale">CodeWhale</span>
+      <span class="brand brand--dark"><img src="logos/devin.svg" alt="Devin">Devin</span>
+      <span class="brand"><img src="logos/factory-droid.svg" alt="Factory Droid">Factory Droid</span>
+      <span class="brand"><img src="logos/trae.png" alt="Trae">Trae</span>
+      <span class="brand"><img src="logos/void-editor.png" alt="Void">Void</span>
+      <span class="brand"><img src="logos/pearai.png" alt="PearAI">PearAI</span>
+      <span class="brand brand--dark"><img src="logos/theia-ai.svg" alt="Theia AI">Theia AI</span>
+      <span class="brand"><img src="logos/jetbrains-junie.svg" alt="Junie">Junie</span>
+      <span class="brand"><img src="logos/qodo.png" alt="Qodo">Qodo</span>
+      <span class="brand brand--dark"><img src="logos/tabnine.png" alt="Tabnine">Tabnine</span>
+      <span class="brand"><img src="logos/supermaven.png" alt="Supermaven">Supermaven</span>
+      <span class="brand"><img src="logos/augment-code.png" alt="Augment">Augment</span>
+      <span class="brand brand--dark"><img src="logos/refact-ai.svg" alt="Refact.ai">Refact.ai</span>
+      <span class="brand"><img src="logos/bolt-new.svg" alt="Bolt.new">Bolt.new</span>
+      <span class="brand"><img src="logos/lovable.svg" alt="Lovable">Lovable</span>
+      <span class="brand"><img src="logos/v0.svg" alt="v0">v0</span>
+      <span class="brand"><img src="logos/replit.png" alt="Replit">Replit</span>
+      <span class="brand"><img src="logos/coderabbit.png" alt="CodeRabbit">CodeRabbit</span>
+      <span class="brand"><img src="logos/greptile.png" alt="Greptile">Greptile</span>
+      <span class="brand"><img src="logos/sweep-ai.png" alt="Sweep">Sweep</span>
+      <span class="brand"><img src="logos/ellipsis.png" alt="Ellipsis">Ellipsis</span>
+      <span class="brand brand--own"><img src="logos/ghostycode.png" alt="GhostyCode">GhostyCode</span>
+  </div>
+  <p class="row-label">Con lo que construyes el tuyo</p>
+  <div class="brands brands--sm">
+      <span class="brand"><i class="mark"><svg viewBox="0 0 24 24" aria-label="Deep Agents" role="img"><path d="M13.796 0a6.93 6.93 0 0 0-4.91 2.019L5.451 5.455l3.273 3.27 3.432-3.432a2.284 2.284 0 0 1 3.277 0 2.28 2.28 0 0 1 0 3.275L12 12.001l3.273 3.273 3.433-3.435c2.692-2.692 2.692-7.127 0-9.82A6.92 6.92 0 0 0 13.796 0m-5.07 8.728-3.433 3.434c-2.692 2.693-2.692 7.126 0 9.819A6.92 6.92 0 0 0 10.203 24a6.93 6.93 0 0 0 4.911-2.02l3.432-3.432-3.271-3.272-3.433 3.433a2.284 2.284 0 0 1-3.277 0 2.28 2.28 0 0 1 0-3.276L12 12z"/></svg></i>Deep Agents</span>
+      <span class="brand"><i class="mark"><svg viewBox="0 0 24 24" aria-label="LangGraph" role="img"><path d="M5 19H10A5 5 0 115 14ZM19 14A5 5 0 1114 19H19ZM10 5A5 5 0 105 10V5ZM19 5V10A5 5 0 1014 5Z"/></svg></i>LangGraph</span>
+      <span class="brand"><i class="mark"><svg viewBox="0 0 24 24" aria-label="CrewAI" role="img"><path d="M12.482.18C7.161 1.319 1.478 9.069 1.426 15.372c-.051 5.527 3.1 8.68 8.68 8.627 6.716-.05 14.259-6.87 12.09-10.9-.672-1.292-1.396-1.344-2.687-.207-1.602 1.395-1.654.31-.207-2.893 1.757-3.98 1.705-5.322-.31-7.544C17.03.388 14.962-.388 12.482.181Zm5.322 2.068c2.273 2.015 2.376 4.236.465 8.42-1.395 3.1-2.17 3.515-3.824 1.86-1.24-1.24-1.343-3.46-.258-6.044 1.137-2.635.982-3.1-.568-1.653-3.72 3.358-6.458 9.765-5.424 12.503.464 1.189.825 1.395 2.737 1.395 2.79 0 6.303-1.705 7.957-3.926 1.756-2.274 2.79-2.274 2.79-.052 0 3.875-6.459 8.627-11.625 8.627-6.251 0-9.351-4.752-7.491-11.47.878-2.995 4.443-7.904 7.077-9.66 3.255-2.17 5.684-2.17 8.164 0z"/></svg></i>CrewAI</span>
+      <span class="brand brand--dark"><img src="logos/mastra.svg" alt="Mastra">Mastra</span>
+      <span class="brand"><img src="logos/agno.svg" alt="Agno">Agno</span>
+      <span class="brand"><img src="logos/smolagents.png" alt="smolagents">smolagents</span>
+      <span class="brand"><img src="logos/llama-index.png" alt="LlamaIndex">LlamaIndex</span>
+      <span class="brand"><img src="logos/haystack.svg" alt="Haystack">Haystack</span>
+      <span class="brand"><img src="logos/dspy.svg" alt="DSPy">DSPy</span>
+      <span class="brand"><img src="logos/openai-agents.svg" alt="Agents SDK">Agents SDK</span>
+      <span class="brand"><img src="logos/semantic-kernel.png" alt="Semantic Kernel">Semantic Kernel</span>
+      <span class="brand"><img src="logos/letta.png" alt="Letta">Letta</span>
+      <span class="brand"><img src="logos/griptape.svg" alt="Griptape">Griptape</span>
+      <span class="brand"><img src="logos/google-adk.png" alt="Google ADK">Google ADK</span>
+      <span class="brand"><img src="logos/strands-agents.svg" alt="Strands">Strands</span>
+      <span class="brand brand--dark"><img src="logos/camel-ai.png" alt="CAMEL-AI">CAMEL-AI</span>
+      <span class="brand"><img src="logos/pydantic-ai.svg" alt="Pydantic AI">Pydantic AI</span>
+      <span class="brand"><img src="logos/autogen.svg" alt="AutoGen">AutoGen</span>
+  </div>
+  <p class="row-label">Y todos usan los mismos modelos</p>
+  <div class="brands brands--sm brands--models">
+      <span class="brand"><img src="logos/model-anthropic.svg" alt="Claude">Claude</span>
+      <span class="brand"><img src="logos/model-openai.svg" alt="GPT">GPT</span>
+      <span class="brand"><img src="logos/model-gemini.svg" alt="Gemini">Gemini</span>
+      <span class="brand"><img src="logos/model-deepseek.svg" alt="DeepSeek">DeepSeek</span>
+      <span class="brand"><img src="logos/model-qwen.svg" alt="Qwen">Qwen</span>
+      <span class="brand"><img src="logos/model-meta.svg" alt="Llama">Llama</span>
+      <span class="brand"><img src="logos/model-mistral.svg" alt="Mistral">Mistral</span>
+      <span class="brand"><img src="logos/model-moonshot.svg" alt="Kimi">Kimi</span>
+      <span class="brand"><img src="logos/model-zhipu.svg" alt="GLM">GLM</span>
+  </div>
+</section>
+
+<!-- 5 · PRIMITIVAS -->
+<section class="slide" data-t="6:00">
+  <span class="kicker">Anatomía</span>
+  <h2>Las primitivas del harness</h2>
+  <div class="pieces">
+    <div class="card piece">
+      <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true" fill="none"
+           stroke="#85DDCB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h20v13H13l-6 5v-5H4z"/><path d="M9 11h10M9 15h6"/></svg>
+      <h3>prompts</h3>
+      <p>la interfaz con el modelo</p>
+    </div>
+    <div class="card piece">
+      <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true" fill="none"
+           stroke="#85DDCB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="14" cy="7" rx="10" ry="4"/><path d="M4 7v14c0 2.2 4.5 4 10 4s10-1.8 10-4V7"/><path d="M4 14c0 2.2 4.5 4 10 4s10-1.8 10-4"/></svg>
+      <h3>memorias</h3>
+      <p>lo que aprende con el tiempo</p>
+    </div>
+    <div class="card piece">
+      <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true" fill="none"
+           stroke="#8DCF6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a7 7 0 0 0-8.5 8.8L3 18.3 6.7 22l6.5-6.5A7 7 0 0 0 22 7l-3.8 3.8-3-3z"/></svg>
+      <h3>tools</h3>
+      <p>sus manos y sus ojos</p>
+    </div>
+    <div class="card piece">
+      <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true" fill="none"
+           stroke="#8DCF6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v6M18 3v6"/><path d="M6 9h16v4a8 8 0 0 1-16 0z"/><path d="M14 21v4"/></svg>
+      <h3>skills · MCP</h3>
+      <p>capacidades que enchufas</p>
+    </div>
+    <div class="card piece">
+      <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true" fill="none"
+           stroke="#FFC46B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="5" r="3.4"/><circle cx="5" cy="22" r="3.4"/><circle cx="23" cy="22" r="3.4"/><path d="M14 8.4v5M12 15l-5 4M16 15l5 4"/></svg>
+      <h3>subagentes</h3>
+      <p>contexto aislado</p>
+    </div>
+    <div class="card piece">
+      <svg class="glyph" viewBox="0 0 28 28" aria-hidden="true" fill="none"
+           stroke="#FFC46B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 14h26" opacity=".35"/><path class="gate gate--1" d="M9 4.5v19"/><path class="gate gate--2" d="M19 4.5v19"/><circle class="signal" cx="0" cy="14" r="2.8" fill="currentColor" stroke="none"/></svg>
+      <h3>hooks</h3>
+      <p>interceptar antes y después</p>
+    </div>
+  </div>
+  <p class="mint">+ la infraestructura que toca: filesystem, sandbox, navegador</p>
+</section>
+
+<!-- 6 · DEMO 1 -->
+<section class="slide demo" data-t="8:00">
+  <div class="cols">
+    <div>
+      <span class="badge">▶ Demo 1</span>
+      <h1 style="margin-top:1.5vh">El harness,<br>por dentro.</h1>
+      <!-- el demo cambió a UI de Ghosty Teams: ya no se abre código -->
+
+      <p class="lead" style="margin-top:1.5vh">Abrimos un agente que ya corre, apagamos una de sus herramientas y le pedimos lo mismo otra vez. Las capacidades no vienen del modelo.</p>
+    </div>
+    <!-- vista explotada: el modelo abajo y las capas del harness separándose encima -->
+    <svg viewBox="0 0 520 400" class="stack" aria-label="Las capas del harness sobre el modelo">
+      <!-- Se ve desde arriba, así que la capa alta tapa a la de abajo: en SVG
+           gana lo último dibujado, por eso van de abajo hacia arriba. -->
+      <g class="layer layer--1">
+        <path d="M260 300 L400 348 L260 396 L120 348 Z" fill="#1d2a31" stroke="#85DDCB" stroke-width="2.5"/>
+        <text x="414" y="354" font-size="16" fill="#85DDCB" font-weight="700">prompts</text>
+      </g>
+      <!-- el modelo: el núcleo que no escribiste -->
+      <g class="core">
+        <ellipse cx="260" cy="348" rx="34" ry="19" fill="#0E1317" stroke="#fff" stroke-width="2.5"/>
+        <text x="260" y="354" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">modelo</text>
+      </g>
+      <g class="layer layer--2">
+        <path d="M260 220 L400 268 L260 316 L120 268 Z" fill="#182128" stroke="#85DDCB" stroke-width="2.5"/>
+        <text x="414" y="274" font-size="16" fill="#85DDCB" font-weight="700">tools</text>
+      </g>
+      <g class="layer layer--3">
+        <path d="M260 140 L400 188 L260 236 L120 188 Z" fill="#182128" stroke="#8DCF6E" stroke-width="2.5"/>
+        <text x="414" y="194" font-size="16" fill="#8DCF6E" font-weight="700">memoria</text>
+      </g>
+      <g class="layer layer--4">
+        <path d="M260 60 L400 108 L260 156 L120 108 Z" fill="#182128" stroke="#FFC46B" stroke-width="2.5"/>
+        <text x="414" y="114" font-size="16" fill="#FFC46B" font-weight="700">hooks</text>
+      </g>
+    </svg>
+  </div>
+  <p class="mono" style="color:#4c5a66">8:00 – 14:00 · vuelve a este mismo agente en cada demo</p>
+</section>
+
+<!-- 7 · CONTEXTO -->
+<section class="slide" data-t="14:00">
+  <div class="cols wide-r">
+    <div>
+      <span class="kicker">Context engineering</span>
+      <h2>El contexto es<br>un recurso <span class="amber">finito</span></h2>
+      <p class="lead" style="margin-top:1.5vh">El archivo no evita que los tokens entren. <strong>Evita que se queden.</strong></p>
+      <p style="margin-top:1.5vh">Lo que vive en disco se puede tirar del historial y recuperar después.</p>
+      <p style="margin-top:1vh">El contexto es la RAM del agente.</p>
+    </div>
+    <!-- La ventana de contexto es del mismo tamaño en los dos lados: lo que
+         cambia es qué metes. A la izquierda el contenido se sale del borde;
+         a la derecha el filesystem vive FUERA y adentro solo queda el puntero. -->
+    <svg viewBox="0 0 560 330">
+      <defs>
+        <!-- recorta las líneas que se desbordan para que se vean cortadas por el borde -->
+        <clipPath id="ctx-overflow"><rect x="0" y="40" width="228" height="250"/></clipPath>
+        <marker id="ctx-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#85DDCB"/>
+        </marker>
+      </defs>
+
+      <text x="120" y="28" text-anchor="middle" font-size="14" fill="#F2777A" font-weight="700">todo al contexto</text>
+      <text x="400" y="28" text-anchor="middle" font-size="14" fill="#8DCF6E" font-weight="700">contexto curado</text>
+
+      <!-- izquierda: el contenido excede la ventana y queda cortado -->
+      <g clip-path="url(#ctx-overflow)">
+        <g class="sk" stroke="#F2777A" stroke-width="1.6" opacity=".8" fill="none">
+          <path d="M40 70 H228 M40 90 H210 M40 110 H228 M40 130 H205 M40 150 H228
+                   M40 170 H216 M40 190 H228 M40 210 H208 M40 230 H228 M40 250 H213
+                   M40 270 H228"/>
+        </g>
+      </g>
+
+      <!-- derecha: unas pocas líneas y, al final, la referencia al archivo -->
+      <g class="sk" stroke="#8DCF6E" stroke-width="1.6" opacity=".9" fill="none">
+        <path d="M320 70 H470 M320 90 H430 M320 110 H460"/>
+      </g>
+      <g class="sk" fill="none" stroke="#85DDCB" stroke-width="1.8">
+        <rect x="320" y="132" width="120" height="26" rx="6"/>
+      </g>
+      <text x="380" y="150" text-anchor="middle" font-size="13" fill="#85DDCB" font-family="ui-monospace,monospace">plan.md</text>
+
+      <!-- las ventanas van encima para que el borde corte las líneas -->
+      <g class="sk" fill="none" stroke-width="2.5">
+        <rect x="20" y="40" width="200" height="250" rx="14" stroke="#F2777A"/>
+        <rect x="300" y="40" width="200" height="250" rx="14" stroke="#8DCF6E"/>
+      </g>
+
+      <!-- el filesystem vive FUERA de la ventana: adentro solo queda el puntero -->
+      <path class="sk" d="M440 145 H500" stroke="#85DDCB" stroke-width="1.8"
+            fill="none" marker-end="url(#ctx-arrow)"/>
+      <g class="sk" fill="#182128" stroke="#85DDCB" stroke-width="2">
+        <rect x="500" y="110" width="52" height="70" rx="8"/>
+      </g>
+      <text x="526" y="140" text-anchor="middle" font-size="11" fill="#85DDCB" font-weight="700">file</text>
+      <text x="526" y="156" text-anchor="middle" font-size="11" fill="#85DDCB" font-weight="700">system</text>
+      <text x="526" y="196" text-anchor="middle" font-size="11" fill="#B7B9BA">fuera</text>
+
+      <text x="120" y="315" text-anchor="middle" font-size="13" fill="#B7B9BA">se desborda</text>
+      <text x="400" y="315" text-anchor="middle" font-size="13" fill="#B7B9BA">se extiende</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 8 · DEMO 2 -->
+<section class="slide demo" data-t="18:00">
+  <div class="cols">
+    <div>
+      <span class="badge">▶ Demo 2</span>
+      <h1 style="margin-top:1.5vh">El agente decide<br>qué vale la pena<br>recordar.</h1>
+      <p class="lead" style="margin-top:1.5vh">Lo escribe una vez. Sobrevive a la conversación, a la sesión y a la máquina. Y tú puedes verlo y borrarlo.</p>
+    </div>
+    <!-- Las sesiones nacen y mueren; la memoria sigue debajo y alimenta a la siguiente.
+         El eje del tiempo va abajo para que se lea de izquierda a derecha. -->
+    <!-- La libreta del agente: lo que anotó a mano, y la línea que escribe ahora.
+         La rotación va en un <g> de fuera porque la animación de entrada define
+         `transform` y aquí se cancelaría. -->
+    <svg viewBox="0 0 560 360" class="mem">
+      <g transform="rotate(-1.4 280 190)">
+        <g class="nb">
+          <!-- las hojas de abajo: hay más páginas, esto no empieza hoy -->
+          <g class="sk" fill="#141b21" stroke="#44545F" stroke-width="2">
+            <rect x="82" y="66" width="392" height="252" rx="6"/>
+            <rect x="74" y="58" width="392" height="252" rx="6"/>
+          </g>
+          <!-- la hoja de encima -->
+          <g class="sk" fill="#182128" stroke="#3d4c57" stroke-width="2.5">
+            <rect x="66" y="50" width="392" height="252" rx="6"/>
+          </g>
+          <!-- el margen rojo de toda libreta -->
+          <g class="sk" fill="none" stroke="#F2777A" stroke-width="1.5" opacity=".45">
+            <path d="M108 50 V302"/>
+          </g>
+          <!-- el espiral -->
+          <g class="sk" fill="none" stroke="#7d8b95" stroke-width="2.5" stroke-linecap="round">
+            <path d="M96 44 q10 -14 20 0"/><path d="M150 44 q10 -14 20 0"/>
+            <path d="M204 44 q10 -14 20 0"/><path d="M258 44 q10 -14 20 0"/>
+            <path d="M312 44 q10 -14 20 0"/><path d="M366 44 q10 -14 20 0"/>
+            <path d="M414 44 q10 -14 20 0"/>
+          </g>
+          <!-- los renglones -->
+          <g class="sk" fill="none" stroke="#22303a" stroke-width="1.2">
+            <path d="M108 116 H432 M108 168 H432 M108 220 H432 M108 272 H432"/>
+          </g>
+
+          <!-- lo que ya estaba escrito, con trazo de mano -->
+          <g fill="none" stroke-linecap="round" stroke-width="3">
+            <path class="ink ink--1" stroke="#B7B9BA"
+                  d="M124 110 q14 -9 26 0 t26 0 t26 0 t26 0 t26 0 t26 0 t26 0"/>
+            <path class="ink ink--2" stroke="#B7B9BA"
+                  d="M124 162 q14 -9 26 0 t26 0 t26 0 t26 0 t26 0"/>
+          </g>
+
+          <!-- la línea que se escribe ahora, y el lápiz siguiéndola -->
+          <g fill="none" stroke-linecap="round" stroke-width="3">
+            <path class="ink ink--3" stroke="#85DDCB"
+                  d="M124 214 q14 -9 26 0 t26 0 t26 0 t26 0 t26 0 t26 0"/>
+          </g>
+          <g class="pencil">
+            <g transform="rotate(38 334 196)">
+              <g class="sk" fill="#FFC46B" stroke="none">
+                <rect x="326" y="140" width="16" height="46" rx="3"/>
+              </g>
+              <g class="sk" fill="#182128" stroke="#FFC46B" stroke-width="2">
+                <path d="M326 186 H342 L334 206 Z"/>
+              </g>
+            </g>
+          </g>
+
+          <!-- la esquina doblada: hay más debajo -->
+          <g class="sk glow" fill="none" stroke="#85DDCB" stroke-width="2">
+            <path d="M458 272 L428 302"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <p class="mono" style="color:#4c5a66">18:00 – 22:00</p>
+</section>
+
+<!-- 9 · LAS 4 DE PRODUCCIÓN -->
+<section class="slide" data-t="22:00">
+  <span class="kicker">Producción</span>
+  <h2>La infraestructura normal no está hecha<br>para tareas que duran <span class="amber">40 minutos</span></h2>
+  <div class="grid4" style="margin-top:2vh">
+    <div class="card"><h3 class="mint">1 · Ejecución durable</h3>
+      <p>Fallar en el paso 67 de 123 y reanudar en el 66. No repetir los 67.</p></div>
+    <div class="card"><h3 class="mint">2 · Memoria</h3>
+      <p>Corto plazo: los checkpoints de una sesión. Largo plazo: lo que persiste entre todas.</p></div>
+    <div class="card"><h3 class="mint">3 · Autenticación</h3>
+      <p>Entrante, saliente y permisos. Un correo a tu nombre está bien; mil, no.</p></div>
+    <div class="card"><h3 class="mint">4 · Humano en el circuito</h3>
+      <p>Interrumpir, aprobar, reanudar — y ver el progreso mientras tanto.</p></div>
+  </div>
+</section>
+
+<!-- 10 · DURABLE -->
+<section class="slide" data-t="24:00">
+  <span class="kicker">1 · Ejecución durable</span>
+  <h2>Paso 67 de 123</h2>
+  <svg viewBox="0 0 1000 235" style="margin-top:1vh;margin-bottom:1vh">
+    <!-- etiquetas arriba, línea de tiempo abajo: no se estorban -->
+    <text x="640" y="40" text-anchor="middle" font-size="26" fill="#85DDCB" font-weight="700">reanuda aquí</text>
+    <text x="885" y="40" text-anchor="middle" font-size="26" fill="#F2777A" font-weight="700">falla aquí</text>
+    <!-- salto corto: del paso que falló al inmediatamente anterior. Arquea hacia arriba. -->
+    <g class="sk" fill="none" stroke-width="3.5">
+      <!-- la curva termina DENTRO del triángulo: el filtro puede temblar sin abrir hueco -->
+      <path d="M862 112 C 850 64, 780 62, 764 110" stroke="#85DDCB"/>
+    </g>
+    <!-- punta: dos brazos a 45° que abren 90°, girados para seguir la tangente de la curva.
+         Fuera del filtro para que no se deforme. -->
+    <g transform="rotate(-62 764 110)">
+      <polyline class="tip" points="788,86 764,110 788,134" fill="none"
+        stroke="#85DDCB" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g class="sk" fill="none" stroke-width="3">
+      <path d="M60 160 H940" stroke="#44545F"/>
+    </g>
+    <g class="sk" stroke="none">
+      <circle cx="120" cy="160" r="11" fill="#8DCF6E" opacity=".45"/>
+      <circle cx="272" cy="160" r="11" fill="#8DCF6E" opacity=".45"/>
+      <circle cx="424" cy="160" r="11" fill="#8DCF6E" opacity=".45"/>
+      <circle cx="576" cy="160" r="11" fill="#8DCF6E" opacity=".45"/>
+      <circle cx="728" cy="160" r="16" fill="#8DCF6E"/>
+      <circle cx="880" cy="160" r="20" fill="#F2777A"/>
+    </g>
+    <g text-anchor="middle" font-size="22" fill="#B7B9BA">
+      <text x="728" y="218">paso 66</text>
+      <text x="880" y="223">paso 67</text>
+      <text x="330" y="218" font-size="20" opacity=".7">…los 65 anteriores, ya guardados</text>
+    </g>
+  </svg>
+  <p class="lead" style="max-width:52ch">Entre más largo el proceso, más seguro es que algo falle. El chiste no es evitar el error: es no pagarlo dos veces.</p>
+</section>
+
+<!-- 11 · MEMORIA -->
+<section class="slide" data-t="26:00">
+  <div class="cols">
+    <div>
+      <span class="kicker">2 · Memoria</span>
+      <h2>Corto plazo<br>y largo plazo</h2>
+      <p style="margin-top:1.5vh">Los mismos checkpoints que te salvan del error, encadenados, <strong>son</strong> la memoria de la sesión.</p>
+      <p style="margin-top:1vh">Lo que quieres que sobreviva entre sesiones se extrae aparte, a un store. Ahí vive "este usuario prefiere Python".</p>
+    </div>
+    <svg viewBox="0 0 520 335">
+      <g class="sk" fill="none" stroke-width="2.5">
+        <rect x="20" y="30" width="480" height="110" rx="12" stroke="#85DDCB"/>
+        <rect x="20" y="180" width="480" height="130" rx="12" stroke="#FFC46B"/>
+      </g>
+      <text x="40" y="58" font-size="14" fill="#85DDCB" font-weight="700">corto plazo · una sesión</text>
+      <g class="sk" fill="#8DCF6E" stroke="none">
+        <circle cx="70" cy="100" r="8"/><circle cx="150" cy="100" r="8"/>
+        <circle cx="230" cy="100" r="8"/><circle cx="310" cy="100" r="8"/>
+        <circle cx="390" cy="100" r="8"/><circle cx="460" cy="100" r="8"/>
+      </g>
+      <g class="sk" fill="none" stroke="#44545F" stroke-width="2"><path d="M70 100 H460"/></g>
+      <g class="sk" fill="none" stroke="#FFC46B" stroke-width="2" opacity=".8">
+        <path d="M150 140 L 210 178"/><path d="M390 140 L 330 178"/>
+      </g>
+      <text x="40" y="208" font-size="15" fill="#FFC46B" font-weight="700">largo plazo · sobrevive a la sesión</text>
+      <text x="260" y="245" text-anchor="middle" font-size="16" fill="#fff">"este usuario prefiere Python"</text>
+      <text x="260" y="272" text-anchor="middle" font-size="13" fill="#B7B9BA">unas cuantas conclusiones,</text>
+      <text x="260" y="290" text-anchor="middle" font-size="13" fill="#B7B9BA">no el historial completo</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 12 · AUTH -->
+<section class="slide" data-t="27:30">
+  <span class="kicker">3 · Autenticación</span>
+  <h2>Un correo a tu nombre está bien.<br><span class="amber">Mil, no.</span></h2>
+  <p class="lead" style="margin-top:1vh">Las apps de siempre son deterministas: das permiso una vez y sabes qué van a hacer. Un agente con el mismo permiso puede hacer algo muy distinto — y esa frontera todavía se está definiendo.</p>
+  <svg viewBox="0 0 900 170" style="margin-top:1vh">
+    <g class="sk" fill="#182128" stroke-width="2.5">
+      <rect x="20"  y="30" width="260" height="100" rx="12" stroke="#85DDCB"/>
+      <rect x="320" y="30" width="260" height="100" rx="12" stroke="#8DCF6E"/>
+      <rect x="620" y="30" width="260" height="100" rx="12" stroke="#FFC46B"/>
+    </g>
+    <g text-anchor="middle" font-size="17" font-weight="700">
+      <text x="150" y="72">entrante</text><text x="450" y="72">saliente</text><text x="750" y="72">permisos</text>
+    </g>
+    <g text-anchor="middle" font-size="12.5" fill="#B7B9BA">
+      <text x="150" y="100">quién le habla al agente</text>
+      <text x="450" y="100">a nombre de quién actúa</text>
+      <text x="750" y="100">qué puede hacer, y cuánto</text>
+    </g>
+  </svg>
+</section>
+
+<!-- 13 · HITL -->
+<section class="slide" data-t="29:00">
+  <span class="kicker">4 · Humano en el circuito</span>
+  <h2>Proponer → confirmar → <span class="amber">ejecutar</span></h2>
+  <p class="lead" style="margin-top:1vh">Nadie se queda esperando. La acción se guarda y alguien la confirma después — puede ser en otra pantalla, o mañana.</p>
+  <svg viewBox="0 0 940 260" style="margin-top:1vh">
+    <defs>
+      <marker id="hitl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#5A6B78"/>
+      </marker>
+    </defs>
+    <g class="sk" fill="#182128" stroke-width="2.5">
+      <rect x="20"  y="60" width="240" height="92" rx="12" stroke="#85DDCB"/>
+      <rect x="350" y="60" width="240" height="92" rx="12" stroke="#FFC46B"/>
+      <rect x="680" y="60" width="240" height="92" rx="12" stroke="#8DCF6E"/>
+    </g>
+    <!-- El primer salto lleva etiqueta: el 409 es la pieza, no un detalle. -->
+    <g class="sk" fill="none" stroke="#5A6B78" stroke-width="2.5" marker-end="url(#hitl-a)">
+      <path d="M266 106 H340"/>
+      <path d="M596 106 H670"/>
+    </g>
+    <g text-anchor="middle" font-size="16" font-weight="700">
+      <text x="140" y="100">el agente propone</text>
+      <text x="470" y="100">queda pendiente</text>
+      <text x="800" y="100">el servidor ejecuta</text>
+    </g>
+    <g text-anchor="middle" font-size="12.5" fill="#B7B9BA">
+      <text x="140" y="126">su turno termina ahí</text>
+      <text x="470" y="126">guardada en la base</text>
+      <text x="800" y="126">no el agente</text>
+    </g>
+    <!-- El 409 solo no dice nada a quien no vive en HTTP: va traducido. -->
+    <g class="hitl-stop">
+      <rect x="232" y="18" width="142" height="30" rx="15" fill="#241d10" stroke="#FFC46B" stroke-width="2"/>
+      <text x="303" y="38" text-anchor="middle" font-size="13" font-weight="700" fill="#FFC46B">409 · todavía no</text>
+    </g>
+    <!-- El gemelo del 409: mismo sello, otro color, y llega después. -->
+    <g class="hitl-go">
+      <rect x="556" y="18" width="154" height="30" rx="15" fill="#16220f" stroke="#8DCF6E" stroke-width="2"/>
+      <text x="633" y="38" text-anchor="middle" font-size="13" font-weight="700" fill="#8DCF6E">200 · ahora sí</text>
+    </g>
+    <!-- Entre pendiente y ejecutar entra una persona, y puede pasar tiempo. -->
+    <g class="sk" fill="none" stroke="#85DDCB" stroke-width="2.5">
+      <path d="M633 172 V 118" stroke-dasharray="6 6"/>
+      <g class="hitl-who">
+        <circle cx="633" cy="186" r="9"/>
+        <path d="M619 214 q14 -16 28 0"/>
+      </g>
+    </g>
+    <text x="633" y="240" text-anchor="middle" font-size="12.5" fill="#85DDCB">alguien confirma</text>
+    <g text-anchor="middle" font-size="12.5" fill="#7A8894">
+      <text x="470" y="186">puede tardar horas · otra pantalla · otra persona</text>
+    </g>
+    <text x="140" y="186" text-anchor="middle" font-size="12.5" fill="#7A8894">nadie espera</text>
+  </svg>
+</section>
+
+<!-- 14 · EL REGALO -->
+<section class="slide" data-t="30:00">
+  <div class="cols">
+    <div>
+      <span class="kicker">Para llevarte</span>
+      <h2>Las seis piezas,<br><span class="mint">en 23 páginas</span></h2>
+      <p class="lead" style="margin-top:1vh;max-width:24ch">Todo esto, con el detalle que no cabe en una pantalla. Es tuyo, ahorita.</p>
+      <p style="margin-top:2.6vh">
+        <a class="dl" href="https://easybits-public.t3.storage.dev/699f35cbc8ad86037eda62b1/XlxD89MrMQSp" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4.5-4.5M12 14l-4.5-4.5M4.5 17.5v1.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1.5"/></svg>
+          <span>Descargar el PDF</span>
+        </a>
+      </p>
+      <p class="mono" style="color:#4c5a66;margin-top:1.1vh">fixtergeek.com/seis-piezas &nbsp;·&nbsp; lo pego en el chat ahorita</p>
+    </div>
+
+    <!-- El PDF abierto: página izquierda con el título de la pieza, derecha con
+         su lista de revisión, y una hoja que se pasa sola cada tantos segundos. -->
+    <svg viewBox="0 0 560 430" class="pdf">
+      <g transform="rotate(-2 280 215)">
+        <g class="stack">
+          <!-- canto: las hojas de abajo asomando -->
+          <path d="M60 344 Q172 358 280 346 Q388 358 500 344" fill="none" stroke="#8E8B82" stroke-width="2.5"/>
+          <path d="M62 352 Q172 366 280 354 Q388 366 498 352" fill="none" stroke="#A9A69C" stroke-width="2.5"/>
+
+          <!-- páginas -->
+          <path d="M64 86 Q172 72 280 84 L280 342 Q172 354 64 340 Z" fill="#F4EFE5" stroke="#0B1014" stroke-width="2.5"/>
+          <path d="M280 84 Q388 72 496 86 L496 340 Q388 354 280 342 Z" fill="#EFEAE0" stroke="#0B1014" stroke-width="2.5"/>
+          <!-- sombra del lomo -->
+          <path d="M280 84 L280 342" stroke="#0B1014" stroke-width="2.5"/>
+          <path d="M268 88 L268 340" stroke="#D8D2C6" stroke-width="9"/>
+          <path d="M292 88 L292 340" stroke="#DCD6CA" stroke-width="9"/>
+
+          <!-- IZQUIERDA: barra de marca + título de la pieza -->
+          <g stroke-linecap="round">
+            <path d="M92 112 H140" stroke="#2E9C86" stroke-width="6"/>
+            <path d="M140 112 H166" stroke="#FFC46B" stroke-width="6"/>
+            <path d="M166 112 H180" stroke="#101820" stroke-width="6"/>
+            <path d="M92 150 H236" stroke="#1B242B" stroke-width="11"/>
+            <path d="M92 176 H192" stroke="#1B242B" stroke-width="11"/>
+            <path d="M92 214 H244" stroke="#9C9A92" stroke-width="4.5"/>
+            <path d="M92 230 H236" stroke="#9C9A92" stroke-width="4.5"/>
+            <path d="M92 246 H210" stroke="#9C9A92" stroke-width="4.5"/>
+            <!-- bloque de código, en oscuro como en el PDF -->
+            <rect x="92" y="266" width="152" height="52" rx="6" fill="#101820" stroke="none"/>
+            <path d="M104 284 H176" stroke="#85DDCB" stroke-width="4"/>
+            <path d="M104 300 H208" stroke="#4C5A66" stroke-width="4"/>
+          </g>
+
+          <!-- DERECHA: la lista de revisión, con sus casillas -->
+          <g class="rt" stroke-linecap="round">
+            <path d="M310 114 H388" stroke="#2E9C86" stroke-width="6"/>
+            <g fill="none" stroke="#2E9C86" stroke-width="3">
+              <rect x="310" y="146" width="15" height="15" rx="3.5"/>
+              <rect x="310" y="192" width="15" height="15" rx="3.5"/>
+              <rect x="310" y="238" width="15" height="15" rx="3.5"/>
+              <rect x="310" y="284" width="15" height="15" rx="3.5"/>
+            </g>
+            <g stroke="#9C9A92" stroke-width="4.5">
+              <path d="M340 154 H466"/><path d="M340 170 H418"/>
+              <path d="M340 200 H452"/><path d="M340 216 H404"/>
+              <path d="M340 246 H470"/>
+              <path d="M340 292 H440"/>
+            </g>
+            <!-- las dos primeras ya palomeadas -->
+            <path class="pk pk--1" d="M313 153 l4 5 l8 -10" fill="none" stroke="#5C9E3F" stroke-width="3.4"/>
+            <path class="pk pk--2" d="M313 199 l4 5 l8 -10" fill="none" stroke="#5C9E3F" stroke-width="3.4"/>
+          </g>
+
+          <!-- la hoja que se pasa: gira sobre el lomo -->
+          <g class="flip">
+            <path d="M280 84 Q388 72 496 86 L496 340 Q388 354 280 342 Z" fill="#F7F3EA" stroke="#0B1014" stroke-width="2.5"/>
+            <g stroke="#B9B5AC" stroke-width="4.5" stroke-linecap="round">
+              <path d="M310 150 H452"/><path d="M310 176 H420"/><path d="M310 202 H462"/>
+              <path d="M310 228 H398"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 15 · LOS TRES PATRONES DE LA INTERFAZ -->
+<section class="slide" data-t="36:00">
+  <span class="kicker">Tres reglas de la interfaz</span>
+  <h2>La interfaz <span class="mint">es</span> el sistema<br>para quien lo usa</h2>
+  <div class="grid4" style="grid-template-columns:1fr 1fr 1fr;margin-top:2vh">
+    <div class="card">
+      <h3 class="mint">Cuenta lo que hace</h3>
+      <p>Qué tarea trae, cuánto lleva, cómo detenerla y qué entregó al terminar.</p>
+    </div>
+    <div class="card">
+      <h3 class="mint">Un solo idioma</h3>
+      <p>El agente llama a esta herramienta:</p>
+      <p class="mono" style="color:#4c5a66;font-size:.85em;margin-top:.2em">mcp__easybits__generate_image</p>
+      <p style="margin-top:.4em">y en pantalla el usuario lee <strong class="grass">“Generando imagen”</strong>. Los nombres internos nunca salen a la interfaz.</p>
+    </div>
+    <div class="card">
+      <h3 class="mint">Nada de plumbing oculto</h3>
+      <p>Escondimos <code>Bash</code> y <code>Write</code> por “técnicos” y quedó un “Trabajando…” vacío. Si el trabajo es ese, mostrarlo <strong>es</strong> la interfaz.</p>
+    </div>
+  </div>
+  <p class="mono" style="color:#4c5a66;margin-top:1vh">patrones: github.com/BuilderIO/agent-native · MIT</p>
+</section>
+
+<!-- 16 · LA CURVA -->
+<section class="slide" data-t="38:00">
+  <div class="cols">
+    <div>
+      <span class="kicker">Hacia dónde va</span>
+      <h2>El cuello de botella<br>ya no es el modelo</h2>
+      <p style="margin-top:1.5vh">Hace unos años, darle libertad a un agente significaba volverlo impredecible. Cada mes esa frontera se recorre: los modelos aguantan tareas más largas y más ambiguas sin perderse.</p>
+      <p class="mint" style="margin-top:1vh"><strong>Lo que hoy limita a tu agente es lo que construiste alrededor del modelo.</strong></p>
+    </div>
+    <svg viewBox="0 0 480 340">
+      <g class="sk" fill="none" stroke="#44545F" stroke-width="2.5">
+        <path d="M60 290 H440 M60 290 V30"/>
+      </g>
+      <g class="sk" fill="none" stroke-width="3">
+        <path d="M70 100 C 150 105, 190 160, 200 280" stroke="#4c5a66"/>
+        <path d="M70 60  C 220 68, 330 150, 400 285" stroke="#85DDCB"/>
+      </g>
+      <text x="250" y="325" text-anchor="middle" font-size="16" fill="#B7B9BA">qué tanto decide solo →</text>
+      <!-- el rotate vive en el grupo: la animación define transform y lo cancelaría -->
+      <g transform="rotate(-90 34 175)">
+        <text x="34" y="175" text-anchor="middle" font-size="16" fill="#B7B9BA">qué tan confiable es →</text>
+      </g>
+      <text x="120" y="140" font-size="15" fill="#8b98a3">antes</text>
+      <text x="330" y="105" font-size="17" fill="#85DDCB" font-weight="700">hoy</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 16 · RECAP -->
+<section class="slide" data-t="39:00">
+  <span class="kicker">Recapitulando</span>
+  <h2>La anatomía completa</h2>
+  <svg viewBox="0 0 1000 320" style="margin-top:1vh">
+    <g class="sk" fill="none" stroke-width="2.5">
+      <rect x="20" y="20" width="960" height="280" rx="18" stroke="#44545F"/>
+      <circle cx="500" cy="160" r="58" fill="#182128" stroke="#85DDCB" stroke-width="3"/>
+    </g>
+    <text x="500" y="167" text-anchor="middle" font-size="18" font-weight="700">modelo</text>
+    <g class="sk" fill="#182128" stroke-width="2">
+      <rect x="60"  y="60"  width="180" height="60" rx="10" stroke="#85DDCB"/>
+      <rect x="60"  y="200" width="180" height="60" rx="10" stroke="#85DDCB"/>
+      <rect x="410" y="40"  width="180" height="52" rx="10" stroke="#8DCF6E"/>
+      <rect x="410" y="228" width="180" height="52" rx="10" stroke="#8DCF6E"/>
+      <rect x="760" y="60"  width="180" height="60" rx="10" stroke="#FFC46B"/>
+      <rect x="760" y="200" width="180" height="60" rx="10" stroke="#FFC46B"/>
+    </g>
+    <g text-anchor="middle" font-size="15" font-weight="700">
+      <text x="150" y="88">primitivas</text><text x="150" y="107" font-size="11.5" fill="#B7B9BA">prompts · tools · MCP</text>
+      <text x="150" y="228">contexto</text><text x="150" y="247" font-size="11.5" fill="#B7B9BA">filesystem · subagentes</text>
+      <text x="500" y="72">ejecución durable</text>
+      <text x="500" y="260">memoria</text>
+      <text x="850" y="88">auth</text><text x="850" y="107" font-size="11.5" fill="#B7B9BA">entrante · saliente · permisos</text>
+      <text x="850" y="228">interfaz</text><text x="850" y="247" font-size="11.5" fill="#B7B9BA">progreso · aprobaciones</text>
+    </g>
+    <g class="sk" fill="none" stroke="#44545F" stroke-width="2" opacity=".7">
+      <path d="M240 90 C 340 110, 400 130, 442 145"/>
+      <path d="M240 230 C 340 210, 400 190, 442 175"/>
+      <path d="M500 92 V 100"/><path d="M500 220 V 228"/>
+      <path d="M760 90 C 660 110, 600 130, 558 145"/>
+      <path d="M760 230 C 660 210, 600 190, 558 175"/>
+    </g>
+  </svg>
+</section>
+
+<!-- 17 · PITCH -->
+<section class="slide" data-t="40:00">
+  <div class="cols">
+    <div>
+      <span class="kicker">El taller</span>
+      <h2>Diseño de<br><span class="mint">sistemas agénticos</span></h2>
+      <p style="margin-top:1.5vh">Cuatro sesiones en vivo. Construyes tu propio agente personal, con las seis piezas de hoy — y te regalo la UI inicial desde la sesión 1.</p>
+      <p class="mono grass" style="margin-top:2vh;font-size:1.05rem">fixtergeek.com/sistemas-agenticos</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1.6vh">
+      <div class="card">
+        <h3 class="mint">Fechas</h3>
+        <p>Martes 1, jueves 3, martes 8 y jueves 10 de septiembre · 8:00 PM CDMX</p>
+      </div>
+      <div class="card">
+        <h3 class="mint">Primera edición</h3>
+        <p><span style="text-decoration:line-through">$3,490</span> &nbsp;<strong style="font-size:1.35em">$2,490 MXN</strong> · meses sin intereses</p>
+      </div>
+      <div class="card" style="border-color:var(--accent)">
+        <h3 class="grass">Solo para quien está aquí</h3>
+        <p>Cupón extra en el chat. Vence en 72 horas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 18 · Q&A -->
+<section class="slide" data-t="42:00">
+  <!-- El logo va tal cual, con un halo detrás. Nunca placa de fondo ni repintarlo. -->
+  <div class="fxg"><img src="logo.png" alt="FixterGeek"></div>
+  <h1>¿Preguntas?</h1>
+  <p class="lead" style="margin-top:1vh">Déjalas en el chat. También me escribes directo por WhatsApp.</p>
+  <p class="mono mint" style="margin-top:2vh;font-size:1.1rem">wa.me/527712412825</p>
+  <p class="mono" style="color:#4c5a66;margin-top:.6vh">fixtergeek.com/sistemas-agenticos</p>
+
+  <!-- Buzón: las preguntas llegan volando y alguien las recoge. Cuerpo claro para
+       que salte del fondo; los aviones viajan por `offset-path`, así que la curva
+       que se ve punteada es literalmente la que recorren. -->
+  <svg viewBox="0 0 900 300" class="qa" style="margin-top:1vh">
+    <!-- estelas -->
+    <g class="trail" fill="none" stroke="#2F3C46" stroke-width="2" stroke-dasharray="7 11">
+      <path d="M880 46 C 700 26, 520 82, 268 128"/>
+      <path d="M898 158 C 720 182, 520 196, 276 150"/>
+      <path d="M866 250 C 700 262, 500 232, 272 172"/>
+      <!-- las de salida: mismas curvas, al revés -->
+      <path d="M262 132 C 470 88, 670 58, 892 98" stroke="#31463F"/>
+      <path d="M268 170 C 480 214, 680 240, 890 212" stroke="#31463F"/>
+    </g>
+
+    <!-- suelo y matas -->
+    <g stroke="#3A4A44" stroke-width="3" stroke-linecap="round" fill="none">
+      <path d="M96 288 H316" stroke="#44545F"/>
+      <path d="M120 288 q-6 -18 2 -26 M132 288 q4 -20 14 -24 M262 288 q8 -16 18 -20 M286 288 q-4 -18 4 -24"/>
+    </g>
+    <!-- poste con veta -->
+    <g>
+      <rect x="196" y="196" width="26" height="94" rx="4" fill="#8C7A5E" stroke="#0B1014" stroke-width="3"/>
+      <path d="M204 208 V278 M214 204 V282" stroke="#6B5B44" stroke-width="2" opacity=".8"/>
+    </g>
+
+    <!-- buzón -->
+    <g class="box">
+      <path d="M126 200 V150 a58 52 0 0 1 116 0 V200 Z" fill="#E8E2D6" stroke="#0B1014" stroke-width="3.5" stroke-linejoin="round"/>
+      <!-- puertita del frente -->
+      <path d="M132 198 V152 a52 46 0 0 1 24 -37 V198 Z" fill="#DAD3C4" stroke="#0B1014" stroke-width="3"/>
+      <circle cx="147" cy="168" r="5.5" fill="#B7B9BA" stroke="#0B1014" stroke-width="2.5"/>
+      <!-- ranura -->
+      <rect x="176" y="128" width="58" height="11" rx="5.5" fill="#101820" stroke="#0B1014" stroke-width="2.5"/>
+      <!-- remaches -->
+      <g fill="#B7B9BA" stroke="#0B1014" stroke-width="1.8">
+        <circle cx="238" cy="160" r="3.6"/><circle cx="238" cy="188" r="3.6"/>
+      </g>
+      <!-- carta asomada -->
+      <g class="letter">
+        <path d="M186 128 L232 128 L232 96 L186 96 Z" fill="#F4EFE5" stroke="#0B1014" stroke-width="2.5"/>
+        <path d="M186 96 L209 112 L232 96" fill="none" stroke="#0B1014" stroke-width="2.5"/>
+      </g>
+      <!-- banderita: está arriba, hay correo -->
+      <g class="flag">
+        <path d="M246 196 V112" stroke="#0B1014" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M248 114 H286 L276 128 L286 142 H248 Z" fill="#FFC46B" stroke="#0B1014" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+    </g>
+
+    <!-- aviones de papel: cada uno viaja por su propia estela -->
+    <g class="plane p1" style="offset-path:path('M880 46 C 700 26, 520 82, 268 128')">
+      <g><path d="M0 0 L30 10 L0 20 L8 10 Z" fill="#F4EFE5" stroke="#0B1014" stroke-width="2.5" stroke-linejoin="round"/>
+         <path d="M8 10 L30 10" stroke="#0B1014" stroke-width="2" opacity=".55"/></g>
+    </g>
+    <g class="plane p2" style="offset-path:path('M898 158 C 720 182, 520 196, 276 150')">
+      <g><path d="M0 0 L26 9 L0 18 L7 9 Z" fill="#E8E2D6" stroke="#0B1014" stroke-width="2.5" stroke-linejoin="round"/>
+         <path d="M7 9 L26 9" stroke="#0B1014" stroke-width="2" opacity=".55"/></g>
+    </g>
+    <!-- de salida: las respuestas -->
+    <g class="plane out p4" style="offset-path:path('M262 132 C 470 88, 670 58, 892 98')">
+      <g><path d="M0 0 L28 10 L0 20 L8 10 Z" fill="#85DDCB" stroke="#0B1014" stroke-width="2.5" stroke-linejoin="round"/>
+         <path d="M8 10 L28 10" stroke="#0B1014" stroke-width="2" opacity=".55"/></g>
+    </g>
+    <g class="plane out p5" style="offset-path:path('M268 170 C 480 214, 680 240, 890 212')">
+      <g><path d="M0 0 L24 9 L0 18 L7 9 Z" fill="#FFC46B" stroke="#0B1014" stroke-width="2.5" stroke-linejoin="round"/>
+         <path d="M7 9 L24 9" stroke="#0B1014" stroke-width="2" opacity=".55"/></g>
+    </g>
+    <g class="plane p3" style="offset-path:path('M866 250 C 700 262, 500 232, 272 172')">
+      <g><path d="M0 0 L22 8 L0 16 L6 8 Z" fill="#85DDCB" stroke="#0B1014" stroke-width="2.5" stroke-linejoin="round"/>
+         <path d="M6 8 L22 8" stroke="#0B1014" stroke-width="2" opacity=".55"/></g>
+    </g>
+  </svg>
+</section>
+
+</div>
+
+<!-- APUNTES (tecla N) — escritos para que se puedan mostrar en pantalla sin pena:
+     amplían el tema para la audiencia en vez de dirigirte a ti. -->
+<div class="notes" data-for="1"><span class="t">Apunte</span><p>Un agente que funciona en una demo y uno que aguanta usuarios reales no se diferencian por el modelo. Se diferencian por todo lo que está construido alrededor. Eso es lo que vamos a desarmar hoy.</p></div>
+<div class="notes" data-for="2"><span class="t">Apunte</span><p>Las seis piezas de hoy son las mismas seis que sostienen a Claude Code, a Cursor y a cualquier agente serio que hayas usado. No es teoría: es el inventario de lo que hay que construir.</p></div>
+<div class="notes" data-for="3"><span class="t">Apunte · la ecuación</span><p>El modelo lo contratas por API y es el mismo que tiene tu competencia. El harness es tuyo: es donde vive tu producto, tu criterio y tu ventaja.</p><p>De ahí la frase: si no eres el modelo, eres el harness.</p></div>
+<div class="notes" data-for="4"><span class="t">Apunte · el dato</span><p>Medio millón de líneas que no entrenan nada, no razonan nada y no generan texto. Solo existen para que el modelo de abajo rinda mejor en tu tarea. Ese es el tamaño real del problema que estamos discutiendo.</p></div>
+<div class="notes" data-for="5"><span class="t">Apunte · primitivas</span><p>Seis familias de piezas. Los prompts son la interfaz con el modelo; las memorias, cómo aprende con el tiempo; las tools, sus manos; skills y MCP, capacidades que enchufas; los subagentes, contexto aislado; el middleware, la aduana antes y después de cada llamada.</p><p>Súmales la infraestructura que el agente toca: filesystem, sandbox, navegador.</p></div>
+<div class="notes" data-for="6"><span class="t">En pantalla</span><p>Un agente real, corriendo, con cada una de esas piezas señalada en el código. Nada de diagramas por un rato.</p></div>
+<div class="notes" data-for="7"><span class="t">Apunte · contexto</span><p>Manejar contexto no es gastar menos tokens: es decidir qué llega al modelo y qué no.</p><p>El filesystem funciona tan bien porque los modelos fueron entrenados con muchísimo código que lee y escribe archivos. Les das la información en el formato que mejor conocen.</p></div>
+<div class="notes" data-for="8"><span class="t">En pantalla</span><p>El agente escribe su plan a disco. Lo interrumpimos, lo retomamos, y sigue sabiendo dónde iba — sin que nada de eso ocupe lugar en la conversación.</p></div>
+<div class="notes" data-for="9"><span class="t">Apunte · producción</span><p>La infraestructura web normal supone peticiones de milisegundos. Un agente serio corre minutos u horas, falla a la mitad, necesita reanudarse y a veces necesita preguntarle algo a un humano. Nada de eso viene incluido.</p></div>
+<div class="notes" data-for="10"><span class="t">Apunte · ejecución durable</span><p>Entre más largo el proceso, más probable es que algo falle en el camino. La solución no es evitar el error, es guardar el estado en cada paso para no volver a pagar lo que ya se hizo.</p></div>
+<div class="notes" data-for="11"><span class="t">Apunte · memoria</span><p>Esos mismos puntos de guardado, encadenados, son la memoria de la sesión: por eso el agente recuerda lo que dijiste hace cinco mensajes.</p><p>Lo que quieres que sobreviva entre sesiones se extrae aparte. En MentorIA, por ejemplo, es tu perfil de práctica.</p></div>
+<div class="notes" data-for="12"><span class="t">Apunte · autenticación</span><p>Con una app tradicional, dar permiso una vez es seguro porque sabes exactamente qué va a hacer. Un agente con el mismo permiso puede hacer algo muy distinto la próxima vez.</p><p>Por eso hay que pensar tres capas por separado: quién le habla, a nombre de quién actúa y qué tanto puede hacer.</p></div>
+<div class="notes" data-for="13"><span class="t">Apunte · humano en el circuito</span><p>Hoy casi ninguna tarea importante corre completamente sola. El agente trabaja, se detiene en el punto delicado, un humano aprueba y continúa.</p><p>En Ghosty eso significa que el agente pide permiso antes de responderle a un cliente por el negocio.</p></div>
+<div class="notes" data-for="14"><span class="t">En pantalla</span><p>Un agente que corre varios minutos necesita contarte qué está haciendo: qué tarea trae, cuánto lleva, cómo detenerlo, qué entregó.</p><p>Es la pieza menos discutida y la que más decide si la gente confía en el agente o lo cierra.</p></div>
+<div class="notes" data-for="15"><span class="t">Apunte · la interfaz</span><p>Las tres reglas salen de patrones abiertos (BuilderIO/agent-native) y de equivocarnos en Ghosty Teams: esconder los comandos por parecer técnicos dejó una pantalla que solo decía "Trabajando…".</p></div>
+<div class="notes" data-for="16"><span class="t">Apunte · hacia dónde va</span><p>Hace unos años tenías que escoger: confiable pero rígido, o flexible pero impredecible. Esa frontera se mueve hacia afuera cada mes.</p><p>Lo que ya no escala solo es el harness. Ahí es donde queda trabajo humano por hacer.</p></div>
+<div class="notes" data-for="17"><span class="t">Apunte · resumen</span><p>Primitivas, contexto, ejecución durable, memoria, autenticación e interfaz. Seis piezas alrededor de un modelo que no escribiste.</p></div>
+<div class="notes" data-for="18"><span class="t">El taller</span><p>Cuatro sesiones en vivo para construir tu propio agente con estas seis piezas. La interfaz inicial te la doy hecha desde la primera sesión, para que el tiempo se vaya en el sistema y no en maquetar.</p></div>
+<div class="notes" data-for="19"><span class="t">Seguimos</span><p>Preguntas en el chat o por WhatsApp directo. La grabación de hoy llega a tu correo.</p></div>
+
+<div class="bar"><i></i></div>
+<div class="clock" id="clock">—:—  ·  T cronómetro · R reinicia · N apuntes</div>
+<div class="meta" id="meta"></div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var notes=[].slice.call(document.querySelectorAll('.notes'));
+  var i=0;
+
+  // el muro de marcas numera sus cápsulas solo, para que la cascada y el
+  // reflector no dependan de escribir el índice a mano en cada una
+  [].slice.call(document.querySelectorAll('.brands .brand')).forEach(function(el,n){
+    el.style.setProperty('--j', n);
+  });
+
+  // ── cronómetro: T arranca/pausa sin perder lo acumulado, R lo pone en cero ──
+  var tick=null, startedAt=0, accumulated=0;
+  var HINT='—:—  ·  T cronómetro · R reinicia · N apuntes';
+  function elapsed(){
+    return accumulated + (tick ? performance.now()-startedAt : 0);
+  }
+  function renderClock(){
+    var el=document.getElementById('clock');
+    if(!tick && !accumulated){ el.textContent=HINT; return }
+    var s=Math.floor(elapsed()/1000);
+    el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')
+      + (tick?'':' ⏸') + '  ·  '+slides[i].dataset.t;
+  }
+  function startClock(){ startedAt=performance.now(); tick=setInterval(renderClock,500); renderClock() }
+  function pauseClock(){ if(!tick) return; accumulated=elapsed(); clearInterval(tick); tick=null; renderClock() }
+
+  // Mide cada trazo para que se dibuje a su propia velocidad, no todos igual.
+  // Los textos y las cascadas se escalonan según su orden dentro del diagrama.
+  function prepare(slide){
+    var shapes=[].slice.call(slide.querySelectorAll('svg path, svg rect, svg circle'));
+    shapes.forEach(function(el,n){
+      var stroke=getComputedStyle(el).stroke;
+      var hasStroke=stroke && stroke!=='none' && stroke!=='rgba(0, 0, 0, 0)';
+      if(hasStroke && el.getTotalLength){
+        var len=Math.ceil(el.getTotalLength());
+        el.style.strokeDasharray=len;
+        el.style.setProperty('--len',len);
+      }
+      // data-delay fija el momento a mano cuando el orden del documento no basta
+      // (ej. la punta de una flecha, que debe llegar cuando el trazo ya terminó)
+      el.style.animationDelay=(el.dataset.delay ? +el.dataset.delay : 0.34+n*0.055)+'s';
+      // trazos largos tardan más en dibujarse: se siente como una mano
+      el.style.animationDuration=(0.75+Math.min(0.9,(parseFloat(el.style.getPropertyValue('--len'))||400)/1400))+'s';
+    });
+    [].slice.call(slide.querySelectorAll('svg text')).forEach(function(el,n){
+      el.style.animationDelay=(0.72+n*0.035)+'s';
+    });
+  }
+
+  function render(){
+    var cur=slides[i];
+    // display:none corta las animaciones; al volver a mostrarla arrancan solas.
+    slides.forEach(function(s,n){s.classList.remove('on')});
+    prepare(cur);
+    void cur.offsetWidth;
+    cur.classList.add('on');
+    notes.forEach(function(n){n.classList.toggle('cur',+n.dataset.for===i+1)});
+    document.querySelector('.bar i').style.width=((i+1)/slides.length*100)+'%';
+    document.getElementById('meta').textContent=
+      (i+1)+' / '+slides.length+'  ·  '+slides[i].dataset.t;
+    renderClock();
+    location.hash=i+1;
+  }
+  var moving=false;
+  function go(d){
+    if(moving) return;
+    var prev=i, next=Math.max(0,Math.min(slides.length-1,i+d));
+    if(next===prev) return;
+    moving=true;
+    var out=slides[prev];
+    out.classList.remove('on');
+    out.classList.toggle('back',d<0);
+    out.classList.add('out');
+    // la siguiente entra cuando la anterior ya terminó de salir
+    setTimeout(function(){
+      out.classList.remove('out','back');
+      i=next;
+      render();
+      moving=false;
+    },220);
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(-1)}
+    else if(e.key==='Home'){i=0;render()}
+    else if(e.key==='End'){i=slides.length-1;render()}
+    else if(e.key.toLowerCase()==='n'){document.body.classList.toggle('notes-on')}
+    else if(e.key.toLowerCase()==='f'){
+      document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+    // T arranca y pausa sin perder lo acumulado. R lo pone en cero.
+    else if(e.key.toLowerCase()==='t'){ tick?pauseClock():startClock() }
+    else if(e.key.toLowerCase()==='r'){ pauseClock(); accumulated=0; renderClock() }
+  });
+  /* Un click en un link (el botón de descarga) abre el link y NADA MÁS: si además
+     avanzara, el regalo se lo lleva la siguiente diapositiva. */
+  document.addEventListener('click',function(e){
+    if(e.target.closest('.notes') || e.target.closest('a')) return;
+    go(1);
+  });
+
+  var h=parseInt(location.hash.slice(1),10);
+  if(h>0&&h<=slides.length) i=h-1;
+  render();
+})();
+</script>
+</body>
+</html>

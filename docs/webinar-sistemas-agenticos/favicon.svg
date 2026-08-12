@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -4 266 216">
+  <style>
+    .ink{fill:#19262A} .green{fill:#37AB93} .mint{fill:#A9DCD0}
+  </style>
+  <!-- solo la cabeza del robot de la portada: a 16px el cuerpo entero es una mancha -->
+  <rect class="mint" x="112" y="18" width="16" height="34" rx="8"/>
+      <circle class="green antena" cx="120" cy="14" r="16"/>
+      <rect class="green" x="-6" y="96" width="20" height="44" rx="10"/>
+      <rect class="green" x="226" y="96" width="20" height="44" rx="10"/>
+      <rect class="mint" x="10" y="44" width="220" height="150" rx="44"/>
+      <rect class="ink" x="38" y="72" width="164" height="94" rx="42"/>
+      <circle class="green eye" cx="88" cy="112" r="18"/>
+      <circle class="green eye" cx="152" cy="112" r="18"/>
+      <rect class="green" x="100" y="142" width="40" height="10" rx="5"/>
+</svg>
