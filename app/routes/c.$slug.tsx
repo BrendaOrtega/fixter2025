@@ -253,7 +253,12 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0E1317] pb-24 pt-28 text-zinc-100">
       {done && <EmojiConfetti emojis={["📬", "✨", "🚀"]} />}
-      {justJoined && <EmojiConfetti emojis={["🎉", "🤖", "🚀", "✨", "👾"]} />}
+      {justJoined && (
+        <EmojiConfetti
+          emojiSize={70}
+          emojis={["🥳", "🪅", "🎊", "🪩", "🍾", "🎈", "🌈", "🦜", "🍭", "🫶"]}
+        />
+      )}
 
       {/* grid de fondo con drift animado */}
       <motion.div
