@@ -24,7 +24,7 @@ export const successPurchase = async ({
   // compra nunca salía: el error moría en el try/catch del cumplimiento.
   return sendgridTransport()
     .sendMail({
-      from: "NotiBot de Fixtergeek <contacto@fixter.org>",
+      from: "NotiBot de Fixtergeek <contacto@fixtergeek.com>",
       subject: "👾¡Una compra en fixtergeek.com!🤖",
       bcc: ["contacto@fixter.org", "brenda@fixter.org"],
       html: `

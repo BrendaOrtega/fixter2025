@@ -8,9 +8,12 @@ const location = isDev ? "http://localhost:3000" : "https://www.fixtergeek.com";
 export const sendWelcome = async (email: string) => {
   // generate token
   const token = generateUserToken({ email });
-  return sendgridTransport
+  // `sendgridTransport` es una función que construye el transport; sin
+  // invocarla, `.sendMail` es undefined y esto nunca llegó a mandar nada.
+  return sendgridTransport()
     .sendMail({
-      from: "Fixtergeek <contacto@fixter.org>",
+      from: "Fixtergeek <contacto@fixtergeek.com>",
+      replyTo: "contacto@fixter.org",
       subject: "👾¡En hora buena!🤖",
       bcc: [email],
       html: welcomeTemplate({

@@ -29,9 +29,12 @@ export const sendConfirmation = (email: string, tags?: string[]) => {
   url.pathname = "/login";
   url.searchParams.set("token", token);
 
-  return sendgridTransport
+  // `sendgridTransport` es una función que construye el transport; sin
+  // invocarla, `.sendMail` es undefined y esto nunca llegó a mandar nada.
+  return sendgridTransport()
     .sendMail({
-      from: "contacto@fixter.org",
+      from: "Fixtergeek <contacto@fixtergeek.com>",
+      replyTo: "contacto@fixter.org",
       subject: "👽 Confirmando que eres humano 🤖",
       bcc: [email],
       html: confirmation({ link: url.toString() }),

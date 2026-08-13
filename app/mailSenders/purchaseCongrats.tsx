@@ -10,9 +10,12 @@ export const purchaseCongrats = async ({
   courseSlug: string;
 }) => {
   const link = `${process.env.BASE_URL || "https://www.fixtergeek.com"}/cursos/${courseSlug}/viewer`;
-  return sendgridTransport.sendMail({
+  // `sendgridTransport` es una función que construye el transport; sin
+  // invocarla, `.sendMail` es undefined y esto nunca llegó a mandar nada.
+  return sendgridTransport().sendMail({
     subject: "🎉¡Gracias por tu compra!🥳",
-    from: "contacto@fixter.org",
+    from: "Fixtergeek <contacto@fixtergeek.com>",
+    replyTo: "contacto@fixter.org",
     bcc: [to],
     html: `
     <html>

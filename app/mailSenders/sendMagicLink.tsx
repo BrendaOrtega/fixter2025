@@ -14,9 +14,12 @@ export const sendMagicLink = async (data: {
   const location = isDev
     ? "http://localhost:3000"
     : "https://www.fixtergeek.com";
-  return sendgridTransport
+  // Se invoca: `sendgridTransport` es un alias de `getSesTransport`, o sea una
+  // función que construye el transport, no el transport.
+  return sendgridTransport()
     .sendMail({
-      from: "contacto@fixter.org",
+      from: "Fixtergeek <contacto@fixtergeek.com>",
+      replyTo: "contacto@fixter.org",
       subject: "👾¡Inicia sesión en Fixtergeek!🤖",
       bcc: [data.email],
       html: magicLinkTemplate({
