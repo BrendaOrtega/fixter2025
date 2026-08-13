@@ -19,6 +19,7 @@ const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
   { name: "Pong gratis", link: "/pong" },
+  { name: "Comunidad", link: "/c/agentes" },
   {
     name: "Sistemas agénticos",
     link: "/sistemas-agenticos",
@@ -329,8 +330,16 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/sistemas-agenticos"
+          to="/c/agentes"
           index={5}
+          isOpen={isOpen}
+          title="Comunidad"
+        />
+        <NavItem
+          onClick={toggleMenu}
+          as="Link"
+          to="/sistemas-agenticos"
+          index={6}
           isOpen={isOpen}
           title="Sistemas agénticos"
         />
@@ -339,7 +348,7 @@ const MobileMenu = ({
             <NavItem
               as="Link"
               to="/mis-cursos"
-              index={6}
+              index={7}
               isOpen={isOpen}
               title="Mis cursos"
             />
@@ -348,7 +357,7 @@ const MobileMenu = ({
               to="/logout"
               reloadDocument
               as="Link"
-              index={7}
+              index={8}
               isOpen={isOpen}
               title="Cerrar sesión"
             />
@@ -358,7 +367,7 @@ const MobileMenu = ({
             onClick={toggleMenu}
             as="Link"
             to="/login"
-            index={6}
+            index={7}
             isOpen={isOpen}
             title="Iniciar sesión"
             className="text-3xl my-4 font-light "
