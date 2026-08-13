@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"></head>
+<body style="margin:0;padding:0;background:#0B1114;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">El hook es el lugar. El guardrail es la regla.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0B1114;padding:24px 0;">
+  <tr><td align="center">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#121D21;border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">
+      <tr><td style="padding:28px 32px 0 32px;">
+        <img alt="FixterGeek" width="150" src="https://i.imgur.com/mpzZhT9.png" style="width:150px;display:block;border:0;" />
+      </td></tr>
+      <tr><td style="padding:16px 32px 32px 32px;color:#E8F1EF;font-size:16px;line-height:1.6;">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px 0;">
+  <tr><td style="padding-bottom:8px;color:#8FA5A9;font-size:12px;letter-spacing:0.5px;text-transform:uppercase;font-weight:bold;">Preparación · 3 de 5</td></tr>
+  <tr><td>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#85DDCB;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#85DDCB;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#85DDCB;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#223035;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#223035;border-radius:3px;">&nbsp;</td></tr></table>
+  </td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;">
+<tr><td style="padding-bottom:8px;color:#85DDCB;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;">Preparación para el taller</td></tr>  <tr><td style="color:#E8F1EF;font-size:26px;line-height:1.25;font-weight:bold;">La regla que tu agente puede ignorar</td></tr>
+</table>
+
+<p style="margin:0 0 14px;">Hola Geek 👋🏼</p>
+
+<p style="margin:0 0 16px;">Escribes una regla en el system prompt y el modelo la lee, la considera y luego la ignora. Estos dos minutos son sobre cómo obligarlo a obedecer. 🎬</p>
+
+{{video}}
+
+<p style="margin:0 0 6px;">Te dejo lo que prometí: el mismo guardrail —bloquear un <code style="background:#0F191D;padding:1px 5px;border-radius:3px;color:#85DDCB;">rm -rf</code>— escrito para tres arneses distintos.</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 10px 0;">
+  <tr><td style="padding-bottom:6px;color:#85DDCB;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">Claude Code</td></tr>
+  <tr><td style="background:#0F191D;border-left:3px solid #E08236;border-radius:0 8px 8px 0;padding:12px 14px;">
+    <pre style="margin:0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:#E8F1EF;white-space:pre-wrap;"><span style="color:#5F7378;">// .claude/settings.json</span>
+<span style="color:#F5C542;">"PreToolUse"</span>: [{ <span style="color:#F5C542;">"matcher"</span>: <span style="color:#85DDCB;">"Bash"</span>,
+  <span style="color:#F5C542;">"hooks"</span>: [{ <span style="color:#F5C542;">"command"</span>: <span style="color:#85DDCB;">"./guard.sh"</span> }] }]
+
+<span style="color:#5F7378;"># guard.sh · exit 2 bloquea la llamada</span>
+<span style="color:#AA99E6;">grep</span> -q <span style="color:#85DDCB;">'rm -rf'</span> &amp;&amp; <span style="color:#E08236;">exit 2</span></pre>
+  </td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px 0;">
+  <tr><td style="padding-bottom:6px;color:#85DDCB;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">LangChain · LangGraph</td></tr>
+  <tr><td style="background:#0F191D;border-left:3px solid #74DCF4;border-radius:0 8px 8px 0;padding:12px 14px;">
+    <pre style="margin:0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:#E8F1EF;white-space:pre-wrap;"><span style="color:#AA99E6;">class</span> Guard(AgentMiddleware):
+  <span style="color:#AA99E6;">def</span> <span style="color:#F5C542;">wrap_tool_call</span>(self, req, handler):
+    <span style="color:#AA99E6;">if</span> <span style="color:#85DDCB;">"rm -rf"</span> <span style="color:#AA99E6;">in</span> str(req.tool_call[<span style="color:#85DDCB;">"args"</span>]):
+      <span style="color:#AA99E6;">return</span> <span style="color:#85DDCB;">"Bloqueado."</span>
+    <span style="color:#AA99E6;">return</span> handler(req)</pre>
+  </td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;">
+  <tr><td style="padding-bottom:6px;color:#85DDCB;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">OpenAI Agents SDK</td></tr>
+  <tr><td style="background:#0F191D;border-left:3px solid #8DCF6E;border-radius:0 8px 8px 0;padding:12px 14px;">
+    <pre style="margin:0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:#E8F1EF;white-space:pre-wrap;"><span style="color:#AA99E6;">class</span> Guard(RunHooks):
+  <span style="color:#AA99E6;">async def</span> <span style="color:#F5C542;">on_tool_start</span>(self, ctx, agent, tool):
+    <span style="color:#AA99E6;">if</span> tool.name == <span style="color:#85DDCB;">"bash"</span>:
+      <span style="color:#AA99E6;">raise</span> <span style="color:#E08236;">Tripwire</span>(<span style="color:#85DDCB;">"Bloqueado."</span>)</pre>
+  </td></tr>
+</table>
+
+<p style="margin:0 0 16px;">En el taller escribiremos los nuestros: el que valida antes de tocar disco, el que registra cada llamada y el que corta el loop cuando se sale de presupuesto. 🪝🛡️🤖</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;">
+  <tr><td height="1" style="height:1px;background:#223035;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px 0;">
+  <tr><td style="color:#8FA5A9;font-size:14px;line-height:1.5;">
+    <strong style="color:#E8F1EF;">En el siguiente correo:</strong><br/><span style="color:#85DDCB;">En 1 día</span> · Cuánto cuesta de verdad un agente.
+  </td></tr>
+</table>
+
+<p style="margin:18px 0 0;color:#8FA5A9;font-size:14px;">Abrazo. bliss.</p>
+
+      </td></tr>
+      <tr><td style="padding:14px 32px;background:#19262A;color:#7e9499;font-size:11px;line-height:1.5;text-align:center;">
+        Enviado con <strong style="color:#85DDCB;">Secuencias</strong> · FixterGeek<br/>
+        <a href="{{unsubscribe}}" style="color:#7e9499;text-decoration:underline;">Cancelar suscripción</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

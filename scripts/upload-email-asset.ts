@@ -28,6 +28,9 @@ const CONTENT_TYPES: Record<string, string> = {
   ".gif": "image/gif",
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
+  // Los videos de la secuencia viven en el mismo bucket público: el feed
+  // /s/video los reproduce directo desde esta URL.
+  ".mp4": "video/mp4",
 };
 
 function arg(name: string): string | undefined {

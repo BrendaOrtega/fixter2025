@@ -12,7 +12,7 @@ Editor: https://www.fixtergeek.com/secuencias/6a7a496344caa1db8e558fc3
 |---|--------|--------|-------|--------|
 | 1 | El loop del agente | 0 d | `sesion-01-el-loop` | escrito |
 | 2 | El ZIP de 113 MB que tumbó al bot | 1 d | `sesion-02-el-escritorio` | escrito |
-| 3 | Qué NO va en el historial | 2 d | — | **vacío** |
+| 3 | La regla que tu agente puede ignorar | 2 d | `sesion-03-los-hooks` | escrito |
 | 4 | Cuánto cuesta de verdad un agente | 1 d | — | **vacío** |
 | 5 | Lo que vas a construir | 2 d | — | **vacío** |
 
@@ -22,8 +22,18 @@ retraso empuja el resto del calendario de esa persona.
 
 ## Inscritos
 
-- `nitram-210397@hotmail.com` (Martín, única compra del taller) — inscrito el 11
-  de agosto. Correo 1 enviado ese día; el 2 sale el 12.
+- `martin.melo.dev.97@gmail.com` (Martín Melo, única compra del taller).
+  **Corregido el 13 de agosto.** Se había inscrito con `nitram-210397@hotmail.com`,
+  la dirección que quedó en el `PurchaseEvent`; su compra fue un caso especial
+  por forma de pago y él pidió directamente el cambio de correo. El acceso al
+  curso vive en el gmail. Los correos 1 y 2 se entregaron al hotmail y **nunca
+  se abrieron** (`opened` y `clicked` vacíos), así que la inscripción se
+  rebobinó al índice 0 para que reciba la secuencia completa desde el correo 1.
+
+  El subscriber del hotmail no se pudo renombrar (ya existía uno con el gmail y
+  el email es único): se reapuntó `subscriberId` en la inscripción y se
+  limpiaron las métricas del envío equivocado. Script:
+  `scripts/fix-martin-enrollment.ts`.
 - `fixtergeek@gmail.com` — inscripción de prueba, `paused` y con el índice al
   final. El cron no la toca.
 
@@ -36,7 +46,15 @@ videos/sesion-01-el-loop.mp4
 videos/sesion-02-el-escritorio.mp4
 videos/posters/sesion-02-el-escritorio.jpg        (vertical, para el feed)
 videos/posters/sesion-02-el-escritorio-wide.jpg   (1200x675, para la card del correo)
+videos/sesion-03-los-hooks.mp4
+videos/posters/sesion-03-los-hooks-v2.jpg         (vertical, para el feed)
+videos/posters/sesion-03-los-hooks-wide-v2.jpg    (1200x675, para la card del correo)
 ```
+
+El `-v2` de los pósters de la sesión 3 no es capricho: los primeros se generaron
+con un titular que después cambió, y las keys se suben inmutables con caché de
+un año. Pisar una key ya publicada deja copias viejas en los proxies, así que se
+versiona el nombre y se actualiza el registro `Video`.
 
 El registro `Video` necesita `posterWide`: `renderSequenceEmail` lo prefiere
 sobre `poster` porque el vertical se come la pantalla en un correo de 600 px.
