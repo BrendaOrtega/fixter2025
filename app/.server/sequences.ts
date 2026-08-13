@@ -176,10 +176,13 @@ export type RenderableSequenceEmail = {
 export async function renderSequenceEmail({
   email,
   enrollmentId,
+  emailId,
   baseUrl: base = baseUrl,
 }: {
   email: RenderableSequenceEmail;
   enrollmentId: string;
+  /** Correo del que sale el enlace: abre el feed en SU pieza, no en la última. */
+  emailId?: string;
   baseUrl?: string;
 }): Promise<{
   subject: string;
@@ -191,9 +194,20 @@ export async function renderSequenceEmail({
   let videoUrl: string | null = null;
 
   if (email.videoSlug) {
+    // Se firma también el par (secuencia, suscriptor) para que el enlace
+    // sobreviva a que el enrollment se recree con otro id.
+    const owner = await db.sequenceEnrollment.findUnique({
+      where: { id: enrollmentId },
+      select: { sequenceId: true, subscriberId: true },
+    });
+    // Sin ?v= el feed abre en la última pieza desbloqueada, que en una
+    // secuencia avanzada es un correo posterior: el lector llega a un video
+    // que no es el que acaba de recibir, y de paso se spoilea.
+    const target = emailId && emailId !== "draft" ? `&v=${emailId}` : "";
     videoUrl = `${base}/s/video?token=${generateSequenceVideoToken(
-      enrollmentId
-    )}`;
+      enrollmentId,
+      owner ?? undefined
+    )}${target}`;
 
     const video = await db.video.findUnique({
       where: { slug: email.videoSlug },
@@ -251,6 +265,7 @@ export async function sendSequenceEmail({
   const { subject, html, unsubscribeUrl } = await renderSequenceEmail({
     email,
     enrollmentId,
+    emailId,
   });
 
   const result = await sendSESTEST(to, {

@@ -24,8 +24,21 @@ import { motion } from "motion/react";
 export const meta = ({ data, location }: Route.MetaArgs) => {
   const { post } = data;
   const url = `https://www.fixtergeek.com${location.pathname}`;
-  const description = post.body?.replace(/[#*`]/g, "").slice(0, 155) + "...";
-  const keywords = [post.mainTag, ...(post.tags ?? [])]
+  // Si el post no trae metaDescription, se recorta el body sin partir palabras.
+  const description =
+    post.metaDescription?.trim() ||
+    (() => {
+      const plain = (post.body ?? "")
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // imágenes
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // links → su texto
+        .replace(/[#*`>]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (plain.length <= 155) return plain;
+      const cut = plain.slice(0, 155);
+      return cut.slice(0, cut.lastIndexOf(" ")) + "...";
+    })();
+  const keywords = [...new Set([post.mainTag, ...(post.tags ?? [])])]
     .filter(Boolean)
     .join(", ");
 
@@ -33,6 +46,10 @@ export const meta = ({ data, location }: Route.MetaArgs) => {
     title: `${post.title} | Fixtergeek`,
     description,
     image: post.metaImage || post.coverImage || undefined,
+    // Los metaImage de posts son 1200x630 por convención; sin esto se heredan
+    // los 700x467 de cover.png y WhatsApp descarta la miniatura.
+    imageWidth: 1200,
+    imageHeight: 630,
     url,
     type: "article",
     keywords: keywords || undefined,

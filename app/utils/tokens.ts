@@ -241,14 +241,24 @@ export const validateCommunitySubscribeToken = (
 // Token para ver videos de una secuencia (gating por avance del suscriptor)
 // ==========================================
 
+// El enrollmentId identifica; sequenceId y subscriberId son el respaldo. Un
+// enrollment puede desaparecer (baja y realta, limpieza, cascada al borrar el
+// subscriber) y con solo el id todos los links ya enviados mueren para siempre:
+// el correo vive 90 días en la bandeja, la fila de la base no necesariamente.
 export type SequenceVideoTokenData = {
   enrollmentId: string;
+  sequenceId?: string;
+  subscriberId?: string;
   action: "sequence-video";
 };
 
-export const generateSequenceVideoToken = (enrollmentId: string): string => {
+export const generateSequenceVideoToken = (
+  enrollmentId: string,
+  fallback?: { sequenceId: string; subscriberId: string }
+): string => {
   const data: SequenceVideoTokenData = {
     enrollmentId,
+    ...fallback,
     action: "sequence-video",
   };
   return jwt.sign(data, process.env.SECRET || "fixtergeek", {

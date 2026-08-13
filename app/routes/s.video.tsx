@@ -51,10 +51,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Identidad: token de la URL (y set cookie) o la cookie existente.
   let enrollmentId: string | undefined;
   let setCookie: string | undefined;
+  // Par (secuencia, suscriptor) del token: rescata el enlace cuando el
+  // enrollment que firmó ya no existe pero el suscriptor sigue inscrito.
+  let fallbackOwner: { sequenceId: string; subscriberId: string } | undefined;
   if (token) {
     const { isValid, decoded } = validateSequenceVideoToken(token);
     if (isValid && decoded) {
       enrollmentId = decoded.enrollmentId;
+      if (decoded.sequenceId && decoded.subscriberId) {
+        fallbackOwner = {
+          sequenceId: decoded.sequenceId,
+          subscriberId: decoded.subscriberId,
+        };
+      }
       setCookie = await accessCookie.serialize({ enrollmentId });
     }
   }
@@ -69,14 +78,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  const enrollment = await db.sequenceEnrollment.findUnique({
+  const withSequence = {
+    sequence: { include: { emails: { orderBy: { order: "asc" as const } } } },
+  };
+  let enrollment = await db.sequenceEnrollment.findUnique({
     where: { id: enrollmentId },
-    include: {
-      sequence: { include: { emails: { orderBy: { order: "asc" } } } },
-    },
+    include: withSequence,
   });
+  // El enrollment del token murió: si el token trae el par (secuencia,
+  // suscriptor) y esa persona sigue inscrita, el enlace se rescata.
+  if (!enrollment && fallbackOwner) {
+    enrollment = await db.sequenceEnrollment.findUnique({
+      where: { sequenceId_subscriberId: fallbackOwner },
+      include: withSequence,
+    });
+    if (enrollment) {
+      setCookie = await accessCookie.serialize({ enrollmentId: enrollment.id });
+    }
+  }
   if (!enrollment) {
-    return data({ ok: false as const, error: "No encontramos tu suscripción." });
+    return data({
+      ok: false as const,
+      error:
+        "Este enlace ya no está ligado a una suscripción activa. Si sigues inscrito, abre el video desde el correo más reciente.",
+    });
   }
 
   const emails = enrollment.sequence.emails;
@@ -155,11 +180,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   slides.push({ kind: "outro", emailId: "outro", title: "El taller" });
 
-  // ?v=<emailId> manda; si no, la última pieza desbloqueada.
-  const lastUnlocked = slides.reduce(
+  // ?v=<emailId> manda; si no, la primera pieza que esta persona NO ha visto.
+  //
+  // Antes el default era la última desbloqueada, y eso mandaba a quien abría el
+  // correo 1 directo al video más avanzado que tuviera disponible: no era el
+  // video que acababa de recibir, y le spoileaba la secuencia. Los correos ya
+  // enviados no llevan ?v=, así que este default es lo único que los rescata.
+  const watched = new Set(enrollment.videosWatched ?? []);
+  const firstUnwatched = slides.findIndex(
+    (slide) => slide.kind === "video" && !watched.has(slide.slug)
+  );
+  const lastVideo = slides.reduce(
     (acc, slide, i) => (slide.kind === "video" ? i : acc),
     0
   );
+  // Todo visto: la última pieza, que es donde se quedó.
+  const lastUnlocked = firstUnwatched >= 0 ? firstUnwatched : lastVideo;
   const requested = selectedEmailId
     ? slides.findIndex((slide) => slide.emailId === selectedEmailId)
     : -1;

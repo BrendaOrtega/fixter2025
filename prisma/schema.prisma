@@ -379,6 +379,7 @@ model Post {
   photoUrl     String?
   isFeatured   Boolean? @default(false)
   metaImage    String?
+  metaDescription String? // Resumen para og/twitter; si falta se recorta el body
   youtubeLink  String?
   authorAtLink String?
 
