@@ -3,7 +3,9 @@
  * Inscribe manualmente a un comprador en la secuencia de preparación.
  *
  * Para los que ya compraron antes de que existiera la secuencia; los nuevos
- * entran solos por el webhook una vez que PREPARACION_SEQUENCE_ID esté seteada.
+ * entran solos: la secuencia está listada en el Product `sistemas-agenticos-workshop`
+ * y el webhook la inscribe al cumplir la compra (scripts/create-sistemas-product.ts).
+ * Esto queda para inscribir a alguien a mano cuando haga falta.
  *
  * Exige --confirm porque manda correo de verdad a un cliente real:
  *

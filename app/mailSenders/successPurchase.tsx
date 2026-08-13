@@ -19,7 +19,10 @@ export const successPurchase = async ({
   meta,
 }: FunctionProps) => {
   const date = new Date().toLocaleDateString();
-  return sendgridTransport
+  // `sendgridTransport` es un alias de `getSesTransport`, o sea una FUNCIÓN que
+  // devuelve el transport. Sin invocarla, `.sendMail` no existe y el aviso de
+  // compra nunca salía: el error moría en el try/catch del cumplimiento.
+  return sendgridTransport()
     .sendMail({
       from: "NotiBot de Fixtergeek <contacto@fixter.org>",
       subject: "👾¡Una compra en fixtergeek.com!🤖",

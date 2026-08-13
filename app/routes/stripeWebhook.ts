@@ -13,18 +13,8 @@ import { sendAisdkWelcome } from "~/mailSenders/sendAisdkWelcome";
 import { sendAisdkWebinarConfirmation } from "~/mailSenders/sendAisdkWebinarConfirmation";
 import { sendAisdkTaller1Welcome } from "~/mailSenders/sendAisdkTaller1Welcome";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
-import { sendSistemasWelcome } from "~/mailSenders/sendSistemasWelcome";
-import { enrollSubscriberInSequence } from "~/.server/sequences";
 import type { BookSlug } from "~/.server/services/book-access.server";
 import { grantCredits, type PackageKey } from "~/.server/services/coach-credits.server";
-
-// Secuencia "Taller Sistemas Agénticos — 1ª edición" (scripts/create-sistemas-sequence.ts)
-const SISTEMAS_SEQUENCE_ID = "6a790319d7dfe60e8edcb5cd";
-
-// Secuencia de preparación (delays relativos a la compra). Detrás de env var
-// para poder desplegarla apagada: sin la variable esto es un no-op, y se
-// enciende seteándola en producción, sin tocar código.
-const PREPARACION_SEQUENCE_ID = process.env.PREPARACION_SEQUENCE_ID || "";
 
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -120,90 +110,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // ============================================================
       // CURSOS ON-DEMAND - El único flujo de compra activo
       // Talleres/webinars van a lista de espera (manejado en landing pages)
+      //
+      // Lo de abajo es la versión vieja: un if por producto. El taller de
+      // sistemas agénticos ya salió de aquí y vive como Product; estos bloques
+      // se van borrando conforme cada uno gane el suyo.
       // ============================================================
-
-      // Taller Diseño de sistemas agénticos: acceso al curso (grabaciones) +
-      // bienvenida dedicada + inscripción a la secuencia de seguimiento.
-      if (session.metadata.type === "sistemas-agenticos-workshop") {
-        const userName =
-          session.customer_details?.name || session.metadata.name;
-
-        // Acceso al viewer: mismo patrón que el bloque unificado de cursos
-        const course = await db.course.findUnique({
-          where: { slug: "sistemas-agenticos" },
-        });
-        if (course) {
-          await db.user.upsert({
-            where: { email },
-            create: {
-              email,
-              username: email,
-              displayName: userName,
-              phoneNumber: session.customer_details?.phone || undefined,
-              courses: [course.id],
-              tags: ["newsletter"],
-              confirmed: true,
-              role: "STUDENT",
-            },
-            update: {
-              courses: { push: course.id },
-              displayName: userName || undefined,
-            },
-          });
-        } else {
-          console.error("WEBHOOK: curso sistemas-agenticos no encontrado");
-        }
-
-        const subscriber = await db.subscriber.upsert({
-          where: { email },
-          create: {
-            email,
-            name: userName || undefined,
-            confirmed: true,
-            tags: ["sistemas-agenticos-paid"],
-          },
-          update: {
-            name: userName || undefined,
-            tags: { push: ["sistemas-agenticos-paid"] },
-          },
-        });
-
-        // Ningún envío debe tumbar el webhook: Stripe reintentaría y
-        // duplicaría efectos (curso re-push, correos dobles).
-        try {
-          await enrollSubscriberInSequence(SISTEMAS_SEQUENCE_ID, subscriber.id);
-        } catch (error) {
-          console.error("WEBHOOK: error al inscribir a secuencia:", error);
-        }
-        if (PREPARACION_SEQUENCE_ID) {
-          try {
-            await enrollSubscriberInSequence(
-              PREPARACION_SEQUENCE_ID,
-              subscriber.id
-            );
-          } catch (error) {
-            console.error("WEBHOOK: error al inscribir a preparación:", error);
-          }
-        }
-        try {
-          await sendSistemasWelcome({ to: email, userName });
-        } catch (error) {
-          console.error("WEBHOOK: error en welcome sistemas:", error);
-        }
-        try {
-          await successPurchase({
-            userName: userName || "Sin nombre",
-            userMail: email,
-            title: "Taller: Diseño de sistemas agénticos",
-            slug: "sistemas-agenticos",
-          });
-        } catch (error) {
-          console.error("WEBHOOK: error en successPurchase sistemas:", error);
-        }
-
-        console.info("WEBHOOK: sistemas-agenticos success");
-        return new Response(null);
-      }
 
       // Handle AI SDK Curso On-Demand - crea User con acceso al curso de videos
       if (session.metadata.type === "aisdk-curso-ondemand") {

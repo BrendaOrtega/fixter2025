@@ -155,7 +155,9 @@ async function main() {
   console.log(`   sequenceId: ${sequence.id}`);
   console.log(`   email ${saved.order}: "${saved.subject}" (${html.length} bytes)`);
   console.log(`\n   Editor: https://www.fixtergeek.com/secuencias/${sequence.id}`);
-  console.log(`   Para activar el webhook: PREPARACION_SEQUENCE_ID=${sequence.id}`);
+  console.log(
+    `   Para engancharla a la compra, agrégala a Product.sequences: ${sequence.id}`
+  );
 }
 
 main()

@@ -69,15 +69,31 @@ el motor pega la tarjeta **al final**, o sea después de `</html>`, y Gmail la
 descarta sin avisar. Todo correo con video debe llevar el marcador dentro del
 `<body>`, en el punto donde el video aporta.
 
-## Pendiente para que los nuevos compradores entren solos
+## Los nuevos compradores entran solos
+
+**Ya no hace falta ninguna variable de entorno.** El enganche vive en el
+producto, como dato:
 
 ```
-fly secrets set PREPARACION_SEQUENCE_ID=6a7a496344caa1db8e558fc3
+Product { key: "sistemas-agenticos-workshop" }
+  sequences: [ 1ª edición, preparación (immediate) ]
 ```
 
-Sin esa variable el enganche del webhook es un no-op y hay que inscribir a mano
-con `scripts/enroll-preparacion.ts`. Martín se inscribió a mano justamente por
-esto.
+Al pagar, el webhook resuelve el producto por `metadata.type`, `fulfillPurchase`
+entrega el curso, crea el subscriber e inscribe en **las dos** secuencias, manda
+la bienvenida y deja el detalle de cada paso en `PurchaseEvent`.
+
+Para cambiar a qué secuencias entra un comprador se edita ese registro
+(`scripts/create-sistemas-product.ts`, que es un upsert y se puede volver a
+correr) o se agregan desde `/admin/productos`. No se toca código.
+
+Antes esto vivía en una rama escrita a mano del webhook con dos ObjectId
+adentro, y la de preparación sólo corría si `PREPARACION_SEQUENCE_ID` estaba
+seteada — no lo estaba, y por eso Martín tuvo que inscribirse a mano. Esa rama
+y esa variable ya no existen.
+
+`scripts/enroll-preparacion.ts` se queda para inscribir a alguien manualmente
+cuando haga falta, pero ya no es el camino normal.
 
 ## Cuidado
 

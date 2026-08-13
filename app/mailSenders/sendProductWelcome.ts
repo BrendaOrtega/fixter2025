@@ -26,7 +26,18 @@ export type WelcomeBlock =
   | {
       type: "sessions";
       title?: string;
-      items: { label: string; date: string }[];
+      /**
+       * `start` y `end` en `YYYYMMDDTHHMMSS`, hora de CDMX. Con ellos el item
+       * gana su enlace a Google Calendar; sin ellos se pinta la fila sola.
+       */
+      items: {
+        label: string;
+        date: string;
+        start?: string;
+        end?: string;
+        calendarTitle?: string;
+        calendarDetails?: string;
+      }[];
     };
 
 export type WelcomeSpec = {
@@ -46,6 +57,28 @@ const ESCAPES: Record<string, string> = {
 /** Los valores interpolados se escapan: un nombre con < rompería el HTML. */
 const escape = (value: string) => value.replace(/[&<>"]/g, (c) => ESCAPES[c]);
 
+/**
+ * "Agregar al calendario" de una sesión en vivo. CDMX no tiene horario de
+ * verano desde 2022, así que la zona fija no se desincroniza.
+ */
+function gcalLink(item: {
+  label: string;
+  start?: string;
+  end?: string;
+  calendarTitle?: string;
+  calendarDetails?: string;
+}): string | null {
+  if (!item.start || !item.end) return null;
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: item.calendarTitle || item.label,
+    dates: `${item.start}/${item.end}`,
+    ctz: "America/Mexico_City",
+    ...(item.calendarDetails ? { details: item.calendarDetails } : {}),
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 function interpolate(
   html: string,
   vars: Record<string, string | undefined>
@@ -54,6 +87,24 @@ function interpolate(
     vars[key] !== undefined ? escape(vars[key] as string) : match
   );
 }
+
+/** Los mismos tokens de `emailShell`, para que la agenda siga al tema. */
+const SESSION_COLORS = {
+  light: {
+    text: "#19262A",
+    muted: "#5c7076",
+    border: "#e2e8e8",
+    eyebrow: "#37AB93",
+    link: "#37AB93",
+  },
+  dark: {
+    text: "#E8F1EF",
+    muted: "#8FA5A9",
+    border: "#223035",
+    eyebrow: "#85DDCB",
+    link: "#85DDCB",
+  },
+} as const;
 
 function renderBlock(block: WelcomeBlock, theme: EmailTheme): string {
   switch (block.type) {
@@ -70,27 +121,47 @@ function renderBlock(block: WelcomeBlock, theme: EmailTheme): string {
       return emailDivider(theme);
     case "image":
       return emailImage(block.src, block.alt || "", undefined, theme);
-    case "sessions":
+    case "sessions": {
       // La agenda de un taller en vivo: la única pieza con estructura propia,
-      // y la comparten todos los talleres.
+      // y la comparten todos los talleres. Los colores salen del tema: estaban
+      // fijos en los del tema oscuro y en un correo claro el título de cada
+      // sesión quedaba casi invisible.
+      const c = SESSION_COLORS[theme];
       return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-${block.title ? `  <tr><td style="padding-bottom:8px;color:#85DDCB;font-size:12px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase;">${block.title}</td></tr>` : ""}
+${block.title ? `  <tr><td style="padding-bottom:8px;color:${c.eyebrow};font-size:12px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase;">${block.title}</td></tr>` : ""}
   <tr><td>${block.items
-    .map(
-      (item) =>
-        `<div style="padding:8px 0;border-bottom:1px solid #223035;"><strong style="color:#E8F1EF;">${item.label}</strong><br/><span style="color:#8FA5A9;font-size:14px;">${item.date}</span></div>`
-    )
+    .map((item) => {
+      const href = gcalLink(item);
+      const cal = href
+        ? `<a href="${href}" style="color:${c.link};font-size:13px;font-weight:bold;text-decoration:none;white-space:nowrap;">+ Google Calendar</a>`
+        : "";
+      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+  <td style="padding:8px 0;border-bottom:1px solid ${c.border};"><strong style="color:${c.text};">${item.label}</strong><br/><span style="color:${c.muted};font-size:14px;">${item.date}</span></td>
+  ${cal ? `<td style="padding:8px 0;border-bottom:1px solid ${c.border};text-align:right;vertical-align:middle;">${cal}</td>` : ""}
+</tr></table>`;
+    })
     .join("")}</td></tr>
 </table>`;
+    }
     default:
       return "";
   }
 }
 
-export async function sendProductWelcome(
+export type WelcomeContext = {
+  to: string;
+  userName?: string | null;
+  courseSlug?: string;
+};
+
+/**
+ * El correo armado, sin mandarlo. Separado del envío para poder revisarlo en el
+ * navegador antes de que lo reciba un comprador.
+ */
+export function renderProductWelcome(
   spec: WelcomeSpec,
-  ctx: { to: string; userName?: string | null; courseSlug?: string }
-): Promise<void> {
+  ctx: WelcomeContext
+): { subject: string; html: string } {
   const theme = spec.theme || "dark";
   const vars = {
     name: ctx.userName || "",
@@ -110,11 +181,20 @@ export async function sendProductWelcome(
     preheader: spec.preheader,
   }).replace(/\{\{unsubscribe\}\}/g, "https://www.fixtergeek.com/perfil");
 
+  return { subject: interpolate(spec.subject, vars), html };
+}
+
+export async function sendProductWelcome(
+  spec: WelcomeSpec,
+  ctx: WelcomeContext
+): Promise<void> {
+  const { subject, html } = renderProductWelcome(spec, ctx);
+
   await getSesTransport().sendMail({
     from: SEQUENCE_FROM,
     to: ctx.to,
     replyTo: SEQUENCE_REPLY_TO,
-    subject: interpolate(spec.subject, vars),
+    subject,
     html,
   });
 }
