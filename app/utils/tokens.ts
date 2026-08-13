@@ -177,6 +177,67 @@ export const validateSequenceSubscribeToken = (
 };
 
 // ==========================================
+// Token para confirmar el alta en una comunidad
+// ==========================================
+
+export type CommunitySubscribeTokenData = {
+  email: string;
+  communityId: string;
+  name?: string;
+  action: "community-subscribe";
+};
+
+/**
+ * Genera un token firmado para confirmar el alta en una comunidad.
+ * Válido por 7 días, igual que el de secuencias.
+ */
+export const generateCommunitySubscribeToken = (
+  email: string,
+  communityId: string,
+  name?: string
+): string => {
+  const data: CommunitySubscribeTokenData = {
+    email,
+    communityId,
+    name,
+    action: "community-subscribe",
+  };
+  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+    expiresIn: "7d",
+  });
+};
+
+export const validateCommunitySubscribeToken = (
+  token: string
+): {
+  isValid: boolean;
+  decoded?: CommunitySubscribeTokenData;
+  error?: string;
+} => {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "fixtergeek"
+    ) as CommunitySubscribeTokenData;
+
+    if (decoded.action !== "community-subscribe") {
+      return { isValid: false, error: "Token inválido" };
+    }
+
+    return { isValid: true, decoded };
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.name === "TokenExpiredError") {
+      return {
+        isValid: false,
+        error: "El enlace ha expirado. Solicita uno nuevo.",
+      };
+    }
+    return { isValid: false, error: "Enlace inválido" };
+  }
+};
+
+// ==========================================
 // Token para ver videos de una secuencia (gating por avance del suscriptor)
 // ==========================================
 

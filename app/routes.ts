@@ -19,6 +19,8 @@ export default [
   route("s/video", "routes/s.video.tsx"), // reproductor con desbloqueo por secuencia
   route("s/baja", "routes/s.baja.tsx"), // cancelar suscripción (unsubscribe)
   route("s/:id", "routes/s.$id.tsx"), // suscripción pública a una secuencia
+  route("c/confirmar", "routes/c.confirmar.tsx"), // doble opt-in de comunidad (antes que c/:slug)
+  route("c/:slug", "routes/c.$slug.tsx"), // alta pública a una comunidad
   route("newsletters", "routes/newsletters.tsx"), // redirect → /secuencias
   route("newsletter", "routes/newsletter.tsx"), // redirect → /secuencias
   route("guides", "routes/guides.tsx"),

@@ -53,7 +53,7 @@ export function wrapEmailHtml(
       ? ""
       : `      <tr><td style="padding:18px 32px;background:#0f1a1d;text-align:center;color:#DAE8E5;font-size:13px;line-height:1.5;">
         ¿Quieres crear una secuencia de correo como esta?<br/>
-        <a href="https://www.fixtergeek.com/secuencias" style="color:#85DDCB;text-decoration:none;font-weight:bold;">Créala gratis en FixterGeek →</a>
+        <a href="https://www.fixtergeek.com/secuencias" target="_blank" rel="noopener" style="color:#85DDCB;text-decoration:none;font-weight:bold;">Créala gratis en FixterGeek →</a>
       </td></tr>
 `;
 
@@ -64,7 +64,8 @@ export function wrapEmailHtml(
 ${preheader}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${c.pageBg};padding:24px 0;">
   <tr><td align="center">
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:${c.cardBg};border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">
+    <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:${c.cardBg};border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">
       <tr><td style="padding:28px 32px 0 32px;">
         <img alt="FixterGeek" width="150" src="${c.logo}" style="width:150px;display:block;border:0;" />
       </td></tr>
@@ -73,9 +74,10 @@ ${innerHtml}
       </td></tr>
 ${promoFooter}      <tr><td style="padding:14px 32px;background:#19262A;color:#7e9499;font-size:11px;line-height:1.5;text-align:center;">
         Enviado con <strong style="color:#85DDCB;">Secuencias</strong> · FixterGeek<br/>
-        <a href="{{unsubscribe}}" style="color:#7e9499;text-decoration:underline;">Cancelar suscripción</a>
+        <a href="{{unsubscribe}}" target="_blank" rel="noopener" style="color:#7e9499;text-decoration:underline;">Cancelar suscripción</a>
       </td></tr>
     </table>
+    <!--[if mso]></td></tr></table><![endif]-->
   </td></tr>
 </table>
 </body>
@@ -86,7 +88,7 @@ ${promoFooter}      <tr><td style="padding:14px 32px;background:#19262A;color:#7
  * Botón CTA con estilos inline, para insertar dentro del contenido del email.
  */
 export function emailButton(label: string, href: string): string {
-  return `<a href="${href}" style="display:inline-block;background:#85DDCB;color:#0E1317;text-decoration:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;margin:8px 0;">${label}</a>`;
+  return `<a href="${href}" target="_blank" rel="noopener" style="display:inline-block;background:#85DDCB;color:#0E1317;text-decoration:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;margin:8px 0;">${label}</a>`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -144,7 +146,7 @@ export function emailVideoCard(
     c.soft
   };border:1px solid ${c.border};border-radius:12px;">
   <tr><td style="padding:10px 10px 0 10px;">
-    <a href="${opts.href}" style="display:block;text-decoration:none;">
+    <a href="${opts.href}" target="_blank" rel="noopener" style="display:block;text-decoration:none;">
       <img src="${opts.posterUrl}" alt="▶ Ver: ${meta}" width="${
     CONTENT_WIDTH - 20
   }" style="width:100%;max-width:${

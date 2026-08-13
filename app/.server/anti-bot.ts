@@ -9,6 +9,7 @@ const CUSTOM_DISPOSABLE = new Set([
   "wshu.net",
   "cloneiostrau.org",
   "hotrokh.com",
+  "emalupe.com",
 ]);
 
 /**

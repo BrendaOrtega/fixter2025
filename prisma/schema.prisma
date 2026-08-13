@@ -52,6 +52,11 @@ model Sequence {
   ownerId     String? @db.ObjectId
   owner       User?   @relation(fields: [ownerId], references: [id])
 
+  /// Comunidad a la que pertenece. Opcional: una secuencia puede vivir suelta
+  /// en el catálogo global sin colgar de ninguna comunidad.
+  communityId String?    @db.ObjectId
+  community   Community? @relation(fields: [communityId], references: [id])
+
   // Trigger
   trigger     SequenceTrigger
   triggerTag  String?                   // Tag específico si trigger es TAG_ADDED
@@ -174,8 +179,39 @@ model SequenceEnrollment {
   @@index([messageIds])                          // Lookup desde SNS webhook
 }
 
+/// Una audiencia: te unes a la comunidad, no a una secuencia concreta. Después
+/// el dueño invita a sus miembros a las secuencias que vaya publicando.
+/// Los miembros son Subscriber marcados con `tag` — no hay tabla de membresía.
+model Community {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String  @unique // "secuences" → /c/secuences
+  name        String
+  tagline     String? // frase del hero
+  description String?
+
+  /// El tag que marca a los miembros en Subscriber.tags
+  tag String @unique
+
+  ownerId String @db.ObjectId
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  /// Secuencia que se activa al confirmar el correo. String plano a propósito:
+  /// sin @relation no hay que tocar el modelo Sequence.
+  welcomeSequenceId String? @db.ObjectId
+
+  isActive Boolean @default(true)
+
+  /// Las secuencias que esta comunidad publica a sus miembros
+  sequences Sequence[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
 // ============================
-// NEWSLETTER SIMPLIFICADO 
+// NEWSLETTER SIMPLIFICADO
 // ============================
 
 model Newsletter {
@@ -524,6 +560,7 @@ model User {
 
   // Secuences que el user creó (es dueño)
   sequences   Sequence[]
+  communities Community[]
 
   @@map("users")
 }

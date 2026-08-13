@@ -12,7 +12,7 @@ import { getOrCreateSubscriberForUser, calculateNextEmailDate } from "~/.server/
 import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
-import { useFetcher } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import { FaPause, FaPlay, FaPlus, FaUsers, FaEnvelope, FaChartBar } from "react-icons/fa";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -55,7 +55,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const allSequences = await db.sequence.findMany({
     where: {
       isActive: true,
-      ...(user ? { NOT: { ownerId: user.id } } : {}),
+      // Las privadas son perks de pago: no se anuncian en el catálogo.
+      isPrivate: false,
     },
     select: {
       id: true,
@@ -64,6 +65,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       trigger: true,
       triggerTag: true,
       isFeatured: true,
+      ownerId: true,
       owner: { select: { username: true, displayName: true } },
     },
     orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
@@ -160,6 +162,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (intent === "join_sequence") {
     const sequenceId = formData.get("sequenceId") as string;
+
+    // Ocultar la card no basta: el POST puede venir a mano. Una secuencia
+    // privada es un perk pagado y solo se entra por código (compra, script).
+    const target = await db.sequence.findUnique({
+      where: { id: sequenceId },
+      select: { isActive: true, isPrivate: true },
+    });
+    if (!target || !target.isActive || target.isPrivate) {
+      return { error: "Secuencia no disponible" };
+    }
+
     const subscriber = await getOrCreateSubscriberForUser(user);
 
     const existingEnrollment = await db.sequenceEnrollment.findUnique({
@@ -228,9 +241,24 @@ export default function Route({
     isLoggedIn,
   },
 }: Route.ComponentProps) {
+  // Quien llega de confirmar el alta en una comunidad trae la pestaña y la
+  // secuencia en la URL; eso gana sobre lo que quedó guardado en localStorage.
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const preselectedId = searchParams.get("pre");
+  const isWelcome = searchParams.get("welcome") === "1";
+
   const [activeTab, setActiveTab] = useState<
     "creator" | "subscriptions" | "discover" | "settings"
   >(() => {
+    if (
+      tabFromUrl === "creator" ||
+      tabFromUrl === "subscriptions" ||
+      tabFromUrl === "discover" ||
+      tabFromUrl === "settings"
+    ) {
+      return tabFromUrl;
+    }
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("secuencias-active-tab");
       if (
@@ -291,14 +319,30 @@ export default function Route({
             </p>
           </div>
 
-          <div className="flex justify-center mb-8">
-            <div className="bg-brand-900/60 rounded-full p-1 flex flex-wrap justify-center">
+          {isWelcome && (
+            <div className="mb-8 rounded-2xl border border-brand-500/40 bg-brand-500/10 px-6 py-5 text-center">
+              <div className="text-3xl">✅</div>
+              <h2 className="mt-2 text-xl font-bold text-white">
+                Ya estás dentro
+              </h2>
+              <p className="mt-1 text-brand-100">
+                {preselectedId
+                  ? "Tu primera entrega sale en unos minutos. Mientras, mira qué más hay aquí."
+                  : "Te avisamos en cuanto haya una secuencia nueva."}
+              </p>
+            </div>
+          )}
+
+          {/* Mobile first: en pantalla chica las pestañas se deslizan en una
+              sola fila; a partir de sm caben centradas. */}
+          <div className="mb-8 -mx-4 overflow-x-auto px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto flex w-max gap-1 rounded-full bg-brand-900/60 p-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "px-6 py-2 rounded-full transition-all text-sm font-medium",
+                    "whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all sm:px-6",
                     activeTab === tab.id
                       ? "bg-brand-500 text-brand-900"
                       : "text-brand-100 hover:text-white"
@@ -328,6 +372,8 @@ export default function Route({
             <DiscoverTab
               sequences={allSequences}
               enrolledSequenceIds={enrolledSequenceIds}
+              currentUserId={user?.id}
+              preselectedId={preselectedId}
               fetcher={fetcher}
               isLoggedIn={isLoggedIn}
             />
@@ -695,11 +741,15 @@ function SequencesTab({
 function DiscoverTab({
   sequences,
   enrolledSequenceIds,
+  currentUserId,
+  preselectedId,
   fetcher,
   isLoggedIn,
 }: {
   sequences: any[];
   enrolledSequenceIds: string[];
+  currentUserId?: string | null;
+  preselectedId?: string | null;
   fetcher: any;
   isLoggedIn: boolean;
 }) {
@@ -725,7 +775,11 @@ function DiscoverTab({
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {sequences.map((sequence) => {
-          const isEnrolled = enrolledSequenceIds.includes(sequence.id);
+          // Quien acaba de confirmar su alta en una comunidad llega sin sesión
+          // pero ya enrolado: el id viene en la URL, así que la card lo refleja.
+          const isPreselected = sequence.id === preselectedId;
+          const isEnrolled =
+            enrolledSequenceIds.includes(sequence.id) || isPreselected;
           const isFeatured = sequence.isFeatured;
           const authorName =
             sequence.owner?.displayName ||
@@ -736,6 +790,8 @@ function DiscoverTab({
             <div
               key={sequence.id}
               className={`relative bg-brand-900/40 border rounded-lg p-6 transition-all ${
+                isPreselected ? "ring-2 ring-brand-500 ring-offset-2 ring-offset-[#0E1317] " : ""
+              }${
                 isFeatured
                   ? "border-brand-500/40 bg-gradient-to-br from-brand-900/60 to-brand-800/40 shadow-lg shadow-brand-500/10"
                   : isEnrolled
@@ -764,12 +820,18 @@ function DiscoverTab({
                 {sequence.description || "Secuencia de emails automatizada"}
               </p>
 
-              {isLoggedIn ? (
-                isEnrolled ? (
-                  <div className="w-full text-green-400 bg-green-900/20 cursor-default px-4 py-2 rounded-lg text-center font-medium">
-                    ✅ Suscrito
-                  </div>
-                ) : (
+              {sequence.ownerId && sequence.ownerId === currentUserId ? (
+                <Link
+                  to={`/secuencias/${sequence.id}`}
+                  className="block w-full rounded-lg border border-brand-100/20 px-4 py-2 text-center font-medium text-brand-100 transition-colors hover:border-brand-500/40 hover:text-white"
+                >
+                  Es tuya · Gestionar
+                </Link>
+              ) : isEnrolled ? (
+                <div className="w-full text-green-400 bg-green-900/20 cursor-default px-4 py-2 rounded-lg text-center font-medium">
+                  ✅ Suscrito
+                </div>
+              ) : isLoggedIn ? (
                   <fetcher.Form method="post">
                     <input type="hidden" name="intent" value="join_sequence" />
                     <input
@@ -788,7 +850,6 @@ function DiscoverTab({
                       Suscribirme
                     </button>
                   </fetcher.Form>
-                )
               ) : (
                 <a
                   href={`/s/${sequence.id}`}
