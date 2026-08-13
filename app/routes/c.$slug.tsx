@@ -25,6 +25,7 @@ import { sendCommunityConfirmation } from "~/mailSenders/sendCommunityConfirmati
 import getMetaTags from "~/utils/getMetaTags";
 import useRecaptcha from "~/lib/useRecaptcha";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
+import { EnvelopeIllustration } from "~/components/community/EnvelopeIllustration";
 
 export const meta = ({ data: d }: Route.MetaArgs) => {
   if (!d?.community) {
@@ -88,7 +89,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const community = await getCommunityBySlug(params.slug as string);
     const email = await getMemberEmail(request);
     if (!community || !(await isMember(community.tag, email))) {
-      return data({ error: "No eres miembro de esta comunidad" }, { status: 403 });
+      return data(
+        { error: "No eres miembro de esta comunidad" },
+        { status: 403 },
+      );
     }
 
     const sequenceId = String(formData.get("sequenceId") || "");
@@ -166,7 +170,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   if (blocked) {
     return data(
       { error: "Este correo no puede suscribirse en este momento." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -185,7 +189,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     // Queda reconocido como miembro y la misma página se convierte en su panel.
     return data(
       { success: true, joined: true },
-      { headers: { "Set-Cookie": await setMemberCookie(email) } }
+      { headers: { "Set-Cookie": await setMemberCookie(email) } },
     );
   }
 
@@ -275,46 +279,73 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
       />
       <motion.div
         className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full bg-brand-500/25 blur-[120px]"
-        animate={{ x: [0, 80, -30, 0], y: [0, 50, -40, 0], scale: [1, 1.2, 0.92, 1] }}
+        animate={{
+          x: [0, 80, -30, 0],
+          y: [0, 50, -40, 0],
+          scale: [1, 1.2, 0.92, 1],
+        }}
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="pointer-events-none absolute -bottom-40 -right-32 h-[26rem] w-[26rem] rounded-full bg-brand-700/25 blur-[120px]"
-        animate={{ x: [0, -70, 40, 0], y: [0, -50, 40, 0], scale: [1, 0.88, 1.25, 1] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        animate={{
+          x: [0, -70, 40, 0],
+          y: [0, -50, 40, 0],
+          scale: [1, 0.88, 1.25, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 2,
+        }}
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-3xl px-6">
-        {/* Hero */}
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2.5 rounded-full border border-brand-500/30 bg-brand-500/10 px-5 py-2 text-sm font-medium text-brand-500"
-        >
-          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />
-          Comunidad
-        </motion.div>
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-6">
+        {/* Hero: texto y buzón conviven en una fila, no en columnas sueltas */}
+        <div className="flex flex-col-reverse gap-6 sm:flex-row sm:items-center sm:gap-10">
+          <div className="min-w-0 flex-1">
+            <motion.div
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-2.5 rounded-full border border-brand-500/30 bg-brand-500/10 px-5 py-2 text-sm font-medium text-brand-500"
+            >
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />
+              Comunidad
+            </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="mt-6 text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl"
-        >
-          {community.name}
-        </motion.h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="mt-6 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
+            >
+              {community.name}
+            </motion.h1>
 
-        {community.tagline && (
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="mt-5 text-lg font-light leading-relaxed text-brand-100 sm:text-xl"
+            {community.tagline && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="mt-5 text-lg font-light leading-relaxed text-brand-100 sm:text-xl"
+              >
+                {community.tagline}
+              </motion.p>
+            )}
+          </div>
+
+          {/* El buzón: dice de qué va esto sin explicarlo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.35 }}
+            className="pointer-events-none flex shrink-0 justify-center"
           >
-            {community.tagline}
-          </motion.p>
-        )}
+            <EnvelopeIllustration className="h-auto w-[260px] sm:w-[320px]" />
+          </motion.div>
+        </div>
 
         {/* Miembro: su panel de la comunidad, no el formulario de alta */}
         {member ? (
@@ -371,11 +402,11 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
                       {completed
                         ? " · las recibiste todas"
                         : s.status
-                        ? ` · vas en la ${Math.min(
-                            s.progress + 1,
-                            s._count.emails
-                          )}`
-                        : ""}
+                          ? ` · vas en la ${Math.min(
+                              s.progress + 1,
+                              s._count.emails,
+                            )}`
+                          : ""}
                     </p>
 
                     {!completed && (
@@ -399,8 +430,8 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
                           {active
                             ? "Pausar entregas"
                             : paused
-                            ? "Reanudar"
-                            : "Suscribirme"}
+                              ? "Reanudar"
+                              : "Suscribirme"}
                         </button>
                       </fetcher.Form>
                     )}
@@ -423,147 +454,149 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
             </p>
           </div>
         ) : (
-        <>
-        {/* Formulario, arriba: es lo que la persona vino a hacer */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          className="mt-10 rounded-2xl border border-brand-100/10 bg-brand-900/60 p-6 backdrop-blur-sm sm:p-8"
-        >
-          {done ? (
-            <div className="text-center">
-              <div className="text-4xl">📬</div>
-              <h2 className="mt-3 text-xl font-bold text-white">
-                Revisa tu correo
-              </h2>
-              <p className="mt-2 text-brand-100">
-                Te mandamos un link para confirmar. Un clic y estás dentro.
-              </p>
-            </div>
-          ) : (
-            <fetcher.Form onSubmit={handleSubmit}>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <input
-                  ref={nameRef}
-                  name="name"
-                  type="text"
-                  placeholder="Tu nombre"
-                  className="h-12 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
-                />
-                <input
-                  ref={emailRef}
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="tu@correo.com"
-                  className="h-12 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
-                />
-              </div>
-
-              {/* honeypot */}
-              <input
-                ref={honeyRef}
-                type="text"
-                name="website"
-                tabIndex={-1}
-                autoComplete="off"
-                className="hidden"
-                aria-hidden
-              />
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="mt-3 h-12 w-full rounded-xl bg-brand-500 font-bold text-brand-900 transition hover:brightness-110 disabled:opacity-50"
-              >
-                {isLoading ? "Un momento…" : "Unirme a la comunidad"}
-              </button>
-
-              {error && (
-                <p className="mt-3 text-center text-sm text-danger">{error}</p>
-              )}
-
-              <p className="mt-4 text-center text-xs text-brand-100/70">
-                Te pedimos confirmar tu correo. Cero spam, baja en un clic.
-              </p>
-            </fetcher.Form>
-          )}
-        </motion.div>
-
-        {/* Números reales */}
-        <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-brand-100">
-          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
-            {memberCount} {memberCount === 1 ? "miembro" : "miembros"}
-          </span>
-          {welcome && (
-            <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
-              {welcome._count.emails}{" "}
-              {welcome._count.emails === 1 ? "entrega" : "entregas"} de arranque
-            </span>
-          )}
-          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
-            Sin costo
-          </span>
-        </div>
-
-        {/* Qué pasa cuando entras */}
-        <h2 className="mt-16 text-2xl font-bold text-white">
-          Qué pasa cuando entras
-        </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          {[
-            {
-              icon: "📨",
-              title: "Arrancas con una secuencia",
-              body: "Nada de esperar. En cuanto confirmas te llega la primera entrega.",
-            },
-            {
-              icon: "🗂",
-              title: "Te invitamos a las nuevas",
-              body: "Cada secuencia que publicamos te llega como invitación. Entras a la que te interese.",
-            },
-            {
-              icon: "🎚",
-              title: "Tú mandas",
-              body: "Pausas, te bajas o te vuelves a subir cuando quieras, desde tu panel.",
-            },
-          ].map((card) => (
-            <div
-              key={card.title}
-              className="rounded-lg border border-brand-100/10 bg-brand-900/40 p-6 transition-colors hover:border-brand-500/40"
+          <>
+            {/* Formulario, arriba: es lo que la persona vino a hacer */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className="mt-10 rounded-2xl border border-brand-100/10 bg-brand-900/60 p-6 backdrop-blur-sm sm:p-8"
             >
-              <div className="text-2xl">{card.icon}</div>
-              <h3 className="mt-3 font-bold text-white">{card.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-brand-100">
-                {card.body}
-              </p>
+              {done ? (
+                <div className="text-center">
+                  <div className="text-4xl">📬</div>
+                  <h2 className="mt-3 text-xl font-bold text-white">
+                    Revisa tu correo
+                  </h2>
+                  <p className="mt-2 text-brand-100">
+                    Te mandamos un link para confirmar. Un clic y estás dentro.
+                  </p>
+                </div>
+              ) : (
+                <fetcher.Form onSubmit={handleSubmit}>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <input
+                      ref={nameRef}
+                      name="name"
+                      type="text"
+                      placeholder="Tu nombre"
+                      className="h-12 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
+                    />
+                    <input
+                      ref={emailRef}
+                      name="email"
+                      type="email"
+                      required
+                      placeholder="tu@correo.com"
+                      className="h-12 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* honeypot */}
+                  <input
+                    ref={honeyRef}
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    className="hidden"
+                    aria-hidden
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="mt-3 h-12 w-full rounded-xl bg-brand-500 font-bold text-brand-900 transition hover:brightness-110 disabled:opacity-50"
+                  >
+                    {isLoading ? "Un momento…" : "Unirme a la comunidad"}
+                  </button>
+
+                  {error && (
+                    <p className="mt-3 text-center text-sm text-danger">
+                      {error}
+                    </p>
+                  )}
+
+                  <p className="mt-4 text-center text-xs text-brand-100/70">
+                    Te pedimos confirmar tu correo. Cero spam, baja en un clic.
+                  </p>
+                </fetcher.Form>
+              )}
+            </motion.div>
+
+            {/* Números reales */}
+            <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-brand-100">
+              <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+                {memberCount} {memberCount === 1 ? "miembro" : "miembros"}
+              </span>
+              {welcome && (
+                <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+                  {welcome._count.emails}{" "}
+                  {welcome._count.emails === 1 ? "entrega" : "entregas"} de
+                  arranque
+                </span>
+              )}
+              <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+                Sin costo
+              </span>
             </div>
-          ))}
-        </div>
 
-        {/* La secuencia con la que arrancas */}
-        {welcome && (
-          <div className="mt-10 rounded-2xl border border-brand-500/40 bg-gradient-to-br from-brand-900/60 to-brand-800/40 p-6 shadow-lg shadow-brand-500/10 sm:p-8">
-            <span className="text-xs font-medium uppercase tracking-wider text-brand-500">
-              Arrancas con
-            </span>
-            <h3 className="mt-2 text-xl font-bold text-white sm:text-2xl">
-              {welcome.name}
-            </h3>
-            {welcome.description && (
-              <p className="mt-2 text-brand-100">{welcome.description}</p>
-            )}
-            {welcome.emails[0] && (
-              <p className="mt-4 rounded-lg border border-brand-100/10 bg-brand-900/60 px-4 py-3 text-sm text-brand-100">
-                <span className="text-brand-500">Entrega 1 ·</span>{" "}
-                {welcome.emails[0].subject}
-              </p>
-            )}
-          </div>
-        )}
+            {/* Qué pasa cuando entras */}
+            <h2 className="mt-16 text-2xl font-bold text-white">
+              Qué pasa cuando entras
+            </h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              {[
+                {
+                  icon: "📨",
+                  title: "Arrancas con una secuencia",
+                  body: "Nada de esperar. En cuanto confirmas te llega la primera entrega.",
+                },
+                {
+                  icon: "🗂",
+                  title: "Te invitamos a las nuevas",
+                  body: "Cada secuencia que publicamos te llega como invitación. Entras a la que te interese.",
+                },
+                {
+                  icon: "🎚",
+                  title: "Tú mandas",
+                  body: "Pausas, te bajas o te vuelves a subir cuando quieras, desde tu panel.",
+                },
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  className="rounded-lg border border-brand-100/10 bg-brand-900/40 p-6 transition-colors hover:border-brand-500/40"
+                >
+                  <div className="text-2xl">{card.icon}</div>
+                  <h3 className="mt-3 font-bold text-white">{card.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-brand-100">
+                    {card.body}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-        </>
+            {/* La secuencia con la que arrancas */}
+            {welcome && (
+              <div className="mt-10 rounded-2xl border border-brand-500/40 bg-gradient-to-br from-brand-900/60 to-brand-800/40 p-6 shadow-lg shadow-brand-500/10 sm:p-8">
+                <span className="text-xs font-medium uppercase tracking-wider text-brand-500">
+                  Arrancas con
+                </span>
+                <h3 className="mt-2 text-xl font-bold text-white sm:text-2xl">
+                  {welcome.name}
+                </h3>
+                {welcome.description && (
+                  <p className="mt-2 text-brand-100">{welcome.description}</p>
+                )}
+                {welcome.emails[0] && (
+                  <p className="mt-4 rounded-lg border border-brand-100/10 bg-brand-900/60 px-4 py-3 text-sm text-brand-100">
+                    <span className="text-brand-500">Entrega 1 ·</span>{" "}
+                    {welcome.emails[0].subject}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* Preguntas */}
@@ -591,7 +624,9 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
             >
               <summary className="cursor-pointer list-none font-medium text-white marker:hidden">
                 <span className="text-brand-500 group-open:hidden">+ </span>
-                <span className="hidden text-brand-500 group-open:inline">− </span>
+                <span className="hidden text-brand-500 group-open:inline">
+                  −{" "}
+                </span>
                 {item.q}
               </summary>
               <p className="mt-3 text-sm leading-relaxed text-brand-100">
