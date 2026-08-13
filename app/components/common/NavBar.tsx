@@ -36,16 +36,17 @@ export const SquigglyUnderline = () => {
     <div className="flex gap-3 md:gap-6 lg:gap-8">
       {navigation.map((item, i) => {
         const isCurrent = isHover === i;
-        const isCurrentRoute = !item.external && location.pathname.includes(item.link);
-        const linkClasses = `relative text-sm leading-6 no-underline ${
+        const isCurrentRoute =
+          !item.external && location.pathname.includes(item.link);
+        const linkClasses = `relative whitespace-nowrap text-sm leading-6 no-underline ${
           item.highlight
             ? `font-semibold bg-gradient-to-r ${
                 (item as { gradient?: string }).gradient ??
                 "from-[#CA9B77] to-[#845A8F]"
               } bg-clip-text text-transparent`
             : isCurrent || isCurrentRoute
-            ? "font-semibold text-white"
-            : "text-white"
+              ? "font-semibold text-white"
+              : "text-white"
         }`;
 
         const content = (
@@ -134,7 +135,7 @@ export const NavBar = ({ user }: { user?: User }) => {
         <Link to="/">
           <img className="h-7" src="/logo.png" alt="logo" />
         </Link>
-        <div className="md:flex items-center gap-8 hidden ">
+        <div className="lg:flex items-center gap-8 hidden ">
           <a
             href="https://www.youtube.com/@fixtergeek"
             rel="noreferrer"
@@ -148,7 +149,7 @@ export const NavBar = ({ user }: { user?: User }) => {
             <UserMenu user={user} />
           ) : (
             <Link to="/login">
-              <button className="py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60">
+              <button className="whitespace-nowrap py-2 px-4 text-base rounded-full text-white font-normal bg-brand-900/60">
                 Iniciar sesión
               </button>{" "}
             </Link>
@@ -179,19 +180,19 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
         {
           type: "spring",
           bounce: 0.7,
-        }
+        },
       );
       animate(
         "button",
         { x: 0, opacity: 1, filter: "blur(0px)" },
-        { delay: stagger(0.2) }
+        { delay: stagger(0.2) },
       );
     } else {
       animate("button", { x: -10, opacity: 0, filter: "blur(4px)" });
       animate(
         scope.current,
         { opacity: 0, filter: "blur(4px)", y: -10, pointerEvents: "none" },
-        { type: "spring", bounce: 0, duration: 0.25 }
+        { type: "spring", bounce: 0, duration: 0.25 },
       );
     }
   }, [isOpen]);
@@ -211,7 +212,7 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
           "bg-background",
           "border border-brand-100/10",
           "grid place-items-start rounded-xl shadow-md",
-          "absolute w-[200px] -right-20 top-[95%]"
+          "absolute w-[200px] -right-20 top-[95%]",
         )}
       >
         <Triangle className="border-b-brand-500" />
@@ -292,7 +293,7 @@ const MobileMenu = ({
       style={{
         y: "-120%",
       }}
-      className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute md:hidden flex items-center justify-center"
+      className="bg-bloob bg-cover px-6 inset-0 w-full h-screen absolute lg:hidden flex items-center justify-center"
     >
       <div className="text-center flex flex-col  !text-white -mt-10 md: ">
         <NavItem
@@ -436,7 +437,7 @@ const Burger = ({
     <button
       onClick={onClick}
       ref={scope}
-      className="flex md:hidden flex-col gap-2 relative"
+      className="flex lg:hidden flex-col gap-2 relative"
     >
       <div
         id="top"
@@ -481,7 +482,7 @@ const NavItem = ({
       animate(
         scope.current,
         { y: 0, opacity: 1, filter: "blur(0px)" },
-        { delay: 0.25 * index, duration: 0.3 }
+        { delay: 0.25 * index, duration: 0.3 },
       );
     } else {
       animate(scope.current, { y: 20, opacity: 0, filter: "blur(9px)" });

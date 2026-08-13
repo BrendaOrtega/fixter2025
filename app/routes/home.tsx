@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import {
   Benefits,
   CoachHighlight,
+  CommunityBand,
   HomeHero,
   SocialPlanet,
   Why,
@@ -139,6 +140,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       )}
       <HomeHero />
       <CoachHighlight />
+      <CommunityBand />
       <Why />
       <Benefits />
       <SocialPlanet />

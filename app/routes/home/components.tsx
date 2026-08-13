@@ -11,6 +11,7 @@ import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
 import { Link } from "react-router";
 import { Footer } from "~/components/Footer";
 import { Banner } from "~/components/common/Banner";
+import { EnvelopeIllustration } from "~/components/community/EnvelopeIllustration";
 
 const companies = [
   {
@@ -305,7 +306,8 @@ export const CoachHighlight = () => {
       <div
         className="relative rounded-3xl border border-[#CA9B77]/20 overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, rgba(202,155,119,0.05) 0%, rgba(132,90,143,0.08) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(202,155,119,0.05) 0%, rgba(132,90,143,0.08) 100%)",
         }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 p-8 md:p-12 lg:p-16">
@@ -323,18 +325,20 @@ export const CoachHighlight = () => {
                 MentorIA
               </h2>
               <p className="text-lg text-zinc-400 mt-4 leading-relaxed">
-                Un coach de entrevistas que te acompaña desde la primera revisión
-                de CV hasta la negociación de tu oferta.
+                Un coach de entrevistas que te acompaña desde la primera
+                revisión de CV hasta la negociación de tu oferta.
               </p>
               <div className="flex flex-wrap gap-3 mt-6">
-                {["Adaptativo", "Con voz", "Ejercicios", "5 dimensiones"].map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs px-3 py-1.5 rounded-full border border-zinc-700 text-zinc-300 bg-zinc-900/50"
-                  >
-                    {tag}
-                  </span>
-                ))}
+                {["Adaptativo", "Con voz", "Ejercicios", "5 dimensiones"].map(
+                  (tag) => (
+                    <span
+                      key={tag}
+                      className="text-xs px-3 py-1.5 rounded-full border border-zinc-700 text-zinc-300 bg-zinc-900/50"
+                    >
+                      {tag}
+                    </span>
+                  ),
+                )}
               </div>
               <div className="mt-8">
                 <PrimaryButton as="Link" to="/coach" title="Probar MentorIA" />
@@ -353,27 +357,34 @@ export const CoachHighlight = () => {
               {/* Fake chat preview */}
               <div className="flex justify-start">
                 <div className="bg-zinc-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-zinc-200 max-w-[85%]">
-                  Vamos a evaluar tu conocimiento de closures en JavaScript. ¿Puedes explicarme qué es un closure?
+                  Vamos a evaluar tu conocimiento de closures en JavaScript.
+                  ¿Puedes explicarme qué es un closure?
                 </div>
               </div>
               <div className="flex justify-end">
                 <div className="bg-[#CA9B77] rounded-2xl rounded-br-md px-4 py-2.5 text-sm text-zinc-900 max-w-[85%]">
-                  Es cuando una función recuerda las variables de su scope padre...
+                  Es cuando una función recuerda las variables de su scope
+                  padre...
                 </div>
               </div>
               <div className="flex justify-start">
                 <div className="bg-zinc-800 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-zinc-200 max-w-[85%]">
-                  Exacto. Ahora un reto: escribe una función counter usando closures.
+                  Exacto. Ahora un reto: escribe una función counter usando
+                  closures.
                 </div>
               </div>
               {/* Radar mini preview */}
               <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
                 <div className="flex gap-2">
                   {["Algoritmos", "Sintaxis", "Debug"].map((d) => (
-                    <span key={d} className="text-[10px] text-zinc-500">{d}</span>
+                    <span key={d} className="text-[10px] text-zinc-500">
+                      {d}
+                    </span>
                   ))}
                 </div>
-                <span className="text-[10px] text-[#CA9B77] font-medium">En vivo</span>
+                <span className="text-[10px] text-[#CA9B77] font-medium">
+                  En vivo
+                </span>
               </div>
             </div>
           </motion.div>
@@ -597,6 +608,18 @@ export const HomeHero = () => {
               children="Nuevo taller: Sistemas agénticos"
             />
           </div>
+          {/* La comunidad, en el hero: es gratis y es la puerta de entrada */}
+          <p className="mt-4 px-4 text-center text-sm text-white/80 lg:px-0 lg:text-left">
+            ✉️ Únete gratis a la{" "}
+            <Link
+              to="/c/agentes"
+              className="font-semibold text-brand-500 transition-all duration-200 hover:underline"
+            >
+              Comunidad Agéntica
+            </Link>{" "}
+            y recibe cómo se construyen los agentes que aguantan usuarios
+            reales.
+          </p>
           {/* Links sutiles a los libros */}
           <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
             📖 Libros gratuitos:{" "}
@@ -630,6 +653,73 @@ export const HomeHero = () => {
           direction="left"
           speed="normal"
         />
+      </div>
+    </motion.section>
+  );
+};
+
+export const CommunityBand = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  return (
+    <motion.section
+      ref={ref}
+      className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32 md:my-[160px]"
+    >
+      <div
+        className="relative overflow-hidden rounded-3xl border border-brand-500/20"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(133,221,203,0.06) 0%, rgba(55,171,147,0.09) 100%)",
+        }}
+      >
+        <div className="grid grid-cols-1 items-center gap-8 p-8 md:p-12 lg:grid-cols-2 lg:gap-16 lg:p-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-widest text-brand-500">
+              Gratis
+            </span>
+            <h2 className="text-3xl font-bold !leading-snug text-white md:text-4xl xl:text-5xl">
+              Comunidad Agéntica
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-zinc-400">
+              Cómo se construyen los agentes que aguantan usuarios reales. Un
+              correo cuando hay algo que de verdad sirve, no cuando toca
+              mandarlo.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {["Sin costo", "Baja en un clic", "Cero spam"].map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="mt-8">
+              <PrimaryButton
+                as="Link"
+                to="/c/agentes"
+                title="Unirme a la comunidad"
+              />
+            </div>
+          </motion.div>
+
+          {/* el mismo sobre de la landing de comunidad */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="pointer-events-none flex justify-center lg:justify-end"
+          >
+            <EnvelopeIllustration className="h-auto w-[240px] md:w-[320px]" />
+          </motion.div>
+        </div>
       </div>
     </motion.section>
   );
