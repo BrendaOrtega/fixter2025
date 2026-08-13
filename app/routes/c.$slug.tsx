@@ -31,6 +31,13 @@ export const meta = ({ data: d }: Route.MetaArgs) => {
   if (!d?.community) {
     return getMetaTags({ title: "Comunidad no disponible | FixterGeek" });
   }
+  // Cada comunidad puede traer su propia imagen de compartir en
+  // public/og/comunidad-<slug>.png; si no existe, cae al cover del sitio.
+  const conOg = ["agentes"];
+  const image = conOg.includes(d.community.slug)
+    ? `https://www.fixtergeek.com/og/comunidad-${d.community.slug}.png`
+    : undefined;
+
   return getMetaTags({
     title: `${d.community.name} | FixterGeek`,
     description:
@@ -38,6 +45,7 @@ export const meta = ({ data: d }: Route.MetaArgs) => {
       d.community.description ||
       "Únete a la comunidad y recibe las secuencias conforme salen.",
     url: `https://www.fixtergeek.com/c/${d.community.slug}`,
+    ...(image ? { image, imageWidth: 1200, imageHeight: 630 } : {}),
   });
 };
 

@@ -28,8 +28,11 @@ export default function getMetaTags({
   title,
   description = "Cursos de IA, Claude Code, AI SDK y programación en español. Plataforma educativa mexicana con más de 2,000 estudiantes.",
   image = "https://www.fixtergeek.com/cover.png",
-  imageWidth = 1200,
-  imageHeight = 630,
+  // Deben coincidir con el archivo real: WhatsApp compara lo declarado contra
+  // la imagen que descarga y descarta la miniatura si no cuadra. cover.png
+  // mide 700x467; las páginas con og propio pasan sus medidas reales.
+  imageWidth = 700,
+  imageHeight = 467,
   url = "https://www.fixtergeek.com",
   twitterCard = "summary_large_image",
   type = "website",
@@ -61,10 +64,14 @@ export default function getMetaTags({
         name: "author",
         content: author,
       },
-      ...(keywords ? [{
-        name: "keywords",
-        content: keywords,
-      }] : []),
+      ...(keywords
+        ? [
+            {
+              name: "keywords",
+              content: keywords,
+            },
+          ]
+        : []),
     ];
   }
   return [
@@ -78,10 +85,14 @@ export default function getMetaTags({
       name: "author",
       content: author,
     },
-    ...(keywords ? [{
-      name: "keywords",
-      content: keywords,
-    }] : []),
+    ...(keywords
+      ? [
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]
+      : []),
     {
       rel: "canonical",
       href: url,
@@ -142,18 +153,30 @@ export default function getMetaTags({
       content: fbAppId,
     },
     // Article timestamps (si aplica)
-    ...(publishedTime ? [{
-      property: "article:published_time",
-      content: publishedTime,
-    }] : []),
-    ...(modifiedTime ? [{
-      property: "article:modified_time",
-      content: modifiedTime,
-    }] : []),
-    ...(type === "article" ? [{
-      property: "article:author",
-      content: author,
-    }] : []),
+    ...(publishedTime
+      ? [
+          {
+            property: "article:published_time",
+            content: publishedTime,
+          },
+        ]
+      : []),
+    ...(modifiedTime
+      ? [
+          {
+            property: "article:modified_time",
+            content: modifiedTime,
+          },
+        ]
+      : []),
+    ...(type === "article"
+      ? [
+          {
+            property: "article:author",
+            content: author,
+          },
+        ]
+      : []),
     // Twitter
     {
       name: "twitter:card",
@@ -182,7 +205,8 @@ export default function getMetaTags({
     // Robots meta (asegura indexación)
     {
       name: "robots",
-      content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+      content:
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
     },
   ];
 }
