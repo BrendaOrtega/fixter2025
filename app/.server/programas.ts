@@ -66,7 +66,7 @@ export const getPrograma = async (slug: string) => {
 
   const tag = audienceTagFor(course.slug);
 
-  const [videos, resources, subscribers, views] = await Promise.all([
+  const [videos, transcripts, resources, subscribers, views] = await Promise.all([
     db.video.findMany({
       where: { id: { in: course.videoIds } },
       select: {
@@ -80,7 +80,16 @@ export const getPrograma = async (slug: string) => {
         accessLevel: true,
         isPublic: true,
         processingStatus: true,
+        poster: true,
+        m3u8: true,
+        storageLink: true,
       },
+    }),
+    db.transcript.findMany({
+      where: { videoId: { in: course.videoIds } },
+      // El texto completo son ~12 mil palabras por video: aquí solo interesa
+      // si existe y qué tan trabajado está.
+      select: { videoId: true, source: true, chapters: true, language: true },
     }),
     db.resource.findMany({
       where: { OR: [{ courseId: course.id }, { videoId: { in: course.videoIds } }] },
@@ -193,6 +202,12 @@ export const getPrograma = async (slug: string) => {
       {
         ...video,
         materiales: resources.filter((r) => r.videoId === video.id),
+        transcript: (() => {
+          const t = transcripts.find((x) => x.videoId === video.id);
+          if (!t) return null;
+          const caps = Array.isArray(t.chapters) ? t.chapters.length : 0;
+          return { source: t.source, capitulos: caps, idioma: t.language };
+        })(),
         // Personas, no filas: hasta que se acotó por ventana de media hora,
         // cada recarga abría un registro nuevo. Se cuenta por navegador.
         espectadores: new Set(
@@ -205,11 +220,13 @@ export const getPrograma = async (slug: string) => {
 
   // Línea de tiempo: primero lo que tiene fecha de evento, luego por índice.
   const piezas = [...porVideo.values()].sort((a, b) => {
+    // `index` es el orden puesto a mano y manda sobre todo lo demás.
+    if ((a.index ?? 0) !== (b.index ?? 0)) return (a.index ?? 0) - (b.index ?? 0);
     if (a.eventDate && b.eventDate)
       return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
     if (a.eventDate) return -1;
     if (b.eventDate) return 1;
-    return (a.index ?? 0) - (b.index ?? 0);
+    return 0;
   });
 
   return {

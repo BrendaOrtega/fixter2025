@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { Link, data, useFetcher } from "react-router";
 import type { Route } from "./+types/programas.$courseSlug";
-import { FaEye, FaEyeSlash, FaTrash, FaTimes } from "react-icons/fa";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaTrash,
+  FaTimes,
+  FaArrowUp,
+  FaArrowDown,
+  FaClosedCaptioning,
+} from "react-icons/fa";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { getPrograma } from "~/.server/programas";
@@ -46,6 +54,42 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       where: { id: videoId },
       data: { isPublic: !video?.isPublic },
     });
+    return { ok: true };
+  }
+
+  if (intent === "move_video") {
+    // El orden vive en `Video.index`. Se reescriben los índices de todas las
+    // piezas del programa para que queden consecutivos: si solo se tocara la
+    // que se mueve, dos piezas podrían empatar y el orden volvería a ser el de
+    // la fecha.
+    const direccion = formData.get("direccion") === "arriba" ? -1 : 1;
+    const course = await db.course.findUnique({
+      where: { slug: params.courseSlug as string },
+      select: { videoIds: true },
+    });
+    if (!course) return data({ error: "Programa no encontrado" }, { status: 404 });
+
+    const videos = await db.video.findMany({
+      where: { id: { in: course.videoIds } },
+      select: { id: true, index: true, eventDate: true },
+    });
+    const ordenadas = videos.sort((a, b) => {
+      if ((a.index ?? 0) !== (b.index ?? 0)) return (a.index ?? 0) - (b.index ?? 0);
+      const ta = a.eventDate ? new Date(a.eventDate).getTime() : Infinity;
+      const tb = b.eventDate ? new Date(b.eventDate).getTime() : Infinity;
+      return ta - tb;
+    });
+
+    const desde = ordenadas.findIndex((v) => v.id === videoId);
+    const hasta = desde + direccion;
+    if (desde < 0 || hasta < 0 || hasta >= ordenadas.length) return { ok: true };
+
+    [ordenadas[desde], ordenadas[hasta]] = [ordenadas[hasta], ordenadas[desde]];
+    await Promise.all(
+      ordenadas.map((v, i) =>
+        db.video.update({ where: { id: v.id }, data: { index: i } }),
+      ),
+    );
     return { ok: true };
   }
 
@@ -102,6 +146,35 @@ const STAGES = [
   { value: "on-demand", label: "On-demand" },
 ];
 
+/// La portada de una pieza. Las que sube el pipeline de grabación quedan sin
+/// ACL pública en Tigris y responden 403: mejor un recuadro honesto que el
+/// icono de imagen rota.
+const Portada = ({
+  src,
+  hayVideo,
+}: {
+  src?: string | null;
+  hayVideo: boolean;
+}) => {
+  const [falló, setFalló] = useState(false);
+  return (
+    <div className="w-28 h-16 shrink-0 rounded-lg overflow-hidden bg-gray-950 border border-gray-800 flex items-center justify-center">
+      {src && !falló ? (
+        <img
+          src={src}
+          alt=""
+          onError={() => setFalló(true)}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <span className="text-[10px] text-gray-600 text-center px-1 leading-tight">
+          {hayVideo ? "sin portada" : "sin video"}
+        </span>
+      )}
+    </div>
+  );
+};
+
 /// El título se edita donde se lee: un click y ya. Guarda al salir del campo o
 /// con Enter; Escape deja las cosas como estaban.
 const TituloEditable = ({ id, title }: { id: string; title: string }) => {
@@ -152,10 +225,14 @@ const AccionesPieza = ({
   id,
   isPublic,
   titulo,
+  primera,
+  ultima,
 }: {
   id: string;
   isPublic: boolean;
   titulo: string;
+  primera: boolean;
+  ultima: boolean;
 }) => {
   const fetcher = useFetcher();
   const [confirmando, setConfirmando] = useState(false);
@@ -163,6 +240,36 @@ const AccionesPieza = ({
 
   return (
     <div className="flex items-center justify-end gap-1.5 text-xs">
+      <button
+        disabled={trabajando || primera}
+        onClick={() =>
+          fetcher.submit(
+            { intent: "move_video", videoId: id, direccion: "arriba" },
+            { method: "post" },
+          )
+        }
+        title="Subir"
+        aria-label="Subir"
+        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800
+          disabled:opacity-20 disabled:hover:bg-transparent"
+      >
+        <FaArrowUp />
+      </button>
+      <button
+        disabled={trabajando || ultima}
+        onClick={() =>
+          fetcher.submit(
+            { intent: "move_video", videoId: id, direccion: "abajo" },
+            { method: "post" },
+          )
+        }
+        title="Bajar"
+        aria-label="Bajar"
+        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800
+          disabled:opacity-20 disabled:hover:bg-transparent"
+      >
+        <FaArrowDown />
+      </button>
       <button
         disabled={trabajando}
         onClick={() =>
@@ -311,13 +418,19 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                 Este programa todavía no tiene piezas publicadas.
               </p>
             )}
-            {piezas.map((pieza) => (
+            {piezas.map((pieza, i) => (
               <div
                 key={pieza.id}
                 className="group bg-gray-900 border border-gray-800 rounded-xl p-4"
               >
                 <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0">
+                  {/* Con tres piezas del mismo título, la miniatura es lo único
+                      que distingue la buena de una ingesta a medias. */}
+                  <Portada
+                    src={pieza.poster}
+                    hayVideo={!!(pieza.m3u8 || pieza.storageLink)}
+                  />
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 text-xs rounded-full bg-gray-800 text-gray-300">
                         {kindLabel(pieza.kind)}
@@ -338,6 +451,11 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                       {fecha(pieza.eventDate) && (
                         <span className="text-xs text-gray-500">
                           {fecha(pieza.eventDate)}
+                        </span>
+                      )}
+                      {pieza.duration && Number(pieza.duration) > 0 && (
+                        <span className="text-xs text-gray-500">
+                          {pieza.duration} min
                         </span>
                       )}
                     </div>
@@ -375,10 +493,33 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                         id={pieza.id}
                         isPublic={pieza.isPublic}
                         titulo={pieza.title}
+                        primera={i === 0}
+                        ultima={i === piezas.length - 1}
                       />
                     </div>
                   </div>
                 </div>
+
+                {pieza.transcript && (
+                  <div className="mt-3 pt-3 border-t border-gray-800">
+                    <a
+                      href={`/cursos/${course.slug}/${pieza.slug}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="inline-flex items-center gap-2 px-2.5 py-1 text-xs rounded-lg
+                        bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      title={`Transcripción de ${pieza.transcript.source}`}
+                    >
+                      <FaClosedCaptioning />
+                      Transcripción
+                      {pieza.transcript.capitulos > 0 && (
+                        <span className="text-gray-500">
+                          · {pieza.transcript.capitulos} capítulos
+                        </span>
+                      )}
+                    </a>
+                  </div>
+                )}
 
                 {pieza.materiales.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-800 flex flex-wrap gap-2">
