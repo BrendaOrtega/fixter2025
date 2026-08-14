@@ -521,6 +521,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                     repeticiones={pieza.calor.repeticiones}
                     personas={pieza.calor.personas}
                     bucketSize={pieza.calor.bucketSize}
+                    duracion={pieza.calor.duracion}
                   />
                 )}
 

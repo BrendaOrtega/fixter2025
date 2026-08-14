@@ -246,11 +246,27 @@ export const getPrograma = async (slug: string) => {
             audiencia.push(vieron);
             repeticiones.push(repitieron);
           }
+          // El eje tiene que ser el video entero, no hasta donde llegó el que
+          // más vio: si no, un video de 75 minutos donde nadie pasó del primero
+          // se dibuja como si durara un minuto.
+          const bucketSize = suyas[0]?.bucketSize || 15;
+          const duracion =
+            Math.max(0, ...suyas.map((v) => v.videoDuration || 0)) ||
+            (video.duration ? Number(video.duration) * 60 : 0);
+          const tramosTotales = duracion
+            ? Math.ceil(duracion / bucketSize)
+            : tramos;
+          while (audiencia.length < tramosTotales) {
+            audiencia.push(0);
+            repeticiones.push(0);
+          }
+
           return {
             audiencia,
             repeticiones,
             personas: porPersona.size,
-            bucketSize: suyas[0]?.bucketSize || 15,
+            bucketSize,
+            duracion: duracion || tramos * bucketSize,
           };
         })(),
         // Cuántos llegaron al reproductor y cuántos le dieron play: entre los

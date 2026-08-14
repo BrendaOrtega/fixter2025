@@ -16,12 +16,18 @@ type Props = {
   repeticiones: number[];
   personas: number;
   bucketSize: number;
+  /** Duración real del video, en segundos: es el eje. */
+  duracion: number;
 };
 
-const reloj = (segundos: number) => {
-  const m = Math.floor(segundos / 60);
+/// En un video de un minuto, "0 min" cinco veces no dice nada: por debajo de
+/// diez minutos manda el segundero.
+const reloj = (segundos: number, escalaCorta: boolean) => {
+  const s = Math.round(segundos);
+  const m = Math.floor(s / 60);
+  if (escalaCorta) return `${m}:${String(s % 60).padStart(2, "0")}`;
   const h = Math.floor(m / 60);
-  return h ? `${h}:${String(m % 60).padStart(2, "0")}` : `${m} min`;
+  return h ? `${h}:${String(m % 60).padStart(2, "0")} h` : `${m} min`;
 };
 
 const W = 1000;
@@ -32,6 +38,7 @@ export const MapaDeCalorVideo = ({
   repeticiones,
   personas,
   bucketSize,
+  duracion,
 }: Props) => {
   const tramos = audiencia.length;
   if (!tramos || !personas) return null;
@@ -49,7 +56,7 @@ export const MapaDeCalorVideo = ({
     .map((v, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`)
     .join(" ");
 
-  const duracion = tramos * bucketSize;
+  const escalaCorta = duracion < 600;
   // Una marca cada cuarto: más que eso satura y menos no ubica.
   const marcas = [0, 0.25, 0.5, 0.75, 1];
 
@@ -73,7 +80,7 @@ export const MapaDeCalorVideo = ({
         className="w-full h-28"
         preserveAspectRatio="none"
         role="img"
-        aria-label={`Retención de ${personas} personas a lo largo de ${reloj(duracion)}`}
+        aria-label={`Retención de ${personas} personas a lo largo de ${reloj(duracion, escalaCorta)}`}
       >
         <defs>
           <linearGradient id="calor-audiencia" x1="0" y1="0" x2="0" y2="1">
@@ -114,7 +121,7 @@ export const MapaDeCalorVideo = ({
 
       <div className="flex justify-between text-[10px] text-gray-600 mt-1">
         {marcas.map((m) => (
-          <span key={m}>{reloj(duracion * m)}</span>
+          <span key={m}>{reloj(duracion * m, escalaCorta)}</span>
         ))}
       </div>
     </div>
