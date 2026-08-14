@@ -19,6 +19,8 @@ import { Streamdown } from "streamdown";
 import { code } from "@streamdown/code";
 import type { Route } from "./+types/courseViewer";
 import getMetaTags from "~/utils/getMetaTags";
+import { parseVideoTime } from "~/utils/videoTime";
+import { checkSignupEmail } from "~/.server/anti-bot";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data) {
@@ -72,6 +74,44 @@ const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
 const COMMUNITY_SLUG = "agentes";
 
 /**
+ * Deja a la persona dentro de verdad: cuenta y sesión abiertas.
+ *
+ * El código que le llegó al correo ya demostró que ese buzón es suyo — es la
+ * misma prueba que usa el magic link. No abrirle sesión después de eso dejaba el
+ * encabezado diciéndole "Iniciar sesión" justo cuando acababa de entrar, y la
+ * ataba a ese navegador: desde el teléfono tenía que repetir el código.
+ *
+ * Devuelve las cabeceras con la cookie de sesión, o `null` si algo falla: el
+ * acceso al video no depende de esto.
+ */
+async function abrirSesion(request: Request, email: string) {
+  try {
+    const { placeSession } = await import("~/.server/dbGetters");
+    const { commitSession } = await import("~/sessions");
+    await db.user.upsert({
+      where: { email },
+      create: { email, confirmed: true, displayName: email.split("@")[0], roles: ["viewer"] },
+      update: { confirmed: true },
+    });
+    return await commitSession(await placeSession(request, email));
+  } catch (error) {
+    console.error("📧 No se pudo abrir sesión:", error);
+    return null;
+  }
+}
+
+/** Las dos cookies del alta: la de suscriptor (de siempre) y la de sesión. */
+function cookiesDeAcceso(email: string, sesion: string | null) {
+  const headers = new Headers();
+  headers.append(
+    "Set-Cookie",
+    `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
+  );
+  if (sesion) headers.append("Set-Cookie", sesion);
+  return headers;
+}
+
+/**
  * Mete al correo a la comunidad y le arranca su secuencia de bienvenida.
  * `joinCommunity` ya es idempotente (no duplica tag ni inscripción), así que
  * volver a verlo un mes después no le vuelve a mandar nada.
@@ -105,6 +145,13 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     return data({ error: "Email requerido" }, { status: 400 });
   }
 
+  // Dominio desechable o truco de puntos en gmail. Se finge que el código salió:
+  // decirle a un bot por qué lo rechazaron es enseñarle a pasar. Este formulario
+  // es el que va en abierto, así que era el que más lo necesitaba.
+  if (checkSignupEmail(email).blocked) {
+    return data({ codeSent: true, email });
+  }
+
   // INTENT: send-code - Envía código OTP o da acceso directo si ya está confirmado
   if (intent === "send-code") {
     console.log("📧 send-code intent received for:", email);
@@ -124,13 +171,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         }
         await joinCommunityFromViewer(email);
 
-        // Set cookie + redirect (sin pedir código)
         const redirectUrl = new URL(request.url);
         redirectUrl.searchParams.set("subscribed", "1");
+        const sesion = await abrirSesion(request, email);
         return redirect(redirectUrl.toString(), {
-          headers: {
-            "Set-Cookie": `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
-          },
+          headers: cookiesDeAcceso(email, sesion),
         });
       }
 
@@ -197,13 +242,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
       await joinCommunityFromViewer(email);
 
-      // Set cookie + redirect
       const redirectUrl = new URL(request.url);
       redirectUrl.searchParams.set("subscribed", "1");
+      const sesion = await abrirSesion(request, email);
       return redirect(redirectUrl.toString(), {
-        headers: {
-          "Set-Cookie": `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
-        },
+        headers: cookiesDeAcceso(email, sesion),
       });
     } catch (error) {
       console.error("📧 Error verifying code:", error);
@@ -518,13 +561,15 @@ export default function Route({
     el.play().catch(() => {});
   }, []);
 
-  // `?t=SEGUNDOS` abre el video en ese momento. Es lo que hace compartible un instante
+  // `?t=` abre el video en ese momento. Es lo que hace compartible un instante
   // concreto —por correo, por WhatsApp— y lo que necesita el SeekToAction del JSON-LD.
+  // Acepta `12m30s`, `12:30` o segundos pelones: la liga tiene que poder escribirse
+  // a mano, no solo generarse.
   const arranqueAplicado = useRef(false);
   useEffect(() => {
     if (arranqueAplicado.current) return;
-    const t = Number(new URLSearchParams(window.location.search).get("t"));
-    if (!Number.isFinite(t) || t <= 0) return;
+    const t = parseVideoTime(new URLSearchParams(window.location.search).get("t"));
+    if (t === null || t <= 0) return;
     const el = playerRef.current;
     if (!el) return;
     arranqueAplicado.current = true;

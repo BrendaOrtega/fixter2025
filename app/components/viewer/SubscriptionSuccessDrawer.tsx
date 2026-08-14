@@ -50,6 +50,12 @@ export const SubscriptionSuccessDrawer = ({
               </span>{" "}
               de este curso.
             </p>
+            {/* Ya tiene sesión abierta; decirlo aquí evita que vea "Iniciar sesión"
+                en el encabezado y crea que algo salió mal. */}
+            <p className="text-sm dark:text-metal text-center text-iron font-light mt-3">
+              Tu sesión quedó abierta: puedes volver desde cualquier dispositivo
+              y seguir donde te quedaste.
+            </p>
 
             {subscriberVideos.length > 0 && (
               <div className="mt-8 bg-white/5 rounded-xl p-4 max-h-[200px] overflow-y-auto">

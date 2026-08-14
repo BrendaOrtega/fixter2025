@@ -113,8 +113,10 @@ export const SubscriptionDrawer = ({
                 Enviar código
               </PrimaryButton>
             </fetcher.Form>
+            {/* El código abre sesión, no solo desbloquea el video: hay que decirlo
+                antes, no después. Una línea; el detalle sobra en este momento. */}
             <p className="text-colorCaption text-xs mt-4 text-center">
-              No spam. Solo contenido de valor.
+              Con tu código quedas dentro y tu avance se guarda. Sin spam.
             </p>
           </>
         ) : (

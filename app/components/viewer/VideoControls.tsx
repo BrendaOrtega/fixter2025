@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type Hls from "hls.js";
 import { cn } from "~/utils/cn";
 import { useStoryboard, tileEn } from "~/hooks/useStoryboard";
+import { formatVideoTime } from "~/utils/videoTime";
 
 /**
  * Barra de controles propia.
@@ -94,7 +95,7 @@ const Menu = ({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
-        className="absolute bottom-full right-0 mb-2 max-h-64 w-56 overflow-y-auto rounded-xl border border-white/10 bg-dark/95 p-1 shadow-xl backdrop-blur"
+        className="scrollbar-sutil absolute bottom-full right-0 mb-2 max-h-64 w-56 overflow-y-auto rounded-xl border border-white/10 bg-dark/95 p-1 shadow-xl backdrop-blur"
       >
         {children}
       </motion.div>
@@ -161,6 +162,7 @@ export const VideoControls = ({
   const [asomado, setAsomado] = useState<number | null>(null);
   const [mostrarRestante, setMostrarRestante] = useState(false);
   const [hayPip, setHayPip] = useState(false);
+  const [ligaCopiada, setLigaCopiada] = useState(false);
 
   const tiles = useStoryboard(videoSlug);
 
@@ -319,6 +321,27 @@ export const VideoControls = ({
     const el = videoRef.current;
     if (!el) return;
     el.paused ? el.play().catch(() => {}) : el.pause();
+  }, [videoRef]);
+
+  /**
+   * Copia la URL de esta pieza con el minuto en curso.
+   *
+   * El `?t=` va en formato legible (`12m30s`) y no en segundos: la liga se pega en
+   * un correo o en WhatsApp, donde alguien la lee antes de darle clic.
+   */
+  const copiarLigaConMinuto = useCallback(async () => {
+    const el = videoRef.current;
+    if (!el) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("t", formatVideoTime(el.currentTime));
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setLigaCopiada(true);
+      setTimeout(() => setLigaCopiada(false), 2000);
+    } catch {
+      // Sin permiso de portapapeles (Safari en http, por ejemplo) no hay a dónde
+      // caer que no sea peor: se deja el botón como estaba en vez de fingir éxito.
+    }
   }, [videoRef]);
 
   /** Segundo bajo una posición horizontal de pantalla. No mueve el video. */
@@ -719,6 +742,14 @@ export const VideoControls = ({
           </Boton>
         )}
 
+        <Boton
+          onClick={copiarLigaConMinuto}
+          titulo={ligaCopiada ? "¡Liga copiada!" : "Copiar liga en este minuto"}
+          activo={ligaCopiada}
+        >
+          {ligaCopiada ? <IconoPalomita /> : <IconoLiga />}
+        </Boton>
+
         <div className="relative">
           <Boton
             onClick={() => setMenu(menu === "velocidad" ? null : "velocidad")}
@@ -806,6 +837,17 @@ const svg = {
   strokeLinejoin: "round" as const,
 };
 
+const IconoLiga = () => (
+  <svg {...svg}>
+    <path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11.5 4.5" />
+    <path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07L12.5 19.5" />
+  </svg>
+);
+const IconoPalomita = () => (
+  <svg {...svg}>
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+);
 const IconoPlay = () => (
   <svg {...svg} fill="currentColor" stroke="none">
     <path d="M6 4l14 8-14 8V4z" />
