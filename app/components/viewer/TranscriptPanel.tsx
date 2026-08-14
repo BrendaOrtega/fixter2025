@@ -280,7 +280,7 @@ export const TranscriptPanel = ({
             ref={contenedorRef}
             onWheel={() => setSeguirVideo(false)}
             onTouchMove={() => setSeguirVideo(false)}
-            className="scrollbar-sutil h-full space-y-1 overflow-y-auto pb-10"
+            className="scrollbar-sutil h-full space-y-1 overflow-y-auto pb-4"
           >
             {segments.map((seg, i) => {
               const activo = i === indiceActivo;
@@ -328,7 +328,9 @@ export const TranscriptPanel = ({
         </div>
       )}
 
-      <p className="shrink-0 pt-2 text-[11px] leading-tight text-gray-600">
+      {/* Fondo opaco y borde: sin ellos, en ventanas bajas el aviso se leía ENCIMA de
+          la última línea de la transcripción, porque no tapa nada por sí solo. */}
+      <p className="shrink-0 border-t border-gray-700/50 bg-dark pt-2 text-[11px] leading-tight text-gray-600">
         Transcripción automática: puede tener errores.
       </p>
     </div>
