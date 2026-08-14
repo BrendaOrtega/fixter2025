@@ -17,13 +17,56 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   await getAdminOrRedirect(request);
   const formData = await request.formData();
 
-  if (formData.get("intent") === "set_stage") {
+  const intent = formData.get("intent");
+
+  if (intent === "set_stage") {
     await db.course.update({
       where: { slug: params.courseSlug as string },
       data: { stage: String(formData.get("stage")) },
     });
     return { ok: true };
   }
+
+  const videoId = String(formData.get("videoId") || "");
+
+  if (intent === "rename_video") {
+    const title = String(formData.get("title") || "").trim();
+    if (!title) return data({ error: "El título no puede quedar vacío" }, { status: 400 });
+    await db.video.update({ where: { id: videoId }, data: { title } });
+    return { ok: true };
+  }
+
+  if (intent === "toggle_public") {
+    const video = await db.video.findUnique({
+      where: { id: videoId },
+      select: { isPublic: true },
+    });
+    await db.video.update({
+      where: { id: videoId },
+      data: { isPublic: !video?.isPublic },
+    });
+    return { ok: true };
+  }
+
+  if (intent === "delete_video") {
+    // Se borra el Video y sus materiales; las vistas se quedan, que son el
+    // histórico de quién vio qué. Los archivos en S3 hay que limpiarlos aparte:
+    // borrarlos desde aquí sin poder deshacer es demasiado filo para un click.
+    await db.resource.deleteMany({ where: { videoId } });
+    const course = await db.course.findUnique({
+      where: { slug: params.courseSlug as string },
+      select: { id: true, videoIds: true },
+    });
+    if (course) {
+      await db.course.update({
+        where: { id: course.id },
+        data: { videoIds: { set: course.videoIds.filter((id) => id !== videoId) } },
+      });
+    }
+    await db.video.delete({ where: { id: videoId } });
+    return { ok: true };
+  }
+
   return data({ error: "Intent desconocido" }, { status: 400 });
 };
 
@@ -43,6 +86,109 @@ const STAGES = [
   { value: "en-vivo", label: "En vivo" },
   { value: "on-demand", label: "On-demand" },
 ];
+
+/// El título se edita donde se lee: un click y ya. Guarda al salir del campo o
+/// con Enter; Escape deja las cosas como estaban.
+const TituloEditable = ({ id, title }: { id: string; title: string }) => {
+  const fetcher = useFetcher();
+  const [editando, setEditando] = useState(false);
+  const valor = (fetcher.formData?.get("title") as string) ?? title;
+
+  if (!editando) {
+    return (
+      <h3
+        onClick={() => setEditando(true)}
+        title="Click para editar"
+        className="text-white font-medium mt-1.5 cursor-text hover:text-gray-300"
+      >
+        {valor}
+      </h3>
+    );
+  }
+
+  const guardar = (title: string) => {
+    setEditando(false);
+    if (title.trim() && title !== valor) {
+      fetcher.submit(
+        { intent: "rename_video", videoId: id, title },
+        { method: "post" },
+      );
+    }
+  };
+
+  return (
+    <input
+      autoFocus
+      defaultValue={valor}
+      onBlur={(e) => guardar(e.currentTarget.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+        if (e.key === "Escape") setEditando(false);
+      }}
+      className="mt-1.5 w-full bg-gray-950 border border-gray-700 rounded-lg px-2 py-1
+        text-white font-medium focus:outline-none focus:border-purple-500"
+    />
+  );
+};
+
+/// Publicar/ocultar y borrar. El borrado pide un segundo click en vez de un
+/// `confirm` del navegador: es más difícil de disparar sin querer y no bloquea.
+const AccionesPieza = ({
+  id,
+  isPublic,
+  titulo,
+}: {
+  id: string;
+  isPublic: boolean;
+  titulo: string;
+}) => {
+  const fetcher = useFetcher();
+  const [confirmando, setConfirmando] = useState(false);
+  const trabajando = fetcher.state !== "idle";
+
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <button
+        disabled={trabajando}
+        onClick={() =>
+          fetcher.submit({ intent: "toggle_public", videoId: id }, { method: "post" })
+        }
+        className="px-2.5 py-1 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700
+          disabled:opacity-50"
+      >
+        {isPublic ? "Pasar a borrador" : "Publicar"}
+      </button>
+      {confirmando ? (
+        <>
+          <span className="text-gray-500">¿Borrar «{titulo}»?</span>
+          <button
+            disabled={trabajando}
+            onClick={() =>
+              fetcher.submit({ intent: "delete_video", videoId: id }, { method: "post" })
+            }
+            className="px-2.5 py-1 rounded-lg bg-red-900/70 text-red-200 hover:bg-red-900
+              disabled:opacity-50"
+          >
+            Sí, borrar
+          </button>
+          <button
+            onClick={() => setConfirmando(false)}
+            className="px-2 py-1 text-gray-500 hover:text-gray-300"
+          >
+            Cancelar
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => setConfirmando(true)}
+          className="px-2.5 py-1 rounded-lg text-gray-600 hover:text-red-300"
+        >
+          Borrar
+        </button>
+      )}
+    </div>
+  );
+};
 
 const Stat = ({ label, value }: { label: string; value: number | string }) => (
   <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
@@ -164,9 +310,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-white font-medium mt-1.5">
-                      {pieza.title}
-                    </h3>
+                    <TituloEditable id={pieza.id} title={pieza.title} />
                     <a
                       href={`/cursos/${course.slug}/${pieza.slug}`}
                       target="_blank"
@@ -193,6 +337,14 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                         : "reproducciones"}
                     </span>
                   </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-800 flex justify-end">
+                  <AccionesPieza
+                    id={pieza.id}
+                    isPublic={pieza.isPublic}
+                    titulo={pieza.title}
+                  />
                 </div>
 
                 {pieza.materiales.length > 0 && (

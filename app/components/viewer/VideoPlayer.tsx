@@ -89,7 +89,11 @@ export const VideoPlayer = ({
     courseId,
     userId,
     email: userEmail,
-    duration: video?.duration,
+    // `Video.duration` viene en MINUTOS y como texto (ver el modelo). Mandarlo
+    // crudo guardaba 75 donde iban 4500 segundos, y cualquier "cuánto vio"
+    // salía en miles por ciento. La duración real la da el elemento cuando
+    // carga su metadata; esto es solo el respaldo mientras llega.
+    duration: video?.duration ? Number(video.duration) * 60 : undefined,
   });
 
   const {
