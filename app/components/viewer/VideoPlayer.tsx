@@ -83,8 +83,15 @@ export const VideoPlayer = ({
   const youtubeId = video?.youtubeUrl ? extractYouTubeId(video.youtubeUrl) : null;
 
   // Video tracking (solo para S3/HLS, no YouTube)
-  const { trackStart, trackProgress, trackComplete, trackTick, trackPlay } =
-    useVideoTracking({
+  const {
+    trackStart,
+    trackProgress,
+    trackComplete,
+    trackTick,
+    trackPlay,
+    trackDuration,
+    identificar,
+  } = useVideoTracking({
     videoId: video?.id || "",
     videoSlug: slug,
     courseId,
@@ -109,10 +116,7 @@ export const VideoPlayer = ({
     courseId,
     slug,
     onPlay: () => {
-      if (!youtubeId) {
-        trackStart();
-        trackPlay(); // distinto de llegar al reproductor: esto es ver de verdad
-      }
+      if (!youtubeId) trackPlay();
       onPlay?.();
     },
     onPause: () => {
@@ -131,6 +135,30 @@ export const VideoPlayer = ({
   });
 
   const [cargando, setCargando] = useState(false);
+
+  // La vista se registra al LLEGAR al reproductor, no al darle play. Creándola
+  // en el play, toda vista tenía play por definición y el "% le dio play" del
+  // admin siempre habría dicho 100%.
+  useEffect(() => {
+    if (!youtubeId && video?.id) trackStart();
+  }, [youtubeId, video?.id, trackStart]);
+
+  // Mucha gente empieza a ver y se identifica después, al desbloquear. Sin
+  // esto la sentada quedaba anónima justo cuando ya sabemos quién es.
+  useEffect(() => {
+    if (!youtubeId && userEmail) identificar(userEmail);
+  }, [youtubeId, userEmail, identificar]);
+
+  // La duración exacta llega con la metadata del elemento; la del modelo está
+  // en minutos enteros escritos a mano.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || youtubeId) return;
+    const alCargar = () => trackDuration(el.duration);
+    if (el.readyState >= 1) alCargar();
+    el.addEventListener("loadedmetadata", alCargar);
+    return () => el.removeEventListener("loadedmetadata", alCargar);
+  }, [videoRef, youtubeId, trackDuration, video?.id]);
 
   const { ofrecido, continuar, empezarDeNuevo, descartar } = useResumePosition({
     videoRef,

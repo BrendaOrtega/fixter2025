@@ -44,14 +44,22 @@ export function useVideoTracking(options: VideoTrackingOptions) {
   const ultimoSegundoRef = useRef(-1);
   const playRef = useRef(false);
   const ultimoEnvioBucketsRef = useRef(0);
+  // La duración que llega por props viene de `Video.duration`, escrita a mano y
+  // en minutos enteros. La del elemento es la de verdad y llega con la metadata.
+  const duracionRealRef = useRef<number | null>(null);
+  // `start` es asíncrono: si el usuario se va antes de que responda, no hay
+  // `viewId` al que colgarle nada y se perdía la sentada entera — justo la de
+  // quien entra y rebota, que es la que más interesa medir.
+  const startEnCursoRef = useRef<Promise<void> | null>(null);
   const lastUpdateRef = useRef(0);
   const hasStartedRef = useRef(false);
 
-  // Crear registro al iniciar reproducción
+  // Crear registro al llegar al reproductor
   const trackStart = useCallback(async () => {
     if (hasStartedRef.current) return; // Ya trackeado esta sesión
     hasStartedRef.current = true;
 
+    const promesa = (async () => {
     try {
       const res = await fetch("/api/video-analytics", {
         method: "POST",
@@ -74,6 +82,9 @@ export function useVideoTracking(options: VideoTrackingOptions) {
     } catch (error) {
       console.error("[VideoTracking] Error tracking start:", error);
     }
+    })();
+    startEnCursoRef.current = promesa;
+    await promesa;
   }, [options]);
 
   // Actualizar progreso (debounced, al pausar o periódicamente)
@@ -110,7 +121,14 @@ export function useVideoTracking(options: VideoTrackingOptions) {
   /// guarda el máximo casilla por casilla, así que un beacon repetido o que
   /// llega tarde no puede ni duplicar ni pisar lo que ya está.
   const enviarBuckets = useCallback((usarBeacon = false) => {
-    if (!viewIdRef.current || !bucketsRef.current.length) return;
+    if (!bucketsRef.current.length) return;
+    if (!viewIdRef.current) {
+      // Todavía no hay vista abierta: se manda en cuanto exista.
+      startEnCursoRef.current?.then(() => {
+        if (viewIdRef.current) enviarBuckets(usarBeacon);
+      });
+      return;
+    }
     const payload = JSON.stringify({
       intent: "heatmap",
       viewId: viewIdRef.current,
@@ -118,6 +136,7 @@ export function useVideoTracking(options: VideoTrackingOptions) {
       bucketSize: BUCKET_SIZE,
       played: playRef.current,
       watchedSeconds: watchedSecondsRef.current,
+      videoDuration: duracionRealRef.current,
     });
     try {
       if (usarBeacon && navigator.sendBeacon) {
@@ -159,6 +178,35 @@ export function useVideoTracking(options: VideoTrackingOptions) {
     enviarBuckets();
   }, []);
 
+  /// El correo puede llegar DESPUÉS de abrir la vista: mucha gente empieza a
+  /// ver y se identifica a mitad. Sin esto, la sentada de quien sí dejó su
+  /// correo quedaba anónima — que es justo el lead que interesa.
+  const identificar = useCallback(async (email: string) => {
+    if (!email) return;
+    await startEnCursoRef.current;
+    if (!viewIdRef.current) return;
+    try {
+      await fetch("/api/video-analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "identify",
+          viewId: viewIdRef.current,
+          email,
+        }),
+      });
+    } catch {
+      // sin ruido: perder la atribución no puede romperle el video a nadie
+    }
+  }, []);
+
+  /// La duración exacta, tomada del `<video>` al cargar su metadata.
+  const trackDuration = useCallback((segundos: number) => {
+    if (Number.isFinite(segundos) && segundos > 0) {
+      duracionRealRef.current = Math.round(segundos);
+    }
+  }, []);
+
   /// El primer play de la sentada. Separado de `trackStart`, que ocurre al
   /// llegar al reproductor: entre los dos sale cuánta gente abre y no ve.
   const trackPlay = useCallback(() => {
@@ -170,9 +218,12 @@ export function useVideoTracking(options: VideoTrackingOptions) {
     if (!viewIdRef.current) return;
 
     try {
+      // `keepalive`: al terminar suele venir una navegación —el siguiente
+      // video— y un fetch normal se cancela a medio camino.
       await fetch("/api/video-analytics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        keepalive: true,
         body: JSON.stringify({
           intent: "complete",
           viewId: viewIdRef.current,
@@ -238,5 +289,13 @@ export function useVideoTracking(options: VideoTrackingOptions) {
     hasStartedRef.current = false;
   }, [options.videoId]);
 
-  return { trackStart, trackProgress, trackComplete, trackTick, trackPlay };
+  return {
+    trackStart,
+    trackProgress,
+    trackComplete,
+    trackTick,
+    trackPlay,
+    trackDuration,
+    identificar,
+  };
 }

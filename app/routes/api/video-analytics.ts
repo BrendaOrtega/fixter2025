@@ -45,6 +45,22 @@ export const action: ActionFunction = async ({ request }) => {
 
     const { intent } = body;
 
+    // Los crawlers y los previews de enlaces (WhatsApp, Slack, Discord) tocan
+    // la página y ejecutan lo suficiente para abrir una vista. Contarlos como
+    // espectadores ensucia justo la métrica que se va a mirar con tráfico real.
+    const ua = (request.headers.get("user-agent") || "").toLowerCase();
+    const esBot =
+      !ua ||
+      /bot|crawler|spider|crawling|preview|facebookexternalhit|whatsapp|slackbot|discordbot|telegrambot|twitterbot|linkedinbot|embedly|quora|pinterest|bitlybot|vkshare|redditbot|applebot|bingbot|googlebot|yandex|duckduckbot|semrush|ahrefs|headless|lighthouse|python-requests|curl|wget|axios|node-fetch/.test(
+        ua,
+      );
+    if (esBot) {
+      return new Response(JSON.stringify({ ok: true, ignorado: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Intent: start - Crear nuevo registro de visualización
     if (intent === "start") {
       const { videoId, videoSlug, courseId, userId, email, duration } = body;
@@ -140,9 +156,29 @@ export const action: ActionFunction = async ({ request }) => {
       });
     }
 
+    // Intent: identify — el correo llegó a mitad de la sesión
+    if (intent === "identify") {
+      const { viewId, email } = body;
+      if (!viewId || !email) {
+        return new Response(JSON.stringify({ error: "viewId y email requeridos" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      await db.videoView.update({
+        where: { id: viewId },
+        data: { email: String(email) },
+      });
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Intent: heatmap — el mapa de calor de esta sentada
     if (intent === "heatmap") {
-      const { viewId, buckets, bucketSize, played, watchedSeconds } = body;
+      const { viewId, buckets, bucketSize, played, watchedSeconds, videoDuration } =
+        body;
 
       if (!viewId || !Array.isArray(buckets)) {
         return new Response(
@@ -183,6 +219,10 @@ export const action: ActionFunction = async ({ request }) => {
           ),
           // se marca una sola vez: es el instante del primer play
           ...(played && !actual.playedAt ? { playedAt: new Date() } : {}),
+          // La duración del elemento manda sobre la que se capturó al publicar
+          ...(Number(videoDuration) > 0
+            ? { videoDuration: Math.round(Number(videoDuration)) }
+            : {}),
         },
       });
 
