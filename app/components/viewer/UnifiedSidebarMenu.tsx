@@ -163,7 +163,9 @@ export const UnifiedSidebarMenu = ({
         menuWidth={menuWidth}
       >
         {/* Header with tabs */}
-        <div className="px-4 py-4 border-b border-gray-700/50">
+        {/* `pr-[72px]` con el panel abierto: ahí encima flota el botón de cerrar y sin
+            este hueco se montaba sobre las pestañas. */}
+        <div className={cn("px-4 py-4 border-b border-gray-700/50", isOpen && "pr-[72px]")}>
           <h2 className="text-lg font-semibold text-white mb-3 truncate">
             {courseTitle}
           </h2>
@@ -301,13 +303,13 @@ const UnifiedMenuButton = ({
       onClick={onToggle}
       className={cn(
         "fixed bg-[#0C1115] border border-gray-600/40 text-4xl w-14 h-14 text-white p-2 z-[220] flex items-center justify-center hover:bg-gray-800/80 transition-colors shadow-lg",
+        // Siempre en el mismo sitio, abierto o cerrado: si se mueve al abrir, hay que
+        // volver a buscarlo para cerrar. El choque con las pestañas se resuelve
+        // dejándoles hueco a la derecha, no moviendo el botón.
+        "top-20",
         {
-          // Cerrado es la pestaña para abrir: arriba, donde se busca.
-          "rounded-r-2xl left-0 top-20": !isOpen,
-          // Abierto se monta sobre el borde del panel, y arriba chocaba con las
-          // pestañas (que ahora son dos filas). Al centro funciona como manija y no
-          // se encima con nada.
-          "rounded-2xl top-1/2 -translate-y-1/2": isOpen,
+          "rounded-r-2xl left-0": !isOpen,
+          "rounded-2xl": isOpen,
         }
       )}
     >
