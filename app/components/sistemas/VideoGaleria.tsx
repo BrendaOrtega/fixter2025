@@ -28,6 +28,24 @@ export const VIDEOS: VideoItem[] = [
     poster: `${CDN}/videos/sesion-01-el-loop.jpg`,
     duracion: "0:47",
   },
+  {
+    slug: "el-escritorio",
+    titulo: "El contexto es un escritorio",
+    descripcion:
+      'Por qué un agente truena con "Prompt is too long", y los cuatro mecanismos que lo arreglan: el índice, la búsqueda, el resumen y la ruta en disco.',
+    src: `${CDN}/videos/sesion-02-el-escritorio.mp4`,
+    poster: `${CDN}/videos/posters/sesion-02-el-escritorio.jpg`,
+    duracion: "4:31",
+  },
+  {
+    slug: "los-hooks",
+    titulo: "Aquí no decide el modelo",
+    descripcion:
+      "El hook es el lugar del ciclo donde corre tu código; el guardrail es la regla que escribes dentro. El único control que no depende de que el modelo obedezca.",
+    src: `${CDN}/videos/sesion-03-los-hooks.mp4`,
+    poster: `${CDN}/videos/posters/sesion-03-los-hooks-v2.jpg`,
+    duracion: "2:10",
+  },
 ];
 
 export default function VideoGaleria() {
