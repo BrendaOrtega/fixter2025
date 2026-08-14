@@ -6,14 +6,21 @@
  * mismas keys, mismos content-types, objetos privados (los presigna
  * `/api/hls-proxy` al reproducir).
  *
- *   npx tsx scripts/upload-hls-local.ts <courseId> <videoId> <dirHLS>
+ *   npx tsx scripts/upload-hls-local.ts <courseId> <videoId> <dirHLS> [--only=1080p] [--skip-db]
+ *
+ * `--only` sube una sola calidad (sirve para solapar la subida con el
+ * transcode de las demás) y `--skip-db` deja la fila del Video sin tocar
+ * hasta que esté TODO arriba.
  */
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
 import path from "path";
 
-const [courseId, videoId, hlsDir] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const [courseId, videoId, hlsDir] = args.filter((a) => !a.startsWith("--"));
+const only = args.find((a) => a.startsWith("--only="))?.split("=")[1];
+const skipDb = args.includes("--skip-db");
 if (!courseId || !videoId || !hlsDir) {
   console.error("uso: npx tsx scripts/upload-hls-local.ts <courseId> <videoId> <dirHLS>");
   process.exit(1);
@@ -73,7 +80,10 @@ async function uploadOne(relative: string) {
 }
 
 async function main() {
-  const files = (await walk(hlsDir)).filter((f) => f.endsWith(".ts") || f.endsWith(".m3u8"));
+  const files = (await walk(hlsDir))
+    .filter((f) => f.endsWith(".ts") || f.endsWith(".m3u8"))
+    // `--only=720p` filtra por carpeta; `--only=master.m3u8`, por archivo exacto.
+    .filter((f) => (only ? f === only || f.startsWith(`${only}/`) : true));
   const segments = files.filter((f) => f.endsWith(".ts"));
   const playlists = files.filter((f) => f.endsWith(".m3u8"));
   console.log(`📦 ${segments.length} segmentos + ${playlists.length} playlists → ${BUCKET}`);
@@ -95,6 +105,11 @@ async function main() {
   );
   for (const playlist of playlists) await uploadOne(playlist);
   console.log(`✅ Subidos ${files.length} archivos`);
+
+  if (skipDb) {
+    console.log("↩️  --skip-db: la fila del Video se cierra en la corrida final");
+    return;
+  }
 
   const m3u8 = `${ENDPOINT}/${BUCKET}/fixtergeek/videos/${courseId}/${videoId}/hls/master.m3u8`;
   await prisma.video.update({

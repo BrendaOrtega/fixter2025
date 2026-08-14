@@ -350,7 +350,14 @@ const VideosContent = ({
                     duration={v?.duration || 0}
                     courseSlug={courseSlug}
                     accessLevel={accessLevel}
-                    hasContent={!!(v as any)?.storageLink || !!(v as any)?.youtubeUrl}
+                    // `m3u8` cuenta: un video procesado a HLS no necesita
+                    // `storageLink`, y sin esto la lección salía marcada "en
+                    // construcción" y con el enlace muerto.
+                    hasContent={
+                      !!(v as any)?.storageLink ||
+                      !!(v as any)?.youtubeUrl ||
+                      !!(v as any)?.m3u8
+                    }
                   />
                 );
               })}

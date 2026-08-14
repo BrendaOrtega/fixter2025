@@ -19,18 +19,24 @@ const COURSE_SLUG = "sistemas-agenticos";
 const VIDEO_SLUG = "primer-webinar-anatomia-de-un-sistema-agentico";
 const VIDEO_TITLE = "Primer webinar: Anatomía de un sistema agéntico";
 
-const DESCRIPTION = `Grabación completa del primer webinar del taller **Diseño de sistemas agénticos**, en vivo el 13 de agosto de 2026.
+const DESCRIPTION = `Grabación completa del primer webinar del taller **Diseño de sistemas agénticos**, en vivo el 13 de agosto de 2026. Hora y cuarto, sin editar.
 
-Un agente es un modelo más todo lo que construyes alrededor de él. Claude Code lleva alrededor de medio millón de líneas de código y ninguna de ellas es el modelo: todas son harness. Este webinar abre esa caja.
+**La tesis:** consumir el API de un LLM no es un sistema agéntico. Un agente se vuelve potente cuando le das una computadora — y ahí empieza el problema, porque no quieres que sea la tuya. De ahí salen las cajas: máquinas virtuales con su propio kernel, disco y RAM, que se levantan como palomitas y se apagan solas.
 
-Lo que se ve:
+Lo que se ve, casi todo en vivo y sobre sistemas que están corriendo:
 
-- **Agente = modelo + harness.** Las primitivas por dentro: system prompts, tools, skills, MCP, subagentes, middleware.
-- **Context engineering.** El contexto como recurso finito: el filesystem como cuaderno, resumir, planear, y subagentes que aíslan contexto.
-- **Lo que rompe a los agentes en producción.** Ejecución durable (fallar en el paso 67 de 123 sin repetir los 67), memoria de corto y largo plazo, auth en tres capas, y human-in-the-loop.
-- **La pieza que casi nadie enseña: la interfaz.** Un agente que trabaja durante minutos necesita progreso, estados y aprobaciones.
+- **Qué es un sistema agéntico.** Del agente que corre en tu computadora al agente aislado en su propia microVM, y por qué el sandboxing es la pieza que decide todo lo demás.
+- **El arnés, y la confusión que trae el término.** SDK, agente de código, framework — y arneces dentro de arneces. Lo que hace bueno a un agente no es el modelo: son las herramientas alrededor y su calidad. Caso medido: 500 millones de tokens que se facturaron como 20, por aprovechar la caché.
+- **Agent native.** Injertarle el agente a un software que ya existe, sin reescribirlo. Demo sobre Deník: cambiarle el nombre a un servicio hablando con el agente, en vez de cinco clics.
+- **Las seis primitivas.** Prompt (sobrevalorado), tools, skills, subagentes, hooks —los guardrails de verdad, porque son código y no se pueden ignorar— y memoria.
+- **Contexto: herramientas en lugar de historial.** El agente arranca vacío y va a buscar lo que necesita. Incluye el hack del file system falso, donde lo que el agente cree que son archivos son filas de una base de datos.
+- **Permisos por token de ejecución.** Quién invocó la herramienta y desde qué room, con un mini IAM al estilo de AWS: cómo se bloquea por código lo que un prompt no puede bloquear.
+- **La interfaz.** Ver qué herramienta está corriendo el agente no se le pide al modelo, se enganchan los hooks.
+- **Preguntas al final.** Evals como postmortem con ojo humano (con un caso real: un pin de WhatsApp que salió en otra ciudad porque la tool exigía latitud y longitud que no existían, y el modelo las inventó), y la estrategia universal de trocear lo grande con un subagente barato.
 
-Es la sesión 0 del taller. Va sin editar, tal como salió en vivo.`;
+Sale también, sin recortar, el sistema de llamadas donde se transmitió — estrenándose ese día, con sus bugs a la vista.
+
+Es la sesión 0 del taller, que empieza el 1 de septiembre.`;
 
 async function main() {
   const course = await prisma.course.findUnique({

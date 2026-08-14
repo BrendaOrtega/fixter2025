@@ -44,7 +44,12 @@ const getAllVideos = async (courseId: string) => {
       accessLevel: true,
       storageLink: true,
       youtubeUrl: true,
-      // m3u8 excluido - algunos videos tienen datos corruptos
+      // m3u8 vuelve, pero SOLO para saber si la lección tiene contenido: un
+      // video procesado a HLS no tiene `storageLink` y sin esto salía marcado
+      // "en construcción" y con el enlace muerto. La reproducción sigue usando
+      // la consulta aparte del viewer, así que un valor corrupto aquí (la razón
+      // por la que se había excluido) no llega al player.
+      m3u8: true,
     },
     orderBy: { index: "asc" },
   });
@@ -67,6 +72,7 @@ const getAllVideos = async (courseId: string) => {
       accessLevel: true,
       youtubeUrl: true,
       storageLink: true,
+      m3u8: true,
     },
     orderBy: { index: "asc" },
   });
@@ -135,7 +141,7 @@ export const getFreeOrEnrolledCourseFor = async (
           accessLevel: true,
           storageLink: true,
           youtubeUrl: true,
-          // m3u8 excluido - algunos videos tienen datos corruptos
+          m3u8: true, // igual que en getAllVideos: solo para saber si hay contenido
         },
         orderBy: { index: "asc" },
       });
