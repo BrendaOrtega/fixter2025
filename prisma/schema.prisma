@@ -737,6 +737,17 @@ model VideoView {
   // Contexto útil
   deviceType String? // mobile/tablet/desktop
 
+  /// Mapa de calor de esta sentada: una casilla por cada tramo de `bucketSize`
+  /// segundos, con las veces que esa persona lo vio. Un 2 o más es un
+  /// rebobinado; un 0 rodeado de casillas vistas es un salto.
+  /// Se guarda el máximo casilla por casilla, no la suma: los beacons pueden
+  /// llegar repetidos o fuera de orden.
+  buckets    Int[]
+  bucketSize Int       @default(15)
+  /// Cuándo le dio play de verdad. `startedAt` es cuándo llegó al reproductor:
+  /// la diferencia entre los dos es la gente que abrió y nunca reprodujo.
+  playedAt   DateTime?
+
   @@index([videoId])
   @@index([courseId])
   @@index([userId])

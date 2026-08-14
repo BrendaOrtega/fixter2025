@@ -1,5 +1,10 @@
 import { useRef, useEffect, useCallback } from "react";
 
+/// Tamaño del tramo del mapa de calor, en segundos. 15 da 300 casillas para un
+/// webinar de 75 minutos (~3 KB) y alcanza para señalar el momento exacto de un
+/// clip, no solo para ver si abandonan al principio.
+const BUCKET_SIZE = 15;
+
 interface VideoTrackingOptions {
   videoId: string;
   videoSlug: string;
@@ -34,6 +39,11 @@ function getVisitorId(): string {
 export function useVideoTracking(options: VideoTrackingOptions) {
   const viewIdRef = useRef<string | null>(null);
   const watchedSecondsRef = useRef(0);
+  // Una casilla por tramo de BUCKET_SIZE segundos, con las veces que se vio.
+  const bucketsRef = useRef<number[]>([]);
+  const ultimoSegundoRef = useRef(-1);
+  const playRef = useRef(false);
+  const ultimoEnvioBucketsRef = useRef(0);
   const lastUpdateRef = useRef(0);
   const hasStartedRef = useRef(false);
 
@@ -96,6 +106,65 @@ export function useVideoTracking(options: VideoTrackingOptions) {
     }
   }, []);
 
+  /// Manda el acumulado COMPLETO de esta sentada, no un delta: el servidor
+  /// guarda el máximo casilla por casilla, así que un beacon repetido o que
+  /// llega tarde no puede ni duplicar ni pisar lo que ya está.
+  const enviarBuckets = useCallback((usarBeacon = false) => {
+    if (!viewIdRef.current || !bucketsRef.current.length) return;
+    const payload = JSON.stringify({
+      intent: "heatmap",
+      viewId: viewIdRef.current,
+      buckets: bucketsRef.current,
+      bucketSize: BUCKET_SIZE,
+      played: playRef.current,
+      watchedSeconds: watchedSecondsRef.current,
+    });
+    try {
+      if (usarBeacon && navigator.sendBeacon) {
+        navigator.sendBeacon("/api/video-analytics", payload);
+      } else {
+        fetch("/api/video-analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    } catch {
+      // perder un lote de métricas no puede romperle el video a nadie
+    }
+  }, []);
+
+  /// Llamado una vez por segundo de reproducción, con la posición del video.
+  /// De aquí sale el mapa de calor: qué tramos se vieron, cuáles se repitieron
+  /// y cuáles nunca se tocaron.
+  const trackTick = useCallback((currentTime: number) => {
+    const segundo = Math.floor(currentTime);
+    if (segundo === ultimoSegundoRef.current) return; // el mismo segundo no cuenta dos veces
+    ultimoSegundoRef.current = segundo;
+
+    const casilla = Math.floor(segundo / BUCKET_SIZE);
+    const b = bucketsRef.current;
+    // rellenar los huecos: un salto adelante deja ceros en medio, que es
+    // justamente lo que queremos ver como "esto se lo brincaron"
+    while (b.length <= casilla) b.push(0);
+    b[casilla] += 1;
+
+    watchedSecondsRef.current = Math.max(watchedSecondsRef.current, segundo);
+
+    // Lotes de 10 s, como hace Mux: ni un beacon por segundo ni perderlo todo
+    const now = Date.now();
+    if (now - ultimoEnvioBucketsRef.current < 10000) return;
+    ultimoEnvioBucketsRef.current = now;
+    enviarBuckets();
+  }, []);
+
+  /// El primer play de la sentada. Separado de `trackStart`, que ocurre al
+  /// llegar al reproductor: entre los dos sale cuánta gente abre y no ve.
+  const trackPlay = useCallback(() => {
+    playRef.current = true;
+  }, []);
+
   // Marcar como completado
   const trackComplete = useCallback(async () => {
     if (!viewIdRef.current) return;
@@ -118,6 +187,7 @@ export function useVideoTracking(options: VideoTrackingOptions) {
   // Guardar progreso al cerrar pestaña (usando sendBeacon para reliability)
   useEffect(() => {
     const handleUnload = () => {
+      enviarBuckets(true); // beacon: es lo único que sobrevive al cierre
       if (viewIdRef.current && watchedSecondsRef.current > 0) {
         navigator.sendBeacon(
           "/api/video-analytics",
@@ -132,6 +202,7 @@ export function useVideoTracking(options: VideoTrackingOptions) {
 
     // Guardar progreso cuando la pestaña pierde foco (usuario cambia de tab)
     const handleVisibilityChange = () => {
+      if (document.hidden) enviarBuckets();
       if (document.hidden && viewIdRef.current && watchedSecondsRef.current > 0) {
         fetch("/api/video-analytics", {
           method: "POST",
@@ -159,9 +230,13 @@ export function useVideoTracking(options: VideoTrackingOptions) {
   useEffect(() => {
     viewIdRef.current = null;
     watchedSecondsRef.current = 0;
+    bucketsRef.current = [];
+    ultimoSegundoRef.current = -1;
+    playRef.current = false;
+    ultimoEnvioBucketsRef.current = 0;
     lastUpdateRef.current = 0;
     hasStartedRef.current = false;
   }, [options.videoId]);
 
-  return { trackStart, trackProgress, trackComplete };
+  return { trackStart, trackProgress, trackComplete, trackTick, trackPlay };
 }

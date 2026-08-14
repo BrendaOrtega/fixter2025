@@ -140,6 +140,58 @@ export const action: ActionFunction = async ({ request }) => {
       });
     }
 
+    // Intent: heatmap — el mapa de calor de esta sentada
+    if (intent === "heatmap") {
+      const { viewId, buckets, bucketSize, played, watchedSeconds } = body;
+
+      if (!viewId || !Array.isArray(buckets)) {
+        return new Response(
+          JSON.stringify({ error: "viewId y buckets requeridos" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      const actual = await db.videoView.findUnique({
+        where: { id: viewId },
+        select: { buckets: true, watchedSeconds: true, playedAt: true },
+      });
+      if (!actual) {
+        return new Response(JSON.stringify({ error: "Vista no encontrada" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // Máximo casilla por casilla, no suma: el cliente manda el acumulado
+      // completo, así que un beacon repetido es inofensivo y uno que llega
+      // tarde no puede pisar lo que ya estaba.
+      const previos = actual.buckets || [];
+      const largo = Math.max(previos.length, buckets.length);
+      const fusionados: number[] = [];
+      for (let i = 0; i < largo; i++) {
+        fusionados[i] = Math.max(previos[i] || 0, Number(buckets[i]) || 0);
+      }
+
+      await db.videoView.update({
+        where: { id: viewId },
+        data: {
+          buckets: fusionados,
+          bucketSize: Number(bucketSize) || 15,
+          watchedSeconds: Math.max(
+            actual.watchedSeconds || 0,
+            Math.floor(Number(watchedSeconds) || 0)
+          ),
+          // se marca una sola vez: es el instante del primer play
+          ...(played && !actual.playedAt ? { playedAt: new Date() } : {}),
+        },
+      });
+
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Intent: complete - Marcar como completado
     if (intent === "complete") {
       const { viewId, watchedSeconds } = body;

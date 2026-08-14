@@ -83,7 +83,8 @@ export const VideoPlayer = ({
   const youtubeId = video?.youtubeUrl ? extractYouTubeId(video.youtubeUrl) : null;
 
   // Video tracking (solo para S3/HLS, no YouTube)
-  const { trackStart, trackProgress, trackComplete } = useVideoTracking({
+  const { trackStart, trackProgress, trackComplete, trackTick, trackPlay } =
+    useVideoTracking({
     videoId: video?.id || "",
     videoSlug: slug,
     courseId,
@@ -108,7 +109,10 @@ export const VideoPlayer = ({
     courseId,
     slug,
     onPlay: () => {
-      if (!youtubeId) trackStart();
+      if (!youtubeId) {
+        trackStart();
+        trackPlay(); // distinto de llegar al reproductor: esto es ver de verdad
+      }
       onPlay?.();
     },
     onPause: () => {
@@ -333,7 +337,10 @@ export const VideoPlayer = ({
         duracionConocida={video?.duration ? Number(video.duration) * 60 : undefined}
         chapters={chapters}
         captionsUrl={captionsUrl}
-        onTimeChange={onTimeChange}
+        onTimeChange={(segundo) => {
+          if (!youtubeId) trackTick(segundo);
+          onTimeChange?.(segundo);
+        }}
       />
     </section>
   );
