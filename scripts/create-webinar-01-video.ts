@@ -17,7 +17,7 @@ const prisma = new PrismaClient();
 
 const COURSE_SLUG = "sistemas-agenticos";
 const VIDEO_SLUG = "anatomia-de-un-sistema-agentico";
-const VIDEO_TITLE = "Primer webinar: Anatomía de un sistema agéntico";
+const VIDEO_TITLE = "Anatomía de un sistema agéntico";
 
 const DESCRIPTION = `Grabación completa del primer webinar del taller **Diseño de sistemas agénticos**, en vivo el 13 de agosto de 2026. Hora y cuarto, sin editar.
 

@@ -26,7 +26,7 @@ async function main() {
     update: {},
     create: {
       slug: VIDEO_SLUG,
-      title: "Segundo webinar: Sandboxing, la caja donde vive tu agente",
+      title: "Sandboxing: la caja donde vive tu agente",
       description:
         "En qué computadora corre el código que tu agente escribió: la escalera de aislamiento, qué cobra cada proveedor y por qué el sandbox es lo que habilita Code Mode.",
       kind: "webinar",
