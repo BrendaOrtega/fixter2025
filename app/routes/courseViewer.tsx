@@ -50,6 +50,33 @@ export function meta({ data }: Route.MetaArgs) {
 // Cookie name for subscriber email
 const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
 
+// Comunidad a la que entra quien desbloquea un video con su correo. Es el
+// mismo público —vino por un webinar de agentes— y la secuencia pública de la
+// comunidad es la continuación natural.
+const COMMUNITY_SLUG = "agentes";
+
+/**
+ * Mete al correo a la comunidad y le arranca su secuencia de bienvenida.
+ * `joinCommunity` ya es idempotente (no duplica tag ni inscripción), así que
+ * volver a verlo un mes después no le vuelve a mandar nada.
+ *
+ * Nunca bloquea: si la comunidad no existe o algo truena, la persona igual ve
+ * su video. Perder el alta es molesto; perder el acceso que ya se ganó, no.
+ */
+async function joinCommunityFromViewer(email: string) {
+  try {
+    const community = await db.community.findUnique({
+      where: { slug: COMMUNITY_SLUG },
+      select: { id: true },
+    });
+    if (!community) return;
+    const { joinCommunity } = await import("~/.server/community");
+    await joinCommunity({ communityId: community.id, email });
+  } catch (error) {
+    console.error("📧 No se pudo unir a la comunidad:", error);
+  }
+}
+
 // Action for handling subscription with OTP verification
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const formData = await request.formData();
@@ -79,6 +106,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
             data: { tags: { push: tag } },
           });
         }
+        await joinCommunityFromViewer(email);
+
         // Set cookie + redirect (sin pedir código)
         const redirectUrl = new URL(request.url);
         redirectUrl.searchParams.set("subscribed", "1");
@@ -149,6 +178,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
           codeExpiresAt: null,
         },
       });
+
+      await joinCommunityFromViewer(email);
 
       // Set cookie + redirect
       const redirectUrl = new URL(request.url);
