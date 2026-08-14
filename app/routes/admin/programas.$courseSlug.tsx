@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, data, useFetcher } from "react-router";
 import type { Route } from "./+types/programas.$courseSlug";
+import { FaEye, FaEyeSlash, FaTrash, FaTimes } from "react-icons/fa";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { getPrograma } from "~/.server/programas";
@@ -50,8 +51,17 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
   if (intent === "delete_video") {
     // Se borra el Video y sus materiales; las vistas se quedan, que son el
-    // histórico de quién vio qué. Los archivos en S3 hay que limpiarlos aparte:
-    // borrarlos desde aquí sin poder deshacer es demasiado filo para un click.
+    // histórico de quién vio qué.
+    //
+    // ⚠️ Y AHORA también sus archivos. Antes se dejaban a propósito ("borrarlos sin poder
+    // deshacer es demasiado filo para un click"), pero nadie los limpiaba después: un
+    // webinar son ~1,400 objetos y 3.6 GB que siguen pagándose sin que nada los apunte.
+    // El borrado va acotado al prefijo del VÍDEO —nunca al del curso— y sólo corre cuando
+    // la fila ya no existe. Ver `app/.server/video-files.ts`.
+    const previo = await db.video.findUnique({
+      where: { id: videoId },
+      select: { courseIds: true },
+    });
     await db.resource.deleteMany({ where: { videoId } });
     const course = await db.course.findUnique({
       where: { slug: params.courseSlug as string },
@@ -64,7 +74,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       });
     }
     await db.video.delete({ where: { id: videoId } });
-    return { ok: true };
+    const { borrarArchivosDeVideo } = await import("~/.server/video-files");
+    let borrados = 0;
+    for (const cid of previo?.courseIds ?? []) {
+      borrados += await borrarArchivosDeVideo(cid, videoId);
+    }
+    return { ok: true, archivosBorrados: borrados };
   }
 
   return data({ error: "Intent desconocido" }, { status: 400 });
@@ -153,10 +168,12 @@ const AccionesPieza = ({
         onClick={() =>
           fetcher.submit({ intent: "toggle_public", videoId: id }, { method: "post" })
         }
-        className="px-2.5 py-1 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700
+        title={isPublic ? "Pasar a borrador" : "Publicar"}
+        aria-label={isPublic ? "Pasar a borrador" : "Publicar"}
+        className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800
           disabled:opacity-50"
       >
-        {isPublic ? "Pasar a borrador" : "Publicar"}
+        {isPublic ? <FaEye /> : <FaEyeSlash />}
       </button>
       {/* La confirmación ocupa el mismo lugar que el botón: si crece, empuja la
           tarjeta y se ve peor que el riesgo que intenta evitar. El nombre no se
@@ -170,24 +187,27 @@ const AccionesPieza = ({
             }
             title={`Borrar «${titulo}»`}
             className="px-2.5 py-1 rounded-lg bg-red-900/70 text-red-200 hover:bg-red-900
-              disabled:opacity-50"
+              disabled:opacity-50 text-xs font-medium"
           >
-            {trabajando ? "Borrando…" : "¿Seguro?"}
+            {trabajando ? "Borrando…" : "Confirmar"}
           </button>
           <button
             onClick={() => setConfirmando(false)}
-            className="px-1.5 py-1 text-gray-600 hover:text-gray-300"
+            className="p-1.5 rounded-lg text-gray-600 hover:text-gray-300"
             title="Cancelar"
+            aria-label="Cancelar"
           >
-            ✕
+            <FaTimes />
           </button>
         </>
       ) : (
         <button
           onClick={() => setConfirmando(true)}
-          className="px-2.5 py-1 rounded-lg text-gray-600 hover:text-red-300"
+          title="Borrar"
+          aria-label="Borrar"
+          className="p-1.5 rounded-lg text-gray-600 hover:text-red-300 hover:bg-red-900/30"
         >
-          Borrar
+          <FaTrash />
         </button>
       )}
     </div>
