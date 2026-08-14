@@ -1,135 +1,72 @@
 # Webinar 2 — Sandboxing: ¿en qué computadora corre tu agente?
 
-**Jueves 20 de agosto de 2026, 8:00 PM CDMX.** ~45 min, alternando slide → demo,
-como el primero. Esqueleto para aprobar el arco antes de construir el deck.
+**Jueves 20 de agosto de 2026, 8:00 PM CDMX.** ~45 min, alternando slide → demo.
 
-**La promesa**: el webinar 1 cerró en "dale una computadora al agente, pero no la
-tuya". Este responde cuál, con precios en pantalla y sin vender humo.
+> **Estado al 14 de agosto: deck construido y revisado, 20 slides.**
+> Vive en `slides.html`, junto a este archivo. Se abre en el navegador y se comparte
+> pestaña. Controles: flechas o espacio, `N` apuntes, `T` cronómetro, `R` reinicia,
+> `F` pantalla completa.
+>
+> **Falta ensayar los demos** — se hace un día de esta semana, antes del jueves 20, y
+> ahí se decide qué se queda. Lo demás está listo para presentarse tal cual.
 
-**Postura sobre proveedores**: los demos son educativos — enseñar qué existe, qué
-cuesta y cuándo conviene cada uno. EasyBits se **presenta** al final (existe, es
-fácil, trinidad API/SDK/MCP con Code Mode), no se corona: todavía no hay
-benchmarks propios que presumir.
+## Lo que quedó decidido en el deck (no volver a discutir)
 
----
+- **Diseño**: branding EasyBits brutalista —morado, naranja, amarillo, fondo crema,
+  borde negro grueso, sombra dura, cero gradientes—, con sus fuentes reales (Cabin y
+  Jersey 10) incrustadas para que no dependa de red. 8 ilustraciones animadas en bucle.
+- **Apertura**: el escape de julio de 2026 en OpenAI (zero-day en Artifactory, 17,600
+  acciones, 136 llaves). Replit se usa después, y solo para hablar de **permisos**.
+- **La tabla (slide 12)** compara **cajas y nada más**: una de 2 vCPU y 2 GB prendida
+  8 h al día, todo en pesos a 17 por dólar, con tarifas verificadas en las páginas de
+  cada proveedor. EasyBits gana la columna de ejecución al 100% y **pierde la del 10%**;
+  esa derrota se queda, porque es lo que hace creíble el resto.
+- **EasyBits se presenta, no se corona.** Sus dos ventajas reales: 4 agentes por caja, y
+  que el kernel persistente no cuesta extra con plan fijo.
+- **Code Mode** cierra con los números de Anthropic: 150,000 tokens contra 2,000.
 
-## Acto 1 — Por qué esto importa (min 0-10)
+## Pendientes concretos
 
-**1. Portada** — *Sandboxing: la caja donde vive tu agente*
-> Apunte: segunda de tres. Quien no vio la primera no necesita haberla visto.
-
-**2. Dónde quedamos**
-> Recap en 30 segundos: un agente se vuelve potente cuando le das una
-> computadora. Y ahí empieza el problema.
-
-**3. La pregunta de hoy: ¿cuál computadora, exactamente?**
-> Es la pregunta que casi nadie contesta antes de estar en producción.
-
-**4. El caso Replit** — el dato duro
-> Julio 2025. El agente borró la base de **producción durante un code freeze**:
-> 1,200 ejecutivos y 1,196 negocios. Luego **fabricó 4,000 usuarios falsos** y
-> dijo que el rollback era imposible. El CEO se disculpó en público.
-> Ilustración: la caja de datos vacía. Nada de dramatizar de más — el dato solo.
-
-**5. Lo que ese caso sí prueba, y lo que no**
-> No fue una falla de sandbox: fue no tener ninguno. Aislar no te salva de dar
-> permisos de más — son dos capas distintas. Pero sin la primera, la segunda no
-> existe. Enlaza con los permisos por token de ejecución del webinar 1.
+1. **Ensayar los 3 demos** (ver abajo) y decidir cuáles sobreviven.
+2. **Cupón de la sesión** — la slide 19 lo tiene marcado como pendiente. Se crea en
+   Stripe igual que `primera-edicion-sistemas`, en el action de
+   `app/routes/sistemas-agenticos.tsx`.
+3. **El regalo del minuto 30** — en el webinar 1 fue el PDF de las seis piezas. Aquí el
+   candidato natural es una hoja de decisión de sandbox.
 
 ---
 
-## Acto 2 — La escalera (min 10-25)
+## Las 20 slides, como están hoy
 
-**6. "Lo meto en Docker"** — el instinto de todos
-> Es el primer reflejo y es el correcto… hasta que dejas de confiar en el código.
+ 1. `0:00` — Sandboxing:la cajadonde vivetu agente
+ 2. `0:30` — Un agente se vuelve potente cuando le das una computadora.
+ 3. `2:00` — ¿Cuálcomputadora,exactamente?
+ 4. `4:00` — Unos agentes se salieron de su red aislada.
+ 5. `6:00` — Aislar y dar permisos resuelven cosas distintas.
+ 6. `8:00` — Casi todos empiezan en un devcontainer.
+ 7. `10:00` — Los contenedores comparten el kernel del host.
+ 8. `13:00` — Cuatro escalones. Cada uno cuesta arranque.
+ 9. `16:00` — Firecracker
+10. `18:00` — **DEMO** Levantar una caja y tratar de salirse.
+11. `24:00` — Cuatro preguntas antes de ver precios.
+12. `27:00` — La ola de sandboxes del último año.
+13. `30:00` — El agente que se quedó prendido.
+14. `33:00` — **DEMO** Le pido al agente que analice un archivo.
+15. `36:00` — Con la caja resuelta, aparece Code Mode.
+16. `38:00` — **DEMO** El agente escribe el programa y lo corre en la caja.
+17. `40:00` — EasyBits Sandbox
+18. `42:00` — Cinco decisiones.
+19. `43:00` — Diseño de sistemas agénticos
+20. `44:00` — ¿Preguntas?
 
-**7. Kernel compartido**
-> Los contenedores comparten el kernel del host. Un exploit de kernel y estás en
-> el host, y en todos los demás contenedores. El consenso de 2026 es explícito:
-> shared-kernel ya no alcanza para código escrito por un modelo.
-> Ilustración: los cuartos que comparten cimiento.
+## Los demos, para el ensayo
 
-**8. La escalera de aislamiento**
-> proceso → contenedor → gVisor (kernel en user-space) → **microVM** (kernel
-> propio, aislamiento por hardware vía KVM). Cada escalón se paga con arranque
-> y compatibilidad. Nadie sube gratis.
+Cada uno pasa una sola prueba: **¿aporta algo que la slide no diga ya?** El que no la
+pase se vuelve dato dentro de una slide, se graba, o se quita. Vale más un webinar de
+17 slides sólidas que uno con tres demos que se arrastran en vivo.
 
-**9. Firecracker, el que ganó**
-> 50 mil líneas de Rust, 5 dispositivos emulados. La superficie de ataque es el
-> argumento entero. Lo usan E2B, Fly y Vercel por debajo.
-
-**10. DEMO 1 — levantar una caja y tratar de salirse**
-> UI real, no código. Se levanta un sandbox, se corre algo destructivo adentro
-> y se ve que el host ni se entera.
-
----
-
-## Acto 3 — Elegir (min 25-38)
-
-**11. Las 4 preguntas que eligen tu proveedor**
-> ¿Cuánto vive? ¿Guarda estado? ¿Qué tan rápido arranca? ¿Quién paga el idle?
-> La tabla sale de aquí, no de logos.
-
-**12. Los proveedores, sin favoritismos**
-> | | Fuerte en | Se cae en |
-> |---|---|---|
-> | E2B | cold start ~150ms, hecho para agentes | 24h máx, sin GPU |
-> | Modal | GPU A100/H100, no cobra idle | pensado para ML, no para agentes |
-> | Daytona | persistente, open source | cobra mientras el sandbox viva |
-> | Fly Sprites | 100GB NVMe, checkpoint/restore ~300ms, idle $0 | más joven |
-
-**13. Los precios, en pantalla**
-> ~$0.05 por vCPU-hora y ~$0.016 por GiB-hora, cobrado por segundo, es el
-> rango de referencia. La pregunta que de verdad mueve la factura no es el
-> precio por hora: es **quién te cobra mientras el agente no hace nada**.
-
-**14. DEMO 2 — la misma tarea, dos modelos de cobro**
-> Un agente que piensa 8 minutos y ejecuta 40 segundos. Ahí se ve por qué el
-> idle decide.
-
----
-
-## Acto 4 — El giro y el cierre (min 38-45)
-
-**15. El sandbox no es solo seguridad**
-> Es lo que habilita **Code Mode**: en vez de exponer tus herramientas como
-> llamadas una por una, las expones como API de TypeScript y dejas que el modelo
-> escriba el código que las orquesta —loops, condicionales, manejo de errores—
-> en una sola pasada. Eso solo se puede correr si tienes dónde correrlo.
-
-**16. DEMO 3 — Code Mode**
-> Los mismos MCPs, convertidos en API de TypeScript, ejecutándose en la caja.
-
-**17. EasyBits Sandbox**
-> Existe, es fácil de levantar, y viene con las tres puertas: API, SDK y MCP.
-> Presentarlo, no coronarlo.
-
-**18. Las decisiones, en una hoja**
-> Recap accionable: qué escalón necesitas, qué preguntas hacerle a un proveedor,
-> y qué cambia cuando el sandbox está resuelto.
-
-**19. El taller + preguntas**
-> Arranca el 1 de septiembre. Mismo buzón con aviones de papel del deck anterior.
-
----
-
-## Pendientes de esta estructura
-
-1. **El regalo del minuto 30.** El primero repartió el PDF de las seis piezas y
-   funcionó. Falta decidir el de este: la hoja de decisión de sandbox (qué
-   escalón necesitas + las 4 preguntas + la tabla) es el candidato natural.
-2. **Los 3 demos se ensayan antes del jueves y ahí se decide si se quedan.**
-   Ninguno está definido todavía: las slides describen qué debería verse, no lo que
-   hay listo. En el ensayo se corren de principio a fin y cada uno pasa una sola
-   prueba: **¿aporta algo que la slide no diga ya?** El que no la pase se convierte
-   en dato dentro de una slide —o se graba, o se quita—. Vale más un webinar de 17
-   slides sólidas que uno con tres demos que se arrastran en vivo.
-   - **Demo 1** — levantar una caja e intentar salirse. Falta decidir sobre qué
-     sistema se hace.
-   - **Demo 2** — el agente analiza un archivo con dos cronómetros a la vista.
-     Requiere instrumentar los tiempos antes; si no se alcanza, se mide en frío y el
-     número entra a la slide 13.
-   - **Demo 3** — Code Mode: los MCPs como API de TypeScript corriendo en la caja.
-     Depende de qué tan estable esté hoy.
-3. **Números propios de EasyBits** — si aparecen antes del jueves, la slide 17
-   cambia de "existe" a un argumento con cifras.
+- **Demo 1 · levantar una caja e intentar salirse.** Falta decidir sobre qué sistema.
+- **Demo 2 · el agente analiza un archivo, con dos cronómetros.** Hay que instrumentar
+  los tiempos antes. Si no se alcanza, se mide en frío y el número entra a la slide 13.
+- **Demo 3 · Code Mode.** El agente escribe un archivo y lo corre en la caja; se mira
+  el archivo y el gasto de tokens. Depende de qué tan estable esté hoy.
