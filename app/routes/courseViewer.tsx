@@ -344,6 +344,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     }
   }
 
+  // La transcripción es el video en texto: se entrega con el MISMO criterio que el video.
+  const transcript = hasAccess
+    ? await db.transcript.findUnique({
+        where: { videoId: video.id },
+        select: { segments: true, chapters: true, text: true },
+      })
+    : null;
+
   const videoToReturn = removeStorageLink
     ? { ...video, storageLink: "", m3u8: "" }
     : { ...video, storageLink: finalStorageLink, m3u8: finalM3u8 };
@@ -362,6 +370,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     isSubscribed,
     accessLevel,
     video: videoToReturn,
+    transcript,
     videos,
     moduleNames,
     subscriberVideos,
@@ -369,6 +378,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     searchParams: {
       success: searchParams.get("success") === "1",
       subscribed: searchParams.get("subscribed") === "1",
+      tab: searchParams.get("tab"),
+      t: searchParams.get("t"),
     },
   };
 };
@@ -426,6 +437,7 @@ export default function Route({
     isSubscribed: serverIsSubscribed,
     accessLevel,
     video,
+    transcript,
     videos,
     searchParams,
     moduleNames,
@@ -441,6 +453,34 @@ export default function Route({
   const lessonContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
 
+  // El segundo en curso, para marcar la línea que suena en la transcripción. Entero, no
+  // el valor crudo del <video>: con el crudo serían ~60 renders por segundo.
+  const [currentTime, setCurrentTime] = useState(0);
+  const playerRef = useRef<HTMLVideoElement | null>(null);
+
+  const seekTo = useCallback((segundo: number) => {
+    const el = playerRef.current;
+    if (!el) return;
+    el.currentTime = segundo;
+    el.play().catch(() => {});
+  }, []);
+
+  // `?t=SEGUNDOS` abre el video en ese momento. Es lo que hace compartible un instante
+  // concreto —por correo, por WhatsApp— y lo que necesita el SeekToAction del JSON-LD.
+  const arranqueAplicado = useRef(false);
+  useEffect(() => {
+    if (arranqueAplicado.current) return;
+    const t = Number(new URLSearchParams(window.location.search).get("t"));
+    if (!Number.isFinite(t) || t <= 0) return;
+    const el = playerRef.current;
+    if (!el) return;
+    arranqueAplicado.current = true;
+    // Hay que esperar a que HLS tenga metadatos: antes de eso, fijar currentTime no hace nada.
+    const aplicar = () => { el.currentTime = t; };
+    if (el.readyState >= 1) aplicar();
+    else el.addEventListener("loadedmetadata", aplicar, { once: true });
+  }, [video.id]);
+
   // Scroll lesson content into view when expanded
   useEffect(() => {
     if (showLessonContent && lessonContentRef.current) {
@@ -455,6 +495,9 @@ export default function Route({
     isPurchased ||
     accessLevel === "public" ||
     (accessLevel === "subscriber" && serverIsSubscribed);
+
+  const chaptersList = (transcript?.chapters as { s: number; titulo: string }[]) || [];
+  const videoUrl = `https://www.fixtergeek.com/cursos/${course.slug}/viewer?videoSlug=${video.slug}`;
 
   const showSubscriptionDrawer = !hasAccess && accessLevel === "subscriber";
   const showPurchaseDrawer = !hasAccess && accessLevel === "paid";
@@ -523,8 +566,42 @@ export default function Route({
   }, [course.id, video.id, nextVideo, videos.length, hasAccess, user?.email, subscriberEmail]);
 
 
+  // Datos estructurados. Sirven dos cosas distintas: los `Clip` habilitan los "momentos
+  // clave" en el buscador, y el `transcript` es lo ÚNICO que los modelos de IA pueden
+  // leer de un video —no lo ven, lo leen— así que sin él la clase es invisible para ellos.
+  const jsonLd = transcript
+    ? {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        name: video.title,
+        description: video.description?.slice(0, 500) || undefined,
+        thumbnailUrl: video.poster || undefined,
+        // El texto completo se recorta: un webinar de 75 min son ~9.000 palabras y
+        // meterlas enteras en cada carga infla el HTML sin ganar nada.
+        transcript: (transcript.text || "").slice(0, 5000),
+        hasPart: (chaptersList || []).map((c, i) => ({
+          "@type": "Clip",
+          name: c.titulo,
+          startOffset: c.s,
+          endOffset: chaptersList[i + 1]?.s,
+          url: `${videoUrl}&t=${c.s}`,
+        })),
+        potentialAction: {
+          "@type": "SeekToAction",
+          target: `${videoUrl}&t={seek_to_second_number}`,
+          "query-input": "required name=seek_to_second_number",
+        },
+      }
+    : null;
+
   return (
     <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
       <article className="bg-dark relative overflow-x-hidden pt-20">
         <VideoPlayer
           key={video.id}
@@ -542,6 +619,15 @@ export default function Route({
           disabled={hasDrawerOpen}
           userId={user?.id}
           userEmail={user?.email || subscriberEmail || undefined}
+          chapters={(transcript?.chapters as any) || undefined}
+          captionsUrl={
+            transcript ? `/api/transcript/${video.slug}?kind=captions` : undefined
+          }
+          onTimeChange={setCurrentTime}
+          onVideoRef={(el) => (playerRef.current = el)}
+          // Con `?t=` manda el enlace: no tiene sentido ofrecer retomar cuando alguien
+          // acaba de hacer clic en un momento concreto.
+          arranqueForzado={!!searchParams.t}
           onPause={() => {
             // setIsMenuOpen(true);// @todo consider this
           }}
@@ -612,7 +698,13 @@ export default function Route({
           isLocked={!isPurchased}
           isSubscribed={serverIsSubscribed}
           markdownBody={video.description || undefined}
-          defaultTab="videos"
+          transcript={transcript as any}
+          courseId={course.id}
+          currentTime={currentTime}
+          onSeek={seekTo}
+          // `?tab=transcript` abre directo la transcripción: es lo que necesitan los
+          // enlaces a otra lección desde un resultado de búsqueda.
+          defaultTab={searchParams.tab === "transcript" ? "transcript" : "videos"}
         />
       </article>
       {searchParams.success && <SuccessDrawer isOpen />}

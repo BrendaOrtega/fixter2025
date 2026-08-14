@@ -16,6 +16,8 @@ interface UseVideoPlayerOptions {
 
 interface UseVideoPlayerReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;
+  /** La instancia de hls.js: los controles la usan para listar y fijar la calidad. */
+  hlsRef: React.RefObject<Hls | null>;
   isPlaying: boolean;
   isEnding: boolean;
   error: string | null;
@@ -302,6 +304,9 @@ export function useVideoPlayer({
 
   return {
     videoRef,
+    // Los controles propios lo necesitan para listar y fijar la calidad: los niveles
+    // ya los conoce hls.js y hasta ahora no salían de aquí.
+    hlsRef,
     isPlaying,
     isEnding,
     error,

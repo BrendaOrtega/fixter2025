@@ -1,11 +1,41 @@
 import type { Route } from "./+types/course";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { courseServerActions } from "./course.server";
 
-export const action = async ({ request }: Route.ActionArgs) => {
-  // await getAdminOrRedirect(request); @todo move to admin api
+/**
+ * Los intents que sólo puede tocar quien administra.
+ *
+ * ⚠️ Aquí había un `getAdminOrRedirect` COMENTADO con un "@todo move to admin api", así que
+ * este endpoint llevaba tiempo abierto: cualquiera con un POST multipart podía crear, editar
+ * y **borrar** vídeos y cursos, o disparar el pipeline de subida.
+ *
+ * El guard no puede ser global: el reproductor normal entra por aquí para pedir sus URLs
+ * firmadas (`get_hls_presigned_url`, `get_original_video_presigned_url` vía `useSecureHLS`) y
+ * el catálogo cuenta vídeos (`videos_length` vía `useVideosLength`). Esos comprueban el acceso
+ * por su cuenta y reciben el `request`. Por eso la puerta es una LISTA, y es cerrada: un
+ * intent nuevo no queda protegido por accidente, pero tampoco se cuela — hay que decidirlo.
+ */
+const SOLO_ADMIN = new Set([
+  "admin_update_course",
+  "admin_delete_video",
+  "admin_update_video",
+  "admin_add_video",
+  "admin_get_videos_for_course",
+  "admin_reorder_videos",
+  "get_video_upload_url",
+  "confirm_video_upload",
+  "get_video_status",
+  "delete_video_files",
+  "trigger_video_processing",
+]);
 
+export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  if (typeof intent === "string" && SOLO_ADMIN.has(intent)) {
+    await getAdminOrRedirect(request);
+  }
 
   if (intent === "admin_update_course") {
     const data = JSON.parse(formData.get("data") as string);

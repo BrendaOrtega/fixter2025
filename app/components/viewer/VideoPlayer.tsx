@@ -1,4 +1,5 @@
 import type { Video } from "~/types/models";
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ImPlay } from "react-icons/im";
 import { IoIosClose } from "react-icons/io";
@@ -6,6 +7,8 @@ import { Link } from "react-router";
 import { nanoid } from "nanoid";
 import { useVideoPlayer } from "~/hooks/useVideoPlayer";
 import { useVideoTracking } from "~/hooks/useVideoTracking";
+import { VideoControls, type Capitulo } from "~/components/viewer/VideoControls";
+import { useResumePosition } from "~/hooks/useResumePosition";
 
 // Helper para extraer el ID de YouTube
 function extractYouTubeId(url: string): string | null {
@@ -41,6 +44,16 @@ interface VideoPlayerProps {
   // Para video tracking
   userId?: string;
   userEmail?: string;
+  /** Capítulos para los marcadores de la barra y el menú. */
+  chapters?: Capitulo[];
+  /** VTT de subtítulos. Sin él no aparece el botón de CC. */
+  captionsUrl?: string;
+  /** Segundo entero en curso, para sincronizar el panel de transcripción. */
+  onTimeChange?: (segundo: number) => void;
+  /** Entrega el <video> hacia arriba, para que la transcripción pueda hacer seek. */
+  onVideoRef?: (el: HTMLVideoElement | null) => void;
+  /** El enlace traía `?t=`: entonces manda ese momento y no se ofrece retomar. */
+  arranqueForzado?: boolean;
 }
 
 export const VideoPlayer = ({
@@ -57,6 +70,11 @@ export const VideoPlayer = ({
   userId,
   userEmail,
   vertical,
+  chapters,
+  captionsUrl,
+  onTimeChange,
+  onVideoRef,
+  arranqueForzado,
 }: VideoPlayerProps) => {
   const sectionClass = vertical
     ? "relative overflow-hidden mx-auto w-full max-w-[420px] aspect-[9/16] rounded-xl bg-black"
@@ -76,6 +94,7 @@ export const VideoPlayer = ({
 
   const {
     videoRef,
+    hlsRef,
     isPlaying,
     isEnding,
     togglePlay,
@@ -102,6 +121,40 @@ export const VideoPlayer = ({
     // Skip hook logic si es YouTube
     skip: !!youtubeId,
   });
+
+  const { ofrecido, continuar, empezarDeNuevo, descartar } = useResumePosition({
+    videoRef,
+    slug,
+    desactivado: !!arranqueForzado || !!youtubeId,
+  });
+
+  // Doble toque para ±10 s: en el teléfono es la única forma cómoda de saltar, porque
+  // arrastrar una barra de 6px con el pulgar no es forma de moverse en 75 minutos.
+  const ultimoToqueRef = useRef<{ t: number; x: number }>({ t: 0, x: 0 });
+  const alTocarVideo = (e: React.MouseEvent<HTMLVideoElement>) => {
+    const ahora = Date.now();
+    const anterior = ultimoToqueRef.current;
+    ultimoToqueRef.current = { t: ahora, x: e.clientX };
+    if (ahora - anterior.t < 300 && Math.abs(e.clientX - anterior.x) < 60) {
+      const el = videoRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const haciaAtras = e.clientX - rect.left < rect.width / 2;
+      el.currentTime = Math.max(0, el.currentTime + (haciaAtras ? -10 : 10));
+      // Se cancela el play/pausa que iba a disparar este mismo clic.
+      ultimoToqueRef.current = { t: 0, x: 0 };
+      return;
+    }
+    togglePlay();
+  };
+
+  // El <video> se entrega hacia arriba para que la transcripción pueda hacer seek.
+  // Es un efecto y no una ref compartida porque `videoRef` se llena al montar y el
+  // padre necesita enterarse.
+  useEffect(() => {
+    onVideoRef?.(videoRef.current);
+    return () => onVideoRef?.(null);
+  }, [onVideoRef, videoRef, video?.id]);
 
   // Render para YouTube
   if (youtubeId) {
@@ -195,12 +248,71 @@ export const VideoPlayer = ({
         }
         controlsList="nodownload"
         className="w-full h-full"
-        controls
+        // Sin `controls`: los nativos no pintan marcadores de capítulo ni dejan elegir
+        // calidad. Los reemplaza <VideoControls/>, abajo.
         playsInline
         preload="metadata"
+        onClick={alTocarVideo}
       >
-        <track kind="captions" />
+        {captionsUrl && (
+          <track
+            kind="captions"
+            srcLang="es"
+            label="Español"
+            src={captionsUrl}
+            default={false}
+          />
+        )}
       </video>
+
+      {/* Retomar. No salta solo: ofrece. Quien vuelve a un video puede querer repasar el
+          principio, y saltarle al minuto 34 sin preguntar es peor que no hacer nada. */}
+      <AnimatePresence>
+        {ofrecido > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            className="absolute bottom-24 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-dark/95 py-2 pl-4 pr-2 shadow-xl backdrop-blur"
+          >
+            <button
+              type="button"
+              onClick={continuar}
+              className="text-sm font-medium text-white hover:text-brand-500"
+            >
+              Continuar desde{" "}
+              {`${Math.floor(ofrecido / 60)}:${String(Math.floor(ofrecido % 60)).padStart(2, "0")}`}
+            </button>
+            <span className="text-white/20">|</span>
+            <button
+              type="button"
+              onClick={empezarDeNuevo}
+              className="text-sm text-white/60 hover:text-white"
+            >
+              Empezar de nuevo
+            </button>
+            <button
+              type="button"
+              onClick={descartar}
+              aria-label="Cerrar"
+              className="grid h-8 w-8 place-items-center rounded-full text-xl text-white/50 hover:bg-white/10 hover:text-white"
+            >
+              <IoIosClose />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <VideoControls
+        videoRef={videoRef}
+        videoSlug={slug}
+        hlsRef={hlsRef}
+        // `duration` se guarda en MINUTOS y como texto (ver el modelo Video).
+        duracionConocida={video?.duration ? Number(video.duration) * 60 : undefined}
+        chapters={chapters}
+        captionsUrl={captionsUrl}
+        onTimeChange={onTimeChange}
+      />
     </section>
   );
 };

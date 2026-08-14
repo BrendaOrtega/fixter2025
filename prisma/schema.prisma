@@ -33,9 +33,9 @@ enum NewsletterStatus {
 }
 
 enum SequenceTrigger {
-  SUBSCRIPTION    // Al suscribirse
-  TAG_ADDED      // Al añadir tag  
-  MANUAL         // Inscripción manual
+  SUBSCRIPTION // Al suscribirse
+  TAG_ADDED // Al añadir tag  
+  MANUAL // Inscripción manual
   COURSE_PURCHASE // Tras comprar curso
 }
 
@@ -44,13 +44,13 @@ enum SequenceTrigger {
 // ============================
 
 model Sequence {
-  id          String @id @default(auto()) @map("_id") @db.ObjectId
-  name        String                    // "Bienvenida Claude Code"
-  description String?                   // Descripción interna
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String // "Bienvenida Claude Code"
+  description String? // Descripción interna
 
   // Dueño: user que la creó. null = secuencia oficial de FixterGeek
-  ownerId     String? @db.ObjectId
-  owner       User?   @relation(fields: [ownerId], references: [id])
+  ownerId String? @db.ObjectId
+  owner   User?   @relation(fields: [ownerId], references: [id])
 
   /// Comunidad a la que pertenece. Opcional: una secuencia puede vivir suelta
   /// en el catálogo global sin colgar de ninguna comunidad.
@@ -58,19 +58,19 @@ model Sequence {
   community   Community? @relation(fields: [communityId], references: [id])
 
   // Trigger
-  trigger     SequenceTrigger
-  triggerTag  String?                   // Tag específico si trigger es TAG_ADDED
+  trigger    SequenceTrigger
+  triggerTag String? // Tag específico si trigger es TAG_ADDED
 
   // Estado
-  isActive    Boolean @default(false)
-  isFeatured  Boolean @default(false)    // Para destacar en la UI
+  isActive   Boolean @default(false)
+  isFeatured Boolean @default(false) // Para destacar en la UI
   /// Sin alta pública: la landing /s/:id la rechaza y solo se entra por
   /// código (webhook de compra, script). Para secuencias que son un perk
   /// pagado — si no, cualquiera con el link recibe gratis lo que otros pagaron.
-  isPrivate   Boolean @default(false)
+  isPrivate  Boolean @default(false)
 
   // Emails de la secuencia (ordenados)
-  emails      SequenceEmail[]
+  emails SequenceEmail[]
 
   // Inscripciones de usuarios
   enrollments SequenceEnrollment[]
@@ -82,26 +82,26 @@ model Sequence {
 }
 
 model SequenceEmail {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  sequenceId String @db.ObjectId
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId String   @db.ObjectId
   sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  
+
   // Orden y timing
-  order        Int                      // 1, 2, 3, etc.
-  
+  order Int // 1, 2, 3, etc.
+
   // Dos formas de programar el envío:
-  schedulingType String @default("delay") // "delay" | "specific_date"
-  delayDays      Int?                     // Días a esperar (para schedulingType: "delay")
-  specificDate   DateTime?                // Fecha/hora específica (para schedulingType: "specific_date")
-  
+  schedulingType String    @default("delay") // "delay" | "specific_date"
+  delayDays      Int? // Días a esperar (para schedulingType: "delay")
+  specificDate   DateTime? // Fecha/hora específica (para schedulingType: "specific_date")
+
   // Contenido
-  subject    String                     // "¡Bienvenido a FixterGeek!"
-  content    String                     // HTML del email
-  videoSlug  String?                    // slug de un Video para adjuntar (desbloqueo por avance)
+  subject   String // "¡Bienvenido a FixterGeek!"
+  content   String // HTML del email
+  videoSlug String? // slug de un Video para adjuntar (desbloqueo por avance)
 
   // Configuración
-  fromName   String @default("FixterGeek")
-  fromEmail  String @default("contacto@fixter.org")
+  fromName  String @default("FixterGeek")
+  fromEmail String @default("contacto@fixter.org")
 
   /// Contadores de PERSONAS ÚNICAS, no de eventos: quien abre cinco veces
   /// suma uno. Se mantienen al vuelo desde SequenceEmailEvent para que el
@@ -149,34 +149,34 @@ model SequenceEmailEvent {
 }
 
 model SequenceEnrollment {
-  id           String @id @default(auto()) @map("_id") @db.ObjectId
-  sequenceId   String @db.ObjectId
-  sequence     Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  
-  subscriberId String @db.ObjectId
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  sequenceId String   @db.ObjectId
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  subscriberId String     @db.ObjectId
   subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
-  
+
   // Estado actual
-  status           String    @default("active")  // active, completed, paused
-  currentEmailIndex Int      @default(0)         // Qué email sigue
-  nextEmailAt      DateTime?                     // Cuándo enviar el siguiente
-  
+  status            String    @default("active") // active, completed, paused
+  currentEmailIndex Int       @default(0) // Qué email sigue
+  nextEmailAt       DateTime? // Cuándo enviar el siguiente
+
   // Tracking básico
-  enrolledAt       DateTime  @default(now())
-  completedAt      DateTime?
-  emailsSent       Int       @default(0)
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+  emailsSent  Int       @default(0)
 
   // SES event tracking (paralelo al patrón de Newsletter)
-  messageIds       String[]                      // SES MessageId por cada email enviado
-  delivered        String[]                      // emails con Delivery confirmado
-  opened           String[]                      // emails que abrieron al menos 1 vez
-  clicked          String[]                      // emails que clickearon al menos 1 vez
-  bounced          String[]                      // emails con Bounce permanente
-  videosWatched    String[]                      // videoSlugs que este suscriptor abrió
+  messageIds    String[] // SES MessageId por cada email enviado
+  delivered     String[] // emails con Delivery confirmado
+  opened        String[] // emails que abrieron al menos 1 vez
+  clicked       String[] // emails que clickearon al menos 1 vez
+  bounced       String[] // emails con Bounce permanente
+  videosWatched String[] // videoSlugs que este suscriptor abrió
 
-  @@unique([sequenceId, subscriberId])           // Un usuario solo puede estar una vez en cada secuencia
-  @@index([status, nextEmailAt])                 // Para encontrar emails a enviar
-  @@index([messageIds])                          // Lookup desde SNS webhook
+  @@unique([sequenceId, subscriberId]) // Un usuario solo puede estar una vez en cada secuencia
+  @@index([status, nextEmailAt]) // Para encontrar emails a enviar
+  @@index([messageIds]) // Lookup desde SNS webhook
 }
 
 /// Una audiencia: te unes a la comunidad, no a una secuencia concreta. Después
@@ -219,30 +219,30 @@ model Newsletter {
   title  String
   slug   String?          @unique
   status NewsletterStatus @default(DRAFT)
-  
+
   // Contenido básico
-  subject    String?
-  content    String?
-  
+  subject String?
+  content String?
+
   // Configuración
-  fromName   String? @default("FixterGeek")
-  fromEmail  String? @default("contacto@fixter.org")
-  
+  fromName  String? @default("FixterGeek")
+  fromEmail String? @default("contacto@fixter.org")
+
   // Programación
   scheduledAt DateTime?
   sentAt      DateTime?
-  
+
   // Backward compatibility
   messageIds String[]
   delivered  String[]
   opened     String[]
   clicked    String[]
   recipients String[]
-  userId     String?   @db.ObjectId
-  
+  userId     String?  @db.ObjectId
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([status])
 }
 
@@ -280,38 +280,38 @@ type Author {
 model Subscriber {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   email String @unique
-  
+
   // Información personal
-  firstName   String?
-  lastName    String?
-  name        String?        // Backward compatibility
-  avatar      String?
-  
+  firstName String?
+  lastName  String?
+  name      String? // Backward compatibility
+  avatar    String?
+
   // Campos personalizados ilimitados
   customFields Json?
-  
+
   // Estado y confirmación
-  confirmed     Boolean          @default(false)
-  confirmedAt   DateTime?
-  validToken    Boolean          @default(true)  // Backward compatibility
+  confirmed   Boolean   @default(false)
+  confirmedAt DateTime?
+  validToken  Boolean   @default(true) // Backward compatibility
 
   // OTP verification
-  verificationCode  String?
-  codeExpiresAt     DateTime?
+  verificationCode String?
+  codeExpiresAt    DateTime?
 
   // Segmentación simple
-  tags              String[]
-  
+  tags String[]
+
   // Sequences relation
   sequenceEnrollments SequenceEnrollment[]
-  
+
   // Backward compatibility with tutorials
   tutorialIds String[]   @db.ObjectId
   tutorials   Tutorial[] @relation(fields: [tutorialIds], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([tags])
 }
 
@@ -369,19 +369,19 @@ model Post {
   published Boolean @default(false)
 
   // Content (Markdown or Tiptap JSON)
-  body           String?  // Backward compatibility (Markdown)
-  content        Json?    // Tiptap JSON AST (new posts)
-  contentFormat  String?  @default("markdown")  // "markdown" | "tiptap"
+  body          String? // Backward compatibility (Markdown)
+  content       Json? // Tiptap JSON AST (new posts)
+  contentFormat String? @default("markdown") // "markdown" | "tiptap"
 
   // Miscelanius
-  coverImage   String?
-  authorAt     String?
-  photoUrl     String?
-  isFeatured   Boolean? @default(false)
-  metaImage    String?
+  coverImage      String?
+  authorAt        String?
+  photoUrl        String?
+  isFeatured      Boolean? @default(false)
+  metaImage       String?
   metaDescription String? // Resumen para og/twitter; si falta se recorta el body
-  youtubeLink  String?
-  authorAtLink String?
+  youtubeLink     String?
+  authorAtLink    String?
 
   // Filtering
   authorName String?
@@ -395,64 +395,64 @@ model Post {
 }
 
 model Course {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  slug              String    @unique
-  title             String
-  isFree            Boolean   @default(true)
-  published         Boolean?  @default(false)
-  basePrice         Int       @default(599)
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  slug                  String    @unique
+  title                 String
+  isFree                Boolean   @default(true)
+  published             Boolean?  @default(false)
+  basePrice             Int       @default(599)
   // videos
-  videos            Video[]   @relation(fields: [videoIds], references: [id])
-  videoIds          String[]  @db.ObjectId
+  videos                Video[]   @relation(fields: [videoIds], references: [id])
+  videoIds              String[]  @db.ObjectId
   // stripe
-  stripeCoupon      String?
-  stripeId          String?
+  stripeCoupon          String?
+  stripeId              String?
   // optionals
-  icon              String?
-  poster            String?
-  isLive            Boolean   @default(false)
+  icon                  String?
+  poster                String?
+  isLive                Boolean   @default(false)
   /// En qué fase del ciclo va el programa: se promociona con webinars abiertos,
   /// se imparte en vivo, y al final todas las grabaciones lo vuelven un curso
   /// on-demand al mismo precio. La fase decide qué se muestra y qué se vende.
-  stage             String?   // "promocion" | "en-vivo" | "on-demand"
+  stage                 String? // "promocion" | "en-vivo" | "on-demand"
   // Si está presente, la card del catálogo lleva aquí en vez de a /cursos/{slug}/detalle.
   // Para talleres en vivo que tienen su propia landing de venta.
-  landingUrl        String?
+  landingUrl            String?
   /// Secuencia de preparación a la que entra quien compra este curso, además
   /// de las notificaciones. Vive aquí y no en una variable de entorno: cada
   /// curso trae la suya, sin tocar el código ni el deploy para encenderla.
-  preparationSequenceId String? @db.ObjectId
-  summary           String?
-  authorAt          String?
-  authorDescription String?
-  authorName        String?
-  authorSocial      String?
-  banner            String?
-  classTime         String?
-  description       String?
-  duration          String?
-  level             String?
-  logos             String?
-  meta              String?
-  offer             String?   @db.ObjectId
-  photoUrl          String?
-  tipo              String?
-  tool              String?
-  trailer           String?
-  version           String?
-  theme             Json?
-  v                 Int?      @map("__v")
+  preparationSequenceId String?   @db.ObjectId
+  summary               String?
+  authorAt              String?
+  authorDescription     String?
+  authorName            String?
+  authorSocial          String?
+  banner                String?
+  classTime             String?
+  description           String?
+  duration              String?
+  level                 String?
+  logos                 String?
+  meta                  String?
+  offer                 String?   @db.ObjectId
+  photoUrl              String?
+  tipo                  String?
+  tool                  String?
+  trailer               String?
+  version               String?
+  theme                 Json?
+  v                     Int?      @map("__v")
   // dates
-  startDate         DateTime? @db.Date
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  startDate             DateTime? @db.Date
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
   // arrays
-  module            Json?
-  Modules           Module[]
-  modules           String[]  @db.ObjectId
+  module                Json?
+  Modules               Module[]
+  modules               String[]  @db.ObjectId
   // relations aug 2023
-  Users             User[]    @relation(fields: [userIds], references: [id])
-  userIds           String[]  @db.ObjectId
+  Users                 User[]    @relation(fields: [userIds], references: [id])
+  userIds               String[]  @db.ObjectId
 
   @@map("courses")
 }
@@ -476,27 +476,29 @@ model Module {
 /// puede ser vertical (las piezas de secuencia son 9:16) y ahí sí conviene,
 /// pero un 9:16 dentro de un email de 600px ocupa la pantalla entera.
 model Video {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String   @unique
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String  @unique
   title       String
-  isPublic    Boolean  @default(false)
-  accessLevel String   @default("paid") // "public" | "subscriber" | "paid"
+  isPublic    Boolean @default(false)
+  accessLevel String  @default("paid") // "public" | "subscriber" | "paid"
 
   /// Qué es esta pieza dentro del programa. Un taller no publica solo
   /// "lecciones": publica webinars de promoción, sesiones en vivo y shorts, y
   /// todos terminan siendo el mismo curso on-demand. Sin esto el admin no puede
   /// distinguirlos y cada publicación necesita código nuevo.
-  kind        String?  // "webinar" | "sesion" | "short" | "leccion"
+  kind       String? // "webinar" | "sesion" | "short" | "leccion"
   /// Cuándo ocurrió en vivo (webinars y sesiones). Distinto de createdAt.
-  eventDate   DateTime?
+  eventDate  DateTime?
   /// Slides, PDFs y demás material de esta pieza.
-  resources   Resource[]
+  resources  Resource[]
+  /// La transcripción, si ya se procesó.
+  transcript Transcript?
 
   //optionals
   moduleName  String?
   storageLink String?
   m3u8        String?
-  youtubeUrl  String?  // URL de YouTube (alternativa a S3)
+  youtubeUrl  String? // URL de YouTube (alternativa a S3)
   index       Int?
   authorName  String?  @default("blissmo")
   photoUrl    String?
@@ -512,18 +514,18 @@ model Video {
   courses     Course[] @relation(fields: [courseIds], references: [id])
   courseIds   String[] @db.ObjectId
   v           Int?     @map("__v")
-  
+
   // Video processing status
-  processingStatus      String?   // "pending", "processing", "ready", "failed"
+  processingStatus      String? // "pending", "processing", "ready", "failed"
   processingStartedAt   DateTime?
   processingCompletedAt DateTime?
   processingFailedAt    DateTime?
   processingError       String?
-  processingMetadata    Json?     // Store quality info, processing time, etc.
-  
+  processingMetadata    Json? // Store quality info, processing time, etc.
+
   //dates
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("videos")
 }
@@ -683,8 +685,8 @@ model HeatmapData {
 model EmailBlacklist {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
-  reason    String   // "hard_bounce", "complaint", "manual"
-  details   String?  // Diagnóstico de SES
+  reason    String // "hard_bounce", "complaint", "manual"
+  details   String? // Diagnóstico de SES
   createdAt DateTime @default(now())
 
   @@map("email_blacklist")
@@ -702,8 +704,8 @@ enum BackupStatus {
 
 model Backup {
   id        String       @id @default(auto()) @map("_id") @db.ObjectId
-  filename  String       // backup_2026-01-20_0300.gz
-  s3Key     String       // backups/fixtergeek/backup_2026-01-20_0300.gz
+  filename  String // backup_2026-01-20_0300.gz
+  s3Key     String // backups/fixtergeek/backup_2026-01-20_0300.gz
   sizeBytes Int          @default(0)
   status    BackupStatus @default(RUNNING)
   error     String?
@@ -716,24 +718,24 @@ model Backup {
 
 // Video analytics - tracking minimalista de visualizaciones
 model VideoView {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  videoId       String    @db.ObjectId
-  videoSlug     String
-  courseId      String?   @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  videoId   String  @db.ObjectId
+  videoSlug String
+  courseId  String? @db.ObjectId
 
   // Identificación flexible
-  userId        String?   @db.ObjectId  // Si está autenticado
-  email         String?                  // Para análisis sin auth
-  sessionId     String                   // Siempre presente (anónimos)
+  userId    String? @db.ObjectId // Si está autenticado
+  email     String? // Para análisis sin auth
+  sessionId String // Siempre presente (anónimos)
 
   // Métricas clave
-  startedAt     DateTime  @default(now())
-  completedAt   DateTime?                // null = no terminó
-  watchedSeconds Int      @default(0)    // Tiempo real visto
-  videoDuration  Int?                    // Duración total del video
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime? // null = no terminó
+  watchedSeconds Int       @default(0) // Tiempo real visto
+  videoDuration  Int? // Duración total del video
 
   // Contexto útil
-  deviceType    String?                  // mobile/tablet/desktop
+  deviceType String? // mobile/tablet/desktop
 
   @@index([videoId])
   @@index([courseId])
@@ -744,23 +746,23 @@ model VideoView {
 
 // Course ratings - Sistema de social proof
 model CourseRating {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  courseId    String   @db.ObjectId
-  userId      String?  @db.ObjectId
-  email       String
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  courseId String  @db.ObjectId
+  userId   String? @db.ObjectId
+  email    String
 
-  rating      Int                    // 1-5 estrellas
-  comment     String?                // Testimonial opcional
-  displayName String?                // Nombre a mostrar (opcional)
-  title       String?                // Título/rol del usuario (ej: "Desarrollador", "Estudiante")
-  avatarUrl   String?                // Avatar en base64
+  rating      Int // 1-5 estrellas
+  comment     String? // Testimonial opcional
+  displayName String? // Nombre a mostrar (opcional)
+  title       String? // Título/rol del usuario (ej: "Desarrollador", "Estudiante")
+  avatarUrl   String? // Avatar en base64
 
-  approved    Boolean  @default(false)
-  featured    Boolean  @default(false)
+  approved Boolean @default(false)
+  featured Boolean @default(false)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  @@unique([courseId, email])        // Un rating por persona por curso
+  @@unique([courseId, email]) // Un rating por persona por curso
   @@index([courseId, approved])
   @@map("course_ratings")
 }
@@ -768,9 +770,9 @@ model CourseRating {
 // 404 tracking - Captura URLs que dan 404 para identificar posts a recuperar
 model NotFoundLog {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  path       String    @unique          // /blog/post-que-no-existe
+  path       String    @unique // /blog/post-que-no-existe
   count      Int       @default(1)
-  lastSeenAt DateTime?                  // Opcional para datos legacy
+  lastSeenAt DateTime? // Opcional para datos legacy
   createdAt  DateTime  @default(now())
 
   @@index([count])
@@ -786,18 +788,18 @@ model LearnerProfile {
   userId String @unique @db.ObjectId
 
   // 5 dimensiones (0-100)
-  algorithms      Int @default(0)
-  syntaxFluency   Int @default(0)
-  systemDesign    Int @default(0)
-  debugging       Int @default(0)
-  communication   Int @default(0)
+  algorithms    Int @default(0)
+  syntaxFluency Int @default(0)
+  systemDesign  Int @default(0)
+  debugging     Int @default(0)
+  communication Int @default(0)
 
   // Meta
-  level           String @default("beginner") // beginner, intermediate, advanced
-  streak          Int    @default(0)
-  directnessLevel Int    @default(3) // 1=muy alentador, 5=directo y retador
+  level           String  @default("beginner") // beginner, intermediate, advanced
+  streak          Int     @default(0)
+  directnessLevel Int     @default(3) // 1=muy alentador, 5=directo y retador
   currentTopic    String? // "javascript", "react", "node", "python", "ai-ml", "system-design"
-  totalSessions   Int    @default(0)
+  totalSessions   Int     @default(0)
 
   // Bonus sesiones otorgadas por admin (expiran si dailyBonusDate ≠ hoy)
   dailyBonusSessions Int       @default(0)
@@ -814,10 +816,10 @@ model LearnerProfile {
 model SessionCredit {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
   userId     String    @db.ObjectId
-  total      Int       // sesiones compradas
+  total      Int // sesiones compradas
   used       Int       @default(0)
-  purchaseId String?   // Stripe payment intent / session ID
-  package    String    // "5", "15", "50"
+  purchaseId String? // Stripe payment intent / session ID
+  package    String // "5", "15", "50"
   createdAt  DateTime  @default(now())
   expiresAt  DateTime? // null = no expira
 
@@ -828,15 +830,15 @@ model SessionCredit {
 model InterviewProfile {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @unique @db.ObjectId
-  targetRole      String?  // "frontend", "fullstack", "backend", etc.
-  seniority       String?  // "junior", "mid", "senior"
+  targetRole      String? // "frontend", "fullstack", "backend", etc.
+  seniority       String? // "junior", "mid", "senior"
   substance       Int      @default(50)
   structure       Int      @default(50)
   relevance       Int      @default(50)
   credibility     Int      @default(50)
   differentiation Int      @default(50)
   directness      Int      @default(3) // 1-5
-  storybank       Json[]   // STAR stories
+  storybank       Json[] // STAR stories
   drillStage      Int      @default(1) // 1-4: Foundation, Practice, Mock, Challenge
   totalSessions   Int      @default(0)
   createdAt       DateTime @default(now())
@@ -854,17 +856,17 @@ enum CoachingPhase {
 }
 
 model CoachingSession {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  profileId String @db.ObjectId
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  profileId String         @db.ObjectId
   profile   LearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   phase      CoachingPhase @default(KICKOFF)
   mode       String        @default("programming") // "programming" | "interview"
   topic      String? // topic de la sesión
-  exerciseId String? @db.ObjectId
+  exerciseId String?       @db.ObjectId
 
   // Conversación
-  messages   Json[] // {role, content, timestamp}
+  messages Json[] // {role, content, timestamp}
 
   // Code response
   codeResponse String? // Último código enviado por el usuario
@@ -874,12 +876,12 @@ model CoachingSession {
   summary     String? // Resumen generado por AI
 
   // Post-session scoring
-  selfAssessment    Int?     // 1-5 user self-rating
+  selfAssessment    Int? // 1-5 user self-rating
   nextSteps         String[] // AI-generated action items
-  dimensionFeedback Json?    // {dimension: "feedback string"}
+  dimensionFeedback Json? // {dimension: "feedback string"}
 
-  startedAt   DateTime  @default(now())
-  endedAt     DateTime?
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
 
   @@index([profileId])
   @@map("coaching_sessions")
@@ -887,7 +889,7 @@ model CoachingSession {
 
 model CoachEvent {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  event     String   // session_started, session_completed, mode_selected, etc.
+  event     String // session_started, session_completed, mode_selected, etc.
   sessionId String?  @db.ObjectId
   userId    String?  @db.ObjectId
   metadata  Json?
@@ -898,14 +900,14 @@ model CoachEvent {
 }
 
 model Exercise {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  topic      String // "javascript", "react", etc.
-  dimension  String // "algorithms", "syntaxFluency", etc.
-  difficulty Int    @default(3) // 1-5
-  prompt     String
-  hints      String[]
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  topic         String // "javascript", "react", etc.
+  dimension     String // "algorithms", "syntaxFluency", etc.
+  difficulty    Int      @default(3) // 1-5
+  prompt        String
+  hints         String[]
   solutionGuide String?
-  tags       String[]
+  tags          String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -919,54 +921,54 @@ model Exercise {
 // ============================
 
 model LeadMagnet {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug                String   @unique
-  title               String
-  description         String?           // Texto plano/markdown para display
-  descriptionContent  Json?             // JSON de Tiptap para edición
+  id                 String  @id @default(auto()) @map("_id") @db.ObjectId
+  slug               String  @unique
+  title              String
+  description        String? // Texto plano/markdown para display
+  descriptionContent Json? // JSON de Tiptap para edición
 
   // Tipo de lead magnet
-  type                String   @default("download")  // "download" | "waitlist"
+  type String @default("download") // "download" | "waitlist"
 
   // Archivo S3 (solo para type: "download")
-  s3Key               String?
-  fileName            String?
-  fileType            String?   // pdf, epub, zip
+  s3Key    String?
+  fileName String?
+  fileType String? // pdf, epub, zip
 
   // Info del evento (solo para type: "waitlist")
-  eventName           String?   // "Taller: Monta tu MoltBot"
-  eventDate           DateTime? // Fecha del evento
-  eventTime           String?   // "7:00 PM CDMX"
-  eventLink           String?   // Link de Zoom/Meet (se envía post-confirmación)
-  eventDescription    String?   // Descripción del evento
+  eventName        String? // "Taller: Monta tu MoltBot"
+  eventDate        DateTime? // Fecha del evento
+  eventTime        String? // "7:00 PM CDMX"
+  eventLink        String? // Link de Zoom/Meet (se envía post-confirmación)
+  eventDescription String? // Descripción del evento
 
   // Landing personalizable
-  heroTitle           String
-  heroSubtitle        String?
-  coverImage          String?
-  primaryColor        String   @default("#CA9B77")
-  secondaryColor      String?  @default("#845A8F")
-  bgPattern           String   @default("gradient")  // dots, grid, gradient, none
-  layout              String   @default("centered")  // centered, split, minimal
-  ctaText             String   @default("Descargar ahora")
-  inputPlaceholder    String   @default("tu@email.com")
-  successTitle        String   @default("¡Listo!")
-  successMessage      String   @default("Revisa tu email para descargar")
-  showFooter          Boolean  @default(true)
-  footerText          String?
+  heroTitle        String
+  heroSubtitle     String?
+  coverImage       String?
+  primaryColor     String  @default("#CA9B77")
+  secondaryColor   String? @default("#845A8F")
+  bgPattern        String  @default("gradient") // dots, grid, gradient, none
+  layout           String  @default("centered") // centered, split, minimal
+  ctaText          String  @default("Descargar ahora")
+  inputPlaceholder String  @default("tu@email.com")
+  successTitle     String  @default("¡Listo!")
+  successMessage   String  @default("Revisa tu email para descargar")
+  showFooter       Boolean @default(true)
+  footerText       String?
 
   // Comportamiento
-  tagOnDownload       String
-  sequenceId          String?  @db.ObjectId
-  urlExpirationHours  Int      @default(24)
+  tagOnDownload      String
+  sequenceId         String? @db.ObjectId
+  urlExpirationHours Int     @default(24)
 
   // Métricas
-  downloadCount       Int      @default(0)
-  isActive            Boolean  @default(true)
+  downloadCount Int     @default(0)
+  isActive      Boolean @default(true)
 
-  downloads           LeadMagnetDownload[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  downloads LeadMagnetDownload[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 
   @@map("lead_magnets")
 }
@@ -979,11 +981,11 @@ model LeadMagnet {
 /// de diseño), pensada para convertir a un desconocido. Un material se le sirve
 /// a quien ya entró, y lo único que necesita es dónde está y de quién cuelga.
 model Resource {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
   /// Último segmento de la URL: /cursos/:curso/:video/{slug}
-  slug        String
-  kind        String   // "slides" | "pdf" | "repo" | "link"
-  title       String
+  slug  String
+  kind  String // "slides" | "pdf" | "repo" | "link"
+  title String
 
   /// Uno de los dos: archivo propio en S3, o destino externo.
   s3Key       String?
@@ -991,17 +993,17 @@ model Resource {
 
   /// De qué cuelga. Un material suele ser de una pieza; los de curso completo
   /// (temario, repo base) van con `courseId` y sin `videoId`.
-  videoId     String?  @db.ObjectId
-  video       Video?   @relation(fields: [videoId], references: [id])
-  courseId    String?  @db.ObjectId
+  videoId  String? @db.ObjectId
+  video    Video?  @relation(fields: [videoId], references: [id])
+  courseId String? @db.ObjectId
 
   /// Ruta corta vieja que debe seguir viva (`/seis-piezas`): se pegó en chats y
   /// correos ya enviados, romperla deja links muertos que no podemos recuperar.
-  legacyPath  String?  @unique
+  legacyPath String? @unique
 
-  accesses    ResourceAccess[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  accesses  ResourceAccess[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   @@unique([videoId, slug])
   @@index([courseId])
@@ -1015,7 +1017,7 @@ model ResourceAccess {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   resourceId String   @db.ObjectId
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-  email      String?  // anónimo si todavía no deja correo
+  email      String? // anónimo si todavía no deja correo
   createdAt  DateTime @default(now())
 
   @@index([resourceId])
@@ -1024,13 +1026,13 @@ model ResourceAccess {
 }
 
 model LeadMagnetDownload {
-  id            String      @id @default(auto()) @map("_id") @db.ObjectId
-  leadMagnetId  String      @db.ObjectId
-  leadMagnet    LeadMagnet  @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
-  subscriberId  String?     @db.ObjectId
-  email         String
-  name          String?
-  downloadedAt  DateTime    @default(now())
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  leadMagnetId String     @db.ObjectId
+  leadMagnet   LeadMagnet @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  subscriberId String?    @db.ObjectId
+  email        String
+  name         String?
+  downloadedAt DateTime   @default(now())
 
   @@index([leadMagnetId, email])
   @@map("lead_magnet_downloads")
@@ -1110,4 +1112,37 @@ model PurchaseEvent {
   @@index([status])
   @@index([email])
   @@map("purchase_events")
+}
+
+/// La transcripción de un video.
+///
+/// No se reusó `Resource`: ese modelo es para material descargable (slides, PDF, repo,
+/// enlace) y su valor es el archivo. Una transcripción se consulta, se busca y se
+/// renderiza —subtítulos, capítulos, panel interactivo, JSON-LD—, y para eso hace falta
+/// el texto estructurado en la base, no un objeto en S3.
+model Transcript {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  videoId String @unique @db.ObjectId
+  video   Video  @relation(fields: [videoId], references: [id])
+
+  /// Denormalizado a propósito: buscar un término en todo el curso no puede resolverse
+  /// con una consulta por video.
+  courseId String? @db.ObjectId
+
+  language String @default("es")
+  /// De dónde salió: "ghosty-teams" | "whisper"
+  source   String
+
+  /// [{ s: number, e: number, quien: string | null, texto: string }]
+  segments Json
+  /// El texto corrido. Es lo que se busca y lo que va en el JSON-LD.
+  text     String
+  /// [{ s: number, titulo: string }] — se generan con IA y se pueden corregir a mano.
+  chapters Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId])
+  @@map("transcripts")
 }

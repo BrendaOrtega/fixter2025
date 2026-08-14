@@ -48,7 +48,9 @@ export const loader = async ({ request }: { request: Request }) => {
 
   try {
     // Check if this is a direct video file (.mp4, .webm, etc.) - not HLS
-    const isDirectVideo = /\.(mp4|webm|mov|avi)$/i.test(hlsPath) ||
+    // Las imágenes del storyboard salen por el mismo camino que un mp4: 302 al presigned.
+    // El token ya se validó arriba, así que el sprite no queda más expuesto que el video.
+    const isDirectVideo = /\.(mp4|webm|mov|avi|jpe?g|png|webp)$/i.test(hlsPath) ||
       // Also handle paths without extension (legacy video-xxx format)
       (!hlsPath.includes('.') && hlsPath.includes('video-'));
 

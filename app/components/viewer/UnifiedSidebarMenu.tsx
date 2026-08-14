@@ -21,10 +21,16 @@ import {
 } from "react-icons/md";
 import { useClickOutside } from "~/hooks/useClickOutside";
 import { cn } from "~/utils/cn";
+import { MdOutlineSubtitles } from "react-icons/md";
+import {
+  TranscriptPanel,
+  type Segmento,
+  type Capitulo,
+} from "~/components/viewer/TranscriptPanel";
 import { Streamdown } from "streamdown";
 import { code } from "@streamdown/code";
 
-type TabType = "videos" | "notes";
+type TabType = "videos" | "notes" | "transcript";
 
 interface UnifiedSidebarProps {
   // Videos props
@@ -37,6 +43,12 @@ interface UnifiedSidebarProps {
   videos: Partial<Video>[];
   // Notes props
   markdownBody?: string;
+  // Transcript props
+  transcript?: { segments: Segmento[]; chapters?: Capitulo[] } | null;
+  courseId?: string;
+  /** Segundo en curso del player, para marcar la línea que suena. */
+  currentTime?: number;
+  onSeek?: (segundo: number) => void;
   // Unified props
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -52,6 +64,10 @@ export const UnifiedSidebarMenu = ({
   moduleNames,
   videos,
   markdownBody,
+  transcript,
+  courseId,
+  currentTime = 0,
+  onSeek,
   isOpen,
   setIsOpen,
   defaultTab = "videos",
@@ -107,6 +123,12 @@ export const UnifiedSidebarMenu = ({
       icon: <BsMarkdown className="text-sm" />,
       available: !!markdownBody,
     },
+    {
+      id: "transcript" as TabType,
+      label: "Transcripción",
+      icon: <MdOutlineSubtitles className="text-sm" />,
+      available: !!transcript?.segments?.length && !!onSeek,
+    },
   ];
 
   return (
@@ -140,15 +162,17 @@ export const UnifiedSidebarMenu = ({
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                    // `min-w-0` + `truncate`: con tres pestañas, "Transcripción" se
+                    // salía de la barra y aparecía un scroll horizontal.
+                    "flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all",
                     {
                       "bg-brand-500 text-brand-900": activeTab === tab.id,
                       "text-gray-400 hover:text-gray-200": activeTab !== tab.id,
                     }
                   )}
                 >
-                  {tab.icon}
-                  {tab.label}
+                  <span className="shrink-0">{tab.icon}</span>
+                  <span className="truncate">{tab.label}</span>
                 </button>
               ))}
           </div>
@@ -191,6 +215,29 @@ export const UnifiedSidebarMenu = ({
                 className="p-4"
               >
                 <NotesContent body={markdownBody} />
+              </motion.div>
+            )}
+
+            {activeTab === "transcript" && transcript && onSeek && (
+              <motion.div
+                key="transcript"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                // Altura fija: el panel maneja su propio scroll para poder llevar la
+                // línea activa al centro sin arrastrar toda la barra lateral.
+                className="h-[70vh] px-4 pt-4"
+              >
+                <TranscriptPanel
+                  segments={transcript.segments}
+                  chapters={transcript.chapters}
+                  currentTime={currentTime}
+                  onSeek={onSeek}
+                  courseId={courseId}
+                  courseSlug={courseSlug}
+                  videoSlug={currentVideoSlug || ""}
+                />
               </motion.div>
             )}
           </AnimatePresence>
