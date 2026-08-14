@@ -63,14 +63,19 @@ const resaltar = (texto: string, q: string) => {
 };
 
 export const TranscriptPanel = ({
-  segments,
-  chapters = [],
+  segments: segmentsProp,
+  chapters: chaptersProp,
   currentTime,
   onSeek,
   courseId,
   courseSlug,
   videoSlug,
 }: Props) => {
+  // Los valores por omisión de los parámetros solo cubren `undefined`. Una
+  // transcripción recién ingestada llega con `chapters: null` —los capítulos se
+  // generan después— y un null explícito se colaba hasta reventar en `.length`.
+  const segments = segmentsProp ?? [];
+  const chapters = chaptersProp ?? [];
   const [q, setQ] = useState("");
   const [resultados, setResultados] = useState<Resultado[] | null>(null);
   const [buscando, setBuscando] = useState(false);

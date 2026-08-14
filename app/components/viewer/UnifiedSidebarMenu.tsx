@@ -295,8 +295,12 @@ export const UnifiedSidebarMenu = ({
                 className="h-[70vh] px-4 pt-4"
               >
                 <TranscriptPanel
-                  segments={transcript.segments}
-                  chapters={transcript.chapters}
+                  // `?? undefined` y no `||`: un transcript recién ingestado trae
+                  // `chapters: null` —los capítulos se generan después— y un null
+                  // explícito NO dispara el valor por omisión del parámetro, así
+                  // que adentro reventaba al leerle `.length`.
+                  segments={transcript.segments ?? []}
+                  chapters={transcript.chapters ?? undefined}
                   currentTime={currentTime}
                   onSeek={onSeek}
                   courseId={courseId}
