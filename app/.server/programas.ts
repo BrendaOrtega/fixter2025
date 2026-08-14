@@ -135,6 +135,9 @@ export const getPrograma = async (slug: string) => {
         videoDuration: true,
         deviceType: true,
         completedAt: true,
+        buckets: true,
+        bucketSize: true,
+        playedAt: true,
       },
     }),
   ]);
@@ -211,6 +214,49 @@ export const getPrograma = async (slug: string) => {
       {
         ...video,
         materiales: resources.filter((r) => r.videoId === video.id),
+        // El mapa de calor de la pieza: cuánta gente siguió viendo en cada
+        // tramo y cuánta lo repitió. Se fusiona por persona antes de contar,
+        // porque quien la abrió veinte veces no son veinte espectadores.
+        calor: (() => {
+          const suyas = views.filter((v) => v.videoId === video.id);
+          if (!suyas.length) return null;
+
+          const porPersona = new Map<string, number[]>();
+          for (const v of suyas) {
+            if (!v.buckets?.length) continue;
+            const k = key(v.email) || v.sessionId;
+            const acc = porPersona.get(k) || [];
+            for (let i = 0; i < v.buckets.length; i++) {
+              acc[i] = Math.max(acc[i] || 0, v.buckets[i] || 0);
+            }
+            porPersona.set(k, acc);
+          }
+          if (!porPersona.size) return null;
+
+          const tramos = Math.max(...[...porPersona.values()].map((b) => b.length));
+          const audiencia: number[] = [];
+          const repeticiones: number[] = [];
+          for (let i = 0; i < tramos; i++) {
+            let vieron = 0;
+            let repitieron = 0;
+            for (const b of porPersona.values()) {
+              if ((b[i] || 0) > 0) vieron++;
+              if ((b[i] || 0) > 1) repitieron++;
+            }
+            audiencia.push(vieron);
+            repeticiones.push(repitieron);
+          }
+          return {
+            audiencia,
+            repeticiones,
+            personas: porPersona.size,
+            bucketSize: suyas[0]?.bucketSize || 15,
+          };
+        })(),
+        // Cuántos llegaron al reproductor y cuántos le dieron play: entre los
+        // dos está la gente que abrió y se fue sin ver nada.
+        llegaron: views.filter((v) => v.videoId === video.id).length,
+        dieronPlay: views.filter((v) => v.videoId === video.id && v.playedAt).length,
         transcript: (() => {
           const t = transcripts.find((x) => x.videoId === video.id);
           if (!t) return null;

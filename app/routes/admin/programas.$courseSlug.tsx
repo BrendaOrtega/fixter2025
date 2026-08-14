@@ -11,6 +11,7 @@ import {
   FaClosedCaptioning,
 } from "react-icons/fa";
 import { AdminNav } from "~/components/admin/AdminNav";
+import { MapaDeCalorVideo } from "~/components/admin/MapaDeCalorVideo";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { getPrograma } from "~/.server/programas";
 import { db } from "~/.server/db";
@@ -488,6 +489,17 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                         ? "reproducción"
                         : "reproducciones"}
                     </span>
+                    {pieza.llegaron > 0 && (
+                      <>
+                        <br />
+                        <span
+                          className="text-gray-700"
+                          title="De los que abrieron el reproductor, cuántos le dieron play"
+                        >
+                          {Math.round((pieza.dieronPlay / pieza.llegaron) * 100)}% le dio play
+                        </span>
+                      </>
+                    )}
                     {/* Aparecen al pasar el mouse: son de uso raro y no tienen
                         por qué competir con los datos, que son lo que se viene
                         a ver. */}
@@ -502,6 +514,15 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                     </div>
                   </div>
                 </div>
+
+                {pieza.calor && (
+                  <MapaDeCalorVideo
+                    audiencia={pieza.calor.audiencia}
+                    repeticiones={pieza.calor.repeticiones}
+                    personas={pieza.calor.personas}
+                    bucketSize={pieza.calor.bucketSize}
+                  />
+                )}
 
                 {pieza.transcript && (
                   <div className="mt-3 pt-3 border-t border-gray-800">
