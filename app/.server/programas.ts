@@ -155,22 +155,31 @@ export const getPrograma = async (slug: string) => {
 
   // Por persona nos interesa lo más lejos que llegó, no la suma de sus sentadas:
   // quien vio media hora tres veces vio media hora, no hora y media.
+  // Por persona y POR PIEZA: un porcentaje suelto no dice de qué video es, y
+  // con tres piezas en el programa eso vale poco.
   const vistosPor = new Map<
     string,
-    { segundos: number; completados: number; duracion: number; dispositivo: string | null }
+    {
+      completados: number;
+      dispositivo: string | null;
+      porVideo: Map<string, { segundos: number; duracion: number }>;
+    }
   >();
   for (const view of views) {
     const k = key(view.email);
     if (!k) continue;
     const acc =
       vistosPor.get(k) ||
-      { segundos: 0, completados: 0, duracion: 0, dispositivo: null };
-    acc.segundos = Math.max(acc.segundos, view.watchedSeconds);
-    acc.duracion = Math.max(acc.duracion, view.videoDuration || 0);
+      { completados: 0, dispositivo: null, porVideo: new Map() };
+    const v = acc.porVideo.get(view.videoId) || { segundos: 0, duracion: 0 };
+    v.segundos = Math.max(v.segundos, view.watchedSeconds);
+    v.duracion = Math.max(v.duracion, view.videoDuration || 0);
+    acc.porVideo.set(view.videoId, v);
     acc.dispositivo = view.deviceType || acc.dispositivo;
     if (view.completedAt) acc.completados += 1;
     vistosPor.set(k, acc);
   }
+  const tituloDeVideo = new Map(videos.map((v) => [v.id, v.title]));
 
   const materialesPor = new Map<string, Set<string>>();
   for (const access of accesses) {
@@ -185,15 +194,30 @@ export const getPrograma = async (slug: string) => {
     const k = key(sub.email);
     const visto = vistosPor.get(k);
     const materiales = materialesPor.get(k)?.size || 0;
+    // Se muestra la pieza donde más avanzó, con su nombre: es lo que dice si
+    // esta persona vale una invitación.
+    const piezasVistas = visto
+      ? [...visto.porVideo.entries()]
+          .map(([videoId, v]) => ({
+            titulo: tituloDeVideo.get(videoId) || "",
+            minutos: Math.round(v.segundos / 60),
+            porcentaje: v.duracion
+              ? Math.min(100, Math.round((v.segundos / v.duracion) * 100))
+              : null,
+          }))
+          .filter((p) => p.minutos > 0)
+          .sort((a, b) => (b.porcentaje ?? 0) - (a.porcentaje ?? 0))
+      : [];
+    const mejor = piezasVistas[0];
+
     return {
       ...sub,
-      minutosVistos: visto ? Math.round(visto.segundos / 60) : 0,
+      minutosVistos: mejor?.minutos || 0,
       // Sin duración conocida no hay porcentaje que valga: mejor nada que un
       // número inventado.
-      porcentaje:
-        visto && visto.duracion
-          ? Math.min(100, Math.round((visto.segundos / visto.duracion) * 100))
-          : null,
+      porcentaje: mejor?.porcentaje ?? null,
+      piezaVista: mejor?.titulo || null,
+      piezasVistas,
       dispositivo: visto?.dispositivo || null,
       videosCompletados: visto?.completados || 0,
       materiales,
@@ -202,7 +226,7 @@ export const getPrograma = async (slug: string) => {
       compromiso:
         (visto?.completados || 0) > 0 || materiales > 0
           ? 3
-          : visto
+          : mejor
             ? 2
             : 1,
     };

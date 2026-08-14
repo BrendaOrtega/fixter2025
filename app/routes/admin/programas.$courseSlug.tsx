@@ -595,7 +595,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                 <tr className="text-xs uppercase text-gray-500">
                   <th className="px-4 py-3 text-left font-medium">Correo</th>
                   <th className="px-4 py-3 text-left font-medium">Registro</th>
-                  <th className="px-4 py-3 text-left font-medium">Vio</th>
+                  <th className="px-4 py-3 text-left font-medium">Qué vio</th>
                   <th className="px-4 py-3 text-center font-medium">
                     Materiales
                   </th>
@@ -648,6 +648,23 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                               <span className="text-gray-600">
                                 {persona.minutosVistos} min
                               </span>
+                              {/* De qué pieza: sin esto, en un programa de
+                                  varias grabaciones el porcentaje no dice nada */}
+                              {persona.piezaVista && (
+                                <span
+                                  className="block text-gray-600 truncate max-w-[16ch]"
+                                  title={persona.piezasVistas
+                                    .map(
+                                      (p) =>
+                                        `${p.titulo}: ${p.porcentaje ?? "?"}% (${p.minutos} min)`,
+                                    )
+                                    .join("\n")}
+                                >
+                                  {persona.piezaVista}
+                                  {persona.piezasVistas.length > 1 &&
+                                    ` +${persona.piezasVistas.length - 1}`}
+                                </span>
+                              )}
                             </span>
                           </div>
                         ) : (
