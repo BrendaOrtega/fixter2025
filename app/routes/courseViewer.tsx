@@ -775,6 +775,15 @@ export default function Route({
         )}
 
         <UnifiedSidebarMenu
+          // El admin enlaza `?tab=transcript` para caer directo en la
+          // transcripción, en vez de aterrizar en la lista de videos.
+          defaultTab={
+            (searchParams.tab as
+              | "videos"
+              | "notes"
+              | "transcript"
+              | "resources") || "videos"
+          }
           courseTitle={course.title}
           courseSlug={course.slug}
           isOpen={isMenuOpen}

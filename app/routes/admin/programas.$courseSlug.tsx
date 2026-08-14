@@ -106,6 +106,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       where: { id: videoId },
       select: { courseIds: true },
     });
+    // El transcript tiene relación obligatoria con el video: si sigue ahí,
+    // Prisma se niega a borrarlo y el admin devolvía un 500 pelón.
+    await db.transcript.deleteMany({ where: { videoId } });
     await db.resource.deleteMany({ where: { videoId } });
     const course = await db.course.findUnique({
       where: { slug: params.courseSlug as string },
@@ -503,7 +506,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                 {pieza.transcript && (
                   <div className="mt-3 pt-3 border-t border-gray-800">
                     <a
-                      href={`/cursos/${course.slug}/${pieza.slug}`}
+                      href={`/cursos/${course.slug}/viewer?videoSlug=${pieza.slug}&tab=transcript`}
                       target="_blank"
                       rel="noopener"
                       className="inline-flex items-center gap-2 px-2.5 py-1 text-xs rounded-lg
