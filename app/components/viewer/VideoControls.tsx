@@ -153,6 +153,10 @@ export const VideoControls = ({
   // Saltar en HLS obliga a bajar el segmento de destino —varios MB— antes de pintar el
   // primer cuadro. Sin señal de que algo pasa, se siente que el clic no hizo nada.
   const [cargando, setCargando] = useState(false);
+  // Los controles tapan la parte baja del video —justo donde van los subtítulos y las
+  // diapositivas—, así que se van solos cuando nadie los está usando.
+  const [visibles, setVisibles] = useState(true);
+  const ocultarRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Posición del cursor sobre la barra, en segundos. `null` = no hay hover.
   const [asomado, setAsomado] = useState<number | null>(null);
   const [mostrarRestante, setMostrarRestante] = useState(false);
@@ -250,6 +254,32 @@ export const VideoControls = ({
       typeof document !== "undefined" && !!document.pictureInPictureEnabled,
     );
   }, []);
+
+  // Auto-ocultado. En pausa, con un menú abierto o mientras se arrastra se quedan: ahí
+  // la persona los está usando y que desaparezcan sería absurdo.
+  useEffect(() => {
+    const zona = videoRef.current?.closest("section");
+    if (!zona) return;
+
+    const reponer = () => {
+      setVisibles(true);
+      if (ocultarRef.current) clearTimeout(ocultarRef.current);
+      ocultarRef.current = setTimeout(() => setVisibles(false), 2800);
+    };
+    const salir = () => setVisibles(false);
+
+    zona.addEventListener("mousemove", reponer);
+    zona.addEventListener("touchstart", reponer);
+    zona.addEventListener("mouseleave", salir);
+    reponer();
+
+    return () => {
+      zona.removeEventListener("mousemove", reponer);
+      zona.removeEventListener("touchstart", reponer);
+      zona.removeEventListener("mouseleave", salir);
+      if (ocultarRef.current) clearTimeout(ocultarRef.current);
+    };
+  }, [videoRef]);
 
   // Preferencias del sitio, no del video: bajarle el volumen en una lección y que la
   // siguiente vuelva a gritar es de lo más molesto que puede hacer un reproductor.
@@ -448,7 +478,14 @@ export const VideoControls = ({
 
   return (
     <div
-      className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-10"
+      className={cn(
+        "absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-2 pt-10",
+        "transition-opacity duration-300",
+        // Sólo se esconden si el video está corriendo y nadie los toca.
+        visibles || !reproduciendo || menu || arrastrando || asomado != null
+          ? "opacity-100"
+          : "pointer-events-none opacity-0"
+      )}
       // Un clic en la barra no debe pausar el video (el <video> tiene su propio onClick).
       onClick={(e) => e.stopPropagation()}
     >

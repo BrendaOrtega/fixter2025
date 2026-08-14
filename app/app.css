@@ -242,5 +242,5 @@ body {
    barra de controles: quedaban encima de los botones. Se suben lo que mide la barra.
    Sólo WebKit/Blink exponen este pseudo-elemento, que es donde está el 95% del público. */
 video::-webkit-media-text-track-container {
-  transform: translateY(-58px);
+  transform: translateY(-78px);
 }
