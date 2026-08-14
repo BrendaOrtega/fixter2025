@@ -158,24 +158,28 @@ const AccionesPieza = ({
       >
         {isPublic ? "Pasar a borrador" : "Publicar"}
       </button>
+      {/* La confirmación ocupa el mismo lugar que el botón: si crece, empuja la
+          tarjeta y se ve peor que el riesgo que intenta evitar. El nombre no se
+          repite porque está a la vista, dos líneas arriba. */}
       {confirmando ? (
         <>
-          <span className="text-gray-500">¿Borrar «{titulo}»?</span>
           <button
             disabled={trabajando}
             onClick={() =>
               fetcher.submit({ intent: "delete_video", videoId: id }, { method: "post" })
             }
+            title={`Borrar «${titulo}»`}
             className="px-2.5 py-1 rounded-lg bg-red-900/70 text-red-200 hover:bg-red-900
               disabled:opacity-50"
           >
-            Sí, borrar
+            {trabajando ? "Borrando…" : "¿Seguro?"}
           </button>
           <button
             onClick={() => setConfirmando(false)}
-            className="px-2 py-1 text-gray-500 hover:text-gray-300"
+            className="px-1.5 py-1 text-gray-600 hover:text-gray-300"
+            title="Cancelar"
           >
-            Cancelar
+            ✕
           </button>
         </>
       ) : (
