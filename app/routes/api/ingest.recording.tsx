@@ -66,21 +66,27 @@ export const action = async ({ request }: Route.ActionArgs) => {
     }).catch(() => null);
     if (!course) return Response.json({ error: "ese taller no existe" }, { status: 404 });
 
-    // El slug lleva la fecha para que dos sesiones del mismo webinar no colisionen, y es
-    // lo que hace la operación IDEMPOTENTE: repetir el `stop` no crea un segundo vídeo.
+    // ⚠️ El slug lleva fecha Y HORA. Con sólo la fecha, dos grabaciones del mismo día
+    // caían en el mismo slug y la segunda SOBRESCRIBÍA a la primera —mismo `upsert`—,
+    // dejando un vídeo apuntando al HLS de otro. Un ensayo por la mañana y la sesión buena
+    // por la tarde es el caso normal, no el raro.
+    //
+    // Quien llama manda `slug` cuando quiere controlarlo (reintentos, correcciones): eso es
+    // lo que mantiene la operación idempotente sin depender del reloj.
     const fecha = body.eventDate ? new Date(String(body.eventDate)) : new Date();
-    const dia = Number.isNaN(fecha.getTime()) ? new Date() : fecha;
-    const slug = String(body.slug ?? "") ||
-      `${slugify(title)}-${dia.toISOString().slice(0, 10)}`;
+    const cuando = Number.isNaN(fecha.getTime()) ? new Date() : fecha;
+    const dia = cuando.toISOString().slice(0, 10);
+    const hora = cuando.toISOString().slice(11, 16).replace(":", "");
+    const slug = String(body.slug ?? "") || `${slugify(title)}-${dia}-${hora}`;
 
     const video = await db.video.upsert({
       where: { slug },
-      update: { title, eventDate: dia },
+      update: { title, eventDate: cuando },
       create: {
         slug,
         title,
         kind: "webinar",
-        eventDate: dia,
+        eventDate: cuando,
         moduleName: "Webinars",
         // ⚠️ `accessLevel` es lo que decide el acceso en el viewer, no `isPublic`.
         accessLevel: "subscriber",
