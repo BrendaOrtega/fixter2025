@@ -32,10 +32,25 @@ const buildMetaLine = (
   }
   if (isTallerSinVideos) return "En vivo";
 
+  const lecciones = `${videosLength} ${videosLength === 1 ? "lección" : "lecciones"}`;
+
+  // En un taller, `duration` son las horas del taller vendido, no las del
+  // material publicado: ponerlas junto al conteo de lecciones se lee como
+  // contradicción ("1 lección | 8 horas"). Ahí vale más la fecha de inicio.
+  if (course.isLive || course.tipo === "taller") {
+    if (course.startDate) {
+      const inicio = new Date(course.startDate).toLocaleDateString("es-MX", {
+        day: "numeric",
+        month: "short",
+        timeZone: "America/Mexico_City",
+      });
+      return `${lecciones} · Inicia ${inicio.replace(".", "")}`;
+    }
+    return `${lecciones} · En vivo`;
+  }
+
   const duration = formatDuration(course.duration);
-  return duration
-    ? `${videosLength} lecciones | ${duration}`
-    : `${videosLength} lecciones`;
+  return duration ? `${lecciones} | ${duration}` : lecciones;
 };
 
 export const CourseCard = ({
