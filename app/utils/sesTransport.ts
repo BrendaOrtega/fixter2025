@@ -23,7 +23,10 @@ export const getSesTransport = () => {
   });
 };
 
-export const getSesRemitent = () => `Fixtergeek <fixtergeek@gmail.com>`;
+// Decir que vienes de @gmail.com y salir por SES falla DMARC: Gmail lo tira en
+// silencio, sin rebote y sin error, así que el log dice "enviado" y nadie recibe
+// nada. El remitente tiene que ser del dominio propio, que es el verificado.
+export const getSesRemitent = () => `Fixtergeek <noreply@fixtergeek.com>`;
 
 // Transporter específico para webinar SIN configuration set
 export const getSesTransportForWebinar = () => {

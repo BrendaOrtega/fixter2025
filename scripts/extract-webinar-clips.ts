@@ -11,10 +11,7 @@ const OUT = process.env.OUT_DIR!;
 
 // Cortes finos, ajustados a las marcas reales del transcript.
 const CLIPS = [
-  { slug: "1-pin-whatsapp", from: 3936, to: 4002 },
-  { slug: "2-500-millones", from: 1797, to: 1821 },
-  { slug: "3-guardrails-token", from: 3084, to: 3111 },
-  { slug: "4-file-system-falso", from: 2738, to: 2789 },
+  { slug: "5-agent-native", from: 1426, to: 1541 },
 ];
 
 const get = async (key: string) => {
