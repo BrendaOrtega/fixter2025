@@ -118,6 +118,18 @@ benchmarks propios que presumir.
 1. **El regalo del minuto 30.** El primero repartió el PDF de las seis piezas y
    funcionó. Falta decidir el de este: la hoja de decisión de sandbox (qué
    escalón necesitas + las 4 preguntas + la tabla) es el candidato natural.
-2. **Los 3 demos** hay que verificarlos en vivo antes, como se hizo con Deník.
+2. **Los 3 demos se ensayan antes del jueves y ahí se decide si se quedan.**
+   Ninguno está definido todavía: las slides describen qué debería verse, no lo que
+   hay listo. En el ensayo se corren de principio a fin y cada uno pasa una sola
+   prueba: **¿aporta algo que la slide no diga ya?** El que no la pase se convierte
+   en dato dentro de una slide —o se graba, o se quita—. Vale más un webinar de 17
+   slides sólidas que uno con tres demos que se arrastran en vivo.
+   - **Demo 1** — levantar una caja e intentar salirse. Falta decidir sobre qué
+     sistema se hace.
+   - **Demo 2** — el agente analiza un archivo con dos cronómetros a la vista.
+     Requiere instrumentar los tiempos antes; si no se alcanza, se mide en frío y el
+     número entra a la slide 13.
+   - **Demo 3** — Code Mode: los MCPs como API de TypeScript corriendo en la caja.
+     Depende de qué tan estable esté hoy.
 3. **Números propios de EasyBits** — si aparecen antes del jueves, la slide 17
    cambia de "existe" a un argumento con cifras.

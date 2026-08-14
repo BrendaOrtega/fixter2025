@@ -90,7 +90,10 @@ export const UnifiedSidebarMenu = ({
   const springX = useSpring(x, { bounce: 0.2 });
   const menuWidth =
     typeof window !== "undefined" && window.innerWidth >= 768 ? 400 : 320;
-  const buttonX = useTransform(springX, [-menuWidth, 0], [0, menuWidth - 56]);
+  // Abierto, el botón queda pegado al borde EXTERIOR del panel (sólo 8px lo pisan, y
+  // esos caen en su padding). Antes se metía 56px y tapaba las pestañas; taparlo con
+  // padding en el encabezado apretaba el título y volvía a truncar las etiquetas.
+  const buttonX = useTransform(springX, [-menuWidth, 0], [0, menuWidth - 8]);
 
   useEffect(() => {
     isOpen ? x.set(0) : x.set(-menuWidth);
@@ -163,9 +166,7 @@ export const UnifiedSidebarMenu = ({
         menuWidth={menuWidth}
       >
         {/* Header with tabs */}
-        {/* `pr-[72px]` con el panel abierto: ahí encima flota el botón de cerrar y sin
-            este hueco se montaba sobre las pestañas. */}
-        <div className={cn("px-4 py-4 border-b border-gray-700/50", isOpen && "pr-[72px]")}>
+        <div className="px-4 py-4 border-b border-gray-700/50">
           <h2 className="text-lg font-semibold text-white mb-3 truncate">
             {courseTitle}
           </h2>
