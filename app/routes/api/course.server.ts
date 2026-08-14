@@ -456,18 +456,9 @@ export const courseServerActions = {
 
     if (!skipPresigned && hlsUrl && video.courses.length > 0) {
       try {
-        // Extract HLS key from the normalized URL
-        const hlsUrlParsed = new URL(hlsUrl);
-        let hlsKey = hlsUrlParsed.pathname.substring(1); // Remove leading slash
-
-        // Remove bucket name if present at start of path
-        const bucketName = process.env.AWS_S3_BUCKET || process.env.BUCKET_NAME || "wild-bird-2039";
-        if (hlsKey.startsWith(`${bucketName}/`)) {
-          hlsKey = hlsKey.substring(bucketName.length + 1);
-        }
-
-        // Use HLS proxy endpoint that rewrites m3u8 with presigned URLs
-        hlsProxyUrl = `/api/hls-proxy?path=${encodeURIComponent(hlsKey)}`;
+        // El proxy exige token firmado: la URL se arma en el servidor, no en el cliente.
+        const { buildHlsProxyUrl } = await import("~/.server/hls");
+        hlsProxyUrl = buildHlsProxyUrl(hlsUrl) || undefined;
 
         console.log("✅ [get_video_status] HLS proxy URL generated:", hlsProxyUrl);
       } catch (error) {

@@ -299,10 +299,24 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const removeStorageLink = !hasAccess;
 
+  // Los videos de curso en Tigris se sirven por el proxy, con un token que se firma
+  // AQUÍ — el único lugar que sabe si hay acceso. El proxy ya no atiende nada sin token.
+  const { buildHlsProxyUrl } = await import("~/.server/hls");
+  let finalM3u8 = (video as any).m3u8 || "";
+  if (hasAccess && finalM3u8) {
+    finalM3u8 = buildHlsProxyUrl(finalM3u8) || finalM3u8;
+  }
+
   // Generar presigned URL para videos de Tigris (bucket privado)
   let finalStorageLink = (video as any).storageLink || "";
   console.log("🎬 Original storageLink:", finalStorageLink);
-  if (hasAccess && finalStorageLink) {
+  // Video de curso: va por el proxy firmado en vez de una presigned suelta.
+  const proxiedStorageLink = hasAccess && finalStorageLink
+    ? buildHlsProxyUrl(finalStorageLink)
+    : null;
+  if (proxiedStorageLink) {
+    finalStorageLink = proxiedStorageLink;
+  } else if (hasAccess && finalStorageLink) {
     try {
       // Detectar URLs de Tigris (cualquier formato)
       const isTigrisUrl = finalStorageLink.includes('tigris.dev') || finalStorageLink.includes('t3.storage.dev');
@@ -332,7 +346,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const videoToReturn = removeStorageLink
     ? { ...video, storageLink: "", m3u8: "" }
-    : { ...video, storageLink: finalStorageLink };
+    : { ...video, storageLink: finalStorageLink, m3u8: finalM3u8 };
   console.log("🔐 Result:", { hasAccess, removeStorageLink, returnedLink: videoToReturn.storageLink?.substring(0, 80) });
 
   // Get subscriber videos for the drawer (with title and slug for navigation)

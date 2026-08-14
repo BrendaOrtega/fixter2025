@@ -38,6 +38,14 @@ export const loader = async ({ request }: { request: Request }) => {
     return new Response("Missing 'path' parameter", { status: 400 });
   }
 
+  // Todo pasa por token. El del master lo emite el loader del curso (que es quien sabe
+  // si hay acceso); los de renditions y segmentos los emite este mismo proxy al
+  // reescribir la playlist. Sin esto el candado sería "no sepas la ruta del bucket".
+  const tokenCheck = validateHlsToken(url.searchParams.get("t"), hlsPath);
+  if (!tokenCheck.isValid) {
+    return new Response(tokenCheck.error, { status: 403, headers: corsHeaders });
+  }
+
   try {
     // Check if this is a direct video file (.mp4, .webm, etc.) - not HLS
     const isDirectVideo = /\.(mp4|webm|mov|avi)$/i.test(hlsPath) ||
@@ -59,21 +67,6 @@ export const loader = async ({ request }: { request: Request }) => {
           'Location': presignedUrl,
         },
       });
-    }
-
-    // Los segmentos y los playlists de calidad vienen firmados desde el master.
-    // El master (la primera petición) es el único que entra sin token.
-    const isSubRequest = hlsPath.endsWith('.ts') || hlsPath.endsWith('.m3u8');
-    if (isSubRequest) {
-      const token = url.searchParams.get('t');
-      const { isValid, error } = validateHlsToken(token, hlsPath);
-      // Sin token: puede ser el master. Con token inválido: se rechaza siempre.
-      if (token && !isValid) {
-        return new Response(error, { status: 403, headers: corsHeaders });
-      }
-      if (!token && hlsPath.endsWith('.ts')) {
-        return new Response('Falta el token de acceso', { status: 403, headers: corsHeaders });
-      }
     }
 
     // Segmentos: 302 al presigned. Los bytes salen de Tigris, no de esta máquina.

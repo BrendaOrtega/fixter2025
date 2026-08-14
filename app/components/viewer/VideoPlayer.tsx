@@ -186,7 +186,13 @@ export const VideoPlayer = ({
 
       <video
         ref={videoRef}
-        poster={video?.storageLink ? poster || video.poster || undefined : "/video-blocked.png"}
+        // Los videos en HLS traen `m3u8` y `storageLink` vacío: si sólo se mira
+        // `storageLink`, salen con el póster de "bloqueado" aunque haya acceso.
+        poster={
+          video?.m3u8 || video?.storageLink
+            ? poster || video.poster || undefined
+            : "/video-blocked.png"
+        }
         controlsList="nodownload"
         className="w-full h-full"
         controls

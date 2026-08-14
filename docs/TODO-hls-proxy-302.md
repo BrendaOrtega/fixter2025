@@ -1,7 +1,59 @@
 # El proxy HLS reenvía bytes en vez de redirigir a Tigris
 
-Anotado el **2026-08-13**. **Auditado el 2026-08-14** (se midió todo lo que el plan pedía
-verificar). Veredicto: **hacer el cambio**, pero no es de 5 minutos y no es un solo archivo.
+Anotado el **2026-08-13**. Auditado e **implementado el 2026-08-14**.
+
+## Estado: hecho
+
+- `app/utils/tokens.ts` — `generateHlsToken` / `validateHlsToken`, HMAC crudo de **38
+  caracteres** (un JWT pesaba ~200, y el token se repite en 452 líneas de playlist). Se
+  firma la carpeta, no el segmento.
+- `app/routes/api/hls-proxy.tsx` — la rama `.ts` ahora responde **302** al presigned; los
+  rewrites de playlist cuelgan `&t=<token>`; sin token o con token de otra carpeta → **403**.
+- `app/routes/playlist.$storageKey.$segment.tsx` — lo mismo para `animaciones/chunks`.
+
+**Verificado en local** (curl + XHR real desde el navegador):
+
+| Prueba | Resultado |
+|---|---|
+| Segmento con token | 302 → `t3.storage.dev`, 8.5 MB en 1.5 s |
+| XHR cross-origin siguiendo el redirect | 200, `Access-Control-Allow-Origin: *` desde Tigris |
+| Range request (seeking) | 206 |
+| Segmento sin token | 403 |
+| Token de otra carpeta / expirado / firma chueca | 403 |
+| master + rendition parseados por hls.js | 3 niveles, 452 fragmentos con URLs correctas |
+| mp4 legacy (`taller-ghosty`) | 302, sin cambios |
+| Viewer sin suscripción | sigue bloqueando y pidiendo correo |
+
+### El candado, cerrado del todo
+
+Primera versión dejaba pasar el **master** sin token: quien tuviera la ruta del bucket
+pedía el master, recibía dentro los tokens firmados y se veía el video completo. Ya no.
+
+- `app/.server/hls.ts` — `buildHlsProxyUrl(url)` arma la URL del proxy **ya firmada**, en
+  el servidor. Reconoce las dos formas de URL de Tigris (bucket en la ruta y bucket en el
+  host) y devuelve `null` para lo que no le toca (`pong/…`, Firebase), que conserva su
+  camino de siempre.
+- El token del master lo emite `courseViewer.tsx`, que es el único lugar que sabe si hay
+  acceso. Los de renditions y segmentos los emite el propio proxy al reescribir la playlist.
+- `api/hls-proxy.tsx` **exige token en todas sus ramas**, incluido el `.mp4`. El cliente ya
+  no arma rutas del proxy por su cuenta: sólo usa la que le llega del loader.
+- `api/course.server.ts` usa el mismo helper.
+
+Comprobado: master sin token → 403, mp4 sin token → 403; con token, master 200 →
+rendition 452 segmentos → segmento 302 → mp4 302.
+
+### Aparte: el póster de "bloqueado" se quedaba pegado
+
+`VideoPlayer.tsx` decidía el póster mirando sólo `storageLink`. Los videos en HLS traen
+`m3u8` y `storageLink` vacío, así que salían con `/video-blocked.png` **aunque ya hubieras
+desbloqueado**. Ahora mira los dos campos.
+
+**Falta la prueba manual**: reproducir y saltar en el player real (Chrome y **Safari
+iPhone**), con sesión. El tab automatizado queda `visibilityState: hidden` y Chrome
+estrangula el tick de hls.js, así que la reproducción completa no se puede comprobar desde
+aquí.
+
+Lo que sigue abajo es la auditoría que motivó el cambio.
 
 ---
 
