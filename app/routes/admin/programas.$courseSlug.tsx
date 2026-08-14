@@ -257,18 +257,25 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
           <Stat label="Comprometidos" value={stats.comprometidos} />
         </div>
 
-        <div className="flex gap-1 mb-4">
-          {(["piezas", "audiencia"] as const).map((t) => (
+        {/* Las pestañas se veían tan apagadas que no parecían clickeables. Con
+            borde y el conteo al lado se leen como lo que son. */}
+        <div className="flex gap-2 mb-4 border-b border-gray-800">
+          {(
+            [
+              ["piezas", `Piezas (${piezas.length})`],
+              ["audiencia", `Audiencia (${audiencia.length})`],
+            ] as const
+          ).map(([id, label]) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-3 py-1.5 text-sm rounded-lg capitalize ${
-                tab === t
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-500 hover:text-gray-300"
+              key={id}
+              onClick={() => setTab(id)}
+              className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
+                tab === id
+                  ? "border-purple-500 text-white"
+                  : "border-transparent text-gray-500 hover:text-gray-300"
               }`}
             >
-              {t}
+              {label}
             </button>
           ))}
         </div>
