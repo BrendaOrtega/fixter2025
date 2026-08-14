@@ -62,18 +62,44 @@ export const action: ActionFunction = async ({ request }) => {
           : generateSessionId(request);
       const deviceType = getDeviceType(request);
 
-      const view = await db.videoView.create({
-        data: {
+      // `sessionId` es un id de navegador que vive en localStorage, así que es
+      // estable para siempre: sin esta ventana, cada recarga de la página abría
+      // una fila nueva y el conteo de vistas medía refrescadas, no personas.
+      // Media hora es la ventana: recargar cuenta como la misma sentada; volver
+      // al día siguiente cuenta como otra.
+      const VENTANA_MS = 30 * 60 * 1000;
+      const reciente = await db.videoView.findFirst({
+        where: {
           videoId,
-          videoSlug,
-          courseId: courseId || null,
-          userId: userId || null,
-          email: email || null,
           sessionId,
-          deviceType,
-          videoDuration: duration ? Math.floor(duration) : null,
+          startedAt: { gte: new Date(Date.now() - VENTANA_MS) },
         },
+        orderBy: { startedAt: "desc" },
+        select: { id: true },
       });
+
+      const view = reciente
+        ? await db.videoView.update({
+            where: { id: reciente.id },
+            // el correo puede llegar hasta que se desbloquea, ya empezada la vista
+            data: {
+              email: email || undefined,
+              userId: userId || undefined,
+              videoDuration: duration ? Math.floor(duration) : undefined,
+            },
+          })
+        : await db.videoView.create({
+            data: {
+              videoId,
+              videoSlug,
+              courseId: courseId || null,
+              userId: userId || null,
+              email: email || null,
+              sessionId,
+              deviceType,
+              videoDuration: duration ? Math.floor(duration) : null,
+            },
+          });
 
       return new Response(JSON.stringify({ viewId: view.id }), {
         status: 200,
@@ -92,9 +118,20 @@ export const action: ActionFunction = async ({ request }) => {
         });
       }
 
+      // Al reusar una vista, el reproductor nuevo arranca su contador en cero:
+      // si se escribiera tal cual, una recarga borraría lo ya visto.
+      const actual = await db.videoView.findUnique({
+        where: { id: viewId },
+        select: { watchedSeconds: true },
+      });
       await db.videoView.update({
         where: { id: viewId },
-        data: { watchedSeconds: Math.max(0, Math.floor(watchedSeconds || 0)) },
+        data: {
+          watchedSeconds: Math.max(
+            actual?.watchedSeconds || 0,
+            Math.floor(watchedSeconds || 0),
+          ),
+        },
       });
 
       return new Response(JSON.stringify({ ok: true }), {

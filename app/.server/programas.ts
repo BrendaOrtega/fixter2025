@@ -112,6 +112,7 @@ export const getPrograma = async (slug: string) => {
       select: {
         email: true,
         videoId: true,
+        sessionId: true,
         watchedSeconds: true,
         completedAt: true,
       },
@@ -174,7 +175,12 @@ export const getPrograma = async (slug: string) => {
       {
         ...video,
         materiales: resources.filter((r) => r.videoId === video.id),
-        vistas: views.filter((v) => v.videoId === video.id).length,
+        // Personas, no filas: hasta que se acotó por ventana de media hora,
+        // cada recarga abría un registro nuevo. Se cuenta por navegador.
+        espectadores: new Set(
+          views.filter((v) => v.videoId === video.id).map((v) => v.sessionId),
+        ).size,
+        reproducciones: views.filter((v) => v.videoId === video.id).length,
       },
     ]),
   );

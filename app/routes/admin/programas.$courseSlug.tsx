@@ -163,8 +163,22 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                       /cursos/{course.slug}/{pieza.slug}
                     </a>
                   </div>
-                  <div className="text-xs text-gray-400 shrink-0">
-                    {pieza.vistas} {pieza.vistas === 1 ? "vista" : "vistas"}
+                  <div
+                    className="text-xs text-gray-400 shrink-0 text-right"
+                    title="Navegadores distintos que abrieron el reproductor. Las reproducciones cuentan cada sentada; recargar dentro de media hora no suma otra."
+                  >
+                    {pieza.espectadores}
+                    <br />
+                    <span className="text-gray-600">
+                      {pieza.espectadores === 1 ? "persona" : "personas"}
+                    </span>
+                    <br />
+                    <span className="text-gray-700">
+                      {pieza.reproducciones}{" "}
+                      {pieza.reproducciones === 1
+                        ? "reproducción"
+                        : "reproducciones"}
+                    </span>
                   </div>
                 </div>
 
