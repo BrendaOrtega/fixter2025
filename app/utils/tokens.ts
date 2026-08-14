@@ -418,6 +418,7 @@ export const validateLeadMagnetToken = (
 // Se firma la CARPETA, no el segmento: un solo token cubre el video completo.
 
 const HLS_TOKEN_TTL = 6 * 60 * 60; // 6 h — cubre de sobra una sesión larga de video
+const HLS_TOKEN_SLOT = 30 * 60; // la expiración se redondea a esto: URLs estables
 
 const signHlsPrefix = (prefix: string, exp: number) =>
   createHmac("sha256", process.env.SECRET || "fixtergeek")
@@ -433,7 +434,13 @@ export const generateHlsToken = (
   prefix: string,
   ttlSeconds: number = HLS_TOKEN_TTL
 ): string => {
-  const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
+  // La expiración se redondea a bloques de media hora para que el token —y por lo
+  // tanto la URL del video— sea IDÉNTICO entre recargas del loader. Con un `exp`
+  // al segundo, cada revalidación de React Router cambiaba la URL, el player
+  // destruía y rearmaba HLS, y el video se reiniciaba o se trababa a media
+  // reproducción. Peor caso, el token vale ttl − 30 min.
+  const now = Math.floor(Date.now() / 1000);
+  const exp = Math.ceil((now + ttlSeconds) / HLS_TOKEN_SLOT) * HLS_TOKEN_SLOT;
   return `${exp}.${signHlsPrefix(prefix, exp)}`;
 };
 

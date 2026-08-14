@@ -73,6 +73,10 @@ export function useVideoPlayer({
   const [isReady, setIsReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const prevDisabledRef = useRef(disabled);
+  // Valor vigente de `disabled` para leerlo desde el efecto de setup sin ponerlo
+  // en sus dependencias (si estuviera, abrir un drawer rearmaría el player).
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
 
   const { interceptHLSUrl } = useSecureHLS({
     courseId,
@@ -267,7 +271,7 @@ export function useVideoPlayer({
         if (!videoRef.current) return;
 
         // Skip autoplay on mobile or when disabled (drawer open)
-        if (isMobile || disabled) {
+        if (isMobile || disabledRef.current) {
           setIsPlaying(false);
           return;
         }
@@ -290,7 +294,11 @@ export function useVideoPlayer({
         hlsRef.current = null;
       }
     };
-  }, [video, interceptHLSUrl, isMobile, isReady, disabled]);
+    // Depende de las fuentes, NO del objeto `video`: el loader devuelve un objeto
+    // nuevo en cada revalidación de React Router, y con eso el efecto destruía HLS
+    // y lo rearmaba desde cero — el video se reiniciaba solo. `disabled` se lee por
+    // ref para que abrir o cerrar un drawer tampoco reinicie la reproducción.
+  }, [video?.id, video?.m3u8, video?.storageLink, interceptHLSUrl, isMobile, isReady]);
 
   return {
     videoRef,
