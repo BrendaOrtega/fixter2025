@@ -407,14 +407,19 @@ const UnifiedMenuContainer = ({
           `left-full` y no una cuenta de anchos que el servidor y el cliente resolvían
           distinto. Va FUERA del panel, sin pisarlo: montarlo sobre el borde lo dejaba
           encimado con las pestañas. */}
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Cerrar menú"
-        className="absolute left-full top-20 ml-2 grid h-14 w-14 place-items-center rounded-2xl border border-gray-600/40 bg-[#0C1115] text-white shadow-lg transition-colors hover:bg-gray-800/80"
-      >
-        <IoMdClose className="text-2xl" />
-      </button>
+      {/* Sólo con el panel abierto: al cerrarse, el panel se desliza fuera de la
+          pantalla y el botón viaja con él, así que reaparecía por el lado izquierdo
+          detrás del botón de abrir. */}
+      {isOpen && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar menú"
+          className="absolute left-full top-20 ml-2 grid h-14 w-14 place-items-center rounded-2xl border border-gray-600/40 bg-[#0C1115] text-white shadow-lg transition-colors hover:bg-gray-800/80"
+        >
+          <IoMdClose className="text-2xl" />
+        </button>
+      )}
     </motion.div>
   );
 };
