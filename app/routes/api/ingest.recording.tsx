@@ -176,36 +176,5 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return Response.json({ ok: true, slug: video.slug, capitulos });
   }
 
-  // ── 3) Borrado ─────────────────────────────────────────────────────────────
-  // Quien borra la grabación en el room espera que desaparezca de todas partes. Sin esto,
-  // el vídeo se queda publicado apuntando a un HLS que ya nadie va a mantener.
-  if (body.intent === "delete") {
-    const videoId = String(body.videoId ?? "");
-    if (!videoId) return Response.json({ error: "videoId" }, { status: 400 });
-    const video = await db.video.findUnique({
-      where: { id: videoId },
-      select: { id: true, courseIds: true, isPublic: true },
-    }).catch(() => null);
-    if (!video) return Response.json({ ok: true, yaNoEstaba: true });
-
-    // ⚠️ Un vídeo YA PUBLICADO no se borra desde aquí: puede tener vistas, estar enlazado o
-    // haberse editado a mano. Que lo quite quien lo publicó, desde el admin.
-    if (video.isPublic) return Response.json({ ok: false, error: "ya está publicado" }, { status: 409 });
-
-    await db.transcript.deleteMany({ where: { videoId: video.id } });
-    await db.resource.deleteMany({ where: { videoId: video.id } });
-    for (const cid of video.courseIds) {
-      const c = await db.course.findUnique({ where: { id: cid }, select: { videoIds: true } });
-      if (c) {
-        await db.course.update({
-          where: { id: cid },
-          data: { videoIds: { set: c.videoIds.filter((v) => v !== video.id) } },
-        });
-      }
-    }
-    await db.video.delete({ where: { id: video.id } });
-    return Response.json({ ok: true });
-  }
-
   return Response.json({ error: "intent desconocido" }, { status: 400 });
 };
