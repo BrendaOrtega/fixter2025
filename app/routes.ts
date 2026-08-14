@@ -87,7 +87,10 @@ export default [
     route("posts", "routes/admin/postList.tsx"),
     route("blog-editor/:postId", "routes/admin/blog-editor.tsx"),
     route("talleres", "routes/admin/talleres.tsx"),
-    route("webinar", "routes/admin/webinar.tsx"),
+    route("programas", "routes/admin/programas.tsx"),
+    route("programas/:courseSlug", "routes/admin/programas.$courseSlug.tsx"),
+    route("suscriptores", "routes/admin/suscriptores.tsx"),
+    route("webinar", "routes/admin/webinar.tsx"), // → /admin/suscriptores
     route("sequences", "routes/admin/sequences.tsx"),
     route("productos", "routes/admin/productos.tsx"),
     route("magnetos", "routes/admin/magnetos.tsx"),
