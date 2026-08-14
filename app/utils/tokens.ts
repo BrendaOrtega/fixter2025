@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { createHmac, timingSafeEqual } from "crypto";
 
 type TokenData = {
   email: string;
@@ -403,4 +404,64 @@ export const validateLeadMagnetToken = (
       error: "Enlace inválido",
     };
   }
+};
+
+// ==========================================
+// Token de acceso a HLS (playlists y segmentos)
+// ==========================================
+
+// A diferencia de los tokens de arriba, este NO es JWT: un JWT pesa ~200 caracteres y
+// aquí el token se repite en cada una de las ~450 líneas de la playlist. Un HMAC crudo
+// baja eso a ~50 y mantiene la playlist chica (que era justo la razón por la que los
+// segmentos se reenviaban por el servidor en vez de redirigir a Tigris).
+//
+// Se firma la CARPETA, no el segmento: un solo token cubre el video completo.
+
+const HLS_TOKEN_TTL = 6 * 60 * 60; // 6 h — cubre de sobra una sesión larga de video
+
+const signHlsPrefix = (prefix: string, exp: number) =>
+  createHmac("sha256", process.env.SECRET || "fixtergeek")
+    .update(`${prefix}|${exp}`)
+    .digest("base64url")
+    .slice(0, 27); // 27 chars ≈ 160 bits, de sobra para esto
+
+/**
+ * Genera el token de acceso para todos los archivos bajo `prefix`.
+ * `prefix` es la ruta de la carpeta en el bucket, con diagonal final.
+ */
+export const generateHlsToken = (
+  prefix: string,
+  ttlSeconds: number = HLS_TOKEN_TTL
+): string => {
+  const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
+  return `${exp}.${signHlsPrefix(prefix, exp)}`;
+};
+
+/**
+ * Valida que el token cubra `path`. El prefijo firmado se deriva del propio `path`
+ * (su carpeta), así que un token de un video no sirve para otro.
+ */
+export const validateHlsToken = (
+  token: string | null,
+  path: string
+): { isValid: boolean; error?: string } => {
+  if (!token) return { isValid: false, error: "Falta el token de acceso" };
+
+  const [expRaw, signature] = token.split(".");
+  const exp = Number(expRaw);
+  if (!signature || !Number.isFinite(exp)) {
+    return { isValid: false, error: "Token inválido" };
+  }
+  if (exp < Math.floor(Date.now() / 1000)) {
+    return { isValid: false, error: "El acceso al video expiró" };
+  }
+
+  const prefix = path.substring(0, path.lastIndexOf("/") + 1);
+  const expected = signHlsPrefix(prefix, exp);
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    return { isValid: false, error: "Token inválido" };
+  }
+  return { isValid: true };
 };

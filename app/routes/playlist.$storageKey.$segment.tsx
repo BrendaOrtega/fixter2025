@@ -1,11 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { Effect } from "effect";
 import { s3VideoService } from "~/.server/services/s3-video";
+import { generateHlsToken, validateHlsToken } from "~/utils/tokens";
 
 const CHUNKS_FOLDER = "animaciones/chunks";
 
 // Sirve playlists de calidad (.m3u8) y segmentos (.ts) para videos de animaciones
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { storageKey, segment } = params;
 
   if (!storageKey || !segment) {
@@ -30,10 +31,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       const content = await response.text();
 
       // Reemplazar nombres de .ts por rutas del servidor
+      // Los segmentos se firman por carpeta; el token viaja en la línea y lo valida
+      // la rama de abajo antes de redirigir a Tigris.
+      const token = generateHlsToken(`${CHUNKS_FOLDER}/${storageKey}/`);
       const lines = content.split("\n");
       const rewritten = lines.map((line) => {
         if (line.endsWith(".ts")) {
-          return `/playlist/${storageKey}/${line}`;
+          return `/playlist/${storageKey}/${line}?t=${token}`;
         }
         return line;
       });
@@ -51,24 +55,25 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     }
   }
 
-  // Si es un segmento .ts, hacer streaming del contenido
+  // Si es un segmento .ts, redirigir a Tigris: los bytes no pasan por esta máquina.
+  // hls.js sigue el redirect sin problema desde un XHR porque el bucket tiene CORS.
   if (segment.endsWith(".ts")) {
+    const token = new URL(request.url).searchParams.get("t");
+    const { isValid, error } = validateHlsToken(token, s3Path);
+    if (!isValid) {
+      throw new Response(error, { status: 403 });
+    }
+
     try {
       const presignedUrl = await Effect.runPromise(
         s3VideoService.getHLSPresignedUrl(s3Path, 3600) // 1 hora para segmentos
       );
 
-      // Fetch y stream del contenido (HLS.js no maneja bien redirects 302)
-      const response = await fetch(presignedUrl);
-      if (!response.ok) {
-        throw new Response("Segment not found", { status: 404 });
-      }
-
-      return new Response(response.body, {
+      return new Response(null, {
+        status: 302,
         headers: {
-          "Content-Type": "video/MP2T",
+          Location: presignedUrl,
           "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "private, max-age=1800",
         },
       });
     } catch (error) {

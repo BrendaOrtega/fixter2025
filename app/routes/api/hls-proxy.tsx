@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { s3VideoService } from "~/.server/services/s3-video";
+import { generateHlsToken, validateHlsToken } from "~/utils/tokens";
 
 /**
  * HLS Proxy Endpoint
@@ -60,42 +61,35 @@ export const loader = async ({ request }: { request: Request }) => {
       });
     }
 
-    // Check if this is a segment request (.ts file)
+    // Los segmentos y los playlists de calidad vienen firmados desde el master.
+    // El master (la primera petición) es el único que entra sin token.
+    const isSubRequest = hlsPath.endsWith('.ts') || hlsPath.endsWith('.m3u8');
+    if (isSubRequest) {
+      const token = url.searchParams.get('t');
+      const { isValid, error } = validateHlsToken(token, hlsPath);
+      // Sin token: puede ser el master. Con token inválido: se rechaza siempre.
+      if (token && !isValid) {
+        return new Response(error, { status: 403, headers: corsHeaders });
+      }
+      if (!token && hlsPath.endsWith('.ts')) {
+        return new Response('Falta el token de acceso', { status: 403, headers: corsHeaders });
+      }
+    }
+
+    // Segmentos: 302 al presigned. Los bytes salen de Tigris, no de esta máquina.
+    // Tigris atiende los Range requests directo y el bucket ya tiene CORS abierto,
+    // que es lo que permite que hls.js siga el redirect desde un XHR.
     if (hlsPath.endsWith('.ts')) {
-      // Stream the segment directly
       const presignedUrl = await Effect.runPromise(
         s3VideoService.getHLSPresignedUrl(hlsPath, 3600) // 1 hour for segments
       );
 
-      // Forward Range header if present (critical for iOS Safari)
-      const fetchHeaders: HeadersInit = {};
-      const rangeHeader = request.headers.get('Range');
-      if (rangeHeader) {
-        fetchHeaders['Range'] = rangeHeader;
-      }
-
-      const response = await fetch(presignedUrl, { headers: fetchHeaders });
-      if (!response.ok && response.status !== 206) {
-        throw new Error(`Failed to fetch segment: ${response.status}`);
-      }
-
-      // Build response headers - pass through important ones from S3
-      const responseHeaders = new Headers({
-        'Content-Type': 'video/MP2T',
-        'Cache-Control': 'private, max-age=1800',
-        'Access-Control-Allow-Origin': '*',
-        'Accept-Ranges': 'bytes',
-      });
-
-      // Pass through size headers for proper seeking
-      const contentLength = response.headers.get('Content-Length');
-      const contentRange = response.headers.get('Content-Range');
-      if (contentLength) responseHeaders.set('Content-Length', contentLength);
-      if (contentRange) responseHeaders.set('Content-Range', contentRange);
-
-      return new Response(response.body, {
-        status: response.status, // 200 or 206 for partial content
-        headers: responseHeaders,
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': presignedUrl,
+        },
       });
     }
 
@@ -124,26 +118,27 @@ export const loader = async ({ request }: { request: Request }) => {
     const protocol = isLocalhost ? url.protocol : 'https:';
     const proxyBaseUrl = `${protocol}//${url.host}/api/hls-proxy?path=`;
 
+    // La línea apunta al proxy (corta, ~50 chars de token) y no al presigned de Tigris
+    // (~700 chars por línea, que es lo que rompía Safari). El proxy sólo redirige.
+    const proxyLink = (fullPath: string) => {
+      const prefix = fullPath.substring(0, fullPath.lastIndexOf('/') + 1);
+      const token = generateHlsToken(prefix);
+      return `${proxyBaseUrl}${encodeURIComponent(fullPath)}&t=${token}`;
+    };
+
     let rewrittenContent = m3u8Content;
 
     if (isMasterPlaylist) {
       // Master playlist: rewrite quality playlist references (e.g., 720p/720p.m3u8)
       rewrittenContent = m3u8Content.replace(
         /^([^#\s].+\.m3u8)$/gm,
-        (match) => {
-          const fullPath = basePath + match;
-          return `${proxyBaseUrl}${encodeURIComponent(fullPath)}`;
-        }
+        (match) => proxyLink(basePath + match)
       );
     } else {
       // Media playlist: rewrite segment references (e.g., seg_001.ts)
-      // Route segments through proxy too (Safari has issues with long presigned URLs)
       rewrittenContent = m3u8Content.replace(
         /^([^#\s].+\.ts)$/gm,
-        (match) => {
-          const fullPath = basePath + match;
-          return `${proxyBaseUrl}${encodeURIComponent(fullPath)}`;
-        }
+        (match) => proxyLink(basePath + match)
       );
     }
 

@@ -36,6 +36,11 @@ Lo que se ve, casi todo en vivo y sobre sistemas que están corriendo:
 
 Sale también, sin recortar, el sistema de llamadas donde se transmitió — estrenándose ese día, con sus bugs a la vista.
 
+**Materiales de la sesión:**
+
+- [Las slides completas](https://www.fixtergeek.com/webinar-1/slides) — las 19, navegables con las flechas.
+- [El PDF de las seis piezas](https://www.fixtergeek.com/seis-piezas) — 23 páginas, el regalo que se repartió en el chat.
+
 Es la sesión 0 del taller, que empieza el 1 de septiembre.`;
 
 async function main() {
