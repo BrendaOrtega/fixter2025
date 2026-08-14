@@ -147,7 +147,7 @@ const AccionesPieza = ({
   const trabajando = fetcher.state !== "idle";
 
   return (
-    <div className="flex items-center gap-2 text-xs">
+    <div className="flex items-center justify-end gap-1.5 text-xs">
       <button
         disabled={trabajando}
         onClick={() =>
@@ -283,7 +283,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
             {piezas.map((pieza) => (
               <div
                 key={pieza.id}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-4"
+                className="group bg-gray-900 border border-gray-800 rounded-xl p-4"
               >
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0">
@@ -336,15 +336,17 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                         ? "reproducción"
                         : "reproducciones"}
                     </span>
+                    {/* Aparecen al pasar el mouse: son de uso raro y no tienen
+                        por qué competir con los datos, que son lo que se viene
+                        a ver. */}
+                    <div className="mt-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <AccionesPieza
+                        id={pieza.id}
+                        isPublic={pieza.isPublic}
+                        titulo={pieza.title}
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-gray-800 flex justify-end">
-                  <AccionesPieza
-                    id={pieza.id}
-                    isPublic={pieza.isPublic}
-                    titulo={pieza.title}
-                  />
                 </div>
 
                 {pieza.materiales.length > 0 && (
