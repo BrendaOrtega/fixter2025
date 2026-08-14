@@ -114,6 +114,8 @@ export const getPrograma = async (slug: string) => {
         videoId: true,
         sessionId: true,
         watchedSeconds: true,
+        videoDuration: true,
+        deviceType: true,
         completedAt: true,
       },
     }),
@@ -130,12 +132,21 @@ export const getPrograma = async (slug: string) => {
   // formas según por dónde entró la persona.
   const key = (email?: string | null) => (email || "").trim().toLowerCase();
 
-  const vistosPor = new Map<string, { segundos: number; completados: number }>();
+  // Por persona nos interesa lo más lejos que llegó, no la suma de sus sentadas:
+  // quien vio media hora tres veces vio media hora, no hora y media.
+  const vistosPor = new Map<
+    string,
+    { segundos: number; completados: number; duracion: number; dispositivo: string | null }
+  >();
   for (const view of views) {
     const k = key(view.email);
     if (!k) continue;
-    const acc = vistosPor.get(k) || { segundos: 0, completados: 0 };
-    acc.segundos += view.watchedSeconds;
+    const acc =
+      vistosPor.get(k) ||
+      { segundos: 0, completados: 0, duracion: 0, dispositivo: null };
+    acc.segundos = Math.max(acc.segundos, view.watchedSeconds);
+    acc.duracion = Math.max(acc.duracion, view.videoDuration || 0);
+    acc.dispositivo = view.deviceType || acc.dispositivo;
     if (view.completedAt) acc.completados += 1;
     vistosPor.set(k, acc);
   }
@@ -156,6 +167,13 @@ export const getPrograma = async (slug: string) => {
     return {
       ...sub,
       minutosVistos: visto ? Math.round(visto.segundos / 60) : 0,
+      // Sin duración conocida no hay porcentaje que valga: mejor nada que un
+      // número inventado.
+      porcentaje:
+        visto && visto.duracion
+          ? Math.min(100, Math.round((visto.segundos / visto.duracion) * 100))
+          : null,
+      dispositivo: visto?.dispositivo || null,
       videosCompletados: visto?.completados || 0,
       materiales,
       // Compromiso a ojo de pájaro, con lo que sí sabemos: se registró (1),

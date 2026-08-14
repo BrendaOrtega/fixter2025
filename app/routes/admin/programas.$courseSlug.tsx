@@ -398,7 +398,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                 <tr className="text-xs uppercase text-gray-500">
                   <th className="px-4 py-3 text-left font-medium">Correo</th>
                   <th className="px-4 py-3 text-left font-medium">Registro</th>
-                  <th className="px-4 py-3 text-center font-medium">Minutos</th>
+                  <th className="px-4 py-3 text-left font-medium">Vio</th>
                   <th className="px-4 py-3 text-center font-medium">
                     Materiales
                   </th>
@@ -419,6 +419,11 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                     <tr key={persona.id} className="hover:bg-gray-800/40">
                       <td className="px-4 py-2 text-gray-200">
                         {persona.email}
+                        {persona.dispositivo && (
+                          <span className="ml-2 text-xs text-gray-600">
+                            {persona.dispositivo}
+                          </span>
+                        )}
                         {!persona.confirmed && (
                           <span className="ml-2 text-xs text-amber-500">
                             sin confirmar
@@ -428,8 +433,29 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                       <td className="px-4 py-2 text-gray-500">
                         {fecha(persona.createdAt)}
                       </td>
-                      <td className="px-4 py-2 text-center text-gray-300">
-                        {persona.minutosVistos || "—"}
+                      <td className="px-4 py-2 text-gray-300">
+                        {persona.minutosVistos ? (
+                          <div className="flex items-center gap-2">
+                            {/* La barra deja comparar de un vistazo sin leer
+                                número por número */}
+                            <div className="w-20 h-1.5 bg-gray-800 rounded-full overflow-hidden shrink-0">
+                              <div
+                                className="h-full bg-purple-500"
+                                style={{ width: `${persona.porcentaje ?? 0}%` }}
+                              />
+                            </div>
+                            <span className="text-xs whitespace-nowrap">
+                              {persona.porcentaje !== null
+                                ? `${persona.porcentaje}%`
+                                : ""}{" "}
+                              <span className="text-gray-600">
+                                {persona.minutosVistos} min
+                              </span>
+                            </span>
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="px-4 py-2 text-center text-gray-300">
                         {persona.materiales || "—"}
