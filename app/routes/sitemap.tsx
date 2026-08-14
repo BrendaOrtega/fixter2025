@@ -31,6 +31,57 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ].join("");
   });
 
+  // Vídeos públicos de cada programa. Sin esto, las clases —que son el contenido con
+  // más sustancia del sitio— no existían para los buscadores: sólo se listaba la
+  // landing del curso. Se incluye el `video:video` de Google, que es lo que las mete a
+  // los carruseles de vídeo.
+  const videos = await db.video.findMany({
+    where: {
+      isPublic: true,
+      courseIds: { hasSome: courses.map((c) => c.id) },
+      OR: [{ accessLevel: "public" }, { accessLevel: "subscriber" }],
+    },
+    select: {
+      slug: true,
+      title: true,
+      description: true,
+      poster: true,
+      duration: true,
+      updatedAt: true,
+      courseIds: true,
+    },
+  });
+
+  const cursoPorId = new Map(courses.map((c) => [c.id, c.slug]));
+  const escapar = (t: string) =>
+    t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const videoItems = videos.flatMap((v) => {
+    const cursoSlug = v.courseIds.map((id) => cursoPorId.get(id)).find(Boolean);
+    if (!cursoSlug) return [];
+    const loc = `${baseUrl}/cursos/${cursoSlug}/viewer?videoSlug=${v.slug}`;
+    return [
+      [
+        `<url>`,
+        `<loc>${escapar(loc)}</loc>`,
+        `<lastmod>${formatDate(v.updatedAt)}</lastmod>`,
+        `<changefreq>monthly</changefreq>`,
+        `<priority>0.8</priority>`,
+        `<video:video>`,
+        `<video:thumbnail_loc>${escapar(v.poster || `${baseUrl}/cover.png`)}</video:thumbnail_loc>`,
+        `<video:title>${escapar(v.title)}</video:title>`,
+        `<video:description>${escapar((v.description || v.title).slice(0, 2000))}</video:description>`,
+        `<video:player_loc>${escapar(loc)}</video:player_loc>`,
+        ...(v.duration
+          ? [`<video:duration>${Math.round(Number(v.duration) * 60)}</video:duration>`]
+          : []),
+        `<video:family_friendly>yes</video:family_friendly>`,
+        `</video:video>`,
+        `</url>`,
+      ].join(""),
+    ];
+  });
+
   // Posts del blog
   const postItems = allPosts.map((post) => {
     return [
@@ -78,10 +129,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const xml = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">`,
     ...staticItems,
     ...postItems,
     ...courseItems,
+    ...videoItems,
     `</urlset>`,
   ];
 

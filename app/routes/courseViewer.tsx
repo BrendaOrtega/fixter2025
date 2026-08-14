@@ -29,23 +29,39 @@ export function meta({ data }: Route.MetaArgs) {
   }
 
   const { course, video } = data;
-  
-  // Si hay un video específico, usar su información
+
   if (video) {
     return getMetaTags({
       title: `${video.title} - ${course.title}`,
-      description: video.description?.slice(0, 150) || course.description?.slice(0, 150) || `Aprende con ${video.title} en el curso ${course.title}`,
-      image: course.icon || course.poster || undefined,
+      // La descripción escrita gana. El arranque del transcript sólo sirve de red: las
+      // primeras frases de una grabación son "vamos a ver si empieza", que como
+      // resultado de búsqueda no dice nada de la clase.
+      description:
+        video.description?.slice(0, 155) ||
+        (data as any).seoDescription ||
+        course.description?.slice(0, 155) ||
+        `Aprende con ${video.title} en el curso ${course.title}`,
+      // El póster del VÍDEO, no el icono del curso: al compartirlo se ve de qué pieza
+      // se trata, y los buscadores lo usan como miniatura.
+      image: video.poster || course.icon || course.poster || undefined,
+      // La canónica es la URL que sirve 200. `/cursos/:curso/:vídeo` es más bonita pero
+      // redirige, así que apuntar ahí manda a los buscadores por un salto de más.
+      url: `${SITE}/cursos/${course.slug}/viewer?videoSlug=${video.slug}`,
+      type: "video.other",
+      videoUrl: `${SITE}/cursos/${course.slug}/viewer?videoSlug=${video.slug}`,
+      videoDuration: video.duration ? Number(video.duration) * 60 : undefined,
     });
   }
-  
-  // Fallback al curso general
+
   return getMetaTags({
     title: course.title,
-    description: course.description?.slice(0, 150) || `Curso completo: ${course.title}`,
+    description: course.description?.slice(0, 155) || `Curso completo: ${course.title}`,
     image: course.icon || course.poster || undefined,
+    url: `${SITE}/cursos/${course.slug}/detalle`,
   });
 }
+
+const SITE = "https://www.fixtergeek.com";
 
 // Cookie name for subscriber email
 const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
@@ -246,6 +262,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         storageLink: true,
         youtubeUrl: true,
         m3u8: true,
+        // Para el `uploadDate` del schema, que Google exige para los carruseles de vídeo.
+        eventDate: true,
+        createdAt: true,
+        authorName: true,
       },
     });
   } else {
@@ -353,12 +373,30 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     orderBy: { createdAt: "asc" },
   });
 
-  // La transcripción es el video en texto: se entrega con el MISMO criterio que el video.
-  const transcript = hasAccess
-    ? await db.transcript.findUnique({
-        where: { videoId: video.id },
-        select: { segments: true, chapters: true, text: true },
-      })
+  // Dos lecturas distintas a propósito:
+  //
+  // - `transcript` es el vídeo en texto y se entrega con el MISMO criterio que el vídeo.
+  // - `seo` va SIEMPRE, con acceso o sin él. Un buscador nunca tiene sesión, así que
+  //   dejar los datos estructurados detrás del muro equivale a no tenerlos: los modelos
+  //   de IA no ven vídeo, leen el transcript, y sin esto la clase es invisible.
+  //   Por eso sólo sale un extracto y los capítulos, no la transcripción entera.
+  const guardado = await db.transcript.findUnique({
+    where: { videoId: video.id },
+    select: { segments: true, chapters: true, text: true },
+  });
+
+  const transcript = hasAccess ? guardado : null;
+  const seo = guardado
+    ? {
+        chapters: guardado.chapters,
+        extracto: (guardado.text || "").slice(0, 1200),
+      }
+    : null;
+
+  // La descripción de la página sale del propio contenido cuando existe: describe de
+  // qué habla el vídeo, no lo que se escribió en el campo hace meses.
+  const seoDescription = guardado?.text
+    ? guardado.text.slice(0, 155).replace(/\s+\S*$/, "") + "…"
     : null;
 
   const videoToReturn = removeStorageLink
@@ -380,6 +418,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     accessLevel,
     video: videoToReturn,
     transcript,
+    seo,
+    seoDescription,
     resources,
     videos,
     moduleNames,
@@ -448,6 +488,8 @@ export default function Route({
     accessLevel,
     video,
     transcript,
+    seo,
+    seoDescription,
     resources,
     videos,
     searchParams,
@@ -507,7 +549,7 @@ export default function Route({
     accessLevel === "public" ||
     (accessLevel === "subscriber" && serverIsSubscribed);
 
-  const chaptersList = (transcript?.chapters as { s: number; titulo: string }[]) || [];
+  const chaptersList = (seo?.chapters as { s: number; titulo: string }[]) || [];
   const videoUrl = `https://www.fixtergeek.com/cursos/${course.slug}/viewer?videoSlug=${video.slug}`;
 
   const showSubscriptionDrawer = !hasAccess && accessLevel === "subscriber";
@@ -580,23 +622,57 @@ export default function Route({
   // Datos estructurados. Sirven dos cosas distintas: los `Clip` habilitan los "momentos
   // clave" en el buscador, y el `transcript` es lo ÚNICO que los modelos de IA pueden
   // leer de un video —no lo ven, lo leen— así que sin él la clase es invisible para ellos.
-  const jsonLd = transcript
+  const jsonLd = seo
     ? {
         "@context": "https://schema.org",
         "@type": "VideoObject",
         name: video.title,
-        description: video.description?.slice(0, 500) || undefined,
-        thumbnailUrl: video.poster || undefined,
+        description:
+          video.description?.slice(0, 500) || seoDescription || undefined,
+        // `thumbnailUrl` es OBLIGATORIO para que Google muestre la miniatura; sin él
+        // el resultado sale como un enlace de texto más.
+        thumbnailUrl: video.poster ? [video.poster] : undefined,
+        // También obligatorio. Sin fecha de publicación, el vídeo no entra a las
+        // carruseles de vídeo del buscador.
+        // `eventDate` es cuándo ocurrió en vivo; para lo demás vale la fecha de alta.
+        uploadDate:
+          (video as any).eventDate || (video as any).createdAt || undefined,
+        // ISO 8601: el campo `duration` está en minutos y como texto.
+        duration: video.duration ? `PT${Math.round(Number(video.duration))}M` : undefined,
+        inLanguage: "es-MX",
+        embedUrl: videoUrl,
+        publisher: {
+          "@type": "Organization",
+          name: "FixterGeek",
+          url: SITE,
+          logo: { "@type": "ImageObject", url: `${SITE}/logo.png` },
+        },
+        author: {
+          "@type": "Person",
+          name: video.authorName || "Héctorbliss",
+        },
+        // Ata el vídeo a su programa: así el buscador entiende que es una clase de un
+        // curso y no una pieza suelta.
+        isPartOf: {
+          "@type": "Course",
+          name: course.title,
+          url: `${SITE}/cursos/${course.slug}/detalle`,
+          provider: { "@type": "Organization", name: "FixterGeek", url: SITE },
+        },
         // El texto completo se recorta: un webinar de 75 min son ~9.000 palabras y
         // meterlas enteras en cada carga infla el HTML sin ganar nada.
-        transcript: (transcript.text || "").slice(0, 5000),
-        hasPart: (chaptersList || []).map((c, i) => ({
-          "@type": "Clip",
-          name: c.titulo,
-          startOffset: c.s,
-          endOffset: chaptersList[i + 1]?.s,
-          url: `${videoUrl}&t=${c.s}`,
-        })),
+        // Extracto, no la clase entera: suficiente para ser encontrable y citable sin
+        // regalar 75 minutos de contenido de pago.
+        transcript: seo.extracto,
+        hasPart: (chaptersList || []).length
+          ? chaptersList.map((c, i) => ({
+              "@type": "Clip",
+              name: c.titulo,
+              startOffset: c.s,
+              endOffset: chaptersList[i + 1]?.s ?? undefined,
+              url: `${videoUrl}&t=${c.s}`,
+            }))
+          : undefined,
         potentialAction: {
           "@type": "SeekToAction",
           target: `${videoUrl}&t={seek_to_second_number}`,

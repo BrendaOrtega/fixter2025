@@ -6,7 +6,11 @@ export type GetBasicMetaTagsPros = {
   imageHeight?: number;
   url?: string;
   twitterCard?: "summary" | "summary_large_image";
-  type?: "website" | "article" | "book";
+  type?: "website" | "article" | "book" | "video.other";
+  /** Duración en segundos: Open Graph y los buscadores la usan para las tarjetas de vídeo. */
+  videoDuration?: number;
+  /** URL del vídeo en sí, cuando la página ES un vídeo. */
+  videoUrl?: string;
   fbAppId?: string;
   keywords?: string;
   author?: string;
@@ -42,6 +46,8 @@ export default function getMetaTags({
   locale = "es_MX",
   publishedTime,
   modifiedTime,
+  videoDuration,
+  videoUrl,
 }: GetBasicMetaTagsPros) {
   if (!title) {
     return [
@@ -94,6 +100,11 @@ export default function getMetaTags({
         ]
       : []),
     {
+      // ⚠️ `tagName: "link"`. Sin él React Router pinta `<meta rel="canonical">`, que
+      // ningún buscador lee: la página quedaba SIN canónica y, como el default de este
+      // helper es la home, cada página que no pasara `url` se declaraba duplicada de
+      // la portada. Eso basta para que no se indexe.
+      tagName: "link",
       rel: "canonical",
       href: url,
     },
@@ -142,6 +153,23 @@ export default function getMetaTags({
       property: "og:site_name",
       content: "FixterGeek",
     },
+    // Vídeo: sin estas etiquetas la página se comparte como un enlace cualquiera y los
+    // buscadores no la reconocen como una pieza de vídeo.
+    ...(type === "video.other"
+      ? [
+          ...(videoUrl
+            ? [
+                { property: "og:video", content: videoUrl },
+                { property: "og:video:secure_url", content: videoUrl },
+                { property: "og:video:type", content: "text/html" },
+              ]
+            : []),
+          ...(videoDuration
+            ? [{ property: "og:video:duration", content: String(videoDuration) }]
+            : []),
+          { name: "twitter:card", content: "player" },
+        ]
+      : []),
     // Locale (importante para GEO - indica idioma y región)
     {
       property: "og:locale",

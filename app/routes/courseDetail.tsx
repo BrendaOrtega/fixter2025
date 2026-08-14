@@ -87,6 +87,23 @@ export function meta({ data }: Route.MetaArgs) {
             ? "Intermediate"
             : "Beginner",
         timeRequired: course.duration ? `PT${course.duration}M` : undefined,
+        // Las clases abiertas, como partes del curso. Sin esto el buscador ve la ficha
+        // pero no sabe que detrás hay contenido de verdad, ni puede enlazar a una
+        // lección concreta. Sólo van las que alguien puede abrir: listar las de pago
+        // sería prometer lo que el muro no entrega.
+        hasPart: (data.videos || [])
+          .filter(
+            (v: any) =>
+              v.accessLevel === "public" || v.accessLevel === "subscriber"
+          )
+          .map((v: any) => ({
+            "@type": "VideoObject",
+            name: v.title,
+            url: `${baseUrl}/cursos/${course.slug}/viewer?videoSlug=${v.slug}`,
+            ...(v.duration
+              ? { duration: `PT${Math.round(Number(v.duration))}M` }
+              : {}),
+          })),
       },
       {
         "@type": "WebPage",
