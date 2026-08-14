@@ -565,18 +565,35 @@ export default function Route({
   // concreto —por correo, por WhatsApp— y lo que necesita el SeekToAction del JSON-LD.
   // Acepta `12m30s`, `12:30` o segundos pelones: la liga tiene que poder escribirse
   // a mano, no solo generarse.
-  const arranqueAplicado = useRef(false);
+  const startApplied = useRef(false);
   useEffect(() => {
-    if (arranqueAplicado.current) return;
+    if (startApplied.current) return;
     const t = parseVideoTime(new URLSearchParams(window.location.search).get("t"));
     if (t === null || t <= 0) return;
-    const el = playerRef.current;
-    if (!el) return;
-    arranqueAplicado.current = true;
-    // Hay que esperar a que HLS tenga metadatos: antes de eso, fijar currentTime no hace nada.
-    const aplicar = () => { el.currentTime = t; };
-    if (el.readyState >= 1) aplicar();
-    else el.addEventListener("loadedmetadata", aplicar, { once: true });
+
+    // El <video> todavía no existe cuando este efecto corre por primera vez, y el
+    // efecto no se vuelve a disparar: sin esta espera, la liga con minuto abría el
+    // video desde el principio. Se reintenta hasta que el elemento aparece.
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const apply = (el: HTMLVideoElement) => {
+      startApplied.current = true;
+      // Y hay que esperar a los metadatos: antes de eso fijar currentTime no hace nada.
+      const seek = () => { el.currentTime = t; };
+      if (el.readyState >= 1) seek();
+      else el.addEventListener("loadedmetadata", seek, { once: true });
+    };
+
+    if (playerRef.current) apply(playerRef.current);
+    else {
+      let tries = 0;
+      timer = setInterval(() => {
+        if (playerRef.current) {
+          clearInterval(timer!);
+          apply(playerRef.current);
+        } else if (++tries > 100) clearInterval(timer!); // 10 s y nos rendimos
+      }, 100);
+    }
+    return () => { if (timer) clearInterval(timer); };
   }, [video.id]);
 
   // Scroll lesson content into view when expanded
