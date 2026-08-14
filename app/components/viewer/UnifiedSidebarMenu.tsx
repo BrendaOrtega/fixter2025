@@ -173,11 +173,16 @@ export const UnifiedSidebarMenu = ({
   return (
     <>
       {/* Unified Menu Button */}
-      <UnifiedMenuButton
-        x={buttonX}
-        onToggle={() => setIsOpen(!isOpen)}
-        isOpen={isOpen}
-      />
+      {/* Sólo para ABRIR. Con el panel abierto el cierre vive en el encabezado: un
+          botón flotando sobre el borde acababa siempre encima de las pestañas, y
+          moverlo o hacerle hueco con padding rompía otra cosa cada vez. */}
+      {!isOpen && (
+        <UnifiedMenuButton
+          x={buttonX}
+          onToggle={() => setIsOpen(true)}
+          isOpen={false}
+        />
+      )}
 
       {/* Unified Menu Container */}
       <UnifiedMenuContainer
@@ -185,6 +190,7 @@ export const UnifiedSidebarMenu = ({
         x={springX}
         onOutsideClick={() => setIsOpen(false)}
         menuWidth={menuWidth}
+        onClose={() => setIsOpen(false)}
       >
         {/* Header with tabs */}
         <div className="px-4 py-4 border-b border-gray-700/50">
@@ -242,6 +248,7 @@ export const UnifiedSidebarMenu = ({
                   completed={completed}
                   videosCompleted={videosCompleted}
                   checkIfWatched={checkIfWatched}
+                  onSelect={() => setActiveTab("transcript")}
                 />
               </motion.div>
             )}
@@ -364,6 +371,7 @@ const UnifiedMenuContainer = ({
   children,
   x = 0,
   onOutsideClick,
+  onClose,
   isOpen = false,
   menuWidth,
 }: {
@@ -371,6 +379,7 @@ const UnifiedMenuContainer = ({
   isOpen?: boolean;
   x?: MotionValue | number;
   onOutsideClick?: () => void;
+  onClose?: () => void;
   menuWidth: number;
 }) => {
   const ref = useClickOutside({ isActive: isOpen, onOutsideClick });
@@ -390,6 +399,19 @@ const UnifiedMenuContainer = ({
       )}
     >
       {children}
+
+      {/* El mismo botón flotante de siempre, pero COLGADO DEL PANEL: así su posición es
+          `left-full` y no una cuenta de anchos que el servidor y el cliente resolvían
+          distinto. `-ml-2` lo deja montado en el padding del borde, para que se lea
+          pegado y no flotando al lado. */}
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Cerrar menú"
+        className="absolute left-full top-20 -ml-2 grid h-14 w-14 place-items-center rounded-2xl border border-gray-600/40 bg-[#0C1115] text-white shadow-lg transition-colors hover:bg-gray-800/80"
+      >
+        <IoMdClose className="text-2xl" />
+      </button>
     </motion.div>
   );
 };
@@ -406,7 +428,10 @@ const VideosContent = ({
   completed,
   videosCompleted,
   checkIfWatched,
+  onSelect,
 }: {
+  /** Se dispara al abrir una lección: el menú salta a su transcripción. */
+  onSelect?: () => void;
   moduleNames: string[];
   videos: Partial<Video>[];
   courseSlug: string;
@@ -467,6 +492,7 @@ const VideosContent = ({
                       !!(v as any)?.youtubeUrl ||
                       !!(v as any)?.m3u8
                     }
+                    onSelect={onSelect}
                   />
                 );
               })}
@@ -598,7 +624,9 @@ const VideoListItem = ({
   isLocked,
   accessLevel,
   hasContent = true,
+  onSelect,
 }: {
+  onSelect?: () => void;
   courseSlug?: string;
   isLocked?: boolean;
   slug: string;
@@ -633,14 +661,18 @@ const VideoListItem = ({
   return (
     <Link
       ref={ref}
-      // `tab=transcript`: abrir una lección lleva a su detalle —de qué habla y en qué
-      // minuto—, no de vuelta a la lista que acabas de usar.
-      to={
-        hasContent
-          ? `/cursos/${courseSlug}/viewer?videoSlug=${slug}&tab=transcript`
-          : "#"
-      }
-      onClick={!hasContent ? (e) => e.preventDefault() : undefined}
+      to={hasContent ? `/cursos/${courseSlug}/viewer?videoSlug=${slug}` : "#"}
+      onClick={(e) => {
+        if (!hasContent) {
+          e.preventDefault();
+          return;
+        }
+        // Abrir una lección lleva a su detalle —de qué habla y en qué minuto—, no de
+        // vuelta a la lista que acabas de usar. Va por estado y NO por la URL: con
+        // `?tab=transcript` en el enlace, volver a hacer clic en la lección que ya
+        // está abierta no cambiaba nada, porque la URL era la misma.
+        onSelect?.();
+      }}
       className={cn(
         "group relative flex items-center p-3 rounded-lg transition-all hover:bg-gray-800/50",
         {
