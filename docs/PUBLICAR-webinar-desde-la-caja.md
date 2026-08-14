@@ -64,11 +64,41 @@ Sin ellas cae al storage de gs, que **no es** donde fixtergeek busca sus vídeos
 ⚠️ El destino lo manda quien para la grabación (`hlsPrefix`), nunca la caja: una caja de
 llamadas no tiene por qué saber qué es un curso.
 
-## Qué queda a mano, a propósito
+## Ya no queda nada a mano (2026-08-14)
 
-Crear el Video y correr el script del paso 3. Automatizarlo (un webhook que cierre la fila
-al terminar la conversión) es trabajo aparte y no urge: lo caro era mover 6 GB, no escribir
-una fila.
+Los tres pasos de arriba son ahora **automáticos**. El room de Ghosty Teams guarda el id del
+taller (se pega una vez, en los ajustes del canal) y al detener la grabación:
+
+1. Teams pide a `POST /api/ingest/recording` con `intent:"draft"` → se crea el `Video` en
+   BORRADOR y devuelve su id. ⚠️ Es lo PRIMERO: ese id va dentro de la llave de todos los
+   objetos que se van a subir.
+2. Con él arma el `hlsPrefix` y se lo pasa a la caja, que transcodifica y sube.
+3. Cuando el HLS está listo, `intent:"ready"` cierra la fila (`m3u8`, portada, duración) y
+   guarda el `Transcript` con segmentos y quién hablaba — de ahí salen los subtítulos, los
+   capítulos y el buscador del curso.
+
+Autenticación: HMAC con `FIXTERGEEK_PARTNER_SECRET` (canonical `${ts}.${body}`, ventana de
+5 min), secreto PROPIO — no se comparte el de plataforma con un tercero.
+
+⚠️ **La transcripción puede llegar tarde**: whisper tarda ~1/4 de lo que dure el audio y el
+vídeo se publica en cuanto el HLS está. En ese caso la publicación queda en `partial` y se
+completa cuando alguien vuelve a abrir el room. El disco de la caja no se libera hasta que
+están las dos cosas: borrar antes se lleva el `transcript.json`, y el audio vivía ahí.
+
+⚠️ **Cada grabación es una pieza distinta**: el slug lleva fecha Y HORA. Con sólo la fecha,
+dos grabaciones del mismo día caían en el mismo `upsert` y la segunda sobrescribía a la
+primera, dejando un vídeo apuntando al HLS de otro.
+
+`scripts/link-hls-remote.ts` se queda para lo que ya existe y para reparar a mano.
+
+## Borrar: dos ciclos de vida
+
+- **En el room** se borra la SALA: el MP4 original, su transcripción y la fila. La pieza del
+  curso NO se toca.
+- **En `/admin/programas/<slug>`** se borra la pieza Y sus archivos del bucket
+  (`app/.server/video-files.ts`).
+
+Es a propósito: limpiar un room no puede despublicar algo que la gente está viendo.
 
 ## Del otro lado: cómo se sirve
 
