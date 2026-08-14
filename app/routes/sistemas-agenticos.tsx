@@ -822,13 +822,14 @@ export default function SistemasAgenticosLanding() {
                 )}
               </p>
               <p className="mt-1 text-xs text-sistemas-gray/70">
-                Y el primero ya está grabado:{" "}
+                El primero ya está grabado y{" "}
                 <a
                   href={`/cursos/sistemas-agenticos/viewer?videoSlug=${WEBINAR_RECORDING_SLUG}`}
-                  className="underline underline-offset-2 hover:text-sistemas-accent"
+                  className="font-semibold underline underline-offset-2 hover:text-sistemas-accent"
                 >
-                  «Anatomía de un sistema agéntico», 1h15
+                  puedes verlo completo
                 </a>
+                : «Anatomía de un sistema agéntico», 1h15.
               </p>
             </motion.div>
 
