@@ -390,7 +390,6 @@ const UnifiedMenuContainer = ({
       ref={ref}
       style={{
         x,
-        maskImage,
         width: menuWidth,
       }}
       className={cn(
@@ -398,7 +397,11 @@ const UnifiedMenuContainer = ({
         "shadow-2xl border-r border-gray-700/50"
       )}
     >
-      {children}
+      {/* La máscara va AQUÍ y no en el contenedor: aplicada al padre recortaba todo lo
+          que sobresale, y el botón de cerrar —que cuelga del borde— salía cortado. */}
+      <motion.div style={{ maskImage }} className="flex min-h-0 flex-1 flex-col">
+        {children}
+      </motion.div>
 
       {/* El mismo botón flotante de siempre, pero COLGADO DEL PANEL: así su posición es
           `left-full` y no una cuenta de anchos que el servidor y el cliente resolvían
