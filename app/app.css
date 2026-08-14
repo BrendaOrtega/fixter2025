@@ -217,3 +217,30 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
 }
+
+/* Barra de scroll discreta, para paneles largos como la transcripción. Ocultarla del
+   todo aquí sería peor: en una hora de charla hay que saber por dónde vas. */
+.scrollbar-sutil {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.scrollbar-sutil::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-sutil::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-sutil::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+}
+.scrollbar-sutil::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.32);
+}
+
+/* Los subtítulos nativos se pegan al borde inferior del vídeo, justo donde va nuestra
+   barra de controles: quedaban encima de los botones. Se suben lo que mide la barra.
+   Sólo WebKit/Blink exponen este pseudo-elemento, que es donde está el 95% del público. */
+video::-webkit-media-text-track-container {
+  transform: translateY(-58px);
+}

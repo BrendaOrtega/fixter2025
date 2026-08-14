@@ -201,7 +201,7 @@ export const TranscriptPanel = ({
 
       {/* Resultados de búsqueda */}
       {q.trim().length >= 3 && (
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="scrollbar-sutil min-h-0 flex-1 overflow-y-auto">
           {buscando && <p className="px-2 py-4 text-sm text-gray-500">Buscando…</p>}
           {!buscando && resultados?.length === 0 && (
             <p className="px-2 py-4 text-sm text-gray-500">
@@ -280,7 +280,7 @@ export const TranscriptPanel = ({
             ref={contenedorRef}
             onWheel={() => setSeguirVideo(false)}
             onTouchMove={() => setSeguirVideo(false)}
-            className="h-full space-y-1 overflow-y-auto pb-10"
+            className="scrollbar-sutil h-full space-y-1 overflow-y-auto pb-10"
           >
             {segments.map((seg, i) => {
               const activo = i === indiceActivo;

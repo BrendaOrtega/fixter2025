@@ -31,6 +31,8 @@ type Props = {
    * capítulos: en una conexión lenta eso son varios segundos con la barra en blanco.
    */
   duracionConocida?: number;
+  /** Avisa al player cuando el video está esperando datos, para pintar el girito. */
+  onCargandoChange?: (cargando: boolean) => void;
   /** Slug del video: con él se piden las miniaturas del hover. */
   videoSlug?: string;
 };
@@ -131,6 +133,7 @@ export const VideoControls = ({
   onTimeChange,
   duracionConocida,
   videoSlug,
+  onCargandoChange,
 }: Props) => {
   const barraRef = useRef<HTMLDivElement>(null);
   const [tiempo, setTiempo] = useState(0);
@@ -147,6 +150,9 @@ export const VideoControls = ({
     null | "velocidad" | "calidad" | "capitulos"
   >(null);
   const [arrastrando, setArrastrando] = useState(false);
+  // Saltar en HLS obliga a bajar el segmento de destino —varios MB— antes de pintar el
+  // primer cuadro. Sin señal de que algo pasa, se siente que el clic no hizo nada.
+  const [cargando, setCargando] = useState(false);
   // Posición del cursor sobre la barra, en segundos. `null` = no hay hover.
   const [asomado, setAsomado] = useState<number | null>(null);
   const [mostrarRestante, setMostrarRestante] = useState(false);
@@ -182,6 +188,21 @@ export const VideoControls = ({
       guardarPref(PREF_SILENCIO, el.muted ? "1" : "0");
     };
 
+    const ocupado = () => {
+      setCargando(true);
+      onCargandoChange?.(true);
+    };
+    const libre = () => {
+      setCargando(false);
+      onCargandoChange?.(false);
+    };
+
+    el.addEventListener("waiting", ocupado);
+    el.addEventListener("seeking", ocupado);
+    el.addEventListener("playing", libre);
+    el.addEventListener("seeked", libre);
+    el.addEventListener("canplay", libre);
+
     el.addEventListener("timeupdate", alTiempo);
     el.addEventListener("durationchange", alCargar);
     el.addEventListener("loadedmetadata", alCargar);
@@ -192,6 +213,11 @@ export const VideoControls = ({
     alVolumen();
 
     return () => {
+      el.removeEventListener("waiting", ocupado);
+      el.removeEventListener("seeking", ocupado);
+      el.removeEventListener("playing", libre);
+      el.removeEventListener("seeked", libre);
+      el.removeEventListener("canplay", libre);
       el.removeEventListener("timeupdate", alTiempo);
       el.removeEventListener("durationchange", alCargar);
       el.removeEventListener("loadedmetadata", alCargar);
@@ -199,7 +225,7 @@ export const VideoControls = ({
       el.removeEventListener("pause", alPause);
       el.removeEventListener("volumechange", alVolumen);
     };
-  }, [videoRef, onTimeChange]);
+  }, [videoRef, onTimeChange, onCargandoChange]);
 
   // Los niveles de calidad ya los tenía hls.js; hasta ahora se desperdiciaban.
   useEffect(() => {
@@ -535,7 +561,12 @@ export const VideoControls = ({
                 className="h-1.5 overflow-hidden rounded-full bg-white/25 transition-[height] group-hover:h-2.5"
               >
                 <div
-                  className="h-full rounded-full bg-brand-500"
+                  className={cn(
+                    "h-full rounded-full bg-brand-500",
+                    // Mientras baja el segmento, el relleno late: el girito del centro se
+                    // ve, pero la mirada está en la barra, que es donde se hizo clic.
+                    cargando && "animate-pulse"
+                  )}
                   style={{ width: `${avance * 100}%` }}
                 />
               </div>

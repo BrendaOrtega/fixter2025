@@ -21,7 +21,7 @@ import {
 } from "react-icons/md";
 import { useClickOutside } from "~/hooks/useClickOutside";
 import { cn } from "~/utils/cn";
-import { MdOutlineSubtitles } from "react-icons/md";
+import { MdOutlineSubtitles, MdOutlineFolder } from "react-icons/md";
 import {
   TranscriptPanel,
   type Segmento,
@@ -30,7 +30,7 @@ import {
 import { Streamdown } from "streamdown";
 import { code } from "@streamdown/code";
 
-type TabType = "videos" | "notes" | "transcript";
+type TabType = "videos" | "notes" | "transcript" | "resources";
 
 interface UnifiedSidebarProps {
   // Videos props
@@ -45,6 +45,14 @@ interface UnifiedSidebarProps {
   markdownBody?: string;
   // Transcript props
   transcript?: { segments: Segmento[]; chapters?: Capitulo[] } | null;
+  /** Slides, PDFs, repos y enlaces de esta pieza y del curso. */
+  resources?: {
+    slug: string;
+    kind: string;
+    title: string;
+    externalUrl: string | null;
+    videoId: string | null;
+  }[];
   courseId?: string;
   /** Segundo en curso del player, para marcar la línea que suena. */
   currentTime?: number;
@@ -65,6 +73,7 @@ export const UnifiedSidebarMenu = ({
   videos,
   markdownBody,
   transcript,
+  resources = [],
   courseId,
   currentTime = 0,
   onSeek,
@@ -124,6 +133,12 @@ export const UnifiedSidebarMenu = ({
       available: !!markdownBody,
     },
     {
+      id: "resources" as TabType,
+      label: "Recursos",
+      icon: <MdOutlineFolder className="text-sm" />,
+      available: resources.length > 0,
+    },
+    {
       id: "transcript" as TabType,
       label: "Transcripción",
       icon: <MdOutlineSubtitles className="text-sm" />,
@@ -154,7 +169,9 @@ export const UnifiedSidebarMenu = ({
           </h2>
 
           {/* Tabs Navigation */}
-          <div className="flex space-x-1 bg-gray-800/50 rounded-lg p-1">
+          {/* Rejilla de dos columnas: con cuatro pestañas en una sola fila de 320px los
+              textos se truncaban a "Transc…" y no se entendía nada. */}
+          <div className="grid grid-cols-2 gap-1 bg-gray-800/50 rounded-lg p-1">
             {tabs
               .filter((tab) => tab.available)
               .map((tab) => (
@@ -164,7 +181,7 @@ export const UnifiedSidebarMenu = ({
                   className={cn(
                     // `min-w-0` + `truncate`: con tres pestañas, "Transcripción" se
                     // salía de la barra y aparecía un scroll horizontal.
-                    "flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all",
+                    "min-w-0 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all",
                     {
                       "bg-brand-500 text-brand-900": activeTab === tab.id,
                       "text-gray-400 hover:text-gray-200": activeTab !== tab.id,
@@ -215,6 +232,23 @@ export const UnifiedSidebarMenu = ({
                 className="p-4"
               >
                 <NotesContent body={markdownBody} />
+              </motion.div>
+            )}
+
+            {activeTab === "resources" && resources.length > 0 && (
+              <motion.div
+                key="resources"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="p-4"
+              >
+                <ResourcesContent
+                  resources={resources}
+                  courseSlug={courseSlug}
+                  videoSlug={currentVideoSlug || ""}
+                />
               </motion.div>
             )}
 
@@ -411,6 +445,77 @@ const VideosContent = ({
           </div>
         </div>
       ))}
+    </div>
+  );
+};
+
+const ICONO_POR_TIPO: Record<string, string> = {
+  slides: "🖥️",
+  pdf: "📄",
+  repo: "💻",
+  link: "🔗",
+};
+
+const ResourcesContent = ({
+  resources,
+  courseSlug,
+  videoSlug,
+}: {
+  resources: {
+    slug: string;
+    kind: string;
+    title: string;
+    externalUrl: string | null;
+    videoId: string | null;
+  }[];
+  courseSlug: string;
+  videoSlug: string;
+}) => {
+  const deLaPieza = resources.filter((r) => r.videoId);
+  const delCurso = resources.filter((r) => !r.videoId);
+
+  const Item = ({ r }: { r: (typeof resources)[number] }) => (
+    <li>
+      <Link
+        // Canónica del material. La ruta decide si se puede abrir; aquí sólo se lista.
+        to={`/cursos/${courseSlug}/${videoSlug}/${r.slug}`}
+        className="flex items-start gap-3 rounded-lg px-2 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+      >
+        <span className="text-base leading-none">{ICONO_POR_TIPO[r.kind] || "📎"}</span>
+        <span className="min-w-0">
+          <span className="block">{r.title}</span>
+          <span className="block text-xs capitalize text-gray-500">{r.kind}</span>
+        </span>
+      </Link>
+    </li>
+  );
+
+  return (
+    <div className="space-y-4">
+      {deLaPieza.length > 0 && (
+        <div>
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            De esta lección
+          </p>
+          <ul className="space-y-0.5">
+            {deLaPieza.map((r) => (
+              <Item key={r.slug} r={r} />
+            ))}
+          </ul>
+        </div>
+      )}
+      {delCurso.length > 0 && (
+        <div>
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Del curso
+          </p>
+          <ul className="space-y-0.5">
+            {delCurso.map((r) => (
+              <Item key={r.slug} r={r} />
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

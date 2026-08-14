@@ -1,5 +1,5 @@
 import type { Video } from "~/types/models";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ImPlay } from "react-icons/im";
 import { IoIosClose } from "react-icons/io";
@@ -121,6 +121,8 @@ export const VideoPlayer = ({
     // Skip hook logic si es YouTube
     skip: !!youtubeId,
   });
+
+  const [cargando, setCargando] = useState(false);
 
   const { ofrecido, continuar, empezarDeNuevo, descartar } = useResumePosition({
     videoRef,
@@ -303,9 +305,25 @@ export const VideoPlayer = ({
         )}
       </AnimatePresence>
 
+      {/* Girito centrado mientras carga: al saltar hay que bajar el segmento de destino
+          antes de pintar nada, y sin señal el clic parece no haber hecho nada. */}
+      <AnimatePresence>
+        {cargando && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none absolute inset-0 z-20 grid place-items-center"
+          >
+            <span className="h-14 w-14 animate-spin rounded-full border-4 border-white/20 border-t-brand-500" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <VideoControls
         videoRef={videoRef}
         videoSlug={slug}
+        onCargandoChange={setCargando}
         hlsRef={hlsRef}
         // `duration` se guarda en MINUTOS y como texto (ver el modelo Video).
         duracionConocida={video?.duration ? Number(video.duration) * 60 : undefined}

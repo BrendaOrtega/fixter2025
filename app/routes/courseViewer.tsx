@@ -344,6 +344,15 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     }
   }
 
+  // Materiales de la pieza y del curso completo (temario, repo base). Se listan aunque no
+  // haya acceso: saber QUÉ existe es parte de lo que vende el curso; abrirlos ya es otra
+  // cosa, y eso lo decide la ruta del material.
+  const resources = await db.resource.findMany({
+    where: { OR: [{ videoId: video.id }, { courseId: course.id, videoId: null }] },
+    select: { slug: true, kind: true, title: true, externalUrl: true, videoId: true },
+    orderBy: { createdAt: "asc" },
+  });
+
   // La transcripción es el video en texto: se entrega con el MISMO criterio que el video.
   const transcript = hasAccess
     ? await db.transcript.findUnique({
@@ -371,6 +380,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     accessLevel,
     video: videoToReturn,
     transcript,
+    resources,
     videos,
     moduleNames,
     subscriberVideos,
@@ -438,6 +448,7 @@ export default function Route({
     accessLevel,
     video,
     transcript,
+    resources,
     videos,
     searchParams,
     moduleNames,
@@ -699,6 +710,7 @@ export default function Route({
           isSubscribed={serverIsSubscribed}
           markdownBody={video.description || undefined}
           transcript={transcript as any}
+          resources={resources}
           courseId={course.id}
           currentTime={currentTime}
           onSeek={seekTo}
