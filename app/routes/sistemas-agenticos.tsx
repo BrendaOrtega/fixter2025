@@ -29,6 +29,9 @@ const WEBINAR_SEQUENCES: Record<string, string> = {
 const PRICE = 2490; // MXN precio de lanzamiento
 const PRICE_REGULAR = 3490; // MXN tachado
 const COURSE_SLUG = "sistemas-agenticos";
+// Grabación del webinar del 13-ago-2026, publicada como video del curso.
+// El slug viaja en la URL del viewer: una vez repartido el enlace, no cambia.
+const WEBINAR_RECORDING_SLUG = "primer-webinar-anatomia-de-un-sistema-agentico";
 
 const SESSIONS = [
   {
@@ -548,6 +551,26 @@ function WebinarSection() {
               </li>
             ))}
           </ul>
+
+          {/* El primero ya pasó y quedó grabado. Va aquí, junto al formulario
+              de los que faltan: quien llega tarde no se queda sin nada. */}
+          <a
+            href={`/cursos/sistemas-agenticos/viewer?videoSlug=${WEBINAR_RECORDING_SLUG}`}
+            className="group mt-8 flex items-center gap-4 rounded-2xl border border-sistemas-primary/40 bg-sistemas-primary/5 p-5 transition hover:border-sistemas-primary hover:bg-sistemas-primary/10"
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sistemas-primary/20 text-xl text-sistemas-primary transition group-hover:bg-sistemas-primary/30">
+              ▶
+            </span>
+            <span>
+              <span className="block text-sm font-bold text-zinc-100">
+                ¿Te perdiste el primero? Míralo completo
+              </span>
+              <span className="mt-0.5 block text-sm text-sistemas-gray">
+                «Anatomía de un sistema agéntico» · 1h15 sin editar · gratis,
+                solo pide tu correo
+              </span>
+            </span>
+          </a>
         </motion.div>
 
         <motion.div
