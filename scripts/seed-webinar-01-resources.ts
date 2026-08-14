@@ -1,7 +1,7 @@
 /**
  * Mete a datos los materiales del primer webinar (13-ago-2026), que hasta hoy
  * vivían hardcodeados: el PDF como una constante en `routes/seis-piezas.tsx` y
- * las slides como un archivo suelto en `public/webinar-1/`.
+ * las slides como un archivo suelto en `public/`.
  *
  * También marca qué es cada pieza (`Video.kind`) y en qué fase va el programa
  * (`Course.stage`), que es lo que permite que el admin arme la línea de tiempo
@@ -14,14 +14,14 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const COURSE_SLUG = "sistemas-agenticos";
-const VIDEO_SLUG = "primer-webinar-anatomia-de-un-sistema-agentico";
+const VIDEO_SLUG = "anatomia-de-un-sistema-agentico";
 
 const MATERIALES = [
   {
     slug: "slides",
     kind: "slides",
     title: "Slides del webinar (19)",
-    externalUrl: "/webinar-1/slides.html",
+    externalUrl: "/slides/anatomia-de-un-sistema-agentico.html",
     legacyPath: "/webinar-1/slides",
   },
   {

@@ -32,7 +32,7 @@ const PRICE_REGULAR = 3490; // MXN tachado
 const COURSE_SLUG = "sistemas-agenticos";
 // Grabación del webinar del 13-ago-2026, publicada como video del curso.
 // El slug viaja en la URL del viewer: una vez repartido el enlace, no cambia.
-const WEBINAR_RECORDING_SLUG = "primer-webinar-anatomia-de-un-sistema-agentico";
+const WEBINAR_RECORDING_SLUG = "anatomia-de-un-sistema-agentico";
 
 const SESSIONS = [
   {

@@ -12,7 +12,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const COURSE_SLUG = "sistemas-agenticos";
-const VIDEO_SLUG = "segundo-webinar-sandboxing";
+const VIDEO_SLUG = "sandboxing";
 
 async function main() {
   const course = await prisma.course.findUnique({
@@ -55,15 +55,15 @@ async function main() {
     where: { videoId_slug: { videoId: video.id, slug: "slides" } },
     update: {
       title: "Slides del webinar (20)",
-      externalUrl: "/webinar-2/slides.html",
+      externalUrl: "/slides/sandboxing.html",
       courseId: course.id,
     },
     create: {
       slug: "slides",
       kind: "slides",
       title: "Slides del webinar (20)",
-      externalUrl: "/webinar-2/slides.html",
-      legacyPath: "/webinar-2/slides",
+      externalUrl: "/slides/sandboxing.html",
+      
       videoId: video.id,
       courseId: course.id,
     },

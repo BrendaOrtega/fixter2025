@@ -59,8 +59,7 @@ export default [
   // Taller: Diseño de sistemas agénticos
   route("sistemas-agenticos", "routes/sistemas-agenticos.tsx"),
   route("seis-piezas", "routes/seis-piezas.tsx"), // regalo del webinar → PDF en EasyBits
-  route("webinar-1/slides", "routes/webinar-1.slides.tsx"), // deck del 13 ago → HTML en public/
-  route("webinar-2/slides", "routes/webinar-2.slides.tsx"), // deck del 20 ago
+  route("webinar-1/slides", "routes/webinar-1.slides.tsx"), // ruta vieja ya compartida → canónica
   // Sala del webinar (redirige a WEBINAR_ROOM_URL cuando está configurada)
   route("webinar-en-vivo", "routes/webinar-en-vivo.tsx"),
   // Pong con Vanilla JS - Classic Course

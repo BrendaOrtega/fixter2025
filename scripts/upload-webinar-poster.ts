@@ -19,7 +19,7 @@ if (!file) {
 
 const BUCKET = process.env.BUCKET_NAME || "wild-bird-2039";
 const KEY = "videos/webinar-01-anatomia-poster.jpg";
-const VIDEO_SLUG = "primer-webinar-anatomia-de-un-sistema-agentico";
+const VIDEO_SLUG = "anatomia-de-un-sistema-agentico";
 
 const s3 = new S3Client({
   region: "auto",

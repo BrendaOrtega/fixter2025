@@ -82,18 +82,32 @@ export const UnifiedSidebarMenu = ({
   defaultTab = "videos",
 }: UnifiedSidebarProps) => {
   const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
+
+  // Navegar a otra lección NO desmonta el menú, así que el estado se quedaría en la
+  // pestaña anterior y `defaultTab` no serviría de nada después del primer render.
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab, currentVideoSlug]);
   const [completed, setCompleted] = useState<string[]>([]);
   const [videosCompleted, setVideosCompleted] = useState<string[]>([]);
 
   // Animation setup
   const x = useMotionValue(0);
   const springX = useSpring(x, { bounce: 0.2 });
-  const menuWidth =
-    typeof window !== "undefined" && window.innerWidth >= 768 ? 400 : 320;
-  // Abierto, el botón queda pegado al borde EXTERIOR del panel (sólo 8px lo pisan, y
-  // esos caen en su padding). Antes se metía 56px y tapaba las pestañas; taparlo con
-  // padding en el encabezado apretaba el título y volvía a truncar las etiquetas.
-  const buttonX = useTransform(springX, [-menuWidth, 0], [0, menuWidth - 8]);
+  // En estado y no calculado en render: al pintar en el servidor `window` no existe, así
+  // que salía 320, y el botón —que se posiciona con un MotionValue— se quedaba con el 400
+  // del cliente. Resultado: el botón flotando a 70px del borde del panel.
+  const [menuWidth, setMenuWidth] = useState(320);
+  useEffect(() => {
+    const medir = () => setMenuWidth(window.innerWidth >= 768 ? 400 : 320);
+    medir();
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, []);
+  // Abierto, el botón monta 16px sobre el borde del panel: los suficientes para que se
+  // lea como parte de él y no como algo flotando al lado, y caen en su padding, así que
+  // no tapa las pestañas.
+  const buttonX = useTransform(springX, [-menuWidth, 0], [0, menuWidth - 16]);
 
   useEffect(() => {
     isOpen ? x.set(0) : x.set(-menuWidth);
@@ -149,6 +163,13 @@ export const UnifiedSidebarMenu = ({
     },
   ];
 
+  // Si la pestaña pedida no existe para esta lección —un video sin transcripción, por
+  // ejemplo— se cae a la primera disponible en vez de dejar el panel en blanco.
+  const disponibles = tabs.filter((t) => t.available);
+  const tabVigente = disponibles.some((t) => t.id === activeTab)
+    ? activeTab
+    : disponibles[0]?.id || "videos";
+
   return (
     <>
       {/* Unified Menu Button */}
@@ -186,8 +207,8 @@ export const UnifiedSidebarMenu = ({
                     // salía de la barra y aparecía un scroll horizontal.
                     "min-w-0 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all",
                     {
-                      "bg-brand-500 text-brand-900": activeTab === tab.id,
-                      "text-gray-400 hover:text-gray-200": activeTab !== tab.id,
+                      "bg-brand-500 text-brand-900": tabVigente === tab.id,
+                      "text-gray-400 hover:text-gray-200": tabVigente !== tab.id,
                     }
                   )}
                 >
@@ -201,7 +222,7 @@ export const UnifiedSidebarMenu = ({
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
-            {activeTab === "videos" && (
+            {tabVigente === "videos" && (
               <motion.div
                 key="videos"
                 initial={{ opacity: 0, x: -20 }}
@@ -225,7 +246,7 @@ export const UnifiedSidebarMenu = ({
               </motion.div>
             )}
 
-            {activeTab === "notes" && markdownBody && (
+            {tabVigente === "notes" && markdownBody && (
               <motion.div
                 key="notes"
                 initial={{ opacity: 0, x: -20 }}
@@ -238,7 +259,7 @@ export const UnifiedSidebarMenu = ({
               </motion.div>
             )}
 
-            {activeTab === "resources" && resources.length > 0 && (
+            {tabVigente === "resources" && resources.length > 0 && (
               <motion.div
                 key="resources"
                 initial={{ opacity: 0, x: -20 }}
@@ -255,7 +276,7 @@ export const UnifiedSidebarMenu = ({
               </motion.div>
             )}
 
-            {activeTab === "transcript" && transcript && onSeek && (
+            {tabVigente === "transcript" && transcript && onSeek && (
               <motion.div
                 key="transcript"
                 initial={{ opacity: 0, x: -20 }}
@@ -612,7 +633,13 @@ const VideoListItem = ({
   return (
     <Link
       ref={ref}
-      to={hasContent ? `/cursos/${courseSlug}/viewer?videoSlug=${slug}` : "#"}
+      // `tab=transcript`: abrir una lección lleva a su detalle —de qué habla y en qué
+      // minuto—, no de vuelta a la lista que acabas de usar.
+      to={
+        hasContent
+          ? `/cursos/${courseSlug}/viewer?videoSlug=${slug}&tab=transcript`
+          : "#"
+      }
       onClick={!hasContent ? (e) => e.preventDefault() : undefined}
       className={cn(
         "group relative flex items-center p-3 rounded-lg transition-all hover:bg-gray-800/50",
