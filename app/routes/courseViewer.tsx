@@ -84,7 +84,7 @@ const COMMUNITY_SLUG = "agentes";
  * Devuelve las cabeceras con la cookie de sesión, o `null` si algo falla: el
  * acceso al video no depende de esto.
  */
-async function abrirSesion(request: Request, email: string) {
+async function openSession(request: Request, email: string) {
   try {
     const { placeSession } = await import("~/.server/dbGetters");
     const { commitSession } = await import("~/sessions");
@@ -101,13 +101,13 @@ async function abrirSesion(request: Request, email: string) {
 }
 
 /** Las dos cookies del alta: la de suscriptor (de siempre) y la de sesión. */
-function cookiesDeAcceso(email: string, sesion: string | null) {
+function accessCookies(email: string, session: string | null) {
   const headers = new Headers();
   headers.append(
     "Set-Cookie",
     `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`,
   );
-  if (sesion) headers.append("Set-Cookie", sesion);
+  if (session) headers.append("Set-Cookie", session);
   return headers;
 }
 
@@ -173,9 +173,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
         const redirectUrl = new URL(request.url);
         redirectUrl.searchParams.set("subscribed", "1");
-        const sesion = await abrirSesion(request, email);
+        const session = await openSession(request, email);
         return redirect(redirectUrl.toString(), {
-          headers: cookiesDeAcceso(email, sesion),
+          headers: accessCookies(email, session),
         });
       }
 
@@ -244,9 +244,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
       const redirectUrl = new URL(request.url);
       redirectUrl.searchParams.set("subscribed", "1");
-      const sesion = await abrirSesion(request, email);
+      const session = await openSession(request, email);
       return redirect(redirectUrl.toString(), {
-        headers: cookiesDeAcceso(email, sesion),
+        headers: accessCookies(email, session),
       });
     } catch (error) {
       console.error("📧 Error verifying code:", error);

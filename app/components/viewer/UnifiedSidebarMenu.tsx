@@ -9,7 +9,7 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { BsMenuButtonWide, BsMarkdown } from "react-icons/bs";
 import { FaPlay, FaVideo } from "react-icons/fa6";
 import { IoMdLock, IoMdClose, IoMdMail, IoMdConstruct } from "react-icons/io";
@@ -81,12 +81,29 @@ export const UnifiedSidebarMenu = ({
   setIsOpen,
   defaultTab = "videos",
 }: UnifiedSidebarProps) => {
-  const [activeTab, setActiveTab] = useState<TabType>(defaultTab);
+  const [activeTab, setActiveTabState] = useState<TabType>(defaultTab);
+
+  /**
+   * Cambiar de pestaña también reescribe `?tab=` en la barra de direcciones.
+   *
+   * Sin esto la pestaña era estado local invisible: quien copiaba la liga con la
+   * transcripción abierta —o recargaba— caía en la lista de videos. `replaceState`
+   * y no `navigate` porque no es un destino nuevo, es la misma página con otra
+   * pestaña: no debe apilar una entrada en el historial ni recargar los loaders.
+   */
+  const setActiveTab = useCallback((tab: TabType) => {
+    setActiveTabState(tab);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (tab === "videos") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", tab);
+    window.history.replaceState(window.history.state, "", url.toString());
+  }, []);
 
   // Navegar a otra lección NO desmonta el menú, así que el estado se quedaría en la
   // pestaña anterior y `defaultTab` no serviría de nada después del primer render.
   useEffect(() => {
-    setActiveTab(defaultTab);
+    setActiveTabState(defaultTab);
   }, [defaultTab, currentVideoSlug]);
   const [completed, setCompleted] = useState<string[]>([]);
   const [videosCompleted, setVideosCompleted] = useState<string[]>([]);

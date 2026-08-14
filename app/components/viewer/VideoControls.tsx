@@ -162,7 +162,7 @@ export const VideoControls = ({
   const [asomado, setAsomado] = useState<number | null>(null);
   const [mostrarRestante, setMostrarRestante] = useState(false);
   const [hayPip, setHayPip] = useState(false);
-  const [ligaCopiada, setLigaCopiada] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const tiles = useStoryboard(videoSlug);
 
@@ -329,19 +329,37 @@ export const VideoControls = ({
    * El `?t=` va en formato legible (`12m30s`) y no en segundos: la liga se pega en
    * un correo o en WhatsApp, donde alguien la lee antes de darle clic.
    */
-  const copiarLigaConMinuto = useCallback(async () => {
+  const copyLinkAtCurrentTime = useCallback(async () => {
     const el = videoRef.current;
     if (!el) return;
     const url = new URL(window.location.href);
     url.searchParams.set("t", formatVideoTime(el.currentTime));
+    const texto = url.toString();
+    let listo = false;
     try {
-      await navigator.clipboard.writeText(url.toString());
-      setLigaCopiada(true);
-      setTimeout(() => setLigaCopiada(false), 2000);
+      // Truena con NotAllowedError si el documento perdió el foco —pasa con el
+      // panel de transcripción abierto, que se lo lleva al hacer scroll—, así que
+      // no puede ser el único camino.
+      await navigator.clipboard.writeText(texto);
+      listo = true;
     } catch {
-      // Sin permiso de portapapeles (Safari en http, por ejemplo) no hay a dónde
-      // caer que no sea peor: se deja el botón como estaba en vez de fingir éxito.
+      const caja = document.createElement("textarea");
+      caja.value = texto;
+      caja.setAttribute("readonly", "");
+      caja.style.position = "fixed";
+      caja.style.opacity = "0";
+      document.body.appendChild(caja);
+      caja.select();
+      try {
+        listo = document.execCommand("copy");
+      } catch {
+        listo = false;
+      }
+      caja.remove();
     }
+    if (!listo) return;
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   }, [videoRef]);
 
   /** Segundo bajo una posición horizontal de pantalla. No mueve el video. */
@@ -743,11 +761,11 @@ export const VideoControls = ({
         )}
 
         <Boton
-          onClick={copiarLigaConMinuto}
-          titulo={ligaCopiada ? "¡Liga copiada!" : "Copiar liga en este minuto"}
-          activo={ligaCopiada}
+          onClick={copyLinkAtCurrentTime}
+          titulo={linkCopied ? "¡Liga copiada!" : "Copiar liga en este minuto"}
+          activo={linkCopied}
         >
-          {ligaCopiada ? <IconoPalomita /> : <IconoLiga />}
+          {linkCopied ? <IconCheck /> : <IconLink />}
         </Boton>
 
         <div className="relative">
@@ -837,13 +855,13 @@ const svg = {
   strokeLinejoin: "round" as const,
 };
 
-const IconoLiga = () => (
+const IconLink = () => (
   <svg {...svg}>
     <path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11.5 4.5" />
     <path d="M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07L12.5 19.5" />
   </svg>
 );
-const IconoPalomita = () => (
+const IconCheck = () => (
   <svg {...svg}>
     <path d="M20 6L9 17l-5-5" />
   </svg>
