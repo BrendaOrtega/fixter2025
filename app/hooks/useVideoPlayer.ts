@@ -5,6 +5,14 @@ import type { Video } from "~/types/models";
 
 interface UseVideoPlayerOptions {
   video?: Partial<Video>;
+  /**
+   * Segundo en el que debe abrir, si la liga traía `?t=`.
+   *
+   * Va aquí y no en un efecto de afuera porque la fuente se attacha con await:
+   * fijar `currentTime` antes de eso no hace nada, y hacerlo después lo pisa el
+   * attach. Este es el único punto que conoce ese orden.
+   */
+  startAt?: number;
   courseId?: string;
   slug: string;
   onPlay?: () => void;
@@ -58,6 +66,7 @@ const extractS3Key = (url: string): string | null => {
 
 export function useVideoPlayer({
   video,
+  startAt,
   courseId,
   slug,
   onPlay,
@@ -264,7 +273,7 @@ export function useVideoPlayer({
         const hlsSource = video.m3u8 || (video.storageLink?.includes('.m3u8') ? video.storageLink : null);
 
         if (hlsSource) {
-          const hls = new Hls();
+          const hls = new Hls(startAt ? { startPosition: startAt } : {});
           hlsRef.current = hls;
           hls.loadSource(await resolveSource(hlsSource));
           hls.attachMedia(el);
@@ -283,6 +292,17 @@ export function useVideoPlayer({
     setupVideo()
       .then(() => {
         if (!videoRef.current) return;
+
+        // Safari reproduce HLS nativo y no conoce startPosition, así que ahí el
+        // salto se hace a mano en cuanto hay metadatos.
+        if (startAt && startAt > 0) {
+          const el = videoRef.current;
+          const seek = () => {
+            if (el.currentTime < startAt - 1) el.currentTime = startAt;
+          };
+          if (el.readyState >= 1) seek();
+          else el.addEventListener("loadedmetadata", seek, { once: true });
+        }
 
         // Skip autoplay on mobile or when disabled (drawer open)
         if (isMobile || disabledRef.current) {

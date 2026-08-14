@@ -90,7 +90,15 @@ async function openSession(request: Request, email: string) {
     const { commitSession } = await import("~/sessions");
     await db.user.upsert({
       where: { email },
-      create: { email, confirmed: true, displayName: email.split("@")[0], roles: ["viewer"] },
+      // `username` es obligatorio en el modelo y no tiene default: sin él el upsert
+      // truena, el catch se lo come y la persona entra sin sesión.
+      create: {
+        email,
+        username: email,
+        displayName: email.split("@")[0],
+        confirmed: true,
+        roles: ["viewer"],
+      },
       update: { confirmed: true },
     });
     return await commitSession(await placeSession(request, email));
@@ -159,23 +167,14 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       const existing = await db.subscriber.findUnique({ where: { email } });
       console.log("📧 Existing subscriber:", existing?.email, "confirmed:", existing?.confirmed);
 
-      // CASO: Ya confirmado → acceso directo sin OTP
-      if (existing?.confirmed) {
-        console.log("📧 User already confirmed, redirecting directly");
-        // Añadir tag si no lo tiene
-        if (!existing.tags.includes(tag)) {
-          await db.subscriber.update({
-            where: { email },
-            data: { tags: { push: tag } },
-          });
-        }
-        await joinCommunityFromViewer(email);
-
-        const redirectUrl = new URL(request.url);
-        redirectUrl.searchParams.set("subscribed", "1");
-        const session = await openSession(request, email);
-        return redirect(redirectUrl.toString(), {
-          headers: accessCookies(email, session),
+      // Antes, un correo ya confirmado entraba directo, sin código. Eso dejó de
+      // ser aceptable en cuanto el alta abre sesión: escribir el correo de otra
+      // persona bastaría para entrar como ella. El código es la única prueba de
+      // que el buzón es tuyo, así que se pide siempre.
+      if (existing?.confirmed && !existing.tags.includes(tag)) {
+        await db.subscriber.update({
+          where: { email },
+          data: { tags: { push: tag } },
         });
       }
 
@@ -565,36 +564,14 @@ export default function Route({
   // concreto —por correo, por WhatsApp— y lo que necesita el SeekToAction del JSON-LD.
   // Acepta `12m30s`, `12:30` o segundos pelones: la liga tiene que poder escribirse
   // a mano, no solo generarse.
-  const startApplied = useRef(false);
-  useEffect(() => {
-    if (startApplied.current) return;
-    const t = parseVideoTime(new URLSearchParams(window.location.search).get("t"));
-    if (t === null || t <= 0) return;
-
-    // El <video> todavía no existe cuando este efecto corre por primera vez, y el
-    // efecto no se vuelve a disparar: sin esta espera, la liga con minuto abría el
-    // video desde el principio. Se reintenta hasta que el elemento aparece.
-    let timer: ReturnType<typeof setInterval> | null = null;
-    const apply = (el: HTMLVideoElement) => {
-      startApplied.current = true;
-      // Y hay que esperar a los metadatos: antes de eso fijar currentTime no hace nada.
-      const seek = () => { el.currentTime = t; };
-      if (el.readyState >= 1) seek();
-      else el.addEventListener("loadedmetadata", seek, { once: true });
-    };
-
-    if (playerRef.current) apply(playerRef.current);
-    else {
-      let tries = 0;
-      timer = setInterval(() => {
-        if (playerRef.current) {
-          clearInterval(timer!);
-          apply(playerRef.current);
-        } else if (++tries > 100) clearInterval(timer!); // 10 s y nos rendimos
-      }, 100);
-    }
-    return () => { if (timer) clearInterval(timer); };
-  }, [video.id]);
+  // `?t=` se lee una sola vez y se le pasa al player, que es quien sabe cuándo
+  // quedó attachada la fuente. Antes se fijaba `currentTime` desde aquí y el
+  // attach lo pisaba: la liga con minuto abría el video desde el principio.
+  const [startAt] = useState(() =>
+    typeof window === "undefined"
+      ? 0
+      : parseVideoTime(new URLSearchParams(window.location.search).get("t")) ?? 0,
+  );
 
   // Scroll lesson content into view when expanded
   useEffect(() => {
@@ -755,6 +732,7 @@ export default function Route({
         <VideoPlayer
           key={video.id}
           video={video}
+          startAt={startAt}
           courseId={course.id}
           src={video.storageLink || undefined}
           type={"video/mp4"}

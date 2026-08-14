@@ -24,6 +24,8 @@ function extractYouTubeId(url: string): string | null {
 
 interface VideoPlayerProps {
   video?: Partial<Video>;
+  /** Segundo de arranque que venía en `?t=`. */
+  startAt?: number;
   courseId?: string;
   slug: string;
   poster?: string;
@@ -58,6 +60,7 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({
   video,
+  startAt,
   courseId,
   slug,
   poster,
@@ -112,6 +115,7 @@ export const VideoPlayer = ({
     togglePlay,
     dismissEnding,
   } = useVideoPlayer({
+    startAt,
     video,
     courseId,
     slug,
