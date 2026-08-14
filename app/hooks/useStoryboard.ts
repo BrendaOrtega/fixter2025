@@ -63,7 +63,19 @@ export const useStoryboard = (videoSlug?: string) => {
     fetch(`/api/storyboard/${videoSlug}`)
       .then((r) => (r.ok ? r.text() : null))
       .then((t) => {
-        if (vivo && t) setTiles(parseStoryboardVTT(t));
+        if (!vivo || !t) return;
+        const parsed = parseStoryboardVTT(t);
+        setTiles(parsed);
+
+        // Precarga. Sin esto el sprite no se empieza a bajar hasta el PRIMER hover, y
+        // como además lleva un 302 al presigned, la primera miniatura tardaba en salir
+        // justo cuando la persona está buscando dónde saltar. Son uno o dos sprites,
+        // así que se piden todos.
+        for (const src of new Set(parsed.map((tile) => tile.src))) {
+          const img = new Image();
+          img.decoding = "async";
+          img.src = src;
+        }
       })
       .catch(() => {});
     return () => {

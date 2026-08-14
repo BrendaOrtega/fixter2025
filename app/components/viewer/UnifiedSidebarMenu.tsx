@@ -300,10 +300,14 @@ const UnifiedMenuButton = ({
       style={{ x }}
       onClick={onToggle}
       className={cn(
-        "fixed bg-[#0C1115] border border-gray-600/40 text-4xl w-14 h-14 text-white top-20 p-2 z-[220] flex items-center justify-center hover:bg-gray-800/80 transition-colors shadow-lg",
+        "fixed bg-[#0C1115] border border-gray-600/40 text-4xl w-14 h-14 text-white p-2 z-[220] flex items-center justify-center hover:bg-gray-800/80 transition-colors shadow-lg",
         {
-          "rounded-r-2xl left-0": !isOpen,
-          "rounded-2xl": isOpen,
+          // Cerrado es la pestaña para abrir: arriba, donde se busca.
+          "rounded-r-2xl left-0 top-20": !isOpen,
+          // Abierto se monta sobre el borde del panel, y arriba chocaba con las
+          // pestañas (que ahora son dos filas). Al centro funciona como manija y no
+          // se encima con nada.
+          "rounded-2xl top-1/2 -translate-y-1/2": isOpen,
         }
       )}
     >
@@ -476,9 +480,13 @@ const ResourcesContent = ({
 
   const Item = ({ r }: { r: (typeof resources)[number] }) => (
     <li>
-      <Link
+      <a
         // Canónica del material. La ruta decide si se puede abrir; aquí sólo se lista.
-        to={`/cursos/${courseSlug}/${videoSlug}/${r.slug}`}
+        href={`/cursos/${courseSlug}/${videoSlug}/${r.slug}`}
+        // Pestaña nueva: abrir unas slides encima del video te saca de la clase y
+        // pierdes el minuto en el que ibas.
+        target="_blank"
+        rel="noopener noreferrer"
         className="flex items-start gap-3 rounded-lg px-2 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
       >
         <span className="text-base leading-none">{ICONO_POR_TIPO[r.kind] || "📎"}</span>
@@ -486,7 +494,7 @@ const ResourcesContent = ({
           <span className="block">{r.title}</span>
           <span className="block text-xs capitalize text-gray-500">{r.kind}</span>
         </span>
-      </Link>
+      </a>
     </li>
   );
 

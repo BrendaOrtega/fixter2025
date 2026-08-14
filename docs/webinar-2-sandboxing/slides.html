@@ -96,6 +96,11 @@
   th{background:var(--ink);color:var(--yellow);text-transform:uppercase;
     letter-spacing:.1em;font-size:clamp(.78rem,1.1vw,1rem)}
   td.name{font-weight:800;background:var(--yellow)}
+  /* la tabla del mapa lleva 5 filas + dos notas: en 720px de alto necesita
+     apretarse o se sale de la slide */
+  .tabla-compacta th,.tabla-compacta td{padding:.42em .7em;
+    font-size:clamp(.82rem,1.2vw,1.12rem);line-height:1.22}
+  .tabla-compacta th{font-size:clamp(.68rem,.95vw,.88rem)}
 
   /* ── la escalera de aislamiento ── */
   .stairs{display:grid;grid-template-columns:repeat(4,1fr);gap:1.4vw;align-items:end;margin-top:1vh}
@@ -214,6 +219,10 @@
   @keyframes dial{0%,20%{transform:rotate(0)}55%,70%{transform:rotate(122deg)}100%{transform:rotate(0)}}
   .slide.on .art .bolt{animation:bolt 4s ease-in-out infinite}
   @keyframes bolt{0%,45%{transform:translateX(0)}62%,88%{transform:translateX(9px)}100%{transform:translateX(0)}}
+
+  /* el recibo: la última línea, la del total, aparece de golpe y se queda */
+  .slide.on .art .total{animation:total 3.4s steps(1) infinite}
+  @keyframes total{0%,40%{opacity:0}48%,92%{opacity:1}100%{opacity:0}}
 
   /* demo 2: la arena cae sola, sin que nadie la empuje */
   .slide.on .art .grain{animation:grain 1.8s cubic-bezier(.4,0,.85,1) infinite}
@@ -581,61 +590,71 @@
 <!-- 12 · LOS PROVEEDORES -->
 <section class="slide" data-t="27:00">
   <span class="kicker">El mapa</span>
-  <h2>La ola de sandboxes del último año.</h2>
+  <h2 style="font-size:clamp(1.8rem,3.6vw,2.9rem)">La ola de sandboxes del último año.</h2>
   <p style="font-size:clamp(.95rem,1.4vw,1.2rem)">
-    Una caja de 2 vCPU y 2 GB, prendida 8 horas al día. Dólar a 17 pesos. Un agente normal ejecuta cerca del 10%: el resto lo pasa esperando al modelo.
+    Una caja de 2 vCPU y 2 GB, prendida 8 horas al día. Dólar a 17 pesos. Los tiempos de arranque son los que declara cada proveedor. Un agente normal ejecuta cerca del 10%: el resto lo pasa esperando al modelo.
   </p>
-  <table style="margin-top:1.5vh">
+  <table class="tabla-compacta" style="margin-top:1vh">
     <thead><tr>
       <th>Proveedor</th><th>Qué te da</th>
       <th>Una caja al mes<br>ejecutando 100%</th><th>Una caja al mes<br>ejecutando 10%</th>
     </tr></thead>
     <tbody>
-      <tr><td class="name">E2B</td><td>Firecracker, arranca en ~150 ms. Cobra mientras la caja viva.</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
-      <tr><td class="name">Daytona</td><td>Cajas que persisten. Open source. Cobra mientras la caja viva.</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
-      <tr><td class="name">Modal</td><td>No cobra el idle. GPU con tarifa aparte.</td><td><strong>$1,354 MXN</strong></td><td><strong>$135 MXN</strong></td></tr>
-      <tr><td class="name">Fly Sprites</td><td>No cobra el idle. 100 GB de disco por caja.</td><td><strong>$928 MXN</strong></td><td><strong>$93 MXN</strong></td></tr>
+      <tr><td class="name">E2B</td><td>Despierta en ~150 ms. Firecracker. Cobra mientras la caja viva.</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
+      <tr><td class="name">Daytona</td><td>Despierta en ~90 ms. Persistente y open source. Cobra mientras la caja viva.</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
+      <tr><td class="name">Modal</td><td>Despierta en menos de 1 s. No cobra el idle. GPU con tarifa aparte.</td><td><strong>$1,354 MXN</strong></td><td><strong>$135 MXN</strong></td></tr>
+      <tr><td class="name">Fly Sprites</td><td>Despierta en 1-2 s, o ~300 ms desde checkpoint. No cobra el idle.</td><td><strong>$928 MXN</strong></td><td><strong>$93 MXN</strong></td></tr>
       <tr style="background:var(--violet);color:var(--paper)">
         <td class="name" style="background:var(--yellow);color:var(--ink)">EasyBits</td>
-        <td>Firecracker &lt;200 ms. Kernel persistente y URL pública. Plan fijo por caja.</td>
+        <td>Despierta en &lt;200 ms. Firecracker, kernel persistente y URL pública.</td>
         <td><strong>$299 MXN</strong></td>
         <td><strong>$299 MXN</strong><br><span style="opacity:.75">es plan fijo</span></td>
       </tr>
     </tbody>
   </table>
-  <p style="font-size:clamp(.95rem,1.4vw,1.2rem);margin-top:.6vh">
-    <strong>Kernel persistente</strong>: las variables y los imports siguen vivos entre una llamada
-    y la siguiente, como en un notebook. El agente no vuelve a cargar el archivo ni a importar todo
-    en cada paso — retoma donde se quedó.
-  </p>
+  <div class="box box--v" style="margin-top:1.2vh;padding:.75em 1.1em;display:flex;
+       align-items:center;gap:1em">
+    <span style="font-size:clamp(2.6rem,6vw,4.4rem);font-weight:800;line-height:.85;
+          background:var(--yellow);color:var(--ink);border:4px solid var(--ink);
+          padding:.05em .18em">4</span>
+    <p style="font-size:clamp(1.05rem,1.75vw,1.55rem);font-weight:800;line-height:1.2">
+      agentes en una sola caja de EasyBits.
+      <span style="font-weight:400">Los demás cobran una caja por agente.</span>
+    </p>
+  </div>
+  <div class="box box--y" style="margin-top:1vh;padding:.7em 1em">
+    <p style="font-size:clamp(.92rem,1.36vw,1.18rem);font-weight:700">
+      <strong>Kernel persistente</strong>: las variables y los imports siguen vivos entre una
+      llamada y la siguiente, como en un notebook. Con los que cobran por caja viva, conservar ese
+      estado deja el reloj corriendo; con plan fijo, no cuesta nada.
+    </p>
+  </div>
 </section>
 
-<!-- 13 · LOS PRECIOS -->
+<!-- 13 · LA FACTURA SORPRESA -->
 <section class="slide" data-t="30:00">
   <div class="cols">
     <div>
-      <span class="kicker">Saca tu cuenta</span>
-      <h2 style="margin-top:1.5vh;font-size:clamp(2rem,4.2vw,3.4rem)">La fórmula, para que no dependas de la calculadora de nadie.</h2>
-      <div class="box box--y" style="margin-top:1.5vh">
-        <p class="mono" style="font-weight:700;font-size:clamp(.95rem,1.45vw,1.25rem);line-height:1.5">
-          (vCPU × tarifa + GiB × tarifa)<br>× horas con la caja <strong>prendida</strong>
-        </p>
-      </div>
-      <p style="margin-top:1.2vh;font-size:clamp(1.05rem,1.55vw,1.35rem)">
-        Cada proveedor tiene su tarifa; todos cobran por segundo. La diferencia está
-        en si el reloj corre mientras la caja no ejecuta nada.
-      </p>
+      <span class="kicker">Lo que nadie presupuesta</span>
+      <h2 style="margin-top:1.5vh;font-size:clamp(2rem,4.2vw,3.4rem)">El agente que se quedó prendido.</h2>
+      <p style="margin-top:1.5vh">Alguien dejó su agente corriendo, se fue veinte minutos y volvió a una cuenta que no esperaba. En los foros circula el caso de uno desbocado que costó <strong>300 dólares</strong>.</p>
+      <p style="margin-top:1.2vh">Las plataformas administradas cobran ese tiempo de espera con un <strong>markup de 7 a 10 veces</strong>.</p>
+      <p style="margin-top:1.2vh">Lo que se factura no es el trabajo del agente: es el rato en que se quedó esperando al modelo, o esperando a que alguien se acordara de apagarlo.</p>
     </div>
-    <div class="box box--v" style="align-self:stretch;display:flex;flex-direction:column;justify-content:center">
-      <h3 style="font-size:clamp(1.1rem,1.75vw,1.45rem)">Una caja de 2 vCPU y 2 GB, prendida 8 h al día</h3>
-      <div class="stat" style="font-size:clamp(2.4rem,5.4vw,4rem);margin-top:.6em">$543</div>
-      <p style="font-weight:700">si te cobran las 8 horas completas</p>
-      <div class="stat" style="font-size:clamp(2.4rem,5.4vw,4rem);margin-top:.7em">$93</div>
-      <p style="font-weight:700">si te cobran solo lo que ejecuta</p>
-      <p style="margin-top:1em;font-size:clamp(.95rem,1.35vw,1.2rem)">
-        Pesos al mes, a 17 por dólar.
-      </p>
-    </div>
+    <!-- un recibo largo que sigue saliendo de la caja, sin que nadie lo pida -->
+    <svg viewBox="0 0 340 400" class="art" aria-label="Un recibo que no deja de salir">
+      <g stroke="#111" stroke-width="6" stroke-linejoin="round">
+        <rect x="52" y="34" width="236" height="74" rx="10" fill="#7b4cd9"/>
+        <rect x="86" y="56" width="168" height="14" rx="7" fill="#111"/>
+        <path d="M78 108 H262 L262 372 L240 352 L218 372 L196 352 L174 372
+                 L152 352 L130 372 L108 352 L86 372 L78 362 Z" fill="#FBF6E4"/>
+      </g>
+      <g stroke="#111" stroke-width="7" stroke-linecap="round" opacity=".35">
+        <path d="M104 152 H236"/><path d="M104 184 H210"/><path d="M104 216 H236"/>
+        <path d="M104 248 H186"/>
+      </g>
+      <g class="total"><path d="M104 300 H236" stroke="#E4572E" stroke-width="12" stroke-linecap="round"/></g>
+    </svg>
   </div>
 </section>
 
@@ -644,8 +663,13 @@
   <div class="cols">
     <div>
       <span class="badge">Demo 2</span>
-      <h2 style="margin-top:2vh;max-width:20ch">Cuánto tiempo piensa y cuánto ejecuta.</h2>
-      <p class="lead" style="margin-top:1.5vh">Un agente corriendo con el reloj partido en dos, para sacar la proporción con un número medido y no con uno inventado.</p>
+      <h2 style="margin-top:2vh;max-width:18ch">¿Cuánto de esa hora fue trabajo?</h2>
+      <p class="lead" style="margin-top:1.5vh">Corremos un agente con dos cronómetros a la vista:</p>
+      <ul style="margin-top:1.2vh;max-width:40ch">
+        <li>Minutos con la caja prendida</li>
+        <li>Segundos ejecutando código de verdad</li>
+      </ul>
+      <p style="margin-top:1.2vh">Ese es el 10% de la tabla, ya no como supuesto mío.</p>
     </div>
     <!-- el tiempo cae en monedas: corre igual aunque nadie esté trabajando -->
     <svg viewBox="0 0 300 400" class="art" aria-label="Un reloj de arena que cuenta monedas">
@@ -856,7 +880,7 @@
 <div class="notes" data-for="10"><span class="t">En pantalla</span><p>Sandbox real levantándose, con el cronómetro a la vista. Lo importante del demo es el tiempo de arranque y lo que pasa cuando corres algo que no deberías.</p></div>
 <div class="notes" data-for="11"><span class="t">Apunte · las cuatro</span><p>Sirven para leer cualquier comparativa sin perderse entre features. Las cuatro salen del patrón de uso, que es lo que cambia entre un agente y un job normal.</p></div>
 <div class="notes" data-for="12"><span class="t">Apunte · el mapa</span><p>En el último año salieron muchísimos: E2B, AIO Sandbox, Sandboxer, AgentSphere, Exe.dev y los de las nubes grandes. Varios corren Firecracker por debajo, así que lo que los distingue es el cobro y la persistencia.</p><p>El problema que la gente reporta no es la tarifa por hora: es la factura sorpresa. Alguien dejó su agente corriendo, se fue veinte minutos y volvió a una cuenta que no esperaba; en los foros circula el caso de un agente desbocado de 300 dólares.</p></div>
-<div class="notes" data-for="13"><span class="t">Apunte · precios</span><p>Los números por hora son parecidos entre proveedores. Lo que cambia la factura es si el reloj sigue corriendo mientras el sandbox está levantado sin hacer nada, que en un agente pasa seguido.</p></div>
+<div class="notes" data-for="13"><span class="t">Apunte · la factura</span><p>Este es el problema que la gente reporta de verdad: no la tarifa por hora, sino la cuenta que llega por algo que se quedó prendido. Han salido herramientas solo para cortarle la luz a un agente cuando pasa cierto monto.</p><p>De ahí sale la cuarta pregunta: quién paga el idle.</p></div>
 <div class="notes" data-for="14"><span class="t">En pantalla</span><p>El mismo trabajo con el reloj partido en dos. La proporción que salga aquí es la que hay que llevarse, medida en vivo.</p></div>
 <div class="notes" data-for="15"><span class="t">Apunte · Code Mode</span><p>Los modelos escriben mejor código del que improvisan cadenas de llamadas, porque programar es exactamente lo que vieron millones de veces en entrenamiento. Code Mode aprovecha eso.</p></div>
 <div class="notes" data-for="16"><span class="t">En pantalla</span><p>Las mismas herramientas que ya tienes como MCP, expuestas como una API que el modelo puede orquestar en una sola pasada.</p></div>
