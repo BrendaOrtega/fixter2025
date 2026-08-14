@@ -49,6 +49,21 @@ export const WEBINAR_SLOTS: WebinarSlot[] = [
 export const getWebinarSlot = (id?: string | null) =>
   WEBINAR_SLOTS.find((s) => s.id === id);
 
+/**
+ * El siguiente webinar que todavía no ocurre.
+ *
+ * Existe porque la landing tenía la fecha escrita a mano ("el jueves 13") y al día
+ * siguiente del primero seguía invitando a uno que ya había pasado. Con tres fechas —y
+ * unos treinta y seis webinars el año que viene— eso no se puede sostener a mano.
+ *
+ * Devuelve `undefined` cuando ya pasaron todos: quien llama decide qué enseñar entonces
+ * (normalmente, la grabación).
+ */
+export const proximoWebinar = (ahora: Date = new Date()) =>
+  WEBINAR_SLOTS.find(
+    (s) => new Date(`${s.id}T21:00:00-06:00`).getTime() > ahora.getTime()
+  );
+
 /** URL estable de la sala: redirige a WEBINAR_ROOM_URL cuando esté lista. */
 export const WEBINAR_ROOM_PATH = "https://www.fixtergeek.com/webinar-en-vivo";
 

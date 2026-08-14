@@ -13,6 +13,7 @@ import {
   WEBINAR_SUBTITLE,
   WEBINAR_TITLE,
   getWebinarSlot,
+  proximoWebinar,
 } from "~/utils/webinarDates";
 
 // Secuencias de recordatorio por fecha (scripts/create-webinar-sequences.ts)
@@ -659,6 +660,8 @@ function WebinarSection() {
 
 export default function SistemasAgenticosLanding() {
   const fetcher = useFetcher();
+  // El siguiente webinar que no ha pasado. `undefined` cuando ya se dieron los tres.
+  const proximo = proximoWebinar();
   const [showConfetti, setShowConfetti] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -792,13 +795,39 @@ export default function SistemasAgenticosLanding() {
                 — <s className="opacity-60">${PRICE_REGULAR.toLocaleString()}</s>{" "}
                 en siguientes ediciones
               </p>
+              {/* La fecha sale de los datos: escrita a mano seguía invitando al webinar
+                  del 13 al día siguiente de darlo. Y si ya pasaron todos, se ofrece la
+                  grabación en vez de un enlace a nada. */}
               <p className="mt-4 text-sm text-sistemas-gray">
-                ¿Prefieres verlo antes?{" "}
+                {proximo ? (
+                  <>
+                    ¿Prefieres verlo antes?{" "}
+                    <a
+                      href="#webinar"
+                      className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
+                    >
+                      Webinar gratis el {proximo.short.split(" ·")[0].toLowerCase()} →
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    ¿Prefieres verlo antes?{" "}
+                    <a
+                      href={`/cursos/sistemas-agenticos/viewer?videoSlug=${WEBINAR_RECORDING_SLUG}`}
+                      className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
+                    >
+                      Mira el webinar completo, gratis →
+                    </a>
+                  </>
+                )}
+              </p>
+              <p className="mt-1 text-xs text-sistemas-gray/70">
+                Y el primero ya está grabado:{" "}
                 <a
-                  href="#webinar"
-                  className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
+                  href={`/cursos/sistemas-agenticos/viewer?videoSlug=${WEBINAR_RECORDING_SLUG}`}
+                  className="underline underline-offset-2 hover:text-sistemas-accent"
                 >
-                  Webinar gratis el jueves 13 →
+                  «Anatomía de un sistema agéntico», 1h15
                 </a>
               </p>
             </motion.div>
