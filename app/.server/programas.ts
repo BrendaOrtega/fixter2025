@@ -68,7 +68,11 @@ export const getPrograma = async (slug: string) => {
 
   const [videos, transcripts, resources, subscribers, views] = await Promise.all([
     db.video.findMany({
-      where: { id: { in: course.videoIds } },
+      // Por `courseIds` y no por `course.videoIds`: la relación vive en los dos
+      // lados y basta que uno se desincronice para que una pieza quede
+      // invisible aquí pero visible en el reproductor — y sin forma de
+      // borrarla. El viewer lista por este mismo criterio.
+      where: { courseIds: { has: course.id } },
       select: {
         id: true,
         slug: true,
@@ -86,13 +90,18 @@ export const getPrograma = async (slug: string) => {
       },
     }),
     db.transcript.findMany({
-      where: { videoId: { in: course.videoIds } },
+      where: { video: { courseIds: { has: course.id } } },
       // El texto completo son ~12 mil palabras por video: aquí solo interesa
       // si existe y qué tan trabajado está.
       select: { videoId: true, source: true, chapters: true, language: true },
     }),
     db.resource.findMany({
-      where: { OR: [{ courseId: course.id }, { videoId: { in: course.videoIds } }] },
+      where: {
+        OR: [
+          { courseId: course.id },
+          { video: { courseIds: { has: course.id } } },
+        ],
+      },
       select: {
         id: true,
         slug: true,
