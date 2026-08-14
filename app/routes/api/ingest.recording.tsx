@@ -79,12 +79,26 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const hora = cuando.toISOString().slice(11, 16).replace(":", "");
     const slug = String(body.slug ?? "") || `${slugify(title)}-${dia}-${hora}`;
 
+    // ⚠️ `index` y `description` NO son opcionales de facto: el viewer ordena y navega por
+    // el índice, y una pieza sin él queda fuera de la secuencia. Se coloca AL FINAL del
+    // programa, que es donde va una grabación nueva.
+    const hermanos = await db.video.findMany({
+      where: { id: { in: course.videoIds } },
+      select: { index: true },
+    }).catch(() => []);
+    const siguiente = hermanos.reduce((max, v) => Math.max(max, v.index ?? 0), -1) + 1;
+    const cuandoTexto = cuando.toLocaleDateString("es-MX", {
+      day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City",
+    });
+
     const video = await db.video.upsert({
       where: { slug },
       update: { title, eventDate: cuando },
       create: {
         slug,
         title,
+        description: `Grabación de la sesión del ${cuandoTexto}.`,
+        index: siguiente,
         kind: "webinar",
         eventDate: cuando,
         moduleName: "Webinars",
