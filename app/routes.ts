@@ -111,6 +111,13 @@ export default [
     route(":courseSlug/viewer", "routes/courseViewer.tsx"),
     route(":courseSlug/detalle", "routes/courseDetail.tsx"),
     route(":courseSlug/rating", "routes/cursos.$courseSlug.rating.tsx"),
+    // Canónicas de una pieza del programa y de sus materiales. Van al final:
+    // las rutas estáticas de arriba (detail, viewer, detalle, rating) ganan.
+    route(":courseSlug/:videoSlug", "routes/cursos.$courseSlug.$videoSlug.tsx"),
+    route(
+      ":courseSlug/:videoSlug/:resourceSlug",
+      "routes/cursos.$courseSlug.$videoSlug.$resourceSlug.tsx",
+    ),
   ]),
   ...prefix("blog", [
     index("routes/blog.tsx"),

@@ -556,7 +556,9 @@ export default function Route({
               <motion.button
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute -top-14 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-5 py-2.5 bg-brand-700 hover:bg-brand-600 text-white rounded-full text-sm font-medium shadow-lg transition-colors cursor-pointer"
+                // Va debajo del video, no encima: con `absolute -top-14` se montaba
+                // sobre la barra de progreso del player.
+                className="mx-auto mt-4 flex items-center gap-2 px-5 py-2.5 bg-brand-700 hover:bg-brand-600 text-white rounded-full text-sm font-medium shadow-lg transition-colors cursor-pointer"
                 onClick={() => setShowLessonContent(true)}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

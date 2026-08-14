@@ -1,8 +1,10 @@
 import { redirect } from "react-router";
+import { canonicalUrlForLegacyPath } from "~/.server/resources";
 
-// Link decible para las slides del primer webinar (13 ago 2026). El deck vive
-// como archivo estático autocontenido en `public/webinar-1/slides.html`, que se
-// regenera con `node scripts/build-webinar-slides.mjs` + copia a public/.
-// Se sirve desde nuestro dominio a propósito: la API de EasyBits no sobrescribe
-// archivos, así que cada republicación cambiaría la URL y rompería este link.
-export const loader = () => redirect("/webinar-1/slides.html");
+// Ruta vieja, no semántica: "webinar-1" no dice de qué programa es, y vienen
+// unos 36 webinars el próximo año. Se queda viva porque ya se compartió, pero
+// manda a la canónica /cursos/:curso/:video/slides.
+export const loader = async () => {
+  const canonical = await canonicalUrlForLegacyPath("/webinar-1/slides");
+  return redirect(canonical || "/webinar-1/slides.html", canonical ? 301 : 302);
+};

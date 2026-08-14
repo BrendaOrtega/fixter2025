@@ -411,6 +411,10 @@ model Course {
   icon              String?
   poster            String?
   isLive            Boolean   @default(false)
+  /// En qué fase del ciclo va el programa: se promociona con webinars abiertos,
+  /// se imparte en vivo, y al final todas las grabaciones lo vuelven un curso
+  /// on-demand al mismo precio. La fase decide qué se muestra y qué se vende.
+  stage             String?   // "promocion" | "en-vivo" | "on-demand"
   // Si está presente, la card del catálogo lleva aquí en vez de a /cursos/{slug}/detalle.
   // Para talleres en vivo que tienen su propia landing de venta.
   landingUrl        String?
@@ -477,6 +481,17 @@ model Video {
   title       String
   isPublic    Boolean  @default(false)
   accessLevel String   @default("paid") // "public" | "subscriber" | "paid"
+
+  /// Qué es esta pieza dentro del programa. Un taller no publica solo
+  /// "lecciones": publica webinars de promoción, sesiones en vivo y shorts, y
+  /// todos terminan siendo el mismo curso on-demand. Sin esto el admin no puede
+  /// distinguirlos y cada publicación necesita código nuevo.
+  kind        String?  // "webinar" | "sesion" | "short" | "leccion"
+  /// Cuándo ocurrió en vivo (webinars y sesiones). Distinto de createdAt.
+  eventDate   DateTime?
+  /// Slides, PDFs y demás material de esta pieza.
+  resources   Resource[]
+
   //optionals
   moduleName  String?
   storageLink String?
@@ -954,6 +969,58 @@ model LeadMagnet {
   updatedAt           DateTime @updatedAt
 
   @@map("lead_magnets")
+}
+
+/// Material de una pieza del programa: las slides de un webinar, el PDF que se
+/// regaló ahí, un repo, una grabación externa.
+///
+/// Deliberadamente NO es un `LeadMagnet`: ese modelo es una landing de captura
+/// completa (`heroTitle` y `tagOnDownload` son obligatorios, más veinte campos
+/// de diseño), pensada para convertir a un desconocido. Un material se le sirve
+/// a quien ya entró, y lo único que necesita es dónde está y de quién cuelga.
+model Resource {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  /// Último segmento de la URL: /cursos/:curso/:video/{slug}
+  slug        String
+  kind        String   // "slides" | "pdf" | "repo" | "link"
+  title       String
+
+  /// Uno de los dos: archivo propio en S3, o destino externo.
+  s3Key       String?
+  externalUrl String?
+
+  /// De qué cuelga. Un material suele ser de una pieza; los de curso completo
+  /// (temario, repo base) van con `courseId` y sin `videoId`.
+  videoId     String?  @db.ObjectId
+  video       Video?   @relation(fields: [videoId], references: [id])
+  courseId    String?  @db.ObjectId
+
+  /// Ruta corta vieja que debe seguir viva (`/seis-piezas`): se pegó en chats y
+  /// correos ya enviados, romperla deja links muertos que no podemos recuperar.
+  legacyPath  String?  @unique
+
+  accesses    ResourceAccess[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([videoId, slug])
+  @@index([courseId])
+  @@map("resources")
+}
+
+/// Quién abrió cada material. El consumo de video ya lo cuenta `VideoView` y las
+/// aperturas de correo `SequenceEnrollment`; esta es la pata que faltaba para
+/// medir compromiso.
+model ResourceAccess {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId String   @db.ObjectId
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  email      String?  // anónimo si todavía no deja correo
+  createdAt  DateTime @default(now())
+
+  @@index([resourceId])
+  @@index([email])
+  @@map("resource_accesses")
 }
 
 model LeadMagnetDownload {
