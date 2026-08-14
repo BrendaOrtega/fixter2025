@@ -208,12 +208,24 @@ export function useVideoPlayer({
         isS3Key: video.storageLink ? isS3Key(video.storageLink) : false,
       });
 
+      // ⚠️ Las URLs de `/api/hls-proxy` que se arman AQUÍ van sin `&t=`, y el proxy exige
+      // el token en todas sus ramas → 403. Hoy no se nota porque el loader ya entrega el
+      // `m3u8` proxificado y firmado (`buildHlsProxyUrl`), así que estos caminos sólo se
+      // pisan con fuentes que no vengan de él. El token lo firma el SERVIDOR con `SECRET`:
+      // no se puede acuñar en el navegador, así que la salida real es que el loader firme
+      // también esas fuentes, no parchear esto. Se avisa para que no se persiga como un
+      // fallo de reproducción.
+      const sinFirmar = (u: string) => {
+        console.warn("🎬 hls-proxy sin token: el servidor lo rechazará con 403 —", u);
+        return u;
+      };
+
       // Helper to resolve source URL based on format
       const resolveSource = async (source: string): Promise<string> => {
         // Case 1: Direct S3 key (new format) -> use proxy
         if (isS3Key(source)) {
           console.log("🎬 Using S3 key via proxy:", source);
-          return `/api/hls-proxy?path=${encodeURIComponent(source)}`;
+          return sinFirmar(`/api/hls-proxy?path=${encodeURIComponent(source)}`);
         }
 
         // Case 2: Internal route (legacy) -> use as-is
@@ -228,7 +240,7 @@ export function useVideoPlayer({
             const s3Key = extractS3Key(source);
             if (s3Key) {
               console.log("🎬 Extracted S3 key from URL:", s3Key);
-              return `/api/hls-proxy?path=${encodeURIComponent(s3Key)}`;
+              return sinFirmar(`/api/hls-proxy?path=${encodeURIComponent(s3Key)}`);
             }
             return await interceptHLSUrl(source);
           }

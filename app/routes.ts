@@ -33,6 +33,9 @@ export default [
   route("aviso-de-privacidad", "routes/aviso.tsx"),
   route("terminos-y-condiciones", "routes/terms.tsx"),
   route("sitemap.xml", "routes/sitemap.tsx"),
+  // Se genera desde la base: el estático de `public/` decía "Diciembre 2025" y no
+  // listaba ni un vídeo. Ver `app/routes/llms.txt.tsx`.
+  route("llms.txt", "routes/llms.txt.tsx"),
   route("sitemap", "routes/sitemap.redirect.tsx"), // redirect → /sitemap.xml
   // Video streaming endpoint (legacy format)
   route("videos", "routes/videos.tsx"),
@@ -146,6 +149,8 @@ export default [
     route("hls-proxy", "routes/api/hls-proxy.tsx"),
     route("transcript/:videoSlug", "routes/api/transcript.$videoSlug.tsx"),
     route("storyboard/:videoSlug", "routes/api/storyboard.$videoSlug.tsx"),
+    // Ghosty Teams publica aquí las grabaciones de sus webinars. Firmado con HMAC.
+    route("ingest/recording", "routes/api/ingest.recording.tsx"),
     route("course-search", "routes/api/course-search.ts"),
     route("book-epub", "routes/api/book-epub.tsx"),
     route("ratings", "routes/api/ratings.ts"),

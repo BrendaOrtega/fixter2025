@@ -71,6 +71,16 @@ export const loader = async ({ request }: { request: Request }) => {
       });
     }
 
+    // ⚠️ Los subtítulos NO pueden caer en la rama de abajo: ahí se descarga el cuerpo y se
+    // reescribe como si fuera una playlist, y se devuelve con el MIME de HLS. Un `.vtt`
+    // servido así no carga como pista de texto y el botón de subtítulos no hace nada.
+    if (hlsPath.endsWith('.vtt')) {
+      const presignedUrl = await Effect.runPromise(
+        s3VideoService.getHLSPresignedUrl(hlsPath, 3600)
+      );
+      return new Response(null, { status: 302, headers: { ...corsHeaders, Location: presignedUrl } });
+    }
+
     // Segmentos: 302 al presigned. Los bytes salen de Tigris, no de esta máquina.
     // Tigris atiende los Range requests directo y el bucket ya tiene CORS abierto,
     // que es lo que permite que hls.js siga el redirect desde un XHR.

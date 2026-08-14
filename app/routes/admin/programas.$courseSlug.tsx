@@ -145,6 +145,19 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                       <span className="px-2 py-0.5 text-xs rounded-full bg-gray-800 text-gray-300">
                         {kindLabel(pieza.kind)}
                       </span>
+                      {/* Una pieza puede estar aquí sin verse todavía: las grabaciones que
+                          publica Ghosty Teams nacen ocultas, y las que aún se están
+                          convirtiendo no tienen qué reproducir. Sin decirlo, un borrador
+                          parece un vídeo roto. */}
+                      {pieza.processingStatus && pieza.processingStatus !== "ready" ? (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-amber-900/60 text-amber-200">
+                          {pieza.processingStatus === "failed" ? "Falló" : "Procesando"}
+                        </span>
+                      ) : !pieza.isPublic ? (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-gray-700 text-gray-200">
+                          Borrador
+                        </span>
+                      ) : null}
                       {fecha(pieza.eventDate) && (
                         <span className="text-xs text-gray-500">
                           {fecha(pieza.eventDate)}
