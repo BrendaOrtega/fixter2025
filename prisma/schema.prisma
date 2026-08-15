@@ -287,6 +287,12 @@ model Subscriber {
   name      String? // Backward compatibility
   avatar    String?
 
+  /// Celular en E.164 (+525512345678) y su consentimiento explícito para
+  /// WhatsApp. Son campos aparte porque el número puede existir sin permiso
+  /// de escribirle: dar el teléfono no es aceptar mensajes.
+  phone         String?
+  whatsappOptIn Boolean @default(false)
+
   // Campos personalizados ilimitados
   customFields Json?
 

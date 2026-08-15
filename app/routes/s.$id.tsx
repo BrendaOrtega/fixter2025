@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -9,6 +9,7 @@ import type { Route } from "./+types/s.$id";
 import { db } from "~/.server/db";
 import { calculateNextEmailDate } from "~/.server/sequences";
 import { checkSignupEmail } from "~/.server/anti-bot";
+import { normalizePhone } from "~/.server/phone";
 import { sendSequenceConfirmation } from "~/mailSenders/sendSequenceConfirmation";
 import getMetaTags from "~/utils/getMetaTags";
 import useRecaptcha from "~/lib/useRecaptcha";
@@ -65,9 +66,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   const email = String(formData.get("email") || "").toLowerCase().trim();
   const name = (formData.get("name") as string)?.trim() || undefined;
+  const wantsWhatsapp = formData.get("wantsWhatsapp") === "on";
+  const rawPhone = String(formData.get("phone") || "").trim();
 
   if (!email || !email.includes("@")) {
     return data({ error: "Email inválido" }, { status: 400 });
+  }
+
+  // El celular solo se guarda si la persona pidió WhatsApp. Sin esa casilla no
+  // hay consentimiento, y un número sin permiso no sirve de nada.
+  let phone: string | undefined;
+  if (wantsWhatsapp && rawPhone) {
+    const parsed = normalizePhone(rawPhone);
+    if (!parsed.ok) return data({ error: parsed.error }, { status: 400 });
+    phone = parsed.phone;
   }
 
   // Anti-bot: dominio desechable o truco de puntos en gmail → fingir éxito y no crear.
@@ -99,7 +111,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   let subscriber = await db.subscriber.findUnique({ where: { email } });
   if (!subscriber) {
     subscriber = await db.subscriber.create({
-      data: { email, name, confirmed: false, tags: [] },
+      data: {
+        email,
+        name,
+        confirmed: false,
+        tags: [],
+        phone,
+        whatsappOptIn: !!phone,
+      },
+    });
+  } else if (phone) {
+    // Quien ya existía y ahora sí quiere WhatsApp: se actualiza. Nunca al
+    // revés — no dar el número esta vez no revoca un permiso anterior.
+    subscriber = await db.subscriber.update({
+      where: { id: subscriber.id },
+      data: { phone, whatsappOptIn: true },
     });
   }
 
@@ -151,6 +177,8 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
   const emailRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const honeyRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
 
   const onSubmit = () => {
     const fd = new FormData();
@@ -158,6 +186,10 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
     fd.append("email", emailRef.current?.value || "");
     fd.append("name", nameRef.current?.value || "");
     fd.append("website", honeyRef.current?.value || "");
+    if (wantsWhatsapp) {
+      fd.append("wantsWhatsapp", "on");
+      fd.append("phone", phoneRef.current?.value || "");
+    }
     fetcher.submit(fd, { method: "POST" });
   };
 
@@ -196,11 +228,13 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
             alt="FixterGeek"
             className="h-10 mx-auto opacity-90 mb-8"
           />
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 text-balance">
             {sequence.name}
           </h1>
           {sequence.description && (
-            <p className="text-lg text-brand-100">{sequence.description}</p>
+            <p className="text-lg text-brand-100 text-balance">
+              {sequence.description}
+            </p>
           )}
           <p className="text-brand-100 text-sm mt-4">
             por {author} · {sequence._count.emails}{" "}
@@ -255,6 +289,34 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                 placeholder="tu@correo.com"
                 className="w-full px-4 py-3 rounded-lg bg-brand-900/60 border border-brand-100/20 text-white placeholder-brand-300 focus:outline-none focus:border-brand-500"
               />
+              {/* WhatsApp opcional: la casilla revela el campo. Pedir el
+                  celular de entrada baja las altas; escondido detrás de un
+                  sí explícito, solo lo llena quien de verdad lo quiere. */}
+              <label className="flex items-start gap-3 cursor-pointer text-brand-100 text-sm">
+                <input
+                  type="checkbox"
+                  checked={wantsWhatsapp}
+                  onChange={(e) => setWantsWhatsapp(e.target.checked)}
+                  className="mt-1 w-4 h-4 shrink-0 accent-brand-500"
+                />
+                <span>También quiero recibirlo por WhatsApp 💬</span>
+              </label>
+              {wantsWhatsapp && (
+                <div>
+                  <input
+                    ref={phoneRef}
+                    type="tel"
+                    name="phone"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="55 1234 5678"
+                    className="w-full px-4 py-3 rounded-lg bg-brand-900/60 border border-brand-100/20 text-white placeholder-brand-300 focus:outline-none focus:border-brand-500"
+                  />
+                  <p className="text-brand-300 text-xs mt-2">
+                    Con lada del país si no estás en México (+34, +54…).
+                  </p>
+                </div>
+              )}
               {error && <p className="text-red-400 text-sm">{error}</p>}
               <button
                 type="submit"
