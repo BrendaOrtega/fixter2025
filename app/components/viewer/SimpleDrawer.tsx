@@ -134,7 +134,12 @@ export const Drawer = ({
           // flex dentro de un contenedor con scroll.
           className="scrollbar-sutil flex flex-1 flex-col overflow-y-auto lg:block"
         >
-          <div className="w-full lg:my-0 my-auto">{children}</div>
+          {/* Medida de lectura: a pantalla completa en tablet las líneas se
+              estiraban a 800px y se leen mal. El cajón puede ser ancho; el
+              texto no. */}
+          <div className="mx-auto my-auto w-full max-w-lg lg:my-0 lg:max-w-none">
+            {children}
+          </div>
         </section>
         <nav className={cn("flex justify-end gap-4 mt-auto", noActions && "hidden")}>
           {cta ? (
