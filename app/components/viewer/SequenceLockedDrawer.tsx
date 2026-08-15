@@ -120,7 +120,9 @@ export function SequenceLockedDrawer({
               <strong className="text-white">
                 {sequenceName || "una serie gratuita"}
               </strong>
-              . Déjanos tu correo y se abre de inmediato.
+              {/* Con sesión no se pide nada: pedir el correo aquí y mostrarlo
+                  dos líneas abajo se contradice solo. */}
+              {conSesion ? "." : ". Déjanos tu correo y se abre de inmediato."}
             </>
           )}
         </p>

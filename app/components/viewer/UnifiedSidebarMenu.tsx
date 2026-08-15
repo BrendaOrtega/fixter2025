@@ -197,10 +197,9 @@ export const UnifiedSidebarMenu = ({
 
   return (
     <>
-      {/* Unified Menu Button */}
-      {/* Sólo para ABRIR. Con el panel abierto el cierre vive en el encabezado: un
-          botón flotando sobre el borde acababa siempre encima de las pestañas, y
-          moverlo o hacerle hueco con padding rompía otra cosa cada vez. */}
+      {/* Sólo para ABRIR. Con el panel abierto el cierre vive colgado del
+          borde: un botón flotando sobre el panel acababa encima de las
+          pestañas. */}
       {!isOpen && (
         <UnifiedMenuButton
           x={buttonX}
@@ -237,7 +236,7 @@ export const UnifiedSidebarMenu = ({
               type="button"
               onClick={() => setIsOpen(false)}
               aria-label="Cerrar el menú"
-              className="-mr-1 shrink-0 rounded-full p-2 text-2xl text-brand-100 transition-colors hover:text-white md:hidden"
+              className="-mr-1 shrink-0 rounded-full p-2 text-2xl text-brand-100 transition-colors hover:text-white lg:hidden"
             >
               <IoMdClose />
             </button>
@@ -447,8 +446,8 @@ const UnifiedMenuContainer = ({
       style={{
         x,
         width: menuWidth,
+        zIndex: LAYER.sidebar,
       }}
-      style={{ zIndex: LAYER.sidebar }}
       className={cn(
         "fixed h-screen bg-[#0C1115] top-0 left-0 flex flex-col",
         "shadow-2xl border-r border-gray-700/50"
