@@ -26,7 +26,10 @@ const DESCRIPTION = `Un agente completo desde cero: un \`fetch\`, una herramient
 
 ![El ciclo de un agente](/ilustraciones/loop-agente.svg)
 
-Le describes al modelo qué herramientas existen. Él pide ejecutar una, tú la ejecutas y le devuelves el resultado. Vuelves a llamarlo con el historial completo.
+1. Le describes al modelo qué herramientas existen
+2. Él pide ejecutar una
+3. Tú la ejecutas y le devuelves el resultado
+4. Lo vuelves a llamar con el historial completo
 
 Cuando responde con texto en vez de pedir otra herramienta, terminó.
 

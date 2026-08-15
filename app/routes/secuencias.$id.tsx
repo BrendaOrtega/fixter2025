@@ -230,6 +230,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         data: { order: { increment: 1 } },
       });
       order = after + 1;
+
+      // Los inscritos que ya iban más adelante se corren con los correos: si no,
+      // el siguiente que reciben es uno que ya habían leído.
+      const { shiftEnrollments } = await import("~/.server/sequences");
+      await shiftEnrollments(sequenceId, order, 1);
     }
 
     const videoSlug = (formData.get("videoSlug") as string) || null;
@@ -328,9 +333,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (intent === "delete_email") {
     const emailId = formData.get("emailId") as string;
+    // El orden del que se va, para saber a quién hay que mover.
+    const borrado = await db.sequenceEmail.findUnique({
+      where: { id: emailId },
+      select: { order: true },
+    });
+
     await db.sequenceEmail.deleteMany({
       where: { id: emailId, sequenceId },
     });
+
+    // Sin esto, quien iba justo en esa posición se salta la entrega siguiente
+    // —en silencio— porque su índice apunta a lo que ahora ocupa otro correo.
+    if (borrado) {
+      const { shiftEnrollments } = await import("~/.server/sequences");
+      await shiftEnrollments(sequenceId, borrado.order + 1, -1);
+    }
+
     // Renumerar para mantener el orden contiguo (1..n)
     const remaining = await db.sequenceEmail.findMany({
       where: { sequenceId },

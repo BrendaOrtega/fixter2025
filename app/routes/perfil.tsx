@@ -1,5 +1,10 @@
 import { forwardRef, useRef, useState, type ChangeEvent } from "react";
-import { type LoaderFunctionArgs } from "react-router";
+import {
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+  data,
+  useFetcher,
+} from "react-router";
 import type { Route } from "./+types/perfil";
 import { FaEdit } from "react-icons/fa";
 import { cn } from "~/utils/cn";
@@ -11,7 +16,79 @@ import getMetaTags from "~/utils/getMetaTags";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUserOrRedirect(request);
   const putURL = await getPutFileUrl(user.email);
-  return { user, putURL };
+
+  // Las suscripciones de esta persona. Un usuario nos escribió que canceló sin
+  // querer, buscó aquí para volver a suscribirse y no había nada: el perfil es
+  // el primer lugar donde uno busca, y no existía.
+  const { db } = await import("~/.server/db");
+  const subscriber = await db.subscriber.findUnique({
+    where: { email: user.email },
+    select: { id: true },
+  });
+
+  const suscripciones = subscriber
+    ? await db.sequenceEnrollment.findMany({
+        where: { subscriberId: subscriber.id },
+        orderBy: { enrolledAt: "desc" },
+        select: {
+          id: true,
+          status: true,
+          currentEmailIndex: true,
+          nextEmailAt: true,
+          sequence: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              isActive: true,
+              _count: { select: { emails: true } },
+            },
+          },
+        },
+      })
+    : [];
+
+  return { user, putURL, suscripciones };
+};
+
+/** Pausar o reactivar una suscripción desde el perfil. */
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const user = await getUserOrRedirect(request);
+  const formData = await request.formData();
+  const enrollmentId = formData.get("enrollmentId") as string;
+  const intent = formData.get("intent");
+
+  const { db } = await import("~/.server/db");
+  // Que sea suya: el id viaja en el formulario y no basta con confiarle.
+  const enr = await db.sequenceEnrollment.findUnique({
+    where: { id: enrollmentId },
+    select: { id: true, sequenceId: true, subscriber: { select: { email: true } } },
+  });
+  if (!enr || enr.subscriber?.email !== user.email) {
+    return data({ error: "No encontramos esa suscripción" }, { status: 404 });
+  }
+
+  if (intent === "pausar") {
+    await db.sequenceEnrollment.update({
+      where: { id: enr.id },
+      data: { status: "paused" },
+    });
+    return data({ ok: true });
+  }
+
+  if (intent === "reactivar") {
+    const subscriber = await db.subscriber.findUnique({
+      where: { email: user.email },
+      select: { id: true },
+    });
+    if (subscriber) {
+      const { enrollSubscriberInSequence } = await import("~/.server/sequences");
+      await enrollSubscriberInSequence(enr.sequenceId, subscriber.id);
+    }
+    return data({ ok: true });
+  }
+
+  return data({ error: "Acción no reconocida" }, { status: 400 });
 };
 
 export const meta = () =>
@@ -21,7 +98,7 @@ export const meta = () =>
   });
 
 export default function Route({
-  loaderData: { user, putURL },
+  loaderData: { user, putURL, suscripciones },
 }: Route.ComponentProps) {
   return (
     <article className="h-screen">
@@ -38,53 +115,102 @@ export default function Route({
           {user.email}
         </p>
 
-        <section className="flex justify-center px-10 md:px-[5%] xl:px-0">
-          <div
-            style={{ backgroundImage: "url(https://i.imgur.com/JEAzNoh.png)" }}
-            className="dark:text-white w-[640px] bg-white p-4 rounded-lg bg-cover bg-right border-[1px] border-brand-black-200/10 dark:border-brand-black-100/10 bg-no-repeat"
-          >
-            <div className="bg-[#fff] dark:bg-[#1B1E24] rounded-lg p-10">
-              <h3 className="font-bold text-xl text-brand-black-400 mb-1">
-                {" "}
-                Suscripción PRO
-              </h3>
-              <p className="text-3xl font-bold ">
-                $X,XXX.00 <span className="text-sm text-blueLight">MXN</span>
-              </p>
-              <div className="flex flex-wrap md:flex-nowrap mt-6">
-                <div className="pr-6 flex flex-col gap-4 dark:text-white mb-4 md:mb-0">
-                  <div>🤓 Acceso ilimitado a todos los cursos</div>
-                  <div>📄 Certificados digitales</div>
-                  <div>🎯 Talleres online exclusivos </div>
-                  <div>🎟 Pack de stickers o swag hasta tu casa </div>
-                  <div>🤳🏻 Soporte prioritario</div>
-                </div>
-                <div className=" border-l-0 w-full md:w-fit	 border-t-[1px] md:border-l-[1px] md:border-t-0 pl-0 md:pl-6 ">
-                  <p className="text-sm text-brand-black-400 dark:brand-black-50 mt-6 md:mt-0">
-                    Inicio de suscripción
-                  </p>
-                  <h2>---</h2>
-                  <p className="text-sm text-brand-black-400 dark:brand-black-50 mt-2">
-                    Fecha de renovación
-                  </p>
-                  <h2>---</h2>
-                  <p className="text-sm text-brand-black-400 dark:brand-black-50 mt-2">
-                    Costo de renovación
-                  </p>
-                  <h2>---</h2>
-                  <br />
-                  <button className="bg-brand-black-500 w-[180px] h-10 text-white dark:text-brand-black-500 rounded-lg px-1">
-                    Disponible Abril 2025
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Aquí vivía una tarjeta de "Suscripción PRO $X,XXX.00 · Disponible
+            Abril 2025": un producto que nunca existió, con precios de relleno y
+            una fecha ya pasada. En el perfil de alguien que sí compró, eso se
+            lee como que el sitio está abandonado. */}
+        <section className="mx-auto w-full max-w-[640px] px-10 md:px-0">
+          <div className="rounded-xl border border-brand-100/10 bg-brand-900/40 p-6">
+            <h3 className="mb-1 text-xl font-bold text-white">Tus cursos</h3>
+            <p className="mb-4 text-sm text-brand-100/70">
+              Todo lo que has comprado o desbloqueado.
+            </p>
+            <a
+              href="/mis-cursos"
+              className="inline-block rounded-full border border-brand-500 px-5 py-2 text-sm font-medium text-brand-500 transition-colors hover:bg-brand-500/10"
+            >
+              Ver mis cursos
+            </a>
           </div>
         </section>
+
+        <Suscripciones items={suscripciones} />
       </section>
     </article>
   );
 }
+
+/**
+ * Las secuencias a las que esta persona está suscrita, con su avance.
+ *
+ * Existe por un reporte concreto: alguien canceló sin querer, vino al perfil a
+ * buscar cómo volver y no encontró nada. Cancelar estaba a un clic en cada
+ * correo; volver no estaba en ningún lado.
+ */
+const Suscripciones = ({ items }: { items: any[] }) => {
+  const fetcher = useFetcher();
+
+  if (!items?.length) return null;
+
+  return (
+    <section className="mx-auto mt-16 w-full max-w-[640px] px-10 md:px-0">
+      <h3 className="mb-1 text-xl font-bold text-white">Tus suscripciones</h3>
+      <p className="mb-6 text-sm text-brand-100/70">
+        Series de correo a las que estás suscrito. Puedes pausarlas y volver
+        cuando quieras — retomamos donde te quedaste.
+      </p>
+
+      <ul className="space-y-3">
+        {items.map((s) => {
+          const total = s.sequence?._count?.emails ?? 0;
+          const activa = s.status === "active";
+          const pausada = s.status === "paused";
+
+          return (
+            <li
+              key={s.id}
+              className="flex items-center justify-between gap-4 rounded-xl border border-brand-100/10 bg-brand-900/40 p-4"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium text-white">
+                  {s.sequence?.name}
+                </p>
+                <p className="mt-0.5 text-xs text-brand-100/70">
+                  {pausada
+                    ? "Pausada"
+                    : s.status === "completed"
+                      ? "Terminada"
+                      : `Entrega ${Math.min(s.currentEmailIndex + 1, total)} de ${total}`}
+                </p>
+              </div>
+
+              <fetcher.Form method="post" className="shrink-0">
+                <input type="hidden" name="enrollmentId" value={s.id} />
+                <input
+                  type="hidden"
+                  name="intent"
+                  value={pausada ? "reactivar" : "pausar"}
+                />
+                <button
+                  type="submit"
+                  disabled={fetcher.state !== "idle"}
+                  className={cn(
+                    "rounded-full border px-4 py-1.5 text-sm transition-colors disabled:opacity-50",
+                    pausada
+                      ? "border-brand-500 text-brand-500 hover:bg-brand-500/10"
+                      : "border-brand-100/20 text-brand-100 hover:border-red-400/50 hover:text-red-400"
+                  )}
+                >
+                  {pausada ? "Reactivar" : "Pausar"}
+                </button>
+              </fetcher.Form>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+};
 
 const EditableAvatar = ({
   src,

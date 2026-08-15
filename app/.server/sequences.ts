@@ -226,6 +226,45 @@ export async function reactivateFinishedEnrollments(sequenceId: string) {
 }
 
 /**
+ * Mueve el avance de los inscritos cuando el orden de los correos cambia.
+ *
+ * `currentEmailIndex` es una POSICIÓN en el arreglo ordenado, no una referencia
+ * al correo. Así que insertar o borrar uno mueve el piso bajo los pies de quien
+ * va a medias: si se borra el correo 2, quien iba en la posición 2 se salta el
+ * que era el 3; si se inserta uno, recibe repetido el que ya leyó.
+ *
+ * Falla en silencio —no hay error, no hay log, la persona solo deja de recibir
+ * algo— así que se corrige donde se rompe: junto a cada renumeración.
+ *
+ * `desde` es el `order` (1-based) a partir del cual cambió todo; `delta` es +1
+ * al insertar y -1 al borrar.
+ */
+export async function shiftEnrollments(
+  sequenceId: string,
+  desde: number,
+  delta: 1 | -1
+) {
+  // `currentEmailIndex` es 0-based: la entrega de orden N vive en el índice N-1.
+  // Solo se mueve a quien ya pasó ese punto; quien no ha llegado lo verá en su
+  // nueva posición sin más.
+  const posicion = desde - 1;
+
+  const afectadas = await db.sequenceEnrollment.findMany({
+    where: { sequenceId, currentEmailIndex: { gte: posicion } },
+    select: { id: true, currentEmailIndex: true },
+  });
+
+  for (const enr of afectadas) {
+    await db.sequenceEnrollment.update({
+      where: { id: enr.id },
+      data: { currentEmailIndex: Math.max(0, enr.currentEmailIndex + delta) },
+    });
+  }
+
+  return afectadas.length;
+}
+
+/**
  * ¿Ya le llegó a esta persona la entrega que trae este video?
  *
  * La regla es la misma que usa el reproductor de la secuencia (`/secuencias/video`):
