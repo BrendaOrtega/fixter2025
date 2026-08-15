@@ -107,10 +107,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     { path: "/libros", priority: "0.8", changefreq: "monthly" },
     { path: "/libros/domina_claude_code", priority: "0.8", changefreq: "weekly" },
     { path: "/libros/llamaindex", priority: "0.8", changefreq: "weekly" },
+    // Lo que de verdad se vende hoy y Google no veía: el taller activo, el
+    // producto de secuencias, MentorIA y el libro que sí está a la venta.
+    // Faltaban todos mientras el sitemap listaba dos placeholders.
+    { path: "/sistemas-agenticos", priority: "0.9", changefreq: "weekly" },
+    { path: "/secuencias", priority: "0.8", changefreq: "weekly" },
+    { path: "/coach", priority: "0.8", changefreq: "weekly" },
+    { path: "/libros/ai_sdk", priority: "0.8", changefreq: "weekly" },
+    { path: "/code-mode", priority: "0.7", changefreq: "weekly" },
+    { path: "/pong", priority: "0.6", changefreq: "monthly" },
     // Otras páginas
     { path: "/faq", priority: "0.5", changefreq: "monthly" },
-    { path: "/guides", priority: "0.6", changefreq: "monthly" },
-    { path: "/tutoriales", priority: "0.6", changefreq: "monthly" },
     { path: "/subscribe", priority: "0.4", changefreq: "yearly" },
   ];
 

@@ -76,6 +76,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data({ ok: true });
   }
 
+  // Baja total. Tres plantillas de correo usan `/perfil` como su URL de
+  // "Cancelar suscripción" (sendSistemasKey, sendProductWelcome,
+  // sendSistemasWebinarConfirmation), así que esta página tiene que cumplir esa
+  // promesa: si no, el enlace de baja no da de baja y la única salida real que
+  // le queda a la persona es marcar el correo como spam.
+  if (intent === "baja-total") {
+    const subscriber = await db.subscriber.findUnique({
+      where: { email: user.email },
+      select: { id: true },
+    });
+    if (subscriber) {
+      await db.sequenceEnrollment.updateMany({
+        where: { subscriberId: subscriber.id, status: { not: "paused" } },
+        data: { status: "paused", nextEmailAt: null },
+      });
+    }
+    return data({ ok: true, bajaTotal: true });
+  }
+
   if (intent === "reactivar") {
     const subscriber = await db.subscriber.findUnique({
       where: { email: user.email },
@@ -208,6 +227,19 @@ const Suscripciones = ({ items }: { items: any[] }) => {
           );
         })}
       </ul>
+
+      {/* La salida completa, visible y sin buscarla: es lo que prometen los
+          correos que usan /perfil como su enlace de baja. */}
+      <fetcher.Form method="post" className="mt-6 text-center">
+        <input type="hidden" name="intent" value="baja-total" />
+        <button
+          type="submit"
+          disabled={fetcher.state !== "idle"}
+          className="text-sm text-brand-100/60 underline underline-offset-4 transition-colors hover:text-red-400 disabled:opacity-50"
+        >
+          Darme de baja de todos los correos
+        </button>
+      </fetcher.Form>
     </section>
   );
 };
