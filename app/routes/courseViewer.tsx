@@ -229,6 +229,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   // ESTE video, y el alta debe ocurrir donde está su atención.
   if (intent === "subscribe-sequence") {
     const sequenceId = formData.get("sequenceId") as string;
+
+    // Con sesión, el correo lo pone el servidor y NO el formulario: si no,
+    // cualquiera con cuenta podría suscribir a un tercero escribiendo su
+    // dirección en el campo oculto.
+    const sesion = await getUserOrNull(request);
+    const correo = sesion?.email?.toLowerCase().trim() || email;
     if (!sequenceId) return data({ error: "Falta la serie" }, { status: 400 });
 
     try {
@@ -243,7 +249,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       const { sendSequenceConfirmation } = await import(
         "~/mailSenders/sendSequenceConfirmation"
       );
-      const existing = await db.subscriber.findUnique({ where: { email } });
+      const existing = await db.subscriber.findUnique({ where: { email: correo } });
 
       // El celular es opcional y solo se guarda con el consentimiento explícito
       // del switch. Mismo trato que en la landing de la serie.
@@ -272,12 +278,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         const { setMemberCookie } = await import("~/.server/memberCookie");
         return data(
           { sequenceEnrolled: true },
-          { headers: { "Set-Cookie": await setMemberCookie(email) } }
+          { headers: { "Set-Cookie": await setMemberCookie(correo) } }
         );
       }
 
       await sendSequenceConfirmation({
-        email,
+        email: correo,
         sequenceId: sequence.id,
         sequenceName: sequence.name,
       });
@@ -1061,6 +1067,9 @@ export default function Route({
           sequenceName={sequenceName}
           sequenceUrl={sequenceUrl}
           userEmail={user?.email || subscriberEmail}
+          // Con sesión abierta la identidad ya está probada: el cajón ofrece un
+          // botón, no un formulario.
+          conSesion={!!user?.email}
         />
       )}
       {showSubscriptionDrawer && (

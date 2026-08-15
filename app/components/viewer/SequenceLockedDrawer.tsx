@@ -28,6 +28,7 @@ export function SequenceLockedDrawer({
   sequenceName,
   sequenceUrl,
   userEmail,
+  conSesion,
   courseSlug,
 }: {
   isOpen: boolean;
@@ -40,6 +41,8 @@ export function SequenceLockedDrawer({
   sequenceName?: string | null;
   sequenceUrl?: string | null;
   userEmail?: string | null;
+  /** Hay sesión abierta: el correo ya está verificado, no se vuelve a pedir. */
+  conSesion?: boolean;
   courseSlug: string;
 }) {
   const fetcher = useFetcher<{
@@ -120,7 +123,27 @@ export function SequenceLockedDrawer({
           )}
         </p>
 
-        {enCodigo ? (
+        {conSesion ? (
+          /* Con sesión no hay nada que preguntar: el correo con el que entró ya
+             quedó verificado cuando abrió sesión. Volver a pedirlo —y encima
+             mandarle un código al buzón desde el que ya está identificado— es
+             cobrarle dos veces la misma prueba. */
+          <fetcher.Form method="post" className="mt-4">
+            <input type="hidden" name="intent" value="subscribe-sequence" />
+            <input type="hidden" name="sequenceId" value={sequenceId || ""} />
+            <input type="hidden" name="email" value={userEmail || ""} />
+            <input type="hidden" name="courseSlug" value={courseSlug} />
+            <p className="mb-3 text-sm text-brand-100">
+              Entrará a <strong className="text-white">{userEmail}</strong>
+            </p>
+            <PrimaryButton type="submit" isDisabled={enviando} className="w-full">
+              {enviando ? "Un momento…" : "Suscribirme y ver el video"}
+            </PrimaryButton>
+            {fetcher.data?.error && (
+              <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
+            )}
+          </fetcher.Form>
+        ) : enCodigo ? (
           /* Paso dos: el código. Se queda en el mismo cajón —mandar a otra
              pantalla a alguien que ya escribió su correo es perderlo. */
           <fetcher.Form method="post" className="mt-4 text-left">
