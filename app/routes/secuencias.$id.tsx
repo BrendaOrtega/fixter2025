@@ -22,6 +22,7 @@ import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import { EmailRichEditor } from "~/components/sequences/EmailRichEditor";
 import { SEQUENCE_ILLUSTRATIONS } from "~/components/sequences/illustrations";
 import { useFetcher } from "react-router";
+import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import {
   FaArrowLeft,
   FaPlus,
@@ -152,6 +153,42 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       console.error("send_test:", error);
       return { error: "No se pudo enviar la prueba. Revisa los logs." };
     }
+  }
+
+  // Pausar, reactivar y quitar desde la tabla. El `sequenceId` va SIEMPRE en el
+  // where: sin él, un id de inscripción de otra secuencia se podría tocar desde
+  // aquí, y el dueño de esta no tiene por qué mandar en aquella.
+  if (
+    intent === "pause_enrollment" ||
+    intent === "resume_enrollment" ||
+    intent === "remove_enrollment"
+  ) {
+    const enrollmentId = formData.get("enrollmentId") as string;
+    if (!enrollmentId) return { error: "Falta la inscripción" };
+
+    const enrollment = await db.sequenceEnrollment.findFirst({
+      where: { id: enrollmentId, sequenceId },
+      select: { id: true, subscriberId: true },
+    });
+    if (!enrollment) return { error: "Esa inscripción no es de esta secuencia" };
+
+    if (intent === "remove_enrollment") {
+      await db.sequenceEnrollment.delete({ where: { id: enrollment.id } });
+      return { success: true, message: "Fuera de la secuencia" };
+    }
+    if (intent === "pause_enrollment") {
+      await db.sequenceEnrollment.update({
+        where: { id: enrollment.id },
+        data: { status: "paused" },
+      });
+      return { success: true, message: "Pausado" };
+    }
+    // Reactivar reusa la misma función que el resto: retoma donde se quedó y
+    // recalcula la próxima fecha. Poner `active` a mano dejaba `nextEmailAt` en
+    // el pasado y el riel disparaba todo lo atrasado de golpe.
+    const { enrollSubscriberInSequence } = await import("~/.server/sequences");
+    await enrollSubscriberInSequence(sequenceId, enrollment.subscriberId);
+    return { success: true, message: "Reactivado" };
   }
 
   // Alta manual: en una secuencia por invitación es el único camino además
@@ -499,6 +536,8 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [detail, setDetail] = useState<any>(null);
+  // Quitar a alguien de una secuencia borra su historial de envíos: pregunta.
+  const [toRemove, setToRemove] = useState<any>(null);
   const [preview, setPreview] = useState<any>(null);
   const [drawer, setDrawer] = useState<
     | { mode: "add"; afterOrder?: number; prevSubject?: string; isFirst: boolean }
@@ -636,6 +675,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
             onRowClick={setDetail}
+            onRemove={setToRemove}
           />
         )}
 
@@ -653,6 +693,21 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
           <SettingsTab sequence={sequence} fetcher={fetcher} />
         )}
       </section>
+
+      <ConfirmDialog
+        isOpen={!!toRemove}
+        title={`¿Quitar a ${toRemove?.subscriber?.email ?? ""} de la secuencia?`}
+        description="Deja de recibir las entregas y se pierde su progreso. Puede volver a suscribirse desde la landing."
+        confirmLabel="Sí, quitar"
+        onCancel={() => setToRemove(null)}
+        onConfirm={() => {
+          fetcher.submit(
+            { intent: "remove_enrollment", enrollmentId: toRemove.id },
+            { method: "POST" }
+          );
+          setToRemove(null);
+        }}
+      />
 
       {detail && (
         <SubscriberModal
@@ -754,6 +809,7 @@ function MonitorTab({
   statusFilter,
   setStatusFilter,
   onRowClick,
+  onRemove,
 }: any) {
   return (
     <div>
@@ -824,6 +880,7 @@ function MonitorTab({
                   <th className="px-4 py-3">Enviados</th>
                   <th className="px-4 py-3">Engagement</th>
                   <th className="px-4 py-3">Próximo</th>
+                  <th className="px-4 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-100/10">
@@ -851,6 +908,40 @@ function MonitorTab({
                             month: "short",
                           })
                         : "—"}
+                    </td>
+                    {/* La tabla sólo miraba. Pausar, reactivar y quitar son
+                        justo lo que se necesita desde aquí —empezando por
+                        sacarse uno mismo para probar el alta de cero— y no
+                        había forma de hacerlo sin entrar a la base. */}
+                    <td
+                      className="px-4 py-3 text-right whitespace-nowrap"
+                      onClick={(ev) => ev.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          fetcher.submit(
+                            {
+                              intent:
+                                e.status === "paused"
+                                  ? "resume_enrollment"
+                                  : "pause_enrollment",
+                              enrollmentId: e.id,
+                            },
+                            { method: "POST" }
+                          )
+                        }
+                        className="text-brand-500 hover:text-brand-400 transition-colors"
+                      >
+                        {e.status === "paused" ? "Reactivar" : "Pausar"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRemove(e)}
+                        className="ml-4 text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        Quitar
+                      </button>
                     </td>
                   </tr>
                 ))}

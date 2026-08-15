@@ -10,10 +10,6 @@ import { motion } from "motion/react";
 import type { Route } from "./+types/s.$id";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
-import {
-  calculateNextEmailDate,
-  enrollSubscriberInSequence,
-} from "~/.server/sequences";
 import { formatUnlock } from "~/utils/formatUnlock";
 import { checkSignupEmail } from "~/.server/anti-bot";
 import { normalizePhone } from "~/.server/phone";
@@ -243,6 +239,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // "¡listo, estás dentro!" y no volvía a llegarle un solo correo. Esa función
   // ya sabe reactivar donde se quedó — es la misma que usa el visor.
   if (subscriber.confirmed) {
+    // Dinámico: importado arriba, el bundler arrastra el módulo de servidor al
+    // cliente porque esta ruta también exporta componente.
+    const { enrollSubscriberInSequence } = await import("~/.server/sequences");
     await enrollSubscriberInSequence(sequence.id, subscriber.id);
     return data({ success: true, enrolled: true });
   }
