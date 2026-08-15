@@ -282,7 +282,9 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           : "A tu ritmo";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#0E1317] pb-24 pt-20 text-zinc-100 sm:pt-28">
+    /* Una sola pantalla: la ilustración a un lado y la acción del otro. Nada
+       de scroll — lo que no cabe aquí no hacía falta para decidirse. */
+    <main className="relative flex min-h-[100svh] flex-col overflow-hidden bg-[#0E1317] px-5 py-6 text-zinc-100 sm:px-6 lg:h-[100svh] lg:py-8">
       {done && <EmojiConfetti emojis={["📬", "✨", "🚀"]} />}
 
       {/* grid de fondo con drift animado */}
@@ -314,36 +316,36 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
         }}
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl px-5 sm:px-6">
-        <a href="/" className="inline-block">
-          <img
-            src="/full-logo.svg"
-            alt="FixterGeek"
-            className="h-8 opacity-90 transition-opacity hover:opacity-100"
-          />
-        </a>
+      <a href="/" className="relative z-10 mx-auto w-full max-w-6xl shrink-0">
+        <img
+          src="/full-logo.svg"
+          alt="FixterGeek"
+          className="h-7 opacity-90 transition-opacity hover:opacity-100"
+        />
+      </a>
 
-        {/* La ilustración manda en el hero; el logo se queda arriba, chico. */}
-        {sequence.illustration && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7 }}
-            className="mt-8 flex justify-center sm:justify-start"
-          >
-            <SequenceIllustration
-              illustration={sequence.illustration}
-              className="w-52 sm:w-64"
-            />
-          </motion.div>
-        )}
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 items-center gap-8 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-14 lg:py-0">
+        {/* Columna izquierda: quién eres y qué doy */}
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          {sequence.illustration && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7 }}
+            >
+              <SequenceIllustration
+                illustration={sequence.illustration}
+                className="w-32 sm:w-40 lg:w-56"
+              />
+            </motion.div>
+          )}
 
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-brand-500/30 bg-brand-500/10 px-4 py-1.5 text-sm font-medium text-brand-500"
+          className="mt-4 inline-flex items-center gap-2.5 rounded-full border border-brand-500/30 bg-brand-500/10 px-4 py-1.5 text-xs font-medium text-brand-500 sm:text-sm"
         >
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />
           Secuencia por correo
@@ -353,7 +355,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="mt-5 text-balance text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl"
+          className="mt-4 text-balance text-3xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.4rem]"
         >
           <BicolorTitle text={sequence.name} />
         </motion.h1>
@@ -363,7 +365,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="mt-5 max-w-2xl text-balance text-lg font-light leading-relaxed text-brand-100 sm:text-xl"
+            className="mt-4 max-w-xl text-balance text-base font-light leading-relaxed text-brand-100 sm:text-lg"
           >
             {sequence.description}
           </motion.p>
@@ -374,33 +376,35 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-7 flex flex-wrap items-center gap-2 text-sm text-brand-100"
+          className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-brand-100 sm:text-sm lg:justify-start"
         >
-          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
             {total} {total === 1 ? "entrega" : "entregas"}
           </span>
-          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
             {cadence}
           </span>
           {withVideo > 0 && (
-            <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+            <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
               🎬 {withVideo} con video
             </span>
           )}
-          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
             Sin costo
           </span>
-          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-4 py-1.5">
+          <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
             Escribe {author}
           </span>
         </motion.div>
 
-        {/* El formulario: la acción, no una caja perdida */}
+        </div>
+
+        {/* Columna derecha: la acción */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 }}
-          className="mt-10 rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-900/80 to-brand-800/40 p-6 shadow-lg shadow-brand-500/10 backdrop-blur-sm sm:p-8"
+          className="rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-900/80 to-brand-800/40 p-6 shadow-lg shadow-brand-500/10 backdrop-blur-sm sm:p-8"
         >
           {done ? (
             <div className="text-center">
@@ -527,94 +531,20 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           )}
         </motion.div>
 
-        {/* Qué llega, entrega por entrega */}
-        {emails.length > 0 && (
-          <>
-            <h2 className="mt-16 text-2xl font-bold text-white">
-              Qué vas a recibir
-            </h2>
-            <ol className="mt-6 space-y-3">
-              {emails.map((email, i) => (
-                <motion.li
-                  key={email.id}
-                  initial={{ opacity: 0, y: 14 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ duration: 0.45, delay: Math.min(i, 5) * 0.05 }}
-                  className="flex items-start gap-4 rounded-lg border border-brand-100/10 bg-brand-900/40 p-5 transition-colors hover:border-brand-500/40"
-                >
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand-500/40 bg-brand-500/10 text-sm font-bold text-brand-500">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-medium leading-snug text-white">
-                      {email.subject}
-                    </p>
-                    <p className="mt-1 text-xs text-brand-100/70">
-                      {i === 0
-                        ? "En cuanto confirmes"
-                        : email.delayDays === 1
-                          ? "Un día después"
-                          : email.delayDays
-                            ? `${email.delayDays} días después`
-                            : "Siguiente entrega"}
-                      {email.videoSlug ? " · incluye video" : ""}
-                    </p>
-                  </div>
-                </motion.li>
-              ))}
-            </ol>
-          </>
-        )}
-
-        {/* Antes de entrar */}
-        <h2 className="mt-16 text-2xl font-bold text-white">Antes de entrar</h2>
-        <div className="mt-6 space-y-3">
-          {[
-            {
-              q: "¿Cada cuándo me escriben?",
-              a: `${cadence.toLowerCase().replace(/^u/, "U")}, y nada más. Cuando termina la secuencia dejamos de escribirte.`,
-            },
-            {
-              q: "¿Cómo me doy de baja?",
-              a: "Cada correo trae el link de baja al pie. Un clic y listo, sin trámites.",
-            },
-            {
-              q: "¿Qué hacen con mi correo?",
-              a: "Se queda en FixterGeek. No lo vendemos ni lo compartimos con nadie.",
-            },
-          ].map((item) => (
-            <details
-              key={item.q}
-              className="group rounded-lg border border-brand-100/10 bg-brand-900/40 px-5 py-4"
-            >
-              <summary className="cursor-pointer list-none font-medium text-white marker:hidden">
-                <span className="text-brand-500 group-open:hidden">+ </span>
-                <span className="hidden text-brand-500 group-open:inline">
-                  −{" "}
-                </span>
-                {item.q}
-              </summary>
-              <p className="mt-3 text-sm leading-relaxed text-brand-100">
-                {item.a}
-              </p>
-            </details>
-          ))}
-        </div>
-
-        <p className="mt-10 text-sm text-brand-100/70">
-          ¿Quieres ver todo lo que publicamos?{" "}
-          <a
-            href="/secuencias"
-            target="_blank"
-            rel="noopener"
-            className="text-brand-500 underline underline-offset-4"
-          >
-            El catálogo completo
-          </a>
-          .
-        </p>
       </div>
+
+      {/* Pie mínimo: sin secciones que empujen la página fuera de la pantalla. */}
+      <p className="relative z-10 mx-auto w-full max-w-6xl shrink-0 text-center text-xs text-brand-100/60 lg:text-left">
+        Cero spam, baja en un clic ·{" "}
+        <a
+          href="/secuencias"
+          target="_blank"
+          rel="noopener"
+          className="text-brand-500 underline underline-offset-4"
+        >
+          Ver el catálogo completo
+        </a>
+      </p>
     </main>
   );
 }
