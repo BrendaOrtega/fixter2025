@@ -147,9 +147,17 @@ async function joinCommunityFromViewer(email: string) {
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
-  const email = (formData.get("email") as string)?.toLowerCase().trim();
   const courseSlug = formData.get("courseSlug") as string;
   const tag = `${courseSlug}-free-access`;
+
+  // Con sesión abierta la fuente del correo es la sesión, no el formulario. El
+  // campo oculto llegaba vacío cuando el loader no cargaba el correo del
+  // usuario, y el guardián de abajo respondía "Email requerido" a alguien que
+  // tenía la sesión abierta y su dirección impresa en pantalla.
+  const session = await getUserOrNull(request);
+  const email =
+    session?.email?.toLowerCase().trim() ||
+    (formData.get("email") as string)?.toLowerCase().trim();
 
   if (!email || !courseSlug) {
     return data({ error: "Email requerido" }, { status: 400 });
@@ -230,11 +238,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   if (intent === "subscribe-sequence") {
     const sequenceId = formData.get("sequenceId") as string;
 
-    // Con sesión, el correo lo pone el servidor y NO el formulario: si no,
-    // cualquiera con cuenta podría suscribir a un tercero escribiendo su
-    // dirección en el campo oculto.
-    const sesion = await getUserOrNull(request);
-    const correo = sesion?.email?.toLowerCase().trim() || email;
+    // `email` ya viene resuelto arriba con la sesión por delante del
+    // formulario: con cuenta abierta nadie puede suscribir a un tercero
+    // escribiendo su dirección en el campo oculto.
     if (!sequenceId) return data({ error: "Falta la serie" }, { status: 400 });
 
     try {
@@ -249,7 +255,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       const { sendSequenceConfirmation } = await import(
         "~/mailSenders/sendSequenceConfirmation"
       );
-      const existing = await db.subscriber.findUnique({ where: { email: correo } });
+      const existing = await db.subscriber.findUnique({ where: { email: email } });
 
       // El celular es opcional y solo se guarda con el consentimiento explícito
       // del switch. Mismo trato que en la landing de la serie.
@@ -268,8 +274,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         }
       }
 
-      // Ya confirmó su correo antes: no se le vuelve a pedir la prueba, se le
-      // inscribe y el primer correo sale en el siguiente ciclo del riel.
+      // Ya confirmó su email antes: no se le vuelve a pedir la prueba, se le
+      // inscribe y el primer email sale en el siguiente ciclo del riel.
       if (existing?.confirmed) {
         const { enrollSubscriberInSequence } = await import("~/.server/sequences");
         await enrollSubscriberInSequence(sequence.id, existing.id, {
@@ -285,12 +291,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         const destino = new URL(request.url);
         destino.searchParams.set("subscribed", "1");
         return redirect(destino.toString(), {
-          headers: { "Set-Cookie": await setMemberCookie(correo) },
+          headers: { "Set-Cookie": await setMemberCookie(email) },
         });
       }
 
       await sendSequenceConfirmation({
-        email: correo,
+        email: email,
         sequenceId: sequence.id,
         sequenceName: sequence.name,
       });
@@ -649,6 +655,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     course,
     nextVideo,
     user,
+    // El veredicto de acceso viaja tal cual. El cliente lo deducía de si le
+    // habían llegado el `m3u8` o el `storageLink`, que es una señal indirecta:
+    // basta que la fuente exista por cualquier otra vía para que dé por bueno
+    // un acceso que el servidor negó, y el cajón de la secuencia no aparece.
+    hasAccess,
     isPurchased,
     isSubscribed,
     accessLevel,
@@ -726,6 +737,7 @@ function setRatingDrawerShown(courseId: string) {
 export default function Route({
   loaderData: {
     nextVideo,
+    hasAccess,
     isPurchased,
     isSubscribed: serverIsSubscribed,
     accessLevel,
@@ -790,14 +802,8 @@ export default function Route({
     }
   }, [showLessonContent]);
 
-  // Determine which drawer to show based on accessLevel.
-  // Para `sequence` la última palabra la tiene el servidor: el cliente no puede
-  // recalcular el avance de una inscripción, así que se fía de que llegó fuente.
-  const hasAccess =
-    isPurchased ||
-    accessLevel === "public" ||
-    (accessLevel === "subscriber" && serverIsSubscribed) ||
-    (accessLevel === "sequence" && !!(video.m3u8 || video.storageLink));
+  // Qué cajón toca. La regla la resolvió el servidor —es el único que puede
+  // consultar la inscripción de una secuencia— y aquí solo se lee su veredicto.
 
   const chaptersList = (seo?.chapters as { s: number; titulo: string }[]) || [];
   const videoUrl = `https://www.fixtergeek.com/cursos/${course.slug}/${video.slug}`;

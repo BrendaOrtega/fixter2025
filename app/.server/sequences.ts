@@ -322,14 +322,29 @@ export async function sequenceUnlockFor(
         subscriberId: subscriber.id,
       },
     },
-    select: { currentEmailIndex: true, nextEmailAt: true },
+    select: { currentEmailIndex: true, nextEmailAt: true, status: true },
   });
   if (!enrollment) return base;
 
   // `order` arranca en 1 y `currentEmailIndex` en 0: la entrega de orden N está
   // enviada cuando el índice ya pasó de N-1.
   const position = email_.order - 1;
-  if (position < enrollment.currentEmailIndex) {
+
+  // La entrega VENCIDA cuenta como tuya aunque el motor todavía no la haya
+  // mandado. Sin esto, quien se acababa de suscribir veía "esta entrega aún no
+  // llega" en el video que le prometimos abrir de inmediato: inscribirse deja
+  // `currentEmailIndex` en 0 y `nextEmailAt` en ahora, y el índice no avanza
+  // hasta que corre el riel —cada varios minutos—. El desbloqueo no puede
+  // depender de que un job haya alcanzado a correr.
+  // Sólo mientras la inscripción sigue viva: a quien se dio de baja se le
+  // respeta lo que ya recibió, pero no se le adelanta lo que no va a recibir.
+  const isDue =
+    enrollment.status === "active" &&
+    position === enrollment.currentEmailIndex &&
+    !!enrollment.nextEmailAt &&
+    enrollment.nextEmailAt <= new Date();
+
+  if (position < enrollment.currentEmailIndex || isDue) {
     return {
       unlocked: true,
       unlocksAt: null,

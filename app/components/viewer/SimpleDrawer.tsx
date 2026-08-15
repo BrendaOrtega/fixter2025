@@ -19,6 +19,7 @@ export const Drawer = ({
   header,
   noActions,
   noClose,
+  noHeader,
 }: {
   mode?: string;
   noOverlay?: boolean;
@@ -28,6 +29,16 @@ export const Drawer = ({
   noActions?: boolean;
   /** Sin ✕: cuando cerrar no lleva a ningún lado (el contenido sigue bloqueado). */
   noClose?: boolean;
+  /**
+   * Sin encabezado propio: el título va dentro del contenido.
+   *
+   * El encabezado vive fuera del bloque centrado, así que en un cajón corto el
+   * título queda solo hasta arriba y el resto flotando a media pantalla, como
+   * dos piezas distintas. Cuando el título es parte del mensaje —el nombre del
+   * video que se está pidiendo abrir— entra al bloque y se centra con él.
+   * `title` se sigue pasando: es el `aria-label` del diálogo.
+   */
+  noHeader?: boolean;
   title?: string;
   subtitle?: string;
   onClose?: () => void;
@@ -97,7 +108,9 @@ export const Drawer = ({
           // no tener fondo. De `md` en adelante vuelve a ser cajón lateral, y
           // arranca DEBAJO de la navbar para que el menú no le cruce el título.
           "bg-background fixed inset-0 flex flex-col justify-center text-white overflow-y-auto scrollbar-sutil p-6",
-          "lg:justify-start",
+          // Con encabezado propio el contenido cuelga de arriba; sin él, el
+          // bloque entero se centra también en pantalla grande.
+          !noHeader && "lg:justify-start",
           // Cajón lateral SOLO desde lg. En tablet el menú de videos ocupa
           // ~420px fijos a la izquierda y se encimaba con un cajón del 60%,
           // dejando su contenido cortado por debajo del menú.
@@ -105,7 +118,18 @@ export const Drawer = ({
           mode === "big" ? "lg:w-[85%]" : "lg:w-[40%]"
         )}
       >
-        {header ? (
+        {noHeader ? (
+          !noClose && (
+            <button
+              tabIndex={0}
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="round-full absolute right-5 top-5 p-1 text-2xl active:scale-95"
+            >
+              <IoClose />
+            </button>
+          )
+        ) : header ? (
           header
         ) : (
           <header className="mx-auto mb-3 flex w-full max-w-lg items-start justify-between gap-3 md:mb-6 lg:max-w-none">
@@ -138,12 +162,20 @@ export const Drawer = ({
           // mientras quepa, pero si el contenido desborda cede en vez de
           // recortarse por arriba, que es el defecto clásico de centrar con
           // flex dentro de un contenedor con scroll.
-          className="scrollbar-sutil flex flex-1 flex-col overflow-y-auto lg:block"
+          className={cn(
+            "scrollbar-sutil flex flex-1 flex-col overflow-y-auto",
+            !noHeader && "lg:block"
+          )}
         >
           {/* Medida de lectura: a pantalla completa en tablet las líneas se
               estiraban a 800px y se leen mal. El cajón puede ser ancho; el
               texto no. */}
-          <div className="mx-auto my-auto w-full max-w-lg lg:my-0 lg:max-w-none">
+          <div
+            className={cn(
+              "mx-auto my-auto w-full max-w-lg",
+              !noHeader && "lg:my-0 lg:max-w-none"
+            )}
+          >
             {children}
           </div>
         </section>

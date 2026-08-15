@@ -63,10 +63,15 @@ export function SequenceLockedDrawer({
   // --- Ya suscrito, esta entrega todavía no le toca ----------------------
   if (enrolled) {
     return (
-      <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="Esta entrega aún no llega">
+      <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose noHeader title="Esta entrega aún no llega">
         <div className="text-center">
           <EnvelopeIllustration className="mx-auto h-auto w-[150px] sm:w-[180px]" />
-          <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
+          <p className="mt-4 text-xs font-medium uppercase tracking-wider text-brand-500">
+            Esta entrega aún no llega
+          </p>
+          <h3 className="mt-1 text-xl font-bold leading-tight text-white sm:text-2xl">
+            {title}
+          </h3>
           <p className="mt-2 text-sm text-brand-100 sm:text-base">
             {cuando ? (
               <>
@@ -94,12 +99,17 @@ export function SequenceLockedDrawer({
 
   // --- Todavía no se suscribe: el alta pasa aquí mismo -------------------
   return (
-    <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title={title}>
+    <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose noHeader title={title}>
       <div className="text-center">
         <EnvelopeIllustration className="mx-auto h-auto w-[150px] sm:w-[180px]" />
-        <p className="mt-4 text-sm font-medium uppercase tracking-wider text-brand-500">
+        <p className="mt-4 text-xs font-medium uppercase tracking-wider text-brand-500">
           Parte de una secuencia de emails
         </p>
+        {/* El título es el nombre del video que están pidiendo abrir: va aquí,
+            dentro del bloque, y no en un encabezado suelto hasta arriba. */}
+        <h3 className="mt-1 text-xl font-bold leading-tight text-white sm:text-2xl">
+          {title}
+        </h3>
 
         {/* Prometer "se abre de inmediato" solo es verdad en la primera
             entrega. En la cuarta, suscribirse empieza por la primera y esta
