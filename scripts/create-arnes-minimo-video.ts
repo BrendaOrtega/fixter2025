@@ -20,27 +20,25 @@ const VIDEO_SLUG = "grok-arnes-minimo";
 const VIDEO_TITLE = "Un agente que construye su propio arnés";
 const MODULE_NAME = "Introducción a los agentes de IA";
 
-const DESCRIPTION = `Un agente completo desde cero: un \`fetch\`, una herramienta y un \`while\`. Sin SDK y sin framework 🔧
-
-![El ciclo de un agente](/ilustraciones/loop-agente.svg)
+// Corta a propósito: el panel de notas es angosto y va al lado del video. Lo
+// que no cabe sin scroll no se lee — el detalle está en el video y en el repo.
+const DESCRIPTION = `Un agente completo desde cero: un \`fetch\`, una herramienta y un \`while\` 🔧
 
 ## El ciclo
 
 Le describes al modelo qué herramientas existen. Él pide ejecutar una, tú la ejecutas y le devuelves el resultado. Vuelves a llamarlo con el historial completo.
 
-Cuando responde con texto en lugar de pedir otra herramienta, terminó. Eso es todo el arnés.
+Cuando responde con texto en vez de pedir otra herramienta, terminó.
 
 ## Lo que construimos
 
-1. **La llamada cruda** — un POST y ya.
-2. **La primera herramienta** y el loop que la ejecuta.
-3. **El chat** — el historial deja de morir con la pregunta.
-4. **La caché** — dejar de pagar dos veces lo que ya sabe.
-5. **Ojos en el navegador** — el agente se mira a sí mismo.
+1. La llamada cruda
+2. La primera herramienta y el loop
+3. El chat, cuando el historial se vuelve memoria
+4. La caché del prompt
+5. Ojos en el navegador
 
-## El código 🧰
-
-[github.com/blissito/taller-arnes-grok](https://github.com/blissito/taller-arnes-grok) — crece con cada entrega.
+[Clonar el repositorio](https://github.com/blissito/taller-arnes-grok) 🧰
 `;
 
 async function main() {

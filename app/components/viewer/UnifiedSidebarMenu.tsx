@@ -287,7 +287,12 @@ export const UnifiedSidebarMenu = ({
                 transition={{ duration: 0.2 }}
                 className="p-4"
               >
-                <NotesContent body={markdownBody} />
+                <NotesContent
+                  body={markdownBody}
+                  title={
+                    videos.find((v: any) => v?.slug === currentVideoSlug)?.title
+                  }
+                />
               </motion.div>
             )}
 
@@ -627,13 +632,22 @@ const ResourcesContent = ({
   );
 };
 
-const NotesContent = ({ body }: { body: string }) => {
+const NotesContent = ({ body, title }: { body: string; title?: string }) => {
   return (
+    <>
+    {/* De qué video son estas notas: el panel se abre solo y sin el título no
+        hay forma de saber a qué lección pertenece lo que se está leyendo. */}
+    {title && (
+      <h2 className="mb-4 border-b border-brand-100/10 pb-3 text-lg font-bold leading-snug text-white">
+        {title}
+      </h2>
+    )}
     <div className="dark prose prose-invert max-w-none prose-base prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-p:leading-relaxed prose-p:text-brand-100 prose-li:text-brand-100 prose-li:my-0.5 prose-strong:text-white prose-a:text-brand-500 prose-a:no-underline hover:prose-a:underline prose-code:text-brand-500 prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-4 prose-hr:border-brand-100/10">
       <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
         {body}
       </Streamdown>
     </div>
+    </>
   );
 };
 
