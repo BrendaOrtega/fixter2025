@@ -173,7 +173,7 @@ export const TranscriptPanel = ({
           del aviso del pie. El número de capítulos lo decide el video, así que
           esto tenía que romperse tarde o temprano. */}
       {chapters.length > 0 && !q && (
-        <div className="flex min-h-0 max-h-64 flex-col pb-3">
+        <div className="flex min-h-0 max-h-56 flex-col border-b border-gray-700/50 pb-2">
           <button
             type="button"
             onClick={() => setMostrarCapitulos((v) => !v)}
@@ -287,12 +287,17 @@ export const TranscriptPanel = ({
 
       {/* La transcripción */}
       {!q && (
-        <div className="relative min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          {chapters.length > 0 && (
+            <p className="shrink-0 px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Transcripción
+            </p>
+          )}
           <div
             ref={contenedorRef}
             onWheel={() => setSeguirVideo(false)}
             onTouchMove={() => setSeguirVideo(false)}
-            className="scrollbar-sutil h-full space-y-1 overflow-y-auto pb-4"
+            className="scrollbar-sutil min-h-0 flex-1 space-y-1 overflow-y-auto pb-4"
           >
             {segments.map((seg, i) => {
               const activo = i === indiceActivo;
@@ -310,8 +315,8 @@ export const TranscriptPanel = ({
                   className={cn(
                     "grid w-full grid-cols-[3.25rem_1fr] gap-x-2 rounded-lg px-2 py-2 text-left text-sm leading-relaxed transition-colors",
                     activo
-                      ? "bg-brand-500/15 text-white"
-                      : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                      ? "bg-brand-500/15 font-medium text-white"
+                      : "text-gray-500 hover:bg-white/5 hover:text-gray-200"
                   )}
                 >
                   <span
