@@ -151,7 +151,7 @@ export const TranscriptPanel = ({
   const POR_GRUPO = 2;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Buscador */}
       <div className="shrink-0 pb-3">
         <input
@@ -173,7 +173,7 @@ export const TranscriptPanel = ({
           del aviso del pie. El número de capítulos lo decide el video, así que
           esto tenía que romperse tarde o temprano. */}
       {chapters.length > 0 && !q && (
-        <div className="flex min-h-0 max-h-[38%] flex-col pb-3">
+        <div className="flex min-h-0 max-h-64 flex-col pb-3">
           <button
             type="button"
             onClick={() => setMostrarCapitulos((v) => !v)}
