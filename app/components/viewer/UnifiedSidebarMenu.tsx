@@ -270,7 +270,7 @@ export const UnifiedSidebarMenu = ({
         </div>
 
         {/* Tab Content */}
-        <div className="scrollbar-sutil flex-1 overflow-y-auto">
+        <div className="scrollbar-sutil flex min-h-0 flex-1 flex-col overflow-y-auto">
           <AnimatePresence mode="wait">
             {tabVigente === "videos" && (
               <motion.div
@@ -340,9 +340,11 @@ export const UnifiedSidebarMenu = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.2 }}
-                // Altura fija: el panel maneja su propio scroll para poder llevar la
-                // línea activa al centro sin arrastrar toda la barra lateral.
-                className="h-[70vh] px-4 pt-4"
+                // Ocupa lo que quede de la barra, ni más ni menos. Antes era
+                // `h-[70vh]`: una altura fija que no llega al fondo del panel,
+                // así que quedaba un hueco muerto debajo del aviso y los
+                // capítulos no podían crecer para llenarlo.
+                className="flex min-h-0 flex-1 flex-col px-4 pt-4"
               >
                 <TranscriptPanel
                   // `?? undefined` y no `||`: un transcript recién ingestado trae
