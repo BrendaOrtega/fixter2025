@@ -260,7 +260,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
       await joinCommunityFromViewer(email);
       await recordOrigin(email, request);
-      await recordSelfReported(email, formData.get("origen") as string);
+      await recordSelfReported(
+        email,
+        (formData.get("origenOtro") as string) || (formData.get("origen") as string),
+      );
 
       const redirectUrl = new URL(request.url);
       redirectUrl.searchParams.set("subscribed", "1");

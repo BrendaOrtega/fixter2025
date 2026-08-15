@@ -8,6 +8,7 @@ import { Drawer } from "./SimpleDrawer";
 const ORIGINS = [
   "LinkedIn",
   "YouTube",
+  "WhatsApp",
   "Un correo de FixterGeek",
   "Me lo pasó alguien",
   "La comunidad",
@@ -44,6 +45,7 @@ export const SubscriptionDrawer = ({
   const [email, setEmail] = useState(userEmail || "");
   const [code, setCode] = useState("");
   const [origins] = useState(() => shuffled(ORIGINS));
+  const [otroOrigen, setOtroOrigen] = useState(false);
   const [step, setStep] = useState<"email" | "code">("email");
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
@@ -171,16 +173,30 @@ export const SubscriptionDrawer = ({
                 <select
                   name="origen"
                   defaultValue=""
+                  onChange={(e) => setOtroOrigen(e.target.value === "Otro")}
                   className="w-full mt-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
-                  <option value="">Prefiero no decir</option>
+                  <option value="" disabled>
+                    Elige una
+                  </option>
                   {origins.map((o) => (
                     <option key={o} value={o}>
                       {o}
                     </option>
                   ))}
                   <option value="Otro">Otro</option>
+                  {/* Hasta el final: arriba se lleva por inercia las respuestas
+                      que sí servían. */}
+                  <option value="">Prefiero no decir</option>
                 </select>
+                {otroOrigen && (
+                  <input
+                    name="origenOtro"
+                    placeholder="¿De dónde?"
+                    maxLength={60}
+                    className="w-full mt-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  />
+                )}
               </div>
               <div className="mt-6">
                 <label className="text-colorParagraph text-sm">
