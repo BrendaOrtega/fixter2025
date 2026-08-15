@@ -107,6 +107,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return data({ ok: true, bajaTotal: true });
   }
 
+  // Simétrico a la baja total: si irse cuesta un clic, volver también. Sin
+  // esto, quien se bajó de todo tenía que reactivar una por una.
+  if (intent === "reactivar-todo") {
+    const subscriber = await db.subscriber.findUnique({
+      where: { email: user.email },
+      select: { id: true },
+    });
+    if (subscriber) {
+      const pausadas = await db.sequenceEnrollment.findMany({
+        where: { subscriberId: subscriber.id, status: "paused" },
+        select: { sequenceId: true },
+      });
+      const { enrollSubscriberInSequence } = await import("~/.server/sequences");
+      for (const p of pausadas) {
+        await enrollSubscriberInSequence(p.sequenceId, subscriber.id);
+      }
+    }
+    return data({ ok: true });
+  }
+
   if (intent === "reactivar") {
     const subscriber = await db.subscriber.findUnique({
       where: { email: user.email },
@@ -181,6 +201,7 @@ export default function Route({
 const Suscripciones = ({ items }: { items: any[] }) => {
   const fetcher = useFetcher();
   const [confirmarBaja, setConfirmarBaja] = useState(false);
+  const todasPausadas = items.every((s: any) => s.status === "paused");
 
   if (!items?.length) return null;
 
@@ -257,6 +278,18 @@ const Suscripciones = ({ items }: { items: any[] }) => {
       {/* La salida completa, visible y sin buscarla: es lo que prometen los
           correos que usan /perfil como su enlace de baja. */}
       <div className="mt-6 text-center">
+        {todasPausadas ? (
+          <button
+            type="button"
+            onClick={() =>
+              fetcher.submit({ intent: "reactivar-todo" }, { method: "post" })
+            }
+            disabled={fetcher.state !== "idle"}
+            className="text-sm text-brand-500 underline underline-offset-4 transition-colors hover:text-brand-400 disabled:opacity-50"
+          >
+            Volver a activar todo
+          </button>
+        ) : (
         <button
           type="button"
           onClick={() => setConfirmarBaja(true)}
@@ -265,6 +298,7 @@ const Suscripciones = ({ items }: { items: any[] }) => {
         >
           Darme de baja de todos los correos
         </button>
+        )}
       </div>
 
       <ConfirmDialog
