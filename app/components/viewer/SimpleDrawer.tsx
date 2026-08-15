@@ -69,7 +69,7 @@ export const Drawer = ({
         <motion.button
           onClick={onClose}
           id="overlay"
-          className="fixed inset-0 bg-dark/60 z-[300]"
+          className="fixed inset-0 bg-dark/60 z-[335]"
           animate={{ backdropFilter: "blur(4px)" }}
           exit={{ backdropFilter: "blur(0)", opacity: 0 }}
         />
@@ -84,7 +84,7 @@ export const Drawer = ({
           // deja el contenido apretado y el fondo a medio ver, que es peor que
           // no tener fondo. De `md` en adelante vuelve a ser cajón lateral, y
           // arranca DEBAJO de la navbar para que el menú no le cruce el título.
-          "bg-background z-[310] fixed inset-0 flex flex-col text-white overflow-y-auto scrollbar-sutil p-6",
+          "bg-background z-[340] fixed inset-0 flex flex-col text-white overflow-y-auto scrollbar-sutil p-6",
           // Cajón lateral SOLO desde lg. En tablet el menú de videos ocupa
           // ~420px fijos a la izquierda y se encimaba con un cajón del 60%,
           // dejando su contenido cortado por debajo del menú.
