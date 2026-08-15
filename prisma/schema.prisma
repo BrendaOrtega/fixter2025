@@ -47,6 +47,9 @@ model Sequence {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   name        String // "Bienvenida Claude Code"
   description String? // Descripción interna
+  /// Slug para el link público /s/:slug. Opcional para no romper secuencias
+  /// viejas creadas antes de este campo (esas siguen resolviendo por id).
+  slug        String? @unique
 
   // Dueño: user que la creó. null = secuencia oficial de FixterGeek
   ownerId String? @db.ObjectId
@@ -68,6 +71,10 @@ model Sequence {
   /// código (webhook de compra, script). Para secuencias que son un perk
   /// pagado — si no, cualquiera con el link recibe gratis lo que otros pagaron.
   isPrivate  Boolean @default(false)
+
+  /// Key de la ilustración animada del hero público (ver
+  /// app/components/sequences/illustrations). null = sin ilustración.
+  illustration String?
 
   // Emails de la secuencia (ordenados)
   emails SequenceEmail[]

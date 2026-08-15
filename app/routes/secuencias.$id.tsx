@@ -19,6 +19,8 @@ import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { marked } from "marked";
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
+import { EmailRichEditor } from "~/components/sequences/EmailRichEditor";
+import { SEQUENCE_ILLUSTRATIONS } from "~/components/sequences/illustrations";
 import { useFetcher } from "react-router";
 import {
   FaArrowLeft,
@@ -183,9 +185,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (!name) return { error: "El nombre no puede estar vacío" };
     // Un checkbox no marcado no viaja en el form: su ausencia ES el "false".
     const isPrivate = formData.get("isPrivate") === "on";
+    // Solo aceptamos keys de la galería; cualquier otra cosa se guarda como
+    // null para que la landing no quede apuntando a una ilustración fantasma.
+    const rawIllustration = (formData.get("illustration") as string) || "";
+    const illustration = SEQUENCE_ILLUSTRATIONS.some(
+      (i) => i.key === rawIllustration
+    )
+      ? rawIllustration
+      : null;
     await db.sequence.update({
       where: { id: sequenceId },
-      data: { name, description, isPrivate },
+      data: { name, description, isPrivate, illustration },
     });
     return { success: true, message: "Secuencia actualizada" };
   }
@@ -1349,14 +1359,32 @@ function EmailDrawer({
     onClose();
   }, [dirty, onClose, pendingVideo]);
 
-  // ESC cierra el drawer (con guarda de dirty).
+  /**
+   * Mientras hay cambios sin guardar, el drawer se cierra únicamente por la ✕ o
+   * por Cancelar. Un clic afuera o un Escape a media redacción tiraban el
+   * trabajo, y un confirm() no compensa el susto.
+   */
+  const closeIfClean = useCallback(() => {
+    if (dirty) return;
+    onClose();
+  }, [dirty, onClose]);
+
+  // ESC cierra el drawer solo si no estás editando.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") attemptClose();
+      if (e.key === "Escape") closeIfClean();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [attemptClose]);
+  }, [closeIfClean]);
+
+  // Y el navegador avisa si alguien recarga o cierra la pestaña a media edición.
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
 
   // Bloquea el scroll del fondo mientras el drawer está abierto.
   useEffect(() => {
@@ -1437,7 +1465,7 @@ function EmailDrawer({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={attemptClose}
+        onClick={closeIfClean}
         className={cn(
           "fixed inset-0 bg-black/50 z-[300]",
           !isPresent && "pointer-events-none"
@@ -1449,7 +1477,7 @@ function EmailDrawer({
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 28, stiffness: 280 }}
         className={cn(
-          "fixed top-0 right-0 h-full w-full max-w-2xl bg-brand-900 border-l border-brand-100/10 z-[300] overflow-y-auto",
+          "fixed top-0 right-0 h-full w-full md:w-[80vw] md:max-w-[80vw] bg-brand-900 border-l border-brand-100/10 z-[300] overflow-y-auto",
           !isPresent && "pointer-events-none"
         )}
       >
@@ -1833,7 +1861,7 @@ function EmailBody({
   const [aiPrompt, setAiPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [view, setView] = useState<"edit" | "preview">("preview");
+  const [view, setView] = useState<"edit" | "rich" | "preview">("preview");
   // Contexto/fuente para la generación (opcional). NO se guarda con el email,
   // es solo material para que la IA no invente.
   const [context, setContext] = useState("");
@@ -1997,7 +2025,8 @@ function EmailBody({
           <div className="flex gap-1 text-xs">
             {[
               { id: "preview", label: "Vista previa" },
-              { id: "edit", label: "Editar" },
+              { id: "rich", label: "Editar" },
+              { id: "edit", label: "HTML" },
             ].map((t) => (
               <button
                 key={t.id}
@@ -2031,7 +2060,7 @@ function EmailBody({
         </div>
 
         {/* El textarea siempre montado (name=content) para que se envíe; se
-            oculta en preview sin desmontarse. */}
+            oculta fuera de la pestaña HTML sin desmontarse. */}
         <textarea
           name="content"
           rows={14}
@@ -2040,9 +2069,12 @@ function EmailBody({
           placeholder="HTML del email, o genéralo con IA arriba…"
           className={cn(
             "w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white text-sm font-mono focus:outline-none focus:border-brand-500",
-            view === "preview" && "hidden"
+            view !== "edit" && "hidden"
           )}
         />
+        {view === "rich" && (
+          <EmailRichEditor value={content} onChange={setContent} />
+        )}
         {view === "preview" && (
           <div className="border border-brand-100/20 rounded-lg overflow-hidden bg-white">
             <div className="text-[10px] text-gray-500 px-3 py-1 bg-gray-50 border-b border-gray-200 sticky top-0">
@@ -2065,7 +2097,57 @@ function EmailBody({
   );
 }
 
+/// Miniatura clickeable de una ilustración. El radio real va oculto para que el
+/// form la mande sin JS y el teclado la siga alcanzando.
+function IllustrationOption({
+  value,
+  label,
+  checked,
+  onSelect,
+  children,
+}: {
+  value: string;
+  label: string;
+  checked: boolean;
+  onSelect: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      className={cn(
+        "cursor-pointer rounded-lg border p-3 flex flex-col items-center gap-2 transition-colors",
+        checked
+          ? "border-brand-500 bg-brand-500/10"
+          : "border-brand-100/15 bg-brand-900/60 hover:border-brand-100/40"
+      )}
+    >
+      <input
+        type="radio"
+        name="illustration"
+        value={value}
+        checked={checked}
+        onChange={() => onSelect(value)}
+        className="sr-only"
+      />
+      <div className="w-full aspect-[4/3] flex items-center justify-center overflow-hidden">
+        {children}
+      </div>
+      <span
+        className={cn(
+          "text-[11px] text-center leading-tight",
+          checked ? "text-white" : "text-brand-100/60"
+        )}
+      >
+        {label}
+      </span>
+    </label>
+  );
+}
+
 function SettingsTab({ sequence, fetcher }: any) {
+  const [illustration, setIllustration] = useState<string>(
+    sequence.illustration || ""
+  );
   return (
     <fetcher.Form
       method="post"
@@ -2091,6 +2173,36 @@ function SettingsTab({ sequence, fetcher }: any) {
           className="w-full px-3 py-2 bg-brand-900/60 border border-brand-100/20 rounded-lg text-white focus:outline-none focus:border-brand-500"
         />
       </div>
+      <div className="border-t border-brand-100/10 pt-4">
+        <label className="block text-sm text-brand-100 mb-1">
+          Ilustración del hero
+        </label>
+        <p className="text-xs text-brand-100/50 mb-3">
+          Se anima en bucle arriba de la landing pública de la secuencia.
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <IllustrationOption
+            value=""
+            label="Sin ilustración"
+            checked={illustration === ""}
+            onSelect={setIllustration}
+          >
+            <span className="text-brand-100/40 text-xs">—</span>
+          </IllustrationOption>
+          {SEQUENCE_ILLUSTRATIONS.map(({ key, label, Component }) => (
+            <IllustrationOption
+              key={key}
+              value={key}
+              label={label}
+              checked={illustration === key}
+              onSelect={setIllustration}
+            >
+              <Component className="w-full h-full" />
+            </IllustrationOption>
+          ))}
+        </div>
+      </div>
+
       <div className="border-t border-brand-100/10 pt-4">
         <label className="flex items-start gap-3 cursor-pointer">
           <input

@@ -9,6 +9,7 @@ import type { Route } from "./+types/secuencias";
 import { getUserOrRedirect, getUserOrNull } from "~/.server/dbGetters";
 import { db } from "~/.server/db";
 import { getOrCreateSubscriberForUser, calculateNextEmailDate } from "~/.server/sequences";
+import { generateUniqueSequenceSlug } from "~/.server/slug";
 import getMetaTags from "~/utils/getMetaTags";
 import { cn } from "~/utils/cn";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
@@ -98,9 +99,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return { error: "Ponle un nombre a tu secuencia" };
     }
 
+    const slug = await generateUniqueSequenceSlug(name);
     const created = await db.sequence.create({
       data: {
         name,
+        slug,
         description,
         ownerId: user.id,
         trigger: "MANUAL",
