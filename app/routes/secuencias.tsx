@@ -537,7 +537,11 @@ function CreatorTab({
           {mySequences.map((seq) => (
             <Link
               key={seq.id}
-              to={`/secuencias/${seq.id}`}
+              // "Gestionar" va a la gestión. Apuntaba a la landing pública, que
+              // para una secuencia en borrador responde "no está disponible":
+              // desde el panel del dueño, sus propias secuencias no se podían
+              // abrir.
+              to={`/secuencias/gestion/${seq.id}`}
               className="block bg-brand-900/40 border border-brand-100/10 rounded-lg p-6 hover:border-brand-500/40 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
@@ -561,11 +565,13 @@ function CreatorTab({
               <div className="flex items-center gap-6 text-sm text-brand-100">
                 <span className="flex items-center gap-2">
                   <FaEnvelope className="w-3 h-3" />
-                  {seq._count.emails} emails
+                  {seq._count.emails}{" "}
+                  {seq._count.emails === 1 ? "entrega" : "entregas"}
                 </span>
                 <span className="flex items-center gap-2">
                   <FaUsers className="w-3 h-3" />
-                  {seq._count.enrollments} suscriptores
+                  {seq._count.enrollments}{" "}
+                  {seq._count.enrollments === 1 ? "suscriptor" : "suscriptores"}
                 </span>
                 <span className="flex items-center gap-2 ml-auto text-brand-500">
                   <FaChartBar className="w-3 h-3" />

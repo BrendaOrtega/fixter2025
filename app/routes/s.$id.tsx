@@ -3,11 +3,13 @@ import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
   data,
+  redirect,
   useFetcher,
 } from "react-router";
 import { motion } from "motion/react";
 import type { Route } from "./+types/s.$id";
 import { db } from "~/.server/db";
+import { getUserOrNull } from "~/.server/dbGetters";
 import { calculateNextEmailDate } from "~/.server/sequences";
 import { checkSignupEmail } from "~/.server/anti-bot";
 import { normalizePhone } from "~/.server/phone";
@@ -38,8 +40,8 @@ export const meta = ({ data: d }: Route.MetaArgs) => {
   });
 };
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-  if (!params.id) return { sequence: null };
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  if (!params.id) return { sequence: null, user: null };
   const sequence = await db.sequence.findUnique({
     where: sequenceWhereFromParam(params.id),
     select: {
@@ -70,9 +72,36 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   // Una secuencia privada no tiene alta pública: se entra por código (compra,
   // script). Sin esto, cualquiera con el link recibe gratis un perk pagado.
   if (!sequence || !sequence.isActive || sequence.isPrivate) {
-    return { sequence: null };
+    return { sequence: null, user: null };
   }
-  return { sequence };
+
+  // La URL canónica es la del slug. El id sigue resolviendo —los correos que ya
+  // salieron lo traen— pero manda a la bonita en vez de servir la misma página
+  // en dos direcciones, que parte las métricas y confunde a los buscadores.
+  if (isValidId(params.id) && sequence.slug) {
+    const url = new URL(request.url);
+    url.pathname = `/secuencias/${sequence.slug}`;
+    throw redirect(url.toString(), 301);
+  }
+
+  // Quien ya tiene cuenta no vuelve a escribir su correo. Es la misma regla del
+  // cajón del visor: la sesión ya probó que ese buzón es suyo.
+  const user = await getUserOrNull(request);
+  const enrolled = user
+    ? !!(await db.sequenceEnrollment.findFirst({
+        where: {
+          sequenceId: sequence.id,
+          status: { not: "paused" },
+          subscriber: { is: { email: user.email } },
+        },
+        select: { id: true },
+      }))
+    : false;
+
+  return {
+    sequence,
+    user: user ? { email: user.email, enrolled } : null,
+  };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -86,7 +115,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ success: true, needsConfirmation: true });
   }
 
-  const email = String(formData.get("email") || "").toLowerCase().trim();
+  // Con sesión el correo lo pone el servidor: además de ahorrarle el trámite a
+  // quien ya tiene cuenta, impide que se suscriba a un tercero escribiendo su
+  // dirección. Sin sesión sigue mandando el formulario, como siempre.
+  const session = await getUserOrNull(request);
+  const email =
+    session?.email?.toLowerCase().trim() ||
+    String(formData.get("email") || "").toLowerCase().trim();
   const name = (formData.get("name") as string)?.trim() || undefined;
   const wantsWhatsapp = formData.get("wantsWhatsapp") === "on";
   const rawPhone = String(formData.get("phone") || "").trim();
@@ -212,7 +247,7 @@ function BicolorTitle({ text }: { text: string }) {
 }
 
 export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
-  const { sequence } = loaderData;
+  const { sequence, user } = loaderData;
   const fetcher = useFetcher<{
     success?: boolean;
     needsConfirmation?: boolean;
@@ -420,10 +455,21 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           ) : (
             <fetcher.Form onSubmit={handleSubmit}>
               <h2 className="text-2xl font-bold text-white sm:text-[1.75rem]">
-                Recibe la primera entrega hoy
+                {user?.enrolled
+                  ? "Ya estás dentro"
+                  : "Recibe la primera entrega hoy"}
               </h2>
               <p className="mt-1.5 text-sm text-brand-100">
-                Déjanos tu correo y la secuencia arranca en cuanto confirmes.
+                {user?.enrolled ? (
+                  "Las entregas te llegan a tu correo conforme salen. No tienes que hacer nada."
+                ) : user ? (
+                  <>
+                    Te subes con{" "}
+                    <strong className="text-white">{user.email}</strong> 📬
+                  </>
+                ) : (
+                  "Déjanos tu correo y la secuencia arranca en cuanto confirmes."
+                )}
               </p>
 
               {/* Honeypot anti-bot (oculto para humanos) */}
@@ -437,6 +483,10 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                 aria-hidden="true"
               />
 
+              {/* Con sesión no se piden ni nombre ni correo: la cuenta ya los
+                  tiene y ya probó que el buzón es suyo. Pedirlos otra vez es
+                  cobrar dos veces el mismo trámite. */}
+              {!user && (
               <div className="mt-5 flex flex-col gap-3">
                 <label className="block">
                   <span className="mb-1.5 block text-sm text-brand-100">
@@ -466,6 +516,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                   />
                 </label>
               </div>
+              )}
 
               {/* WhatsApp opcional: el switch revela el campo. Pedir el celular
                   de entrada baja las altas; detrás de un sí explícito, solo lo
@@ -519,10 +570,16 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !!user?.enrolled}
                 className="mt-6 h-14 w-full rounded-xl bg-brand-500 text-lg font-bold text-brand-900 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 focus:ring-offset-brand-900 disabled:opacity-50"
               >
-                {isLoading ? "Procesando…" : "Quiero la secuencia"}
+                {user?.enrolled
+                  ? "Ya estás suscrito ✅"
+                  : isLoading
+                    ? "Procesando…"
+                    : user
+                      ? "Súbeme a la secuencia 🍿"
+                      : "Quiero la secuencia"}
               </button>
 
               {error && (
@@ -531,9 +588,15 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
 
               {/* En dos renglones a propósito: en una sola línea el texto se
                   parte donde le toca y se lee cortado. */}
+              {/* Con sesión no hay confirmación que pedir: la cuenta ya la dio.
+                  Prometerla igual haría esperar un correo que nunca llega. */}
               <p className="mt-4 text-center text-xs leading-relaxed text-brand-100/70">
-                Te pediremos confirmar tu correo.
-                <br />
+                {!user && (
+                  <>
+                    Te pediremos confirmar tu correo.
+                    <br />
+                  </>
+                )}
                 Cero spam, bájate en un clic.
               </p>
             </fetcher.Form>
