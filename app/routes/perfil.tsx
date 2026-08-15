@@ -12,6 +12,7 @@ import * as fabric from "fabric";
 import { getUserOrRedirect } from "~/.server/dbGetters";
 import { getPutFileUrl } from "~/.server/tigrs";
 import getMetaTags from "~/utils/getMetaTags";
+import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUserOrRedirect(request);
@@ -59,11 +60,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   const { db } = await import("~/.server/db");
-  // Que sea suya: el id viaja en el formulario y no basta con confiarle.
-  const enr = await db.sequenceEnrollment.findUnique({
-    where: { id: enrollmentId },
-    select: { id: true, sequenceId: true, subscriber: { select: { email: true } } },
-  });
+
+  // La baja total no lleva `enrollmentId`: se resuelve antes de buscarlo, o la
+  // consulta sale con `id: undefined` y Prisma revienta con un 500.
+
+  // De aquí en adelante hace falta una inscripción concreta, y tiene que ser
+  // suya: el id viaja en el formulario y no basta con confiarle.
+  const enr = enrollmentId
+    ? await db.sequenceEnrollment.findUnique({
+        where: { id: enrollmentId },
+        select: {
+          id: true,
+          sequenceId: true,
+          subscriber: { select: { email: true } },
+        },
+      })
+    : null;
   if (!enr || enr.subscriber?.email !== user.email) {
     return data({ error: "No encontramos esa suscripción" }, { status: 404 });
   }
@@ -168,6 +180,7 @@ export default function Route({
  */
 const Suscripciones = ({ items }: { items: any[] }) => {
   const fetcher = useFetcher();
+  const [confirmarBaja, setConfirmarBaja] = useState(false);
 
   if (!items?.length) return null;
 
@@ -243,16 +256,29 @@ const Suscripciones = ({ items }: { items: any[] }) => {
 
       {/* La salida completa, visible y sin buscarla: es lo que prometen los
           correos que usan /perfil como su enlace de baja. */}
-      <fetcher.Form method="post" className="mt-6 text-center">
-        <input type="hidden" name="intent" value="baja-total" />
+      <div className="mt-6 text-center">
         <button
-          type="submit"
+          type="button"
+          onClick={() => setConfirmarBaja(true)}
           disabled={fetcher.state !== "idle"}
           className="text-sm text-brand-100/60 underline underline-offset-4 transition-colors hover:text-red-400 disabled:opacity-50"
         >
           Darme de baja de todos los correos
         </button>
-      </fetcher.Form>
+      </div>
+
+      <ConfirmDialog
+        isOpen={confirmarBaja}
+        title="¿Darte de baja de todos los correos?"
+        description="Dejarías de recibir todas tus series de una vez. Puedes volver cuando quieras desde aquí mismo, y retomamos donde te quedaste."
+        confirmLabel="Sí, darme de baja"
+        cancelLabel="Mejor no"
+        onCancel={() => setConfirmarBaja(false)}
+        onConfirm={() => {
+          setConfirmarBaja(false);
+          fetcher.submit({ intent: "baja-total" }, { method: "post" });
+        }}
+      />
     </section>
   );
 };
