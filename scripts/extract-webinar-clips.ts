@@ -11,7 +11,7 @@ const OUT = process.env.OUT_DIR!;
 
 // Cortes finos, ajustados a las marcas reales del transcript.
 const CLIPS = [
-  { slug: "5-agent-native", from: 1389, to: 1545 },
+  { slug: "5-agent-native", from: 1389, to: 1542 },
 ];
 
 const get = async (key: string) => {
