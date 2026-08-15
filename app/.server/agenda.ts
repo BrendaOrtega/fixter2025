@@ -228,7 +228,13 @@ getAgenda().define(
     const { processed } = await processDueEnrollments();
     console.info(`Processed ${processed} ready enrollments`);
     console.info("::SEQUENCE_JOB_FINISHED::", job.attrs.name);
-  }
+  },
+  // Explícito, como `process_video_hls`. El bucle duerme 500ms por inscripción
+  // más la latencia de SES: con unos cientos de vencidas se rebasa el default
+  // de 10 minutos, Agenda da el job por colgado y otra máquina lo retoma —
+  // mientras la primera sigue enviando. Todo lo que no había alcanzado sale
+  // dos veces.
+  { lockLifetime: 30 * 60 * 1000 }
 );
 
 // Schedule sequence processing - optimized frequency for development

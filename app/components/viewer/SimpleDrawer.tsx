@@ -84,7 +84,7 @@ export const Drawer = ({
           // deja el contenido apretado y el fondo a medio ver, que es peor que
           // no tener fondo. De `md` en adelante vuelve a ser cajón lateral, y
           // arranca DEBAJO de la navbar para que el menú no le cruce el título.
-          "bg-background z-[310] fixed inset-0 flex flex-col text-white overflow-y-auto p-6",
+          "bg-background z-[310] fixed inset-0 flex flex-col text-white overflow-y-auto scrollbar-sutil p-6",
           "md:inset-auto md:right-0 md:top-20 md:h-[calc(100vh-5rem)] md:border md:border-white/10 md:shadow-xl md:rounded-tl-3xl md:rounded-bl-3xl md:py-8 md:px-12",
           mode === "big"
             ? "md:w-[90%] lg:w-[85%]"
@@ -116,7 +116,7 @@ export const Drawer = ({
           style={{
             scrollbarWidth: "none",
           }}
-          className="overflow-y-auto flex-1"
+          className="scrollbar-sutil overflow-y-auto flex-1"
         >
           {children}
         </section>

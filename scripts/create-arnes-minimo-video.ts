@@ -24,21 +24,11 @@ const MODULE_NAME = "Introducción a los agentes de IA";
 // que no cabe sin scroll no se lee — el detalle está en el video y en el repo.
 const DESCRIPTION = `Un agente completo desde cero: un \`fetch\`, una herramienta y un \`while\` 🔧
 
-## El ciclo
-
 ![El ciclo de un agente](/ilustraciones/loop-agente.svg)
 
 Le describes al modelo qué herramientas existen. Él pide ejecutar una, tú la ejecutas y le devuelves el resultado. Vuelves a llamarlo con el historial completo.
 
 Cuando responde con texto en vez de pedir otra herramienta, terminó.
-
-## Lo que construimos
-
-1. La llamada cruda
-2. La primera herramienta y el loop
-3. El chat, cuando el historial se vuelve memoria
-4. La caché del prompt
-5. Ojos en el navegador
 
 [Clonar el repositorio](https://github.com/blissito/taller-arnes-grok) 🧰
 `;

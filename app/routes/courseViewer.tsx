@@ -322,6 +322,28 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       });
 
       await joinCommunityFromViewer(email);
+
+      // Si el desbloqueo venía de un video de secuencia, la inscripción se hace
+      // AQUÍ: el código recién demostró que el buzón es suyo, que es la misma
+      // prueba que pide el doble opt-in. Así "se abre de inmediato" se cumple
+      // de verdad, sin mandar a nadie a buscar un link a su correo.
+      const sequenceId = formData.get("sequenceId") as string | null;
+      if (sequenceId) {
+        try {
+          const { enrollSubscriberInSequence } = await import("~/.server/sequences");
+          const sub = await db.subscriber.findUnique({
+            where: { email },
+            select: { id: true },
+          });
+          if (sub) {
+            await enrollSubscriberInSequence(sequenceId, sub.id, {
+              immediate: true,
+            });
+          }
+        } catch (error) {
+          console.error("📧 No se pudo inscribir a la secuencia:", error);
+        }
+      }
       await recordOrigin(email, request);
       await recordSelfReported(
         email,

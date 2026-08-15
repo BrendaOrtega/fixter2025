@@ -218,6 +218,11 @@ export const UnifiedSidebarMenu = ({
       >
         {/* Header with tabs */}
         <div className="px-4 py-4 border-b border-gray-700/50">
+          {/* Sin la etiqueta, el nombre del programa se confunde con el
+              título del video que se está viendo. */}
+          <p className="mb-0.5 text-[11px] font-bold uppercase tracking-wider text-brand-500">
+            Curso
+          </p>
           <h2 className="text-lg font-semibold text-white mb-3 truncate">
             {courseTitle}
           </h2>
@@ -250,7 +255,7 @@ export const UnifiedSidebarMenu = ({
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="scrollbar-sutil flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             {tabVigente === "videos" && (
               <motion.div

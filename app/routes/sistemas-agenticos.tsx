@@ -239,7 +239,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             },
           })
         : await db.subscriber.create({
-            data: { email, name: name || undefined, confirmed: true, tags },
+            // `confirmed` NO se fabrica aquí. Registrarse a un webinar prueba
+            // interés, no que el buzón sea tuyo — y este flag es global: en
+            // cuanto se pone, cualquier alta posterior en cualquier secuencia se
+            // salta el doble opt-in (ver s.$id.tsx, "ya confirmado → enrolar
+            // directo"). Un formulario abierto no puede tener esa llave.
+            //
+            // La confirmación llega con el correo de bienvenida al webinar, que
+            // es donde la persona demuestra el buzón sin fricción extra.
+            data: { email, name: name || undefined, confirmed: false, tags },
           });
 
       const { recordOrigin } = await import("~/.server/origen");

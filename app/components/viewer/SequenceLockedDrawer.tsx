@@ -28,6 +28,7 @@ export function SequenceLockedDrawer({
   sequenceName,
   sequenceUrl,
   userEmail,
+  courseSlug,
 }: {
   isOpen: boolean;
   title: string;
@@ -39,38 +40,22 @@ export function SequenceLockedDrawer({
   sequenceName?: string | null;
   sequenceUrl?: string | null;
   userEmail?: string | null;
+  courseSlug: string;
 }) {
   const fetcher = useFetcher<{
-    sequenceEnrolled?: boolean;
-    sequenceNeedsConfirmation?: boolean;
+    codeSent?: boolean;
+    email?: string;
     error?: string;
   }>();
   const emailRef = useRef<HTMLInputElement>(null);
   const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
+  const [correo, setCorreo] = useState(userEmail || "");
+
+  // El código llegó: se pasa al paso dos sin cambiar de pantalla.
+  const enCodigo = !!fetcher.data?.codeSent;
 
   const cuando = formatUnlock(unlocksAt ?? null);
   const enviando = fetcher.state !== "idle";
-  const listo = fetcher.data?.sequenceEnrolled;
-  const porConfirmar = fetcher.data?.sequenceNeedsConfirmation;
-
-  // --- Acaba de darse de alta -------------------------------------------
-  if (listo || porConfirmar) {
-    return (
-      <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="¡Listo!">
-        <div className="text-center">
-          <EnvelopeIllustration className="mx-auto h-auto w-[110px] sm:w-[170px]" />
-          <h3 className="mt-3 text-lg font-bold text-white sm:text-xl">
-            {listo ? "Ya estás dentro" : "Revisa tu correo"}
-          </h3>
-          <p className="mt-2 text-sm text-brand-100 sm:text-base">
-            {listo
-              ? "La primera entrega sale en unos minutos y trae este video. En cuanto llegue, se abre aquí."
-              : "Te mandamos un enlace para confirmar. Al confirmarlo recibes la primera entrega, que es justo este video."}
-          </p>
-        </div>
-      </Drawer>
-    );
-  }
 
   // --- Ya suscrito, esta entrega todavía no le toca ----------------------
   if (enrolled) {
@@ -135,70 +120,97 @@ export function SequenceLockedDrawer({
           )}
         </p>
 
-        <fetcher.Form method="post" className="mt-4 text-left">
-          <input type="hidden" name="intent" value="subscribe-sequence" />
-          <input type="hidden" name="sequenceId" value={sequenceId || ""} />
-          <input
-            ref={emailRef}
-            type="email"
-            name="email"
-            required
-            defaultValue={userEmail || ""}
-            placeholder="tu@correo.com"
-            className="h-12 sm:h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-          />
-          {/* Mismo trato que en la landing de la serie: el celular vive detrás
-              de un sí explícito, y es para avisos, no para las entregas. */}
-          <button
-            type="button"
-            role="switch"
-            aria-checked={wantsWhatsapp}
-            onClick={() => setWantsWhatsapp((v) => !v)}
-            className="mt-2 flex w-full items-center gap-3 rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 py-3 text-left transition-colors hover:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-          >
-            <span
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                wantsWhatsapp ? "bg-brand-500" : "bg-brand-100/25"
-              }`}
+        {enCodigo ? (
+          /* Paso dos: el código. Se queda en el mismo cajón —mandar a otra
+             pantalla a alguien que ya escribió su correo es perderlo. */
+          <fetcher.Form method="post" className="mt-4 text-left">
+            <input type="hidden" name="intent" value="verify-code" />
+            <input type="hidden" name="email" value={fetcher.data?.email || correo} />
+            <input type="hidden" name="courseSlug" value={courseSlug} />
+            <input type="hidden" name="sequenceId" value={sequenceId || ""} />
+            <p className="mb-3 text-center text-sm text-brand-100">
+              Te mandamos un código de 6 dígitos a{" "}
+              <strong className="text-white">{fetcher.data?.email || correo}</strong>
+            </p>
+            <input
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              required
+              autoFocus
+              placeholder="000000"
+              className="h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-center text-2xl tracking-[0.4em] text-white placeholder-brand-100/30 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+            />
+            {fetcher.data?.error && (
+              <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
+            )}
+            <PrimaryButton type="submit" isDisabled={enviando} className="mt-3 w-full">
+              {enviando ? "Verificando…" : "Ver el video"}
+            </PrimaryButton>
+          </fetcher.Form>
+        ) : (
+          <fetcher.Form method="post" className="mt-4 text-left">
+            {/* El mismo OTP del resto del sitio: el código prueba que el buzón
+                es suyo sin sacarlo de aquí, y esa prueba es la que permite
+                inscribirlo de una vez en vez de mandarle un link. */}
+            <input type="hidden" name="intent" value="send-code" />
+            <input type="hidden" name="courseSlug" value={courseSlug} />
+            <input type="hidden" name="sequenceId" value={sequenceId || ""} />
+            <input
+              ref={emailRef}
+              type="email"
+              name="email"
+              required
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+              placeholder="tu@correo.com"
+              className="h-12 sm:h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+            />
+            {/* Mismo trato que en la landing de la serie: el celular vive detrás
+                de un sí explícito, y es para avisos, no para las entregas. */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={wantsWhatsapp}
+              onClick={() => setWantsWhatsapp((v) => !v)}
+              className="mt-2 flex w-full items-center gap-3 rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 py-3 text-left transition-colors hover:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             >
               <span
-                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  wantsWhatsapp ? "translate-x-5" : ""
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                  wantsWhatsapp ? "bg-brand-500" : "bg-brand-100/25"
                 }`}
+              >
+                <span
+                  className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    wantsWhatsapp ? "translate-x-5" : ""
+                  }`}
+                />
+              </span>
+              <span className="text-sm font-medium text-white">
+                Quiero enterarme de lo nuevo por WhatsApp 💬
+              </span>
+            </button>
+            {wantsWhatsapp && (
+              <input
+                type="tel"
+                name="phone"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="55 1234 5678"
+                className="mt-2 h-12 sm:h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
               />
-            </span>
-            <span className="text-sm font-medium text-white">
-              Quiero enterarme de lo nuevo por WhatsApp 💬
-            </span>
-          </button>
-          {wantsWhatsapp && (
-            <input
-              type="tel"
-              name="phone"
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="55 1234 5678"
-              className="mt-2 h-12 sm:h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-            />
-          )}
-          {wantsWhatsapp && (
-            <input type="hidden" name="wantsWhatsapp" value="on" />
-          )}
+            )}
+            {wantsWhatsapp && <input type="hidden" name="wantsWhatsapp" value="on" />}
+            {fetcher.data?.error && (
+              <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
+            )}
+            <PrimaryButton type="submit" isDisabled={enviando} className="mt-3 w-full">
+              {enviando ? "Un momento…" : "Desbloquear este video"}
+            </PrimaryButton>
+          </fetcher.Form>
+        )}
 
-          {fetcher.data?.error && (
-            <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
-          )}
-          <PrimaryButton
-            type="submit"
-            isDisabled={enviando}
-            className="mt-3 w-full"
-          >
-            {enviando ? "Un momento…" : "Desbloquear este video"}
-          </PrimaryButton>
-        </fetcher.Form>
-
-        {/* En dos renglones: en uno solo el texto se parte donde le toca y se
-            lee cortado. */}
         <p className="mt-3 text-center text-xs leading-relaxed text-brand-100/60">
           Gratis, una entrega cada pocos días.
           <br />

@@ -336,19 +336,31 @@ export const validateAccessToken = (
 
 export type SequenceUnsubscribeTokenData = {
   enrollmentId: string;
+  /** Respaldo por si la inscripción se recrea con otro id. */
+  sequenceId?: string;
+  subscriberId?: string;
   action: "sequence-unsubscribe";
 };
 
+/**
+ * Token de baja. Firma también el par (secuencia, suscriptor) como respaldo,
+ * igual que el token de video: si la inscripción se recrea —un bounce borra al
+ * subscriber y arrastra sus filas en cascada— el enlace de los correos ya
+ * enviados debe seguir funcionando.
+ *
+ * NO expira, a propósito. Un correo de hace trece meses tiene que poder darte
+ * de baja; si no, la única salida es marcarlo como spam.
+ */
 export const generateSequenceUnsubscribeToken = (
-  enrollmentId: string
+  enrollmentId: string,
+  fallback?: { sequenceId: string; subscriberId: string }
 ): string => {
   const data: SequenceUnsubscribeTokenData = {
     enrollmentId,
+    ...fallback,
     action: "sequence-unsubscribe",
   };
-  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
-    expiresIn: "365d",
-  });
+  return jwt.sign(data, process.env.SECRET || "fixtergeek");
 };
 
 export const validateSequenceUnsubscribeToken = (

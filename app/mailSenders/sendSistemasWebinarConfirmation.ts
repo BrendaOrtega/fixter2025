@@ -15,9 +15,19 @@ type Props = {
   to: string;
   userName?: string | null;
   slot: WebinarSlot;
+  /** Link que confirma el buzón. Sin él no salen los recordatorios. */
+  confirmUrl?: string | null;
 };
 
-const template = ({ userName, slot }: { userName?: string | null; slot: WebinarSlot }) => `
+const template = ({
+  userName,
+  slot,
+  confirmUrl,
+}: {
+  userName?: string | null;
+  slot: WebinarSlot;
+  confirmUrl?: string | null;
+}) => `
 <h1 style="font-size:26px;margin:0 0 8px 0;color:#19262A;">${userName ? `Listo, ${userName}` : "Listo"} ✅</h1>
 <p style="margin:0 0 20px 0;">
   Tu lugar en el webinar <strong>${WEBINAR_TITLE}</strong> está apartado para el
@@ -44,6 +54,19 @@ const template = ({ userName, slot }: { userName?: string | null; slot: WebinarS
 <p style="margin:0 0 8px 0;color:#475569;">La sala abre 10 minutos antes en este link (guárdalo):</p>
 <div style="margin:0 0 24px 0;">
   ${emailButton("Entrar al webinar", WEBINAR_ROOM_PATH)}
+${
+  confirmUrl
+    ? `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff8ec;border-radius:10px;border-left:4px solid #E4A853;margin:24px 0;">
+  <tr><td style="padding:16px 18px;color:#19262A;font-size:15px;line-height:1.6;">
+    <strong>Un clic más para los recordatorios</strong><br/>
+    Te avisamos el día anterior y una hora antes, pero antes necesitamos saber que
+    este buzón es tuyo.<br/>
+    <a href="${confirmUrl}" target="_blank" rel="noopener" style="display:inline-block;margin-top:10px;color:#0E8F79;font-weight:bold;text-decoration:underline;">Confirmar mi correo →</a>
+  </td></tr>
+</table>`
+    : ""
+}
 </div>
 
 <p style="margin:0 0 24px 0;color:#475569;font-size:15px;">
@@ -58,8 +81,8 @@ const template = ({ userName, slot }: { userName?: string | null; slot: WebinarS
 <p style="color:#64748B;margin:0;">Abrazo. Blissmo. 🤓</p>
 `;
 
-export const sendSistemasWebinarConfirmation = async ({ to, userName, slot }: Props) => {
-  const html = wrapEmailHtml(template({ userName, slot }), {
+export const sendSistemasWebinarConfirmation = async ({ to, userName, slot, confirmUrl }: Props) => {
+  const html = wrapEmailHtml(template({ userName, slot, confirmUrl }), {
     preheader: `Tu lugar está apartado para el ${slot.short}. Guarda el link de la sala.`,
   }).replace(/\{\{unsubscribe\}\}/g, "https://www.fixtergeek.com/perfil");
 

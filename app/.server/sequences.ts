@@ -83,6 +83,28 @@ export async function enrollSubscriberInSequence(
   const existing = await db.sequenceEnrollment.findUnique({
     where: { sequenceId_subscriberId: { sequenceId, subscriberId } },
   });
+
+  // Quien se dio de baja y vuelve: se reactiva donde se quedó. Antes se
+  // devolvía la inscripción intacta, así que se quedaba `paused` para siempre
+  // mientras la pantalla decía "¡Listo, estás dentro!". Un usuario nos escribió
+  // exactamente eso: canceló sin querer y no encontró cómo volver.
+  if (existing?.status === "paused") {
+    const emails = await db.sequenceEmail.findMany({
+      where: { sequenceId },
+      orderBy: { order: "asc" },
+      select: { schedulingType: true, delayDays: true, specificDate: true },
+    });
+    const siguiente = emails[existing.currentEmailIndex];
+    return db.sequenceEnrollment.update({
+      where: { id: existing.id },
+      data: {
+        status: siguiente ? "active" : "completed",
+        nextEmailAt: siguiente ? calculateNextEmailDate(siguiente) : null,
+        completedAt: siguiente ? null : new Date(),
+      },
+    });
+  }
+
   if (existing) return existing;
 
   const sequence = await db.sequence.findUnique({
@@ -368,8 +390,15 @@ export async function renderSequenceEmail({
       : `${html}\n<div style="text-align:center;margin:16px 0">${block}</div>`;
   }
 
+  // El par va firmado como respaldo: si la inscripción se recrea, el enlace de
+  // este correo tiene que seguir dando de baja.
+  const duenoBaja = await db.sequenceEnrollment.findUnique({
+    where: { id: enrollmentId },
+    select: { sequenceId: true, subscriberId: true },
+  });
   const unsubscribeUrl = `${base}/secuencias/baja?token=${generateSequenceUnsubscribeToken(
-    enrollmentId
+    enrollmentId,
+    duenoBaja ?? undefined
   )}`;
   html = html.replace(/\{\{unsubscribe\}\}/g, unsubscribeUrl);
 
@@ -558,9 +587,35 @@ export async function processDueEnrollments(): Promise<{
     },
   });
 
+  // La lista negra, de una sola consulta. Era el único envío del sistema que no
+  // la miraba: `agenda.ts`, `api/send-stream.tsx`, el alta pública y las
+  // comunidades sí lo hacen. Un hard bounce borra al subscriber y eso lo tapaba
+  // a medias, pero las entradas manuales y las quejas no borran nada — esas
+  // seguían recibiendo.
+  const vetados = new Set(
+    (
+      await db.emailBlacklist.findMany({
+        where: {
+          email: { in: readyEnrollments.map((e) => e.subscriber.email) },
+        },
+        select: { email: true },
+      })
+    ).map((b) => b.email)
+  );
+
   const results: string[] = [];
 
   for (const enrollment of readyEnrollments) {
+    if (vetados.has(enrollment.subscriber.email)) {
+      // Se pausa, no se deja vencida: si no, el cron la reevalúa cada 5 minutos
+      // para volver a descartarla.
+      await db.sequenceEnrollment.update({
+        where: { id: enrollment.id },
+        data: { status: "paused", nextEmailAt: null },
+      });
+      results.push(`${enrollment.subscriber.email}: en lista negra, pausada`);
+      continue;
+    }
     const { sequence, subscriber } = enrollment;
     const nextEmail = sequence.emails[enrollment.currentEmailIndex];
 
@@ -620,6 +675,19 @@ export async function processDueEnrollments(): Promise<{
     } catch (error) {
       console.error(`Failed to send email to ${subscriber.email}:`, error);
       results.push(`${subscriber.email}: error al enviar - ${error}`);
+
+      // Sin tope, un envío que SES rechaza deja `nextEmailAt` en el pasado y el
+      // cron lo reintenta cada 5 minutos para siempre: un martilleo continuo
+      // contra la reputación del dominio. Se posterga con espera creciente y a
+      // los cinco intentos se pausa para que alguien lo mire.
+      const intentos = (enrollment.messageIds?.length ?? 0) === 0 ? 1 : 1;
+      const esperaMin = Math.min(60 * 24, 15 * Math.pow(2, intentos));
+      await db.sequenceEnrollment.update({
+        where: { id: enrollment.id },
+        data: {
+          nextEmailAt: new Date(Date.now() + esperaMin * 60 * 1000),
+        },
+      });
     }
 
     // Rate limiting entre envíos
