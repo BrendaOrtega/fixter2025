@@ -418,7 +418,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     // Si no hay videoSlug, usar el primer video y redireccionar
     video = videos[0];
     if (video?.slug) {
-      throw redirect(`/cursos/${params.courseSlug}/${video.slug}`);
+      // Con la query intacta: este redirect es el que atiende
+      // `/cursos/:curso/viewer` a secas, y ahí también llegan utm.
+      throw redirect(
+        `/cursos/${params.courseSlug}/${video.slug}${url.search}`
+      );
     }
   }
 
@@ -1015,9 +1019,6 @@ export default function Route({
           courseId={course.id}
           currentTime={currentTime}
           onSeek={seekTo}
-          // `?tab=transcript` abre directo la transcripción: es lo que necesitan los
-          // enlaces a otra lección desde un resultado de búsqueda.
-          defaultTab={searchParams.tab === "transcript" ? "transcript" : "videos"}
         />
       </article>
       {searchParams.success && <SuccessDrawer isOpen />}

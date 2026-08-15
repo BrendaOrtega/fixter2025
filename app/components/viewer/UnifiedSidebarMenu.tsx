@@ -629,7 +629,7 @@ const ResourcesContent = ({
 
 const NotesContent = ({ body }: { body: string }) => {
   return (
-    <div className="dark prose prose-invert prose-sm max-w-none">
+    <div className="dark prose prose-invert max-w-none prose-base prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-p:leading-relaxed prose-p:text-brand-100 prose-li:text-brand-100 prose-li:my-0.5 prose-strong:text-white prose-a:text-brand-500 prose-a:no-underline hover:prose-a:underline prose-code:text-brand-500 prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-4 prose-hr:border-brand-100/10">
       <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
         {body}
       </Streamdown>
@@ -775,9 +775,16 @@ const VideoListItem = ({
         {/* La entrega que todavía no llega dice CUÁNDO llega. Un candado mudo
             se lee como error del sitio; una fecha se lee como una cita. */}
         {hasContent && isLocked && accessLevel === "sequence" ? (
-          <span className="text-xs text-brand-500">
-            {formatUnlock(unlocksAt ?? null) || "por correo"}
-          </span>
+          formatUnlock(unlocksAt ?? null) ? (
+            <span className="text-xs text-brand-500">
+              {formatUnlock(unlocksAt ?? null)}
+            </span>
+          ) : (
+            <IoMdMail
+              className="text-sm text-brand-500"
+              title="Llega por correo"
+            />
+          )
         ) : (
           <span className="text-xs text-gray-500">
             {formatDuration(duration)}

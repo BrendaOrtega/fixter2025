@@ -20,21 +20,28 @@ const VIDEO_SLUG = "grok-arnes-minimo";
 const VIDEO_TITLE = "Un agente que construye su propio arnés";
 const MODULE_NAME = "Introducción a los agentes de IA";
 
-const DESCRIPTION = `Escribimos un agente completo desde cero, sin SDK y sin framework: un \`fetch\` a la API, una herramienta y un \`while\`.
+const DESCRIPTION = `Un agente completo desde cero: un \`fetch\`, una herramienta y un \`while\`. Sin SDK y sin framework 🔧
 
-El ciclo es siempre el mismo: le describes al modelo qué herramientas existen, él pide ejecutar una, tú la ejecutas y le devuelves el resultado, y vuelves a llamarlo con el historial completo. Cuando responde con texto en lugar de pedir otra herramienta, terminó. Eso es todo el arnés — los frameworks de agentes son ese loop con adornos encima.
+![El ciclo de un agente](/ilustraciones/loop-agente.svg)
 
-Lo que se construye, en orden:
+## El ciclo
 
-- **La llamada cruda** a la Responses API, con \`fetch\` y nada más.
-- **La primera herramienta** y el loop que la ejecuta: el arnés mínimo.
-- **El chat**, cuando el historial deja de morir con la pregunta y se vuelve memoria.
-- **La caché** del prompt, para dejar de pagar dos veces lo que el agente ya sabe.
-- **Ojos en el navegador**: el agente levanta un servidor, abre una página y se mira a sí mismo.
+Le describes al modelo qué herramientas existen. Él pide ejecutar una, tú la ejecutas y le devuelves el resultado. Vuelves a llamarlo con el historial completo.
 
-**El código:** [github.com/blissito/taller-arnes-grok](https://github.com/blissito/taller-arnes-grok) — el repositorio crece con cada entrega.
+Cuando responde con texto en lugar de pedir otra herramienta, terminó. Eso es todo el arnés.
 
-Es la primera entrega de la secuencia [Introducción a los agentes de IA](https://www.fixtergeek.com/secuencias/introduccion-a-los-agentes-de-ia).`;
+## Lo que construimos
+
+1. **La llamada cruda** — un POST y ya.
+2. **La primera herramienta** y el loop que la ejecuta.
+3. **El chat** — el historial deja de morir con la pregunta.
+4. **La caché** — dejar de pagar dos veces lo que ya sabe.
+5. **Ojos en el navegador** — el agente se mira a sí mismo.
+
+## El código 🧰
+
+[github.com/blissito/taller-arnes-grok](https://github.com/blissito/taller-arnes-grok) — crece con cada entrega.
+`;
 
 async function main() {
   const course = await prisma.course.findUnique({
