@@ -24,4 +24,4 @@ Un agente que elige qué traer puede trabajar indefinidamente. Uno que carga tod
 
 Lo que acabas de leer es el enunciado del principio. En el taller lo aterrizamos: el protocolo completo de archivos grandes, escrito como skill, conectado al agente y probado contra un ZIP real de esos que llegan sin avisar. Y ese es uno de varios protocolos que le vamos a instalar. 📦🔍🤖
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
