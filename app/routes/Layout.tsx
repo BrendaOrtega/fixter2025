@@ -18,7 +18,12 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
   // Ocultar navbar en rutas de libros, admin y viewer
   const isBookRoute = location.pathname.startsWith('/libros/');
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
-  const isViewerRoute = location.pathname.includes('/viewer');
+  // La URL canónica del reproductor dejó de ser `/viewer`: ahora es
+  // `/cursos/:curso/:video`. Al detectar solo "/viewer", la navbar y el promo
+  // flotante volvieron a aparecer encima del video.
+  const isViewerRoute =
+    location.pathname.includes('/viewer') ||
+    /^\/cursos\/[^/]+\/[^/]+$/.test(location.pathname);
   const isCoachRoute = location.pathname.startsWith('/coach');
   const isExcalidrawDemo = location.pathname === '/excalidraw-demo';
   const isSecuenciasRoute =

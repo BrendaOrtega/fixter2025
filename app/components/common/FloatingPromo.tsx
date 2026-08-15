@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
 import { BiCodeAlt, BiX } from "react-icons/bi";
+import { LAYER } from "~/utils/layers";
 
 export const FloatingPromo = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -58,7 +59,8 @@ export const FloatingPromo = () => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="fixed bottom-6 left-6 z-[100]"
+          style={{ zIndex: LAYER.banner }}
+          className="fixed bottom-6 left-6"
           onMouseEnter={() => setIsExpanded(true)}
           onMouseLeave={() => setIsExpanded(false)}
         >

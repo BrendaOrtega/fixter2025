@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { cn } from "~/utils/cn";
+import { LAYER } from "~/utils/layers";
 
 /**
  * Confirmación para acciones que no se pueden deshacer solas.
@@ -61,12 +62,14 @@ export function ConfirmDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onCancel}
-            className="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm"
+            style={{ zIndex: LAYER.dialog }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
           />
           {/* El centrado va por flex y NO por `-translate-x-1/2`: Motion escribe
               su propio `transform` para animar y se lleva por delante el de
               Tailwind, dejando el diálogo colgado de su esquina. */}
-          <div className="pointer-events-none fixed inset-0 z-[410] flex items-center justify-center p-4">
+          <div style={{ zIndex: LAYER.dialog }}
+          className="pointer-events-none fixed inset-0 flex items-center justify-center p-4">
           <motion.div
             role="alertdialog"
             aria-modal="true"

@@ -15,7 +15,7 @@ export const SuccessDrawer = ({
       <Drawer
         header={<></>}
         cta={<></>}
-        className="z-[100] "
+        
         title="Desbloquea todo el curso"
         isOpen={isOpen}
         onClose={onClose}

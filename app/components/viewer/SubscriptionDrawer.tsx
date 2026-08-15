@@ -78,7 +78,7 @@ export const SubscriptionDrawer = ({
       noOverlay
       header={<></>}
       cta={<></>}
-      className="z-[300]"
+      
       title="Desbloquea más contenido"
       isOpen={show}
     >

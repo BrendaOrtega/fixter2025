@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from "motion/react";
-import { type ReactNode, useEffect, useRef } from "react";
-// import { createPortal } from "react-dom";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { IoClose } from "react-icons/io5";
 import { cn } from "~/utils/cn";
+import { LAYER } from "~/utils/layers";
 
 export const Drawer = ({
   mode,
@@ -33,6 +34,10 @@ export const Drawer = ({
   children: ReactNode;
   className?: string;
 }) => {
+  // El portal solo existe en el navegador: en SSR no hay `document`.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
   const body = useRef<HTMLElement>(null);
 
   // listeners
@@ -64,17 +69,24 @@ export const Drawer = ({
   }, [isOpen]);
 
   const jsx = (
-    <article className={cn("relative ", className)}>
+    /* Sin `relative` ni z-index aquí. Este contenedor los tenía, y como cada
+       consumidor pasaba su propia clase `z-[300]`/`z-[100]` por `className`, se
+       creaba un stacking context que encerraba al overlay y al panel: por más
+       que se subiera su z interno, el cajón nunca podía salir por encima del
+       menú. Esa fue la causa de tres rondas de parches que no servían. */
+    <article>
       {!noOverlay && (
         <motion.button
           onClick={onClose}
           id="overlay"
-          className="fixed inset-0 bg-dark/60 z-[335]"
+          style={{ zIndex: LAYER.overlay }}
+          className="fixed inset-0 bg-dark/60"
           animate={{ backdropFilter: "blur(4px)" }}
           exit={{ backdropFilter: "blur(0)", opacity: 0 }}
         />
       )}
       <motion.section
+        style={{ zIndex: LAYER.drawer }}
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "120%" }}
@@ -84,7 +96,7 @@ export const Drawer = ({
           // deja el contenido apretado y el fondo a medio ver, que es peor que
           // no tener fondo. De `md` en adelante vuelve a ser cajón lateral, y
           // arranca DEBAJO de la navbar para que el menú no le cruce el título.
-          "bg-background z-[340] fixed inset-0 flex flex-col text-white overflow-y-auto scrollbar-sutil p-6",
+          "bg-background fixed inset-0 flex flex-col text-white overflow-y-auto scrollbar-sutil p-6",
           // Cajón lateral SOLO desde lg. En tablet el menú de videos ocupa
           // ~420px fijos a la izquierda y se encimaba con un cajón del 60%,
           // dejando su contenido cortado por debajo del menú.
@@ -145,6 +157,12 @@ export const Drawer = ({
     </article>
   );
 
-  /* <>{body.current && createPortal(jsx, body.current)}</> */
-  return <AnimatePresence mode="popLayout">{isOpen && jsx}</AnimatePresence>;
+  // Al portal: montado dentro del árbol, cualquier ancestro con `transform` o
+  // `filter` —los tiene el visor, por las animaciones— vuelve a encerrarlo.
+  const contenido = (
+    <AnimatePresence mode="popLayout">{isOpen && jsx}</AnimatePresence>
+  );
+
+  if (!montado) return null;
+  return createPortal(contenido, document.body);
 };

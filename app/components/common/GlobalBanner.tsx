@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "~/utils/cn";
+import { LAYER } from "~/utils/layers";
 import { PrimaryButton } from "./PrimaryButton";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -59,7 +60,10 @@ export const GlobalBanner = ({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -160 }}
           transition={{ type: "spring", bounce: 0.4 }}
-          className="fixed bottom-8 left-8 w-[480px] z-[999] rounded-xl overflow-hidden h-[240px] hidden md:flex  "
+          // A la capa de banner: en 999 se ponía encima de un diálogo de
+          // confirmación, que es exactamente al revés de lo que debe pasar.
+          style={{ zIndex: LAYER.banner }}
+          className="fixed bottom-8 left-8 w-[480px] rounded-xl overflow-hidden h-[240px] hidden md:flex"
         >
           <div
             className={cn(

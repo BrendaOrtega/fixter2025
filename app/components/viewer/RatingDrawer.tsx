@@ -4,6 +4,7 @@ import { useFetcher } from "react-router";
 import { IoClose } from "react-icons/io5";
 import { StarRating } from "~/components/common/StarRating";
 import { cn } from "~/utils/cn";
+import { LAYER } from "~/utils/layers";
 
 interface RatingDrawerProps {
   isOpen: boolean;
@@ -59,7 +60,8 @@ export function RatingDrawer({
       <motion.button
         onClick={handleClose}
         id="overlay"
-        className="fixed inset-0 bg-dark/60 z-50"
+        style={{ zIndex: LAYER.overlay }}
+        className="fixed inset-0 bg-dark/60"
         animate={{ backdropFilter: "blur(4px)" }}
         exit={{ backdropFilter: "blur(0)", opacity: 0 }}
       />
@@ -68,8 +70,9 @@ export function RatingDrawer({
         animate={{ y: 0 }}
         exit={{ y: "120%" }}
         transition={{ type: "spring", bounce: 0.1, duration: 0.3 }}
+        style={{ zIndex: LAYER.drawer }}
         className={cn(
-          "bg-background border border-white/10 z-50",
+          "bg-background border border-white/10",
           "fixed bottom-0 left-0 right-0 md:left-auto md:right-4 md:bottom-4",
           "md:w-[450px] md:rounded-2xl rounded-t-2xl",
           "p-6 md:p-8 flex flex-col text-white shadow-2xl"

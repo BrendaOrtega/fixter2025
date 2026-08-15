@@ -22,6 +22,7 @@ import {
 } from "react-icons/md";
 import { useClickOutside } from "~/hooks/useClickOutside";
 import { cn } from "~/utils/cn";
+import { LAYER } from "~/utils/layers";
 import { MdOutlineSubtitles, MdOutlineFolder } from "react-icons/md";
 import {
   TranscriptPanel,
@@ -382,10 +383,11 @@ const UnifiedMenuButton = ({
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
-      style={{ x }}
+      // Justo encima del panel que abre, y por debajo de cualquier cajón.
+      style={{ x, zIndex: LAYER.sidebar + 1 }}
       onClick={onToggle}
       className={cn(
-        "fixed bg-[#0C1115] border border-gray-600/40 text-4xl w-14 h-14 text-white p-2 z-[330] flex items-center justify-center hover:bg-gray-800/80 transition-colors shadow-lg",
+        "fixed bg-[#0C1115] border border-gray-600/40 text-4xl w-14 h-14 text-white p-2 flex items-center justify-center hover:bg-gray-800/80 transition-colors shadow-lg",
         // Siempre en el mismo sitio, abierto o cerrado: si se mueve al abrir, hay que
         // volver a buscarlo para cerrar. El choque con las pestañas se resuelve
         // dejándoles hueco a la derecha, no moviendo el botón.
@@ -446,8 +448,9 @@ const UnifiedMenuContainer = ({
         x,
         width: menuWidth,
       }}
+      style={{ zIndex: LAYER.sidebar }}
       className={cn(
-        "fixed z-[320] h-screen bg-[#0C1115] top-0 left-0 flex flex-col",
+        "fixed h-screen bg-[#0C1115] top-0 left-0 flex flex-col",
         "shadow-2xl border-r border-gray-700/50"
       )}
     >

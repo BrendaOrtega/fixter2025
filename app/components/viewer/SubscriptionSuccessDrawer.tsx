@@ -28,7 +28,6 @@ export const SubscriptionSuccessDrawer = ({
       <Drawer
         header={<></>}
         cta={<></>}
-        className="z-[100]"
         title="¡Bienvenido!"
         isOpen={isOpen}
         onClose={onClose}
