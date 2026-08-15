@@ -30,15 +30,23 @@ ffmpeg -y -hide_banner -loglevel warning -stats \
   -hls_segment_filename "$OUT/1080p/seg_%03d.ts" \
   "$OUT/1080p/1080p.m3u8"
 
-# Las dos chicas sí se recodifican (encoder por hardware del Mac).
-# name  ancho  alto  bitrate_video  bitrate_audio
+# El ancho NO se fija: se deriva de la altura con `scale=-2:H`, que conserva el
+# aspecto de la fuente. Fijarlo a 1280x720 deformaba cualquier grabación que no
+# fuera 16:9 — y las hay 4:3, que es como sale una pantalla compartida.
+SRC_W=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$IN")
+SRC_H=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$IN")
+echo "📐 fuente: ${SRC_W}x${SRC_H}"
+
+# name  alto  bitrate_video  bitrate_audio
 QUALITIES=(
-  "720p  1280  720 2800k 128k"
-  "480p   852  480 1400k 128k"
+  "720p 720 2800k 128k"
+  "480p 480 1400k 128k"
 )
 
 for q in "${QUALITIES[@]}"; do
-  read -r NAME W H VB AB <<< "$q"
+  read -r NAME H VB AB <<< "$q"
+  # ancho proporcional, redondeado a par (lo que exige h264)
+  W=$(( (SRC_W * H / SRC_H + 1) / 2 * 2 ))
   DIR="$OUT/$NAME"
   mkdir -p "$DIR"
   echo "🎞️  $NAME ($W x $H, $VB)…"
@@ -46,7 +54,7 @@ for q in "${QUALITIES[@]}"; do
   # sugerencia y los segmentos salen de duración despareja.
   ffmpeg -y -hide_banner -loglevel warning -stats \
     -i "$IN" \
-    -vf "scale=$W:$H" \
+    -vf "scale=-2:$H" \
     -c:v h264_videotoolbox -b:v "$VB" -maxrate "$VB" -bufsize "$VB" \
     -force_key_frames "expr:gte(t,n_forced*10)" \
     -c:a aac -b:a "$AB" \
@@ -57,14 +65,16 @@ done
 
 # Idéntico a generateMasterPlaylist() del video-processor: rutas relativas, que
 # es lo que /api/hls-proxy sabe reescribir.
-cat > "$OUT/master.m3u8" <<'EOF'
+W720=$(( (SRC_W * 720 / SRC_H + 1) / 2 * 2 ))
+W480=$(( (SRC_W * 480 / SRC_H + 1) / 2 * 2 ))
+cat > "$OUT/master.m3u8" <<EOF
 #EXTM3U
 #EXT-X-VERSION:3
-#EXT-X-STREAM-INF:BANDWIDTH=4200000,RESOLUTION=1920x1080
+#EXT-X-STREAM-INF:BANDWIDTH=4200000,RESOLUTION=${SRC_W}x${SRC_H}
 1080p/1080p.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
+#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=${W720}x720
 720p/720p.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=852x480
+#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=${W480}x480
 480p/480p.m3u8
 EOF
 

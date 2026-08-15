@@ -20,10 +20,14 @@ const SEQUENCE_ID = "6a7df909e5a1dfc09e842fd3";
 const FROM_NAME = "Héctorbliss de FixterGeek";
 const FROM_EMAIL = "secuencias@fixtergeek.com";
 
-// TODO(bliss): ajustar cuando el video esté publicado.
-const VIDEO_URL = "https://www.fixtergeek.com/videos/minimo-arnes";
+// El video vive en el curso on-demand: la card del correo lleva al reproductor
+// de la secuencia (/s/video), que es quien sabe si esta entrega ya te tocaba.
+const VIDEO_SLUG = "grok-arnes-minimo";
+const VIDEO_URL =
+  "https://www.fixtergeek.com/cursos/sistemas-agenticos/viewer?videoSlug=grok-arnes-minimo";
+// TODO(bliss): póster propio del video; por ahora el logo.
 const VIDEO_POSTER = "https://i.imgur.com/mpzZhT9.png";
-const VIDEO_DURATION = null; // p.ej. "18 min"
+const VIDEO_DURATION = "48 min";
 const REPO_URL = "https://github.com/blissito/taller-arnes-grok";
 const PDF_URL = "https://www.fixtergeek.com/seis-piezas";
 // Mark oficial de GitHub. PNG y no SVG: Gmail y Outlook no renderizan SVG.
@@ -105,6 +109,7 @@ const emailTwo = {
   order: 2,
   schedulingType: "delay",
   delayDays: 3,
+  videoSlug: VIDEO_SLUG,
   subject: "Un agente cabe en cien líneas (aquí está el código)",
   content: wrapEmailHtml(
     `
@@ -200,6 +205,7 @@ async function main() {
           content: email.content,
           schedulingType: email.schedulingType,
           delayDays: email.delayDays,
+          videoSlug: (email as { videoSlug?: string }).videoSlug ?? null,
         },
       });
       console.log(`✏️  entrega ${email.order} actualizada — ${email.subject}`);

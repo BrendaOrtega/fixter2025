@@ -158,6 +158,68 @@ export function estimateUnlockDates(
   });
 }
 
+/**
+ * ¿Ya le llegó a esta persona la entrega que trae este video?
+ *
+ * La regla es la misma que usa el reproductor de la secuencia (`/s/video`):
+ * los correos con índice menor a `currentEmailIndex` ya se enviaron, el resto
+ * está por venir. Aquí vive una sola vez porque ahora la necesitan dos lugares
+ * —el reproductor y el visor del curso— y una regla de permisos duplicada es
+ * una regla que tarde o temprano diverge.
+ *
+ * Sin correo, o sin inscripción, no hay acceso: se devuelve la fecha estimada
+ * solo si podemos calcularla, porque un candado sin fecha se lee como error.
+ */
+export async function sequenceUnlockFor(
+  videoSlug: string,
+  email?: string | null
+): Promise<{ unlocked: boolean; unlocksAt: Date | null; sequenceId?: string }> {
+  const email_ = await db.sequenceEmail.findFirst({
+    where: { videoSlug },
+    select: { id: true, order: true, sequenceId: true },
+  });
+  if (!email_) return { unlocked: false, unlocksAt: null };
+
+  const base = { unlocked: false, unlocksAt: null, sequenceId: email_.sequenceId };
+  if (!email) return base;
+
+  const subscriber = await db.subscriber.findUnique({
+    where: { email: email.toLowerCase().trim() },
+    select: { id: true },
+  });
+  if (!subscriber) return base;
+
+  const enrollment = await db.sequenceEnrollment.findUnique({
+    where: {
+      sequenceId_subscriberId: {
+        sequenceId: email_.sequenceId,
+        subscriberId: subscriber.id,
+      },
+    },
+    select: { currentEmailIndex: true, nextEmailAt: true },
+  });
+  if (!enrollment) return base;
+
+  // `order` arranca en 1 y `currentEmailIndex` en 0: la entrega de orden N está
+  // enviada cuando el índice ya pasó de N-1.
+  const position = email_.order - 1;
+  if (position < enrollment.currentEmailIndex) {
+    return { unlocked: true, unlocksAt: null, sequenceId: email_.sequenceId };
+  }
+
+  const emails = await db.sequenceEmail.findMany({
+    where: { sequenceId: email_.sequenceId },
+    orderBy: { order: "asc" },
+    select: { schedulingType: true, delayDays: true, specificDate: true },
+  });
+
+  return {
+    unlocked: false,
+    unlocksAt: estimateUnlockDates(emails, enrollment)[position] ?? null,
+    sequenceId: email_.sequenceId,
+  };
+}
+
 export type RenderableSequenceEmail = {
   subject: string;
   content: string;

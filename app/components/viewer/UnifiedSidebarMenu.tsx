@@ -14,6 +14,7 @@ import { BsMenuButtonWide, BsMarkdown } from "react-icons/bs";
 import { FaPlay, FaVideo } from "react-icons/fa6";
 import { IoMdLock, IoMdClose, IoMdMail, IoMdConstruct } from "react-icons/io";
 import { IoCheckmarkCircle } from "react-icons/io5";
+import { formatUnlock } from "~/utils/formatUnlock";
 import {
   MdMenuOpen,
   MdOutlineRadioButtonChecked,
@@ -38,6 +39,8 @@ interface UnifiedSidebarProps {
   courseTitle?: string;
   isLocked?: boolean;
   isSubscribed?: boolean;
+  /** Veredicto del servidor por slug para los videos de una secuencia. */
+  sequenceUnlocks?: Record<string, { unlocked: boolean; unlocksAt: string | null }>;
   currentVideoSlug?: string;
   moduleNames: string[];
   videos: Partial<Video>[];
@@ -68,6 +71,7 @@ export const UnifiedSidebarMenu = ({
   courseTitle,
   isLocked,
   isSubscribed,
+  sequenceUnlocks,
   currentVideoSlug,
   moduleNames,
   videos,
@@ -262,6 +266,7 @@ export const UnifiedSidebarMenu = ({
                   currentVideoSlug={currentVideoSlug}
                   isLocked={isLocked}
                   isSubscribed={isSubscribed}
+                  sequenceUnlocks={sequenceUnlocks}
                   completed={completed}
                   videosCompleted={videosCompleted}
                   checkIfWatched={checkIfWatched}
@@ -454,6 +459,7 @@ const VideosContent = ({
   currentVideoSlug,
   isLocked,
   isSubscribed,
+  sequenceUnlocks,
   completed,
   videosCompleted,
   checkIfWatched,
@@ -468,6 +474,8 @@ const VideosContent = ({
   currentVideoSlug?: string;
   isLocked?: boolean;
   isSubscribed?: boolean;
+  /** Veredicto del servidor por slug para los videos de una secuencia. */
+  sequenceUnlocks?: Record<string, { unlocked: boolean; unlocksAt: string | null }>;
   completed: string[];
   videosCompleted: string[];
   checkIfWatched: (slug: string) => boolean;
@@ -496,16 +504,22 @@ const VideosContent = ({
               .sort((a, b) => (a.index < b.index ? -1 : 1))
               .map((v) => {
                 const accessLevel = (v as any)?.accessLevel || "paid";
-                // Determinar si el video está bloqueado según accessLevel
+                // Las entregas de una secuencia las resuelve el servidor: aquí
+                // solo se lee su veredicto y la fecha en que se abren.
+                const unlock = v?.slug ? sequenceUnlocks?.[v.slug] : undefined;
                 const videoIsLocked =
                   accessLevel === "public" ? false :
                   accessLevel === "subscriber" ? !isSubscribed :
+                  // Quien compró ve todo: `isLocked` ya viene como !isPurchased,
+                  // así que si es false no hay nada que esperar.
+                  accessLevel === "sequence" ? isLocked && !unlock?.unlocked :
                   isLocked; // paid
 
                 return (
                   <VideoListItem
                     key={v?.id}
                     isLocked={videoIsLocked}
+                    unlocksAt={unlock?.unlocksAt}
                     isCompleted={videosCompleted.includes(v?.slug)}
                     isCurrent={currentVideoSlug === v?.slug}
                     slug={v?.slug || ""}
@@ -652,6 +666,7 @@ const VideoListItem = ({
   slug,
   isLocked,
   accessLevel,
+  unlocksAt,
   hasContent = true,
   onSelect,
 }: {
@@ -664,6 +679,8 @@ const VideoListItem = ({
   isCompleted?: boolean;
   title: string;
   accessLevel?: string;
+  /** Para las entregas de secuencia que aún no llegan. */
+  unlocksAt?: string | null;
   hasContent?: boolean;
 }) => {
   const formatDuration = (mins: number | string | null | undefined) => {
@@ -749,9 +766,17 @@ const VideoListItem = ({
         {hasContent && isLocked && (accessLevel === "paid" || !accessLevel) && (
           <IoMdLock className="text-gray-500 text-sm" title="Requiere compra" />
         )}
-        <span className="text-xs text-gray-500">
-          {formatDuration(duration)}
-        </span>
+        {/* La entrega que todavía no llega dice CUÁNDO llega. Un candado mudo
+            se lee como error del sitio; una fecha se lee como una cita. */}
+        {hasContent && isLocked && accessLevel === "sequence" ? (
+          <span className="text-xs text-brand-500">
+            {formatUnlock(unlocksAt ?? null) || "por correo"}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-500">
+            {formatDuration(duration)}
+          </span>
+        )}
       </div>
     </Link>
   );

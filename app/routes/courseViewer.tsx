@@ -7,6 +7,7 @@ import { UnifiedSidebarMenu } from "~/components/viewer/UnifiedSidebarMenu";
 import { SuccessDrawer } from "~/components/viewer/SuccessDrawer";
 import { PurchaseDrawer } from "~/components/viewer/PurchaseDrawer";
 import { SubscriptionDrawer } from "~/components/viewer/SubscriptionDrawer";
+import { SequenceLockedDrawer } from "~/components/viewer/SequenceLockedDrawer";
 import { SubscriptionSuccessDrawer } from "~/components/viewer/SubscriptionSuccessDrawer";
 import { RatingDrawer } from "~/components/viewer/RatingDrawer";
 import {
@@ -368,20 +369,56 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   // Determine access based on accessLevel
   const accessLevel = (video as any).accessLevel || "paid";
 
-  // Debug log
-  console.log("🔐 Access check:", {
-    videoTitle: video.title,
-    accessLevel,
-    rawAccessLevel: (video as any).accessLevel,
-    isSubscribed,
-    isPurchased,
-    courseFree: course.isFree,
-  });
+  // Los videos que llegan por una secuencia se abren con el avance de quien
+  // mira, no con la compra: hay que ir a preguntarle a su inscripción. Se
+  // resuelven TODOS los del curso y no solo el actual, porque la lista lateral
+  // también tiene que decir cuándo se abre cada uno — un candado sin fecha se
+  // lee como error del sitio.
+  const sequenceVideos = isPurchased
+    ? []
+    : videos.filter((v: any) => v.accessLevel === "sequence");
+  const sequenceUnlocks: Record<string, { unlocked: boolean; unlocksAt: string | null }> =
+    {};
+  let sequenceUrl: string | null = null;
 
-  const hasAccess =
-    isPurchased ||
-    accessLevel === "public" ||
-    (accessLevel === "subscriber" && isSubscribed);
+  if (sequenceVideos.length) {
+    const { viewerEmailFrom } = await import("~/.server/videoAccess");
+    const { sequenceUnlockFor } = await import("~/.server/sequences");
+    const viewerEmail = await viewerEmailFrom(request, user?.email);
+    let sequenceId: string | undefined;
+
+    for (const v of sequenceVideos) {
+      if (!v?.slug) continue;
+      const unlock = await sequenceUnlockFor(v.slug as string, viewerEmail);
+      sequenceUnlocks[v.slug as string] = {
+        unlocked: unlock.unlocked,
+        unlocksAt: unlock.unlocksAt ? unlock.unlocksAt.toISOString() : null,
+      };
+      sequenceId ||= unlock.sequenceId;
+    }
+
+    if (sequenceId) {
+      const seq = await db.sequence.findUnique({
+        where: { id: sequenceId },
+        select: { slug: true, id: true },
+      });
+      if (seq) sequenceUrl = `/s/${seq.slug || seq.id}`;
+    }
+  }
+
+  const currentUnlock = sequenceUnlocks[video.slug as string];
+  const sequenceUnlocked = currentUnlock?.unlocked ?? false;
+  const unlocksAt = currentUnlock?.unlocksAt ?? null;
+
+  // La regla vive en un solo lugar; aquí solo se le pasan los datos ya cargados.
+  const { resolveAccess } = await import("~/.server/videoAccess");
+  const { hasAccess } = resolveAccess({
+    accessLevel,
+    isPurchased,
+    isSubscribed,
+    sequenceUnlocked,
+    unlocksAt: unlocksAt ? new Date(unlocksAt) : null,
+  });
 
   const removeStorageLink = !hasAccess;
 
@@ -482,6 +519,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     isPurchased,
     isSubscribed,
     accessLevel,
+    unlocksAt,
+    sequenceUrl,
+    sequenceUnlocks,
     video: videoToReturn,
     transcript,
     seo,
@@ -552,6 +592,9 @@ export default function Route({
     isPurchased,
     isSubscribed: serverIsSubscribed,
     accessLevel,
+    unlocksAt,
+    sequenceUrl,
+    sequenceUnlocks,
     video,
     transcript,
     seo,
@@ -606,16 +649,20 @@ export default function Route({
     }
   }, [showLessonContent]);
 
-  // Determine which drawer to show based on accessLevel
+  // Determine which drawer to show based on accessLevel.
+  // Para `sequence` la última palabra la tiene el servidor: el cliente no puede
+  // recalcular el avance de una inscripción, así que se fía de que llegó fuente.
   const hasAccess =
     isPurchased ||
     accessLevel === "public" ||
-    (accessLevel === "subscriber" && serverIsSubscribed);
+    (accessLevel === "subscriber" && serverIsSubscribed) ||
+    (accessLevel === "sequence" && !!(video.m3u8 || video.storageLink));
 
   const chaptersList = (seo?.chapters as { s: number; titulo: string }[]) || [];
   const videoUrl = `https://www.fixtergeek.com/cursos/${course.slug}/viewer?videoSlug=${video.slug}`;
 
   const showSubscriptionDrawer = !hasAccess && accessLevel === "subscriber";
+  const showSequenceDrawer = !hasAccess && accessLevel === "sequence";
   const showPurchaseDrawer = !hasAccess && accessLevel === "paid";
 
   // Bloquear autoplay cuando hay drawer abierto
@@ -623,6 +670,7 @@ export default function Route({
     searchParams.success ||
     searchParams.subscribed ||
     showSubscriptionDrawer ||
+    showSequenceDrawer ||
     showPurchaseDrawer;
 
   // Set initial menu state based on screen size
@@ -875,6 +923,14 @@ export default function Route({
           onClose={() => navigate(`/cursos/${course.slug}/viewer?videoSlug=${video.slug}`, { replace: true })}
           subscriberVideos={subscriberVideos}
           courseSlug={course.slug}
+        />
+      )}
+      {showSequenceDrawer && (
+        <SequenceLockedDrawer
+          isOpen
+          title={video.title}
+          unlocksAt={unlocksAt as string | null}
+          sequenceUrl={sequenceUrl}
         />
       )}
       {showSubscriptionDrawer && (

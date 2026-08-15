@@ -1,8 +1,9 @@
-import { type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs, data } from "react-router";
 import type { Route } from "./+types/s.confirmar";
 import { db } from "~/.server/db";
 import { calculateNextEmailDate } from "~/.server/sequences";
 import { validateSequenceSubscribeToken } from "~/utils/tokens";
+import { setMemberCookie } from "~/.server/memberCookie";
 import getMetaTags from "~/utils/getMetaTags";
 
 export const meta = () =>
@@ -60,13 +61,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  return { ok: true, sequenceName: sequence.name };
+  // La cookie de miembro es lo que permite reconocer a esta persona FUERA de
+  // /s: sin ella, el visor del curso no sabe qué entregas ya le llegaron y le
+  // muestra todo bloqueado a alguien que sí está al día.
+  return data(
+    { ok: true, sequenceName: sequence.name },
+    { headers: { "Set-Cookie": await setMemberCookie(subscriber.email) } }
+  );
 };
 
 export default function ConfirmSubscription({
   loaderData,
 }: Route.ComponentProps) {
   const { ok } = loaderData;
+  const detalle = loaderData as { sequenceName?: string; error?: string };
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-brand-900">
       <div className="text-center max-w-md">
@@ -78,7 +86,7 @@ export default function ConfirmSubscription({
             </h1>
             <p className="text-brand-100">
               Ya estás suscrito a{" "}
-              <strong className="text-white">{loaderData.sequenceName}</strong>.
+              <strong className="text-white">{detalle.sequenceName}</strong>.
               Pronto recibirás el primer email.
             </p>
           </>
@@ -88,7 +96,7 @@ export default function ConfirmSubscription({
             <h1 className="text-2xl font-bold text-white mb-2">
               No pudimos confirmar
             </h1>
-            <p className="text-brand-100">{loaderData.error}</p>
+            <p className="text-brand-100">{detalle.error}</p>
           </>
         )}
       </div>

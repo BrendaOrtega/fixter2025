@@ -267,19 +267,12 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
   const total = sequence._count.emails;
   const withVideo = emails.filter((e) => !!e.videoSlug).length;
 
-  // Cadencia real, leída de los delays: si todas las entregas van al mismo
-  // ritmo lo decimos con número; si no, hablamos de la duración total.
+  // La cadencia NO se promete con un número: los delays se ajustan sobre la
+  // marcha —una entrega pesada pide más aire que un recordatorio— y decir
+  // "cada 3 días" es una promesa que después se rompe sola.
   const gaps = emails.slice(1).map((e) => e.delayDays ?? 0);
-  const uniformGap = gaps.length && gaps.every((g) => g === gaps[0]) ? gaps[0] : null;
   const span = gaps.reduce((acc, g) => acc + g, 0);
-  const cadence =
-    uniformGap === 1
-      ? "Una entrega diaria"
-      : uniformGap && uniformGap > 1
-        ? `Una entrega cada ${uniformGap} días`
-        : span > 0
-          ? `Repartidas en ${span} días`
-          : "A tu ritmo";
+  const cadence = span > 0 ? "Cada ciertos días" : "A tu ritmo";
 
   return (
     /* Una sola pantalla: la ilustración a un lado y la acción del otro. Nada
@@ -324,7 +317,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
         />
       </a>
 
-      <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 items-center gap-8 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-14 lg:py-0">
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 items-center gap-8 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,32rem)] lg:gap-12 lg:py-0">
         {/* Columna izquierda: quién eres y qué doy */}
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
           {sequence.illustration && (
@@ -386,14 +379,14 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           </span>
           {withVideo > 0 && (
             <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
-              🎬 {withVideo} con video
+              🎬 Incluye acceso a videos
             </span>
           )}
           <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
-            Sin costo
+            Gratuito
           </span>
           <span className="rounded-full border border-brand-100/10 bg-brand-900/40 px-3 py-1">
-            Escribe {author}
+            Te escribe {author}
           </span>
         </motion.div>
 
@@ -404,7 +397,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 }}
-          className="rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-900/80 to-brand-800/40 p-6 shadow-lg shadow-brand-500/10 backdrop-blur-sm sm:p-8"
+          className="w-full rounded-2xl border border-brand-500/30 bg-gradient-to-br from-brand-900/80 to-brand-800/40 p-6 shadow-xl shadow-brand-500/10 backdrop-blur-sm sm:p-9"
         >
           {done ? (
             <div className="text-center">
@@ -426,7 +419,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
             </div>
           ) : (
             <fetcher.Form onSubmit={handleSubmit}>
-              <h2 className="text-xl font-bold text-white sm:text-2xl">
+              <h2 className="text-2xl font-bold text-white sm:text-[1.75rem]">
                 Recibe la primera entrega hoy
               </h2>
               <p className="mt-1.5 text-sm text-brand-100">
@@ -444,22 +437,34 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                 aria-hidden="true"
               />
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <input
-                  ref={nameRef}
-                  type="text"
-                  name="name"
-                  placeholder="Tu nombre (opcional)"
-                  className="h-12 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
-                />
-                <input
-                  ref={emailRef}
-                  type="email"
-                  name="email"
-                  required
-                  placeholder="tu@correo.com"
-                  className="h-12 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
-                />
+              <div className="mt-5 flex flex-col gap-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-sm text-brand-100">
+                    Tu nombre <span className="text-brand-100/50">(opcional)</span>
+                  </span>
+                  <input
+                    ref={nameRef}
+                    type="text"
+                    name="name"
+                    autoComplete="given-name"
+                    placeholder="Cómo te llamamos"
+                    className="h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm text-brand-100">
+                    Tu correo
+                  </span>
+                  <input
+                    ref={emailRef}
+                    type="email"
+                    name="email"
+                    required
+                    autoComplete="email"
+                    placeholder="tu@correo.com"
+                    className="h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                  />
+                </label>
               </div>
 
               {/* WhatsApp opcional: el switch revela el campo. Pedir el celular
@@ -471,7 +476,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                 role="switch"
                 aria-checked={wantsWhatsapp}
                 onClick={() => setWantsWhatsapp((v) => !v)}
-                className="mt-4 flex w-full items-center gap-3 rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 py-3 text-left transition-colors hover:border-brand-500/50"
+                className="mt-4 flex w-full items-center gap-3 rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 py-4 text-left transition-colors hover:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
               >
                 <span
                   className={cn(
@@ -504,7 +509,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                     inputMode="tel"
                     autoComplete="tel"
                     placeholder="55 1234 5678"
-                    className="h-12 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
+                    className="h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none"
                   />
                   <p className="mt-2 text-xs text-brand-100/70">
                     Con lada del país si no estás en México (+34, +54…).
@@ -515,7 +520,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-5 h-12 w-full rounded-xl bg-brand-500 text-lg font-bold text-brand-900 transition hover:brightness-110 disabled:opacity-50"
+                className="mt-6 h-14 w-full rounded-xl bg-brand-500 text-lg font-bold text-brand-900 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 focus:ring-offset-brand-900 disabled:opacity-50"
               >
                 {isLoading ? "Procesando…" : "Quiero la secuencia"}
               </button>
@@ -524,8 +529,12 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                 <p className="mt-3 text-center text-sm text-red-400">{error}</p>
               )}
 
-              <p className="mt-4 text-center text-xs text-brand-100/70">
-                Te pediremos confirmar tu correo. Cero spam, baja en un clic.
+              {/* En dos renglones a propósito: en una sola línea el texto se
+                  parte donde le toca y se lee cortado. */}
+              <p className="mt-4 text-center text-xs leading-relaxed text-brand-100/70">
+                Te pediremos confirmar tu correo.
+                <br />
+                Cero spam, bájate en un clic.
               </p>
             </fetcher.Form>
           )}
@@ -535,7 +544,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
 
       {/* Pie mínimo: sin secciones que empujen la página fuera de la pantalla. */}
       <p className="relative z-10 mx-auto w-full max-w-6xl shrink-0 text-center text-xs text-brand-100/60 lg:text-left">
-        Cero spam, baja en un clic ·{" "}
+        Cero spam, bájate en un clic ·{" "}
         <a
           href="/secuencias"
           target="_blank"
