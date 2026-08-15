@@ -223,6 +223,9 @@ export async function sequenceUnlockFor(
   unlocksAt: Date | null;
   /** false = ni siquiera está suscrito; hay que ofrecerle el alta, no una fecha. */
   enrolled: boolean;
+  /** Qué número de entrega es. Suscribirse abre la 1, no la 4. */
+  order?: number;
+  total?: number;
   sequenceId?: string;
 }> {
   const email_ = await db.sequenceEmail.findFirst({
@@ -231,10 +234,16 @@ export async function sequenceUnlockFor(
   });
   if (!email_) return { unlocked: false, unlocksAt: null, enrolled: false };
 
+  const total = await db.sequenceEmail.count({
+    where: { sequenceId: email_.sequenceId },
+  });
+
   const base = {
     unlocked: false,
     unlocksAt: null,
     enrolled: false,
+    order: email_.order,
+    total,
     sequenceId: email_.sequenceId,
   };
   if (!email) return base;
@@ -264,6 +273,8 @@ export async function sequenceUnlockFor(
       unlocked: true,
       unlocksAt: null,
       enrolled: true,
+      order: email_.order,
+      total,
       sequenceId: email_.sequenceId,
     };
   }
@@ -278,6 +289,8 @@ export async function sequenceUnlockFor(
     unlocked: false,
     unlocksAt: estimateUnlockDates(emails, enrollment)[position] ?? null,
     enrolled: true,
+    order: email_.order,
+    total,
     sequenceId: email_.sequenceId,
   };
 }

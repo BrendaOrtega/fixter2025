@@ -29,7 +29,7 @@ const VIDEO_URL =
 // superponerlo con CSS se descuadra en Outlook. Vive junto al HLS, con ACL
 // público porque en un correo no hay quien firme una URL.
 const VIDEO_POSTER =
-  "https://wild-bird-2039.fly.storage.tigris.dev/fixtergeek/videos/6a78ff744a8e00e3b2eea500/6a809b70f13d797a474a6916/poster.png";
+  "https://wild-bird-2039.fly.storage.tigris.dev/fixtergeek/videos/6a78ff744a8e00e3b2eea500/6a809b70f13d797a474a6916/poster-yt.png";
 const VIDEO_DURATION = "48 min";
 const REPO_URL = "https://github.com/blissito/taller-arnes-grok";
 const PDF_URL = "https://www.fixtergeek.com/seis-piezas";
@@ -48,7 +48,7 @@ const emailOne = {
   // inmediato: un correo de bienvenida que solo promete lo que vendrá deja a la
   // persona con la mano estirada.
   videoSlug: VIDEO_SLUG,
-  subject: "Tu primera entrega: un agente en cien líneas",
+  subject: "Tu primera entrega: un agente que construye su propio arnés",
   content: wrapEmailHtml(
     `
 <h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">Empezamos 🧰</h1>
@@ -65,7 +65,7 @@ ${emailVideoCard(
   {
     posterUrl: VIDEO_POSTER,
     href: VIDEO_URL,
-    title: "El mínimo arnés",
+    title: "Un agente que construye su propio arnés",
     duration: VIDEO_DURATION,
     label: "▶ Ver el video",
   },

@@ -63,7 +63,7 @@ export const Drawer = ({
         <motion.button
           onClick={onClose}
           id="overlay"
-          className="fixed inset-0 bg-dark/60  z-10"
+          className="fixed inset-0 bg-dark/60 z-[300]"
           animate={{ backdropFilter: "blur(4px)" }}
           exit={{ backdropFilter: "blur(0)", opacity: 0 }}
         />
@@ -76,7 +76,7 @@ export const Drawer = ({
         className={cn(
           // Arranca DEBAJO de la navbar: pegado a top-0 el título quedaba
           // atravesado por los links del menú, que viven más arriba en la pila.
-          "bg-background border border-white/10 z-10 h-[calc(100vh-5rem)] top-20 fixed right-0 shadow-xl rounded-tl-3xl rounded-bl-3xl p-6 md:py-8 md:px-12 flex flex-col text-white overflow-y-auto",
+          "bg-background border border-white/10 z-[310] h-[calc(100vh-5rem)] top-20 fixed right-0 shadow-xl rounded-tl-3xl rounded-bl-3xl p-6 md:py-8 md:px-12 flex flex-col text-white overflow-y-auto",
           mode === "big"
             ? "w-[95%] md:w-[90%] lg:w-[85%]"
             : "w-[90%] md:w-[60%] lg:w-[40%]"

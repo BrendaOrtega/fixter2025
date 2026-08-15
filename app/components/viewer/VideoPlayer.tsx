@@ -283,10 +283,18 @@ export const VideoPlayer = ({
         ref={videoRef}
         // Los videos en HLS traen `m3u8` y `storageLink` vacío: si sólo se mira
         // `storageLink`, salen con el póster de "bloqueado" aunque haya acceso.
+        // Bloqueado no significa "compra el curso": una entrega que llega por
+        // correo se abre con el correo, no con la tarjeta. En ese caso se deja
+        // el póster propio del video —el contenido se intuye, no se esconde— y
+        // el drawer de encima explica cómo abrirlo.
         poster={
           video?.m3u8 || video?.storageLink
             ? poster || video.poster || undefined
-            : "/video-blocked.png"
+            : ["sequence", "subscriber"].includes(
+                  (video as { accessLevel?: string })?.accessLevel || ""
+                )
+              ? poster || video?.poster || undefined
+              : "/video-blocked.png"
         }
         controlsList="nodownload"
         className="w-full h-full"

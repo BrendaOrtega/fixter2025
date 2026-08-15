@@ -247,6 +247,23 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       );
       const existing = await db.subscriber.findUnique({ where: { email } });
 
+      // El celular es opcional y solo se guarda con el consentimiento explícito
+      // del switch. Mismo trato que en la landing de la serie.
+      if (formData.get("wantsWhatsapp") === "on") {
+        const raw = String(formData.get("phone") || "").trim();
+        if (raw) {
+          const { normalizePhone } = await import("~/.server/phone");
+          const parsed = normalizePhone(raw);
+          if (!parsed.ok) return data({ error: parsed.error }, { status: 400 });
+          if (existing) {
+            await db.subscriber.update({
+              where: { id: existing.id },
+              data: { phone: parsed.phone, whatsappOptIn: true },
+            });
+          }
+        }
+      }
+
       // Ya confirmó su correo antes: no se le vuelve a pedir la prueba, se le
       // inscribe y el primer correo sale en el siguiente ciclo del riel.
       if (existing?.confirmed) {
@@ -426,7 +443,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     : videos.filter((v: any) => v.accessLevel === "sequence");
   const sequenceUnlocks: Record<
     string,
-    { unlocked: boolean; unlocksAt: string | null; enrolled: boolean }
+    {
+      unlocked: boolean;
+      unlocksAt: string | null;
+      enrolled: boolean;
+      order: number | null;
+    }
   > = {};
   let sequenceUrl: string | null = null;
   let sequenceName: string | null = null;
@@ -445,6 +467,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         unlocked: unlock.unlocked,
         unlocksAt: unlock.unlocksAt ? unlock.unlocksAt.toISOString() : null,
         enrolled: unlock.enrolled,
+        order: unlock.order ?? null,
       };
       sequenceId ||= unlock.sequenceId;
     }
@@ -466,6 +489,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const sequenceUnlocked = currentUnlock?.unlocked ?? false;
   const unlocksAt = currentUnlock?.unlocksAt ?? null;
   const sequenceEnrolled = currentUnlock?.enrolled ?? false;
+  const sequenceOrder = currentUnlock?.order ?? null;
 
   // La regla vive en un solo lugar; aquí solo se le pasan los datos ya cargados.
   const { resolveAccess } = await import("~/.server/videoAccess");
@@ -581,6 +605,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     sequenceName,
     sequenceDbId,
     sequenceEnrolled,
+    sequenceOrder,
     sequenceUnlocks,
     video: videoToReturn,
     transcript,
@@ -657,6 +682,7 @@ export default function Route({
     sequenceName,
     sequenceDbId,
     sequenceEnrolled,
+    sequenceOrder,
     sequenceUnlocks,
     video,
     transcript,
@@ -994,6 +1020,7 @@ export default function Route({
           title={video.title}
           unlocksAt={unlocksAt as string | null}
           enrolled={sequenceEnrolled}
+          order={sequenceOrder}
           sequenceId={sequenceDbId}
           sequenceName={sequenceName}
           sequenceUrl={sequenceUrl}
