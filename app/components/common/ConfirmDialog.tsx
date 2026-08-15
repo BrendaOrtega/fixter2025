@@ -63,6 +63,10 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="fixed inset-0 z-[400] bg-black/70 backdrop-blur-sm"
           />
+          {/* El centrado va por flex y NO por `-translate-x-1/2`: Motion escribe
+              su propio `transform` para animar y se lleva por delante el de
+              Tailwind, dejando el diálogo colgado de su esquina. */}
+          <div className="pointer-events-none fixed inset-0 z-[410] flex items-center justify-center p-4">
           <motion.div
             role="alertdialog"
             aria-modal="true"
@@ -70,7 +74,7 @@ export function ConfirmDialog({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="fixed left-1/2 top-1/2 z-[410] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-brand-100/10 bg-brand-900 p-6 shadow-2xl"
+            className="pointer-events-auto w-full max-w-md rounded-2xl border border-brand-100/10 bg-brand-900 p-6 shadow-2xl"
           >
             <h2 className="text-lg font-bold text-white">{title}</h2>
             {description && (
@@ -102,6 +106,7 @@ export function ConfirmDialog({
               </button>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

@@ -220,12 +220,27 @@ export const UnifiedSidebarMenu = ({
         <div className="px-4 py-4 border-b border-gray-700/50">
           {/* Sin la etiqueta, el nombre del programa se confunde con el
               título del video que se está viendo. */}
-          <p className="mb-0.5 text-[11px] font-bold uppercase tracking-wider text-brand-500">
-            Curso
-          </p>
-          <h2 className="text-lg font-semibold text-white mb-3 truncate">
-            {courseTitle}
-          </h2>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="mb-0.5 text-[11px] font-bold uppercase tracking-wider text-brand-500">
+                Curso
+              </p>
+              <h2 className="text-lg font-semibold text-white mb-3 truncate">
+                {courseTitle}
+              </h2>
+            </div>
+            {/* En móvil el panel ocupa toda la pantalla y el botón flotante que
+                lo abre queda debajo: sin esta ✕ no había forma de volver al
+                video. */}
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              aria-label="Cerrar el menú"
+              className="-mr-1 shrink-0 rounded-full p-2 text-2xl text-brand-100 transition-colors hover:text-white md:hidden"
+            >
+              <IoMdClose />
+            </button>
+          </div>
 
           {/* Tabs Navigation */}
           {/* Rejilla de dos columnas: con cuatro pestañas en una sola fila de 320px los
