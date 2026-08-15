@@ -1,10 +1,22 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFetcher } from "react-router";
 import { IoClose } from "react-icons/io5";
 import { StarRating } from "~/components/common/StarRating";
 import { cn } from "~/utils/cn";
 import { LAYER } from "~/utils/layers";
+import { useScrollLock } from "~/hooks/useScrollLock";
+
+/**
+ * Hoja inferior para calificar el curso.
+ *
+ * Mantiene su forma —entra desde abajo, no desde el costado— porque no es un
+ * muro: llega sin que nadie la pida, al terminar un video, y una hoja se lee
+ * como una invitación que se puede ignorar. Lo que sí comparte con el resto de
+ * los cajones es el chasis: portal, Escape, bloqueo de scroll y el fondo que
+ * cierra.
+ */
 
 interface RatingDrawerProps {
   isOpen: boolean;
@@ -55,17 +67,44 @@ export function RatingDrawer({
     onClose();
   };
 
+  // El portal sólo existe en el navegador: en SSR no hay `document`.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  useScrollLock(isOpen);
+
+  // Escape cierra. Se registra sólo cuando esta hoja está abierta: si no, un
+  // Escape dispara el `onClose` de todo lo que esté montado en el árbol.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   const jsx = (
-    <article className="relative">
+    <>
       <motion.button
         onClick={handleClose}
         id="overlay"
+        aria-label="Cerrar"
         style={{ zIndex: LAYER.overlay }}
+        // Sin `backdrop-filter`: un elemento con blur se vuelve backdrop root y
+        // el navegador lo compone por encima de sus hermanos aunque tengan
+        // mayor z-index, así que la hoja salía atenuada detrás de su propio
+        // fondo.
         className="fixed inset-0 bg-dark/60"
-        animate={{ backdropFilter: "blur(4px)" }}
-        exit={{ backdropFilter: "blur(0)", opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
       />
       <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-label="Califica el curso"
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "120%" }}
@@ -166,10 +205,17 @@ export function RatingDrawer({
           </>
         )}
       </motion.section>
-    </article>
+    </>
   );
 
-  return <AnimatePresence mode="popLayout">{isOpen && jsx}</AnimatePresence>;
+  // Al portal, como el resto: montada dentro del árbol, cualquier ancestro con
+  // `transform` o `filter` —el visor los tiene, por las animaciones— la
+  // encierra y deja de poder salir por encima de la navegación.
+  if (!mounted) return null;
+  return createPortal(
+    <AnimatePresence mode="popLayout">{isOpen && jsx}</AnimatePresence>,
+    document.body
+  );
 }
 
 function SuccessState({ onClose }: { onClose: () => void }) {
