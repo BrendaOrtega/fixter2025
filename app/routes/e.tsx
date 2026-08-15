@@ -33,6 +33,55 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { isValid, decoded } = validateAccessToken(token);
   if (!isValid || !decoded?.email) return redirect(seguro);
 
+  // El token es prueba de identidad equivalente al código OTP: solo pudo salir
+  // de un correo que mandamos a ese buzón. Si el destino es un video de curso
+  // que se abre "con tu correo", se le da el tag de acceso aquí mismo — si no,
+  // el link prometía un video y entregaba un formulario pidiendo el correo por
+  // el que la persona acaba de entrar.
+  const curso = seguro.match(/^\/cursos\/([^/?]+)/)?.[1];
+  if (curso) {
+    try {
+      const { db } = await import("~/.server/db");
+      const subscriber = await db.subscriber.findUnique({
+        where: { email: decoded.email },
+        select: { id: true, tags: true },
+      });
+
+      if (subscriber) {
+        const tag = `${curso}-free-access`;
+        if (!subscriber.tags.includes(tag)) {
+          await db.subscriber.update({
+            where: { id: subscriber.id },
+            data: { tags: { push: tag }, confirmed: true },
+          });
+        }
+
+        // Si el destino es un video que se abre con el avance de una secuencia,
+        // hay que asegurarse de que esté inscrito: quien hace clic en el video
+        // de SU correo no puede toparse con un formulario para suscribirse a lo
+        // que ya está suscrito.
+        const videoSlug = new URL(request.url).searchParams
+          .get("to")
+          ?.match(/videoSlug=([^&]+)/)?.[1];
+        if (videoSlug) {
+          const entrega = await db.sequenceEmail.findFirst({
+            where: { videoSlug: decodeURIComponent(videoSlug) },
+            select: { sequenceId: true },
+          });
+          if (entrega) {
+            const { enrollSubscriberInSequence } = await import(
+              "~/.server/sequences"
+            );
+            await enrollSubscriberInSequence(entrega.sequenceId, subscriber.id);
+          }
+        }
+      }
+    } catch (error) {
+      // Que falle esto no debe costarle la entrada: sigue con sus cookies.
+      console.error("📧 No se pudo marcar el acceso:", error);
+    }
+  }
+
   const headers = new Headers();
   headers.append("Set-Cookie", await setMemberCookie(decoded.email));
   headers.append(
