@@ -73,9 +73,13 @@ export const Drawer = ({
           id="overlay"
           aria-label="Cerrar"
           style={{ zIndex: LAYER.overlay }}
-          className="fixed inset-0 bg-dark/60"
-          animate={{ backdropFilter: "blur(4px)" }}
-          exit={{ backdropFilter: "blur(0)", opacity: 0 }}
+          // Sin `backdrop-filter`: un elemento con blur se vuelve backdrop root
+          // y Chrome lo compone por encima de sus hermanos aunque tengan mayor
+          // z-index, así que el propio cajón salía atenuado detrás de su fondo.
+          className="fixed inset-0 bg-dark/70"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         />
       )}
       <motion.section
