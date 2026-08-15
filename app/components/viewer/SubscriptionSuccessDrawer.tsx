@@ -39,7 +39,7 @@ export const SubscriptionSuccessDrawer = ({
               alt="Astronauta celebrando"
               className="mx-auto w-[200px] md:w-[260px]"
             />
-            <h2 className="text-2xl text-dark dark:text-white font-semibold md:text-4xl text-center pt-12">
+            <h2 className="text-balance text-2xl text-dark dark:text-white font-semibold md:text-4xl text-center pt-12">
               ¡Bienvenido a bordo! 🚀
             </h2>
             <p className="text-lg dark:text-metal text-center text-iron font-light mt-6">

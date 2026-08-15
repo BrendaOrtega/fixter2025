@@ -146,7 +146,7 @@ export const Drawer = ({
         ) : (
           <header className="mx-auto mb-3 flex w-full max-w-lg items-start justify-between gap-3 md:mb-6 lg:max-w-none">
             <div className="min-w-0 flex-1 text-center lg:text-left">
-              <h4 className="text-xl font-semibold text-white sm:text-2xl lg:text-4xl">
+              <h4 className="text-balance text-xl font-semibold text-white sm:text-2xl lg:text-4xl">
                 {title}
               </h4>
               <p className="text-brand_gray">{subtitle}</p>

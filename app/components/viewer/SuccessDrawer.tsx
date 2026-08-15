@@ -23,7 +23,7 @@ export const SuccessDrawer = ({
         <div className=" h-full flex items-center px-[5%]">
           <div>
             <img src="/congrats.svg" alt="logo" className="mx-auto w-[240px]" />
-            <h2 className="text-2xl text-dark dark:text-white font-semibold md:text-4xl text-center pt-20">
+            <h2 className="text-balance text-2xl text-dark dark:text-white font-semibold md:text-4xl text-center pt-20">
               ¡Has desbloqueado todos los tutoriales! 🎉 🍾
             </h2>
             {/* <p className="text-lg bg-[#0E1317]  dark:text-metal text-center text-iron font-light mt-6">

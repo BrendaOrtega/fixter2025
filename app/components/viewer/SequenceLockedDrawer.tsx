@@ -69,10 +69,10 @@ export function SequenceLockedDrawer({
           <p className="mt-4 text-xs font-medium uppercase tracking-wider text-brand-500">
             Esta entrega aún no llega
           </p>
-          <h3 className="mt-1 text-xl font-bold leading-tight text-white sm:text-2xl">
+          <h3 className="mt-1 text-balance text-xl font-bold leading-tight text-white sm:text-2xl">
             {title}
           </h3>
-          <p className="mt-2 text-sm text-brand-100 sm:text-base">
+          <p className="mt-2 text-pretty text-sm text-brand-100 sm:text-base">
             {cuando ? (
               <>
                 Se abre <strong className="text-brand-500">{cuando}</strong>,
@@ -82,7 +82,7 @@ export function SequenceLockedDrawer({
               "Se abre en cuanto te llegue la entrega por correo."
             )}
           </p>
-          <p className="mt-3 text-sm text-brand-100/70">
+          <p className="mt-3 text-pretty text-sm text-brand-100/70">
             Vas al día — no tienes que hacer nada, nosotros te avisamos.
           </p>
           {sequenceUrl && (
@@ -107,14 +107,14 @@ export function SequenceLockedDrawer({
         </p>
         {/* El título es el nombre del video que están pidiendo abrir: va aquí,
             dentro del bloque, y no en un encabezado suelto hasta arriba. */}
-        <h3 className="mt-1 text-xl font-bold leading-tight text-white sm:text-2xl">
+        <h3 className="mt-1 text-balance text-xl font-bold leading-tight text-white sm:text-2xl">
           {title}
         </h3>
 
         {/* Prometer "se abre de inmediato" solo es verdad en la primera
             entrega. En la cuarta, suscribirse empieza por la primera y esta
             llega días después: decirlo de frente evita que se sienta engaño. */}
-        <p className="mt-2 text-sm text-brand-100 sm:text-base">
+        <p className="mt-2 text-pretty text-sm text-brand-100 sm:text-base">
           {order && order > 1 ? (
             <>
               Es la entrega {order} de{" "}
@@ -147,7 +147,7 @@ export function SequenceLockedDrawer({
             <input type="hidden" name="sequenceId" value={sequenceId || ""} />
             <input type="hidden" name="email" value={userEmail || ""} />
             <input type="hidden" name="courseSlug" value={courseSlug} />
-            <p className="mb-3 text-sm text-brand-100">
+            <p className="mb-3 text-pretty text-sm text-brand-100">
               Te subes a la serie con{" "}
               <strong className="text-white">{userEmail}</strong> 📬
             </p>
@@ -168,7 +168,7 @@ export function SequenceLockedDrawer({
             <input type="hidden" name="email" value={fetcher.data?.email || correo} />
             <input type="hidden" name="courseSlug" value={courseSlug} />
             <input type="hidden" name="sequenceId" value={sequenceId || ""} />
-            <p className="mb-3 text-center text-sm text-brand-100">
+            <p className="mb-3 text-pretty text-center text-sm text-brand-100">
               Te mandamos un código de 6 dígitos a{" "}
               <strong className="text-white">{fetcher.data?.email || correo}</strong>
             </p>

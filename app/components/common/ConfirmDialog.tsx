@@ -79,7 +79,7 @@ export function ConfirmDialog({
             transition={{ duration: 0.15 }}
             className="pointer-events-auto w-full max-w-md rounded-2xl border border-brand-100/10 bg-brand-900 p-6 shadow-2xl"
           >
-            <h2 className="text-lg font-bold text-white">{title}</h2>
+            <h2 className="text-balance text-lg font-bold text-white">{title}</h2>
             {description && (
               <p className="mt-2 text-sm leading-relaxed text-brand-100">
                 {description}

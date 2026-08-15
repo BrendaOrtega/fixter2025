@@ -21,7 +21,7 @@ import { marked } from "marked";
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import { EmailRichEditor } from "~/components/sequences/EmailRichEditor";
 import { SEQUENCE_ILLUSTRATIONS } from "~/components/sequences/illustrations";
-import { useFetcher } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import { ConfirmDialog } from "~/components/common/ConfirmDialog";
 import {
   FaArrowLeft,
@@ -532,7 +532,23 @@ function aggregate(enrollments: any[]) {
 export default function ManageSequence({ loaderData }: Route.ComponentProps) {
   const { sequence, videos, statsByEmail, userEmail } = loaderData;
   const fetcher = useFetcher();
-  const [tab, setTab] = useState<"monitor" | "emails" | "settings">("emails");
+  // La pestaña vive en la URL. En estado se perdía con cada recarga y con
+  // cada acción del panel: pausabas a alguien en Suscriptores y volvías a
+  // Emails. Además así la pestaña se puede compartir y el botón de atrás
+  // hace lo que se espera.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get("tab") || "emails") as
+    | "monitor"
+    | "emails"
+    | "settings";
+  const setTab = (next: string) =>
+    setSearchParams(
+      (prev) => {
+        prev.set("tab", next);
+        return prev;
+      },
+      { replace: true, preventScrollReset: true }
+    );
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [detail, setDetail] = useState<any>(null);

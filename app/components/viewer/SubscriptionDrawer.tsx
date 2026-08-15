@@ -102,7 +102,7 @@ export const SubscriptionDrawer = ({
                 Y el drawer sale en dos momentos muy distintos —quien cae frío
                 desde un enlace y quien ya lleva rato viendo—, así que el título
                 cambia según de dónde venga. */}
-            <h3 className="mt-6 text-2xl font-bold leading-tight text-white sm:text-3xl">
+            <h3 className="text-balance mt-6 text-2xl font-bold leading-tight text-white sm:text-3xl">
               {hasWatchedBefore
                 ? "Para las que siguen, deja tu correo"
                 : "Entra con tu correo y sigue viendo"}
@@ -173,7 +173,7 @@ export const SubscriptionDrawer = ({
           </>
         ) : (
           <>
-            <h3 className="mt-6 text-2xl font-bold text-white sm:text-3xl">
+            <h3 className="text-balance mt-6 text-2xl font-bold text-white sm:text-3xl">
               Ingresa el código
             </h3>
             <p className="mt-3 text-base font-light text-colorParagraph sm:text-lg">

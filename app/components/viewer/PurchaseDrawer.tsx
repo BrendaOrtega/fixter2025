@@ -26,7 +26,7 @@ export const PurchaseDrawer = ({ courseSlug, price }: { courseSlug: string; pric
           animate={{ y: [0, -10, 0], rotate: [0, -2.5, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
-        <h3 className="mt-6 text-2xl font-bold leading-tight text-white sm:text-3xl">
+        <h3 className="text-balance mt-6 text-2xl font-bold leading-tight text-white sm:text-3xl">
           ¿List@ para ver todo el curso? Prepárate porque apenas estamos
           comenzando 🚀
         </h3>
