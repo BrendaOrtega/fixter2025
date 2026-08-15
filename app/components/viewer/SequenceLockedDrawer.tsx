@@ -56,7 +56,7 @@ export function SequenceLockedDrawer({
   // --- Acaba de darse de alta -------------------------------------------
   if (listo || porConfirmar) {
     return (
-      <Drawer isOpen={isOpen} onClose={() => {}} title="¡Listo!">
+      <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="¡Listo!">
         <div className="text-center">
           <EnvelopeIllustration className="mx-auto h-auto w-[190px]" />
           <h3 className="mt-4 text-xl font-bold text-white">
@@ -75,7 +75,7 @@ export function SequenceLockedDrawer({
   // --- Ya suscrito, esta entrega todavía no le toca ----------------------
   if (enrolled) {
     return (
-      <Drawer isOpen={isOpen} onClose={() => {}} title="Esta entrega aún no llega">
+      <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="Esta entrega aún no llega">
         <div className="text-center">
           <EnvelopeIllustration className="mx-auto h-auto w-[190px]" />
           <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
@@ -106,7 +106,7 @@ export function SequenceLockedDrawer({
 
   // --- Todavía no se suscribe: el alta pasa aquí mismo -------------------
   return (
-    <Drawer isOpen={isOpen} onClose={() => {}} title="Este video es parte de una secuencia de emails">
+    <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="Este video es parte de una secuencia de emails">
       <div className="text-center">
         <EnvelopeIllustration className="mx-auto h-auto w-[190px]" />
         <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>

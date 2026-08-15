@@ -15,11 +15,17 @@ export const Drawer = ({
   cta,
   className,
   header,
+  noActions,
+  noClose,
 }: {
   mode?: string;
   noOverlay?: boolean;
   header?: ReactNode;
   cta?: ReactNode;
+  /** Sin Aceptar/Cancelar: hay cajones donde no hay nada que aceptar. */
+  noActions?: boolean;
+  /** Sin ✕: cuando cerrar no lleva a ningún lado (el contenido sigue bloqueado). */
+  noClose?: boolean;
   title?: string;
   subtitle?: string;
   onClose?: () => void;
@@ -92,13 +98,15 @@ export const Drawer = ({
               </h4>
               <p className="text-brand_gray">{subtitle}</p>
             </div>
-            <button
-              tabIndex={0}
-              onClick={onClose}
-              className="text-2xl round-full p-1 active:scale-95"
-            >
-              <IoClose />
-            </button>
+            {!noClose && (
+              <button
+                tabIndex={0}
+                onClick={onClose}
+                className="text-2xl round-full p-1 active:scale-95"
+              >
+                <IoClose />
+              </button>
+            )}
           </header>
         )}
         <section
@@ -109,7 +117,7 @@ export const Drawer = ({
         >
           {children}
         </section>
-        <nav className="flex justify-end gap-4  mt-auto">
+        <nav className={cn("flex justify-end gap-4 mt-auto", noActions && "hidden")}>
           {cta ? (
             cta
           ) : (
