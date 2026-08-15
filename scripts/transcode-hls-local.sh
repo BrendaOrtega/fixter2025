@@ -19,17 +19,6 @@ OUT="${2:?falta el directorio de salida}"
 
 mkdir -p "$OUT"
 
-# 1080p NO se recodifica: la grabación ya viene 1920x1080 h264/aac a ~4 Mbps.
-# Segmentarla con `-c copy` es casi instantáneo y además conserva la calidad
-# original — recodificarla costaba tres horas para quedar PEOR.
-echo "🎞️  1080p (copy, sin recodificar)…"
-mkdir -p "$OUT/1080p"
-ffmpeg -y -hide_banner -loglevel warning -stats \
-  -i "$IN" -c copy \
-  -f hls -hls_time 10 -hls_list_size 0 \
-  -hls_segment_filename "$OUT/1080p/seg_%03d.ts" \
-  "$OUT/1080p/1080p.m3u8"
-
 # El ancho NO se fija: se deriva de la altura con `scale=-2:H`, que conserva el
 # aspecto de la fuente. Fijarlo a 1280x720 deformaba cualquier grabación que no
 # fuera 16:9 — y las hay 4:3, que es como sale una pantalla compartida.
@@ -50,11 +39,32 @@ fi
 DISP_W=$(( (DISP_W + 1) / 2 * 2 ))
 echo "📐 fuente: ${SRC_W}x${SRC_H} · se ve como ${DISP_W}x${SRC_H} (DAR ${DAR:-cuadrado})"
 
-# name  alto  bitrate_video  bitrate_audio
-QUALITIES=(
-  "720p 720 2800k 128k"
-  "480p 480 1400k 128k"
-)
+# La calidad máxima sale de la fuente: si ya trae píxeles cuadrados se copia
+# —instantáneo y sin perder nada—, y si viene ANAMÓRFICA se recodifica a
+# píxeles cuadrados. Copiarla en ese caso deja un 1440x1080 con SAR 4:3 dentro
+# del HLS, y basta con que un reproductor ignore el SAR para que el video se
+# vea aplastado. Es exactamente lo que estaba pasando.
+SAR=$(ffprobe -v error -select_streams v:0 -show_entries stream=sample_aspect_ratio -of csv=p=0 "$IN")
+if [ "$SAR" = "1:1" ] || [ "$SAR" = "N/A" ] || [ -z "$SAR" ]; then
+  echo "🎞️  1080p (copy, píxeles ya cuadrados)…"
+  mkdir -p "$OUT/1080p"
+  ffmpeg -y -hide_banner -loglevel warning -stats \
+    -i "$IN" -c copy \
+    -f hls -hls_time 10 -hls_list_size 0 \
+    -hls_segment_filename "$OUT/1080p/seg_%03d.ts" \
+    "$OUT/1080p/1080p.m3u8"
+  QUALITIES=(
+    "720p 720 2800k 128k"
+    "480p 480 1400k 128k"
+  )
+else
+  echo "🎞️  fuente anamórfica (SAR $SAR): la máxima también se normaliza."
+  QUALITIES=(
+    "1080p 1080 8000k 192k"
+    "720p 720 2800k 128k"
+    "480p 480 1400k 128k"
+  )
+fi
 
 for q in "${QUALITIES[@]}"; do
   read -r NAME H VB AB <<< "$q"
@@ -83,7 +93,7 @@ W480=$(( (DISP_W * 480 / SRC_H + 1) / 2 * 2 ))
 cat > "$OUT/master.m3u8" <<EOF
 #EXTM3U
 #EXT-X-VERSION:3
-#EXT-X-STREAM-INF:BANDWIDTH=4200000,RESOLUTION=${DISP_W}x${SRC_H}
+#EXT-X-STREAM-INF:BANDWIDTH=8000000,RESOLUTION=${DISP_W}x${SRC_H}
 1080p/1080p.m3u8
 #EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=${W720}x720
 720p/720p.m3u8

@@ -10,7 +10,11 @@ import { motion } from "motion/react";
 import type { Route } from "./+types/s.$id";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { calculateNextEmailDate } from "~/.server/sequences";
+import {
+  calculateNextEmailDate,
+  enrollSubscriberInSequence,
+} from "~/.server/sequences";
+import { formatUnlock } from "~/utils/formatUnlock";
 import { checkSignupEmail } from "~/.server/anti-bot";
 import { normalizePhone } from "~/.server/phone";
 import { sendSequenceConfirmation } from "~/mailSenders/sendSequenceConfirmation";
@@ -87,20 +91,65 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Quien ya tiene cuenta no vuelve a escribir su correo. Es la misma regla del
   // cajón del visor: la sesión ya probó que ese buzón es suyo.
   const user = await getUserOrNull(request);
-  const enrolled = user
-    ? !!(await db.sequenceEnrollment.findFirst({
+
+  // No basta con saber si está dentro: hay que decirle POR DÓNDE va. "Ya estás
+  // suscrito" a secas no informa de nada a quien lleva tres entregas received
+  // y espera la cuarta.
+  const enrollment = user
+    ? await db.sequenceEnrollment.findFirst({
         where: {
           sequenceId: sequence.id,
-          status: { not: "paused" },
           subscriber: { is: { email: user.email } },
         },
-        select: { id: true },
-      }))
-    : false;
+        select: { status: true, currentEmailIndex: true, nextEmailAt: true },
+      })
+    : null;
+
+  const total = sequence._count.emails;
+  const received = Math.min(enrollment?.currentEmailIndex ?? 0, total);
+
+  // A qué video mandarlo: el de la última entrega que YA recibió — no el de la
+  // primera, que después de tres entregas es volver al principio. Necesita el
+  // curso porque la URL del visor es /cursos/:curso/:video.
+  const withVideo = sequence.emails.filter((e) => !!e.videoSlug);
+  const lastReceived = withVideo
+    .filter((e) => e.order <= received)
+    .slice(-1)[0];
+  let resumeVideo: { slug: string; course: string } | null = null;
+  if (lastReceived?.videoSlug) {
+    const v = await db.video.findUnique({
+      where: { slug: lastReceived.videoSlug },
+      select: { slug: true, courseIds: true },
+    });
+    const course = v?.courseIds.length
+      ? await db.course.findUnique({
+          where: { id: v.courseIds[0] },
+          select: { slug: true },
+        })
+      : null;
+    if (v && course?.slug) resumeVideo = { slug: v.slug, course: course.slug };
+  }
 
   return {
     sequence,
-    user: user ? { email: user.email, enrolled } : null,
+    resumeVideo,
+    user: user
+      ? {
+          email: user.email,
+          // Una inscripción paused NO cuenta como estar dentro: es justo a
+          // quien hay que ofrecerle volver.
+          enrolled: !!enrollment && enrollment.status !== "paused",
+          // Se dio de baja: hay que decírselo, no fingir que llega de nuevo.
+          paused: enrollment?.status === "paused",
+          received,
+          total,
+          // Null cuando ya recibió todo lo que hay publicado.
+          nextAt:
+            enrollment?.status === "active" && enrollment.nextEmailAt
+              ? enrollment.nextEmailAt.toISOString()
+              : null,
+        }
+      : null,
   };
 };
 
@@ -187,29 +236,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   // Subscriber ya confirmado → enrolar directo (sin doble opt-in de nuevo).
+  //
+  // Delega en `enrollSubscriberInSequence` en vez de crear la inscripción a
+  // mano. Hacerlo a mano era `if (!existe) crear`, y a quien ya se había dado
+  // de baja no le hacía NADA: la fila seguía en `paused`, la pantalla decía
+  // "¡listo, estás dentro!" y no volvía a llegarle un solo correo. Esa función
+  // ya sabe reactivar donde se quedó — es la misma que usa el visor.
   if (subscriber.confirmed) {
-    const existing = await db.sequenceEnrollment.findUnique({
-      where: {
-        sequenceId_subscriberId: {
-          sequenceId: sequence.id,
-          subscriberId: subscriber.id,
-        },
-      },
-    });
-    if (!existing) {
-      const firstEmail = sequence.emails[0];
-      await db.sequenceEnrollment.create({
-        data: {
-          sequenceId: sequence.id,
-          subscriberId: subscriber.id,
-          status: "active",
-          currentEmailIndex: 0,
-          nextEmailAt: firstEmail ? calculateNextEmailDate(firstEmail) : null,
-          enrolledAt: new Date(),
-          emailsSent: 0,
-        },
-      });
-    }
+    await enrollSubscriberInSequence(sequence.id, subscriber.id);
     return data({ success: true, enrolled: true });
   }
 
@@ -247,7 +281,7 @@ function BicolorTitle({ text }: { text: string }) {
 }
 
 export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
-  const { sequence, user } = loaderData;
+  const { sequence, user, resumeVideo } = loaderData;
   const fetcher = useFetcher<{
     success?: boolean;
     needsConfirmation?: boolean;
@@ -456,12 +490,34 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
             <fetcher.Form onSubmit={handleSubmit}>
               <h2 className="text-2xl font-bold text-white sm:text-[1.75rem]">
                 {user?.enrolled
-                  ? "Ya estás dentro"
-                  : "Recibe la primera entrega hoy"}
+                  ? user.received >= user.total
+                    ? "Vas al día"
+                    : `Vas en la entrega ${user.received} de ${user.total}`
+                  : user?.paused
+                    ? "Te habías dado de baja"
+                    : "Recibe la primera entrega hoy"}
               </h2>
               <p className="mt-1.5 text-sm text-brand-100">
                 {user?.enrolled ? (
-                  "Las entregas te llegan a tu correo conforme salen. No tienes que hacer nada."
+                  user.nextAt ? (
+                    <>
+                      La siguiente te llega{" "}
+                      <strong className="text-white">
+                        {formatUnlock(user.nextAt)}
+                      </strong>
+                      . No tienes que hacer nada.
+                    </>
+                  ) : (
+                    "Ya recibiste todo lo publicado. Te avisamos cuando salga la siguiente."
+                  )
+                ) : user?.paused ? (
+                  <>
+                    Dejaste de recibir esta serie. Si quieres, retomas justo
+                    donde te quedaste —
+                    {user.received > 0
+                      ? ` llevabas ${user.received} de ${user.total}.`
+                      : " desde la primera entrega."}
+                  </>
                 ) : user ? (
                   <>
                     Te subes con{" "}
@@ -568,19 +624,41 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                 </motion.div>
               )}
 
-              <button
-                type="submit"
-                disabled={isLoading || !!user?.enrolled}
-                className="mt-6 h-14 w-full rounded-xl bg-brand-500 text-lg font-bold text-brand-900 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 focus:ring-offset-brand-900 disabled:opacity-50"
-              >
-                {user?.enrolled
-                  ? "Ya estás suscrito ✅"
-                  : isLoading
+              {/* Estar dentro no es el final del camino: un botón muerto que
+                  dice "ya estás suscrito" no deja hacer nada. Quien ya está
+                  quiere VER lo que le tocó; quien se dio de baja, volver. */}
+              {user?.enrolled ? (
+                <div className="mt-6 flex flex-col gap-2">
+                  {resumeVideo && (
+                    <a
+                      href={`/cursos/${resumeVideo.course}/${resumeVideo.slug}`}
+                      className="flex h-14 w-full items-center justify-center rounded-xl bg-brand-500 text-lg font-bold text-brand-900 transition hover:brightness-110"
+                    >
+                      Ver mis entregas 🍿
+                    </a>
+                  )}
+                  <a
+                    href="/perfil"
+                    className="flex h-12 w-full items-center justify-center rounded-xl border border-brand-100/20 text-sm font-medium text-brand-100 transition-colors hover:border-brand-100/40 hover:text-white"
+                  >
+                    Administrar mi suscripción
+                  </a>
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="mt-6 h-14 w-full rounded-xl bg-brand-500 text-lg font-bold text-brand-900 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 focus:ring-offset-brand-900 disabled:opacity-50"
+                >
+                  {isLoading
                     ? "Procesando…"
-                    : user
-                      ? "Súbeme a la secuencia 🍿"
-                      : "Quiero la secuencia"}
-              </button>
+                    : user?.paused
+                      ? "Retomar donde me quedé 🍿"
+                      : user
+                        ? "Súbeme a la secuencia 🍿"
+                        : "Quiero la secuencia"}
+                </button>
+              )}
 
               {error && (
                 <p className="mt-3 text-center text-sm text-red-400">{error}</p>
