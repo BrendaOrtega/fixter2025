@@ -124,7 +124,10 @@ export function useVideoPlayer({
     if (!controls) return;
 
     if (controls.paused) {
-      controls.play();
+      // El play() se rechaza si el <video> se va del documento antes de que la
+      // promesa resuelva —navegar a otra lección mientras arranca—, y sin catch
+      // eso sube a la consola como AbortError sin que nada esté roto.
+      controls.play().catch(() => {});
       onPlay?.();
     } else {
       controls.pause();

@@ -381,6 +381,36 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     }
   }
 
+  // Con sesión abierta no hay código que mandar: la cuenta ya probó que ese
+  // buzón es suyo, y es la misma prueba que pide el OTP. Mandarle un código al
+  // correo desde el que ya está identificado es cobrarle dos veces lo mismo.
+  if (intent === "unlock-session") {
+    if (!session) return data({ error: "Necesitas sesión" }, { status: 401 });
+    try {
+      const subscriber = await db.subscriber.upsert({
+        where: { email },
+        create: { email, confirmed: true, confirmedAt: new Date(), tags: [tag] },
+        update: { confirmed: true },
+      });
+      if (!subscriber.tags.includes(tag)) {
+        await db.subscriber.update({
+          where: { email },
+          data: { tags: { push: tag } },
+        });
+      }
+      await joinCommunityFromViewer(email);
+
+      const destination = new URL(request.url);
+      destination.searchParams.set("subscribed", "1");
+      return redirect(destination.toString(), {
+        headers: accessCookies(email, null),
+      });
+    } catch (error) {
+      console.error("📧 No se pudo desbloquear con la sesión:", error);
+      return data({ error: "No se pudo desbloquear" }, { status: 500 });
+    }
+  }
+
   return data({ error: "Intent no válido" }, { status: 400 });
 };
 
@@ -622,9 +652,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   //   dejar los datos estructurados detrás del muro equivale a no tenerlos: los modelos
   //   de IA no ven vídeo, leen el transcript, y sin esto la clase es invisible.
   //   Por eso sólo sale un extracto y los capítulos, no la transcripción entera.
+  //   `segments` es lo pesado —una entrada por frase, decenas de miles en un
+  //   webinar de 75 minutos— y sin acceso se leía completo de la base para
+  //   descartarlo dos líneas después. Eso es lo que hacía que abrir un video
+  //   BLOQUEADO tardara como si estuviera cargando el video.
   const guardado = await db.transcript.findUnique({
     where: { videoId: video.id },
-    select: { segments: true, chapters: true, text: true },
+    select: { segments: hasAccess, chapters: true, text: true },
   });
 
   const transcript = hasAccess ? guardado : null;
@@ -1060,7 +1094,17 @@ export default function Route({
           onSeek={seekTo}
         />
       </article>
-      {searchParams.success && <SuccessDrawer isOpen />}
+      {/* Con `onClose`: sin él, la ✕ y el fondo no hacían nada y el cajón de
+          éxito se quedaba pegado hasta recargar. Cerrar limpia el `?success`
+          para que no vuelva a salir al navegar. */}
+      {searchParams.success && (
+        <SuccessDrawer
+          isOpen
+          onClose={() =>
+            navigate(`/cursos/${course.slug}/${video.slug}`, { replace: true })
+          }
+        />
+      )}
       {searchParams.subscribed && (
         <SubscriptionSuccessDrawer
           isOpen

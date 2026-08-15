@@ -78,15 +78,19 @@ export const Drawer = ({
        que se subiera su z interno, el cajón nunca podía salir por encima del
        menú. Esa fue la causa de tres rondas de parches que no servían. */
     <article>
-      {/* Un cajón que NO se cierra tampoco pone fondo. El fondo existe para
-          una sola cosa: cerrar al hacer clic afuera. En un cajón de bloqueo
-          —el del video de secuencia— cerrar no es opción, así que ese fondo
-          se quedaba a pantalla completa por encima de todo, atrapando cada
-          clic para no hacer nada con él: el menú de videos no se podía abrir,
-          y cualquier clic en él lo cerraba porque el clic caía en el fondo y
-          no en el menú. El panel ya bloquea lo suyo; el resto de la pantalla
-          se queda vivo para poder irse a otro video. */}
-      {!noOverlay && !noClose && (
+      {/* LA REGLA: hay fondo sólo si hacer clic en él HACE algo.
+
+          El fondo existe para cerrar al tocar afuera. Cuando no puede cerrar
+          —un cajón de bloqueo (`noClose`), o uno montado sin `onClose`, como
+          el de éxito— se quedaba igual a pantalla completa por encima de todo,
+          tragándose cada clic para no hacer nada con él. De ahí "el botón
+          gigante invisible": el menú de videos no se podía abrir, y al abrirlo
+          cualquier clic dentro lo cerraba, porque el clic caía en el fondo y
+          nunca llegaba al menú.
+
+          Sin fondo, el panel bloquea lo suyo y el resto de la pantalla queda
+          vivo — que además es lo útil: poder irse a otro video. */}
+      {!noOverlay && !noClose && !!onClose && (
         <motion.button
           onClick={onClose}
           id="overlay"

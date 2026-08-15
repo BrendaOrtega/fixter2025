@@ -1,5 +1,6 @@
 import { Form } from "react-router";
 import { useState } from "react";
+import { motion } from "motion/react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
@@ -7,28 +8,29 @@ export const PurchaseDrawer = ({ courseSlug, price }: { courseSlug: string; pric
   const [isLoading, setIsLoading] = useState(false);
   const [show, setShow] = useState(true);
   return (
+    /* Mismo chasis que los demás: este también se había hecho el suyo con
+       `pt-20`, `mt-16` y una ✕ en una imagen, y en panel lateral eso empuja el
+       botón de compra debajo del pliegue. */
     <Drawer
       noOverlay
-      header={<></>}
-      cta={<></>}
-      
+      noActions
+      onClose={() => setShow(false)}
       title="Desbloquea todo el curso"
       isOpen={show}
     >
-      <div className="pt-20  px-0 md:px-8 relative  pb-8 ">
-        <button onClick={() => setShow(false)}>
-          <img
-            className="h-12 w-12 absolute right-0 top-0"
-            alt="close"
-            src="/closeDark.png"
-          />{" "}
-        </button>
-        <img alt="spaceman" className="w-64 mx-auto" src="/spaceman.svg" />
-        <h3 className="text-2xl md:text-3xl text-white mt-16 ">
+      <div className="pb-4">
+        <motion.img
+          alt="spaceman"
+          src="/spaceman.svg"
+          className="mx-auto w-40 sm:w-48"
+          animate={{ y: [0, -10, 0], rotate: [0, -2.5, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <h3 className="mt-6 text-2xl font-bold leading-tight text-white sm:text-3xl">
           ¿List@ para ver todo el curso? Prepárate porque apenas estamos
           comenzando 🚀
         </h3>
-        <p className="text-lg md:text-xl font-light mt-4 text-metal text-colorParagraph">
+        <p className="mt-3 text-base font-light text-colorParagraph sm:text-lg">
           ¡Desbloquea el curso completo y conviértete en un web hacker! 🫶🏻
         </p>
         {price && (
@@ -45,7 +47,7 @@ export const PurchaseDrawer = ({ courseSlug, price }: { courseSlug: string; pric
             value="checkout"
             type="submit"
             variant="fill"
-            className="font-semibold w-full mt-20  "
+            className="mt-8 w-full font-semibold"
           >
             ¡Desbloquear ahora! 🛸
           </PrimaryButton>

@@ -1,5 +1,6 @@
 import { useFetcher } from "react-router";
 import { useState, useEffect, useRef } from "react";
+import { motion } from "motion/react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
@@ -56,9 +57,7 @@ export const SubscriptionDrawer = ({
 
   // Detectar respuesta del server
   useEffect(() => {
-    console.log("🔐 Fetcher data:", fetcher.data, "state:", fetcher.state);
     if (fetcher.data?.codeSent) {
-      console.log("✅ Code sent, switching to OTP step");
       setStep("code");
       // Focus en el input de código
       setTimeout(() => codeInputRef.current?.focus(), 100);
@@ -74,23 +73,28 @@ export const SubscriptionDrawer = ({
   };
 
   return (
+    /* El chasis es el del resto de los cajones. Este se había hecho el suyo
+       —encabezado vacío, su propia ✕ en una imagen, `pt-20` y `mt-16`— y en un
+       panel lateral eso empuja el formulario debajo del pliegue: se veía el
+       título y la lista, y el correo y el botón quedaban fuera de pantalla.
+       Parecía un cajón sin CTA. */
     <Drawer
       noOverlay
-      header={<></>}
-      cta={<></>}
-      
+      noActions
+      onClose={() => setShow(false)}
       title="Desbloquea más contenido"
       isOpen={show}
     >
-      <div className="pt-20 px-0 md:px-8 relative pb-8">
-        <button onClick={() => setShow(false)}>
-          <img
-            className="h-12 w-12 absolute right-0 top-0"
-            alt="close"
-            src="/closeDark.png"
-          />
-        </button>
-        <img alt="spaceman" className="w-64 mx-auto" src="/spaceman.svg" />
+      <div className="pb-4">
+        {/* Flota. Sutil y en bucle: un astronauta quieto en un panel oscuro se
+            lee como una imagen que no cargó del todo. */}
+        <motion.img
+          alt="spaceman"
+          src="/spaceman.svg"
+          className="mx-auto w-40 sm:w-48"
+          animate={{ y: [0, -10, 0], rotate: [0, -2.5, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
 
         {step === "email" ? (
           <>
@@ -98,12 +102,12 @@ export const SubscriptionDrawer = ({
                 Y el drawer sale en dos momentos muy distintos —quien cae frío
                 desde un enlace y quien ya lleva rato viendo—, así que el título
                 cambia según de dónde venga. */}
-            <h3 className="text-2xl md:text-3xl text-white mt-16">
+            <h3 className="mt-6 text-2xl font-bold leading-tight text-white sm:text-3xl">
               {hasWatchedBefore
                 ? "Para las que siguen, deja tu correo"
                 : "Entra con tu correo y sigue viendo"}
             </h3>
-            <p className="text-lg md:text-xl font-light mt-4 text-colorParagraph">
+            <p className="mt-3 text-base font-light text-colorParagraph sm:text-lg">
               Te mandamos un código de 6 dígitos.{" "}
               {subscriberVideos.length > 0 ? (
                 <>{hasWatchedBefore ? "Con él se te abren también:" : "Con él se te abren, gratis:"}</>
@@ -121,21 +125,34 @@ export const SubscriptionDrawer = ({
                 ))}
               </ul>
             )}
+            {/* Con sesión no se pide nada: la cuenta ya verificó ese buzón, que
+                es exactamente lo que prueba el código. */}
             <fetcher.Form method="POST">
-              <input type="hidden" name="intent" value="send-code" />
+              <input
+                type="hidden"
+                name="intent"
+                value={userEmail ? "unlock-session" : "send-code"}
+              />
               <input type="hidden" name="courseSlug" value={courseSlug} />
-              <div className="mt-8">
-                <label className="text-colorParagraph text-sm">Tu email</label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  className="w-full mt-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                />
-              </div>
+              {userEmail ? (
+                <p className="mt-6 text-sm text-colorParagraph">
+                  Se abren con{" "}
+                  <strong className="text-white">{userEmail}</strong> 📬
+                </p>
+              ) : (
+                <div className="mt-6">
+                  <label className="text-colorParagraph text-sm">Tu email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    className="w-full mt-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  />
+                </div>
+              )}
               {fetcher.data?.error && step === "email" && (
                 <p className="text-red-400 mt-2 text-sm">{fetcher.data.error}</p>
               )}
@@ -143,9 +160,9 @@ export const SubscriptionDrawer = ({
                 isLoading={isLoading}
                 type="submit"
                 variant="fill"
-                className="font-semibold w-full mt-8"
+                className="mt-6 w-full font-semibold"
               >
-                Enviar código
+                {userEmail ? "Ábreme estos videos 🍿" : "Enviar código"}
               </PrimaryButton>
             </fetcher.Form>
             {/* El código abre sesión, no solo desbloquea el video: hay que decirlo
@@ -156,10 +173,10 @@ export const SubscriptionDrawer = ({
           </>
         ) : (
           <>
-            <h3 className="text-2xl md:text-3xl text-white mt-16">
+            <h3 className="mt-6 text-2xl font-bold text-white sm:text-3xl">
               Ingresa el código
             </h3>
-            <p className="text-lg md:text-xl font-light mt-4 text-colorParagraph">
+            <p className="mt-3 text-base font-light text-colorParagraph sm:text-lg">
               Te enviamos un código de 6 dígitos a{" "}
               <span className="text-brand-400 font-medium">{email}</span>
             </p>
