@@ -877,6 +877,7 @@ export default function Route({
           courseSlug={course.slug}
           subscriberVideos={subscriberVideos}
           userEmail={user?.email}
+          hasWatchedBefore={getWatchedVideos(course.id).length > 0}
         />
       )}
       {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} price={course.basePrice} />}

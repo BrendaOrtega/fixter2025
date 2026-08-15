@@ -11,10 +11,13 @@ type SubscriberVideo = {
 export const SubscriptionDrawer = ({
   courseSlug,
   subscriberVideos = [],
+  hasWatchedBefore = false,
   userEmail,
 }: {
   courseSlug: string;
   subscriberVideos?: SubscriberVideo[];
+  /** Ya vio alguna lección de este programa: el drawer le habla distinto. */
+  hasWatchedBefore?: boolean;
   userEmail?: string;
 }) => {
   const [show, setShow] = useState(true);
@@ -65,15 +68,19 @@ export const SubscriptionDrawer = ({
 
         {step === "email" ? (
           <>
-            {/* No es una suscripción y no siempre lleva rato viendo: mucha gente
-                cae aquí directo de un enlace. El título dice la acción real. */}
+            {/* No es una suscripción: se entra con el correo y llega un código.
+                Y el drawer sale en dos momentos muy distintos —quien cae frío
+                desde un enlace y quien ya lleva rato viendo—, así que el título
+                cambia según de dónde venga. */}
             <h3 className="text-2xl md:text-3xl text-white mt-16">
-              Entra con tu correo y sigue viendo
+              {hasWatchedBefore
+                ? "Para las que siguen, deja tu correo"
+                : "Entra con tu correo y sigue viendo"}
             </h3>
             <p className="text-lg md:text-xl font-light mt-4 text-colorParagraph">
               Te mandamos un código de 6 dígitos.{" "}
               {subscriberVideos.length > 0 ? (
-                <>Con él se te abren, gratis:</>
+                <>{hasWatchedBefore ? "Con él se te abren también:" : "Con él se te abren, gratis:"}</>
               ) : (
                 <>Con él se te abren las siguientes lecciones, gratis.</>
               )}
