@@ -9,6 +9,7 @@ import {
 import stylesheet from "./app.css?url";
 import useHotjar from "./lib/useHotjar";
 import useGoogleTM from "./lib/useGoogleTM";
+import useOriginCapture from "./lib/useOriginCapture";
 import { MainLayout } from "./routes/Layout";
 
 import type { Route } from "./+types/root";
@@ -43,6 +44,8 @@ export const links: Route.LinksFunction = () => [
 export function Layout({ children }: { children: React.ReactNode }) {
   useGoogleTM();
   useHotjar();
+  // Antes de que nadie deje su correo, para tener a qué pegárselo después.
+  useOriginCapture();
   return (
     <html lang="es" suppressHydrationWarning>
       <head>

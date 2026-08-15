@@ -242,6 +242,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             data: { email, name: name || undefined, confirmed: true, tags },
           });
 
+      const { recordOrigin } = await import("~/.server/origen");
+      await recordOrigin(email, request);
+
       // Recordatorios: si ya pasó el "día anterior", arranca más adelante para
       // no mandar un "mañana nos vemos" el mismo día del webinar.
       const { enrollSubscriberInSequence } = await import("~/.server/sequences");

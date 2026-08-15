@@ -302,6 +302,23 @@ model Subscriber {
   // Segmentación simple
   tags String[]
 
+  /// De dónde llegó esta persona.
+  ///
+  /// El primer toque nunca se pisa: es el que dice qué la trajo. El último se
+  /// actualiza para ver qué la hizo volver. Campos planos y no dentro de
+  /// `customFields` porque sobre JSON no se puede agrupar ni indexar, y la
+  /// pregunta que hay que contestar es justamente "¿cuántos por canal?".
+  firstSource        String? // linkedin, youtube, email, directo…
+  firstMedium        String?
+  firstCampaign      String?
+  firstReferrer      String?
+  firstLandingPath   String?
+  firstSeenAt        DateTime?
+  lastSource         String?
+  /// Lo que la persona contestó al "¿cómo llegaste?". Ve lo que ningún UTM ve:
+  /// mensajes privados, comunidades y recomendaciones.
+  selfReportedSource String?
+
   // Sequences relation
   sequenceEnrollments SequenceEnrollment[]
 
@@ -313,6 +330,7 @@ model Subscriber {
   updatedAt DateTime @updatedAt
 
   @@index([tags])
+  @@index([firstSource])
 }
 
 model Tutorial {

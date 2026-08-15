@@ -21,6 +21,7 @@ import {
 import { getMemberEmail, setMemberCookie } from "~/.server/memberCookie";
 import { enrollSubscriberInSequence } from "~/.server/sequences";
 import { checkSignupEmail } from "~/.server/anti-bot";
+import { recordOrigin } from "~/.server/origen";
 import { sendCommunityConfirmation } from "~/mailSenders/sendCommunityConfirmation";
 import getMetaTags from "~/utils/getMetaTags";
 import useRecaptcha from "~/lib/useRecaptcha";
@@ -194,6 +195,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const subscriber = await db.subscriber.findUnique({ where: { email } });
   if (subscriber?.confirmed) {
     await joinCommunity({ communityId: community.id, email, name });
+    await recordOrigin(email, request);
     // Queda reconocido como miembro y la misma página se convierte en su panel.
     return data(
       { success: true, joined: true },

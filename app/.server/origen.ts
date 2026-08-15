@@ -1,0 +1,137 @@
+import { db } from "~/.server/db";
+
+/**
+ * De dónde llegó cada persona.
+ *
+ * Se guardan dos cosas a la vez, a propósito: el UTM y el referrer, que sirven
+ * para lo que viene etiquetado; y lo que la persona contesta, que es lo único
+ * que ve los mensajes privados, las comunidades y las recomendaciones —la mayor
+ * parte del tráfico de una audiencia de creador—. Cuando los dos no coinciden,
+ * ese desacuerdo señala dónde está ciega la medición.
+ *
+ * El primer toque nunca se sobrescribe. Es el que dice qué te trajo; el último
+ * solo dice qué te hizo volver.
+ */
+
+export const ORIGIN_COOKIE = "fx_origen";
+
+export type Origin = {
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  referrer?: string;
+  landingPath?: string;
+  at?: string;
+};
+
+type StoredOrigin = { first?: Origin; last?: Origin };
+
+/// Dominios que valen como canal propio. Lo demás se guarda con su host pelón:
+/// inventar categorías por adelantado esconde de dónde viene la gente de verdad.
+const KNOWN_HOSTS: Record<string, string> = {
+  "linkedin.com": "linkedin",
+  "lnkd.in": "linkedin",
+  "youtube.com": "youtube",
+  "youtu.be": "youtube",
+  "x.com": "x",
+  "twitter.com": "x",
+  "t.co": "x",
+  "facebook.com": "facebook",
+  "instagram.com": "instagram",
+  "google.com": "google",
+  "bing.com": "google",
+  "duckduckgo.com": "google",
+  "github.com": "github",
+  "news.ycombinator.com": "hackernews",
+  "reddit.com": "reddit",
+  "whatsapp.com": "whatsapp",
+  "chat.whatsapp.com": "whatsapp",
+};
+
+/** Un host cualquiera reducido al canal con el que lo llamamos. */
+export const normalizeHost = (raw?: string | null): string | undefined => {
+  if (!raw) return undefined;
+  try {
+    const host = new URL(raw).hostname.replace(/^www\./, "");
+    if (KNOWN_HOSTS[host]) return KNOWN_HOSTS[host];
+    // Salir de fixtergeek.com hacia fixtergeek.com no es una fuente.
+    if (host.endsWith("fixtergeek.com")) return undefined;
+    return host;
+  } catch {
+    return undefined;
+  }
+};
+
+/** El origen que trae la petición, o `null` si nunca se escribió la cookie. */
+export const readOrigin = (request: Request): StoredOrigin | null => {
+  const cookie = request.headers.get("Cookie");
+  if (!cookie) return null;
+  const match = cookie.match(new RegExp(`${ORIGIN_COOKIE}=([^;]+)`));
+  if (!match) return null;
+  try {
+    const parsed = JSON.parse(decodeURIComponent(match[1])) as StoredOrigin;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+/** El canal, con el UTM ganando sobre el referrer y "directo" como último recurso. */
+const channelOf = (origin?: Origin): string =>
+  origin?.source || normalizeHost(origin?.referrer) || "directo";
+
+/**
+ * Deja el origen en el subscriber. Idempotente: los campos `first*` solo se
+ * escriben si están vacíos, así que volver a entrar un mes después no borra de
+ * dónde vino la persona la primera vez.
+ *
+ * Nunca lanza: perder la atribución es molesto, perder el alta no.
+ */
+export const recordOrigin = async (email: string, request: Request) => {
+  try {
+    const stored = readOrigin(request);
+    if (!stored) return;
+
+    const subscriber = await db.subscriber.findUnique({
+      where: { email },
+      select: { id: true, firstSource: true },
+    });
+    if (!subscriber) return;
+
+    const first = stored.first;
+    const last = stored.last ?? stored.first;
+
+    await db.subscriber.update({
+      where: { id: subscriber.id },
+      data: {
+        ...(subscriber.firstSource || !first
+          ? {}
+          : {
+              firstSource: channelOf(first),
+              firstMedium: first.medium,
+              firstCampaign: first.campaign,
+              firstReferrer: first.referrer,
+              firstLandingPath: first.landingPath,
+              firstSeenAt: first.at ? new Date(first.at) : new Date(),
+            }),
+        lastSource: channelOf(last),
+      },
+    });
+  } catch (error) {
+    console.error("📊 No se pudo guardar el origen:", error);
+  }
+};
+
+/** Guarda la respuesta al "¿cómo llegaste?". Se pisa: la última vale. */
+export const recordSelfReported = async (email: string, answer?: string | null) => {
+  const clean = answer?.trim().slice(0, 60);
+  if (!clean) return;
+  try {
+    await db.subscriber.update({
+      where: { email },
+      data: { selfReportedSource: clean },
+    });
+  } catch (error) {
+    console.error("📊 No se pudo guardar la autoatribución:", error);
+  }
+};

@@ -21,6 +21,7 @@ import type { Route } from "./+types/courseViewer";
 import getMetaTags from "~/utils/getMetaTags";
 import { parseVideoTime } from "~/utils/videoTime";
 import { checkSignupEmail } from "~/.server/anti-bot";
+import { recordOrigin, recordSelfReported } from "~/.server/origen";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data) {
@@ -258,6 +259,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       });
 
       await joinCommunityFromViewer(email);
+      await recordOrigin(email, request);
+      await recordSelfReported(email, formData.get("origen") as string);
 
       const redirectUrl = new URL(request.url);
       redirectUrl.searchParams.set("subscribed", "1");

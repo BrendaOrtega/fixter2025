@@ -124,6 +124,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         }
       }
 
+      const { recordOrigin } = await import("~/.server/origen");
+      await recordOrigin(email, request);
+
       // 2. Check if subscriber is confirmed
       if (subscriber.confirmed) {
         // Create download/registration record

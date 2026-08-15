@@ -3,6 +3,26 @@ import { useState, useEffect, useRef } from "react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
+/// Las fuentes que un UTM no ve. El orden se baraja en cada montaje: dejar una
+/// fija arriba se la lleva casi la mitad de las respuestas por inercia.
+const ORIGINS = [
+  "LinkedIn",
+  "YouTube",
+  "Un correo de FixterGeek",
+  "Me lo pasó alguien",
+  "La comunidad",
+  "Buscando en Google",
+];
+
+const shuffled = (items: string[]) => {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
 type SubscriberVideo = {
   title: string;
   slug: string;
@@ -23,6 +43,7 @@ export const SubscriptionDrawer = ({
   const [show, setShow] = useState(true);
   const [email, setEmail] = useState(userEmail || "");
   const [code, setCode] = useState("");
+  const [origins] = useState(() => shuffled(ORIGINS));
   const [step, setStep] = useState<"email" | "code">("email");
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
@@ -141,7 +162,27 @@ export const SubscriptionDrawer = ({
               <input type="hidden" name="intent" value="verify-code" />
               <input type="hidden" name="email" value={email} />
               <input type="hidden" name="courseSlug" value={courseSlug} />
+              {/* Opcional y hasta aquí: en la primera pantalla estorbaría el
+                  desbloqueo, que es lo único que la persona vino a hacer. */}
               <div className="mt-8">
+                <label className="text-colorParagraph text-sm">
+                  ¿Cómo llegaste? <span className="opacity-50">(opcional)</span>
+                </label>
+                <select
+                  name="origen"
+                  defaultValue=""
+                  className="w-full mt-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                >
+                  <option value="">Prefiero no decir</option>
+                  {origins.map((o) => (
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
+                  ))}
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div className="mt-6">
                 <label className="text-colorParagraph text-sm">
                   Código de verificación
                 </label>
