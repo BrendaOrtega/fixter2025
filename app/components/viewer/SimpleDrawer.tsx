@@ -128,9 +128,13 @@ export const Drawer = ({
           // En móvil el cajón ocupa la pantalla completa y el contenido se
           // apelmazaba arriba con media pantalla vacía debajo. Centrado vertical
           // mientras quepa; si crece, el `justify-center` cede y vuelve el scroll.
-          className="scrollbar-sutil flex flex-1 flex-col justify-center overflow-y-auto lg:block"
+          // `my-auto` en el hijo y NO `justify-center` en el padre: centrado
+          // mientras quepa, pero si el contenido desborda cede en vez de
+          // recortarse por arriba, que es el defecto clásico de centrar con
+          // flex dentro de un contenedor con scroll.
+          className="scrollbar-sutil flex flex-1 flex-col overflow-y-auto lg:block"
         >
-          {children}
+          <div className="w-full lg:my-0 my-auto">{children}</div>
         </section>
         <nav className={cn("flex justify-end gap-4 mt-auto", noActions && "hidden")}>
           {cta ? (

@@ -94,10 +94,12 @@ export function SequenceLockedDrawer({
 
   // --- Todavía no se suscribe: el alta pasa aquí mismo -------------------
   return (
-    <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="Este video es parte de una secuencia de emails">
+    <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title={title}>
       <div className="text-center">
         <EnvelopeIllustration className="mx-auto h-auto w-[150px] sm:w-[180px]" />
-        <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
+        <p className="mt-4 text-sm font-medium uppercase tracking-wider text-brand-500">
+          Parte de una secuencia de emails
+        </p>
 
         {/* Prometer "se abre de inmediato" solo es verdad en la primera
             entrega. En la cuarta, suscribirse empieza por la primera y esta
