@@ -173,12 +173,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       // ser aceptable en cuanto el alta abre sesión: escribir el correo de otra
       // persona bastaría para entrar como ella. El código es la única prueba de
       // que el buzón es tuyo, así que se pide siempre.
-      if (existing?.confirmed && !existing.tags.includes(tag)) {
-        await db.subscriber.update({
-          where: { email },
-          data: { tags: { push: tag } },
-        });
-      }
+      // El tag NO se otorga aquí: `courseSlug` viene del formulario, así que
+      // pedir un código para un curso ajeno bastaba para quedar taggeado en él
+      // sin escribir nunca el código. Se otorga al VERIFICAR, que es cuando la
+      // persona demuestra que el buzón es suyo.
 
       // CASO: No confirmado o no existe → enviar código
       const code = Math.random().toString().slice(2, 8); // 6 dígitos

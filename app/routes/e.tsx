@@ -24,9 +24,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const token = url.searchParams.get("t");
   const destino = url.searchParams.get("to") || "/";
 
-  // Solo rutas propias: nada de "//otro.com" ni "https://…".
-  const seguro =
-    destino.startsWith("/") && !destino.startsWith("//") ? destino : "/";
+  // Solo rutas propias. No basta con exigir que empiece por "/": Chrome y
+  // Firefox normalizan la barra invertida, así que "/\\evil.com" acaba siendo
+  // "//evil.com" y sale del dominio. Se resuelve contra el origen y se compara.
+  let seguro = "/";
+  try {
+    const candidato = new URL(destino, url.origin);
+    if (candidato.origin === url.origin) {
+      seguro = candidato.pathname + candidato.search;
+    }
+  } catch {
+    seguro = "/";
+  }
 
   if (!token) return redirect(seguro);
 

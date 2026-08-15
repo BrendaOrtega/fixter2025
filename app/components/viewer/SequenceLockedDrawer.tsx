@@ -202,7 +202,7 @@ export function SequenceLockedDrawer({
         <p className="mt-3 text-center text-xs leading-relaxed text-brand-100/60">
           Gratis, una entrega cada pocos días.
           <br />
-          Bájate en un clic.
+          Puedes bajarte en un clic.
         </p>
       </div>
     </Drawer>

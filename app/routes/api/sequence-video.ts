@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { randomUUID } from "crypto";
 import slugify from "slugify";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { getUserOrRedirect } from "~/.server/dbGetters";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { getPutFileUrl, getPresignedFromUrl } from "~/.server/tigrs";
 import { db } from "~/.server/db";
 
@@ -11,7 +11,11 @@ const VIDEO_URL_PREFIX = `https://fly.storage.tigris.dev/${process.env.BUCKET_NA
 // GET: presigned src para PREVIEW. Por `slug` (Video existente) o por
 // `storageLink` (video recién subido aún sin registro), restringido al prefijo.
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await getUserOrRedirect(request);
+  // ADMIN, no cualquier sesión: esto devuelve el presigned de un video por su
+  // slug, sin mirar accessLevel. Con solo exigir sesión, registrarse gratis y
+  // pedir el slug de una lección de pago —que viaja al cliente en el loader del
+  // visor— entregaba el archivo entero. Es el preview del editor, nada más.
+  await getAdminOrRedirect(request);
   const url = new URL(request.url);
   const slug = url.searchParams.get("slug");
   const storageLink = url.searchParams.get("storageLink");
@@ -42,7 +46,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 // (evita Videos huérfanos si se cancela el drawer). El archivo sí se sube; un
 // archivo suelto en storage es barato vs un registro huérfano en DB.
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await getUserOrRedirect(request);
+  // También admin: subir y borrar objetos del bucket no es algo que deba poder
+  // hacer cualquiera con una cuenta gratuita.
+  await getAdminOrRedirect(request);
 
   // DELETE: borra el objeto de S3 de un video subido pero NO guardado
   // (cancelar el drawer o reemplazar el video) → sin basura en storage.

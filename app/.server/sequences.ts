@@ -545,6 +545,12 @@ export async function processDueEnrollments(): Promise<{
     where: {
       status: "active",
       nextEmailAt: { lte: new Date() },
+      // Solo a correos confirmados. Hoy ninguna vía inscribe sin confirmar
+      // —el alta pública manda doble opt-in y la inscripción nace al confirmar—
+      // pero eso se cumple aguas arriba, en cuatro archivos distintos. Aquí es
+      // donde de verdad se envía, y una regresión en cualquiera de esos cuatro
+      // se paga con la reputación del dominio en SES, que no se recupera.
+      subscriber: { is: { confirmed: true } },
     },
     include: {
       sequence: { include: { emails: { orderBy: { order: "asc" } } } },
