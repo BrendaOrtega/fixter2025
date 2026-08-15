@@ -36,7 +36,10 @@ export const EnvelopeIllustration = ({
 
   return (
     <svg
-      viewBox="0 0 280 220"
+      // Un poco de aire arriba y a los lados: la carta se eleva y rota con la
+      // animación, y con el viewBox justo al dibujo se recortaba contra el
+      // borde en cada ciclo.
+      viewBox="-16 -14 312 248"
       className={className}
       role="img"
       aria-label="Un sobre abierto con una carta saliendo"
