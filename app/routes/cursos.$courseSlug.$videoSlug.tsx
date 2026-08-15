@@ -7,11 +7,15 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 /// pueden colgar de una URL con sentido (`.../slides`, `.../seis-piezas`) sin
 /// tocar las 600 líneas del viewer.
 export const loader = ({ params, request }: LoaderFunctionArgs) => {
-  // `?t=` sobrevive al redirect: si no, compartir un minuto por la URL bonita
-  // —que es la que uno pega en un correo— abría el video desde el principio.
-  const t = new URL(request.url).searchParams.get("t");
-  return redirect(
-    `/cursos/${params.courseSlug}/viewer?videoSlug=${params.videoSlug}` +
-      (t ? `&t=${encodeURIComponent(t)}` : ""),
-  );
+  // TODA la query sobrevive al redirect, no solo `?t=`.
+  //
+  // Antes se rescataba únicamente el minuto y se tiraba el resto: los `utm_*`
+  // que pone el generador de ligas del admin morían aquí, así que el visor
+  // nunca los veía y el tráfico de YouTube se registraba como directo. Esta es
+  // la URL que se pega en las descripciones de los videos, o sea justo la que
+  // más UTM carga.
+  const entrada = new URL(request.url).searchParams;
+  entrada.set("videoSlug", params.videoSlug as string);
+
+  return redirect(`/cursos/${params.courseSlug}/viewer?${entrada.toString()}`);
 };

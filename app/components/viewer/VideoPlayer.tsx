@@ -390,6 +390,7 @@ export const VideoPlayer = ({
           onTimeChange?.(segundo);
         }}
       />
+      )}
     </section>
   );
 };

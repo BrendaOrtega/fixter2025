@@ -1,5 +1,6 @@
-# El contexto se sube entero al builder remoto: cada MB de más son segundos de
-# deploy en cada iteración.
+# El contexto se sube entero al builder remoto: cada MB son segundos por deploy.
+# Solo se excluye lo que con certeza no participa del build — excluir de más
+# rompe la compilación de formas difíciles de leer desde los logs remotos.
 .git
 .github
 .claude
@@ -7,26 +8,15 @@ node_modules
 build
 .react-router
 
-# Nada de esto llega a la imagen
-docs
-scripts
+# Salidas y trabajo local
 videos
-taller-*
-test
-tests
-*.test.ts
-*.test.tsx
+taller-arnes-grok
 coverage
+.DS_Store
 .vscode
 .idea
-*.md
-!app/content/**/*.md
 
-# Assets pesados que se sirven desde el CDN, no desde la imagen
-public/videos
-public/*.mp4
-public/*.mov
-
+# Secretos: las variables llegan por el entorno de Fly, nunca en la imagen
 .env
 .env.*
 !.env.example
