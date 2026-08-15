@@ -70,7 +70,7 @@ Gracias Mariana por compartir tu experiencia con nosotros. Espero que esta entre
 
 Si te gustó este formato y quieres que entrevistemos a alguien más, déjanos saber en los comentarios o escríbenos a **brenda@fixter.org**.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

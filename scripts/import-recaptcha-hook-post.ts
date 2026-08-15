@@ -208,7 +208,7 @@ En el código de arriba uso \`0.5\` como umbral, pero puedes ajustarlo según tu
 3. **Usa diferentes actions**: Cada formulario debería tener su propia action para mejor análisis
 4. **Variables de entorno**: Nunca expongas tu \`SECRET_KEY\` en el cliente, solo la \`SITE_KEY\`
 
-Abrazo. bliss.`;
+Abrazo. Blissmo. 🤓`;
 
 async function main() {
   console.log("Importando post de useRecaptcha hook...");

@@ -134,7 +134,7 @@ Host github-work
 
 Con esto ya tienes SSH configurado. Ahora cada \`git push\` y \`git pull\` funcionará sin pedirte credenciales.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

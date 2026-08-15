@@ -25,11 +25,18 @@ const FROM_EMAIL = "secuencias@fixtergeek.com";
 const VIDEO_SLUG = "grok-arnes-minimo";
 const VIDEO_URL =
   "https://www.fixtergeek.com/cursos/sistemas-agenticos/viewer?videoSlug=grok-arnes-minimo";
-// TODO(bliss): póster propio del video; por ahora el logo.
-const VIDEO_POSTER = "https://i.imgur.com/mpzZhT9.png";
+// Póster del video: un frame real del código con el play quemado encima —
+// superponerlo con CSS se descuadra en Outlook. Vive junto al HLS, con ACL
+// público porque en un correo no hay quien firme una URL.
+const VIDEO_POSTER =
+  "https://wild-bird-2039.fly.storage.tigris.dev/fixtergeek/videos/6a78ff744a8e00e3b2eea500/6a809b70f13d797a474a6916/poster.png";
 const VIDEO_DURATION = "48 min";
 const REPO_URL = "https://github.com/blissito/taller-arnes-grok";
 const PDF_URL = "https://www.fixtergeek.com/seis-piezas";
+// El reproductor donde se van juntando las entregas. Hoy ya tiene el webinar,
+// así que la bienvenida no manda a una sala vacía.
+const VIEWER_URL =
+  "https://www.fixtergeek.com/cursos/sistemas-agenticos/viewer?videoSlug=anatomia-de-un-sistema-agentico";
 // Mark oficial de GitHub. PNG y no SVG: Gmail y Outlook no renderizan SVG.
 const GITHUB_MARK = "https://github.githubassets.com/favicons/favicon.png";
 
@@ -37,88 +44,21 @@ const emailOne = {
   order: 1,
   schedulingType: "delay",
   delayDays: 0,
-  subject: "Un agente es dos cosas, y solo una es el modelo",
-  content: wrapEmailHtml(
-    `
-<h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">Empezamos por la ecuación 🧩</h1>
-<p style="margin:0 0 16px 0;">
-  Bienvenido a <strong>Introducción a los agentes de IA</strong>. Aquí no hay
-  prompts mágicos: vamos a construir un agente y a entender por qué se cae con
-  el primer usuario real.
-</p>
-
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6fafa;border-radius:10px;border-left:4px solid #85DDCB;margin:0 0 24px 0;">
-  <tr><td style="padding:16px 18px;">
-    <strong style="color:#19262A;font-size:18px;">agente = modelo + harness</strong>
-  </td></tr>
-</table>
-
-<p style="margin:0 0 16px 0;">
-  El modelo lo compras: Claude, GPT, Grok. Cuesta lo mismo para ti que para tu
-  competencia y mejora solo. El harness es todo lo demás — las herramientas que
-  le das, cómo administras su contexto, qué pasa cuando la tarea dura 40
-  minutos, cómo pide permiso antes de hacer algo irreversible.
-</p>
-
-<p style="margin:0 0 24px 0;">
-  Cuando un agente falla, casi nunca es porque el modelo no supo. Es porque el
-  harness no existía. Y el harness sí lo construyes tú.
-</p>
-
-${emailCallout(
-  `Cada entrega trae <strong>un video</strong> con el código escrito en vivo y
-   <strong>una carpeta del repositorio</strong> que puedes clonar y correr.`,
-  { title: "Cómo funciona esto" },
-  "light"
-)}
-
-<h3 style="margin:0 0 10px 0;color:#19262A;font-size:18px;">El camino</h3>
-<ol style="margin:0 0 24px 0;padding-left:20px;color:#475569;">
-  <li style="margin-bottom:6px;"><strong style="color:#19262A;">El mínimo arnés</strong> — la llamada cruda, la primera herramienta y el loop.</li>
-  <li style="margin-bottom:6px;"><strong style="color:#19262A;">La interfaz web</strong> — sacar al agente de la terminal y meterlo al navegador.</li>
-  <li style="margin-bottom:6px;">Contexto y memoria — que no pague dos veces lo que ya sabe.</li>
-  <li>Ejecución durable y permisos — que aguante 40 minutos y no borre nada.</li>
-</ol>
-
-<p style="margin:0 0 8px 0;color:#475569;">
-  Mientras llega el primer video, el PDF con las seis piezas:
-</p>
-<div style="margin:0 0 24px 0;">${emailButton(
-      "Descargar las seis piezas",
-      PDF_URL
-    )}</div>
-
-${emailTeaser(
-  {
-    title:
-      "El mínimo arnés — un agente completo en menos de cien líneas, con video y repositorio.",
-  },
-  "light"
-)}
-
-<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. bliss.</p>
-`,
-    {
-      preheader: "El modelo lo compras; el harness lo construyes. Ahí se decide todo.",
-      theme: "light",
-    }
-  ),
-};
-
-const emailTwo = {
-  order: 2,
-  schedulingType: "delay",
-  delayDays: 3,
+  // La primera entrega ES el primer video. Suscribirse tiene que pagar de
+  // inmediato: un correo de bienvenida que solo promete lo que vendrá deja a la
+  // persona con la mano estirada.
   videoSlug: VIDEO_SLUG,
-  subject: "Un agente cabe en cien líneas (aquí está el código)",
+  subject: "Tu primera entrega: un agente en cien líneas",
   content: wrapEmailHtml(
     `
-<h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">El mínimo arnés 🔧</h1>
+<h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">Empezamos 🧰</h1>
 
-<p style="margin:0 0 16px 0;">
-  La palabra "agente" carga mucho peso para lo que en realidad es. En este
-  video lo escribimos completo, sin SDK y sin framework: un <code style="background:#f6fafa;padding:2px 6px;border-radius:4px;">fetch</code>
-  a la API, una herramienta y un <code style="background:#f6fafa;padding:2px 6px;border-radius:4px;">while</code>.
+<p style="margin:0 0 20px 0;">
+  Esta serie no explica agentes: los escribe. Aquí está la primera entrega —
+  un agente completo, sin SDK y sin framework: un
+  <code style="background:#f6fafa;padding:2px 6px;border-radius:4px;">fetch</code>,
+  una herramienta y un
+  <code style="background:#f6fafa;padding:2px 6px;border-radius:4px;">while</code>.
 </p>
 
 ${emailVideoCard(
@@ -132,36 +72,72 @@ ${emailVideoCard(
   "light"
 )}
 
-<p style="margin:0 0 16px 0;">El ciclo es siempre el mismo 🔄</p>
-
 <p style="margin:0 0 16px 0;">
-  Le describes al modelo qué herramientas
-  existen, él pide ejecutar una, tú la ejecutas y le devuelves el resultado,
-  y vuelves a llamarlo con el historial completo. Cuando responde con texto en
-  lugar de pedir otra herramienta, terminó. Eso es todo el arnés. Los
-  frameworks de agentes son ese loop con adornos encima.
+  El ciclo es siempre el mismo 🔄: le describes al modelo qué herramientas
+  existen, él pide ejecutar una, tú la ejecutas y le devuelves el resultado, y
+  vuelves a llamarlo con el historial completo. Cuando responde con texto en
+  lugar de pedir otra herramienta, terminó. Los frameworks de agentes son ese
+  loop con adornos encima.
 </p>
-
-<p style="margin:0 0 16px 0;">
-  Y la memoria del agente es el historial que le devuelves en cada vuelta: un arreglo.
-</p>
-
-${emailCallout(
-  `El repositorio del taller crece con cada entrega. La primera trae cinco
-   scripts numerados que se leen en orden, del <code>fetch</code> pelón al
-   agente que abre un navegador y se mira a sí mismo.`,
-  { title: "Para clonar y correr" },
-  "light"
-)}
 
 <div style="margin:0 0 24px 0;">${emailButton(
-      `<img src="${GITHUB_MARK}" alt="" width="18" height="18" style="width:18px;height:18px;vertical-align:middle;border:0;margin-right:8px;" />Ver el repositorio`,
+      `<span style="display:inline-block;vertical-align:middle;white-space:nowrap;"><img src="${GITHUB_MARK}" alt="" width="18" height="18" style="width:18px;height:18px;display:inline-block;vertical-align:middle;border:0;margin-right:8px;" /><span style="display:inline-block;vertical-align:middle;">Clonar el repositorio</span></span>`,
       REPO_URL
     )}</div>
 
-<p style="margin:0 0 24px 0;color:#475569;">
-  Necesitas una llave de la API y Node. <code style="background:#f6fafa;padding:2px 6px;border-radius:4px;">npm install</code>,
-  tu llave en el <code style="background:#f6fafa;padding:2px 6px;border-radius:4px;">.env</code> y ya está corriendo.
+<h3 style="margin:0 0 8px 0;color:#19262A;font-size:18px;">Lo que sigue</h3>
+<ol style="margin:0 0 24px 0;padding-left:20px;color:#475569;">
+  <li style="margin-bottom:4px;"><strong style="color:#19262A;">La interfaz web</strong> — el agente sale de la terminal.</li>
+  <li style="margin-bottom:4px;">Contexto y memoria.</li>
+  <li>Ejecución durable y permisos.</li>
+</ol>
+
+${emailTeaser(
+  {
+    title:
+      "Los materiales del webinar: el PDF de las seis piezas y la grabación completa.",
+  },
+  "light"
+)}
+
+<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>
+`,
+    {
+      preheader: "Un agente completo en cien líneas: video y repositorio, ya.",
+      theme: "light",
+    }
+  ),
+};
+
+const emailTwo = {
+  order: 2,
+  schedulingType: "delay",
+  delayDays: 3,
+  subject: "Las seis piezas (y el webinar completo)",
+  content: wrapEmailHtml(
+    `
+<h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">Las seis piezas 🧩</h1>
+
+<p style="margin:0 0 16px 0;">
+  Ya tienes el loop corriendo. Lo que separa ese agente de uno que aguanta
+  usuarios reales son seis piezas: herramientas, contexto, ejecución durable,
+  memoria, permisos e interfaz.
+</p>
+
+<p style="margin:0 0 16px 0;">
+  Están a detalle en este PDF de 23 páginas, y en la grabación del webinar donde
+  se arma un sistema agéntico completo — los dos salieron de los webinars en
+  vivo de los jueves, que son abiertos y gratuitos.
+</p>
+
+<div style="margin:0 0 10px 0;">${emailButton(
+      "Descargar las seis piezas",
+      PDF_URL
+    )}</div>
+<p style="margin:0 0 24px 0;">
+  <a href="${VIEWER_URL}" target="_blank" rel="noopener" style="color:#0E8F79;font-weight:bold;text-decoration:underline;">
+    ▶ Ver el webinar completo
+  </a>
 </p>
 
 ${emailTeaser(
@@ -172,10 +148,10 @@ ${emailTeaser(
   "light"
 )}
 
-<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. bliss. 🔧🤖</p>
+<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>
 `,
     {
-      preheader: "Sin SDK, sin framework: un fetch, una herramienta y un while.",
+      preheader: "Lo que separa un demo de un agente que aguanta usuarios reales.",
       theme: "light",
     }
   ),

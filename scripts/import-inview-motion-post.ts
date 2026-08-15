@@ -147,7 +147,7 @@ Cuando hacemos scroll y el texto es vivible, nuestra animación se detona con un
 
 Las animaciones han sido un reto todos estos años, pero herramientas como **Motion One** las hacen accesibles para programadores web de todos los niveles, no creo que quieras quedarte atrás, así que no dejes de agregar detalles a tus sitios web y checar mis cursos en [fixtergeek](https://fixtergeek.com).
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

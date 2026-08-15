@@ -117,7 +117,7 @@ const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 
 Tipar eventos en React con TypeScript es sencillo una vez que conoces los tipos disponibles. Los más comunes son \`ChangeEvent\`, \`FormEvent\` y \`MouseEvent\`. Y si tienes dudas sobre qué tipo usar, \`SyntheticEvent\` siempre funciona como fallback genérico.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 
 ### Enlaces relacionados
 

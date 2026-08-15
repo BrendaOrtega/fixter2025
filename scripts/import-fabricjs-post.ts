@@ -140,7 +140,7 @@ No dejes de echarle un vistazo a su [documentación oficial](http://fabricjs.com
 
 Recuerda que puedes aprender a usar canvas con puro JS [aquí](https://videogames.offers.hectorbliss.com/).
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

@@ -182,7 +182,7 @@ En el **Taller de Claude Code** cubrimos:
 
 👉 [Ver temario del taller](/claude)
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

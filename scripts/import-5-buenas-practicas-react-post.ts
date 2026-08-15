@@ -261,7 +261,7 @@ Estas prácticas no son dogmas, son guías. Lo importante es entender el *por qu
 
 Aplícalas con criterio y tu código React será más mantenible y predecible.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

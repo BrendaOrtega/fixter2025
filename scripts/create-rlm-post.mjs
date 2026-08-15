@@ -86,7 +86,7 @@ Si quieres revisar la fuente original o probarlo:
 - Implementación mínima: [github.com/alexzhang13/rlm-minimal](https://github.com/alexzhang13/rlm-minimal)
 - Implementación lista para producción: [github.com/blissito/ghostycode](https://github.com/blissito/ghostycode)
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 const post = await db.post.upsert({

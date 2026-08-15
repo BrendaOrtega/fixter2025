@@ -15,6 +15,7 @@ export default [
   route("subscribe", "routes/subscribe.tsx"),
   route("secuencias", "routes/secuencias.tsx"),
   route("secuencias/:id", "routes/secuencias.$id.tsx"),
+  route("e", "routes/e.tsx"), // entrada desde un correo: siembra identidad y redirige
   route("s/confirmar", "routes/s.confirmar.tsx"), // confirmación doble opt-in pública
   route("s/video", "routes/s.video.tsx"), // reproductor con desbloqueo por secuencia
   route("s/baja", "routes/s.baja.tsx"), // cancelar suscripción (unsubscribe)

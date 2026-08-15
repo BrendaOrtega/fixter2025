@@ -152,7 +152,7 @@ Esto te da más control sobre qué tipos son válidos para tu función.
 
 Seguro encontrarás mejores usos que yo, pero ¡oye! Ahora sabes usar generics. 🎉
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 
 ## Enlaces relacionados
 

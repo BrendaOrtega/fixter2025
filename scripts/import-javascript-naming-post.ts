@@ -78,7 +78,7 @@ Cuando quieras sonar más técnico o preciso, usa **ECMAScript**. Cuando quieras
 - [ECMAScript Proposals](https://github.com/tc39/proposals)
 - [ECMA-262 Specification](https://www.ecma-international.org/publications-and-standards/standards/ecma-262/)
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

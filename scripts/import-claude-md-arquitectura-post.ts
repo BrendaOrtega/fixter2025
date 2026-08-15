@@ -126,7 +126,7 @@ No dice "así funciona React Router v7" (eso Claude ya lo sabe). Dice **qué dec
 
 \`\`\`markdown
 Posts del blog: storytelling (narrativa con arco, NO listas de tips),
-firma "Abrazo. bliss." solo para Héctorbliss, incluir CTA al canal
+firma "Abrazo. Blissmo. 🤓" solo para Héctorbliss, incluir CTA al canal
 de YouTube en transiciones naturales.
 \`\`\`
 
@@ -147,7 +147,7 @@ Fly.io con Docker (HOST=0.0.0.0, PORT=3000). **PROHIBIDO ejecutar
 investigar y preguntar, NUNCA usar \\\`--force-reset\\\` ni \\\`--accept-data-loss\\\`.**
 Rutas en \\\`app/routes.ts\\\`, utilidades backend en archivos \\\`.server.tsx\\\`,
 preferir componentes existentes sobre crear nuevos. Posts del blog:
-storytelling (narrativa con arco, NO listas de tips), firma "Abrazo. bliss."
+storytelling (narrativa con arco, NO listas de tips), firma "Abrazo. Blissmo. 🤓"
 solo para Héctorbliss, incluir CTA al canal de YouTube en transiciones
 naturales. Libros: leer prólogo primero, ejemplos en español. AI SDK v6:
 usar \\\`DefaultChatTransport\\\`, \\\`sendMessage({ text })\\\`, \\\`message.parts\\\`,
@@ -188,7 +188,7 @@ No es minimalismo por estética — es ingeniería de contexto.
 
 📚 Si quieres profundizar en estas técnicas y muchas más, tenemos un [libro completo sobre Claude Code](/libros/domina_claude_code) que puedes descargar gratis.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

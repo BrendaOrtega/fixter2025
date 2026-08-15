@@ -127,7 +127,7 @@ Los subagentes de Claude Code son como tener un equipo de especialistas:
 
 Aprende a delegarles trabajo y multiplica tu productividad.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

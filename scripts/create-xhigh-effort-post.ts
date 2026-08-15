@@ -77,7 +77,7 @@ Calibra tu effort como calibras cualquier otro recurso: por ROI. Y cuando dudes,
 
 Si quieres ver cómo aplico estos niveles en proyectos reales (Claude Code en producción, loops agénticos, refactors de React Router v7), pásate por el [canal de YouTube](https://www.youtube.com/@fixtergeek) — ahí subo los casos donde se ve la diferencia en vivo.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 
 <!-- author-signature -->
 `;

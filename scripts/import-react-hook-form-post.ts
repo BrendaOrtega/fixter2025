@@ -199,7 +199,7 @@ Si ya usas Formik y funciona bien para ti, no hay necesidad de migrar. Pero si e
 
 La [documentación oficial](https://react-hook-form.com/) es excelente y tiene muchos más ejemplos.
 
-Abrazo. bliss.`;
+Abrazo. Blissmo. 🤓`;
 
 async function main() {
   console.log("Importando post de React Hook Form...");

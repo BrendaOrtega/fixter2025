@@ -74,7 +74,7 @@ Si estás evaluando frameworks para construir agentes de IA en canales de mensaj
 
 Si te interesa ver más sobre cómo construimos agentes de IA en producción, échale un ojo al [canal de YouTube](https://www.youtube.com/@fixtergeek) donde compartimos el proceso completo.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 
 <!-- author-signature -->
 `;

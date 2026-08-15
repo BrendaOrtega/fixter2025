@@ -16,7 +16,7 @@ const COMMUNITY_TAG = "community:agentes";
 const COMMUNITY_NAME = "Comunidad Agéntica";
 const SEQUENCE_NAME = "Introducción a los agentes de IA";
 
-const firma = `<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. bliss.</p>`;
+const firma = `<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>`;
 
 const email1 = {
   subject: "Un agente es dos cosas, y solo una es el modelo",

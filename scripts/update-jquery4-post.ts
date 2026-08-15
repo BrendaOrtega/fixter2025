@@ -105,7 +105,7 @@ jQuery 4 representa un paso importante hacia la modernización, eliminando códi
 
 Si te interesa aprender más sobre desarrollo web moderno, en [FixterGeek](/) tenemos cursos de React, TypeScript y herramientas de IA para desarrolladores.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 
 ### Recursos
 

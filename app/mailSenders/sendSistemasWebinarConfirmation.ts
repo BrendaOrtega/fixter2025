@@ -55,7 +55,7 @@ const template = ({ userName, slot }: { userName?: string | null; slot: WebinarS
   ¿Dudas? Escríbeme directo por <a href="https://wa.me/527712412825" style="color:#37AB93;">WhatsApp</a>.
 </p>
 <p style="color:#19262A;margin:16px 0 4px 0;">Nos vemos ahí.</p>
-<p style="color:#64748B;margin:0;">Abrazo. bliss.</p>
+<p style="color:#64748B;margin:0;">Abrazo. Blissmo. 🤓</p>
 `;
 
 export const sendSistemasWebinarConfirmation = async ({ to, userName, slot }: Props) => {

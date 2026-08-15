@@ -124,4 +124,4 @@ Si vas a poner un agente a convivir con humanos en un espacio compartido, prepá
 
 Si te late este tipo de cosas —agentes de verdad, en producción, con todos los detalles feos incluidos— eso es justo lo que desmenuzo en mi canal de YouTube, con código y sin filtros. Ahí sigo la conversación.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓

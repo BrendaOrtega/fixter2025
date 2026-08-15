@@ -196,4 +196,4 @@ Server-Sent Events representa la evolución natural para aplicaciones que requie
 
 Estos ejemplos son válidos para frameworks maduros como Next o React Router.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓

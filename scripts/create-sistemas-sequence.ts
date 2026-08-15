@@ -20,7 +20,7 @@ const dates = {
 };
 
 const whats = `<p style="color:#64748B;font-size:14px;margin:24px 0 8px 0;">¿Dudas? Escríbeme por <a href="https://wa.me/527712412825" style="color:#37AB93;">WhatsApp</a>.</p>`;
-const firma = `<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. bliss.</p>`;
+const firma = `<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>`;
 
 const emails = [
   {

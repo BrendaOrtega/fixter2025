@@ -171,7 +171,7 @@ jQuery 4.0 demuestra que la biblioteca sigue evolucionando y adaptándose a los 
 - [Guía de migración](https://jquery.com/upgrade-guide/4.0/)
 - [Repositorio en GitHub](https://github.com/jquery/jquery)
 
-Abrazo. bliss.`;
+Abrazo. Blissmo. 🤓`;
 
 async function main() {
   const slug = "jquery-4-novedades-2026";

@@ -164,7 +164,7 @@ Prettier es de esas herramientas que instalas una vez y te olvidas. Ya no hay ex
 
 Instálalo hoy y tu yo del futuro te lo agradecerá.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

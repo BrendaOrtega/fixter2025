@@ -73,7 +73,7 @@ El valor no es que el agente trabaje "solo" en abstracto. Es que el trabajo avan
 
 En el [canal de YouTube](https://www.youtube.com/@fixtergeek) compartimos más patrones para sacarle jugo a los agentes en el trabajo real. Si te late, suscríbete.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

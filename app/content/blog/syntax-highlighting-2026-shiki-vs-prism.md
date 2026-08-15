@@ -328,4 +328,4 @@ Mientras Prism se queda atrás y Highlight.js se mantiene en modo supervivencia,
 
 La decisión es simple: si empiezas algo nuevo, usa Shiki.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓

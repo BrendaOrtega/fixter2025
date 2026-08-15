@@ -507,4 +507,4 @@ Este capítulo demuestra que los Agent Workflows pueden manejar **procesos empre
 En el próximo capítulo aprenderemos **streaming en tiempo real** para hacer estos workflows aún más interactivos y dinámicos.
 
 ¡Gracias por acompañarme en este viaje! 🌮✨
-Abrazo. bliss. 🤓
+Abrazo. Blissmo. 🤓 🤓

@@ -226,6 +226,53 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   }
 
   // INTENT: verify-code - Verifica el código OTP
+  // Alta a la serie SIN salir del video. Mandar a otra pestaña a llenar otro
+  // formulario pierde a la mitad: quien está aquí ya decidió que le interesa
+  // ESTE video, y el alta debe ocurrir donde está su atención.
+  if (intent === "subscribe-sequence") {
+    const sequenceId = formData.get("sequenceId") as string;
+    if (!sequenceId) return data({ error: "Falta la serie" }, { status: 400 });
+
+    try {
+      const sequence = await db.sequence.findUnique({
+        where: { id: sequenceId },
+        select: { id: true, name: true, isActive: true, isPrivate: true },
+      });
+      if (!sequence || !sequence.isActive || sequence.isPrivate) {
+        return data({ error: "Esta serie no está disponible" }, { status: 404 });
+      }
+
+      const { sendSequenceConfirmation } = await import(
+        "~/mailSenders/sendSequenceConfirmation"
+      );
+      const existing = await db.subscriber.findUnique({ where: { email } });
+
+      // Ya confirmó su correo antes: no se le vuelve a pedir la prueba, se le
+      // inscribe y el primer correo sale en el siguiente ciclo del riel.
+      if (existing?.confirmed) {
+        const { enrollSubscriberInSequence } = await import("~/.server/sequences");
+        await enrollSubscriberInSequence(sequence.id, existing.id, {
+          immediate: true,
+        });
+        const { setMemberCookie } = await import("~/.server/memberCookie");
+        return data(
+          { sequenceEnrolled: true },
+          { headers: { "Set-Cookie": await setMemberCookie(email) } }
+        );
+      }
+
+      await sendSequenceConfirmation({
+        email,
+        sequenceId: sequence.id,
+        sequenceName: sequence.name,
+      });
+      return data({ sequenceNeedsConfirmation: true });
+    } catch (error) {
+      console.error("📧 Alta a la serie falló:", error);
+      return data({ error: "No se pudo completar el alta" }, { status: 500 });
+    }
+  }
+
   if (intent === "verify-code") {
     const code = formData.get("code") as string;
 
@@ -382,6 +429,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     { unlocked: boolean; unlocksAt: string | null; enrolled: boolean }
   > = {};
   let sequenceUrl: string | null = null;
+  let sequenceName: string | null = null;
+  let sequenceDbId: string | null = null;
 
   if (sequenceVideos.length) {
     const { viewerEmailFrom } = await import("~/.server/videoAccess");
@@ -403,9 +452,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     if (sequenceId) {
       const seq = await db.sequence.findUnique({
         where: { id: sequenceId },
-        select: { slug: true, id: true },
+        select: { slug: true, id: true, name: true },
       });
-      if (seq) sequenceUrl = `/s/${seq.slug || seq.id}`;
+      if (seq) {
+        sequenceUrl = `/s/${seq.slug || seq.id}`;
+        sequenceName = seq.name;
+        sequenceDbId = seq.id;
+      }
     }
   }
 
@@ -525,6 +578,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     accessLevel,
     unlocksAt,
     sequenceUrl,
+    sequenceName,
+    sequenceDbId,
     sequenceEnrolled,
     sequenceUnlocks,
     video: videoToReturn,
@@ -599,6 +654,8 @@ export default function Route({
     accessLevel,
     unlocksAt,
     sequenceUrl,
+    sequenceName,
+    sequenceDbId,
     sequenceEnrolled,
     sequenceUnlocks,
     video,
@@ -937,7 +994,10 @@ export default function Route({
           title={video.title}
           unlocksAt={unlocksAt as string | null}
           enrolled={sequenceEnrolled}
+          sequenceId={sequenceDbId}
+          sequenceName={sequenceName}
           sequenceUrl={sequenceUrl}
+          userEmail={user?.email || subscriberEmail}
         />
       )}
       {showSubscriptionDrawer && (

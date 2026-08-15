@@ -332,7 +332,7 @@ TURNSTILE_SITE_KEY=2x00000000000000000000AB
 
 Con esto tienes una implementación completa y reutilizable de Cloudflare Turnstile en React Router. Es más liviano, más privado, y generalmente ofrece mejor experiencia de usuario que reCAPTCHA.
 
-Abrazo. bliss.`;
+Abrazo. Blissmo. 🤓`;
 
 async function main() {
   console.log("Importando post de Cloudflare Turnstile + React Router...");

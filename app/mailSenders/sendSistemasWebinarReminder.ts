@@ -55,7 +55,7 @@ const template = ({
   Trae tu pregunta para el Q&amp;A.<br/>
   Si no puedes llegar en vivo, respóndeme y te paso la grabación.
 </p>
-<p style="color:#64748B;margin:0;">Abrazo. bliss.</p>
+<p style="color:#64748B;margin:0;">Abrazo. Blissmo. 🤓</p>
 `;
 
 /** El HTML final, sin enviar nada — para preview local. */

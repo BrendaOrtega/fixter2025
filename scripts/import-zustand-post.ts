@@ -308,7 +308,7 @@ Zustand no es solo "Redux simplificado". Es un replanteamiento de cómo debería
 
 Dale una oportunidad en tu próximo proyecto. Te va a sorprender lo productivo que puedes ser cuando no estás peleando con tu manejador de estado.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

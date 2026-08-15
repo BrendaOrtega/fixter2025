@@ -171,7 +171,7 @@ Si quieres enterarte de todo lo nuevo en React Router y aprender a usarlo sin in
 
 ¡Y ya está! No dejes de suscribirte. 💺
 
-Abrazo. bliss. 🤓`;
+Abrazo. Blissmo. 🤓 🤓`;
 
 async function main() {
   console.log("Importando post sobre React Router Framework...");

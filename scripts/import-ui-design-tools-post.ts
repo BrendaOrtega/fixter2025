@@ -122,7 +122,7 @@ Figma es un software de edición de gráficos vectorial y generación de prototi
 
 Se leerá trillado, pero la mejor herramienta que puedes usar es la mejor se adapte a tus necesidades, algunas de ellas cuentan con una versión gratuita así que no tendrás que preocuparte por empezar a pagar una membresía.
 
-Abrazo. bliss.`;
+Abrazo. Blissmo. 🤓`;
 
 async function main() {
   console.log("Importando post de herramientas de diseño de interfaces...");

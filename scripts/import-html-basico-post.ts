@@ -35,7 +35,7 @@ Cada una de estas etiquetas tiene algunas características predefinidas como má
 
 Sabemos que aprender tantas etiquetas no es fácil, pero es solo cuestión de práctica. ¿Quieres practicar ahora? Te dejo este link en donde podrás visualizar la estructura básica de un archivo HTML y un par de etiquetas, así que solo empieza a agregar las tuyas [Practicar ahora](https://codepen.io/fixtergeek/pen/gOvVdWj?editors=1000)
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

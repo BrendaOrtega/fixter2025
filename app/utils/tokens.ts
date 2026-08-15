@@ -293,6 +293,44 @@ export const validateSequenceVideoToken = (
 };
 
 // ==========================================
+// Token de acceso desde un correo
+//
+// Quien recibe una secuencia YA demostró que ese buzón es suyo al confirmarla.
+// Volver a pedirle el correo cuando hace clic en un link del propio correo es
+// cobrarle dos veces la misma prueba, y ahí se pierde a la gente. Este token
+// viaja en los links y lo único que hace es sembrar la cookie de identidad.
+// ==========================================
+
+export type AccessTokenData = { email: string; action: "email-access" };
+
+export const generateAccessToken = (email: string): string =>
+  jwt.sign({ email, action: "email-access" } as AccessTokenData,
+    process.env.SECRET || "fixtergeek",
+    { expiresIn: "180d" }
+  );
+
+export const validateAccessToken = (
+  token: string
+): { isValid: boolean; decoded?: AccessTokenData; error?: string } => {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "fixtergeek"
+    ) as AccessTokenData;
+    if (decoded.action !== "email-access") {
+      return { isValid: false, error: "Token inválido" };
+    }
+    return { isValid: true, decoded };
+  } catch (e: unknown) {
+    const error = e as Error;
+    if (error.name === "TokenExpiredError") {
+      return { isValid: false, error: "El enlace ha expirado." };
+    }
+    return { isValid: false, error: "Enlace inválido" };
+  }
+};
+
+// ==========================================
 // Token de baja (unsubscribe) de una secuencia
 // ==========================================
 

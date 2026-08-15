@@ -252,7 +252,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         fromEmail: "contacto@fixter.org",
       },
     });
-    return { success: true, message: "Email agregado" };
+    // Quien ya había terminado la secuencia se quedaría sin esta entrega: el
+    // riel solo mira las inscripciones activas. Los primeros en suscribirse son
+    // justo los que se quedaban fuera de todo lo que se publicara después.
+    const { reactivateFinishedEnrollments } = await import("~/.server/sequences");
+    const revividas = await reactivateFinishedEnrollments(sequenceId);
+
+    return {
+      success: true,
+      message: revividas
+        ? `Email agregado · ${revividas} ${revividas === 1 ? "inscripción reactivada" : "inscripciones reactivadas"}`
+        : "Email agregado",
+    };
   }
 
   if (intent === "edit_email") {

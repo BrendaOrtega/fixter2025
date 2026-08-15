@@ -125,7 +125,7 @@ Los que aprendan ahora van a tener una ventaja enorme en los próximos 5 años.
 
 La pregunta es: ¿vas a ser de los que implementan, o de los que siguen comprando soluciones genéricas que no funcionan?
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

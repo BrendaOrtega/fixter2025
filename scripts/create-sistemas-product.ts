@@ -114,7 +114,7 @@ const welcome: WelcomeSpec = {
     },
     {
       type: "text",
-      html: "Nos vemos el martes 1 de septiembre.<br/>Abrazo. bliss.",
+      html: "Nos vemos el martes 1 de septiembre.<br/>Abrazo. Blissmo. 🤓",
     },
   ],
 };

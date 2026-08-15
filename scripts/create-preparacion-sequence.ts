@@ -59,7 +59,7 @@ ${emailCallout(
 ${emailDivider()}
 ${emailTeaser({ title: "Las cuatro piezas de un harness.", when: "En 2 días" })}
 
-<p style="margin:18px 0 0;color:#8FA5A9;font-size:14px;">Abrazo. bliss.</p>
+<p style="margin:18px 0 0;color:#8FA5A9;font-size:14px;">Abrazo. Blissmo. 🤓</p>
 `,
 };
 

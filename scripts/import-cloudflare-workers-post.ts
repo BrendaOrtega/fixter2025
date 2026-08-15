@@ -152,7 +152,7 @@ Cloudflare Workers son ideales para:
 
 El free tier es suficiente para experimentar y proyectos pequeños. Para producción, el pricing es competitivo.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

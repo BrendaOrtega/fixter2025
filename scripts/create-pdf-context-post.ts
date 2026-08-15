@@ -209,7 +209,7 @@ Si estás armando agentes que tocan archivos reales en producción, este patrón
 
 En el [canal de YouTube](https://www.youtube.com/@fixtergeek) compartimos más patterns de agentes en producción — desde circuit breakers hasta cursor recovery. Si te late el tema, suscríbete.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

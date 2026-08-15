@@ -126,7 +126,7 @@ seguir que en un texto: [youtube.com/@fixtergeek](https://www.youtube.com/@fixte
 El mapa completo lo va a ir desarrollando en los próximos posts. Vale la pena seguirlo, aunque
 solo sea para tener un criterio propio con qué filtrar el ruido.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 const post = await db.post.create({

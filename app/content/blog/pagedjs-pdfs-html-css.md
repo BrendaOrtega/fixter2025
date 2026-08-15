@@ -172,4 +172,4 @@ Paged.js es el puente que faltaba entre la web que ya conoces y los documentos i
 
 Si quieres ver cómo funciona esto en un producto real, echa un vistazo a [EasyBits](https://www.easybits.cloud). Y si quieres aprender más sobre las herramientas que usamos para construir, pásate por nuestro [canal de YouTube](https://www.youtube.com/@fixtergeek) donde compartimos todo lo que aprendemos.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓

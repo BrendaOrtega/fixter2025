@@ -94,4 +94,4 @@ Si quieres empezar, conecta [EasyBits.cloud](https://easybits.cloud) como MCP a 
 
 La serie apenas empieza. En el siguiente post nos metemos de lleno en el pipeline Figma → agente → producto.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓

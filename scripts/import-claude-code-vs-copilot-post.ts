@@ -114,7 +114,7 @@ No hay un ganador absoluto. La herramienta correcta depende de la tarea:
 
 Lo inteligente es dominar las tres y usar cada una en su contexto óptimo. El desarrollador del futuro no elige una herramienta, sabe cuándo usar cada una.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

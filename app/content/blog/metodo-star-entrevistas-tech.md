@@ -86,4 +86,4 @@ MentorIA está en beta y puedes probarlo gratis. Elige tu rol, practica con preg
 
 Si quieres ver más sobre cómo prepararte para entrevistas tech, en el [canal de YouTube](https://youtube.com/@fixtergeek) publicamos contenido sobre desarrollo profesional y habilidades técnicas.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓

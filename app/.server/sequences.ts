@@ -5,6 +5,7 @@ import { recordSequenceEmailEvent } from "~/.server/sequenceEvents";
 import {
   generateSequenceVideoToken,
   generateSequenceUnsubscribeToken,
+  generateAccessToken,
 } from "~/utils/tokens";
 
 const baseUrl =
@@ -156,6 +157,50 @@ export function estimateUnlockDates(
     }
     return new Date(cursor);
   });
+}
+
+/**
+ * Revive las inscripciones que se dieron por terminadas y ahora tienen entregas
+ * nuevas que recibir.
+ *
+ * Una secuencia crece con el tiempo: la de la comunidad nació con un solo
+ * correo y quien entró ese día quedó `completed` al instante. Sin esto, esa
+ * gente —la primera, la que más temprano confió— es justamente la que nunca
+ * recibe lo que sigue. El riel solo mira las `active`.
+ *
+ * Idempotente: si nadie se quedó atrás no toca nada.
+ */
+export async function reactivateFinishedEnrollments(sequenceId: string) {
+  const total = await db.sequenceEmail.count({ where: { sequenceId } });
+
+  const atrasadas = await db.sequenceEnrollment.findMany({
+    where: { sequenceId, status: "completed", currentEmailIndex: { lt: total } },
+    select: { id: true, currentEmailIndex: true },
+  });
+  if (!atrasadas.length) return 0;
+
+  const emails = await db.sequenceEmail.findMany({
+    where: { sequenceId },
+    orderBy: { order: "asc" },
+    select: { schedulingType: true, delayDays: true, specificDate: true },
+  });
+
+  for (const enrollment of atrasadas) {
+    const siguiente = emails[enrollment.currentEmailIndex];
+    await db.sequenceEnrollment.update({
+      where: { id: enrollment.id },
+      data: {
+        status: "active",
+        completedAt: null,
+        // El delay cuenta desde HOY, no desde que se inscribió: si no, una
+        // entrega publicada meses después saldría "vencida" y se dispararía de
+        // golpe junto con todas las demás.
+        nextEmailAt: siguiente ? calculateNextEmailDate(siguiente) : null,
+      },
+    });
+  }
+
+  return atrasadas.length;
 }
 
 /**
@@ -315,7 +360,50 @@ export async function renderSequenceEmail({
   )}`;
   html = html.replace(/\{\{unsubscribe\}\}/g, unsubscribeUrl);
 
+  // Los links internos del cuerpo pasan por /e con un token de identidad. Sin
+  // esto, quien hace clic en "ver el webinar" desde el correo cae en una
+  // pantalla que le pide su correo y un código — el mismo correo por el que
+  // acaba de entrar. Es la fricción que más gente tira.
+  html = await withEmailAccessLinks(html, enrollmentId, base);
+
   return { subject: email.subject, html, unsubscribeUrl, videoUrl };
+}
+
+/**
+ * Reescribe los enlaces del cuerpo que apuntan a nuestras propias pantallas de
+ * contenido para que lleven la identidad de quien recibe el correo.
+ *
+ * Solo se tocan las rutas donde el acceso depende de saber quién eres
+ * (`/cursos/...`, `/c/...`). Las públicas —un PDF, la landing de la secuencia—
+ * se dejan intactas: firmarlas no aporta nada y hace las URLs más frágiles.
+ */
+async function withEmailAccessLinks(
+  html: string,
+  enrollmentId: string,
+  base: string
+): Promise<string> {
+  const enrollment = await db.sequenceEnrollment.findUnique({
+    where: { id: enrollmentId },
+    select: { subscriber: { select: { email: true } } },
+  });
+  const email = enrollment?.subscriber?.email;
+  if (!email) return html;
+
+  const token = generateAccessToken(email);
+  const RUTAS_CON_IDENTIDAD = /^\/(cursos|c)\//;
+
+  return html.replace(
+    /href="([^"]+)"/g,
+    (match, href: string) => {
+      const ruta = href.startsWith(base)
+        ? href.slice(base.length)
+        : href.startsWith("https://www.fixtergeek.com")
+          ? href.slice("https://www.fixtergeek.com".length)
+          : null;
+      if (!ruta || !RUTAS_CON_IDENTIDAD.test(ruta)) return match;
+      return `href="${base}/e?t=${token}&to=${encodeURIComponent(ruta)}"`;
+    }
+  );
 }
 
 /**

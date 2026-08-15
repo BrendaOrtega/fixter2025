@@ -247,7 +247,7 @@ Los custom hooks son tu herramienta para escribir React limpio y mantenible. No 
 
 Empieza con hooks simples como \`useToggle\` y ve aumentando la complejidad conforme los necesites.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

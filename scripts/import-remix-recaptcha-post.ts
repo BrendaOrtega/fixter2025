@@ -295,7 +295,7 @@ GCP_PROJECT_ID=mi-proyecto-123                  # Solo para Enterprise
 - [reCAPTCHA Enterprise API](https://cloud.google.com/recaptcha-enterprise/docs)
 - [Remix Actions](https://remix.run/docs/en/main/route/action)
 
-Abrazo. bliss.`;
+Abrazo. Blissmo. 🤓`;
 
 async function main() {
   console.log("Importando post de Remix + React + Recaptcha...");

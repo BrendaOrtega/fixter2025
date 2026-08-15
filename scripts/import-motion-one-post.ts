@@ -108,7 +108,7 @@ Aunque honestamente, para React yo prefiero usar **Framer Motion** directamente 
 
 Si quieres aprender más sobre animaciones web, también tenemos un curso completo de animaciones con React y Motion en FixterGeek.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

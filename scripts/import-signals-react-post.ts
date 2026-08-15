@@ -175,7 +175,7 @@ Pero por ahora Preact que nació desde el principio como una alternativa «más 
 
 Mientras tanto, ya puedes utilizar este nuevo conocimiento en tu día a día, es hora de sustituir \`useState\` por \`signal\`. 🤯
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 
 ### Enlaces relacionados
 

@@ -196,7 +196,7 @@ Abre ChatGPT o Claude ahora mismo. Pregunta algo relacionado con tu industria o 
 
 Esa es tu línea base. Ahora sabes dónde estás parado.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

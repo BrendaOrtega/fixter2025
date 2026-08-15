@@ -69,4 +69,4 @@ Todo lo de este post está corriendo en producción, en **[ghosty.studio](https:
 
 Y si este tipo de arquitectura te prende —agentes en producción, con sus decisiones feas y sus números reales— en [mi canal de YouTube](https://www.youtube.com/@BlissmoHQ) desmenuzo estas piezas con código y sin filtros.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓

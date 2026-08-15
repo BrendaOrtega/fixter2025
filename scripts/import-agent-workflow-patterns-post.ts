@@ -200,7 +200,7 @@ Los agentes de IA son combinaciones de estos patrones fundamentales. Entenderlos
 
 El futuro del desarrollo incluye orquestar estos patrones. Empieza a experimentar con ellos hoy.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

@@ -82,7 +82,7 @@ REGLAS ESTRICTAS:
 - CTA a YouTube (https://youtube.com/@BlissmoHQ) entre El Problema y La Solución, de forma natural con separadores ---
 - CTA a EasyBits.cloud en la Conclusión (como MCP que pueden conectar hoy, NO mezclarlo con Figma)
 - Mencionar /ftc (github.com/blissito/figma-to-code) cuando sea relevante hablar de Figma MCP
-- Firma al final: "Abrazo. bliss."
+- Firma al final: "Abrazo. Blissmo. 🤓"
 - NO empieces con "# Título" — el título se agrega aparte
 - La audiencia son millennials mexicanos diseñadores, NO developers. Lenguaje accesible.
 - EasyBits MCP es para publicar (presentaciones, docs, landing pages, storage S3). Figma MCP es para leer diseños. Son cosas DIFERENTES, no los mezcles.`;

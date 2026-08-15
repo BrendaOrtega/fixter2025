@@ -82,7 +82,7 @@ El truco no es dejar un agente "suelto y a ver qué pasa". Es diseñar el encarg
 
 En el [canal de YouTube](https://www.youtube.com/@fixtergeek) compartimos más de estos flujos con agentes en el trabajo real. Si te late, suscríbete.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

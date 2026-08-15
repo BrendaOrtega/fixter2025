@@ -97,7 +97,7 @@ Si te interesa la programación asistida por IA, estudiar el código de OpenCode
 
 El futuro del desarrollo de software involucra herramientas como esta. Aprenderlas ahora te posiciona para aprovechar esta revolución tecnológica.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

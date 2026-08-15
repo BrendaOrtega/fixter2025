@@ -103,7 +103,7 @@ Cuando hablamos de "engineering" para agentes, casi siempre pensamos en prompts,
 
 El MCP te da acceso a una API. Eso no significa que el agente sea el lugar correcto para correrla.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 
 <!-- author-signature -->
 `;

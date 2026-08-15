@@ -19,7 +19,7 @@ import {
 
 const LANDING = "https://www.fixtergeek.com/sistemas-agenticos";
 const whats = `<p style="color:#64748B;font-size:14px;margin:24px 0 8px 0;">¿Dudas? Escríbeme por <a href="https://wa.me/527712412825" style="color:#37AB93;">WhatsApp</a>.</p>`;
-const firma = `<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. bliss.</p>`;
+const firma = `<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>`;
 
 // Fechas en UTC. CDMX es UTC-6 fijo (sin horario de verano desde 2022).
 const at = (isoDay: string, utcHour: number) =>

@@ -101,7 +101,7 @@ El comando es \`ghosty\`, la configuración vive en \`~/.ghosty/config.toml\`, y
 
 En el [canal de YouTube](https://www.youtube.com/@fixtergeek) mostramos cómo usamos estas herramientas en trabajo real —incluido Ghosty corriendo distintos modelos según la tarea. Si te late el detrás de cámaras, suscríbete.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

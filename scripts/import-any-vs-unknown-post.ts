@@ -188,7 +188,7 @@ function getColorCode(color: Color): string {
 
 TypeScript está para ayudarte, no para estorbarte. Usa \`unknown\` y deja que el compilador trabaje a tu favor.
 
-Abrazo. bliss.
+Abrazo. Blissmo. 🤓
 `;
 
 async function main() {

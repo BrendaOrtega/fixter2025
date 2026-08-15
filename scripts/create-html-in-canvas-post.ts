@@ -84,7 +84,7 @@ Y esa es la clase de cambio que no se nota en la demo, pero se siente durante a�
 
 Te dejo el video oficial del equipo de Chrome arriba para que lo veas en acción. Si te late este tipo de contenido —APIs nuevas, gráficos en la web, lo que viene— pásate por [mi canal de YouTube](https://www.youtube.com/@fixtergeek), que ahí desmenuzo estas cosas con calma.
 
-Abrazo. bliss. 🪄
+Abrazo. Blissmo. 🤓 🪄
 `;
 
 async function main() {

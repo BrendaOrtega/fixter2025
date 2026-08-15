@@ -65,7 +65,7 @@ ${codeBlock("ghosty doctor")}
   ¿Algo no jala? Escríbeme por <a href="https://wa.me/527712412825" style="color:#37AB93;">WhatsApp</a> y lo resolvemos.
 </p>
 <p style="color:#19262A;margin:16px 0 4px 0;">Nos vemos en la sesión 1.</p>
-<p style="color:#64748B;margin:0;">Abrazo. bliss.</p>
+<p style="color:#64748B;margin:0;">Abrazo. Blissmo. 🤓</p>
 `;
 
 export const sendSistemasKey = async ({ to, userName, apiKey }: SistemasKeyProps) => {
