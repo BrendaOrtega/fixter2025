@@ -11,7 +11,7 @@ const OUT = process.env.OUT_DIR!;
 
 // Cortes finos, ajustados a las marcas reales del transcript.
 const CLIPS = [
-  { slug: "5-agent-native", from: 1426, to: 1541 },
+  { slug: "5-agent-native", from: 1389, to: 1545 },
 ];
 
 const get = async (key: string) => {
@@ -56,9 +56,14 @@ for (const c of CLIPS) {
   await writeFile(listaPath, lista.join("\n"));
   const offset = (c.from - inicio[idx[0]]).toFixed(2);
   const largo = (c.to - c.from).toFixed(2);
+  // `aresample` y los timestamps a cero: sin esto el corte hereda el desfase de
+  // los segmentos HLS y la voz queda adelantada frente a la cara.
   await run("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", listaPath,
-    "-ss", offset, "-t", largo, "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
-    "-c:a", "aac", `${OUT}/${c.slug}.mp4`]);
+    "-ss", offset, "-t", largo,
+    "-af", "aresample=async=1:first_pts=0",
+    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-r", "30",
+    "-c:a", "aac", "-ar", "48000",
+    "-avoid_negative_ts", "make_zero", "-fflags", "+genpts", `${OUT}/${c.slug}.mp4`]);
   // el audio es lo que de verdad sirve: la imagen del webinar es una pantalla dentro de otra
   await run("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", listaPath,
     "-ss", offset, "-t", largo, "-vn", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",

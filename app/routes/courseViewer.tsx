@@ -196,7 +196,25 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         },
       });
 
-      await sendVerificationCode(email, code);
+      // El correo dice qué se abre con el código: un código pelón no le recuerda
+      // a nadie qué estaba haciendo, y estos correos se leen minutos después.
+      const course = await db.course.findUnique({
+        where: { slug: courseSlug },
+        select: { title: true, videoIds: true },
+      });
+      const unlocks = course
+        ? (
+            await db.video.findMany({
+              where: { id: { in: course.videoIds }, accessLevel: "subscriber" },
+              orderBy: { index: "asc" },
+              select: { title: true },
+            })
+          ).map((v) => v.title)
+        : [];
+      await sendVerificationCode(email, code, {
+        courseTitle: course?.title,
+        unlocks,
+      });
       console.log("📧 Code sent successfully, returning codeSent: true");
       return data({ codeSent: true, email });
     } catch (error) {

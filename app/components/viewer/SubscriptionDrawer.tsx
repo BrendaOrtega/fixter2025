@@ -65,15 +65,17 @@ export const SubscriptionDrawer = ({
 
         {step === "email" ? (
           <>
+            {/* No es una suscripción y no siempre lleva rato viendo: mucha gente
+                cae aquí directo de un enlace. El título dice la acción real. */}
             <h3 className="text-2xl md:text-3xl text-white mt-16">
-              ¿Te está gustando? Suscríbete para continuar
+              Entra con tu correo y sigue viendo
             </h3>
             <p className="text-lg md:text-xl font-light mt-4 text-colorParagraph">
-              Ingresa tu email para desbloquear{" "}
+              Te mandamos un código de 6 dígitos.{" "}
               {subscriberVideos.length > 0 ? (
-                <>estas lecciones gratis:</>
+                <>Con él se te abren, gratis:</>
               ) : (
-                <>las siguientes lecciones gratis.</>
+                <>Con él se te abren las siguientes lecciones, gratis.</>
               )}
             </p>
             {subscriberVideos.length > 0 && (
@@ -116,7 +118,7 @@ export const SubscriptionDrawer = ({
             {/* El código abre sesión, no solo desbloquea el video: hay que decirlo
                 antes, no después. Una línea; el detalle sobra en este momento. */}
             <p className="text-colorCaption text-xs mt-4 text-center">
-              Con tu código quedas dentro y tu avance se guarda. Sin spam.
+              Quedas dentro y tu avance se guarda. Sin spam.
             </p>
           </>
         ) : (
