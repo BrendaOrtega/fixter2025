@@ -65,8 +65,8 @@ export function SequenceLockedDrawer({
     return (
       <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="Esta entrega aún no llega">
         <div className="text-center">
-          <EnvelopeIllustration className="mx-auto h-auto w-[110px] sm:w-[170px]" />
-          <h3 className="mt-3 text-lg font-bold text-white sm:text-xl">{title}</h3>
+          <EnvelopeIllustration className="mx-auto h-auto w-[150px] sm:w-[180px]" />
+          <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
           <p className="mt-2 text-sm text-brand-100 sm:text-base">
             {cuando ? (
               <>
@@ -96,8 +96,8 @@ export function SequenceLockedDrawer({
   return (
     <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose title="Este video es parte de una secuencia de emails">
       <div className="text-center">
-        <EnvelopeIllustration className="mx-auto h-auto w-[110px] sm:w-[170px]" />
-        <h3 className="mt-3 text-lg font-bold text-white sm:text-xl">{title}</h3>
+        <EnvelopeIllustration className="mx-auto h-auto w-[150px] sm:w-[180px]" />
+        <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
 
         {/* Prometer "se abre de inmediato" solo es verdad en la primera
             entrega. En la cuarta, suscribirse empieza por la primera y esta

@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { IoClose } from "react-icons/io5";
 import { cn } from "~/utils/cn";
 import { LAYER } from "~/utils/layers";
+import { useScrollLock } from "~/hooks/useScrollLock";
 
 export const Drawer = ({
   mode,
@@ -41,32 +42,23 @@ export const Drawer = ({
   const body = useRef<HTMLElement>(null);
 
   // listeners
-  const handleKeys = (event: unknown) => {
-    if (event.key === "Escape") {
-      onClose?.();
-    }
-  };
+  // Escape solo cuando ESTE cajón está abierto y es cerrable. El listener se
+  // registraba siempre, montado o no: con varios cajones en el árbol, un solo
+  // Escape disparaba el `onClose` de todos.
+  useEffect(() => {
+    if (!isOpen || noClose) return;
+    const handleKeys = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose?.();
+    };
+    addEventListener("keydown", handleKeys);
+    return () => removeEventListener("keydown", handleKeys);
+  }, [isOpen, noClose, onClose]);
+
+  useScrollLock(isOpen);
 
   useEffect(() => {
-    if (document.body) {
-      body.current = document.body;
-    }
-    // listers
-    addEventListener("keydown", handleKeys);
-
-    // block scroll
-    if (document.body && isOpen) {
-      document.body.style.overflow = "hidden";
-    } else if (document.body && !isOpen) {
-      document.body.style.overflow = "";
-    }
-    // clean up
-    return () => {
-      removeEventListener("keydown", handleKeys);
-      document.body.style.overflow = "";
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+    if (document.body) body.current = document.body;
+  }, []);
 
   const jsx = (
     /* Sin `relative` ni z-index aquí. Este contenedor los tenía, y como cada
@@ -79,6 +71,7 @@ export const Drawer = ({
         <motion.button
           onClick={onClose}
           id="overlay"
+          aria-label="Cerrar"
           style={{ zIndex: LAYER.overlay }}
           className="fixed inset-0 bg-dark/60"
           animate={{ backdropFilter: "blur(4px)" }}
@@ -86,6 +79,9 @@ export const Drawer = ({
         />
       )}
       <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         style={{ zIndex: LAYER.drawer }}
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
@@ -129,7 +125,10 @@ export const Drawer = ({
           style={{
             scrollbarWidth: "none",
           }}
-          className="scrollbar-sutil overflow-y-auto flex-1"
+          // En móvil el cajón ocupa la pantalla completa y el contenido se
+          // apelmazaba arriba con media pantalla vacía debajo. Centrado vertical
+          // mientras quepa; si crece, el `justify-center` cede y vuelve el scroll.
+          className="scrollbar-sutil flex flex-1 flex-col justify-center overflow-y-auto lg:block"
         >
           {children}
         </section>
