@@ -140,7 +140,7 @@ export function SequenceLockedDrawer({
             {/* El botón dice lo que pasa AL INSTANTE, no el trámite: nadie hace
                 clic con ganas de "suscribirse", hace clic para ver el video. */}
             <PrimaryButton type="submit" isDisabled={enviando} className="w-full">
-              {enviando ? "Abriendo…" : "Ábreme este video 🚀"}
+              {enviando ? "Abriendo…" : "Ábreme este video 🍿"}
             </PrimaryButton>
             {fetcher.data?.error && (
               <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
@@ -172,7 +172,7 @@ export function SequenceLockedDrawer({
               <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
             )}
             <PrimaryButton type="submit" isDisabled={enviando} className="mt-3 w-full">
-              {enviando ? "Verificando…" : "Ábreme este video 🚀"}
+              {enviando ? "Verificando…" : "Ábreme este video 🍿"}
             </PrimaryButton>
           </fetcher.Form>
         ) : (
@@ -232,7 +232,7 @@ export function SequenceLockedDrawer({
               <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
             )}
             <PrimaryButton type="submit" isDisabled={enviando} className="mt-3 w-full">
-              {enviando ? "Un momento…" : "Ábreme este video 🚀"}
+              {enviando ? "Un momento…" : "Ábreme este video 🍿"}
             </PrimaryButton>
           </fetcher.Form>
         )}
