@@ -161,6 +161,13 @@ export const getPrograma = async (slug: string) => {
       })
     : [];
 
+  // Las compras del programa. Se cruzan por correo porque es la única llave que
+  // comparten Stripe y el resto del sitio.
+  const purchases = await db.purchaseEvent.findMany({
+    where: { productKey: { contains: course.slug } },
+    select: { email: true, amountTotal: true, createdAt: true, status: true },
+  });
+
   // Índices por correo, en minúsculas: el mismo correo llega escrito de las dos
   // formas según por dónde entró la persona.
   const key = (email?: string | null) => (email || "").trim().toLowerCase();
@@ -243,6 +250,99 @@ export const getPrograma = async (slug: string) => {
             : 1,
     };
   });
+
+  /**
+   * El embudo del programa: cuánta gente sobrevive a cada paso.
+   *
+   * El orden es este porque así funciona el producto: la grabación está detrás
+   * del correo, así que nadie ve nada sin dejarlo primero.
+   *
+   * Cada paso se intersecta con el anterior a propósito. Contar cada uno por su
+   * lado daba pasos que crecían —133% del anterior—, porque hay gente que se
+   * registró en la landing y nunca abrió el video, y filas viejas con minutos
+   * pero sin `playedAt`, que se empezó a guardar el 14 de agosto. Un embudo que
+   * crece no es un embudo: es dos métricas distintas puestas en fila.
+   *
+   * Las definiciones quedan escritas aquí y no se renegocian: un embudo con
+   * reglas que cambian no se puede comparar contra sí mismo, que es para lo que
+   * existe.
+   */
+  const compradores = new Set(purchases.map((p) => key(p.email)).filter(Boolean));
+
+  // Todo el que sabemos que existe: quien dejó correo y quien abrió el video sin
+  // dejarlo. Los anónimos caen en el segundo paso, que es justo lo que se quiere
+  // ver.
+  const alcanzados = new Set<string>([
+    ...subscribers.map((sub) => key(sub.email)),
+    ...views.map((v) => key(v.email) || v.sessionId),
+  ]);
+
+  const conCorreo = new Set(subscribers.map((sub) => key(sub.email)));
+
+  // El <video> marca el play aunque el drawer esté encima, así que un play de
+  // cero segundos no es nadie viendo. Vale el `playedAt` o los segundos, porque
+  // las filas anteriores al 14 de agosto no tienen lo primero.
+  const vieron = new Set(
+    views.filter((v) => v.watchedSeconds >= 5)
+      .map((v) => key(v.email) || v.sessionId),
+  );
+
+  // Se quedó = una cuarta parte de la pieza. Por debajo de eso vio la intro.
+  const seQuedaron = new Set(
+    views.filter((v) => v.videoDuration && v.watchedSeconds / v.videoDuration >= 0.25)
+      .map((v) => key(v.email) || v.sessionId),
+  );
+
+  const conMaterial = new Set([...materialesPor.keys()]);
+
+  // La compra NO va como último eslabón de la cadena: a este producto se entra
+  // también por la landing, y de hecho quien compró hasta hoy nunca abrió la
+  // grabación. Colgarla del último paso la habría mostrado como cero. Va aparte,
+  // con el dato que sí dice algo: cuántos de los que compraron venían de ver.
+  //
+  // El material tampoco es un eslabón: es una señal lateral, no un requisito
+  // para comprar.
+  const pasos: { paso: string; gente: Set<string> }[] = [
+    { paso: "Alcanzados", gente: alcanzados },
+    { paso: "Dejaron su correo", gente: conCorreo },
+    { paso: "Vieron algo", gente: vieron },
+    { paso: "Se quedaron (25% o más)", gente: seQuedaron },
+  ];
+
+  let anterior: Set<string> | null = null;
+  const embudo = pasos.map(({ paso, gente }) => {
+    const vivos = anterior
+      ? new Set([...gente].filter((k) => anterior!.has(k)))
+      : new Set(gente);
+    const respectoAlAnterior =
+      anterior && anterior.size ? Math.round((vivos.size / anterior.size) * 100) : null;
+    anterior = vivos;
+    return { paso, personas: vivos.size, respectoAlAnterior };
+  });
+
+  /**
+   * El mismo embudo, cortado por canal. Contesta la pregunta que importa: qué
+   * canal trae gente que se queda, no solo gente que entra.
+   *
+   * Se cuentan las dos señales por separado —el UTM y lo que la persona
+   * contestó— porque miden cosas distintas: el UTM ve lo etiquetado, la
+   * respuesta ve los mensajes privados y el boca a boca. Donde no coinciden
+   * está el punto ciego.
+   */
+  const porCanal = (campo: "firstSource" | "selfReportedSource") => {
+    const cubos = new Map<string, { registrados: number; vieron: number; compraron: number }>();
+    for (const sub of subscribers) {
+      const canal = (sub as any)[campo] || "sin dato";
+      const cubo = cubos.get(canal) || { registrados: 0, vieron: 0, compraron: 0 };
+      cubo.registrados++;
+      if (seQuedaron.has(key(sub.email))) cubo.vieron++;
+      if (compradores.has(key(sub.email))) cubo.compraron++;
+      cubos.set(canal, cubo);
+    }
+    return [...cubos.entries()]
+      .map(([canal, datos]) => ({ canal, ...datos }))
+      .sort((a, b) => b.registrados - a.registrados);
+  };
 
   const porVideo = new Map(
     videos.map((video) => [
@@ -340,6 +440,18 @@ export const getPrograma = async (slug: string) => {
     course,
     tags,
     piezas,
+    embudo,
+    canales: { medido: porCanal("firstSource"), preguntado: porCanal("selfReportedSource") },
+    ventas: {
+      total: compradores.size,
+      ingreso: purchases.reduce((sum, p) => sum + (p.amountTotal || 0), 0),
+      // De los que compraron, cuántos habían visto la grabación. Es lo que dice
+      // si el webinar está vendiendo o si vende otra cosa.
+      queVieron: [...compradores].filter((k) => seQuedaron.has(k)).length,
+    },
+    materiales: {
+      abrieron: [...conMaterial].filter((k) => conCorreo.has(k)).length,
+    },
     // Material del programa completo (temario, repo), no de una pieza.
     materialesDelCurso: resources.filter((r) => !r.videoId),
     audiencia,

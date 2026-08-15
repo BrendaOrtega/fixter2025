@@ -13,6 +13,7 @@ import {
 import { AdminNav } from "~/components/admin/AdminNav";
 import { MapaDeCalorVideo } from "~/components/admin/MapaDeCalorVideo";
 import { LinkBuilder } from "~/components/admin/LinkBuilder";
+import { Embudo } from "~/components/admin/Embudo";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { getPrograma } from "~/.server/programas";
 import { db } from "~/.server/db";
@@ -343,10 +344,10 @@ const fecha = (value: string | Date | null) =>
     : null;
 
 export default function Programa({ loaderData }: Route.ComponentProps) {
-  const { course, tags, piezas, materialesDelCurso, audiencia, stats } =
+  const { course, tags, piezas, materialesDelCurso, audiencia, stats, embudo, canales, ventas } =
     loaderData;
   const fetcher = useFetcher();
-  const [tab, setTab] = useState<"piezas" | "audiencia">("piezas");
+  const [tab, setTab] = useState<"piezas" | "audiencia" | "embudo">("piezas");
 
   return (
     <article className="min-h-screen bg-gray-950 pt-8 ml-48">
@@ -412,6 +413,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
             [
               ["piezas", `Piezas (${piezas.length})`],
               ["audiencia", `Audiencia (${audiencia.length})`],
+              ["embudo", "Embudo"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -601,6 +603,8 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
               </div>
             )}
           </div>
+        ) : tab === "embudo" ? (
+          <Embudo embudo={embudo} canales={canales} ventas={ventas} />
         ) : (
           <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
