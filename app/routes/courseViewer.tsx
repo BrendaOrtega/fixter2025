@@ -276,10 +276,17 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
           immediate: true,
         });
         const { setMemberCookie } = await import("~/.server/memberCookie");
-        return data(
-          { sequenceEnrolled: true },
-          { headers: { "Set-Cookie": await setMemberCookie(correo) } }
-        );
+
+        // Redirige en vez de devolver datos: el loader tiene que correr otra
+        // vez para que la fuente del video llegue firmada. Sin esto el alta
+        // funcionaba pero el video seguía bloqueado detrás del cajón hasta que
+        // la persona recargara a mano. `?subscribed=1` además dispara el drawer
+        // de éxito con su confeti, igual que el alta por código.
+        const destino = new URL(request.url);
+        destino.searchParams.set("subscribed", "1");
+        return redirect(destino.toString(), {
+          headers: { "Set-Cookie": await setMemberCookie(correo) },
+        });
       }
 
       await sendSequenceConfirmation({

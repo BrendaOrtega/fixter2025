@@ -85,10 +85,11 @@ export const Drawer = ({
           // no tener fondo. De `md` en adelante vuelve a ser cajón lateral, y
           // arranca DEBAJO de la navbar para que el menú no le cruce el título.
           "bg-background z-[310] fixed inset-0 flex flex-col text-white overflow-y-auto scrollbar-sutil p-6",
-          "md:inset-auto md:right-0 md:top-20 md:h-[calc(100vh-5rem)] md:border md:border-white/10 md:shadow-xl md:rounded-tl-3xl md:rounded-bl-3xl md:py-8 md:px-12",
-          mode === "big"
-            ? "md:w-[90%] lg:w-[85%]"
-            : "md:w-[60%] lg:w-[40%]"
+          // Cajón lateral SOLO desde lg. En tablet el menú de videos ocupa
+          // ~420px fijos a la izquierda y se encimaba con un cajón del 60%,
+          // dejando su contenido cortado por debajo del menú.
+          "lg:inset-auto lg:right-0 lg:top-20 lg:h-[calc(100vh-5rem)] lg:border lg:border-white/10 lg:shadow-xl lg:rounded-tl-3xl lg:rounded-bl-3xl lg:py-8 lg:px-12",
+          mode === "big" ? "lg:w-[85%]" : "lg:w-[40%]"
         )}
       >
         {header ? (
