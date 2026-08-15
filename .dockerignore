@@ -1,4 +1,32 @@
-.react-router
-build
+# El contexto se sube entero al builder remoto: cada MB de más son segundos de
+# deploy en cada iteración.
+.git
+.github
+.claude
 node_modules
-README.md
+build
+.react-router
+
+# Nada de esto llega a la imagen
+docs
+scripts
+videos
+taller-*
+test
+tests
+*.test.ts
+*.test.tsx
+coverage
+.vscode
+.idea
+*.md
+!app/content/**/*.md
+
+# Assets pesados que se sirven desde el CDN, no desde la imagen
+public/videos
+public/*.mp4
+public/*.mov
+
+.env
+.env.*
+!.env.example

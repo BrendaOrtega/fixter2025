@@ -80,20 +80,23 @@ export const Drawer = ({
         exit={{ x: "120%" }}
         transition={{ type: "spring", bounce: 0, duration: 0.2 }}
         className={cn(
-          // Arranca DEBAJO de la navbar: pegado a top-0 el título quedaba
-          // atravesado por los links del menú, que viven más arriba en la pila.
-          "bg-background border border-white/10 z-[310] h-[calc(100vh-5rem)] top-20 fixed right-0 shadow-xl rounded-tl-3xl rounded-bl-3xl p-6 md:py-8 md:px-12 flex flex-col text-white overflow-y-auto",
+          // En móvil ocupa la pantalla completa: una tarjeta flotante en 375px
+          // deja el contenido apretado y el fondo a medio ver, que es peor que
+          // no tener fondo. De `md` en adelante vuelve a ser cajón lateral, y
+          // arranca DEBAJO de la navbar para que el menú no le cruce el título.
+          "bg-background z-[310] fixed inset-0 flex flex-col text-white overflow-y-auto p-6",
+          "md:inset-auto md:right-0 md:top-20 md:h-[calc(100vh-5rem)] md:border md:border-white/10 md:shadow-xl md:rounded-tl-3xl md:rounded-bl-3xl md:py-8 md:px-12",
           mode === "big"
-            ? "w-[95%] md:w-[90%] lg:w-[85%]"
-            : "w-[90%] md:w-[60%] lg:w-[40%]"
+            ? "md:w-[90%] lg:w-[85%]"
+            : "md:w-[60%] lg:w-[40%]"
         )}
       >
         {header ? (
           header
         ) : (
-          <header className="flex items-center justify-between mb-6 ">
+          <header className="flex items-center justify-between mb-3 md:mb-6">
             <div>
-              <h4 className="text-2xl font-semibold md:text-4xl text-white">
+              <h4 className="text-lg font-semibold sm:text-2xl md:text-4xl text-white">
                 {title}
               </h4>
               <p className="text-brand_gray">{subtitle}</p>
@@ -113,7 +116,7 @@ export const Drawer = ({
           style={{
             scrollbarWidth: "none",
           }}
-          className="overflow-y-scroll h-[95%]"
+          className="overflow-y-auto flex-1"
         >
           {children}
         </section>

@@ -173,6 +173,11 @@ export const VideoPlayer = ({
   // Doble toque para ±10 s: en el teléfono es la única forma cómoda de saltar, porque
   // arrastrar una barra de 6px con el pulgar no es forma de moverse en 75 minutos.
   const ultimoToqueRef = useRef<{ t: number; x: number }>({ t: 0, x: 0 });
+  // Sin fuente no hay video que reproducir: el elemento sigue montado para
+  // conservar el póster, pero no debe responder a clics ni fingir que carga.
+  // Un spinner eterno sobre un video bloqueado se lee como "está roto".
+  const sinFuente = !(video?.m3u8 || video?.storageLink);
+
   const alTocarVideo = (e: React.MouseEvent<HTMLVideoElement>) => {
     const ahora = Date.now();
     const anterior = ultimoToqueRef.current;
@@ -302,7 +307,7 @@ export const VideoPlayer = ({
         // calidad. Los reemplaza <VideoControls/>, abajo.
         playsInline
         preload="metadata"
-        onClick={alTocarVideo}
+        onClick={sinFuente ? undefined : alTocarVideo}
       >
         {captionsUrl && (
           <track
@@ -356,7 +361,7 @@ export const VideoPlayer = ({
       {/* Girito centrado mientras carga: al saltar hay que bajar el segmento de destino
           antes de pintar nada, y sin señal el clic parece no haber hecho nada. */}
       <AnimatePresence>
-        {cargando && (
+        {cargando && !sinFuente && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -368,6 +373,9 @@ export const VideoPlayer = ({
         )}
       </AnimatePresence>
 
+      {/* Controles de un video que no existe: la barra de progreso, el volumen
+          y el botón de pantalla completa no tienen sobre qué actuar. */}
+      {!sinFuente && (
       <VideoControls
         videoRef={videoRef}
         videoSlug={slug}
