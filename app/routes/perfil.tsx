@@ -191,14 +191,23 @@ const Suscripciones = ({ items }: { items: any[] }) => {
               className="flex items-center justify-between gap-4 rounded-xl border border-brand-100/10 bg-brand-900/40 p-4"
             >
               <div className="min-w-0">
-                <p className="truncate font-medium text-white">
+                {/* El nombre lleva a la secuencia: desde aquí solo se podía
+                    pausar o reactivar a ciegas, sin ver de qué se trata ni qué
+                    entregas trae. */}
+                <a
+                  href={`/secuencias/${s.sequence?.slug || s.sequence?.id}`}
+                  className="block truncate font-medium text-white underline-offset-4 hover:text-brand-500 hover:underline"
+                >
                   {s.sequence?.name}
-                </p>
+                </a>
+                {/* Una terminada no está muerta: cuando la secuencia gana una
+                    entrega, los que ya la acabaron vuelven a la fila. Por eso
+                    aquí sí hay algo que decidir, y hay que decirlo. */}
                 <p className="mt-0.5 text-xs text-brand-100/70">
                   {pausada
-                    ? "Pausada"
+                    ? "Pausada — no recibes nada"
                     : s.status === "completed"
-                      ? "Terminada"
+                      ? "Al día · te avisamos cuando haya entregas nuevas"
                       : `Entrega ${Math.min(s.currentEmailIndex + 1, total)} de ${total}`}
                 </p>
               </div>
@@ -220,7 +229,11 @@ const Suscripciones = ({ items }: { items: any[] }) => {
                       : "border-brand-100/20 text-brand-100 hover:border-red-400/50 hover:text-red-400"
                   )}
                 >
-                  {pausada ? "Reactivar" : "Pausar"}
+                  {pausada
+                    ? "Reactivar"
+                    : s.status === "completed"
+                      ? "No avisarme"
+                      : "Pausar"}
                 </button>
               </fetcher.Form>
             </li>
@@ -268,30 +281,28 @@ const EditableAvatar = ({
       width: 160,
       height: 160,
     });
+    // JPEG con calidad alta en vez de PNG crudo: un avatar de 320px en PNG
+    // pesa cientos de KB para una foto, y se sirve en un círculo de 160.
+    // `multiplier: 2` lo exporta al doble para que no se vea suave en retina.
     const resultImage = canvasObj.current?.toDataURL({
-      // top: center.y,
       top: center.y - 160,
       left: center.x - 160,
       width: 320,
       height: 320,
-      multiplier: 1,
-      format: "png",
-      // quality: 0.2,
+      multiplier: 2,
+      format: "jpeg",
+      quality: 0.85,
     });
     const file = await fetch(resultImage).then((r) => r.blob());
     setImageSrc(resultImage);
-    const a = document.createElement("a");
-    a.href = resultImage;
-    a.download = true;
-    a.click();
+    // Aquí había un `a.click()` que DESCARGABA el avatar al disco de la persona
+    // cada vez que lo editaba. Nadie pidió ese archivo.
     if (!file) return;
-    console.log("About to put:", putURL);
     const res = await fetch(putURL, {
       // presignurl
       method: "PUT",
       body: file,
-    }).catch((e) => console.error(e));
-    console.log("RES:", res);
+    }).catch((e) => console.error("No se pudo subir el avatar:", e));
   };
 
   const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {

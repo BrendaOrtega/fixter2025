@@ -6,6 +6,22 @@ import { GiMagicBroom } from "react-icons/gi";
 import Spinner from "~/components/common/Spinner";
 import { BsMailboxFlag } from "react-icons/bs";
 import type { Route } from "./+types/login";
+import getMetaTags from "~/utils/getMetaTags";
+
+/**
+ * Metadatos propios.
+ *
+ * Aquí cae el scraper de WhatsApp, Slack o Twitter cada vez que alguien
+ * comparte un enlace protegido —su perfil, sus cursos, una lección— porque el
+ * bot no trae sesión y la ruta lo redirige. Sin metas propias, la miniatura de
+ * todos esos links sale con el título de otra página.
+ */
+export const meta = () =>
+  getMetaTags({
+    title: "Entra a FixterGeek",
+    description:
+      "Cursos y talleres de programación con IA en español. Entra con tu correo, sin contraseña.",
+  });
 
 // Configuración de UI por tipo de confirmación
 const CONFIRMATION_CONFIG: Record<string, {
