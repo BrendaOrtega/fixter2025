@@ -11,9 +11,12 @@ import { db } from "./db";
 export const audienceTagFor = (courseSlug: string) => `webinar-${courseSlug}`;
 
 /// Al programa se entra por dos puertas: registrarse al webinar en vivo, o
-/// desbloquear la grabación con el correo desde el reproductor —que escribe
-/// `<slug>-free-access`—. Contar solo la primera dejaba fuera justo a la gente
-/// que llega por difusión, que es la que más importa medir.
+/// desbloquear la grabación con el correo desde el reproductor.
+///
+/// TODO SIEMPRE por aquí: cualquier cosa que cuente audiencia —admin, correos
+/// segmentados, exportaciones— usa esta lista con `hasSome`, nunca
+/// `audienceTagFor` a secas. Si aparece una tercera puerta, se agrega aquí y
+/// todo lo demás la hereda.
 export const audienceTagsFor = (courseSlug: string) => [
   audienceTagFor(courseSlug),
   `${courseSlug}-free-access`,
