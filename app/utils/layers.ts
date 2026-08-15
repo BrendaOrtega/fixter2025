@@ -33,6 +33,15 @@ export const LAYER = {
   overlay: 400,
   /** El cajón. */
   drawer: 410,
+  /**
+   * Menús colgados de la navegación (el de la cuenta).
+   *
+   * Van POR ENCIMA del cajón a propósito: con un video bloqueado abierto, el
+   * menú de la cuenta se abría debajo del panel y no había forma de llegar al
+   * perfil ni de cerrar sesión. Un menú anclado es transitorio y gana al
+   * panel; lo único que le gana a él es una confirmación.
+   */
+  popover: 450,
   /** Confirmaciones. Siempre por encima del cajón que las pidió. */
   dialog: 500,
   /** Avisos efímeros, lo último que se dibuja. */

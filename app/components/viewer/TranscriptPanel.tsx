@@ -295,8 +295,13 @@ export const TranscriptPanel = ({
                   ref={activo ? activoRef : undefined}
                   type="button"
                   onClick={() => onSeek(seg.s)}
+                  // Rejilla y no texto corrido: el reloj va en su propia
+                  // columna, así el párrafo tiene un borde izquierdo limpio y
+                  // se puede barrer la columna de tiempos con la vista. En
+                  // línea, dentro del texto, la marca se lee como parte de la
+                  // frase y el bloque queda apachurrado.
                   className={cn(
-                    "block w-full rounded-lg px-2 py-1.5 text-left text-sm leading-relaxed transition-colors",
+                    "grid w-full grid-cols-[3.25rem_1fr] gap-x-2 rounded-lg px-2 py-2 text-left text-sm leading-relaxed transition-colors",
                     activo
                       ? "bg-brand-500/15 text-white"
                       : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
@@ -304,18 +309,20 @@ export const TranscriptPanel = ({
                 >
                   <span
                     className={cn(
-                      "mr-2 font-mono text-xs",
+                      "pt-px font-mono text-xs tabular-nums",
                       activo ? "text-brand-500" : "text-gray-600"
                     )}
                   >
                     {reloj(seg.s)}
                   </span>
-                  {seg.quien && (
-                    <span className="mr-1 text-xs font-semibold text-gray-500">
-                      {seg.quien}:
-                    </span>
-                  )}
-                  {seg.texto}
+                  <span className="min-w-0 text-pretty">
+                    {seg.quien && (
+                      <span className="mr-1 text-xs font-semibold text-gray-500">
+                        {seg.quien}:
+                      </span>
+                    )}
+                    {seg.texto}
+                  </span>
                 </button>
               );
             })}

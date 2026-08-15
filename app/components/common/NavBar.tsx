@@ -212,7 +212,12 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
           "bg-background",
           "border border-brand-100/10",
           "grid place-items-start rounded-xl shadow-md",
-          "absolute w-[200px] -right-20 top-[95%]",
+          // Por encima de un cajón abierto. La navbar vive en 200 y un cajón
+          // en 410, así que en el visor este menú se abría DEBAJO del cajón:
+          // no había forma de llegar al perfil ni de cerrar sesión desde un
+          // video bloqueado. Un menú anclado a la navegación es transitorio y
+          // gana al panel; lo único que le gana a él es una confirmación.
+          "absolute w-[200px] -right-20 top-[95%] z-[450]",
         )}
       >
         <Triangle className="border-b-brand-500" />

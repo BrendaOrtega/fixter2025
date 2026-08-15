@@ -111,18 +111,29 @@ export const pareceSinMarcas = (texto: string): boolean =>
  * Junta segmentos consecutivos del mismo hablante. Repetir el nombre en cada línea de
  * una frase partida en cinco trozos es ruido, no información.
  *
- * ⚠️ Los segmentos SIN hablante no se juntan: agrupar por `null` fundiría en un bloque
- * cosas dichas por personas distintas.
+ * ⚠️ Los segmentos SIN hablante no se juntan CUANDO los hay identificados: agrupar por
+ * `null` fundiría en un bloque cosas dichas por personas distintas.
+ *
+ * Pero si NINGUNO trae hablante —whisper sin diarización, que es lo normal— no hay nada
+ * que preservar y sí mucho que perder: quedan cuatrocientos bloques de siete segundos,
+ * de tres o cuatro palabras cada uno. En el panel del visor eso no se lee, se deletrea.
+ * En ese caso se juntan por tiempo, como párrafos.
  *
  * `maxSegundos` evita el bloque interminable cuando alguien habla veinte minutos
  * seguido — un párrafo así no se puede seguir mientras corre el video.
  */
 export const agruparPorHablante = (segs: Segmento[], maxSegundos = 45): Segmento[] => {
+  const hayHablantes = segs.some((seg) => seg.quien !== null);
   const out: Segmento[] = [];
   for (const seg of segs) {
     const ultimo = out[out.length - 1];
     const cabe = ultimo && seg.e - ultimo.s <= maxSegundos;
-    if (ultimo && ultimo.quien === seg.quien && seg.quien !== null && cabe) {
+    const mismoOrigen = ultimo
+      ? hayHablantes
+        ? ultimo.quien === seg.quien && seg.quien !== null
+        : true
+      : false;
+    if (ultimo && mismoOrigen && cabe) {
       ultimo.texto += " " + seg.texto;
       ultimo.e = seg.e;
     } else {
