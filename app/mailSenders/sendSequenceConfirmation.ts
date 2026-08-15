@@ -11,7 +11,7 @@ const baseUrl =
 
 /**
  * Email de doble opt-in: pide confirmar la suscripción a una secuencia.
- * El link lleva un token firmado que, al abrirse en /series/confirmar, confirma
+ * El link lleva un token firmado que, al abrirse en /secuencias/confirmar, confirma
  * al subscriber y crea el enrollment.
  */
 export async function sendSequenceConfirmation({
@@ -26,7 +26,7 @@ export async function sendSequenceConfirmation({
   sequenceName: string;
 }) {
   const token = generateSequenceSubscribeToken(email, sequenceId, name);
-  const link = `${baseUrl}/series/confirmar?token=${token}`;
+  const link = `${baseUrl}/secuencias/confirmar?token=${token}`;
 
   const inner = `
     <h1 style="margin:0 0 12px 0;font-size:22px;color:#19262A;">

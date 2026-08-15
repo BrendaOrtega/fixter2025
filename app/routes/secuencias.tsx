@@ -825,7 +825,7 @@ function DiscoverTab({
 
               {sequence.ownerId && sequence.ownerId === currentUserId ? (
                 <Link
-                  to={`/secuencias/${sequence.id}`}
+                  to={`/secuencias/gestion/${sequence.id}`}
                   className="block w-full rounded-lg border border-brand-100/20 px-4 py-2 text-center font-medium text-brand-100 transition-colors hover:border-brand-500/40 hover:text-white"
                 >
                   Es tuya · Gestionar
@@ -855,7 +855,7 @@ function DiscoverTab({
                   </fetcher.Form>
               ) : (
                 <a
-                  href={`/series/${sequence.id}`}
+                  href={`/secuencias/gestion/${sequence.id}`}
                   className="block w-full px-4 py-2 rounded-lg font-medium text-center bg-brand-500 text-brand-900 hover:bg-brand-400 transition-colors"
                 >
                   Suscribirme

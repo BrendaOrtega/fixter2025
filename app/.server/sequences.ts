@@ -206,7 +206,7 @@ export async function reactivateFinishedEnrollments(sequenceId: string) {
 /**
  * ¿Ya le llegó a esta persona la entrega que trae este video?
  *
- * La regla es la misma que usa el reproductor de la secuencia (`/series/video`):
+ * La regla es la misma que usa el reproductor de la secuencia (`/secuencias/video`):
  * los correos con índice menor a `currentEmailIndex` ya se enviaron, el resto
  * está por venir. Aquí vive una sola vez porque ahora la necesitan dos lugares
  * —el reproductor y el visor del curso— y una regla de permisos duplicada es
@@ -341,7 +341,7 @@ export async function renderSequenceEmail({
     // secuencia avanzada es un correo posterior: el lector llega a un video
     // que no es el que acaba de recibir, y de paso se spoilea.
     const target = emailId && emailId !== "draft" ? `&v=${emailId}` : "";
-    videoUrl = `${base}/series/video?token=${generateSequenceVideoToken(
+    videoUrl = `${base}/secuencias/video?token=${generateSequenceVideoToken(
       enrollmentId,
       owner ?? undefined
     )}${target}`;
@@ -368,7 +368,7 @@ export async function renderSequenceEmail({
       : `${html}\n<div style="text-align:center;margin:16px 0">${block}</div>`;
   }
 
-  const unsubscribeUrl = `${base}/series/baja?token=${generateSequenceUnsubscribeToken(
+  const unsubscribeUrl = `${base}/secuencias/baja?token=${generateSequenceUnsubscribeToken(
     enrollmentId
   )}`;
   html = html.replace(/\{\{unsubscribe\}\}/g, unsubscribeUrl);
@@ -496,7 +496,7 @@ export async function sendSequenceEmail({
  * Inscripción de prueba para que un admin se mande el correo por el camino real.
  *
  * Nace `paused` con `nextEmailAt: null` (doble candado: el motor filtra por
- * ambos) y con el índice al final, porque /series/video desbloquea con
+ * ambos) y con el índice al final, porque /secuencias/video desbloquea con
  * `i < currentEmailIndex` — en 0 el video saldría bloqueado y parecería un
  * error del correo.
  */

@@ -1,7 +1,7 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
 
 /**
- * Alias de las rutas viejas `/s/*` hacia `/series/*`.
+ * Alias de las rutas viejas `/s/*` hacia `/secuencias/*`.
  *
  * La letra suelta se entendía cuando había una sola serie; con varias, la URL
  * tiene que decir qué es. Pero `/s/video?token=…` y `/s/baja?token=…` viajan en
@@ -15,5 +15,5 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 export const loader = ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const resto = url.pathname.replace(/^\/s\/?/, "");
-  return redirect(`/series/${resto}${url.search}`, 301);
+  return redirect(`/secuencias/${resto}${url.search}`, 301);
 };
