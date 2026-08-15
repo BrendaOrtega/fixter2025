@@ -11,7 +11,10 @@ const ORIGINS = [
   "WhatsApp",
   "Un correo de FixterGeek",
   "Me lo pasó alguien",
-  "La comunidad",
+  // "La comunidad" era ambiguo: quien llega de un Discord ajeno también la
+  // escogía. La señal útil es "alguien lo compartió en un grupo donde estoy",
+  // que es distinta de "me lo pasó alguien" uno a uno.
+  "En un grupo o comunidad",
   "Buscando en Google",
 ];
 
