@@ -167,18 +167,25 @@ export const TranscriptPanel = ({
       </div>
 
       {/* Capítulos */}
+      {/* `shrink-0` sólo en el encabezado, NUNCA en la lista. Con el bloque
+          entero sin encoger, once capítulos se comían el panel completo: la
+          transcripción quedaba con altura cero y su texto se leía por debajo
+          del aviso del pie. El número de capítulos lo decide el video, así que
+          esto tenía que romperse tarde o temprano. */}
       {chapters.length > 0 && !q && (
-        <div className="shrink-0 pb-3">
+        <div className="flex min-h-0 max-h-[38%] flex-col pb-3">
           <button
             type="button"
             onClick={() => setMostrarCapitulos((v) => !v)}
-            className="flex w-full items-center justify-between px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-200"
+            className="flex w-full shrink-0 items-center justify-between px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-400 hover:text-gray-200"
           >
             Capítulos
             <span className="text-base leading-none">{mostrarCapitulos ? "−" : "+"}</span>
           </button>
           {mostrarCapitulos && (
-            <ul className="mt-1 space-y-0.5">
+            /* Con su propio scroll y un tope: la lista informa, pero el
+               panel es de la transcripción. */
+            <ul className="scrollbar-sutil mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
               {chapters.map((c) => {
                 const activo = [...chapters].reverse().find((x) => currentTime >= x.s)?.s === c.s;
                 return (
