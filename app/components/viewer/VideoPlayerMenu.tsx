@@ -171,7 +171,7 @@ const ListItem = ({
   return (
     <Link
       ref={ref}
-      to={`/cursos/${courseSlug}/viewer?videoSlug=${slug}`}
+      to={`/cursos/${courseSlug}/${slug}`}
       // reloadDocument
       className={cn(
         "group text-metal/50 overflow-hidden w-[90%] mx-auto relative pl-4 flex py-4  hover:brightness-100 rounded-2xl hover:text-metal/80 transition-all items-center",

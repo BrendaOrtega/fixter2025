@@ -127,7 +127,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return Response.json({
       videoId: video.id,
       slug: video.slug,
-      viewerUrl: `/cursos/${course.slug}/viewer?videoSlug=${video.slug}`,
+      viewerUrl: `/cursos/${course.slug}/${video.slug}`,
     });
   }
 

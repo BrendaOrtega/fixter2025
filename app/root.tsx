@@ -14,6 +14,20 @@ import { MainLayout } from "./routes/Layout";
 
 import type { Route } from "./+types/root";
 import getMetaTags from "./utils/getMetaTags";
+import { data } from "react-router";
+import { captureOriginHeaders } from "./.server/origen";
+
+/**
+ * De dónde llegó quien está entrando, resuelto en el servidor.
+ *
+ * Corre en TODA petición porque la primera puede ser cualquiera: nadie aterriza
+ * siempre en la home. Solo escribe cabecera cuando hay algo nuevo que guardar,
+ * así que una visita directa de alguien conocido no cuesta nada.
+ */
+export const loader = ({ request }: Route.LoaderArgs) => {
+  const cookie = captureOriginHeaders(request);
+  return data(null, cookie ? { headers: { "Set-Cookie": cookie } } : undefined);
+};
 
 export const meta = () =>
   getMetaTags({

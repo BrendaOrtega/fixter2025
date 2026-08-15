@@ -99,7 +99,7 @@ export function meta({ data }: Route.MetaArgs) {
           .map((v: any) => ({
             "@type": "VideoObject",
             name: v.title,
-            url: `${baseUrl}/cursos/${course.slug}/viewer?videoSlug=${v.slug}`,
+            url: `${baseUrl}/cursos/${course.slug}/${v.slug}`,
             ...(v.duration
               ? { duration: `PT${Math.round(Number(v.duration))}M` }
               : {}),

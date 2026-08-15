@@ -76,6 +76,54 @@ export const readOrigin = (request: Request): StoredOrigin | null => {
   }
 };
 
+/**
+ * Captura el origen EN EL SERVIDOR y devuelve la cabecera que lo persiste, o
+ * `null` si esta visita no aporta nada nuevo.
+ *
+ * Se hace aquí y no en el navegador porque en el navegador se pierde de tres
+ * formas distintas: un redirect se lleva la query antes de que corra el JS
+ * (justo lo que pasaba con `/cursos/:curso/:video`), un bloqueador puede
+ * detener el script, y el primer render puede tardar más que el primer clic.
+ * El servidor ve la URL y el `Referer` siempre, en la primera petición.
+ *
+ * El primer toque nunca se pisa: es el que dice qué trajo a la persona.
+ */
+export const captureOriginHeaders = (request: Request): string | null => {
+  const url = new URL(request.url);
+  const params = url.searchParams;
+  const referer = request.headers.get("Referer") || undefined;
+
+  // Navegar dentro del sitio no es una fuente.
+  const external =
+    referer && !referer.includes(url.host) ? referer : undefined;
+
+  const ahora: Origin = {
+    source: params.get("utm_source") ?? undefined,
+    medium: params.get("utm_medium") ?? undefined,
+    campaign: params.get("utm_campaign") ?? undefined,
+    referrer: external,
+    landingPath: url.pathname,
+    at: new Date().toISOString(),
+  };
+
+  const haySeñal = Boolean(ahora.source || ahora.referrer);
+  const guardado = readOrigin(request);
+
+  // Sin señal y con primer toque ya guardado no hay nada que escribir: una
+  // visita directa de alguien que ya conocemos no cambia su origen.
+  if (!haySeñal && guardado?.first) return null;
+
+  const valor: StoredOrigin = {
+    first: guardado?.first ?? ahora,
+    last: haySeñal ? ahora : guardado?.last,
+  };
+
+  const YEAR = 60 * 60 * 24 * 365;
+  return `${ORIGIN_COOKIE}=${encodeURIComponent(
+    JSON.stringify(valor)
+  )}; Path=/; Max-Age=${YEAR}; SameSite=Lax`;
+};
+
 /** El canal, con el UTM ganando sobre el referrer y "directo" como último recurso. */
 const channelOf = (origin?: Origin): string =>
   origin?.source || normalizeHost(origin?.referrer) || "directo";

@@ -713,7 +713,7 @@ const VideoListItem = ({
   return (
     <Link
       ref={ref}
-      to={hasContent ? `/cursos/${courseSlug}/viewer?videoSlug=${slug}` : "#"}
+      to={hasContent ? `/cursos/${courseSlug}/${slug}` : "#"}
       onClick={(e) => {
         if (!hasContent) {
           e.preventDefault();

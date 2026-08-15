@@ -57,6 +57,15 @@ const currentOrigin = (): Origin => {
   };
 };
 
+/**
+ * NOTA: desde el 15 de agosto de 2026 la captura de verdad vive en el servidor
+ * (`captureOriginHeaders`, llamada desde el loader de `root`). Este hook se
+ * queda como red para lo que el servidor no ve: navegaciones del lado del
+ * cliente dentro de la SPA, donde no hay petición que inspeccionar.
+ *
+ * Los dos escriben la misma cookie y respetan la misma regla —el primer toque
+ * no se pisa— así que da igual quién llegue primero.
+ */
 export default function useOriginCapture() {
   useEffect(() => {
     try {

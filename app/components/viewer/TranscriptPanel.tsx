@@ -265,7 +265,7 @@ export const TranscriptPanel = ({
               {resultadosDeOtros.map((r, i) => (
                 <a
                   key={`${r.videoSlug}-${r.s}-${i}`}
-                  href={`/cursos/${courseSlug}/viewer?videoSlug=${r.videoSlug}&t=${r.s}&tab=transcript`}
+                  href={`/cursos/${courseSlug}/${r.videoSlug}?t=${r.s}&tab=transcript`}
                   className="block rounded-lg px-2 py-2 text-sm text-gray-300 hover:bg-white/5"
                 >
                   <span className="block truncate text-xs text-gray-500">{r.videoTitle}</span>

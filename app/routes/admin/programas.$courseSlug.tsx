@@ -562,7 +562,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                 {pieza.transcript && (
                   <div className="mt-3 pt-3 border-t border-gray-800">
                     <a
-                      href={`/cursos/${course.slug}/viewer?videoSlug=${pieza.slug}&tab=transcript`}
+                      href={`/cursos/${course.slug}/${pieza.slug}?tab=transcript`}
                       target="_blank"
                       rel="noopener"
                       className="inline-flex items-center gap-2 px-2.5 py-1 text-xs rounded-lg

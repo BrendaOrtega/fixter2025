@@ -59,7 +59,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const videoItems = videos.flatMap((v) => {
     const cursoSlug = v.courseIds.map((id) => cursoPorId.get(id)).find(Boolean);
     if (!cursoSlug) return [];
-    const loc = `${baseUrl}/cursos/${cursoSlug}/viewer?videoSlug=${v.slug}`;
+    const loc = `${baseUrl}/cursos/${cursoSlug}/${v.slug}`;
     return [
       [
         `<url>`,

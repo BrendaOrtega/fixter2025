@@ -559,7 +559,7 @@ function WebinarSection() {
           {/* El primero ya pasó y quedó grabado. Va aquí, junto al formulario
               de los que faltan: quien llega tarde no se queda sin nada. */}
           <a
-            href={`/cursos/sistemas-agenticos/viewer?videoSlug=${WEBINAR_RECORDING_SLUG}`}
+            href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
             className="group mt-8 flex items-center gap-4 rounded-2xl border border-sistemas-primary/40 bg-sistemas-primary/5 p-5 transition hover:border-sistemas-primary hover:bg-sistemas-primary/10"
           >
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sistemas-primary/20 text-xl text-sistemas-primary transition group-hover:bg-sistemas-primary/30">
@@ -816,7 +816,7 @@ export default function SistemasAgenticosLanding() {
                   <>
                     ¿Prefieres verlo antes?{" "}
                     <a
-                      href={`/cursos/sistemas-agenticos/viewer?videoSlug=${WEBINAR_RECORDING_SLUG}`}
+                      href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
                       className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
                     >
                       Mira el webinar completo, gratis →
@@ -827,7 +827,7 @@ export default function SistemasAgenticosLanding() {
               <p className="mt-1 text-xs text-sistemas-gray/70">
                 El primero ya está grabado y{" "}
                 <a
-                  href={`/cursos/sistemas-agenticos/viewer?videoSlug=${WEBINAR_RECORDING_SLUG}`}
+                  href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
                   className="font-semibold underline underline-offset-2 hover:text-sistemas-accent"
                 >
                   puedes verlo completo

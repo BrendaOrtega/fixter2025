@@ -92,7 +92,7 @@ export const loader = async () => {
         const acceso =
           v.accessLevel === "public" ? "" : " · pide tu correo para verla";
         lineas.push(
-          `  - [${v.title}](${SITE}/cursos/${c.slug}/viewer?videoSlug=${v.slug})${dur}${acceso}`
+          `  - [${v.title}](${SITE}/cursos/${c.slug}/${v.slug})${dur}${acceso}`
         );
         if (v.description) {
           lineas.push(

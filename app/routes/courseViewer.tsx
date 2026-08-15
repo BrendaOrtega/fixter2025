@@ -50,9 +50,9 @@ export function meta({ data }: Route.MetaArgs) {
       image: video.poster || course.icon || course.poster || undefined,
       // La canónica es la URL que sirve 200. `/cursos/:curso/:vídeo` es más bonita pero
       // redirige, así que apuntar ahí manda a los buscadores por un salto de más.
-      url: `${SITE}/cursos/${course.slug}/viewer?videoSlug=${video.slug}`,
+      url: `${SITE}/cursos/${course.slug}/${video.slug}`,
       type: "video.other",
-      videoUrl: `${SITE}/cursos/${course.slug}/viewer?videoSlug=${video.slug}`,
+      videoUrl: `${SITE}/cursos/${course.slug}/${video.slug}`,
       videoDuration: video.duration ? Number(video.duration) * 60 : undefined,
     });
   }
@@ -374,10 +374,25 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { course, videos } = result;
   const isPurchased = user ? user.courses.includes(course.id as string) : false;
   let video;
-  if (searchParams.has("videoSlug")) {
+  // La URL canónica es `/cursos/:curso/:video`. Quien llega por la vieja
+  // —`/viewer?videoSlug=`— se manda a la canónica con TODA su query intacta:
+  // los links repartidos en correos y descripciones de YouTube no se rompen, y
+  // los `utm_*` sobreviven al salto.
+  if (!params.videoSlug && searchParams.has("videoSlug")) {
+    const slug = searchParams.get("videoSlug") as string;
+    const resto = new URLSearchParams(searchParams);
+    resto.delete("videoSlug");
+    const query = resto.toString();
+    throw redirect(
+      `/cursos/${params.courseSlug}/${slug}${query ? `?${query}` : ""}`,
+      301
+    );
+  }
+
+  if (params.videoSlug) {
     video = await db.video.findUnique({
       where: {
-        slug: searchParams.get("videoSlug") as string,
+        slug: params.videoSlug as string,
       },
       select: {
         id: true,
@@ -403,7 +418,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     // Si no hay videoSlug, usar el primer video y redireccionar
     video = videos[0];
     if (video?.slug) {
-      throw redirect(`/cursos/${params.courseSlug}/viewer?videoSlug=${video.slug}`);
+      throw redirect(`/cursos/${params.courseSlug}/${video.slug}`);
     }
   }
 
@@ -748,7 +763,7 @@ export default function Route({
     (accessLevel === "sequence" && !!(video.m3u8 || video.storageLink));
 
   const chaptersList = (seo?.chapters as { s: number; titulo: string }[]) || [];
-  const videoUrl = `https://www.fixtergeek.com/cursos/${course.slug}/viewer?videoSlug=${video.slug}`;
+  const videoUrl = `https://www.fixtergeek.com/cursos/${course.slug}/${video.slug}`;
 
   const showSubscriptionDrawer = !hasAccess && accessLevel === "subscriber";
   const showSequenceDrawer = !hasAccess && accessLevel === "sequence";
@@ -900,7 +915,7 @@ export default function Route({
           nextVideo={nextVideo || undefined}
           nextVideoLink={
             nextVideo
-              ? `/cursos/${course.slug}/viewer?videoSlug=${nextVideo.slug}`
+              ? `/cursos/${course.slug}/${nextVideo.slug}`
               : undefined
           }
           slug={video.slug}
@@ -1009,7 +1024,7 @@ export default function Route({
       {searchParams.subscribed && (
         <SubscriptionSuccessDrawer
           isOpen
-          onClose={() => navigate(`/cursos/${course.slug}/viewer?videoSlug=${video.slug}`, { replace: true })}
+          onClose={() => navigate(`/cursos/${course.slug}/${video.slug}`, { replace: true })}
           subscriberVideos={subscriberVideos}
           courseSlug={course.slug}
         />
