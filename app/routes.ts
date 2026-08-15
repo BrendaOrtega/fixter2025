@@ -16,10 +16,13 @@ export default [
   route("secuencias", "routes/secuencias.tsx"),
   route("secuencias/:id", "routes/secuencias.$id.tsx"),
   route("e", "routes/e.tsx"), // entrada desde un correo: siembra identidad y redirige
-  route("s/confirmar", "routes/s.confirmar.tsx"), // confirmación doble opt-in pública
-  route("s/video", "routes/s.video.tsx"), // reproductor con desbloqueo por secuencia
-  route("s/baja", "routes/s.baja.tsx"), // cancelar suscripción (unsubscribe)
-  route("s/:id", "routes/s.$id.tsx"), // suscripción pública a una secuencia
+  // Las series, con nombre. `/s/*` sigue vivo como 301 porque viaja en correos
+  // ya enviados —incluido el link de baja, que nunca puede romperse.
+  route("series/confirmar", "routes/s.confirmar.tsx"), // confirmación doble opt-in pública
+  route("series/video", "routes/s.video.tsx"), // reproductor con desbloqueo por serie
+  route("series/baja", "routes/s.baja.tsx"), // cancelar suscripción (unsubscribe)
+  route("series/:id", "routes/s.$id.tsx"), // suscripción pública a una serie
+  route("s/*", "routes/s.legacy.tsx"), // alias viejo → /series/*
   route("c/confirmar", "routes/c.confirmar.tsx"), // doble opt-in de comunidad (antes que c/:slug)
   route("c/:slug", "routes/c.$slug.tsx"), // alta pública a una comunidad
   route("newsletters", "routes/newsletters.tsx"), // redirect → /secuencias

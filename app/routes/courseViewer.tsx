@@ -493,7 +493,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
         select: { slug: true, id: true, name: true },
       });
       if (seq) {
-        sequenceUrl = `/s/${seq.slug || seq.id}`;
+        sequenceUrl = `/series/${seq.slug || seq.id}`;
         sequenceName = seq.name;
         sequenceDbId = seq.id;
       }

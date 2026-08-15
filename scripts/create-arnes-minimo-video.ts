@@ -34,7 +34,7 @@ Lo que se construye, en orden:
 
 **El código:** [github.com/blissito/taller-arnes-grok](https://github.com/blissito/taller-arnes-grok) — el repositorio crece con cada entrega.
 
-Es la primera entrega de la secuencia [Introducción a los agentes de IA](https://www.fixtergeek.com/s/introduccion-a-los-agentes-de-ia).`;
+Es la primera entrega de la secuencia [Introducción a los agentes de IA](https://www.fixtergeek.com/series/introduccion-a-los-agentes-de-ia).`;
 
 async function main() {
   const course = await prisma.course.findUnique({

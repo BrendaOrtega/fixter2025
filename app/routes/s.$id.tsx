@@ -34,7 +34,7 @@ export const meta = ({ data: d }: Route.MetaArgs) => {
     description:
       d.sequence.description ||
       "Suscríbete a esta secuencia de emails en FixterGeek.",
-    url: `https://www.fixtergeek.com/s/${d.sequence.slug || d.sequence.id}`,
+    url: `https://www.fixtergeek.com/series/${d.sequence.slug || d.sequence.id}`,
   });
 };
 

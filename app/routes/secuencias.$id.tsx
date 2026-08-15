@@ -490,7 +490,7 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
 
   const copyShareLink = () => {
     navigator.clipboard?.writeText(
-      `${window.location.origin}/s/${sequence.id}`
+      `${window.location.origin}/series/${sequence.slug || sequence.id}`
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

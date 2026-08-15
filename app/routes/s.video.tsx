@@ -28,16 +28,16 @@ const needsSigning = (url: string) => !/^https:\/\/[^/]+\.t3\.storage\.dev\//.te
 
 // Cookie de acceso firmada: recuerda el enrollment para volver sin el token.
 //
-// El path es "/s" y no "/s/video": React Router pide los loaders de una
-// navegación cliente a "/s/video.data", y por las reglas de cookies ese path
-// NO cae dentro de "/s/video" (el carácter siguiente debe ser "/", y es un
+// El path es "/series" y no "/series/video": React Router pide los loaders de
+// una navegación cliente a "/series/video.data", y por las reglas de cookies ese
+// path NO cae dentro de "/series/video" (el carácter siguiente debe ser "/", y es un
 // punto). Con el path anterior la cookie no viajaba en esas peticiones, así
 // que navegar dentro del camino contestaba "Abre este video desde el enlace de
 // tu correo" aunque el usuario acabara de entrar con su token.
 const accessCookie = createCookie("secuencia_acceso", {
   httpOnly: true,
   sameSite: "lax",
-  path: "/s",
+  path: "/series",
   maxAge: 60 * 60 * 24 * 90,
   secrets: [process.env.SECRET || "fixtergeek"],
   secure: process.env.NODE_ENV === "production",
@@ -396,7 +396,7 @@ function Path({
             <li key={item.emailId} className="relative">
               {item.unlocked && item.hasVideo && !isCurrent ? (
                 <Link
-                  to={`/s/video?v=${item.emailId}`}
+                  to={`/series/video?v=${item.emailId}`}
                   className="flex gap-4 group hover:opacity-90"
                 >
                   {node}
