@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { MapaDeCalorVideo } from "~/components/admin/MapaDeCalorVideo";
+import { LinkBuilder } from "~/components/admin/LinkBuilder";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { getPrograma } from "~/.server/programas";
 import { db } from "~/.server/db";
@@ -392,8 +393,20 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
           <Stat label="Comprometidos" value={stats.comprometidos} />
         </div>
 
-        {/* Las pestañas se veían tan apagadas que no parecían clickeables. Con
-            borde y el conteo al lado se leen como lo que son. */}
+        <div className="mb-6">
+          <LinkBuilder
+            campanaSugerida={`${course.slug}-${new Date().toISOString().slice(0, 10)}`}
+            destinos={[
+              ...(course.landingUrl
+                ? [{ label: "Landing del programa", path: course.landingUrl }]
+                : []),
+              ...piezas.map((pieza) => ({
+                label: pieza.title,
+                path: `/cursos/${course.slug}/${pieza.slug}`,
+              })),
+            ]}
+          />
+        </div>
         <div className="flex gap-2 mb-4 border-b border-gray-800">
           {(
             [
