@@ -317,7 +317,20 @@ export const getPrograma = async (slug: string) => {
     const respectoAlAnterior =
       anterior && anterior.size ? Math.round((vivos.size / anterior.size) * 100) : null;
     anterior = vivos;
-    return { paso, personas: vivos.size, respectoAlAnterior };
+    return { paso, personas: vivos.size, respectoAlAnterior, fuera: false };
+  });
+
+  // La compra se muestra al final de la misma lista, pero medida contra quien
+  // dejó su correo y no contra el último paso: a la landing del taller se llega
+  // sin ver la grabación. Va marcada como fuera del camino para que nadie lea
+  // ese porcentaje como si fuera la continuación del embudo.
+  embudo.push({
+    paso: "Compraron",
+    personas: compradores.size,
+    respectoAlAnterior: conCorreo.size
+      ? Math.round((compradores.size / conCorreo.size) * 100)
+      : null,
+    fuera: true,
   });
 
   /**

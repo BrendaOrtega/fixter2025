@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, data, useFetcher } from "react-router";
 import type { Route } from "./+types/programas.$courseSlug";
 import {
@@ -347,7 +347,26 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
   const { course, tags, piezas, materialesDelCurso, audiencia, stats, embudo, canales, ventas } =
     loaderData;
   const fetcher = useFetcher();
-  const [tab, setTab] = useState<"piezas" | "audiencia" | "embudo">("piezas");
+  type Tab = "piezas" | "audiencia" | "embudo";
+  // La pestaña vive en la URL: si es estado local, recargar —o volver desde
+  // otra pantalla— siempre devuelve a Piezas, y este admin se abre para mirar
+  // una pestaña concreta, no para navegar hasta ella otra vez.
+  const [tab, setTabState] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "piezas";
+    const desde = new URLSearchParams(window.location.search).get("tab");
+    return desde === "audiencia" || desde === "embudo" ? desde : "piezas";
+  });
+
+  const setTab = useCallback((next: Tab) => {
+    setTabState(next);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (next === "piezas") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", next);
+    // replaceState y no navigate: es la misma página con otra pestaña, no un
+    // destino nuevo que deba apilar historial ni recargar los loaders.
+    window.history.replaceState(window.history.state, "", url.toString());
+  }, []);
 
   return (
     <article className="min-h-screen bg-gray-950 pt-8 ml-48">

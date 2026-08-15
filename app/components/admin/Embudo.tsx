@@ -6,7 +6,13 @@
  * al borde lo esconde.
  */
 
-type Paso = { paso: string; personas: number; respectoAlAnterior: number | null };
+type Paso = {
+  paso: string;
+  personas: number;
+  respectoAlAnterior: number | null;
+  /** Fuera del camino: su porcentaje no se mide contra el paso de arriba. */
+  fuera: boolean;
+};
 type Canal = { canal: string; registrados: number; vieron: number; compraron: number };
 
 export const Embudo = ({
@@ -27,17 +33,29 @@ export const Embudo = ({
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
         <h3 className="text-sm font-medium text-gray-300">De la grabación</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Cada paso solo cuenta a quien pasó el anterior. El porcentaje es contra
-          el paso de arriba: ahí se ve la fuga.
+          Cada paso solo cuenta a quien pasó el anterior, y el porcentaje es
+          contra el paso de arriba: ahí se ve la fuga. La compra va debajo de la
+          línea porque no cuelga de este camino — a la landing del taller se
+          llega sin ver la grabación.
         </p>
 
         <div className="mt-4 flex flex-col gap-2">
           {embudo.map((paso) => (
-            <div key={paso.paso} className="flex items-center gap-3">
-              <div className="w-52 shrink-0 text-sm text-gray-300">{paso.paso}</div>
+            <div
+              key={paso.paso}
+              className={`flex items-center gap-3 ${paso.fuera ? "mt-3 pt-3 border-t border-dashed border-gray-700" : ""}`}
+            >
+              <div className="w-52 shrink-0 text-sm text-gray-300">
+                {paso.paso}
+                {paso.fuera && (
+                  <span className="block text-[11px] text-gray-500">
+                    sobre los que dejaron correo
+                  </span>
+                )}
+              </div>
               <div className="flex-1 h-7 rounded-lg bg-gray-950 overflow-hidden">
                 <div
-                  className="h-full bg-purple-500/40 border-r border-purple-400/60"
+                  className={`h-full border-r ${paso.fuera ? "bg-emerald-500/40 border-emerald-400/60" : "bg-purple-500/40 border-purple-400/60"}`}
                   style={{ width: `${Math.max(2, (paso.personas / tope) * 100)}%` }}
                 />
               </div>
