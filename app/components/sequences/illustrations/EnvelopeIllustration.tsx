@@ -31,6 +31,10 @@ export function EnvelopeIllustration({
         .en-sheet  { animation: en-rise 6s cubic-bezier(.34,1.15,.4,1) infinite; }
         .en-flap   { animation: en-flap 6s cubic-bezier(.34,1.1,.4,1) infinite;
                      transform-origin: 130px 74px; }
+        /* Cerrado, la solapa tapa la carta; abierto, cae por detrás. Como el
+           orden de pintado no se puede animar, hay dos copias que se turnan. */
+        .en-flap--front { animation: en-front 6s steps(1) infinite; }
+        .en-flap--back  { animation: en-back  6s steps(1) infinite; }
         .en-seal   { animation: en-seal 6s ease-in-out infinite;
                      transform-origin: 130px 128px; }
         .en-ln     { stroke-dasharray: 76; stroke-dashoffset: 76;
@@ -55,10 +59,12 @@ export function EnvelopeIllustration({
           26%, 74%  { transform: rotate(-180deg); }
           90%, 100% { transform: rotate(0deg); }
         }
+        /* En reposo la carta está guardada: +34 la mete por debajo del borde
+           superior del sobre, así que cerrado no asoma nada. */
         @keyframes en-rise {
-          0%, 16%   { transform: translateY(10px); }
+          0%, 16%   { transform: translateY(34px); }
           40%, 70%  { transform: translateY(-46px); }
-          88%, 100% { transform: translateY(10px); }
+          88%, 100% { transform: translateY(34px); }
         }
         @keyframes en-write {
           0%, 34%   { stroke-dashoffset: 76; }
@@ -79,14 +85,25 @@ export function EnvelopeIllustration({
           0%, 100% { transform: scaleX(1); opacity: .32; }
           50%      { transform: scaleX(1.1); opacity: .18; }
         }
+        @keyframes en-front {
+          0%, 13%   { opacity: 1; }
+          14%, 89%  { opacity: 0; }
+          90%, 100% { opacity: 1; }
+        }
+        @keyframes en-back {
+          0%, 13%   { opacity: 0; }
+          14%, 89%  { opacity: 1; }
+          90%, 100% { opacity: 0; }
+        }
         @keyframes en-spark {
           0%, 30%   { opacity: 0; transform: translate(0, 6px) scale(.6); }
           46%       { opacity: 1; transform: translate(0, -6px) scale(1); }
           66%, 100% { opacity: 0; transform: translate(0, -18px) scale(.7); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .en-all, .en-sheet, .en-flap, .en-seal, .en-ln, .en-dot,
-          .en-shadow, .en-spark { animation: none; }
+          .en-all, .en-sheet, .en-flap, .en-flap--front, .en-flap--back,
+          .en-seal, .en-ln, .en-dot, .en-shadow, .en-spark { animation: none; }
+          .en-flap--back { opacity: 0; }
           .en-ln { stroke-dashoffset: 0; }
         }
       `}</style>
@@ -124,9 +141,9 @@ export function EnvelopeIllustration({
           strokeLinejoin="round"
         />
 
-        {/* 2. SOLAPA: gira sobre el borde superior y cae hacia atrás */}
+        {/* 2. SOLAPA DE ATRÁS: la que se ve mientras el sobre está abierto */}
         <path
-          className="en-flap"
+          className="en-flap en-flap--back"
           d="M40 74l84 56a10 10 0 0012 0l84-56z"
           fill="#16262E"
           stroke="#85DDCB"
@@ -195,6 +212,17 @@ export function EnvelopeIllustration({
           <circle cx="62" cy="134" r="12" />
           <path d="M55 130h14M55 138h14" />
         </g>
+
+        {/* 5. SOLAPA DE ENFRENTE: el mismo trazo, pintado hasta arriba. Es la
+              que se ve con el sobre cerrado, tapando la carta guardada. */}
+        <path
+          className="en-flap en-flap--front"
+          d="M40 74l84 56a10 10 0 0012 0l84-56z"
+          fill="#16262E"
+          stroke="#85DDCB"
+          strokeWidth="4"
+          strokeLinejoin="round"
+        />
 
         {/* sello de cera, en la punta del bolsillo */}
         <g className="en-seal">

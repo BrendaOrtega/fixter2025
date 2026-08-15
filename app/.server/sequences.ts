@@ -173,14 +173,25 @@ export function estimateUnlockDates(
 export async function sequenceUnlockFor(
   videoSlug: string,
   email?: string | null
-): Promise<{ unlocked: boolean; unlocksAt: Date | null; sequenceId?: string }> {
+): Promise<{
+  unlocked: boolean;
+  unlocksAt: Date | null;
+  /** false = ni siquiera está suscrito; hay que ofrecerle el alta, no una fecha. */
+  enrolled: boolean;
+  sequenceId?: string;
+}> {
   const email_ = await db.sequenceEmail.findFirst({
     where: { videoSlug },
     select: { id: true, order: true, sequenceId: true },
   });
-  if (!email_) return { unlocked: false, unlocksAt: null };
+  if (!email_) return { unlocked: false, unlocksAt: null, enrolled: false };
 
-  const base = { unlocked: false, unlocksAt: null, sequenceId: email_.sequenceId };
+  const base = {
+    unlocked: false,
+    unlocksAt: null,
+    enrolled: false,
+    sequenceId: email_.sequenceId,
+  };
   if (!email) return base;
 
   const subscriber = await db.subscriber.findUnique({
@@ -204,7 +215,12 @@ export async function sequenceUnlockFor(
   // enviada cuando el índice ya pasó de N-1.
   const position = email_.order - 1;
   if (position < enrollment.currentEmailIndex) {
-    return { unlocked: true, unlocksAt: null, sequenceId: email_.sequenceId };
+    return {
+      unlocked: true,
+      unlocksAt: null,
+      enrolled: true,
+      sequenceId: email_.sequenceId,
+    };
   }
 
   const emails = await db.sequenceEmail.findMany({
@@ -216,6 +232,7 @@ export async function sequenceUnlockFor(
   return {
     unlocked: false,
     unlocksAt: estimateUnlockDates(emails, enrollment)[position] ?? null,
+    enrolled: true,
     sequenceId: email_.sequenceId,
   };
 }

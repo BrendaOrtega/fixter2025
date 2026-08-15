@@ -40,7 +40,10 @@ interface UnifiedSidebarProps {
   isLocked?: boolean;
   isSubscribed?: boolean;
   /** Veredicto del servidor por slug para los videos de una secuencia. */
-  sequenceUnlocks?: Record<string, { unlocked: boolean; unlocksAt: string | null }>;
+  sequenceUnlocks?: Record<
+    string,
+    { unlocked: boolean; unlocksAt: string | null; enrolled?: boolean }
+  >;
   currentVideoSlug?: string;
   moduleNames: string[];
   videos: Partial<Video>[];
@@ -475,7 +478,10 @@ const VideosContent = ({
   isLocked?: boolean;
   isSubscribed?: boolean;
   /** Veredicto del servidor por slug para los videos de una secuencia. */
-  sequenceUnlocks?: Record<string, { unlocked: boolean; unlocksAt: string | null }>;
+  sequenceUnlocks?: Record<
+    string,
+    { unlocked: boolean; unlocksAt: string | null; enrolled?: boolean }
+  >;
   completed: string[];
   videosCompleted: string[];
   checkIfWatched: (slug: string) => boolean;

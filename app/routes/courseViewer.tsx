@@ -377,8 +377,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const sequenceVideos = isPurchased
     ? []
     : videos.filter((v: any) => v.accessLevel === "sequence");
-  const sequenceUnlocks: Record<string, { unlocked: boolean; unlocksAt: string | null }> =
-    {};
+  const sequenceUnlocks: Record<
+    string,
+    { unlocked: boolean; unlocksAt: string | null; enrolled: boolean }
+  > = {};
   let sequenceUrl: string | null = null;
 
   if (sequenceVideos.length) {
@@ -393,6 +395,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       sequenceUnlocks[v.slug as string] = {
         unlocked: unlock.unlocked,
         unlocksAt: unlock.unlocksAt ? unlock.unlocksAt.toISOString() : null,
+        enrolled: unlock.enrolled,
       };
       sequenceId ||= unlock.sequenceId;
     }
@@ -409,6 +412,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const currentUnlock = sequenceUnlocks[video.slug as string];
   const sequenceUnlocked = currentUnlock?.unlocked ?? false;
   const unlocksAt = currentUnlock?.unlocksAt ?? null;
+  const sequenceEnrolled = currentUnlock?.enrolled ?? false;
 
   // La regla vive en un solo lugar; aquí solo se le pasan los datos ya cargados.
   const { resolveAccess } = await import("~/.server/videoAccess");
@@ -521,6 +525,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     accessLevel,
     unlocksAt,
     sequenceUrl,
+    sequenceEnrolled,
     sequenceUnlocks,
     video: videoToReturn,
     transcript,
@@ -594,6 +599,7 @@ export default function Route({
     accessLevel,
     unlocksAt,
     sequenceUrl,
+    sequenceEnrolled,
     sequenceUnlocks,
     video,
     transcript,
@@ -930,6 +936,7 @@ export default function Route({
           isOpen
           title={video.title}
           unlocksAt={unlocksAt as string | null}
+          enrolled={sequenceEnrolled}
           sequenceUrl={sequenceUrl}
         />
       )}

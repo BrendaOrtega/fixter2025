@@ -88,7 +88,7 @@ ${promoFooter}      <tr><td style="padding:14px 32px;background:#19262A;color:#7
  * Botón CTA con estilos inline, para insertar dentro del contenido del email.
  */
 export function emailButton(label: string, href: string): string {
-  return `<a href="${href}" target="_blank" rel="noopener" style="display:inline-block;background:#85DDCB;color:#0E1317;text-decoration:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;margin:8px 0;">${label}</a>`;
+  return `<a href="${href}" target="_blank" rel="noopener" style="display:inline-block;background:#85DDCB;color:#0E1317;text-decoration:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;margin:8px 0;white-space:nowrap;">${label}</a>`;
 }
 
 /* ------------------------------------------------------------------ *
