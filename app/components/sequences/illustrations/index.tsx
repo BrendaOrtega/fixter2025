@@ -1,5 +1,7 @@
 import type React from "react";
-import { EnvelopeIllustration } from "./EnvelopeIllustration";
+// El sobre es el mismo que usan las comunidades: un solo dibujo, un solo
+// lugar donde mejorarlo.
+import { EnvelopeIllustration } from "~/components/community/EnvelopeIllustration";
 import { MailboxIllustration } from "./MailboxIllustration";
 import { TerminalIllustration } from "./TerminalIllustration";
 import { NotebookIllustration } from "./NotebookIllustration";

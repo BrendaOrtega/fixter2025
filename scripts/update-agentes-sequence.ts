@@ -92,10 +92,22 @@ ${emailVideoCard(
   <li>Ejecución durable y permisos.</li>
 </ol>
 
+<h3 style="margin:0 0 8px 0;color:#19262A;font-size:18px;">Mientras tanto</h3>
+<p style="margin:0 0 12px 0;color:#475569;">
+  De los webinars en vivo de los jueves —abiertos y gratuitos— salieron estos
+  dos, por si quieres seguir:
+</p>
+<p style="margin:0 0 24px 0;color:#475569;">
+  <a href="${PDF_URL}" target="_blank" rel="noopener" style="color:#0E8F79;font-weight:bold;text-decoration:underline;">El PDF de las seis piezas</a>
+  &nbsp;·&nbsp;
+  <a href="${VIEWER_URL}" target="_blank" rel="noopener" style="color:#0E8F79;font-weight:bold;text-decoration:underline;">▶ La grabación del webinar</a>
+</p>
+
 ${emailTeaser(
   {
     title:
-      "Los materiales del webinar: el PDF de las seis piezas y la grabación completa.",
+      "La interfaz web — el agente sale de la terminal y se muda al navegador.",
+    when: "en unos días",
   },
   "light"
 )}
@@ -109,58 +121,10 @@ ${emailTeaser(
   ),
 };
 
-const emailTwo = {
-  order: 2,
-  schedulingType: "delay",
-  delayDays: 3,
-  subject: "Las seis piezas (y el webinar completo)",
-  content: wrapEmailHtml(
-    `
-<h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">Las seis piezas 🧩</h1>
-
-<p style="margin:0 0 16px 0;">
-  Ya tienes el loop corriendo. Lo que separa ese agente de uno que aguanta
-  usuarios reales son seis piezas: herramientas, contexto, ejecución durable,
-  memoria, permisos e interfaz.
-</p>
-
-<p style="margin:0 0 16px 0;">
-  Están a detalle en este PDF de 23 páginas, y en la grabación del webinar donde
-  se arma un sistema agéntico completo — los dos salieron de los webinars en
-  vivo de los jueves, que son abiertos y gratuitos.
-</p>
-
-<div style="margin:0 0 10px 0;">${emailButton(
-      "Descargar las seis piezas",
-      PDF_URL
-    )}</div>
-<p style="margin:0 0 24px 0;">
-  <a href="${VIEWER_URL}" target="_blank" rel="noopener" style="color:#0E8F79;font-weight:bold;text-decoration:underline;">
-    ▶ Ver el webinar completo
-  </a>
-</p>
-
-${emailTeaser(
-  {
-    title:
-      "La interfaz web — el agente sale de la terminal y se muda al navegador, con streaming en vivo.",
-  },
-  "light"
-)}
-
-<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>
-`,
-    {
-      preheader: "Lo que separa un demo de un agente que aguanta usuarios reales.",
-      theme: "light",
-    }
-  ),
-};
-
 /** Sin --write solo escupe los HTML a /tmp para revisarlos en el navegador. */
 async function preview() {
   const { writeFile } = await import("node:fs/promises");
-  for (const email of [emailOne, emailTwo]) {
+  for (const email of [emailOne]) {
     const path = `/tmp/agentes-entrega-${email.order}.html`;
     await writeFile(path, email.content);
     console.log(`👀 ${path} — ${email.subject}`);
@@ -168,7 +132,7 @@ async function preview() {
 }
 
 async function main() {
-  for (const email of [emailOne, emailTwo]) {
+  for (const email of [emailOne]) {
     const existing = await db.sequenceEmail.findFirst({
       where: { sequenceId: SEQUENCE_ID, order: email.order },
     });

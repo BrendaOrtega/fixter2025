@@ -3,6 +3,7 @@ import { useFetcher } from "react-router";
 import { Drawer } from "./SimpleDrawer";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { formatUnlock } from "~/utils/formatUnlock";
+import { EnvelopeIllustration } from "~/components/community/EnvelopeIllustration";
 
 /**
  * Lo que ve quien llega a un video que todavía no le toca.
@@ -53,7 +54,7 @@ export function SequenceLockedDrawer({
     return (
       <Drawer isOpen={isOpen} onClose={() => {}} title="¡Listo!">
         <div className="text-center">
-          <div className="text-5xl">{listo ? "✅" : "📬"}</div>
+          <EnvelopeIllustration className="mx-auto h-auto w-[190px]" />
           <h3 className="mt-4 text-xl font-bold text-white">
             {listo ? "Ya estás dentro" : "Revisa tu correo"}
           </h3>
@@ -72,7 +73,7 @@ export function SequenceLockedDrawer({
     return (
       <Drawer isOpen={isOpen} onClose={() => {}} title="Esta entrega aún no llega">
         <div className="text-center">
-          <div className="text-5xl">📬</div>
+          <EnvelopeIllustration className="mx-auto h-auto w-[190px]" />
           <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
           <p className="mt-3 text-brand-100">
             {cuando ? (
@@ -103,7 +104,7 @@ export function SequenceLockedDrawer({
   return (
     <Drawer isOpen={isOpen} onClose={() => {}} title="Este video llega por correo">
       <div className="text-center">
-        <div className="text-5xl">📬</div>
+        <EnvelopeIllustration className="mx-auto h-auto w-[190px]" />
         <h3 className="mt-4 text-xl font-bold text-white">{title}</h3>
 
         <p className="mt-3 text-brand-100">
