@@ -342,7 +342,7 @@ const fecha = (value: string | Date | null) =>
     : null;
 
 export default function Programa({ loaderData }: Route.ComponentProps) {
-  const { course, tag, piezas, materialesDelCurso, audiencia, stats } =
+  const { course, tags, piezas, materialesDelCurso, audiencia, stats } =
     loaderData;
   const fetcher = useFetcher();
   const [tab, setTab] = useState<"piezas" | "audiencia">("piezas");
@@ -363,7 +363,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
             <h1 className="text-2xl font-bold text-white">{course.title}</h1>
             <p className="text-sm text-gray-500">
               tag de audiencia:{" "}
-              <code className="text-gray-400">{tag}</code>
+              <code className="text-gray-400">{tags.join(" · ")}</code>
             </p>
           </div>
           <fetcher.Form method="post" className="flex items-center gap-2">
@@ -608,7 +608,7 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                 {audiencia.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      Nadie con el tag <code>{tag}</code> todavía.
+                      Nadie registrado ni con la grabación desbloqueada todavía.
                     </td>
                   </tr>
                 ) : (

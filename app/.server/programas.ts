@@ -10,6 +10,15 @@ import { db } from "./db";
 /// (`sistemas-agenticos.tsx`, `claude.tsx`, `gemini.tsx`).
 export const audienceTagFor = (courseSlug: string) => `webinar-${courseSlug}`;
 
+/// Al programa se entra por dos puertas: registrarse al webinar en vivo, o
+/// desbloquear la grabación con el correo desde el reproductor —que escribe
+/// `<slug>-free-access`—. Contar solo la primera dejaba fuera justo a la gente
+/// que llega por difusión, que es la que más importa medir.
+export const audienceTagsFor = (courseSlug: string) => [
+  audienceTagFor(courseSlug),
+  `${courseSlug}-free-access`,
+];
+
 export const getProgramas = async () => {
   const courses = await db.course.findMany({
     where: { tipo: { not: "proximamente" } },
@@ -31,7 +40,7 @@ export const getProgramas = async () => {
   const audiencias = await Promise.all(
     courses.map((course) =>
       db.subscriber.count({
-        where: { tags: { has: audienceTagFor(course.slug) } },
+        where: { tags: { hasSome: audienceTagsFor(course.slug) } },
       }),
     ),
   );
@@ -64,7 +73,7 @@ export const getPrograma = async (slug: string) => {
   });
   if (!course) return null;
 
-  const tag = audienceTagFor(course.slug);
+  const tags = audienceTagsFor(course.slug);
 
   const [videos, transcripts, resources, subscribers, views] = await Promise.all([
     db.video.findMany({
@@ -114,7 +123,7 @@ export const getPrograma = async (slug: string) => {
       },
     }),
     db.subscriber.findMany({
-      where: { tags: { has: tag } },
+      where: { tags: { hasSome: tags } },
       select: {
         id: true,
         email: true,
@@ -326,7 +335,7 @@ export const getPrograma = async (slug: string) => {
 
   return {
     course,
-    tag,
+    tags,
     piezas,
     // Material del programa completo (temario, repo), no de una pieza.
     materialesDelCurso: resources.filter((r) => !r.videoId),
