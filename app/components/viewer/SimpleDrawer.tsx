@@ -92,7 +92,8 @@ export const Drawer = ({
           // deja el contenido apretado y el fondo a medio ver, que es peor que
           // no tener fondo. De `md` en adelante vuelve a ser cajón lateral, y
           // arranca DEBAJO de la navbar para que el menú no le cruce el título.
-          "bg-background fixed inset-0 flex flex-col text-white overflow-y-auto scrollbar-sutil p-6",
+          "bg-background fixed inset-0 flex flex-col justify-center text-white overflow-y-auto scrollbar-sutil p-6",
+          "lg:justify-start",
           // Cajón lateral SOLO desde lg. En tablet el menú de videos ocupa
           // ~420px fijos a la izquierda y se encimaba con un cajón del 60%,
           // dejando su contenido cortado por debajo del menú.
@@ -103,9 +104,9 @@ export const Drawer = ({
         {header ? (
           header
         ) : (
-          <header className="flex items-center justify-between mb-3 md:mb-6">
-            <div>
-              <h4 className="text-lg font-semibold sm:text-2xl md:text-4xl text-white">
+          <header className="mx-auto mb-3 flex w-full max-w-lg items-start justify-between gap-3 md:mb-6 lg:max-w-none">
+            <div className="min-w-0 flex-1 text-center lg:text-left">
+              <h4 className="text-xl font-semibold text-white sm:text-2xl lg:text-4xl">
                 {title}
               </h4>
               <p className="text-brand_gray">{subtitle}</p>
@@ -114,7 +115,8 @@ export const Drawer = ({
               <button
                 tabIndex={0}
                 onClick={onClose}
-                className="text-2xl round-full p-1 active:scale-95"
+                aria-label="Cerrar"
+                className="round-full absolute right-5 top-5 p-1 text-2xl active:scale-95 lg:static"
               >
                 <IoClose />
               </button>
