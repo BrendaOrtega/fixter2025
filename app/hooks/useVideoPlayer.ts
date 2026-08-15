@@ -196,6 +196,11 @@ export function useVideoPlayer({
   useEffect(() => {
     if (!isReady || !videoRef.current || !video) return;
 
+    // Sin fuente no hay nada que montar. Un video bloqueado llega con `m3u8` y
+    // `storageLink` vacíos a propósito, y aun así se intentaba levantar HLS.js:
+    // ruido en consola y un reproductor esperando algo que nunca llega.
+    if (!video.m3u8 && !video.storageLink) return;
+
     const el = videoRef.current;
     // Solo Safari/iOS tienen HLS nativo confiable. Chrome puede devolver "maybe" pero no funciona bien.
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -209,7 +214,10 @@ export function useVideoPlayer({
         hlsRef.current = null;
       }
 
-      console.log("🎬 Video setup:", {
+      // Diagnóstico solo en desarrollo: en producción llenaba la consola de la
+      // gente con detalles que no le sirven a nadie.
+      if (import.meta.env.DEV)
+        if (import.meta.env.DEV) console.log("🎬 Video setup:", {
         hasNativeHLS,
         hasM3U8: !!video.m3u8,
         hasStorageLink: !!video.storageLink,
@@ -233,13 +241,13 @@ export function useVideoPlayer({
       const resolveSource = async (source: string): Promise<string> => {
         // Case 1: Direct S3 key (new format) -> use proxy
         if (isS3Key(source)) {
-          console.log("🎬 Using S3 key via proxy:", source);
+          if (import.meta.env.DEV) console.log("🎬 Using S3 key via proxy:", source);
           return sinFirmar(`/api/hls-proxy?path=${encodeURIComponent(source)}`);
         }
 
         // Case 2: Internal route (legacy) -> use as-is
         if (isInternalRoute(source)) {
-          console.log("🎬 Using internal route:", source);
+          if (import.meta.env.DEV) console.log("🎬 Using internal route:", source);
           return source;
         }
 
@@ -248,7 +256,7 @@ export function useVideoPlayer({
           if (isNewFormat(source)) {
             const s3Key = extractS3Key(source);
             if (s3Key) {
-              console.log("🎬 Extracted S3 key from URL:", s3Key);
+              if (import.meta.env.DEV) console.log("🎬 Extracted S3 key from URL:", s3Key);
               return sinFirmar(`/api/hls-proxy?path=${encodeURIComponent(s3Key)}`);
             }
             return await interceptHLSUrl(source);
@@ -261,7 +269,7 @@ export function useVideoPlayer({
 
       if (hasNativeHLS) {
         // Safari, iOS - native HLS
-        console.log("🎬 Using Native HLS (Safari/iOS)");
+        if (import.meta.env.DEV) console.log("🎬 Using Native HLS (Safari/iOS)");
         if (video.m3u8) {
           el.src = await resolveSource(video.m3u8);
         } else if (video.storageLink) {
@@ -269,7 +277,7 @@ export function useVideoPlayer({
         }
       } else {
         // Chrome, Firefox - HLS.js
-        console.log("🎬 Using HLS.js (Chrome/Firefox)");
+        if (import.meta.env.DEV) console.log("🎬 Using HLS.js (Chrome/Firefox)");
         const hlsSource = video.m3u8 || (video.storageLink?.includes('.m3u8') ? video.storageLink : null);
 
         if (hlsSource) {

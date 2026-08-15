@@ -164,10 +164,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
   // INTENT: send-code - Envía código OTP o da acceso directo si ya está confirmado
   if (intent === "send-code") {
-    console.log("📧 send-code intent received for:", email);
+    if (import.meta.env.DEV) console.log("📧 send-code intent received for:", email);
     try {
       const existing = await db.subscriber.findUnique({ where: { email } });
-      console.log("📧 Existing subscriber:", existing?.email, "confirmed:", existing?.confirmed);
+      if (import.meta.env.DEV) console.log("📧 Existing subscriber:", existing?.email, "confirmed:", existing?.confirmed);
 
       // Antes, un correo ya confirmado entraba directo, sin código. Eso dejó de
       // ser aceptable en cuanto el alta abre sesión: escribir el correo de otra
@@ -215,7 +215,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         courseTitle: course?.title,
         unlocks,
       });
-      console.log("📧 Code sent successfully, returning codeSent: true");
+      if (import.meta.env.DEV) console.log("📧 Code sent successfully, returning codeSent: true");
       return data({ codeSent: true, email });
     } catch (error) {
       console.error("📧 Error sending code:", error);
@@ -565,7 +565,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   // Generar presigned URL para videos de Tigris (bucket privado)
   let finalStorageLink = (video as any).storageLink || "";
-  console.log("🎬 Original storageLink:", finalStorageLink);
+  if (import.meta.env.DEV) console.log("🎬 Original storageLink:", finalStorageLink);
   // Video de curso: va por el proxy firmado en vez de una presigned suelta.
   const proxiedStorageLink = hasAccess && finalStorageLink
     ? buildHlsProxyUrl(finalStorageLink)
@@ -580,23 +580,23 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       const isFirebaseUrl = finalStorageLink.includes('firebasestorage.googleapis.com');
 
       if (isTigrisUrl) {
-        console.log("🎬 Generating Tigris presigned URL for:", finalStorageLink.substring(0, 80));
+        if (import.meta.env.DEV) console.log("🎬 Generating Tigris presigned URL for:", finalStorageLink.substring(0, 80));
         finalStorageLink = await getPresignedFromUrl(finalStorageLink, 3600);
       } else if (isFirebaseUrl) {
         // Firebase URLs públicas funcionan sin signed URL
         // Solo intentar firmar si hay credenciales configuradas
         if (process.env.FIREBASE_CREDENTIALS_BASE64) {
-          console.log("🔥 Generating Firebase signed URL for:", finalStorageLink.substring(0, 80));
+          if (import.meta.env.DEV) console.log("🔥 Generating Firebase signed URL for:", finalStorageLink.substring(0, 80));
           finalStorageLink = await getFirebaseSignedUrl(finalStorageLink, 3600000);
         } else {
-          console.log("🔥 Using Firebase URL directly (no credentials):", finalStorageLink.substring(0, 80));
+          if (import.meta.env.DEV) console.log("🔥 Using Firebase URL directly (no credentials):", finalStorageLink.substring(0, 80));
           // Usar la URL original - es pública
         }
       }
     } catch (err) {
       console.error("❌ Error generating presigned URL:", err);
       // Mantener la URL original como fallback en lugar de vacío
-      console.log("⚠️ Using original URL as fallback");
+      if (import.meta.env.DEV) console.log("⚠️ Using original URL as fallback");
     }
   }
 
@@ -638,7 +638,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const videoToReturn = removeStorageLink
     ? { ...video, storageLink: "", m3u8: "" }
     : { ...video, storageLink: finalStorageLink, m3u8: finalM3u8 };
-  console.log("🔐 Result:", { hasAccess, removeStorageLink, returnedLink: videoToReturn.storageLink?.substring(0, 80) });
+  if (import.meta.env.DEV) console.log("🔐 Result:", { hasAccess, removeStorageLink, returnedLink: videoToReturn.storageLink?.substring(0, 80) });
 
   // Get subscriber videos for the drawer (with title and slug for navigation)
   const subscriberVideos = videos
