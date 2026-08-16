@@ -53,6 +53,11 @@ export function SequenceLockedDrawer({
   const emailRef = useRef<HTMLInputElement>(null);
   const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
   const [correo, setCorreo] = useState(userEmail || "");
+  // Quien YA está suscrito puede cerrar el cajón y volver al temario, donde se
+  // ven todas las entregas con su estado. El `isOpen` llega fijo desde el
+  // viewer, así que el cierre vive aquí. Para quien no se ha dado de alta el
+  // cajón sigue sin salida: ahí el bloqueo es el punto.
+  const [cerrado, setCerrado] = useState(false);
 
   // El código llegó: se pasa al paso dos sin cambiar de pantalla.
   const enCodigo = !!fetcher.data?.codeSent;
@@ -63,7 +68,13 @@ export function SequenceLockedDrawer({
   // --- Ya suscrito, esta entrega todavía no le toca ----------------------
   if (enrolled) {
     return (
-      <Drawer isOpen={isOpen} onClose={() => {}} noActions noClose noHeader title="Esta entrega aún no llega">
+      <Drawer
+        isOpen={isOpen && !cerrado}
+        onClose={() => setCerrado(true)}
+        noActions
+        noHeader
+        title="Esta entrega aún no llega"
+      >
         <div className="text-center">
           <EnvelopeIllustration className="mx-auto h-auto w-[150px] sm:w-[180px]" />
           <p className="mt-4 text-xs font-medium uppercase tracking-wider text-brand-500">
@@ -83,15 +94,17 @@ export function SequenceLockedDrawer({
             )}
           </p>
           <p className="mt-3 text-pretty text-sm text-brand-100/70">
-            Vas al día — no tienes que hacer nada, nosotros te avisamos.
+            Vas al día — no tienes que hacer nada. El acceso se abre solo, en
+            cuanto te llegue el correo de esta entrega.
           </p>
-          {sequenceUrl && (
-            <a href={sequenceUrl} target="_blank" rel="noopener">
-              <PrimaryButton className="mt-6">
-                Ver todas las entregas
-              </PrimaryButton>
-            </a>
-          )}
+          {/* Antes este botón llevaba a `/secuencias/:slug`, que es el ALTA
+              pública: mandaba a suscribirse a quien ya estaba suscrito, y de
+              ahí caía en la primera entrega. Las entregas con su estado están
+              en el temario, detrás de este mismo cajón — así que el botón
+              cierra en vez de sacar del sitio. */}
+          <PrimaryButton className="mt-6" onClick={() => setCerrado(true)}>
+            Volver al temario
+          </PrimaryButton>
         </div>
       </Drawer>
     );

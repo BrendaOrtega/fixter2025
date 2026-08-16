@@ -223,18 +223,25 @@ getAgenda().define(
 // Process sequences - delega en el service compartido (app/.server/sequences.ts)
 getAgenda().define(
   "process_sequences",
+  // Las opciones van ANTES del handler: la firma es `define(name, options, fn)`
+  // y Agenda solo corrige el orden cuando el tercer argumento viene vacío. Con
+  // los tres puestos al revés guardaba la función como opciones y el objeto como
+  // handler, así que el job corría cada cinco minutos y moría en el acto con
+  // `definition.fn is not a function` — sin tocar una sola inscripción y sin más
+  // rastro que el `failCount` de la colección de Agenda.
+  //
+  // `lockLifetime` explícito, como en `process_video_hls`. El bucle duerme 500ms
+  // por inscripción más la latencia de SES: con unos cientos de vencidas se
+  // rebasa el default de 10 minutos, Agenda da el job por colgado y otra máquina
+  // lo retoma mientras la primera sigue enviando. Todo lo que no había alcanzado
+  // sale dos veces.
+  { lockLifetime: 30 * 60 * 1000 },
   async (job: { attrs: { name: string } }) => {
     console.info("::SEQUENCE_JOB_WORKING::", job.attrs.name);
     const { processed } = await processDueEnrollments();
     console.info(`Processed ${processed} ready enrollments`);
     console.info("::SEQUENCE_JOB_FINISHED::", job.attrs.name);
-  },
-  // Explícito, como `process_video_hls`. El bucle duerme 500ms por inscripción
-  // más la latencia de SES: con unos cientos de vencidas se rebasa el default
-  // de 10 minutos, Agenda da el job por colgado y otra máquina lo retoma —
-  // mientras la primera sigue enviando. Todo lo que no había alcanzado sale
-  // dos veces.
-  { lockLifetime: 30 * 60 * 1000 }
+  }
 );
 
 /**
