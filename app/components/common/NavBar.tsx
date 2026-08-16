@@ -250,7 +250,11 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
           "fixed w-[200px]",
         )}
       >
-        <Triangle className="border-b-brand-500" />
+        {/* A la derecha y no al 45%: ese porcentaje estaba calibrado para
+            cuando el menú colgaba desplazado (`-right-20`). Ahora su borde
+            derecho coincide con el del avatar, así que la punta va a 16px del
+            borde — justo bajo el centro del avatar. */}
+        <Triangle className="border-b-brand-500 left-auto right-4" />
         <button
           onClick={() => handleNavigation("/perfil")}
           className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4 rounded-xl"
