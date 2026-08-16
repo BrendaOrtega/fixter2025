@@ -1085,6 +1085,11 @@ export default function Route({
           videos={videos}
           moduleNames={moduleNames.filter((n) => typeof n === "string")}
           isLocked={!isPurchased}
+          // El loader lo calcula y el menú lo espera, pero nadie lo pasaba: sin
+          // esto, TODA entrega de secuencia se pinta bloqueada —candado, texto
+          // atenuado y cursor de prohibido— aunque el servidor ya haya dicho
+          // que está abierta y el video se esté viendo en esa misma pantalla.
+          sequenceUnlocks={sequenceUnlocks}
           isSubscribed={serverIsSubscribed}
           markdownBody={video.description || undefined}
           transcript={transcript as any}
