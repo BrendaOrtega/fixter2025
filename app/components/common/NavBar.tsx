@@ -200,6 +200,10 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
   };
 
   useEffect(() => {
+    // El menú vive en un portal que sólo existe después del primer render: en
+    // SSR y en ese primer pase `scope.current` es null, y animar contra null
+    // revienta la navbar entera —y con ella toda la página.
+    if (!scope.current) return;
     if (isOpen) {
       animate(
         scope.current,
@@ -222,7 +226,7 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
         { type: "spring", bounce: 0, duration: 0.25 },
       );
     }
-  }, [isOpen]);
+  }, [isOpen, montado]);
 
   const handleNavigation = (path: To) => {
     toggleMenu();
