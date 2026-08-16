@@ -159,8 +159,13 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     session?.email?.toLowerCase().trim() ||
     (formData.get("email") as string)?.toLowerCase().trim();
 
-  if (!email || !courseSlug) {
-    return data({ error: "Email requerido" }, { status: 400 });
+  // Dos faltantes distintos, dos mensajes distintos. Decir "Email requerido"
+  // cuando lo que falta es el curso manda a buscar el problema al lado
+  // equivocado — y eso fue exactamente lo que pasó.
+  if (!email) return data({ error: "Email requerido" }, { status: 400 });
+  if (!courseSlug) {
+    console.error("[viewer] falta courseSlug en el formulario", { intent });
+    return data({ error: "Algo falló de nuestro lado. Recarga la página." }, { status: 400 });
   }
 
   // Dominio desechable o truco de puntos en gmail. Se finge que el código salió:
@@ -1128,6 +1133,11 @@ export default function Route({
           sequenceId={sequenceDbId}
           sequenceName={sequenceName}
           sequenceUrl={sequenceUrl}
+          // Obligatoria y no se pasaba: el cajón la manda en un campo oculto y
+          // el action exige correo Y curso, así que respondía "Email requerido"
+          // a alguien que acababa de escribir su correo. El mensaje señalaba al
+          // dato equivocado.
+          courseSlug={course.slug as string}
           userEmail={user?.email || subscriberEmail}
           // Con sesión abierta la identidad ya está probada: el cajón ofrece un
           // botón, no un formulario.

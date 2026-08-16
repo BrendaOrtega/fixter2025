@@ -153,7 +153,7 @@ export function SequenceLockedDrawer({
             </p>
             {/* El botón dice lo que pasa AL INSTANTE, no el trámite: nadie hace
                 clic con ganas de "suscribirse", hace clic para ver el video. */}
-            <PrimaryButton type="submit" isDisabled={enviando} className="h-14 w-full text-base sm:h-16 sm:text-lg lg:h-12 lg:text-base">
+            <PrimaryButton type="submit" isDisabled={enviando} variant="fill" className="mt-6 w-full font-semibold">
               {enviando ? "Abriendo…" : "Ábreme este video 🍿"}
             </PrimaryButton>
             {fetcher.data?.error && (
@@ -172,6 +172,9 @@ export function SequenceLockedDrawer({
               Te mandamos un código de 6 dígitos a{" "}
               <strong className="text-white">{fetcher.data?.email || correo}</strong>
             </p>
+            <label className="text-sm text-colorParagraph">
+              Código de verificación
+            </label>
             <input
               name="code"
               inputMode="numeric"
@@ -180,12 +183,12 @@ export function SequenceLockedDrawer({
               required
               autoFocus
               placeholder="000000"
-              className="h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-center text-2xl tracking-[0.4em] text-white placeholder-brand-100/30 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-mono text-2xl tracking-[0.5em] text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
             {fetcher.data?.error && (
               <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
             )}
-            <PrimaryButton type="submit" isDisabled={enviando} className="mt-3 h-14 w-full text-base sm:h-16 sm:text-lg lg:h-12 lg:text-base">
+            <PrimaryButton type="submit" isDisabled={enviando} variant="fill" className="mt-6 w-full font-semibold">
               {enviando ? "Verificando…" : "Ábreme este video 🍿"}
             </PrimaryButton>
           </fetcher.Form>
@@ -197,6 +200,7 @@ export function SequenceLockedDrawer({
             <input type="hidden" name="intent" value="send-code" />
             <input type="hidden" name="courseSlug" value={courseSlug} />
             <input type="hidden" name="sequenceId" value={sequenceId || ""} />
+            <label className="text-sm text-colorParagraph">Tu email</label>
             <input
               ref={emailRef}
               type="email"
@@ -205,7 +209,7 @@ export function SequenceLockedDrawer({
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
               placeholder="tu@correo.com"
-              className="h-12 sm:h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
             {/* Mismo trato que en la landing de la serie: el celular vive detrás
                 de un sí explícito, y es para avisos, no para las entregas. */}
@@ -238,20 +242,20 @@ export function SequenceLockedDrawer({
                 inputMode="tel"
                 autoComplete="tel"
                 placeholder="55 1234 5678"
-                className="mt-2 h-12 sm:h-14 w-full rounded-xl border border-brand-100/20 bg-brand-900/60 px-4 text-base text-white placeholder-brand-100/40 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
             )}
             {wantsWhatsapp && <input type="hidden" name="wantsWhatsapp" value="on" />}
             {fetcher.data?.error && (
               <p className="mt-2 text-sm text-red-400">{fetcher.data.error}</p>
             )}
-            <PrimaryButton type="submit" isDisabled={enviando} className="mt-3 h-14 w-full text-base sm:h-16 sm:text-lg lg:h-12 lg:text-base">
+            <PrimaryButton type="submit" isDisabled={enviando} variant="fill" className="mt-6 w-full font-semibold">
               {enviando ? "Un momento…" : "Ábreme este video 🍿"}
             </PrimaryButton>
           </fetcher.Form>
         )}
 
-        <p className="mt-3 text-center text-xs leading-relaxed text-brand-100/60">
+        <p className="mt-4 text-center text-xs leading-relaxed text-colorCaption">
           Gratis, una entrega cada pocos días.
           <br />
           Puedes bajarte en un clic.

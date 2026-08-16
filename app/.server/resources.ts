@@ -1,16 +1,10 @@
 import { db } from "./db";
-import { SUBSCRIBER_COOKIE } from "./services/book-access.server";
+import { subscriberEmail } from "./subscriberCookie";
 
 /// Quién está pidiendo el material. No se le exige correo: el material es la
 /// carnada, cobrarlo antes de entregarlo mata la conversión. Si trae la cookie
 /// de suscriptor, se aprovecha para medir compromiso; si no, cuenta anónimo.
-export const getRequesterEmail = (request: Request) => {
-  const raw = (request.headers.get("Cookie") || "")
-    .split(";")
-    .find((c) => c.trim().startsWith(`${SUBSCRIBER_COOKIE}=`))
-    ?.split("=")[1];
-  return raw ? decodeURIComponent(raw) : null;
-};
+export const getRequesterEmail = (request: Request) => subscriberEmail(request);
 
 /// Resuelve un material por la URL canónica /cursos/:curso/:video/:slug.
 /// El curso se valida contra el video para que la URL no mienta: un material
@@ -71,7 +65,7 @@ export const openResource = async (
 ) => {
   try {
     await db.resourceAccess.create({
-      data: { resourceId: resource.id, email: getRequesterEmail(request) },
+      data: { resourceId: resource.id, email: await getRequesterEmail(request) },
     });
   } catch (error) {
     console.error("[resources] no se pudo registrar el acceso", error);

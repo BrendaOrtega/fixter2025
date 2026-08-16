@@ -3,6 +3,7 @@ import { getUserOrNull } from "~/.server/dbGetters";
 import { checkSubscriptionByEmail } from "~/.server/dbGetters";
 import { getMemberEmail } from "~/.server/memberCookie";
 import { sequenceUnlockFor } from "~/.server/sequences";
+import { subscriberEmail } from "./subscriberCookie";
 
 /**
  * ¿Esta petición puede ver este video?
@@ -24,17 +25,16 @@ import { sequenceUnlockFor } from "~/.server/sequences";
  * bloqueado: el default nunca debe abrir de más.
  */
 
-export const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
+export { SUBSCRIBER_COOKIE, setSubscriberCookie } from "./subscriberCookie";
 
-/** El correo del suscriptor guardado en cookie, ya decodificado. */
-export const subscriberEmailFrom = (request: Request): string | null => {
-  const cookie = request.headers.get("Cookie") || "";
-  const crudo = cookie
-    .split(";")
-    .find((c) => c.trim().startsWith(`${SUBSCRIBER_COOKIE}=`))
-    ?.split("=")[1];
-  return crudo ? decodeURIComponent(crudo) : null;
-};
+/**
+ * El correo del suscriptor guardado en cookie.
+ *
+ * Vive en `subscriberCookie.ts`, que la verifica firmada. Aquí sólo se
+ * reexporta: leerla a mano —partiendo el header por `;` y creyéndole al
+ * contenido— era lo que permitía escribir el correo de otra persona.
+ */
+export const subscriberEmailFrom = subscriberEmail;
 
 export type AccesoAVideo = {
   hasAccess: boolean;
@@ -85,7 +85,7 @@ export const viewerEmailFrom = async (
   request: Request,
   userEmail?: string | null
 ): Promise<string | null> =>
-  userEmail || (await getMemberEmail(request)) || subscriberEmailFrom(request);
+  userEmail || (await getMemberEmail(request)) || (await subscriberEmailFrom(request));
 
 /**
  * La versión completa, para rutas sueltas (subtítulos, capítulos, búsqueda) que sólo
@@ -125,7 +125,7 @@ export const videoAccessFor = async (
   // La suscripción se marca con un tag por curso, así que hay que resolver el slug del
   // curso al que pertenece el video antes de preguntar.
   let isSubscribed = false;
-  const email = subscriberEmailFrom(request);
+  const email = await subscriberEmailFrom(request);
   if (email && !isPurchased && video.accessLevel === "subscriber") {
     const cursos = await db.course.findMany({
       where: { id: { in: video.courseIds } },

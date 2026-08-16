@@ -6,7 +6,8 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Cookie name for subscriber email
-export const SUBSCRIBER_COOKIE = "fixtergeek_subscriber";
+export { SUBSCRIBER_COOKIE, setSubscriberCookie } from "../subscriberCookie";
+import { subscriberEmail as readSubscriberEmail, setSubscriberCookie as signSubscriberCookie } from "../subscriberCookie";
 
 // Configuración centralizada de libros
 export const BOOK_CONFIG = {
@@ -69,16 +70,9 @@ export interface ChapterAccessInfo {
   };
 }
 
-// Helper para extraer email del cookie
-function getSubscriberEmailFromCookie(request: Request): string | null {
-  const cookieHeader = request.headers.get("Cookie") || "";
-  const match = cookieHeader
-    .split(";")
-    .find((c) => c.trim().startsWith(`${SUBSCRIBER_COOKIE}=`));
-  if (!match) return null;
-  const encoded = match.split("=")[1];
-  return encoded ? decodeURIComponent(encoded) : null;
-}
+// La cookie la lee y verifica `subscriberCookie`: partir el header a mano era
+// creerle a un dato que cualquiera puede escribir.
+const getSubscriberEmailFromCookie = (request: Request) => readSubscriberEmail(request);
 
 /**
  * Obtiene datos de acceso para un capítulo específico de un libro
@@ -92,7 +86,7 @@ export async function getBookAccessData(
   const user = await getUserOrNull(request);
 
   // Check subscription from cookie
-  const subscriberEmail = getSubscriberEmailFromCookie(request);
+  const subscriberEmail = await getSubscriberEmailFromCookie(request);
   let isSubscribed = false;
   if (subscriberEmail) {
     isSubscribed = await checkSubscriptionByEmail(subscriberEmail, bookSlug);
@@ -154,7 +148,7 @@ export async function getAllChaptersAccessInfo(
 ): Promise<ChapterAccessInfo> {
   // Get user and subscription status
   const user = await getUserOrNull(request);
-  const subscriberEmail = getSubscriberEmailFromCookie(request);
+  const subscriberEmail = await getSubscriberEmailFromCookie(request);
   const isSubscribed = subscriberEmail
     ? await checkSubscriptionByEmail(subscriberEmail, bookSlug)
     : false;
@@ -330,10 +324,7 @@ export async function handleBookVerify(
 
   // Set cookie
   const headers = new Headers();
-  headers.append(
-    "Set-Cookie",
-    `${SUBSCRIBER_COOKIE}=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`
-  );
+  headers.append("Set-Cookie", await signSubscriberCookie(email));
 
   return { success: true, verified: true, headers };
 }
