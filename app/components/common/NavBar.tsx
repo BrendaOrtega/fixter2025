@@ -5,7 +5,9 @@ import { motion, stagger, useAnimate } from "motion/react";
 import { Link, useLocation, useNavigate, type To } from "react-router";
 import { AiFillInstagram } from "react-icons/ai";
 import { BsLinkedin } from "react-icons/bs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { LAYER } from "~/utils/layers";
 import type { User } from "~/types/models";
 import { Youtube } from "../icons/Youtube";
 import { useSelf } from "~/hooks/useSelf";
@@ -168,7 +170,32 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scope, animate] = useAnimate();
 
+  /**
+   * El menú se dibuja en un PORTAL, no dentro de la navbar.
+   *
+   * La navbar es `fixed` con z-index propio, así que crea un stacking context y
+   * encierra a sus hijos: por más capa que se le ponga al menú, no puede salir
+   * por encima de un cajón abierto. Con un video bloqueado en pantalla, el menú
+   * abría DEBAJO del panel y no había forma de llegar al perfil ni de cerrar
+   * sesión. Subirle el z-index no servía —y no iba a servir nunca.
+   *
+   * Al portal hay que llevarle la posición: se mide el avatar al abrir.
+   */
+  const anclaRef = useRef<HTMLDivElement>(null);
+  const [montado, setMontado] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  useEffect(() => setMontado(true), []);
+
   const toggleMenu = async () => {
+    const r = anclaRef.current?.getBoundingClientRect();
+    if (r) {
+      setPos({
+        top: r.bottom + 12,
+        // Nunca menos de 16px del borde: colgado del avatar, en pantallas
+        // angostas el menú se salía por la derecha.
+        right: Math.max(16, window.innerWidth - r.right),
+      });
+    }
     setIsOpen((o) => !o);
   };
 
@@ -202,11 +229,10 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
     navigate(path);
   };
 
-  return (
-    <section>
-      <Avatar onClick={toggleMenu} user={user} />
-      <aside
+  const menu = (
+    <aside
         ref={scope}
+        style={{ top: pos.top, right: pos.right, zIndex: LAYER.popover }}
         className={cn(
           "opacity-0",
           "bg-background",
@@ -217,7 +243,7 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
           // no había forma de llegar al perfil ni de cerrar sesión desde un
           // video bloqueado. Un menú anclado a la navegación es transitorio y
           // gana al panel; lo único que le gana a él es una confirmación.
-          "absolute w-[200px] -right-20 top-[95%] z-[450]",
+          "fixed w-[200px]",
         )}
       >
         <Triangle className="border-b-brand-500" />
@@ -251,6 +277,12 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
           <span>Cerrar sesión</span>
         </Link>
       </aside>
+  );
+
+  return (
+    <section ref={anclaRef} className="relative">
+      <Avatar onClick={toggleMenu} user={user} />
+      {montado && createPortal(menu, document.body)}
     </section>
   );
 };
