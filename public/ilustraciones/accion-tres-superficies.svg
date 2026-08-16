@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240" viewBox="0 0 640 240" role="img" aria-label="Una acción se declara una vez y de ella comen tres superficies: la interfaz, el agente y el CLI">
+  <!--
+    Agent Native: una acción declarada una sola vez, y de ella comen todas las
+    superficies. Flat vector con la paleta de la casa, igual que loop-agente.
+
+    La animación es CSS dentro del propio SVG, no SMIL ni JS: así sigue viva
+    cuando el archivo se usa como <img>, que es como lo referencia el markdown
+    de las descripciones. Sutil a propósito —va al lado de un video.
+  -->
+  <style>
+    .caja   { fill: #122027; stroke: #85DDCB; stroke-width: 2.5; }
+    .fuente { fill: #16232b; stroke: #FFC46B; stroke-width: 3; }
+    .txt    { fill: #E8F1EF; font: bold 15px Helvetica, Arial, sans-serif; }
+    .txtf   { fill: #FFD79A; font: bold 16px Helvetica, Arial, sans-serif; }
+    .sub    { fill: #8FA5A9; font: 12px Helvetica, Arial, sans-serif; }
+    .mono   { fill: #8FA5A9; font: 11.5px ui-monospace, Menlo, monospace; }
+    .linea  { stroke: #85DDCB; stroke-width: 2.5; fill: none; opacity: .5; }
+
+    /* Tres pulsos salen de la misma caja, uno por rama, y vuelven a empezar. */
+    .pulso { stroke: #FFC46B; stroke-width: 3.5; fill: none; stroke-linecap: round;
+             stroke-dasharray: 26 400; }
+    .p1 { animation: correr 4.5s linear infinite; }
+    .p2 { animation: correr 4.5s linear infinite; animation-delay: .35s; }
+    .p3 { animation: correr 4.5s linear infinite; animation-delay: .7s; }
+    @keyframes correr { to { stroke-dashoffset: -426; } }
+
+    /* Cada superficie se enciende cuando le llega su pulso. */
+    .s1 { animation: latir 4.5s ease-in-out infinite; }
+    .s2 { animation: latir 4.5s ease-in-out infinite; animation-delay: .35s; }
+    .s3 { animation: latir 4.5s ease-in-out infinite; animation-delay: .7s; }
+    @keyframes latir {
+      0%, 22%, 46%, 100% { stroke: #85DDCB; }
+      28%, 40%           { stroke: #FFC46B; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pulso, .s1, .s2, .s3 { animation: none; }
+      .pulso { display: none; }
+    }
+  </style>
+
+  <!-- La acción: declarada una sola vez -->
+  <rect class="fuente" x="16" y="86" width="176" height="72" rx="14" />
+  <text class="txtf" x="104" y="112" text-anchor="middle">Una acción</text>
+  <text class="mono" x="104" y="132" text-anchor="middle">name · params</text>
+  <text class="mono" x="104" y="148" text-anchor="middle">label · run</text>
+
+  <!-- Los tres caminos: salen del mismo borde y se abren -->
+  <path id="c1" class="linea" d="M192 122 H250 Q272 122 272 100 V54 Q272 40 292 40 H420" />
+  <path id="c2" class="linea" d="M192 122 H420" />
+  <path id="c3" class="linea" d="M192 122 H250 Q272 122 272 144 V190 Q272 204 292 204 H420" />
+
+  <path class="pulso p1" d="M192 122 H250 Q272 122 272 100 V54 Q272 40 292 40 H420" />
+  <path class="pulso p2" d="M192 122 H420" />
+  <path class="pulso p3" d="M192 122 H250 Q272 122 272 144 V190 Q272 204 292 204 H420" />
+
+  <!-- Las tres superficies -->
+  <rect class="caja s1" x="424" y="12" width="200" height="58" rx="12" />
+  <text class="txt" x="524" y="36" text-anchor="middle">La interfaz</text>
+  <text class="sub" x="524" y="55" text-anchor="middle">un clic en el navegador</text>
+
+  <rect class="caja s2" x="424" y="94" width="200" height="58" rx="12" />
+  <text class="txt" x="524" y="118" text-anchor="middle">El agente</text>
+  <text class="sub" x="524" y="137" text-anchor="middle">la pide como herramienta</text>
+
+  <rect class="caja s3" x="424" y="176" width="200" height="58" rx="12" />
+  <text class="txt" x="524" y="200" text-anchor="middle">HTTP y el CLI</text>
+  <text class="sub" x="524" y="219" text-anchor="middle">la misma ejecución</text>
+</svg>

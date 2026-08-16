@@ -1473,6 +1473,9 @@ function EmailDrawer({
   const [pendingVideo, setPendingVideo] = useState<any>(null);
   const [showVideoPreview, setShowVideoPreview] = useState(false);
   const [videoPreviewSrc, setVideoPreviewSrc] = useState("");
+  // Video servido por HLS: no hay mp4 que previsualizar, pero sí se ve en el
+  // viewer. Guarda esa URL para ofrecerla en vez de un error.
+  const [videoViewerUrl, setVideoViewerUrl] = useState("");
   const [videoYoutubeUrl, setVideoYoutubeUrl] = useState("");
   const [copiedVideoLink, setCopiedVideoLink] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -1623,6 +1626,7 @@ function EmailDrawer({
       const data = await res.json();
       if (data.src) setVideoPreviewSrc(data.src);
       if (data.youtubeUrl) setVideoYoutubeUrl(data.youtubeUrl);
+      if (data.hlsOnly) setVideoViewerUrl(data.viewerUrl);
     } catch {
       // silencioso
     } finally {
@@ -1841,6 +1845,19 @@ function EmailDrawer({
                         preload="metadata"
                         className="w-full max-h-[260px] bg-black"
                       />
+                    ) : videoViewerUrl ? (
+                      <p className="text-brand-100/70 text-xs p-4 text-center">
+                        Este video se sirve por HLS y no tiene mp4 que
+                        previsualizar aquí.{" "}
+                        <a
+                          href={videoViewerUrl}
+                          target="_blank"
+                          rel="noopener"
+                          className="text-brand-300 underline"
+                        >
+                          Verlo en el reproductor
+                        </a>
+                      </p>
                     ) : (
                       <p className="text-brand-100/60 text-xs p-4 text-center">
                         No se pudo cargar el preview.

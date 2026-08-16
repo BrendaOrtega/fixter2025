@@ -48,7 +48,7 @@ const VIDEOS: Record<
     duracion: "40 min",
     // Póster con ACL público: en un correo no hay quien firme una URL.
     poster:
-      "https://wild-bird-2039.fly.storage.tigris.dev/fixtergeek/videos/6a78ff744a8e00e3b2eea500/6a82179a444b718b605e2a1c/poster-yt.jpg",
+      "https://wild-bird-2039.fly.storage.tigris.dev/fixtergeek/videos/6a78ff744a8e00e3b2eea500/6a82179a444b718b605e2a1c/poster-yt-v2.jpg",
   },
   3: { slug: null, titulo: "Memoria y base de datos", duracion: null, poster: null },
   // El video existe pero sigue sin publicar ni tener póster.

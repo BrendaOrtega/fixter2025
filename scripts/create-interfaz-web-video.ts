@@ -22,7 +22,11 @@ const DURATION = "40"; // 2406s medidos con ffprobe
 // que no cabe sin scroll no se lee — el detalle está en el video y en el repo.
 const DESCRIPTION = `El agente sale de la terminal y se muda al navegador 🪟
 
-Le pides desde la consola que construya su propia interfaz. Cuando termina, cierras la terminal y le sigues hablando desde el navegador.
+Antes de ponerlo a trabajar le entregas un **spec**: la arquitectura, los endpoints, los eventos y las trampas que ya conoces. Si algo del spec no se cumple, está mal aunque funcione.
+
+![Una acción, tres superficies](/ilustraciones/accion-tres-superficies.svg)
+
+**Agent Native:** las tools dejan de ser tools y se vuelven acciones. Una acción se declara una vez —nombre, parámetros, etiqueta y ejecución— y de ahí comen la interfaz, el agente y el CLI. El agente dispara lo mismo que dispara un clic.
 
 **El cajón del chat va hermano de la app, nunca hijo.** El agente reescribe la aplicación todo el tiempo y el HMR recarga ese módulo en cada cambio: si el chat colgara de ahí adentro, cada edición lo tiraría con ella.
 

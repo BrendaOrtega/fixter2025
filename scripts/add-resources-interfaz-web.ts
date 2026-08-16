@@ -16,13 +16,13 @@ const RECURSOS = [
   {
     slug: "repo",
     kind: "repo",
-    title: "El código de esta entrega (rama main)",
+    title: "Empieza aquí: el andamio, con la página en blanco",
     externalUrl: `${REPO}/tree/main/entregas/02-interfaz-web`,
   },
   {
     slug: "referencia",
     kind: "repo",
-    title: "A dónde se llega (rama referencia/02-interfaz-web)",
+    title: "A dónde se llega: el cajón ya construido",
     externalUrl: `${REPO}/tree/referencia/02-interfaz-web/entregas/02-interfaz-web`,
   },
   {
@@ -51,24 +51,23 @@ async function main() {
       await db.resource.update({ where: { id: existente.id }, data: r });
       console.log(`✏️  ${r.slug} — ${r.title}`);
     } else {
-      // Inserción cruda a propósito: `legacyPath` es único y los recursos
-      // viejos NO traen el campo, mientras que Prisma lo escribe como `null`
-      // explícito. El segundo `null` choca contra el índice y revienta con
-      // P2002 hablando de una ruta legacy que nadie pidió. Insertando sin el
-      // campo, el índice lo ignora igual que a los que ya existían.
-      const ahora = { $date: new Date().toISOString() };
+      // `legacyPath` es único y los recursos viejos NO traen el campo, mientras
+      // que Prisma lo escribe como `null` explícito: el segundo `null` choca
+      // contra el índice y revienta con P2002 hablando de una ruta legacy que
+      // nadie pidió. Se crea con un valor único y de inmediato se le quita el
+      // campo, que es como están los que ya funcionaban.
+      //
+      // Insertar en crudo para evitar el rodeo NO sirve: `$runCommandRaw` deja
+      // el `videoId` como objeto `{$oid}` en vez de ObjectId, y entonces Prisma
+      // no encuentra el recurso — la pestaña de materiales se queda vacía sin
+      // que nada falle.
+      const creado = await db.resource.create({
+        data: { ...r, videoId: video.id, legacyPath: `tmp:${video.id}:${r.slug}` },
+      });
       await db.$runCommandRaw({
-        insert: "Resource",
-        documents: [
-          {
-            slug: r.slug,
-            kind: r.kind,
-            title: r.title,
-            externalUrl: r.externalUrl,
-            videoId: { $oid: video.id },
-            createdAt: ahora,
-            updatedAt: ahora,
-          },
+        update: "Resource",
+        updates: [
+          { q: { _id: { $oid: creado.id } }, u: { $unset: { legacyPath: "" } } },
         ],
       });
       console.log(`✅ ${r.slug} — ${r.title}`);

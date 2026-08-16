@@ -176,15 +176,78 @@ idempotente y hace upsert por `order`. Dos cosas aprendidas a golpes:
 
 ---
 
-## Orden recomendado
+## 6. Storyboard de miniaturas
 
-Transcode y transcripción corren **en paralelo** con lo demás; la subida del HLS
-es lo único que hay que vigilar.
+Sin esto, al pasar el mouse por la barra de progreso sale el capítulo y la hora,
+pero ningún cuadro. `livekit-svc` lo genera solo para lo que pasa por él; un
+video subido a mano **no lo tiene**.
 
-1. Medir la fuente
-2. Crear la fila del Video → anotar `courseId` y `videoId`
-3. Lanzar el transcode **y** la transcripción
-4. Importar el transcript (con las correcciones aplicadas)
-5. Subir el HLS por calidad, verificando por conteo
-6. Miniatura → PNG para el viewer, JPG público para el correo
-7. Actualizar el correo con la card real y el póster
+```bash
+npx tsx --env-file=.env scripts/make-storyboard.ts <videoSlug> <archivoFuente>
+```
+
+Un fotograma cada 10 s en un sprite, más el WebVTT con `#xywh`. Van **privados**,
+como el HLS: los firma `/api/hls-proxy`.
+
+---
+
+## 7. Materiales de la entrega
+
+La pestaña de materiales sale vacía si nadie crea los `Resource`. Van colgados
+del `videoId`: el repo, la rama de referencia y el spec.
+
+**Dos trampas, las dos silenciosas:**
+
+- `legacyPath` es único y los recursos viejos **no traen el campo**, mientras que
+  Prisma escribe `null` explícito. El segundo `null` revienta con P2002 hablando
+  de una ruta legacy que nadie pidió. Se crea con un valor único y se le quita el
+  campo enseguida (`$unset`).
+- Insertar en crudo para esquivar lo anterior **es peor**: `$runCommandRaw` deja
+  el `videoId` como objeto `{$oid}` en vez de ObjectId, Prisma no encuentra nada
+  y la pestaña sigue vacía sin que falle nada. Se ve como si el script no
+  hubiera corrido.
+
+Verificar siempre contando **con Prisma**, no con un `find` crudo.
+
+---
+
+## 8. La ilustración de la descripción
+
+Cada entrega lleva un SVG animado en su descripción, como
+`/ilustraciones/loop-agente.svg` en la primera. Se dibuja a mano —flat vector con
+la paleta del sitio— y la animación es **CSS dentro del propio SVG**, no SMIL ni
+JS: el markdown lo referencia como `<img>` y ahí solo sobrevive el CSS. Sutil, en
+bucle permanente, porque va al lado de un video y no debe competir.
+
+---
+
+## 9. Lo que va fuera del sitio
+
+- **Corte para YouTube** con intro y transición: la malla de la casa cierra en
+  cascada diagonal y se abre del otro lado. Nunca fundido, nunca un fotograma
+  negro — verificar con `blackdetect` sobre el archivo entregado.
+- **Descripción de YouTube** con links trackeados: `utm_source=youtube`,
+  `utm_campaign=<slug del video>`, `utm_content=<botón>`. El alta a la secuencia
+  es `/secuencias/:slug`, **no** `/c/:slug`, que es la comunidad.
+- **Short vertical** 1080×1920 con la estructura fija de la casa (ver CLAUDE.md).
+
+---
+
+## Checklist
+
+Marcar de arriba abajo. Lo que se olvidó una vez fue: el storyboard, los
+materiales, el SVG de la descripción y el `videoSlug` en el correo.
+
+- [ ] Medir la fuente (`ffprobe`), confirmar aspecto y duración
+- [ ] Crear la fila del Video → anotar `courseId` y `videoId`
+- [ ] Lanzar transcode **y** transcripción en paralelo
+- [ ] Importar el transcript con las correcciones de oído aplicadas
+- [ ] Subir el HLS **por calidad**, verificando por conteo contra S3
+- [ ] Generar y subir el **storyboard** de miniaturas
+- [ ] Miniatura: PNG para el viewer, **JPG** público para el correo
+- [ ] **SVG animado** para la descripción del video
+- [ ] Crear los **materiales** (repo, referencia, spec) y contarlos con Prisma
+- [ ] Correo de la secuencia: card real, póster, `videoSlug` y `delayDays` intacto
+- [ ] Corte de YouTube con intro, transición y `blackdetect` limpio
+- [ ] Descripción de YouTube con UTMs
+- [ ] Short vertical

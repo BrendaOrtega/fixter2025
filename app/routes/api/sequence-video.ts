@@ -24,9 +24,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (slug) {
     const v = await db.video.findUnique({
       where: { slug },
-      select: { storageLink: true, youtubeUrl: true },
+      select: { storageLink: true, youtubeUrl: true, m3u8: true },
     });
     if (v?.youtubeUrl) return Response.json({ youtubeUrl: v.youtubeUrl });
+    // Un video transcodificado a HLS no tiene mp4 que presignar, y un
+    // `<video src>` no reproduce una playlist. Antes se caía al genérico "no se
+    // pudo cargar el preview", que hacía pensar que el video estaba roto
+    // cuando en realidad se ve perfecto en el viewer.
+    if (!v?.storageLink && v?.m3u8) {
+      return Response.json({
+        hlsOnly: true,
+        viewerUrl: `/cursos/sistemas-agenticos/viewer?videoSlug=${slug}`,
+      });
+    }
     link = v?.storageLink || "";
   } else if (storageLink && storageLink.startsWith(VIDEO_URL_PREFIX)) {
     link = storageLink;
