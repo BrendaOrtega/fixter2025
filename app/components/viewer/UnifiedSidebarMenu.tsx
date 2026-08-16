@@ -364,8 +364,6 @@ export const UnifiedSidebarMenu = ({
           </AnimatePresence>
         </div>
 
-        {/* Bottom spacer */}
-        <div className="h-20" />
       </UnifiedMenuContainer>
     </>
   );
