@@ -287,7 +287,7 @@ export const TranscriptPanel = ({
 
       {/* La transcripción */}
       {!q && (
-        <div className="relative flex shrink-0 flex-col">
+        <div className="relative mt-auto flex shrink-0 flex-col">
           {chapters.length > 0 && (
             <p className="shrink-0 px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
               Transcripción

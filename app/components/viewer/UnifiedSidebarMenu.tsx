@@ -440,7 +440,11 @@ const UnifiedMenuContainer = ({
   menuWidth: number;
 }) => {
   const ref = useClickOutside({ isActive: isOpen, onOutsideClick });
-  const maskImage = useMotionTemplate`linear-gradient(to bottom, white 90%, transparent 100%)`;
+  // El desvanecido de abajo mordía el último 10% de la barra: en la pestaña de
+  // transcripción eso se comía el aviso del pie y dejaba un hueco que parecía
+  // un error de maquetación. 10% de una barra de 1300px son 130px. Se conserva
+  // el efecto, en una franja que sólo suaviza el corte.
+  const maskImage = useMotionTemplate`linear-gradient(to bottom, white 97%, transparent 100%)`;
 
   return (
     <motion.div
