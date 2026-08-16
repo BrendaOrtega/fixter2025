@@ -586,7 +586,7 @@ export async function sendSequenceEmail({
 export async function getOrCreateTestEnrollment(
   sequenceId: string,
   user: { email: string; displayName?: string | null; username?: string | null }
-): Promise<{ id: string }> {
+): Promise<{ id: string; isEphemeral: boolean }> {
   const subscriber = await getOrCreateSubscriberForUser(user);
 
   const existing = await db.sequenceEnrollment.findUnique({
@@ -596,7 +596,7 @@ export async function getOrCreateTestEnrollment(
   });
 
   // Si ya recibió correos es una inscripción real: no degradarla a pausada.
-  if (existing?.emailsSent) return { id: existing.id };
+  if (existing?.emailsSent) return { id: existing.id, isEphemeral: false };
 
   const emailCount = await db.sequenceEmail.count({ where: { sequenceId } });
   const testState = {
@@ -612,7 +612,11 @@ export async function getOrCreateTestEnrollment(
     create: { sequenceId, subscriberId: subscriber.id, ...testState },
     update: testState,
   });
-  return { id: enrollment.id };
+  // `isEphemeral` = la creamos NOSOTROS para esta prueba y hay que borrarla al
+  // terminar. Dejarla puesta era veneno: queda con el índice al final, y cuando
+  // esa persona se suscribe DE VERDAD, la reactivación cree que ya recibió todo
+  // y la marca completada sin enviarle jamás un correo. Pasó en producción.
+  return { id: enrollment.id, isEphemeral: !existing };
 }
 
 /**

@@ -148,6 +148,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         emailId: (formData.get("emailId") as string) || undefined,
         isTest: true, // una prueba no infla las métricas del correo
       });
+      // La inscripción que se creó SOLO para esta prueba se borra. Si se queda,
+      // envenena la suscripción real: arranca con el índice al final y, cuando
+      // esa persona se dé de alta de verdad, la reactivación cree que ya recibió
+      // todo y la marca completada sin enviarle nada. Pasó en producción.
+      if (enrollment.isEphemeral) {
+        await db.sequenceEnrollment.delete({ where: { id: enrollment.id } });
+      }
       return { success: true, message: `Prueba enviada a ${user.email}` };
     } catch (error) {
       console.error("send_test:", error);
