@@ -134,6 +134,10 @@ export const getPrograma = async (slug: string) => {
         tags: true,
         confirmed: true,
         createdAt: true,
+        // Se pedía con un sí explícito y no se veía en ningún lado: un permiso
+        // que nadie puede consultar es un permiso desperdiciado.
+        phone: true,
+        whatsappOptIn: true,
       },
       orderBy: { createdAt: "desc" },
     }),

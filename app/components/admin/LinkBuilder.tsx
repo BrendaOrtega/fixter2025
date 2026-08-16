@@ -23,6 +23,8 @@ const SOURCES = [
   { id: "comunidad", label: "Comunidad" },
   { id: "x", label: "X" },
   { id: "instagram", label: "Instagram" },
+  { id: "facebook", label: "Facebook" },
+  { id: "tiktok", label: "TikTok" },
 ];
 
 type Destino = { label: string; path: string };

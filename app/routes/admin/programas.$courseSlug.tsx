@@ -662,6 +662,18 @@ export default function Programa({ loaderData }: Route.ComponentProps) {
                             sin confirmar
                           </span>
                         )}
+                        {/* Dio su número con un sí explícito. Sin enseñarlo
+                            aquí, ese permiso no le servía a nadie. */}
+                        {persona.whatsappOptIn && persona.phone && (
+                          <a
+                            href={`https://wa.me/${persona.phone.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener"
+                            className="ml-2 text-xs text-green-400 hover:text-green-300"
+                          >
+                            💬 {persona.phone}
+                          </a>
+                        )}
                       </td>
                       <td className="px-4 py-2 text-gray-500">
                         {fecha(persona.createdAt)}

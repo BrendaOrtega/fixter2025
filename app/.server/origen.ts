@@ -38,6 +38,14 @@ const KNOWN_HOSTS: Record<string, string> = {
   "twitter.com": "x",
   "t.co": "x",
   "facebook.com": "facebook",
+  "m.facebook.com": "facebook",
+  "l.facebook.com": "facebook",
+  "fb.me": "facebook",
+  // TikTok manda el tráfico desde su propio dominio de salida, no desde
+  // tiktok.com: sin esto caía como un host suelto y no cuadraba con la liga
+  // etiquetada `utm_source=tiktok`.
+  "tiktok.com": "tiktok",
+  "vm.tiktok.com": "tiktok",
   "instagram.com": "instagram",
   "google.com": "google",
   "bing.com": "google",

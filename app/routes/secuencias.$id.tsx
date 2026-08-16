@@ -56,7 +56,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     include: {
       emails: { orderBy: { order: "asc" } },
       enrollments: {
-        include: { subscriber: { select: { email: true, name: true } } },
+        include: {
+          subscriber: {
+            select: {
+              email: true,
+              name: true,
+              // El número sólo existe con consentimiento explícito; sin
+              // enseñarlo aquí, ese permiso no le servía a nadie.
+              phone: true,
+              whatsappOptIn: true,
+            },
+          },
+        },
         orderBy: { enrolledAt: "desc" },
       },
     },
@@ -902,6 +913,7 @@ function MonitorTab({
                   <th className="px-4 py-3">Progreso</th>
                   <th className="px-4 py-3">Enviados</th>
                   <th className="px-4 py-3">Engagement</th>
+                  <th className="px-4 py-3">WhatsApp</th>
                   <th className="px-4 py-3">Próximo</th>
                   <th className="px-4 py-3 text-right">Acciones</th>
                 </tr>
@@ -923,6 +935,21 @@ function MonitorTab({
                     <td className="px-4 py-3 text-brand-100">{e.emailsSent}</td>
                     <td className="px-4 py-3">
                       <EngagementBadges enrollment={e} />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {e.subscriber.whatsappOptIn && e.subscriber.phone ? (
+                        <a
+                          href={`https://wa.me/${e.subscriber.phone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener"
+                          onClick={(ev) => ev.stopPropagation()}
+                          className="text-green-400 hover:text-green-300"
+                        >
+                          {e.subscriber.phone}
+                        </a>
+                      ) : (
+                        <span className="text-brand-100/30">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-brand-100">
                       {e.nextEmailAt
