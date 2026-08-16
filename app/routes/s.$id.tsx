@@ -112,9 +112,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     .filter((e) => e.order <= received)
     .slice(-1)[0];
   let resumeVideo: { slug: string; course: string } | null = null;
-  if (lastReceived?.videoSlug) {
+  // Quien acaba de inscribirse lleva 0 received, así que `lastReceived` no
+  // existe: para él, la primera con video es su entrega.
+  const target = lastReceived ?? withVideo[0];
+  if (target?.videoSlug) {
     const v = await db.video.findUnique({
-      where: { slug: lastReceived.videoSlug },
+      where: { slug: target.videoSlug },
       select: { slug: true, courseIds: true },
     });
     const course = v?.courseIds.length
@@ -238,7 +241,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // de baja no le hacía NADA: la fila seguía en `paused`, la pantalla decía
   // "¡listo, estás dentro!" y no volvía a llegarle un solo correo. Esa función
   // ya sabe reactivar donde se quedó — es la misma que usa el visor.
-  if (subscriber.confirmed) {
+  // Con la sesión abierta el correo salió del servidor, no del formulario: la
+  // identidad ya está probada y el alta es inmediata.
+  //
+  // SIN sesión no basta con que el correo esté confirmado, aunque lo esté:
+  // cualquiera podría escribir el correo de otra persona y suscribirla a sus
+  // espaldas. Es exactamente el abuso que el doble opt-in existe para evitar, y
+  // saltárselo en el caso más fácil de explotar no tiene sentido. Al dueño del
+  // buzón le cuesta un clic; a quien no lo es, no lo lleva a ningún lado.
+  if (subscriber.confirmed && session) {
     // Dinámico: importado arriba, el bundler arrastra el módulo de servidor al
     // cliente porque esta ruta también exporta componente.
     const { enrollSubscriberInSequence } = await import("~/.server/sequences");
@@ -473,17 +484,33 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
               <h2 className="mt-3 text-xl font-bold text-white">
                 {enrolled ? "¡Listo, estás dentro!" : "Revisa tu correo"}
               </h2>
-              <p className="mt-2 text-brand-100">
+              <p className="mt-2 text-pretty text-brand-100">
                 {enrolled ? (
                   <>
-                    Ya quedaste suscrito a esta secuencia.
-                    <br />
-                    Pronto recibirás la primera entrega.
+                    {user?.email ? (
+                      <>
+                        La primera entrega sale a{" "}
+                        <strong className="text-white">{user.email}</strong> en
+                        los próximos minutos.
+                      </>
+                    ) : (
+                      "La primera entrega sale a tu correo en los próximos minutos."
+                    )}
                   </>
                 ) : (
                   "Te enviamos un enlace para confirmar tu suscripción. Haz clic en él para empezar a recibir las entregas."
                 )}
               </p>
+              {/* Y no un callejón sin salida: la primera entrega ya está
+                  desbloqueada, así que se puede ver sin esperar el correo. */}
+              {enrolled && resumeVideo && (
+                <a
+                  href={`/cursos/${resumeVideo.course}/${resumeVideo.slug}`}
+                  className="mt-6 flex h-14 w-full items-center justify-center rounded-xl bg-brand-500 text-lg font-bold text-brand-900 transition hover:brightness-110"
+                >
+                  Ver la primera entrega 🍿
+                </a>
+              )}
             </div>
           ) : (
             <fetcher.Form onSubmit={handleSubmit}>
