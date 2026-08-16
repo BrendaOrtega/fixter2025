@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="UTF-8"><style>
+  /* El fondo del cuerpo, con la misma retícula y los mismos blobs que las
+     tarjetas: antes era la tarjeta desenfocada y se veía apagada, como si el
+     short hubiera perdido color en medio. */
+  *{margin:0}
+  body{background:#0b0b0f}
+  #c{position:relative;width:1080px;height:1920px;overflow:hidden;background:#0b0b0f}
+  .grid{position:absolute;inset:-200px;
+    background-image:linear-gradient(#7c3aed33 2px,transparent 2px),
+      linear-gradient(90deg,#7c3aed33 2px,transparent 2px);
+    background-size:160px 160px}
+  .b{position:absolute;border-radius:50%;filter:blur(110px)}
+  .b1{width:760px;height:760px;left:480px;top:-220px;background:#7c3aed;opacity:.42}
+  .b2{width:640px;height:640px;left:-180px;top:560px;background:#fbbf24;opacity:.20}
+  .b3{width:720px;height:720px;left:420px;top:1240px;background:#7c3aed;opacity:.34}
+  .b4{width:460px;height:460px;left:-120px;top:1500px;background:#0E8F79;opacity:.22}
+</style></head><body>
+  <div id="c">
+    <div class="grid"></div>
+    <div class="b b1"></div><div class="b b2"></div>
+    <div class="b b3"></div><div class="b b4"></div>
+  </div>
+</body></html>

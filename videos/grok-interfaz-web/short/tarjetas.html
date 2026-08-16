@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Short — tarjetas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Las dos tarjetas del short, en el mismo lienzo vertical. Se renderizan
+         por separado con Chrome headless recortando por #intro / #outro.
+
+         Nunca fondo negro plano: la retícula de la casa, la misma de la
+         miniatura y de la intro de YouTube, para que la serie se reconozca. */
+      * { margin: 0; box-sizing: border-box; }
+      body { background: #0b0b0f; font-family: "Archivo Black", sans-serif; }
+      .card {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0b0b0f;
+      }
+      .grid {
+        position: absolute;
+        inset: -200px;
+        background-image: linear-gradient(#7c3aed2b 2px, transparent 2px),
+          linear-gradient(90deg, #7c3aed2b 2px, transparent 2px);
+        background-size: 160px 160px;
+      }
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(90px);
+      }
+      .b1 { width: 620px; height: 620px; left: 560px; top: -160px; background: #7c3aed; opacity: .3; }
+      .b2 { width: 520px; height: 520px; left: -120px; top: 1320px; background: #fbbf24; opacity: .14; }
+
+      .wrap { position: absolute; inset: 0; padding: 140px 90px; display: flex; flex-direction: column; }
+      .kicker {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        font-size: 34px;
+        letter-spacing: .18em;
+        color: #fbbf24;
+        text-transform: uppercase;
+      }
+      h1 {
+        font-size: 96px;
+        line-height: 1.02;
+        letter-spacing: -.02em;
+        color: #f4f4f6;
+        text-transform: uppercase;
+        margin-top: 28px;
+      }
+      h1 em { font-style: normal; color: #fbbf24; }
+      .nota {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 30px;
+        line-height: 1.5;
+        color: #a9a9c0;
+        margin-top: 40px;
+      }
+      .pie { margin-top: auto; display: flex; align-items: center; gap: 26px; }
+      .pie img.logo { height: 62px; }
+      .retrato {
+        width: 150px; height: 150px; border-radius: 50%;
+        border: 5px solid #7c3aed; object-fit: cover; object-position: 50% 40%;
+      }
+      /* Outro: el CTA lleva verbo y URL, no solo un título. */
+      .cta {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 36px;
+        color: #f4f4f6;
+        background: #7c3aed;
+        border-radius: 18px;
+        padding: 26px 34px;
+        margin-top: 44px;
+        display: inline-block;
+      }
+      .url { color: #85DDCB; }
+    </style>
+  </head>
+  <body>
+    <!-- INTRO -->
+    <div class="card" id="intro">
+      <div class="grid"></div>
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="wrap">
+        <div class="kicker">Entrega 02 · fragmento</div>
+        <h1>El agente<br />se construye<br /><em>su interfaz</em></h1>
+        <p class="nota">
+          Desde la terminal, a partir de un spec<br />
+          y con el modelo que ya tengas.
+        </p>
+        <div class="pie">
+          <img class="retrato" src="../thumb/assets/face.png" alt="" />
+          <img class="logo" src="../thumb/assets/logo.png" alt="FixterGeek" />
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTRO -->
+    <div class="card" id="outro">
+      <div class="grid"></div>
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="wrap">
+        <div class="kicker">Introducción a los agentes de IA</div>
+        <h1>El agente<br />construye su<br /><em>propia interfaz</em></h1>
+        <p class="nota">
+          El video completo y el código,<br />
+          por correo, entrega por entrega.
+        </p>
+        <div class="cta">
+          Suscríbete en<br />
+          <span class="url">fixtergeek.com/cursos</span>
+        </div>
+        <div class="pie">
+          <img class="retrato" src="../thumb/assets/face.png" alt="" />
+          <img class="logo" src="../thumb/assets/logo.png" alt="FixterGeek" />
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -525,12 +525,20 @@ function aggregate(enrollments: any[]) {
   const active = enrollments.filter((e) => e.status === "active").length;
   const completed = enrollments.filter((e) => e.status === "completed").length;
   const paused = enrollments.filter((e) => e.status === "paused").length;
-  const withSends = enrollments.filter((e) => e.emailsSent > 0).length;
+  // La base son los que TIENEN un envío registrado (`messageIds`), no el
+  // contador `emailsSent`: ese se puede reiniciar al reabrir una inscripción y
+  // entonces la división daba tasas de 400%, con más aperturas que envíos.
+  const withSends = enrollments.filter(
+    (e) => e.messageIds?.length > 0 || e.emailsSent > 0
+  ).length;
   const delivered = enrollments.filter((e) => e.delivered?.length > 0).length;
   const opened = enrollments.filter((e) => e.opened?.length > 0).length;
   const clicked = enrollments.filter((e) => e.clicked?.length > 0).length;
   const bounced = enrollments.filter((e) => e.bounced?.length > 0).length;
-  const rate = (n: number) => (withSends ? Math.round((n / withSends) * 100) : 0);
+  // Tope al 100%: aunque los datos vengan torcidos, una tasa mayor es un bug
+  // en pantalla, no un dato.
+  const rate = (n: number) =>
+    withSends ? Math.min(100, Math.round((n / withSends) * 100)) : 0;
   return {
     total,
     active,
@@ -580,10 +588,17 @@ export default function ManageSequence({ loaderData }: Route.ComponentProps) {
   >(null);
   const [copied, setCopied] = useState(false);
 
+  // El enlace se comparte pegándolo en algún lado —un chat, una descripción,
+  // un post— y sin UTM ese tráfico entra como "directo" y no hay forma de
+  // saber de dónde vino. La campaña es la secuencia misma; el resto se ajusta
+  // en el generador de ligas cuando hace falta más detalle.
   const copyShareLink = () => {
-    navigator.clipboard?.writeText(
-      `${window.location.origin}/secuencias/${sequence.slug || sequence.id}`
-    );
+    const slug = sequence.slug || sequence.id;
+    const url = new URL(`${window.location.origin}/secuencias/${slug}`);
+    url.searchParams.set("utm_source", "compartido");
+    url.searchParams.set("utm_campaign", slug);
+    url.searchParams.set("utm_content", "boton-compartir");
+    navigator.clipboard?.writeText(url.toString());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
