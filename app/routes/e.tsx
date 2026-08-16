@@ -31,6 +31,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     const candidato = new URL(destino, url.origin);
     if (candidato.origin === url.origin) {
+      // Quien llega de un correo viene a VER un video concreto, así que la
+      // barra lateral abre en la transcripción —con sus capítulos— y no en la
+      // lista de videos, que es justo lo que menos necesita: ya sabe cuál
+      // quiere. Si el video no tiene transcripción, el visor cae solo a la
+      // primera pestaña disponible.
+      const esVideoDeCurso = /^\/cursos\/[^/]+\/[^/]+$/.test(candidato.pathname);
+      if (esVideoDeCurso && !candidato.searchParams.has("tab")) {
+        candidato.searchParams.set("tab", "transcript");
+      }
       seguro = candidato.pathname + candidato.search;
     }
   } catch {
