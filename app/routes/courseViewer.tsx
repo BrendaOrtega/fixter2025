@@ -294,7 +294,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         // la persona recargara a mano. `?subscribed=1` además dispara el drawer
         // de éxito con su confeti, igual que el alta por código.
         const destino = new URL(request.url);
-        destino.searchParams.set("subscribed", "1");
+        destino.searchParams.set("subscribed", "sequence");
         return redirect(destino.toString(), {
           headers: { "Set-Cookie": await setMemberCookie(email) },
         });
@@ -375,7 +375,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       );
 
       const redirectUrl = new URL(request.url);
-      redirectUrl.searchParams.set("subscribed", "1");
+      // El MISMO intent atiende el desbloqueo de webinars y el de secuencia:
+      // lo que los distingue es que el de secuencia trae `sequenceId`. Sin
+      // esto, quien se suscribía con código veía el "has desbloqueado 2
+      // lecciones gratuitas" de los webinars.
+      redirectUrl.searchParams.set("subscribed", sequenceId ? "sequence" : "1");
       const session = await openSession(request, email);
       return redirect(redirectUrl.toString(), {
         headers: accessCookies(email, session),
@@ -1115,12 +1119,16 @@ export default function Route({
           }
         />
       )}
+      {/* Los dos flujos aterrizan aquí, pero no celebran lo mismo: uno abrió
+          lecciones de webinar, el otro te subió a una serie por correo. */}
       {searchParams.subscribed && (
         <SubscriptionSuccessDrawer
           isOpen
           onClose={() => navigate(`/cursos/${course.slug}/${video.slug}`, { replace: true })}
           subscriberVideos={subscriberVideos}
           courseSlug={course.slug}
+          variant={searchParams.subscribed === "sequence" ? "secuencia" : "webinar"}
+          sequenceName={sequenceName}
         />
       )}
       {showSequenceDrawer && (

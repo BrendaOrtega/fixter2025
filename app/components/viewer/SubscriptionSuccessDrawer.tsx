@@ -7,16 +7,31 @@ type SubscriberVideo = {
   slug: string;
 };
 
+/**
+ * El "ya entraste" del visor. Dos altas distintas terminan aquí y NO son lo
+ * mismo, así que no pueden decir lo mismo:
+ *
+ * - `webinar`: se desbloquearon N lecciones que ya están ahí para ver.
+ * - `secuencia`: te subiste a una serie por correo; lo que se abrió es ESTA
+ *   entrega, y las demás van llegando. Antes salía el texto de webinars —"has
+ *   desbloqueado 2 lecciones gratuitas"— a quien se acababa de suscribir a una
+ *   secuencia: le prometía dos videos que no eran los suyos.
+ */
 export const SubscriptionSuccessDrawer = ({
   isOpen,
   onClose,
   subscriberVideos = [],
+  variant = "webinar",
+  sequenceName,
 }: {
   isOpen?: boolean;
   onClose?: () => void;
   subscriberVideos?: SubscriberVideo[];
   courseSlug?: string;
+  variant?: "webinar" | "secuencia";
+  sequenceName?: string | null;
 }) => {
+  const esSecuencia = variant === "secuencia";
   // Solo cerrar el drawer - el onClose ya maneja la navegación limpia
   const handleViewNow = () => {
     onClose?.();
@@ -40,14 +55,26 @@ export const SubscriptionSuccessDrawer = ({
               className="mx-auto w-[200px] md:w-[260px]"
             />
             <h2 className="text-balance text-2xl text-dark dark:text-white font-semibold md:text-4xl text-center pt-12">
-              ¡Bienvenido a bordo! 🚀
+              {esSecuencia ? "¡Listo, ya estás dentro! 🎉" : "¡Bienvenido a bordo! 🚀"}
             </h2>
-            <p className="text-lg dark:text-metal text-center text-iron font-light mt-6">
-              Has desbloqueado{" "}
-              <span className="text-brand-500 font-medium">
-                {subscriberVideos.length} lecciones gratuitas
-              </span>{" "}
-              de este curso.
+            <p className="text-pretty text-lg dark:text-metal text-center text-iron font-light mt-6">
+              {esSecuencia ? (
+                <>
+                  Este video ya está abierto. Las siguientes entregas de{" "}
+                  <span className="font-medium text-brand-500">
+                    {sequenceName || "la serie"}
+                  </span>{" "}
+                  te llegan por correo.
+                </>
+              ) : (
+                <>
+                  Has desbloqueado{" "}
+                  <span className="text-brand-500 font-medium">
+                    {subscriberVideos.length} lecciones gratuitas
+                  </span>{" "}
+                  de este curso.
+                </>
+              )}
             </p>
             {/* Ya tiene sesión abierta; decirlo aquí evita que vea "Iniciar sesión"
                 en el encabezado y crea que algo salió mal. */}
@@ -56,7 +83,7 @@ export const SubscriptionSuccessDrawer = ({
               y seguir donde te quedaste.
             </p>
 
-            {subscriberVideos.length > 0 && (
+            {!esSecuencia && subscriberVideos.length > 0 && (
               <div className="mt-8 bg-white/5 rounded-xl p-4 max-h-[200px] overflow-y-auto">
                 <p className="text-sm text-gray-400 mb-3">
                   Lecciones desbloqueadas:

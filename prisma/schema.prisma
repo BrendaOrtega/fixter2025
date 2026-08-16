@@ -324,6 +324,10 @@ model Subscriber {
   firstSource        String? // linkedin, youtube, email, directo…
   firstMedium        String?
   firstCampaign      String?
+  /// Qué pieza concreta la trajo dentro de la campaña: con dos links en la
+  /// misma descripción de YouTube, `campaign` dice de qué video vinieron y
+  /// `content` cuál de los dos botones apretaron.
+  firstContent       String?
   firstReferrer      String?
   firstLandingPath   String?
   firstSeenAt        DateTime?

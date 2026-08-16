@@ -1,8 +1,15 @@
 import { cn } from "~/utils/cn";
 
-export const Triangle = ({ className }: { className?: string }) => {
+export const Triangle = ({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) => {
   return (
     <div
+      style={style}
       className={cn(
         "w-0 h-0",
         "border-8",

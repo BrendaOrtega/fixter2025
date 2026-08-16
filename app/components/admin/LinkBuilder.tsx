@@ -38,11 +38,15 @@ export const LinkBuilder = ({
   const [path, setPath] = useState(destinos[0]?.path ?? "/");
   const [source, setSource] = useState("linkedin");
   const [campaign, setCampaign] = useState(campanaSugerida);
+  // Qué pieza concreta dentro de la campaña. Con dos ligas en la misma
+  // descripción de YouTube, `campaign` dice de qué video vinieron y `content`
+  // cuál de los dos botones apretaron. Opcional: vacío no ensucia la URL.
+  const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
 
   const url = `${SITE}${path}${path.includes("?") ? "&" : "?"}utm_source=${source}${
     campaign ? `&utm_campaign=${encodeURIComponent(campaign)}` : ""
-  }`;
+  }${content ? `&utm_content=${encodeURIComponent(content)}` : ""}`;
 
   const copy = async () => {
     try {
@@ -84,6 +88,18 @@ export const LinkBuilder = ({
             value={campaign}
             onChange={(e) => setCampaign(e.target.value)}
             placeholder="sin campaña"
+            className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-200"
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-xs uppercase tracking-wide text-gray-500">
+            Pieza <span className="normal-case text-gray-600">(opcional)</span>
+          </span>
+          <input
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="tutorial, taller, bio…"
             className="mt-1 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-gray-200"
           />
         </label>

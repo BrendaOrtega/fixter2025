@@ -19,6 +19,7 @@ export type Origin = {
   source?: string;
   medium?: string;
   campaign?: string;
+  content?: string;
   referrer?: string;
   landingPath?: string;
   at?: string;
@@ -101,6 +102,7 @@ export const captureOriginHeaders = (request: Request): string | null => {
     source: params.get("utm_source") ?? undefined,
     medium: params.get("utm_medium") ?? undefined,
     campaign: params.get("utm_campaign") ?? undefined,
+    content: params.get("utm_content") ?? undefined,
     referrer: external,
     landingPath: url.pathname,
     at: new Date().toISOString(),
@@ -158,6 +160,7 @@ export const recordOrigin = async (email: string, request: Request) => {
               firstSource: channelOf(first),
               firstMedium: first.medium,
               firstCampaign: first.campaign,
+              firstContent: first.content,
               firstReferrer: first.referrer,
               firstLandingPath: first.landingPath,
               firstSeenAt: first.at ? new Date(first.at) : new Date(),

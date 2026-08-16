@@ -183,17 +183,24 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
    */
   const anclaRef = useRef<HTMLDivElement>(null);
   const [montado, setMontado] = useState(false);
-  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const [pos, setPos] = useState({ top: 0, right: 0, punta: 16 });
   useEffect(() => setMontado(true), []);
 
   const toggleMenu = async () => {
     const r = anclaRef.current?.getBoundingClientRect();
     if (r) {
+      // Nunca menos de 16px del borde: colgado del avatar, en pantallas
+      // angostas el menú se salía por la derecha.
+      const right = Math.max(16, window.innerWidth - r.right);
+      // La punta se calcula del centro REAL del avatar, no de un porcentaje
+      // fijo: el ancla tiene su propio padding y cualquier número a ojo queda
+      // desalineado por unos píxeles. 8 = media base del triángulo.
+      const bordeDerechoDelMenu = window.innerWidth - right;
+      const centroDelAvatar = (r.left + r.right) / 2;
       setPos({
         top: r.bottom + 12,
-        // Nunca menos de 16px del borde: colgado del avatar, en pantallas
-        // angostas el menú se salía por la derecha.
-        right: Math.max(16, window.innerWidth - r.right),
+        right,
+        punta: Math.max(8, bordeDerechoDelMenu - centroDelAvatar - 8),
       });
     }
     setIsOpen((o) => !o);
@@ -254,7 +261,7 @@ const UserMenu = ({ user }: { user: Partial<User> }) => {
             cuando el menú colgaba desplazado (`-right-20`). Ahora su borde
             derecho coincide con el del avatar, así que la punta va a 16px del
             borde — justo bajo el centro del avatar. */}
-        <Triangle className="border-b-brand-500 left-auto right-4" />
+        <Triangle className="border-b-brand-500 left-auto" style={{ right: pos.punta }} />
         <button
           onClick={() => handleNavigation("/perfil")}
           className="flex gap-3 items-center text-white hover:bg-brand-100/5 w-full p-4 rounded-xl"
