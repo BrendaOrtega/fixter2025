@@ -237,18 +237,34 @@ getAgenda().define(
   { lockLifetime: 30 * 60 * 1000 }
 );
 
-// Schedule sequence processing - optimized frequency for development
+/**
+ * Arranca el riel de secuencias.
+ *
+ * NO se cancela el job antes de reprogramarlo. `agenda.every` ya es idempotente
+ * por nombre; cancelar primero borra la programación y `every` la vuelve a
+ * crear con el próximo disparo a 5 minutos DESDE AHORA. Cada arranque reiniciaba
+ * la cuenta, así que una racha de despliegues seguidos —justo lo que pasa un día
+ * de trabajo— dejaba el motor sin correr nunca y sin una sola señal de error:
+ * las inscripciones se acumulaban vencidas y nadie recibía su entrega.
+ *
+ * Y al arrancar se procesa una vez, sin esperar el primer intervalo: un reinicio
+ * no tiene por qué costarle cinco minutos de espera a quien acaba de suscribirse.
+ */
 export const startSequenceProcessor = async () => {
   const agenda = getAgenda();
   await agenda.start();
-  
-  // Clear any existing job to avoid duplicates
-  await agenda.cancel({ name: 'process_sequences' });
-  
-  // Use different intervals based on environment
-  const interval = process.env.NODE_ENV === 'development' ? '15 minutes' : '5 minutes';
-  await agenda.every(interval, 'process_sequences');
+
+  const interval = process.env.NODE_ENV === "development" ? "15 minutes" : "5 minutes";
+  await agenda.every(interval, "process_sequences");
   console.info(`Sequence processor started - runs every ${interval}`);
+
+  // Nunca tumba el arranque: si esto falla, el intervalo lo recoge después.
+  try {
+    const { processed } = await processDueEnrollments();
+    console.info(`Catch-up al arrancar: ${processed} inscripciones procesadas`);
+  } catch (error) {
+    console.error("Catch-up al arrancar falló:", error);
+  }
 };
 
 // Initialize Agenda with all job definitions
