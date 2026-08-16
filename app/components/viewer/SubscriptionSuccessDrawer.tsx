@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useFetcher } from "react-router";
 import { EmojiConfetti } from "../common/EmojiConfetti";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
@@ -23,6 +25,8 @@ export const SubscriptionSuccessDrawer = ({
   subscriberVideos = [],
   variant = "webinar",
   sequenceName,
+  askName = false,
+  courseSlug,
 }: {
   isOpen?: boolean;
   onClose?: () => void;
@@ -30,8 +34,13 @@ export const SubscriptionSuccessDrawer = ({
   courseSlug?: string;
   variant?: "webinar" | "secuencia";
   sequenceName?: string | null;
+  /** Todavía no sabemos cómo se llama. */
+  askName?: boolean;
 }) => {
   const esSecuencia = variant === "secuencia";
+  const fetcher = useFetcher<{ nameSaved?: boolean; error?: string }>();
+  const [nombre, setNombre] = useState("");
+  const guardado = fetcher.data?.nameSaved;
   // Solo cerrar el drawer - el onClose ya maneja la navegación limpia
   const handleViewNow = () => {
     onClose?.();
@@ -82,6 +91,42 @@ export const SubscriptionSuccessDrawer = ({
               Tu sesión quedó abierta: puedes volver desde cualquier dispositivo
               y seguir donde te quedaste.
             </p>
+
+            {/* Se pregunta aquí y no en el muro: allá cada campo cuesta gente
+                que abandona; aquí ya entró. Opcional de verdad — quien no
+                quiera, cierra y ya está dentro igual. */}
+            {askName && !guardado && (
+              <fetcher.Form method="POST" className="mt-8">
+                <input type="hidden" name="intent" value="save-name" />
+                <input type="hidden" name="courseSlug" value={courseSlug || ""} />
+                <label className="block text-sm text-colorParagraph">
+                  ¿Cómo te llamamos?{" "}
+                  <span className="opacity-60">(opcional)</span>
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    name="name"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    placeholder="Tu nombre"
+                    maxLength={60}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!nombre.trim() || fetcher.state !== "idle"}
+                    className="shrink-0 rounded-lg bg-brand-500 px-5 font-semibold text-brand-900 transition hover:brightness-110 disabled:opacity-40"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </fetcher.Form>
+            )}
+            {guardado && (
+              <p className="mt-8 text-center text-sm text-brand-500">
+                Listo, te llamamos {nombre.trim()} 👋
+              </p>
+            )}
 
             {!esSecuencia && subscriberVideos.length > 0 && (
               <div className="mt-8 bg-white/5 rounded-xl p-4 max-h-[200px] overflow-y-auto">

@@ -390,6 +390,23 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     }
   }
 
+  // El nombre, preguntado DESPUÉS del alta. Nunca bloquea nada: si falla, la
+  // persona ya está dentro y lo único que se pierde es el saludo por su nombre.
+  if (intent === "save-name") {
+    const nombre = ((formData.get("name") as string) || "").trim().slice(0, 60);
+    if (!nombre) return data({ error: "Escribe un nombre" }, { status: 400 });
+    try {
+      await db.subscriber.updateMany({ where: { email }, data: { name: nombre } });
+      if (session) {
+        await db.user.updateMany({ where: { email }, data: { displayName: nombre } });
+      }
+      return data({ nameSaved: true });
+    } catch (error) {
+      console.error("📧 No se pudo guardar el nombre:", error);
+      return data({ error: "No se pudo guardar" }, { status: 500 });
+    }
+  }
+
   // Con sesión abierta no hay código que mandar: la cuenta ya probó que ese
   // buzón es suyo, y es la misma prueba que pide el OTP. Mandarle un código al
   // correo desde el que ya está identificado es cobrarle dos veces lo mismo.
@@ -586,6 +603,23 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const sequenceUnlocked = currentUnlock?.unlocked ?? false;
   const unlocksAt = currentUnlock?.unlocksAt ?? null;
   const sequenceEnrolled = currentUnlock?.enrolled ?? false;
+
+  // Sólo cuando se acaba de dar de alta: es la única pantalla que va a
+  // preguntar el nombre. Quien entra por el visor nunca lo deja —el muro pide
+  // el correo y nada más, a propósito— así que la secuencia le habla en
+  // genérico para siempre si no se pregunta aquí.
+  let viewerName: string | null = null;
+  if (searchParams.get("subscribed")) {
+    const { viewerEmailFrom } = await import("~/.server/videoAccess");
+    const correo = await viewerEmailFrom(request, user?.email);
+    if (correo) {
+      const s = await db.subscriber.findUnique({
+        where: { email: correo },
+        select: { name: true },
+      });
+      viewerName = s?.name || null;
+    }
+  }
   const sequenceOrder = currentUnlock?.order ?? null;
 
   // La regla vive en un solo lugar; aquí solo se le pasan los datos ya cargados.
@@ -703,6 +737,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     // basta que la fuente exista por cualquier otra vía para que dé por bueno
     // un acceso que el servidor negó, y el cajón de la secuencia no aparece.
     hasAccess,
+    viewerName,
     isPurchased,
     isSubscribed,
     accessLevel,
@@ -781,6 +816,7 @@ export default function Route({
   loaderData: {
     nextVideo,
     hasAccess,
+    viewerName,
     isPurchased,
     isSubscribed: serverIsSubscribed,
     accessLevel,
@@ -1129,6 +1165,9 @@ export default function Route({
           courseSlug={course.slug}
           variant={searchParams.subscribed === "sequence" ? "secuencia" : "webinar"}
           sequenceName={sequenceName}
+          // Se pregunta el nombre AQUÍ y no en el muro: ahí cada campo se paga
+          // en gente que abandona; aquí ya entró, y quien no quiera lo ignora.
+          askName={!viewerName}
         />
       )}
       {showSequenceDrawer && (
