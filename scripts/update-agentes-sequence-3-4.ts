@@ -117,8 +117,14 @@ const entrega2 = wrapEmailHtml(
       )}, a dónde se llega.`
     ),
     repoButton("Ver el código", `${REPO_URL}/tree/main/entregas/02-interfaz-web`),
+    // Sin tema concreto a propósito: la entrega 3 se decide después, y un
+    // teaser que promete algo distinto a lo que llega se paga caro.
     emailTeaser(
-      { title: "Memoria y base de datos — dónde vive lo que el agente recuerda cuando cierras la pestaña." },
+      {
+        title:
+          "Seguimos construyendo sobre este mismo agente. Te aviso en cuanto esté lista.",
+        when: "en unos días",
+      },
       "light"
     ),
     firma,
