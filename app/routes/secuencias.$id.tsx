@@ -908,14 +908,14 @@ function MonitorTab({
             <table className="w-full text-sm">
               <thead className="bg-brand-900/60">
                 <tr className="text-left text-xs text-brand-100 uppercase">
-                  <th className="px-4 py-3">Suscriptor</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3">Progreso</th>
-                  <th className="px-4 py-3">Enviados</th>
-                  <th className="px-4 py-3">Engagement</th>
-                  <th className="px-4 py-3">WhatsApp</th>
-                  <th className="px-4 py-3">Próximo</th>
-                  <th className="px-4 py-3 text-right">Acciones</th>
+                  <th className="px-3 py-3">Suscriptor</th>
+                  <th className="px-2 py-3">Estado</th>
+                  <th className="px-2 py-3">Progreso</th>
+                  <th className="px-2 py-3 hidden 2xl:table-cell">Enviados</th>
+                  <th className="px-2 py-3">Engagement</th>
+                  <th className="px-2 py-3 hidden xl:table-cell">WhatsApp</th>
+                  <th className="px-2 py-3">Próximo</th>
+                  <th className="px-3 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-100/10">
@@ -925,18 +925,21 @@ function MonitorTab({
                     onClick={() => onRowClick(e)}
                     className="hover:bg-brand-800/30 cursor-pointer"
                   >
-                    <td className="px-4 py-3 text-white">
+                    {/* El correo es lo único que puede crecer sin límite: se
+                        trunca y el completo queda en el title, para que sea la
+                        celda que cede en vez de empujar la tabla fuera. */}
+                    <td className="px-3 py-3 text-white max-w-[240px] truncate" title={e.subscriber.email}>
                       {e.subscriber.email}
                     </td>
-                    <td className="px-4 py-3">{statusPill(e.status)}</td>
-                    <td className="px-4 py-3 text-brand-100">
+                    <td className="px-2 py-3">{statusPill(e.status)}</td>
+                    <td className="px-2 py-3 text-brand-100">
                       {e.currentEmailIndex}/{totalEmails}
                     </td>
-                    <td className="px-4 py-3 text-brand-100">{e.emailsSent}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-3 text-brand-100 hidden 2xl:table-cell">{e.emailsSent}</td>
+                    <td className="px-2 py-3">
                       <EngagementBadges enrollment={e} />
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-2 py-3 whitespace-nowrap hidden xl:table-cell">
                       {e.subscriber.whatsappOptIn && e.subscriber.phone ? (
                         <a
                           href={`https://wa.me/${e.subscriber.phone.replace(/\D/g, "")}`}
@@ -951,7 +954,7 @@ function MonitorTab({
                         <span className="text-brand-100/30">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-brand-100">
+                    <td className="px-2 py-3 text-brand-100 whitespace-nowrap">
                       {e.nextEmailAt
                         ? new Date(e.nextEmailAt).toLocaleDateString("es-MX", {
                             day: "numeric",
@@ -964,7 +967,7 @@ function MonitorTab({
                         sacarse uno mismo para probar el alta de cero— y no
                         había forma de hacerlo sin entrar a la base. */}
                     <td
-                      className="px-4 py-3 text-right whitespace-nowrap"
+                      className="px-3 py-3 text-right whitespace-nowrap"
                       onClick={(ev) => ev.stopPropagation()}
                     >
                       <button
