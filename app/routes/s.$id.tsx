@@ -241,15 +241,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // de baja no le hacía NADA: la fila seguía en `paused`, la pantalla decía
   // "¡listo, estás dentro!" y no volvía a llegarle un solo correo. Esa función
   // ya sabe reactivar donde se quedó — es la misma que usa el visor.
-  // Con la sesión abierta el correo salió del servidor, no del formulario: la
-  // identidad ya está probada y el alta es inmediata.
+  // Ya confirmó su correo antes: entra sin fricción, con o sin sesión. Es lo
+  // que hace la industria y la razón es buena — la prueba de que el buzón es
+  // suyo ya se dio, y volver a pedirla por cada lista del MISMO remitente se
+  // siente burocrático.
   //
-  // SIN sesión no basta con que el correo esté confirmado, aunque lo esté:
-  // cualquiera podría escribir el correo de otra persona y suscribirla a sus
-  // espaldas. Es exactamente el abuso que el doble opt-in existe para evitar, y
-  // saltárselo en el caso más fácil de explotar no tiene sentido. Al dueño del
-  // buzón le cuesta un clic; a quien no lo es, no lo lleva a ningún lado.
-  if (subscriber.confirmed && session) {
+  // El riesgo que queda: sin sesión, alguien podría escribir el correo de un
+  // tercero y suscribirlo. Se acepta a cambio de la fricción que ahorra, y lo
+  // acota el "bájate en un clic" que va en cada correo (List-Unsubscribe
+  // incluido). Si algún día llegan quejas de spam, aquí es donde se aprieta.
+  if (subscriber.confirmed) {
     // Dinámico: importado arriba, el bundler arrastra el módulo de servidor al
     // cliente porque esta ruta también exporta componente.
     const { enrollSubscriberInSequence } = await import("~/.server/sequences");
