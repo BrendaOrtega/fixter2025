@@ -1,7 +1,6 @@
 import { getSesTransport } from "~/utils/sendGridTransport";
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import {
-  WEBINAR_TITLE,
   WEBINAR_ROOM_PATH,
   webinarGcalLink,
   type WebinarSlot,
@@ -32,7 +31,7 @@ const template = ({
     : "Ya le caes ¿qué no?"
 } 👋</h1>
 <p style="margin:0 0 8px 0;">
-  <strong>${WEBINAR_TITLE}</strong> — Hoy, ${slot.short
+  <strong>${slot.title}</strong> — Hoy, ${slot.short
     .charAt(0)
     .toLowerCase()}${slot.short.slice(1)} (CDMX).
 </p>
@@ -92,7 +91,7 @@ export const sendSistemasWebinarReminder = async ({
     .sendMail({
       from: FROM,
       to,
-      subject: `Hoy a las 8:00 PM — tu link para "${WEBINAR_TITLE}"`,
+      subject: `Hoy a las 8:00 PM — tu link para "${slot.title}"`,
       html,
     })
     .then((result: unknown) => {

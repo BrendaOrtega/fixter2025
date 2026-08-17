@@ -12,7 +12,6 @@ import { db } from "../app/.server/db";
 import { wrapEmailHtml, emailButton } from "../app/utils/emailShell";
 import {
   WEBINAR_SLOTS,
-  WEBINAR_TITLE,
   WEBINAR_ROOM_PATH,
   type WebinarSlot,
 } from "../app/utils/webinarDates";
@@ -40,11 +39,11 @@ const emailsFor = (slot: WebinarSlot) => [
   {
     order: 1,
     specificDate: at(dayBefore(slot.id), 16), // 10:00 AM CDMX
-    subject: `Mañana: ${WEBINAR_TITLE}`,
+    subject: `Mañana: ${slot.title}`,
     content: wrapEmailHtml(
       `
 <h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">Mañana nos vemos 👋</h1>
-<p style="margin:0 0 16px 0;">Te espero mañana <strong>${slot.label}</strong> en el webinar <strong>${WEBINAR_TITLE}</strong>. Dura una hora.</p>
+<p style="margin:0 0 16px 0;">Te espero mañana <strong>${slot.label}</strong> en el webinar <strong>${slot.title}</strong>. Dura una hora.</p>
 <p style="margin:0 0 8px 0;color:#475569;">Voy a enseñarte, en vivo, un agente que funciona perfecto y luego se rompe con un usuario real — y las piezas que le faltan para no romperse. Nada de slides genéricas: sistemas que hoy tenemos corriendo en producción.</p>
 <div style="margin:16px 0 24px 0;">${emailButton("Guardar el link de la sala", WEBINAR_ROOM_PATH)}</div>
 <p style="margin:0 0 8px 0;color:#475569;">Trae tu pregunta — la última parte es puro Q&amp;A.</p>

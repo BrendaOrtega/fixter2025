@@ -8,6 +8,7 @@ import {
   SocialPlanet,
   Why,
 } from "./home/components";
+import { WebinarBar } from "~/components/common/WebinarBar";
 import { getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/home";
 import getMetaTags from "~/utils/getMetaTags";
@@ -138,6 +139,9 @@ export default function Page({ loaderData }: Route.ComponentProps) {
           </Link>
         </div>
       )}
+      {/* Arriba de todo: es el CTA al que apuntan los shorts, que solo dicen
+          "regístrate en fixtergeek.com". Se quita sola cuando ya no hay webinar. */}
+      <WebinarBar />
       <HomeHero />
       <CoachHighlight />
       <CommunityBand />

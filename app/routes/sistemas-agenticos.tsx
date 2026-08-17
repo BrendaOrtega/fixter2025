@@ -9,11 +9,9 @@ import VideoGaleria from "~/components/sistemas/VideoGaleria";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import { FaWhatsapp } from "react-icons/fa";
 import {
-  WEBINAR_SLOTS,
-  WEBINAR_SUBTITLE,
-  WEBINAR_TITLE,
   getWebinarSlot,
   proximoWebinar,
+  webinarsDisponibles,
 } from "~/utils/webinarDates";
 
 // Secuencias de recordatorio por fecha (scripts/create-webinar-sequences.ts)
@@ -216,6 +214,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     if (!slot) {
       return data({ error: "Elige una fecha para el webinar" });
+    }
+    // La fecha viaja en un formulario público: que el <select> ya solo muestre
+    // las que faltan no impide que llegue un POST con una que ya pasó.
+    if (!webinarsDisponibles().some((s) => s.id === slot.id)) {
+      return data({ error: "Ese webinar ya pasó, elige otra fecha" });
     }
 
     try {
@@ -520,6 +523,36 @@ function WebinarSection() {
   const isLoading = webinarFetcher.state !== "idle";
   const done = webinarFetcher.data?.success;
   const confirmedSlot = getWebinarSlot(webinarFetcher.data?.slotId);
+  // Solo las fechas que faltan. El <select> listaba las tres y arrancaba en la
+  // primera, así que días después del primer webinar seguía inscribiendo gente
+  // a uno que ya había pasado.
+  const disponibles = webinarsDisponibles();
+  const proximo = disponibles[0];
+
+  // Ya pasaron todos: en vez de un formulario a ninguna parte, la grabación.
+  if (!proximo) {
+    return (
+      <section
+        id="webinar"
+        className="relative z-10 scroll-mt-24 border-y border-sistemas-line/60 bg-sistemas-surface/40"
+      >
+        <div className="mx-auto w-full max-w-3xl px-6 py-20 text-center lg:px-10">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Esta serie de webinars ya terminó
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
+            Pero la grabación está completa y es gratis.
+          </p>
+          <a
+            href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
+            className="mt-8 inline-block rounded-xl bg-sistemas-accent px-6 py-3.5 text-sm font-bold text-sistemas-dark transition hover:brightness-110"
+          >
+            Mira el webinar completo, gratis →
+          </a>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -539,21 +572,13 @@ function WebinarSection() {
           </span>
           <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
             ¿Prefieres verlo antes?{" "}
-            <span className="text-sistemas-primary">{WEBINAR_TITLE}</span>
+            <span className="text-sistemas-primary">{proximo.title}</span>
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-            {WEBINAR_SUBTITLE}. Desarmamos en vivo las seis piezas que separan
-            un agente que funciona en una demo de uno que aguanta usuarios
-            reales, con sistemas nuestros que hoy corren en producción por
-            dentro. Tres demos sobre un mismo agente y Q&amp;A al final.
+            {proximo.blurb}
           </p>
           <ul className="mt-6 space-y-2.5">
-            {[
-              "La ecuación: agente = modelo + harness (y por qué el harness es tuyo)",
-              "Contexto, ejecución durable, memoria y autenticación",
-              "La interfaz: la única pieza que el usuario ve",
-              "🎁 Al minuto 30, el PDF de las seis piezas — gratis, compres o no",
-            ].map((item) => (
+            {proximo.bullets.map((item) => (
               <li
                 key={item}
                 className="flex items-start gap-2.5 text-zinc-300"
@@ -612,7 +637,9 @@ function WebinarSection() {
                 Aparta tu lugar
               </h3>
               <p className="mt-1.5 text-sm text-sistemas-gray">
-                Gratis. Solo necesito saber a dónde mandarte el link.
+                {disponibles.length === 1
+                  ? `Gratis, el ${proximo.short.toLowerCase()}. Solo necesito saber a dónde mandarte el link.`
+                  : "Gratis. Solo necesito saber a dónde mandarte el link."}
               </p>
               <webinarFetcher.Form method="post" className="mt-5 space-y-3">
                 <input
@@ -633,18 +660,24 @@ function WebinarSection() {
                   placeholder="tu@email.com"
                   className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
                 />
-                <select
-                  name="webinarDate"
-                  required
-                  defaultValue={WEBINAR_SLOTS[0].id}
-                  className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
-                >
-                  {WEBINAR_SLOTS.map((slot) => (
-                    <option key={slot.id} value={slot.id}>
-                      {slot.short}
-                    </option>
-                  ))}
-                </select>
+                {/* Con una sola fecha el selector es fricción: la fecha ya se
+                    dijo arriba y aquí solo viaja. */}
+                {disponibles.length === 1 ? (
+                  <input type="hidden" name="webinarDate" value={proximo.id} />
+                ) : (
+                  <select
+                    name="webinarDate"
+                    required
+                    defaultValue={proximo.id}
+                    className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
+                  >
+                    {disponibles.map((slot) => (
+                      <option key={slot.id} value={slot.id}>
+                        {slot.short}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   type="submit"
                   disabled={isLoading}

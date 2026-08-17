@@ -1,10 +1,12 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
 import {
-  WEBINAR_SLOTS,
-  WEBINAR_SUBTITLE,
-  WEBINAR_TITLE,
+  proximoWebinar,
+  webinarsDisponibles,
 } from "~/utils/webinarDates";
+
+/** Cuando ya pasaron todos los webinars, la sala habla de la serie. */
+const SERIE = "Diseño de sistemas agénticos";
 
 /**
  * URL estable de la sala del webinar. Los correos (confirmación y
@@ -14,7 +16,7 @@ import {
  */
 export const meta = () =>
   getMetaTags({
-    title: `Webinar en vivo | ${WEBINAR_TITLE} | FixterGeek`,
+    title: `Webinar en vivo | ${proximoWebinar()?.title ?? SERIE} | FixterGeek`,
     description:
       "Acceso a la sala del webinar gratuito sobre diseño de sistemas agénticos.",
     url: "https://www.fixtergeek.com/webinar-en-vivo",
@@ -27,6 +29,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function WebinarEnVivo() {
+  // El tema de la sesión que sigue, no el de la serie: cada webinar es distinto.
+  const proximo = proximoWebinar();
+  const disponibles = webinarsDisponibles();
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#0E1317] px-6 text-center text-zinc-100">
       <div className="max-w-md">
@@ -35,19 +41,30 @@ export default function WebinarEnVivo() {
           Webinar gratuito
         </span>
         <h1 className="text-3xl font-black leading-tight sm:text-4xl">
-          {WEBINAR_TITLE}
+          {proximo?.title ?? SERIE}
         </h1>
-        <p className="mt-3 text-zinc-400">{WEBINAR_SUBTITLE}.</p>
-        <p className="mt-5 leading-relaxed text-zinc-400">
-          La sala todavía no abre. Se abre 10 minutos antes de cada sesión:
-        </p>
-        <ul className="mt-5 space-y-2 text-zinc-300">
-          {WEBINAR_SLOTS.map((slot) => (
-            <li key={slot.id} className="font-mono text-sm">
-              {slot.short}
-            </li>
-          ))}
-        </ul>
+        {proximo && <p className="mt-3 text-zinc-400">{proximo.subtitle}.</p>}
+        {disponibles.length > 0 ? (
+          <>
+            <p className="mt-5 leading-relaxed text-zinc-400">
+              La sala todavía no abre. Se abre 10 minutos antes de cada sesión:
+            </p>
+            {/* Solo las fechas que faltan: listar las que ya pasaron hace dudar
+                de si uno se metió al link equivocado. */}
+            <ul className="mt-5 space-y-2 text-zinc-300">
+              {disponibles.map((slot) => (
+                <li key={slot.id} className="font-mono text-sm">
+                  {slot.short}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="mt-5 leading-relaxed text-zinc-400">
+            Esta serie de webinars ya terminó. La grabación y el taller completo
+            están en la página del taller.
+          </p>
+        )}
         <p className="mt-8 text-sm text-zinc-500">
           Vuelve a este mismo link a la hora del webinar. Si tienes dudas,
           escríbeme por{" "}

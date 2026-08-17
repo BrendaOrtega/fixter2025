@@ -1,8 +1,6 @@
 import { getSesTransport } from "~/utils/sendGridTransport";
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import {
-  WEBINAR_TITLE,
-  WEBINAR_SUBTITLE,
   WEBINAR_ROOM_PATH,
   webinarGcalLink,
   type WebinarSlot,
@@ -30,8 +28,8 @@ const template = ({
 }) => `
 <h1 style="font-size:26px;margin:0 0 8px 0;color:#19262A;">${userName ? `Listo, ${userName}` : "Listo"} ✅</h1>
 <p style="margin:0 0 20px 0;">
-  Tu lugar en el webinar <strong>${WEBINAR_TITLE}</strong> está apartado para el
-  <strong>${slot.label}</strong>. ${WEBINAR_SUBTITLE}: 45 minutos, Q&amp;A al final y sin costo.
+  Tu lugar en el webinar <strong>${slot.title}</strong> está apartado para el
+  <strong>${slot.label}</strong>. ${slot.subtitle}: 45 minutos, Q&amp;A al final y sin costo.
 </p>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6fafa;border-radius:10px;border-left:4px solid #85DDCB;margin-bottom:24px;">
