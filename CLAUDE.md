@@ -37,13 +37,23 @@ fragmento y dónde está lo completo; el outro lleva fecha, tema, verbo ("Regís
 **Nunca fondo negro plano**: patrón animado con la paleta de la casa (morado `#7c3aed`,
 ámbar `#fbbf24`, fondo `#0b0b0f`), en bucle que cierre sin salto.
 
-**La música sale de Mixkit** — `https://assets.mixkit.co/music/<id>/<id>.mp3`, gratis, uso
-comercial sin atribución (no se puede redistribuir la pista suelta, así que no va al repo público).
-**Pistas nuevas cada video**, nunca reciclar la del anterior. Se eligen midiendo, no de oído: se
-bajan ~30 candidatas y se sacan BPM (autocorrelación sobre el flujo de onsets), RMS y punch;
-se busca movida —BPM alto y punch alto— con RMS moderado (~0.12) para que quepa debajo de la voz.
-Luego se normaliza a −20 LUFS y se mete con `sidechaincompress` para que se agache al hablar.
-El script de medición vive junto al proyecto del video; el precedente está en
+**La música sale de Openverse** (el buscador de Creative Commons, catálogo de Jamendo; API pública
+sin key). Mixkit se agotó — sus cinco pistas ya se usaron y repetir está prohibido. Flujo completo,
+scripts y reglas en **`scripts/bgm/README.md`**; leerlo antes de elegir cama musical:
+
+```sh
+node scripts/bgm/fetch-bgm.mjs "upbeat energetic techno" /tmp/bgm --n 30
+node scripts/bgm/medir-bgm.mjs /tmp/bgm
+```
+
+**Ahora hay que dar crédito**: lo aprovechable de Jamendo es CC BY, así que el artista y la
+licencia van en la descripción del short (`creditos.json` los deja listos). El script filtra solo
+pistas **instrumentales** — una canción cantada compite con la narración y el medidor no la
+distingue, porque mide energía y no voz. **Pistas nuevas cada
+video**, nunca reciclar la del anterior, y el mp3 no va al repo público. Se eligen midiendo, no de
+oído: BPM (autocorrelación sobre el flujo de onsets), RMS y punch; se busca movida —BPM alto y
+punch alto— con RMS moderado (~0.12) para que quepa debajo de la voz. Luego se normaliza a −20 LUFS
+y se mete con `sidechaincompress` para que se agache al hablar. Precedente de documentación en
 `videos/hooks-deterministas/assets/BGM.md`.
 
 Herramientas: HyperFrames para las tarjetas (SVG animado a mano, nunca imágenes generadas), ffmpeg

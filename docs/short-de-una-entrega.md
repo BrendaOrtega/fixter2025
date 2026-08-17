@@ -121,7 +121,10 @@ ffmpeg -y -i final.mp4 -ac 1 -ar 8000 -f f32le mix.raw   # y medir con numpy
 ## La música
 
 **Pista nueva cada video** — se compara por hash contra las que ya se usaron en
-el proyecto, no de memoria. Se bajan ~10 candidatas de Mixkit, se miden BPM
+el proyecto, no de memoria. Se bajan ~30 candidatas con
+`scripts/bgm/fetch-bgm.mjs` (Openverse/Jamendo; Mixkit ya se agotó — ver
+`scripts/bgm/README.md`, y ojo que ahora hay que dar crédito CC BY), se
+miden BPM
 (autocorrelación del flujo de onsets), RMS y punch, y se elige con RMS ~0.12 para
 que quepa bajo la voz. Para 60 s de voz continua conviene una pista **pausada**:
 a 178 BPM la cama cansa aunque esté baja.
