@@ -610,12 +610,16 @@ function WebinarSection() {
           </a>
         </motion.div>
 
+        {/* En móvil el formulario va primero: apilado, quien llega por
+            `#webinar` —casi todos desde un short— caía frente a mil doscientos
+            píxeles de texto y el formulario fuera de pantalla. En `lg` vuelve a
+            su columna de la derecha. */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="rounded-2xl border border-sistemas-line bg-sistemas-dark p-7 sm:p-8"
+          className="order-first rounded-2xl border border-sistemas-line bg-sistemas-dark p-7 sm:p-8 lg:order-none"
         >
           {done ? (
             <div className="text-center">
@@ -633,6 +637,11 @@ function WebinarSection() {
             </div>
           ) : (
             <>
+              {/* Solo en móvil: aquí el formulario va antes que el título de
+                  la sección, así que sin esto no se sabe a qué te apuntas. */}
+              <p className="mb-3 text-sm font-bold text-sistemas-accent lg:hidden">
+                Webinar gratuito · {proximo.title}
+              </p>
               <h3 className="text-lg font-bold text-zinc-100">
                 Aparta tu lugar
               </h3>
@@ -719,6 +728,33 @@ export default function SistemasAgenticosLanding() {
     if (params.get("cancel") === "1") {
       window.history.replaceState({}, "", "/sistemas-agenticos");
     }
+  }, []);
+
+  /**
+   * Bajar al ancla cuando se llega con `#webinar` desde otra página.
+   *
+   * El navegador solo resuelve el hash en una carga completa. Al llegar por un
+   * `<Link>` —como el de la banda de la home— React Router cambia la URL sin
+   * recargar y nadie hace el scroll: la página se quedaba hasta arriba, con el
+   * formulario 2,300px más abajo.
+   *
+   * Se repite con `setTimeout` en vez de `requestAnimationFrame`: la página
+   * monta un canvas WebGL y varias imágenes, así que el primer intento cae
+   * sobre un layout que todavía se está acomodando y el salto queda corto. Y
+   * rAF no corre mientras la pestaña no está al frente —entrar por un link con
+   * la ventana en segundo plano es justo el caso de alguien que llega de un
+   * short—, así que ahí nunca dispararía.
+   */
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    // `scrollIntoView` respeta el `scroll-mt-24` de la sección, así que el
+    // destino no queda debajo de la navbar.
+    const irAlAncla = () =>
+      document.querySelector(hash)?.scrollIntoView({ block: "start" });
+    irAlAncla();
+    const reintentos = [80, 300, 800].map((ms) => setTimeout(irAlAncla, ms));
+    return () => reintentos.forEach(clearTimeout);
   }, []);
 
   return (

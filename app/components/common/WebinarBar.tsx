@@ -54,9 +54,13 @@ export const WebinarBar = () => {
   // Cinta sólida, no un tinte: en `bg-brand-500/10` sobre el fondo oscuro se leía
   // como un segundo renglón de la navbar. Menta llena y texto casi negro es lo
   // único que se despega de un sitio que es oscuro de arriba a abajo.
-  // El `pt` deja pasar a la navbar, que es `fixed` en top:0.
+  //
+  // El margen deja pasar a la navbar, que es `fixed` en top:0 y con
+  // `backdrop-blur`: lo que le quede debajo no se tapa, se enturbia. Su altura
+  // medida es 44px, 60px a partir de `md` y 78px a partir de `lg`; aquí van esos
+  // números más ~8px de aire.
   return (
-    <aside className="mt-12 w-full bg-brand-500 text-brand-900 md:mt-16">
+    <aside className="mt-[52px] w-full bg-brand-500 text-brand-900 md:mt-[68px] lg:mt-[86px]">
       <div className="relative mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-2.5">
         <p className="flex items-center gap-2.5 pr-8 text-sm font-medium sm:pr-0">
           <span className="relative flex h-2.5 w-2.5 shrink-0">
