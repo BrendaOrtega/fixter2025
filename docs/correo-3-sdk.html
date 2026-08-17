@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"></head>
+<body style="margin:0;padding:0;background:#0B1114;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Escribí el loop a mano. Después dejé de mantenerlo.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0B1114;padding:24px 0;">
+  <tr><td align="center">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#121D21;border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">
+      <tr><td style="padding:28px 32px 0 32px;">
+        <img alt="FixterGeek" width="150" src="https://i.imgur.com/mpzZhT9.png" style="width:150px;display:block;border:0;" />
+      </td></tr>
+      <tr><td style="padding:16px 32px 32px 32px;color:#E8F1EF;font-size:16px;line-height:1.6;">
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px 0;">
+  <tr><td style="padding-bottom:8px;color:#8FA5A9;font-size:12px;letter-spacing:0.5px;text-transform:uppercase;font-weight:bold;">Preparación · 3 de 5</td></tr>
+  <tr><td>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#85DDCB;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#85DDCB;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#85DDCB;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#223035;border-radius:3px;">&nbsp;</td><td width="6" style="width:6px;font-size:0;">&nbsp;</td><td width="20%" height="6" style="height:6px;font-size:0;line-height:0;background:#223035;border-radius:3px;">&nbsp;</td></tr></table>
+  </td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;">
+<tr><td style="padding-bottom:8px;color:#85DDCB;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;">Preparación para el taller</td></tr>  <tr><td style="color:#E8F1EF;font-size:26px;line-height:1.25;font-weight:bold;">El día que tiré mi propio arnés</td></tr>
+</table>
+
+<p style="margin:0 0 14px;">Hola Geek 👋🏼</p>
+
+<p style="margin:0 0 16px;">Escribí el loop del agente a mano: el ciclo, el parseo del stream, un protocolo propio. Valió la pena escribirlo, porque es lo que hace que entiendas qué pasa por dentro. Después lo tiré y puse el <strong style="color:#E8F1EF;">AI SDK</strong> debajo. 🎬</p>
+
+{{video}}
+
+<p style="margin:0 0 10px;">Lo que gané en el cambio, en 44 segundos:</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px 0;">
+  <tr><td style="padding:0 0 8px 0;color:#E8F1EF;font-size:15px;line-height:1.5;"><span style="color:#85DDCB;">▸</span> Un esquema en Zod, y de ahí salen el tipo, la validación y lo que ve el modelo.</td></tr>
+  <tr><td style="padding:0 0 8px 0;color:#E8F1EF;font-size:15px;line-height:1.5;"><span style="color:#85DDCB;">▸</span> Tres streams por un mismo canal: el agente, las métricas y un segundo modelo escribiendo a la vez. Uno de ellos es <strong style="color:#E8F1EF;">un stream dedicado a tu UI</strong>, que es lo que hace posibles los artefactos.</td></tr>
+  <tr><td style="padding:0 0 8px 0;color:#E8F1EF;font-size:15px;line-height:1.5;"><span style="color:#85DDCB;">▸</span> Repetir el contexto cuesta 30× menos, con caché automático.</td></tr>
+  <tr><td style="color:#E8F1EF;font-size:15px;line-height:1.5;"><span style="color:#85DDCB;">▸</span> <strong style="color:#E8F1EF;">500 líneas borradas</strong>: el búfer del stream, la cola de mensajes y el protocolo que yo mismo había inventado para hablarle a la interfaz. He dejado de mantener todo eso.</td></tr>
+</table>
+
+<p style="margin:0 0 16px;">Una advertencia que te va a servir en el taller: con caché por prefijo, <strong style="color:#E8F1EF;">cuidar ese prefijo pasa a ser trabajo tuyo</strong>. Una fecha dentro del system prompt y el caché no pega nunca. La petición funciona igual, solo que cuesta diez veces más, y nada te avisa. 🧰</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;">
+  <tr><td height="1" style="height:1px;background:#223035;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px 0;">
+  <tr><td style="color:#8FA5A9;font-size:14px;line-height:1.5;">
+    <strong style="color:#E8F1EF;">En el siguiente correo:</strong><br/><span style="color:#85DDCB;">En 3 días</span> · La regla que tu agente puede ignorar.
+  </td></tr>
+</table>
+
+<p style="margin:18px 0 0;color:#8FA5A9;font-size:14px;">Abrazo. Blissmo. 🤓</p>
+
+      </td></tr>
+      <tr><td style="padding:14px 32px;background:#19262A;color:#7e9499;font-size:11px;line-height:1.5;text-align:center;">
+        Enviado con <strong style="color:#85DDCB;">Secuencias</strong> · FixterGeek<br/>
+        <a href="{{unsubscribe}}" style="color:#7e9499;text-decoration:underline;">Cancelar suscripción</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

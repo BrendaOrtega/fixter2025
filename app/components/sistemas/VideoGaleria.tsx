@@ -38,6 +38,15 @@ export const VIDEOS: VideoItem[] = [
     duracion: "4:31",
   },
   {
+    slug: "el-sdk",
+    titulo: "El día que tiré mi propio arnés",
+    descripcion:
+      "Un esquema en Zod del que salen el tipo, la validación y lo que ve el modelo; tres streams por un mismo canal; y el caché que abarata treinta veces repetir el contexto.",
+    src: `${CDN}/videos/el-sdk-de-vercel.mp4`,
+    poster: `${CDN}/videos/posters/el-sdk-de-vercel.jpg`,
+    duracion: "0:44",
+  },
+  {
     slug: "los-hooks",
     titulo: "Aquí no decide el modelo",
     descripcion:

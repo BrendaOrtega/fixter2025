@@ -76,8 +76,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!sequence) throw redirect("/secuencias");
 
   // Videos disponibles para adjuntar a un email (selector del drawer).
+  // Los pósters vienen también: la vista previa pinta la tarjeta con la imagen
+  // real, que es lo único que permite cachar a tiempo un video equivocado.
   const videos = await db.video.findMany({
-    select: { slug: true, title: true },
+    select: { slug: true, title: true, poster: true, posterWide: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -1918,6 +1920,7 @@ function EmailDrawer({
             content={content}
             setContent={setContent}
             subject={subject}
+            video={videoList?.find((v: any) => v.slug === videoSlug) ?? null}
             sequenceId={sequence.id}
             error={error}
             setError={setError}
@@ -2040,18 +2043,32 @@ function playChime() {
  * Marcadores del motor renderizados como bloques visibles. Sin esto el editor
  * enseña `{{video}}` en medio del texto y se lee como un error del contenido,
  * cuando en realidad es la señal de dónde entra la tarjeta al enviar.
+ *
+ * Con un video seleccionado se pinta su póster de verdad: un hueco genérico
+ * dejaba pasar sin ruido el video equivocado hasta que ya estaba enviado. Lo
+ * único que sigue siendo de mentira es el enlace, que se firma por suscriptor
+ * en el momento del envío.
  */
-function previewHtml(content: string) {
+function previewHtml(content: string, video?: { title?: string; poster?: string | null; posterWide?: string | null } | null) {
   if (!content) return content;
-  return content
-    .replace(
-      /\{\{video\}\}/g,
-      `<div style="border:2px dashed #85DDCB;border-radius:10px;padding:18px;text-align:center;color:#186656;background:#F2FBF9;margin:12px 0;">
+
+  const poster = video?.posterWide || video?.poster || null;
+  const tarjeta = poster
+    ? `<div style="border:1px solid #d6e6e2;border-radius:10px;overflow:hidden;margin:12px 0;background:#F2FBF9;">
+         <img src="${poster}" alt="" style="display:block;width:100%;height:auto;" />
+         <div style="padding:10px 12px;color:#186656;">
+           <div style="font-weight:bold;font-size:13px;">▶ ${video?.title ?? ""}</div>
+           <div style="font-size:11px;opacity:.75;">Póster real. El enlace se firma por suscriptor al enviar.</div>
+         </div>
+       </div>`
+    : `<div style="border:2px dashed #85DDCB;border-radius:10px;padding:18px;text-align:center;color:#186656;background:#F2FBF9;margin:12px 0;">
          <div style="font-size:22px;line-height:1">▶</div>
          <div style="font-weight:bold;font-size:13px;margin-top:6px;">Tarjeta del video</div>
-         <div style="font-size:11px;opacity:.75;">Se arma al enviar, con el poster y el link del suscriptor</div>
-       </div>`
-    )
+         <div style="font-size:11px;opacity:.75;">${video ? "Este video no tiene póster" : "Elige un video para ver su póster"}</div>
+       </div>`;
+
+  return content
+    .replace(/\{\{video\}\}/g, tarjeta)
     .replace(/\{\{unsubscribe\}\}/g, "#");
 }
 
@@ -2060,6 +2077,7 @@ function EmailBody({
   content,
   setContent,
   subject,
+  video,
   sequenceId,
   error,
   setError,
@@ -2290,7 +2308,7 @@ function EmailBody({
               className="p-3 text-sm text-gray-900"
               dangerouslySetInnerHTML={{
                 __html:
-                  previewHtml(content) ||
+                  previewHtml(content, video) ||
                   '<p style="color:#9ca3af">La vista previa aparecerá aquí.</p>',
               }}
             />
