@@ -272,6 +272,81 @@
   .slide.on .art .stamp{animation:stampblink 2.4s steps(1) infinite}
   @keyframes stampblink{0%,49%{opacity:1;fill:var(--red)}50%,100%{opacity:.3}}
 
+  /* ── LA PANTALLA: dos ventanas corriendo el MISMO ciclo de 8 s ──
+     Izquierda sin stream: gira hasta el segundo 6 y suelta todo de golpe.
+     Derecha con stream: la vista previa se arma bloque por bloque desde el
+     medio segundo, y el estado va diciendo en qué punto va.
+     Aquí no va código a propósito: lo que se enseña es la diferencia que ve
+     el usuario, no la API que la produce. */
+  .demo{display:grid;grid-template-columns:1fr 1fr;gap:2.4vw;align-items:start}
+  .win{background:var(--panel);border:var(--border);box-shadow:var(--hard)}
+  .win--dim{border-color:#2a2436;box-shadow:14px 14px 0 rgba(42,36,54,.5)}
+  .win--a{border-color:var(--amber);box-shadow:14px 14px 0 rgba(251,191,36,.28)}
+  .win .chrome{display:flex;align-items:center;gap:.45em;
+    padding:.5em .8em;background:#0e0b16;border-bottom:2px solid #2a2436}
+  .win .chrome i{width:.6em;height:.6em;background:#2a2436}
+  .win .chrome span{margin-left:auto;color:var(--dim);font-weight:700;
+    font-size:clamp(.6rem,.9vw,.78rem);letter-spacing:.16em;text-transform:uppercase}
+  .win--a .chrome span{color:var(--amber)}
+  .win .screen{position:relative;height:26vh;padding:.9em;
+    display:flex;flex-direction:column;gap:.7em;overflow:hidden}
+
+  /* el estado del turno: submitted → streaming → ready */
+  .status{display:flex;gap:.5em;height:1.5em;flex:none}
+  .status b{padding:.15em .7em;font-size:clamp(.6rem,.9vw,.78rem);font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;background:#0e0b16;
+    border:2px solid #2a2436;color:var(--dim)}
+  .status b.live{border-color:var(--amber);color:var(--amber)}
+
+  /* la vista previa: barra de título, texto, imagen y botón */
+  .doc{display:flex;flex-direction:column;gap:.6em}
+  .doc>*{opacity:0}
+  .doc .h{height:1.4em;background:var(--violet)}
+  .doc .l{height:.66em;background:#2a2436}
+  .doc .l.short{width:58%}
+  .doc .img{height:4.4em;background:#0e0b16;border:3px solid var(--violet-lt)}
+  .doc .btn{height:1.5em;width:36%;background:var(--amber)}
+
+  /* SIN STREAM · el spinner ocupa la ventana entera hasta el 75 % del ciclo */
+  .wait{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:.9em;color:var(--dim);
+    font-size:clamp(.7rem,1vw,.9rem);letter-spacing:.14em;text-transform:uppercase}
+  .wait i{width:2.1em;height:2.1em;border:5px solid #2a2436;border-top-color:var(--violet)}
+  .slide.on .wait i{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .slide.on .win--dim .wait{animation:waitgone 8s steps(1) infinite}
+  @keyframes waitgone{0%,74.9%{opacity:1}75%,100%{opacity:0}}
+  .slide.on .win--dim .doc>*{animation:dump 8s steps(1) infinite}
+  @keyframes dump{0%,74.9%{opacity:0}75%,100%{opacity:1}}
+
+  /* CON STREAM · cada bloque entra en su momento del mismo ciclo de 8 s.
+     Van seis reglas y no una con retraso: un `animation-delay` sobre un bucle
+     infinito desplaza el ciclo entero y los bloques dejan de reiniciar juntos. */
+  .slide.on .win--a .doc>*:nth-child(1){animation:paint1 8s steps(1) infinite}
+  .slide.on .win--a .doc>*:nth-child(2){animation:paint2 8s steps(1) infinite}
+  .slide.on .win--a .doc>*:nth-child(3){animation:paint3 8s steps(1) infinite}
+  .slide.on .win--a .doc>*:nth-child(4){animation:paint4 8s steps(1) infinite}
+  .slide.on .win--a .doc>*:nth-child(5){animation:paint5 8s steps(1) infinite}
+  .slide.on .win--a .doc>*:nth-child(6){animation:paint6 8s steps(1) infinite}
+  @keyframes paint1{0%,5.9%{opacity:0}6%,100%{opacity:1}}
+  @keyframes paint2{0%,10.9%{opacity:0}11%,100%{opacity:1}}
+  @keyframes paint3{0%,15.9%{opacity:0}16%,100%{opacity:1}}
+  @keyframes paint4{0%,21.9%{opacity:0}22%,100%{opacity:1}}
+  @keyframes paint5{0%,27.9%{opacity:0}28%,100%{opacity:1}}
+  @keyframes paint6{0%,33.9%{opacity:0}34%,100%{opacity:1}}
+  /* el estado sigue el mismo reloj: se enciende el que toca */
+  .slide.on .win--a .status .st1{animation:st1 8s steps(1) infinite}
+  .slide.on .win--a .status .st2{animation:st2 8s steps(1) infinite}
+  .slide.on .win--a .status .st3{animation:st3 8s steps(1) infinite}
+  @keyframes st1{0%,4.9%{border-color:var(--amber);color:var(--amber)}
+                 5%,100%{border-color:#2a2436;color:var(--dim)}}
+  @keyframes st2{0%,4.9%{border-color:#2a2436;color:var(--dim)}
+                 5%,39.9%{border-color:var(--amber);color:var(--amber)}
+                 40%,100%{border-color:#2a2436;color:var(--dim)}}
+  @keyframes st3{0%,39.9%{border-color:#2a2436;color:var(--dim)}
+                 40%,100%{border-color:var(--amber);color:var(--amber)}}
+  /* el de la izquierda no tiene estados: se queda en «cargando» todo el ciclo */
+
   /* cronómetro y contador (mismos que el deck del webinar) */
   .bar{position:fixed;left:0;right:0;bottom:0;height:8px;background:#1a1626;z-index:5}
   .bar i{display:block;height:100%;background:var(--amber);width:0;transition:width .2s steps(4)}
@@ -701,6 +776,48 @@
 });</pre>
 </section>
 
+<!-- ═══ 8c · LO QUE GANA LA PANTALLA ═══
+     La única slide del deck que se demuestra sola: las dos ventanas corren
+     el mismo ciclo, así que la diferencia se ve sin que haya que contarla. -->
+<section class="slide slide--tight" data-t="Lo que gana la pantalla">
+  <span class="kicker">Lo que ve tu usuario</span>
+  <h2>El mismo resultado,<br><em>seis segundos antes</em></h2>
+  <div class="demo" style="margin-top:1vh">
+
+    <div class="win win--dim">
+      <div class="chrome"><i></i><i></i><i></i><span>sin stream</span></div>
+      <div class="screen">
+        <div class="status"><b>cargando…</b></div>
+        <div class="doc">
+          <div class="h"></div><div class="l"></div><div class="l short"></div>
+          <div class="img"></div><div class="l"></div><div class="btn"></div>
+        </div>
+        <div class="wait"><i></i>generando</div>
+      </div>
+    </div>
+
+    <div class="win win--a">
+      <div class="chrome"><i></i><i></i><i></i><span>con stream</span></div>
+      <div class="screen">
+        <div class="status">
+          <b class="st1">submitted</b><b class="st2">streaming</b><b class="st3">ready</b>
+        </div>
+        <div class="doc">
+          <div class="h"></div><div class="l"></div><div class="l short"></div>
+          <div class="img"></div><div class="l"></div><div class="btn"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <ul class="checks" style="margin-top:1.4vh">
+    <li>Se pinta mientras se escribe</li>
+    <li>El estado dice en qué va</li>
+    <li>Se puede cancelar a media</li>
+    <li>Cada parte se dibuja distinto</li>
+  </ul>
+</section>
+
 <!-- ═══ 9 · EL EXECUTE SIGUE SIENDO TUYO ═══ -->
 <section class="slide" data-t="Por qué el execute sigue siendo nuestro">
   <span class="kicker">La decisión que sí conservamos</span>
@@ -883,6 +1000,10 @@ Hoy es <span class="x">${new Date().toISOString()}</span>.   <span class="cm">�
 </div>
 <div class="notes" data-for="Las ~500 líneas que ya no mantienes"><span class="t">Las 500 líneas</span>
   <p>Deja que la tabla se llene sola antes de hablar; las filas entran con retraso a propósito y el total aparece hasta el final. Es el número que la gente se lleva.</p>
+</div>
+<div class="notes" data-for="Lo que gana la pantalla"><span class="t">Lo que gana la pantalla</span>
+  <p>Cállate los primeros segundos y deja que las dos ventanas hablen. La de la izquierda sigue girando cuando la de la derecha ya está entera; ese es el argumento completo.</p>
+  <p>Entra hasta que el ciclo se reinicia: «el resultado es el mismo. Lo que cambia es que uno lo ve armarse.» Y de ahí a las palomitas: el estado del turno es lo que le dice al botón cuándo es Enviar y cuándo Detener.</p>
 </div>
 <div class="notes" data-for="Por qué el execute sigue siendo nuestro"><span class="t">El execute · el dialecto de la API</span>
   <p>Si sale la pregunta: <strong>este código NO usa la Responses API</strong>. <code>@ai-sdk/deepseek</code> llama a <code>/chat/completions</code> — verificado en el paquete. DeepSeek V4-Pro sí soporta Responses de forma nativa, pero el provider del SDK no pasa por ahí.</p>
