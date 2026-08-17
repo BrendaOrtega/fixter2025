@@ -971,13 +971,33 @@ function MonitorTab({
                         <span className="text-brand-100/30">—</span>
                       )}
                     </td>
+                    {/* Con la hora: saber que sale "el 17" no sirve para
+                        decidir si da tiempo de pausarlo. El número de la
+                        entrega no va aquí — ya está en Progreso.
+
+                        En dos renglones a propósito: "17 ago, 9:00 a.m." en una
+                        sola línea con `whitespace-nowrap` casi triplica el ancho
+                        de la columna y la tabla vuelve a arrastrarse en móvil. */}
                     <td className="px-2 py-3 text-brand-100 whitespace-nowrap">
-                      {e.nextEmailAt
-                        ? new Date(e.nextEmailAt).toLocaleDateString("es-MX", {
-                            day: "numeric",
-                            month: "short",
-                          })
-                        : "—"}
+                      {e.nextEmailAt ? (
+                        <>
+                          <div>
+                            {new Date(e.nextEmailAt).toLocaleDateString("es-MX", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </div>
+                          <div className="text-xs text-brand-300">
+                            {new Date(e.nextEmailAt).toLocaleTimeString("es-MX", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </div>
+                        </>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     {/* La tabla sólo miraba. Pausar, reactivar y quitar son
                         justo lo que se necesita desde aquí —empezando por
