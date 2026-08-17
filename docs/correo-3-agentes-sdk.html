@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"></head>
+<body style="margin:0;padding:0;background:#f4f6f6;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">500 líneas menos, tres streams por un canal y el caché 30× más barato.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f6;padding:24px 0;">
+  <tr><td align="center">
+    <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">
+      <tr><td style="padding:28px 32px 0 32px;">
+        <img alt="FixterGeek" width="150" src="https://i.imgur.com/mpzZhT9.png" style="width:150px;display:block;border:0;" />
+      </td></tr>
+      <tr><td style="padding:16px 32px 32px 32px;color:#19262A;font-size:16px;line-height:1.6;">
+<h1 style="font-size:24px;margin:0 0 12px 0;color:#19262A;">Cambiamos el arnés por uno más sólido 🌉</h1>
+<p style="margin:0 0 20px 0;">Escribir el loop a mano fue lo que te dejó entender qué hace un agente por dentro. Mantenerlo ya no enseña nada, así que debajo del mismo agente pusimos el <strong>AI SDK de Vercel</strong>, y de paso cambiamos Grok por DeepSeek. 🎬</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;background:#f7faf9;border:1px solid #e2e8e8;border-radius:12px;">
+  <tr><td style="padding:10px 10px 0 10px;">
+    <a href="http://localhost:3000/e?t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImZpeHRlcmdlZWtAZ21haWwuY29tIiwiYWN0aW9uIjoiZW1haWwtYWNjZXNzIiwiaWF0IjoxNzg2OTg5MjEwLCJleHAiOjE4MDI1NDEyMTB9.ePya6IK_qOHHMzwdQUdgP5cAYgDUahhy5XYufRElNPk&to=%2Fcursos%2Fsistemas-agenticos%2Fviewer%3FvideoSlug%3Dsdk-deepseek" target="_blank" rel="noopener" style="display:block;text-decoration:none;">
+      <img src="https://wild-bird-2039.t3.storage.dev/videos/posters/sdk-deepseek.jpg" alt="▶ Ver: Un arnés más sólido: Vercel AI SDK · 7 min" width="516" style="width:100%;max-width:516px;height:auto;display:block;border:0;border-radius:8px;" />
+    </a>
+  </td></tr>
+  <tr><td style="padding:12px 16px 16px 16px;text-align:center;">
+    <div style="color:#5c7076;font-size:13px;line-height:1.4;margin-bottom:10px;">Un arnés más sólido: Vercel AI SDK · 7 min</div>
+    <a href="http://localhost:3000/e?t=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImZpeHRlcmdlZWtAZ21haWwuY29tIiwiYWN0aW9uIjoiZW1haWwtYWNjZXNzIiwiaWF0IjoxNzg2OTg5MjEwLCJleHAiOjE4MDI1NDEyMTB9.ePya6IK_qOHHMzwdQUdgP5cAYgDUahhy5XYufRElNPk&to=%2Fcursos%2Fsistemas-agenticos%2Fviewer%3FvideoSlug%3Dsdk-deepseek" target="_blank" rel="noopener" style="display:inline-block;background:#85DDCB;color:#0E1317;text-decoration:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;margin:8px 0;white-space:nowrap;">▶ Ver el video</a>
+  </td></tr>
+</table>
+<p style="margin:0 0 20px 0;">Lo que ganamos en el cambio, en 7 minutos:</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px 0;">
+  <tr><td style="padding:0 0 8px 0;color:#19262A;font-size:15px;line-height:1.5;"><span style="color:#0E8F79;">▸</span> <strong>500 líneas borradas</strong>: el buffer de NDJSON, el parseo del stream a mano y el protocolo que yo mismo inventé para hablarle a la interfaz.</td></tr>
+  <tr><td style="padding:0 0 8px 0;color:#19262A;font-size:15px;line-height:1.5;"><span style="color:#0E8F79;">▸</span> Un esquema en Zod, y de ahí salen el tipo, la validación y lo que ve el modelo.</td></tr>
+  <tr><td style="padding:0 0 8px 0;color:#19262A;font-size:15px;line-height:1.5;"><span style="color:#0E8F79;">▸</span> Tres streams por un mismo canal, y <strong>uno es tuyo</strong>: eso es lo que hace posibles los artefactos.</td></tr>
+  <tr><td style="padding:0 0 8px 0;color:#19262A;font-size:15px;line-height:1.5;"><span style="color:#0E8F79;">▸</span> Los ojos son intercambiables: pones la llave de Anthropic, Google u OpenAI y otro modelo mira por DeepSeek.</td></tr>
+</table>
+<p style="margin:0 0 20px 0;">Lo que no cambió es Agent Native: las acciones se siguen declarando una sola vez en <code style="background:#f6fafa;padding:2px 6px;border-radius:4px;">actions.ts</code>.</p>
+<div style="margin:0 0 24px 0;"><a href="https://github.com/blissito/taller-arnes-grok/tree/main/entregas/03-sdk-deepseek" target="_blank" rel="noopener" style="display:inline-block;background:#85DDCB;color:#0E1317;text-decoration:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;margin:8px 0;white-space:nowrap;"><span style="display:inline-block;vertical-align:middle;white-space:nowrap;"><img src="https://github.githubassets.com/favicons/favicon.png" alt="" width="18" height="18" style="width:18px;height:18px;display:inline-block;vertical-align:middle;border:0;margin-right:8px;" /><span style="display:inline-block;vertical-align:middle;">El código de la entrega</span></span></a></div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px 0;">
+  <tr><td style="color:#5c7076;font-size:14px;line-height:1.5;">
+    <strong style="color:#19262A;">En el siguiente correo:</strong><br/>Dónde vive lo que tu agente recuerda — hoy reinicias el servidor y no se acuerda de nada.
+  </td></tr>
+</table>
+<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>
+      </td></tr>
+      <tr><td style="padding:18px 32px;background:#0f1a1d;text-align:center;color:#DAE8E5;font-size:13px;line-height:1.5;">
+        ¿Quieres crear una secuencia de correo como esta?<br/>
+        <a href="https://www.fixtergeek.com/secuencias" target="_blank" rel="noopener" style="color:#85DDCB;text-decoration:none;font-weight:bold;">Créala gratis en FixterGeek →</a>
+      </td></tr>
+      <tr><td style="padding:14px 32px;background:#19262A;color:#7e9499;font-size:11px;line-height:1.5;text-align:center;">
+        Enviado con <strong style="color:#85DDCB;">Secuencias</strong> · FixterGeek<br/>
+        <a href="http://localhost:3000/secuencias/baja?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnJvbGxtZW50SWQiOiI2YTgxY2FjMzE0NzQ1NGNkNjMzM2RlYTIiLCJzZXF1ZW5jZUlkIjoiNmE3ZGY5MDllNWExZGZjMDllODQyZmQzIiwic3Vic2NyaWJlcklkIjoiNjk2ZTcyZjgxMjdkNWE0YjA4NjUwZDdjIiwiYWN0aW9uIjoic2VxdWVuY2UtdW5zdWJzY3JpYmUiLCJpYXQiOjE3ODY5ODkyMTB9.yYX0z_1aHCbAdWwstpS4HeDT59QKVgIJ_T1rg57ryD4" target="_blank" rel="noopener" style="color:#7e9499;text-decoration:underline;">Cancelar suscripción</a>
+      </td></tr>
+    </table>
+    <!--[if mso]></td></tr></table><![endif]-->
+  </td></tr>
+</table>
+</body>
+</html>
+<div style="text-align:center;margin:16px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px 0;background:#0F191D;border:1px solid #223035;border-radius:12px;">
+  <tr><td style="padding:10px 10px 0 10px;">
+    <a href="http://localhost:3000/secuencias/video?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnJvbGxtZW50SWQiOiI2YTgxY2FjMzE0NzQ1NGNkNjMzM2RlYTIiLCJzZXF1ZW5jZUlkIjoiNmE3ZGY5MDllNWExZGZjMDllODQyZmQzIiwic3Vic2NyaWJlcklkIjoiNjk2ZTcyZjgxMjdkNWE0YjA4NjUwZDdjIiwiYWN0aW9uIjoic2VxdWVuY2UtdmlkZW8iLCJpYXQiOjE3ODY5ODkyMTAsImV4cCI6MTc5NDc2NTIxMH0.oAR693SCt0rYLNAmyXfDlFRAdjsWhKPLWaHnr2v9ui4&v=6a821665cc65f23449702385" target="_blank" rel="noopener" style="display:block;text-decoration:none;">
+      <img src="https://wild-bird-2039.t3.storage.dev/videos/posters/sdk-deepseek.jpg" alt="▶ Ver: Un arnés más sólido: Vercel AI SDK · 7" width="516" style="width:100%;max-width:516px;height:auto;display:block;border:0;border-radius:8px;" />
+    </a>
+  </td></tr>
+  <tr><td style="padding:12px 16px 16px 16px;text-align:center;">
+    <div style="color:#8FA5A9;font-size:13px;line-height:1.4;margin-bottom:10px;">Un arnés más sólido: Vercel AI SDK · 7</div>
+    <a href="http://localhost:3000/secuencias/video?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnJvbGxtZW50SWQiOiI2YTgxY2FjMzE0NzQ1NGNkNjMzM2RlYTIiLCJzZXF1ZW5jZUlkIjoiNmE3ZGY5MDllNWExZGZjMDllODQyZmQzIiwic3Vic2NyaWJlcklkIjoiNjk2ZTcyZjgxMjdkNWE0YjA4NjUwZDdjIiwiYWN0aW9uIjoic2VxdWVuY2UtdmlkZW8iLCJpYXQiOjE3ODY5ODkyMTAsImV4cCI6MTc5NDc2NTIxMH0.oAR693SCt0rYLNAmyXfDlFRAdjsWhKPLWaHnr2v9ui4&v=6a821665cc65f23449702385" target="_blank" rel="noopener" style="display:inline-block;background:#85DDCB;color:#0E1317;text-decoration:none;padding:12px 24px;border-radius:24px;font-size:16px;font-weight:bold;margin:8px 0;white-space:nowrap;">▶ Ver el video</a>
+  </td></tr>
+</table></div>

@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- sin caché: mientras iteramos, cada recarga debe traer los cambios -->
+<meta http-equiv="cache-control" content="no-store">
+<title>El día que reemplacé mi arnés por uno más sólido — Entrega 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Paleta del short de esta misma entrega (videos/goodies-sdk) ──
+     Documentada en docs/estilo-short-motion-graphics.md. El deck y el short
+     son la misma entrega: si no se parecen, se ven como dos productos.
+     Fondo #0b0b0f · panel #15121f · morado #7c3aed · ámbar #fbbf24.
+     Cero gradientes en los bloques, cero esquinas redondeadas. */
+  :root{
+    --bg:#0b0b0f; --panel:#15121f;
+    --violet:#7c3aed; --violet-lt:#a78bfa;
+    --amber:#fbbf24; --cyan:#4fc7ee;
+    --ink:#f7f0e4; --dim:#7a7a8c;
+    --red:#f87171;
+    --display:"Archivo Black","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+    --border:5px solid var(--violet);
+    --hard:14px 14px 0 rgba(124,58,237,.33);
+    /* ── zona reservada para la cámara ──
+       El recuadro con la cara del que graba va en la esquina INFERIOR DERECHA.
+       Todas las slides dejan libre esa franja: `justify-content:center` reparte
+       el sobrante, así que un padding-bottom del alto de la cámara sube el
+       contenido entero sin descuadrar nada. Con la tecla C se dibuja la guía
+       para comprobarlo antes de grabar.
+       La medida va en `vw` con proporción 16:9 real, no en `vh`: en una ventana
+       alta un alto en vh abre un hueco enorme debajo del contenido. */
+    --cam-w:20vw; --cam-h:calc(var(--cam-w) * 0.5625);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);
+    font-family:var(--mono);overflow:hidden}
+
+  /* ── el fondo: retícula que recorre UNA celda exacta, así el bucle cierra
+     sin salto; dos manchas de color respirando desfasadas; viñeta al centro.
+     Nunca negro plano. ── */
+  .bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .bgfx .grid{position:absolute;inset:-80px;
+    background-image:linear-gradient(rgba(124,58,237,.13) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(124,58,237,.13) 1px,transparent 1px);
+    background-size:60px 60px;animation:drift 9s linear infinite}
+  @keyframes drift{from{transform:translate(0,0)}to{transform:translate(60px,60px)}}
+  .bgfx .blob{position:absolute;width:46vw;height:46vw;border-radius:50%;
+    filter:blur(120px);opacity:.30}
+  .bgfx .blob--v{background:var(--violet);left:-10vw;top:-12vw;
+    animation:breathe 11s ease-in-out infinite}
+  .bgfx .blob--a{background:var(--amber);right:-12vw;bottom:-16vw;opacity:.14;
+    animation:breathe 13s ease-in-out infinite 2.2s}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+  .bgfx .vig{position:absolute;inset:0;
+    background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,.72) 100%)}
+
+  .deck{position:relative;width:100vw;height:100vh;z-index:1}
+  .slide{
+    position:absolute;inset:0;display:none;
+    flex-direction:column;justify-content:center;
+    /* el aire lateral nunca baja de 56px, por angosta que sea la ventana */
+    padding:5vh max(56px,6vw) calc(2.5vh + var(--cam-h));gap:2.2vh;
+  }
+  /* la guía de la cámara (tecla C): solo para encuadrar antes de grabar */
+  /* slide apretada: menos aire y una ilustración más baja */
+  .slide--tight{gap:1.2vh}
+  .slide--tight .art{max-height:30vh}
+  .slide--tight .box p{font-size:clamp(.9rem,1.32vw,1.16rem)}
+  .slide--tight pre{font-size:clamp(.72rem,1.02vw,.94rem);padding:.7em .95em}
+  .camguide{position:fixed;right:2vw;bottom:2.4vh;width:var(--cam-w);height:var(--cam-h);
+    border:3px dashed rgba(251,191,36,.65);display:none;z-index:7;pointer-events:none}
+  .camguide::after{content:"cámara";position:absolute;left:.6em;top:.4em;
+    color:rgba(251,191,36,.75);font-size:.8rem;letter-spacing:.18em;text-transform:uppercase}
+  body.cam-on .camguide{display:block}
+  .slide.on{display:flex;z-index:1}
+  /* El relevo es duro, como en el short: la que sale se va de golpe. */
+  .slide.out{display:flex;pointer-events:none;z-index:0;animation:leave .16s steps(3) both}
+  @keyframes leave{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-40px)}}
+
+  h1{font-family:var(--display);font-size:clamp(2.8rem,7vw,6.2rem);line-height:.92;
+     letter-spacing:-.03em;font-weight:400}
+  h2{font-family:var(--display);font-size:clamp(2.1rem,4.6vw,3.9rem);line-height:.98;
+     letter-spacing:-.03em;font-weight:400}
+  h3{font-size:clamp(1.1rem,1.9vw,1.55rem);font-weight:700;letter-spacing:-.01em}
+  p,li{font-size:clamp(1.1rem,1.85vw,1.55rem);line-height:1.45}
+  .lead{font-size:clamp(1.3rem,2.4vw,2rem);max-width:36ch;line-height:1.32}
+  em{font-style:normal;color:var(--amber)}
+  strong{font-weight:700;color:var(--ink)}
+  .v{color:var(--violet-lt)} .a{color:var(--amber)} .c{color:var(--cyan)}
+  .dim{color:var(--dim)}
+  code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
+
+  /* kicker: mayúsculas espaciadas, como en el short */
+  .kicker{align-self:flex-start;color:var(--violet-lt);font-size:clamp(.72rem,1.05vw,.95rem);
+    letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+
+  ul{list-style:none;display:flex;flex-direction:column;gap:1.6vh}
+  ul li{padding-left:1.8em;position:relative}
+  ul li::before{content:"";position:absolute;left:0;top:.5em;width:.66em;height:.66em;
+    background:var(--violet)}
+  ul.amber li::before{background:var(--amber)}
+  /* lista de palomitas: en fila, para las cosas tachadas de la lista */
+  ul.checks{flex-direction:row;flex-wrap:wrap;gap:.6em 2.2em;margin-top:.2em}
+  ul.checks li{padding-left:1.5em;font-size:clamp(.95rem,1.45vw,1.28rem)}
+  ul.checks li::before{content:"✓";background:none;color:var(--amber);
+    width:auto;height:auto;top:0;font-weight:700;font-size:1.15em}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:3.4vw;align-items:center}
+  .cols.wide-l{grid-template-columns:1.15fr .85fr}
+  /* Sin esto, un `pre` largo ensancha su columna —los items de grid traen
+     `min-width:auto`— y empuja la slide entera fuera de la pantalla. */
+  .cols>*,.grid2>*,.grid3>*{min-width:0}
+
+  .box{background:var(--panel);border:var(--border);box-shadow:var(--hard);padding:1.1em 1.3em}
+  .box--a{border-color:var(--amber);box-shadow:14px 14px 0 rgba(251,191,36,.28)}
+  .box--dim{border-color:#2a2436;box-shadow:14px 14px 0 rgba(42,36,54,.5)}
+  .box p{font-size:clamp(.95rem,1.45vw,1.28rem);line-height:1.4}
+  .box .t{display:block;color:var(--violet-lt);font-size:clamp(.7rem,1vw,.88rem);
+    letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin-bottom:.5em}
+  .box--a .t{color:var(--amber)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw}
+
+  /* el número protagonista: el número ES la diapositiva */
+  .stat{font-family:var(--display);font-size:clamp(5rem,17vw,15rem);line-height:.84;
+    letter-spacing:-.05em;color:var(--amber)}
+  .stat--sm{font-size:clamp(3.4rem,9vw,7.4rem)}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+    border:var(--border);box-shadow:var(--hard)}
+  th,td{border:2px solid #2a2436;padding:.6em .85em;text-align:left;
+    font-size:clamp(.88rem,1.35vw,1.2rem);line-height:1.3}
+  th{background:var(--violet);color:#fff;text-transform:uppercase;
+    letter-spacing:.14em;font-size:clamp(.68rem,1vw,.85rem)}
+  td.num{text-align:right;color:var(--amber);font-weight:700}
+  tr.total td{background:rgba(251,191,36,.12);font-weight:700;font-size:1.06em}
+  tr.total td.num{color:var(--amber)}
+
+  /* bloques de código: antes/después */
+  pre{background:#0e0b16;border-left:5px solid var(--violet);padding:.9em 1.1em;
+    overflow:auto;max-width:100%;font-size:clamp(.8rem,1.2vw,1.08rem);line-height:1.55;color:var(--ink)}
+  pre.bad{border-left-color:var(--red)}
+  pre.good{border-left-color:var(--amber)}
+  /* coloreado tipo editor: cada categoría con su color, como en un tema oscuro */
+  pre .cm{color:var(--dim);font-style:italic}   /* comentario */
+  pre .k{color:#c4b5fd}                          /* palabra clave */
+  pre .f{color:var(--cyan)}                      /* función o método */
+  pre .p{color:#f0abfc}                          /* propiedad */
+  pre .s{color:var(--amber)}                     /* cadena */
+  pre .b{color:#fca5a5}                          /* booleano */
+  pre .x{color:var(--red);font-weight:700}
+
+  /* ── ANIMACIONES DE ENTRADA ──
+     Regla del short: el cuadro 0 va completo. Aquí no hay cuadro 0 —hay
+     una slide que aparece— así que todo entra con un asentamiento corto
+     (`y:26` → 0) y nada tarda más de medio segundo en estar puesto. */
+  @keyframes settle{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+
+  .slide.on .kicker{animation:settle .3s ease-out both}
+  .slide.on h1,.slide.on h2{animation:settle .38s cubic-bezier(.2,.9,.3,1.02) both .06s}
+  .slide.on .lead,.slide.on>p{animation:settle .38s ease-out both .16s}
+  .slide.on .box,.slide.on pre,.slide.on figure{animation:settle .36s cubic-bezier(.2,.9,.3,1.02) both .22s}
+  .slide.on .grid2>*:nth-child(2),.slide.on .grid3>*:nth-child(2){animation-delay:.34s}
+  .slide.on .grid3>*:nth-child(3){animation-delay:.46s}
+  .slide.on .cols>*:nth-child(2){animation-delay:.34s}
+  .slide.on ul li{animation:slideIn .34s ease-out both}
+  .slide.on ul li:nth-child(1){animation-delay:.24s}
+  .slide.on ul li:nth-child(2){animation-delay:.36s}
+  .slide.on ul li:nth-child(3){animation-delay:.48s}
+  .slide.on ul li:nth-child(4){animation-delay:.60s}
+  .slide.on ul li:nth-child(5){animation-delay:.72s}
+  .slide.on .stat{animation:pop .42s cubic-bezier(.2,.9,.3,1.15) both .3s}
+  /* la tabla se llena fila por fila: es la slide del "500 líneas" y merece
+     que el número crezca delante de quien mira */
+  .slide.on tbody tr{animation:slideIn .3s ease-out both}
+  .slide.on tbody tr:nth-child(1){animation-delay:.30s}
+  .slide.on tbody tr:nth-child(2){animation-delay:.46s}
+  .slide.on tbody tr:nth-child(3){animation-delay:.62s}
+  .slide.on tbody tr:nth-child(4){animation-delay:.78s}
+  .slide.on tbody tr:nth-child(5){animation-delay:.94s}
+  .slide.on tbody tr.total{animation:pop .38s cubic-bezier(.2,.9,.3,1.15) both 1.20s}
+
+  /* ── ILUSTRACIONES SVG ──
+     Objetos concretos, trazo grueso, color plano, y TODAS con bucle
+     permanente: una ilustración que se queda quieta se siente pegada.
+     Cada transform vive en su propio <g>; si comparte elemento con otra
+     animación, se cancelan entre sí. */
+  figure{margin:0}
+  .art{width:100%;max-height:58vh;display:block}
+  .art *{transform-box:fill-box;transform-origin:center}
+
+  /* portada · el Golden Gate: la estructura NO se mueve, a propósito. Lo que
+     anima es el mundo alrededor —niebla, tráfico, luces de aviso—, y por
+     contraste el puente se lee inmóvil. Si el puente se moviera, la slide
+     diría lo contrario de lo que dice el título. */
+  .art .fog,.art .car{transform-box:view-box}
+  .slide.on .art .fog{animation:fog 26s linear infinite}
+  .slide.on .art .fog--2{animation-duration:38s;animation-direction:reverse}
+  .slide.on .art .fog--3{animation-duration:19s}
+  @keyframes fog{from{transform:translateX(0)}to{transform:translateX(460px)}}
+  /* el tráfico entra por un extremo y sale por el otro, sin acelerar */
+  .slide.on .art .car{animation:car 7s linear infinite}
+  .slide.on .art .car--2{animation:car-back 9s linear infinite 2.5s}
+  @keyframes car{from{transform:translateX(-30px)}to{transform:translateX(480px)}}
+  @keyframes car-back{from{transform:translateX(480px)}to{transform:translateX(-30px)}}
+  .slide.on .art .rivet{animation:rivet 2.6s ease-in-out infinite}
+  .slide.on .art .rivet--2{animation-delay:1.3s}
+  @keyframes rivet{0%,100%{opacity:.25}50%{opacity:1}}
+
+  /* el canal único: tres cintas de color corren por el mismo tubo */
+  .slide.on .art .flow{stroke-dasharray:22 16;animation:flow 1.5s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-38}}
+  .slide.on .art .flow--2{animation-duration:1.9s}
+  .slide.on .art .flow--3{animation-duration:2.4s}
+
+  /* los tres streams: los paquetes recorren el mismo tubo con cadencias
+     distintas —tráfico simultáneo, no turnos— y en la interfaz cada zona
+     late cuando le toca recibir. */
+  .art .pkt{transform-box:view-box}
+  .slide.on .art .pkt{animation:pkt 2.2s linear infinite}
+  .slide.on .art .pkt--2{animation-duration:2.9s;animation-delay:.4s}
+  .slide.on .art .pkt--3{animation-duration:1.8s;animation-delay:.9s}
+  .slide.on .art .pkt--4{animation-duration:3.3s;animation-delay:1.5s}
+  @keyframes pkt{
+    0%      {transform:translateX(0);opacity:0}
+    10%     {opacity:1}
+    88%     {opacity:1}
+    100%    {transform:translateX(150px);opacity:0}
+  }
+  .slide.on .art .land{animation:land 2.6s ease-in-out infinite}
+  .slide.on .art .land--2{animation-delay:.85s}
+  .slide.on .art .land--3{animation-delay:1.7s}
+  @keyframes land{0%,100%{opacity:.5}18%{opacity:1}}
+
+  /* .describe(): la etiqueta con el texto sale del código y recorre el riel
+     hasta el modelo, una y otra vez. Es lo único que llega hasta allá. */
+  .art .tag{transform-box:view-box}
+  .slide.on .art .tag{animation:tag 3.6s cubic-bezier(.5,0,.3,1) infinite}
+  @keyframes tag{
+    0%      {transform:translateX(40px);opacity:0}
+    14%     {transform:translateX(64px);opacity:1}
+    62%     {transform:translateX(300px);opacity:1}
+    78%,100%{transform:translateX(330px);opacity:0}
+  }
+
+  /* el schema: una sola pieza se parte en tres salidas, en bucle */
+  .slide.on .art .beam{animation:beam 2.8s ease-in-out infinite}
+  .slide.on .art .beam--2{animation-delay:.22s}
+  .slide.on .art .beam--3{animation-delay:.44s}
+  @keyframes beam{0%,100%{opacity:.28}45%{opacity:1}}
+
+  /* los ojos prestados: un ojo parpadea y mira de lado */
+  .slide.on .art .pupil{animation:look 4.2s ease-in-out infinite}
+  @keyframes look{0%,100%{transform:translateX(0)}35%,55%{transform:translateX(13px)}}
+  .slide.on .art .lidshut{animation:blinklid 4.2s steps(1) infinite}
+  @keyframes blinklid{0%,90%{opacity:0}92%,96%{opacity:1}98%,100%{opacity:0}}
+
+  /* el caché: la moneda cae al frasco, una y otra vez */
+  .slide.on .art .coin{animation:coin 2.2s cubic-bezier(.4,0,.85,1) infinite}
+  .slide.on .art .coin--2{animation-delay:.7s}
+  .slide.on .art .coin--3{animation-delay:1.4s}
+  @keyframes coin{0%{transform:translateY(-130px);opacity:0}
+                  15%{opacity:1}85%{opacity:1}100%{transform:translateY(60px);opacity:0}}
+
+  /* la trampa del prefijo: la fecha parpadea y rompe la llave */
+  .slide.on .art .stamp{animation:stampblink 2.4s steps(1) infinite}
+  @keyframes stampblink{0%,49%{opacity:1;fill:var(--red)}50%,100%{opacity:.3}}
+
+  /* cronómetro y contador (mismos que el deck del webinar) */
+  .bar{position:fixed;left:0;right:0;bottom:0;height:8px;background:#1a1626;z-index:5}
+  .bar i{display:block;height:100%;background:var(--amber);width:0;transition:width .2s steps(4)}
+  .clock,.meta{position:fixed;top:1.6vh;font-family:var(--mono);font-size:clamp(.68rem,.95vw,.85rem);
+    background:var(--panel);color:var(--violet-lt);padding:.4em .8em;z-index:5;letter-spacing:.05em;
+    border:2px solid #2a2436}
+  .clock{left:1.6vw} .meta{right:1.6vw}
+
+  /* apuntes (tecla N): son para ti al grabar, no para la cámara */
+  .notes{position:fixed;inset:auto 0 8px 0;max-height:44vh;overflow:auto;
+    background:#07060b;color:#e8e2d6;border-top:6px solid var(--amber);
+    padding:1.4em 7vw 2em;display:none;z-index:6}
+  body.notes-on .notes.cur{display:block}
+  .notes p{font-size:clamp(.95rem,1.35vw,1.2rem);line-height:1.5;max-width:74ch}
+  .notes p+p{margin-top:.6em}
+  .notes .t{color:var(--amber);font-weight:700;font-size:clamp(.8rem,1vw,.95rem);
+    letter-spacing:.16em;text-transform:uppercase;margin-bottom:.6em;display:block}
+</style>
+</head>
+<body>
+
+<div class="bgfx">
+  <div class="grid"></div>
+  <div class="blob blob--v"></div>
+  <div class="blob blob--a"></div>
+  <div class="vig"></div>
+</div>
+
+<div class="deck">
+
+<!-- ═══ 1 · PORTADA ═══ -->
+<section class="slide" data-t="Portada">
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:2.2vh">
+      <span class="kicker">Sistemas Agénticos · Entrega 3</span>
+      <h1>El día que reemplacé<br>mi arnés por uno<br><em>más sólido</em></h1>
+      <p class="lead dim">Escribimos el loop a mano para entenderlo. Ahora
+        debajo va una implementación <em>de calibre, para producción</em>.</p>
+    </div>
+    <figure>
+      <!-- El Golden Gate: firmeza y solidez, sin metáfora que explicar.
+           Lo que se mueve es el mundo alrededor —la niebla que pasa, el tráfico
+           que cruza, las luces de aviso— y el puente no. Esa quietud es el
+           punto: una estructura de calibre no se te mueve debajo. -->
+      <!-- Todo es simétrico respecto a x=230: las torres están a 112 de ese eje
+           (centros 118 y 342) y la catenaria toca su punto bajo justo ahí. Si
+           una torre se mueve, hay que mover la otra la misma distancia. -->
+      <svg class="art" viewBox="0 0 460 350" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-label="El puente Golden Gate entre la niebla">
+        <defs>
+          <clipPath id="marco"><rect x="0" y="0" width="460" height="350"/></clipPath>
+        </defs>
+        <g clip-path="url(#marco)">
+          <!-- la niebla del fondo, cruzando despacio -->
+          <g class="fog">
+            <rect x="-460" y="196" width="1380" height="20" rx="10" fill="#7c3aed" opacity=".16"/>
+          </g>
+          <g class="fog fog--2">
+            <rect x="-460" y="252" width="1380" height="26" rx="13" fill="#7c3aed" opacity=".12"/>
+          </g>
+
+          <!-- los cables: los laterales bajan al anclaje, la catenaria central
+               llega a su punto bajo en el eje y no toca el tablero -->
+          <path d="M6 300 Q62 210 118 60" stroke="#fbbf24" stroke-width="7"/>
+          <path d="M118 60 Q230 424 342 60" stroke="#fbbf24" stroke-width="7"/>
+          <path d="M454 300 Q398 210 342 60" stroke="#fbbf24" stroke-width="7"/>
+
+          <!-- los suspensores: su altura sale de la curva de arriba -->
+          <g stroke="#fbbf24" stroke-width="3" opacity=".85">
+            <path d="M140 126 L140 300"/>
+            <path d="M163 177 L163 300"/>
+            <path d="M185 213 L185 300"/>
+            <path d="M208 235 L208 300"/>
+            <path d="M230 242 L230 300"/>
+            <path d="M252 235 L252 300"/>
+            <path d="M275 213 L275 300"/>
+            <path d="M297 177 L297 300"/>
+            <path d="M320 126 L320 300"/>
+          </g>
+
+          <!-- las torres: se apoyan en el tablero, no lo atraviesan -->
+          <g stroke="#fbbf24" stroke-width="9">
+            <path d="M106 300 L108 56 M130 300 L128 56"/>
+            <path d="M330 300 L332 56 M354 300 L352 56"/>
+          </g>
+          <!-- travesaños, estrechando hacia arriba -->
+          <g stroke="#fbbf24" stroke-width="7">
+            <path d="M109 74 L127 74 M108 118 L128 118 M107 188 L129 188 M106 258 L130 258"/>
+            <path d="M333 74 L351 74 M332 118 L352 118 M331 188 L353 188 M330 258 L354 258"/>
+          </g>
+          <!-- el remate de cada torre -->
+          <path d="M104 56 L132 56 M328 56 L356 56" stroke="#fbbf24" stroke-width="9"/>
+
+          <!-- el tablero: recto de lado a lado, sin una sola curva -->
+          <path d="M0 300 L460 300" stroke="#a78bfa" stroke-width="11"/>
+          <path d="M0 313 L460 313" stroke="#7c3aed" stroke-width="7"/>
+          <path d="M0 294 L460 294" stroke="#0b0b0f" stroke-width="2" stroke-dasharray="14 16"/>
+
+          <!-- el tráfico: lo único que se desplaza sobre el puente -->
+          <g class="car"><rect x="0" y="286" width="16" height="8" rx="2" fill="#fbbf24"/></g>
+          <g class="car car--2"><rect x="0" y="286" width="13" height="8" rx="2" fill="#4fc7ee"/></g>
+
+          <!-- las luces de aviso, una por torre -->
+          <g class="rivet"><circle cx="118" cy="48" r="6" fill="#f7f0e4"/></g>
+          <g class="rivet rivet--2"><circle cx="342" cy="48" r="6" fill="#f7f0e4"/></g>
+
+          <!-- la niebla de enfrente, por delante del tablero -->
+          <g class="fog fog--3">
+            <rect x="-460" y="326" width="1380" height="30" rx="15" fill="#0b0b0f" opacity=".55"/>
+          </g>
+        </g>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 2 · DÓNDE VAMOS ═══ -->
+<section class="slide" data-t="El mapa de las tres entregas">
+  <span class="kicker">Dónde estamos</span>
+  <h2>Tres entregas, una sola idea</h2>
+  <div class="grid3" style="margin-top:1.5vh">
+    <div class="box box--dim">
+      <span class="t">Entrega 1</span>
+      <h3>El mínimo arnés</h3>
+      <p class="dim">El loop escrito a mano. El ciclo, el parseo del stream, un
+        protocolo propio.</p>
+    </div>
+    <div class="box box--dim">
+      <span class="t">Entrega 2</span>
+      <h3>La interfaz</h3>
+      <p class="dim">El agente deja de vivir en la terminal y sale a la web.</p>
+    </div>
+    <div class="box box--a">
+      <span class="t">Entrega 3 · hoy</span>
+      <h3>Calibre de producción</h3>
+      <p>El AI SDK va debajo del mismo diseño. DeepSeek en lugar de Grok.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3 · NO ES DESDECIRSE ═══ -->
+<section class="slide" data-t="Por qué no es desdecirse">
+  <span class="kicker">La pregunta obvia</span>
+  <h2>«¿Entonces para qué lo escribimos?»</h2>
+  <div class="grid2" style="margin-top:2vh">
+    <div class="box">
+      <span class="t">Escribirlo</span>
+      <p>Para entender <strong>qué hace un agente por dentro</strong>.</p>
+    </div>
+    <div class="box box--a">
+      <span class="t">Cambiarlo</span>
+      <p>Para comprobar que <strong>puedes cambiar de proveedor cuando
+        quieras</strong>.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:2vh">En esta entrega cambiamos dos cosas a la
+    vez: el arnés propio por el AI SDK, y Grok por DeepSeek. <em>Ninguna de las dos
+    debería dar miedo.</em></p>
+</section>
+
+<!-- ═══ 4 · LAS 500 LÍNEAS ═══ -->
+<section class="slide" data-t="Las ~500 líneas que ya no mantienes">
+  <span class="kicker">El saldo</span>
+  <h2>Lo que ya <em>no mantienes</em></h2>
+  <table style="margin-top:1.5vh">
+    <thead>
+      <tr><th>Lo escribías tú</th><th style="text-align:right">Líneas</th><th>Quién lo hace ahora</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>El buffer NDJSON, la cola, la acumulación por id</td><td class="num">340</td><td><code>useChat</code></td></tr>
+      <tr><td>El vocabulario de eventos propio</td><td class="num">39</td><td>las partes del SDK</td></tr>
+      <tr><td>El <code>fetch</code> y el parseo SSE a mano</td><td class="num">~90</td><td><code>streamText</code></td></tr>
+      <tr><td>El armado de schemas para el proveedor</td><td class="num">~10</td><td>Zod</td></tr>
+      <tr><td>El protocolo del servidor</td><td class="num">~30</td><td><code>toUIMessageStreamResponse</code></td></tr>
+      <tr class="total"><td>Y hace más que antes</td><td class="num">≈ 500</td><td>menos código que mantener</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ 5 · ZOD ═══ -->
+<section class="slide" data-t="Zod: una línea, tres consumidores">
+  <span class="kicker">Una declaración</span>
+  <h2>El schema y el código<br>dejan de <em>poder contradecirse</em></h2>
+  <div class="grid2" style="margin-top:1.5vh">
+    <div>
+      <p class="dim" style="margin-bottom:.7em;font-size:1rem;letter-spacing:.14em;text-transform:uppercase">Antes · el schema por un lado, el código por otro</p>
+<pre class="bad"><span class="k">parameters</span>: { type:<span class="s">"object"</span>,
+  properties:{ command:{type:<span class="s">"string"</span>} },
+  required:[<span class="s">"command"</span>] },
+<span class="k">run</span>: <span class="k">async</span> (a) =&gt; execAsync(String(a.command))
+<span class="cm">// `a` es <span class="x">any</span>.</span></pre>
+      <p style="margin-top:1.2vh;font-size:clamp(.95rem,1.4vw,1.24rem)" class="dim">
+        Describes el mismo dato dos veces. Le cambias el nombre a uno y el otro
+        <strong>se queda como estaba</strong>: compila, arranca, y el modelo
+        manda un campo que tu código no lee.</p>
+    </div>
+    <div>
+      <p class="a" style="margin-bottom:.7em;font-size:1rem;letter-spacing:.14em;text-transform:uppercase">Ahora · una sola</p>
+<pre class="good"><span class="k">inputSchema</span>: z.object({
+  command: z.string().describe(<span class="s">"El comando."</span>)
+})
+<span class="cm">// run recibe { command: string }, ya validado</span></pre>
+      <p style="margin-top:1.2vh;font-size:clamp(.95rem,1.4vw,1.24rem)" class="dim">
+        De esa línea salen tres cosas, y ya no pueden discrepar:</p>
+      <ul class="amber" style="margin-top:1vh">
+        <li>El schema que <strong>ve el modelo</strong></li>
+        <li>La <strong>validación</strong>: si manda <code>comand</code>, truena
+          ahí y no tres capas abajo</li>
+        <li>El <strong>tipo</strong>, sin escribirlo aparte</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6 · .describe() Y LA TRAMPA ═══ -->
+<section class="slide" data-t=".describe() no es adorno">
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:2vh">
+      <span class="kicker">El detalle que se pasa por alto</span>
+      <h2><code style="font-size:1em">.describe()</code><br>es el <em>manual</em><br>de la herramienta</h2>
+      <p class="lead dim">El modelo no lee tu código. Lee el nombre, los campos
+        y ese texto. <strong>Lo que no digas ahí, no lo sabe.</strong></p>
+      <div class="box box--a">
+        <p>La mejora: al escribir <code>run</code>, el editor ya sabe que
+          <code>a.command</code> es un string. <strong>Te autocompleta y te marca
+          la errata.</strong></p>
+      </div>
+    </div>
+    <figure>
+      <!-- El texto del describe sale del código y es lo único que llega al
+           modelo: viaja por el riel como una etiqueta, en bucle. -->
+      <svg class="art" viewBox="0 0 460 250" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round"
+           aria-label="El texto del describe viaja desde el código hasta el modelo">
+        <!-- tu código -->
+        <rect x="8" y="34" width="150" height="182" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <g stroke="#a78bfa" stroke-width="5" opacity=".55">
+          <path d="M30 68 L108 68"/><path d="M30 92 L136 92"/>
+          <path d="M30 164 L120 164"/><path d="M30 188 L96 188"/>
+        </g>
+        <!-- la línea del describe, la única que importa -->
+        <path d="M30 126 L136 126" stroke="#fbbf24" stroke-width="7"/>
+        <text x="83" y="248" text-anchor="middle" fill="#7a7a8c"
+              font-family="JetBrains Mono, monospace" font-size="15">tu código</text>
+
+        <!-- el riel -->
+        <path d="M170 126 L300 126" stroke="#2a2436" stroke-width="4" stroke-dasharray="8 10"/>
+
+        <!-- la etiqueta que viaja -->
+        <g class="tag">
+          <rect x="0" y="112" width="104" height="30" fill="#fbbf24"/>
+          <text x="52" y="133" text-anchor="middle" fill="#0b0b0f"
+                font-family="JetBrains Mono, monospace" font-size="14" font-weight="700">"El comando."</text>
+        </g>
+
+        <!-- lo que ve el modelo -->
+        <rect x="306" y="34" width="146" height="182" fill="#15121f" stroke="#fbbf24" stroke-width="6"/>
+        <text x="379" y="112" text-anchor="middle" fill="#f7f0e4"
+              font-family="JetBrains Mono, monospace" font-size="17">lo que ve</text>
+        <text x="379" y="140" text-anchor="middle" fill="#f7f0e4"
+              font-family="JetBrains Mono, monospace" font-size="17">el modelo</text>
+        <text x="379" y="248" text-anchor="middle" fill="#7a7a8c"
+              font-family="JetBrains Mono, monospace" font-size="15">y nada más</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 7 · EL DISEÑO ═══ -->
+<section class="slide" data-t="El diseño: todo desemboca en un canal">
+  <span class="kicker">La arquitectura · lo que NO cambió</span>
+  <h2><em>Agent Native</em>:<br>una acción se declara una vez</h2>
+  <div class="cols" style="margin-top:1vh">
+    <figure>
+      <!-- Agent Native: UN origen, tres consumidores. Nada de streams aquí
+           —ese es el diagrama de la slide siguiente— o se mezclan dos ideas. -->
+      <svg class="art" viewBox="0 0 460 290" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round"
+           aria-label="Una sola definición de acciones de la que comen la interfaz, el agente y el CLI">
+        <!-- el origen único -->
+        <rect x="8" y="106" width="150" height="70" fill="#15121f" stroke="#fbbf24" stroke-width="7"/>
+        <text x="83" y="140" text-anchor="middle" fill="#fbbf24"
+              font-family="JetBrains Mono, monospace" font-size="19" font-weight="700">actions.ts</text>
+        <text x="83" y="162" text-anchor="middle" fill="#7a7a8c"
+              font-family="JetBrains Mono, monospace" font-size="13">11 acciones · Zod</text>
+
+        <!-- se reparte a los tres, en bucle -->
+        <g class="beam"><path d="M158 128 C210 128 210 44 262 44" stroke="#a78bfa" stroke-width="6"/></g>
+        <g class="beam beam--2"><path d="M158 141 L262 141" stroke="#a78bfa" stroke-width="6"/></g>
+        <g class="beam beam--3"><path d="M158 154 C210 154 210 238 262 238" stroke="#a78bfa" stroke-width="6"/></g>
+
+        <!-- los tres consumidores -->
+        <rect x="262" y="16" width="190" height="56" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <text x="357" y="51" text-anchor="middle" fill="#f7f0e4"
+              font-family="JetBrains Mono, monospace" font-size="18">la interfaz</text>
+        <rect x="262" y="113" width="190" height="56" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <text x="357" y="148" text-anchor="middle" fill="#f7f0e4"
+              font-family="JetBrains Mono, monospace" font-size="18">el agente</text>
+        <rect x="262" y="210" width="190" height="56" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <text x="357" y="245" text-anchor="middle" fill="#f7f0e4"
+              font-family="JetBrains Mono, monospace" font-size="18">el CLI</text>
+      </svg>
+    </figure>
+    <div style="display:flex;flex-direction:column;gap:1.8vh">
+      <p class="lead">Las capacidades viven en <strong>un solo lugar</strong> y
+        todo lo demás las consume. Eso es Agent Native.</p>
+      <div class="box box--a">
+        <span class="t">Y por eso la migración salió barata</span>
+        <p>Cambiamos el arnés <strong>y</strong> el proveedor, y este archivo
+          <strong>no se tocó</strong>. Una arquitectura sirve cuando sobrevive
+          al cambio de las piezas que hay debajo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8 · TRES STREAMS ═══ -->
+<!-- la slide más cargada del deck: la ilustración se limita a 30vh para que
+     las palomitas y el snippet quepan sin recortarse -->
+<section class="slide slide--tight" data-t="Tres streams por el mismo canal">
+  <span class="kicker">Lo que ganamos usando las definiciones de Vercel</span>
+  <h2>Tres cosas distintas viajan<br>por <em>una sola conexión</em></h2>
+  <div class="cols wide-l" style="margin-top:.5vh">
+    <div style="display:flex;flex-direction:column;gap:1.4vh">
+      <div class="box">
+        <span class="t">1 · del modelo</span>
+        <p>Lo que el agente <strong>escribe y razona</strong>, palabra por palabra.</p>
+      </div>
+      <div class="box">
+        <span class="t">2 · estadísticas</span>
+        <p>Cuánto <strong>tardó cada acción</strong> y los tokens que salieron del
+          caché. Las medimos nosotros.</p>
+      </div>
+      <div class="box box--a">
+        <span class="t">3 · artefactos</span>
+        <p>Un stream <strong>dedicado a tu interfaz</strong>: lo que llega por ahí
+          se pinta como componente, no como texto.</p>
+      </div>
+    </div>
+    <figure>
+      <!-- Los tres emisores mandan a la vez por un mismo tubo, y cada paquete
+           llega a su sitio en la pantalla: el texto a las líneas, la estadística
+           a la barra, el artefacto a la tarjeta. Los paquetes salen con
+           cadencias distintas a propósito — es tráfico simultáneo, no un turno
+           ordenado. -->
+      <svg class="art" viewBox="0 0 440 280" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round"
+           aria-label="Tres emisores mandan por un mismo canal y cada dato llega a su lugar en la interfaz">
+        <!-- los tres emisores -->
+        <g>
+          <circle cx="26" cy="52" r="15" fill="#15121f" stroke="#fbbf24" stroke-width="5"/>
+          <circle cx="26" cy="140" r="15" fill="#15121f" stroke="#a78bfa" stroke-width="5"/>
+          <circle cx="26" cy="228" r="15" fill="#15121f" stroke="#4fc7ee" stroke-width="5"/>
+        </g>
+        <!-- entran al mismo tubo -->
+        <path d="M42 52 C96 52 96 140 132 140" stroke="#fbbf24" stroke-width="4" opacity=".45"/>
+        <path d="M42 140 L132 140" stroke="#a78bfa" stroke-width="4" opacity=".45"/>
+        <path d="M42 228 C96 228 96 140 132 140" stroke="#4fc7ee" stroke-width="4" opacity=".45"/>
+
+        <!-- el tubo: uno solo -->
+        <rect x="132" y="116" width="150" height="48" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+        <text x="207" y="184" text-anchor="middle" fill="#7a7a8c"
+              font-family="JetBrains Mono, monospace" font-size="14">una conexión</text>
+
+        <!-- los paquetes que lo recorren -->
+        <g class="pkt"><rect x="138" y="128" width="22" height="10" rx="2" fill="#fbbf24"/></g>
+        <g class="pkt pkt--2"><rect x="138" y="142" width="16" height="10" rx="2" fill="#a78bfa"/></g>
+        <g class="pkt pkt--3"><rect x="138" y="128" width="26" height="10" rx="2" fill="#4fc7ee"/></g>
+        <g class="pkt pkt--4"><rect x="138" y="142" width="20" height="10" rx="2" fill="#fbbf24"/></g>
+
+        <!-- la interfaz, donde cada uno aterriza en su sitio -->
+        <rect x="298" y="34" width="136" height="212" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+        <path d="M298 62 L434 62" stroke="#7c3aed" stroke-width="4"/>
+        <!-- el texto -->
+        <g class="land">
+          <path d="M316 88 L410 88 M316 104 L390 104 M316 120 L402 120"
+                stroke="#fbbf24" stroke-width="5"/>
+        </g>
+        <!-- la barra de la estadística -->
+        <g class="land land--2">
+          <path d="M316 152 L416 152" stroke="#2a2436" stroke-width="9"/>
+          <path d="M316 152 L382 152" stroke="#a78bfa" stroke-width="9"/>
+        </g>
+        <!-- el artefacto: una tarjeta, no texto -->
+        <g class="land land--3">
+          <rect x="316" y="176" width="100" height="52" fill="#0b0b0f" stroke="#4fc7ee" stroke-width="5"/>
+          <path d="M330 194 L402 194 M330 210 L376 210" stroke="#4fc7ee" stroke-width="4" opacity=".7"/>
+        </g>
+      </svg>
+    </figure>
+  </div>
+  <div class="box box--dim" style="margin-top:1.6vh">
+    <span class="t">Lo que ya no escribimos</span>
+    <ul class="checks">
+      <li>El protocolo inventado</li>
+      <li>El búfer del stream</li>
+      <li>La cola por id</li>
+      <li>El parseo a mano</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ 8b · EL CÓDIGO DE LOS TRES STREAMS ═══
+     El snippet vive en su propia slide: metido con la ilustración y las
+     palomitas se salía de pantalla. -->
+<section class="slide slide--tight" data-t="El código de los tres streams">
+  <span class="kicker">Los tres, en el mismo bloque</span>
+  <h2>Todo entra por <em>el mismo writer</em></h2>
+  <p class="dim" style="max-width:74ch"><strong>UI</strong> es la interfaz: la
+    pantalla que ve tu usuario. Un <strong>artefacto</strong> es un dato que esa
+    interfaz dibuja como componente —una tarjeta, una imagen, una vista previa—
+    en vez de escupirlo como texto.</p>
+<pre class="good" style="margin-top:1.2vh"><span class="cm">// abre el canal hacia la pantalla. `writer` es quien escribe en él</span>
+<span class="k">const</span> stream = <span class="f">createUIMessageStream</span>({
+  <span class="p">execute</span>: <span class="k">async</span> ({ writer }) =&gt; {
+
+    <span class="cm">// write = mando un dato mío. El `type` le dice a React qué pintar</span>
+    writer.<span class="f">write</span>({ <span class="p">type</span>: <span class="s">"data-uso"</span>,     <span class="p">data</span>: estado.uso });  <span class="cm">// 2</span>
+    writer.<span class="f">write</span>({ <span class="p">type</span>: <span class="s">"data-captura"</span>, <span class="p">data</span>: { url } });     <span class="cm">// 3</span>
+
+    <span class="cm">// merge = vuelco TODO lo que va diciendo el modelo en ese mismo</span>
+    <span class="cm">// canal, mientras lo dice. Antes esto era mi protocolo a mano.</span>
+    <span class="k">const</span> resultado = <span class="f">correrTurno</span>({ mensajes, writer, estado });  <span class="cm">// 1</span>
+    writer.<span class="f">merge</span>(resultado.<span class="f">toUIMessageStream</span>({ <span class="p">sendReasoning</span>: <span class="b">true</span> }));
+  },                                          <span class="cm">// ↑ que su razonamiento también viaje</span>
+});</pre>
+</section>
+
+<!-- ═══ 9 · EL EXECUTE SIGUE SIENDO TUYO ═══ -->
+<section class="slide" data-t="Por qué el execute sigue siendo nuestro">
+  <span class="kicker">La decisión que sí conservamos</span>
+  <h2>Las herramientas<br>las corremos <em>nosotros</em></h2>
+  <p class="dim" style="max-width:62ch">Cuando el modelo pide usar una
+    herramienta —leer un archivo, correr un comando— alguien tiene que
+    ejecutarla de verdad.</p>
+  <div class="grid2" style="margin-top:1.4vh">
+    <div class="box box--dim">
+      <span class="t">Podríamos dejárselo al SDK</span>
+      <p>Le entregas la función y él la llama. Menos código todavía.</p>
+    </div>
+    <div class="box box--a">
+      <span class="t">Pero entonces nadie mide</span>
+      <p>No sabrías <strong>cuánto tardó</strong> ni <strong>si falló</strong>.
+        El modelo no reporta nada de eso.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:1.8vh">Así que la corremos nosotros, le
+    tomamos el tiempo, y ese dato sale a la pantalla <em>por la misma
+    conexión</em>.</p>
+</section>
+
+<!-- ═══ 10 · LOS OJOS PRESTADOS ═══ -->
+<section class="slide" data-t="Los ojos prestados">
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:2vh">
+      <span class="kicker">El problema real</span>
+      <h2>DeepSeek <em>no ve</em></h2>
+      <p class="lead dim">Y este agente construye interfaces: sin ojos escribe
+        el código pero no comprueba el resultado, que era lo que lo hacía útil.</p>
+      <div class="box box--a">
+        <span class="t">La solución</span>
+        <p>Otro modelo mira por él. Para el agente sigue siendo
+          <strong>una sola herramienta</strong>: pide una captura y recibe una
+          descripción, sin enterarse de que hubo dos modelos.</p>
+      </div>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 0 360 360" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Un ojo prestado que mira por el agente">
+        <!-- la pantalla que se observa -->
+        <rect x="30" y="60" width="130" height="100" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <path d="M46 88 L118 88 M46 110 L98 110 M46 132 L128 132" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/>
+        <path d="M95 160 L95 186 M60 186 L130 186" stroke="#7c3aed" stroke-width="6" stroke-linecap="round"/>
+        <!-- el ojo -->
+        <path d="M186 200 C232 152 302 152 340 200 C302 248 232 248 186 200Z" fill="#15121f" stroke="#fbbf24" stroke-width="7"/>
+        <g class="pupil"><circle cx="258" cy="200" r="26" fill="#fbbf24"/></g>
+        <circle cx="250" cy="192" r="8" fill="#0b0b0f"/>
+        <!-- el párpado que parpadea -->
+        <path class="lidshut" d="M186 200 C232 152 302 152 340 200 C302 248 232 248 186 200Z" fill="#0b0b0f" stroke="#fbbf24" stroke-width="7"/>
+        <!-- la línea de mirada -->
+        <path class="flow" d="M180 190 L166 130" stroke="#4fc7ee" stroke-width="5" stroke-linecap="round"/>
+        <text x="180" y="316" text-anchor="middle" fill="#7a7a8c" font-family="JetBrains Mono, monospace" font-size="19">una tool, dos modelos</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 11 · EL CACHÉ ═══ -->
+<section class="slide slide--tight" data-t="El caché: 30x más barato, y automático">
+  <span class="kicker">El caché</span>
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:1.6vh">
+      <div class="stat">30×</div>
+      <h3 style="color:var(--ink);font-size:clamp(1.2rem,2.2vw,1.9rem)">
+        más barato que entrada fresca.</h3>
+      <div class="box">
+        <span class="t">Y no se pide</span>
+        <p>Es automático, <strong>por prefijo</strong>, y vive en disco: por eso
+          dura de horas a días, no de minutos. Sin <code>prompt_cache_key</code>,
+          sin <code>previous_response_id</code>.</p>
+      </div>
+      <div class="box box--a">
+        <span class="t">Lo que pone el SDK</span>
+        <p>El caché es de DeepSeek. Lo que da el SDK es <strong>verlo</strong>:
+          cada paso te entrega los contadores del proveedor en el mismo lugar,
+          y de ahí salen los números de abajo.</p>
+<pre class="good" style="margin-top:.8em"><span class="f">onStepFinish</span>({ providerMetadata }) {
+  <span class="k">const</span> m = providerMetadata?.deepseek;   <span class="cm">// promptCacheHitTokens</span>
+}</pre>
+      </div>
+<pre class="good">paso 1 → 324 tokens,   <span class="cm">0</span> del caché
+paso 2 → 381 tokens, <span class="s">256</span> del caché   <span class="cm">← sin pedir nada</span></pre>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 0 300 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Monedas que caen solas en un frasco">
+        <g class="coin"><circle cx="150" cy="180" r="20" fill="#fbbf24" stroke="#0b0b0f" stroke-width="4"/></g>
+        <g class="coin coin--2"><circle cx="118" cy="180" r="15" fill="#a78bfa" stroke="#0b0b0f" stroke-width="4"/></g>
+        <g class="coin coin--3"><circle cx="184" cy="180" r="15" fill="#a78bfa" stroke="#0b0b0f" stroke-width="4"/></g>
+        <!-- el frasco -->
+        <path d="M74 236 L74 366 Q74 380 90 380 L210 380 Q226 380 226 366 L226 236Z"
+              fill="#15121f" stroke="#7c3aed" stroke-width="7"/>
+        <path d="M64 232 L236 232" stroke="#7c3aed" stroke-width="8" stroke-linecap="round"/>
+        <!-- monedas acumuladas -->
+        <circle cx="112" cy="344" r="17" fill="#fbbf24" opacity=".75"/>
+        <circle cx="152" cy="352" r="17" fill="#fbbf24" opacity=".75"/>
+        <circle cx="192" cy="344" r="17" fill="#fbbf24" opacity=".75"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 12 · LA TRAMPA DEL PREFIJO ═══ -->
+<section class="slide slide--tight" data-t="La trampa: cuidar el prefijo es trabajo tuyo">
+  <span class="kicker">La letra chica del 30×</span>
+  <h2>El caché solo sirve si<br><em>el principio no cambia</em></h2>
+  <p class="dim" style="max-width:70ch">El descuento de hace un momento no es
+    gratis: llega solo si tu petición <strong>empieza igual</strong> que la
+    anterior. El proveedor las compara desde la primera palabra, reusa todo lo
+    que venga igual al inicio, y en cuanto encuentra una diferencia deja de
+    reusar de ahí hasta el final.</p>
+  <div class="cols" style="margin-top:.6vh">
+    <div style="display:flex;flex-direction:column;gap:1.4vh">
+<pre class="bad">const SYSTEM = `Eres un agente.
+Hoy es <span class="x">${new Date().toISOString()}</span>.   <span class="cm">← cambia cada vez</span>
+...`</pre>
+      <div class="box box--a">
+        <p>La diferencia está en la <strong>segunda línea</strong>, así que de
+          ahí en adelante no se reusa nada. Nunca.</p>
+        <p style="margin-top:.6em">Funciona igual, solo cuesta diez veces más, y
+          <strong>nada te avisa</strong>.</p>
+      </div>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 0 360 300" fill="none" xmlns="http://www.w3.org/2000/svg"
+           aria-label="Dos peticiones que coinciden al principio hasta que aparece la fecha">
+        <!-- petición 1 -->
+        <text x="10" y="48" fill="#7a7a8c" font-family="JetBrains Mono, monospace" font-size="15">petición 1</text>
+        <rect x="10" y="60" width="66" height="46" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <rect x="84" y="60" width="66" height="46" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <g class="stamp"><rect x="158" y="60" width="66" height="46" fill="#f87171" stroke="#0b0b0f" stroke-width="5"/></g>
+        <rect x="232" y="60" width="66" height="46" fill="#15121f" stroke="#2a2436" stroke-width="6"/>
+        <!-- petición 2 -->
+        <text x="10" y="162" fill="#7a7a8c" font-family="JetBrains Mono, monospace" font-size="15">petición 2</text>
+        <rect x="10" y="174" width="66" height="46" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <rect x="84" y="174" width="66" height="46" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <g class="stamp"><rect x="158" y="174" width="66" height="46" fill="#f87171" stroke="#0b0b0f" stroke-width="5"/></g>
+        <rect x="232" y="174" width="66" height="46" fill="#15121f" stroke="#2a2436" stroke-width="6"/>
+        <!-- dónde deja de coincidir -->
+        <path d="M154 40 L154 244" stroke="#fbbf24" stroke-width="5" stroke-dasharray="12 10"/>
+        <text x="78" y="272" text-anchor="middle" fill="#a78bfa"
+              font-family="JetBrains Mono, monospace" font-size="15">igual · se reusa</text>
+        <text x="252" y="272" text-anchor="middle" fill="#f87171"
+              font-family="JetBrains Mono, monospace" font-size="15">se paga completo</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 13 · CIERRE ═══ -->
+<section class="slide" data-t="Cierre · qué sigue">
+  <span class="kicker">Entrega 3 · resumen</span>
+  <h2>Lo que te llevas</h2>
+  <ul style="margin-top:1.5vh">
+    <li><strong>~500 líneas</strong> que ya no mantienes, y hace más que antes.</li>
+    <li><strong>Un schema en Zod</strong>: el modelo, la validación y el tipo salen de la misma línea.</li>
+    <li><strong>Tres streams por un canal</strong> — y uno es tuyo, para tu UI. Eso es lo que hace posibles los artefactos.</li>
+    <li><strong>Caché 30× más barato</strong>, automático… y ahora el prefijo es cosa tuya.</li>
+  </ul>
+  <div class="box box--a" style="margin-top:2.4vh;align-self:flex-start">
+    <span class="t">En la entrega 4</span>
+    <p><strong>Memoria.</strong> Hoy reinicias el servidor y el agente no se acuerda de nada.</p>
+  </div>
+</section>
+
+</div>
+
+<div class="camguide"></div>
+<div class="bar"><i></i></div>
+<div class="clock" id="clock">—:—</div>
+<div class="meta" id="meta"></div>
+
+<!-- ── APUNTES (tecla N) ── -->
+<div class="notes" data-for="Portada"><span class="t">Portada</span>
+  <p>Arranque directo: «En la entrega 1 escribimos el loop del agente a mano. Hoy lo voy a borrar.» No explicar todavía por qué; que la pregunta quede en el aire una slide más.</p>
+</div>
+<div class="notes" data-for="Por qué no es desdecirse"><span class="t">No es desdecirse</span>
+  <p>El punto es la soltura, no el SDK. Cambiamos de arnés y de proveedor en la misma entrega, a propósito: quien se casa con uno solo deja de poder comparar.</p>
+  <p>Escribirlo a mano hizo su trabajo —enseñarte el mecanismo— y es justamente eso lo que te deja evaluar cualquier implementación en vez de creerle.</p>
+</div>
+<div class="notes" data-for="Las ~500 líneas que ya no mantienes"><span class="t">Las 500 líneas</span>
+  <p>Deja que la tabla se llene sola antes de hablar; las filas entran con retraso a propósito y el total aparece hasta el final. Es el número que la gente se lleva.</p>
+</div>
+<div class="notes" data-for="Por qué el execute sigue siendo nuestro"><span class="t">El execute · el dialecto de la API</span>
+  <p>Si sale la pregunta: <strong>este código NO usa la Responses API</strong>. <code>@ai-sdk/deepseek</code> llama a <code>/chat/completions</code> — verificado en el paquete. DeepSeek V4-Pro sí soporta Responses de forma nativa, pero el provider del SDK no pasa por ahí.</p>
+  <p>Y eso no le quita nada al caché: el caché de DeepSeek es automático por prefijo y no depende de Responses. La prueba son los 256 tokens de la slide siguiente, medidos sobre chat/completions. Responses sirve para otra cosa — que el servidor guarde el hilo con <code>previous_response_id</code>.</p>
+  <p>Lo interesante es el meta-punto: el SDK te deja no tener esta conversación. Cambias el provider y el dialecto es su problema.</p>
+</div>
+<div class="notes" data-for="El caché: 30x más barato, y automático"><span class="t">El caché</span>
+  <p>No des precios por millón de tokens en cámara: cambian y el video vive meses. El «30×» y los 256 tokens medidos aguantan mejor el paso del tiempo.</p>
+</div>
+<div class="notes" data-for="La trampa: cuidar el prefijo es trabajo tuyo"><span class="t">La trampa del prefijo</span>
+  <p>Este es el consejo que la gente va a usar el mismo día. Dilo despacio: la petición funciona igual, solo que cuesta diez veces más, y nada te avisa. No hay error, no hay warning, no hay log.</p>
+</div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var notes=[].slice.call(document.querySelectorAll('.notes'));
+  var i=0;
+
+  // ── cronómetro: T arranca/pausa sin perder lo acumulado, R lo pone en cero ──
+  var tick=null, startedAt=0, accumulated=0;
+  var HINT='—:—  ·  T cronómetro · R reinicia · N apuntes · C cámara';
+  function elapsed(){ return accumulated + (tick ? performance.now()-startedAt : 0) }
+  function renderClock(){
+    var el=document.getElementById('clock');
+    if(!tick && !accumulated){ el.textContent=HINT; return }
+    var s=Math.floor(elapsed()/1000);
+    el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')
+      + (tick?'':' ⏸');
+  }
+  function startClock(){ startedAt=performance.now(); tick=setInterval(renderClock,500); renderClock() }
+  function pauseClock(){ if(!tick) return; accumulated=elapsed(); clearInterval(tick); tick=null; renderClock() }
+
+  function render(){
+    var cur=slides[i];
+    // display:none corta las animaciones; al volver a mostrarla arrancan solas.
+    slides.forEach(function(s){s.classList.remove('on')});
+    void cur.offsetWidth;
+    cur.classList.add('on');
+    // Las notas se anclan por el NOMBRE de la slide, no por su número: en
+    // cuanto se inserta o se mueve una, los números dejan de coincidir y los
+    // apuntes salen desfasados sin que nada avise.
+    notes.forEach(function(n){n.classList.toggle('cur',n.dataset.for===cur.dataset.t)});
+    document.querySelector('.bar i').style.width=((i+1)/slides.length*100)+'%';
+    document.getElementById('meta').textContent=(i+1)+' / '+slides.length+'  ·  '+slides[i].dataset.t;
+    renderClock();
+    location.hash=i+1;
+  }
+  var moving=false;
+  function go(d){
+    if(moving) return;
+    var prev=i, next=Math.max(0,Math.min(slides.length-1,i+d));
+    if(next===prev) return;
+    moving=true;
+    var out=slides[prev];
+    out.classList.remove('on');
+    out.classList.add('out');
+    setTimeout(function(){ out.classList.remove('out'); i=next; render(); moving=false },160);
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(-1)}
+    else if(e.key==='Home'){i=0;render()}
+    else if(e.key==='End'){i=slides.length-1;render()}
+    else if(e.key.toLowerCase()==='n'){document.body.classList.toggle('notes-on')}
+    else if(e.key.toLowerCase()==='c'){document.body.classList.toggle('cam-on')}
+    else if(e.key.toLowerCase()==='f'){
+      document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+    else if(e.key.toLowerCase()==='t'){ tick?pauseClock():startClock() }
+    else if(e.key.toLowerCase()==='r'){ pauseClock(); accumulated=0; renderClock() }
+  });
+  // Un click en un link abre el link y nada más; en cualquier otro lado, avanza.
+  document.addEventListener('click',function(e){
+    if(e.target.closest('.notes') || e.target.closest('a')) return;
+    go(1);
+  });
+
+  var h=parseInt(location.hash.slice(1),10);
+  if(h>0&&h<=slides.length) i=h-1;
+  render();
+})();
+</script>
+</body>
+</html>
