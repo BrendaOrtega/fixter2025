@@ -1,16 +1,22 @@
 /**
  * Secuencia "Introducción a los agentes de IA" (comunidad /c/agentes).
  *
- * Crea las entregas 2, 3 y 4, que faltaban: quien se daba de alta recibía el
- * correo de bienvenida y nunca más.
+ * Crea las entregas 2 a 5: quien se daba de alta recibía el correo de
+ * bienvenida y nunca más.
  *
- * Los videos todavía no existen, así que cada correo lleva la card en modo
- * placeholder —misma forma que la de la entrega 1, con el póster en gris y sin
+ * **El 17 de agosto la entrega del SDK se metió en el 3** —es el video que se
+ * grabó— y memoria y sandboxing se corrieron a 4 y 5. Nadie había recibido
+ * todavía el correo 3, así que el cambio no le movió el piso a nadie. El orden
+ * queda igual al del repo del taller, donde `03-sdk-deepseek` va antes que la
+ * memoria.
+ *
+ * Los videos de las últimas entregas todavía no existen, así que su correo
+ * lleva la card en modo placeholder —misma forma, con el póster en gris y sin
  * link— para que el hueco se vea y no se olvide. Cuando un video se publique,
  * se llena su entrada en VIDEOS y se vuelve a correr el script.
  *
  * Idempotente: upsert por `order`, se puede correr las veces que sea.
- *   npx tsx --env-file=.env scripts/update-agentes-sequence-3-4.ts
+ *   npx tsx --env-file=.env scripts/update-agentes-sequence-2-5.ts
  */
 import { db } from "../app/.server/db";
 import {
@@ -50,9 +56,15 @@ const VIDEOS: Record<
     poster:
       "https://wild-bird-2039.fly.storage.tigris.dev/fixtergeek/videos/6a78ff744a8e00e3b2eea500/6a82179a444b718b605e2a1c/poster-yt-v2.jpg",
   },
-  3: { slug: null, titulo: "Memoria y base de datos", duracion: null, poster: null },
+  3: {
+    slug: "sdk-deepseek",
+    titulo: "Un arnés más sólido: Vercel AI SDK",
+    duracion: "7 min",
+    poster: "https://wild-bird-2039.t3.storage.dev/videos/posters/sdk-deepseek.jpg",
+  },
+  4: { slug: null, titulo: "Memoria y base de datos", duracion: null, poster: null },
   // El video existe pero sigue sin publicar ni tener póster.
-  4: { slug: null, titulo: "Sandboxing: la caja donde vive tu agente", duracion: null, poster: null },
+  5: { slug: null, titulo: "Sandboxing: la caja donde vive tu agente", duracion: null, poster: null },
 };
 
 /**
@@ -89,6 +101,20 @@ const code = (text: string) =>
 const link = (text: string, href: string) =>
   `<a href="${href}" target="_blank" rel="noopener" style="color:#0E8F79;font-weight:bold;text-decoration:underline;">${text}</a>`;
 const firma = `<p style="color:#19262A;margin:16px 0 4px 0;">Abrazo. Blissmo. 🤓</p>`;
+
+/**
+ * Lista de bullets. El video lleva el contenido y el correo solo lo enmarca:
+ * cuatro líneas se leen de un vistazo, cuatro párrafos no se leen.
+ */
+const bullets = (items: string[]) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px 0;">
+${items
+  .map(
+    (t) =>
+      `  <tr><td style="padding:0 0 8px 0;color:#19262A;font-size:15px;line-height:1.5;"><span style="color:#0E8F79;">▸</span> ${t}</td></tr>`
+  )
+  .join("\n")}
+</table>`;
 
 /** Botón al repositorio, con el mark de GitHub adentro (igual que la entrega 1). */
 function repoButton(label: string, href: string): string {
@@ -138,19 +164,57 @@ const entrega2 = wrapEmailHtml(
 // ── Entrega 3 ──────────────────────────────────────────────────────────────
 const entrega3 = wrapEmailHtml(
   [
+    h1("Cambiamos el arnés por uno más sólido 🌉"),
+    p(
+      `Escribir el loop a mano fue lo que te dejó entender qué hace un agente por dentro. Mantenerlo ya no enseña nada, así que debajo del mismo agente pusimos el <strong>AI SDK de Vercel</strong>, y de paso cambiamos Grok por DeepSeek. 🎬`
+    ),
+    videoCard(3),
+    p(`Lo que ganamos en el cambio, en 7 minutos:`),
+    bullets([
+      `<strong>500 líneas borradas</strong>: el buffer de NDJSON, el parseo del stream a mano y el protocolo que yo mismo inventé para hablarle a la interfaz.`,
+      `Un esquema en Zod, y de ahí salen el tipo, la validación y lo que ve el modelo.`,
+      `Tres streams por un mismo canal, y <strong>uno es tuyo</strong>: eso es lo que hace posibles los artefactos.`,
+      `Los ojos son intercambiables: pones la llave de Anthropic, Google u OpenAI y otro modelo mira por DeepSeek.`,
+    ]),
+    p(
+      `Lo que no cambió es Agent Native: las acciones se siguen declarando una sola vez en ${code(
+        "actions.ts"
+      )}.`
+    ),
+    repoButton(
+      "El código de la entrega",
+      `${REPO_URL}/tree/main/entregas/03-sdk-deepseek`
+    ),
+    emailTeaser(
+      {
+        title:
+          "Dónde vive lo que tu agente recuerda — hoy reinicias el servidor y no se acuerda de nada.",
+      },
+      "light"
+    ),
+    firma,
+  ].join("\n"),
+  {
+    preheader: "500 líneas menos, tres streams por un canal y el caché 30× más barato.",
+    theme: "light",
+  }
+);
+
+// ── Entrega 4 ──────────────────────────────────────────────────────────────
+const entrega4 = wrapEmailHtml(
+  [
     h1("Dónde vive lo que el agente recuerda 🧠"),
     p(
       `Un agente no recuerda nada por su cuenta: en cada vuelta del loop le vuelves a mandar la conversación entera. Mientras eso vive en una variable, cerrar la pestaña —o reiniciar el servidor— lo borra todo.`
     ),
-    videoCard(3),
-    p(
-      `Aquí la conversación se muda a la base de datos. El navegador deja de ser el dueño del estado y pasa a ser una vista: recargas, pides la sesión de vuelta y se repinta completa, con sus herramientas y sus resultados en el mismo orden.`
-    ),
-    emailCallout(
-      `Guardar el historial y guardar la <strong>memoria</strong> son dos cosas distintas. El historial es lo que pasó en esta sesión; la memoria es lo que el agente debe seguir sabiendo en la siguiente. Si no las separas, en tres días le estás mandando un contexto que no cabe.`,
-      { title: "La distinción que importa" },
-      "light"
-    ),
+    videoCard(4),
+    p(`Lo que cambia cuando la conversación se muda a la base de datos:`),
+    bullets([
+      `Recargas la página y la sesión se repinta completa, con sus herramientas y sus resultados en el mismo orden.`,
+      `El navegador deja de ser el dueño del estado y pasa a ser una vista.`,
+      `<strong>El historial y la memoria son dos cosas distintas</strong>: lo que pasó en esta sesión, y lo que el agente debe seguir sabiendo en la siguiente.`,
+      `Si no las separas, en tres días le estás mandando un contexto que no cabe.`,
+    ]),
     repoButton("El código de la entrega", REPO_URL),
     emailTeaser(
       { title: "Ejecución durable y permisos — qué pasa cuando el agente tarda diez minutos." },
@@ -164,25 +228,24 @@ const entrega3 = wrapEmailHtml(
   }
 );
 
-// ── Entrega 4 ──────────────────────────────────────────────────────────────
-const entrega4 = wrapEmailHtml(
+// ── Entrega 5 ──────────────────────────────────────────────────────────────
+const entrega5 = wrapEmailHtml(
   [
     h1("Cuando el agente tarda, y cuando se pasa 🧱"),
     p(
       `Las entregas anteriores asumen que cada herramienta termina rápido. Le pides levantar un servidor de desarrollo y esa suposición se cae: la herramienta no regresa nunca y el chat se queda tieso.`
     ),
-    videoCard(4),
-    p(
-      `La salida es separar lanzar de esperar. El agente arranca el proceso en segundo plano, recibe un identificador y sigue trabajando; lo consulta solo cuando necesita la URL o el error.`
-    ),
-    emailCallout(
-      `Aquí también se decide qué <strong>no</strong> puede hacer: el agente escribe únicamente dentro de la carpeta de la app, con la ruta verificada en cada operación. Un agente que puede editar su propio arnés puede dejarte sin forma de corregirlo.`,
-      { title: "Permisos" },
-      "light"
-    ),
+    videoCard(5),
+    p(`Lo último que le falta al arnés:`),
+    bullets([
+      `<strong>Separar lanzar de esperar</strong>: el agente arranca el proceso en segundo plano, recibe un identificador y sigue trabajando.`,
+      `Lo consulta solo cuando necesita la URL o el error.`,
+      `Y se decide qué <strong>no</strong> puede hacer: escribe únicamente dentro de la carpeta de la app, con la ruta verificada en cada operación.`,
+      `Un agente que puede editar su propio arnés puede dejarte sin forma de corregirlo.`,
+    ]),
     repoButton("Todo el repositorio", REPO_URL),
     p(
-      `Con esto tienes el arnés completo: el loop, la interfaz, el contexto y la ejecución. Lo que sigue lo vemos en ${link(
+      `Con esto tienes el arnés completo. Lo que sigue lo vemos en ${link(
         "la comunidad",
         COMUNIDAD_URL
       )} y en los webinars de los jueves, que son abiertos.`
@@ -205,14 +268,20 @@ const entregas = [
   },
   {
     order: 3,
-    subject: "Dónde vive lo que tu agente recuerda",
+    subject: "Cambiamos el arnés por uno más sólido",
     content: entrega3,
     delayDays: 4,
   },
   {
     order: 4,
-    subject: "Cuando el agente tarda diez minutos",
+    subject: "Dónde vive lo que tu agente recuerda",
     content: entrega4,
+    delayDays: 4,
+  },
+  {
+    order: 5,
+    subject: "Cuando el agente tarda diez minutos",
+    content: entrega5,
     delayDays: 4,
   },
 ];
