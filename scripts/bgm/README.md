@@ -41,7 +41,10 @@ node scripts/bgm/fetch-bgm.mjs "techno house electronic" /tmp/bgm --n 30
 # 2. Medirlas y quedarse con las de arriba
 node scripts/bgm/medir-bgm.mjs /tmp/bgm
 
-# 3. Bajar completa solo la ganadora
+# 3. Registrar la elegida — SIEMPRE, es lo que evita repetirla
+node scripts/bgm/registrar-bgm.mjs /tmp/bgm/06.mp3 videos/mi-short
+
+# 4. Bajar completa solo la ganadora
 node scripts/bgm/fetch-bgm.mjs "techno" /tmp/final --n 1 --full
 ```
 
@@ -73,7 +76,9 @@ Después, como siempre: normalizar a **−20 LUFS** y meterla con
 
 ## Reglas que no cambian
 
-- **Pista nueva cada video.** Nunca reciclar la del anterior.
+- **Pista nueva cada video**, y no de memoria: `usadas.json` lleva el registro
+  y `fetch-bgm.mjs` descarta solo lo ya usado. Registrar con `registrar-bgm.mjs`
+  al elegir — Mixkit se agotó justamente porque esto se llevaba de cabeza.
 - **No va al repo público.** El mp3 se queda en `assets/` del proyecto del
   video, igual que antes.
 - Documentar la elección en el `BGM.md` del proyecto, con la tabla de siempre

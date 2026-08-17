@@ -16,13 +16,22 @@
  * Después: node ../medir-bgm.mjs /tmp/bgm-candidatas
  */
 import { execFile } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 
 const correr = promisify(execFile);
 
 const API = "https://api.openverse.org/v1/audio/";
+
+// Registro de pistas ya usadas. Existe porque "pista nueva cada video" se
+// venía cumpliendo de memoria, y así fue como Mixkit se agotó sin que nadie se
+// diera cuenta. Se compara contra la página de origen, que es la identidad
+// estable de la pista (el hash del mp3 no sirve: solo bajamos un fragmento).
+const RUTA_USADAS = join(import.meta.dirname, "usadas.json");
+const usadas = new Set(
+  JSON.parse(readFileSync(RUTA_USADAS, "utf8")).map((u) => u.fuente)
+);
 
 const [query, outDir] = process.argv.slice(2);
 if (!query || !outDir) {
@@ -52,6 +61,7 @@ const MAX_MS = 360_000;
 // medidor no la distingue (mide energía, no voz). Se filtra aquí o no se
 // filtra nunca.
 function sirve(r, termino) {
+  if (usadas.has(r.foreign_landing_url)) return false;
   const tags = (r.tags ?? []).map((t) => t.name.toLowerCase());
   if (tags.includes("vocal")) return false;
   if (!tags.includes("instrumental")) return false;
