@@ -1,10 +1,12 @@
 # Secuencia de preparación del taller — estado operativo
 
-Actualizado: 11 de agosto de 2026.
+Actualizado: 17 de agosto de 2026.
 
 Secuencia `6a7a496344caa1db8e558fc3` — "Taller Sistemas Agénticos — Preparación".
 Privada, `trigger: MANUAL`, activa.
-Editor: https://www.fixtergeek.com/secuencias/6a7a496344caa1db8e558fc3
+Editor: https://www.fixtergeek.com/secuencias/gestion/6a7a496344caa1db8e558fc3
+(la ruta `/secuencias/:id` es el alta pública y devuelve "secuencia no
+disponible" para una privada; la gestión vive un nivel adentro).
 
 ## Los cinco correos
 
@@ -12,13 +14,36 @@ Editor: https://www.fixtergeek.com/secuencias/6a7a496344caa1db8e558fc3
 |---|--------|--------|-------|--------|
 | 1 | El loop del agente | 0 d | `sesion-01-el-loop` | escrito |
 | 2 | El ZIP de 113 MB que tumbó al bot | 1 d | `sesion-02-el-escritorio` | escrito |
-| 3 | La regla que tu agente puede ignorar | 2 d | `sesion-03-los-hooks` | escrito |
-| 4 | Cuánto cuesta de verdad un agente | 1 d | — | **vacío** |
-| 5 | Lo que vas a construir | 2 d | — | **vacío** |
+| 3 | El día que tiré mi propio arnés | 2 d | `el-sdk-de-vercel` | escrito |
+| 4 | La regla que tu agente puede ignorar | 3 d | `sesion-03-los-hooks` | escrito |
+| 5 | Lo que vas a construir | 4 d | — | **vacío** |
+
+El **17 de agosto** entró el short del AI SDK como entrega 3 y los hooks pasaron
+a la 4 (`scripts/set-correo-3-sdk.ts`, idempotente: el intercambio de `order`
+solo corre si todavía no se hizo). El asunto reservado del hueco —"Cuánto cuesta
+de verdad un agente"— se disolvió: el costo entra dentro de la entrega del SDK,
+con el caché y las 500 líneas.
 
 Un correo sin cuerpo **no se manda**: el motor lo pospone 24 h y reintenta. La
 inscripción se queda esperando en lugar de enviar algo roto, pero cada día de
-retraso empuja el resto del calendario de esa persona.
+retraso empuja el resto del calendario de esa persona. **El correo 5 sigue
+vacío**, así que la secuencia se queda colgada en el último paso.
+
+### Los cuerpos viven en `docs/`
+
+`correo-1-loop.html`, `correo-2-zip.html`, `correo-3-sdk.html` y
+`correo-4-hooks.html` son la copia de trabajo; la base es la que manda. El
+formato quedó fijo el 17 de agosto: **saludo → gancho de dos líneas → `{{video}}`
+→ bullets → una frase de cierre**. El video lleva el contenido y el correo solo
+lo enmarca; antes cada entrega repetía en texto lo que el video ya explica, con
+bloques de código incluidos, y salía un correo de scroll infinito
+(`scripts/simplificar-correos-preparacion.ts`).
+
+Al mover una entrega hay que tocar **tres cosas por correo**, y ninguna es
+automática: la barra de progreso ("3 de 5" y los segmentos encendidos), el pie de
+"En el siguiente correo" —que anuncia asunto **y** espera— y el `delayDays` de la
+base, que se ajusta a mano en el riel. Estaban desalineados desde antes: el
+correo 2 anunciaba "Cómo sabes que tu agente sirve", que nunca se escribió.
 
 ## Inscritos
 
@@ -34,12 +59,23 @@ retraso empuja el resto del calendario de esa persona.
   el email es único): se reapuntó `subscriberId` en la inscripción y se
   limpiaron las métricas del envío equivocado. Script:
   `scripts/fix-martin-enrollment.ts`.
-- `fixtergeek@gmail.com` — inscripción de prueba, `paused` y con el índice al
-  final. El cron no la toca.
+- `fixtergeek@gmail.com` y `fixtergeek+taller@gmail.com` — residuo del botón
+  **"Enviar prueba"**, que crea la inscripción `paused` con el índice al final
+  para que no se dispare y solo la borra si la creó ella misma. Como ya existían,
+  se quedaron. El cron no las toca.
+
+**Al 17 de agosto las tres inscripciones están en `paused`, incluida la de
+Martín** (índice 2, `nextEmailAt` vencido el 16 de agosto): está detenida y no
+va a recibir el correo 3, porque `processDueEnrollments` solo mira las activas.
+No fue rebote, ni blacklist, ni `scripts/pausar-agentes-para-deploy.ts` —ese
+apunta a la secuencia de comunidad—. Fue una pausa manual desde el panel, o una
+baja desde `/secuencias/baja` o `/perfil`; **no hay forma de distinguirlo**,
+porque no existe un campo `pausedAt` ni registro de quién pausó. Si fue baja del
+propio Martín, reanudarlo es mandarle correo que pidió no recibir.
 
 ## Los videos
 
-Ambos viven en Tigris, públicos, bucket `wild-bird-2039`:
+Viven en Tigris, públicos, bucket `wild-bird-2039`:
 
 ```
 videos/sesion-01-el-loop.mp4
@@ -49,7 +85,16 @@ videos/posters/sesion-02-el-escritorio-wide.jpg   (1200x675, para la card del co
 videos/sesion-03-los-hooks.mp4
 videos/posters/sesion-03-los-hooks-v2.jpg         (vertical, para el feed)
 videos/posters/sesion-03-los-hooks-wide-v2.jpg    (1200x675, para la card del correo)
+videos/el-sdk-de-vercel.mp4
+videos/posters/el-sdk-de-vercel.jpg               (vertical, para el feed)
+videos/posters/el-sdk-de-vercel-wide.jpg          (1200x675, para la card del correo)
 ```
+
+El slug del cuarto **no lleva número**: el orden de las entregas ya se movió una
+vez, y un `sesion-04-` que acaba viviendo en la posición 3 miente para siempre.
+Su proyecto está en `videos/goodies-sdk/` (HyperFrames, 1080x1920, 44 s, puro
+motion graphics) y el estilo quedó documentado en
+`docs/estilo-short-motion-graphics.md`.
 
 El `-v2` de los pósters de la sesión 3 no es capricho: los primeros se generaron
 con un titular que después cambió, y las keys se suben inmutables con caché de
