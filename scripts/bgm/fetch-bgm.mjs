@@ -35,7 +35,7 @@ const usadas = new Set(
 
 const [query, outDir] = process.argv.slice(2);
 if (!query || !outDir) {
-  console.error("uso: node fetch-bgm.mjs <búsqueda> <directorio> [--license cc0,by] [--n 30] [--source jamendo]");
+  console.error("uso: node fetch-bgm.mjs <búsqueda> <directorio> [--license cc0,by] [--n 30] [--velocidad rapidas|lentas|todas]");
   process.exit(1);
 }
 
@@ -50,6 +50,11 @@ const objetivo = Number(flag("n", 30));
 // Con --estricto se descartan las pistas cuyo género declarado no coincide con
 // el término buscado. Da menos candidatas pero todas del estilo pedido.
 const ESTRICTO = process.argv.includes("--estricto");
+// Jamendo etiqueta la velocidad. bliss pide movida, y el grueso del catálogo es
+// `speed_medium`: sin este filtro el lote se llena de pistas que va a rechazar.
+// `--velocidad todas` lo apaga cuando hace falta una cama pausada (un clip de
+// 60 s de voz continua se cansa con BPM alto, aunque esté baja).
+const VELOCIDAD = flag("velocidad", "rapidas");
 
 // De 1 a 6 min: más corto no cubre un short con outro, más largo suele ser un
 // set y no una pieza.
@@ -65,6 +70,8 @@ function sirve(r, termino) {
   const tags = (r.tags ?? []).map((t) => t.name.toLowerCase());
   if (tags.includes("vocal")) return false;
   if (!tags.includes("instrumental")) return false;
+  if (VELOCIDAD === "rapidas" && !tags.includes("speed_high") && !tags.includes("speed_veryhigh")) return false;
+  if (VELOCIDAD === "lentas" && !tags.includes("speed_low") && !tags.includes("speed_verylow")) return false;
   const dur = r.duration ?? 0;
   if (dur < MIN_MS || dur > MAX_MS) return false;
   // Openverse busca sobre el texto: "house" trae "Burnin Down the House". Si
@@ -79,8 +86,8 @@ function sirve(r, termino) {
 // Openverse hace AND estricto sobre los metadatos: "upbeat electronic" casi
 // siempre da cero. Cada palabra se busca por separado y los resultados se
 // juntan — de paso el lote sale más variado.
-async function buscarTermino(termino, vistos, pistas) {
-  for (let page = 1; page <= 12 && pistas.length < objetivo; page++) {
+async function buscarTermino(termino, vistos, pistas, tope) {
+  for (let page = 1; page <= 12 && pistas.length < tope; page++) {
     const url = `${API}?q=${encodeURIComponent(termino)}&license=${license}&source=${source}&page_size=20&page=${page}`;
     const res = await fetch(url, { headers: { "User-Agent": "fixtergeek-bgm/1.0" } });
     // 400 = se acabaron las páginas que da el acceso anónimo (tope de ~240).
@@ -93,19 +100,51 @@ async function buscarTermino(termino, vistos, pistas) {
       if (vistos.has(r.url)) continue;
       vistos.add(r.url);
       pistas.push(r);
-      if (pistas.length >= objetivo) break;
+      if (pistas.length >= tope) break;
     }
   }
+}
+
+// Los títulos vienen con entidades HTML del scrape de Jamendo (`&#039;`).
+function limpiar(t) {
+  return t
+    .replace(/&#0?39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
+// El mismo tema aparece subido dos veces, y un solo artista prolífico se come
+// medio lote. Ni una cosa ni la otra dan de dónde elegir.
+const POR_ARTISTA = 2;
+
+function depurar(pistas) {
+  const titulos = new Set();
+  const porArtista = new Map();
+  const salida = [];
+  for (const p of pistas) {
+    p.title = limpiar(p.title);
+    const clave = `${p.title.toLowerCase().replace(/\(.*?\)/g, "").trim()}|${p.creator}`;
+    if (titulos.has(clave)) continue;
+    const n = porArtista.get(p.creator) ?? 0;
+    if (n >= POR_ARTISTA) continue;
+    titulos.add(clave);
+    porArtista.set(p.creator, n + 1);
+    salida.push(p);
+  }
+  return salida;
 }
 
 async function buscar() {
   const vistos = new Set();
   const pistas = [];
+  // Se pide de más porque depurar() recorta duplicados y artistas repetidos.
+  const antes = objetivo;
   for (const termino of query.split(/\s+/).filter(Boolean)) {
-    if (pistas.length >= objetivo) break;
-    await buscarTermino(termino, vistos, pistas);
+    if (pistas.length >= antes * 2) break;
+    await buscarTermino(termino, vistos, pistas, antes * 2);
   }
-  return pistas;
+  return depurar(pistas).slice(0, antes);
 }
 
 const pistas = await buscar();
