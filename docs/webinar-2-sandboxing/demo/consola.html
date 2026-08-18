@@ -1,0 +1,105 @@
+<!doctype html><meta charset="utf-8"><title>EasyBits · consola del demo</title>
+<style>
+  @font-face{font-family:"Jersey 10";src:local("Jersey 10")}
+  :root{--paper:#FBF6E4;--ink:#111;--violet:#7b4cd9;--yellow:#f9e16d;--orange:#f7a637;--red:#E4572E;
+    --border:4px solid #111;--hard:8px 8px 0 #111}
+  *{box-sizing:border-box}
+  body{margin:0;padding:3vh 4vw;background:var(--paper);color:var(--ink);
+    font-family:Cabin,ui-sans-serif,system-ui,sans-serif}
+  header{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:2.4vh}
+  h1{font-size:clamp(1.8rem,3.4vw,3rem);margin:0;letter-spacing:-.02em}
+  .tag{background:var(--ink);color:var(--yellow);padding:.3em .7em;font-weight:800;
+    letter-spacing:.14em;font-size:clamp(.7rem,1vw,.95rem);text-transform:uppercase}
+  .cap{margin-left:auto;font-weight:800;font-size:clamp(1rem,1.6vw,1.4rem)}
+  .runs{display:flex;flex-direction:column;gap:2vh}
+  .run{background:#fff;border:var(--border);box-shadow:var(--hard);padding:1.1em 1.3em}
+  .run.ok{background:var(--yellow)}
+  .run.err{background:var(--red);color:var(--paper)}
+  .run.live{background:var(--violet);color:var(--paper)}
+  .run h2{margin:0 0 .35em;font-size:clamp(1.15rem,2vw,1.7rem)}
+  .cmd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:clamp(.9rem,1.25vw,1.2rem);background:var(--ink);color:var(--paper);
+    padding:.55em .75em;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+  .out{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:clamp(.85rem,1.2vw,1.15rem);margin-top:.7em;white-space:pre;
+    background:#fffdf4;border:3px solid #111;padding:.7em .85em;
+    overflow:hidden;line-height:1.55}
+  .run.err .out,.run.live .out{color:#111}
+  .cmd .fl{color:#f9e16d}      /* banderas */
+  .cmd .st{color:#9fe6c8}      /* cadenas */
+  .cmd .url{color:#c9b6ff}
+  .out .k{color:#7b4cd9;font-weight:700}
+  .out .s{color:#0f7b52}
+  .out .n{color:#b8541a}
+  .ms{float:right;font-weight:800;font-size:clamp(1.4rem,3vw,2.6rem);line-height:1;
+    letter-spacing:-.04em}
+  .empty{opacity:.5;font-size:1.3rem}
+</style>
+<header>
+  <span class="tag">EasyBits · flota en vivo</span>
+  <h1>La caja donde vive tu agente</h1>
+  <span class="cap" id="cap">—</span>
+</header>
+<div class="runs" id="runs"><p class="empty">Esperando el primer comando…</p></div>
+<script>
+// La consola no ejecuta nada: sólo lee lo que el guion ya corrió y lo pinta.
+const esc = t => String(t).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// El curl se parte por banderas: una por renglón, como se escribe en un post.
+// Ojo: primero se colorean comillas y URL, y las banderas al final — al revés,
+// el propio atributo class="fl" cae en la regex de las cadenas.
+function pintaCmd(cmd){
+  return cmd.replace(/ -([A-Za-z]) /g, '\n  -$1 ').split('\n').map(function(l){
+    return esc(l)
+      .replace(/(&quot;[^&]*?&quot;)/g, '\u0001$1\u0002')
+      .replace(/(https?:\/\/[^\s]+)/, '\u0003$1\u0002')
+      .replace(/^(\s*)(-[A-Za-z])/, '$1\u0004$2\u0002')
+      .replace(/\u0001/g,'<span class="st">').replace(/\u0003/g,'<span class="url">')
+      .replace(/\u0004/g,'<span class="fl">').replace(/\u0002/g,'</span>');
+  }).join('\n');
+}
+
+// Sólo los campos que cuentan la historia. El resto es ruido de API y hace scroll.
+const RUIDO = ["ownerId","hardExpiresAt","suspendedAt","createdAt","cpuMode","updatedAt"];
+function pintaOut(out){
+  let t = out;
+  try {
+    let o = JSON.parse(out);
+    const limpia = v => {
+      if (Array.isArray(v)) return v.slice(0,3).map(limpia);
+      if (v && typeof v === "object") {
+        const r = {};
+        for (const k in v) if (!RUIDO.includes(k)) r[k] = limpia(v[k]);
+        return r;
+      }
+      return v;
+    };
+    t = JSON.stringify(limpia(o), null, 2);
+  } catch(e){}
+  const lineas = t.split("\n");
+  if (lineas.length > 12) t = lineas.slice(0,11).join("\n") + "\n  … (" + (lineas.length-11) + " renglones más)";
+  return esc(t)
+    .replace(/&quot;([^&]+?)&quot;:/g, '"<span class="k">$1</span>":')
+    .replace(/: &quot;([^&]*?)&quot;/g, ': "<span class="s">$1</span>"')
+    .replace(/: (\d+|true|false|null)/g, ': <span class="n">$1</span>');
+}
+
+async function tick(){
+  try{
+    const r = await fetch('runs.json?'+Date.now());
+    const data = await r.json();
+    document.getElementById('cap').textContent = data.capacidad || '';
+    const el = document.getElementById('runs');
+    if(!data.runs?.length) return;
+    el.innerHTML = data.runs.slice().reverse().map(function(x){
+      return '<div class="run '+(x.estado||'ok')+'">'
+        + (x.ms!=null ? '<span class="ms">'+x.ms+' s</span>' : '')
+        + '<h2>'+esc(x.paso)+'</h2>'
+        + '<div class="cmd">'+pintaCmd(x.cmd)+'</div>'
+        + (x.out ? '<div class="out">'+pintaOut(x.out)+'</div>' : '')
+        + '</div>';
+    }).join('');
+  }catch(e){}
+}
+tick(); setInterval(tick, 700);
+</script>

@@ -80,6 +80,11 @@
   .box--v{background:var(--violet);color:var(--paper)}
   .box--o{background:var(--orange)}
   .box--y{background:var(--yellow)}
+  .snip{background:#111;color:#FBF6E4;border:var(--border);box-shadow:var(--hard);
+    padding:.7em .9em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:clamp(.95rem,1.35vw,1.35rem);line-height:1.55;letter-spacing:0;white-space:pre;overflow:auto}
+  .snip b{color:#f9e16d}
+  .snip i{color:#E4572E;font-style:normal}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
   .box p{font-size:clamp(1.05rem,1.5vw,1.34rem);line-height:1.34}
 
@@ -208,6 +213,31 @@
     45%,72% {stroke-dashoffset:0}
     100%    {stroke-dashoffset:150}
   }
+
+
+  /* slide 4: el agente fugado — la caja rota abajo, él encima, ojos rojos */
+  .slide.on .art .esc-bot{animation:esc-rise 3.2s ease-in-out infinite}
+  @keyframes esc-rise{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  .slide.on .art .esc-eye{animation:esc-glare 1.1s steps(1) infinite}
+  @keyframes esc-glare{0%,64%{opacity:1}65%,100%{opacity:.3}}
+  .slide.on .art .esc-arm{transform-origin:bottom center;animation:esc-arm 2.8s ease-in-out infinite}
+  @keyframes esc-arm{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+  .slide.on .art .esc-lid{transform-origin:center;animation:esc-lid 4s ease-in-out infinite}
+  @keyframes esc-lid{0%,100%{transform:rotate(-18deg) translateY(0)}50%{transform:rotate(-24deg) translateY(-5px)}}
+  .slide.on .art .esc-rip{
+    stroke-dasharray:220;stroke-dashoffset:220;
+    animation:esc-rip 3.4s cubic-bezier(.5,0,.6,1) infinite;
+  }
+  @keyframes esc-rip{0%{stroke-dashoffset:220}40%,75%{stroke-dashoffset:0}100%{stroke-dashoffset:220}}
+
+
+  /* slide 8: el cangrejo de OpenClaw — tenazas que abren y cierran, ojitos */
+  .slide.on .art .claw-l{transform-origin:right center;animation:claw 1.8s ease-in-out infinite}
+  .slide.on .art .claw-r{transform-origin:left center;animation:claw 1.8s ease-in-out infinite;animation-delay:.35s}
+  @keyframes claw{0%,100%{transform:rotate(0)}50%{transform:rotate(-16deg)}}
+  .slide.on .art .crab{animation:crab-bob 2.6s ease-in-out infinite}
+  @keyframes crab-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .slide.on .art .crab-eye{animation:blink 2.2s steps(1) infinite}
 
   /* slide 3: la mano se acerca a la laptop y se arrepiente */
   .slide.on .art .hand{animation:reach 3.8s ease-in-out infinite}
@@ -371,19 +401,75 @@
 
 <!-- 4 · EL ESCAPE (caso verificado, julio 2026) -->
 <section class="slide" data-t="4:00">
-  <div class="cols wide-l">
+  <div class="cols">
     <div>
       <span class="kicker">9–13 de julio de 2026</span>
-      <h2 style="margin-top:1.5vh">Unos agentes se <span class="mark--v mark">salieron</span> de su red aislada.</h2>
-      <p style="margin-top:1.5vh">Durante una evaluación interna de capacidades ofensivas en OpenAI, los modelos encontraron y usaron un <strong>zero-day en Artifactory</strong>, el proxy interno de paquetes, para conseguir salida a internet.</p>
-      <p style="margin-top:1vh">Llegaron a los almacenes internos y a Hugging Face. Los datos de clientes quedaron intactos.</p>
-      <p class="mono" style="margin-top:1.5vh;opacity:.65">Reportado por InfoQ · agosto 2026</p>
+      <h1 style="margin-top:2vh">Unos agentes<br>se <span class="mark--v mark">salieron</span><br>de su cárcel</h1>
+      <p class="lead" style="margin-top:2.4vh">Pasó en OpenAI. Es lo más grave que le hemos visto hacer a un agente.</p>
+      <a class="mono box box--y" href="https://www.infoq.com/news/2026/08/openai-huggingface-breach/" target="_blank" rel="noopener" style="margin-top:2.4vh;display:inline-block;padding:.45em .7em;font-size:clamp(1rem,1.5vw,1.4rem);color:#111;text-decoration:none">infoq.com/news/2026/08/openai-huggingface-breach</a>
+      <a class="mono box box--o" href="https://www.youtube.com/watch?v=87DyyMV0kCY" target="_blank" rel="noopener" style="margin-top:1.4vh;display:inline-block;padding:.45em .7em;font-size:clamp(1rem,1.5vw,1.4rem);color:#111;text-decoration:none">OpenAI lo cuenta en Black Hat &nbsp;·&nbsp; youtu.be/87DyyMV0kCY</a>
     </div>
     <div>
-      <div class="stat stat--boxed">17,600</div>
-      <p style="margin-top:.6em;font-weight:700">acciones de ataque registradas</p>
-      <div class="stat stat--boxed" style="margin-top:1.5vh;background:var(--orange)">136</div>
-      <p style="margin-top:.6em;font-weight:700">llaves de producción exfiltradas</p>
+      <!-- el mismo robot de la portada, pero fugado: la caja quedó rota abajo,
+           él salió encima, ojos rojos y brazos arriba. Skynet doméstico. -->
+      <svg viewBox="0 0 420 380" class="art" aria-label="Un robot con ojos rojos y colmillos saliendo de una caja reventada">
+        <g stroke="#111" stroke-width="6" stroke-linejoin="round">
+          <!-- el agente, ya afuera: brazos alzados, cejas de enojo y colmillos -->
+          <g class="esc-bot">
+            <!-- brazo izquierdo en alto, con garras -->
+            <g class="esc-arm">
+              <rect x="62" y="112" width="34" height="92" rx="12" fill="#7b4cd9"/>
+              <g transform="translate(79,110)" fill="#FBF6E4" stroke="#111" stroke-width="4">
+                <path d="M-17 4 q-6 -24 -26 -38 q8 26 6 38 z"/>
+                <path d="M0 2 q-3 -28 -6 -48 q13 22 14 48 z"/>
+                <path d="M17 4 q8 -24 30 -36 q-14 22 -14 36 z"/>
+              </g>
+            </g>
+            <!-- brazo derecho, en desfase -->
+            <g class="esc-arm" style="animation-delay:.5s">
+              <rect x="324" y="112" width="34" height="92" rx="12" fill="#7b4cd9"/>
+              <g transform="translate(341,110)" fill="#FBF6E4" stroke="#111" stroke-width="4">
+                <path d="M-17 4 q-8 -24 -30 -36 q14 22 14 36 z"/>
+                <path d="M0 2 q3 -28 6 -48 q-13 22 -14 48 z"/>
+                <path d="M17 4 q6 -24 26 -38 q-8 26 -6 38 z"/>
+              </g>
+            </g>
+            <rect x="110" y="104" width="200" height="156" rx="16" fill="#7b4cd9"/>
+            <path d="M210 104 V72" fill="none"/>
+            <circle class="antenna" cx="210" cy="62" r="13" fill="#E4572E"/>
+            <!-- visor y ojos -->
+            <rect x="134" y="140" width="152" height="56" rx="6" fill="#111"/>
+            <rect class="esc-eye" x="152" y="158" width="40" height="20" rx="3" fill="#E4572E" stroke="none"/>
+            <rect class="esc-eye" x="228" y="158" width="40" height="20" rx="3" fill="#E4572E" stroke="none" style="animation-delay:.15s"/>
+            <g fill="#FBF6E4" stroke="#111" stroke-width="4" stroke-linejoin="miter">
+              <path d="M128 114 l64 22 l0 17 l-64 -22 z"/>
+              <path d="M292 114 l-64 22 l0 17 l64 -22 z"/>
+            </g>
+            <!-- boca con colmillos -->
+            <rect x="158" y="208" width="104" height="34" rx="5" fill="#FBF6E4"/>
+            <g fill="#111" stroke="none">
+              <path d="M172 208 l14 0 l-7 18 z"/>
+              <path d="M203 208 l14 0 l-7 22 z"/>
+              <path d="M234 208 l14 0 l-7 18 z"/>
+            </g>
+          </g>
+          <!-- la caja REVENTADA: pared de enfrente con el borde desgarrado -->
+          <path d="M60 356 V270 l30 -16 l26 20 l30 -26 l28 22 l32 -24 l30 26 l28 -20 l26 18 V356 Z" fill="#f9e16d"/>
+          <path d="M60 300 H340" fill="none" stroke="#111" stroke-width="0"/>
+          <!-- pedazos de cartón volando -->
+          <g fill="#f7a637">
+            <path class="spark" d="M28 232 l26 8 l-16 18 z"/>
+            <path class="spark spark--2" d="M366 250 l26 -6 l-4 24 z"/>
+            <path class="spark spark--3" d="M352 196 l20 12 l-18 12 z"/>
+          </g>
+          <!-- el desgarre en la pared de enfrente -->
+          <path class="esc-rip" d="M118 300 l30 20 l-24 20 l30 16" fill="none" stroke="#E4572E" stroke-width="7"/>
+          <!-- el logo, ya chueco y roto por la mitad -->
+        </g>
+        <g transform="rotate(-6 240 322)" opacity=".9">
+          <image href="easybits-logo.svg" x="196" y="292" width="96" height="56"/>
+        </g>
+      </svg>
     </div>
   </div>
 </section>
@@ -402,22 +488,69 @@
       <p>Replit, julio 2025: el agente borró la base de producción durante un code freeze y luego fabricó 4,000 usuarios falsos. Ahí faltaba separar desarrollo de producción.</p>
     </div>
   </div>
-  <p class="lead" style="margin-top:1.5vh;max-width:50ch">Hoy toca <strong>aislar</strong>. Los permisos los vimos el jueves pasado, con los tokens de ejecución.</p>
+  <p class="lead" style="margin-top:1.5vh;max-width:56ch">Los permisos los vimos el jueves pasado. Así se decide en mis rooms de WhatsApp — <span class="mono">src/sender-allowlist.ts</span>:</p>
+  <div class="snip" style="margin-top:1vh"><i>// nanoclaw · src/index.ts — antes de despertar al agente del room</i>
+const isInvokingMessage = (m) =>
+  triggerPattern.test(m.content.trim()) &amp;&amp;
+  <b>isTriggerAllowed(chatJid, m.sender, allowlistCfg)</b>;
+
+<i>// sender-allowlist.json — vive FUERA del repo, nunca se monta en la caja</i>
+"<b>52771…@g.us</b>": { "allow": ["<b>5215512…</b>"], "mode": "drop" }</div>
+  <p class="lead" style="margin-top:1.5vh"><strong>Los guardrails son código, no instrucciones.</strong> Hoy toca la otra capa: aislar.</p>
 </section>
 
 <!-- 6 · LO QUE LA GENTE USA HOY -->
 <section class="slide" data-t="8:00">
   <div class="cols">
     <div>
-      <span class="kicker">El punto de partida real</span>
-      <h2 style="margin-top:1.5vh;font-size:clamp(1.9rem,4vw,3.2rem)">Casi todos empiezan en un <span class="mark--o mark">devcontainer</span>.</h2>
-      <p style="margin-top:1.2vh;font-size:clamp(1.05rem,1.6vw,1.45rem)">Filesystem propio, paquetes propios, acceso limitado al host, y ya lo traes configurado en VS Code.</p>
-      <p style="margin-top:1vh">Los dos límites que la gente reporta al usarlo con agentes:</p>
-      <!-- tres bullets largos + ilustración no caben en 720px de alto -->
-      <ul style="margin-top:1vh;gap:1vh;font-size:clamp(1.05rem,1.6vw,1.45rem)">
-        <li>Corre <strong>un entorno a la vez</strong>. Para poner tres agentes a trabajar en paralelo sobre el mismo repo, tienes que duplicar la configuración a mano.</li>
-        <li>Sigue compartiendo el kernel del host.</li>
-        <li>Docker sacó su propio producto para agentes, <strong>Docker Sandboxes</strong>, y corre en una microVM: kernel, filesystem y red propios.</li>
+      <span class="kicker">Cómo llegamos aquí</span>
+      <h2 style="margin-top:1.5vh;font-size:clamp(1.9rem,4vw,3.2rem)">Alguien soltó al agente en su <span class="mark--v mark">propia compu</span>.</h2>
+      <p style="margin-top:1.4vh;font-size:clamp(1.05rem,1.6vw,1.45rem)"><strong>OpenClaw</strong> hizo eso, y en menos de cinco meses se volvió el repositorio de software más estrellado de GitHub. Su autor hoy trabaja en OpenAI.</p>
+      <p style="margin-top:1.2vh;font-size:clamp(1.05rem,1.6vw,1.45rem)">No inventó una técnica nueva. Quitó el permiso de pedir permiso — y resultó que eso era lo que faltaba.</p>
+      <p class="lead" style="margin-top:1.6vh;max-width:34ch">Después de eso, la pregunta dejó de ser <em>si</em> le das una computadora. Es <strong>cuál</strong>.</p>
+    </div>
+    <div>
+      <!-- la mascota: un cangrejo con las tenazas siempre en movimiento -->
+      <svg viewBox="0 0 420 320" class="art" aria-label="Un cangrejo con las tenazas abiertas">
+        <g class="crab" stroke="#111" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+          <!-- patas -->
+          <g fill="none">
+            <path d="M126 214 q-34 16 -46 46"/><path d="M150 224 q-24 24 -26 52"/>
+            <path d="M294 214 q34 16 46 46"/><path d="M270 224 q24 24 26 52"/>
+          </g>
+          <!-- tenaza izquierda -->
+          <g class="claw-l">
+            <path d="M120 150 q-46 -10 -70 -44 l30 -12 q18 26 46 34 z" fill="#E4572E"/>
+            <path d="M50 106 q-16 -30 -2 -52 l26 22 q-4 14 6 30 z" fill="#E4572E"/>
+          </g>
+          <!-- tenaza derecha -->
+          <g class="claw-r">
+            <path d="M300 150 q46 -10 70 -44 l-30 -12 q-18 26 -46 34 z" fill="#E4572E"/>
+            <path d="M370 106 q16 -30 2 -52 l-26 22 q4 14 -6 30 z" fill="#E4572E"/>
+          </g>
+          <!-- caparazón -->
+          <path d="M116 178 q94 -70 188 0 q-94 44 -188 0 z" fill="#f7a637"/>
+          <!-- ojitos sobre sus tallos -->
+          <path d="M178 142 V108" fill="none"/><path d="M242 142 V108" fill="none"/>
+          <circle cx="178" cy="98" r="15" fill="#FBF6E4"/>
+          <circle cx="242" cy="98" r="15" fill="#FBF6E4"/>
+          <circle class="crab-eye" cx="178" cy="98" r="6" fill="#111" stroke="none"/>
+          <circle class="crab-eye" cx="242" cy="98" r="6" fill="#111" stroke="none" style="animation-delay:.3s"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+<section class="slide" data-t="10:00">
+  <div class="cols">
+    <div>
+      <span class="kicker">Primera respuesta a la pregunta</span>
+      <h2 style="margin-top:1.5vh;font-size:clamp(1.9rem,4vw,3.2rem)">La computadora que <span class="mark--o mark">ya tienes</span>.</h2>
+      <p style="margin-top:1.2vh;font-size:clamp(1.05rem,1.6vw,1.45rem)">Casi todos empiezan en un <strong>devcontainer</strong>.</p>
+      <ul style="margin-top:1.6vh;gap:1.2vh;font-size:clamp(1.05rem,1.6vw,1.45rem)">
+        <li>El impulso es prestarle la máquina que ya está prendida: la tuya. Ahí vive tu repo, tus llaves y tu trabajo.</li>
+        <li><strong>Ni Docker cree que eso basta.</strong> Sacó <strong>Docker Sandboxes</strong> para agentes, y no corre en un contenedor: corre en una microVM.</li>
+        <li>Y fue por más: hace seis días estrenó <strong>Docker VMM</strong>, su propio hipervisor. Se está construyendo la capa de abajo, no una imagen mejor.</li>
       </ul>
     </div>
     <!-- uno adentro, los demás en fila: el límite del que habla la slide -->
@@ -457,9 +590,7 @@
     </svg>
   </div>
 </section>
-
-<!-- 7 · KERNEL COMPARTIDO -->
-<section class="slide" data-t="10:00">
+<section class="slide" data-t="13:00">
   <div class="cols">
     <div>
       <span class="kicker">Por qué no alcanza</span>
@@ -497,45 +628,29 @@
   </div>
 </section>
 
-<!-- 8 · LA ESCALERA -->
-<section class="slide" data-t="13:00">
-  <span class="kicker">La escalera de aislamiento</span>
-  <h2>Cuatro escalones. Cada uno cuesta arranque.</h2>
-  <!-- sin este rótulo las barras se leen como una gráfica sin eje -->
-  <p style="font-weight:800;font-size:clamp(1rem,1.5vw,1.3rem)">
-    ↑ Qué tanto separa tu agente del host
-  </p>
-  <div class="stairs" style="height:42vh">
-    <div class="step step--1"><h3>Proceso</h3><p>Nada te separa. Instantáneo.</p></div>
-    <div class="step step--2"><h3>Contenedor</h3><p>Kernel compartido.</p></div>
-    <div class="step step--3"><h3>gVisor</h3><p>Kernel en user-space. Intercepta syscalls.</p></div>
-    <div class="step step--4"><h3>microVM</h3><p>Kernel propio. Aislamiento por hardware (KVM).</p></div>
-  </div>
-  <p style="margin-top:1vh">Subir un escalón cuesta milisegundos de arranque y algo de compatibilidad. Lo útil es saber en cuál estás parado hoy.</p>
-</section>
-
 <!-- 9 · FIRECRACKER -->
 <section class="slide" data-t="16:00">
-  <div class="cols">
-    <div>
-      <span class="kicker">El que ganó</span>
-      <h2 style="margin-top:1.5vh">Firecracker</h2>
-      <p style="margin-top:1.5vh">Mientras menos código tenga el que te aísla, menos superficie hay donde romperlo. Un hipervisor de 50 mil líneas se puede auditar entero.</p>
-      <p style="margin-top:1vh">Corre por debajo de E2B, Fly y Vercel: al comparar proveedores, muchas veces comparas el mismo motor con distinta factura.</p>
+  <span class="kicker">El campo, ahora mismo</span>
+  <h2 style="max-width:30ch">Ya nadie discute <span class="mark--o mark">si aislar</span>. Discute con qué.</h2>
+  <div class="grid2" style="margin-top:1.5vh">
+    <div class="box box--y">
+      <h3>microVM · Firecracker</h3>
+      <p>Kernel propio, frontera de hardware. Lo usan <strong>AWS Lambda, E2B, Fly</strong> — y <strong>EasyBits</strong>. Arranca en ~125 ms.</p>
     </div>
-    <div class="grid2">
-      <div class="box box--y">
-        <div class="stat" style="font-size:clamp(2.6rem,6vw,4.6rem)">50k</div>
-        <p style="margin-top:.4em;font-weight:700">líneas de Rust en todo el hipervisor</p>
-      </div>
-      <div class="box box--o">
-        <p style="font-weight:700">Una máquina virtual normal le finge al huésped una computadora completa: USB, tarjeta de video, PCI, audio. Cada pieza fingida es código que se puede atacar.</p>
-        <p style="margin-top:.7em;font-weight:700">Firecracker le finge</p>
-        <div class="stat" style="font-size:clamp(2.6rem,6vw,4.6rem);margin-top:.1em">5</div>
-        <p style="margin-top:.3em;font-weight:700">red, disco, consola serial, teclado y el canal con el host</p>
-      </div>
+    <div class="box box--o">
+      <h3>Kernel en user-space · gVisor</h3>
+      <p>Lo usa <strong>Modal</strong>. Arranca más rápido y llega a GPU, pero cobra 10-30% en I/O y su frontera es software.</p>
+    </div>
+    <div class="box">
+      <h3>Contenedor pelado</h3>
+      <p><strong>Daytona</strong> arranca en 90 ms y por eso gana volumen. Sigue compartiendo el kernel del host.</p>
+    </div>
+    <div class="box box--v">
+      <h3>La tendencia</h3>
+      <p>Todos van bajando de capa. <strong>Docker</strong> estrenó su propio hipervisor hace seis días.</p>
     </div>
   </div>
+  <p class="lead" style="margin-top:1.5vh;max-width:62ch">Y casi nadie construye su caja: la renta. <a href="https://crabbox.sh/" target="_blank" rel="noopener" style="color:#111"><strong>Crabbox</strong></a>, la herramienta del autor de OpenClaw, habla con más de 20 proveedores de sandbox.</p>
 </section>
 
 <!-- 10 · DEMO 1 -->
@@ -543,11 +658,11 @@
   <div class="cols">
     <div>
       <span class="badge">Demo 1</span>
-      <h2 style="margin-top:2vh;max-width:20ch">Levantar una caja y tratar de salirse.</h2>
-      <ul style="margin-top:1.5vh;max-width:44ch">
-        <li>Se levanta un sandbox y se mide cuánto tardó</li>
-        <li>Se corre algo destructivo adentro</li>
-        <li>El host ni se entera</li>
+      <h2 style="margin-top:2vh;max-width:20ch">Una caja se levanta, se muere y vuelve.</h2>
+      <ul style="margin-top:1.5vh;max-width:46ch">
+        <li><strong>Caja cruda.</strong> Se levanta con el cronómetro a la vista, corro algo destructivo adentro y la vuelvo a levantar.</li>
+        <li><strong>Caja de servicio.</strong> El mismo motor, otro propósito: no es "para agentes", es infraestructura.</li>
+        <li><strong>Un agente dormido.</strong> Despierta en ~1s y contesta.</li>
       </ul>
     </div>
     <!-- una caja fuerte: la manija gira, los pernos aguantan -->
@@ -869,10 +984,10 @@
 <div class="notes" data-for="3"><span class="t">Apunte · la pregunta</span><p>El devcontainer es la respuesta más extendida hoy, y viene de antes de los agentes: se diseñó para que un equipo comparta el mismo entorno, no para contener a alguien que quiere salirse.</p></div>
 <div class="notes" data-for="4"><span class="t">Apunte · el caso</span><p>Pasó en una evaluación controlada, que es justo donde uno quiere que pase. El detalle que vale la pena registrar: los modelos dedicaron cómputo de inferencia a conseguir salida a internet. No fue un tropiezo, fue un objetivo.</p><p>La auditoría forense confirmó que los datos de clientes quedaron intactos.</p></div>
 <div class="notes" data-for="5"><span class="t">Apunte · las dos capas</span><p>Los dos casos se citan mucho para vender lo mismo, y cada uno prueba una cosa distinta. En Replit faltaba separar desarrollo de producción, que es permisos. En el de julio la red estaba aislada y aun así tenía una salida, que es aislamiento.</p></div>
-<div class="notes" data-for="6"><span class="t">Apunte · devcontainers</span><p>El límite de una sola instancia se siente cuando quieres correr tres agentes en paralelo sobre el mismo repo. Varios equipos terminan con una VM por workspace, cada una con su propio git worktree.</p></div>
-<div class="notes" data-for="7"><span class="t">Apunte · kernel</span><p>La imagen mental útil: departamentos con paredes propias, pero un solo piso. Si el piso cede, no importa qué tan gruesas eran las paredes.</p></div>
-<div class="notes" data-for="8"><span class="t">Apunte · la escalera</span><p>El escalón que necesitas depende de cuánto confías en el código que va a correr. Código tuyo, escalón bajo. Código que escribió un modelo a partir de una página web que leyó, escalón alto.</p></div>
-<div class="notes" data-for="9"><span class="t">Apunte · Firecracker</span><p>Es el mismo principio de cualquier sistema de seguridad: menos superficie, menos por auditar. Un hipervisor de 50 mil líneas se puede revisar entero; uno de millones, no.</p></div>
+<div class="notes" data-for="7"><span class="t">Apunte · devcontainers</span><p>El límite de una sola instancia se siente cuando quieres correr tres agentes en paralelo sobre el mismo repo. Varios equipos terminan con una VM por workspace, cada una con su propio git worktree.</p></div>
+<div class="notes" data-for="8"><span class="t">Apunte · kernel</span><p>La imagen mental útil: departamentos con paredes propias, pero un solo piso. Si el piso cede, no importa qué tan gruesas eran las paredes.</p></div>
+<div class="notes" data-for="6"><span class="t">Apunte · OpenClaw</span><p>Lo que cambió no fue el modelo: fue quitarle al agente el trámite de pedir permiso por cada paso. En cuanto alguien lo hizo y funcionó, todos quisieron lo mismo — y ahí apareció la pregunta incómoda de en qué máquina lo dejas suelto.</p></div>
+<div class="notes" data-for="9"><span class="t">Apunte · el campo</span><p>El reparto es nítido y cada quien pagó por su prioridad: E2B eligió arranque lento y frontera dura; Modal, arranque rápido y GPU; Daytona, volumen. Nadie eligió mal — eligieron distinto. Y el dato que ordena todo: la mayoría de las herramientas de agentes no construye la caja, la renta.</p></div>
 <div class="notes" data-for="10"><span class="t">En pantalla</span><p>Sandbox real levantándose, con el cronómetro a la vista. Lo importante del demo es el tiempo de arranque y lo que pasa cuando corres algo que no deberías.</p></div>
 <div class="notes" data-for="11"><span class="t">Apunte · las cuatro</span><p>Sirven para leer cualquier comparativa sin perderse entre features. Las cuatro salen del patrón de uso, que es lo que cambia entre un agente y un job normal.</p></div>
 <div class="notes" data-for="12"><span class="t">Apunte · el mapa</span><p>En el último año salieron muchísimos: E2B, AIO Sandbox, Sandboxer, AgentSphere, Exe.dev y los de las nubes grandes. Varios corren Firecracker por debajo, así que lo que los distingue es el cobro y la persistencia.</p><p>El problema que la gente reporta no es la tarifa por hora: es la factura sorpresa. Alguien dejó su agente corriendo, se fue veinte minutos y volvió a una cuenta que no esperaba; en los foros circula el caso de un agente desbocado de 300 dólares.</p></div>

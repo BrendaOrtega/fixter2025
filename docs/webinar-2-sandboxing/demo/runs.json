@@ -1,0 +1,33 @@
+{
+ "capacidad": "",
+ "runs": [
+  {
+   "paso": "Paso 1 · levantar una caja vacía",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"template\":\"ubuntu\",\"name\":\"webinar\",\"timeoutSeconds\":900}'",
+   "out": "{\"sandboxId\":\"sb_9a093223-7600-431f-aa36-3e3500e4d6a3\",\"template\":\"ubuntu\",\"status\":\"starting\",\"ownerId\":\"699f35cbc8ad86037eda62b1\",\"name\":\"webinar\",\"createdAt\":\"2026-08-18T21:25:44.410511716Z\",\"expiresAt\":\"2026-08-18T21:40:44.410511716Z\",\"hardExpiresAt\":\"0001-01-01T00:00:00Z\",\"suspendedAt\":\"0001-01-01T00:00:00Z\",\"cpuMode\":\"shared\",\"vcpus\":1}",
+   "ms": 1.2,
+   "estado": "ok"
+  },
+  {
+   "paso": "Paso 2 · instalar nginx dentro de la caja",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/exec \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"cmd\":\"apt-get update -qq && apt-get install -y -qq nginx && nginx && echo listo\"}'",
+   "out": "{\"error\":\"Invalid body\",\"issues\":[{\"code\":\"invalid_type\",\"expected\":\"string\",\"received\":\"undefined\",\"path\":[\"command\"],\"message\":\"Required\"}]}",
+   "ms": 0.3,
+   "estado": "err"
+  },
+  {
+   "paso": "Paso 2 · instalar nginx dentro de la caja",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/exec \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"command\":\"apt-get update -qq && apt-get install -y -qq nginx && nginx && echo LISTO\"}'",
+   "out": "{\"exitCode\":0,\"stdout\":\"Selecting previously unselected package gcc-14-base:amd64.\\r\\n(Reading database ... \\r(Reading database ... 50%\\r(Reading database ... 100%\\r(Reading database ... 0 files and directories currently installed.)\\r\\nPreparing to unpack .../gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb ...\\r\\nUnpacking gcc-14-base:amd64 (14.2.0-4ubuntu2~24.04.1) ...\\r\\nSetting up gcc-14-base:amd64 (14.2.0-4ubuntu2~24.04.1) ...\\r\\nSelecting previously unselected package libc6:amd64.\\r\\n(Reading database ... \\r(Reading database ... 10%\\r(Reading database ... 25%\\r(Reading database ... 35%\\r(Reading database ... 50%\\r(Reading database ... 60%\\r(Reading database ... 75%\\r(Reading database ... 85%\\r(Reading database ... 100%\\r(Reading database ... 9 files and directories currently installed.)\\r\\nPreparing to unpack .../libc6_2.39-0ubuntu8.8_amd64.deb ...\\r\\ndebconf: unable to initialize frontend: Dialog\\r\\ndebconf: (TERM is not set, so the dialog frontend is not usable.)\\r\\ndebconf: falling back to frontend: Readline\\r\\ndebconf: unable to initialize frontend: Readline\\r\\ndebconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.38.2 /usr/local/share/perl/5.38.2 /usr/lib/x86_64-linux-gnu/perl5/5.38 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.38 /usr/share/perl/5.38 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd",
+   "ms": 11.05,
+   "estado": "ok"
+  },
+  {
+   "paso": "Paso 3 · abrir el puerto 80 al mundo",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/expose \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"port\":80}'",
+   "out": "{\"host\":\"sb-9a093223-7600-431f-aa36-3e3500e4d6a3-80.sandboxes.easybits.cloud\",\"port\":80,\"url\":\"https://sb-9a093223-7600-431f-aa36-3e3500e4d6a3-80.sandboxes.easybits.cloud\"}",
+   "ms": 0.81,
+   "estado": "ok"
+  }
+ ]
+}

@@ -135,3 +135,39 @@ Posts con `contentFormat: "markdown"` se renderizan con **Streamdown** + Shiki (
 3. **El silencio es coaching** — Después de una pregunta difícil, el prompt debe indicar explícitamente NO llenar el silencio. El "generation effect" (cognitive science) dice que la gente retiene mejor lo que genera con esfuerzo. Un coach que explica todo está saboteando el aprendizaje.
 4. **Respuestas cortas por default** — Máximo 3 oraciones fuera de debriefs. En voz, una respuesta de 2 párrafos se siente como un monólogo de 45 segundos. 1 observación + 1 pregunta es el formato ideal.
 5. **70/30 rule** — 70% challenge, 30% encouragement. Más aliento que eso baja los outcomes reales aunque suba la satisfacción percibida.
+
+## URGENTE — Libro corto: A2A v1.0
+
+**Hueco editorial verificado el 18 ago 2026: no existe ningún libro sobre el protocolo A2A**
+(Agent2Agent, Linux Foundation). Ni de v0.3 ni de v1.0. Se revisó O'Reilly, Manning/MEAP, Packt,
+Apress, Amazon y Leanpub. Lo más cercano son libros de agentes con un capítulo dedicado, escritos
+antes del release de v1.0.
+
+**Por qué es urgente y no sólo interesante:**
+
+1. **La literatura existente enseña la versión equivocada.** La v1.0 (abril 2026) rompió con
+   v0.3. El curso de DeepLearning.AI —hecho con Google Cloud e IBM, enero 2026— es anterior al
+   release, igual que casi todos los codelabs de Google y todo lo de Udemy. Quien estudie hoy por
+   esos materiales aprende un dialecto muerto.
+2. **El tema no es de nicho.** Linux Foundation reportó en abril 150+ organizaciones y un TSC con
+   AWS, Cisco, Google, IBM, Microsoft, Salesforce, SAP y ServiceNow.
+3. **La ventana se cierra sola.** El ciclo de un libro técnico es de 12 a 18 meses. Cuando
+   O'Reilly o Manning publiquen el suyo, la oportunidad se acabó.
+
+**El ángulo que nadie más tiene.** No es "qué dice la spec" —eso está en la doc oficial y es
+gratis— sino **qué pasa cuando la implementas de verdad**: el mapeo de un dialecto propio al cable
+A2A, las dos contradicciones internas de la spec (`securityRequirements` vs `security`;
+`SubscribeToTask` como GET vs POST), qué NO tiene equivalente en el protocolo (consumo/facturación,
+inyección en un turno vivo) y cómo se resuelve sin inventar campos, y por qué el AgentCard puede
+vivir en otro origen que el endpoint. Todo eso sale de la implementación real en sandbox-host,
+hecha contra el `a2a.proto` normativo del tag v1.0.1.
+
+**Qué cambia respecto a los diferenciadores 0.3 → 1.0** (para no escribir lo obsoleto):
+métodos PascalCase (`SendMessage`, no `message/send`), AgentCard sin `url` en la raíz sino
+`supportedInterfaces[]`, sin discriminador `kind`, Part aplanado a un oneof `{text|raw|url|data}`,
+TaskState en SCREAMING_SNAKE, eventos de stream sin `final`, ruta `/.well-known/agent-card.json`.
+
+- Referencia técnica ya publicada (esqueleto del libro): https://claude.ai/code/artifact/a413ce56-a063-4849-bf6d-fb217c98d75b
+- Implementación de referencia: `~/sandbox-host/templates/claude-worker/src/a2a/`
+- Fuente normativa: `github.com/a2aproject/A2A`, tag `v1.0.1`, `specification/a2a.proto`
+- Recordatorio de estilo del proyecto: leer el prólogo primero, ejemplos en español.
