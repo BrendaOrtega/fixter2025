@@ -18,14 +18,14 @@ const POSTS = [
     title: "A2A v1.0 — lo que aprendimos implementando un estándar que casi nadie implementa",
     tags: ["ai", "agentes", "protocolos"],
     // Ruins of an Ancient City, John Martin, c. 1810–20 — Cleveland Museum of Art (CC0)
-    metaImage: "/covers/a2a-ciudad-en-ruinas.jpg",
+    metaImage: "https://www.fixtergeek.com/covers/a2a-ciudad-en-ruinas.jpg",
   },
   {
     slug: "acp-el-cable-sin-traductor",
     title: "ACP, parte 2 — el día que el relé pasó mensajes que no conocía",
     tags: ["ai", "agentes", "protocolos"],
     // Sculptura in Aes, Stradanus, c. 1591 — Cleveland Museum of Art (CC0)
-    metaImage: "/covers/acp-taller-grabador.jpg",
+    metaImage: "https://www.fixtergeek.com/covers/acp-taller-grabador.jpg",
   },
 ];
 
