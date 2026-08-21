@@ -349,14 +349,28 @@ export const scheduleVideoProcessing = async ({
   }
 };
 
-// Job de limpieza: detecta videos stuck en "processing" por más de 15 min
+// Job de limpieza: detecta videos stuck en "processing" por más de 15 min, y en "pending"
+// por más de 12 horas.
+//
+// ⚠️ El `pending` NO puede compartir la ventana de 15 min. Un webinar entra en `pending` en
+// cuanto se crea su borrador y ahí se queda mientras la caja del evento transcodifica las
+// calidades y whisper transcribe: una hora de vídeo son minutos de HLS más ~15 de audio, y
+// matarlo a los 15 min marcaría como fallida una grabación que va perfectamente.
+//
+// Pero sin límite tampoco: hasta hoy un `pending` colgado no lo cazaba nadie —esta consulta
+// sólo miraba "processing"— y el admin lo enseñaba como "Procesando" indefinidamente, con
+// una ruedita girando sobre algo que ya no iba a llegar. Pasó el 20-ago-2026. 12 horas es
+// más de lo que tarda cualquier grabación real y menos que la noche que uno duerme.
 getAgenda().define("cleanup_stuck_videos", async () => {
   const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+  const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
 
   const stuckVideos = await db.video.findMany({
     where: {
-      processingStatus: "processing",
-      processingStartedAt: { lt: fifteenMinutesAgo }
+      OR: [
+        { processingStatus: "processing", processingStartedAt: { lt: fifteenMinutesAgo } },
+        { processingStatus: "pending", processingStartedAt: { lt: twelveHoursAgo } },
+      ]
     },
     select: { id: true, title: true }
   });
@@ -367,7 +381,7 @@ getAgenda().define("cleanup_stuck_videos", async () => {
       where: { id: video.id },
       data: {
         processingStatus: "failed",
-        processingError: "Timeout: el procesamiento excedió 15 minutos",
+        processingError: "Timeout: el procesamiento se quedó colgado",
         processingFailedAt: new Date()
       }
     });
