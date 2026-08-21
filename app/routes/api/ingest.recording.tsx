@@ -79,6 +79,51 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const hora = cuando.toISOString().slice(11, 16).replace(":", "");
     const slug = String(body.slug ?? "") || `${slugify(title)}-${dia}-${hora}`;
 
+    // ── Reusar la pieza que ya estaba preparada ──────────────────────────────
+    //
+    // Un webinar se prepara ANTES de ocurrir: se crea su `Video` con el título bueno, la
+    // fecha, el índice dentro del módulo y sus recursos colgando (las slides). Si la
+    // grabación crea una pieza NUEVA, el programa acaba con dos filas del mismo webinar —
+    // la preparada, vacía y con las slides, y la de la grabación, sin nada más que el
+    // vídeo. Pasó el 20-ago-2026 con el webinar de sandboxing.
+    //
+    // Se reusa sólo una pieza VIRGEN: sin `m3u8` y sin `processingStatus`. En cuanto una
+    // grabación la reclama queda marcada, así que la segunda grabación del mismo día
+    // —el ensayo por la mañana y la sesión buena por la tarde— ya no la encuentra y se
+    // crea la suya, que es justo lo que protege el slug con hora.
+    const margenMs = 12 * 60 * 60 * 1000;
+    const preparada = body.slug
+      ? null
+      : await db.video.findFirst({
+          where: {
+            id: { in: course.videoIds },
+            kind: "webinar",
+            m3u8: null,
+            processingStatus: null,
+            eventDate: {
+              gte: new Date(cuando.getTime() - margenMs),
+              lte: new Date(cuando.getTime() + margenMs),
+            },
+          },
+          orderBy: { eventDate: "asc" },
+          select: { id: true, slug: true, index: true },
+        }).catch(() => null);
+
+    if (preparada) {
+      // NO se le pisa el título ni la fecha: los de la pieza preparada están revisados y
+      // el título que manda el room es el nombre de la sala.
+      await db.video.update({
+        where: { id: preparada.id },
+        data: { processingStatus: "pending", processingStartedAt: new Date() },
+      });
+      return Response.json({
+        videoId: preparada.id,
+        slug: preparada.slug,
+        viewerUrl: `/cursos/${course.slug}/${preparada.slug}`,
+        reused: true,
+      });
+    }
+
     // ⚠️ `index` y `description` NO son opcionales de facto: el viewer ordena y navega por
     // el índice, y una pieza sin él queda fuera de la secuencia. Se coloca AL FINAL del
     // programa, que es donde va una grabación nueva.
