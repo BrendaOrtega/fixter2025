@@ -286,8 +286,19 @@ export const TranscriptPanel = ({
       )}
 
       {/* La transcripción */}
+      {/* ⚠️ Con capítulos, la transcripción es una VENTANITA de karaoke pegada abajo y
+          los capítulos se llevan el resto. Sin capítulos no hay nada que se lleve ese
+          resto, y el `mt-auto` empujaba los 7.5rem hasta el borde inferior dejando el
+          panel entero en blanco — que es como se veía la grabación del 20-ago-2026, que
+          llegó con 560 segmentos y `chapters: null`. Un transcript sin capítulos no es
+          el caso raro: los genera quien publica, y puede no generarlos. */}
       {!q && (
-        <div className="relative mt-auto flex shrink-0 flex-col">
+        <div
+          className={cn(
+            "relative flex flex-col",
+            chapters.length > 0 ? "mt-auto shrink-0" : "min-h-0 flex-1"
+          )}
+        >
           {chapters.length > 0 && (
             <p className="shrink-0 px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
               Transcripción
@@ -301,7 +312,10 @@ export const TranscriptPanel = ({
             // veinte bloques a la vista el ojo busca cuál está resaltado en vez
             // de leer el que suena. Para leerlo entero está la búsqueda, y para
             // saltar, los capítulos.
-            className="scrollbar-sutil h-[7.5rem] space-y-1 overflow-y-auto"
+            className={cn(
+              "scrollbar-sutil space-y-1 overflow-y-auto",
+              chapters.length > 0 ? "h-[7.5rem]" : "min-h-0 flex-1"
+            )}
           >
             {segments.map((seg, i) => {
               const activo = i === indiceActivo;

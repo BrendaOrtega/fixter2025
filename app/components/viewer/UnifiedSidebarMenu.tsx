@@ -753,17 +753,24 @@ const VideoListItem = ({
   return (
     <Link
       ref={ref}
-      to={hasContent ? `/cursos/${courseSlug}/${slug}` : "#"}
+      // ⚠️ La pestaña viaja en la URL, no sólo en el estado. Al llegar a la lección
+      // nueva, el efecto que sincroniza `defaultTab` vuelve a leer `?tab=` — y si el
+      // enlace no lo lleva, lee "videos" y deshace el cambio: la transcripción se veía
+      // un instante y la lista volvía sola. Parecía que la segunda navegación cancelaba
+      // la primera; en realidad eran el estado y la URL contándose cosas distintas.
+      to={hasContent ? `/cursos/${courseSlug}/${slug}?tab=transcript` : "#"}
       onClick={(e) => {
         if (!hasContent) {
           e.preventDefault();
           return;
         }
-        // Abrir una lección lleva a su detalle —de qué habla y en qué minuto—, no de
-        // vuelta a la lista que acabas de usar. Va por estado y NO por la URL: con
-        // `?tab=transcript` en el enlace, volver a hacer clic en la lección que ya
-        // está abierta no cambiaba nada, porque la URL era la misma.
-        onSelect?.();
+        // La lección que YA está abierta es el caso que obligaba a hacerlo por estado:
+        // su URL no cambia, así que el router no navega y no habría nada que sincronice
+        // la pestaña. Aquí se corta el enlace y se cambia a mano.
+        if (isCurrent) {
+          e.preventDefault();
+          onSelect?.();
+        }
       }}
       className={cn(
         "group relative flex items-center p-3 rounded-lg transition-all hover:bg-gray-800/50",

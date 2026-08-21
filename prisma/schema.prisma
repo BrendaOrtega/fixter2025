@@ -513,6 +513,11 @@ model Module {
 model Video {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   slug        String  @unique
+  /// Slugs por los que ESTE vídeo respondió antes. Renombrar la pieza —fusionar una
+  /// grabación con su placeholder, corregir un título— rompía en silencio los enlaces
+  /// ya repartidos: la tarjeta del room de Teams guarda la URL desde que se crea el
+  /// borrador, y nadie la reescribe. El viewer los mira antes de rendirse y manda un 301.
+  previousSlugs String[]
   title       String
   isPublic    Boolean @default(false)
   accessLevel String  @default("paid") // "public" | "subscriber" | "paid"

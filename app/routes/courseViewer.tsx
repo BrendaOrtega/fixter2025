@@ -521,6 +521,23 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     }
   }
 
+  // Antes de rendirse: puede que la pieza se haya renombrado y este slug sea uno de los
+  // viejos. Los enlaces ya repartidos —correos, la tarjeta del room de Teams, un tuit—
+  // no se reescriben solos, y un 404 es una forma silenciosa de perderlos.
+  const slugPedido = (params as { videoSlug?: string }).videoSlug;
+  if (!video && slugPedido) {
+    const renombrado = await db.video.findFirst({
+      where: { previousSlugs: { has: slugPedido } },
+      select: { slug: true },
+    });
+    if (renombrado) {
+      throw redirect(
+        `/cursos/${params.courseSlug}/${renombrado.slug}${url.search}`,
+        301
+      );
+    }
+  }
+
   // if (!video) throw data("Video not found", { status: 404 });
   if (!video) throw redirect("/404"); // @todo throw a proper 404!
   const nextVideo = await db.video.findFirst({

@@ -113,3 +113,32 @@ flujo:
   cambiar en la caja ni en `link-hls-remote.ts`.
 
 Detalle completo en `docs/TODO-hls-proxy-302.md`.
+
+## Después de publicar: lo que NO se actualiza solo
+
+Anotado el **2026-08-21**, después de publicar el webinar 2 (sandboxing). El pipeline deja
+la pieza lista dentro del curso y ahí se detiene. Todo lo que la anuncia hacia afuera sigue
+apuntando al webinar anterior, y nadie avisa — la landing se ve perfecta, sólo que
+promociona la grabación vieja.
+
+**Repasar en este orden, con la pieza ya revisada:**
+
+1. **Abrirla.** Nace en `isPublic: false` a propósito: un webinar arranca con minutos de
+   sala vacía. Mientras siga cerrada, cualquier enlace que le pongas a la landing lleva a
+   un 404.
+2. **Verificar que el vídeo REPRODUCE**, no que la fila diga `ready`. Son cosas distintas:
+   una fila `ready` apuntando a un bucket vacío deja el reproductor en negro sin decir por
+   qué. Pasó el 20-ago-2026.
+3. **La landing del taller** — `app/routes/sistemas-agenticos.tsx`. La constante
+   `WEBINAR_RECORDING_SLUG` alimenta DOS bloques: la tarjeta «¿Te perdiste el primero?
+   Míralo completo» junto al formulario, y el estado «Esta serie de webinars ya terminó».
+   Con más de una grabación publicada, «el primero» deja de ser cierto y el copy hay que
+   reescribirlo, no sólo cambiar el slug.
+4. **Los capítulos**, si el transcript llegó sin ellos. Un transcript sin capítulos es un
+   caso normal —los genera quien publica—, y el panel del viewer se comporta distinto:
+   sin ellos la transcripción ocupa el panel entero, con ellos es una ventanita de karaoke
+   debajo de la lista (`app/components/viewer/TranscriptPanel.tsx`).
+
+⚠️ **Lo del punto 3 no tiene test ni aviso.** El día que se publique el webinar 3, esa
+tarjeta seguirá ofreciendo la grabación del 13 de agosto a quien acaba de perderse la del
+27, y la landing se verá impecable mientras lo hace.
