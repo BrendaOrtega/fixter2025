@@ -583,6 +583,8 @@ function WebinarSection() {
           </p>
           <a
             href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-8 inline-block rounded-xl bg-sistemas-accent px-6 py-3.5 text-sm font-bold text-sistemas-dark transition hover:brightness-110"
           >
             {grabaciones.length > 1
@@ -650,6 +652,8 @@ function WebinarSection() {
                   <li key={g.slug}>
                     <a
                       href={`/cursos/sistemas-agenticos/${g.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-sistemas-primary/10"
                     >
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sistemas-primary/20 text-sm text-sistemas-primary transition group-hover:bg-sistemas-primary/30">
@@ -956,6 +960,8 @@ export default function SistemasAgenticosLanding() {
                     ¿Prefieres verlo antes?{" "}
                     <a
                       href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
                     >
                       Mira el webinar completo, gratis →
@@ -970,6 +976,8 @@ export default function SistemasAgenticosLanding() {
                     : "El primero ya está grabado y "}
                   <a
                     href={`/cursos/sistemas-agenticos/${ultima.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="font-semibold underline underline-offset-2 hover:text-sistemas-accent"
                   >
                     {grabaciones.length > 1 ? "puedes verlas completas" : "puedes verlo completo"}
