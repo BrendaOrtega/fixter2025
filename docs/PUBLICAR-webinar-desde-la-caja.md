@@ -134,7 +134,13 @@ promociona la grabación vieja.
    Míralo completo» junto al formulario, y el estado «Esta serie de webinars ya terminó».
    Con más de una grabación publicada, «el primero» deja de ser cierto y el copy hay que
    reescribirlo, no sólo cambiar el slug.
-4. **Los capítulos**, si el transcript llegó sin ellos. Un transcript sin capítulos es un
+4. **La portada.** La fila la trae puesta, y aun así el admin puede decir «sin portada»:
+   la caja sube el `poster.jpg` **sin ACL**, y en Tigris eso son 403 por URL directa. Los
+   vídeos no lo notan porque van por presigned; las imágenes se sirven directo y sí lo
+   notan. Se arregla copiando el objeto sobre sí mismo con `ACL: public-read` y
+   `MetadataDirective: REPLACE` — es la única forma de cambiarle la ACL a algo que ya
+   existe. Comprobarlo con un `curl` a la URL cruda, no mirando la fila.
+5. **Los capítulos**, si el transcript llegó sin ellos. Un transcript sin capítulos es un
    caso normal —los genera quien publica—, y el panel del viewer se comporta distinto:
    sin ellos la transcripción ocupa el panel entero, con ellos es una ventanita de karaoke
    debajo de la lista (`app/components/viewer/TranscriptPanel.tsx`).

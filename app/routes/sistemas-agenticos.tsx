@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
@@ -28,9 +28,11 @@ const WEBINAR_SEQUENCES: Record<string, string> = {
 const PRICE = 2490; // MXN precio de lanzamiento
 const PRICE_REGULAR = 3490; // MXN tachado
 const COURSE_SLUG = "sistemas-agenticos";
-// Grabación del webinar del 13-ago-2026, publicada como video del curso.
-// El slug viaja en la URL del viewer: una vez repartido el enlace, no cambia.
-const WEBINAR_RECORDING_SLUG = "anatomia-de-un-sistema-agentico";
+const MINUTOS_A_TEXTO = (m: string | null) => {
+  const n = Number(m ?? 0);
+  if (!n) return "";
+  return n >= 60 ? `${Math.floor(n / 60)}h${String(n % 60).padStart(2, "0")}` : `${n} min`;
+};
 
 const SESSIONS = [
   {
@@ -195,6 +197,37 @@ export const meta = () => {
   };
 
   return [...baseMeta, { "script:ld+json": schemaOrg }];
+};
+
+/**
+ * Las grabaciones que ya se pueden ver, leídas del programa.
+ *
+ * Antes era una constante con el slug del primer webinar escrita a mano. Funcionó
+ * exactamente hasta que hubo un segundo: la landing siguió ofreciendo la grabación de
+ * agosto 13 a quien acababa de perderse la del 20, y se veía impecable haciéndolo. Nadie
+ * avisa de eso — no hay test que compare una constante con la base.
+ *
+ * El filtro es el mismo que decide si una pieza se puede ver: `isPublic` y que tenga
+ * vídeo. Una pieza preparada antes del evento existe en el programa desde días antes, y
+ * enlazarla entonces lleva a un reproductor vacío.
+ */
+export const loader = async () => {
+  const { db } = await import("~/.server/db");
+  const course = await db.course.findUnique({
+    where: { slug: COURSE_SLUG },
+    select: { videoIds: true },
+  });
+  const grabaciones = await db.video.findMany({
+    where: {
+      id: { in: course?.videoIds ?? [] },
+      kind: "webinar",
+      isPublic: true,
+      m3u8: { not: null },
+    },
+    orderBy: { eventDate: "asc" },
+    select: { slug: true, title: true, duration: true },
+  });
+  return { grabaciones };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -515,6 +548,9 @@ function CheckoutButton({
 // Registro al webinar gratuito — visible (no modal) para que el anuncio de
 // Meta pueda apuntar directo a /sistemas-agenticos#webinar
 function WebinarSection() {
+  const { grabaciones } = useLoaderData<typeof loader>();
+  // La más reciente: es la que se ofrece cuando el copy habla de UNA sola.
+  const ultima = grabaciones.at(-1);
   const webinarFetcher = useFetcher<{
     success?: boolean;
     error?: string;
@@ -541,13 +577,17 @@ function WebinarSection() {
             Esta serie de webinars ya terminó
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-            Pero la grabación está completa y es gratis.
+            {grabaciones.length > 1
+              ? `Pero las ${grabaciones.length} grabaciones están completas y son gratis.`
+              : "Pero la grabación está completa y es gratis."}
           </p>
           <a
-            href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
+            href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
             className="mt-8 inline-block rounded-xl bg-sistemas-accent px-6 py-3.5 text-sm font-bold text-sistemas-dark transition hover:brightness-110"
           >
-            Mira el webinar completo, gratis →
+            {grabaciones.length > 1
+              ? "Míralas completas, gratis →"
+              : "Mira el webinar completo, gratis →"}
           </a>
         </div>
       </section>
@@ -589,26 +629,45 @@ function WebinarSection() {
             ))}
           </ul>
 
-          {/* El primero ya pasó y quedó grabado. Va aquí, junto al formulario
-              de los que faltan: quien llega tarde no se queda sin nada. */}
-          <a
-            href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
-            className="group mt-8 flex items-center gap-4 rounded-2xl border border-sistemas-primary/40 bg-sistemas-primary/5 p-5 transition hover:border-sistemas-primary hover:bg-sistemas-primary/10"
-          >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sistemas-primary/20 text-xl text-sistemas-primary transition group-hover:bg-sistemas-primary/30">
-              ▶
-            </span>
-            <span>
-              <span className="block text-sm font-bold text-zinc-100">
-                ¿Te perdiste el primero? Míralo completo
-              </span>
-              <span className="mt-0.5 block text-sm text-sistemas-gray">
-                «Anatomía de un sistema agéntico» · 1h15 sin editar · gratis,
-                solo pide tu correo
-              </span>
-            </span>
-          </a>
-        </motion.div>
+          {/* Las que ya pasaron y quedaron grabadas. Van aquí, junto al formulario
+              de la que falta: quien llega tarde no se queda sin nada.
+
+              ⚠️ Salen del programa, no de una lista escrita a mano. Con la lista fija,
+              el día que se publicó la segunda grabación esta tarjeta siguió ofreciendo
+              la primera —y se veía impecable haciéndolo. */}
+          {grabaciones.length > 0 && (
+            <div className="mt-8 rounded-2xl border border-sistemas-primary/40 bg-sistemas-primary/5 p-5">
+              <p className="text-sm font-bold text-zinc-100">
+                {grabaciones.length > 1
+                  ? "¿Te perdiste alguno? Míralos completos"
+                  : "¿Te perdiste el primero? Míralo completo"}
+              </p>
+              <p className="mt-0.5 text-xs text-sistemas-gray">
+                Sin editar · gratis, solo pide tu correo
+              </p>
+              <ul className="mt-3 space-y-1">
+                {grabaciones.map((g) => (
+                  <li key={g.slug}>
+                    <a
+                      href={`/cursos/sistemas-agenticos/${g.slug}`}
+                      className="group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-sistemas-primary/10"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sistemas-primary/20 text-sm text-sistemas-primary transition group-hover:bg-sistemas-primary/30">
+                        ▶
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">
+                        «{g.title}»
+                      </span>
+                      <span className="shrink-0 text-xs text-sistemas-gray">
+                        {MINUTOS_A_TEXTO(g.duration)}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          </motion.div>
 
         {/* En móvil el formulario va primero: apilado, quien llega por
             `#webinar` —casi todos desde un short— caía frente a mil doscientos
@@ -712,6 +771,9 @@ function WebinarSection() {
 }
 
 export default function SistemasAgenticosLanding() {
+  const { grabaciones } = useLoaderData<typeof loader>();
+  // La más reciente: es la que se ofrece cuando el copy habla de UNA sola.
+  const ultima = grabaciones.at(-1);
   const fetcher = useFetcher();
   // El siguiente webinar que no ha pasado. `undefined` cuando ya se dieron los tres.
   const proximo = proximoWebinar();
@@ -893,7 +955,7 @@ export default function SistemasAgenticosLanding() {
                   <>
                     ¿Prefieres verlo antes?{" "}
                     <a
-                      href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
+                      href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
                       className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
                     >
                       Mira el webinar completo, gratis →
@@ -901,16 +963,20 @@ export default function SistemasAgenticosLanding() {
                   </>
                 )}
               </p>
-              <p className="mt-1 text-xs text-sistemas-gray/70">
-                El primero ya está grabado y{" "}
-                <a
-                  href={`/cursos/sistemas-agenticos/${WEBINAR_RECORDING_SLUG}`}
-                  className="font-semibold underline underline-offset-2 hover:text-sistemas-accent"
-                >
-                  puedes verlo completo
-                </a>
-                : «Anatomía de un sistema agéntico», 1h15.
-              </p>
+              {ultima && (
+                <p className="mt-1 text-xs text-sistemas-gray/70">
+                  {grabaciones.length > 1
+                    ? `Las ${grabaciones.length} anteriores ya están grabadas y `
+                    : "El primero ya está grabado y "}
+                  <a
+                    href={`/cursos/sistemas-agenticos/${ultima.slug}`}
+                    className="font-semibold underline underline-offset-2 hover:text-sistemas-accent"
+                  >
+                    {grabaciones.length > 1 ? "puedes verlas completas" : "puedes verlo completo"}
+                  </a>
+                  {`: «${ultima.title}», ${MINUTOS_A_TEXTO(ultima.duration)}.`}
+                </p>
+              )}
             </motion.div>
 
             <motion.div
