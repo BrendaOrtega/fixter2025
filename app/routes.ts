@@ -70,6 +70,7 @@ export default [
   route("sistemas-agenticos", "routes/sistemas-agenticos.tsx"),
   route("seis-piezas", "routes/seis-piezas.tsx"), // regalo del webinar → PDF en EasyBits
   route("webinar-1/slides", "routes/webinar-1.slides.tsx"), // ruta vieja ya compartida → canónica
+  route("sandboxing/slides", "routes/sandboxing.slides.tsx"), // corta, para pegar en el chat del webinar
   // Sala del webinar (redirige a WEBINAR_ROOM_URL cuando está configurada)
   route("webinar-en-vivo", "routes/webinar-en-vivo.tsx"),
   // Pong con Vanilla JS - Classic Course
@@ -134,6 +135,8 @@ export default [
   ]),
   ...prefix("blog", [
     index("routes/blog.tsx"),
+    // La serie va ANTES del :postSlug o la ruta dinámica se la come.
+    route("serie/:serie", "routes/blog.serie.tsx"),
     route(
       "aws-ses-features-ocultos",
       "routes/blog.aws-ses-features-ocultos.tsx"

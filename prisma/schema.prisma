@@ -423,6 +423,12 @@ model Post {
   mainTag    String?
   tags       String[]
   category   String[]
+
+  // Series (ladders): varios posts que se leen en orden y se enlazan entre sí.
+  // `serie` es el slug de la serie; `orden` la posición, empezando en 1.
+  // Sin `serie`, el post es una nota suelta y no entra a ninguna navegación.
+  serie String?
+  orden Int?
   banner     Banner?
 
   // Relations

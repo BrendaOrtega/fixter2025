@@ -10,6 +10,7 @@ import { CourseBanner } from "~/components/CourseBanner";
 import YoutubeComponent from "~/components/common/YoutubeComponent";
 import { SubscriptionModal } from "~/components/SubscriptionModal";
 import { NextPost } from "~/components/common/NextPost";
+import { SeriesNav, SeriesBadge } from "~/components/blog/SeriesNav";
 import { AuthorSignature } from "~/components/blog/AuthorSignature";
 import { FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -18,6 +19,7 @@ import { useToast } from "~/hooks/useToaster";
 import { twMerge } from "tailwind-merge";
 import getMetaTags from "~/utils/getMetaTags";
 import { AudioButton } from "~/components/AudioButton";
+import { getSeriesNav } from "~/utils/series.server";
 import useAnalytics from "~/hooks/use-analytics";
 import { motion } from "motion/react";
 
@@ -104,6 +106,10 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     console.error("Error fetching audio data:", error);
   }
 
+  // La serie, si el post pertenece a una: manda al lector a la siguiente parte
+  // en vez de soltarlo en dos posts al azar.
+  const serie = await getSeriesNav(post);
+
   return {
     post: {
       ...post,
@@ -113,12 +119,13 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     },
     posts,
     audioData,
+    serie,
   };
 };
 
 
 export default function Page({
-  loaderData: { post, posts, audioData },
+  loaderData: { post, posts, audioData, serie },
 }: Route.ComponentProps) {
   // Inicializar analytics para este post
   useAnalytics(post.id);
@@ -375,6 +382,12 @@ export default function Page({
                   <hr className="opacity-10" />
                 </div>
 
+                {serie && (
+                  <div className="mb-8">
+                    <SeriesBadge serie={serie} />
+                  </div>
+                )}
+
                 <YoutubeComponent url={post.youtubeLink as string} />
 
                 <div className={twMerge(
@@ -383,6 +396,8 @@ export default function Page({
                 )}>
                   <Streamdown plugins={{ code }} shikiTheme={["dracula", "dracula"]} linkSafety={{ enabled: false }}>{post.body}</Streamdown>
                 </div>
+
+                {serie && <SeriesNav serie={serie} />}
               </motion.div>
             </section>
           </div>
