@@ -315,6 +315,13 @@ const Searcher = ({
         <div className="flex flex-wrap gap-3 px-2 justify-center">
           {/* Los temas nuevos primero: es donde está el contenido reciente. */}
           <Filter
+            value="gtm"
+            isActive={search === "gtm"}
+            onClick={handleFilter}
+            image="/icons/colorRobot.svg"
+            title="GTM"
+          />
+          <Filter
             value="ai"
             isActive={search === "ai"}
             onClick={handleFilter}

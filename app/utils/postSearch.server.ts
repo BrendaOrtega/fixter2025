@@ -19,6 +19,9 @@ export const postSearch = async (search: string) => {
         { tags: { has: search } },
         { tags: { has: search.toLowerCase() } },
         { mainTag: { equals: search, mode: "insensitive" } },
+        // La categoría agrupa temas transversales (ej. `gtm`) que no son un tag
+        // técnico. Sin esto, el chip de una categoría no devolvía nada.
+        { category: { has: search.toLowerCase() } },
         ...fuzzy,
       ],
     },
