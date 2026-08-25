@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- sin caché: mientras iteramos, cada recarga debe traer los cambios -->
+<meta http-equiv="cache-control" content="no-store">
+<title>Agentes que recuerdan — Entrega 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Paleta del short de esta misma entrega (videos/goodies-sdk) ──
+     Documentada en docs/estilo-short-motion-graphics.md. El deck y el short
+     son la misma entrega: si no se parecen, se ven como dos productos.
+     Fondo #0b0b0f · panel #15121f · morado #7c3aed · ámbar #fbbf24.
+     Cero gradientes en los bloques, cero esquinas redondeadas. */
+  :root{
+    --bg:#0b0b0f; --panel:#15121f;
+    --violet:#7c3aed; --violet-lt:#a78bfa;
+    --amber:#fbbf24; --cyan:#4fc7ee;
+    --ink:#f7f0e4; --dim:#7a7a8c;
+    --red:#f87171;
+    --display:"Archivo Black","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+    --border:5px solid var(--violet);
+    --hard:14px 14px 0 rgba(124,58,237,.33);
+    /* ── zona reservada para la cámara ──
+       El recuadro con la cara del que graba va en la esquina INFERIOR DERECHA.
+       Todas las slides dejan libre esa franja: `justify-content:center` reparte
+       el sobrante, así que un padding-bottom del alto de la cámara sube el
+       contenido entero sin descuadrar nada. Con la tecla C se dibuja la guía
+       para comprobarlo antes de grabar.
+       La medida va en `vw` con proporción 16:9 real, no en `vh`: en una ventana
+       alta un alto en vh abre un hueco enorme debajo del contenido. */
+    --cam-w:20vw; --cam-h:calc(var(--cam-w) * 0.5625);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);
+    font-family:var(--mono);overflow:hidden}
+
+  /* ── el fondo: retícula que recorre UNA celda exacta, así el bucle cierra
+     sin salto; dos manchas de color respirando desfasadas; viñeta al centro.
+     Nunca negro plano. ── */
+  .bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .bgfx .grid{position:absolute;inset:-80px;
+    background-image:linear-gradient(rgba(124,58,237,.13) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(124,58,237,.13) 1px,transparent 1px);
+    background-size:60px 60px;animation:drift 9s linear infinite}
+  @keyframes drift{from{transform:translate(0,0)}to{transform:translate(60px,60px)}}
+  .bgfx .blob{position:absolute;width:46vw;height:46vw;border-radius:50%;
+    filter:blur(120px);opacity:.30}
+  .bgfx .blob--v{background:var(--violet);left:-10vw;top:-12vw;
+    animation:breathe 11s ease-in-out infinite}
+  .bgfx .blob--a{background:var(--amber);right:-12vw;bottom:-16vw;opacity:.14;
+    animation:breathe 13s ease-in-out infinite 2.2s}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+  .bgfx .vig{position:absolute;inset:0;
+    background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,.72) 100%)}
+
+  .deck{position:relative;width:100vw;height:100vh;z-index:1}
+  .slide{
+    position:absolute;inset:0;display:none;
+    flex-direction:column;justify-content:center;
+    /* el aire lateral nunca baja de 56px, por angosta que sea la ventana */
+    padding:5vh max(56px,6vw) calc(2.5vh + var(--cam-h));gap:2.2vh;
+  }
+  /* la guía de la cámara (tecla C): solo para encuadrar antes de grabar */
+  /* slide apretada: menos aire y una ilustración más baja */
+  .slide--tight{gap:1.2vh}
+  .slide--tight .art{max-height:30vh}
+  .slide--tight .box p{font-size:clamp(.9rem,1.32vw,1.16rem)}
+  .slide--tight pre{font-size:clamp(.72rem,1.02vw,.94rem);padding:.7em .95em}
+  .camguide{position:fixed;right:2vw;bottom:2.4vh;width:var(--cam-w);height:var(--cam-h);
+    border:3px dashed rgba(251,191,36,.65);display:none;z-index:7;pointer-events:none}
+  .camguide::after{content:"cámara";position:absolute;left:.6em;top:.4em;
+    color:rgba(251,191,36,.75);font-size:.8rem;letter-spacing:.18em;text-transform:uppercase}
+  body.cam-on .camguide{display:block}
+  .slide.on{display:flex;z-index:1}
+  /* El relevo es duro, como en el short: la que sale se va de golpe. */
+  .slide.out{display:flex;pointer-events:none;z-index:0;animation:leave .16s steps(3) both}
+  @keyframes leave{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-40px)}}
+
+  h1{font-family:var(--display);font-size:clamp(2.8rem,7vw,6.2rem);line-height:.92;
+     letter-spacing:-.03em;font-weight:400}
+  h2{font-family:var(--display);font-size:clamp(2.1rem,4.6vw,3.9rem);line-height:.98;
+     letter-spacing:-.03em;font-weight:400}
+  h3{font-size:clamp(1.1rem,1.9vw,1.55rem);font-weight:700;letter-spacing:-.01em}
+  p,li{font-size:clamp(1.1rem,1.85vw,1.55rem);line-height:1.45}
+  .lead{font-size:clamp(1.3rem,2.4vw,2rem);max-width:36ch;line-height:1.32}
+  em{font-style:normal;color:var(--amber)}
+  strong{font-weight:700;color:var(--ink)}
+  .v{color:var(--violet-lt)} .a{color:var(--amber)} .c{color:var(--cyan)}
+  .dim{color:var(--dim)}
+  code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
+
+  /* kicker: mayúsculas espaciadas, como en el short */
+  .kicker{align-self:flex-start;color:var(--violet-lt);font-size:clamp(.72rem,1.05vw,.95rem);
+    letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+
+  ul{list-style:none;display:flex;flex-direction:column;gap:1.6vh}
+  ul li{padding-left:1.8em;position:relative}
+  ul li::before{content:"";position:absolute;left:0;top:.5em;width:.66em;height:.66em;
+    background:var(--violet)}
+  ul.amber li::before{background:var(--amber)}
+  /* lista de palomitas: en fila, para las cosas tachadas de la lista */
+  ul.checks{flex-direction:row;flex-wrap:wrap;gap:.6em 2.2em;margin-top:.2em}
+  ul.checks li{padding-left:1.5em;font-size:clamp(.95rem,1.45vw,1.28rem)}
+  ul.checks li::before{content:"✓";background:none;color:var(--amber);
+    width:auto;height:auto;top:0;font-weight:700;font-size:1.15em}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:3.4vw;align-items:center}
+  .cols.wide-l{grid-template-columns:1.15fr .85fr}
+  /* Sin esto, un `pre` largo ensancha su columna —los items de grid traen
+     `min-width:auto`— y empuja la slide entera fuera de la pantalla. */
+  .cols>*,.grid2>*,.grid3>*{min-width:0}
+
+  .box{background:var(--panel);border:var(--border);box-shadow:var(--hard);padding:1.1em 1.3em}
+  .box--a{border-color:var(--amber);box-shadow:14px 14px 0 rgba(251,191,36,.28)}
+  .box--dim{border-color:#2a2436;box-shadow:14px 14px 0 rgba(42,36,54,.5)}
+  .box p{font-size:clamp(.95rem,1.45vw,1.28rem);line-height:1.4}
+  .grid2[style*="--boxp"] .box p,[style*="--boxp"] .grid2 .box p{font-size:var(--boxp)}
+  [style*="--boxp"] .grid2 .box .t{font-size:clamp(.82rem,1.2vw,1.06rem)}
+  .box .t{display:block;color:var(--violet-lt);font-size:clamp(.7rem,1vw,.88rem);
+    letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin-bottom:.5em}
+  .box--a .t{color:var(--amber)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw}
+
+  /* el número protagonista: el número ES la diapositiva */
+  .stat{font-family:var(--display);font-size:clamp(5rem,17vw,15rem);line-height:.84;
+    letter-spacing:-.05em;color:var(--amber)}
+  .stat--sm{font-size:clamp(3.4rem,9vw,7.4rem)}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+    border:var(--border);box-shadow:var(--hard)}
+  th,td{border:2px solid #2a2436;padding:.6em .85em;text-align:left;
+    font-size:clamp(.88rem,1.35vw,1.2rem);line-height:1.3}
+  th{background:var(--violet);color:#fff;text-transform:uppercase;
+    letter-spacing:.14em;font-size:clamp(.68rem,1vw,.85rem)}
+  td.num{text-align:right;color:var(--amber);font-weight:700}
+  tr.total td{background:rgba(251,191,36,.12);font-weight:700;font-size:1.06em}
+  tr.total td.num{color:var(--amber)}
+
+  /* bloques de código: antes/después */
+  pre{background:#0e0b16;border-left:5px solid var(--violet);padding:.9em 1.1em;
+    overflow:auto;max-width:100%;font-size:clamp(.8rem,1.2vw,1.08rem);line-height:1.55;color:var(--ink)}
+  pre.bad{border-left-color:var(--red)}
+  pre.good{border-left-color:var(--amber)}
+  /* coloreado tipo editor: cada categoría con su color, como en un tema oscuro */
+  pre .cm{color:var(--dim);font-style:italic}   /* comentario */
+  pre .k{color:#c4b5fd}                          /* palabra clave */
+  pre .f{color:var(--cyan)}                      /* función o método */
+  pre .p{color:#f0abfc}                          /* propiedad */
+  pre .s{color:var(--amber)}                     /* cadena */
+  pre .b{color:#fca5a5}                          /* booleano */
+  pre .x{color:var(--red);font-weight:700}
+
+  /* ── ANIMACIONES DE ENTRADA ──
+     Regla del short: el cuadro 0 va completo. Aquí no hay cuadro 0 —hay
+     una slide que aparece— así que todo entra con un asentamiento corto
+     (`y:26` → 0) y nada tarda más de medio segundo en estar puesto. */
+  @keyframes settle{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+
+  .slide.on .kicker{animation:settle .3s ease-out both}
+  .slide.on h1,.slide.on h2{animation:settle .38s cubic-bezier(.2,.9,.3,1.02) both .06s}
+  .slide.on .lead,.slide.on>p{animation:settle .38s ease-out both .16s}
+  .slide.on .box,.slide.on pre,.slide.on figure{animation:settle .36s cubic-bezier(.2,.9,.3,1.02) both .22s}
+  .slide.on .grid2>*:nth-child(2),.slide.on .grid3>*:nth-child(2){animation-delay:.34s}
+  .slide.on .grid3>*:nth-child(3){animation-delay:.46s}
+  .slide.on .cols>*:nth-child(2){animation-delay:.34s}
+  .slide.on ul li{animation:slideIn .34s ease-out both}
+  .slide.on ul li:nth-child(1){animation-delay:.24s}
+  .slide.on ul li:nth-child(2){animation-delay:.36s}
+  .slide.on ul li:nth-child(3){animation-delay:.48s}
+  .slide.on ul li:nth-child(4){animation-delay:.60s}
+  .slide.on ul li:nth-child(5){animation-delay:.72s}
+  .slide.on .stat{animation:pop .42s cubic-bezier(.2,.9,.3,1.15) both .3s}
+  /* la tabla se llena fila por fila: es la slide del "500 líneas" y merece
+     que el número crezca delante de quien mira */
+  .slide.on tbody tr{animation:slideIn .3s ease-out both}
+  .slide.on tbody tr:nth-child(1){animation-delay:.30s}
+  .slide.on tbody tr:nth-child(2){animation-delay:.46s}
+  .slide.on tbody tr:nth-child(3){animation-delay:.62s}
+  .slide.on tbody tr:nth-child(4){animation-delay:.78s}
+  .slide.on tbody tr:nth-child(5){animation-delay:.94s}
+  .slide.on tbody tr.total{animation:pop .38s cubic-bezier(.2,.9,.3,1.15) both 1.20s}
+
+  /* ── ILUSTRACIONES SVG ──
+     Objetos concretos, trazo grueso, color plano, y TODAS con bucle
+     permanente: una ilustración que se queda quieta se siente pegada.
+     Cada transform vive en su propio <g>; si comparte elemento con otra
+     animación, se cancelan entre sí. */
+  figure{margin:0}
+  .art{width:100%;max-height:58vh;display:block}
+  .art *{transform-box:fill-box;transform-origin:center}
+
+  /* portada · el fichero de tarjetas: la caja no se mueve; lo que anima es la
+     mano invisible que saca una ficha y la vuelve a meter, y la lámpara que
+     late encima. Un archivo quieto con algo vivo adentro. */
+  .art .card,.art .beam2,.art .spark{transform-box:view-box}
+  .slide.on .art .card{animation:cardpull 4.2s cubic-bezier(.4,0,.3,1) infinite}
+  @keyframes cardpull{0%,8%{transform:translateY(0)}
+                      30%,58%{transform:translateY(-26px)}
+                      82%,100%{transform:translateY(0)}}
+  .slide.on .art .lamp{animation:lamp 3.1s ease-in-out infinite}
+  @keyframes lamp{0%,100%{opacity:.35}50%{opacity:1}}
+
+  /* el olvido · las líneas escritas se destiñen de arriba abajo y vuelven */
+  .slide.on .art .ln{animation:fade 5s ease-in-out infinite}
+  .slide.on .art .ln--2{animation-delay:.35s}
+  .slide.on .art .ln--3{animation-delay:.7s}
+  .slide.on .art .ln--4{animation-delay:1.05s}
+  .slide.on .art .ln--5{animation-delay:1.4s}
+  @keyframes fade{0%,12%{opacity:1}46%,60%{opacity:.08}92%,100%{opacity:1}}
+
+  /* el olvido · la trituradora: la hoja escrita baja, entra por la ranura y
+     sale hecha tiritas. Un solo ciclo de 3.6 s para los dos movimientos, así
+     la hoja desaparece justo cuando empiezan a caer las tiras. */
+  .art .sheet,.art .strip{transform-box:view-box}
+  .slide.on .art .sheet{animation:feed 3.6s cubic-bezier(.5,0,.6,1) infinite}
+  @keyframes feed{0%{transform:translateY(-14px);opacity:0}
+                  10%{opacity:1}
+                  44%{transform:translateY(104px);opacity:1}
+                  50%,100%{transform:translateY(104px);opacity:0}}
+  .slide.on .art .strip{animation:shred 3.6s cubic-bezier(.4,0,.9,1) infinite}
+  .slide.on .art .strip--2{animation-delay:.06s}
+  .slide.on .art .strip--3{animation-delay:.12s}
+  .slide.on .art .strip--4{animation-delay:.04s}
+  .slide.on .art .strip--5{animation-delay:.1s}
+  .slide.on .art .strip--6{animation-delay:.16s}
+  @keyframes shred{0%,44%{transform:translateY(-58px);opacity:0}
+                   50%{opacity:1}
+                   88%{transform:translateY(26px);opacity:1}
+                   100%{transform:translateY(40px);opacity:0}}
+  .slide.on .art .mouth{animation:mouth 3.6s steps(1) infinite}
+  @keyframes mouth{0%,42%{opacity:.25}44%,58%{opacity:1}60%,100%{opacity:.25}}
+
+  /* contexto y memoria · la mesa se llena y alguien la barre cada noche; el
+     archivero de al lado no se inmuta, solo respira abriendo un cajón. */
+  .art .sweep,.art .drw{transform-box:view-box}
+  .slide.on .art .sweep{animation:desk 4.4s ease-in-out infinite}
+  .slide.on .art .sweep--2{animation-delay:.25s}
+  .slide.on .art .sweep--3{animation-delay:.5s}
+  @keyframes desk{0%{opacity:0;transform:translateY(10px)}
+                  14%,58%{opacity:1;transform:translateY(0)}
+                  74%,100%{opacity:0;transform:translateY(-4px) translateX(-30px)}}
+  .slide.on .art .drw{animation:drawer 4.4s ease-in-out infinite}
+  @keyframes drawer{0%,100%{transform:translateX(0)}50%{transform:translateX(14px)}}
+
+  /* la tapa levantada · el aparato se abre despacio y adentro se encienden las
+     piezas de siempre. La tapa gira desde la bisagra, no desde su centro. */
+  .art .lid{transform-box:view-box;transform-origin:34px 112px}
+  .art{overflow:hidden}
+  .slide.on .art .lid{animation:lid 5s ease-in-out infinite}
+  @keyframes lid{0%,10%{transform:rotate(0deg)}45%,75%{transform:rotate(-16deg)}100%{transform:rotate(0deg)}}
+  .slide.on .art .guts{animation:guts 5s ease-in-out infinite}
+  .slide.on .art .guts--2{animation-delay:.3s}
+  .slide.on .art .guts--3{animation-delay:.6s}
+  @keyframes guts{0%,30%{opacity:.15}52%,74%{opacity:1}92%,100%{opacity:.15}}
+
+  /* la verdad y el índice · las partículas viajan del papel a la caja */
+  .slide.on .art .spark{animation:spark 2.4s linear infinite}
+  .slide.on .art .spark--2{animation-delay:.8s}
+  .slide.on .art .spark--3{animation-delay:1.6s}
+  @keyframes spark{0%{transform:translateX(0);opacity:0}
+                   12%{opacity:1}80%{opacity:1}
+                   100%{transform:translateX(196px);opacity:0}}
+
+  /* pasos numerados: el número manda y el texto lo acompaña */
+  .steps{display:flex;flex-direction:column;gap:1.4vh;margin-top:1.6vh}
+  .steps li{display:grid;grid-template-columns:auto 1fr;gap:1em;align-items:baseline;padding:0}
+  .steps li::before{content:none}
+  .steps b{font-family:var(--display);font-size:clamp(1.6rem,3vw,2.6rem);
+    color:var(--amber);line-height:1;font-weight:400}
+  .steps span{font-size:clamp(1rem,1.6vw,1.36rem);line-height:1.35}
+
+  /* la pirámide invertida · los .md se quedan quietos arriba; la base de abajo
+     desaparece y se vuelve a armar desde ellos, una y otra vez. Ver el ciclo
+     completo explica la regla mejor que decirla. */
+  .art .drop,.art .rb{transform-box:view-box}
+  .slide.on .art .rb{animation:rb 5s ease-in-out infinite}
+  @keyframes rb{0%,24%{opacity:1;transform:scale(1)}
+                40%,52%{opacity:0;transform:scale(.86)}
+                74%,100%{opacity:1;transform:scale(1)}}
+  .slide.on .art .drop{animation:drop 5s linear infinite}
+  .slide.on .art .drop--2{animation-delay:.22s}
+  .slide.on .art .drop--3{animation-delay:.44s}
+  @keyframes drop{0%,52%{transform:translateY(0);opacity:0}
+                  58%{opacity:1}
+                  72%{transform:translateY(58px);opacity:1}
+                  76%,100%{transform:translateY(58px);opacity:0}}
+  .slide.on .art .rock{animation:rock 5s ease-in-out infinite}
+  @keyframes rock{0%,100%{opacity:1}}
+
+  /* dos búsquedas · la lupa recorre en línea recta, el imán atrae en pulso */
+  .art .glass{transform-box:view-box}
+  .slide.on .art .glass{animation:sweep 4.4s ease-in-out infinite}
+  @keyframes sweep{0%,100%{transform:translateX(0)}50%{transform:translateX(84px)}}
+  .slide.on .art .pull{animation:pull 2.4s ease-in-out infinite}
+  .slide.on .art .pull--2{animation-delay:.3s}
+  .slide.on .art .pull--3{animation-delay:.6s}
+  @keyframes pull{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.08)}}
+
+  /* del archivo a la tabla · la banda ámbar se va a los encabezados y cada
+     sección del cuerpo cae en su fila. El bucle enseña la conversión completa. */
+  .art .toc,.art .tor{transform-box:view-box}
+  .slide.on .art .toc{animation:toc 4s ease-in-out infinite}
+  @keyframes toc{0%{transform:translateX(0);opacity:0}
+                 8%{opacity:1}30%{transform:translateX(104px);opacity:1}
+                 36%,100%{transform:translateX(104px);opacity:0}}
+  .slide.on .art .tor{animation:tor 4s ease-in-out infinite}
+  .slide.on .art .tor--2{animation-delay:.5s}
+  @keyframes tor{0%,38%{transform:translateX(0);opacity:0}
+                 46%{opacity:1}68%{transform:translateX(104px);opacity:1}
+                 74%,100%{transform:translateX(104px);opacity:0}}
+  .slide.on .art .rowlit{animation:rowlit 4s ease-in-out infinite}
+  .slide.on .art .rowlit--2{animation-delay:.5s}
+  @keyframes rowlit{0%,60%{opacity:.25}72%,92%{opacity:1}100%{opacity:.25}}
+  .slide.on .art .headlit{animation:headlit 4s ease-in-out infinite}
+  @keyframes headlit{0%,26%{opacity:.3}36%,88%{opacity:1}100%{opacity:.3}}
+
+  /* el índice del libro · las entradas se encienden por turnos, como cuando
+     recorres con el dedo la lista del final buscando tu palabra. */
+  .slide.on .art .entry{animation:entry 4.2s ease-in-out infinite}
+  .slide.on .art .entry--2{animation-delay:.5s}
+  .slide.on .art .entry--3{animation-delay:1s}
+  @keyframes entry{0%,10%{opacity:.3}22%,42%{opacity:1}54%,100%{opacity:.3}}
+
+  /* el peso · tres recuerdos con su nivel debajo, como pilas. Los dos primeros
+     se van gastando; el tercero llega al fondo, se reescribe y se recarga.
+     El último tramo del ciclo devuelve todo a su sitio con la misma suavidad
+     con que se gastó: sin ese regreso, el bucle da un salto al reiniciar. */
+  .art .lvl{transform-box:fill-box;transform-origin:left center}
+  .slide.on .art .lvl{animation:drain 8s ease-in-out infinite}
+  @keyframes drain{0%{transform:scaleX(1)}70%{transform:scaleX(.72)}100%{transform:scaleX(1)}}
+  .slide.on .art .lvl--2{animation:drain2 8s ease-in-out infinite}
+  @keyframes drain2{0%{transform:scaleX(.62)}70%{transform:scaleX(.34)}100%{transform:scaleX(.62)}}
+  .slide.on .art .lvl--3{animation:recharge 8s cubic-bezier(.3,.9,.3,1) infinite}
+  @keyframes recharge{0%{transform:scaleX(.3)}
+                      52%{transform:scaleX(.12)}
+                      64%,84%{transform:scaleX(1)}
+                      100%{transform:scaleX(.3)}}
+  .slide.on .art .faded{animation:revive 8s ease-in-out infinite}
+  @keyframes revive{0%,52%{opacity:.3}64%,84%{opacity:1}100%{opacity:.3}}
+  .slide.on .art .aged{animation:aged 8s ease-in-out infinite}
+  @keyframes aged{0%,56%{opacity:1}64%,84%{opacity:0}96%,100%{opacity:1}}
+  .slide.on .art .agenew{animation:agenew 8s ease-in-out infinite}
+  @keyframes agenew{0%,56%{opacity:0}64%,84%{opacity:1}96%,100%{opacity:0}}
+  .slide.on .art .ping{animation:ping 8s ease-out infinite}
+  @keyframes ping{0%,54%{opacity:0;transform:scale(.4)}
+                  62%{opacity:1;transform:scale(1)}
+                  76%,100%{opacity:0;transform:scale(1.5)}}
+
+  /* el cierre · un robot chico que flota. Ligero por el vaivén y por no tocar
+     el suelo; poderoso por el núcleo que late más fuerte que todo lo demás. */
+  .art .bot{transform-box:view-box}
+  .slide.on .art .bot{animation:bob 3.6s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .slide.on .art .core{animation:core 2.6s ease-in-out infinite}
+  @keyframes core{0%,100%{opacity:.22;transform:scale(.9)}50%{opacity:.5;transform:scale(1.14)}}
+  /* el pecho es un índice: las filas se encienden en cascada, como cuando
+     algo se está recuperando de la memoria */
+  .slide.on .art .memrow{animation:memrow 2.6s ease-in-out infinite}
+  .slide.on .art .memrow--2{animation-delay:.22s}
+  .slide.on .art .memrow--3{animation-delay:.44s}
+  @keyframes memrow{0%,20%{opacity:.28}40%,64%{opacity:1}84%,100%{opacity:.28}}
+  /* dos recuerdos suben del pecho a la cabeza, en bucle */
+  .art .recall{transform-box:view-box}
+  .slide.on .art .recall{animation:recall 2.6s ease-in-out infinite}
+  .slide.on .art .recall--2{animation-delay:1.1s}
+  @keyframes recall{0%{transform:translateY(0);opacity:0}
+                    20%{opacity:1}70%{transform:translateY(-58px);opacity:1}
+                    88%,100%{transform:translateY(-70px);opacity:0}}
+  .slide.on .art .ant{animation:ant 2.4s steps(1) infinite}
+  @keyframes ant{0%,60%{opacity:1}62%,72%{opacity:.2}74%,100%{opacity:1}}
+  .slide.on .art .eye{animation:blink 5s steps(1) infinite}
+  @keyframes blink{0%,92%{transform:scaleY(1)}94%,97%{transform:scaleY(.12)}98%,100%{transform:scaleY(1)}}
+  .art .eye{transform-box:fill-box;transform-origin:center}
+  .slide.on .art .hover{animation:hover 3.6s ease-in-out infinite}
+  @keyframes hover{0%,100%{transform:scaleX(1);opacity:.5}50%{transform:scaleX(.72);opacity:.25}}
+  .art .hover{transform-box:fill-box;transform-origin:center}
+
+  /* el candado · un solo escritor: la pluma escribe, las otras dos esperan */
+  .slide.on .art .pen{animation:write 3s ease-in-out infinite}
+  @keyframes write{0%,100%{transform:translateX(0) rotate(-8deg)}
+                   50%{transform:translateX(30px) rotate(-2deg)}}
+  .slide.on .art .queued{animation:knock 3s ease-in-out infinite}
+  .slide.on .art .queued--2{animation-delay:.4s}
+  @keyframes knock{0%,100%{opacity:.3}50%{opacity:.75}}
+
+  /* cronómetro y contador (mismos que el deck del webinar) */
+  .bar{position:fixed;left:0;right:0;bottom:0;height:8px;background:#1a1626;z-index:5}
+  .bar i{display:block;height:100%;background:var(--amber);width:0;transition:width .2s steps(4)}
+  .meta{position:fixed;top:1.6vh;font-family:var(--mono);font-size:clamp(.68rem,.95vw,.85rem);
+    background:var(--panel);color:var(--violet-lt);padding:.4em .8em;z-index:5;letter-spacing:.05em;
+    border:2px solid #2a2436}
+  .meta{right:1.6vw}
+
+</style>
+</head>
+<body>
+
+<div class="bgfx">
+  <div class="grid"></div>
+  <div class="blob blob--v"></div>
+  <div class="blob blob--a"></div>
+  <div class="vig"></div>
+</div>
+
+<div class="deck">
+
+<!-- ═══ 1 · PORTADA ═══ -->
+<!-- ═══ 1 · PORTADA ═══ -->
+<section class="slide" data-t="Portada">
+  <div class="cols wide-l">
+    <div>
+      <span class="kicker">Taller del arnés · Entrega 4 · la última pieza</span>
+      <h1>Agentes<br>que<br><span class="a">recuerdan</span></h1>
+      <p class="lead dim" style="margin-top:2vh">Markdown en disco, SQLite como
+        índice. Vectores incluidos. La pieza más importante del arnés.</p>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 0 300 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="46" y="24" width="208" height="212" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="5"/>
+        <rect x="46" y="24" width="14" height="212" fill="#7c3aed"/>
+        <circle cx="53" cy="56" r="5" fill="#0b0b0f"/><circle cx="53" cy="130" r="5" fill="#0b0b0f"/>
+        <circle cx="53" cy="204" r="5" fill="#0b0b0f"/>
+        <rect class="ln" x="80" y="56" width="140" height="9" fill="#2a2436"/>
+        <rect class="ln ln--2" x="80" y="86" width="112" height="9" fill="#2a2436"/>
+        <rect class="ln ln--3" x="80" y="116" width="146" height="9" fill="#2a2436"/>
+        <rect class="ln ln--4" x="80" y="146" width="92" height="9" fill="#2a2436"/>
+        <rect class="ln ln--5" x="80" y="176" width="130" height="9" fill="#2a2436"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 2 · EL PROBLEMA ═══ -->
+<section class="slide" data-t="Reinicias y se le olvida todo">
+  <span class="kicker">Dónde estamos</span>
+  <div class="cols">
+    <div>
+      <h2>Reinicias el<br>servidor y se le<br>olvida <span class="a">todo</span></h2>
+      <p class="lead" style="margin-top:1.8vh">Tres entregas de agente, y sigue
+        despertando en blanco cada vez.</p>
+      <ul class="amber" style="margin-top:2.4vh">
+        <li>Le repites lo que ya le dijiste ayer.</li>
+        <li>Y lo pagas otra vez, en tokens.</li>
+      </ul>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- la hoja escrita que entra -->
+        <g class="sheet">
+          <rect x="102" y="12" width="96" height="112" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="5"/>
+          <rect x="116" y="32" width="46" height="8" fill="#7c3aed"/>
+          <rect x="116" y="52" width="66" height="5" fill="#2a2436"/>
+          <rect x="116" y="66" width="54" height="5" fill="#2a2436"/>
+          <rect x="116" y="80" width="68" height="5" fill="#2a2436"/>
+          <rect x="116" y="94" width="40" height="5" fill="#2a2436"/>
+        </g>
+        <!-- el cuerpo de la trituradora -->
+        <path d="M46 136h208v58a8 8 0 0 1-8 8H54a8 8 0 0 1-8-8z" fill="#15121f" stroke="#7c3aed" stroke-width="6" stroke-linejoin="round"/>
+        <rect class="mouth" x="92" y="150" width="116" height="12" fill="#fbbf24"/>
+        <circle cx="228" cy="180" r="7" fill="#f87171"/>
+        <rect x="62" y="174" width="30" height="6" fill="#2a2436"/>
+        <!-- las tiritas -->
+        <g class="strip"><rect x="98" y="210" width="10" height="62" fill="#f7f0e4" opacity=".85"/></g>
+        <g class="strip strip--2"><rect x="116" y="210" width="10" height="70" fill="#f7f0e4" opacity=".7"/></g>
+        <g class="strip strip--3"><rect x="134" y="210" width="10" height="56" fill="#f7f0e4" opacity=".85"/></g>
+        <g class="strip strip--4"><rect x="152" y="210" width="10" height="68" fill="#f7f0e4" opacity=".65"/></g>
+        <g class="strip strip--5"><rect x="170" y="210" width="10" height="58" fill="#f7f0e4" opacity=".8"/></g>
+        <g class="strip strip--6"><rect x="188" y="210" width="10" height="66" fill="#f7f0e4" opacity=".7"/></g>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 3 · CONTEXTO ≠ MEMORIA ═══ -->
+<section class="slide" data-t="La ventana de contexto no es memoria">
+  <span class="kicker">El primer impulso</span>
+  <div class="cols">
+    <div>
+      <h2>Un millón de<br>tokens <span class="dim">tampoco</span><br>es <span class="a">memoria</span></h2>
+      <p class="dim" style="margin-top:1.6vh">Lo primero que se te ocurre es meterle
+        todo al contexto. Y funciona… un rato.</p>
+      <div class="box box--dim" style="margin-top:1.8vh">
+        <span class="t">Contexto · la mesa</span>
+        <p>Se paga en cada petición, y se llena.</p>
+      </div>
+      <div class="box box--a" style="margin-top:1.4vh">
+        <span class="t">Memoria · el archivero</span>
+        <p>Vive en disco. Entra solo cuando hace falta.</p>
+      </div>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 0 320 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- la mesa: se llena de papeles y alguien los barre -->
+        <g class="sweep"><rect x="30" y="104" width="52" height="38" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4"/></g>
+        <g class="sweep sweep--2"><rect x="56" y="86" width="52" height="38" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4" opacity=".9"/></g>
+        <g class="sweep sweep--3"><rect x="84" y="110" width="52" height="34" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4" opacity=".8"/></g>
+        <rect x="18" y="146" width="130" height="10" fill="#7c3aed"/>
+        <rect x="30" y="156" width="8" height="58" fill="#2a2436"/>
+        <rect x="128" y="156" width="8" height="58" fill="#2a2436"/>
+        <!-- el archivero: quieto, con un cajón que respira -->
+        <rect x="184" y="40" width="118" height="174" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+        <g class="drw">
+          <rect x="184" y="56" width="118" height="46" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+          <rect x="228" y="74" width="30" height="9" fill="#fbbf24"/>
+        </g>
+        <rect x="184" y="112" width="118" height="46" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+        <rect x="228" y="130" width="30" height="9" fill="#a78bfa"/>
+        <rect x="184" y="168" width="118" height="46" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+        <rect x="228" y="186" width="30" height="9" fill="#a78bfa"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 4 · LOS CUATRO TIPOS ═══ -->
+<section class="slide" data-t="Cuatro memorias, no una">
+  <span class="kicker">El vocabulario</span>
+  <h2>Cuatro memorias, no una</h2>
+  <table style="margin-top:1.8vh">
+    <thead><tr><th>Tipo</th><th>Qué guarda</th><th>Ejemplo</th><th>Dónde vive</th></tr></thead>
+    <tbody>
+      <tr><td class="a">De trabajo</td><td>El turno actual</td><td>Los mensajes del hilo abierto</td><td class="dim">En RAM · el proceso</td></tr>
+      <tr><td class="a">Episódica</td><td>Qué pasó y cuándo</td><td>«El martes falló el build por Tailwind»</td><td class="dim"><code>memory/2026-08-25-*.md</code></td></tr>
+      <tr><td class="a">Semántica</td><td>Hechos estables</td><td>«Este proyecto usa React Router v7»</td><td class="dim"><code>memory/proyecto.md</code></td></tr>
+      <tr><td class="a">Procedimental</td><td>Cómo se hacen las cosas</td><td>«Los tests se corren con <code>npm run t</code>»</td><td class="dim"><code>memory/como-se-hace.md</code></td></tr>
+    </tbody>
+  </table>
+  <p class="dim" style="margin-top:1.8vh">La de trabajo ya la tienes: el historial
+    del <code>useChat</code>.</p>
+  <p class="dim">Las otras tres pueden usar el mismo almacén.</p>
+</section>
+
+<!-- ═══ 5 · PANORAMA · LAS CAPAS ═══ -->
+<section class="slide" data-t="El mapa: qué usa la industria">
+  <span class="kicker">Panorama · 1 de 2</span>
+  <h2>Qué usa la industria</h2>
+  <div class="grid3" style="margin-top:2.2vh">
+    <div class="box box--dim">
+      <span class="t">Rápida y efímera</span>
+      <p><strong class="c">Redis</strong> · KV<br><span class="dim">Sesión, locks, estado del turno.
+        Milisegundos, y se puede perder.</span></p>
+    </div>
+    <div class="box box--a">
+      <span class="t">La que ganó</span>
+      <p><strong class="a">Postgres + pgvector</strong><br><span class="dim">Relacional, vectorial y
+        bitácora en un solo motor. Sin sumar infraestructura.</span></p>
+    </div>
+    <div class="box box--dim">
+      <span class="t">Cuando los hechos cambian</span>
+      <p><strong class="v">Grafo</strong> · Neo4j, Graphiti<br><span class="dim">Aristas con
+        fecha de validez: «trabajaba en X <em>hasta</em> marzo».</span></p>
+    </div>
+  </div>
+  <p style="margin-top:2.4vh">Las bases vectoriales dedicadas —Pinecone,
+    Weaviate— <strong>están de bajada</strong>. <code>pgvector</code> se comió
+    ese caso: si ya tienes Postgres, agregar una extensión cuesta menos que
+    operar un servicio más.</p>
+</section>
+
+<!-- ═══ 6 · PANORAMA · LAS HERRAMIENTAS ═══ -->
+<section class="slide slide--tight" data-t="Las herramientas y los proveedores">
+  <span class="kicker">Panorama · 2 de 2</span>
+  <h2>Quién te lo da <span class="a">listo para usar</span></h2>
+  <div class="grid2" style="margin-top:1.8vh">
+    <div class="box">
+      <span class="t">Open source</span>
+      <p><strong>Letta</strong> <span class="dim">(ex MemGPT)</span> — el agente edita su propia memoria. El más maduro.</p>
+      <p><strong>Mem0</strong> — extrae hechos y los guarda; la comunidad más grande.</p>
+      <p><strong>Cognee</strong> — grafo, más experimental.</p>
+      <p><strong>LangMem</strong> — solo si ya vives en LangGraph.</p>
+    </div>
+    <div class="box box--a">
+      <span class="t">Servicios administrados</span>
+      <p><strong>Mem0 Platform</strong> — el atajo de «no quiero pensarlo».</p>
+      <p><strong>Zep</strong> — grafo temporal, para hechos que caducan.</p>
+      <p><strong>Cloudflare Agents</strong> — memoria pegada al edge.</p>
+    </div>
+  </div>
+  <div class="cols" style="margin-top:2vh;grid-template-columns:.44fr .56fr;gap:2.6vw">
+    <figure>
+      <svg class="art" style="max-height:28vh" viewBox="0 0 300 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- la tapa, con bisagra abajo a la izquierda -->
+        <g class="lid">
+          <rect x="34" y="92" width="234" height="20" fill="#7c3aed" stroke="#0b0b0f" stroke-width="4"/>
+          <rect x="132" y="78" width="42" height="10" fill="#fbbf24"/>
+        </g>
+        <!-- la carcasa -->
+        <path d="M34 112h234v96a8 8 0 0 1-8 8H42a8 8 0 0 1-8-8z" fill="#15121f" stroke="#7c3aed" stroke-width="6" stroke-linejoin="round"/>
+        <!-- las piezas de adentro -->
+        <g class="guts">
+          <rect x="52" y="130" width="70" height="30" fill="#0e0b16" stroke="#fbbf24" stroke-width="4"/>
+          <text x="87" y="150" fill="#fbbf24" font-family="monospace" font-size="14" text-anchor="middle">sqlite</text>
+        </g>
+        <g class="guts guts--2">
+          <rect x="134" y="130" width="82" height="30" fill="#0e0b16" stroke="#4fc7ee" stroke-width="4"/>
+          <text x="175" y="150" fill="#4fc7ee" font-family="monospace" font-size="13" text-anchor="middle">postgres</text>
+        </g>
+        <g class="guts guts--3">
+          <rect x="52" y="170" width="164" height="26" fill="#0e0b16" stroke="#a78bfa" stroke-width="4"/>
+          <text x="134" y="188" fill="#a78bfa" font-family="monospace" font-size="12" text-anchor="middle">tabla de vectores</text>
+        </g>
+        <circle cx="242" cy="156" r="8" fill="#f87171"/>
+        <rect x="230" y="180" width="26" height="6" fill="#2a2436"/>
+      </svg>
+    </figure>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <h3 class="a" style="letter-spacing:.16em;text-transform:uppercase;font-size:clamp(.72rem,1.05vw,.95rem)">Levanta la tapa de cualquiera</h3>
+      <p class="lead" style="margin-top:1.2vh">Debajo hay <strong>SQLite,
+        Postgres y una tabla de vectores</strong>.</p>
+      <p style="margin-top:1.2vh">Las mismas piezas que armamos en el taller,
+        con una API encima.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 7 · LA DECISIÓN ═══ -->
+<section class="slide slide--tight" data-t="Lo que preferimos usar">
+  <span class="kicker">La idea inteligente</span>
+  <div class="cols">
+    <div>
+      <h2>La memoria<br>son <span class="a">archivos</span></h2>
+      <p class="lead" style="margin-top:1.6vh">Los escribe el agente. Los lees tú.
+        Los dos miran lo mismo.</p>
+      <ul class="amber" style="margin-top:2.2vh">
+        <li>Los abres con tu editor.</li>
+        <li><code>git diff</code> te dice qué aprendió esta semana.</li>
+        <li>Si aprendió mal, lo corriges a mano.</li>
+      </ul>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 -30 340 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- los dos actores, nombrados arriba -->
+        <text x="14" y="-8" fill="#fbbf24" font-family="monospace" font-size="11" font-weight="700" letter-spacing="1">LA FUENTE DE VERDAD</text>
+        <text x="326" y="-8" fill="#a78bfa" font-family="monospace" font-size="13" font-weight="700" letter-spacing="1.6" text-anchor="end">ÍNDICE</text>
+        <!-- el papel: la verdad -->
+        <rect x="14" y="30" width="104" height="140" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="5"/>
+        <rect x="28" y="48" width="52" height="8" fill="#7c3aed"/>
+        <rect x="28" y="70" width="72" height="5" fill="#2a2436"/>
+        <rect x="28" y="84" width="60" height="5" fill="#2a2436"/>
+        <rect x="28" y="98" width="76" height="5" fill="#2a2436"/>
+        <rect x="28" y="112" width="44" height="5" fill="#2a2436"/>
+        <text x="66" y="192" fill="#fbbf24" font-family="monospace" font-size="17" font-weight="700" text-anchor="middle">.md</text>
+        <!-- partículas -->
+        <g><rect class="spark" x="126" y="86" width="14" height="6" fill="#fbbf24"/></g>
+        <g><rect class="spark spark--2" x="126" y="102" width="14" height="6" fill="#a78bfa"/></g>
+        <g><rect class="spark spark--3" x="126" y="118" width="14" height="6" fill="#4fc7ee"/></g>
+        <path d="M126 76h176" stroke="#2a2436" stroke-width="3" stroke-dasharray="8 8"/>
+        <!-- la caja: el índice -->
+        <path d="M226 62h100v108a6 6 0 0 1-6 6h-88a6 6 0 0 1-6-6z" fill="#15121f" stroke="#7c3aed" stroke-width="6" stroke-linejoin="round"/>
+        <rect x="226" y="62" width="100" height="14" fill="#7c3aed"/>
+        <rect x="242" y="92" width="68" height="6" fill="#a78bfa" opacity=".7"/>
+        <rect x="242" y="108" width="68" height="6" fill="#a78bfa" opacity=".5"/>
+        <rect x="242" y="124" width="68" height="6" fill="#a78bfa" opacity=".35"/>
+        <text x="276" y="200" fill="#fbbf24" font-family="monospace" font-size="17" font-weight="700" text-anchor="middle">.db</text>
+      </svg>
+    </figure>
+  </div>
+  <div class="box box--dim" style="margin-top:1.6vh;padding:.8em 1.1em">
+    <p style="font-size:clamp(1.15rem,1.85vw,1.55rem);line-height:1.4">
+      <span class="a" style="font-weight:700">memweave</span>, de Sachin Sharma.
+      <span class="dim">La librería casi nadie la usa. El patrón lo usa todo el
+      mundo: es lo mismo que haces al escribir un <code>CLAUDE.md</code>.</span></p>
+  </div>
+</section>
+
+<!-- ═══ 8 · LA REGLA ═══ -->
+<section class="slide" data-t="Por qué un índice">
+  <span class="kicker">La regla</span>
+  <div class="cols">
+    <figure>
+      <svg class="art" viewBox="0 0 300 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- arriba, lo irreemplazable -->
+        <text x="150" y="16" fill="#fbbf24" font-family="monospace" font-size="11" font-weight="700" letter-spacing="1" text-anchor="middle">LOS ARCHIVOS</text>
+        <g class="rock">
+          <rect x="22" y="30" width="76" height="60" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4"/>
+          <rect x="34" y="42" width="40" height="6" fill="#7c3aed"/><rect x="34" y="56" width="52" height="4" fill="#2a2436"/>
+          <rect x="112" y="30" width="76" height="60" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4"/>
+          <rect x="124" y="42" width="46" height="6" fill="#7c3aed"/><rect x="124" y="56" width="38" height="4" fill="#2a2436"/>
+          <rect x="202" y="30" width="76" height="60" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4"/>
+          <rect x="214" y="42" width="34" height="6" fill="#7c3aed"/><rect x="214" y="56" width="50" height="4" fill="#2a2436"/>
+        </g>
+        <!-- lo que baja a reconstruir -->
+        <g class="drop"><rect x="60" y="100" width="12" height="7" fill="#fbbf24"/></g>
+        <g class="drop drop--2"><rect x="144" y="100" width="12" height="7" fill="#a78bfa"/></g>
+        <g class="drop drop--3"><rect x="228" y="100" width="12" height="7" fill="#4fc7ee"/></g>
+        <!-- abajo, lo desechable -->
+        <g class="rb" style="transform-origin:150px 196px">
+          <rect x="66" y="172" width="168" height="48" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+          <text x="150" y="203" fill="#fbbf24" font-family="monospace" font-size="20" font-weight="700" text-anchor="middle">.db</text>
+        </g>
+        <text x="150" y="242" fill="#7a7a8c" font-family="monospace" font-size="11" letter-spacing="1" text-anchor="middle">SE BORRA Y SE REHACE</text>
+      </svg>
+    </figure>
+    <div>
+      <h2>El índice es<br>tu <span class="a">dist/</span>…<br><span style="font-size:.62em" class="dim">o tu <span class="a">node_modules</span></span></h2>
+      <div class="box box--a" style="margin-top:2.4vh;padding:1.4em 1.5em">
+        <p style="font-size:clamp(1.15rem,1.9vw,1.6rem);line-height:1.4">Nadie
+          versiona <code>dist/</code>. Lo borras, corres el build y vuelve
+          idéntico, porque sale de <code>src/</code>.</p>
+        <p style="font-size:clamp(1.15rem,1.9vw,1.6rem);line-height:1.4;margin-top:.7em">
+          Los <code>.md</code> son tu <code>src/</code>. Indexar es el build.</p>
+      </div>
+      <p class="dim" style="margin-top:1.4vh;font-size:clamp(.92rem,1.3vw,1.1rem)">
+        Ninguno de los dos se versiona, y los dos vuelven con un <code>npm i</code>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 9 · EL CÓDIGO · ESCRIBIR ═══ -->
+<!-- ═══ CÓMO SE REHACE ═══ -->
+<section class="slide" data-t="Indexar es un solo bucle">
+  <span class="kicker">Paso a paso</span>
+  <h2>Indexar es un<br>solo <span class="a">bucle</span></h2>
+  <p class="lead" style="margin-top:1.2vh"><code>memory/</code> es una carpeta del
+    proyecto con un <code>.md</code> por recuerdo. Nada más.</p>
+  <ul class="steps">
+    <li><b>1</b><span>El indexador recorre <code>memory/</code> y parte cada archivo
+      por sus encabezados: un trozo por sección.</span></li>
+    <li><b>2</b><span>De cada trozo pregunta a la tabla: <strong>¿ya tengo este
+      <code>SHA-256</code>?</strong></span></li>
+    <li><b>3</b><span>Si la respuesta es no, guarda la fila: texto, frontmatter en
+      columnas y el hash. Si es sí, pasa al siguiente.</span></li>
+  </ul>
+  <div class="grid2" style="margin-top:2.2vh">
+    <div class="box box--a">
+      <span class="t">Borraste el .db</span>
+      <p>La tabla se crea de cero. Nada coincide, así que
+        <strong>se reconstruye completa</strong>.</p>
+    </div>
+    <div class="box box--dim">
+      <span class="t">Editaste un archivo</span>
+      <p>Solo cambió el hash de los trozos que tocaste. El indexador
+        <strong>reescribe esos y deja todo lo demás intacto</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ¿Y SI LA CAJA MUERE? ═══ -->
+<section class="slide" data-t="Si la caja muere, ¿mueren los .md?">
+  <span class="kicker">La pregunta que sigue</span>
+  <h2>Si la caja muere,<br>¿no se van los<br><span class="a">.md</span> también?</h2>
+  <p class="lead" style="margin-top:1.4vh">Sí. El disco del sandbox se va con el
+    sandbox. Hay tres formas de que la memoria no se vaya con él.</p>
+  <div class="grid3" style="margin-top:2.2vh">
+    <div class="box">
+      <span class="t">1 · Volumen</span>
+      <p>El proveedor guarda el disco y te lo <strong>vuelve a montar</strong> en
+        la caja siguiente.</p>
+    </div>
+    <div class="box">
+      <span class="t">2 · Objeto</span>
+      <p>Al arrancar bajas <code>memory/</code> de S3. Al terminar lo subes.
+        La caja queda <strong>desechable de verdad</strong>.</p>
+    </div>
+    <div class="box">
+      <span class="t">3 · Git</span>
+      <p><code>memory/</code> es un repo y el agente hace commit. La auditoría
+        te sale <strong>de regalo</strong>.</p>
+    </div>
+  </div>
+  <div class="box box--a" style="margin-top:2vh">
+    <span class="t">Aquí se cobra la separación</span>
+    <p>Solo sincronizas los <code>.md</code>, que son <strong>kilobytes de
+      texto</strong>. El <code>.db</code> nunca viaja: se rehace al arrancar.</p>
+  </div>
+</section>
+
+<!-- ═══ POR QUÉ SQLITE ═══ -->
+<section class="slide" data-t="Por qué SQLite" style="--boxp:clamp(1.3rem,2.2vw,1.9rem)">
+  <span class="kicker">La elección</span>
+  <h2>Por qué <span class="a">SQLite</span><br>para un índice</h2>
+  <div class="grid2" style="margin-top:2.4vh;gap:2.2vw;font-size:var(--boxp)">
+    <div class="box">
+      <span class="t">Ya lo tienes</span>
+      <p>Vive dentro de Node 22, sin instalación.</p>
+    </div>
+    <div class="box">
+      <span class="t">Ya trae el buscador</span>
+      <p>FTS5, el buscador de texto de SQLite. Encuentra y ordena por relevancia.</p>
+    </div>
+    <div class="box">
+      <span class="t">Filtra y busca a la vez</span>
+      <p>El frontmatter son columnas de la misma tabla, así que filtrar por tipo o fecha va en el mismo <code>where</code> que busca el texto.</p>
+    </div>
+    <div class="box box--a">
+      <span class="t">Es un archivo</span>
+      <p>Cabe en la caja, se copia con <code>cp</code> y se sube a S3.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:2.4vh;font-size:clamp(1.15rem,1.75vw,1.5rem);line-height:1.4">
+    <span class="a">¿Y los vectores?</span> Cada trozo guarda el suyo como blob en
+    su propia fila, y el coseno se calcula en JS.</p>
+  <p class="dim" style="font-size:clamp(1.15rem,1.75vw,1.5rem);line-height:1.4">
+    Cuando deje de alcanzar, cargas <code>sqlite-vec</code> y listo.</p>
+</section>
+
+<section class="slide slide--tight" data-t="Escribir un recuerdo">
+  <span class="kicker">El código · 1 de 3</span>
+  <h2>Un recuerdo es un archivo</h2>
+  <div class="cols" style="margin-top:1.4vh">
+    <pre class="good" style="font-size:clamp(.86rem,1.16vw,1.06rem)"><span class="cm">memory/2026-08-25-estilos.md</span>
+<span class="k">---</span>
+<span class="p">tipo</span>: <span class="s">procedimental</span>
+<span class="p">peso</span>: <span class="s">alto</span>
+<span class="p">fecha</span>: <span class="s">2026-08-25</span>
+<span class="p">tags</span>: [<span class="s">tailwind</span>, <span class="s">build</span>]
+<span class="p">fuente</span>: <span class="s">conversación</span>
+<span class="k">---</span>
+
+<span class="k">## Nada de CSS suelto</span>
+
+El build truena si agregas un archivo <span class="s">.css</span> aparte.
+Todo va con clases de Tailwind.
+
+<span class="k">## Cómo verificarlo</span>
+
+<span class="s">npm run build</span> falla con «unknown at-rule»
+cuando alguien mete <span class="s">@apply</span> fuera de la config.</pre>
+    <figure>
+      <svg class="art" style="max-height:30vh" viewBox="0 0 300 214" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- el archivo -->
+        <rect x="6" y="18" width="88" height="150" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4"/>
+        <rect x="6" y="18" width="88" height="34" fill="#fbbf24"/>
+        <rect x="18" y="27" width="42" height="4" fill="#0b0b0f"/>
+        <rect x="18" y="37" width="56" height="4" fill="#0b0b0f"/>
+        <rect x="18" y="68" width="30" height="6" fill="#7c3aed"/>
+        <rect x="18" y="82" width="62" height="4" fill="#2a2436"/>
+        <rect x="18" y="120" width="30" height="6" fill="#7c3aed"/>
+        <rect x="18" y="134" width="54" height="4" fill="#2a2436"/>
+        <text x="50" y="188" fill="#7a7a8c" font-family="monospace" font-size="11" text-anchor="middle">el archivo</text>
+        <!-- lo que viaja -->
+        <g class="toc"><rect x="100" y="32" width="14" height="7" fill="#fbbf24"/></g>
+        <g class="tor"><rect x="100" y="68" width="14" height="7" fill="#a78bfa"/></g>
+        <g class="tor tor--2"><rect x="100" y="120" width="14" height="7" fill="#a78bfa"/></g>
+        <!-- la tabla -->
+        <rect x="222" y="18" width="72" height="150" fill="#15121f" stroke="#7c3aed" stroke-width="4"/>
+        <g class="headlit">
+          <rect x="222" y="18" width="72" height="34" fill="#fbbf24"/>
+          <rect x="230" y="30" width="14" height="6" fill="#0b0b0f"/>
+          <rect x="250" y="30" width="14" height="6" fill="#0b0b0f"/>
+          <rect x="270" y="30" width="16" height="6" fill="#0b0b0f"/>
+        </g>
+        <g class="rowlit">
+          <rect x="222" y="60" width="72" height="46" fill="#0e0b16" stroke="#a78bfa" stroke-width="3"/>
+          <rect x="232" y="76" width="52" height="5" fill="#a78bfa"/>
+          <rect x="232" y="87" width="38" height="5" fill="#a78bfa"/>
+        </g>
+        <g class="rowlit rowlit--2">
+          <rect x="222" y="112" width="72" height="46" fill="#0e0b16" stroke="#a78bfa" stroke-width="3"/>
+          <rect x="232" y="128" width="46" height="5" fill="#a78bfa"/>
+          <rect x="232" y="139" width="52" height="5" fill="#a78bfa"/>
+        </g>
+        <text x="258" y="188" fill="#7a7a8c" font-family="monospace" font-size="11" text-anchor="middle">la tabla</text>
+      </svg>
+    </figure>
+  </div>
+  <p style="margin-top:1.6vh;font-size:clamp(1.25rem,1.95vw,1.68rem);line-height:1.35">
+    El <span class="a">frontmatter</span> se vuelve columnas. El cuerpo se parte en
+    cada <span class="v">##</span> y cada trozo ocupa <span class="v">una fila</span>:
+    este archivo son dos.</p>
+</section>
+
+<!-- ═══ 10 · EL CÓDIGO · INDEXAR ═══ -->
+<section class="slide slide--tight" data-t="El índice, sin dependencias">
+  <span class="kicker">El código · 2 de 3 · la mitad léxica</span>
+  <h2>Búsqueda <span class="a">léxica</span>,<br>con cero dependencias</h2>
+  <div class="cols" style="margin-top:1.4vh;grid-template-columns:.58fr .42fr;gap:2.6vw">
+    <pre class="good" style="font-size:clamp(.86rem,1.24vw,1.14rem)"><span class="k">import</span> { DatabaseSync } <span class="k">from</span> <span class="s">"node:sqlite"</span>;  <span class="cm">// viene en Node 22</span>
+
+<span class="k">const</span> db = <span class="k">new</span> <span class="f">DatabaseSync</span>(<span class="s">"memory/index.db"</span>);
+db.<span class="f">exec</span>(<span class="s">`create virtual table if not exists fts using fts5(body)`</span>);
+
+<span class="cm">// guardar un trozo</span>
+db.<span class="f">prepare</span>(<span class="s">`insert into fts(body) values (?)`</span>).<span class="f">run</span>(trozo);
+
+<span class="cm">// buscar la palabra que escribió el usuario</span>
+<span class="k">const</span> query = <span class="s">"tailwind"</span>;
+<span class="k">const</span> hits = db.<span class="f">prepare</span>(<span class="s">`select body from fts
+      where fts match ? order by rank`</span>).<span class="f">all</span>(query);</pre>
+    <div>
+      <figure>
+        <svg class="art" style="max-height:20vh" viewBox="0 0 300 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="8" width="280" height="154" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="5"/>
+          <rect x="10" y="8" width="280" height="18" fill="#7c3aed"/>
+          <g class="entry">
+            <rect x="28" y="46" width="76" height="10" fill="#fbbf24"/>
+            <path d="M112 52h108" stroke="#2a2436" stroke-width="3" stroke-dasharray="4 7"/>
+            <rect x="228" y="46" width="14" height="10" fill="#7c3aed"/>
+            <rect x="250" y="46" width="14" height="10" fill="#7c3aed"/>
+          </g>
+          <g class="entry entry--2">
+            <rect x="28" y="82" width="56" height="10" fill="#fbbf24"/>
+            <path d="M92 88h128" stroke="#2a2436" stroke-width="3" stroke-dasharray="4 7"/>
+            <rect x="228" y="82" width="14" height="10" fill="#7c3aed"/>
+          </g>
+          <g class="entry entry--3">
+            <rect x="28" y="118" width="92" height="10" fill="#fbbf24"/>
+            <path d="M128 124h92" stroke="#2a2436" stroke-width="3" stroke-dasharray="4 7"/>
+            <rect x="228" y="118" width="14" height="10" fill="#7c3aed"/>
+            <rect x="250" y="118" width="14" height="10" fill="#7c3aed"/>
+            <rect x="272" y="118" width="14" height="10" fill="#7c3aed"/>
+          </g>
+        </svg>
+      </figure>
+      <div class="box box--a" style="margin-top:1.2vh">
+        <span class="t">Qué es FTS5</span>
+        <p style="font-size:clamp(1.15rem,1.75vw,1.5rem);line-height:1.35">El
+          buscador de texto que SQLite <strong>ya trae adentro</strong>.</p>
+        <p style="font-size:clamp(1.15rem,1.75vw,1.5rem);line-height:1.35;margin-top:.5em">
+          Anota en qué filas aparece cada palabra, y así no tiene que leerlas
+          todas para encontrarla.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 11 · BÚSQUEDA HÍBRIDA ═══ -->
+<section class="slide slide--tight" data-t="La mitad semántica">
+  <span class="kicker">El código · 3 de 3 · la mitad semántica</span>
+  <h2>Búsqueda <span class="v">semántica</span>,<br>por significado</h2>
+  <div class="cols" style="margin-top:1.4vh;grid-template-columns:.58fr .42fr;gap:2.6vw">
+    <pre class="good" style="font-size:clamp(.86rem,1.24vw,1.14rem)"><span class="k">import</span> { embed } <span class="k">from</span> <span class="s">"ai"</span>;
+<span class="k">import</span> { openai } <span class="k">from</span> <span class="s">"@ai-sdk/openai"</span>;  <span class="cm">// DeepSeek no da embeddings</span>
+
+<span class="k">const</span> model = openai.<span class="f">embeddingModel</span>(<span class="s">"text-embedding-3-small"</span>);
+
+<span class="cm">// al indexar: el vector del trozo, como blob en su fila</span>
+<span class="k">const</span> { embedding } = <span class="k">await</span> <span class="f">embed</span>({ model, value: body });
+db.<span class="f">prepare</span>(<span class="s">`update chunk set vec = ? where id = ?`</span>)
+  .<span class="f">run</span>(Buffer.<span class="f">from</span>(<span class="k">new</span> Float32Array(embedding).buffer), id);
+
+<span class="cm">// al buscar: coseno contra el vector de la pregunta</span>
+<span class="k">const</span> { embedding: q } = <span class="k">await</span> <span class="f">embed</span>({ model, value: query });
+<span class="k">const</span> hits = rows
+  .<span class="f">map</span>((r) => ({ ...r, score: <span class="f">cosine</span>(q, <span class="f">toFloats</span>(r.vec)) }))
+  .<span class="f">sort</span>((a, b) => b.score - a.score);</pre>
+    <div>
+      <figure>
+        <svg class="art" style="max-height:19vh" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="30" y="128" width="240" height="60" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+          <rect x="46" y="142" width="40" height="32" fill="#a78bfa" opacity=".5"/>
+          <rect x="96" y="142" width="40" height="32" fill="#a78bfa" opacity=".5"/>
+          <rect x="146" y="142" width="40" height="32" fill="#a78bfa" opacity=".5"/>
+          <rect x="196" y="142" width="40" height="32" fill="#a78bfa" opacity=".5"/>
+          <g class="glass">
+            <circle cx="72" cy="66" r="26" stroke="#fbbf24" stroke-width="6" fill="#0b0b0f" fill-opacity=".6"/>
+            <path d="M91 85l19 19" stroke="#fbbf24" stroke-width="8" stroke-linecap="round"/>
+          </g>
+          <text x="72" y="20" fill="#fbbf24" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">LÉXICA</text>
+          <path d="M200 44h18v40a12 12 0 0 0 24 0V44h18v40a36 36 0 0 1-60 29" stroke="#a78bfa" stroke-width="6" fill="none" stroke-linejoin="round"/>
+          <rect x="200" y="28" width="18" height="16" fill="#f87171"/>
+          <rect x="242" y="28" width="18" height="16" fill="#4fc7ee"/>
+          <text x="230" y="20" fill="#a78bfa" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">SEMÁNTICA</text>
+          <circle class="pull" cx="184" cy="112" r="6" fill="#a78bfa"/>
+          <circle class="pull pull--2" cx="208" cy="124" r="5" fill="#a78bfa"/>
+          <circle class="pull pull--3" cx="162" cy="124" r="4" fill="#a78bfa"/>
+        </svg>
+      </figure>
+      <div class="box box--a" style="margin-top:1.2vh">
+        <span class="t">Por qué van las dos</span>
+        <p style="font-size:clamp(1.08rem,1.62vw,1.4rem);line-height:1.35">
+          <span class="a">Léxica</span> encuentra <code>DrawerBoundary</code>
+          porque dice esa palabra.</p>
+        <p style="font-size:clamp(1.08rem,1.62vw,1.4rem);line-height:1.35;margin-top:.5em">
+          <span class="v">Semántica</span> encuentra «el build truena» cuando
+          preguntas «por qué no compila».</p>
+      </div>
+    </div>
+  </div>
+  <p class="dim" style="margin-top:1.2vh;font-size:clamp(1rem,1.42vw,1.22rem)">
+    Cada mitad devuelve su propia lista ordenada, y las dos se mezclan en una sola
+    por posición. <span class="a">Una sola no alcanza</span>: la léxica se pierde en
+    los sinónimos, la semántica en los nombres propios.</p>
+</section>
+
+<!-- ═══ 12 · EL TIEMPO ═══ -->
+<section class="slide" data-t="No todos pesan lo mismo">
+  <span class="kicker">El peso</span>
+  <div class="cols wide-l">
+    <div>
+      <h2>No todos los<br>recuerdos pesan<br><span class="a">lo mismo</span></h2>
+      <p style="margin-top:1.4vh">Sin decaimiento, una nota de hace seis meses
+        compite de tú a tú con lo de ayer, y el agente te contesta con la
+        arquitectura que ya cambiaste.</p>
+      <pre class="good" style="margin-top:1.6vh;font-size:clamp(.86rem,1.24vw,1.14rem)"><span class="cm">// a los 90 días, un recuerdo vale la mitad</span>
+<span class="k">const</span> <span class="f">decay</span> = (days) => <span class="s">0.5</span> ** (days / <span class="s">90</span>);
+
+<span class="k">const</span> ranked = hits
+  .<span class="f">map</span>((r) => ({
+    ...r,
+    <span class="cm">// los hechos estables no envejecen</span>
+    score: r.score * (r.peso === <span class="s">"alto"</span>
+      ? <span class="s">1</span>
+      : <span class="f">decay</span>(<span class="f">daysSince</span>(r.fecha))),
+  }))
+  .<span class="f">sort</span>((a, b) => b.score - a.score);</pre>
+      <p class="dim" style="margin-top:1.4vh;font-size:clamp(.98rem,1.4vw,1.2rem)">
+        Y una nota se renueva: si el agente la vuelve a confirmar, reescribe el
+        archivo, la <code>fecha</code> vuelve a hoy y el trozo pesa completo otra vez.</p>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 -26 300 246" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- recuerdo reciente -->
+        <rect x="12" y="14" width="80" height="98" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4"/>
+        <rect x="24" y="30" width="42" height="6" fill="#7c3aed"/>
+        <rect x="24" y="46" width="56" height="4" fill="#2a2436"/>
+        <rect x="24" y="58" width="44" height="4" fill="#2a2436"/>
+        <rect x="12" y="126" width="80" height="20" fill="#0e0b16" stroke="#2a2436" stroke-width="3"/>
+        <rect class="lvl" x="15" y="129" width="74" height="14" fill="#fbbf24"/>
+        <text x="52" y="170" fill="#7a7a8c" font-family="monospace" font-size="12" text-anchor="middle">hoy</text>
+        <!-- recuerdo a medias -->
+        <rect x="110" y="14" width="80" height="98" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4" opacity=".72"/>
+        <rect x="122" y="30" width="38" height="6" fill="#7c3aed"/>
+        <rect x="122" y="46" width="52" height="4" fill="#2a2436"/>
+        <rect x="110" y="126" width="80" height="20" fill="#0e0b16" stroke="#2a2436" stroke-width="3"/>
+        <rect class="lvl lvl--2" x="113" y="129" width="74" height="14" fill="#fbbf24"/>
+        <text x="150" y="170" fill="#7a7a8c" font-family="monospace" font-size="12" text-anchor="middle">90 días</text>
+        <!-- el que se confirma y revive -->
+        <g class="faded">
+          <rect x="208" y="14" width="80" height="98" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="4"/>
+          <rect x="220" y="30" width="46" height="6" fill="#7c3aed"/>
+          <rect x="220" y="46" width="48" height="4" fill="#2a2436"/>
+          <rect x="220" y="58" width="36" height="4" fill="#2a2436"/>
+        </g>
+        <circle class="ping" cx="248" cy="63" r="22" stroke="#4fc7ee" stroke-width="5" style="transform-origin:248px 63px"/>
+        <text class="ping" x="248" y="-8" fill="#4fc7ee" font-family="monospace" font-size="12" font-weight="700" text-anchor="middle" style="transform-origin:248px -12px">SE REESCRIBE</text>
+        <rect x="208" y="126" width="80" height="20" fill="#0e0b16" stroke="#2a2436" stroke-width="3"/>
+        <rect class="lvl lvl--3" x="211" y="129" width="74" height="14" fill="#fbbf24"/>
+        <text class="aged" x="248" y="170" fill="#7a7a8c" font-family="monospace" font-size="12" text-anchor="middle">180 días</text>
+        <text class="agenew" x="248" y="170" fill="#4fc7ee" font-family="monospace" font-size="12" font-weight="700" text-anchor="middle">hoy</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 13 · QUIÉN DECIDE ═══ -->
+<!-- ═══ 14 · LA TRAMPA ═══ -->
+<!-- ═══ 15 · DÓNDE SE ROMPE ═══ -->
+<section class="slide" data-t="Dónde se rompe SQLite">
+  <span class="kicker">Sé honesto con los límites</span>
+  <div class="cols">
+    <div>
+      <h2>Dónde se<br>rompe esto</h2>
+      <p style="margin-top:1.4vh"><strong>Un agente, una caja, un escritor</strong>:
+        SQLite va perfecto. Es el caso de este taller y el de casi todo agente local.</p>
+      <p style="margin-top:1.2vh">Pon <strong>varios agentes escribiendo la misma
+        memoria al mismo tiempo</strong> y te topas con el escritor único. Con
+        libSQL replicado el problema no desaparece: las escrituras siguen yendo
+        al primario.</p>
+      <div class="box box--a" style="margin-top:1.8vh">
+        <span class="t">El escalón siguiente</span>
+        <p>Memoria compartida entre agentes, o que sobreviva a la caja:
+          <strong>Postgres con pgvector</strong>. El mismo diseño de esta entrega,
+          con otro motor debajo.</p>
+      </div>
+    </div>
+    <figure>
+      <svg class="art" viewBox="0 0 280 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="40" y="70" width="200" height="130" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="5"/>
+        <rect x="62" y="100" width="120" height="6" fill="#2a2436"/>
+        <rect x="62" y="120" width="96" height="6" fill="#2a2436"/>
+        <g class="pen" style="transform-origin:120px 150px">
+          <path d="M96 168l14-42 20 8-16 40z" fill="#fbbf24" stroke="#0b0b0f" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M94 170l6 12 12-6z" fill="#0b0b0f"/>
+        </g>
+        <circle class="queued" cx="246" cy="106" r="16" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+        <circle class="queued queued--2" cx="246" cy="152" r="16" fill="#15121f" stroke="#7c3aed" stroke-width="5"/>
+        <path d="M228 106h-14M228 152h-14" stroke="#f87171" stroke-width="5" stroke-linecap="round"/>
+        <text x="140" y="230" fill="#7a7a8c" font-family="monospace" font-size="15" text-anchor="middle">un solo escritor</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 16 · CIERRE ═══ -->
+<section class="slide" data-t="Cierre · ¡Recuérdalo todo!">
+  <span class="kicker">Entrega 4 · resumen</span>
+  <h2>¡Recuérdalo <span class="a">todo</span>!</h2>
+  <ul style="margin-top:1.5vh">
+    <li><strong>Memoria que puedes leer</strong> — archivos <code>.md</code> que
+      abres con tu editor y revisas con <code>git diff</code>.</li>
+    <li><strong>Un índice desechable</strong> — SQLite con FTS5 del propio Node,
+      cero dependencias.</li>
+    <li><strong>Búsqueda híbrida con decaimiento</strong> — FTS5 para las palabras,
+      vectores para el significado, y la fecha decide cuánto pesa cada trozo.</li>
+    <li><strong>Y sobrevive a la caja</strong> — el sandbox muere, los
+      <code>.md</code> se sincronizan y el índice se rehace al arrancar.</li>
+  </ul>
+  <div class="cols" style="margin-top:2vh;grid-template-columns:.72fr .28fr;gap:2.6vw">
+    <div class="box box--a">
+      <span class="t">Y es el tema del año</span>
+      <p style="font-size:clamp(1.15rem,1.75vw,1.5rem);line-height:1.38">La memoria
+        de agentes es el problema que más gente está resolviendo este año, y las
+        mejores herramientas son <strong>abiertas y gratuitas</strong>: Letta, Mem0,
+        Zep, SQLite.</p>
+      <p style="font-size:clamp(1.15rem,1.75vw,1.5rem);line-height:1.38;margin-top:.6em">
+        No hace falta comprar nada para tener un agente que lo recuerde todo.</p>
+    </div>
+    <figure>
+      <svg class="art" style="max-height:28vh" viewBox="0 0 200 224" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g class="bot">
+          <!-- antena -->
+          <path d="M100 24v14" stroke="#7c3aed" stroke-width="6"/>
+          <rect class="ant" x="90" y="8" width="20" height="16" fill="#fbbf24"/>
+          <!-- cabeza -->
+          <rect x="54" y="38" width="92" height="58" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+          <rect class="eye" x="72" y="58" width="16" height="19" fill="#fbbf24"/>
+          <rect class="eye" x="112" y="58" width="16" height="19" fill="#fbbf24"/>
+          <rect x="88" y="96" width="24" height="10" fill="#7c3aed"/>
+          <!-- el resplandor del archivo que lleva dentro -->
+          <ellipse class="core" cx="100" cy="142" rx="62" ry="42" fill="#fbbf24" style="transform-origin:100px 142px"/>
+          <!-- el pecho ES un índice -->
+          <rect x="56" y="106" width="88" height="72" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+          <rect class="memrow" x="68" y="118" width="64" height="12" fill="#fbbf24"/>
+          <rect class="memrow memrow--2" x="68" y="136" width="64" height="12" fill="#fbbf24"/>
+          <rect class="memrow memrow--3" x="68" y="154" width="64" height="12" fill="#fbbf24"/>
+          <!-- brazos cortos -->
+          <rect x="28" y="120" width="22" height="11" fill="#a78bfa"/>
+          <rect x="150" y="120" width="22" height="11" fill="#a78bfa"/>
+        </g>
+        <!-- lo que recupera sube a la cabeza -->
+        <g class="recall"><rect x="24" y="128" width="18" height="14" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="3"/></g>
+        <g class="recall recall--2"><rect x="160" y="132" width="18" height="14" fill="#f7f0e4" stroke="#0b0b0f" stroke-width="3"/></g>
+        <!-- la sombra dice que no toca el suelo -->
+        <ellipse class="hover" cx="100" cy="206" rx="42" ry="9" fill="#7c3aed"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+
+</div>
+
+<div class="camguide"></div>
+<div class="bar"><i></i></div>
+<div class="meta" id="meta"></div>
+
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var i=0;
+
+
+  function render(){
+    var cur=slides[i];
+    // display:none corta las animaciones; al volver a mostrarla arrancan solas.
+    slides.forEach(function(s){s.classList.remove('on')});
+    void cur.offsetWidth;
+    cur.classList.add('on');
+    document.querySelector('.bar i').style.width=((i+1)/slides.length*100)+'%';
+    document.getElementById('meta').textContent=(i+1)+' / '+slides.length+'  ·  '+slides[i].dataset.t;
+    location.hash=i+1;
+  }
+  var moving=false;
+  function go(d){
+    if(moving) return;
+    var prev=i, next=Math.max(0,Math.min(slides.length-1,i+d));
+    if(next===prev) return;
+    moving=true;
+    var out=slides[prev];
+    out.classList.remove('on');
+    out.classList.add('out');
+    setTimeout(function(){ out.classList.remove('out'); i=next; render(); moving=false },160);
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(-1)}
+    else if(e.key==='Home'){i=0;render()}
+    else if(e.key==='End'){i=slides.length-1;render()}
+    else if(e.key.toLowerCase()==='c'){document.body.classList.toggle('cam-on')}
+    else if(e.key.toLowerCase()==='f'){
+      document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+  });
+  document.addEventListener('click',function(e){
+    if(e.target.closest('a')) return;
+    go(1);
+  });
+
+  var h=parseInt(location.hash.slice(1),10);
+  if(h>0&&h<=slides.length) i=h-1;
+  render();
+})();
+</script>
+</body>
+</html>

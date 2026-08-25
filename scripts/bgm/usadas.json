@@ -1,9 +1,51 @@
 [
-  { "fuente": "mixkit:527", "titulo": "mixkit 527", "video": "videos/hooks-deterministas (escena 1)" },
-  { "fuente": "mixkit:155", "titulo": "mixkit 155", "video": "videos/hooks-deterministas (escena 2)" },
-  { "fuente": "mixkit:899", "titulo": "mixkit 899", "video": "videos/hooks-deterministas (escena 3)" },
-  { "fuente": "mixkit:593", "titulo": "mixkit 593", "video": "videos/contexto-escritorio" },
-  { "fuente": "mixkit:788", "titulo": "mixkit 788", "video": "videos/goodies-sdk" },
-  { "fuente": "mixkit:566", "titulo": "mixkit 566", "video": "shorts webinar 1" },
-  { "fuente": "mixkit:690", "titulo": "mixkit 690", "video": "shorts webinar 1" }
+  {
+    "fuente": "mixkit:527",
+    "titulo": "mixkit 527",
+    "video": "videos/hooks-deterministas (escena 1)"
+  },
+  {
+    "fuente": "mixkit:155",
+    "titulo": "mixkit 155",
+    "video": "videos/hooks-deterministas (escena 2)"
+  },
+  {
+    "fuente": "mixkit:899",
+    "titulo": "mixkit 899",
+    "video": "videos/hooks-deterministas (escena 3)"
+  },
+  {
+    "fuente": "mixkit:593",
+    "titulo": "mixkit 593",
+    "video": "videos/contexto-escritorio"
+  },
+  {
+    "fuente": "mixkit:788",
+    "titulo": "mixkit 788",
+    "video": "videos/goodies-sdk"
+  },
+  {
+    "fuente": "mixkit:566",
+    "titulo": "mixkit 566",
+    "video": "shorts webinar 1"
+  },
+  {
+    "fuente": "mixkit:690",
+    "titulo": "mixkit 690",
+    "video": "shorts webinar 1"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/619940",
+    "titulo": "Simbios(Downtempo)",
+    "autor": "Transformation",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/gtm-engineer-short"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1180671",
+    "titulo": "the other side",
+    "autor": "Smiling Cynic",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/code-mode-vs-mcp"
+  }
 ]

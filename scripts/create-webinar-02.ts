@@ -55,14 +55,14 @@ async function main() {
     where: { videoId_slug: { videoId: video.id, slug: "slides" } },
     update: {
       title: "Slides del webinar (20)",
-      externalUrl: "/slides/sandboxing.html",
+      externalUrl: "/slides/sandboxing-la-caja-donde-vive-tu-agente.html",
       courseId: course.id,
     },
     create: {
       slug: "slides",
       kind: "slides",
       title: "Slides del webinar (20)",
-      externalUrl: "/slides/sandboxing.html",
+      externalUrl: "/slides/sandboxing-la-caja-donde-vive-tu-agente.html",
       
       videoId: video.id,
       courseId: course.id,

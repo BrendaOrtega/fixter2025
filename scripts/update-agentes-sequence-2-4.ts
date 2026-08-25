@@ -1,8 +1,13 @@
 /**
  * Secuencia "Introducción a los agentes de IA" (comunidad /c/agentes).
  *
- * Crea las entregas 2 a 5: quien se daba de alta recibía el correo de
+ * Crea las entregas 2 a 4: quien se daba de alta recibía el correo de
  * bienvenida y nunca más.
+ *
+ * **El 25 de agosto la serie se cerró en la entrega 4** (memoria). La 5
+ * —ejecución durable y permisos— se cayó: puede grabarse más adelante, pero sin
+ * prometerlo en el correo. Un teaser que promete algo que no llega se paga
+ * caro, así que la 4 cierra mandando a la comunidad y a los webinars.
  *
  * **El 17 de agosto la entrega del SDK se metió en el 3** —es el video que se
  * grabó— y memoria y sandboxing se corrieron a 4 y 5. Nadie había recibido
@@ -62,9 +67,12 @@ const VIDEOS: Record<
     duracion: "7 min",
     poster: "https://wild-bird-2039.t3.storage.dev/videos/posters/sdk-deepseek.jpg",
   },
-  4: { slug: null, titulo: "Memoria y base de datos", duracion: null, poster: null },
-  // El video existe pero sigue sin publicar ni tener póster.
-  5: { slug: null, titulo: "Sandboxing: la caja donde vive tu agente", duracion: null, poster: null },
+  4: {
+    slug: "memoria-sqlite",
+    titulo: "Dónde vive lo que el agente recuerda",
+    duracion: "45 min",
+    poster: "https://wild-bird-2039.t3.storage.dev/videos/posters/memoria-sqlite-v2.jpg",
+  },
 };
 
 /**
@@ -201,59 +209,46 @@ const entrega3 = wrapEmailHtml(
 );
 
 // ── Entrega 4 ──────────────────────────────────────────────────────────────
+// Cierra la serie. Sin teaser a propósito: la entrega 5 se cayó y prometer un
+// video que quizá se grabe dentro de un mes deja a la gente esperando.
 const entrega4 = wrapEmailHtml(
   [
     h1("Dónde vive lo que el agente recuerda 🧠"),
     p(
-      `Un agente no recuerda nada por su cuenta: en cada vuelta del loop le vuelves a mandar la conversación entera. Mientras eso vive en una variable, cerrar la pestaña —o reiniciar el servidor— lo borra todo.`
+      `Reinicias el servidor y te saluda como si no te conociera. En esta última entrega le damos memoria de verdad: <strong>archivos de markdown en disco</strong>, y un índice de SQLite encima. 🎬`
     ),
     videoCard(4),
-    p(`Lo que cambia cuando la conversación se muda a la base de datos:`),
+    p(`Lo que se construye:`),
     bullets([
-      `Recargas la página y la sesión se repinta completa, con sus herramientas y sus resultados en el mismo orden.`,
-      `El navegador deja de ser el dueño del estado y pasa a ser una vista.`,
-      `<strong>El historial y la memoria son dos cosas distintas</strong>: lo que pasó en esta sesión, y lo que el agente debe seguir sabiendo en la siguiente.`,
-      `Si no las separas, en tres días le estás mandando un contexto que no cabe.`,
+      `Cada recuerdo es un ${code(".md")} que <strong>abres con tu editor</strong>. Si el agente aprendió mal, lo corriges a mano; y ${code(
+        "git diff"
+      )} te dice qué aprendió esta semana.`,
+      `<strong>El índice es desechable.</strong> Lo borras, se reconstruye desde los archivos y vuelve idéntico. Es el ${code(
+        "dist/"
+      )} de tu memoria.`,
+      `<strong>Búsqueda híbrida</strong>: FTS5 encuentra la palabra exacta y los vectores encuentran el significado. Las dos viven en el mismo archivo.`,
+      `Y <strong>sobrevive a la caja</strong>: el sandbox muere, los ${code(
+        ".md"
+      )} se sincronizan y el índice se rehace al arrancar.`,
     ]),
-    repoButton("El código de la entrega", REPO_URL),
-    emailTeaser(
-      { title: "Ejecución durable y permisos — qué pasa cuando el agente tarda diez minutos." },
+    emailCallout(
+      `SQLite viene <strong>dentro de Node 22</strong>, con FTS5 compilado. Cero ${code(
+        "npm install"
+      )}, y la memoria entera cabe en un archivo que copias con ${code("cp")}.`,
+      { title: "Sin infraestructura" },
       "light"
     ),
-    firma,
-  ].join("\n"),
-  {
-    preheader: "La conversación se muda a la base de datos.",
-    theme: "light",
-  }
-);
-
-// ── Entrega 5 ──────────────────────────────────────────────────────────────
-const entrega5 = wrapEmailHtml(
-  [
-    h1("Cuando el agente tarda, y cuando se pasa 🧱"),
+    repoButton("El código de la entrega", `${REPO_URL}/tree/main/entregas/04-memoria`),
     p(
-      `Las entregas anteriores asumen que cada herramienta termina rápido. Le pides levantar un servidor de desarrollo y esa suposición se cae: la herramienta no regresa nunca y el chat se queda tieso.`
-    ),
-    videoCard(5),
-    p(`Lo último que le falta al arnés:`),
-    bullets([
-      `<strong>Separar lanzar de esperar</strong>: el agente arranca el proceso en segundo plano, recibe un identificador y sigue trabajando.`,
-      `Lo consulta solo cuando necesita la URL o el error.`,
-      `Y se decide qué <strong>no</strong> puede hacer: escribe únicamente dentro de la carpeta de la app, con la ruta verificada en cada operación.`,
-      `Un agente que puede editar su propio arnés puede dejarte sin forma de corregirlo.`,
-    ]),
-    repoButton("Todo el repositorio", REPO_URL),
-    p(
-      `Con esto tienes el arnés completo. Lo que sigue lo vemos en ${link(
+      `Con esto el arnés está completo: el loop, la interfaz, el SDK y la memoria. Lo que sigue lo vemos en ${link(
         "la comunidad",
         COMUNIDAD_URL
-      )} y en los webinars de los jueves, que son abiertos.`
+      )} y en los webinars de los jueves, que son abiertos. 🤓`
     ),
     firma,
   ].join("\n"),
   {
-    preheader: "Procesos que tardan, y lo que el agente no debería poder tocar.",
+    preheader: "Markdown en disco, SQLite como índice, y vectores incluidos.",
     theme: "light",
   }
 );
@@ -276,12 +271,6 @@ const entregas = [
     order: 4,
     subject: "Dónde vive lo que tu agente recuerda",
     content: entrega4,
-    delayDays: 4,
-  },
-  {
-    order: 5,
-    subject: "Cuando el agente tarda diez minutos",
-    content: entrega5,
     delayDays: 4,
   },
 ];
@@ -322,6 +311,24 @@ async function main() {
     } else {
       await db.sequenceEmail.create({ data });
       console.log(`✅ creada #${e.order} — ${e.subject}`);
+    }
+  }
+
+  // La entrega 5 se cayó: si quedó creada de una corrida anterior, se borra.
+  // Solo si nadie la recibió — con envíos de por medio hay eventos apuntando a
+  // su id, y borrarla los deja huérfanos sin que nada avise.
+  const sobrante = seq.emails.find((x) => x.order === 5);
+  if (sobrante) {
+    const enviados = await db.sequenceEmailEvent.count({
+      where: { sequenceEmailId: sobrante.id, type: "sent" },
+    });
+    if (enviados > 0) {
+      console.log(
+        `⚠️  la #5 ya se envió a ${enviados} persona(s): se deja en su lugar. Bórrala desde el panel si de verdad quieres perder sus métricas.`
+      );
+    } else {
+      await db.sequenceEmail.delete({ where: { id: sobrante.id } });
+      console.log(`🗑️  borrada #5 — ${sobrante.subject} (nadie la había recibido)`);
     }
   }
 

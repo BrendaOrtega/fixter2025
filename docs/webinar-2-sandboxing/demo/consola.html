@@ -34,12 +34,44 @@
   .ms{float:right;font-weight:800;font-size:clamp(1.4rem,3vw,2.6rem);line-height:1;
     letter-spacing:-.04em}
   .empty{opacity:.5;font-size:1.3rem}
+  .pedir{display:flex;gap:1rem;margin-bottom:2vh}
+  .pedir input{flex:1;border:var(--border);box-shadow:var(--hard);background:#fff;
+    padding:.7em .9em;font:inherit;font-size:clamp(1rem,1.8vw,1.5rem)}
+  .pedir button{border:var(--border);box-shadow:var(--hard);background:var(--orange);
+    padding:.7em 1.4em;font:inherit;font-weight:800;font-size:clamp(1rem,1.8vw,1.5rem);cursor:pointer}
+  .pedir button:active{transform:translate(4px,4px);box-shadow:none}
+  .pedir button[disabled]{background:#ccc;cursor:wait}
+  /* lo que se le ha pedido, del más nuevo al más viejo */
+  .hist{display:flex;flex-direction:column;gap:.7vh;margin-bottom:2vh}
+  .hist div{background:#fff;border:3px solid #111;padding:.55em .8em;
+    font-size:clamp(1rem,1.5vw,1.3rem);display:flex;gap:.7em;align-items:baseline}
+  .hist .est{margin-left:auto;font-weight:800;font-size:.8em;letter-spacing:.08em;
+    text-transform:uppercase}
+  .hist .corriendo{background:var(--yellow)}
+  .hist .corriendo .est{color:#b8541a}
+  /* la bitácora del agente, leída de su propia caja cada segundo */
+  .log{background:var(--violet);color:var(--paper);border:var(--border);box-shadow:var(--hard);
+    padding:1.1em 1.3em;margin-bottom:2vh}
+  .log h2{margin:0 0 .5em;font-size:clamp(1.15rem,2vw,1.7rem)}
+  .log #logurl{font-weight:400;opacity:.75;font-size:.7em;font-family:ui-monospace,monospace}
+  .log pre{margin:0;background:#111;padding:.8em 1em;max-height:34vh;overflow:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:clamp(.9rem,1.25vw,1.15rem);line-height:1.6;white-space:pre-wrap}
+  .log .t{color:#f9e16d;font-weight:700}
+  .log .h{color:#9fe6c8}
+  .log .ok{color:#f7a637}
 </style>
 <header>
   <span class="tag">EasyBits · flota en vivo</span>
   <h1>La caja donde vive tu agente</h1>
   <span class="cap" id="cap">—</span>
 </header>
+<form class="pedir" id="pedir">
+  <input id="prompt" placeholder="Pídele algo al agente…" autocomplete="off">
+  <button id="btn">Enviar</button>
+</form>
+<div class="hist" id="hist"></div>
+<div class="log" id="log" hidden><h2>Bitácora del agente <span id="logurl"></span></h2><pre id="logtxt"></pre></div>
 <div class="runs" id="runs"><p class="empty">Esperando el primer comando…</p></div>
 <script>
 // La consola no ejecuta nada: sólo lee lo que el guion ya corrió y lo pinta.
@@ -49,7 +81,7 @@ const esc = t => String(t).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'
 // Ojo: primero se colorean comillas y URL, y las banderas al final — al revés,
 // el propio atributo class="fl" cae en la regex de las cadenas.
 function pintaCmd(cmd){
-  return cmd.replace(/ -([A-Za-z]) /g, '\n  -$1 ').split('\n').map(function(l){
+  return cmd.replace(/\s*\\\n\s*/g,'\n  ').replace(/ -([A-Za-z]) /g, '\n  -$1 ').split('\n').map(function(l){
     return esc(l)
       .replace(/(&quot;[^&]*?&quot;)/g, '\u0001$1\u0002')
       .replace(/(https?:\/\/[^\s]+)/, '\u0003$1\u0002')
@@ -102,4 +134,48 @@ async function tick(){
   }catch(e){}
 }
 tick(); setInterval(tick, 700);
+
+// La bitácora vive DENTRO de la caja y se sirve por su puerto 80: la leemos
+// desde aquí igual que cualquier visitante. `logUrl` sale de runs.json.
+async function tickLog(){
+  try{
+    const cfg = await (await fetch('runs.json?'+Date.now())).json();
+    if(!cfg.logUrl) return;
+    const caja = document.getElementById('log');
+    caja.hidden = false;
+    document.getElementById('logurl').textContent = cfg.logUrl.replace('https://','');
+    const t = await (await fetch('/log?'+Date.now())).text();
+    document.getElementById('logtxt').innerHTML = esc(t.trim().split('\n').slice(-40).join('\n'))
+      .replace(/^(===.*)$/gm,'<span class="t">$1</span>')
+      .replace(/^(\s*→.*)$/gm,'<span class="h">$1</span>')
+      .replace(/^(\s*✓.*|---.*)$/gm,'<span class="ok">$1</span>');
+    document.getElementById('logtxt').scrollTop = 1e6;
+  }catch(e){}
+}
+tickLog(); setInterval(tickLog, 1000);
+
+// El turno se dispara aquí. El texto se conserva en el historial (nunca se pierde
+// lo que pediste) y el botón se bloquea mientras el agente trabaja.
+const hist = [];
+function pintaHist(){
+  document.getElementById('hist').innerHTML = hist.slice().reverse().map(h =>
+    '<div class="'+(h.fin?'':'corriendo')+'">'+esc(h.texto)
+    + '<span class="est">'+(h.fin?'listo':'trabajando…')+'</span></div>').join('');
+}
+document.getElementById('pedir').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const campo = document.getElementById('prompt'), btn = document.getElementById('btn');
+  const texto = campo.value.trim(); if(!texto) return;
+  const item = {texto, fin:false}; hist.push(item); pintaHist();
+  campo.value = ''; btn.disabled = true; btn.textContent = 'Trabajando…';
+  try{
+    const r = await fetch('/turno', {method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({prompt: texto})});
+    if(!r.ok) throw new Error(r.status);
+  }catch(err){
+    item.texto += '  ⚠ no salió: ' + err.message;
+  }
+  item.fin = true; pintaHist();
+  btn.disabled = false; btn.textContent = 'Enviar'; campo.focus();
+});
 </script>

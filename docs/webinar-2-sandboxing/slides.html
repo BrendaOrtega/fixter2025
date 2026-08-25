@@ -6,6 +6,7 @@
 <!-- sin caché: mientras iteramos, cada recarga debe traer los cambios -->
 <meta http-equiv="cache-control" content="no-store">
 <title>Sandboxing: la caja donde vive tu agente — Webinar 2</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPCEtLSBhIDE2cHggc8OzbG8gc2UgbGVlIGxhIGNhamE6IHRhcGEgbGV2YW50YWRhIHkgY2FuZGFkbywgbmFkYSBtw6FzIC0tPgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjEwIiBmaWxsPSIjRkJGNkU0Ii8+CiAgPHJlY3QgeD0iOSIgeT0iMjYiIHdpZHRoPSI0NiIgaGVpZ2h0PSIzMCIgcng9IjQiIGZpbGw9IiM3YjRjZDkiIHN0cm9rZT0iIzExMSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPHJlY3QgeD0iNSIgeT0iMTYiIHdpZHRoPSI1NCIgaGVpZ2h0PSIxMiIgcng9IjMiIGZpbGw9IiNmOWUxNmQiIHN0cm9rZT0iIzExMSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPHBhdGggZD0iTTI2IDQwIHYtNSBhNiA2IDAgMCAxIDEyIDAgdjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzExMSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPHJlY3QgeD0iMjQiIHk9IjM5IiB3aWR0aD0iMTYiIGhlaWdodD0iMTIiIHJ4PSIyIiBmaWxsPSIjZjllMTZkIiBzdHJva2U9IiMxMTEiIHN0cm9rZS13aWR0aD0iNCIvPgo8L3N2Zz4=">
 <style>
   /* Las fuentes de EasyBits, incrustadas: el deck se proyecta sin red.
      Cabin es la del cuerpo; Jersey 10 es la del wordmark del logo
@@ -238,6 +239,28 @@
   .slide.on .art .crab{animation:crab-bob 2.6s ease-in-out infinite}
   @keyframes crab-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
   .slide.on .art .crab-eye{animation:blink 2.2s steps(1) infinite}
+
+
+  /* slide 11: la regla de medir — la barra se llena y se vacía sin parar */
+  .slide.on .art .llena{transform-origin:left center;animation:llena 3.6s cubic-bezier(.5,0,.5,1) infinite}
+  @keyframes llena{0%{transform:scaleX(.12)}45%,60%{transform:scaleX(1)}100%{transform:scaleX(.12)}}
+  .slide.on .art .aguja{transform-origin:bottom center;animation:aguja 3.6s cubic-bezier(.5,0,.5,1) infinite}
+  @keyframes aguja{0%{transform:rotate(-52deg)}45%,60%{transform:rotate(50deg)}100%{transform:rotate(-52deg)}}
+  .slide.on .art .chip{animation:chip 2.4s ease-in-out infinite}
+  .slide.on .art .chip--2{animation-delay:.8s}
+  .slide.on .art .chip--3{animation-delay:1.6s}
+  @keyframes chip{0%,100%{transform:translateY(0);opacity:.45}50%{transform:translateY(-9px);opacity:1}}
+
+
+  /* slide 11 bis: dos cajas que se hablan — el mensaje viaja de ida y vuelta */
+  .slide.on .art .mensaje{animation:viaja 3.4s cubic-bezier(.6,0,.4,1) infinite}
+  @keyframes viaja{0%{transform:translateX(0);opacity:0}
+                   12%{opacity:1}45%{transform:translateX(150px);opacity:1}
+                   55%{transform:translateX(150px);opacity:0}100%{transform:translateX(0);opacity:0}}
+  .slide.on .art .mensaje--v{animation-delay:1.7s;animation-name:vuelve}
+  @keyframes vuelve{0%{transform:translateX(150px);opacity:0}
+                    12%{opacity:1}45%{transform:translateX(0);opacity:1}
+                    55%{transform:translateX(0);opacity:0}100%{transform:translateX(150px);opacity:0}}
 
   /* slide 3: la mano se acerca a la laptop y se arrepiente */
   .slide.on .art .hand{animation:reach 3.8s ease-in-out infinite}
@@ -658,11 +681,11 @@ const isInvokingMessage = (m) =>
   <div class="cols">
     <div>
       <span class="badge">Demo 1</span>
-      <h2 style="margin-top:2vh;max-width:20ch">Una caja se levanta, se muere y vuelve.</h2>
+      <h2 style="margin-top:2vh;max-width:20ch">Una caja, un sitio y un agente adentro.</h2>
       <ul style="margin-top:1.5vh;max-width:46ch">
-        <li><strong>Caja cruda.</strong> Se levanta con el cronómetro a la vista, corro algo destructivo adentro y la vuelvo a levantar.</li>
-        <li><strong>Caja de servicio.</strong> El mismo motor, otro propósito: no es "para agentes", es infraestructura.</li>
-        <li><strong>Un agente dormido.</strong> Despierta en ~1s y contesta.</li>
+        <li><strong>Nace y sirve.</strong> Caja nueva en 1.3 s, nginx, y una URL pública con HTTPS.</li>
+        <li><strong>El agente entra.</strong> No como root. Le hablo desde el chat y edita el sitio en vivo.</li>
+        <li><strong>La clonamos.</strong> Instalar todo: 45 s. Clonar la caja ya lista: <strong>4.7 s</strong>.</li>
       </ul>
     </div>
     <!-- una caja fuerte: la manija gira, los pernos aguantan -->
@@ -693,12 +716,40 @@ const isInvokingMessage = (m) =>
 <!-- 11 · LAS 4 PREGUNTAS -->
 <section class="slide" data-t="24:00">
   <span class="kicker">Cómo elegir</span>
-  <h2>Cuatro preguntas antes de ver precios.</h2>
-  <div class="grid2" style="margin-top:1.5vh">
-    <div class="box"><h3>1 · ¿Cuánto vive?</h3><p>Segundos por tarea, o días de trabajo continuo.</p></div>
-    <div class="box box--y"><h3>2 · ¿Guarda estado?</h3><p>Empieza limpio cada vez, o retoma donde se quedó.</p></div>
-    <div class="box box--o"><h3>3 · ¿Qué tan rápido arranca?</h3><p>El cold start lo espera tu usuario, no tu servidor.</p></div>
-    <div class="box box--v"><h3>4 · ¿Quién paga el idle?</h3><p>Mientras el agente espera al modelo, ¿el reloj corre? Las plataformas administradas cobran ese tiempo con un markup de 7 a 10 veces.</p></div>
+  <h2>Cinco preguntas antes de ver precios.</h2>
+  <div class="cols wide-l" style="margin-top:1.2vh">
+    <div class="grid2">
+      <div class="box"><h3>1 · ¿Cuánto vive?</h3><p>Segundos por tarea, o días de trabajo continuo.</p></div>
+      <div class="box box--y"><h3>2 · ¿Guarda estado?</h3><p>Empieza limpio cada vez, o retoma donde se quedó.</p></div>
+      <div class="box box--o"><h3>3 · ¿Qué tan rápido arranca?</h3><p>El cold start lo espera tu usuario, no tu servidor.</p></div>
+      <div class="box box--v"><h3>4 · ¿Quién paga el idle?</h3><p>Mientras el agente espera al modelo, ¿el reloj corre? Las administradas cobran ese tiempo con un markup de 7 a 10 veces.</p></div>
+      <div class="box" style="grid-column:1 / -1"><h3>5 · ¿Cuánto disco y cuánta RAM?</h3><p>Un agente instala cosas: un runtime, sus paquetes, un modelo chico. La caja mínima de cualquier proveedor se queda corta antes de lo que crees.</p></div>
+    </div>
+    <div>
+      <!-- una regla de medir: la barra se llena, la aguja la sigue -->
+      <svg viewBox="0 0 340 300" class="art" aria-label="Un medidor cuya barra se llena y su aguja lo sigue">
+        <g stroke="#111" stroke-width="6" stroke-linejoin="round">
+          <!-- el arco del medidor -->
+          <path d="M46 200 a124 124 0 0 1 248 0" fill="none"/>
+          <g stroke-width="5">
+            <path d="M56 168 L74 174"/><path d="M92 122 L106 134"/>
+            <path d="M170 100 V120"/>
+            <path d="M248 122 L234 134"/><path d="M284 168 L266 174"/>
+          </g>
+          <g class="aguja"><path d="M170 200 V112" stroke="#E4572E" stroke-width="9" stroke-linecap="round"/></g>
+          <circle cx="170" cy="200" r="16" fill="#7b4cd9"/>
+          <!-- la barra que se llena -->
+          <rect x="46" y="230" width="248" height="40" rx="6" fill="#FBF6E4"/>
+          <rect class="llena" x="49" y="233" width="242" height="34" rx="4" fill="#f9e16d" stroke="none"/>
+          <!-- lo que se va metiendo a la caja -->
+          <g fill="#7b4cd9">
+            <rect class="chip" x="94" y="46" width="20" height="20" rx="3"/>
+            <rect class="chip chip--2" x="158" y="30" width="24" height="24" rx="3"/>
+            <rect class="chip chip--3" x="222" y="50" width="18" height="18" rx="3"/>
+          </g>
+        </g>
+      </svg>
+    </div>
   </div>
 </section>
 
@@ -711,17 +762,18 @@ const isInvokingMessage = (m) =>
   </p>
   <table class="tabla-compacta" style="margin-top:1vh">
     <thead><tr>
-      <th>Proveedor</th><th>Qué te da</th>
+      <th>Proveedor</th><th>Qué te da</th><th>La caja base<br>vCPU · RAM · disco</th>
       <th>Una caja al mes<br>ejecutando 100%</th><th>Una caja al mes<br>ejecutando 10%</th>
     </tr></thead>
     <tbody>
-      <tr><td class="name">E2B</td><td>Despierta en ~150 ms. Firecracker. Cobra mientras la caja viva.</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
-      <tr><td class="name">Daytona</td><td>Despierta en ~90 ms. Persistente y open source. Cobra mientras la caja viva.</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
-      <tr><td class="name">Modal</td><td>Despierta en menos de 1 s. No cobra el idle. GPU con tarifa aparte.</td><td><strong>$1,354 MXN</strong></td><td><strong>$135 MXN</strong></td></tr>
-      <tr><td class="name">Fly Sprites</td><td>Despierta en 1-2 s, o ~300 ms desde checkpoint. No cobra el idle.</td><td><strong>$928 MXN</strong></td><td><strong>$93 MXN</strong></td></tr>
+      <tr><td class="name">E2B</td><td>Despierta en ~150 ms. Firecracker. Cobra mientras la caja viva.</td><td>1 vCPU · 512 MB · 1 GB</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
+      <tr><td class="name">Daytona</td><td>Despierta en ~90 ms. Persistente y open source. Cobra mientras la caja viva.</td><td>1 vCPU · 1 GB · 3 GB</td><td><strong>$543 MXN</strong></td><td><strong>$543 MXN</strong><br><span style="opacity:.65">el reloj no se detiene</span></td></tr>
+      <tr><td class="name">Modal</td><td>Despierta en menos de 1 s. No cobra el idle. GPU con tarifa aparte.</td><td>0.125 vCPU · 128 MB · disco compartido</td><td><strong>$1,354 MXN</strong></td><td><strong>$135 MXN</strong></td></tr>
+      <tr><td class="name">Fly Sprites</td><td>Despierta en 1-2 s, o ~300 ms desde checkpoint. No cobra el idle.</td><td>0.0625 vCPU · 256 MB · disco que crece</td><td><strong>$928 MXN</strong></td><td><strong>$93 MXN</strong></td></tr>
       <tr style="background:var(--violet);color:var(--paper)">
         <td class="name" style="background:var(--yellow);color:var(--ink)">EasyBits</td>
         <td>Despierta en &lt;200 ms. Firecracker, kernel persistente y URL pública.</td>
+        <td>2 vCPU · 2 GB · 2 GB</td>
         <td><strong>$299 MXN</strong></td>
         <td><strong>$299 MXN</strong><br><span style="opacity:.75">es plan fijo</span></td>
       </tr>
@@ -778,34 +830,35 @@ const isInvokingMessage = (m) =>
   <div class="cols">
     <div>
       <span class="badge">Demo 2</span>
-      <h2 style="margin-top:2vh;max-width:18ch">Le pido al agente que analice un archivo.</h2>
-      <p class="lead" style="margin-top:1.5vh">Mientras trabaja, dos cronómetros en pantalla: uno cuenta la caja prendida, el otro solo los segundos en que se está ejecutando código.</p>
+      <h2 style="margin-top:2vh;max-width:22ch">La caja también es una <span class="mark--v mark">dirección</span>.</h2>
+      <ul style="margin-top:1.5vh;max-width:46ch">
+        <li>Un agente de código en <strong>Rust</strong>, en su propia microVM.</li>
+        <li>Contesta en un canal de Teams por <strong>A2A</strong>. Pegamos una URL y funcionó.</li>
+        <li><strong>Nadie escribió integración</strong> entre los dos. Ese era el punto del protocolo.</li>
+      </ul>
+      <p class="lead" style="margin-top:1.5vh;max-width:40ch">Hasta donde buscamos, ningún agente de código publica AgentCard hoy.</p>
     </div>
-    <!-- el tiempo cae en monedas: corre igual aunque nadie esté trabajando -->
-    <svg viewBox="0 0 300 400" class="art" aria-label="Un reloj de arena que cuenta monedas">
-      <g stroke="#111" stroke-width="6" stroke-linejoin="round">
-        <!-- tapas -->
-        <rect x="46" y="24" width="208" height="30" rx="8" fill="#f7a637"/>
-        <rect x="46" y="346" width="208" height="30" rx="8" fill="#f7a637"/>
-        <!-- los dos bulbos, cuello al centro -->
-        <path d="M74 54 H226 L162 200 L226 346 H74 L138 200 Z" fill="#FBF6E4"/>
-        <!-- lo que ya se gastó, apilado abajo -->
-        <path d="M92 346 H208 L172 262 H128 Z" fill="#f9e16d"/>
-      </g>
-      <!-- la arena va recortada con el vidrio: así cae por dentro y no encima -->
-      <defs>
-        <clipPath id="vidrio">
-          <path d="M74 54 H226 L162 200 L226 346 H74 L138 200 Z"/>
-        </clipPath>
-      </defs>
-      <g clip-path="url(#vidrio)" fill="#f7a637">
-        <circle class="grain"          cx="150" cy="0" r="7"/>
-        <circle class="grain grain--2" cx="143" cy="0" r="5"/>
-        <circle class="grain grain--3" cx="157" cy="0" r="6"/>
-        <circle class="grain grain--4" cx="148" cy="0" r="4.5"/>
-        <circle class="grain grain--5" cx="154" cy="0" r="5.5"/>
-      </g>
-    </svg>
+    <div>
+      <!-- dos cajas separadas y un mensaje que cruza, sin cable entre ellas -->
+      <svg viewBox="0 0 420 260" class="art" aria-label="Dos cajas intercambiando mensajes sin cable entre ellas">
+        <g stroke="#111" stroke-width="6" stroke-linejoin="round">
+          <rect x="20" y="80" width="130" height="110" rx="10" fill="#f9e16d"/>
+          <rect x="270" y="80" width="130" height="110" rx="10" fill="#7b4cd9"/>
+          <g stroke-width="5" opacity=".4"><path d="M52 80 V190"/><path d="M118 80 V190"/></g>
+          <g fill="#FBF6E4" stroke-width="5">
+            <rect x="300" y="106" width="70" height="42" rx="6"/>
+            <circle cx="320" cy="127" r="5" fill="#111"/><circle cx="350" cy="127" r="5" fill="#111"/>
+          </g>
+          <!-- el mensaje: un sobrecito que cruza el hueco -->
+          <g class="mensaje" fill="#f7a637"><rect x="162" y="102" width="46" height="32" rx="4"/>
+            <path d="M162 102 L185 120 L208 102" fill="none"/></g>
+          <g class="mensaje mensaje--v" fill="#FBF6E4"><rect x="162" y="150" width="46" height="32" rx="4"/>
+            <path d="M162 150 L185 168 L208 150" fill="none"/></g>
+        </g>
+        <text x="210" y="238" text-anchor="middle" font-family="ui-monospace,monospace"
+              font-size="19" fill="#111" opacity=".65">sin cable entre ellas</text>
+      </svg>
+    </div>
   </div>
 </section>
 
@@ -816,44 +869,12 @@ const isInvokingMessage = (m) =>
   <div class="grid2" style="margin-top:1.5vh">
     <div class="box"><h3>Como lo haces hoy</h3><p>Las definiciones de todas tus herramientas entran al contexto antes de la primera palabra. Anthropic midió workflows que se comían <strong>150,000 tokens</strong> así.</p></div>
     <div class="box box--y"><h3>Code Mode</h3><p>Las herramientas quedan como archivos que el agente abre solo si los necesita, y escribe el código que las encadena. El mismo workflow: <strong>2,000 tokens</strong>.</p></div>
+    <div class="box box--v" style="grid-column:1 / -1"><h3>Por qué depende de la caja</h3><p>El agente ya no llama herramientas: escribe un programa que las encadena. Y un programa recién escrito por un modelo necesita dónde correr, con permiso de fallar.</p></div>
   </div>
   <p class="lead" style="margin-top:1.5vh;max-width:52ch">Ese código lo escribió un modelo y tiene que correr en algún lado. Por eso la caja va primero.</p>
 </section>
 
 <!-- 16 · DEMO 3 -->
-<section class="slide demo" data-t="38:00">
-  <div class="cols">
-    <div>
-      <span class="badge">Demo 3</span>
-      <h2 style="margin-top:2vh;max-width:18ch">El agente escribe el programa y lo corre en la caja.</h2>
-      <p class="lead" style="margin-top:1.5vh">Miramos dos cosas: el archivo que escribió y cuántos tokens gastó.</p>
-    </div>
-    <!-- la clavija entra al enchufe: conectar lo que ya tienes, no rehacerlo -->
-    <svg viewBox="0 0 420 300" class="art" aria-label="Una clavija conectándose a un enchufe">
-      <g stroke="#111" stroke-width="6" stroke-linejoin="round">
-        <!-- la placa del enchufe, atornillada a la pared -->
-        <rect x="256" y="64" width="132" height="172" rx="16" fill="#f9e16d"/>
-        <circle cx="322" cy="80" r="5" fill="#111"/>
-        <circle cx="322" cy="220" r="5" fill="#111"/>
-        <rect x="292" y="112" width="18" height="40" rx="4" fill="#111"/>
-        <rect x="334" y="112" width="18" height="40" rx="4" fill="#111"/>
-        <circle cx="322" cy="182" r="14" fill="#FBF6E4"/>
-        <!-- la clavija: cuerpo, patas y cable, todo dentro del marco -->
-        <g class="plug">
-          <rect x="112" y="88" width="124" height="124" rx="16" fill="#FBF6E4"/>
-          <rect x="236" y="118" width="34" height="14" rx="4" fill="#f7a637"/>
-          <rect x="236" y="166" width="34" height="14" rx="4" fill="#f7a637"/>
-          <path d="M112 150 H92 C74 150 74 196 92 196 H108"
-                fill="none" stroke-linecap="round"/>
-        </g>
-      </g>
-      <!-- el chispazo del contacto -->
-      <g class="zap" fill="#f7a637" stroke="#111" stroke-width="4">
-        <path d="M262 40 L242 82 L264 82 L248 122 L292 74 L268 74 L284 40 Z"/>
-      </g>
-    </svg>
-  </div>
-</section>
 
 <!-- 17 · EASYBITS -->
 <section class="slide" data-t="40:00">
@@ -876,104 +897,53 @@ const isInvokingMessage = (m) =>
 </section>
 
 <!-- 18 · RECAP -->
-<section class="slide" data-t="42:00">
-  <span class="kicker">Lo que te llevas</span>
-  <h2>Cinco decisiones.</h2>
-  <div class="cols wide-l">
-  <ul style="margin-top:1.5vh">
-    <li><strong>Revisa hoy</strong> en qué escalón corre tu agente.</li>
-    <li><strong>Trata aparte</strong> el aislamiento y los permisos: son dos trabajos.</li>
-    <li><strong>Contesta las cuatro preguntas</strong> antes de abrir la página de precios.</li>
-    <li><strong>Compara por tiempo cobrable</strong>, que es donde de verdad se separan.</li>
-    <li><strong>Prueba Code Mode</strong> en cuanto tengas la caja.</li>
-  </ul>
-  <!-- la hoja que se palomea sola: el objeto que te llevas del webinar -->
-  <svg viewBox="0 0 320 340" class="art" aria-label="Una hoja de decisiones palomeándose sola">
-    <g stroke="#111" stroke-width="6" stroke-linejoin="round">
-      <rect x="34" y="18" width="252" height="304" rx="8" fill="#FBF6E4"/>
-      <rect x="34" y="18" width="252" height="42" rx="8" fill="#f7a637"/>
-      <g fill="#f9e16d">
-        <rect x="58" y="86"  width="34" height="34" rx="4"/>
-        <rect x="58" y="148" width="34" height="34" rx="4"/>
-        <rect x="58" y="210" width="34" height="34" rx="4"/>
-        <rect x="58" y="272" width="34" height="34" rx="4"/>
-      </g>
-      <g stroke="#111" stroke-width="7" stroke-linecap="round" opacity=".28">
-        <path d="M112 103 H256"/><path d="M112 165 H232"/>
-        <path d="M112 227 H252"/><path d="M112 289 H220"/>
-      </g>
-    </g>
-    <!-- las palomas aparecen una tras otra y la lista se reinicia -->
-    <g stroke="#7b4cd9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none">
-      <path class="check"          d="M64 104 L74 114 L90 92"/>
-      <path class="check check--2" d="M64 166 L74 176 L90 154"/>
-      <path class="check check--3" d="M64 228 L74 238 L90 216"/>
-      <path class="check check--4" d="M64 290 L74 300 L90 278"/>
-    </g>
-  </svg>
-  </div>
-</section>
 
 <!-- 19 · LA OFERTA -->
 <section class="slide" data-t="43:00">
   <div class="cols">
     <div>
       <span class="kicker">El taller</span>
-      <h2 style="margin-top:1.5vh">Diseño de sistemas agénticos</h2>
-      <ul style="margin-top:1.5vh;max-width:40ch">
+      <h2 style="margin-top:1.2vh">Diseño de sistemas agénticos</h2>
+      <ul style="margin-top:1.2vh;max-width:40ch">
         <li>4 sesiones en vivo de 2 horas · <strong>8 horas en total</strong></li>
         <li>Martes 1, jueves 3, martes 8 y jueves 10 de septiembre<br>
             <strong>8:00 a 10:00 PM</strong> (CDMX)</li>
-        <li>Sandbox y tokens incluidos desde la sesión 1</li>
-        <li>Te quedas con las grabaciones</li>
+        <li>Sandbox y tokens incluidos desde la sesión 1 · te quedas con las grabaciones</li>
       </ul>
-      <p class="mono" style="margin-top:2vh">fixtergeek.com/sistemas-agenticos</p>
+      <p class="mono" style="margin-top:1.4vh">fixtergeek.com/sistemas-agenticos</p>
+      <h1 style="margin-top:2.4vh">¿Preguntas?</h1>
+      <p class="lead" style="margin-top:.8vh;max-width:44ch">En el chat o por WhatsApp directo. La grabación de hoy te llega por correo.</p>
+      <p class="mono" style="margin-top:1.2vh;font-size:clamp(1.1rem,1.9vw,1.6rem);font-weight:700">wa.me/527712412825</p>
     </div>
-    <div>
+    <div style="text-align:center">
       <div class="box box--y" style="text-align:center">
-        <p style="text-decoration:line-through;opacity:.55;font-size:clamp(1.3rem,2vw,1.7rem)">$3,490 MXN</p>
-        <div class="stat" style="font-size:clamp(3.2rem,8.5vw,6.2rem);margin-top:.1em">$2,490</div>
+        <p style="text-decoration:line-through;opacity:.55;font-size:clamp(1.2rem,1.8vw,1.5rem)">$3,490 MXN</p>
+        <div class="stat" style="font-size:clamp(2.8rem,7vw,5.2rem);margin-top:.1em">$2,490</div>
         <p style="margin-top:.3em;font-weight:800">MXN · primera edición</p>
-        <p style="margin-top:.6em">Meses sin intereses disponibles.</p>
+        <p style="margin-top:.4em">Meses sin intereses disponibles.</p>
       </div>
       <!-- TODO antes del jueves: cupón exclusivo de la sesión. Se crea en Stripe
            igual que `primera-edicion-sistemas` (ver el action de
            app/routes/sistemas-agenticos.tsx) y se escribe aquí con su vigencia. -->
-      <div class="box box--v" style="margin-top:2vh;text-align:center">
+      <div class="box box--v" style="margin-top:1.6vh;text-align:center">
         <h3 style="letter-spacing:.06em">CUPÓN DE HOY</h3>
-        <p style="margin-top:.5em">— pendiente de definir —</p>
+        <p style="margin-top:.4em">— pendiente de definir —</p>
+      </div>
+      <!-- los dos logos cierran la sesión: es lo que queda en pantalla mientras
+           se contestan preguntas. Sin repintar y sin placa detrás. -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:2.4vw;margin-top:2.2vh">
+        <div class="eb eb--md" aria-label="EasyBits">
+          <img src="easybits-logo.svg" alt="">
+          <div class="word">EasyBits</div>
+        </div>
+        <img src="fixtergeek-logo.png" alt="FixterGeek"
+             style="height:clamp(34px,3.8vw,54px);width:auto;display:block">
       </div>
     </div>
   </div>
 </section>
 
 <!-- 20 · PREGUNTAS -->
-<section class="slide" data-t="44:00">
-  <div class="cols">
-    <div>
-      <span class="kicker">Seguimos</span>
-      <h1 style="margin-top:1.5vh">¿Preguntas?</h1>
-      <p class="lead" style="margin-top:1.5vh">En el chat o por WhatsApp directo. La grabación de hoy te llega por correo.</p>
-      <p class="mono" style="margin-top:2vh;font-size:clamp(1.1rem,1.9vw,1.6rem);font-weight:700">wa.me/527712412825</p>
-    </div>
-    <div style="text-align:center">
-      <!-- el logo completo cierra la sesión: es lo que queda en pantalla
-           mientras se contestan preguntas -->
-      <div class="eb eb--xl" style="justify-content:center" aria-label="EasyBits">
-        <img src="easybits-logo.svg" alt="">
-        <div class="word">EasyBits</div>
-      </div>
-      <div class="box box--v" style="margin-top:3vh;text-align:left">
-        <h3 style="font-size:clamp(1.4rem,2.4vw,2rem)">Diseño de sistemas agénticos</h3>
-        <p style="margin-top:.8em">4 sesiones en vivo · Arranca el <strong>1 de septiembre</strong></p>
-        <p style="margin-top:.8em" class="mono">fixtergeek.com/sistemas-agenticos</p>
-      </div>
-      <!-- el logo de la casa cierra, sin repintar y sin placa detrás -->
-      <img src="fixtergeek-logo.png" alt="FixterGeek"
-           style="height:clamp(38px,4.4vw,62px);width:auto;margin:2.5vh auto 0;display:block">
-    </div>
-  </div>
-</section>
 
 </div>
 
@@ -988,17 +958,14 @@ const isInvokingMessage = (m) =>
 <div class="notes" data-for="8"><span class="t">Apunte · kernel</span><p>La imagen mental útil: departamentos con paredes propias, pero un solo piso. Si el piso cede, no importa qué tan gruesas eran las paredes.</p></div>
 <div class="notes" data-for="6"><span class="t">Apunte · OpenClaw</span><p>Lo que cambió no fue el modelo: fue quitarle al agente el trámite de pedir permiso por cada paso. En cuanto alguien lo hizo y funcionó, todos quisieron lo mismo — y ahí apareció la pregunta incómoda de en qué máquina lo dejas suelto.</p></div>
 <div class="notes" data-for="9"><span class="t">Apunte · el campo</span><p>El reparto es nítido y cada quien pagó por su prioridad: E2B eligió arranque lento y frontera dura; Modal, arranque rápido y GPU; Daytona, volumen. Nadie eligió mal — eligieron distinto. Y el dato que ordena todo: la mayoría de las herramientas de agentes no construye la caja, la renta.</p></div>
-<div class="notes" data-for="10"><span class="t">En pantalla</span><p>Sandbox real levantándose, con el cronómetro a la vista. Lo importante del demo es el tiempo de arranque y lo que pasa cuando corres algo que no deberías.</p></div>
+<div class="notes" data-for="10"><span class="t">Apunte · lo que salió del ensayo</span><p>Tres cosas que pasaron de verdad y valen más dichas que escritas. Una: le pedimos que corriera <em>rm -rf /</em> y se negó, aunque le juráramos que estábamos conscientes — el juicio del modelo no es tu aislamiento, hoy dice que no y mañana otra frase lo convence. Dos: cuando no pudo instalar lo que quería, no se rindió: montó la base en disco y generó el sitio de otra forma. Tres: encontró un bug real, que su propio comando para reiniciar el servidor se estaba matando a sí mismo. Nadie se lo pidió.</p></div>
 <div class="notes" data-for="11"><span class="t">Apunte · las cuatro</span><p>Sirven para leer cualquier comparativa sin perderse entre features. Las cuatro salen del patrón de uso, que es lo que cambia entre un agente y un job normal.</p></div>
 <div class="notes" data-for="12"><span class="t">Apunte · el mapa</span><p>En el último año salieron muchísimos: E2B, AIO Sandbox, Sandboxer, AgentSphere, Exe.dev y los de las nubes grandes. Varios corren Firecracker por debajo, así que lo que los distingue es el cobro y la persistencia.</p><p>El problema que la gente reporta no es la tarifa por hora: es la factura sorpresa. Alguien dejó su agente corriendo, se fue veinte minutos y volvió a una cuenta que no esperaba; en los foros circula el caso de un agente desbocado de 300 dólares.</p></div>
 <div class="notes" data-for="13"><span class="t">Apunte · la factura</span><p>Este es el problema que la gente reporta de verdad: no la tarifa por hora, sino la cuenta que llega por algo que se quedó prendido. Han salido herramientas solo para cortarle la luz a un agente cuando pasa cierto monto.</p><p>De ahí sale la cuarta pregunta: quién paga el idle.</p></div>
 <div class="notes" data-for="14"><span class="t">En pantalla</span><p>El mismo trabajo con el reloj partido en dos. La proporción que salga aquí es la que hay que llevarse, medida en vivo.</p></div>
-<div class="notes" data-for="15"><span class="t">Apunte · Code Mode</span><p>Los modelos escriben mejor código del que improvisan cadenas de llamadas, porque programar es exactamente lo que vieron millones de veces en entrenamiento. Code Mode aprovecha eso.</p></div>
-<div class="notes" data-for="16"><span class="t">En pantalla</span><p>Las mismas herramientas que ya tienes como MCP, expuestas como una API que el modelo puede orquestar en una sola pasada.</p></div>
-<div class="notes" data-for="17"><span class="t">Apunte · EasyBits</span><p>Es el sandbox sobre el que está construido el taller. Las tres puertas importan porque no todos los equipos integran igual: unos quieren HTTP, otros el SDK dentro del código, y otros que el agente lo tome como herramienta.</p></div>
-<div class="notes" data-for="18"><span class="t">Apunte · recap</span><p>Cinco puntos para llevarse. El más accionable de todos es el primero: revisar hoy en qué escalón está corriendo tu agente.</p></div>
-<div class="notes" data-for="19"><span class="t">El taller</span><p>Cuatro sesiones en vivo para construir tu propio agente, con el sandbox ya resuelto desde el primer día. El precio de primera edición aplica solo a este grupo.</p></div>
-<div class="notes" data-for="20"><span class="t">Seguimos</span><p>Preguntas en el chat o por WhatsApp directo. La grabación de hoy, las slides y el material llegan a tu correo.</p></div>
+<div class="notes" data-for="15"><span class="t">Apunte · A2A</span><p>A2A es el protocolo de la Linux Foundation para que agentes de distintos fabricantes se hablen. Cada agente publica una tarjeta en una ruta conocida que dice quién es y qué sabe hacer; del otro lado, pegas esa URL y ya. Lo llamativo aquí no es el protocolo, es dónde vive el agente: en su propia máquina, con su propia dirección. Aislarlo y hacerlo alcanzable resultaron ser el mismo problema.</p></div>
+<div class="notes" data-for="16"><span class="t">Apunte · EasyBits</span><p>Es el sandbox sobre el que está construido el taller. Las tres puertas importan porque no todos los equipos integran igual: unos quieren HTTP, otros el SDK dentro del código, y otros que el agente lo tome como herramienta.</p></div>
+<div class="notes" data-for="17"><span class="t">El taller</span><p>Cuatro sesiones en vivo para construir tu propio agente, con el sandbox ya resuelto desde el primer día. El precio de primera edición aplica solo a este grupo.</p></div>
 
 <div class="bar"><i></i></div>
 <div class="clock" id="clock">—:—  ·  T cronómetro · R reinicia · N apuntes</div>

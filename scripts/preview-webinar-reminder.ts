@@ -1,6 +1,6 @@
 /** Genera un preview HTML del recordatorio del webinar (no envía nada). */
 import { writeFileSync } from "node:fs";
-import { WEBINAR_SLOTS } from "../app/utils/webinarDates";
+import { getWebinarSlot } from "../app/utils/webinarDates";
 
 process.env.PREVIEW_ONLY = "1";
 const { previewSistemasWebinarReminder } = await import(
@@ -8,5 +8,5 @@ const { previewSistemasWebinarReminder } = await import(
 );
 
 const out = "/tmp/webinar-reminder-preview.html";
-writeFileSync(out, previewSistemasWebinarReminder({ userName: "Jose Luis Pacheco Soto", slot: WEBINAR_SLOTS[0] }));
+writeFileSync(out, previewSistemasWebinarReminder({ userName: "Jose Luis Pacheco Soto", slot: getWebinarSlot(process.argv[2] ?? "2026-08-20")! }));
 console.log(out);

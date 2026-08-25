@@ -20,6 +20,10 @@ import { motion, useInView } from "motion/react";
 import { SuscriptionBanner } from "~/components/SuscriptionBanner";
 import { Footer } from "~/components/Footer";
 import getMetaTags from "~/utils/getMetaTags";
+import { getSerie, getSeriesPosts } from "~/utils/series.server";
+
+// La serie que se anuncia en el banner del índice. Cambiar aquí cambia el banner.
+const SERIE_DESTACADA = "gtm-engineer";
 
 export const meta = ({ location }: Route.MetaArgs) => {
   const url = `https://www.fixtergeek.com${location.pathname}`;
@@ -55,6 +59,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       posts,
       // featured,
       search,
+      // La serie destacada del banner: se cuenta lo publicado, así el banner nunca
+      // promete cuatro partes cuando sólo hay una.
+      serie: {
+        slug: SERIE_DESTACADA,
+        meta: getSerie(SERIE_DESTACADA),
+        total: (await getSeriesPosts(SERIE_DESTACADA)).length,
+      },
       totalLength: await db.post.count({ where: { published: true } }),
     },
     {

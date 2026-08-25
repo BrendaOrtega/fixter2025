@@ -55,6 +55,15 @@ export const VIDEOS: VideoItem[] = [
     poster: `${CDN}/videos/posters/sesion-03-los-hooks-v2.jpg`,
     duracion: "2:10",
   },
+  {
+    slug: "code-mode",
+    titulo: "Doscientas tools no caben",
+    descripcion:
+      "Cada tool conectada mete su definición en el contexto, y cada resultado lo cruza dos veces. Con code mode las tools son archivos que el agente importa: 150,000 tokens contra 2,000 en el mismo flujo.",
+    src: `${CDN}/videos/code-mode-vs-mcp.mp4`,
+    poster: `${CDN}/videos/posters/code-mode-vs-mcp.jpg`,
+    duracion: "1:51",
+  },
 ];
 
 export default function VideoGaleria() {

@@ -608,17 +608,29 @@ export const HomeHero = () => {
               children="Nuevo taller: Sistemas agénticos"
             />
           </div>
-          {/* La comunidad, en el hero: es gratis y es la puerta de entrada */}
+          {/* El curso gratis es la puerta de entrada, y hasta hoy el hero solo
+              decía "comunidad" — que no dice qué recibes. Aquí se nombra lo que
+              llega: cuatro videos, uno por correo. */}
           <p className="mt-4 px-4 text-center text-sm text-white/80 lg:px-0 lg:text-left">
-            ✉️ Únete gratis a la{" "}
+            🎬 Curso gratis por correo:{" "}
             <Link
-              to="/c/agentes"
+              to="/secuencias/introduccion-a-los-agentes-de-ia"
               className="font-semibold text-brand-500 transition-all duration-200 hover:underline"
             >
-              Comunidad Agéntica
+              Introducción a los agentes de IA
             </Link>{" "}
-            y recibe cómo se construyen los agentes que aguantan usuarios
-            reales.
+            — cuatro entregas en video, de la primera llamada al modelo hasta la
+            memoria. Con todo el código.
+          </p>
+          <p className="mt-2 px-4 text-center text-sm text-white/60 lg:px-0 lg:text-left">
+            ✉️ Y la{" "}
+            <Link
+              to="/c/agentes"
+              className="text-white/80 transition-all duration-200 hover:underline"
+            >
+              Comunidad Agéntica
+            </Link>
+            , para lo que sale después.
           </p>
           {/* Links sutiles a los libros */}
           <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">

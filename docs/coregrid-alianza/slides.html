@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- sin caché: mientras iteramos, cada recarga debe traer los cambios -->
+<meta http-equiv="cache-control" content="no-store">
+<title>Cómo ganamos juntos vendiendo cómputo — Ghosty Studio × CoreGrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Paleta del short de esta misma entrega (videos/goodies-sdk) ──
+     Documentada en docs/estilo-short-motion-graphics.md. El deck y el short
+     son la misma entrega: si no se parecen, se ven como dos productos.
+     Fondo #0b0b0f · panel #15121f · morado #7c3aed · ámbar #fbbf24.
+     Cero gradientes en los bloques, cero esquinas redondeadas. */
+  :root{
+    --bg:#0b0b0f; --panel:#15121f;
+    --violet:#7c3aed; --violet-lt:#a78bfa;
+    --amber:#fbbf24; --cyan:#4fc7ee;
+    --ink:#f7f0e4; --dim:#7a7a8c;
+    --red:#f87171;
+    --display:"Archivo Black","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --mono:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+    --border:5px solid var(--violet);
+    --hard:14px 14px 0 rgba(124,58,237,.33);
+    /* ── zona reservada para la cámara ──
+       El recuadro con la cara del que graba va en la esquina INFERIOR DERECHA.
+       Todas las slides dejan libre esa franja: `justify-content:center` reparte
+       el sobrante, así que un padding-bottom del alto de la cámara sube el
+       contenido entero sin descuadrar nada. Con la tecla C se dibuja la guía
+       para comprobarlo antes de grabar.
+       La medida va en `vw` con proporción 16:9 real, no en `vh`: en una ventana
+       alta un alto en vh abre un hueco enorme debajo del contenido. */
+    --cam-w:20vw; --cam-h:calc(var(--cam-w) * 0.5625);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);
+    font-family:var(--mono);overflow:hidden}
+
+  /* ── el fondo: retícula que recorre UNA celda exacta, así el bucle cierra
+     sin salto; dos manchas de color respirando desfasadas; viñeta al centro.
+     Nunca negro plano. ── */
+  .bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .bgfx .grid{position:absolute;inset:-80px;
+    background-image:linear-gradient(rgba(124,58,237,.13) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(124,58,237,.13) 1px,transparent 1px);
+    background-size:60px 60px;animation:drift 9s linear infinite}
+  @keyframes drift{from{transform:translate(0,0)}to{transform:translate(60px,60px)}}
+  .bgfx .blob{position:absolute;width:46vw;height:46vw;border-radius:50%;
+    filter:blur(120px);opacity:.30}
+  .bgfx .blob--v{background:var(--violet);left:-10vw;top:-12vw;
+    animation:breathe 11s ease-in-out infinite}
+  .bgfx .blob--a{background:var(--amber);right:-12vw;bottom:-16vw;opacity:.14;
+    animation:breathe 13s ease-in-out infinite 2.2s}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+  .bgfx .vig{position:absolute;inset:0;
+    background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,.72) 100%)}
+
+  .deck{position:relative;width:100vw;height:100vh;z-index:1}
+  .slide{
+    position:absolute;inset:0;display:none;
+    flex-direction:column;justify-content:center;
+    /* el aire lateral nunca baja de 56px, por angosta que sea la ventana */
+    padding:5vh max(56px,6vw) calc(2.5vh + var(--cam-h));gap:2.2vh;
+  }
+  /* la guía de la cámara (tecla C): solo para encuadrar antes de grabar */
+  /* slide apretada: menos aire y una ilustración más baja */
+  .slide--tight{gap:1.2vh}
+  .slide--tight .art{max-height:30vh}
+  .slide--tight .box p{font-size:clamp(.9rem,1.32vw,1.16rem)}
+  .slide--tight pre{font-size:clamp(.72rem,1.02vw,.94rem);padding:.7em .95em}
+  .slide.on{display:flex;z-index:1}
+  /* El relevo es duro, como en el short: la que sale se va de golpe. */
+  .slide.out{display:flex;pointer-events:none;z-index:0;animation:leave .16s steps(3) both}
+  @keyframes leave{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-40px)}}
+
+  h1{font-family:var(--display);font-size:clamp(2.8rem,7vw,6.2rem);line-height:.92;
+     letter-spacing:-.03em;font-weight:400}
+  h2{font-family:var(--display);font-size:clamp(2.1rem,4.6vw,3.9rem);line-height:.98;
+     letter-spacing:-.03em;font-weight:400}
+  h3{font-size:clamp(1.1rem,1.9vw,1.55rem);font-weight:700;letter-spacing:-.01em}
+  p,li{font-size:clamp(1.1rem,1.85vw,1.55rem);line-height:1.45}
+  .lead{font-size:clamp(1.3rem,2.4vw,2rem);max-width:36ch;line-height:1.32}
+  em{font-style:normal;color:var(--amber)}
+  strong{font-weight:700;color:var(--ink)}
+  .v{color:var(--violet-lt)} .a{color:var(--amber)} .c{color:var(--cyan)}
+  .dim{color:var(--dim)}
+  code{font-family:var(--mono);font-size:.92em;color:var(--amber)}
+
+  /* kicker: mayúsculas espaciadas, como en el short */
+  .kicker{align-self:flex-start;color:var(--violet-lt);font-size:clamp(.72rem,1.05vw,.95rem);
+    letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+
+  ul{list-style:none;display:flex;flex-direction:column;gap:1.6vh}
+  ul li{padding-left:1.8em;position:relative}
+  ul li::before{content:"";position:absolute;left:0;top:.5em;width:.66em;height:.66em;
+    background:var(--violet)}
+  ul.amber li::before{background:var(--amber)}
+  /* lista de palomitas: en fila, para las cosas tachadas de la lista */
+  ul.checks{flex-direction:row;flex-wrap:wrap;gap:.6em 2.2em;margin-top:.2em}
+  ul.checks li{padding-left:1.5em;font-size:clamp(.95rem,1.45vw,1.28rem)}
+  ul.checks li::before{content:"✓";background:none;color:var(--amber);
+    width:auto;height:auto;top:0;font-weight:700;font-size:1.15em}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:3.4vw;align-items:center}
+  .cols.wide-l{grid-template-columns:1.15fr .85fr}
+  /* Sin esto, un `pre` largo ensancha su columna —los items de grid traen
+     `min-width:auto`— y empuja la slide entera fuera de la pantalla. */
+  .cols>*,.grid2>*,.grid3>*{min-width:0}
+
+  .box{background:var(--panel);border:var(--border);box-shadow:var(--hard);padding:1.1em 1.3em}
+  .box--a{border-color:var(--amber);box-shadow:14px 14px 0 rgba(251,191,36,.28)}
+  .box--dim{border-color:#2a2436;box-shadow:14px 14px 0 rgba(42,36,54,.5)}
+  .box p{font-size:clamp(.95rem,1.45vw,1.28rem);line-height:1.4}
+  .box .t{display:block;color:var(--violet-lt);font-size:clamp(.7rem,1vw,.88rem);
+    letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin-bottom:.5em}
+  .box--a .t{color:var(--amber)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:2vw}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw}
+
+  /* el número protagonista: el número ES la diapositiva */
+  .stat{font-family:var(--display);font-size:clamp(5rem,17vw,15rem);line-height:.84;
+    letter-spacing:-.05em;color:var(--amber)}
+  .stat--sm{font-size:clamp(3.4rem,9vw,7.4rem)}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+    border:var(--border);box-shadow:var(--hard)}
+  th,td{border:2px solid #2a2436;padding:.6em .85em;text-align:left;
+    font-size:clamp(.88rem,1.35vw,1.2rem);line-height:1.3}
+  th{background:var(--violet);color:#fff;text-transform:uppercase;
+    letter-spacing:.14em;font-size:clamp(.68rem,1vw,.85rem)}
+  td.num{text-align:right;color:var(--amber);font-weight:700}
+  tr.total td{background:rgba(251,191,36,.12);font-weight:700;font-size:1.06em}
+  tr.total td.num{color:var(--amber)}
+
+  /* bloques de código: antes/después */
+  pre{background:#0e0b16;border-left:5px solid var(--violet);padding:.9em 1.1em;
+    overflow:auto;max-width:100%;font-size:clamp(.8rem,1.2vw,1.08rem);line-height:1.55;color:var(--ink)}
+  pre.bad{border-left-color:var(--red)}
+  pre.good{border-left-color:var(--amber)}
+  /* coloreado tipo editor: cada categoría con su color, como en un tema oscuro */
+  pre .cm{color:var(--dim);font-style:italic}   /* comentario */
+  pre .k{color:#c4b5fd}                          /* palabra clave */
+  pre .f{color:var(--cyan)}                      /* función o método */
+  pre .p{color:#f0abfc}                          /* propiedad */
+  pre .s{color:var(--amber)}                     /* cadena */
+  pre .b{color:#fca5a5}                          /* booleano */
+  pre .x{color:var(--red);font-weight:700}
+
+  /* ── ANIMACIONES DE ENTRADA ──
+     Regla del short: el cuadro 0 va completo. Aquí no hay cuadro 0 —hay
+     una slide que aparece— así que todo entra con un asentamiento corto
+     (`y:26` → 0) y nada tarda más de medio segundo en estar puesto. */
+  @keyframes settle{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+
+  .slide.on .kicker{animation:settle .3s ease-out both}
+  .slide.on h1,.slide.on h2{animation:settle .38s cubic-bezier(.2,.9,.3,1.02) both .06s}
+  .slide.on .lead,.slide.on>p{animation:settle .38s ease-out both .16s}
+  .slide.on .box,.slide.on pre,.slide.on figure{animation:settle .36s cubic-bezier(.2,.9,.3,1.02) both .22s}
+  .slide.on .grid2>*:nth-child(2),.slide.on .grid3>*:nth-child(2){animation-delay:.34s}
+  .slide.on .grid3>*:nth-child(3){animation-delay:.46s}
+  .slide.on .cols>*:nth-child(2){animation-delay:.34s}
+  .slide.on ul li{animation:slideIn .34s ease-out both}
+  .slide.on ul li:nth-child(1){animation-delay:.24s}
+  .slide.on ul li:nth-child(2){animation-delay:.36s}
+  .slide.on ul li:nth-child(3){animation-delay:.48s}
+  .slide.on ul li:nth-child(4){animation-delay:.60s}
+  .slide.on ul li:nth-child(5){animation-delay:.72s}
+  .slide.on .stat{animation:pop .42s cubic-bezier(.2,.9,.3,1.15) both .3s}
+  /* la tabla se llena fila por fila: es la slide del "500 líneas" y merece
+     que el número crezca delante de quien mira */
+  .slide.on tbody tr{animation:slideIn .3s ease-out both}
+  .slide.on tbody tr:nth-child(1){animation-delay:0.30s}
+  .slide.on tbody tr:nth-child(2){animation-delay:0.43s}
+  .slide.on tbody tr:nth-child(3){animation-delay:0.56s}
+  .slide.on tbody tr:nth-child(4){animation-delay:0.69s}
+  .slide.on tbody tr:nth-child(5){animation-delay:0.82s}
+  .slide.on tbody tr:nth-child(6){animation-delay:0.95s}
+  .slide.on tbody tr:nth-child(7){animation-delay:1.08s}
+  .slide.on tbody tr:nth-child(8){animation-delay:1.21s}
+  .slide.on tbody tr:nth-child(9){animation-delay:1.34s}
+  .slide.on tbody tr:nth-child(10){animation-delay:1.47s}
+  /* el total entra al final, después de la última fila que exista */
+  .slide.on tbody tr.total{animation:pop .38s cubic-bezier(.2,.9,.3,1.15) both 1.42s}
+
+
+  /* Este deck se presenta en vivo, no se graba: no hay que reservar esquina
+     para la cámara. La tecla C sigue funcionando por si acaba en video. */
+  :root{--cam-w:2vw}
+
+  /* ── ILUSTRACIONES SVG ──
+     Mismas reglas del deck del webinar: objetos concretos, trazo grueso, color
+     plano, y TODAS con bucle permanente. Cada transform en su propio <g>. */
+  figure{margin:0}
+  .art{width:100%;max-height:52vh;display:block}
+  /* la factura de «la regla del consumo» es el argumento, no un adorno */
+  .slide[data-t="Dónde se pueden posicionar"] .art{max-height:60vh}
+  .art *{transform-box:fill-box;transform-origin:center}
+
+  /* portada · las tres capas: la de abajo sostiene, las de arriba respiran
+     desfasadas. Lo que sube por el costado es el dinero, que atraviesa las
+     tres — que es exactamente de lo que va la junta. */
+  .slide.on .art .layer{animation:layer 4.4s ease-in-out infinite}
+  .slide.on .art .layer--2{animation-delay:.5s}
+  .slide.on .art .layer--3{animation-delay:1s}
+  @keyframes layer{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  .art .rise{transform-box:view-box}
+  .slide.on .art .rise{animation:rise 3.2s ease-in-out infinite backwards}
+  .slide.on .art .rise--2{animation-delay:1.1s}
+  .slide.on .art .rise--3{animation-delay:2.1s}
+  @keyframes rise{0%{transform:translateY(0);opacity:0}
+                  14%{opacity:1}80%{opacity:1}
+                  100%{transform:translateY(-272px);opacity:0}}
+
+  /* Monedas Y billetes caen del cielo y entran por la boca de la cartera.
+     ⚠️ `backwards`: sin él, la pieza se pinta quieta en su sitio durante el
+     animation-delay y se ven flotando las que aún no arrancan. */
+  .art .cae{transform-box:view-box}
+  .slide.on .art .cae{animation:caeDentro 2.7s cubic-bezier(.35,0,.9,1) infinite backwards}
+  .slide.on .art .cae--2{animation-delay:.42s;animation-duration:3.1s}
+  .slide.on .art .cae--3{animation-delay:.86s;animation-duration:2.4s}
+  .slide.on .art .cae--4{animation-delay:1.3s;animation-duration:2.9s}
+  .slide.on .art .cae--5{animation-delay:1.72s;animation-duration:2.5s}
+  .slide.on .art .cae--6{animation-delay:2.15s;animation-duration:3.2s}
+  @keyframes caeDentro{0%{transform:translateY(-24px);opacity:0}
+                       16%{opacity:1}
+                       74%{opacity:1}
+                       100%{transform:translateY(176px);opacity:0}}
+
+  /* ── LA PIRÁMIDE DE «DÓNDE POSICIONARSE» ──
+     Las tarjetas mismas son el dibujo: cada escalón más angosto que el de abajo
+     y centrados, así que el bloque entero se lee como pirámide sin una línea de
+     SVG. Entran de ABAJO hacia arriba, primero la base.
+     No van en bucle a propósito: es texto que hay que leer, y un texto que se
+     reanima cada pocos segundos no se lee. */
+  .pira{display:flex;flex-direction:column;align-items:center;gap:1.1vh;margin-top:1.4vh}
+  .pira>*{width:100%}
+  .pira--1{max-width:56%}
+  .pira--2{max-width:78%}
+  .pira--3{max-width:100%}
+  .slide.on .pira--1{animation:settle .4s cubic-bezier(.2,.9,.3,1.02) both .18s}
+  .slide.on .pira--2{animation:settle .4s cubic-bezier(.2,.9,.3,1.02) both .34s}
+  .slide.on .pira--3{animation:settle .4s cubic-bezier(.2,.9,.3,1.02) both .50s}
+
+  /* Los tres niveles crecen desde la izquierda al ENTRAR la slide, y se
+     quedan puestos. Antes iban en bucle y la consecuencia era peor que el
+     tirón que el bucle quería evitar: la barra encogía a cero y la cifra se
+     apagaba, así que durante media vuelta la slide estaba vacía — justo
+     mientras alguien la está explicando.
+     El ancho de cada barra es su porcentaje (300 px = 95%), así que verlas
+     crecer es ver la diferencia entre los tres niveles. */
+  .art .bar{transform-box:fill-box;transform-origin:left center}
+  .slide.on .art .bar{animation:barGrow .62s cubic-bezier(.2,.9,.3,1) both .2s}
+  .slide.on .art .bar--2{animation-delay:.42s}
+  .slide.on .art .bar--3{animation-delay:.64s}
+  /* ⚠️ El trazo NO se encoge (`non-scaling-stroke`), así que a escala cero los
+     dos bordes verticales se juntan y queda una rayita que se ve como defecto.
+     Por eso arranca invisible y no exactamente en cero. */
+  @keyframes barGrow{0%{transform:scaleX(.02);opacity:0}
+                     18%{opacity:1}
+                     100%{transform:scaleX(1);opacity:1}}
+  /* la cifra entra cuando su barra ya llegó: un número flotando junto a una
+     barra a medias se lee como error */
+  .slide.on .art .lbl{animation:lblIn .34s ease-out both .74s}
+  .slide.on .art .lbl--2{animation-delay:.96s}
+  .slide.on .art .lbl--3{animation-delay:1.18s}
+  @keyframes lblIn{0%{opacity:0;transform:translateX(-8px)}
+                   100%{opacity:1;transform:none}}
+  /* El destello: recorre cada barra por dentro, en bucle y para siempre. Da
+     movimiento continuo SIN que la barra ni la cifra se apaguen — que era el
+     defecto del bucle anterior, donde media vuelta la slide estaba vacía.
+     Arranca cuando la barra ya terminó de crecer. */
+  .art .sweep{transform-box:view-box}
+  .slide.on .art .sweep{animation:sweep 3.6s cubic-bezier(.45,0,.55,1) infinite 1.1s}
+  .slide.on .art .sweep--2{animation-delay:1.5s}
+  .slide.on .art .sweep--3{animation-delay:1.9s}
+  @keyframes sweep{0%{transform:translateX(0)}
+                   55%,100%{transform:translateX(420px)}}
+
+  /* el menú de las cinco piezas: cada una se enciende por turnos, como quien
+     va marcando lo que se lleva */
+  .slide.on .art .pick{animation:pick 6s steps(1) infinite}
+  .slide.on .art .pick--2{animation-delay:1.2s}
+  .slide.on .art .pick--3{animation-delay:2.4s}
+  .slide.on .art .pick--4{animation-delay:3.6s}
+  .slide.on .art .pick--5{animation-delay:4.8s}
+  @keyframes pick{0%,18%{opacity:1}19%,100%{opacity:0}}
+
+  /* la puerta de la capacitación: el pasador corre y la hoja se abre.
+     Sólo se abre para quien pasó — por eso vuelve a cerrarse en el bucle. */
+  .slide.on .art .bolt{animation:bolt 4.6s ease-in-out infinite}
+  @keyframes bolt{0%,18%{transform:translateX(0)}34%,74%{transform:translateX(-26px)}
+                  92%,100%{transform:translateX(0)}}
+  .art .door{transform-box:view-box;transform-origin:118px 300px}
+  .slide.on .art .door{animation:door 4.6s ease-in-out infinite}
+  @keyframes door{0%,30%{transform:none}48%,72%{transform:perspective(600px) rotateY(-58deg)}
+                  90%,100%{transform:none}}
+  .slide.on .art .glow{animation:glow 4.6s ease-in-out infinite}
+  @keyframes glow{0%,34%{opacity:0}52%,70%{opacity:.85}88%,100%{opacity:0}}
+
+  /* las dos redes: la malla late y el que intenta salirse rebota */
+  .slide.on .art .mesh{animation:meshpulse 3.4s ease-in-out infinite}
+  .slide.on .art .mesh--2{animation-delay:.6s}
+  .slide.on .art .mesh--3{animation-delay:1.2s}
+  @keyframes meshpulse{0%,100%{opacity:.3}50%{opacity:1}}
+  .art .bounce{transform-box:view-box}
+  .slide.on .art .bounce{animation:bounce 3s cubic-bezier(.3,0,.4,1) infinite}
+  @keyframes bounce{0%{transform:translateX(0)}
+                    38%{transform:translateX(96px)}
+                    54%{transform:translateX(70px)}
+                    100%{transform:translateX(0)}}
+
+  /* la bolsa de tokens: el grifo llena y la marca de "a costo" se mantiene
+     fija. El descuento del socio no la toca — eso dice el dibujo. */
+  .slide.on .art .drop{animation:drop 1.7s cubic-bezier(.4,0,.9,1) infinite}
+  .slide.on .art .drop--2{animation-delay:.55s}
+  .slide.on .art .drop--3{animation-delay:1.1s}
+  .art .drop{transform-box:view-box}
+  @keyframes drop{0%{transform:translateY(0);opacity:0}
+                  12%{opacity:1}78%{opacity:1}
+                  100%{transform:translateY(118px);opacity:0}}
+  .slide.on .art .shield{animation:shieldpulse 2.8s ease-in-out infinite}
+  @keyframes shieldpulse{0%,100%{opacity:.45}50%{opacity:1}}
+
+  /* ⚠️ Nota para el próximo texto girado: la regla base `.art *` pone
+     `transform-box:fill-box`, y en SVG2 el atributo `transform` ES la propiedad
+     CSS — así que un rotate con centro explícito se mide contra el glifo y el
+     texto desaparece. Se arregla con `style="transform-box:view-box"` EN LÍNEA
+     sobre el <text>; una regla de hoja pierde contra `.art *` por herencia. */
+
+  /* La cuota de tokens: el nivel baja mientras se consume y se rellena de golpe
+     cuando el cliente recarga. El bucle es el ciclo que explica la slide. */
+  .art .nivel{transform-box:fill-box;transform-origin:bottom}
+  .slide.on .art .nivel{animation:gasta 5.2s ease-in-out infinite}
+  @keyframes gasta{0%{transform:scaleY(1)}
+                   68%{transform:scaleY(.12)}
+                   82%{transform:scaleY(1)}
+                   100%{transform:scaleY(1)}}
+  /* cada turno que sale es una gota que cae por debajo del depósito */
+  .art .gota{transform-box:view-box}
+  .slide.on .art .gota{animation:turno 1.6s cubic-bezier(.4,0,.9,1) infinite backwards}
+  .slide.on .art .gota--2{animation-delay:.55s}
+  .slide.on .art .gota--3{animation-delay:1.1s}
+  @keyframes turno{0%{transform:translateY(-8px);opacity:0}
+                   20%{opacity:1}
+                   75%{opacity:1}
+                   100%{transform:translateY(22px);opacity:0}}
+
+  /* El portapapeles: se marca UNA casilla a la vez y va rotando entre las tres.
+     Antes se marcaban las tres y se quedaban — parecía "todas", cuando la
+     pregunta de al lado es justamente cuál de las tres.
+     Las tres animaciones duran lo mismo y NO llevan delay: un delay sobre un
+     bucle infinito las desfasa y acaban solapándose. */
+  .slide.on .art .tick--1{animation:sel1 6s steps(1) infinite}
+  .slide.on .art .tick--2{animation:sel2 6s steps(1) infinite}
+  .slide.on .art .tick--3{animation:sel3 6s steps(1) infinite}
+  @keyframes sel1{0%,29%{opacity:1}30%,100%{opacity:0}}
+  @keyframes sel2{0%,32%{opacity:0}33%,62%{opacity:1}63%,100%{opacity:0}}
+  @keyframes sel3{0%,65%{opacity:0}66%,95%{opacity:1}96%,100%{opacity:0}}
+
+  /* las columnas del acumulado: crecen desde la base una tras otra y se
+     quedan arriba hasta que el bucle reinicia. Ninguna baja jamás — ése es
+     literalmente el argumento de la slide. */
+  .art .stack{transform-origin:bottom}
+  .slide.on .art .stack{animation:grow 5.6s cubic-bezier(.2,.9,.3,1) both infinite}
+  @keyframes grow{0%{transform:scaleY(0)}14%,92%{transform:scaleY(1)}100%{transform:scaleY(1)}}
+  .slide.on .art .stack--2{animation-delay:0.16s}
+  .slide.on .art .stack--3{animation-delay:0.32s}
+  .slide.on .art .stack--4{animation-delay:0.48s}
+  .slide.on .art .stack--5{animation-delay:0.64s}
+  .slide.on .art .stack--6{animation-delay:0.80s}
+  .slide.on .art .stack--7{animation-delay:0.96s}
+  .slide.on .art .stack--8{animation-delay:1.12s}
+  .slide.on .art .stack--9{animation-delay:1.28s}
+  .slide.on .art .stack--10{animation-delay:1.44s}
+  .slide.on .art .stack--11{animation-delay:1.60s}
+  .slide.on .art .stack--12{animation-delay:1.76s}
+
+  /* la parte que les toca: late para que la vista vuelva a ella */
+  .slide.on .art .cut{animation:cutpulse 2.6s ease-in-out infinite}
+  @keyframes cutpulse{0%,100%{opacity:.55}50%{opacity:1}}
+  /* el consumo: cruza la barra de lado a lado y sale. Nadie lo detiene. */
+  .art .thru{transform-box:view-box}
+  .slide.on .art .thru{animation:thru 3s linear infinite}
+  @keyframes thru{0%{transform:translateX(0);opacity:0}
+                  10%{opacity:1}82%{opacity:1}
+                  100%{transform:translateX(348px);opacity:0}}
+
+  /* el % dentro del encabezado violeta: `.dim` ahí se pierde */
+  th .pct{color:#e9ddff;font-size:1.35em;letter-spacing:0}
+  /* el precio de lista es referencia, no es lo que ganan: va apagado.
+     Necesita ganarle a `td.num` (0,1,1), y por eso NO usa `.dim`. */
+  td.num.lista{color:#8b8ba0;font-weight:400}
+
+  /* fila de tabla marcada como la recomendada */
+  tr.pick td{background:rgba(251,191,36,.14);font-weight:700}
+  tr.pick td.num{color:var(--amber)}
+  td.no{color:var(--dim)}
+  td.si{color:var(--amber);font-weight:700}
+
+  /* la pregunta grande de cierre */
+  .ask{font-family:var(--display);font-size:clamp(1.9rem,4.2vw,3.4rem);line-height:1.02;
+    letter-spacing:-.03em;color:var(--amber);max-width:22ch}
+
+  /* El logo de Fixter.org va TAL CUAL: sin filtro, sin fondo, sin recorte.
+     El PNG ya trae contorno claro, así que se sostiene sobre el fondo oscuro. */
+  .logo{align-self:flex-start;width:clamp(140px,14vw,200px);margin-top:1.6vh;display:block}
+  /* en el cierre el logo cuelga del dibujo, no de la columna de texto */
+  figure .logo{width:clamp(120px,11vw,160px);margin:1.8vh auto 0;align-self:auto}
+
+  /* la moneda dentro del titular: la misma del dibujo del cierre, a la altura
+     del renglón. `em` para que crezca con el clamp del h2. */
+  .peso{width:.86em;height:.86em;vertical-align:-.04em;margin-left:.3em}
+
+  /* barra de avance y contador de slide */
+  .bar{position:fixed;left:0;right:0;bottom:0;height:8px;background:#1a1626;z-index:5}
+  .bar i{display:block;height:100%;background:var(--amber);width:0;transition:width .2s steps(4)}
+  .meta{position:fixed;top:1.6vh;right:1.6vw;font-family:var(--mono);
+    font-size:clamp(.68rem,.95vw,.85rem);background:var(--panel);color:var(--violet-lt);
+    padding:.4em .8em;z-index:5;letter-spacing:.05em;border:2px solid #2a2436}
+
+</style>
+</head>
+<body>
+
+<div class="bgfx">
+  <div class="grid"></div>
+  <div class="blob blob--v"></div>
+  <div class="blob blob--a"></div>
+  <div class="vig"></div>
+</div>
+
+<div class="deck">
+
+<!-- ═══ 1 · PORTADA ═══ -->
+<section class="slide" data-t="Portada">
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:2.2vh">
+      <img class="logo" src="data:image/png;base64,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" alt="Fixter.org">
+      <h1>Cómo ganamos<br>juntos vendiendo<br><em>cómputo</em></h1>
+      <p class="lead dim">Ayer su comunidad vio el producto y pidió más.
+        Hoy definimos <em>quién hace qué</em> y cuánto vale cada parte.</p>
+    </div>
+    <figure>
+      <!-- Las tres capas del negocio, apiladas: la de abajo sostiene y no se
+           mueve mucho; las de arriba respiran desfasadas. Lo que sube por el
+           costado es el dinero, y atraviesa las tres. Ese recorrido ES la junta. -->
+      <svg class="art" viewBox="0 0 460 350" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-label="Tres capas apiladas y el dinero subiendo por ellas">
+        <!-- capa 3 · agentes y aplicación -->
+        <g class="layer layer--3">
+          <rect x="96" y="52" width="268" height="62" fill="#15121f" stroke="#fbbf24" stroke-width="6"/>
+          <rect x="120" y="74" width="60" height="18" fill="#fbbf24"/>
+          <rect x="192" y="74" width="92" height="18" fill="#2a2436"/>
+          <rect x="296" y="74" width="44" height="18" fill="#2a2436"/>
+        </g>
+        <!-- capa 2 · las cajas -->
+        <g class="layer layer--2">
+          <rect x="72" y="142" width="316" height="62" fill="#15121f" stroke="#a78bfa" stroke-width="6"/>
+          <rect x="96" y="164" width="40" height="18" fill="#a78bfa"/>
+          <rect x="148" y="164" width="40" height="18" fill="#a78bfa"/>
+          <rect x="200" y="164" width="40" height="18" fill="#2a2436"/>
+          <rect x="252" y="164" width="40" height="18" fill="#2a2436"/>
+          <rect x="304" y="164" width="40" height="18" fill="#2a2436"/>
+        </g>
+        <!-- capa 1 · el fierro. Es la que sostiene: se mueve menos. -->
+        <g class="layer">
+          <rect x="48" y="232" width="364" height="66" fill="#15121f" stroke="#7c3aed" stroke-width="6"/>
+          <g stroke="#7c3aed" stroke-width="4">
+            <path d="M78 256 L78 274 M104 256 L104 274 M130 256 L130 274 M156 256 L156 274"/>
+            <path d="M182 256 L182 274 M208 256 L208 274 M234 256 L234 274 M260 256 L260 274"/>
+            <path d="M286 256 L286 274 M312 256 L312 274 M338 256 L338 274 M364 256 L364 274"/>
+          </g>
+        </g>
+        <!-- el dinero cruzando las tres capas de abajo a arriba: billetes, no
+             círculos. Van CENTRADOS sobre la pila (eje x=230); antes subían
+             pegados al borde derecho y se salían del cuadro. -->
+        <g class="rise">
+          <g transform="rotate(-13 198 300)">
+            <rect x="174" y="288" width="48" height="26" rx="3" fill="#15121f" stroke="#fbbf24" stroke-width="4"/>
+            <circle cx="198" cy="301" r="6" fill="#fbbf24"/>
+          </g>
+        </g>
+        <g class="rise rise--2">
+          <g transform="rotate(9 240 300)">
+            <rect x="216" y="288" width="48" height="26" rx="3" fill="#15121f" stroke="#4fc7ee" stroke-width="4"/>
+            <circle cx="240" cy="301" r="6" fill="#4fc7ee"/>
+          </g>
+        </g>
+        <g class="rise rise--3">
+          <g transform="rotate(-5 219 300)">
+            <rect x="195" y="288" width="48" height="26" rx="3" fill="#15121f" stroke="#a78bfa" stroke-width="4"/>
+            <circle cx="219" cy="301" r="6" fill="#a78bfa"/>
+          </g>
+        </g>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 2 · LA SEÑAL DE AYER ═══ -->
+<section class="slide" data-t="La señal de ayer">
+  <span class="kicker">Punto de partida</span>
+  <h2>Ayer no fue un demo.<br>Fue <em>demanda</em>.</h2>
+  <div class="grid3" style="margin-top:1.4vh">
+    <div class="box box--a">
+      <span class="t">Lo que dijeron</span>
+      <p>«Quiero usarlo para <strong>desarrollar ya</strong>.»</p>
+    </div>
+    <div class="box">
+      <span class="t">Lo que preguntaron</span>
+      <p>Cómo <strong>revenderlo</strong>. Los modelos de venta. El negocio.</p>
+    </div>
+    <div class="box box--dim">
+      <span class="t">Lo que falta</span>
+      <p>Poner sobre la mesa el <strong>reparto de esfuerzo</strong>.</p>
+    </div>
+  </div>
+  <p class="dim" style="margin-top:1.2vh">Eso es lo único que traigo hoy.</p>
+</section>
+
+<!-- ═══ 3 · DÓNDE SE PUEDEN POSICIONAR ═══ -->
+<section class="slide" data-t="Dónde se pueden posicionar">
+  <span class="kicker">De qué estamos hablando</span>
+  <h2>Tres lugares donde <em>posicionarse</em></h2>
+  <!-- Las tarjetas SON el dibujo: se leen 1, 2, 3 de arriba abajo y cada una es
+       MÁS ANCHA que la anterior. El ancho es la oportunidad, así que marca propia
+       —la de más margen— es la más grande. Al revés se leía como si valiera menos. -->
+  <div class="pira">
+    <div class="box box--dim pira--1">
+      <span class="t">1 · Referidor</span>
+      <p>Nos presentan al cliente. Fixter hace el resto.</p>
+    </div>
+    <div class="box pira--2">
+      <span class="t">2 · Revendedor</span>
+      <p>Venden y atienden a sus clientes. Marca Ghosty en la plataforma.</p>
+    </div>
+    <div class="box box--a pira--3">
+      <span class="t">3 · Marca propia</span>
+      <p>Su propia marca, con sus propias cajas, tenants y precios.
+        Fixter otorga: <strong>espacio dedicado de infra y nube.</strong></p>
+    </div>
+  </div>
+  <p class="dim" style="margin-top:1.2vh">Debajo de las tres está el fierro, y ése lo mantiene
+    <strong>Fixter.org</strong>.</p>
+</section>
+
+<!-- ═══ 4 · LO QUE GANA CADA NIVEL ═══ -->
+<section class="slide" data-t="Lo que gana cada nivel">
+  <div class="cols">
+    <div style="display:flex;flex-direction:column;gap:1.8vh">
+      <span class="kicker">Lo que paga el mercado</span>
+      <h2>El techo lo ponen<br><em>ustedes</em></h2>
+      <ul class="amber" style="margin-top:.6vh">
+        <li><strong>Referir</strong> <span class="dim">· 20%</span></li>
+        <li><strong>Revender</strong> <span class="dim">· 30%</span></li>
+        <li><strong>Marca propia</strong> <span class="dim">· +95%</span></li>
+      </ul>
+      <p class="dim">En marca propia el margen ya no lo fija Fixter:
+        lo fija <strong class="a">el precio que ustedes le pongan</strong> a su cliente.</p>
+    </div>
+    <figure>
+      <!-- Tres niveles apilados: el de abajo es ancho y bajo, el de arriba
+           angosto y alto. Cada uno se enciende por turnos, de abajo a arriba —
+           no se salta, se sube. -->
+      <svg class="art" viewBox="0 0 460 388" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-label="Tres niveles apilados que se encienden de abajo a arriba">
+        <defs>
+          <clipPath id="cb1"><rect x="40" y="48" width="63" height="56"/></clipPath>
+          <clipPath id="cb2"><rect x="40" y="158" width="95" height="56"/></clipPath>
+          <clipPath id="cb3"><rect x="40" y="268" width="300" height="56"/></clipPath>
+        </defs>
+        <text x="40" y="36" fill="#a78bfa"
+              font-family="JetBrains Mono, monospace" font-size="16" font-weight="700"
+              letter-spacing="1">referir</text>
+        <g class="bar bar--1">
+          <rect x="40" y="48" width="63" height="56" fill="#15121f" stroke="#7c3aed"
+                stroke-width="6" vector-effect="non-scaling-stroke"/>
+          <!-- el destello recorre la barra por dentro: da vida sin que la barra
+               ni su cifra desaparezcan nunca -->
+          <g clip-path="url(#cb1)">
+            <g class="sweep sweep--1">
+              <rect x="-20" y="48" width="46" height="56" fill="#7c3aed" opacity=".22"/>
+            </g>
+          </g>
+        </g>
+        <g class="lbl lbl--1">
+          <text x="119" y="88" fill="#a78bfa"
+                font-family="Archivo Black, sans-serif" font-size="30">20%</text>
+        </g>
+        <text x="40" y="146" fill="#c4b5fd"
+              font-family="JetBrains Mono, monospace" font-size="16" font-weight="700"
+              letter-spacing="1">revender</text>
+        <g class="bar bar--2">
+          <rect x="40" y="158" width="95" height="56" fill="#15121f" stroke="#a78bfa"
+                stroke-width="6" vector-effect="non-scaling-stroke"/>
+          <!-- el destello recorre la barra por dentro: da vida sin que la barra
+               ni su cifra desaparezcan nunca -->
+          <g clip-path="url(#cb2)">
+            <g class="sweep sweep--2">
+              <rect x="-20" y="158" width="46" height="56" fill="#a78bfa" opacity=".22"/>
+            </g>
+          </g>
+        </g>
+        <g class="lbl lbl--2">
+          <text x="151" y="198" fill="#c4b5fd"
+                font-family="Archivo Black, sans-serif" font-size="30">30%</text>
+        </g>
+        <text x="40" y="256" fill="#fbbf24"
+              font-family="JetBrains Mono, monospace" font-size="16" font-weight="700"
+              letter-spacing="1">marca propia</text>
+        <g class="bar bar--3">
+          <rect x="40" y="268" width="300" height="56" fill="#15121f" stroke="#fbbf24"
+                stroke-width="7" vector-effect="non-scaling-stroke"/>
+          <!-- el destello recorre la barra por dentro: da vida sin que la barra
+               ni su cifra desaparezcan nunca -->
+          <g clip-path="url(#cb3)">
+            <g class="sweep sweep--3">
+              <rect x="-20" y="268" width="46" height="56" fill="#fbbf24" opacity=".22"/>
+            </g>
+          </g>
+        </g>
+        <g class="lbl lbl--3">
+          <text x="356" y="308" fill="#fbbf24"
+                font-family="Archivo Black, sans-serif" font-size="30">+95%</text>
+        </g>
+        <path d="M40 352 L420 352" stroke="#2a2436" stroke-width="3"/>
+        <text x="40" y="378" fill="#7a7a8c"
+              font-family="JetBrains Mono, monospace" font-size="15">su margen · % de lo que el cliente paga al mes</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 5 · LAS TRES FORMAS ═══ -->
+<section class="slide" data-t="Las tres formas">
+  <span class="kicker">Sin letras chiquitas</span>
+  <h2>Las tres formas, <em>lado a lado</em></h2>
+  <table style="margin-top:1.2vh">
+    <thead><tr><th></th><th>Referidor</th><th>Revendedor</th><th>Marca propia</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Qué hacen</strong></td><td>Nos presentan al cliente</td><td class="si">Venden ustedes</td><td class="si">Venden ustedes</td></tr>
+      <tr><td><strong>Quién atiende al cliente</strong></td><td class="dim">Fixter</td><td class="si">Ustedes</td><td class="si">Ustedes</td></tr>
+      <tr><td><strong>Quién factura</strong></td><td class="dim">Fixter</td><td>Fixter, o <strong class="a">ustedes</strong> si prefieren</td><td class="si">Ustedes</td></tr>
+      <tr><td><strong>La marca</strong></td><td class="dim">Ghosty Studio</td><td class="dim">Ghosty Studio</td><td class="si">La suya</td></tr>
+      <tr><td><strong>El precio al cliente</strong></td><td class="dim">El de lista</td><td class="dim">El de lista</td><td class="si">El que pongan</td></tr>
+      <tr><td><strong>Si el cliente no paga o se va</strong></td><td>Dejan de ganar</td><td>Dejan de ganar, pero <strong class="a">el setup ya lo cobraron</strong></td><td>La renta se paga igual</td></tr>
+      <tr><td><strong>Inversión</strong></td><td class="si">$0</td><td class="si">$0</td><td>Requiere inversión</td></tr>
+      <tr><td><strong>Cuánto dura</strong></td><td>12 meses</td><td class="si">Permanente, mientras no haya churn</td><td class="si">Es suyo</td></tr>
+      <tr class="total"><td><strong>Su margen</strong></td><td class="num">20%</td><td class="num">30%</td><td class="num">+95%</td></tr>
+    </tbody>
+  </table>
+  <p class="dim" style="margin-top:1vh">La diferencia entre 20% y 30% es <strong class="a">una sola
+    fila</strong>: <strong class="v">quién atiende al cliente</strong>.</p>
+</section>
+
+<!-- ═══ 6 · QUÉ SE LLEVAN, EN PESOS ═══ -->
+<section class="slide" data-t="Qué se llevan, en pesos">
+  <span class="kicker">Referidor y revendedor · sin invertir nada</span>
+  <h2>Lo que ganan, <em>en pesos</em></h2>
+  <table style="margin-top:1.2vh">
+    <thead><tr><th>Lo que venden</th><th>Precio de lista</th><th>Si refieren<br><span class="pct">20%</span></th><th>Si revenden<br><span class="pct">30%</span></th></tr></thead>
+    <tbody>
+      <tr><td>1 espacio Pro</td><td class="num lista">$690</td><td class="num">$138</td><td class="num">$207</td></tr>
+      <tr><td><strong>10 espacios Pro</strong></td><td class="num lista">$6,900</td><td class="num">$1,380</td><td class="num">$2,070</td></tr>
+      <tr><td>1 Empresarial</td><td class="num lista">$5,990</td><td class="num">$1,198</td><td class="num">$1,797</td></tr>
+      <tr class="pick"><td><strong>10 Pro + 1 Empresarial</strong></td><td class="num lista">$12,890</td><td class="num">$2,578</td><td class="num">$3,867</td></tr>
+    </tbody>
+  </table>
+  <p class="dim" style="margin-top:.9vh">Al mes, antes de IVA, y <strong class="v">recurrente</strong>.</p>
+  <div class="box box--a" style="margin-top:1.1vh">
+    <span class="t">Y aparte de eso</span>
+    <p>Como revendedores pueden cobrar una <strong>cuota de implementación</strong> por
+      configurar al cliente — uno o dos meses del plan: <strong class="a">$690 a $1,380</strong>
+      en un Pro, <strong class="a">$6,000 a $12,000</strong> en un Empresarial. Ésa se la
+      quedan completa.</p>
+  </div>
+</section>
+
+<!-- ═══ 7 · LOS TOKENS ═══ -->
+<section class="slide" data-t="Los tokens">
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:1.6vh">
+      <span class="kicker">La pregunta que siempre sale</span>
+      <h2>Los tokens también<br><em>les pagan</em></h2>
+      <p class="lead">Cada turno de un agente consume tokens. Si el cliente
+        quiere que <em>Fixter</em> se los provea, se los provee.</p>
+      <p class="lead">Y eso también lleva <em>su margen</em>.</p>
+      <div class="box box--dim" style="margin-top:.6vh">
+        <span class="t">En marca propia</span>
+        <p>Ponen <strong>sus propias llaves</strong> y controlan sus tokens
+          directamente.</p>
+      </div>
+    </div>
+    <figure>
+      <!-- El medidor: los tokens se consumen y la cuota se vacía; al llegar
+           abajo el cliente recarga y vuelve a llenarse. El bucle ES el ciclo
+           que se está explicando, no un adorno. -->
+      <svg class="art" viewBox="0 0 460 350" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-label="La cuota de tokens del mes, que se consume y se recarga">
+        <text x="230" y="30" text-anchor="middle" fill="#7a7a8c"
+              font-family="JetBrains Mono, monospace" font-size="16" font-weight="700"
+              letter-spacing="2">SU CUOTA DEL MES</text>
+
+        <!-- el garrafón: cuello arriba, cuerpo con hombros, y una llave abajo
+             por donde sale lo que se consume. -->
+        <!-- el cuello -->
+        <path d="M204 50 L204 74 M256 50 L256 74" stroke="#a78bfa" stroke-width="7"/>
+        <rect x="198" y="42" width="64" height="14" rx="4" fill="#15121f" stroke="#a78bfa" stroke-width="6"/>
+        <!-- el cuerpo, con hombros -->
+        <path d="M204 74 Q126 96 126 152 L126 256 Q126 274 146 274 L314 274
+                 Q334 274 334 256 L334 152 Q334 96 256 74"
+              fill="#15121f" stroke="#a78bfa" stroke-width="7"/>
+
+        <!-- lo que queda dentro: baja al consumirse y se rellena al recargar -->
+        <g class="nivel">
+          <path d="M132 122 Q132 106 168 96 L292 96 Q328 106 328 122 L328 254
+                   Q328 268 312 268 L148 268 Q132 268 132 254 Z" fill="#5ee88a" opacity=".85"/>
+        </g>
+
+        <!-- la tajada que es SUYA: 20% del ancho del garrafón, marcada sobre el
+             líquido para que se lea como parte de lo que se consume -->
+        <g class="cut">
+          <path d="M132 122 Q132 106 168 96 L173 96 L173 268 L148 268 Q132 268 132 254 Z"
+                fill="#0b0b0f" opacity=".55"/>
+          <path d="M173 96 L173 268" stroke="#0b0b0f" stroke-width="4"/>
+        </g>
+        <g>
+          <text x="112" y="172" text-anchor="end" fill="#f7f0e4"
+                font-family="Archivo Black, sans-serif" font-size="30">20%</text>
+          <text x="112" y="194" text-anchor="end" fill="#7a7a8c"
+                font-family="JetBrains Mono, monospace" font-size="14" font-weight="700">de margen</text>
+          <path d="M116 168 L152 168" stroke="#7a7a8c" stroke-width="3"/>
+        </g>
+
+        <!-- LA LLAVE, en el costado derecho: base contra el garrafón, cuerpo
+             horizontal hacia afuera y codo que baja. El pico hacia abajo es lo
+             que la hace leer como llave. -->
+        <g>
+          <rect x="322" y="228" width="26" height="26" rx="4" fill="#15121f" stroke="#a78bfa" stroke-width="5"/>
+          <path d="M348 241 L382 241 L382 262" fill="none" stroke="#a78bfa" stroke-width="9"/>
+          <rect x="373" y="260" width="18" height="12" rx="2" fill="#a78bfa"/>
+          <path d="M362 241 L362 220" stroke="#a78bfa" stroke-width="7"/>
+          <rect x="346" y="208" width="32" height="12" rx="6" fill="#15121f" stroke="#a78bfa" stroke-width="5"/>
+        </g>
+
+        <!-- lo que sale por la llave: cada gota es un turno del agente -->
+        <g class="gota"><circle cx="382" cy="282" r="8" fill="#5ee88a"/></g>
+        <g class="gota gota--2"><circle cx="382" cy="282" r="6" fill="#5ee88a"/></g>
+        <g class="gota gota--3"><circle cx="382" cy="282" r="7" fill="#5ee88a"/></g>
+
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 8 · CÓMO FUNCIONA MARCA PROPIA ═══ -->
+<section class="slide" data-t="Cómo funciona marca propia">
+  <span class="kicker">El tercer nivel, en concreto</span>
+  <h2>Marca propia:<br>una <em>renta fija</em></h2>
+  <div class="grid2" style="margin-top:1.4vh">
+    <div class="box">
+      <span class="t">1 · Su instancia</span>
+      <p>Su Ghosty Studio con su marca, su dominio y sus tenants.
+        Encendida siempre.</p>
+    </div>
+    <div class="box box--a">
+      <span class="t">2 · Su lote de cajas</span>
+      <p>Donde corren los agentes de <strong>sus</strong> clientes.
+        Es lo que crece con su negocio.</p>
+    </div>
+  </div>
+  <div class="box box--dim" style="margin-top:1.4vh">
+    <span class="t">Cómo se cobra</span>
+    <p><strong>Una cuota mensual fija</strong> = instancia + su lote de cajas.
+      Si necesitan más cajas para crecer, <strong class="a">se provisionan</strong>.</p>
+  </div>
+  <p class="dim" style="margin-top:1.2vh">Fija y no por uso: con un costo estable
+    <strong class="a">pueden ponerle precio a su propio producto</strong>.</p>
+</section>
+
+<!-- ═══ 9 · LA PREGUNTA ═══ -->
+<section class="slide" data-t="La pregunta">
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:2.4vh">
+      <span class="kicker">Lo único que necesito hoy</span>
+      <p class="ask">¿En qué nivel<br>se quieren<br>posicionar?</p>
+      <p class="lead dim">Elijan uno y <em>arrancamos</em>. Los dos primeros no
+        necesitan nada de su parte.</p>
+    </div>
+    <figure>
+      <!-- El portapapeles con las TRES casillas —una por nivel—: se marcan de
+           arriba abajo y se borran juntas. Antes eran cinco, del menú viejo de
+           piezas, y contradecían la pregunta que está al lado. -->
+      <svg class="art" viewBox="0 0 460 350" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-label="Un portapapeles con tres casillas que se van marcando">
+        <g class="clipglow">
+          <rect x="86" y="34" width="288" height="292" fill="#fbbf24" opacity=".10"/>
+        </g>
+        <rect x="96" y="44" width="268" height="272" fill="#15121f" stroke="#fbbf24" stroke-width="7"/>
+        <rect x="196" y="24" width="68" height="34" fill="#15121f" stroke="#fbbf24" stroke-width="6"/>
+        <rect x="212" y="14" width="36" height="18" rx="9" fill="none" stroke="#a78bfa" stroke-width="6"/>
+        <rect x="126" y="110" width="34" height="34" fill="none" stroke="#7c3aed" stroke-width="5"/>
+        <rect x="180" y="121" width="150" height="14" fill="#7c3aed" opacity=".45"/>
+        <path class="tick tick--1" d="M131 127 L143 139 L166 112" stroke="#7c3aed" stroke-width="7"
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <rect x="126" y="168" width="34" height="34" fill="none" stroke="#a78bfa" stroke-width="5"/>
+        <rect x="180" y="179" width="124" height="14" fill="#a78bfa" opacity=".45"/>
+        <path class="tick tick--2" d="M131 185 L143 197 L166 170" stroke="#a78bfa" stroke-width="7"
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <rect x="126" y="226" width="34" height="34" fill="none" stroke="#fbbf24" stroke-width="5"/>
+        <rect x="180" y="237" width="166" height="14" fill="#fbbf24" opacity=".45"/>
+        <path class="tick tick--3" d="M131 243 L143 255 L166 228" stroke="#fbbf24" stroke-width="7"
+              stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══ 10 · CIERRE ═══ -->
+<section class="slide" data-t="Cierre">
+  <div class="cols wide-l">
+    <div style="display:flex;flex-direction:column;gap:1.6vh">
+      <span class="kicker">Lo que propongo</span>
+      <h2>Empiezan sin desembolsar<br><em>un solo peso<svg class="peso" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="19" fill="#fbbf24"/>
+          <circle cx="20" cy="20" r="12" fill="none" stroke="#0b0b0f" stroke-width="4"/>
+        </svg></em></h2>
+      <div class="box box--a">
+        <span class="t">Hoy</span>
+        <p><strong>Referidor al 20%.</strong> Sin invertir nada, sin compromiso.</p>
+      </div>
+      <div class="box">
+        <span class="t">Para cobrar setup</span>
+        <p><strong>Revendedor al 30%.</strong> Sigue sin costarles nada. Y entra una <strong class="a">cuota de implementación</strong> con cada cliente.</p>
+      </div>
+      <div class="box box--dim">
+        <span class="t">Para controlarlo todo</span>
+        <p><strong>Marca propia.</strong> Ahí sí se invierte, pero
+          <strong class="a">se gana en serio con negocio propio instantáneo</strong>.</p>
+      </div>
+    </div>
+    <figure>
+      <!-- La cartera cerrada: sólo entra. Es el argumento entero de la slide en
+           un dibujo, y por eso el cierre ya no necesita una slide aparte. -->
+      <svg class="art" viewBox="0 0 460 360" fill="none" xmlns="http://www.w3.org/2000/svg"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-label="Una cartera abierta donde caen monedas y billetes">
+        <g class="cae cae--1">
+          <circle cx="168" cy="0" r="13" fill="#fbbf24"/>
+          <circle cx="168" cy="0" r="8" fill="none" stroke="#0b0b0f" stroke-width="2.5"/>
+        </g>
+        <g class="cae cae--2">
+          <g transform="rotate(-7 214 0)">
+            <rect x="189" y="-13" width="50" height="26" rx="3" fill="#15121f" stroke="#4fc7ee" stroke-width="4"/>
+            <circle cx="214" cy="0" r="6" fill="#4fc7ee"/>
+          </g>
+        </g>
+        <g class="cae cae--3">
+          <circle cx="252" cy="0" r="11" fill="#a78bfa"/>
+          <circle cx="252" cy="0" r="6" fill="none" stroke="#0b0b0f" stroke-width="2.5"/>
+        </g>
+        <g class="cae cae--4">
+          <g transform="rotate(11 192 0)">
+            <rect x="167" y="-13" width="50" height="26" rx="3" fill="#15121f" stroke="#fbbf24" stroke-width="4"/>
+            <circle cx="192" cy="0" r="6" fill="#fbbf24"/>
+          </g>
+        </g>
+        <g class="cae cae--5">
+          <circle cx="288" cy="0" r="12" fill="#fbbf24"/>
+          <circle cx="288" cy="0" r="7" fill="none" stroke="#0b0b0f" stroke-width="2.5"/>
+        </g>
+        <g class="cae cae--6">
+          <g transform="rotate(-16 268 0)">
+            <rect x="243" y="-13" width="50" height="26" rx="3" fill="#15121f" stroke="#a78bfa" stroke-width="4"/>
+            <circle cx="268" cy="0" r="6" fill="#a78bfa"/>
+          </g>
+        </g>
+
+        <!-- La cartera: tres piezas con profundidad distinta para que se lea
+             como objeto y no como rectángulo. El fondo interior es más claro
+             que el frente, así que la boca se ve HUECA — que es lo que hace que
+             lo que cae parezca entrar. -->
+        <g>
+          <!-- el interior, visible por la boca -->
+          <path d="M112 154 L348 154 L348 206 L112 206 Z" fill="#241d3a"/>
+          <!-- el cuerpo, al frente -->
+          <path d="M108 186 L108 300 Q108 316 124 316 L336 316 Q352 316 352 300 L352 186 Z"
+                fill="#15121f" stroke="#fbbf24" stroke-width="7"/>
+          <!-- la solapa, abatida sobre el frente -->
+          <path d="M108 186 L352 186 L352 230 Q230 262 108 230 Z"
+                fill="#1c1730" stroke="#fbbf24" stroke-width="7"/>
+          <!-- los bordes de la boca -->
+          <path d="M108 154 L108 190 M352 154 L352 190" stroke="#fbbf24" stroke-width="7"/>
+          <path d="M112 154 L348 154" stroke="#fbbf24" stroke-width="5" opacity=".55"/>
+          <!-- el broche, colgando de la solapa -->
+          <rect x="206" y="232" width="48" height="30" rx="7" fill="#0b0b0f" stroke="#fbbf24" stroke-width="5"/>
+          <circle cx="230" cy="247" r="7" fill="#fbbf24"/>
+          <!-- la costura del frente -->
+          <path d="M126 288 Q230 302 334 288" stroke="#2a2436" stroke-width="4" stroke-dasharray="9 8"/>
+        </g>
+        <text x="230" y="348" text-anchor="middle" fill="#7a7a8c"
+              font-family="JetBrains Mono, monospace" font-size="15">sólo entra</text>
+      </svg>
+      <img class="logo" src="data:image/png;base64,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" alt="Fixter.org">
+    </figure>
+  </div>
+</section>
+
+</div><!-- /deck -->
+
+<div class="bar"><i></i></div>
+<div class="meta" id="meta"></div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var i=0;
+
+  function render(){
+    var cur=slides[i];
+    // display:none corta las animaciones; al volver a mostrarla arrancan solas.
+    slides.forEach(function(s){s.classList.remove('on')});
+    void cur.offsetWidth;
+    cur.classList.add('on');
+    document.querySelector('.bar i').style.width=((i+1)/slides.length*100)+'%';
+    document.getElementById('meta').textContent=(i+1)+' / '+slides.length+'  ·  '+slides[i].dataset.t;
+    location.hash=i+1;
+  }
+  var moving=false;
+  function go(d){
+    if(moving) return;
+    var prev=i, next=Math.max(0,Math.min(slides.length-1,i+d));
+    if(next===prev) return;
+    moving=true;
+    var out=slides[prev];
+    out.classList.remove('on');
+    out.classList.add('out');
+    setTimeout(function(){ out.classList.remove('out'); i=next; render(); moving=false },160);
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(-1)}
+    else if(e.key==='Home'){i=0;render()}
+    else if(e.key==='End'){i=slides.length-1;render()}
+    else if(e.key.toLowerCase()==='f'){
+      document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+  });
+  // Un click en un link abre el link y nada más; en cualquier otro lado, avanza.
+  document.addEventListener('click',function(e){
+    if(e.target.closest('a')) return;
+    go(1);
+  });
+
+  var h=parseInt(location.hash.slice(1),10);
+  if(h>0&&h<=slides.length) i=h-1;
+  render();
+})();
+</script>
+</body>
+</html>

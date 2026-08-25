@@ -23,6 +23,12 @@ export type WebinarSlot = {
   blurb: string;
   /** lo que se va a ver, en la landing. 3-4 líneas, la última suele ser el regalo */
   bullets: string[];
+  /**
+   * La línea de "qué te llevas" del recordatorio. Vive en el slot porque cada
+   * webinar regala algo distinto: el del 13 daba el PDF de las seis piezas y el
+   * correo del 20 lo seguía prometiendo.
+   */
+  reminderPerk: string;
   /** inicio/fin en formato Google Calendar (hora local CDMX) */
   start: string;
   end: string;
@@ -43,6 +49,8 @@ export const WEBINAR_SLOTS: WebinarSlot[] = [
       "La interfaz: la única pieza que el usuario ve",
       "🎁 Al minuto 30, el PDF de las seis piezas — gratis, compres o no",
     ],
+    reminderPerk:
+      "Al minuto 30 dejo en el chat el PDF con las seis piezas 🎁",
     start: "20260813T200000",
     end: "20260813T210000",
   },
@@ -60,6 +68,8 @@ export const WEBINAR_SLOTS: WebinarSlot[] = [
       "Firecracker, lo que usa AWS Lambda, y qué cuesta cada escalón",
       "Demo: levantar una caja y tratar de salirse de ella",
     ],
+    reminderPerk:
+      "Levantamos una caja en vivo y vemos pa que nos sirve 📦",
     start: "20260820T200000",
     end: "20260820T210000",
   },
@@ -67,16 +77,17 @@ export const WEBINAR_SLOTS: WebinarSlot[] = [
     id: "2026-08-27",
     short: "Jueves 27 de agosto · 8:00 PM",
     label: "jueves 27 de agosto a las 8:00 PM (CDMX)",
-    // TODO(bliss): falta decidir el tema del tercero. Mientras, el de la serie.
-    title: "Diseño de sistemas agénticos",
-    subtitle: "Construyendo un agente que sobrevive a producción",
+    title: "¿Para qué me sirve un agente?",
+    subtitle: "Dónde sí paga, y dónde un script hace lo mismo",
     blurb:
-      "Una hora en vivo sobre cómo se construyen los agentes que aguantan usuarios reales, con sistemas nuestros que hoy corren en producción por dentro. Demos sobre un agente de verdad y Q&A al final.",
+      "La pregunta que casi nadie contesta sin querer venderte algo. Una hora recorriendo trabajos donde un agente ya se gana su lugar, y los casos donde un script de cien líneas hace lo mismo por una fracción del costo. Con sistemas nuestros que hoy corren en producción, abiertos por dentro, y Q&A al final.",
     bullets: [
-      "La ecuación: agente = modelo + harness (y por qué el harness es tuyo)",
-      "Contexto, ejecución durable, memoria y autenticación",
-      "Demos en vivo sobre un agente real, no slides genéricas",
+      "Qué trabajos aguanta hoy un agente, y con qué margen de error",
+      "Cuándo un script hace lo mismo más barato y más predecible",
+      "Cómo se ve por dentro uno que atiende gente de verdad",
+      "Lo que cuesta operarlo al mes, con las cifras a la vista",
     ],
+    reminderPerk: "Abrimos por dentro un agente que hoy atiende gente 🧪",
     start: "20260827T200000",
     end: "20260827T210000",
   },

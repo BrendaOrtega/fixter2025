@@ -544,11 +544,16 @@ const VideosContent = ({
                 // Las entregas de una secuencia las resuelve el servidor: aquí
                 // solo se lee su veredicto y la fecha en que se abren.
                 const unlock = v?.slug ? sequenceUnlocks?.[v.slug] : undefined;
+                // Quien compró ve todo: `isLocked` llega como !isPurchased, así
+                // que en cuanto es false ya no hay nada que esperar. Iba primero
+                // en la rama de secuencia y NO en la de suscriptor, y por eso un
+                // webinar del curso comprado se abría al hacer clic pero se
+                // pintaba con candado y cursor de prohibido: el servidor decía
+                // que sí (`resolveAccess` mira `isPurchased` antes que nada) y
+                // la lista decía que no.
                 const videoIsLocked =
                   accessLevel === "public" ? false :
-                  accessLevel === "subscriber" ? !isSubscribed :
-                  // Quien compró ve todo: `isLocked` ya viene como !isPurchased,
-                  // así que si es false no hay nada que esperar.
+                  accessLevel === "subscriber" ? isLocked && !isSubscribed :
                   accessLevel === "sequence" ? isLocked && !unlock?.unlocked :
                   isLocked; // paid
 

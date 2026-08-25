@@ -27,11 +27,12 @@ const template = ({
 }) => `
 <h1 style="font-size:26px;margin:0 0 8px 0;color:#19262A;">${
   firstName(userName)
-    ? `${firstName(userName)}, ya le caes ¿qué no?`
-    : "Ya le caes ¿qué no?"
+    ? `¡${firstName(userName)}, ya vente a la llamada!`
+    : "¡Ya vente a la llamada!"
 } 👋</h1>
 <p style="margin:0 0 8px 0;">
-  <strong>${slot.title}</strong> — Hoy, ${slot.short
+  <strong>${slot.title}</strong><br/>
+  Hoy, ${slot.short
     .charAt(0)
     .toLowerCase()}${slot.short.slice(1)} (CDMX).
 </p>
@@ -50,7 +51,7 @@ const template = ({
 </p>
 
 <p style="margin:0 0 24px 0;color:#475569;">
-  Al minuto 30 dejo en el chat el PDF con las seis piezas 🎁<br/>
+  ${slot.reminderPerk}<br/>
   Trae tu pregunta para el Q&amp;A.<br/>
   Si no puedes llegar en vivo, respóndeme y te paso la grabación.
 </p>

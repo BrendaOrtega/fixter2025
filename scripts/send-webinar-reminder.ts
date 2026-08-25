@@ -7,10 +7,12 @@
  *   npx tsx --env-file=.env scripts/send-webinar-reminder.ts --send
  *   npx tsx --env-file=.env scripts/send-webinar-reminder.ts --slot 2026-08-20 --send
  *   npx tsx --env-file=.env scripts/send-webinar-reminder.ts --only tu@correo.com --send
+ *   npx tsx --env-file=.env scripts/send-webinar-reminder.ts --audiencia --send   # todo el programa
  */
 import { PrismaClient } from "@prisma/client";
 import { sendSistemasWebinarReminder } from "../app/mailSenders/sendSistemasWebinarReminder";
 import { getWebinarSlot, WEBINAR_SLOTS } from "../app/utils/webinarDates";
+import { audienceTagsFor } from "../app/.server/programas";
 
 const db = new PrismaClient();
 
@@ -20,6 +22,13 @@ const arg = (flag: string) => {
 };
 
 const send = process.argv.includes("--send");
+/**
+ * Por defecto solo se avisa a quien eligió ESTA fecha. Con --audiencia va a todo
+ * el programa: quien se apuntó a cualquier webinar de la serie y quien entró por
+ * la grabación. Son las dos puertas de `audienceTagsFor`, con `hasSome` — contar
+ * con un solo tag deja fuera a media lista.
+ */
+const audiencia = process.argv.includes("--audiencia");
 const only = arg("--only");
 const slotId =
   arg("--slot") ??
@@ -37,7 +46,11 @@ if (!slot) {
 
 const subscribers = await db.subscriber.findMany({
   where: {
-    tags: { hasEvery: ["webinar-sistemas-agenticos", `webinar-${slot.id}`] },
+    ...(audiencia
+      ? { tags: { hasSome: audienceTagsFor("sistemas-agenticos") } }
+      : {
+          tags: { hasEvery: ["webinar-sistemas-agenticos", `webinar-${slot.id}`] },
+        }),
     ...(only ? { email: only } : {}),
   },
   select: { email: true, name: true },
@@ -45,6 +58,7 @@ const subscribers = await db.subscriber.findMany({
 });
 
 console.log(`Slot: ${slot.short}`);
+console.log(audiencia ? "Alcance: toda la audiencia del programa" : "Alcance: solo inscritos a esta fecha");
 console.log(`Destinatarios: ${subscribers.length}`);
 subscribers.forEach((s) => console.log(`  · ${s.email} (${s.name ?? "sin nombre"})`));
 

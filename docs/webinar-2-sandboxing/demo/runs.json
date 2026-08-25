@@ -28,6 +28,99 @@
    "out": "{\"host\":\"sb-9a093223-7600-431f-aa36-3e3500e4d6a3-80.sandboxes.easybits.cloud\",\"port\":80,\"url\":\"https://sb-9a093223-7600-431f-aa36-3e3500e4d6a3-80.sandboxes.easybits.cloud\"}",
    "ms": 0.81,
    "estado": "ok"
+  },
+  {
+   "paso": "Paso 4 · publicar una página propia",
+   "ms": 0.01,
+   "estado": "ok",
+   "cmd": "curl -X POST $BASE/sandboxes/$SB/exec \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -d '{\"command\":\"cat > /var/www/html/index.html <<EOF … EOF\"}'",
+   "out": "{\"exitCode\":0,\"stdout\":\"PUBLICADA\",\"durationMs\":6}\n\nhttps://sb-9a093223-…-80.sandboxes.easybits.cloud"
+  },
+  {
+   "paso": "Extender la caja a una hora",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/extend \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"timeoutSeconds\":3600}'",
+   "out": "Unexpected Server Error",
+   "ms": 0.98,
+   "estado": "ok"
+  },
+  {
+   "paso": "Extender la caja a una hora",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/extend \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"extendSeconds\":3600}'",
+   "out": "{\"sandboxId\":\"sb_9a093223-7600-431f-aa36-3e3500e4d6a3\",\"template\":\"ubuntu\",\"status\":\"running\",\"ownerId\":\"699f35cbc8ad86037eda62b1\",\"name\":\"webinar\",\"metadata\":{\"exposedPorts\":\"80\",\"ip\":\"172.20.1.197\"},\"createdAt\":\"2026-08-18T21:25:44.410511716Z\",\"expiresAt\":\"2026-08-18T22:40:44.410511716Z\",\"hardExpiresAt\":\"0001-01-01T00:00:00Z\",\"suspendedAt\":\"0001-01-01T00:00:00Z\",\"cpuMode\":\"shared\",\"vcpus\":1,\"templateVersion\":\"1778195946-2147483648\",\"vm\":{\"sandboxId\":\"sb_9a093223-7600-431f-aa36-3e3500e4d6a3\",\"tap\":\"fc-01c5\",\"guestMac\":\"02:FC:ac:14:01:c5\",\"guestIp\":\"172.20.1.197\",\"rootfsPath\":\"/dev/mapper/fc-sb_9a093223-7600-431f-aa36-3e3500e4d6a3\",\"socketPath\":\"/run/sandbox-host/sb_9a093223-7600-431f-aa36-3e3500e4d6a3.sock\",\"vcpus\":1,\"memMb\":512}}",
+   "ms": 1.34,
+   "estado": "ok"
+  },
+  {
+   "paso": "Paso 5 · instalar Node dentro de la caja",
+   "ms": 10.84,
+   "estado": "ok",
+   "cmd": "curl -X POST $BASE/sandboxes/$SB/exec \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -d '{\"command\":\"curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs\"}'",
+   "out": "{\"exitCode\":0,\"stdout\":\"v22.23.2\\n10.9.8\",\"durationMs\":10837}"
+  },
+  {
+   "paso": "Paso 6 · instalar el Agent SDK",
+   "ms": 11.92,
+   "estado": "ok",
+   "cmd": "curl -X POST $BASE/sandboxes/$SB/exec \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -d '{\"command\":\"npm i -g @anthropic-ai/claude-agent-sdk @anthropic-ai/claude-code\"}'",
+   "out": "{\"exitCode\":0,\"stdout\":\"2.1.235 (Claude Code)\",\"durationMs\":11924}"
+  },
+  {
+   "paso": "Paso 7 · un turno del agente, con log público",
+   "ms": 9.72,
+   "estado": "ok",
+   "cmd": "curl -X POST $BASE/sandboxes/$SB/exec \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -d '{\"command\":\"/root/agente.sh \\\"Agrega un comentario HTML que diga: editado por el agente\\\"\"}'",
+   "out": "=== 22:06:27 · Agrega un comentario HTML\n  -> Bash  ls -la /var/www/html\n  Voy a agregar el comentario en index.html.\n  -> Read  /var/www/html/index.html\n  -> Edit  /var/www/html/index.html\n  Listo, agregue el comentario al inicio.\n  OK success · 8.7s"
+  },
+  {
+   "paso": "Congelar la caja lista (snapshot)",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/snapshot \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"webinar-agente\"}'",
+   "out": "{\"snapshotId\":\"snap_e756d331-bcd5-41cd-b707-cabcab21ab35\",\"name\":\"webinar-agente\",\"sourceId\":\"sb_9a093223-7600-431f-aa36-3e3500e4d6a3\",\"ownerId\":\"699f35cbc8ad86037eda62b1\",\"template\":\"ubuntu\",\"vcpus\":1,\"memMb\":512,\"cpuMode\":\"shared\",\"hasMem\":true,\"sizeBytes\":2684370442,\"createdAt\":\"2026-08-18T22:42:46.966267334Z\"}",
+   "ms": 4.2,
+   "estado": "ok"
+  },
+  {
+   "paso": "Clonar la caja desde el snapshot",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"snapshotId\":\"snap_e756d331-bcd5-41cd-b707-cabcab21ab35\",\"name\":\"webinar-clon\",\"timeoutSeconds\":3600}'",
+   "out": "{\"error\":\"Invalid body\",\"issues\":[{\"expected\":\"'ubuntu' | 'python' | 'node' | 'node-agent' | 'bun' | 'claude-code' | 'goose' | 'ghostyclaw' | 'ghosty-lite' | 'open-ghosty' | 'lang-ghosty' | 'rust-ghosty' | 'ghosty-gc' | 'ghosty-chat' | 'claude-worker' | 'codex-worker' | 'cagent-ghosty' | 'openclaw' | 'chat-openai' | 'chat-anthropic' | 'ghosty-studio' | 'code-interpreter' | 'desktop-ghosty' | 'computer-ghosty' | 'computer-ghosty-gemini' | 'livekit-svc' | 'whisper-svc' | 'kokoro-svc' | 'voice-svc' | 'render-svc' | 'collab-svc' | 'hyperframes-svc'\",\"received\":\"undefined\",\"code\":\"invalid_type\",\"path\":[\"template\"],\"message\":\"Required\"}]}",
+   "ms": 0.28,
+   "estado": "err"
+  },
+  {
+   "paso": "Congelar la caja lista (snapshot)",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/snapshot \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"webinar-agente-v2\"}'",
+   "out": "{\"snapshotId\":\"snap_f5f41ccd-429f-47c9-8432-d711a16d1038\",\"name\":\"webinar-agente-v2\",\"sourceId\":\"sb_9a093223-7600-431f-aa36-3e3500e4d6a3\",\"ownerId\":\"699f35cbc8ad86037eda62b1\",\"template\":\"ubuntu\",\"vcpus\":1,\"memMb\":512,\"cpuMode\":\"shared\",\"hasMem\":true,\"sizeBytes\":2684370442,\"createdAt\":\"2026-08-18T22:43:58.967618507Z\"}",
+   "ms": 4.03,
+   "estado": "ok"
+  },
+  {
+   "paso": "Clonar la caja lista, desde el snapshot",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/snapshots/snap_f5f41ccd-429f-47c9-8432-d711a16d1038 \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"webinar-clon\",\"timeoutSeconds\":3600}'",
+   "out": "Unexpected Server Error",
+   "ms": 1.56,
+   "estado": "ok"
+  },
+  {
+   "paso": "Clonar la caja lista (fork)",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_9a093223-7600-431f-aa36-3e3500e4d6a3/fork \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"count\":1,\"name\":\"webinar-clon-2\"}'",
+   "out": "[{\"sandboxId\":\"sb_3a3279e1-edd1-4713-ab10-dedfdcd0ca1b\",\"template\":\"ubuntu\",\"status\":\"starting\",\"ownerId\":\"699f35cbc8ad86037eda62b1\",\"name\":\"webinar-clon-2\",\"metadata\":{\"forkedFrom\":\"snap_e86884c3-da38-43bb-a87a-6c81ea669e72\"},\"createdAt\":\"2026-08-18T22:45:46.161529989Z\",\"expiresAt\":\"2026-08-18T22:50:46.161529989Z\",\"hardExpiresAt\":\"0001-01-01T00:00:00Z\",\"suspendedAt\":\"0001-01-01T00:00:00Z\",\"cpuMode\":\"shared\",\"vcpus\":1}]",
+   "ms": 4.71,
+   "estado": "ok"
+  },
+  {
+   "paso": "Caja grande: 4 vCPU, 4 GB, 12 GB de disco",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"template\":\"ubuntu\",\"name\":\"webinar-l\",\"size\":\"l\",\"timeoutSeconds\":3600}'",
+   "out": "{\"sandboxId\":\"sb_e3f9af86-9d16-4a21-bb54-d943eb6f7175\",\"template\":\"ubuntu\",\"status\":\"starting\",\"ownerId\":\"699f35cbc8ad86037eda62b1\",\"name\":\"webinar-l\",\"createdAt\":\"2026-08-18T22:55:47.625235368Z\",\"expiresAt\":\"2026-08-18T23:55:47.625235368Z\",\"hardExpiresAt\":\"0001-01-01T00:00:00Z\",\"suspendedAt\":\"0001-01-01T00:00:00Z\",\"cpuMode\":\"shared\",\"vcpus\":4}",
+   "ms": 1.14,
+   "estado": "ok"
+  },
+  {
+   "paso": "Congelar la caja buena (snapshot)",
+   "cmd": "curl -X POST https://www.easybits.cloud/api/v2/sandboxes/sb_e3f9af86-9d16-4a21-bb54-d943eb6f7175/snapshot \\\n  -H \"Authorization: Bearer $EASYBITS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"webinar-l-listo\"}'",
+   "out": "{\"snapshotId\":\"snap_fa02346e-994d-4731-ad64-8a33308369cd\",\"name\":\"webinar-l-listo\",\"sourceId\":\"sb_e3f9af86-9d16-4a21-bb54-d943eb6f7175\",\"ownerId\":\"699f35cbc8ad86037eda62b1\",\"template\":\"ubuntu\",\"vcpus\":4,\"memMb\":4096,\"cpuMode\":\"shared\",\"volumes\":[{\"name\":\"app\",\"mountPath\":\"/app\"}],\"hasMem\":true,\"sizeBytes\":19327407782,\"createdAt\":\"2026-08-18T23:00:49.191606464Z\"}",
+   "ms": 23.21,
+   "estado": "ok"
   }
- ]
+ ],
+ "logUrl": "https://sb-e3f9af86-9d16-4a21-bb54-d943eb6f7175-80.sandboxes.easybits.cloud/log.txt",
+ "sandboxId": "sb_e3f9af86-9d16-4a21-bb54-d943eb6f7175"
 }
