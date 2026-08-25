@@ -99,7 +99,23 @@ la parte útil de la pantalla; en el hueco entre los dos no estorban a ninguno.
 ## Transición y sonido
 
 **No reusar la transición de otra pieza.** La del corte de YouTube ya se vio; el
-short lleva la suya. Para el vertical, las columnas caen desde arriba con un
+short lleva la suya. En la entrega 4 salieron cuatro seguidas y ninguna se
+repitió: bandas horizontales en cascada, columnas que se engranan, mosaicos que
+se rehacen en diagonal y paneles que voltean en 3D. Cada una sale del contenido
+de SU clip.
+
+⚠️ **Van muy rápidas a 18 cuadros (0.6 s).** Feedback de bliss el 25 de agosto:
+se sienten atropelladas. Usar ~0.9–1.2 s —27 a 36 cuadros— y alargar el riser y
+el golpe con ellas, porque el sonido dura lo que dura el movimiento.
+
+⚠️ **El cierre tiene que SOSTENER la cobertura tres cuadros.** Si termina exacto
+en el corte se cuela un cuadro de la tarjeta limpia antes de que entre el cuerpo:
+parece un error de sincronía y es de montaje.
+
+⚠️ **La forma que cubre el cuadro entero no puede ser un plano oscuro liso.** Con
+ocho paneles de `#15121f` tapando todo, `blackdetect` lo marca como fotograma
+negro — que está prohibido. Se sube el tono (`#241d33`) y se le mete la retícula
+de la casa. Para el vertical, las columnas caen desde arriba con un
 retraso por columna, que hace la diagonal.
 
 Se renderiza cuadro por cuadro con el estado en `?t=`, nunca animando en el
@@ -131,6 +147,14 @@ a 178 BPM la cama cansa aunque esté baja.
 
 Va con `sidechaincompress` usando la voz como llave, y todo normalizado a
 −16 LUFS.
+
+⚠️ **`loudnorm` de una pasada no garantiza el pico**: con `TP=-1.5` dejó un short
+en −0.2 dBFS. Rematar con `alimiter=limit=0.84:level=disabled` y comprobar con
+`ebur128=peak=true`.
+
+**La mezcla que aprobó bliss** (entrega 4): música a `volume=0.20`, voz a `1.33`
+antes de mezclar, y el agachado con `threshold=0.03:ratio=12`. Con la música a
+0.34 se sentía agresiva.
 
 ---
 
