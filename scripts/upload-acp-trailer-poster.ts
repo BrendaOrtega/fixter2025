@@ -26,8 +26,8 @@ const s3 = new S3Client({
 const prisma = new PrismaClient();
 
 const SUBIR = [
-  { key: "fixtergeek/posters/acp-trailer.png", file: "videos/acp-desde-cero/thumb/renders/poster.png", type: "image/png" },
-  { key: "fixtergeek/posters/acp-trailer-email.jpg", file: "videos/acp-desde-cero/thumb/renders/poster-email.jpg", type: "image/jpeg" },
+  { key: "fixtergeek/posters/acp-trailer-v2.png", file: "videos/acp-desde-cero/thumb/renders/poster.png", type: "image/png" },
+  { key: "fixtergeek/posters/acp-trailer-email-v2.jpg", file: "videos/acp-desde-cero/thumb/renders/poster-email.jpg", type: "image/jpeg" },
 ];
 
 async function main() {

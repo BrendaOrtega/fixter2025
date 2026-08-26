@@ -32,7 +32,7 @@ const entrega0 = wrapEmailHtml(
    las próximas semanas.</p>
 
    ${emailVideoCard({
-     posterUrl: POSTER("acp-trailer"),
+     posterUrl: `https://t3.storage.dev/wild-bird-2039/fixtergeek/posters/acp-trailer-v2.png`,
      href: VIEWER("acp-trailer"),
      title: "El módulo en un minuto",
      duration: "1 min",
