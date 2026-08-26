@@ -9,7 +9,13 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { BsMenuButtonWide, BsMarkdown } from "react-icons/bs";
 import { FaPlay, FaVideo } from "react-icons/fa6";
 import { IoMdLock, IoMdClose, IoMdMail, IoMdConstruct } from "react-icons/io";
@@ -149,9 +155,15 @@ export const UnifiedSidebarMenu = ({
   useEffect(() => {
     const list: string[] = [];
     moduleNames.map((moduleName) => {
-      const allCompleted = videos
-        .filter((vi) => vi?.moduleName === moduleName)
-        .every((v) => checkIfWatched(v?.slug));
+      // El mismo criterio que usa la lista para agrupar. Comparar contra el
+      // sentinel «nomodules» no casaba con nada —esos videos traen `null`— y
+      // el filtro salía VACÍO… que es como se colaba el bug: `[].every()` es
+      // `true`, así que TODO curso sin módulos se pintaba como completado.
+      const delModulo = videos.filter((vi) =>
+        moduleName === "nomodules" ? true : vi?.moduleName === moduleName,
+      );
+      const allCompleted =
+        delModulo.length > 0 && delModulo.every((v) => checkIfWatched(v?.slug));
       allCompleted && list.push(moduleName);
     });
     setCompleted(list);
@@ -258,8 +270,9 @@ export const UnifiedSidebarMenu = ({
                     "min-w-0 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs font-medium transition-all",
                     {
                       "bg-brand-500 text-brand-900": tabVigente === tab.id,
-                      "text-gray-400 hover:text-gray-200": tabVigente !== tab.id,
-                    }
+                      "text-gray-400 hover:text-gray-200":
+                        tabVigente !== tab.id,
+                    },
                   )}
                 >
                   <span className="shrink-0">{tab.icon}</span>
@@ -363,7 +376,6 @@ export const UnifiedSidebarMenu = ({
             )}
           </AnimatePresence>
         </div>
-
       </UnifiedMenuContainer>
     </>
   );
@@ -394,7 +406,7 @@ const UnifiedMenuButton = ({
         {
           "rounded-r-2xl left-0": !isOpen,
           "rounded-2xl": isOpen,
-        }
+        },
       )}
     >
       <AnimatePresence mode="popLayout">
@@ -454,12 +466,15 @@ const UnifiedMenuContainer = ({
       }}
       className={cn(
         "fixed h-screen bg-[#0C1115] top-0 left-0 flex flex-col",
-        "shadow-2xl border-r border-gray-700/50"
+        "shadow-2xl border-r border-gray-700/50",
       )}
     >
       {/* La máscara va AQUÍ y no en el contenedor: aplicada al padre recortaba todo lo
           que sobresale, y el botón de cerrar —que cuelga del borde— salía cortado. */}
-      <motion.div style={{ maskImage }} className="flex min-h-0 flex-1 flex-col">
+      <motion.div
+        style={{ maskImage }}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         {children}
       </motion.div>
 
@@ -519,27 +534,27 @@ const VideosContent = ({
 }) => {
   return (
     <div className="space-y-4">
-      {moduleNames.map((moduleName, index) => (
-        <div key={index}>
-          <ModuleHeader
-            title={moduleName === "nomodules" ? courseTitle : moduleName}
-            subtitle={
-              moduleName === "nomodules"
-                ? "Lecciones del curso"
-                : `Capítulo ${String(index + 1).padStart(2, "0")}`
-            }
-            isCompleted={completed.includes(moduleName)}
-          />
+      {moduleNames.map((moduleName, index) => {
+        // El filtro se resuelve UNA vez: lo necesitan la lista y el recuento del
+        // encabezado, y repetirlo abría la puerta a que dijeran cosas distintas.
+        const delModulo = videos
+          .filter((vid) =>
+            moduleName === "nomodules" ? true : vid.moduleName === moduleName,
+          )
+          .sort((a, b) => (a.index < b.index ? -1 : 1));
 
-          <div className="space-y-2">
-            {videos
-              .filter((vid) =>
-                moduleName === "nomodules"
-                  ? true
-                  : vid.moduleName === moduleName
-              )
-              .sort((a, b) => (a.index < b.index ? -1 : 1))
-              .map((v) => {
+        return (
+          <div key={index}>
+            <ModuleHeader
+              title={moduleName === "nomodules" ? courseTitle : moduleName}
+              lecciones={delModulo.length}
+              minutos={totalMinutos(delModulo)}
+              primero={index === 0}
+              isCompleted={completed.includes(moduleName)}
+            />
+
+            <div className="space-y-2">
+              {delModulo.map((v) => {
                 const accessLevel = (v as any)?.accessLevel || "paid";
                 // Las entregas de una secuencia las resuelve el servidor: aquí
                 // solo se lee su veredicto y la fecha en que se abren.
@@ -552,10 +567,13 @@ const VideosContent = ({
                 // que sí (`resolveAccess` mira `isPurchased` antes que nada) y
                 // la lista decía que no.
                 const videoIsLocked =
-                  accessLevel === "public" ? false :
-                  accessLevel === "subscriber" ? isLocked && !isSubscribed :
-                  accessLevel === "sequence" ? isLocked && !unlock?.unlocked :
-                  isLocked; // paid
+                  accessLevel === "public"
+                    ? false
+                    : accessLevel === "subscriber"
+                      ? isLocked && !isSubscribed
+                      : accessLevel === "sequence"
+                        ? isLocked && !unlock?.unlocked
+                        : isLocked; // paid
 
                 return (
                   <VideoListItem
@@ -581,9 +599,10 @@ const VideosContent = ({
                   />
                 );
               })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -624,10 +643,14 @@ const ResourcesContent = ({
         rel="noopener noreferrer"
         className="flex items-start gap-3 rounded-lg px-2 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
       >
-        <span className="text-base leading-none">{ICONO_POR_TIPO[r.kind] || "📎"}</span>
+        <span className="text-base leading-none">
+          {ICONO_POR_TIPO[r.kind] || "📎"}
+        </span>
         <span className="min-w-0">
           <span className="block">{r.title}</span>
-          <span className="block text-xs capitalize text-gray-500">{r.kind}</span>
+          <span className="block text-xs capitalize text-gray-500">
+            {r.kind}
+          </span>
         </span>
       </a>
     </li>
@@ -666,44 +689,105 @@ const ResourcesContent = ({
 const NotesContent = ({ body, title }: { body: string; title?: string }) => {
   return (
     <>
-    {/* De qué video son estas notas: el panel se abre solo y sin el título no
+      {/* De qué video son estas notas: el panel se abre solo y sin el título no
         hay forma de saber a qué lección pertenece lo que se está leyendo. */}
-    {title && (
-      <h2 className="mb-4 border-b border-brand-100/10 pb-3 text-lg font-bold leading-snug text-white">
-        {title}
-      </h2>
-    )}
-    <div className="dark prose prose-invert max-w-none prose-base prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-p:leading-relaxed prose-p:text-brand-100 prose-li:text-brand-100 prose-li:my-0.5 prose-strong:text-white prose-a:text-brand-500 prose-a:no-underline hover:prose-a:underline prose-code:text-brand-500 prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-4 prose-hr:border-brand-100/10">
-      <Streamdown plugins={{ code }} shikiTheme={["one-dark-pro", "one-dark-pro"]}>
-        {body}
-      </Streamdown>
-    </div>
+      {title && (
+        <h2 className="mb-4 border-b border-brand-100/10 pb-3 text-lg font-bold leading-snug text-white">
+          {title}
+        </h2>
+      )}
+      <div className="dark prose prose-invert max-w-none prose-base prose-headings:font-bold prose-h1:text-xl prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2 prose-h3:text-base prose-p:leading-relaxed prose-p:text-brand-100 prose-li:text-brand-100 prose-li:my-0.5 prose-strong:text-white prose-a:text-brand-500 prose-a:no-underline hover:prose-a:underline prose-code:text-brand-500 prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:my-4 prose-hr:border-brand-100/10">
+        <Streamdown
+          plugins={{ code }}
+          shikiTheme={["one-dark-pro", "one-dark-pro"]}
+        >
+          {body}
+        </Streamdown>
+      </div>
     </>
   );
 };
 
+/**
+ * Minutos de una lección. `duration` es un String? en el schema y se guarda como
+ * MINUTOS DECIMALES (12.5 = 12m 30s), no como segundos.
+ */
+const formatDuration = (mins: number | string | null | undefined) => {
+  const totalMins = +(mins || 0);
+  if (!totalMins || isNaN(totalMins)) return "";
+  const m = Math.floor(totalMins);
+  const s = Math.round((totalMins - m) * 60);
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+};
+
+/**
+ * Total de un módulo, en horas cuando toca: los webinars suman 161 minutos y
+ * "161m" no se lee como "2h 41m".
+ *
+ * ⚠️ Un video sin `duration` llega como "" o null y `+""` es 0, pero `+"abc"` es
+ * NaN y envenenaría la suma entera. Por eso se descarta pieza a pieza.
+ */
+export const totalMinutos = (vs: Partial<Video>[]) =>
+  vs.reduce((acc, v) => {
+    const m = +((v as any)?.duration || 0);
+    return acc + (isNaN(m) ? 0 : m);
+  }, 0);
+
+export const formatTotal = (mins: number) => {
+  const t = Math.round(mins);
+  if (!t) return "";
+  return t >= 60 ? `${Math.floor(t / 60)}h ${t % 60}m` : `${t}m`;
+};
+
+/**
+ * Etiqueta de módulo. Fue una tarjeta con fondo y borde que ocupaba lo que dos
+ * lecciones; hoy es una etiqueta, con el mismo peso visual que las secciones de
+ * `TranscriptPanel`.
+ *
+ * ⚠️ **No lleva número de capítulo, y es deliberado.** El que había salía de la
+ * POSICIÓN en la lista, así que un grupo que no es un módulo —los Webinars del
+ * curso de sistemas agénticos— corría la cuenta y "ACP desde cero" se anunciaba
+ * como Capítulo 03 mientras su propio video decía MÓDULO 02. Hoy no hay dato del
+ * que sacar el número bueno: `moduleName` es un String suelto en `Video` y el
+ * modelo `Module` no tiene campo de orden. El recuento sí es siempre cierto, y
+ * además dice algo que el número no decía: a qué te estás metiendo.
+ */
 const ModuleHeader = ({
   title,
-  subtitle,
+  lecciones,
+  minutos,
+  primero,
   isCompleted,
 }: {
   isCompleted?: boolean;
   title: string;
-  subtitle?: string;
+  lecciones?: number;
+  minutos?: number;
+  /** El primer grupo no lleva regla arriba: no hay nada de qué separarlo. */
+  primero?: boolean;
 }) => {
+  const total = formatTotal(minutos ?? 0);
+  const cuenta =
+    lecciones && lecciones > 0
+      ? `${lecciones} ${lecciones === 1 ? "lección" : "lecciones"}${total ? ` · ${total}` : ""}`
+      : "";
+
   return (
-    <header className="bg-[#1a2332] rounded-lg p-3 mb-3 border border-gray-700/30">
-      <p className="text-gray-400 text-xs font-semibold text-brand-400 uppercase tracking-wider">
-        {subtitle}
-      </p>
+    <header
+      className={cn(
+        "mb-2 px-2",
+        primero ? "pt-1" : "border-t border-gray-700/40 pt-4",
+      )}
+    >
       <h3
         className={cn(
-          "text-base font-bold mt-1",
-          isCompleted ? "text-green-400" : "text-white"
+          "text-sm font-semibold uppercase tracking-wide",
+          isCompleted ? "text-green-400" : "text-gray-200",
         )}
       >
         {title}
       </h3>
+      {cuenta && <p className="mt-0.5 text-[11px] text-gray-500">{cuenta}</p>}
     </header>
   );
 };
@@ -734,14 +818,6 @@ const VideoListItem = ({
   unlocksAt?: string | null;
   hasContent?: boolean;
 }) => {
-  const formatDuration = (mins: number | string | null | undefined) => {
-    const totalMins = +(mins || 0);
-    if (!totalMins || isNaN(totalMins)) return "";
-    const m = Math.floor(totalMins);
-    const s = Math.round((totalMins - m) * 60);
-    return s > 0 ? `${m}m ${s}s` : `${m}m`;
-  };
-
   const ref = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
@@ -783,7 +859,7 @@ const VideoListItem = ({
           "bg-[#1a2332] ring-1 ring-brand-500/30": isCurrent,
           "cursor-pointer": !isDisabled,
           "cursor-not-allowed opacity-60": isDisabled,
-        }
+        },
       )}
     >
       <span
@@ -805,7 +881,10 @@ const VideoListItem = ({
       </span>
 
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-200 truncate" title={title}>
+        <div
+          className="line-clamp-2 text-sm font-medium text-gray-200"
+          title={title}
+        >
           {title}
         </div>
       </div>
@@ -813,19 +892,35 @@ const VideoListItem = ({
       {/* Access level indicator */}
       <div className="flex items-center gap-1.5 ml-2">
         {!hasContent && (
-          <IoMdConstruct className="text-yellow-500 text-sm" title="En construcción" />
+          <IoMdConstruct
+            className="text-yellow-500 text-sm"
+            title="En construcción"
+          />
         )}
         {hasContent && accessLevel === "public" && (
-          <IoCheckmarkCircle className="text-green-500 text-sm" title="Gratis" />
+          <IoCheckmarkCircle
+            className="text-brand-500 text-sm"
+            title="Gratis"
+          />
         )}
+        {/* ⚠️ brand-700, no brand-400: la escala `brand` de tailwind.config sólo
+            tiene 100/500/600/700/800/900. Un `text-brand-400` compila y deja el
+            icono SIN color — se ve casi negro sobre el fondo. */}
         {hasContent && accessLevel === "subscriber" && (
-          <IoMdMail className="text-emerald-400 text-sm" title="Gratis con email" />
+          <IoMdMail
+            className="text-brand-700 text-sm"
+            title="Gratis con email"
+          />
         )}
         {hasContent && isLocked && (accessLevel === "paid" || !accessLevel) && (
           <IoMdLock className="text-gray-500 text-sm" title="Requiere compra" />
         )}
         {/* La entrega que todavía no llega dice CUÁNDO llega. Un candado mudo
-            se lee como error del sitio; una fecha se lee como una cita. */}
+            se lee como error del sitio; una fecha se lee como una cita.
+            ⚠️ Y va JUNTO a la duración, no en su lugar: esto se llevaba la
+            duración de toda lección de secuencia bloqueada —o sea de casi
+            todas— y cuánto dura una clase es justo lo que quieres saber ANTES
+            de que te llegue, no después. */}
         {hasContent && isLocked && accessLevel === "sequence" ? (
           formatUnlock(unlocksAt ?? null) ? (
             <span className="text-xs text-brand-500">
@@ -837,11 +932,10 @@ const VideoListItem = ({
               title="Llega por correo"
             />
           )
-        ) : (
-          <span className="text-xs text-gray-500">
-            {formatDuration(duration)}
-          </span>
-        )}
+        ) : null}
+        <span className="text-xs text-gray-500">
+          {formatDuration(duration)}
+        </span>
       </div>
     </Link>
   );
