@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { ImPlay } from "react-icons/im";
 import { IoIosClose } from "react-icons/io";
 import { Link } from "react-router";
-import { nanoid } from "nanoid";
 import { useVideoPlayer } from "~/hooks/useVideoPlayer";
 import { useVideoTracking } from "~/hooks/useVideoTracking";
 import { VideoControls, type Capitulo } from "~/components/viewer/VideoControls";
@@ -241,21 +240,22 @@ export const VideoPlayer = ({
         {nextVideo && isEnding && (
           <Link to={nextVideoLink}>
             <motion.div
-              key={nanoid()}
+              key="siguiente-video"
               whileTap={{ scale: 0.99 }}
               transition={{ type: "spring", bounce: 0.2 }}
               whileHover={{ scale: 1.05 }}
               exit={{ opacity: 0, filter: "blur(9px)", x: 50 }}
               initial={{ opacity: 0, filter: "blur(9px)", x: 50 }}
               animate={{ opacity: 1, filter: "blur(0px)", x: 0 }}
-              className="absolute right-2 bg-gray-100 z-20 bottom-20 md:top-4 md:right-4 md:left-auto md:bottom-auto left-2 md:w-[500px] px-6 md:pt-6 pt-10 pb-6 rounded-3xl flex gap-4 shadow-sm items-end"
+              className="absolute right-2 bg-gray-100 z-20 bottom-20 md:right-4 md:left-auto left-2 md:w-[500px] px-6 pt-10 pb-6 rounded-3xl flex gap-4 shadow-sm items-end"
             >
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   dismissEnding();
                 }}
-                className="self-end text-4xl active:scale-95 md:hidden absolute right-4 top-1"
+                aria-label="Cerrar sugerencia"
+                className="self-end text-4xl text-iron/60 hover:text-iron active:scale-95 absolute right-3 top-1 transition-colors"
               >
                 <IoIosClose />
               </button>
