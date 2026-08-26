@@ -41,7 +41,9 @@ const isInternalRoute = (str: string) => str.startsWith("/");
 const isS3Key = (str: string) =>
   !isFullUrl(str) &&
   !isInternalRoute(str) &&
-  (str.includes("fixtergeek/") || str.endsWith(".m3u8") || str.endsWith(".mp4"));
+  (str.includes("fixtergeek/") ||
+    str.endsWith(".m3u8") ||
+    str.endsWith(".mp4"));
 
 const isNewFormat = (url: string) =>
   url.includes("fixtergeek/videos/") &&
@@ -80,6 +82,16 @@ export function useVideoPlayer({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  /**
+   * Ya cerraste la sugerencia del siguiente video.
+   *
+   * ⚠️ Va en un ref, no en estado, y es lo que hace que el botón funcione:
+   * `timeupdate` dispara ~4 veces por segundo y su listener se registra UNA vez.
+   * Con estado leería siempre el valor de aquel primer render —false— y volvería
+   * a abrir la tarjeta al cuarto de segundo, que es exactamente lo que pasaba:
+   * la X ponía `isEnding` en false y el siguiente tick lo devolvía a true.
+   */
+  const descartadaRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -101,7 +113,7 @@ export function useVideoPlayer({
 
     setIsMobile(
       /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-        "ontouchstart" in window
+        "ontouchstart" in window,
     );
     setIsReady(true);
   }, [skip]);
@@ -109,11 +121,14 @@ export function useVideoPlayer({
   // Auto-play cuando drawer se cierra (disabled: true → false)
   useEffect(() => {
     if (prevDisabledRef.current && !disabled && videoRef.current && !isMobile) {
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(() => {
-        setIsPlaying(false);
-      });
+      videoRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(() => {
+          setIsPlaying(false);
+        });
     }
     prevDisabledRef.current = disabled;
   }, [disabled, isMobile]);
@@ -135,7 +150,10 @@ export function useVideoPlayer({
     setIsPlaying(!controls.paused);
   }, [onPlay]);
 
-  const dismissEnding = useCallback(() => setIsEnding(false), []);
+  const dismissEnding = useCallback(() => {
+    descartadaRef.current = true;
+    setIsEnding(false);
+  }, []);
 
   // Update watched list in localStorage
   const updateWatchedList = useCallback(() => {
@@ -167,9 +185,15 @@ export function useVideoPlayer({
     const handleEnded = () => onEnd?.();
     const handleTimeUpdate = () => {
       if (el.duration - el.currentTime < 15) {
-        setIsEnding(true);
+        // La lista de vistos se marca aunque hayas cerrado la sugerencia: son
+        // dos cosas distintas y esto es lo que da el progreso.
         updateWatchedList();
+        if (!descartadaRef.current) setIsEnding(true);
       } else {
+        // Saliste de los últimos 15 s —rebobinaste—: la sugerencia vuelve a
+        // estar disponible. Si no se limpiara aquí, cerrarla una vez la
+        // enterraría para toda la sesión aunque vuelvas a ver el final.
+        descartadaRef.current = false;
         setIsEnding(false);
       }
     };
@@ -199,6 +223,10 @@ export function useVideoPlayer({
   useEffect(() => {
     if (!isReady || !videoRef.current || !video) return;
 
+    // Otra lección, otra sugerencia: cerrarla en una no puede silenciarla en la
+    // siguiente. El hook no siempre se desmonta al cambiar de video.
+    descartadaRef.current = false;
+
     // Sin fuente no hay nada que montar. Un video bloqueado llega con `m3u8` y
     // `storageLink` vacíos a propósito, y aun así se intentaba levantar HLS.js:
     // ruido en consola y un reproductor esperando algo que nunca llega.
@@ -208,7 +236,8 @@ export function useVideoPlayer({
     // Solo Safari/iOS tienen HLS nativo confiable. Chrome puede devolver "maybe" pero no funciona bien.
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const hasNativeHLS = (isSafari || isIOS) && !!el.canPlayType("application/vnd.apple.mpegURL");
+    const hasNativeHLS =
+      (isSafari || isIOS) && !!el.canPlayType("application/vnd.apple.mpegURL");
 
     const setupVideo = async () => {
       // Cleanup previous HLS instance
@@ -220,13 +249,18 @@ export function useVideoPlayer({
       // Diagnóstico solo en desarrollo: en producción llenaba la consola de la
       // gente con detalles que no le sirven a nadie.
       if (import.meta.env.DEV)
-        if (import.meta.env.DEV) console.log("🎬 Video setup:", {
-        hasNativeHLS,
-        hasM3U8: !!video.m3u8,
-        hasStorageLink: !!video.storageLink,
-        isNewFormat: video.m3u8 ? isNewFormat(video.m3u8) : video.storageLink ? isNewFormat(video.storageLink) : false,
-        isS3Key: video.storageLink ? isS3Key(video.storageLink) : false,
-      });
+        if (import.meta.env.DEV)
+          console.log("🎬 Video setup:", {
+            hasNativeHLS,
+            hasM3U8: !!video.m3u8,
+            hasStorageLink: !!video.storageLink,
+            isNewFormat: video.m3u8
+              ? isNewFormat(video.m3u8)
+              : video.storageLink
+                ? isNewFormat(video.storageLink)
+                : false,
+            isS3Key: video.storageLink ? isS3Key(video.storageLink) : false,
+          });
 
       // ⚠️ Las URLs de `/api/hls-proxy` que se arman AQUÍ van sin `&t=`, y el proxy exige
       // el token en todas sus ramas → 403. Hoy no se nota porque el loader ya entrega el
@@ -236,7 +270,10 @@ export function useVideoPlayer({
       // también esas fuentes, no parchear esto. Se avisa para que no se persiga como un
       // fallo de reproducción.
       const sinFirmar = (u: string) => {
-        console.warn("🎬 hls-proxy sin token: el servidor lo rechazará con 403 —", u);
+        console.warn(
+          "🎬 hls-proxy sin token: el servidor lo rechazará con 403 —",
+          u,
+        );
         return u;
       };
 
@@ -244,13 +281,15 @@ export function useVideoPlayer({
       const resolveSource = async (source: string): Promise<string> => {
         // Case 1: Direct S3 key (new format) -> use proxy
         if (isS3Key(source)) {
-          if (import.meta.env.DEV) console.log("🎬 Using S3 key via proxy:", source);
+          if (import.meta.env.DEV)
+            console.log("🎬 Using S3 key via proxy:", source);
           return sinFirmar(`/api/hls-proxy?path=${encodeURIComponent(source)}`);
         }
 
         // Case 2: Internal route (legacy) -> use as-is
         if (isInternalRoute(source)) {
-          if (import.meta.env.DEV) console.log("🎬 Using internal route:", source);
+          if (import.meta.env.DEV)
+            console.log("🎬 Using internal route:", source);
           return source;
         }
 
@@ -259,8 +298,11 @@ export function useVideoPlayer({
           if (isNewFormat(source)) {
             const s3Key = extractS3Key(source);
             if (s3Key) {
-              if (import.meta.env.DEV) console.log("🎬 Extracted S3 key from URL:", s3Key);
-              return sinFirmar(`/api/hls-proxy?path=${encodeURIComponent(s3Key)}`);
+              if (import.meta.env.DEV)
+                console.log("🎬 Extracted S3 key from URL:", s3Key);
+              return sinFirmar(
+                `/api/hls-proxy?path=${encodeURIComponent(s3Key)}`,
+              );
             }
             return await interceptHLSUrl(source);
           }
@@ -272,7 +314,8 @@ export function useVideoPlayer({
 
       if (hasNativeHLS) {
         // Safari, iOS - native HLS
-        if (import.meta.env.DEV) console.log("🎬 Using Native HLS (Safari/iOS)");
+        if (import.meta.env.DEV)
+          console.log("🎬 Using Native HLS (Safari/iOS)");
         if (video.m3u8) {
           el.src = await resolveSource(video.m3u8);
         } else if (video.storageLink) {
@@ -280,8 +323,11 @@ export function useVideoPlayer({
         }
       } else {
         // Chrome, Firefox - HLS.js
-        if (import.meta.env.DEV) console.log("🎬 Using HLS.js (Chrome/Firefox)");
-        const hlsSource = video.m3u8 || (video.storageLink?.includes('.m3u8') ? video.storageLink : null);
+        if (import.meta.env.DEV)
+          console.log("🎬 Using HLS.js (Chrome/Firefox)");
+        const hlsSource =
+          video.m3u8 ||
+          (video.storageLink?.includes(".m3u8") ? video.storageLink : null);
 
         if (hlsSource) {
           const hls = new Hls(startAt ? { startPosition: startAt } : {});
@@ -322,11 +368,14 @@ export function useVideoPlayer({
         }
 
         // Desktop: try autoplay
-        videoRef.current.play().then(() => {
-          setIsPlaying(true);
-        }).catch(() => {
-          setIsPlaying(false);
-        });
+        videoRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(() => {
+            setIsPlaying(false);
+          });
       })
       .catch(() => {
         setError("Error al configurar el video");
@@ -343,7 +392,14 @@ export function useVideoPlayer({
     // nuevo en cada revalidación de React Router, y con eso el efecto destruía HLS
     // y lo rearmaba desde cero — el video se reiniciaba solo. `disabled` se lee por
     // ref para que abrir o cerrar un drawer tampoco reinicie la reproducción.
-  }, [video?.id, video?.m3u8, video?.storageLink, interceptHLSUrl, isMobile, isReady]);
+  }, [
+    video?.id,
+    video?.m3u8,
+    video?.storageLink,
+    interceptHLSUrl,
+    isMobile,
+    isReady,
+  ]);
 
   return {
     videoRef,
