@@ -181,10 +181,10 @@ export const UnifiedSidebarMenu = ({
       available: videos.length > 0,
     },
     {
-      id: "notes" as TabType,
-      label: "Notas",
-      icon: <BsMarkdown className="text-sm" />,
-      available: !!markdownBody,
+      id: "transcript" as TabType,
+      label: "Transcripción",
+      icon: <MdOutlineSubtitles className="text-sm" />,
+      available: !!transcript?.segments?.length && !!onSeek,
     },
     {
       id: "resources" as TabType,
@@ -193,10 +193,10 @@ export const UnifiedSidebarMenu = ({
       available: resources.length > 0,
     },
     {
-      id: "transcript" as TabType,
-      label: "Transcripción",
-      icon: <MdOutlineSubtitles className="text-sm" />,
-      available: !!transcript?.segments?.length && !!onSeek,
+      id: "notes" as TabType,
+      label: "Notas",
+      icon: <BsMarkdown className="text-sm" />,
+      available: !!markdownBody,
     },
   ];
 
