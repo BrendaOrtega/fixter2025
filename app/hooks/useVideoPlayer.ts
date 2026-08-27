@@ -106,6 +106,23 @@ export function useVideoPlayer({
     onError: setError,
   });
 
+  /**
+   * Otra lección, otra sugerencia: haberla cerrado en una no puede silenciarla
+   * en la siguiente, y el hook no siempre se desmonta al cambiar de video.
+   *
+   * ⚠️ Va en un efecto PROPIO con una sola dependencia, y eso es el arreglo, no
+   * un detalle de estilo. Vivía dentro del efecto que monta la fuente, cuyas
+   * dependencias incluyen `interceptHLSUrl` — y esa función cambia de identidad
+   * en CADA render, porque `useSecureHLS` recibe un objeto literal nuevo cada
+   * vez y `getPresignedUrl` lo lleva en sus deps. Así que el efecto se
+   * re-ejecutaba constantemente y borraba la bandera recién puesta: cerrar la
+   * tarjeta funcionaba con el video en pausa y no hacía nada con el video
+   * corriendo, que es cuando alguien la cierra.
+   */
+  useEffect(() => {
+    descartadaRef.current = false;
+  }, [video?.id]);
+
   // Client-side detection (avoids hydration mismatch)
   useEffect(() => {
     // Skip si es video de YouTube
@@ -222,10 +239,6 @@ export function useVideoPlayer({
   // Video source setup
   useEffect(() => {
     if (!isReady || !videoRef.current || !video) return;
-
-    // Otra lección, otra sugerencia: cerrarla en una no puede silenciarla en la
-    // siguiente. El hook no siempre se desmonta al cambiar de video.
-    descartadaRef.current = false;
 
     // Sin fuente no hay nada que montar. Un video bloqueado llega con `m3u8` y
     // `storageLink` vacíos a propósito, y aun así se intentaba levantar HLS.js:
