@@ -23,7 +23,7 @@ const WEBINAR_SEQUENCES: Record<string, string> = {
 
 // ===========================================
 // Taller: Diseño de sistemas agénticos
-// Primera edición · 4 sesiones en vivo de 2h · Septiembre 2026
+// Primera edición · 5 sesiones en vivo de 2h + 1 sesión personal · Septiembre 2026
 // ===========================================
 const PRICE = 2490; // MXN precio de lanzamiento
 const PRICE_REGULAR = 3490; // MXN tachado
@@ -37,66 +37,95 @@ const MINUTOS_A_TEXTO = (m: string | null) => {
 const SESSIONS = [
   {
     number: "01",
-    title: "El harness: anatomía de un agente",
+    title: "La caja",
     date: "Martes 1 de septiembre · 8:00 PM CDMX",
     intro:
-      "Un agente es un modelo más todo lo que construyes alrededor de él. Claude Code lleva ~500,000 líneas de código y ninguna es el modelo: todas son harness. En esta sesión entiendes qué hay en esas líneas y construyes las tuyas.",
+      "Empezamos donde ya estás: el agente corriendo en tu laptop. Lo abrimos, vemos qué trae y qué tools tiene, y en la misma sesión lo mandamos a un sandbox remoto. Ahí es donde deja de ser un juguete local y empieza a comportarse como infraestructura.",
     topics: [
-      "Agente = modelo + harness: system prompts, tools, skills, MCP y subagentes",
-      "Patrones de arquitectura: ReAct, Plan-and-Execute y reflection — cuándo basta un solo agente",
-      "Middleware y hooks: interceptar al modelo antes y después de cada llamada",
-      "La curva confiabilidad vs. agencia y por qué se mueve cada mes",
+      "Conocemos al agente en tu máquina: qué trae de fábrica y qué tools ya tiene",
+      "Lo metemos en un sandbox remoto de EasyBits",
+      "Correr on-demand y dormir: por qué no pagas por un servidor prendido todo el día",
+      "Cuánto cuesta de verdad una corrida, con números de tu propio agente",
     ],
-    artifact:
-      "Tu agente personal con sus primeras tools, respondiendo en la UI inicial que te damos",
+    artifact: "Tu agente viviendo fuera de tu compu, despertando cuando lo llamas",
   },
   {
     number: "02",
-    title: "Context engineering y memoria",
+    title: "La interfaz",
     date: "Jueves 3 de septiembre · 8:00 PM CDMX",
     intro:
-      "La ventana de contexto es el recurso más escaso del sistema. Aprendes a tratarla como lo que es: el sistema operativo del agente — qué entra, qué se resume, qué se va a disco y qué se delega.",
+      "Un agente sin interfaz es un proceso que no puedes ver. Escribimos juntos la capa que lo vuelve producto: el protocolo por el que habla, el hook que lo escucha y la pantalla donde el chat y el artefacto crecen en paralelo. Esta UI es la que vas a modificar el resto del taller.",
     topics: [
-      "El filesystem como estado del arte en manejo de contexto: scratchpads, summarization y planning",
-      "Diseño de tools: por qué un mal schema rompe al agente y cómo se ve uno bueno",
-      "Memoria de corto plazo (checkpoints por sesión) y de largo plazo (insights que persisten)",
-      "Subagentes: aislar contexto para que el agente principal no se contamine",
+      "ACP sobre WebSocket: el core del protocolo, evento por evento",
+      "Escribimos el hook juntos: un stream, dos destinos — chat y artefacto",
+      "Streaming de progreso y tool calls visibles: ninguna acción del agente se esconde",
+      "Por qué escribes este hook y no instalas un paquete que ya lo trae",
     ],
-    artifact: "Un agente con memoria persistente entre sesiones y tools propias bien diseñadas",
+    artifact: "Tu agente con UI propia, mostrando lo que hace mientras lo hace",
   },
   {
     number: "03",
-    title: "Producción: lo que rompe a los agentes",
+    title: "Memoria y estado",
     date: "Martes 8 de septiembre · 8:00 PM CDMX",
     intro:
-      "La infraestructura estándar no está hecha para procesos que corren 40 minutos, fallan en el paso 67 de 123 y tocan APIs a nombre de tu usuario. Esta sesión cubre la capa que separa un demo de un sistema.",
+      "La caja duerme y a veces muere. Esta sesión es sobre lo que sobrevive: dónde guardas cada cosa, cómo retomas una tarea de 40 minutos que se cayó en el paso 67, y por qué el mismo registro que usas para saber qué pasó te sirve para que el agente recuerde.",
     topics: [
-      "Ejecución durable: checkpointing, resume desde el último paso bueno, recuperación de fallos",
-      "Autenticación en 3 capas: inbound, outbound a terceros y RBAC — el problema de los 1,000 emails",
-      "Human-in-the-loop: interrupciones, aprobaciones y guardrails que escalan a humano",
-      "Costos y observabilidad: presupuesto por sesión, tracing y evals básicos",
+      "Qué sobrevive cuando la caja muere y qué se pierde sin que te enteres",
+      "Los tres almacenes de EasyBits: base de datos, S3 y disco — cuál para qué",
+      "Checkpoints: correr 40 minutos y retomar desde el paso que falló",
+      "El mismo stream que guardas para la traza es el material de la memoria",
+      "Memoria de corto plazo y de largo plazo, y dónde vive cada una",
     ],
-    artifact: "Tu agente desplegado: sobrevive fallos, pide aprobación y no rebasa presupuesto",
+    artifact: "Un agente que matas a media tarea y revive justo donde iba",
   },
   {
     number: "04",
-    title: "La interfaz del agente",
+    title: "Human in the loop",
     date: "Jueves 10 de septiembre · 8:00 PM CDMX",
     intro:
-      "Casi nadie enseña esto y es donde tú tienes ventaja: un agente que corre minutos necesita una interfaz que muestre progreso, pida permiso y falle con gracia. Estudiamos los patrones agent-native de Builder.io y cómo los aplicamos en producción en Ghosty Teams y Tasks. Aquí tu experiencia en frontend y diseño vale oro.",
+      "Un agente con permiso de mandar un correo un día manda mil. La salida no es quitarle permisos, es ponerte a ti en medio: interrumpir, revisar, corregir y dejarlo seguir. Cerramos poniéndolo en línea, respondiendo desde un canal.",
     topics: [
-      "Streaming de progreso: qué mostrar mientras el agente trabaja y qué callar",
-      "Patrones agent-native (Builder.io): humanizar cada tool call — ninguna acción del agente se esconde",
-      "Caso real: el panel de turnos en vivo de Ghosty Teams — quién trabaja, en qué va, detener, qué entregó",
-      "Aprobaciones en vivo desde la UI: el ciclo interrupt → review → resume en React",
+      "Interrumpir al agente a media corrida sin tirar el trabajo hecho",
+      "Aprobar, corregir y reanudar desde tu propia UI",
+      "Streams paralelos: lanzar un segundo modelo dentro del mismo turno",
+      "Conectarlo a un canal — el canal va dado, ustedes lo conectan",
     ],
-    artifact: "El producto completo: tu agente con interfaz en React, streaming y aprobaciones",
+    artifact: "Tu agente pidiendo permiso desde un canal real, y tú decidiendo",
+  },
+  {
+    number: "05",
+    title: "Refuerzo",
+    date: "Lunes 14 de septiembre · 8:00 PM CDMX",
+    intro:
+      "Una sesión de colchón, a propósito. Cerramos lo que quedó a medias y le ponemos al agente lo que casi ningún curso enseña: cómo sabes que sigue funcionando después de que le moviste. Con las corridas ya guardadas, medir sale casi gratis.",
+    topics: [
+      "Lo que quedó a medias de las sesiones anteriores, en el código de cada quien",
+      "Evals: cómo sabes que no lo empeoraste al tocar un prompt",
+      "Observabilidad sobre lo que ya guardaste — comparar corridas, no adivinar",
+      "Dudas del grupo, con pantalla compartida",
+    ],
+    artifact: "Todo sólido, corriendo, y con una forma de saber si se rompe",
+  },
+  {
+    number: "06",
+    title: "Tu caso",
+    date: "Agendada contigo · 1-a-1",
+    intro:
+      "Una sesión privada contigo y con tu código. Aquí el agente del taller se convierte en el agente de tu trabajo: las tools de tu dominio, tus datos, tu flujo. Es la parte que no se puede dar en grupo, y por eso va aparte.",
+    topics: [
+      "Las tools de tu dominio, diseñadas para tu caso",
+      "Prospección, soporte, research o lo que traigas",
+      "Ajustes sobre tu propio agente, en vivo",
+      "Qué le falta a tu sistema para aguantar usuarios reales",
+    ],
+    artifact: "Tu agente haciendo lo tuyo, no el ejercicio del taller",
   },
 ];
 
 const INCLUDES = [
-  "4 sesiones en vivo de 2 horas (8 horas totales) en 2 semanas intensivas: martes y jueves",
-  "La UI inicial de tu agente, lista desde la primera sesión",
+  "5 sesiones en vivo de 2 horas (10 horas totales) en 3 semanas: martes, jueves y el lunes de cierre",
+  "Una sesión personal 1-a-1 sobre tu propio caso, agendada contigo",
+  "Los tokens de DeepSeek incluidos: no pagas ninguna API aparte",
   "Secuencia de preparación: 6 entregas con video, una cada 2 días, antes de empezar",
   "Grabaciones de todas las sesiones, para siempre",
   "El código completo de cada sesión en un repo privado",
@@ -108,11 +137,11 @@ const INCLUDES = [
 const FAQS = [
   {
     q: "¿Qué nivel necesito?",
-    a: "Saber programar y haber construido producto: frontend, fullstack o diseño con código. No necesitas experiencia previa con agentes ni con IA — empezamos por la anatomía y terminamos en producción. Si nunca has usado una terminal, este taller te va a quedar grande.",
+    a: "Saber programar y haber construido producto: frontend, fullstack o diseño con código. No necesitas experiencia previa con agentes ni con IA — el arnés lo eliges ya hecho y arrancamos por meterlo en una caja remota. Si nunca has usado una terminal, este taller te va a quedar grande.",
   },
   {
     q: "¿Qué herramientas usamos y cuánto cuestan aparte?",
-    a: "TypeScript y React para el código, y DeepSeek v4 Pro como modelo — con los tokens incluidos: te damos una API key de EasyBits con crédito de sobra para construir el agente completo del curso, así que no pagas ninguna API aparte. La misma key funciona en GhostyCode, nuestro agente de terminal open source. Todo lo demás también es open source.",
+    a: "El arnés lo eliges tú: GhostyCode (el nuestro, open source, y el que recomendamos porque es el que podemos arreglar en vivo), Goose, OpenHands o Aider. Los cuatro son binarios que se instalan en un minuto y los cuatro caben en la caja, así que las sesiones no se ramifican por lo que elijas. Para el código, TypeScript y React. Como modelo, DeepSeek v4 Pro con los tokens incluidos: te damos una API key de EasyBits con crédito de sobra para todo el taller, así que no pagas ninguna API aparte.",
   },
   {
     q: "¿Qué pasa si no puedo asistir a una sesión en vivo?",
@@ -128,7 +157,7 @@ const FAQS = [
   },
   {
     q: "¿Cuándo son las sesiones?",
-    a: "Martes 1, jueves 3, martes 8 y jueves 10 de septiembre de 2026, de 8:00 a 10:00 PM (CDMX). 2 semanas intensivas. Todas se graban, así que si un día no puedes, no pierdes nada.",
+    a: "Martes 1, jueves 3, martes 8, jueves 10 y lunes 14 de septiembre de 2026, de 8:00 a 10:00 PM (CDMX). La sexta sesión es personal y la agendamos contigo cuando te acomode. Todas las grupales se graban, así que si un día no puedes, no pierdes nada.",
   },
 ];
 
@@ -136,7 +165,7 @@ export const meta = () => {
   const baseMeta = getMetaTags({
     title: "Diseño de sistemas agénticos | Taller en vivo | FixterGeek",
     description:
-      "Tu agente funciona en tu laptop y se rompe con usuarios reales. Aprende lo que falta en medio: harness, memoria, ejecución durable, human-in-the-loop y la interfaz. 4 sesiones en vivo, $2,490 MXN.",
+      "Tu agente funciona en tu laptop y se rompe con usuarios reales. Aprende lo que falta en medio: la caja remota, la interfaz, la memoria, los checkpoints y el permiso humano. 5 sesiones en vivo más una personal, $2,490 MXN.",
     url: "https://www.fixtergeek.com/sistemas-agenticos",
     image: "https://www.fixtergeek.com/cover.png",
     keywords:
@@ -365,7 +394,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               product_data: {
                 name: "Taller: Diseño de sistemas agénticos",
                 description:
-                  "4 sesiones en vivo · Septiembre 2026 · Grabaciones incluidas",
+                  "5 sesiones en vivo + 1 personal · Septiembre 2026 · Grabaciones incluidas",
               },
               unit_amount: PRICE_REGULAR * 100,
             },
@@ -899,8 +928,8 @@ export default function SistemasAgenticosLanding() {
               className="mt-8 flex flex-wrap items-center gap-3 text-sm text-sistemas-gray"
             >
               {[
-                "4 sesiones en vivo · 8 horas",
-                "Del 1 al 10 de septiembre · 8 PM CDMX",
+                "5 sesiones en vivo + 1 personal",
+                "Del 1 al 14 de septiembre · 8 PM CDMX",
                 "TypeScript + React",
                 "Grabaciones incluidas",
               ].map((chip) => (
@@ -942,49 +971,31 @@ export default function SistemasAgenticosLanding() {
                 en siguientes ediciones
               </p>
               {/* La fecha sale de los datos: escrita a mano seguía invitando al webinar
-                  del 13 al día siguiente de darlo. Y si ya pasaron todos, se ofrece la
-                  grabación en vez de un enlace a nada. */}
+                  del 13 al día siguiente de darlo. Ya que pasaron todos, una sola
+                  línea a las grabaciones; el detalle de cuántas y cuánto duran
+                  sobraba aquí. */}
               <p className="mt-4 text-sm text-sistemas-gray">
+                ¿Prefieres verlo antes?{" "}
                 {proximo ? (
-                  <>
-                    ¿Prefieres verlo antes?{" "}
-                    <a
-                      href="#webinar"
-                      className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
-                    >
-                      Webinar gratis el {proximo.short.split(" ·")[0].toLowerCase()} →
-                    </a>
-                  </>
-                ) : (
-                  <>
-                    ¿Prefieres verlo antes?{" "}
-                    <a
-                      href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
-                    >
-                      Mira el webinar completo, gratis →
-                    </a>
-                  </>
-                )}
-              </p>
-              {ultima && (
-                <p className="mt-1 text-xs text-sistemas-gray/70">
-                  {grabaciones.length > 1
-                    ? `Las ${grabaciones.length} anteriores ya están grabadas y `
-                    : "El primero ya está grabado y "}
                   <a
-                    href={`/cursos/sistemas-agenticos/${ultima.slug}`}
+                    href="#webinar"
+                    className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
+                  >
+                    Webinar gratis el {proximo.short.split(" ·")[0].toLowerCase()} →
+                  </a>
+                ) : (
+                  <a
+                    href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-semibold underline underline-offset-2 hover:text-sistemas-accent"
+                    className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
                   >
-                    {grabaciones.length > 1 ? "puedes verlas completas" : "puedes verlo completo"}
+                    {grabaciones.length > 1
+                      ? `Mira los ${grabaciones.length} webinars completos, gratis →`
+                      : "Mira el webinar completo, gratis →"}
                   </a>
-                  {`: «${ultima.title}», ${MINUTOS_A_TEXTO(ultima.duration)}.`}
-                </p>
-              )}
+                )}
+              </p>
             </motion.div>
 
             <motion.div
@@ -1038,20 +1049,20 @@ export default function SistemasAgenticosLanding() {
               <span className="text-sistemas-primary">no con apuntes</span>
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-              A lo largo de las 4 sesiones construyes tu agente personal
-              production-ready: investiga en la web, redacta reportes, recuerda
-              tus preferencias entre sesiones, sobrevive fallos a media tarea y
-              te pide aprobación antes de acciones sensibles. Desde la primera
-              sesión trabajas sobre una UI inicial que te damos — tu agente se
-              ve y se usa como producto desde el arranque. Ahí le das sus
-              primeras tools; en la 2, memoria; en la 3 lo despliegas con
-              checkpoints y aprobaciones; en la 4 vuelves esa UI agent-native:
-              streaming, estados y aprobaciones en vivo. Te llevas el repo completo,
-              corriendo con los tokens de DeepSeek que van incluidos.
+              A lo largo del taller construyes tu agente personal
+              production-ready: vive en una caja remota que despierta cuando la
+              llamas, tiene su propia interfaz, recuerda entre sesiones,
+              sobrevive fallos a media tarea y te pide aprobación antes de
+              acciones sensibles. En la 1 lo sacas de tu laptop; en la 2 le
+              escribes la UI; en la 3 le das memoria y checkpoints; en la 4 te
+              pones en medio con el permiso humano y lo conectas a un canal; en
+              la 5 lo dejas sólido y medido. La 6 es contigo a solas, sobre tu
+              caso. Te llevas el repo completo, corriendo con los tokens de
+              DeepSeek que van incluidos.
             </p>
           </motion.div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {SESSIONS.map((s, i) => (
               <motion.div
                 key={s.number}
@@ -1149,8 +1160,36 @@ export default function SistemasAgenticosLanding() {
               <span className="text-sistemas-primary">sesión</span>
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
-              2 semanas intensivas: martes y jueves, 2 horas en vivo cada
-              sesión. Del harness a la interfaz.
+              3 semanas: martes, jueves y el lunes de cierre, 2 horas en vivo
+              cada sesión. Más una sexta sesión, contigo a solas.
+            </p>
+          </motion.div>
+
+          {/* Qué SÍ y qué NO — la exclusión antes de la introducción */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55 }}
+            className="mx-auto mb-14 max-w-3xl rounded-2xl border border-sistemas-line bg-sistemas-dark p-7 sm:p-9"
+          >
+            <h3 className="font-mono text-xs uppercase tracking-widest text-sistemas-accent">
+              De qué se trata
+            </h3>
+            <p className="mt-4 leading-relaxed text-sistemas-gray">
+              El arnés lo eliges ya hecho —{" "}
+              <strong className="text-zinc-200">GhostyCode</strong>, Goose,
+              OpenHands o Aider — y lo instalas antes de la primera sesión. Cómo
+              se arma uno por dentro está en el video gratuito, y ahí se queda.
+              Lo que construimos aquí es todo lo que va alrededor: la caja
+              remota, la interfaz, la memoria, los checkpoints y el permiso
+              humano.
+            </p>
+            <p className="mt-4 leading-relaxed text-sistemas-gray">
+              Dicho al revés, para que quede claro antes de que pagues: en este
+              taller no escribes tu propio loop de agente desde cero ni hacemos
+              el tour de LangChain contra CrewAI. Los frameworks cambian cada
+              trimestre; lo que se te queda es la capa de sistemas.
             </p>
           </motion.div>
 
@@ -1205,6 +1244,10 @@ export default function SistemasAgenticosLanding() {
               </motion.div>
             ))}
           </div>
+
+          <p className="mt-8 text-center font-mono text-xs text-sistemas-gray/70">
+            Temario revisado el 28 de agosto de 2026
+          </p>
         </div>
       </section>
 
@@ -1287,7 +1330,7 @@ export default function SistemasAgenticosLanding() {
         >
           Los cursos gringos de agentes están llenos de gente de backend
           aprendiendo a hacer interfaces. Tú ya sabes hacer producto — te falta
-          la capa de sistemas, y eso se aprende en 4 sesiones bien dadas.
+          la capa de sistemas, y eso se aprende en seis sesiones bien dadas.
         </motion.p>
       </section>
 
