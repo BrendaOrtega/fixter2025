@@ -254,7 +254,7 @@ export const loader = async () => {
       m3u8: { not: null },
     },
     orderBy: { eventDate: "asc" },
-    select: { slug: true, title: true, duration: true },
+    select: { slug: true, title: true, duration: true, poster: true },
   });
   return { grabaciones };
 };
@@ -601,7 +601,7 @@ function WebinarSection() {
         id="webinar"
         className="relative z-10 scroll-mt-24 border-y border-sistemas-line/60 bg-sistemas-surface/40"
       >
-        <div className="mx-auto w-full max-w-3xl px-6 py-20 text-center lg:px-10">
+        <div className="mx-auto w-full max-w-5xl px-6 py-20 text-center lg:px-10">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Esta serie de webinars ya terminó
           </h2>
@@ -610,6 +610,44 @@ function WebinarSection() {
               ? `Pero las ${grabaciones.length} grabaciones están completas y son gratis.`
               : "Pero la grabación está completa y es gratis."}
           </p>
+
+          {/* Una tira de miniaturas en vez de un solo botón: el título dice de
+              qué es cada una y cada tarjeta abre su propio video en el visor. */}
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+            {grabaciones.map((g, i) => (
+              <motion.a
+                key={g.slug}
+                href={`/cursos/sistemas-agenticos/${g.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: i * 0.1 }}
+                className="group overflow-hidden rounded-xl border border-sistemas-line bg-sistemas-dark text-left transition-colors hover:border-sistemas-accent/50"
+              >
+                <div className="relative aspect-video overflow-hidden bg-sistemas-surface">
+                  {g.poster ? (
+                    <img
+                      src={g.poster}
+                      alt={g.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : null}
+                  <span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 font-mono text-[11px] text-zinc-200">
+                    {MINUTOS_A_TEXTO(g.duration)}
+                  </span>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-sistemas-accent">
+                    {g.title}
+                  </p>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+
           <a
             href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
             target="_blank"
