@@ -622,15 +622,17 @@ export const HomeHero = () => {
             — cuatro entregas en video, de la primera llamada al modelo hasta la
             memoria. Con todo el código.
           </p>
+          {/* Antes este renglón mandaba a la comunidad, que no dice qué recibes.
+              Las tres grabaciones sí: se ven completas dejando el correo. */}
           <p className="mt-2 px-4 text-center text-sm text-white/60 lg:px-0 lg:text-left">
-            ✉️ Y la{" "}
+            📺 Mira los{" "}
             <Link
-              to="/c/agentes"
+              to="/cursos/sistemas-agenticos/agentes-en-produccion"
               className="text-white/80 transition-all duration-200 hover:underline"
             >
-              Comunidad Agéntica
-            </Link>
-            , para lo que sale después.
+              3 webinars completos de sistemas agénticos
+            </Link>{" "}
+            — gratis, solo deja tu correo.
           </p>
           {/* Links sutiles a los libros */}
           <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
