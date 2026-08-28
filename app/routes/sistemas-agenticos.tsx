@@ -83,14 +83,14 @@ const SESSIONS = [
     title: "Human in the loop",
     date: "Jueves 10 de septiembre · 8:00 PM CDMX",
     intro:
-      "Un agente con permiso de mandar un correo un día manda mil. La salida no es quitarle permisos, es ponerte a ti en medio: interrumpir, revisar, corregir y dejarlo seguir. Cerramos poniéndolo en línea, respondiendo desde un canal.",
+      "Un agente con permiso de mandar un correo un día manda mil. La salida no es quitarle permisos, es ponerte a ti en medio: interrumpir, revisar, corregir y dejarlo seguir. Cerramos poniéndolo en línea: tu agente contestando por WhatsApp y pidiéndote permiso desde ahí.",
     topics: [
       "Interrumpir al agente a media corrida sin tirar el trabajo hecho",
       "Aprobar, corregir y reanudar desde tu propia UI",
       "Streams paralelos: lanzar un segundo modelo dentro del mismo turno",
-      "Conectarlo a un canal — el canal va dado, ustedes lo conectan",
+      "Conectarlo a WhatsApp — la integración va dada, ustedes la conectan",
     ],
-    artifact: "Tu agente pidiendo permiso desde un canal real, y tú decidiendo",
+    artifact: "Tu agente contestando por WhatsApp y pidiéndote permiso desde ahí",
   },
   {
     number: "05",
@@ -913,12 +913,9 @@ export default function SistemasAgenticosLanding() {
               className="max-w-xl text-lg leading-relaxed text-sistemas-gray sm:text-xl"
             >
               Tu agente funciona en tu laptop y se rompe con usuarios reales.
-              Este taller cubre lo que falta en medio:{" "}
-              <span className="text-zinc-100">el harness</span>,{" "}
-              <span className="text-zinc-100">la memoria</span>,{" "}
-              <span className="text-zinc-100">la ejecución durable</span> y una{" "}
-              <span className="text-zinc-100">interfaz</span> que muestre lo que
-              el agente hace — y pida permiso antes de hacerlo.
+              Este taller cubre lo que falta en medio: sacarlo de tu compu,
+              darle memoria e interfaz, y ponerte a ti a aprobar antes de que
+              actúe.
             </motion.p>
 
             <motion.div
@@ -930,8 +927,6 @@ export default function SistemasAgenticosLanding() {
               {[
                 "5 sesiones en vivo + 1 personal",
                 "Del 1 al 14 de septiembre · 8 PM CDMX",
-                "TypeScript + React",
-                "Grabaciones incluidas",
               ].map((chip) => (
                 <span
                   key={chip}
@@ -946,14 +941,9 @@ export default function SistemasAgenticosLanding() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
-              className="mt-6 inline-block rounded-2xl border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-2.5 text-sm font-semibold leading-relaxed text-sistemas-accent"
+              className="mt-4 text-sm font-medium text-sistemas-accent"
             >
-              <span className="block">
-                🎁 Incluye agente de código (GhostyCode)
-              </span>
-              <span className="block">
-                + todos los tokens de DeepSeek v4 Pro que vas a necesitar
-              </span>
+              🎁 Incluye GhostyCode y todos los tokens de DeepSeek que necesites
             </motion.div>
 
             <motion.div
@@ -962,7 +952,15 @@ export default function SistemasAgenticosLanding() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-8"
             >
-              <CheckoutButton fetcher={fetcher} />
+              <div className="flex flex-wrap items-center gap-3">
+                <CheckoutButton fetcher={fetcher} />
+                <a
+                  href="#temario"
+                  className="rounded-full border border-sistemas-line bg-sistemas-surface px-6 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-sistemas-primary/50 hover:text-sistemas-primary"
+                >
+                  Ver el temario ↓
+                </a>
+              </div>
               <p className="mt-3 text-sm text-sistemas-gray">
                 <span className="text-sistemas-accent">
                   Precio de primera edición
@@ -1055,7 +1053,7 @@ export default function SistemasAgenticosLanding() {
               sobrevive fallos a media tarea y te pide aprobación antes de
               acciones sensibles. En la 1 lo sacas de tu laptop; en la 2 le
               escribes la UI; en la 3 le das memoria y checkpoints; en la 4 te
-              pones en medio con el permiso humano y lo conectas a un canal; en
+              pones en medio con el permiso humano y lo conectas a WhatsApp; en
               la 5 lo dejas sólido y medido. La 6 es contigo a solas, sobre tu
               caso. Te llevas el repo completo, corriendo con los tokens de
               DeepSeek que van incluidos.
@@ -1146,7 +1144,10 @@ export default function SistemasAgenticosLanding() {
       <WebinarSection />
 
       {/* ============ TEMARIO ============ */}
-      <section className="relative z-10 border-t border-sistemas-line/60 bg-sistemas-surface/30">
+      <section
+        id="temario"
+        className="relative z-10 scroll-mt-24 border-t border-sistemas-line/60 bg-sistemas-surface/30"
+      >
         <div className="mx-auto w-full max-w-5xl px-6 py-20 lg:px-10">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -1177,19 +1178,30 @@ export default function SistemasAgenticosLanding() {
               De qué se trata
             </h3>
             <p className="mt-4 leading-relaxed text-sistemas-gray">
-              El arnés lo eliges ya hecho —{" "}
-              <strong className="text-zinc-200">GhostyCode</strong>, Goose,
-              OpenHands o Aider — y lo instalas antes de la primera sesión. Cómo
-              se arma uno por dentro está en el video gratuito, y ahí se queda.
-              Lo que construimos aquí es todo lo que va alrededor: la caja
-              remota, la interfaz, la memoria, los checkpoints y el permiso
-              humano.
+              El arnés lo eliges ya hecho y lo instalas antes de la primera
+              sesión. Cómo se arma uno por dentro está en el video gratuito, y
+              ahí se queda. Lo que construimos aquí es todo lo que va alrededor:
+              la caja remota, la interfaz, la memoria, los checkpoints y el
+              permiso humano.
             </p>
             <p className="mt-4 leading-relaxed text-sistemas-gray">
-              Dicho al revés, para que quede claro antes de que pagues: en este
-              taller no escribes tu propio loop de agente desde cero ni hacemos
-              el tour de LangChain contra CrewAI. Los frameworks cambian cada
-              trimestre; lo que se te queda es la capa de sistemas.
+              Los cuatro caben en la caja, y dos caben mejor:{" "}
+              <strong className="text-zinc-200">GhostyCode</strong> (el nuestro,
+              open source, y el que recomendamos porque lo podemos arreglar en
+              vivo) y <strong className="text-zinc-200">Goose</strong> están
+              escritos en Rust, así que cada uno viaja como un binario suelto:
+              lo copias a la caja y corre. <strong className="text-zinc-200">Aider</strong>{" "}
+              y <strong className="text-zinc-200">OpenHands</strong> son Python
+              y piden meter el intérprete y las dependencias en la imagen, que
+              es peso y una versión más que mantener.
+            </p>
+            <p className="mt-4 leading-relaxed text-sistemas-gray">
+              Por eso Rust se llevó esta categoría: el arnés vive donde la caja
+              arranca de cero cien veces al día, y ahí un binario estático que
+              levanta de inmediato y usa poca memoria vale más que la comodidad
+              de escribirlo en el lenguaje de siempre. Lo mismo empujó a Codex
+              CLI de TypeScript a Rust. Las sesiones no se ramifican por lo que
+              elijas.
             </p>
           </motion.div>
 
