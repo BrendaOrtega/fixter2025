@@ -299,7 +299,12 @@ export const TranscriptPanel = ({
         <div
           className={cn(
             "relative flex flex-col",
-            chapters.length > 0 ? "mt-auto shrink-0" : "min-h-0 flex-1"
+            // ⚠️ El tope va AQUÍ, no en la ventana de dentro. Medido en el navegador el
+            // 27-ago: sin él este bloque crece con sus 433 párrafos hasta **57,119 px**,
+            // y un `max-h` en porcentaje colgado de él daba una ventana de 25,703 px —
+            // o sea ninguna ventana. El padre de este div es el panel, que sí tiene
+            // altura definida (`h-full`), así que aquí el porcentaje sí resuelve.
+            chapters.length > 0 ? "mt-auto min-h-0 max-h-[45%] shrink-0" : "min-h-0 flex-1"
           )}
         >
           {chapters.length > 0 && (
@@ -319,12 +324,11 @@ export const TranscriptPanel = ({
             // ⚠️ Pero "un párrafo" NO es una altura fija: lo decide whisper. Medido
             // sobre el webinar del 27-ago (433 segmentos): la mediana son 3 líneas y
             // el p90 son ONCE, así que con las 7.5rem de antes **el 31% de los
-            // párrafos salía cortado**. Por eso ahora es un rango — suelo el de
-            // siempre, techo a la mitad del panel para que los capítulos no
-            // desaparezcan— y lo que se pase, se scrollea.
+            // párrafos salía cortado**. La altura la pone ahora el contenedor de
+            // arriba (tope 45% del panel); aquí sólo se ocupa lo que quede.
             className={cn(
               "scrollbar-sutil space-y-1 overflow-y-auto",
-              chapters.length > 0 ? "min-h-[7.5rem] max-h-[45%] flex-1" : "min-h-0 flex-1"
+              "min-h-0 flex-1"
             )}
           >
             {segments.map((seg, i) => {
