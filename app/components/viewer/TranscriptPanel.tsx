@@ -97,7 +97,10 @@ export const TranscriptPanel = ({
 
   useEffect(() => {
     if (!seguirVideo || q) return;
-    activoRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    // ⚠️ `start`, no `center`. Centrar un párrafo más alto que la ventana lo corta por
+    // ARRIBA y por abajo: se empieza a leer a media frase, que es peor que no verlo
+    // entero. Alineado al inicio, siempre se lee desde su primera palabra.
+    activoRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [indiceActivo, seguirVideo, q]);
 
   // Búsqueda en todo el curso, con espera para no disparar una consulta por tecla.
@@ -312,9 +315,16 @@ export const TranscriptPanel = ({
             // veinte bloques a la vista el ojo busca cuál está resaltado en vez
             // de leer el que suena. Para leerlo entero está la búsqueda, y para
             // saltar, los capítulos.
+            //
+            // ⚠️ Pero "un párrafo" NO es una altura fija: lo decide whisper. Medido
+            // sobre el webinar del 27-ago (433 segmentos): la mediana son 3 líneas y
+            // el p90 son ONCE, así que con las 7.5rem de antes **el 31% de los
+            // párrafos salía cortado**. Por eso ahora es un rango — suelo el de
+            // siempre, techo a la mitad del panel para que los capítulos no
+            // desaparezcan— y lo que se pase, se scrollea.
             className={cn(
               "scrollbar-sutil space-y-1 overflow-y-auto",
-              chapters.length > 0 ? "h-[7.5rem]" : "min-h-0 flex-1"
+              chapters.length > 0 ? "min-h-[7.5rem] max-h-[45%] flex-1" : "min-h-0 flex-1"
             )}
           >
             {segments.map((seg, i) => {
