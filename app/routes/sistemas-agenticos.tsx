@@ -1179,29 +1179,21 @@ export default function SistemasAgenticosLanding() {
             </h3>
             <p className="mt-4 leading-relaxed text-sistemas-gray">
               El arnés lo eliges ya hecho y lo instalas antes de la primera
-              sesión. Cómo se arma uno por dentro está en el video gratuito, y
-              ahí se queda. Lo que construimos aquí es todo lo que va alrededor:
-              la caja remota, la interfaz, la memoria, los checkpoints y el
-              permiso humano.
-            </p>
-            <p className="mt-4 leading-relaxed text-sistemas-gray">
-              Los cuatro caben en la caja, y dos caben mejor:{" "}
-              <strong className="text-zinc-200">GhostyCode</strong> (el nuestro,
-              open source, y el que recomendamos porque lo podemos arreglar en
-              vivo) y <strong className="text-zinc-200">Goose</strong> están
-              escritos en Rust, así que cada uno viaja como un binario suelto:
-              lo copias a la caja y corre. <strong className="text-zinc-200">Aider</strong>{" "}
-              y <strong className="text-zinc-200">OpenHands</strong> son Python
-              y piden meter el intérprete y las dependencias en la imagen, que
-              es peso y una versión más que mantener.
-            </p>
-            <p className="mt-4 leading-relaxed text-sistemas-gray">
-              Por eso Rust se llevó esta categoría: el arnés vive donde la caja
-              arranca de cero cien veces al día, y ahí un binario estático que
-              levanta de inmediato y usa poca memoria vale más que la comodidad
-              de escribirlo en el lenguaje de siempre. Lo mismo empujó a Codex
-              CLI de TypeScript a Rust. Las sesiones no se ramifican por lo que
-              elijas.
+              sesión. Cómo se arma uno por dentro está en el video gratuito;
+              aquí armamos lo que va alrededor: la caja remota, la interfaz, la
+              memoria, los checkpoints y el permiso humano. Recomendamos{" "}
+              <strong className="text-zinc-200">GhostyCode</strong> —el nuestro,
+              open source, y el que podemos arreglar en vivo— o{" "}
+              <strong className="text-zinc-200">Goose</strong>: los dos están
+              escritos en Rust y viajan como un binario suelto que copias a la
+              caja y corre, mientras que{" "}
+              <strong className="text-zinc-200">Aider</strong> y{" "}
+              <strong className="text-zinc-200">OpenHands</strong>, en Python,
+              te obligan a hornear el intérprete y sus dependencias en la
+              imagen. Con Codex CLI pasó lo mismo: se mudó de TypeScript a Rust
+              cuando el arnés empezó a arrancar dentro de cajas efímeras. Los
+              cuatro funcionan y, elijas el que elijas, en clase seguimos los
+              mismos pasos.
             </p>
           </motion.div>
 
