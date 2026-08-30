@@ -1426,9 +1426,17 @@ export default function SistemasAgenticosLanding() {
           />
           <InstallStep
             step="04"
-            title="Verifica y arranca"
-            command="ghosty doctor"
-            note="Si sale en verde, corre ghosty --yolo y pídele algo. Ya estás listo para la sesión 1. El idioma de la interfaz se cambia desde la configuración de Ghosty."
+            title="Conecta las sandboxes"
+            command={
+              'ghosty mcp add easybits --url "https://www.easybits.cloud/api/mcp/sandbox"\nghosty mcp login easybits'
+            }
+            note="Son las cajas donde corre el agente. login abre el navegador y autorizas con tu cuenta."
+          />
+          <InstallStep
+            step="05"
+            title="Arranca"
+            command="ghosty --yolo"
+            note="Pídele algo y, si responde, ya estás listo para la sesión 1. --yolo lo deja ejecutar sin pedirte permiso en cada paso; el idioma se cambia desde la configuración de Ghosty."
           />
         </motion.div>
       </section>
