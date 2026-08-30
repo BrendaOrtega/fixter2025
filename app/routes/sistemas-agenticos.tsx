@@ -1394,8 +1394,8 @@ export default function SistemasAgenticosLanding() {
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
             El taller corre sobre GhostyCode, nuestro agente de código en
-            terminal (open source). Al inscribirte te llega por correo tu key de
-            EasyBits, con los tokens del modelo y las sandboxes.
+            terminal (open source). Los tokens del modelo y las sandboxes salen
+            de tu cuenta de EasyBits.
           </p>
         </motion.div>
 
@@ -1422,7 +1422,7 @@ export default function SistemasAgenticosLanding() {
             step="03"
             title="Conecta tu key de EasyBits"
             command="ghosty auth set --provider easybits --api-key TU_KEY"
-            note="Al inscribirte te llegan por correo tu key y los pasos para activarla. Queda guardada en tu configuración, así que sobrevive a cerrar la terminal."
+            note="La key la creas en tu cuenta de EasyBits, en el panel de desarrollador. Queda guardada en tu configuración, así que sobrevive a cerrar la terminal."
           />
           <InstallStep
             step="04"
