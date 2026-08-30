@@ -1390,12 +1390,12 @@ export default function SistemasAgenticosLanding() {
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Prepara tu entorno en{" "}
-            <span className="text-sistemas-primary">2 minutos</span>
+            <span className="text-sistemas-primary">5 minutos</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
             El taller corre sobre GhostyCode, nuestro agente de código en
-            terminal (open source). La key con tus tokens te la regalamos al
-            inscribirte.
+            terminal (open source). Los tokens del modelo y las sandboxes salen
+            de tu trial de EasyBits: 30 días, sin tarjeta.
           </p>
         </motion.div>
 
@@ -1406,23 +1406,73 @@ export default function SistemasAgenticosLanding() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="space-y-4"
         >
+          <div className="rounded-2xl border border-sistemas-line bg-sistemas-dark p-5 sm:p-6">
+            <div className="flex items-baseline gap-3">
+              <span className="font-mono text-xl font-black text-sistemas-primary/50">
+                01
+              </span>
+              <h3 className="font-bold text-zinc-100">
+                Activa tu trial de EasyBits
+              </h3>
+            </div>
+            <a
+              href="https://buy.stripe.com/dRm28sf3d5pJ3vm3Ul3F60A"
+              target="_blank"
+              rel="noopener"
+              className="mt-3 inline-block rounded-xl bg-sistemas-primary px-5 py-2.5 text-sm font-bold text-sistemas-dark transition hover:opacity-90"
+            >
+              Activar mis 30 días gratis →
+            </a>
+            <p className="mt-3 text-sm leading-relaxed text-sistemas-gray">
+              No pide tarjeta: pones tu correo y el trial arranca. Al terminar el
+              mes decides si te quedas; si no haces nada, se cancela solo. Usa el
+              mismo correo con el que te inscribiste al taller.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-sistemas-line bg-sistemas-dark p-5 sm:p-6">
+            <div className="flex items-baseline gap-3">
+              <span className="font-mono text-xl font-black text-sistemas-primary/50">
+                02
+              </span>
+              <h3 className="font-bold text-zinc-100">Copia tu API key</h3>
+            </div>
+            <a
+              href="https://www.easybits.cloud/dash/developer"
+              target="_blank"
+              rel="noopener"
+              className="mt-3 inline-block rounded-xl border border-sistemas-line px-5 py-2.5 text-sm font-bold text-sistemas-primary transition hover:border-sistemas-primary"
+            >
+              Ir a mi panel →
+            </a>
+            <p className="mt-3 text-sm leading-relaxed text-sistemas-gray">
+              Crea una key y cópiala — empieza con eb_sk_live_. Es individual: no
+              la compartas ni la subas a un repo. La misma sirve para el modelo y
+              para las tools.
+            </p>
+          </div>
           <InstallStep
-            step="01"
+            step="03"
+            title="Borra los ghostys viejos"
+            command={"rm -f ~/.local/bin/ghosty\nrm -rf ~/.ghosty"}
+            note="Si ya lo habías instalado en otro taller, esa versión arranca en lugar de la nueva. Confirma con which -a ghosty: no debe imprimir nada."
+          />
+          <InstallStep
+            step="04"
             title="Instala GhostyCode"
             command="curl -fsSL https://formmy.app/ghosty/install.sh | sh"
             note="Binario precompilado — no necesitas Node ni Rust. También disponible con npm install -g ghostycode."
           />
           <InstallStep
-            step="02"
+            step="05"
             title="Conecta tu key de EasyBits"
             command="ghosty auth set --provider easybits --api-key TU_KEY"
-            note="La key te llega por correo al inscribirte, cargada con todos los tokens de DeepSeek v4 Pro del taller. La misma sirve para el modelo y las tools."
+            note="Queda guardada en tu configuración, así que sobrevive a cerrar la terminal."
           />
           <InstallStep
-            step="03"
+            step="06"
             title="Verifica y arranca"
             command="ghosty doctor"
-            note="Si sale en verde, corre `ghosty` y pídele algo. Ya estás listo para la sesión 1."
+            note="Si sale en verde, corre ghosty --yolo y pídele algo. Ya estás listo para la sesión 1. El idioma de la interfaz se cambia desde la configuración de Ghosty."
           />
         </motion.div>
       </section>
