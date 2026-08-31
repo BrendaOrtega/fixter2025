@@ -171,7 +171,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   // Dominio desechable o truco de puntos en gmail → fingir éxito y no crear.
-  if (checkSignupEmail(email).blocked) {
+  if (checkSignupEmail(email, name).blocked) {
     return data({ success: true, needsConfirmation: true });
   }
 

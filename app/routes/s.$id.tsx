@@ -187,8 +187,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     phone = parsed.phone;
   }
 
-  // Anti-bot: dominio desechable o truco de puntos en gmail → fingir éxito y no crear.
-  if (checkSignupEmail(email).blocked) {
+  // Anti-bot: nombre generado, dominio desechable o truco de puntos en gmail →
+  // fingir éxito y no crear.
+  if (checkSignupEmail(email, name).blocked) {
     return data({ success: true, needsConfirmation: true });
   }
 
