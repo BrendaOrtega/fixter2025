@@ -62,6 +62,13 @@ largo hacia abajo. 0.3s al cerrar, 0.32s al abrir.
 
 - **El cuadro 0 va completo.** Lo que se anima es un asentamiento (`from` con
   `y: 26`) sobre algo que ya está puesto, nunca una aparición desde la nada.
+- **Y ese reposo va en el CSS, no en un `gsap.set`.** Añadido el 2026-08-27 tras
+  dibujar el robot de la lección 2.3: el párpado y el barrido del visor tenían su
+  posición inicial en `gsap.set`, así que en cualquier captura que no ejecute la
+  línea de tiempo —`mirar.sh`, una miniatura, un preview— el robot salía **con
+  los ojos cerrados y el barrido tapándole la cara**. Con el reposo en el CSS el
+  cuadro 0 es correcto por construcción, y de paso la herramienta de snapshot
+  vuelve a servir para revisar esa escena.
 - **`repeat` finito, jamás `-1`**: rompe el render determinista por cuadro.
 - **Y con suficientes repeticiones para cubrir la escena entera.** Un bucle de 12
   repeticiones se congeló a media escena y parecía que el video se atoraba.

@@ -89,5 +89,33 @@
     "autor": "DInside Project",
     "licencia": "CC BY 3.0 (pide crédito)",
     "video": "videos/acp-desde-cero"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1504527",
+    "titulo": "Perun",
+    "autor": "Ivan Tregub (BER)",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/webinar-3-promo"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1842819",
+    "titulo": "Techno Fashion",
+    "autor": "Milestep",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/webinar-3-inteligencia"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1057412",
+    "titulo": "Airplane Mode (Instrumental Version)",
+    "autor": "Josh Woodward",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/webinar-3-quimico"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/9460",
+    "titulo": "Chill Out",
+    "autor": "BrunoXe",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/webinar-3-robot"
   }
 ]
