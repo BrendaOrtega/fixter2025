@@ -27,8 +27,8 @@ const template = ({
 }) => `
 <h1 style="font-size:26px;margin:0 0 8px 0;color:#19262A;">${
   firstName(userName)
-    ? `¡${firstName(userName)}, ya vente a la llamada!`
-    : "¡Ya vente a la llamada!"
+    ? `¡${firstName(userName)}, esta es la última reunión!`
+    : "¡Esta es la última reunión!"
 } 👋</h1>
 <p style="margin:0 0 8px 0;">
   <strong>${slot.title}</strong><br/>
@@ -50,8 +50,17 @@ const template = ({
   <a href="${WEBINAR_ROOM_PATH}" target="_blank" rel="noopener" style="color:#37AB93;">${WEBINAR_ROOM_PATH}</a>
 </p>
 
+<p style="margin:0 0 8px 0;color:#475569;">
+  Hoy van cuatro agentes que ya corren en producción, en vivo:
+</p>
+<ul style="margin:0 0 24px 0;padding-left:20px;color:#475569;">
+  <li style="margin:0 0 4px 0;">Un vendedor que atiende por WhatsApp</li>
+  <li style="margin:0 0 4px 0;">Un asistente que vive dentro de Denik</li>
+  <li style="margin:0 0 4px 0;">Un programador que toma un ticket y lo resuelve</li>
+  <li style="margin:0 0 4px 0;">Un prospectador que sale a buscar clientes</li>
+</ul>
+
 <p style="margin:0 0 24px 0;color:#475569;">
-  ${slot.reminderPerk}<br/>
   Trae tu pregunta para el Q&amp;A.<br/>
   Si no puedes llegar en vivo, respóndeme y te paso la grabación.
 </p>

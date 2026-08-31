@@ -13,8 +13,20 @@ import { PrismaClient } from "@prisma/client";
 import { sendSistemasWebinarReminder } from "../app/mailSenders/sendSistemasWebinarReminder";
 import { getWebinarSlot, WEBINAR_SLOTS } from "../app/utils/webinarDates";
 import { audienceTagsFor } from "../app/.server/programas";
+import { checkSignupEmail } from "../app/.server/anti-bot";
 
 const db = new PrismaClient();
+
+/** Las cuentas de prueba de bliss no cuentan como audiencia. */
+const esCuentaPropia = (email: string) =>
+  /^fixtergeek\+/i.test(email) || CUENTAS_PROPIAS.has(email.toLowerCase());
+
+const CUENTAS_PROPIAS = new Set([
+  "fixtergeek@gmail.com",
+  "blissitos@gmail.com",
+  "contacto@fixter.org",
+  "brenda@fixter.org",
+]);
 
 const arg = (flag: string) => {
   const i = process.argv.indexOf(flag);
@@ -29,6 +41,18 @@ const send = process.argv.includes("--send");
  * con un solo tag deja fuera a media lista.
  */
 const audiencia = process.argv.includes("--audiencia");
+/**
+ * Suma a los suscritos al newsletter general. Sólo los CONFIRMADOS: el newsletter
+ * es doble opt-in y quien no confirmó nunca dijo que sí — mandarle es lo que
+ * ensucia la reputación del dominio en SES.
+ */
+const newsletter = process.argv.includes("--newsletter");
+/**
+ * Todo el que haya confirmado, con cualquier tag: los de otros cursos
+ * (`pong-course`, `aisdk-waitlist`) y las listas de espera. Es el alcance máximo
+ * de la base; sólo confirmados, por lo mismo que en `--newsletter`.
+ */
+const todos = process.argv.includes("--todos");
 const only = arg("--only");
 const slotId =
   arg("--slot") ??
@@ -44,7 +68,7 @@ if (!slot) {
   process.exit(1);
 }
 
-const subscribers = await db.subscriber.findMany({
+const subscribers: Array<{ email: string; name: string | null }> = await db.subscriber.findMany({
   where: {
     ...(audiencia
       ? { tags: { hasSome: audienceTagsFor("sistemas-agenticos") } }
@@ -57,10 +81,49 @@ const subscribers = await db.subscriber.findMany({
   orderBy: { createdAt: "asc" },
 });
 
+if ((newsletter || todos) && !only) {
+  const yaEstan = new Set(subscribers.map((s) => s.email.toLowerCase()));
+  const delNewsletter = await db.subscriber.findMany({
+    where: { ...(todos ? {} : { tags: { has: "newsletter" } }), confirmed: true },
+    select: { email: true, name: true },
+    orderBy: { createdAt: "asc" },
+  });
+  for (const s of delNewsletter) {
+    if (!yaEstan.has(s.email.toLowerCase())) subscribers.push(s);
+  }
+}
+
+// Se filtra DESPUES de consultar para poder decir en pantalla a quién se dejó
+// fuera y por qué: un descarte silencioso se lee igual que una lista corta.
+const descartados: Array<{ email: string; motivo: string }> = [];
+// Con `--only` se pide una dirección a mano — casi siempre la propia, para ver el
+// correo recibido antes del envío real. Filtrarla ahí sería no mandar nada.
+const destinatarios = subscribers.filter((s) => {
+  if (only) return true;
+  const { blocked, reason } = checkSignupEmail(s.email, s.name);
+  const motivo = blocked
+    ? reason === "generated-name"
+      ? "alta automatizada"
+      : "correo desechable"
+    : esCuentaPropia(s.email)
+      ? "cuenta propia"
+      : null;
+  if (motivo) descartados.push({ email: s.email, motivo });
+  return !motivo;
+});
+
 console.log(`Slot: ${slot.short}`);
-console.log(audiencia ? "Alcance: toda la audiencia del programa" : "Alcance: solo inscritos a esta fecha");
-console.log(`Destinatarios: ${subscribers.length}`);
-subscribers.forEach((s) => console.log(`  · ${s.email} (${s.name ?? "sin nombre"})`));
+console.log(
+  (audiencia ? "Alcance: toda la audiencia del programa" : "Alcance: solo inscritos a esta fecha") +
+    (todos ? " + TODA la base confirmada" : newsletter ? " + newsletter confirmado" : "")
+);
+console.log(`Destinatarios: ${destinatarios.length}`);
+destinatarios.forEach((s) => console.log(`  · ${s.email} (${s.name ?? "sin nombre"})`));
+
+if (descartados.length) {
+  console.log(`\nDescartados: ${descartados.length}`);
+  for (const d of descartados) console.log(`  · ${d.email} — ${d.motivo}`);
+}
 
 if (!send) {
   console.log("\nDry-run. Agrega --send para enviar de verdad.");
@@ -69,7 +132,7 @@ if (!send) {
 }
 
 let ok = 0;
-for (const sub of subscribers) {
+for (const sub of destinatarios) {
   try {
     await sendSistemasWebinarReminder({
       to: sub.email,
@@ -84,5 +147,5 @@ for (const sub of subscribers) {
   await new Promise((r) => setTimeout(r, 300));
 }
 
-console.log(`\nEnviados: ${ok}/${subscribers.length}`);
+console.log(`\nEnviados: ${ok}/${destinatarios.length}`);
 await db.$disconnect();
