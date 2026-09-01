@@ -29,12 +29,12 @@ T(640, 280, "el salto", 36, "#6741d9")
 # ---- MAÑANA: la caja
 els.append({"type": "rectangle", "x": 820, "y": 190, "width": 780, "height": 380, "backgroundColor": "#f3f0ff", "strokeColor": "#6741d9", "fillStyle": "solid", "strokeWidth": 4, "roundness": {"type": 3}})
 T(850, 205, "📦 sandbox EasyBits (microVM)", 34, "#6741d9")
-BOX(860, 290, 300, 130, "#fff3bf", "#e8590c", "🪿 goose serve --acp\n--host 0.0.0.0", 26)
+BOX(860, 290, 300, 130, "#fff3bf", "#e8590c", "🪿 goose serve\n--host 0.0.0.0", 26)
 ARROW(1160, 355, [[0, 0], [60, -20], [120, 0]], "#c2255c")
 T(1170, 300, "expose", 26, "#c2255c")
 BOX(1280, 290, 280, 130, "#fcc2d7", "#c2255c", "🌐 wss://…easybits.cloud", 24)
 els.extend(ghosty(x=1440, y=425, height=120))
-T(850, 450, "😀 aislado, no toca tu disco\n😀 despierta con el Upgrade\n😀 N clientes, desde donde sea", 26, "#2f9e44")
+T(850, 450, "😀 aislado, no toca tu disco\n😀 se duerme sola y despierta al conectar\n😀 N clientes, desde donde sea", 26, "#2f9e44")
 
 # ---- Clientes que llegan por wss
 ARROW(1420, 190, [[0, 0], [-40, -60], [-100, -90]], "#c2255c")
@@ -47,15 +47,15 @@ ARROW(1440, 190, [[0, 0], [60, -40], [150, -70]], "#c2255c")
 # ---- Por qué wss y no ssh
 els.append({"type": "rectangle", "x": 80, "y": 620, "width": 1640, "height": 170, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2", "fillStyle": "solid", "strokeWidth": 3, "roundness": {"type": 3}})
 T(110, 635, "🔌 por qué wss", 32, "#1971c2")
-T(110, 685, "1 conversación = 1 WebSocket: new WebSocket(url) … close(), sin child.kill() ni señales\nNode 22 lo trae nativo: cero dependencias. el proxy de la caja pasa el Upgrade (capa 7): sin túnel ssh ni llaves en el app", 26, "#1864ab")
+T(110, 685, "1 conversación = 1 WebSocket: new WebSocket(url) … close(), sin child.kill() ni señales\nNode 22 lo trae nativo: cero dependencias. La URL que te da expose ya acepta WebSocket: te conectas directo, sin túnel ssh ni llaves", 26, "#1864ab")
 
 # ---- Cómo
 els.append({"type": "rectangle", "x": 80, "y": 820, "width": 1640, "height": 160, "backgroundColor": "#f1f3f5", "strokeColor": "#495057", "fillStyle": "solid", "strokeWidth": 3, "roundness": {"type": 3}})
 T(110, 835, "⌨️ cómo (≈5 s de cero a ACP)", 30, "#495057")
 els.append({"type": "text", "x": 110, "y": 885, "fontSize": 26, "fontFamily": 3, "strokeColor": "#212529",
-            "text": "create  →  running  →  goose serve --acp --host 0.0.0.0  →  expose 3284  →  wss://…  →  initialize"})
+            "text": "create  →  running  →  goose serve --host 0.0.0.0  →  expose 3284  →  wss://…  →  initialize"})
 
-T(200, 1020, "💡 sin --host 0.0.0.0 el proxy no te encuentra: llega a la IP de la microVM, no al loopback.", 34, "#e67700")
+T(200, 1020, "💡 goose serve escucha en 127.0.0.1; el proxy entra por la IP de la microVM. Sin --host 0.0.0.0, 502.", 34, "#e67700")
 
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)
