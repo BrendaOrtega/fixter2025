@@ -87,14 +87,14 @@ def ghosty(x, y, height=260):
     for i in range(0, 19):  # arco superior, de izquierda a derecha
         a = math.pi - math.pi * i / 18
         pts.append((50 + 46 * math.cos(a), 46 - 44 * math.sin(a)))
-    pts.append((96, 100))
-    # olanes: tres semicírculos convexos hacia abajo, de derecha a izquierda
-    for k in range(3):
-        cx = 80 - k * 30
+    pts.append((96, 87))
+    # olanes de tamaños distintos, de derecha a izquierda: el derecho chico y alto,
+    # el de en medio mediano, el izquierdo ancho y el que más baja (como en el asset)
+    for cx, rx, ry, base in ((80, 16, 10, 87), (50, 14, 9, 90), (18, 18, 12, 89)):
         for i in range(1, 12):
-            a = -math.pi * i / 12
-            pts.append((cx + 15 * math.cos(a), 100 - 12 * math.sin(a)))
-    pts.append((4, 100))
+            a = math.pi * i / 12
+            pts.append((cx + rx * math.cos(a), base + ry * math.sin(a)))
+    pts.append((0, 89))
     pts.append(pts[0])
     add({"type": "line", "x": x, "y": y, "points": [[px * s, py * s] for px, py in pts],
          "backgroundColor": "#8b83e8", "strokeColor": "#6c63d6", "width": 100 * s, "height": 115 * s,
