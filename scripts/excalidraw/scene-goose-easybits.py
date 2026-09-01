@@ -20,21 +20,21 @@ ARROW(400, 380, [[0, 0], [100, -40], [200, 0]], "#1971c2")
 T(430, 395, "goose acp", 26, "#868e96")
 
 BOX(600, 260, 340, 300, "#fff3bf", "#e8590c", "🪿\ngoose\n\nservidor ACP\n+ cliente HTTP", 38)
-T(640, 570, "provider: easybits", 30, "#e8590c")
+T(640, 570, "provider: custom_easybits", 30, "#e8590c")
 
 T(970, 200, "https", 30, "#c2255c")
 ARROW(940, 380, [[0, 0], [100, -40], [200, 0]], "#c2255c")
 T(955, 240, "OpenAI compatible", 26, "#868e96")
 
-els.append({"type": "ellipse", "x": 1140, "y": 250, "width": 360, "height": 300, "backgroundColor": "#e5dbff", "strokeColor": "#6741d9", "fillStyle": "solid", "strokeWidth": 4,
-            "label": {"text": "🧩\nEasyBits\nLLM API", "fontSize": 44, "fontFamily": V}})
-BOX(1120, 580, 400, 80, "#ffe3e3", "#c92a2a", "🔑 EASYBITS_API_KEY", 28)
-T(1540, 590, "la misma key\nde tus sandboxes", 28, "#c92a2a")
+els.append({"type": "ellipse", "x": 1140, "y": 240, "width": 420, "height": 320, "backgroundColor": "#e5dbff", "strokeColor": "#6741d9", "fillStyle": "solid", "strokeWidth": 4,
+            "label": {"text": "🧩\nEasyBits\ndeepseek-v4-flash", "fontSize": 36, "fontFamily": V}})
+BOX(1110, 590, 470, 80, "#ffe3e3", "#c92a2a", "🔑 CUSTOM_EASYBITS_API_KEY", 28)
+T(1600, 600, "la misma key\nde tus sandboxes", 28, "#c92a2a")
 
-els.append({"type": "rectangle", "x": 100, "y": 720, "width": 900, "height": 200, "backgroundColor": "#f1f3f5", "strokeColor": "#495057", "fillStyle": "solid", "strokeWidth": 3, "roundness": {"type": 3}})
+els.append({"type": "rectangle", "x": 100, "y": 720, "width": 1080, "height": 200, "backgroundColor": "#f1f3f5", "strokeColor": "#495057", "fillStyle": "solid", "strokeWidth": 3, "roundness": {"type": 3}})
 T(130, 735, "⌨️ cómo se arma", 30, "#495057")
 els.append({"type": "text", "x": 130, "y": 780, "fontSize": 26, "fontFamily": 3, "strokeColor": "#212529",
-            "text": "goose configure          # Custom Provider (OpenAI compatible)\n#   base URL: https://www.easybits.cloud/api/v2/llm/v1\n#   api key:  EASYBITS_API_KEY\ngoose acp                # VS Code lo lanza así"})
+            "text": "goose configure          # Custom Provider (OpenAI compatible)\n#   base URL: https://www.easybits.cloud/api/v2/llm/v1\n#   api key:  CUSTOM_EASYBITS_API_KEY · modelo deepseek-v4-flash\ngoose acp                # VS Code lo lanza así"})
 
 T(200, 960, "💡 mismo goose, mismo ACP arriba; lo que cambia es a quién le pide el modelo.", 39, "#e67700")
 
