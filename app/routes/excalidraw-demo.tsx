@@ -26,6 +26,8 @@ const ExcalidrawWrapper = lazy(async () => {
                 data.version !== lastVersion.current
               ) {
                 lastVersion.current = data.version;
+                // Esperar a que carguen las fuentes: si se mide antes, el texto sale recortado
+                await document.fonts.ready;
                 const elements = convertToExcalidrawElements(data.elements || []);
                 apiRef.current.updateScene({ elements });
                 if (data.elements?.length) {
