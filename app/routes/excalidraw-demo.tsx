@@ -28,7 +28,12 @@ const ExcalidrawWrapper = lazy(async () => {
                 lastVersion.current = data.version;
                 // Esperar a que carguen las fuentes: si se mide antes, el texto sale recortado
                 await document.fonts.ready;
-                const elements = convertToExcalidrawElements(data.elements || []);
+                let elements = convertToExcalidrawElements(data.elements || []);
+                apiRef.current.updateScene({ elements });
+                // Las fuentes se piden al primer uso: al cabo de un momento, volver a medir
+                await new Promise((r) => setTimeout(r, 700));
+                await document.fonts.ready;
+                elements = convertToExcalidrawElements(data.elements || []);
                 apiRef.current.updateScene({ elements });
                 if (data.elements?.length) {
                   apiRef.current.scrollToContent(elements, {

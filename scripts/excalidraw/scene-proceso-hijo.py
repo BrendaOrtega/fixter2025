@@ -38,7 +38,16 @@ BOX(200, 660, 240, 60, "#fff3bf", "#e8590c", "goose acp", 30)
 BOX(460, 660, 320, 60, "#d3f9d8", "#2f9e44", "ghosty serve --acp", 30)
 BOX(800, 660, 400, 60, "#ffd8a8", "#e8590c", "gemini --experimental-acp", 30)
 
-T(300, 790, "💡 sin red, sin puerto: solo dos tuberías y un proceso.", 39, "#e67700")
+# El agente sale a internet a pedirle al modelo
+ARROW(1300, 420, [[0, 0], [90, -40], [180, 0]], "#e8590c")
+T(1330, 340, "https", 36, "#e8590c")
+els.append({"type": "ellipse", "x": 1480, "y": 250, "width": 420, "height": 360, "backgroundColor": "#fff3bf", "strokeColor": "#e8590c", "fillStyle": "solid", "strokeWidth": 4,
+            "label": {"text": "☁️\nel modelo", "fontSize": 44, "fontFamily": V}})
+BOX(1520, 630, 340, 56, "#ffe8cc", "#e8590c", "Claude API", 30)
+BOX(1520, 700, 340, 56, "#ffe8cc", "#e8590c", "OpenAI", 30)
+BOX(1520, 770, 340, 56, "#ffe8cc", "#e8590c", "DeepSeek", 30)
+
+T(300, 860, "💡 el proceso vive en tu máquina; el modelo, en la nube de quien lo sirva.", 39, "#e67700")
 
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)
