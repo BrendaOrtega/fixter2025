@@ -100,6 +100,39 @@ body {
   color: var(--shiki-dark, inherit) !important;
 }
 
+/* Código en línea: prose le mete comillas invertidas y streamdown lo encoge */
+[data-streamdown="inline-code"] {
+  font-size: 0.875em !important;
+  font-weight: 500 !important;
+  color: #85ddcb !important;
+  background: rgba(133, 221, 203, 0.1) !important;
+  border: 1px solid rgba(133, 221, 203, 0.18) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.15em 0.4em !important;
+}
+
+[data-streamdown="inline-code"]::before,
+[data-streamdown="inline-code"]::after {
+  content: none !important;
+}
+
+/* Links dentro del post: verde de marca y subrayado suave */
+.prose a:not([data-streamdown="code-block"] a),
+.prose-invert a:not([data-streamdown="code-block"] a) {
+  color: #85ddcb !important;
+  font-weight: 500 !important;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(133, 221, 203, 0.4);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+
+.prose a:hover,
+.prose-invert a:hover {
+  text-decoration-color: #85ddcb;
+}
+
 *:focus-visible {
   outline: 4px dashed var(--brand-700);
 }
