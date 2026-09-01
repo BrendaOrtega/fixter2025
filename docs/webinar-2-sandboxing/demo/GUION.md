@@ -66,6 +66,11 @@ El `CLAUDE.md` de la caja ya se lo dice al agente, así que si él lo levanta, l
 - Sin `--continue`, **cada turno llega sin memoria**. La bandera va en `/root/agente.sh`.
 - Sudo **acotado** en `/etc/sudoers.d/agente`: sólo `apt-get install|update`.
 - `extend` usa `extendSeconds`, no `timeoutSeconds`.
+- ⚠️ **Sin `suspendOnIdle`, al vencer el TTL la caja se DESTRUYE, no se duerme.** Para la demo
+  da igual (dura una hora y se tira). Para una caja que aloja un agente al que le escribes
+  después, es la diferencia entre que siga ahí mañana o un 404: va
+  `{"suspendOnIdle":true,"hardTtlSeconds":604800}`. Medido el 2026-09-01: con la siesta queda
+  `suspended` y despierta en 167 ms; sin ella desaparece del inventario.
 - `POST /snapshots/:id` responde **500** (bug abierto). Usar `POST /sandboxes/:id/fork`.
 - La bitácora es cross-origin: el navegador la bloquea. El servidor local la proxea en `/log`.
 - `/dash/flota` no revalida solo: ⌘R en el beat.

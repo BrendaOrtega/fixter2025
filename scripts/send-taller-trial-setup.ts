@@ -21,14 +21,16 @@ const CUENTAS_PROPIAS = new Set(["fixtergeek@gmail.com", "blissitos@gmail.com"])
 const PRUEBA = ["fixtergeek@gmail.com"];
 
 /**
- * Quien ya tiene el correo en su bandeja, fuera del envío general de ayer.
- * Bremin lo recibió el 30 de agosto en un envío de prueba equivocado; Rosalba
- * el 31, a mano, porque la inscribimos después de que salió el general. A
- * cualquiera de los dos se le manda con --only si el contenido cambia.
+ * Quien ya tiene el correo en su bandeja, fuera del envío general del 30 de
+ * agosto. Bremin lo recibió ese día en un envío de prueba equivocado; Rosalba,
+ * Oswaldo y Sergio a mano, porque pagaron después de que salió el general. A
+ * cualquiera de ellos se le manda con --only si el contenido cambia.
  */
 const YA_ENVIADO = new Set([
   "bremin11.20.93@gmail.com",
   "rfc.rossy@gmail.com",
+  "oswaldinho963@gmail.com",
+  "serchcode@gmail.com",
 ]);
 
 const arg = (flag: string) => {
