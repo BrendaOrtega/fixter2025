@@ -23,54 +23,51 @@ def arrow(x, y, dx, dy, color, bend=-30):
     els.append({"type": "arrow", "x": x, "y": y, "strokeColor": color, "strokeWidth": 4, "roundness": {"type": 2},
                 "points": [[0, 0], [dx / 2, bend], [dx, dy]]})
 
-N = int(sys.argv[1]) if len(sys.argv) > 1 else 4
+N = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
-T(100, 20, "cierre · deploy: la app en su propia caja", 58, "#6741d9")
+T(100, 20, "3 de 4 · la app en su propia caja", 58, "#6741d9")
 T(100, 95, "dos cajas: una corre al agente, otra corre a la app", 32, "#868e96")
-els.extend(ghosty(x=1560, y=10, height=160))
 
-# las dos cajas
-box(100, 190, 520, 250, "#e5dbff", "#6741d9", "", 30)
-T(120, 200, "🤖 caja del agente", 30, "#6741d9")
-MONO(120, 250, "goose serve --host 0.0.0.0\nwss://sb-…-3000.sandboxes.easybits.cloud", 20, "#6741d9")
-T(120, 340, "ya existía; ACP_WS_URL apunta aquí", 24, "#495057")
+els.extend(ghosty(x=1440, y=5, height=170))
 
-box(760, 190, 520, 250, "#d3f9d8", "#2f9e44", "", 30, dashed=(N < 2))
-T(780, 200, "🖥️ caja de la app (nueva)", 30, "#2f9e44")
-MONO(780, 250, "git clone → npm run build → npm start\nhttps://sb-…-3000.sandboxes.easybits.cloud", 20, "#2f9e44")
-T(780, 340, "SSR + ruta SSE; la 3 le agrega memoria", 24, "#495057")
-arrow(760, 315, -140, 0, "#6741d9", -40)
-T(640, 250, "ACP\nwss", 22, "#6741d9")
+# ---- el diagrama, protagonista ------------------------------------------
+box(300, 200, 520, 150, "#f8f9fa", "#495057", "", 30)
+T(325, 225, "💻 tu Mac", 32, "#495057")
+T(325, 280, "un JSON con la URL del repo", 26, "#868e96")
+arrow(560, 360, 0, 110, "#2f9e44", 0)
 
-box(1380, 190, 300, 250, "#a5d8ff", "#1971c2", "🌐 alumno\n(y en la 4,\nWhatsApp)", 28)
-arrow(1380, 315, -100, 0, "#1971c2", -40)
+box(220, 510, 680, 380, "#d3f9d8", "#2f9e44", "", 30)
+T(250, 535, "📦 la caja de la app", 32, "#2f9e44")
+T(250, 600, "git clone", 26, "#495057")
+T(250, 645, "npm ci && npm run build", 26, "#495057")
+T(250, 690, "node server.js  + vault", 26, "#6741d9")
+box(250, 750, 620, 110, "#a5d8ff", "#1971c2", "", 26)
+T(275, 770, "🌐 …-3000.sandboxes.easybits.cloud", 26, "#1971c2")
+T(275, 812, "su puerta al mundo", 22, "#495057")
 
-# pasos
+arrow(910, 665, 200, 0, "#6741d9", -20)
+els.append({"type": "arrow", "x": 1110, "y": 745, "strokeColor": "#6741d9", "strokeWidth": 4,
+            "roundness": {"type": 2}, "points": [[0, 0], [-100, 20], [-200, 0]]})
+T(940, 590, "ACP / wss", 26, "#6741d9")
+
+box(1130, 620, 520, 160, "#e5dbff", "#6741d9", "", 30)
+T(1155, 650, "🤖 caja del agente", 32, "#6741d9")
+T(1155, 705, "la de siempre, ya viva", 26, "#495057")
+
+# ---- los tres pasos, en una tira abajo -----------------------------------
 steps = [
-    ("01", "lanzar", "#2f9e44", "#d3f9d8",
-     'launch_app({ sandboxId, repo,\n  buildCommand: "npm run build",\n  startCommand: "npm start",\n  port: 3000,\n  env: { ACP_WS_URL, ACP_SECRET, EASYBITS_API_KEY } })',
-     "sandboxId es el destino, repo la fuente. Se buildea DENTRO de la caja (Linux)."),
-    ("02", "verificar", "#1971c2", "#d0ebff",
-     "curl -I https://sb-…/   → 200",
-     "no está publicada hasta que el GET responde 200. Si no: get_machine_logs primero."),
-    ("03", "iterar", "#e8590c", "#ffd8a8",
-     "launch_app({ …mismo sandboxId })   → release v2, ~20 s\nrollback_machine({ sandboxId, releaseId })   → ~12 s",
-     "cada deploy es un release; volver atrás no rebuildea."),
-    ("04", "matarla", "#c92a2a", "#ffe3e3",
-     "destroy → launch_app otra vez → ¿qué se perdió?  (puente a la 3)",
-     "se pierde TODO: el Map, las fotos locales… y con eso abre la sesión 3."),
+    ("01", "lanzar", "#2f9e44", "#d3f9d8", "le das el repo;\nla caja lo clona"),
+    ("02", "secretos", "#6741d9", "#e5dbff", "van al vault,\nnunca al repo"),
+    ("03", "verificar", "#1971c2", "#d0ebff", "no está publicada\nhasta que da 200"),
 ]
-y = 480
-for num, title, stroke, bg, cmd, note in steps[:N]:
-    h = 40 + 26 * (cmd.count("\n") + 1) + 40
-    box(100, y, 1580, h, bg, stroke, "", 30)
-    T(120, y + 10, f"{num}  {title}", 32, stroke)
-    MONO(360, y + 12, cmd, 19, stroke)
-    T(360, y + h - 32, note, 20, "#495057")
-    y += h + 18
+x = 220
+for num, title, stroke, bg, que in steps[:N]:
+    box(x, 1000, 400, 170, bg, stroke, "", 30)
+    T(x + 25, 1025, f"{num}  {title}", 32, stroke)
+    T(x + 25, 1085, que, 24, "#212529")
+    x += 440
 
-if N == 4:
-    T(100, y + 15, "💡 los secretos van por env, nunca en el repo. Express 5: app.use(handler), no app.all(\"*\").", 32, "#e67700")
+T(220, 1220, "💡 se buildea dentro de la caja, no en tu Mac.", 30, "#e67700")
 
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)
