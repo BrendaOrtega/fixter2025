@@ -40,7 +40,7 @@ const SyntaxHighlight: object = {
       </div>
     ) : (
       <code
-        className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-sm font-mono break-words"
+        className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[0.85em] font-mono break-words before:content-none after:content-none"
         {...props}
       />
     );
