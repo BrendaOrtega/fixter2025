@@ -70,5 +70,7 @@ espera a que alguien le hable. Ese alguien eres tú, en la primera página del c
 **Una cuenta en EasyBits**, a partir del capítulo 6, para la caja donde vive Ghosty. Los primeros
 cinco capítulos no la necesitan.
 
-**Un editor que hable el protocolo** es opcional. Zed y los IDEs de JetBrains lo traen de fábrica y
-sirven para comparar tu Cliente con uno hecho; ninguno hace falta para seguir el libro.
+**Un editor que hable el protocolo** es opcional. Zed y los IDEs de JetBrains lo traen de fábrica,
+y VS Code lo tiene con la extensión **ACP Client** del marketplace, que trae once Agentes ya
+configurados y deja agregar el tuyo. Sirven para comparar tu Cliente con uno hecho; ninguno hace
+falta para seguir el libro.
