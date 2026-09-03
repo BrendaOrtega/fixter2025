@@ -76,8 +76,7 @@ código en lugar de consumirla. No necesitas saber de modelos de lenguaje por de
 implementado un protocolo antes. JSON-RPC se explica desde cero en el primer capítulo, y son unas
 veinte líneas de idea.
 
-Si sólo quieres usar Claude Code dentro de Zed, la documentación de Zed te alcanza y te sobra. Si
-quieres escribir el Agente que la gente elige, o el Cliente que tu equipo va a usar todos los días,
-sigue leyendo.
+Si sólo quieres usar un agente de código desde tu editor, la documentación de tu editor te alcanza
+y te sobra. Si quieres escribir el Cliente que tu equipo va a usar todos los días, sigue leyendo.
 
 Abrazo. Blissmo. 🤓
