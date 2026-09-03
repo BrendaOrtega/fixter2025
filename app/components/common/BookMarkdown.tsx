@@ -3,6 +3,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import rangeParser from "parse-numeric-range";
 import { useEffect, useState } from "react";
+import { FiCheck, FiCopy, FiMaximize2, FiX } from "react-icons/fi";
 
 // Bloque de código con "Expandir": los ejemplos largos se salen de la columna
 // de lectura, y desplazarse de lado es incómodo. Expandido, el bloque se abre en
@@ -49,21 +50,35 @@ function CodeBlock({ language, lineProps, ...props }: any) {
     />
   );
 
+  // Iconos en vez de texto: el rótulo competía con el código. El title deja
+  // la palabra a la mano de quien la necesita.
   const buttonClass =
-    "rounded-md bg-white/80 px-2 py-1 text-xs text-gray-600 shadow-sm backdrop-blur hover:bg-white hover:text-purple-700";
+    "rounded-md bg-white/80 p-1.5 text-gray-500 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-purple-700";
 
   return (
     <div className="relative my-6">
       <div className="absolute right-3 top-3 z-20 flex gap-1">
-        <button type="button" onClick={copy} className={buttonClass}>
-          {copied ? "Copiado" : "Copiar"}
+        <button
+          type="button"
+          onClick={copy}
+          title={copied ? "Copiado" : "Copiar"}
+          aria-label={copied ? "Copiado" : "Copiar código"}
+          className={buttonClass}
+        >
+          {copied ? (
+            <FiCheck className="h-4 w-4 text-green-600" />
+          ) : (
+            <FiCopy className="h-4 w-4" />
+          )}
         </button>
         <button
           type="button"
           onClick={() => setExpanded(true)}
+          title="Expandir"
+          aria-label="Expandir código"
           className={`${buttonClass} hidden lg:block`}
         >
-          Expandir
+          <FiMaximize2 className="h-4 w-4" />
         </button>
       </div>
       <div className="overflow-x-auto">{highlighted}</div>
@@ -78,15 +93,27 @@ function CodeBlock({ language, lineProps, ...props }: any) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 z-20 float-right flex gap-1">
-              <button type="button" onClick={copy} className={buttonClass}>
-                {copied ? "Copiado" : "Copiar"}
+              <button
+                type="button"
+                onClick={copy}
+                title={copied ? "Copiado" : "Copiar"}
+                aria-label={copied ? "Copiado" : "Copiar código"}
+                className={buttonClass}
+              >
+                {copied ? (
+                  <FiCheck className="h-4 w-4 text-green-600" />
+                ) : (
+                  <FiCopy className="h-4 w-4" />
+                )}
               </button>
               <button
                 type="button"
                 onClick={() => setExpanded(false)}
+                title="Cerrar"
+                aria-label="Cerrar"
                 className={buttonClass}
               >
-                Cerrar
+                <FiX className="h-4 w-4" />
               </button>
             </div>
             {highlighted}
