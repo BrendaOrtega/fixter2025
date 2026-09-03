@@ -53,11 +53,10 @@ salida estándar. Sin puerto, sin dirección, sin socket. El Cliente arranca al 
 subproceso y le habla por `stdin`; el Agente contesta por `stdout`. Cuando el Cliente cierra el
 tubo, el Agente muere. En su forma básica el protocolo no pide más infraestructura que ésa.
 
-Si has usado el Language Server Protocol —el que hace que tu editor subraye errores de
-TypeScript—, la idea te suena: también arranca un subproceso y le habla por `stdin`. Hay una
-diferencia práctica que te va a ahorrar una tarde de depuración. LSP antepone a cada mensaje una
-cabecera `Content-Length:` con el número de bytes. ACP no: cada mensaje es **un JSON en una sola
-línea, terminado en salto de línea**. Para leerlo basta partir por `\n`. Para escribirlo hay que
+¿Y cómo sabe el que lee dónde termina un mensaje y empieza el siguiente? En HTTP lo resuelve la
+cabecera `Content-Length`, que anuncia cuántos bytes vienen. Aquí no hay cabeceras: cada mensaje
+es **un JSON en una sola línea, terminado en salto de línea**, igual que un archivo de registro
+donde cada renglón es un evento. Para leerlo basta partir por `\n`. Para escribirlo hay que
 asegurarse de que el JSON no traiga saltos de línea adentro, que es lo que `JSON.stringify` hace
 por defecto. Si alguna vez mandas un mensaje "bonito", con indentación, el Agente va a recibir
 media línea, intentar parsearla, y contestar un error de análisis con `id: null`, porque no pudo
