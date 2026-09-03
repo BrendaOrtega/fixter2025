@@ -47,6 +47,17 @@ export const BOOK_CONFIG = {
     epubFilename: "llamaindex-workflows.epub",
     epubPublicPath: "/llamaindex-workflows.epub",
   },
+  "acp": {
+    title: "Agent Client Protocol",
+    priceUSD: 0, // se escribe en público; sin precio todavía
+    priceMXN: 0,
+    chaptersCount: 14,
+    contentPath: "acp",
+    routePath: "acp",
+    epubS3Key: null,
+    epubFilename: null,
+    epubPublicPath: null, // aún no hay EPUB
+  },
 } as const;
 
 export type BookSlug = keyof typeof BOOK_CONFIG;

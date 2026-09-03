@@ -73,6 +73,27 @@ const getBooksConfig = () => [
       { slug: "capitulo-07", title: "Proyecto Final" },
     ],
   },
+  {
+    slug: "acp" as const,
+    title: BOOK_CONFIG["acp"].title,
+    url: "/libros/acp",
+    chapters: [
+      { slug: "prologo", title: "Prólogo" },
+      { slug: "introduccion", title: "Introducción" },
+      { slug: "capitulo-01", title: "El primer initialize" },
+      { slug: "capitulo-02", title: "Sesiones" },
+      { slug: "capitulo-03", title: "El turno" },
+      { slug: "capitulo-04", title: "Las manos" },
+      { slug: "capitulo-05", title: "Permisos" },
+      { slug: "capitulo-06", title: "Un Agente remoto llamado Ghosty" },
+      { slug: "capitulo-07", title: "WebSocket: quién lo trae puesto y quién no" },
+      { slug: "capitulo-08", title: "MCP por ACP" },
+      { slug: "capitulo-09", title: "Revivir" },
+      { slug: "capitulo-10", title: "Extensibilidad" },
+      { slug: "capitulo-11", title: "Memoria" },
+      { slug: "capitulo-12", title: "La interfaz web" },
+    ],
+  },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
