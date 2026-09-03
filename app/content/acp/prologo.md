@@ -29,7 +29,9 @@ El Agent Client Protocol corta eso en dos mitades que se hablan por JSON-RPC. De
 **Agente**: quien tiene el modelo y hace el trabajo. El Cliente abre el proceso, negocia
 capacidades, manda una instrucción y recibe un chorro de actualizaciones mientras el Agente
 trabaja. Cuando el Agente necesita leer un archivo, correr un comando o pedir permiso, se lo pide
-al Cliente. Diez agentes y diez editores vuelven a ser veinte implementaciones.
+al Cliente. Cada Agente implementa el protocolo una vez y cada Cliente lo implementa una vez: con
+diez de cada lado son veinte implementaciones que se combinan como quieran, en lugar de las cien
+parejas hechas a mano.
 
 Zed lo estrenó y hoy también lo hablan de fábrica los IDEs de JetBrains —IntelliJ, PyCharm, GoLand,
 WebStorm— desde diciembre de 2025. Neovim y Emacs lo tienen por plugins de la comunidad. Del lado
