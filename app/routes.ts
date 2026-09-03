@@ -87,6 +87,8 @@ export default [
   route("libros/llamaindex", "routes/libros/llamaindex.tsx"),
   // Libro IA aplicada con React y TypeScript
   route("libros/ai_sdk", "routes/libros/ai_sdk.tsx"),
+  // Libro Agent Client Protocol
+  route("libros/acp", "routes/libros/acp.tsx"),
   // Lead Magnets
   route("descarga/:slug", "routes/descarga.$slug.tsx"),
   route("descarga/:slug/gracias", "routes/descarga.$slug.gracias.tsx"),

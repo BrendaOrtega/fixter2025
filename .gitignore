@@ -8,3 +8,6 @@
 
 # Proyectos de video (HyperFrames) — assets pesados, no van al repo
 /videos/
+
+# Estado local de ghosty
+.ghosty/

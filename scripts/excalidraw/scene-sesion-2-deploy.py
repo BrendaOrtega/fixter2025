@@ -69,6 +69,11 @@ for num, title, stroke, bg, que in steps[:N]:
 
 T(220, 1220, "💡 se buildea dentro de la caja, no en tu Mac.", 30, "#e67700")
 
+box(1420, 210, 560, 150, "#fff3bf", "#e8590c", "", 28, dashed=True)
+T(1450, 235, "🌐 ¿y tu dominio?", 30, "#e8590c")
+T(1450, 290, "mandas domain en el launch y creas", 24, "#495057")
+T(1450, 328, "el registro DNS que te devuelve", 24, "#495057")
+
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)
 out.write_text(json.dumps({"version": prev + 1, "elements": els}, ensure_ascii=False))
