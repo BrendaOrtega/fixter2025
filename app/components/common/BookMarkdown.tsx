@@ -2,11 +2,12 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import rangeParser from "parse-numeric-range";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Bloque de código con "Expandir": los ejemplos largos se salen de la columna
-// de lectura, y desplazarse de lado es incómodo. Expandido, el bloque se ensancha
-// sobre la columna hasta 90vw en pantallas grandes; en móvil no hay a dónde crecer.
+// de lectura, y desplazarse de lado es incómodo. Expandido, el bloque se abre en
+// un modal a 90vw; la columna tiene overflow oculto y no hay forma de crecer
+// dentro de ella. En móvil no hay a dónde crecer, así que el botón no aparece.
 function CodeBlock({ language, lineProps, ...props }: any) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -20,43 +21,72 @@ function CodeBlock({ language, lineProps, ...props }: any) {
     } catch {}
   };
 
+  // Escape cierra el modal
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setExpanded(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expanded]);
+
+  const highlighted = (
+    <SyntaxHighlighter
+      style={oneLight}
+      language={language}
+      PreTag="div"
+      className="codeStyle rounded-lg shadow-sm border border-gray-200"
+      showLineNumbers={true}
+      wrapLines={true}
+      useunlinestyles={"true"}
+      lineProps={lineProps}
+      {...props}
+    />
+  );
+
+  const buttonClass =
+    "rounded-md bg-white/80 px-2 py-1 text-xs text-gray-600 shadow-sm backdrop-blur hover:bg-white hover:text-purple-700";
+
   return (
-    <div
-      className={
-        expanded
-          ? "relative my-6 lg:left-1/2 lg:w-[min(90vw,1400px)] lg:-translate-x-1/2 z-10"
-          : "relative my-6"
-      }
-    >
+    <div className="relative my-6">
       <div className="absolute right-3 top-3 z-20 flex gap-1">
-        <button
-          type="button"
-          onClick={copy}
-          className="rounded-md bg-white/80 px-2 py-1 text-xs text-gray-600 shadow-sm backdrop-blur hover:bg-white hover:text-purple-700"
-        >
+        <button type="button" onClick={copy} className={buttonClass}>
           {copied ? "Copiado" : "Copiar"}
         </button>
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="hidden rounded-md bg-white/80 px-2 py-1 text-xs text-gray-600 shadow-sm backdrop-blur hover:bg-white hover:text-purple-700 lg:block"
+          onClick={() => setExpanded(true)}
+          className={`${buttonClass} hidden lg:block`}
         >
-          {expanded ? "Contraer" : "Expandir"}
+          Expandir
         </button>
       </div>
-      <div className="overflow-x-auto">
-        <SyntaxHighlighter
-          style={oneLight}
-          language={language}
-          PreTag="div"
-          className="codeStyle rounded-lg shadow-sm border border-gray-200"
-          showLineNumbers={true}
-          wrapLines={true}
-          useunlinestyles={"true"}
-          lineProps={lineProps}
-          {...props}
-        />
-      </div>
+      <div className="overflow-x-auto">{highlighted}</div>
+
+      {expanded && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-6"
+          onClick={() => setExpanded(false)}
+        >
+          <div
+            className="relative max-h-[90vh] w-[min(90vw,1400px)] overflow-auto rounded-xl bg-white p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-20 float-right flex gap-1">
+              <button type="button" onClick={copy} className={buttonClass}>
+                {copied ? "Copiado" : "Copiar"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                className={buttonClass}
+              >
+                Cerrar
+              </button>
+            </div>
+            {highlighted}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
