@@ -2,6 +2,64 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import rangeParser from "parse-numeric-range";
+import { useState } from "react";
+
+// Bloque de código con "Expandir": los ejemplos largos se salen de la columna
+// de lectura, y desplazarse de lado es incómodo. Expandido, el bloque se ensancha
+// sobre la columna hasta 90vw en pantallas grandes; en móvil no hay a dónde crecer.
+function CodeBlock({ language, lineProps, ...props }: any) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const source = String(props.children ?? "").replace(/\n$/, "");
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(source);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
+  return (
+    <div
+      className={
+        expanded
+          ? "relative my-6 lg:left-1/2 lg:w-[min(90vw,1400px)] lg:-translate-x-1/2 z-10"
+          : "relative my-6"
+      }
+    >
+      <div className="absolute right-3 top-3 z-20 flex gap-1">
+        <button
+          type="button"
+          onClick={copy}
+          className="rounded-md bg-white/80 px-2 py-1 text-xs text-gray-600 shadow-sm backdrop-blur hover:bg-white hover:text-purple-700"
+        >
+          {copied ? "Copiado" : "Copiar"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="hidden rounded-md bg-white/80 px-2 py-1 text-xs text-gray-600 shadow-sm backdrop-blur hover:bg-white hover:text-purple-700 lg:block"
+        >
+          {expanded ? "Contraer" : "Expandir"}
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <SyntaxHighlighter
+          style={oneLight}
+          language={language}
+          PreTag="div"
+          className="codeStyle rounded-lg shadow-sm border border-gray-200"
+          showLineNumbers={true}
+          wrapLines={true}
+          useunlinestyles={"true"}
+          lineProps={lineProps}
+          {...props}
+        />
+      </div>
+    </div>
+  );
+}
 
 const SyntaxHighlight: object = {
   code({ node, inline, className, ...props }) {
@@ -25,19 +83,11 @@ const SyntaxHighlight: object = {
     };
 
     return !inline && match ? (
-      <div className="overflow-x-auto">
-        <SyntaxHighlighter
-          style={oneLight}
-          language={match[1]}
-          PreTag="div"
-          className="codeStyle rounded-lg shadow-sm border border-gray-200"
-          showLineNumbers={true}
-          wrapLines={true}
-          useunlinestyles={"true"}
-          lineProps={applyHighlights}
-          {...props}
-        />
-      </div>
+      <CodeBlock
+        language={match[1]}
+        lineProps={applyHighlights}
+        {...props}
+      />
     ) : (
       <code
         className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[0.85em] font-mono break-words before:content-none after:content-none"
