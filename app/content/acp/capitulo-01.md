@@ -71,11 +71,12 @@ capítulo 7, esa va a ser la primera regla: **`stdout` es sagrado**.
 
 ## El sobre
 
-El mensaje que escribiste sigue el formato JSON-RPC 2.0. Son cuatro campos y vale la pena
+El mensaje que escribiste sigue el formato JSON-RPC 2.0. Son cuatro campos y conviene
 distinguirlos porque de ellos depende cómo se emparejan preguntas con respuestas cuando hay
 muchas en vuelo.
 
-`jsonrpc` siempre vale `"2.0"`. Es la versión del sobre, no del protocolo; nunca cambia.
+`jsonrpc` siempre trae `"2.0"`. Indica la versión del formato JSON-RPC, que es el envoltorio del
+mensaje; la versión del protocolo ACP viaja aparte, en `params`. Este campo nunca cambia.
 
 `method` es el nombre de lo que pides. En ACP los nombres tienen forma de ruta:
 `initialize`, `session/new`, `fs/read_text_file`. La barra separa el área del verbo, y esa
@@ -151,7 +152,7 @@ al usuario tal cual.
 
 `agentInfo` y `clientInfo` son tarjetas de presentación: `name` para máquinas, `title` para
 personas, `version` para cuando algo falla y hay que preguntar "¿con cuál hablabas?". Ninguno es
-obligatorio; ambos son gratis y valen mucho en un reporte de error.
+obligatorio; ambos cuestan nada y ayudan mucho en un reporte de error.
 
 ## Lo que pasa cuando mientes
 
