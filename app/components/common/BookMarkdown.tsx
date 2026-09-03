@@ -21,12 +21,18 @@ function CodeBlock({ language, lineProps, ...props }: any) {
     } catch {}
   };
 
-  // Escape cierra el modal
+  // Escape cierra el modal, y mientras está abierto la página de atrás no
+  // se desplaza: la rueda del ratón sobre el fondo movía el capítulo.
   useEffect(() => {
     if (!expanded) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setExpanded(false);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
   }, [expanded]);
 
   const highlighted = (
