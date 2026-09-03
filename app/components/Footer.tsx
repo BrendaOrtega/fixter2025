@@ -35,14 +35,26 @@ export const Footer = () => {
       </div>
       <div className="flex flex-col gap-3  w-[40%] md:w-fit">
         <h3 className="text-white font-mdedium">Recursos</h3>
-        <Link to="/libros">
+        {/* Los cuatro libros, el nuevo primero. Antes el primer link iba a
+            /libros, que redirige al de AI SDK y no al de Claude Code. */}
+        <Link to="/libros/acp">
           <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
-            📖 Libro: Domina Claude Code (Gratis)
+            📖 Libro: Agent Client Protocol (Nuevo)
+          </p>
+        </Link>
+        <Link to="/libros/ai_sdk">
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            📖 Libro: IA aplicada con React y TypeScript
+          </p>
+        </Link>
+        <Link to="/libros/domina_claude_code">
+          <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
+            📖 Libro: Domina Claude Code
           </p>
         </Link>
         <Link to="/libros/llamaindex">
           <p className="text-colorCaption font-light hover:text-brand-500 transition-all">
-            🦙 Libro: LlamaIndex Agent Workflows (Gratis)
+            🦙 Libro: LlamaIndex Agent Workflows
           </p>
         </Link>
         <Link to="/cursos">
