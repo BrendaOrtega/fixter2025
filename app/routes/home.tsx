@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router";
 import {
   Benefits,
+  BooksSection,
   CoachHighlight,
   CommunityBand,
   HomeHero,
@@ -145,6 +146,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       <HomeHero />
       <CoachHighlight />
       <CommunityBand />
+      <BooksSection />
       <Why />
       <Benefits />
       <SocialPlanet />

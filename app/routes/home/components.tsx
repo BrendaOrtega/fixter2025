@@ -569,17 +569,18 @@ export const HomeHero = () => {
     >
       <div className="flex  flex-col-reverse md:flex-row justify-center md:justify-between items-center max-w-7xl mx-auto h-[95vh] lg:h-[85vh] gap-0 md:gap-0 lg:gap-20">
         <div>
-          {/* Tag de MentorIA */}
-          <div className="flex justify-center md:justify-start mb-6 hidden md:flex ">
-            <Link to="/coach" className="group">
+          {/* Anuncio del libro nuevo. Visible también en móvil: es lo que se
+              está publicando ahora y a lo que apuntan los correos. */}
+          <div className="mb-6 flex justify-center md:justify-start">
+            <Link to="/libros/acp" className="group">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-[#CA9B77]/10 to-[#845A8F]/10 border border-[#CA9B77]/30 rounded-full px-4 py-2 hover:from-[#CA9B77]/20 hover:to-[#845A8F]/20 hover:border-[#CA9B77]/50 transition-all duration-300"
+                className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-4 py-2 transition-all duration-300 hover:border-brand-500/60 hover:bg-brand-500/20"
               >
-                <span className="text-sm font-semibold text-[#CA9B77] transition-colors">
-                  Nuevo: MentorIA — tu mentor de programación con IA y voz
+                <span className="text-sm font-semibold text-brand-500">
+                  📖 Nuevo libro gratis: Agent Client Protocol
                 </span>
               </motion.div>
             </Link>
@@ -638,12 +639,19 @@ export const HomeHero = () => {
           <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
             📖 Libros gratuitos:{" "}
             <Link
+              to="/libros/acp"
+              className="text-sm font-semibold text-brand-500 hover:underline transition-all duration-200"
+            >
+              Agent Client Protocol
+            </Link>
+            ,{" "}
+            <Link
               to="/libros/domina_claude_code"
               className="text-sm  text-orange-300  hover:underline transition-all duration-200  "
             >
               Dominando Claude Code
-            </Link>{" "}
-            y{" "}
+            </Link>
+            ,{" "}
             <Link
               to="/libros/llamaindex"
               className="text-sm text-llamaindex-purple hover:underline transition-all duration-200  "
@@ -667,6 +675,109 @@ export const HomeHero = () => {
           direction="left"
           speed="normal"
         />
+      </div>
+    </motion.section>
+  );
+};
+
+// Los cuatro libros, en orden de publicación inverso: el nuevo va primero y
+// lleva la etiqueta. Se leen completos en el sitio, sin registro.
+const books = [
+  {
+    to: "/libros/acp",
+    title: "Agent Client Protocol",
+    subtitle: "Construcción de sistemas agénticos",
+    blurb:
+      "Cómo se hablan tu Cliente y tu Agente. Construye los dos lados del protocolo y pon a Ghosty a trabajar en su propia caja.",
+    accent: "#7c3aed",
+    isNew: true,
+  },
+  {
+    to: "/libros/ai_sdk",
+    title: "IA aplicada con React y TypeScript",
+    subtitle: "AI SDK + React Router v7",
+    blurb:
+      "De la primera inferencia a RAG agéntico y voz, sin cambiar de stack.",
+    accent: "#3178C6",
+  },
+  {
+    to: "/libros/domina_claude_code",
+    title: "Dominando Claude Code",
+    subtitle: "Para desarrolladores",
+    blurb:
+      "Contexto, CLAUDE.md, MCP, worktrees y subagentes, en doce capítulos.",
+    accent: "#f97316",
+  },
+  {
+    to: "/libros/llamaindex",
+    title: "LlamaIndex desde Cero",
+    subtitle: "Agent Workflows en TypeScript",
+    blurb: "Steps, eventos, streaming y herramientas externas, paso a paso.",
+    accent: "#a855f7",
+  },
+];
+
+export const BooksSection = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  return (
+    <motion.section
+      ref={ref}
+      className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32 md:my-[160px]"
+    >
+      <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-widest text-brand-500">
+        Gratis, sin registro
+      </span>
+      <h2 className="text-3xl font-bold !leading-snug text-white md:text-4xl xl:text-5xl">
+        Libros para leer en el sitio
+      </h2>
+      <p className="mt-4 max-w-2xl text-lg leading-relaxed text-zinc-400">
+        Cuatro libros técnicos en español, con código que corre. El más nuevo
+        se está escribiendo en público: los capítulos aparecen conforme salen.
+      </p>
+
+      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {books.map((book, i) => (
+          <motion.div
+            key={book.to}
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: i * 0.08 }}
+          >
+            <Link
+              to={book.to}
+              className="group flex h-full flex-col rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 transition-colors hover:border-zinc-600"
+            >
+              {/* lomo del libro: una franja de color, sin imagen que cargar */}
+              <div
+                className="mb-5 h-2 w-16 rounded-full"
+                style={{ background: book.accent }}
+              />
+              {book.isNew && (
+                <span
+                  className="mb-3 inline-block w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-white"
+                  style={{ background: book.accent }}
+                >
+                  Nuevo
+                </span>
+              )}
+              <h3 className="text-xl font-bold leading-tight text-white group-hover:underline">
+                {book.title}
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500">{book.subtitle}</p>
+              <p className="mt-4 flex-1 text-sm leading-relaxed text-zinc-400">
+                {book.blurb}
+              </p>
+              <span
+                className="mt-6 text-sm font-semibold"
+                style={{ color: book.accent }}
+              >
+                Leer →
+              </span>
+            </Link>
+          </motion.div>
+        ))}
       </div>
     </motion.section>
   );
