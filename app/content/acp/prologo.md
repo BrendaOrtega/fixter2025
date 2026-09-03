@@ -53,7 +53,7 @@ trabaja, viva donde viva cada uno.
 
 ## Qué vas a construir
 
-Este libro se escribe con las manos. Vas a levantar las dos mitades.
+Un Cliente y un Agente, los dos completos y hablándose entre sí.
 
 Del lado del Cliente empiezas con un `initialize` mandado a mano, con el mensaje crudo a la vista,
 para que el protocolo no sea nunca una caja negra. De ahí crecen las sesiones, el turno, el acceso
