@@ -609,63 +609,40 @@ export const HomeHero = () => {
               children="Nuevo taller: Sistemas agénticos"
             />
           </div>
-          {/* El curso gratis es la puerta de entrada, y hasta hoy el hero solo
-              decía "comunidad" — que no dice qué recibes. Aquí se nombra lo que
-              llega: cuatro videos, uno por correo. */}
-          <p className="mt-4 px-4 text-center text-sm text-white/80 lg:px-0 lg:text-left">
-            🎬 Curso gratis por correo:{" "}
-            <Link
-              to="/secuencias/introduccion-a-los-agentes-de-ia"
-              className="font-semibold text-brand-500 transition-all duration-200 hover:underline"
-            >
-              Introducción a los agentes de IA
-            </Link>{" "}
-            — cuatro entregas en video, de la primera llamada al modelo hasta la
-            memoria. Con todo el código.
-          </p>
-          {/* Antes este renglón mandaba a la comunidad, que no dice qué recibes.
-              Las tres grabaciones sí: se ven completas dejando el correo. */}
-          <p className="mt-2 px-4 text-center text-sm text-white/60 lg:px-0 lg:text-left">
-            📺 Mira los{" "}
-            <Link
-              to="/cursos/sistemas-agenticos/agentes-en-produccion"
-              className="text-white/80 transition-all duration-200 hover:underline"
-            >
-              3 webinars completos de sistemas agénticos
-            </Link>{" "}
-            — gratis, solo deja tu correo.
-          </p>
-          {/* Links sutiles a los libros */}
-          <p className="text-sm text-white/80 hover:text-white  text-center lg:text-left mt-4  gap-2 px-4 lg:px-0">
-            📖 Libros gratuitos:{" "}
-            <Link
-              to="/libros/acp"
-              className="text-sm font-semibold text-brand-500 hover:underline transition-all duration-200"
-            >
-              Agent Client Protocol
-            </Link>
-            ,{" "}
-            <Link
-              to="/libros/domina_claude_code"
-              className="text-sm  text-orange-300  hover:underline transition-all duration-200  "
-            >
-              Dominando Claude Code
-            </Link>
-            ,{" "}
-            <Link
-              to="/libros/llamaindex"
-              className="text-sm text-llamaindex-purple hover:underline transition-all duration-200  "
-            >
-              LlamaIndex desde Cero
-            </Link>{" "}
-            y{" "}
-            <Link
-              to="/libros/ai_sdk"
-              className="text-sm text-[#3178C6] hover:underline transition-all duration-200"
-            >
-              IA aplicada con React y TypeScript
-            </Link>
-          </p>
+          {/* Tres puertas gratis, una por renglón y sin explicación: el hero
+              es para elegir, no para leer. Los libros viven en su sección. */}
+          <ul className="mt-6 flex flex-col items-center gap-2 px-4 text-sm text-white/80 lg:items-start lg:px-0">
+            <li>
+              📖{" "}
+              <Link
+                to="/libros/acp"
+                className="font-semibold text-brand-500 hover:underline"
+              >
+                Nuevo libro: Agent Client Protocol
+              </Link>{" "}
+              <a href="#libros" className="text-white/50 hover:underline">
+                y tres más
+              </a>
+            </li>
+            <li>
+              🎬{" "}
+              <Link
+                to="/secuencias/introduccion-a-los-agentes-de-ia"
+                className="hover:underline"
+              >
+                Curso gratis por correo: Introducción a los agentes de IA
+              </Link>
+            </li>
+            <li>
+              📺{" "}
+              <Link
+                to="/cursos/sistemas-agenticos/agentes-en-produccion"
+                className="hover:underline"
+              >
+                3 webinars completos de sistemas agénticos
+              </Link>
+            </li>
+          </ul>
         </div>
         <img className="scale-75 lg:scale-100" src="/robot.svg" alt="robot" />
       </div>
@@ -723,8 +700,9 @@ export const BooksSection = () => {
 
   return (
     <motion.section
+      id="libros"
       ref={ref}
-      className="max-w-7xl mx-auto px-4 md:px-[5%] xl:px-0 my-32 md:my-[160px]"
+      className="max-w-7xl mx-auto scroll-mt-24 px-4 md:px-[5%] xl:px-0 my-32 md:my-[160px]"
     >
       <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-widest text-brand-500">
         Gratis, sin registro
