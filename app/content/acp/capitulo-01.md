@@ -6,10 +6,10 @@ sola función, conviene ver esas dos líneas con los ojos, porque el resto del p
 variaciones de ese intercambio.
 
 Abre una terminal. Necesitas un Agente que hable el protocolo; cualquiera del registro sirve, y
-opencode es cómodo porque trae el modo integrado en un subcomando:
+goose es cómodo porque trae el modo integrado en un subcomando que lo deja escuchando en `stdin`:
 
 ```sh
-opencode acp
+goose acp
 ```
 
 El cursor se queda parpadeando. El proceso arrancó y está esperando. Todavía no ha dicho nada,
@@ -35,7 +35,7 @@ La respuesta llega en una sola línea, larga. Con un poco de aire se ve así:
       "promptCapabilities": { "image": true, "audio": false, "embeddedContext": true },
       "mcpCapabilities": { "http": true, "sse": false }
     },
-    "agentInfo": { "name": "opencode", "title": "OpenCode", "version": "…" },
+    "agentInfo": { "name": "goose", "title": "goose", "version": "…" },
     "authMethods": []
   }
 }
@@ -194,7 +194,7 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 
 // El Agente es un subproceso: le hablamos por stdin y lo leemos por stdout.
-const agent = spawn("opencode", ["acp"], { stdio: ["pipe", "pipe", "inherit"] });
+const agent = spawn("goose", ["acp"], { stdio: ["pipe", "pipe", "inherit"] });
 
 // Respuestas pendientes, por id. Cada línea que entra resuelve la suya.
 let nextId = 0;
