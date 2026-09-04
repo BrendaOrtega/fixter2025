@@ -4,7 +4,35 @@ import { motion } from "motion/react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
 
-export const PurchaseDrawer = ({ courseSlug, price }: { courseSlug: string; price?: number }) => {
+export const PurchaseDrawer = ({
+  courseSlug,
+  price,
+  courseTitle,
+  kind,
+  stage,
+  videosCount,
+  duration,
+}: {
+  courseSlug: string;
+  price?: number;
+  courseTitle?: string;
+  kind?: string | null;
+  stage?: string | null;
+  videosCount?: number;
+  duration?: string | null;
+}) => {
+  // En la base todo es `Course`, pero en pantalla un taller se llama taller,
+  // y sus videos son sesiones y no lecciones.
+  const isTaller = kind === "taller";
+  const noun = isTaller ? "taller" : "curso";
+  const unit = isTaller ? "sesiones" : "lecciones";
+
+  const perks = [
+    videosCount ? `${videosCount} ${unit} en video, desde la primera.` : null,
+    duration ? `${duration} de contenido.` : null,
+    // Sólo mientras se está impartiendo: en un programa terminado sería mentira.
+    stage === "en-vivo" ? "Las entregas que faltan, conforme salen." : null,
+  ].filter(Boolean) as string[];
   const [isLoading, setIsLoading] = useState(false);
   const [show, setShow] = useState(true);
   return (
@@ -15,7 +43,7 @@ export const PurchaseDrawer = ({ courseSlug, price }: { courseSlug: string; pric
       noOverlay
       noActions
       onClose={() => setShow(false)}
-      title="Desbloquea todo el curso"
+      title={`Desbloquea todo el ${noun}`}
       isOpen={show}
     >
       <div className="pb-4">
@@ -27,12 +55,15 @@ export const PurchaseDrawer = ({ courseSlug, price }: { courseSlug: string; pric
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
         <h3 className="text-balance mt-6 text-2xl font-bold leading-tight text-white sm:text-3xl">
-          ¿List@ para ver todo el curso? Prepárate porque apenas estamos
-          comenzando 🚀
+          {courseTitle ?? `Este ${noun} completo, en un pago`}
         </h3>
-        <p className="mt-3 text-base font-light text-colorParagraph sm:text-lg">
-          ¡Desbloquea el curso completo y conviértete en un web hacker! 🫶🏻
-        </p>
+        {perks.length > 0 && (
+          <ul className="mt-4 space-y-2 text-base font-light text-colorParagraph sm:text-lg">
+            {perks.map((perk) => (
+              <li key={perk}>{perk}</li>
+            ))}
+          </ul>
+        )}
         {price && (
           <p className="text-2xl font-bold mt-4 text-brand-500">
             ${price} MXN
