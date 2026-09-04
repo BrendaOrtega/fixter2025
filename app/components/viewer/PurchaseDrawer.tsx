@@ -10,7 +10,7 @@ export const PurchaseDrawer = ({
   courseTitle,
   kind,
   stage,
-  videosCount,
+  unlockedCount,
   duration,
 }: {
   courseSlug: string;
@@ -18,17 +18,21 @@ export const PurchaseDrawer = ({
   courseTitle?: string;
   kind?: string | null;
   stage?: string | null;
-  videosCount?: number;
+  unlockedCount?: number;
   duration?: string | null;
 }) => {
   // En la base todo es `Course`, pero en pantalla un taller se llama taller,
   // y sus videos son sesiones y no lecciones.
   const isTaller = kind === "taller";
   const noun = isTaller ? "taller" : "curso";
-  const unit = isTaller ? "sesiones" : "lecciones";
+  const unit = isTaller
+    ? { one: "sesión", many: "sesiones" }
+    : { one: "lección", many: "lecciones" };
 
   const perks = [
-    videosCount ? `${videosCount} ${unit} en video, desde la primera.` : null,
+    unlockedCount
+      ? `${unlockedCount} ${unlockedCount === 1 ? unit.one : unit.many} en video.`
+      : null,
     duration ? `${duration} de contenido.` : null,
     // Sólo mientras se está impartiendo: en un programa terminado sería mentira.
     stage === "en-vivo" ? "Las entregas que faltan, conforme salen." : null,

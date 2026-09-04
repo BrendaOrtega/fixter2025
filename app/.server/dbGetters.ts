@@ -117,6 +117,11 @@ export const getFreeOrEnrolledCourseFor = async (
         slug: true,
         version: true,
         basePrice: true,
+        // El cajón de compra arma su copy con esto; sin seleccionarlo llega
+        // `undefined` y un taller se anuncia como curso.
+        tipo: true,
+        stage: true,
+        duration: true,
       },
     });
     if (!course) throw data("Course not found", { status: 404 });

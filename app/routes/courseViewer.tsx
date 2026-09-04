@@ -1217,7 +1217,7 @@ export default function Route({
           hasWatchedBefore={getWatchedVideos(course.id).length > 0}
         />
       )}
-      {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} price={course.basePrice} courseTitle={course.title} kind={course.tipo} stage={course.stage} videosCount={videos.length} duration={course.duration} />}
+      {showPurchaseDrawer && <PurchaseDrawer key={video.id} courseSlug={course.slug} price={course.basePrice} courseTitle={course.title} kind={course.tipo} stage={course.stage} unlockedCount={videos.filter((v: any) => v.accessLevel === "paid").length} duration={course.duration} />}
       {showRatingDrawer && (user?.email || subscriberEmail) && course.id && (
         <RatingDrawer
           isOpen={showRatingDrawer}
