@@ -87,18 +87,21 @@ for q in "${QUALITIES[@]}"; do
 done
 
 # Idéntico a generateMasterPlaylist() del video-processor: rutas relativas, que
-# es lo que /api/hls-proxy sabe reescribir.
+# es lo que /api/hls-proxy sabe reescribir. BANDWIDTH lleva el techo (-maxrate),
+# no el promedio: con el promedio el reproductor escoge una calidad que no puede
+# sostener y el video se congela en los segmentos pesados. De menor a mayor, para
+# que el arranque sea por la ligera.
 W720=$(( (DISP_W * 720 / SRC_H + 1) / 2 * 2 ))
 W480=$(( (DISP_W * 480 / SRC_H + 1) / 2 * 2 ))
 cat > "$OUT/master.m3u8" <<EOF
 #EXTM3U
 #EXT-X-VERSION:3
-#EXT-X-STREAM-INF:BANDWIDTH=8000000,RESOLUTION=${DISP_W}x${SRC_H}
-1080p/1080p.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=${W720}x720
-720p/720p.m3u8
-#EXT-X-STREAM-INF:BANDWIDTH=1400000,RESOLUTION=${W480}x480
+#EXT-X-STREAM-INF:BANDWIDTH=1400000,AVERAGE-BANDWIDTH=1400000,RESOLUTION=${W480}x480
 480p/480p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2800000,AVERAGE-BANDWIDTH=2800000,RESOLUTION=${W720}x720
+720p/720p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=8000000,AVERAGE-BANDWIDTH=8000000,RESOLUTION=${DISP_W}x${SRC_H}
+1080p/1080p.m3u8
 EOF
 
 echo "✅ HLS listo en $OUT"

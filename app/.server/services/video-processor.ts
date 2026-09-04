@@ -26,6 +26,8 @@ export interface HLSProcessingResult {
 export interface QualityVariant {
   resolution: string;
   bitrate: string;
+  /// Techo real del codificador (-maxrate). Es lo que va en BANDWIDTH.
+  maxrate: string;
   playlistPath: string;
 }
 
@@ -148,11 +150,10 @@ export const VideoProcessorServiceLive: VideoProcessorService = {
             ),
         });
 
-        // Get video duration
-        const duration = yield* Effect.tryPromise({
-          try: () => getVideoDuration(inputPath),
-          catch: () => 0, // Default to 0 if can't get duration
-        });
+        // Get video duration. getVideoDuration ya devuelve 0 si falla, así que
+        // no puede rechazar: con tryPromise, el `catch: () => 0` metía `number`
+        // en el canal de error del Effect y rompía la firma del servicio.
+        const duration = yield* Effect.promise(() => getVideoDuration(inputPath));
 
         console.log(`🎬 Processing video to HLS (duration: ${duration}s)`);
 
@@ -188,6 +189,12 @@ export const VideoProcessorServiceLive: VideoProcessorService = {
             // Video settings ultra-simples - solo scale básico sin expresiones complejas
             "-vf", `scale=${width}:${height}`,
             "-b:v", config.videoBitrate,
+            // Sin techo, un tramo con mucho movimiento dispara el segmento a
+            // varias veces el bitrate objetivo y el reproductor se queda sin
+            // búfer justo ahí. maxrate/bufsize ya estaban en la config y no se
+            // estaban pasando.
+            "-maxrate", config.maxrate,
+            "-bufsize", config.bufsize,
             "-b:a", config.audioBitrate,
             // HLS settings mínimos
             "-f", "hls",
@@ -247,6 +254,7 @@ export const VideoProcessorServiceLive: VideoProcessorService = {
           qualities.push({
             resolution: config.resolution,
             bitrate: config.videoBitrate,
+            maxrate: config.maxrate,
             playlistPath: `${config.name}/${playlistName}`,
           });
         }
@@ -287,14 +295,25 @@ export const VideoProcessorServiceLive: VideoProcessorService = {
 };
 
 // Generate master playlist for adaptive bitrate streaming
+//
+// BANDWIDTH lleva el TECHO de cada calidad, no su promedio: la especificación de
+// HLS pide el pico, y declarar el promedio hace que el reproductor escoja una
+// calidad que no puede sostener — el video se congela en los segmentos pesados
+// hasta que el usuario adelanta. Las variantes van de menor a mayor para que el
+// arranque sea por la ligera.
 function generateMasterPlaylist(qualities: QualityVariant[]): string {
   let playlist = "#EXTM3U\n#EXT-X-VERSION:3\n";
 
-  for (const quality of qualities) {
-    const [width, height] = quality.resolution.split("x");
-    const bandwidth = parseInt(quality.bitrate) * 1000; // Convert to bps
+  const toBps = (value: string) => parseInt(value) * 1000;
+  const sorted = [...qualities].sort(
+    (a, b) => Number(a.resolution.split("x")[1]) - Number(b.resolution.split("x")[1])
+  );
 
-    playlist += `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},RESOLUTION=${quality.resolution}\n`;
+  for (const quality of sorted) {
+    const bandwidth = toBps(quality.maxrate ?? quality.bitrate);
+    const average = toBps(quality.bitrate);
+
+    playlist += `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},AVERAGE-BANDWIDTH=${average},RESOLUTION=${quality.resolution}\n`;
     playlist += `${quality.playlistPath}\n`;
   }
 
