@@ -456,6 +456,10 @@ model Course {
   /// se imparte en vivo, y al final todas las grabaciones lo vuelven un curso
   /// on-demand al mismo precio. La fase decide qué se muestra y qué se vende.
   stage                 String? // "promocion" | "en-vivo" | "on-demand"
+  /// Cuántas sesiones tendrá el programa completo, no cuántas llevan grabadas.
+  /// El taller se vende entero desde la primera, así que el cajón de compra
+  /// necesita el total prometido y no el conteo de lo ya publicado.
+  totalSessions         Int?
   // Si está presente, la card del catálogo lleva aquí en vez de a /cursos/{slug}/detalle.
   // Para talleres en vivo que tienen su propia landing de venta.
   landingUrl            String?

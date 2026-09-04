@@ -122,6 +122,7 @@ export const getFreeOrEnrolledCourseFor = async (
         tipo: true,
         stage: true,
         duration: true,
+        totalSessions: true,
       },
     });
     if (!course) throw data("Course not found", { status: 404 });

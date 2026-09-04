@@ -11,6 +11,7 @@ export const PurchaseDrawer = ({
   kind,
   stage,
   unlockedCount,
+  totalSessions,
   duration,
 }: {
   courseSlug: string;
@@ -19,6 +20,7 @@ export const PurchaseDrawer = ({
   kind?: string | null;
   stage?: string | null;
   unlockedCount?: number;
+  totalSessions?: number | null;
   duration?: string | null;
 }) => {
   // En la base todo es `Course`, pero en pantalla un taller se llama taller,
@@ -29,13 +31,19 @@ export const PurchaseDrawer = ({
     ? { one: "sesión", many: "sesiones" }
     : { one: "lección", many: "lecciones" };
 
+  // Se vende el programa entero: manda el total prometido, y lo ya grabado va
+  // como aclaración cuando todavía faltan.
+  const total = totalSessions ?? unlockedCount ?? 0;
+  const pending = total - (unlockedCount ?? 0);
   const perks = [
-    unlockedCount
-      ? `${unlockedCount} ${unlockedCount === 1 ? unit.one : unit.many} en video.`
+    total
+      ? `${total} ${total === 1 ? unit.one : unit.many}` +
+        (pending > 0 ? `, ${unlockedCount} ya grabada${unlockedCount === 1 ? "" : "s"}.` : " en video.")
       : null,
     duration ? `${duration} de contenido.` : null,
-    // Sólo mientras se está impartiendo: en un programa terminado sería mentira.
-    stage === "en-vivo" ? "Las entregas que faltan, conforme salen." : null,
+    pending > 0
+      ? `Las ${pending} restantes se suben en cuanto se graban.`
+      : null,
   ].filter(Boolean) as string[];
   const [isLoading, setIsLoading] = useState(false);
   const [show, setShow] = useState(true);
