@@ -22,7 +22,6 @@ def arrow(x, y, dx, dy, color, bend=-40):
                 "points": [[0, 0], [dx / 2, bend], [dx, dy]]})
 
 T(120, 20, "Sesión 3 · si la caja muere, ¿qué se pierde?", 62, "#6741d9")
-T(120, 100, "4 memorias, 2 almacenes usados + 1 explicado, un mismo ritual", 34, "#868e96")
 els.extend(ghosty(x=1560, y=10, height=170))
 
 # ritual de cada bloque
@@ -35,10 +34,10 @@ box(rx + 720, ry, 340, 90, "#d3f9d8", "#2f9e44", "🔨 construir 15'", 34)
 T(rx + 1090, ry + 22, "× 4", 45, "#868e96")
 
 rows = [
-    ("🧠 trabajo",     "el turno en curso",            "#e5dbff", "#6741d9", "☁️ S3 (json)", "checkpoint del turno; la base de datos sólo se explica"),
-    ("📼 episódica",   "qué pasó (sesiones)",          "#d0ebff", "#1971c2", "disco → ☁️ S3", "goose sessions, respaldo"),
-    ("📝 semántica",   "qué sé (memory/*.md)",         "#d3f9d8", "#2f9e44", "☁️ S3 + MCP http", "fuente; índice desechable; tools remember/recall en la app"),
-    ("🔧 procedimental","cómo se hace (skills)",       "#ffec99", "#f08c00", "disco (repo)",  "viaja con el código"),
+    ("🧠 trabajo",     "el turno en curso",            "#e5dbff", "#6741d9", "🧠 RAM (nada)", "se pierde y no importa: --resume lo reconstruye"),
+    ("📼 episódica",   "qué pasó (sesiones)",          "#d0ebff", "#1971c2", "SQLite (/data) → ☁️ S3", "HECHA"),
+    ("🔧 procedimental","cómo se hace (skills)",       "#ffec99", "#f08c00", "el repo",  "viaja con el código; el bootstrap la pone"),
+    ("📝 semántica",   "qué sé (memory/*.md)",         "#f1f3f5", "#868e96", "sesión 4 · por MCP", "recordar es una tool, y las tools son la 4"),
 ]
 N = int(sys.argv[1]) if len(sys.argv) > 1 else len(rows)
 y = 330
@@ -47,12 +46,22 @@ for name, what, bg, stroke, store, note in rows[:N]:
     T(600, y + 30, what, 28, "#495057")
     arrow(880, y + 55, 140, 0, stroke, -35)
     box(1040, y, 480, 110, bg, stroke, store, 36)
-    T(1050, y + 118, note, 22, "#868e96")
+    if note == "HECHA":
+        # La que ya está construida: se marca y se desglosa en lo que costó.
+        T(1550, y + 28, "✔", 56, "#2f9e44")
+        for i, paso in enumerate([
+            "session/list · load · close",
+            "XDG_DATA_HOME=/data/state",
+            ".backup, nunca cp",
+            "→ S3 con putUrl firmado",
+        ]):
+            T(1620, y - 4 + i * 34, paso, 24, "#2f9e44")
+    else:
+        T(1050, y + 118, note, 22, "#868e96")
     y += 150
 
 if N == len(rows):
     T(120, y + 25, "💡 a S3 va lo que no puedes regenerar; índices y cachés se quedan en disco.", 36, "#e67700")
-    T(120, y + 85, "abre: ¿qué se pierde si mato la caja?   ·   cierra: launch_app en otra caja, GET 200… y matarla también", 28, "#868e96")
 
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)

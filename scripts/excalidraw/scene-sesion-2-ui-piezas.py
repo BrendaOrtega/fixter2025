@@ -1,6 +1,7 @@
 """Escena: arranque de la sesión 2 — tres diapositivas.
 
-Uso: python3 scene-sesion-2-ui-piezas.py [1|2|3]
+Uso: python3 scene-sesion-2-ui-piezas.py [1|2|3] [paso]
+  la 1 se revela en 3 pasos: 1 la maqueta · 2 + las piezas · 3 + los conectores
   1 → la UI propuesta, sus piezas y los conectores de hoy
   2 → lo que ya hay y lo que falta
   3 → qué modificamos, con los diffs
@@ -37,6 +38,8 @@ def col(x, y, title, color, items, w=760, todo=None):
     return y
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+# paso dentro de la diapositiva: 1 la maqueta, 2 + las piezas, 3 + los conectores
+STEP = int(sys.argv[2]) if len(sys.argv) > 2 else 3
 
 # =========================================================================
 # 1. la UI propuesta, sus piezas, los conectores de hoy
@@ -56,34 +59,36 @@ if N == 1:
     box(WX + 300, WY + 150, 380, 60, "#ffe3e3", "#c92a2a", "▸ node --version", 22, dashed=True)
     T(WX + 300, WY + 235, "🤖  Node 22.16", 26, "#6741d9")
 
-    PX = 1100
-    T(PX, WY, "4 piezas para chatear, 1 para ver", 40, "#2f9e44")
-    pieces = [
-        ("① input", "crea la conversación y navega", "#fff3bf", "#e8590c"),
-        ("② hilo", "pinta lo que llega, en vivo", "#ffffff", "#adb5bd"),
-        ("③ ruta SSE", "un stream abierto por conversación", "#d3f9d8", "#2f9e44"),
-        ("④ motor ACP", "en el servidor; el navegador nunca habla ACP", "#e5dbff", "#6741d9"),
-    ]
-    y = WY + 70
-    for name, note, bg, stroke in pieces:
-        box(PX, y, 480, 72, bg, stroke, name, 30)
-        T(PX + 10, y + 78, note, 22, "#868e96")
-        y += 118
-    box(PX, y, 480, 72, "#ffe3e3", "#c92a2a", "⑤ tarjeta de tool", 30, dashed=True)
-    T(PX + 10, y + 78, "qué corrió y qué salió; la construimos hoy", 22, "#c92a2a")
+    if STEP >= 2:
+        PX = 1100
+        T(PX, WY, "4 piezas para chatear, 1 para ver", 40, "#2f9e44")
+        pieces = [
+            ("① input", "crea la conversación y navega", "#fff3bf", "#e8590c"),
+            ("② hilo", "pinta lo que llega, en vivo", "#ffffff", "#adb5bd"),
+            ("③ ruta SSE", "un stream abierto por conversación", "#d3f9d8", "#2f9e44"),
+            ("④ motor ACP", "en el servidor; el navegador nunca habla ACP", "#e5dbff", "#6741d9"),
+        ]
+        y = WY + 70
+        for name, note, bg, stroke in pieces:
+            box(PX, y, 480, 72, bg, stroke, name, 30)
+            T(PX + 10, y + 78, note, 22, "#868e96")
+            y += 118
+        box(PX, y, 480, 72, "#ffe3e3", "#c92a2a", "⑤ tarjeta de tool", 30, dashed=True)
+        T(PX + 10, y + 78, "qué corrió y qué salió; la construimos hoy", 22, "#c92a2a")
 
-    CY = 900
-    T(120, CY - 60, "cómo están los conectores hoy (headless)", 40, "#1971c2")
-    box(120, CY, 260, 110, "#a5d8ff", "#1971c2", "navegador", 32)
-    arrow(380, CY + 55, 140, 0, "#2f9e44", -30, "SSE")
-    box(520, CY, 300, 110, "#d3f9d8", "#2f9e44", "app (SSR)", 32)
-    arrow(820, CY + 55, 140, 0, "#6741d9", -30, "ACP / wss")
-    box(960, CY, 330, 110, "#e5dbff", "#6741d9", "goose en la caja", 32)
-    T(130, CY + 125, "EventSource: chunk · done", 22, "#868e96")
-    T(530, CY + 125, "SDK oficial, secreto en el header", 22, "#868e96")
-    T(970, CY + 125, "goose serve 0.0.0.0, systemd", 22, "#868e96")
-    T(120, CY + 190, "💡 ya funciona: preguntas y responde.", 34, "#e67700")
-    T(120, CY + 235, "Lo que falta es ver qué hizo en el camino.", 34, "#e67700")
+    if STEP >= 3:
+        CY = 900
+        T(120, CY - 60, "cómo están los conectores hoy (headless)", 40, "#1971c2")
+        box(120, CY, 260, 110, "#a5d8ff", "#1971c2", "navegador", 32)
+        arrow(380, CY + 55, 140, 0, "#2f9e44", -30, "SSE")
+        box(520, CY, 300, 110, "#d3f9d8", "#2f9e44", "app (SSR)", 32)
+        arrow(820, CY + 55, 140, 0, "#6741d9", -30, "ACP / wss")
+        box(960, CY, 330, 110, "#e5dbff", "#6741d9", "goose en la caja", 32)
+        T(130, CY + 125, "EventSource: chunk · done", 22, "#868e96")
+        T(530, CY + 125, "SDK oficial, secreto en el header", 22, "#868e96")
+        T(970, CY + 125, "goose serve 0.0.0.0, systemd", 22, "#868e96")
+        T(120, CY + 190, "💡 ya funciona: preguntas y responde.", 34, "#e67700")
+        T(120, CY + 235, "Lo que falta es ver qué hizo en el camino.", 34, "#e67700")
 
 # =========================================================================
 # 2. lo que hay y lo que falta
@@ -102,21 +107,23 @@ if N == 2:
         ("chat.tsx · ChatInput.tsx", "quien lo pinta, y dónde se escribe", "#d3f9d8", "#2f9e44", False),
         ("MessageUsageStats.tsx", "el precedente: ya pinta tokens y costo", "#d3f9d8", "#2f9e44", False),
     ])
-    col(940, Y, "falta", "#c2255c", [
-        ("la tarjeta de tool", "los eventos ya llegan; nadie los pinta", "#ffdeeb", "#c2255c", True),
-        ("la barra: modo · modelo · esfuerzo", "los tres son un configOptions[] con category;\nvienen en session/new y hoy se tiran", "#ffdeeb", "#c2255c", True),
-    ])
+    if STEP >= 2:
+        col(940, Y, "falta", "#c2255c", [
+            ("la tarjeta de tool", "los eventos ya llegan; nadie los pinta", "#ffdeeb", "#c2255c", True),
+            ("la barra: modo · modelo · esfuerzo", "los tres son un configOptions[] con category;\nvienen en session/new y hoy se tiran", "#ffdeeb", "#c2255c", True),
+        ])
 
-    box(940, 640, 760, 86, "#fff3bf", "#e8590c", "mandar imágenes", 30, dashed=True)
-    T(950, 736, "esto es otra cosa: no es config, es contenido", 26, "#868e96")
-    T(950, 776, "del turno — un ContentBlock más en el prompt", 26, "#868e96")
+        box(940, 640, 760, 86, "#fff3bf", "#e8590c", "mandar imágenes", 30, dashed=True)
+        T(950, 736, "esto es otra cosa: no es config, es contenido", 26, "#868e96")
+        T(950, 776, "del turno — un ContentBlock más en el prompt", 26, "#868e96")
 
-    T(120, 1010, "Hoy construimos dos:", 40, "#e8590c")
-    box(120, 1080, 760, 86, "#ffe3e3", "#c92a2a", "① la tarjeta de tool", 30, dashed=True)
-    T(130, 1176, "ver qué corrió, no sólo la respuesta", 26, "#868e96")
-    box(940, 1080, 760, 86, "#ffe3e3", "#c92a2a", "② mandarle una foto", 30, dashed=True)
-    T(950, 1176, "va inline como bloque image, no como link", 26, "#868e96")
-    T(120, 1250, "⚠️ resource_link con URL no sirve: el agente sólo ve un link.", 30, "#e67700")
+    if STEP >= 3:
+        T(120, 1010, "Hoy construimos dos:", 40, "#e8590c")
+        box(120, 1080, 760, 86, "#ffe3e3", "#c92a2a", "① la tarjeta de tool", 30, dashed=True)
+        T(130, 1176, "ver qué corrió, no sólo la respuesta", 26, "#868e96")
+        box(940, 1080, 760, 86, "#ffe3e3", "#c92a2a", "② mandarle una foto", 30, dashed=True)
+        T(950, 1176, "va inline como bloque image, no como link", 26, "#868e96")
+        T(120, 1250, "⚠️ resource_link con URL no sirve: el agente sólo ve un link.", 30, "#e67700")
 
 # =========================================================================
 # 3. qué modificamos hoy
@@ -192,4 +199,4 @@ if N == 3:
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)
 out.write_text(json.dumps({"version": prev + 1, "elements": els}, ensure_ascii=False))
-print("diapositiva", N, "· version", prev + 1)
+print("diapositiva", N, "paso", STEP, "· version", prev + 1)
