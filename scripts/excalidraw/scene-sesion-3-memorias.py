@@ -60,8 +60,11 @@ for name, what, bg, stroke, store, note in rows[:N]:
         T(1050, y + 118, note, 22, "#868e96")
     y += 150
 
+if N >= 2:
+    T(120, y + 25, "📼 sessions.db · goose-docs.ai/docs/guides/sessions/session-management", 28, "#1971c2")
+
 if N == len(rows):
-    T(120, y + 25, "💡 a S3 va lo que no puedes regenerar; índices y cachés se quedan en disco.", 36, "#e67700")
+    T(120, y + 85, "💡 a S3 va lo que no puedes regenerar; índices y cachés se quedan en disco.", 36, "#e67700")
 
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)

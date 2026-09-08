@@ -63,17 +63,17 @@ T(1225, 415, "una sesión", 30, GRIS)
 
 # --- 2. los tres verbos ---
 if N >= 2:
-    arrow(700, 330, [[0, 0], [230, -30], [470, -10]], AZUL)
-    T(790, 250, "session/list", 34, AZUL)
-    T(800, 300, "¿qué hay?", 24, GRIS)
+    arrow(700, 350, [[0, 0], [230, -30], [470, -10]], AZUL)
+    T(780, 245, "session/list", 34, AZUL)
+    T(790, 288, "¿qué hay?", 24, GRIS)
 
-    arrow(1170, 430, [[0, 0], [-230, 20], [-460, 10]], VERDE)
-    T(770, 430, "session/load", 34, VERDE)
-    T(790, 480, "tráemelo", 24, GRIS)
+    arrow(1170, 480, [[0, 0], [-230, 20], [-460, 10]], VERDE)
+    T(780, 385, "session/load", 34, VERDE)
+    T(790, 428, "tráemelo", 24, GRIS)
 
-    arrow(700, 560, [[0, 0], [240, 40], [470, 20]], AMBAR)
-    T(770, 590, "session/close", 34, AMBAR)
-    T(775, 640, "suéltalo · la caja puede dormir", 24, GRIS)
+    arrow(700, 620, [[0, 0], [240, 40], [470, 20]], AMBAR)
+    T(780, 520, "session/close", 34, AMBAR)
+    T(700, 563, "suéltalo · la caja puede dormir", 24, GRIS)
 
 # --- 3. cambiar de hilo ---
 if N >= 3:
@@ -83,6 +83,9 @@ if N >= 3:
     T(800, 840, "2. load del nuevo", 32, GRIS)
     T(1290, 840, "misma conexión", 32, VERDE)
     T(190, 960, "abrirla cuesta segundos: es del agente, no del hilo.", 32, GRIS)
+
+    T(190, 1040, "los hilos viven en sessions.db (SQLite, desde goose 1.10):", 28, GRIS)
+    T(190, 1085, "goose-docs.ai/docs/guides/sessions/session-management", 28, AZUL)
 
 out = Path(__file__).resolve().parents[2] / "app/data/excalidraw-scene.json"
 prev = json.loads(out.read_text()).get("version", 0)
