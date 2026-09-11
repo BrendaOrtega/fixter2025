@@ -1,0 +1,737 @@
+[
+  {
+    "text": "Yesto",
+    "start": 0,
+    "end": 0.34
+  },
+  {
+    "text": "se",
+    "start": 0.45,
+    "end": 0.63
+  },
+  {
+    "text": "lo",
+    "start": 0.63,
+    "end": 0.81
+  },
+  {
+    "text": "puedes",
+    "start": 0.81,
+    "end": 1.35
+  },
+  {
+    "text": "poner",
+    "start": 1.35,
+    "end": 1.8
+  },
+  {
+    "text": "a",
+    "start": 1.8,
+    "end": 1.89
+  },
+  {
+    "text": "la",
+    "start": 1.89,
+    "end": 2.07
+  },
+  {
+    "text": "gente,",
+    "start": 2.07,
+    "end": 2.68
+  },
+  {
+    "text": "se",
+    "start": 2.78,
+    "end": 3.06
+  },
+  {
+    "text": "lo",
+    "start": 3.28,
+    "end": 3.31
+  },
+  {
+    "text": "puedes",
+    "start": 3.31,
+    "end": 4.06
+  },
+  {
+    "text": "vender",
+    "start": 4.15,
+    "end": 4.81
+  },
+  {
+    "text": "a",
+    "start": 4.81,
+    "end": 4.93
+  },
+  {
+    "text": "las",
+    "start": 4.93,
+    "end": 5.3
+  },
+  {
+    "text": "personas,¿no?",
+    "start": 5.3,
+    "end": 6.94
+  },
+  {
+    "text": "Algo",
+    "start": 6.94,
+    "end": 7.15
+  },
+  {
+    "text": "que",
+    "start": 7.16,
+    "end": 7.33
+  },
+  {
+    "text": "ellos",
+    "start": 7.33,
+    "end": 7.61
+  },
+  {
+    "text": "hacen",
+    "start": 7.62,
+    "end": 7.89
+  },
+  {
+    "text": "consecutivamente.",
+    "start": 7.89,
+    "end": 8.98
+  },
+  {
+    "text": "Baja",
+    "start": 8.98,
+    "end": 9.34
+  },
+  {
+    "text": "los",
+    "start": 9.34,
+    "end": 9.61
+  },
+  {
+    "text": "cuatro",
+    "start": 9.61,
+    "end": 9.99
+  },
+  {
+    "text": "archivos",
+    "start": 10.5,
+    "end": 10.88
+  },
+  {
+    "text": "del",
+    "start": 10.88,
+    "end": 11.15
+  },
+  {
+    "text": "Drive,",
+    "start": 11.15,
+    "end": 11.79
+  },
+  {
+    "text": "analiza",
+    "start": 11.79,
+    "end": 12.26
+  },
+  {
+    "text": "las",
+    "start": 12.67,
+    "end": 12.69
+  },
+  {
+    "text": "ventas",
+    "start": 12.69,
+    "end": 13.19
+  },
+  {
+    "text": "de",
+    "start": 13.23,
+    "end": 13.41
+  },
+  {
+    "text": "la",
+    "start": 13.41,
+    "end": 13.59
+  },
+  {
+    "text": "semana,",
+    "start": 13.59,
+    "end": 14.21
+  },
+  {
+    "text": "saca",
+    "start": 14.32,
+    "end": 14.68
+  },
+  {
+    "text": "los",
+    "start": 14.68,
+    "end": 14.95
+  },
+  {
+    "text": "totales,",
+    "start": 14.95,
+    "end": 15.77
+  },
+  {
+    "text": "genera",
+    "start": 15.77,
+    "end": 16.29
+  },
+  {
+    "text": "un",
+    "start": 16.31,
+    "end": 16.5
+  },
+  {
+    "text": "PDF",
+    "start": 16.5,
+    "end": 16.77
+  },
+  {
+    "text": "con",
+    "start": 16.77,
+    "end": 17.04
+  },
+  {
+    "text": "gráficas",
+    "start": 17.04,
+    "end": 17.77
+  },
+  {
+    "text": "y",
+    "start": 17.77,
+    "end": 17.86
+  },
+  {
+    "text": "entregala",
+    "start": 17.86,
+    "end": 18.64
+  },
+  {
+    "text": "en",
+    "start": 18.68,
+    "end": 18.86
+  },
+  {
+    "text": "tal",
+    "start": 18.86,
+    "end": 19.13
+  },
+  {
+    "text": "correo.",
+    "start": 19.13,
+    "end": 20.06
+  },
+  {
+    "text": "Receta,",
+    "start": 20.58,
+    "end": 21.39
+  },
+  {
+    "text": "agenda,",
+    "start": 21.4,
+    "end": 22.09
+  },
+  {
+    "text": "cada",
+    "start": 22.27,
+    "end": 22.63
+  },
+  {
+    "text": "viernes,",
+    "start": 22.63,
+    "end": 23.54
+  },
+  {
+    "text": "variable,",
+    "start": 23.86,
+    "end": 24.58
+  },
+  {
+    "text": "correo",
+    "start": 24.58,
+    "end": 25.2
+  },
+  {
+    "text": "del",
+    "start": 25.2,
+    "end": 25.51
+  },
+  {
+    "text": "administrador,",
+    "start": 25.51,
+    "end": 27.05
+  },
+  {
+    "text": "del",
+    "start": 27.05,
+    "end": 27.36
+  },
+  {
+    "text": "contador.",
+    "start": 27.36,
+    "end": 28.62
+  },
+  {
+    "text": "Yentonces",
+    "start": 28.62,
+    "end": 29.46
+  },
+  {
+    "text": "pasas",
+    "start": 29.46,
+    "end": 29.92
+  },
+  {
+    "text": "de",
+    "start": 29.92,
+    "end": 30.1
+  },
+  {
+    "text": "construir",
+    "start": 30.1,
+    "end": 30.58
+  },
+  {
+    "text": "pipelines,",
+    "start": 31.12,
+    "end": 31.96
+  },
+  {
+    "text": "workflows",
+    "start": 31.96,
+    "end": 32.77
+  },
+  {
+    "text": "de",
+    "start": 32.77,
+    "end": 32.87
+  },
+  {
+    "text": "N8N",
+    "start": 32.97,
+    "end": 33.44
+  },
+  {
+    "text": "a",
+    "start": 33.44,
+    "end": 33.53
+  },
+  {
+    "text": "trabajar",
+    "start": 33.53,
+    "end": 34.28
+  },
+  {
+    "text": "con",
+    "start": 34.28,
+    "end": 34.56
+  },
+  {
+    "text": "una",
+    "start": 34.56,
+    "end": 34.79
+  },
+  {
+    "text": "gente",
+    "start": 34.9,
+    "end": 35.31
+  },
+  {
+    "text": "que",
+    "start": 35.31,
+    "end": 35.56
+  },
+  {
+    "text": "es",
+    "start": 35.58,
+    "end": 35.77
+  },
+  {
+    "text": "general,",
+    "start": 35.77,
+    "end": 36.74
+  },
+  {
+    "text": "que",
+    "start": 36.74,
+    "end": 36.87
+  },
+  {
+    "text": "le",
+    "start": 36.89,
+    "end": 36.92
+  },
+  {
+    "text": "puedes",
+    "start": 37.05,
+    "end": 37.33
+  },
+  {
+    "text": "pedir",
+    "start": 37.33,
+    "end": 37.6
+  },
+  {
+    "text": "de",
+    "start": 37.6,
+    "end": 37.71
+  },
+  {
+    "text": "todo,",
+    "start": 37.71,
+    "end": 37.96
+  },
+  {
+    "text": "pero",
+    "start": 38.1,
+    "end": 38.43
+  },
+  {
+    "text": "le",
+    "start": 38.43,
+    "end": 38.6
+  },
+  {
+    "text": "enseñas",
+    "start": 38.61,
+    "end": 39.22
+  },
+  {
+    "text": "a",
+    "start": 39.27,
+    "end": 39.35
+  },
+  {
+    "text": "hacer",
+    "start": 39.35,
+    "end": 39.82
+  },
+  {
+    "text": "ciertos",
+    "start": 39.82,
+    "end": 40.46
+  },
+  {
+    "text": "trabajitos",
+    "start": 40.46,
+    "end": 41.4
+  },
+  {
+    "text": "en",
+    "start": 41.4,
+    "end": 41.58
+  },
+  {
+    "text": "orden,",
+    "start": 41.58,
+    "end": 42.32
+  },
+  {
+    "text": "que",
+    "start": 42.32,
+    "end": 42.59
+  },
+  {
+    "text": "además",
+    "start": 42.9,
+    "end": 43.14
+  },
+  {
+    "text": "improvisa,¿no?",
+    "start": 43.14,
+    "end": 44.63
+  },
+  {
+    "text": "Ejecuta",
+    "start": 44.63,
+    "end": 45.3
+  },
+  {
+    "text": "la",
+    "start": 45.3,
+    "end": 45.36
+  },
+  {
+    "text": "receta,",
+    "start": 45.45,
+    "end": 45.95
+  },
+  {
+    "text": "pero",
+    "start": 46.04,
+    "end": 46.33
+  },
+  {
+    "text": "si",
+    "start": 46.33,
+    "end": 46.48
+  },
+  {
+    "text": "algo",
+    "start": 46.48,
+    "end": 46.79
+  },
+  {
+    "text": "falla,",
+    "start": 46.79,
+    "end": 47.31
+  },
+  {
+    "text": "si",
+    "start": 47.31,
+    "end": 47.44
+  },
+  {
+    "text": "algo",
+    "start": 47.47,
+    "end": 47.77
+  },
+  {
+    "text": "pasa,",
+    "start": 47.77,
+    "end": 48.24
+  },
+  {
+    "text": "la",
+    "start": 48.24,
+    "end": 48.39
+  },
+  {
+    "text": "misma",
+    "start": 48.58,
+    "end": 48.78
+  },
+  {
+    "text": "receta",
+    "start": 48.78,
+    "end": 49.24
+  },
+  {
+    "text": "puede",
+    "start": 49.24,
+    "end": 49.63
+  },
+  {
+    "text": "decirle.",
+    "start": 49.63,
+    "end": 50.53
+  },
+  {
+    "text": "Si",
+    "start": 50.58,
+    "end": 50.64
+  },
+  {
+    "text": "esto",
+    "start": 50.73,
+    "end": 50.92
+  },
+  {
+    "text": "pasa",
+    "start": 51.03,
+    "end": 51.15
+  },
+  {
+    "text": "a",
+    "start": 51.15,
+    "end": 51.2
+  },
+  {
+    "text": "esto,",
+    "start": 51.2,
+    "end": 51.54
+  },
+  {
+    "text": "si",
+    "start": 51.54,
+    "end": 51.64
+  },
+  {
+    "text": "esto",
+    "start": 51.73,
+    "end": 51.88
+  },
+  {
+    "text": "pasa",
+    "start": 51.88,
+    "end": 52.09
+  },
+  {
+    "text": "al",
+    "start": 52.12,
+    "end": 52.13
+  },
+  {
+    "text": "otro.",
+    "start": 52.27,
+    "end": 52.68
+  },
+  {
+    "text": "Yentonces",
+    "start": 53.08,
+    "end": 53.24
+  },
+  {
+    "text": "la",
+    "start": 53.24,
+    "end": 53.36
+  },
+  {
+    "text": "gente",
+    "start": 53.36,
+    "end": 53.67
+  },
+  {
+    "text": "improvisa",
+    "start": 53.67,
+    "end": 54.24
+  },
+  {
+    "text": "y",
+    "start": 54.24,
+    "end": 54.3
+  },
+  {
+    "text": "es",
+    "start": 54.3,
+    "end": 54.42
+  },
+  {
+    "text": "mucho",
+    "start": 54.42,
+    "end": 54.59
+  },
+  {
+    "text": "más",
+    "start": 54.77,
+    "end": 54.92
+  },
+  {
+    "text": "útil",
+    "start": 54.92,
+    "end": 55.17
+  },
+  {
+    "text": "que",
+    "start": 55.17,
+    "end": 55.32
+  },
+  {
+    "text": "un",
+    "start": 55.35,
+    "end": 55.48
+  },
+  {
+    "text": "workflow",
+    "start": 55.48,
+    "end": 55.75
+  },
+  {
+    "text": "que,",
+    "start": 55.86,
+    "end": 56.19
+  },
+  {
+    "text": "pum,",
+    "start": 56.37,
+    "end": 56.6
+  },
+  {
+    "text": "falló,",
+    "start": 56.6,
+    "end": 57.03
+  },
+  {
+    "text": "se",
+    "start": 57.03,
+    "end": 57.15
+  },
+  {
+    "text": "rompe,",
+    "start": 57.23,
+    "end": 57.58
+  },
+  {
+    "text": "no",
+    "start": 57.58,
+    "end": 57.7
+  },
+  {
+    "text": "terminó",
+    "start": 57.7,
+    "end": 58.1
+  },
+  {
+    "text": "y",
+    "start": 58.1,
+    "end": 58.23
+  },
+  {
+    "text": "se",
+    "start": 58.23,
+    "end": 58.32
+  },
+  {
+    "text": "quedó",
+    "start": 58.32,
+    "end": 58.63
+  },
+  {
+    "text": "y",
+    "start": 58.63,
+    "end": 58.69
+  },
+  {
+    "text": "necesita",
+    "start": 58.69,
+    "end": 59.07
+  },
+  {
+    "text": "intervención",
+    "start": 59.19,
+    "end": 59.94
+  },
+  {
+    "text": "humana.",
+    "start": 59.94,
+    "end": 60.7
+  },
+  {
+    "text": "Una",
+    "start": 60.7,
+    "end": 61.18
+  },
+  {
+    "text": "gente",
+    "start": 61.18,
+    "end": 61.24
+  },
+  {
+    "text": "no,",
+    "start": 61.33,
+    "end": 61.53
+  },
+  {
+    "text": "una",
+    "start": 61.63,
+    "end": 61.75
+  },
+  {
+    "text": "gente",
+    "start": 61.75,
+    "end": 62.1
+  },
+  {
+    "text": "puede",
+    "start": 62.1,
+    "end": 62.45
+  },
+  {
+    "text": "improvisar.",
+    "start": 62.45,
+    "end": 63.32
+  }
+]

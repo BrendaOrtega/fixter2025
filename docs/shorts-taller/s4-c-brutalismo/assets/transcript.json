@@ -1,0 +1,802 @@
+[
+  {
+    "text": "pero",
+    "start": 0.01,
+    "end": 0.14
+  },
+  {
+    "text": "levanto",
+    "start": 0.8,
+    "end": 1.2
+  },
+  {
+    "text": "10",
+    "start": 1.2,
+    "end": 1.37
+  },
+  {
+    "text": "tickets",
+    "start": 1.48,
+    "end": 1.79
+  },
+  {
+    "text": "y",
+    "start": 1.83,
+    "end": 1.96
+  },
+  {
+    "text": "Xy",
+    "start": 1.96,
+    "end": 2.58
+  },
+  {
+    "text": "otra",
+    "start": 2.62,
+    "end": 2.9
+  },
+  {
+    "text": "persona",
+    "start": 2.9,
+    "end": 3.39
+  },
+  {
+    "text": "levanta",
+    "start": 3.48,
+    "end": 4
+  },
+  {
+    "text": "otros",
+    "start": 4.01,
+    "end": 4.12
+  },
+  {
+    "text": "10",
+    "start": 4.21,
+    "end": 4.39
+  },
+  {
+    "text": "tickets¿cómo",
+    "start": 4.76,
+    "end": 6.13
+  },
+  {
+    "text": "verificamos",
+    "start": 6.15,
+    "end": 8.94
+  },
+  {
+    "text": "esa",
+    "start": 8.94,
+    "end": 9.72
+  },
+  {
+    "text": "identidad",
+    "start": 9.73,
+    "end": 10.73
+  },
+  {
+    "text": "de",
+    "start": 10.73,
+    "end": 10.95
+  },
+  {
+    "text": "que",
+    "start": 10.95,
+    "end": 11.29
+  },
+  {
+    "text": "Xpersona",
+    "start": 11.32,
+    "end": 12.4
+  },
+  {
+    "text": "y",
+    "start": 12.44,
+    "end": 12.56
+  },
+  {
+    "text": "Ypersona?",
+    "start": 12.57,
+    "end": 13.72
+  },
+  {
+    "text": "para",
+    "start": 13.72,
+    "end": 14.62
+  },
+  {
+    "text": "obviamente",
+    "start": 14.62,
+    "end": 15.5
+  },
+  {
+    "text": "que",
+    "start": 15.5,
+    "end": 15.78
+  },
+  {
+    "text": "me",
+    "start": 15.8,
+    "end": 15.9
+  },
+  {
+    "text": "muestre",
+    "start": 16.06,
+    "end": 16.41
+  },
+  {
+    "text": "mis",
+    "start": 16.58,
+    "end": 16.62
+  },
+  {
+    "text": "recursos",
+    "start": 16.62,
+    "end": 17.14
+  },
+  {
+    "text": "y",
+    "start": 17.26,
+    "end": 17.36
+  },
+  {
+    "text": "no",
+    "start": 17.44,
+    "end": 17.56
+  },
+  {
+    "text": "los",
+    "start": 17.76,
+    "end": 17.98
+  },
+  {
+    "text": "de",
+    "start": 18,
+    "end": 18.1
+  },
+  {
+    "text": "otra",
+    "start": 18.13,
+    "end": 18.14
+  },
+  {
+    "text": "persona",
+    "start": 18.78,
+    "end": 19.08
+  },
+  {
+    "text": "al",
+    "start": 19.09,
+    "end": 19.68
+  },
+  {
+    "text": "final",
+    "start": 19.88,
+    "end": 21.52
+  },
+  {
+    "text": "es",
+    "start": 21.52,
+    "end": 21.86
+  },
+  {
+    "text": "una",
+    "start": 21.86,
+    "end": 21.98
+  },
+  {
+    "text": "gran",
+    "start": 21.99,
+    "end": 22.11
+  },
+  {
+    "text": "pregunta,",
+    "start": 22.76,
+    "end": 22.89
+  },
+  {
+    "text": "al",
+    "start": 22.89,
+    "end": 23.02
+  },
+  {
+    "text": "final",
+    "start": 23.02,
+    "end": 23.34
+  },
+  {
+    "text": "es",
+    "start": 23.34,
+    "end": 23.48
+  },
+  {
+    "text": "una",
+    "start": 23.48,
+    "end": 23.7
+  },
+  {
+    "text": "API¿no?",
+    "start": 23.7,
+    "end": 24.7
+  },
+  {
+    "text": "en",
+    "start": 24.88,
+    "end": 25.02
+  },
+  {
+    "text": "una",
+    "start": 25.02,
+    "end": 25.44
+  },
+  {
+    "text": "API",
+    "start": 25.56,
+    "end": 25.86
+  },
+  {
+    "text": "si",
+    "start": 26,
+    "end": 26.1
+  },
+  {
+    "text": "vamos",
+    "start": 26.1,
+    "end": 26.59
+  },
+  {
+    "text": "de",
+    "start": 26.78,
+    "end": 26.84
+  },
+  {
+    "text": "nuevo",
+    "start": 26.84,
+    "end": 27.32
+  },
+  {
+    "text": "a",
+    "start": 27.32,
+    "end": 27.35
+  },
+  {
+    "text": "pensar",
+    "start": 27.46,
+    "end": 28
+  },
+  {
+    "text": "en",
+    "start": 28.02,
+    "end": 28.12
+  },
+  {
+    "text": "ella,¿cómo",
+    "start": 28.44,
+    "end": 28.94
+  },
+  {
+    "text": "limitas",
+    "start": 28.94,
+    "end": 29.37
+  },
+  {
+    "text": "esto?",
+    "start": 29.48,
+    "end": 30.02
+  },
+  {
+    "text": "bueno,",
+    "start": 30.28,
+    "end": 30.39
+  },
+  {
+    "text": "con",
+    "start": 30.39,
+    "end": 30.73
+  },
+  {
+    "text": "un",
+    "start": 30.75,
+    "end": 30.9
+  },
+  {
+    "text": "token",
+    "start": 31.06,
+    "end": 31.3
+  },
+  {
+    "text": "que",
+    "start": 31.31,
+    "end": 31.46
+  },
+  {
+    "text": "identifica",
+    "start": 32.1,
+    "end": 33.5
+  },
+  {
+    "text": "a",
+    "start": 33.5,
+    "end": 33.61
+  },
+  {
+    "text": "la",
+    "start": 33.72,
+    "end": 33.94
+  },
+  {
+    "text": "persona,",
+    "start": 33.95,
+    "end": 34.87
+  },
+  {
+    "text": "que",
+    "start": 34.87,
+    "end": 35.18
+  },
+  {
+    "text": "identifica",
+    "start": 35.18,
+    "end": 36.24
+  },
+  {
+    "text": "su",
+    "start": 36.26,
+    "end": 36.36
+  },
+  {
+    "text": "nivel",
+    "start": 36.38,
+    "end": 36.4
+  },
+  {
+    "text": "de",
+    "start": 36.76,
+    "end": 36.88
+  },
+  {
+    "text": "acceso",
+    "start": 37.04,
+    "end": 37.33
+  },
+  {
+    "text": "otra",
+    "start": 37.39,
+    "end": 37.52
+  },
+  {
+    "text": "forma",
+    "start": 38.18,
+    "end": 38.28
+  },
+  {
+    "text": "de",
+    "start": 38.28,
+    "end": 38.45
+  },
+  {
+    "text": "hacerle",
+    "start": 38.52,
+    "end": 39.16
+  },
+  {
+    "text": "una",
+    "start": 39.36,
+    "end": 39.48
+  },
+  {
+    "text": "API",
+    "start": 39.48,
+    "end": 39.69
+  },
+  {
+    "text": "endpoints",
+    "start": 39.81,
+    "end": 41.04
+  },
+  {
+    "text": "ciertos",
+    "start": 41.05,
+    "end": 41.81
+  },
+  {
+    "text": "endpoints",
+    "start": 41.84,
+    "end": 42.8
+  },
+  {
+    "text": "son",
+    "start": 42.8,
+    "end": 43.13
+  },
+  {
+    "text": "para",
+    "start": 43.13,
+    "end": 43.56
+  },
+  {
+    "text": "operación,",
+    "start": 43.59,
+    "end": 44.35
+  },
+  {
+    "text": "ciertos",
+    "start": 44.38,
+    "end": 44.84
+  },
+  {
+    "text": "endpoints",
+    "start": 44.84,
+    "end": 45.46
+  },
+  {
+    "text": "son",
+    "start": 45.56,
+    "end": 45.72
+  },
+  {
+    "text": "para",
+    "start": 45.72,
+    "end": 45.88
+  },
+  {
+    "text": "administración",
+    "start": 45.91,
+    "end": 46.82
+  },
+  {
+    "text": "o",
+    "start": 46.83,
+    "end": 46.95
+  },
+  {
+    "text": "un",
+    "start": 47.62,
+    "end": 47.63
+  },
+  {
+    "text": "híbrido",
+    "start": 47.63,
+    "end": 49.52
+  },
+  {
+    "text": "o",
+    "start": 49.54,
+    "end": 49.64
+  },
+  {
+    "text": "simplemente",
+    "start": 50.32,
+    "end": 51.1
+  },
+  {
+    "text": "interno",
+    "start": 51.18,
+    "end": 51.96
+  },
+  {
+    "text": "interno",
+    "start": 51.97,
+    "end": 52.57
+  },
+  {
+    "text": "con",
+    "start": 52.76,
+    "end": 52.83
+  },
+  {
+    "text": "una",
+    "start": 52.83,
+    "end": 53.04
+  },
+  {
+    "text": "sesión¿no?",
+    "start": 53.1,
+    "end": 53.92
+  },
+  {
+    "text": "tú",
+    "start": 54,
+    "end": 54.11
+  },
+  {
+    "text": "mandas",
+    "start": 54.38,
+    "end": 54.5
+  },
+  {
+    "text": "al",
+    "start": 54.5,
+    "end": 54.62
+  },
+  {
+    "text": "final",
+    "start": 54.62,
+    "end": 54.94
+  },
+  {
+    "text": "del",
+    "start": 54.94,
+    "end": 55.13
+  },
+  {
+    "text": "día",
+    "start": 55.13,
+    "end": 55.38
+  },
+  {
+    "text": "un",
+    "start": 55.38,
+    "end": 55.42
+  },
+  {
+    "text": "algo",
+    "start": 55.62,
+    "end": 55.92
+  },
+  {
+    "text": "una",
+    "start": 55.93,
+    "end": 56.05
+  },
+  {
+    "text": "evidencia",
+    "start": 56.72,
+    "end": 57
+  },
+  {
+    "text": "un",
+    "start": 57.01,
+    "end": 57.14
+  },
+  {
+    "text": "una",
+    "start": 57.42,
+    "end": 58.4
+  },
+  {
+    "text": "credencial,",
+    "start": 58.4,
+    "end": 58.98
+  },
+  {
+    "text": "una",
+    "start": 59.06,
+    "end": 59.18
+  },
+  {
+    "text": "llave",
+    "start": 59.38,
+    "end": 59.71
+  },
+  {
+    "text": "las",
+    "start": 59.73,
+    "end": 59.85
+  },
+  {
+    "text": "10",
+    "start": 60.52,
+    "end": 60.55
+  },
+  {
+    "text": "mil",
+    "start": 60.55,
+    "end": 60.8
+  },
+  {
+    "text": "formas",
+    "start": 60.86,
+    "end": 61.4
+  },
+  {
+    "text": "que",
+    "start": 61.4,
+    "end": 61.6
+  },
+  {
+    "text": "quieras",
+    "start": 61.7,
+    "end": 61.92
+  },
+  {
+    "text": "decir",
+    "start": 61.93,
+    "end": 62.06
+  },
+  {
+    "text": "evidencia",
+    "start": 62.69,
+    "end": 62.9
+  },
+  {
+    "text": "eso",
+    "start": 62.91,
+    "end": 63.02
+  },
+  {
+    "text": "es",
+    "start": 63.11,
+    "end": 63.24
+  },
+  {
+    "text": "lo",
+    "start": 63.26,
+    "end": 63.41
+  },
+  {
+    "text": "que",
+    "start": 63.41,
+    "end": 63.7
+  },
+  {
+    "text": "mandas,",
+    "start": 63.7,
+    "end": 64.24
+  },
+  {
+    "text": "una",
+    "start": 64.24,
+    "end": 64.46
+  },
+  {
+    "text": "evidencia",
+    "start": 64.46,
+    "end": 65.16
+  },
+  {
+    "text": "y",
+    "start": 65.18,
+    "end": 65.23
+  },
+  {
+    "text": "entonces",
+    "start": 65.23,
+    "end": 65.75
+  },
+  {
+    "text": "el",
+    "start": 65.96,
+    "end": 66.01
+  },
+  {
+    "text": "servidor",
+    "start": 66.01,
+    "end": 66.53
+  },
+  {
+    "text": "decide",
+    "start": 66.64,
+    "end": 66.94
+  },
+  {
+    "text": "tu",
+    "start": 67.16,
+    "end": 67.26
+  },
+  {
+    "text": "servidor",
+    "start": 67.26,
+    "end": 68.11
+  },
+  {
+    "text": "de",
+    "start": 68.11,
+    "end": 68.3
+  },
+  {
+    "text": "recursos",
+    "start": 68.3,
+    "end": 68.92
+  },
+  {
+    "text": "es",
+    "start": 69.12,
+    "end": 69.3
+  },
+  {
+    "text": "quien",
+    "start": 69.3,
+    "end": 69.44
+  },
+  {
+    "text": "deja",
+    "start": 69.53,
+    "end": 69.66
+  },
+  {
+    "text": "o",
+    "start": 69.93,
+    "end": 69.99
+  },
+  {
+    "text": "no",
+    "start": 70.07,
+    "end": 70.12
+  },
+  {
+    "text": "pasar",
+    "start": 70.32,
+    "end": 70.76
+  },
+  {
+    "text": "con",
+    "start": 70.77,
+    "end": 70.9
+  },
+  {
+    "text": "el",
+    "start": 70.9,
+    "end": 71.34
+  },
+  {
+    "text": "MCP",
+    "start": 71.56,
+    "end": 71.68
+  },
+  {
+    "text": "es",
+    "start": 71.68,
+    "end": 71.91
+  },
+  {
+    "text": "lo",
+    "start": 71.91,
+    "end": 72.13
+  },
+  {
+    "text": "mismo",
+    "start": 72.24,
+    "end": 72.76
+  },
+  {
+    "text": "el",
+    "start": 72.78,
+    "end": 72.88
+  },
+  {
+    "text": "MCP",
+    "start": 73.04,
+    "end": 73.23
+  },
+  {
+    "text": "puede",
+    "start": 73.56,
+    "end": 73.74
+  },
+  {
+    "text": "llevar",
+    "start": 73.74,
+    "end": 74.33
+  },
+  {
+    "text": "una",
+    "start": 74.33,
+    "end": 74.54
+  },
+  {
+    "text": "llave",
+    "start": 74.74,
+    "end": 75.07
+  },
+  {
+    "text": "que",
+    "start": 75.17,
+    "end": 75.32
+  },
+  {
+    "text": "trae",
+    "start": 75.96,
+    "end": 76.23
+  },
+  {
+    "text": "ciertos",
+    "start": 76.3,
+    "end": 77.42
+  },
+  {
+    "text": "permisos",
+    "start": 77.44,
+    "end": 77.68
+  }
+]

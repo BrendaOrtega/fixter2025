@@ -1,0 +1,83 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Bitter:wght@500;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" />
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1080px; height:1920px; overflow:hidden; background:#1B1B1B; }
+  body { font-family:"Bitter", serif; color:#F6E7C8; position:relative; }
+  .slab { font-family:"Alfa Slab One", serif; font-weight:400; }
+  #av { position:absolute; left:72px; top:250px; width:132px; height:132px; border-radius:50%; overflow:hidden; border:8px solid #F2C14E; box-shadow:0 0 0 6px #C8322B; }
+  #av img { width:100%; height:100%; object-fit:cover; display:block; }
+  #who { position:absolute; left:236px; top:262px; }
+  #who b { display:block; font-family:"Alfa Slab One"; font-size:42px; color:#F6E7C8; }
+  #who span { display:block; margin-top:6px; font-family:"JetBrains Mono"; font-size:24px; letter-spacing:.16em; color:#F2C14E; }
+  #clock { position:absolute; right:72px; top:266px; font-family:"Alfa Slab One"; font-size:28px; color:#F6E7C8; background:#C8322B; padding:14px 26px; border:4px solid #F2C14E; }
+  #sig { position:absolute; right:72px; top:346px; font-family:"JetBrains Mono"; font-size:20px; letter-spacing:.14em; color:#8a7a5a; }
+  #sign { position:absolute; left:72px; right:72px; top:404px; height:250px; }
+  #signin { font-family:"Alfa Slab One"; font-size:112px; line-height:.98; color:#F6E7C8; }
+  #signin em { font-style:normal; color:#F2C14E; }
+  #stage { position:absolute; left:72px; top:676px; width:936px; height:496px; }
+  #cap { position:absolute; left:60px; right:60px; top:1188px; height:200px; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:800; font-size:72px; line-height:1.12; color:#F6E7C8; }
+  #cap .on { color:#F2C14E; }
+  #cap .off { color:#9a8b6e; font-weight:500; }
+</style></head><body>
+<svg style="position:absolute;inset:0;width:1080px;height:1920px" viewBox="0 0 1080 1920">
+  <defs>
+    <!-- papel picado de fondo: rombos calados, muy tenues -->
+    <pattern id="picado" width="90" height="90" patternUnits="userSpaceOnUse"><path d="M45 8 L82 45 L45 82 L8 45 Z" fill="none" stroke="#F6E7C8" stroke-width="1.5" opacity=".08"/><circle cx="45" cy="45" r="8" fill="#F6E7C8" opacity=".05"/></pattern>
+  </defs>
+  <rect width="1080" height="1920" fill="#1B1B1B"/>
+  <rect width="1080" height="1920" fill="url(#picado)"/>
+  <!-- guirnalda de papel picado arriba -->
+  <path d="M0 200 Q270 235 540 200 T1080 200" fill="none" stroke="#C8322B" stroke-width="4"/>
+  <g fill="#C8322B" opacity=".9"><rect x="120" y="205" width="60" height="30"/><rect x="380" y="212" width="60" height="30" fill="#1F4E9C"/><rect x="640" y="212" width="60" height="30" fill="#2E7D4F"/><rect x="900" y="205" width="60" height="30" fill="#F2C14E"/></g>
+</svg>
+<div id="sig">fixtergeek.com</div>
+<div id="av"><img src="assets/face-still.png"/></div>
+<div id="who"><b>Héctorbliss</b><span>SISTEMAS AGÉNTICOS</span></div>
+<div id="clock">SESIÓN 4</div>
+<div id="sign"><div id="signin">240 CARTAS<br/><em>NO CABEN</em></div></div>
+
+<div id="stage"><svg viewBox="0 0 936 496" width="936" height="496">
+  <defs>
+    <pattern id="marco" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#C8322B"/><circle cx="7" cy="7" r="2.6" fill="#F2C14E"/></pattern>
+  </defs>
+  <!-- la tabla de lotería: 4 × 3 casillas, ya llenas -->
+  <rect x="20" y="20" width="560" height="456" fill="#F6E7C8" stroke="#C8322B" stroke-width="10"/>
+  <rect x="34" y="34" width="532" height="428" fill="none" stroke="#1F4E9C" stroke-width="3" stroke-dasharray="10 6"/>
+  <!-- casillas -->
+  <g font-family="Alfa Slab One" font-size="13" text-anchor="middle">
+    <!-- fila 1 -->
+    <g transform="translate(46 46)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">LA LUPA</text><circle cx="52" cy="52" r="26" fill="none" stroke="#1F4E9C" stroke-width="8"/><path d="M70 70 l26 26" stroke="#1F4E9C" stroke-width="10" stroke-linecap="round"/><text x="12" y="18" font-size="12" fill="#1B1B1B">1</text></g>
+    <g transform="translate(180 46)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">EL SOBRE</text><rect x="26" y="34" width="70" height="46" fill="#F2C14E" stroke="#1B1B1B" stroke-width="3"/><path d="M26 34 l35 28 l35 -28" fill="none" stroke="#1B1B1B" stroke-width="3"/><text x="12" y="18" font-size="12" fill="#1B1B1B">2</text></g>
+    <g transform="translate(314 46)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">LA NUBE</text><path d="M30 78 a18 18 0 0 1 10 -34 a24 24 0 0 1 46 -4 a16 16 0 0 1 6 38z" fill="#1F4E9C" stroke="#1B1B1B" stroke-width="3"/><text x="12" y="18" font-size="12" fill="#1B1B1B">3</text></g>
+    <g transform="translate(448 46)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">EL PDF</text><rect x="36" y="26" width="50" height="64" fill="#fff" stroke="#1B1B1B" stroke-width="3"/><rect x="44" y="40" width="34" height="5" fill="#C8322B"/><rect x="44" y="52" width="34" height="5" fill="#C8322B"/><rect x="44" y="64" width="22" height="5" fill="#C8322B"/><text x="12" y="18" font-size="12" fill="#1B1B1B">4</text></g>
+    <!-- fila 2 -->
+    <g transform="translate(46 186)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">EL RELOJ</text><circle cx="61" cy="56" r="30" fill="#F2C14E" stroke="#1B1B1B" stroke-width="3"/><path d="M61 56 v-20 M61 56 h14" stroke="#1B1B1B" stroke-width="4" stroke-linecap="round"/><text x="12" y="18" font-size="12" fill="#1B1B1B">5</text></g>
+    <g transform="translate(180 186)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">LA BASE</text><ellipse cx="61" cy="34" rx="30" ry="10" fill="#2E7D4F" stroke="#1B1B1B" stroke-width="3"/><path d="M31 34 v44 a30 10 0 0 0 60 0 v-44" fill="#2E7D4F" stroke="#1B1B1B" stroke-width="3"/><text x="12" y="18" font-size="12" fill="#1B1B1B">6</text></g>
+    <g transform="translate(314 186)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">LA CÁMARA</text><rect x="26" y="34" width="70" height="50" rx="6" fill="#1B1B1B"/><circle cx="61" cy="59" r="14" fill="#F6E7C8"/><circle cx="61" cy="59" r="7" fill="#1F4E9C"/><text x="12" y="18" font-size="12" fill="#1B1B1B">7</text></g>
+    <g transform="translate(448 186)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">LA VOZ</text><path d="M30 46 h16 l20 -16 v56 l-20 -16 h-16z" fill="#C8322B" stroke="#1B1B1B" stroke-width="3"/><path d="M76 44 q10 12 0 24 M86 36 q18 20 0 40" fill="none" stroke="#1B1B1B" stroke-width="3"/><text x="12" y="18" font-size="12" fill="#1B1B1B">8</text></g>
+    <!-- fila 3 -->
+    <g transform="translate(46 326)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">LA ARAÑA</text><circle cx="61" cy="56" r="14" fill="#1B1B1B"/><path d="M47 50 l-22 -14 M47 60 l-24 6 M75 50 l22 -14 M75 60 l24 6 M50 66 l-14 20 M72 66 l14 20" stroke="#1B1B1B" stroke-width="3"/><text x="12" y="18" font-size="12" fill="#1B1B1B">9</text></g>
+    <g transform="translate(180 326)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">LA CAJA</text><rect x="28" y="40" width="66" height="48" fill="#F2C14E" stroke="#1B1B1B" stroke-width="3"/><path d="M28 40 l12 -14 h66 l-12 14" fill="#F2C14E" stroke="#1B1B1B" stroke-width="3"/><text x="12" y="18" font-size="12" fill="#1B1B1B">10</text></g>
+    <g transform="translate(314 326)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">EL CALENDARIO</text><rect x="28" y="30" width="66" height="60" fill="#fff" stroke="#1B1B1B" stroke-width="3"/><rect x="28" y="30" width="66" height="16" fill="#C8322B"/><text x="61" y="78" font-size="26" fill="#1B1B1B">11</text><text x="12" y="18" font-size="12" fill="#1B1B1B">11</text></g>
+    <g transform="translate(448 326)"><rect width="122" height="130" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect x="0" y="104" width="122" height="26" fill="#C8322B"/><text x="61" y="122" fill="#F6E7C8">EL MAPA</text><path d="M30 40 l20 -8 l22 8 l20 -8 v52 l-20 8 l-22 -8 l-20 8z" fill="#2E7D4F" stroke="#1B1B1B" stroke-width="3"/><text x="12" y="18" font-size="12" fill="#1B1B1B">12</text></g>
+  </g>
+  <!-- la carta grande: EL AGENTE, con Ghosty; le caen cartas encima -->
+  <g transform="translate(620 30)">
+    <rect x="8" y="10" width="290" height="420" fill="#1B1B1B" opacity=".5"/>
+    <rect x="0" y="0" width="290" height="420" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="4"/>
+    <rect x="10" y="10" width="270" height="400" fill="none" stroke="url(#marco)" stroke-width="10"/>
+    <text x="34" y="46" font-family="Alfa Slab One" font-size="26" fill="#1B1B1B">13</text>
+    <image href="assets/ghosty.png" x="62" y="70" width="170" height="196"/>
+    <rect x="18" y="330" width="254" height="60" fill="#C8322B"/>
+    <text x="145" y="372" text-anchor="middle" font-family="Alfa Slab One" font-size="34" fill="#F6E7C8">EL AGENTE</text>
+  </g>
+  <!-- cartas que llueven y se salen de la tabla -->
+  <g font-family="Alfa Slab One" font-size="11" text-anchor="middle">
+    <g transform="translate(560 -10) rotate(18)"><rect width="90" height="96" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect y="76" width="90" height="20" fill="#1F4E9C"/><text x="45" y="90" fill="#F6E7C8">EL WEB</text></g>
+    <g transform="translate(600 170) rotate(-24)"><rect width="90" height="96" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect y="76" width="90" height="20" fill="#2E7D4F"/><text x="45" y="90" fill="#F6E7C8">EL CRAWL</text></g>
+    <g transform="translate(20 420) rotate(-12)"><rect width="90" height="96" fill="#FFF6E0" stroke="#1B1B1B" stroke-width="3"/><rect y="76" width="90" height="20" fill="#C8322B"/><text x="45" y="90" fill="#F6E7C8">EL TTS</text></g>
+  </g>
+</svg></div>
+<div id="cap">tengo <span class="on">más de 240</span> herramientas</div>
+</body></html>
