@@ -27,8 +27,9 @@ export const audienceTagsFor = (courseSlug: string) => [
 
 export const getProgramas = async () => {
   const courses = await db.course.findMany({
-    // `not` en Mongo excluye null Y el campo ausente: un Course creado sin `tipo` desaparecía de la lista
-    where: { OR: [{ tipo: null }, { tipo: { isSet: false } }, { tipo: { not: "proximamente" } }] },
+    // Solo entran los Course con `tipo` (taller/curso/null explícito); los cursos viejos no traen el campo
+    // y así se quedan fuera. Un programa nuevo necesita su `tipo` puesto (animaciones-ai lleva "curso").
+    where: { OR: [{ tipo: null }, { tipo: { not: "proximamente" } }] },
     select: {
       id: true,
       slug: true,
