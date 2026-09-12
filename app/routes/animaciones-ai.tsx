@@ -25,11 +25,31 @@ export const meta = () =>
       "Construyes componentes 3D, presentaciones animadas y micro-interacciones con Motion y AI.",
   });
 
+// Límite por IP en memoria: 5 altas por hora por dirección. Suficiente contra
+// ráfagas de bots; se reinicia con cada deploy y no necesita tabla.
+const hits = new Map<string, number[]>();
+const rateLimited = (ip: string) => {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 60 * 60 * 1000);
+  recent.push(now);
+  hits.set(ip, recent);
+  return recent.length > 5;
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
+
+  // Tres señales de bot, todas con respuesta "ok" para no darles pistas:
+  // el honeypot lleno, el form enviado en menos de 2 s, o más de 5 altas por hora desde la misma IP.
+  const honeypot = String(formData.get("website") ?? "");
+  const startedAt = Number(formData.get("t") ?? 0);
+  const ip = request.headers.get("fly-client-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "?";
+  if (honeypot || (startedAt && Date.now() - startedAt < 2000) || rateLimited(ip)) {
+    return data({ ok: true });
+  }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
     return data({ ok: false, error: "Escribe un correo válido." }, { status: 400 });
@@ -77,6 +97,9 @@ export default function Route() {
   const done = fetcher.data?.ok === true;
   // el correo que se mandó, para enseñarlo en la celebración (el input ya no existe cuando llega el ok)
   const [submittedEmail, setSubmittedEmail] = useState("");
+  // cuándo se pintó el form: un envío a menos de 2 s es un bot
+  const [startedAt, setStartedAt] = useState(0);
+  useEffect(() => setStartedAt(Date.now()), []);
   const error =
     fetcher.data && "error" in fetcher.data && typeof fetcher.data.error === "string"
       ? fetcher.data.error
@@ -144,6 +167,9 @@ export default function Route() {
             onSubmit={() => setSubmittedEmail(inputRef.current?.value ?? "")}
             className="mt-10 flex w-full flex-col gap-3 sm:flex-row"
           >
+            {/* honeypot: un humano no lo ve ni lo llena; un bot sí */}
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
+            <input type="hidden" name="t" value={startedAt} />
             <label htmlFor="email" className="sr-only">
               Correo
             </label>
