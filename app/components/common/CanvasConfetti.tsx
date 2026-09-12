@@ -17,12 +17,54 @@ type Particle = {
   color: string;
 };
 
+// El sonido de la ráfaga, sintetizado: un "pop" grave y tres blips que suben.
+// Sin archivo de audio; corre tras el submit, así que el navegador lo permite.
+const playBurst = () => {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ac = new Ctx();
+    const out = ac.createGain();
+    out.gain.value = 0.35;
+    out.connect(ac.destination);
+    const t0 = ac.currentTime;
+    // pop: seno que cae de 320 a 80 Hz en 120 ms
+    const pop = ac.createOscillator();
+    const pg = ac.createGain();
+    pop.frequency.setValueAtTime(320, t0);
+    pop.frequency.exponentialRampToValueAtTime(80, t0 + 0.12);
+    pg.gain.setValueAtTime(0.9, t0);
+    pg.gain.exponentialRampToValueAtTime(0.001, t0 + 0.18);
+    pop.connect(pg).connect(out);
+    pop.start(t0);
+    pop.stop(t0 + 0.2);
+    // blips ascendentes: mi, sol, do
+    [659, 784, 1047].forEach((f, i) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      const t = t0 + 0.08 + i * 0.09;
+      o.type = "triangle";
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.5, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + 0.25);
+    });
+    setTimeout(() => ac.close(), 800);
+  } catch {
+    // Sin audio no pasa nada: el confetti sigue.
+  }
+};
+
 export const CanvasConfetti = ({ count = 160 }: { count?: number }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    playBurst();
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 

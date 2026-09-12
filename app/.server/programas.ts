@@ -17,9 +17,12 @@ export const audienceTagFor = (courseSlug: string) => `webinar-${courseSlug}`;
 /// segmentados, exportaciones— usa esta lista con `hasSome`, nunca
 /// `audienceTagFor` a secas. Si aparece una tercera puerta, se agrega aquí y
 /// todo lo demás la hereda.
+/// Tercera puerta: la lista de espera de un programa que aún no abre
+/// (`animaciones-ai.tsx` escribe `<slug>-waitlist`).
 export const audienceTagsFor = (courseSlug: string) => [
   audienceTagFor(courseSlug),
   `${courseSlug}-free-access`,
+  `${courseSlug}-waitlist`,
 ];
 
 export const getProgramas = async () => {
