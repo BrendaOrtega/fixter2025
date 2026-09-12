@@ -66,7 +66,7 @@ const Tools = () => (
   <div className="flex w-full flex-col items-center gap-4 sm:gap-6">
     <div className="text-center">
       <p className="font-mono text-[10px] uppercase tracking-[0.3em] sm:text-xs" style={{ color: MUTE }}>03 · Las herramientas</p>
-      <h2 className="mt-1 text-2xl font-extrabold sm:text-4xl" style={{ color: INK }}>Diez herramientas, un solo flujo:<br />del prompt al video renderizado</h2>
+      <h2 className="mt-1 text-2xl font-extrabold sm:text-4xl" style={{ color: INK }}>Del prompt al video renderizado</h2>
     </div>
     <div className="flex max-w-md flex-wrap justify-center gap-2 sm:max-w-xl sm:gap-3">
       {TOOLS.map(([name, color], k) => {
@@ -78,7 +78,7 @@ const Tools = () => (
         );
       })}
     </div>
-    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="text-center text-xs sm:text-sm" style={{ color: MUTE }}>Motion y GSAP animan; Three.js y Blender ponen el 3D; Fable y Astra generan; HyperFrames y ffmpeg renderizan.</motion.p>
+    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="text-center text-xs sm:text-sm" style={{ color: MUTE }}>Las diez herramientas del curso.</motion.p>
   </div>
 );
 
