@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
  * puntos. Las siguientes slides asoman detrás, como un deck apilado.
  */
 const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E";
-const SLIDES = 6;
+const SLIDES = 5;
 const spring = { type: "spring", stiffness: 260, damping: 22 } as const;
 
 const Title = () => {
@@ -102,63 +102,76 @@ const Cube3D = () => (
   </div>
 );
 
-const Bars = () => (
-  <div className="flex flex-col items-center gap-6 sm:flex-row sm:gap-14">
-    <div className="flex h-36 items-end gap-2 sm:h-48 sm:gap-3">
-      {[0.35, 0.6, 0.45, 0.8, 1].map((h, i) => (
-        <motion.div key={i} className="w-7 rounded-t-md sm:w-10" style={{ background: i > 2 ? GREEN : MINT, height: `${h * 100}%`, transformOrigin: "bottom" }} initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ ...spring, delay: 0.3 + i * 0.12 }} />
-      ))}
-    </div>
-    <div className="text-center sm:text-left">
-      <p className="font-mono text-xs uppercase tracking-[0.3em]" style={{ color: MUTE }}>05 · Presentaciones</p>
-      <h2 className="mt-2 text-2xl font-extrabold sm:text-5xl" style={{ color: INK }}>Slides que<br />se animan solas</h2>
-      <p className="mt-2 text-sm sm:text-base" style={{ color: MUTE }}>Como esta. Se escriben en HTML y se renderizan a video.</p>
-    </div>
+// --- presentación: un mini deck que se anima solo, como los shorts.
+//     Tres beats en bucle con cortinilla de rebanadas diagonales entre ellos.
+const BEATS = 3, BEAT_MS = 2600;
+const Wipe = ({ k }: { k: number }) => (
+  <div key={k} className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+    {Array.from({ length: 6 }, (_, i) => (
+      <motion.div key={i} className="absolute -left-1/2 h-[22%] w-[200%]" style={{ top: `${i * 18 - 4}%`, background: i % 2 ? GREEN : MINT, rotate: -12, transformOrigin: i % 2 ? "right center" : "left center" }} initial={{ scaleX: 0 }} animate={{ scaleX: [0, 1, 1, 0] }} transition={{ duration: 0.7, times: [0, 0.4, 0.55, 1], ease: ["backOut", "linear", "backIn"], delay: i * 0.04 }} />
+    ))}
   </div>
 );
-
-const TOASTS = ["Componente generado", "Deck renderizado", "Card 3D lista", "Deploy en Fly.io", "Video exportado"];
-const Micro = () => {
-  // toasts apiladas: la nueva empuja a las anteriores hacia atrás, máximo 3 visibles
-  const [list, setList] = useState<{ id: number; text: string }[]>([{ id: 0, text: TOASTS[0] }]);
-  const [burst, setBurst] = useState(0);
-  const [liked, setLiked] = useState(false);
+const Kinetic = () => (
+  <div className="flex flex-col items-center leading-none">
+    {[["DIEZ", INK, -6], ["AÑOS", GREEN, 4], ["ENSEÑANDO", INK, -3]].map(([w, c, r], i) => (
+      <motion.span key={w as string} initial={{ y: 60, opacity: 0, rotate: (r as number) * 3, scale: 1.6 }} animate={{ y: 0, opacity: 1, rotate: r as number, scale: 1 }} transition={{ ...spring, delay: 0.25 + i * 0.16 }} className="text-4xl font-black tracking-tight sm:text-7xl" style={{ color: c as string }}>
+        {w as string}
+      </motion.span>
+    ))}
+  </div>
+);
+const Counter = ({ to, label, delay }: { to: number; label: string; delay: number }) => {
+  const [n, setN] = useState(0);
   useEffect(() => {
-    let n = 1;
-    const id = setInterval(() => { setList((l) => [{ id: n, text: TOASTS[n % TOASTS.length] }, ...l].slice(0, 3)); n++; }, 1500);
-    const like = setInterval(() => { setLiked((v) => !v); setBurst((b) => b + 1); }, 3200);
-    return () => { clearInterval(id); clearInterval(like); };
-  }, []);
-  const tap = () => { setLiked((v) => !v); setBurst((b) => b + 1); };
+    let raf = 0; const t0 = performance.now() + delay * 1000;
+    const step = (t: number) => { const k = Math.min(1, Math.max(0, (t - t0) / 900)); setN(Math.round(to * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step); return () => cancelAnimationFrame(raf);
+  }, [to, delay]);
   return (
-    <div className="flex w-full flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-16">
-      {/* la pila de toasts */}
-      <div className="relative mt-6 h-20 w-56 sm:mt-0 sm:h-28 sm:w-72">
-        <AnimatePresence>
-          {list.map((t, k) => (
-            <motion.div key={t.id} layout initial={{ y: 40, opacity: 0, scale: 1 }} animate={{ y: -k * 12, opacity: 1 - k * 0.3, scale: 1 - k * 0.06 }} exit={{ opacity: 0, scale: 0.9 }} transition={spring} style={{ zIndex: 10 - k, background: "#141B20", borderColor: `${GREEN}66`, color: INK, transformOrigin: "top center" }} className="absolute inset-x-0 bottom-0 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm shadow-xl">
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ...spring, delay: 0.1 }} className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold" style={{ background: GREEN, color: "#0E1317" }}>✓</motion.span>
-              {t.text}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+    <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ ...spring, delay }} className="text-center">
+      <div className="text-5xl font-black tabular-nums sm:text-8xl" style={{ color: GREEN }}>{n}</div>
+      <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.25em] sm:text-xs" style={{ color: MUTE }}>{label}</div>
+    </motion.div>
+  );
+};
+const Stats = () => (
+  <div className="flex items-center gap-8 sm:gap-16">
+    <Counter to={31} label="videos" delay={0.25} />
+    <Counter to={60} label="líneas por card" delay={0.45} />
+  </div>
+);
+const Chart = () => (
+  <div className="flex flex-col items-center gap-3">
+    <div className="flex h-28 items-end gap-2 sm:h-40 sm:gap-3">
+      {[0.3, 0.55, 0.42, 0.78, 1].map((h, i) => (
+        <motion.div key={i} className="w-7 rounded-t-md sm:w-11" style={{ background: i > 2 ? GREEN : MINT, height: `${h * 100}%`, transformOrigin: "bottom" }} initial={{ scaleY: 0 }} animate={{ scaleY: [0, 1.15, 1] }} transition={{ duration: 0.5, delay: 0.25 + i * 0.1, ease: "easeOut" }} />
+      ))}
+    </div>
+    <motion.div initial={{ x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ ...spring, delay: 0.9 }} className="rounded-full px-4 py-1.5 font-mono text-xs font-bold sm:text-sm" style={{ background: GREEN, color: "#0E1317" }}>7 módulos · 31 lecciones</motion.div>
+  </div>
+);
+const Bars = () => {
+  const [b, setB] = useState(0);
+  useEffect(() => { const id = setInterval(() => setB((v) => v + 1), BEAT_MS); return () => clearInterval(id); }, []);
+  const k = b % BEATS;
+  return (
+    <div className="relative flex w-full flex-col items-center gap-3 sm:gap-4">
+      <div className="text-center">
+        <p className="font-mono text-[10px] uppercase tracking-[0.3em] sm:text-xs" style={{ color: MUTE }}>05 · Presentaciones</p>
+        <h2 className="mt-1 text-2xl font-extrabold sm:text-3xl" style={{ color: INK }}>Slides que se animan solas</h2>
       </div>
-      {/* el botón que explota */}
-      <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-10">
-        <button type="button" onClick={tap} aria-label="me gusta" className="relative flex h-14 w-14 items-center justify-center rounded-full border-2 sm:h-16 sm:w-16" style={{ borderColor: liked ? GREEN : "#2f4047", background: liked ? `${GREEN}22` : "transparent" }}>
-          <motion.svg key={burst} viewBox="0 0 24 24" className="h-7 w-7" initial={{ scale: 0.6 }} animate={{ scale: [0.6, 1.35, 1] }} transition={{ duration: 0.45 }} fill={liked ? GREEN : "none"} stroke={liked ? GREEN : MUTE} strokeWidth="2">
-            <path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z" />
-          </motion.svg>
-          {liked && Array.from({ length: 10 }, (_, k) => {
-            const a = (k / 10) * Math.PI * 2;
-            return <motion.span key={`${burst}-${k}`} className="absolute h-2 w-2 rounded-full" style={{ background: k % 2 ? GREEN : MINT }} initial={{ x: 0, y: 0, opacity: 1, scale: 1 }} animate={{ x: Math.cos(a) * 44, y: Math.sin(a) * 44, opacity: 0, scale: 0.2 }} transition={{ duration: 0.6, ease: "easeOut" }} />;
-          })}
-        </button>
-        <div className="text-center sm:text-left">
-          <p className="font-mono text-xs uppercase tracking-[0.3em]" style={{ color: MUTE }}>06 · Micro-interacciones</p>
-          <h2 className="mt-2 text-2xl font-extrabold sm:text-5xl" style={{ color: INK }}>Toasts que se apilan,<br />botones que explotan</h2>
-          <p className="mt-2 hidden text-sm sm:block sm:text-base" style={{ color: MUTE }}>Motion en React, con springs que se sienten reales.</p>
-        </div>
+      {/* el mini deck: mismo lenguaje que los shorts, cortinilla incluida */}
+      <div className="relative flex h-44 w-full max-w-md items-center justify-center overflow-hidden rounded-xl border sm:h-56" style={{ background: "#0E1317", borderColor: "#2f4047" }}>
+        <AnimatePresence mode="wait">
+          <motion.div key={b} className="absolute inset-0 flex items-center justify-center" initial={{ opacity: 1 }} exit={{ opacity: 1 }}>
+            {k === 0 && <Kinetic />}
+            {k === 1 && <Stats />}
+            {k === 2 && <Chart />}
+          </motion.div>
+        </AnimatePresence>
+        <Wipe key={`w${b}`} k={b} />
+        <div className="absolute bottom-2 right-3 font-mono text-[9px]" style={{ color: MUTE }}>{k + 1} / {BEATS}</div>
       </div>
     </div>
   );
@@ -199,7 +212,6 @@ export const HeroDeck = ({ paused = false }: { paused?: boolean }) => {
             {i === 2 && <Tools />}
             {i === 3 && <Cube3D />}
             {i === 4 && <Bars />}
-            {i === 5 && <Micro />}
           </motion.div>
         </AnimatePresence>
 
