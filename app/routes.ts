@@ -68,6 +68,7 @@ export default [
   route("code-mode", "routes/code-mode.tsx"),
   // Taller: Diseño de sistemas agénticos
   route("sistemas-agenticos", "routes/sistemas-agenticos.tsx"),
+  route("animaciones-ai", "routes/animaciones-ai.tsx"), // lista de espera del curso
   route("seis-piezas", "routes/seis-piezas.tsx"), // regalo del webinar → PDF en EasyBits
   route("webinar-1/slides", "routes/webinar-1.slides.tsx"), // ruta vieja ya compartida → canónica
   route("sandboxing/slides", "routes/sandboxing.slides.tsx"), // corta, para pegar en el chat del webinar
@@ -106,6 +107,7 @@ export default [
     route("suscriptores", "routes/admin/suscriptores.tsx"),
     route("webinar", "routes/admin/webinar.tsx"), // → /admin/suscriptores
     route("sequences", "routes/admin/sequences.tsx"),
+    route("motor", "routes/admin/motor.tsx"), // corridas del cron y envíos fallidos
     route("productos", "routes/admin/productos.tsx"),
     route("magnetos", "routes/admin/magnetos.tsx"),
     route("libros", "routes/admin/libros.tsx"),
