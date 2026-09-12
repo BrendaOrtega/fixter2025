@@ -242,11 +242,9 @@ export const HeroDeck = ({ paused = false }: { paused?: boolean }) => {
 
       {/* puntos + flechas */}
       <div className="relative z-10 mt-10 flex items-center justify-center gap-2 sm:mt-12 sm:gap-3">
-        <button type="button" onClick={() => go(i - 1)} className="px-2 font-mono text-lg" style={{ color: INK }} aria-label="anterior">←</button>
         {Array.from({ length: SLIDES }, (_, k) => (
           <button key={k} type="button" onClick={() => go(k)} aria-label={`slide ${k + 1}`} className="h-2.5 rounded-full transition-all" style={{ width: k === i ? 32 : 10, background: k === i ? GREEN : "#3a4c54" }} />
         ))}
-        <button type="button" onClick={() => go(i + 1)} className="px-2 font-mono text-lg" style={{ color: INK }} aria-label="siguiente">→</button>
       </div>
     </div>
   );
