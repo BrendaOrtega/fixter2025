@@ -153,8 +153,11 @@ const Chart = () => (
 );
 const Bars = () => {
   const [b, setB] = useState(0);
-  useEffect(() => { const id = setInterval(() => setB((v) => v + 1), BEAT_MS); return () => clearInterval(id); }, []);
+  // el intervalo se reinicia al elegir un beat, para que se vea completo
+  useEffect(() => { const id = setInterval(() => setB((v) => v + 1), BEAT_MS); return () => clearInterval(id); }, [b]);
   const k = b % BEATS;
+  // ir a un beat (o repetirlo si es el actual): siempre avanza `b` para que la key cambie y la animación arranque de cero
+  const goBeat = (target: number) => setB((v) => v + (((target - (v % BEATS)) % BEATS) + BEATS) % BEATS || BEATS);
   return (
     <div className="relative flex w-full flex-col items-center gap-3 sm:gap-4">
       <div className="text-center">
@@ -172,6 +175,12 @@ const Bars = () => {
         </AnimatePresence>
         <Wipe key={`w${b}`} k={b} />
         <div className="absolute bottom-2 right-3 font-mono text-[9px]" style={{ color: MUTE }}>{k + 1} / {BEATS}</div>
+        {/* bolitas para ir a un beat o repetirlo */}
+        <div className="absolute bottom-2 left-0 right-0 z-30 flex justify-center gap-2">
+          {Array.from({ length: BEATS }, (_, t) => (
+            <button key={t} type="button" onClick={() => goBeat(t)} aria-label={`beat ${t + 1}`} className="h-2 rounded-full transition-all" style={{ width: t === k ? 22 : 8, background: t === k ? GREEN : "#2f4047" }} />
+          ))}
+        </div>
       </div>
     </div>
   );
