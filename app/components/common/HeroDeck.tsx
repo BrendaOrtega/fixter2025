@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+const IslandDiorama = lazy(() => import("~/components/common/IslandDiorama"));
 import { AnimatePresence, motion } from "motion/react";
 
 /**
@@ -82,29 +83,25 @@ const Tools = () => (
   </div>
 );
 
+// mini deck de la slide 5
+const BEATS = 3, BEAT_MS = 3000;
+
 const Cube3D = () => (
-  <div className="flex flex-col items-center gap-10 sm:flex-row sm:gap-14">
-    <div className="relative h-24 w-24 scale-75 sm:h-44 sm:w-44 sm:scale-100" style={{ perspective: 700 }}>
-      <motion.div className="absolute inset-0" style={{ transformStyle: "preserve-3d" }} animate={{ rotateX: [0, 360], rotateY: [0, 360] }} transition={{ duration: 9, ease: "linear", repeat: Infinity }}>
-        {[
-          ["translateZ(64px)", MINT], ["rotateY(180deg) translateZ(64px)", "#37ab93"], ["rotateY(90deg) translateZ(64px)", GREEN],
-          ["rotateY(-90deg) translateZ(64px)", "#2a7a6b"], ["rotateX(90deg) translateZ(64px)", "#C9F0E6"], ["rotateX(-90deg) translateZ(64px)", "#1f5f54"],
-        ].map(([tf, bg], i) => (
-          <div key={i} className="absolute inset-0 rounded-md border-2 sm:[transform:var(--tf)]" style={{ transform: tf, background: bg, borderColor: "#0E1317", opacity: 0.95 }} />
-        ))}
-      </motion.div>
+  <div className="flex w-full flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-10">
+    {/* la isla Three.js carga en cliente; el hueco tiene el mismo tamaño para que nada brinque */}
+    <div className="w-[240px] sm:w-[340px]">
+      <Suspense fallback={<div className="aspect-square w-full" />}>
+        <IslandDiorama />
+      </Suspense>
     </div>
     <div className="text-center sm:text-left">
-      <p className="font-mono text-xs uppercase tracking-[0.3em]" style={{ color: MUTE }}>04 · Componentes 3D</p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.3em] sm:text-xs" style={{ color: MUTE }}>04 · Componentes 3D</p>
       <h2 className="mt-2 text-2xl font-extrabold sm:text-5xl" style={{ color: INK }}>Cards y escenas<br />en 3D</h2>
-      <p className="mt-2 text-sm sm:text-base" style={{ color: MUTE }}>Three.js y CSS 3D, generados con Astra y Fable.</p>
+      <p className="mt-2 hidden text-sm sm:block sm:text-base" style={{ color: MUTE }}>Three.js y CSS 3D, generados con Astra y Fable.</p>
     </div>
   </div>
 );
 
-// --- presentación: un mini deck que se anima solo, como los shorts.
-//     Tres beats en bucle con cortinilla de rebanadas diagonales entre ellos.
-const BEATS = 3, BEAT_MS = 3000;
 // beat 1 · karaoke: la palabra en curso brinca en menta y se queda blanca, con código tecleándose atrás
 const LINE = ["Cada", "slide", "se", "escribe", "en", "HTML"];
 const CODE = ["<hf-slide in=\"0\">", "  <h1 data-anim=\"pop\">", "    Animaciones con AI", "  </h1>", "</hf-slide>"];
