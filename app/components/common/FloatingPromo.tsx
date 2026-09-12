@@ -79,7 +79,7 @@ export const FloatingPromo = () => {
                   animate={{ opacity: 1, y: -10, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute bottom-full left-0 mb-0 w-80 bg-zinc-900 rounded-2xl shadow-xl border border-[#7c3aed]/50 p-4 z-10"
+                  className="absolute bottom-full left-0 mb-0 w-80 bg-zinc-900 rounded-2xl shadow-xl border border-[#85DDCB]/50 p-4 z-10"
                 >
                   {/* Close button */}
                   <button
@@ -94,7 +94,7 @@ export const FloatingPromo = () => {
 
                   <div className="pr-8">
                     <div className="flex items-center gap-2 mb-2">
-                      <BiCodeAlt className="text-2xl text-[#fbbf24]" />
+                      <BiCodeAlt className="text-2xl text-[#8DCF6E]" />
                       <h3 className="font-bold text-gray-900 dark:text-white">
                         Nuevo curso · Octubre 2026
                       </h3>
@@ -117,7 +117,7 @@ export const FloatingPromo = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleClick}
-                        className="bg-[#fbbf24] text-[#0b0b0f] text-xs font-bold px-4 py-2 rounded-full transition-colors"
+                        className="bg-[#8DCF6E] text-[#0E1317] text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
                         Quiero mi lugar →
                       </motion.button>
@@ -138,9 +138,9 @@ export const FloatingPromo = () => {
             >
               {/* Main button */}
               <motion.div
-                className="relative z-20 bg-gradient-to-r from-[#7c3aed] to-[#5b21b6] text-white p-4 rounded-2xl shadow-2xl border border-[#7c3aed]/40"
+                className="relative z-20 bg-gradient-to-r from-[#85DDCB] to-[#37ab93] text-white p-4 rounded-2xl shadow-2xl border border-[#85DDCB]/40"
                 whileHover={{
-                  boxShadow: "0 20px 40px rgba(124, 58, 237, 0.35)",
+                  boxShadow: "0 20px 40px rgba(133, 221, 203, 0.35)",
                 }}
                 onClick={handleClick}
               >
@@ -179,7 +179,7 @@ export const FloatingPromo = () => {
                 repeat: Infinity,
                 repeatType: "reverse",
               }}
-              className="absolute inset-0 bg-[#7c3aed] rounded-2xl -z-10"
+              className="absolute inset-0 bg-[#85DDCB] rounded-2xl -z-10"
             />
           </div>
         </motion.div>

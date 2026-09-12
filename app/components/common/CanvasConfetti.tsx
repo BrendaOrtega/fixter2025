@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 // Confetti dibujado a mano sobre un canvas fijo a pantalla completa. Sin
 // librerías: una ráfaga desde el centro con la paleta de la casa, gravedad y
 // giro por partícula. Se desmonta solo cuando todas caen fuera de cuadro.
-const PALETTE = ["#7c3aed", "#fbbf24", "#f5f3ff", "#a78bfa", "#fde68a"];
+const PALETTE = ["#85DDCB", "#8DCF6E", "#F2F5F4", "#37ab93", "#C9F0E6"];
 
 type Particle = {
   x: number;

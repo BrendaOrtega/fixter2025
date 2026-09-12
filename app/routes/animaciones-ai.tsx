@@ -83,7 +83,7 @@ export default function Route() {
   }, [error]);
 
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0b0b0f] px-5 py-16 text-[#f5f3ff] sm:px-8">
+    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0E1317] px-5 py-16 text-[#F2F5F4] sm:px-8">
       {done && <CanvasConfetti />}
 
       {/* Malla de puntos sutil + halo morado; nunca un negro plano */}
@@ -102,12 +102,12 @@ export default function Route() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#7c3aed] opacity-20 blur-[140px]"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#85DDCB] opacity-20 blur-[140px]"
       />
 
       <section className="relative z-10 flex w-full max-w-xl flex-col items-center text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#fbbf24]/30 bg-[#fbbf24]/10 px-3 py-1 text-xs font-medium tracking-wide text-[#fbbf24]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#fbbf24]" />
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#8DCF6E]/30 bg-[#8DCF6E]/10 px-3 py-1 text-xs font-medium tracking-wide text-[#8DCF6E]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#8DCF6E]" />
           Nuevo curso · Octubre 2026
         </span>
 
@@ -115,19 +115,19 @@ export default function Route() {
           Animaciones con AI
         </h1>
 
-        <p className="mt-5 max-w-md text-base leading-relaxed text-[#f5f3ff]/75 sm:text-lg">
+        <p className="mt-5 max-w-md text-base leading-relaxed text-[#F2F5F4]/75 sm:text-lg">
           Construyes componentes 3D, presentaciones animadas y
           micro-interacciones con Motion y AI.
         </p>
 
-        <p className="mt-3 font-mono text-xs text-[#f5f3ff]/45 sm:text-sm">
+        <p className="mt-3 font-mono text-xs text-[#F2F5F4]/45 sm:text-sm">
           Motion · Fable 5.1 · GPT-6 Astra · Three.js
         </p>
 
         {done ? (
           <div
             role="status"
-            className="mt-10 w-full rounded-2xl border border-[#7c3aed]/40 bg-[#7c3aed]/10 px-5 py-4 text-sm sm:text-base"
+            className="mt-10 w-full rounded-2xl border border-[#85DDCB]/40 bg-[#85DDCB]/10 px-5 py-4 text-sm sm:text-base"
           >
             Ya estás en la lista. Te escribimos cuando abra el curso.
           </div>
@@ -148,12 +148,12 @@ export default function Route() {
               autoComplete="email"
               placeholder="tu@correo.com"
               aria-invalid={!!error}
-              className="h-12 w-full flex-1 rounded-xl border border-[#f5f3ff]/15 bg-[#f5f3ff]/5 px-4 text-base text-[#f5f3ff] placeholder:text-[#f5f3ff]/35 focus:border-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/40"
+              className="h-12 w-full flex-1 rounded-xl border border-[#F2F5F4]/15 bg-[#F2F5F4]/5 px-4 text-base text-[#F2F5F4] placeholder:text-[#F2F5F4]/35 focus:border-[#85DDCB] focus:outline-none focus:ring-2 focus:ring-[#85DDCB]/40"
             />
             <button
               type="submit"
               disabled={isLoading}
-              className="h-12 shrink-0 rounded-xl bg-[#7c3aed] px-5 text-base font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
+              className="h-12 shrink-0 rounded-xl bg-[#85DDCB] px-5 text-base font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
             >
               {isLoading ? "Enviando…" : "Únete a la lista de espera"}
             </button>
@@ -161,19 +161,19 @@ export default function Route() {
         )}
 
         {error && (
-          <p role="alert" className="mt-3 text-sm text-[#fbbf24]">
+          <p role="alert" className="mt-3 text-sm text-[#8DCF6E]">
             {error}
           </p>
         )}
       </section>
 
-      <footer className="relative z-10 mt-16 text-xs text-[#f5f3ff]/45">
+      <footer className="relative z-10 mt-16 text-xs text-[#F2F5F4]/45">
         Por{" "}
         <a
           href="https://www.hectorbliss.com"
           target="_blank"
           rel="noopener"
-          className="underline decoration-[#f5f3ff]/25 underline-offset-4 hover:text-[#f5f3ff]"
+          className="underline decoration-[#F2F5F4]/25 underline-offset-4 hover:text-[#F2F5F4]"
         >
           Héctorbliss
         </a>{" "}
