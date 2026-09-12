@@ -105,13 +105,6 @@ const Cube3D = () => (
 // --- presentación: un mini deck que se anima solo, como los shorts.
 //     Tres beats en bucle con cortinilla de rebanadas diagonales entre ellos.
 const BEATS = 3, BEAT_MS = 2600;
-const Wipe = ({ k }: { k: number }) => (
-  <div key={k} className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-    {Array.from({ length: 6 }, (_, i) => (
-      <motion.div key={i} className="absolute -left-1/2 h-[22%] w-[200%]" style={{ top: `${i * 18 - 4}%`, background: i % 2 ? GREEN : MINT, rotate: -12, transformOrigin: i % 2 ? "right center" : "left center" }} initial={{ scaleX: 0 }} animate={{ scaleX: [0, 1, 1, 0] }} transition={{ duration: 0.7, times: [0, 0.4, 0.55, 1], ease: ["backOut", "linear", "backIn"], delay: i * 0.04 }} />
-    ))}
-  </div>
-);
 const Kinetic = () => (
   <div className="flex flex-col items-center leading-none">
     {[["DIEZ", INK, -6], ["AÑOS", GREEN, 4], ["ENSEÑANDO", INK, -3]].map(([w, c, r], i) => (
@@ -156,8 +149,6 @@ const Bars = () => {
   // el intervalo se reinicia al elegir un beat, para que se vea completo
   useEffect(() => { const id = setInterval(() => setB((v) => v + 1), BEAT_MS); return () => clearInterval(id); }, [b]);
   const k = b % BEATS;
-  // ir a un beat (o repetirlo si es el actual): siempre avanza `b` para que la key cambie y la animación arranque de cero
-  const goBeat = (target: number) => setB((v) => v + (((target - (v % BEATS)) % BEATS) + BEATS) % BEATS || BEATS);
   return (
     <div className="relative flex w-full flex-col items-center gap-3 sm:gap-4">
       <div className="text-center">
@@ -167,20 +158,13 @@ const Bars = () => {
       {/* el mini deck: mismo lenguaje que los shorts, cortinilla incluida */}
       <div className="relative flex h-44 w-full max-w-md items-center justify-center overflow-hidden rounded-xl border sm:h-56" style={{ background: "#0E1317", borderColor: "#2f4047" }}>
         <AnimatePresence mode="wait">
-          <motion.div key={b} className="absolute inset-0 flex items-center justify-center" initial={{ opacity: 1 }} exit={{ opacity: 1 }}>
+          <motion.div key={b} className="absolute inset-0 flex items-center justify-center" initial={{ opacity: 0, scale: 1.1, filter: "blur(8px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 0.9, filter: "blur(6px)" }} transition={{ duration: 0.25 }}>
             {k === 0 && <Kinetic />}
             {k === 1 && <Stats />}
             {k === 2 && <Chart />}
           </motion.div>
         </AnimatePresence>
-        <Wipe key={`w${b}`} k={b} />
         <div className="absolute bottom-2 right-3 font-mono text-[9px]" style={{ color: MUTE }}>{k + 1} / {BEATS}</div>
-        {/* bolitas para ir a un beat o repetirlo */}
-        <div className="absolute bottom-2 left-0 right-0 z-30 flex justify-center gap-2">
-          {Array.from({ length: BEATS }, (_, t) => (
-            <button key={t} type="button" onClick={() => goBeat(t)} aria-label={`beat ${t + 1}`} className="h-2 rounded-full transition-all" style={{ width: t === k ? 22 : 8, background: t === k ? GREEN : "#2f4047" }} />
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -215,7 +199,7 @@ export const HeroDeck = ({ paused = false }: { paused?: boolean }) => {
         <div className="absolute right-4 top-3 font-mono text-[10px] sm:right-5 sm:top-4 sm:text-xs" style={{ color: MUTE }}>{String(i + 1).padStart(2, "0")} / {String(SLIDES).padStart(2, "0")}</div>
 
         <AnimatePresence mode="wait">
-          <motion.div key={i} className="absolute inset-0 flex items-center justify-center px-4 pb-6 pt-12 sm:px-12 sm:pt-10" initial={{ x: 80, opacity: 0, rotateY: -12 }} animate={{ x: 0, opacity: 1, rotateY: 0 }} exit={{ x: -80, opacity: 0, rotateY: 12 }} transition={{ ...spring, damping: 26 }}>
+          <motion.div key={i} className="absolute inset-0 flex items-center justify-center px-4 pb-6 pt-12 sm:px-12 sm:pt-10" initial={{ scale: 1.08, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}>
             {i === 0 && <Title />}
             {i === 1 && <Shorts />}
             {i === 2 && <Tools />}
@@ -229,12 +213,12 @@ export const HeroDeck = ({ paused = false }: { paused?: boolean }) => {
       </div>
 
       {/* puntos + flechas */}
-      <div className="mt-6 flex items-center justify-center gap-2 sm:mt-8 sm:gap-3">
-        <button type="button" onClick={() => go(i - 1)} className="font-mono text-sm" style={{ color: MUTE }} aria-label="anterior">←</button>
+      <div className="relative z-10 mt-10 flex items-center justify-center gap-2 sm:mt-12 sm:gap-3">
+        <button type="button" onClick={() => go(i - 1)} className="px-2 font-mono text-lg" style={{ color: INK }} aria-label="anterior">←</button>
         {Array.from({ length: SLIDES }, (_, k) => (
-          <button key={k} type="button" onClick={() => go(k)} aria-label={`slide ${k + 1}`} className="h-2 rounded-full transition-all" style={{ width: k === i ? 28 : 8, background: k === i ? GREEN : "#2f4047" }} />
+          <button key={k} type="button" onClick={() => go(k)} aria-label={`slide ${k + 1}`} className="h-2.5 rounded-full transition-all" style={{ width: k === i ? 32 : 10, background: k === i ? GREEN : "#3a4c54" }} />
         ))}
-        <button type="button" onClick={() => go(i + 1)} className="font-mono text-sm" style={{ color: MUTE }} aria-label="siguiente">→</button>
+        <button type="button" onClick={() => go(i + 1)} className="px-2 font-mono text-lg" style={{ color: INK }} aria-label="siguiente">→</button>
       </div>
     </div>
   );
