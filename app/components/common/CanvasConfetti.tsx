@@ -58,7 +58,7 @@ const playBurst = () => {
   }
 };
 
-export const CanvasConfetti = ({ count = 160 }: { count?: number }) => {
+export const CanvasConfetti = ({ count = 260 }: { count?: number }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -77,14 +77,21 @@ export const CanvasConfetti = ({ count = 160 }: { count?: number }) => {
     resize();
     window.addEventListener("resize", resize);
 
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight * 0.45;
-    const particles: Particle[] = Array.from({ length: count }, () => {
-      const theta = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9;
-      const speed = 9 + Math.random() * 11;
+    const W = window.innerWidth, H = window.innerHeight;
+    // tres cañones: dos desde las esquinas de abajo apuntando al centro, y uno central hacia arriba
+    const cannons = [
+      { x: 0, y: H, dir: -Math.PI / 3.2, spread: 0.55, n: Math.round(count * 0.4), delay: 0 },
+      { x: W, y: H, dir: -Math.PI + Math.PI / 3.2, spread: 0.55, n: Math.round(count * 0.4), delay: 0 },
+      { x: W / 2, y: H * 0.5, dir: -Math.PI / 2, spread: 1.1, n: Math.round(count * 0.5), delay: 18 },
+    ];
+    const particles: (Particle & { delay: number; round: boolean })[] = cannons.flatMap((c) => Array.from({ length: c.n }, () => {
+      const theta = c.dir + (Math.random() - 0.5) * c.spread;
+      const speed = 14 + Math.random() * 14;
       return {
-        x: cx,
-        y: cy,
+        x: c.x,
+        y: c.y,
+        delay: c.delay + Math.floor(Math.random() * 6),
+        round: Math.random() < 0.3,
         vx: Math.cos(theta) * speed,
         vy: Math.sin(theta) * speed,
         w: 6 + Math.random() * 6,
@@ -93,15 +100,16 @@ export const CanvasConfetti = ({ count = 160 }: { count?: number }) => {
         spin: (Math.random() - 0.5) * 0.3,
         color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
       };
-    });
+    }));
 
     let raf = 0;
     const tick = () => {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       let alive = 0;
       for (const p of particles) {
-        p.vy += 0.35; // gravedad
-        p.vx *= 0.99; // fricción
+        if (p.delay > 0) { p.delay--; alive++; continue; }
+        p.vy += 0.42; // gravedad
+        p.vx *= 0.985; // fricción
         p.x += p.vx;
         p.y += p.vy;
         p.angle += p.spin;
@@ -112,7 +120,8 @@ export const CanvasConfetti = ({ count = 160 }: { count?: number }) => {
         // el coseno simula el volteo de la tira de papel
         ctx.scale(1, Math.cos(p.angle * 2));
         ctx.fillStyle = p.color;
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2); ctx.fill(); }
+        else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
         ctx.restore();
       }
       if (alive > 0) raf = requestAnimationFrame(tick);

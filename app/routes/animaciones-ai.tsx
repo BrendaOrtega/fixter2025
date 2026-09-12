@@ -6,6 +6,7 @@ import { checkSignupEmail } from "~/.server/anti-bot";
 import { recordOrigin } from "~/.server/origen";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
 import { HeroDeck } from "~/components/common/HeroDeck";
+import { motion } from "motion/react";
 import getMetaTags from "~/utils/getMetaTags";
 
 // ===========================================
@@ -74,6 +75,8 @@ export default function Route() {
   const inputRef = useRef<HTMLInputElement>(null);
   const isLoading = fetcher.state !== "idle";
   const done = fetcher.data?.ok === true;
+  // el correo que se mandó, para enseñarlo en la celebración (el input ya no existe cuando llega el ok)
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const error =
     fetcher.data && "error" in fetcher.data && typeof fetcher.data.error === "string"
       ? fetcher.data.error
@@ -110,15 +113,35 @@ export default function Route() {
         <HeroDeck paused={done} />
 
         {done ? (
-          <div
-            role="status"
-            className="mt-10 w-full rounded-2xl border border-[#85DDCB]/40 bg-[#85DDCB]/10 px-5 py-4 text-sm sm:text-base"
-          >
-            Ya estás en la lista. Te escribimos cuando abra el curso.
+          <div role="status" className="relative mt-10 flex w-full flex-col items-center">
+            {/* onda expansiva desde donde estaba el botón */}
+            {[0, 0.18, 0.36].map((d) => (
+              <motion.span key={d} aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 rounded-full border-4 border-[#8DCF6E]" initial={{ x: "-50%", y: "-50%", scale: 0.2, opacity: 0.9 }} animate={{ scale: 14, opacity: 0 }} transition={{ duration: 1.3, delay: d, ease: "easeOut" }} />
+            ))}
+            {/* el título que se azota, letra por letra */}
+            <h2 className="flex flex-wrap justify-center gap-x-[0.3em] text-4xl font-black leading-none tracking-tight sm:text-7xl">
+              {["¡ESTÁS", "DENTRO!"].map((w, wi) => (
+                <span key={w} className="inline-flex" style={{ color: wi ? "#8DCF6E" : "#F2F5F4" }}>
+                  {w.split("").map((ch, i) => (
+                    <motion.span key={i} className="inline-block" initial={{ y: -80, opacity: 0, scale: 2.2, rotate: (i % 2 ? 1 : -1) * 18 }} animate={{ y: 0, opacity: 1, scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 420, damping: 18, delay: 0.1 + (wi * 6 + i) * 0.05 }}>{ch}</motion.span>
+                  ))}
+                </span>
+              ))}
+            </h2>
+            <motion.div initial={{ y: 30, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.85 }} className="mt-6 w-full max-w-md rounded-2xl border border-[#85DDCB]/40 bg-[#85DDCB]/10 px-5 py-4 text-sm sm:text-base">
+              <span className="font-mono text-[#85DDCB]">{submittedEmail}</span>
+              <br />
+              Te escribimos en octubre cuando abra el curso.
+            </motion.div>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }} className="mt-4 text-xs text-[#F2F5F4]/50">
+              Mientras, el canal:{" "}
+              <a href="https://www.youtube.com/@fixtergeek" target="_blank" rel="noopener" className="text-[#8DCF6E] underline underline-offset-4">youtube.com/@fixtergeek</a>
+            </motion.p>
           </div>
         ) : (
           <fetcher.Form
             method="post"
+            onSubmit={() => setSubmittedEmail(inputRef.current?.value ?? "")}
             className="mt-10 flex w-full flex-col gap-3 sm:flex-row"
           >
             <label htmlFor="email" className="sr-only">
