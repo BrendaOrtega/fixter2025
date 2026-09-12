@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <!-- cubo isométrico con destellos: la card 3D del teaser, en plano y paleta FixterGeek -->
+  <rect width="160" height="160" rx="32" fill="#0E1317"/>
+  <polygon points="80,34 124,58 80,82 36,58" fill="#C9F0E6"/>
+  <polygon points="36,58 80,82 80,130 36,106" fill="#85DDCB"/>
+  <polygon points="124,58 80,82 80,130 124,106" fill="#37ab93"/>
+  <circle cx="126" cy="34" r="8" fill="#8DCF6E"/>
+  <circle cx="34" cy="122" r="5" fill="#8DCF6E"/>
+  <path d="M108 122 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#F2F5F4"/>
+</svg>

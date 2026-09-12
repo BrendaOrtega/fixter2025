@@ -29,7 +29,8 @@ export const getProgramas = async () => {
   const courses = await db.course.findMany({
     // Solo entran los Course con `tipo` (taller/curso/null explícito); los cursos viejos no traen el campo
     // y así se quedan fuera. Un programa nuevo necesita su `tipo` puesto (animaciones-ai lleva "curso").
-    where: { OR: [{ tipo: null }, { tipo: { not: "proximamente" } }] },
+    // un "proximamente" con fase (stage) es un programa en promoción y sí entra; los sin fase son placeholders
+    where: { OR: [{ tipo: null }, { tipo: { not: "proximamente" } }, { stage: { not: null } }] },
     select: {
       id: true,
       slug: true,

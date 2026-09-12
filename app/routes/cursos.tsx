@@ -89,10 +89,13 @@ export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
     (c) => !FEATURED_SLUGS.includes(c.slug as string)
   );
 
+  // los "proximamente" de la base van arriba, junto a los destacados
+  const upcoming = otherCourses.filter((c) => c.tipo === "proximamente");
   const orderedCourses = [
     ...featuredCourses,
+    ...upcoming,
     ...proximamenteCourses,
-    ...otherCourses,
+    ...otherCourses.filter((c) => c.tipo !== "proximamente"),
   ];
 
   return (
