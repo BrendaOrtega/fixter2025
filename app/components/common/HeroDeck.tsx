@@ -96,7 +96,7 @@ const Cube3D = () => (
     </div>
     <div className="text-center sm:text-left">
       <p className="font-mono text-xs uppercase tracking-[0.3em]" style={{ color: MUTE }}>04 · Componentes 3D</p>
-      <h2 className="mt-2 text-2xl font-extrabold sm:text-5xl" style={{ color: INK }}>Cards, cubos<br />y escenas</h2>
+      <h2 className="mt-2 text-2xl font-extrabold sm:text-5xl" style={{ color: INK }}>Cards y escenas<br />en 3D</h2>
       <p className="mt-2 text-sm sm:text-base" style={{ color: MUTE }}>Three.js y CSS 3D, generados con Astra y Fable.</p>
     </div>
   </div>
