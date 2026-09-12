@@ -30,8 +30,8 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
     location.pathname.startsWith('/secuencias') ||
     location.pathname === '/s' ||
     location.pathname.startsWith('/s/');
-  // El promo flotante promociona este taller; no mostrarlo en su propia landing
-  const isSistemasRoute = location.pathname.startsWith('/sistemas-agenticos');
+  // El promo flotante promociona Animaciones con AI; no mostrarlo en su propia landing
+  const isSistemasRoute = location.pathname.startsWith('/animaciones-ai');
 
   return (
     <>

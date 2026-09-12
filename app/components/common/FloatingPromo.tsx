@@ -12,7 +12,7 @@ export const FloatingPromo = () => {
 
   useEffect(() => {
     // Verificar si el usuario ya lo desechó y si aún está vigente
-    const dismissedData = localStorage.getItem("sistemas-promo-dismissed");
+    const dismissedData = localStorage.getItem("animaciones-ai-promo-dismissed");
     if (dismissedData) {
       const { timestamp } = JSON.parse(dismissedData);
       const oneDayInMs = 24 * 60 * 60 * 1000; // 24 horas
@@ -22,7 +22,7 @@ export const FloatingPromo = () => {
         return;
       } else {
         // Ha pasado el tiempo, remover y mostrar de nuevo
-        localStorage.removeItem("sistemas-promo-dismissed");
+        localStorage.removeItem("animaciones-ai-promo-dismissed");
       }
     }
 
@@ -36,7 +36,7 @@ export const FloatingPromo = () => {
 
   const handleDismiss = () => {
     localStorage.setItem(
-      "sistemas-promo-dismissed",
+      "animaciones-ai-promo-dismissed",
       JSON.stringify({
         timestamp: Date.now(),
       }),
@@ -46,7 +46,7 @@ export const FloatingPromo = () => {
   };
 
   const handleClick = () => {
-    navigate("/sistemas-agenticos");
+    navigate("/animaciones-ai");
   };
 
   if (isDismissed) return null;
@@ -79,7 +79,7 @@ export const FloatingPromo = () => {
                   animate={{ opacity: 1, y: -10, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute bottom-full left-0 mb-0 w-80 bg-zinc-900 rounded-2xl shadow-xl border border-emerald-500/40 p-4 z-10"
+                  className="absolute bottom-full left-0 mb-0 w-80 bg-zinc-900 rounded-2xl shadow-xl border border-[#7c3aed]/50 p-4 z-10"
                 >
                   {/* Close button */}
                   <button
@@ -94,31 +94,30 @@ export const FloatingPromo = () => {
 
                   <div className="pr-8">
                     <div className="flex items-center gap-2 mb-2">
-                      <BiCodeAlt className="text-2xl text-emerald-400" />
+                      <BiCodeAlt className="text-2xl text-[#fbbf24]" />
                       <h3 className="font-bold text-gray-900 dark:text-white">
-                        Nuevo taller en vivo
+                        Nuevo curso · Octubre 2026
                       </h3>
                     </div>
 
                     <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                      Diseño de sistemas agénticos
+                      Animaciones con AI
                     </h4>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Construye tu agente personal production-ready, del harness
-                      a la interfaz. Incluye GhostyCode y tokens de DeepSeek v4
-                      Pro.
+                      Construyes componentes 3D, presentaciones animadas y
+                      micro-interacciones con Motion y AI.
                     </p>
 
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        ✦ Primera edición
+                        ✦ Lista de espera abierta
                       </div>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleClick}
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors"
+                        className="bg-[#fbbf24] text-[#0b0b0f] text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
                         Quiero mi lugar →
                       </motion.button>
@@ -139,9 +138,9 @@ export const FloatingPromo = () => {
             >
               {/* Main button */}
               <motion.div
-                className="relative z-20 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/30"
+                className="relative z-20 bg-gradient-to-r from-[#7c3aed] to-[#5b21b6] text-white p-4 rounded-2xl shadow-2xl border border-[#7c3aed]/40"
                 whileHover={{
-                  boxShadow: "0 20px 40px rgba(16, 185, 129, 0.3)",
+                  boxShadow: "0 20px 40px rgba(124, 58, 237, 0.35)",
                 }}
                 onClick={handleClick}
               >
@@ -157,9 +156,9 @@ export const FloatingPromo = () => {
                         className="overflow-hidden"
                       >
                         <div className="whitespace-nowrap text-white">
-                          <p className="font-bold text-sm">Sistemas agénticos</p>
+                          <p className="font-bold text-sm">Animaciones con AI</p>
                           <p className="text-xs opacity-90">
-                            Primera edición • Septiembre 2026
+                            Nuevo curso • Octubre 2026
                           </p>
                         </div>
                       </motion.div>
@@ -180,7 +179,7 @@ export const FloatingPromo = () => {
                 repeat: Infinity,
                 repeatType: "reverse",
               }}
-              className="absolute inset-0 bg-emerald-500 rounded-2xl -z-10"
+              className="absolute inset-0 bg-[#7c3aed] rounded-2xl -z-10"
             />
           </div>
         </motion.div>

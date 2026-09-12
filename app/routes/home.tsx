@@ -10,6 +10,7 @@ import {
   Why,
 } from "./home/components";
 import { WebinarBar } from "~/components/common/WebinarBar";
+import { AnimacionesAiBand } from "~/components/common/AnimacionesAiBand";
 import { getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/home";
 import getMetaTags from "~/utils/getMetaTags";
@@ -144,6 +145,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
           "regístrate en fixtergeek.com". Se quita sola cuando ya no hay webinar. */}
       <WebinarBar />
       <HomeHero />
+      <AnimacionesAiBand />
       <CoachHighlight />
       <CommunityBand />
       <BooksSection />

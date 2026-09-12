@@ -605,8 +605,15 @@ export const HomeHero = () => {
           <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8 lg:mt-12">
             <PrimaryButton
               as="Link"
+              to="/animaciones-ai"
+              variant="fill"
+              children="Nuevo curso: Animaciones con AI"
+            />
+            <PrimaryButton
+              as="Link"
               to="/sistemas-agenticos"
-              children="Nuevo taller: Sistemas agénticos"
+              variant="ghost"
+              children="Taller: Sistemas agénticos"
             />
           </div>
           {/* Tres puertas gratis, una por renglón y sin explicación: el hero
