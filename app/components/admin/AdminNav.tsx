@@ -37,7 +37,8 @@ export const AdminNav = () => {
             to={link.href}
             className={cn(
               "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-              location.pathname === link.href
+              // activo también en las subrutas (/admin/programas/animaciones-ai); /admin solo exacto
+              (link.href === "/admin" ? location.pathname === "/admin" : location.pathname.startsWith(link.href))
                 ? "bg-purple-600 text-white"
                 : "text-gray-400 hover:bg-gray-800 hover:text-white"
             )}

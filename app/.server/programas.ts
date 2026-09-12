@@ -27,7 +27,8 @@ export const audienceTagsFor = (courseSlug: string) => [
 
 export const getProgramas = async () => {
   const courses = await db.course.findMany({
-    where: { tipo: { not: "proximamente" } },
+    // `not` en Mongo excluye los null: un Course sin `tipo` (como animaciones-ai) desaparecía de la lista
+    where: { OR: [{ tipo: null }, { tipo: { not: "proximamente" } }] },
     select: {
       id: true,
       slug: true,
