@@ -110,7 +110,7 @@ export default function Route() {
       />
 
       <section className="relative z-10 flex w-full max-w-4xl flex-col items-center text-center">
-        <HeroDeck paused={done} />
+        <HeroDeck />
 
         {done ? (
           <div role="status" className="relative mt-10 flex w-full flex-col items-center">
