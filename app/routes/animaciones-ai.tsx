@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { data, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { checkSignupEmail } from "~/.server/anti-bot";
 import { recordOrigin } from "~/.server/origen";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
+import { HeroDeck } from "~/components/common/HeroDeck";
 import getMetaTags from "~/utils/getMetaTags";
 
 // ===========================================
@@ -105,24 +106,8 @@ export default function Route() {
         className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#85DDCB] opacity-20 blur-[140px]"
       />
 
-      <section className="relative z-10 flex w-full max-w-xl flex-col items-center text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#8DCF6E]/30 bg-[#8DCF6E]/10 px-3 py-1 text-xs font-medium tracking-wide text-[#8DCF6E]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#8DCF6E]" />
-          Nuevo curso · Octubre 2026
-        </span>
-
-        <h1 className="mt-6 text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">
-          Animaciones con AI
-        </h1>
-
-        <p className="mt-5 max-w-md text-base leading-relaxed text-[#F2F5F4]/75 sm:text-lg">
-          Construyes componentes 3D, presentaciones animadas y
-          micro-interacciones con Motion y AI.
-        </p>
-
-        <p className="mt-3 font-mono text-xs text-[#F2F5F4]/45 sm:text-sm">
-          Motion · Fable 5.1 · GPT-6 Astra · Three.js
-        </p>
+      <section className="relative z-10 flex w-full max-w-4xl flex-col items-center text-center">
+        <HeroDeck paused={done} />
 
         {done ? (
           <div
