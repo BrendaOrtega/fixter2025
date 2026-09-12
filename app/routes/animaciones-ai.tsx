@@ -165,8 +165,13 @@ export default function Route() {
           <fetcher.Form
             method="post"
             onSubmit={() => setSubmittedEmail(inputRef.current?.value ?? "")}
-            className="mt-10 flex w-full flex-col gap-3 sm:flex-row"
+            className="mt-10 flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap"
           >
+            {/* qué es esto y qué gana quien se apunta */}
+            <div className="w-full text-center sm:text-left">
+              <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[#8DCF6E]">Lista de espera</p>
+              <p className="mt-1 text-sm text-[#F2F5F4]/75 sm:text-base">Apúntate y te avisamos cuando abra, con el precio de lanzamiento antes que nadie.</p>
+            </div>
             {/* honeypot: un humano no lo ve ni lo llena; un bot sí */}
             <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
             <input type="hidden" name="t" value={startedAt} />

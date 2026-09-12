@@ -32,6 +32,10 @@ const Title = () => {
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.5 }} className="mt-4 max-w-md text-sm sm:text-lg" style={{ color: `${INK}bb` }}>
         Construyes componentes 3D, presentaciones animadas y micro-interacciones con Motion y AI.
       </motion.p>
+      {/* CTA dentro de la slide: lleva al input de la lista de espera */}
+      <motion.button type="button" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 1.6 }} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} onClick={() => { const el = document.getElementById("email") as HTMLInputElement | null; el?.scrollIntoView({ behavior: "smooth", block: "center" }); el?.focus({ preventScroll: true }); }} className="mt-6 rounded-full px-5 py-2.5 text-sm font-bold sm:text-base" style={{ background: GREEN, color: "#0E1317" }}>
+        Únete a la lista de espera ↓
+      </motion.button>
     </div>
   );
 };
