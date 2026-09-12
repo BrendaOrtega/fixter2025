@@ -11,7 +11,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     console.info("Manual sequence processing triggered");
-    const { processed, results } = await processDueEnrollments();
+    const { processed, results } = await processDueEnrollments("manual");
     return Response.json({
       success: true,
       message: `Processed ${processed} enrollments`,

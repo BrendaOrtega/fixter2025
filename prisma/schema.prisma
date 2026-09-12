@@ -181,9 +181,52 @@ model SequenceEnrollment {
   bounced       String[] // emails con Bounce permanente
   videosWatched String[] // videoSlugs que este suscriptor abrió
 
+  /// Envíos fallidos seguidos del correo que toca. Se reinicia al lograr uno;
+  /// al quinto el motor pausa y deja `pausedReason`, para distinguirlo de una
+  /// pausa a mano en el panel o de una baja del suscriptor.
+  failedAttempts Int       @default(0)
+  lastError      String?
+  lastErrorAt    DateTime?
+  pausedReason   String? // "send-failed" | "blacklist" | "manual" | "unsubscribe"
+
   @@unique([sequenceId, subscriberId]) // Un usuario solo puede estar una vez en cada secuencia
   @@index([status, nextEmailAt]) // Para encontrar emails a enviar
   @@index([messageIds]) // Lookup desde SNS webhook
+}
+
+/// Una corrida del motor de secuencias (cron cada 5 min, catch-up al arrancar
+/// o el botón del admin). Sin esto no había forma de saber si el cron corrió
+/// tal día ni cuánto tardó: la auditoría del 12 sep 2026 se quedó ciega ahí.
+model SequenceRun {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  source     String // "cron" | "startup" | "manual"
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  durationMs Int?
+  due        Int       @default(0) // inscripciones vencidas encontradas
+  sent       Int       @default(0)
+  skipped    Int       @default(0) // sin contenido, lista negra, completadas
+  failed     Int       @default(0)
+  error      String? // si la corrida entera reventó
+
+  @@index([startedAt])
+}
+
+/// Un envío que SES rechazó. Antes el catch hacía `console.error` y movía
+/// `nextEmailAt`; el error se perdía con el log del contenedor.
+model SequenceSendFailure {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  runId           String?  @db.ObjectId
+  enrollmentId    String   @db.ObjectId
+  sequenceId      String   @db.ObjectId
+  sequenceEmailId String   @db.ObjectId
+  email           String
+  attempt         Int
+  error           String
+  createdAt       DateTime @default(now())
+
+  @@index([sequenceId, createdAt])
+  @@index([enrollmentId])
 }
 
 /// Una audiencia: te unes a la comunidad, no a una secuencia concreta. Después

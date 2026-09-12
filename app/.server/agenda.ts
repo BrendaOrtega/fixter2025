@@ -238,7 +238,7 @@ getAgenda().define(
   { lockLifetime: 30 * 60 * 1000 },
   async (job: { attrs: { name: string } }) => {
     console.info("::SEQUENCE_JOB_WORKING::", job.attrs.name);
-    const { processed } = await processDueEnrollments();
+    const { processed } = await processDueEnrollments("cron");
     console.info(`Processed ${processed} ready enrollments`);
     console.info("::SEQUENCE_JOB_FINISHED::", job.attrs.name);
   }
@@ -267,7 +267,7 @@ export const startSequenceProcessor = async () => {
 
   // Nunca tumba el arranque: si esto falla, el intervalo lo recoge después.
   try {
-    const { processed } = await processDueEnrollments();
+    const { processed } = await processDueEnrollments("startup");
     console.info(`Catch-up al arrancar: ${processed} inscripciones procesadas`);
   } catch (error) {
     console.error("Catch-up al arrancar falló:", error);

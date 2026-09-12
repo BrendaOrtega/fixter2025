@@ -8,6 +8,7 @@ const links = [
   { href: "/admin/programas", label: "Programas" },
   { href: "/admin/ratings", label: "Ratings" },
   { href: "/admin/sequences", label: "Sequences" },
+  { href: "/admin/motor", label: "Motor" },
   { href: "/admin/productos", label: "Productos" },
   { href: "/admin/magnetos", label: "Magnetos" },
   { href: "/admin/suscriptores", label: "Suscriptores" },

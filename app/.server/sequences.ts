@@ -624,10 +624,49 @@ export async function getOrCreateTestEnrollment(
  * ya vence. Usado por el cron (agenda) y por el endpoint manual de admin.
  * Devuelve un resumen para reportar.
  */
-export async function processDueEnrollments(): Promise<{
+export async function processDueEnrollments(
+  source: "cron" | "startup" | "manual" = "cron"
+): Promise<{
   processed: number;
   results: string[];
 }> {
+  // La corrida queda registrada aunque reviente a medias: `finishedAt` nulo
+  // con `error` es justo la señal que antes no existía.
+  const run = await db.sequenceRun.create({ data: { source } });
+  const counters = { sent: 0, skipped: 0, failed: 0 };
+  try {
+    const out = await runDueEnrollments(run.id, counters);
+    await db.sequenceRun.update({
+      where: { id: run.id },
+      data: {
+        finishedAt: new Date(),
+        durationMs: Date.now() - run.startedAt.getTime(),
+        due: out.processed,
+        ...counters,
+      },
+    });
+    return out;
+  } catch (error) {
+    await db.sequenceRun.update({
+      where: { id: run.id },
+      data: {
+        finishedAt: new Date(),
+        durationMs: Date.now() - run.startedAt.getTime(),
+        error: String(error),
+        ...counters,
+      },
+    });
+    throw error;
+  }
+}
+
+/** Tope de envíos fallidos seguidos antes de pausar la inscripción. */
+const MAX_SEND_ATTEMPTS = 5;
+
+async function runDueEnrollments(
+  runId: string,
+  counters: { sent: number; skipped: number; failed: number }
+): Promise<{ processed: number; results: string[] }> {
   const readyEnrollments = await db.sequenceEnrollment.findMany({
     where: {
       status: "active",
@@ -669,8 +708,9 @@ export async function processDueEnrollments(): Promise<{
       // para volver a descartarla.
       await db.sequenceEnrollment.update({
         where: { id: enrollment.id },
-        data: { status: "paused", nextEmailAt: null },
+        data: { status: "paused", nextEmailAt: null, pausedReason: "blacklist" },
       });
+      counters.skipped++;
       results.push(`${enrollment.subscriber.email}: en lista negra, pausada`);
       continue;
     }
@@ -682,6 +722,7 @@ export async function processDueEnrollments(): Promise<{
         where: { id: enrollment.id },
         data: { status: "completed", completedAt: new Date() },
       });
+      counters.skipped++;
       results.push(`${subscriber.email}: secuencia completada`);
       continue;
     }
@@ -694,6 +735,7 @@ export async function processDueEnrollments(): Promise<{
         where: { id: enrollment.id },
         data: { nextEmailAt: new Date(Date.now() + DAY_MS) },
       });
+      counters.skipped++;
       results.push(
         `${subscriber.email}: email ${nextEmail.order} sin contenido, pospuesto`
       );
@@ -724,26 +766,46 @@ export async function processDueEnrollments(): Promise<{
           status: hasMoreEmails ? "active" : "completed",
           completedAt: hasMoreEmails ? null : new Date(),
           messageIds: { push: messageId },
+          failedAttempts: 0,
         },
       });
 
+      counters.sent++;
       results.push(
         `${subscriber.email}: enviado email ${nextEmail.order} de ${sequence.name}`
       );
     } catch (error) {
       console.error(`Failed to send email to ${subscriber.email}:`, error);
       results.push(`${subscriber.email}: error al enviar - ${error}`);
+      counters.failed++;
 
       // Sin tope, un envío que SES rechaza deja `nextEmailAt` en el pasado y el
       // cron lo reintenta cada 5 minutos para siempre: un martilleo continuo
-      // contra la reputación del dominio. Se posterga con espera creciente y a
-      // los cinco intentos se pausa para que alguien lo mire.
-      const intentos = (enrollment.messageIds?.length ?? 0) === 0 ? 1 : 1;
-      const esperaMin = Math.min(60 * 24, 15 * Math.pow(2, intentos));
+      // contra la reputación del dominio. Se posterga con espera creciente y al
+      // quinto intento se pausa con razón, para que alguien lo mire.
+      const attempt = (enrollment.failedAttempts ?? 0) + 1;
+      const waitMin = Math.min(60 * 24, 15 * Math.pow(2, attempt - 1));
+      const giveUp = attempt >= MAX_SEND_ATTEMPTS;
+      await db.sequenceSendFailure.create({
+        data: {
+          runId,
+          enrollmentId: enrollment.id,
+          sequenceId: sequence.id,
+          sequenceEmailId: nextEmail.id,
+          email: subscriber.email,
+          attempt,
+          error: String(error),
+        },
+      });
       await db.sequenceEnrollment.update({
         where: { id: enrollment.id },
         data: {
-          nextEmailAt: new Date(Date.now() + esperaMin * 60 * 1000),
+          failedAttempts: attempt,
+          lastError: String(error).slice(0, 500),
+          lastErrorAt: new Date(),
+          ...(giveUp
+            ? { status: "paused", nextEmailAt: null, pausedReason: "send-failed" }
+            : { nextEmailAt: new Date(Date.now() + waitMin * 60 * 1000) }),
         },
       });
     }

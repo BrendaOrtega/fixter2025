@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFetcher, useLoaderData } from "react-router";
 import { data, redirect, type ActionFunctionArgs } from "react-router";
@@ -7,145 +7,152 @@ import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import SimpleFooter from "~/components/common/SimpleFooter";
 import VideoGaleria from "~/components/sistemas/VideoGaleria";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
+import HeroScene from "~/components/sistemas/HeroScene";
 import { FaWhatsapp } from "react-icons/fa";
-import {
-  getWebinarSlot,
-  proximoWebinar,
-  webinarsDisponibles,
-} from "~/utils/webinarDates";
-
-// Secuencias de recordatorio por fecha (scripts/create-webinar-sequences.ts)
-const WEBINAR_SEQUENCES: Record<string, string> = {
-  "2026-08-13": "6a790a151d99ed94a4258d63",
-  "2026-08-20": "6a790a151d99ed94a4258d67",
-  "2026-08-27": "6a790a151d99ed94a4258d6b",
-};
 
 // ===========================================
-// Taller: Diseño de sistemas agénticos
-// Primera edición · 5 sesiones en vivo de 2h + 1 sesión personal · Septiembre 2026
+// Programa: Diseño de sistemas agénticos
+// On-demand desde septiembre 2026 · dos niveles
 // ===========================================
-const PRICE = 2490; // MXN precio de lanzamiento
-const PRICE_REGULAR = 3490; // MXN tachado
 const COURSE_SLUG = "sistemas-agenticos";
-const MINUTOS_A_TEXTO = (m: string | null) => {
-  const n = Number(m ?? 0);
+
+/// Los dos niveles. `key` es el `Product.key` que resuelve el webhook
+/// (`fulfillment.server.ts`); el precio de verdad se lee del Product en el
+/// action y estos números solo pintan la landing.
+const TIERS = {
+  programa: {
+    key: "sistemas-agenticos-workshop",
+    name: "Programa completo",
+    price: 3490,
+    stripeName: "Diseño de sistemas agénticos — Programa completo",
+    stripeDescription:
+      "17 h de video · repos y materiales · comunidad · acceso de por vida",
+  },
+  "tu-caso": {
+    key: "sistemas-agenticos-tu-caso",
+    name: "Programa + Tu caso",
+    price: 4990,
+    stripeName: "Diseño de sistemas agénticos — Programa + sesión 1-a-1",
+    stripeDescription:
+      "Todo el programa + una sesión privada de 60 min sobre tu agente",
+  },
+} as const;
+type TierId = keyof typeof TIERS;
+const isTier = (t: unknown): t is TierId => t === "programa" || t === "tu-caso";
+
+const MINUTES_TO_TEXT = (m: number | string | null) => {
+  const n = Math.round(Number(m ?? 0));
   if (!n) return "";
-  return n >= 60 ? `${Math.floor(n / 60)}h${String(n % 60).padStart(2, "0")}` : `${n} min`;
+  return n >= 60
+    ? `${Math.floor(n / 60)} h ${String(n % 60).padStart(2, "0")}`
+    : `${n} min`;
 };
 
-const SESSIONS = [
+/// Orden de los bloques en la landing. Coincide con `Video.moduleName`.
+const MODULE_ORDER = [
+  "Preparación",
+  "Webinars",
+  "Las sesiones",
+  "ACP desde cero",
+] as const;
+const MODULE_BLURB: Record<string, string> = {
+  Preparación:
+    "Cuatro lecciones para llegar con el arnés entendido: el loop, la interfaz, el SDK y la memoria. Todo desde cero, en tu máquina.",
+  Webinars:
+    "Las tres sesiones abiertas con las que arrancó el programa. Son gratis con tu correo, y aquí quedan integradas al resto.",
+  "Las sesiones":
+    "El taller en vivo, completo: cinco sesiones de dos horas donde el agente sale de tu laptop y termina pidiéndote permiso por WhatsApp.",
+  "ACP desde cero":
+    "El protocolo por el que tu interfaz habla con el agente, trama por trama, con el cable grabado para leerlo.",
+};
+/// Piezas que todavía no están en la base pero ya tienen fecha
+const UPCOMING: Record<
+  string,
+  { title: string; note: string; minutes: number; slugPrefix: string }[]
+> = {
+  "Las sesiones": [
+    {
+      title: "Sesión 5 · Refuerzo: evals y observabilidad",
+      note: "Se graba el lunes 14 de septiembre y se sube al día siguiente",
+      minutes: 120, // lo que dura una sesión; se sustituye por el real al subirla
+      // En cuanto exista un video con este prefijo de slug, la entrada se retira
+      // sola: nadie tiene que volver a editar esta lista.
+      slugPrefix: "sesion-5",
+    },
+  ],
+};
+
+/// Lo que construyes, en el orden en que se construye
+const BUILD_STEPS = [
   {
-    number: "01",
-    title: "La caja",
-    date: "Martes 1 de septiembre · 8:00 PM CDMX",
-    intro:
-      "Empezamos donde ya estás: el agente corriendo en tu laptop. Lo abrimos, vemos qué trae y qué tools tiene, y en la misma sesión lo mandamos a un sandbox remoto. Ahí es donde deja de ser un juguete local y empieza a comportarse como infraestructura.",
-    topics: [
-      "Conocemos al agente en tu máquina: qué trae de fábrica y qué tools ya tiene",
-      "Lo metemos en un sandbox remoto de EasyBits",
-      "Correr on-demand y dormir: por qué no pagas por un servidor prendido todo el día",
-      "Cuánto cuesta de verdad una corrida, con números de tu propio agente",
-    ],
-    artifact: "Tu agente viviendo fuera de tu compu, despertando cuando lo llamas",
+    n: "01",
+    title: "Vive en una caja remota",
+    text: "Sale de tu laptop a un sandbox de EasyBits que despierta cuando lo llamas y duerme cuando termina. Pagas por corrida, no por servidor.",
   },
   {
-    number: "02",
-    title: "La interfaz",
-    date: "Jueves 3 de septiembre · 8:00 PM CDMX",
-    intro:
-      "Un agente sin interfaz es un proceso que no puedes ver. Escribimos juntos la capa que lo vuelve producto: el protocolo por el que habla, el hook que lo escucha y la pantalla donde el chat y el artefacto crecen en paralelo. Esta UI es la que vas a modificar el resto del taller.",
-    topics: [
-      "ACP sobre WebSocket: el core del protocolo, evento por evento",
-      "Escribimos el hook juntos: un stream, dos destinos — chat y artefacto",
-      "Streaming de progreso y tool calls visibles: ninguna acción del agente se esconde",
-      "Por qué escribes este hook y no instalas un paquete que ya lo trae",
-    ],
-    artifact: "Tu agente con UI propia, mostrando lo que hace mientras lo hace",
+    n: "02",
+    title: "Tiene interfaz propia",
+    text: "ACP sobre WebSocket, un hook que escuchas tú, y una pantalla donde el chat y el artefacto crecen en paralelo. Cada tool call se ve.",
   },
   {
-    number: "03",
-    title: "Memoria y estado",
-    date: "Martes 8 de septiembre · 8:00 PM CDMX",
-    intro:
-      "La caja duerme y a veces muere. Esta sesión es sobre lo que sobrevive: dónde guardas cada cosa, cómo retomas una tarea de 40 minutos que se cayó en el paso 67, y por qué el mismo registro que usas para saber qué pasó te sirve para que el agente recuerde.",
-    topics: [
-      "Qué sobrevive cuando la caja muere y qué se pierde sin que te enteres",
-      "Los tres almacenes de EasyBits: base de datos, S3 y disco — cuál para qué",
-      "Checkpoints: correr 40 minutos y retomar desde el paso que falló",
-      "El mismo stream que guardas para la traza es el material de la memoria",
-      "Memoria de corto plazo y de largo plazo, y dónde vive cada una",
-    ],
-    artifact: "Un agente que matas a media tarea y revive justo donde iba",
+    n: "03",
+    title: "Recuerda",
+    text: "Cuatro tipos de memoria en tres almacenes. Matas la caja a media tarea y el agente revive justo donde iba.",
   },
   {
-    number: "04",
-    title: "Human in the loop",
-    date: "Jueves 10 de septiembre · 8:00 PM CDMX",
-    intro:
-      "Un agente con permiso de mandar un correo un día manda mil. La salida no es quitarle permisos, es ponerte a ti en medio: interrumpir, revisar, corregir y dejarlo seguir. Cerramos poniéndolo en línea: tu agente contestando por WhatsApp y pidiéndote permiso desde ahí.",
-    topics: [
-      "Interrumpir al agente a media corrida sin tirar el trabajo hecho",
-      "Aprobar, corregir y reanudar desde tu propia UI",
-      "Streams paralelos: lanzar un segundo modelo dentro del mismo turno",
-      "Conectarlo a WhatsApp — la integración va dada, ustedes la conectan",
-    ],
-    artifact: "Tu agente contestando por WhatsApp y pidiéndote permiso desde ahí",
+    n: "04",
+    title: "Pide permiso",
+    text: "Interrumpir, revisar, corregir y dejarlo seguir desde tu UI. Extensiones por MCP con su costo en el prompt medido.",
   },
   {
-    number: "05",
-    title: "Refuerzo",
-    date: "Lunes 14 de septiembre · 8:00 PM CDMX",
-    intro:
-      "Una sesión de colchón, a propósito. Cerramos lo que quedó a medias y le ponemos al agente lo que casi ningún curso enseña: cómo sabes que sigue funcionando después de que le moviste. Con las corridas ya guardadas, medir sale casi gratis.",
-    topics: [
-      "Lo que quedó a medias de las sesiones anteriores, en el código de cada quien",
-      "Evals: cómo sabes que no lo empeoraste al tocar un prompt",
-      "Observabilidad sobre lo que ya guardaste — comparar corridas, no adivinar",
-      "Dudas del grupo, con pantalla compartida",
-    ],
-    artifact: "Todo sólido, corriendo, y con una forma de saber si se rompe",
-  },
-  {
-    number: "06",
-    title: "Tu caso",
-    date: "Agendada contigo · 1-a-1",
-    intro:
-      "Una sesión privada contigo y con tu código. Aquí el agente del taller se convierte en el agente de tu trabajo: las tools de tu dominio, tus datos, tu flujo. Es la parte que no se puede dar en grupo, y por eso va aparte.",
-    topics: [
-      "Las tools de tu dominio, diseñadas para tu caso",
-      "Prospección, soporte, research o lo que traigas",
-      "Ajustes sobre tu propio agente, en vivo",
-      "Qué le falta a tu sistema para aguantar usuarios reales",
-    ],
-    artifact: "Tu agente haciendo lo tuyo, no el ejercicio del taller",
+    n: "05",
+    title: "Sale al mundo",
+    text: "Contesta por WhatsApp, y tú sabes si sigue funcionando después de tocar un prompt: evals y observabilidad sobre lo que ya guardaste.",
   },
 ];
 
-const INCLUDES = [
-  "5 sesiones en vivo de 2 horas (10 horas totales) en 3 semanas: martes, jueves y el lunes de cierre",
-  "Una sesión personal 1-a-1 sobre tu propio caso, agendada contigo",
-  "Los tokens de DeepSeek incluidos: no pagas ninguna API aparte",
-  "Secuencia de preparación: 6 entregas con video, una cada 2 días, antes de empezar",
-  "Grabaciones de todas las sesiones, para siempre",
-  "El código completo de cada sesión en un repo privado",
+const INCLUDES_BASE = [
+  "Todo el contenido en video, para siempre",
+  "Repos con el código de cada pieza, tag por lección",
+  "Slides y PDFs de cada sesión",
+  "GhostyCode, nuestro agente de terminal open source, con el trial de EasyBits para las cajas y el modelo",
   "Comunidad en Ghosty Teams con el instructor y el grupo",
-  "Certificado de finalización",
   "Factura fiscal si tu empresa lo paga",
 ];
+const INCLUDES_TU_CASO = [
+  "Sesión privada de 60 min sobre tu propio agente",
+  "Revisión de tu repo antes de la sesión",
+  "Las tools de tu dominio, diseñadas contigo",
+];
+
+/// Testimonios en video de quienes tomaron el taller. Se llenan conforme se
+/// suban a Tigris (mismo CDN que VideoGaleria); mientras la lista está vacía la
+/// sección muestra los espacios.
+type Testimonial = {
+  name: string;
+  role: string;
+  src: string;
+  poster?: string;
+  quote: string;
+};
+const TESTIMONIALS: Testimonial[] = [];
 
 const FAQS = [
   {
     q: "¿Qué nivel necesito?",
-    a: "Saber programar y haber construido producto: frontend, fullstack o diseño con código. No necesitas experiencia previa con agentes ni con IA — el arnés lo eliges ya hecho y arrancamos por meterlo en una caja remota. Si nunca has usado una terminal, este taller te va a quedar grande.",
+    a: "Saber programar y haber construido producto: frontend, fullstack o diseño con código. No necesitas experiencia previa con agentes ni con IA — el arnés lo eliges ya hecho y arrancamos por meterlo en una caja remota. Si nunca has usado una terminal, este programa te va a quedar grande.",
+  },
+  {
+    q: "¿Es en vivo o grabado?",
+    a: "Ya está grabado completo: los webinars, las cinco sesiones del taller y las lecciones cortas. Lo ves a tu ritmo desde el visor de FixterGeek. La comunidad en Ghosty Teams sigue abierta y ahí se resuelven dudas.",
   },
   {
     q: "¿Qué herramientas usamos y cuánto cuestan aparte?",
-    a: "El arnés lo eliges tú: GhostyCode (el nuestro, open source, y el que recomendamos porque es el que podemos arreglar en vivo), Goose, OpenHands o Aider. Los cuatro son binarios que se instalan en un minuto y los cuatro caben en la caja, así que las sesiones no se ramifican por lo que elijas. Para el código, TypeScript y React. Como modelo, DeepSeek v4 Pro con los tokens incluidos: te damos una API key de EasyBits con crédito de sobra para todo el taller, así que no pagas ninguna API aparte.",
+    a: "El arnés lo eliges tú: GhostyCode (el nuestro, open source), Goose, OpenHands o Aider. Los cuatro caben en la caja. Para el código, TypeScript y React. Como modelo, DeepSeek v4 Pro a través de EasyBits: con el trial de tu cuenta alcanza para seguir el programa, y después pagas solo lo que uses. Los tokens incluidos fueron parte de la primera edición en vivo.",
   },
   {
-    q: "¿Qué pasa si no puedo asistir a una sesión en vivo?",
-    a: "Todas las sesiones se graban y quedan tuyas para siempre. Lo ideal es asistir en vivo para preguntar y trabajar el código en tiempo real, pero no pierdes nada del contenido.",
+    q: "¿Cómo funciona la sesión 1-a-1?",
+    a: "Es del nivel «Programa + Tu caso». Cuando tengas tu agente corriendo me escribes por WhatsApp con el link a tu repo; lo reviso antes y agendamos 60 minutos a solas para adaptarlo a tu dominio: tus tools, tus datos, tu flujo.",
   },
   {
     q: "¿Esto es de algún framework en particular?",
@@ -153,23 +160,23 @@ const FAQS = [
   },
   {
     q: "¿Mi empresa puede pagarlo?",
-    a: "Sí, emitimos factura fiscal. Muchos asistentes lo pasan como capacitación — escríbenos por WhatsApp y te mandamos la carta descriptiva para tu área de recursos humanos.",
-  },
-  {
-    q: "¿Cuándo son las sesiones?",
-    a: "Martes 1, jueves 3, martes 8, jueves 10 y lunes 14 de septiembre de 2026, de 8:00 a 10:00 PM (CDMX). La sexta sesión es personal y la agendamos contigo cuando te acomode. Todas las grupales se graban, así que si un día no puedes, no pierdes nada.",
+    a: "Sí, emitimos factura fiscal. Muchos lo pasan como capacitación — escríbenos por WhatsApp y te mandamos la carta descriptiva para tu área de recursos humanos.",
   },
 ];
 
-export const meta = () => {
+export const meta = ({
+  data: loaderData,
+}: {
+  data?: { totals?: { hours: number; lessons: number } };
+}) => {
+  const hours = loaderData?.totals?.hours ?? 17;
   const baseMeta = getMetaTags({
-    title: "Diseño de sistemas agénticos | Taller en vivo | FixterGeek",
-    description:
-      "Tu agente funciona en tu laptop y se rompe con usuarios reales. Aprende lo que falta en medio: la caja remota, la interfaz, la memoria, los checkpoints y el permiso humano. 5 sesiones en vivo más una personal, $2,490 MXN.",
+    title: "Diseño de sistemas agénticos | Programa completo | FixterGeek",
+    description: `Tu agente funciona en tu laptop y se rompe con usuarios reales. ${hours} horas de video, repos y materiales: la caja remota, la interfaz, la memoria y el permiso humano. Desde $${TIERS.programa.price.toLocaleString()} MXN.`,
     url: "https://www.fixtergeek.com/sistemas-agenticos",
     image: "https://www.fixtergeek.com/cover.png",
     keywords:
-      "sistemas agénticos, agentes de ia, diseño de agentes, harness, context engineering, human in the loop, taller agentes español, curso agentes ia méxico",
+      "sistemas agénticos, agentes de ia, diseño de agentes, harness, context engineering, human in the loop, curso agentes español, curso agentes ia méxico, acp, mcp",
   });
 
   const schemaOrg = {
@@ -180,7 +187,7 @@ export const meta = () => {
         "@id": "https://www.fixtergeek.com/sistemas-agenticos#course",
         name: "Diseño de sistemas agénticos",
         description:
-          "Taller en vivo sobre diseño de sistemas para agentes de IA: harness, context engineering, memoria, ejecución durable, autenticación, human-in-the-loop y diseño de la interfaz del agente.",
+          "Programa on-demand sobre diseño de sistemas para agentes de IA: harness, sandbox remoto, interfaz por ACP, memoria, human-in-the-loop, MCP y evals.",
         url: "https://www.fixtergeek.com/sistemas-agenticos",
         provider: {
           "@type": "Organization",
@@ -195,19 +202,28 @@ export const meta = () => {
           url: "https://www.linkedin.com/in/hectorbliss/",
           sameAs: ["https://github.com/blissito", "https://x.com/HectorBlisS"],
         },
-        offers: {
-          "@type": "Offer",
-          price: String(PRICE),
-          priceCurrency: "MXN",
-          availability: "https://schema.org/InStock",
-          url: "https://www.fixtergeek.com/sistemas-agenticos",
-        },
+        offers: [
+          {
+            "@type": "Offer",
+            name: TIERS.programa.name,
+            price: String(TIERS.programa.price),
+            priceCurrency: "MXN",
+            availability: "https://schema.org/InStock",
+            url: "https://www.fixtergeek.com/sistemas-agenticos#precio",
+          },
+          {
+            "@type": "Offer",
+            name: TIERS["tu-caso"].name,
+            price: String(TIERS["tu-caso"].price),
+            priceCurrency: "MXN",
+            availability: "https://schema.org/InStock",
+            url: "https://www.fixtergeek.com/sistemas-agenticos#precio",
+          },
+        ],
         hasCourseInstance: {
           "@type": "CourseInstance",
           courseMode: "Online",
-          courseWorkload: "PT8H",
-          startDate: "2026-09-01",
-          endDate: "2026-09-10",
+          courseWorkload: `PT${hours}H`,
         },
         inLanguage: "es",
         coursePrerequisites:
@@ -215,11 +231,11 @@ export const meta = () => {
         educationalLevel: "Intermediate",
         teaches: [
           "Arquitectura de harness para agentes",
-          "Context engineering y manejo de memoria",
-          "Ejecución durable y recuperación de fallos",
-          "Autenticación y guardrails para agentes",
-          "Human-in-the-loop",
-          "Diseño de interfaces para agentes",
+          "Sandboxes remotos y ejecución on-demand",
+          "Interfaz de agente por Agent Client Protocol",
+          "Memoria y recuperación de fallos",
+          "Human-in-the-loop y permisos",
+          "Extensiones por MCP, evals y observabilidad",
         ],
       },
     ],
@@ -228,163 +244,126 @@ export const meta = () => {
   return [...baseMeta, { "script:ld+json": schemaOrg }];
 };
 
+/// Primera oración de la descripción, sin markdown: es lo que cabe en una fila
+const firstSentence = (md: string | null) => {
+  const line = (md ?? "")
+    .split("\n")[0]
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[*_`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return line.length > 150 ? `${line.slice(0, 147)}…` : line;
+};
+
 /**
- * Las grabaciones que ya se pueden ver, leídas del programa.
- *
- * Antes era una constante con el slug del primer webinar escrita a mano. Funcionó
- * exactamente hasta que hubo un segundo: la landing siguió ofreciendo la grabación de
- * agosto 13 a quien acababa de perderse la del 20, y se veía impecable haciéndolo. Nadie
- * avisa de eso — no hay test que compare una constante con la base.
- *
- * El filtro es el mismo que decide si una pieza se puede ver: `isPublic` y que tenga
- * vídeo. Una pieza preparada antes del evento existe en el programa desde días antes, y
- * enlazarla entonces lleva a un reproductor vacío.
+ * Todo el contenido sale del programa, no de una lista escrita a mano: cada
+ * pieza que se sube aparece aquí sola, con sus materiales y su duración. Las
+ * constantes que tenía esta landing se quedaron viejas dos veces.
  */
 export const loader = async () => {
   const { db } = await import("~/.server/db");
   const course = await db.course.findUnique({
     where: { slug: COURSE_SLUG },
-    select: { videoIds: true },
+    select: { id: true },
   });
-  const grabaciones = await db.video.findMany({
+  const videos = await db.video.findMany({
     where: {
-      id: { in: course?.videoIds ?? [] },
-      kind: "webinar",
+      // Por `courseIds` y no por `course.videoIds`: la sesión 1 se subió sin
+      // apuntarla en la lista del curso y desaparecía de aquí en silencio.
+      courseIds: { has: course?.id ?? "" },
       isPublic: true,
       m3u8: { not: null },
     },
-    orderBy: { eventDate: "asc" },
-    select: { slug: true, title: true, duration: true, poster: true },
+    orderBy: { index: "asc" },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      duration: true,
+      description: true,
+      moduleName: true,
+      accessLevel: true,
+      kind: true,
+    },
   });
-  return { grabaciones };
+  const resources = await db.resource.findMany({
+    where: { videoId: { in: videos.map((v) => v.id) } },
+    select: { videoId: true, slug: true, title: true, kind: true },
+  });
+
+  const modules = MODULE_ORDER.map((name) => {
+    const items = videos
+      .filter((v) => v.moduleName === name)
+      .map((v) => ({
+        slug: v.slug,
+        title: v.title,
+        minutes: Number(v.duration ?? 0),
+        blurb: firstSentence(v.description),
+        free: v.accessLevel === "subscriber" || v.accessLevel === "public",
+        materials: resources
+          .filter((r) => r.videoId === v.id)
+          .map((r) => ({ title: r.title, kind: r.kind, slug: r.slug })),
+      }));
+    const pending = (UPCOMING[name] ?? []).filter(
+      (u) => !items.some((i) => i.slug.startsWith(u.slugPrefix)),
+    );
+    return {
+      name,
+      blurb: MODULE_BLURB[name] ?? "",
+      // Lo que falta cuenta con su duración estimada: el programa se vende
+      // completo y la hora total no puede bajar por una pieza en cola.
+      minutes:
+        items.reduce((n, i) => n + i.minutes, 0) +
+        pending.reduce((n, u) => n + u.minutes, 0),
+      items,
+      upcoming: pending,
+    };
+  }).filter((m) => m.items.length > 0 || m.upcoming.length > 0);
+
+  const minutes = modules.reduce((n, m) => n + m.minutes, 0);
+  const totals = {
+    hours: Math.round(minutes / 60),
+    lessons: modules.reduce(
+      (n, m) => n + m.items.length + m.upcoming.length,
+      0,
+    ),
+    materials: resources.length,
+  };
+  return { modules, totals };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  // Registro al webinar gratuito de venta (13, 20 o 27 de agosto)
-  if (intent === "webinar_registration") {
-    const email = String(formData.get("email") || "")
-      .toLowerCase()
-      .trim();
-    const name = String(formData.get("name") || "").trim();
-    const slot = getWebinarSlot(String(formData.get("webinarDate") || ""));
-
-    if (!email.includes("@")) {
-      return data({ error: "Necesitamos un correo válido" });
-    }
-    if (!slot) {
-      return data({ error: "Elige una fecha para el webinar" });
-    }
-    // La fecha viaja en un formulario público: que el <select> ya solo muestre
-    // las que faltan no impide que llegue un POST con una que ya pasó.
-    if (!webinarsDisponibles().some((s) => s.id === slot.id)) {
-      return data({ error: "Ese webinar ya pasó, elige otra fecha" });
-    }
-
-    try {
-      const { db } = await import("~/.server/db");
-      const { checkSignupEmail } = await import("~/.server/anti-bot");
-      // Anti-bot: finge éxito para no darle señal al bot
-      if (checkSignupEmail(email).blocked) {
-        return data({ success: true, type: "webinar", slotId: slot.id });
-      }
-
-      const tags = ["webinar-sistemas-agenticos", `webinar-${slot.id}`];
-      const existing = await db.subscriber.findUnique({ where: { email } });
-      const subscriber = existing
-        ? await db.subscriber.update({
-            where: { email },
-            data: {
-              name: name || existing.name || undefined,
-              tags: {
-                push: tags.filter((t) => !(existing.tags || []).includes(t)),
-              },
-            },
-          })
-        : await db.subscriber.create({
-            // `confirmed` NO se fabrica aquí. Registrarse a un webinar prueba
-            // interés, no que el buzón sea tuyo — y este flag es global: en
-            // cuanto se pone, cualquier alta posterior en cualquier secuencia se
-            // salta el doble opt-in (ver s.$id.tsx, "ya confirmado → enrolar
-            // directo"). Un formulario abierto no puede tener esa llave.
-            //
-            // La confirmación llega con el correo de bienvenida al webinar, que
-            // es donde la persona demuestra el buzón sin fricción extra.
-            data: { email, name: name || undefined, confirmed: false, tags },
-          });
-
-      const { recordOrigin } = await import("~/.server/origen");
-      await recordOrigin(email, request);
-
-      // Recordatorios: si ya pasó el "día anterior", arranca más adelante para
-      // no mandar un "mañana nos vemos" el mismo día del webinar.
-      const { enrollSubscriberInSequence } = await import("~/.server/sequences");
-      const webinarStart = new Date(`${slot.id}T20:00:00-06:00`).getTime();
-      const now = Date.now();
-      const startAtIndex =
-        now > webinarStart ? 2 : now > webinarStart - 20 * 60 * 60 * 1000 ? 1 : 0;
-
-      try {
-        await enrollSubscriberInSequence(
-          WEBINAR_SEQUENCES[slot.id],
-          subscriber.id,
-          { startAtIndex }
-        );
-      } catch (error) {
-        console.error("[webinar] error al inscribir a recordatorios:", error);
-      }
-
-      try {
-        const { sendSistemasWebinarConfirmation } = await import(
-          "~/mailSenders/sendSistemasWebinarConfirmation"
-        );
-        await sendSistemasWebinarConfirmation({
-          to: email,
-          userName: name || subscriber.name,
-          slot,
-        });
-      } catch (error) {
-        console.error("[webinar] error al enviar confirmación:", error);
-      }
-
-      return data({ success: true, type: "webinar", slotId: slot.id });
-    } catch (error) {
-      console.error("[webinar] error en registro:", error);
-      return data({ error: "Algo falló al registrarte. Intenta de nuevo." });
-    }
-  }
-
   if (intent === "direct_checkout") {
+    const tierId = formData.get("tier");
+    const tier = TIERS[isTier(tierId) ? tierId : "programa"];
     try {
       const stripe = new (await import("stripe")).default(
         process.env.STRIPE_SECRET_KEY as string,
-        {}
+        {},
       );
       const isDev = process.env.NODE_ENV === "development";
       const location = isDev
         ? "http://localhost:3000"
         : "https://www.fixtergeek.com";
 
-      // Cupón de primera edición: el checkout muestra $3,490 tachado → $2,490
-      const COUPON_ID = "primera-edicion-sistemas";
-      try {
-        await stripe.coupons.create({
-          id: COUPON_ID,
-          amount_off: (PRICE_REGULAR - PRICE) * 100,
-          currency: "mxn",
-          duration: "once",
-          name: "Primera edición",
-        });
-      } catch (e: any) {
-        if (e?.code !== "resource_already_exists") throw e;
-      }
+      // El precio manda desde el Product: la landing puede quedarse vieja, el
+      // cobro no.
+      const { db } = await import("~/.server/db");
+      const product = await db.product.findUnique({
+        where: { key: tier.key },
+        select: { priceMxn: true },
+      });
+      const priceMxn = product?.priceMxn ?? tier.price;
 
       const session = await stripe.checkout.sessions.create({
         metadata: {
-          type: "sistemas-agenticos-workshop",
+          type: tier.key,
           courseSlug: COURSE_SLUG,
+          tier: tierId as string,
         },
         mode: "payment",
         line_items: [
@@ -392,23 +371,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             price_data: {
               currency: "mxn",
               product_data: {
-                name: "Taller: Diseño de sistemas agénticos",
-                description:
-                  "5 sesiones en vivo + 1 personal · Septiembre 2026 · Grabaciones incluidas",
+                name: tier.stripeName,
+                description: tier.stripeDescription,
               },
-              unit_amount: PRICE_REGULAR * 100,
+              unit_amount: priceMxn * 100,
             },
             quantity: 1,
           },
         ],
-        discounts: [{ coupon: COUPON_ID }],
         success_url: `${location}/sistemas-agenticos?success=1&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${location}/sistemas-agenticos?cancel=1`,
         billing_address_collection: "required",
         phone_number_collection: { enabled: true },
-        payment_method_options: {
-          card: { installments: { enabled: true } },
-        },
+        payment_method_options: { card: { installments: { enabled: true } } },
       });
 
       if (!session.url) throw new Error("Failed to create checkout session");
@@ -424,85 +399,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return data({ success: false });
 };
-
-// ===========================================
-// Traza de un agente en vivo (hero): se tipea
-// a mano → pausa → se borra rapidísimo → reinicia
-// ===========================================
-const TRACE_TOKENS: { t: string; c: string }[] = [
-  { t: "$ ", c: "text-sistemas-primary" },
-  {
-    t: 'mi-agente "investiga a la competencia\n            y arma un reporte"\n\n',
-    c: "text-zinc-100",
-  },
-  { t: "⏺ ", c: "text-sistemas-primary" },
-  { t: "plan escrito → plan.md (3 pasos)\n", c: "" },
-  { t: "⏺ ", c: "text-sistemas-primary" },
-  { t: 'tool: web_search("competencia saas mx")\n', c: "" },
-  { t: "⏺ ", c: "text-sistemas-primary" },
-  { t: "tool: fetch → 12 páginas leídas\n", c: "" },
-  { t: "⚠ contexto al 91% → resumen a disco\n", c: "text-amber-300" },
-  { t: "⏺ ", c: "text-sistemas-primary" },
-  { t: "checkpoint #67 guardado\n", c: "" },
-  { t: "⏸ interrupt(): ¿envío el reporte por correo?\n", c: "text-amber-300" },
-  { t: "✓ aprobado por el humano → resume\n", c: "text-sistemas-accent" },
-  { t: "⏺ ", c: "text-sistemas-primary" },
-  { t: "reporte.pdf → streaming a la UI\n\n", c: "" },
-  {
-    t: "// checkpoints, contexto, aprobación humana y una\n// UI que muestra todo: eso es un sistema agéntico",
-    c: "text-zinc-600",
-  },
-];
-
-function AgentTrace() {
-  const total = TRACE_TOKENS.reduce((n, t) => n + t.t.length, 0);
-  const [count, setCount] = useState(0);
-  const [phase, setPhase] = useState<"typing" | "deleting">("typing");
-
-  useEffect(() => {
-    let id: ReturnType<typeof setTimeout>;
-    if (phase === "typing") {
-      if (count < total) id = setTimeout(() => setCount((c) => c + 1), 18);
-      else id = setTimeout(() => setPhase("deleting"), 3200);
-    } else {
-      if (count > 0) id = setTimeout(() => setCount((c) => c - 1), 4);
-      else id = setTimeout(() => setPhase("typing"), 150);
-    }
-    return () => clearTimeout(id);
-  }, [count, phase, total]);
-
-  let remaining = count;
-  const out: ReactNode[] = [];
-  for (let i = 0; i < TRACE_TOKENS.length && remaining > 0; i++) {
-    out.push(
-      <span key={i} className={TRACE_TOKENS[i].c || "text-zinc-300"}>
-        {TRACE_TOKENS[i].t.slice(0, remaining)}
-      </span>
-    );
-    remaining -= TRACE_TOKENS[i].t.length;
-  }
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-sistemas-line bg-zinc-950/80 shadow-2xl backdrop-blur">
-      <div className="flex items-center gap-2 border-b border-sistemas-line px-4 py-3">
-        <span className="h-3 w-3 rounded-full bg-danger/70" />
-        <span className="h-3 w-3 rounded-full bg-amber-300/70" />
-        <span className="h-3 w-3 rounded-full bg-sistemas-primary/70" />
-        <span className="ml-2 font-mono text-sm text-sistemas-gray">
-          tu agente personal, corriendo en producción
-        </span>
-      </div>
-      <pre className="min-h-[21rem] overflow-hidden whitespace-pre-wrap p-6 font-mono text-xs leading-relaxed lg:min-h-[23rem] lg:text-sm">
-        {out}
-        <span
-          className="ml-px inline-block w-[7px] animate-pulse bg-sistemas-primary align-middle"
-          style={{ height: "1.05em" }}
-        />
-      </pre>
-    </div>
-  );
-}
-
 // Paso de instalación con bloque de código copiable
 function InstallStep({
   step,
@@ -542,7 +438,9 @@ function InstallStep({
         </button>
       </div>
       {note && (
-        <p className="mt-3 text-sm leading-relaxed text-sistemas-gray">{note}</p>
+        <p className="mt-3 text-sm leading-relaxed text-sistemas-gray">
+          {note}
+        </p>
       )}
     </div>
   );
@@ -550,306 +448,58 @@ function InstallStep({
 
 function CheckoutButton({
   fetcher,
-  label = "Reservar mi lugar",
+  tier = "programa",
+  label,
+  variant = "primary",
   className = "",
 }: {
   fetcher: ReturnType<typeof useFetcher>;
+  tier?: TierId;
   label?: string;
+  variant?: "primary" | "outline";
   className?: string;
 }) {
-  const isLoading = fetcher.state !== "idle";
+  const isLoading =
+    fetcher.state !== "idle" && fetcher.formData?.get("tier") === tier;
+  const t = TIERS[tier];
+  const styles =
+    variant === "primary"
+      ? "bg-sistemas-primary text-sistemas-dark hover:brightness-110"
+      : "border border-sistemas-primary/50 bg-sistemas-primary/10 text-sistemas-primary hover:bg-sistemas-primary/20";
   return (
     <fetcher.Form method="post" className={className}>
       <input type="hidden" name="intent" value="direct_checkout" />
+      <input type="hidden" name="tier" value={tier} />
       <motion.button
         type="submit"
-        disabled={isLoading}
+        disabled={fetcher.state !== "idle"}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="h-14 w-full rounded-xl bg-sistemas-primary px-8 text-base font-bold text-sistemas-dark transition hover:brightness-110 disabled:opacity-60 sm:w-auto"
+        className={`h-14 w-full rounded-xl px-6 text-base font-bold transition disabled:opacity-60 sm:w-auto ${styles}`}
       >
-        {isLoading ? "Procesando…" : `${label} — $${PRICE.toLocaleString()} MXN`}
+        {isLoading
+          ? "Procesando…"
+          : `${label ?? t.name} — $${t.price.toLocaleString()} MXN`}
       </motion.button>
     </fetcher.Form>
   );
 }
 
-// Registro al webinar gratuito — visible (no modal) para que el anuncio de
-// Meta pueda apuntar directo a /sistemas-agenticos#webinar
-function WebinarSection() {
-  const { grabaciones } = useLoaderData<typeof loader>();
-  // La más reciente: es la que se ofrece cuando el copy habla de UNA sola.
-  const ultima = grabaciones.at(-1);
-  const webinarFetcher = useFetcher<{
-    success?: boolean;
-    error?: string;
-    slotId?: string;
-  }>();
-  const isLoading = webinarFetcher.state !== "idle";
-  const done = webinarFetcher.data?.success;
-  const confirmedSlot = getWebinarSlot(webinarFetcher.data?.slotId);
-  // Solo las fechas que faltan. El <select> listaba las tres y arrancaba en la
-  // primera, así que días después del primer webinar seguía inscribiendo gente
-  // a uno que ya había pasado.
-  const disponibles = webinarsDisponibles();
-  const proximo = disponibles[0];
-
-  // Ya pasaron todos: en vez de un formulario a ninguna parte, la grabación.
-  if (!proximo) {
-    return (
-      <section
-        id="webinar"
-        className="relative z-10 scroll-mt-24 border-y border-sistemas-line/60 bg-sistemas-surface/40"
-      >
-        <div className="mx-auto w-full max-w-5xl px-6 py-20 text-center lg:px-10">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Esta serie de webinars ya terminó
-          </h2>
-          <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-            {grabaciones.length > 1
-              ? `Pero las ${grabaciones.length} grabaciones están completas y son gratis.`
-              : "Pero la grabación está completa y es gratis."}
-          </p>
-
-          {/* Una tira de miniaturas en vez de un solo botón: el título dice de
-              qué es cada una y cada tarjeta abre su propio video en el visor. */}
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {grabaciones.map((g, i) => (
-              <motion.a
-                key={g.slug}
-                href={`/cursos/sistemas-agenticos/${g.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.1 }}
-                className="group overflow-hidden rounded-xl border border-sistemas-line bg-sistemas-dark text-left transition-colors hover:border-sistemas-accent/50"
-              >
-                <div className="relative aspect-video overflow-hidden bg-sistemas-surface">
-                  {g.poster ? (
-                    <img
-                      src={g.poster}
-                      alt={g.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : null}
-                  <span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 font-mono text-[11px] text-zinc-200">
-                    {MINUTOS_A_TEXTO(g.duration)}
-                  </span>
-                </div>
-                <div className="p-4">
-                  <p className="text-sm font-semibold leading-snug text-zinc-100 transition-colors group-hover:text-sistemas-accent">
-                    {g.title}
-                  </p>
-                </div>
-              </motion.a>
-            ))}
-          </div>
-
-          <a
-            href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-8 inline-block rounded-xl bg-sistemas-accent px-6 py-3.5 text-sm font-bold text-sistemas-dark transition hover:brightness-110"
-          >
-            {grabaciones.length > 1
-              ? "Míralas completas, gratis →"
-              : "Mira el webinar completo, gratis →"}
-          </a>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      id="webinar"
-      className="relative z-10 scroll-mt-24 border-y border-sistemas-line/60 bg-sistemas-surface/40"
-    >
-      <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:px-10">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <span className="inline-flex items-center gap-2.5 rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-1.5 text-sm font-bold text-sistemas-accent">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-sistemas-accent" />
-            Webinar gratuito · 45 min + Q&amp;A
-          </span>
-          <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
-            ¿Prefieres verlo antes?{" "}
-            <span className="text-sistemas-primary">{proximo.title}</span>
-          </h2>
-          <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-            {proximo.blurb}
-          </p>
-          <ul className="mt-6 space-y-2.5">
-            {proximo.bullets.map((item) => (
-              <li
-                key={item}
-                className="flex items-start gap-2.5 text-zinc-300"
-              >
-                <span className="mt-0.5 text-sistemas-accent">▸</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-
-          {/* Las que ya pasaron y quedaron grabadas. Van aquí, junto al formulario
-              de la que falta: quien llega tarde no se queda sin nada.
-
-              ⚠️ Salen del programa, no de una lista escrita a mano. Con la lista fija,
-              el día que se publicó la segunda grabación esta tarjeta siguió ofreciendo
-              la primera —y se veía impecable haciéndolo. */}
-          {grabaciones.length > 0 && (
-            <div className="mt-8 rounded-2xl border border-sistemas-primary/40 bg-sistemas-primary/5 p-5">
-              <p className="text-sm font-bold text-zinc-100">
-                {grabaciones.length > 1
-                  ? "¿Te perdiste alguno? Míralos completos"
-                  : "¿Te perdiste el primero? Míralo completo"}
-              </p>
-              <p className="mt-0.5 text-xs text-sistemas-gray">
-                Sin editar · gratis, solo pide tu correo
-              </p>
-              <ul className="mt-3 space-y-1">
-                {grabaciones.map((g) => (
-                  <li key={g.slug}>
-                    <a
-                      href={`/cursos/sistemas-agenticos/${g.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-sistemas-primary/10"
-                    >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sistemas-primary/20 text-sm text-sistemas-primary transition group-hover:bg-sistemas-primary/30">
-                        ▶
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">
-                        «{g.title}»
-                      </span>
-                      <span className="shrink-0 text-xs text-sistemas-gray">
-                        {MINUTOS_A_TEXTO(g.duration)}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          </motion.div>
-
-        {/* En móvil el formulario va primero: apilado, quien llega por
-            `#webinar` —casi todos desde un short— caía frente a mil doscientos
-            píxeles de texto y el formulario fuera de pantalla. En `lg` vuelve a
-            su columna de la derecha. */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="order-first rounded-2xl border border-sistemas-line bg-sistemas-dark p-7 sm:p-8 lg:order-none"
-        >
-          {done ? (
-            <div className="text-center">
-              <div className="text-4xl">✅</div>
-              <h3 className="mt-4 text-xl font-bold text-zinc-100">
-                Tu lugar está apartado
-              </h3>
-              <p className="mt-3 leading-relaxed text-sistemas-gray">
-                {confirmedSlot
-                  ? `Nos vemos el ${confirmedSlot.short}.`
-                  : "Nos vemos pronto."}{" "}
-                Te mandé un correo con el link de la sala y te recordaré antes
-                de que empiece.
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Solo en móvil: aquí el formulario va antes que el título de
-                  la sección, así que sin esto no se sabe a qué te apuntas. */}
-              <p className="mb-3 text-sm font-bold text-sistemas-accent lg:hidden">
-                Webinar gratuito · {proximo.title}
-              </p>
-              <h3 className="text-lg font-bold text-zinc-100">
-                Aparta tu lugar
-              </h3>
-              <p className="mt-1.5 text-sm text-sistemas-gray">
-                {disponibles.length === 1
-                  ? `Gratis, el ${proximo.short.toLowerCase()}. Solo necesito saber a dónde mandarte el link.`
-                  : "Gratis. Solo necesito saber a dónde mandarte el link."}
-              </p>
-              <webinarFetcher.Form method="post" className="mt-5 space-y-3">
-                <input
-                  type="hidden"
-                  name="intent"
-                  value="webinar_registration"
-                />
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Tu nombre"
-                  className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
-                />
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="tu@email.com"
-                  className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
-                />
-                {/* Con una sola fecha el selector es fricción: la fecha ya se
-                    dijo arriba y aquí solo viaja. */}
-                {disponibles.length === 1 ? (
-                  <input type="hidden" name="webinarDate" value={proximo.id} />
-                ) : (
-                  <select
-                    name="webinarDate"
-                    required
-                    defaultValue={proximo.id}
-                    className="h-12 w-full rounded-xl border border-sistemas-line bg-sistemas-surface px-4 text-sm text-white outline-none transition focus:border-sistemas-primary"
-                  >
-                    {disponibles.map((slot) => (
-                      <option key={slot.id} value={slot.id}>
-                        {slot.short}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="h-12 w-full rounded-xl bg-sistemas-accent px-6 text-sm font-bold text-sistemas-dark transition hover:brightness-110 disabled:opacity-60"
-                >
-                  {isLoading ? "Apartando…" : "Apartar mi lugar gratis"}
-                </button>
-                {webinarFetcher.data?.error && (
-                  <p className="text-xs text-danger">
-                    {webinarFetcher.data.error}
-                  </p>
-                )}
-                <p className="text-center text-xs text-sistemas-gray">
-                  Sin costo · Te aviso antes de que empiece · Nada de spam
-                </p>
-              </webinarFetcher.Form>
-            </>
-          )}
-        </motion.div>
-      </div>
-    </section>
-  );
-}
+const MATERIAL_ICON: Record<string, string> = {
+  repo: "⌥",
+  slides: "▤",
+  pdf: "▣",
+  link: "↗",
+};
 
 export default function SistemasAgenticosLanding() {
-  const { grabaciones } = useLoaderData<typeof loader>();
-  // La más reciente: es la que se ofrece cuando el copy habla de UNA sola.
-  const ultima = grabaciones.at(-1);
+  const { modules, totals } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
-  // El siguiente webinar que no ha pasado. `undefined` cuando ya se dieron los tres.
-  const proximo = proximoWebinar();
   const [showConfetti, setShowConfetti] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  // Todos abiertos de entrada: la sección existe para que se vea todo el
+  // contenido, y un acordeón cerrado lo esconde.
+  const [closedModules, setClosedModules] = useState<string[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -863,32 +513,25 @@ export default function SistemasAgenticosLanding() {
     }
   }, []);
 
-  /**
-   * Bajar al ancla cuando se llega con `#webinar` desde otra página.
-   *
-   * El navegador solo resuelve el hash en una carga completa. Al llegar por un
-   * `<Link>` —como el de la banda de la home— React Router cambia la URL sin
-   * recargar y nadie hace el scroll: la página se quedaba hasta arriba, con el
-   * formulario 2,300px más abajo.
-   *
-   * Se repite con `setTimeout` en vez de `requestAnimationFrame`: la página
-   * monta un canvas WebGL y varias imágenes, así que el primer intento cae
-   * sobre un layout que todavía se está acomodando y el salto queda corto. Y
-   * rAF no corre mientras la pestaña no está al frente —entrar por un link con
-   * la ventana en segundo plano es justo el caso de alguien que llega de un
-   * short—, así que ahí nunca dispararía.
-   */
+  // Bajar al ancla al llegar con `#precio` o `#instalar` desde otra página:
+  // el router cambia la URL sin recargar y nadie hace el scroll. Se reintenta
+  // porque el canvas WebGL y las imágenes mueven el layout al montar.
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) return;
-    // `scrollIntoView` respeta el `scroll-mt-24` de la sección, así que el
-    // destino no queda debajo de la navbar.
-    const irAlAncla = () =>
+    const goToAnchor = () =>
       document.querySelector(hash)?.scrollIntoView({ block: "start" });
-    irAlAncla();
-    const reintentos = [80, 300, 800].map((ms) => setTimeout(irAlAncla, ms));
-    return () => reintentos.forEach(clearTimeout);
+    goToAnchor();
+    const retries = [80, 300, 800].map((ms) => setTimeout(goToAnchor, ms));
+    return () => retries.forEach(clearTimeout);
   }, []);
+
+  const stats = [
+    [`${totals.hours} h`, "de video"],
+    [String(totals.lessons), "lecciones"],
+    [String(totals.materials), "materiales"],
+    ["∞", "acceso de por vida"],
+  ];
 
   return (
     <main className="relative overflow-hidden bg-sistemas-dark text-zinc-100">
@@ -907,16 +550,28 @@ export default function SistemasAgenticosLanding() {
         animate={{ backgroundPosition: ["0px 0px", "44px 44px"] }}
         transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
       />
-      {/* blobs de glow flotando */}
       <motion.div
         className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full bg-sistemas-primary/25 blur-[120px]"
-        animate={{ x: [0, 80, -30, 0], y: [0, 50, -40, 0], scale: [1, 1.2, 0.92, 1] }}
+        animate={{
+          x: [0, 80, -30, 0],
+          y: [0, 50, -40, 0],
+          scale: [1, 1.2, 0.92, 1],
+        }}
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="pointer-events-none absolute right-0 top-[30rem] h-[24rem] w-[24rem] rounded-full bg-brand-700/20 blur-[120px]"
-        animate={{ x: [0, -70, 40, 0], y: [0, -50, 40, 0], scale: [1, 0.88, 1.25, 1] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        animate={{
+          x: [0, -70, 40, 0],
+          y: [0, -50, 40, 0],
+          scale: [1, 0.88, 1.25, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 2,
+        }}
       />
 
       {/* ============ HERO ============ */}
@@ -927,8 +582,8 @@ export default function SistemasAgenticosLanding() {
           transition={{ duration: 0.5 }}
           className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-sistemas-primary/30 bg-sistemas-primary/10 px-5 py-2 text-sm font-medium text-sistemas-primary"
         >
-          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-sistemas-primary" />
-          Nuevo taller en vivo · Primera edición · Septiembre 2026
+          <span className="h-2.5 w-2.5 rounded-full bg-sistemas-primary" />
+          Programa completo · On-demand · Acceso inmediato
         </motion.div>
 
         <motion.h1
@@ -943,7 +598,6 @@ export default function SistemasAgenticosLanding() {
 
         <div className="mt-10 grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
-
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -951,27 +605,27 @@ export default function SistemasAgenticosLanding() {
               className="max-w-xl text-lg leading-relaxed text-sistemas-gray sm:text-xl"
             >
               Tu agente funciona en tu laptop y se rompe con usuarios reales.
-              Este taller cubre lo que falta en medio: sacarlo de tu compu,
-              darle memoria e interfaz, y ponerte a ti a aprobar antes de que
-              actúe.
+              Aquí construyes lo que falta en medio: la caja remota, la
+              interfaz, la memoria, los permisos y tú en el loop.
             </motion.p>
 
+            {/* Datos duros: salen de la base, no de un copy */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="mt-8 flex flex-wrap items-center gap-3 text-sm text-sistemas-gray"
+              className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4"
             >
-              {[
-                "5 sesiones en vivo + 1 personal",
-                "Del 1 al 14 de septiembre · 8 PM CDMX",
-              ].map((chip) => (
-                <span
-                  key={chip}
-                  className="rounded-full border border-sistemas-line bg-sistemas-surface px-4 py-1.5"
+              {stats.map(([n, label]) => (
+                <div
+                  key={label}
+                  className="rounded-xl border border-sistemas-line bg-sistemas-surface px-4 py-3"
                 >
-                  {chip}
-                </span>
+                  <div className="text-2xl font-black text-sistemas-primary">
+                    {n}
+                  </div>
+                  <div className="text-xs text-sistemas-gray">{label}</div>
+                </div>
               ))}
             </motion.div>
 
@@ -981,7 +635,7 @@ export default function SistemasAgenticosLanding() {
               transition={{ duration: 0.6, delay: 0.35 }}
               className="mt-4 text-sm font-medium text-sistemas-accent"
             >
-              🎁 Incluye GhostyCode y todos los tokens de DeepSeek que necesites
+              🎁 Incluye GhostyCode y el trial de EasyBits para arrancar
             </motion.div>
 
             <motion.div
@@ -990,47 +644,27 @@ export default function SistemasAgenticosLanding() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-8"
             >
-              <div className="flex flex-wrap items-center gap-3">
-                <CheckoutButton fetcher={fetcher} />
-                <a
-                  href="#temario"
-                  className="rounded-full border border-sistemas-line bg-sistemas-surface px-6 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-sistemas-primary/50 hover:text-sistemas-primary"
-                >
-                  Ver el temario ↓
-                </a>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <CheckoutButton
+                  fetcher={fetcher}
+                  tier="programa"
+                  label="Quiero el programa"
+                />
+                <CheckoutButton
+                  fetcher={fetcher}
+                  tier="tu-caso"
+                  label="Con sesión 1-a-1"
+                  variant="outline"
+                />
               </div>
               <p className="mt-3 text-sm text-sistemas-gray">
-                <span className="text-sistemas-accent">
-                  Precio de primera edición
-                </span>{" "}
-                — <s className="opacity-60">${PRICE_REGULAR.toLocaleString()}</s>{" "}
-                en siguientes ediciones
-              </p>
-              {/* La fecha sale de los datos: escrita a mano seguía invitando al webinar
-                  del 13 al día siguiente de darlo. Ya que pasaron todos, una sola
-                  línea a las grabaciones; el detalle de cuántas y cuánto duran
-                  sobraba aquí. */}
-              <p className="mt-4 text-sm text-sistemas-gray">
-                ¿Prefieres verlo antes?{" "}
-                {proximo ? (
-                  <a
-                    href="#webinar"
-                    className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
-                  >
-                    Webinar gratis el {proximo.short.split(" ·")[0].toLowerCase()} →
-                  </a>
-                ) : (
-                  <a
-                    href={`/cursos/sistemas-agenticos/${ultima?.slug ?? ""}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-sistemas-accent underline underline-offset-4 hover:brightness-110"
-                  >
-                    {grabaciones.length > 1
-                      ? `Mira los ${grabaciones.length} webinars completos, gratis →`
-                      : "Mira el webinar completo, gratis →"}
-                  </a>
-                )}
+                3 y 6 meses sin intereses · Factura disponible ·{" "}
+                <a
+                  href="#contenido"
+                  className="text-sistemas-primary underline underline-offset-4"
+                >
+                  Ver todo el contenido ↓
+                </a>
               </p>
             </motion.div>
 
@@ -1046,7 +680,7 @@ export default function SistemasAgenticosLanding() {
                 className="h-10 w-10 rounded-full border border-sistemas-line object-cover"
               />
               <p className="text-sm text-sistemas-gray">
-                Un taller de{" "}
+                Un programa de{" "}
                 <a
                   href="https://www.hectorbliss.com"
                   target="_blank"
@@ -1065,12 +699,12 @@ export default function SistemasAgenticosLanding() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            <AgentTrace />
+            <HeroScene />
           </motion.div>
         </div>
       </section>
 
-      {/* ============ QUÉ VAS A CONSTRUIR ============ */}
+      {/* ============ QUÉ CONSTRUYES ============ */}
       <section className="relative z-10 border-t border-sistemas-line/60 bg-sistemas-surface/30">
         <div className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
           <motion.div
@@ -1081,38 +715,31 @@ export default function SistemasAgenticosLanding() {
             className="max-w-3xl"
           >
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Sales con un sistema completo,{" "}
+              Sales con un agente completo,{" "}
               <span className="text-sistemas-primary">no con apuntes</span>
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-sistemas-gray">
-              A lo largo del taller construyes tu agente personal
-              production-ready: vive en una caja remota que despierta cuando la
-              llamas, tiene su propia interfaz, recuerda entre sesiones,
-              sobrevive fallos a media tarea y te pide aprobación antes de
-              acciones sensibles. En la 1 lo sacas de tu laptop; en la 2 le
-              escribes la UI; en la 3 le das memoria y checkpoints; en la 4 te
-              pones en medio con el permiso humano y lo conectas a WhatsApp; en
-              la 5 lo dejas sólido y medido. La 6 es contigo a solas, sobre tu
-              caso. Te llevas el repo completo, corriendo con los tokens de
-              DeepSeek que van incluidos.
+              Un agente personal listo para usuarios reales. Se construye en
+              este orden, y cada paso deja algo corriendo.
             </p>
           </motion.div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {SESSIONS.map((s, i) => (
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {BUILD_STEPS.map((s, i) => (
               <motion.div
-                key={s.number}
+                key={s.n}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.1 }}
+                transition={{ duration: 0.45, delay: i * 0.08 }}
                 className="rounded-xl border border-sistemas-line bg-sistemas-dark p-5"
               >
                 <span className="font-mono text-xs text-sistemas-accent">
-                  sesión {s.number}
+                  {s.n}
                 </span>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-                  {s.artifact}
+                <h3 className="mt-2 font-bold text-zinc-100">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-sistemas-gray">
+                  {s.text}
                 </p>
               </motion.div>
             ))}
@@ -1139,8 +766,7 @@ export default function SistemasAgenticosLanding() {
             con permiso de mandar un correo que un día manda mil. Una interfaz
             que solo muestra un spinner mientras todo eso pasa. Los cuatro
             problemas se arreglan con diseño — checkpoints, manejo de contexto,
-            guardrails, streaming — y esas son exactamente las piezas que
-            construyes en este taller.
+            guardrails, streaming — y esas son las piezas que construyes aquí.
           </p>
         </motion.div>
 
@@ -1178,12 +804,9 @@ export default function SistemasAgenticosLanding() {
         </div>
       </section>
 
-      {/* ============ WEBINAR GRATUITO ============ */}
-      <WebinarSection />
-
-      {/* ============ TEMARIO ============ */}
+      {/* ============ CONTENIDO COMPLETO ============ */}
       <section
-        id="temario"
+        id="contenido"
         className="relative z-10 scroll-mt-24 border-t border-sistemas-line/60 bg-sistemas-surface/30"
       >
         <div className="mx-auto w-full max-w-5xl px-6 py-20 lg:px-10">
@@ -1192,104 +815,177 @@ export default function SistemasAgenticosLanding() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="mb-14 text-center"
+            className="mb-12 text-center"
           >
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              El temario, sesión por{" "}
-              <span className="text-sistemas-primary">sesión</span>
+              Todo el contenido,{" "}
+              <span className="text-sistemas-primary">pieza por pieza</span>
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
-              3 semanas: martes, jueves y el lunes de cierre, 2 horas en vivo
-              cada sesión. Más una sexta sesión, contigo a solas.
+              {totals.hours} horas de video en {modules.length} bloques, con el
+              repo, las slides y el material de cada uno. Lo ves en el orden que
+              quieras, para siempre.
             </p>
           </motion.div>
 
-          {/* Qué SÍ y qué NO — la exclusión antes de la introducción */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55 }}
-            className="mx-auto mb-14 max-w-3xl rounded-2xl border border-sistemas-line bg-sistemas-dark p-7 sm:p-9"
-          >
-            <h3 className="font-mono text-xs uppercase tracking-widest text-sistemas-accent">
-              De qué se trata
-            </h3>
-            <p className="mt-4 leading-relaxed text-sistemas-gray">
-              El arnés lo eliges ya hecho y lo instalas antes de la primera
-              sesión. Cómo se arma uno por dentro está en el video gratuito;
-              aquí armamos lo que va alrededor: la caja remota, la interfaz, la
-              memoria, los checkpoints y el permiso humano. Recomendamos{" "}
-              <strong className="text-zinc-200">GhostyCode</strong> —el nuestro,
-              open source, y el que podemos arreglar en vivo— o{" "}
-              <strong className="text-zinc-200">Goose</strong>: los dos están
-              escritos en Rust y viajan como un binario suelto que copias a la
-              caja y corre, mientras que{" "}
-              <strong className="text-zinc-200">Aider</strong> y{" "}
-              <strong className="text-zinc-200">OpenHands</strong>, en Python,
-              te obligan a hornear el intérprete y sus dependencias en la
-              imagen. Con Codex CLI pasó lo mismo: se mudó de TypeScript a Rust
-              cuando el arnés empezó a arrancar dentro de cajas efímeras. Los
-              cuatro funcionan y, elijas el que elijas, en clase seguimos los
-              mismos pasos.
-            </p>
-          </motion.div>
-
-          <div className="space-y-6">
-            {SESSIONS.map((session, index) => (
-              <motion.div
-                key={session.number}
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.55, delay: index * 0.08 }}
-                className="group relative overflow-hidden rounded-2xl border border-sistemas-line bg-sistemas-dark p-7 transition-colors hover:border-sistemas-primary/40 sm:p-9"
-              >
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                  <div className="flex items-baseline gap-4">
-                    <span className="font-mono text-2xl font-black text-sistemas-primary/50 transition-colors group-hover:text-sistemas-primary">
-                      {session.number}
-                    </span>
-                    <h3 className="text-xl font-bold text-zinc-100 sm:text-2xl">
-                      {session.title}
-                    </h3>
-                  </div>
-                  <span className="shrink-0 font-mono text-xs text-sistemas-gray sm:text-sm">
-                    {session.date}
-                  </span>
-                </div>
-
-                <p className="mt-4 max-w-3xl leading-relaxed text-sistemas-gray">
-                  {session.intro}
-                </p>
-
-                <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
-                  {session.topics.map((topic) => (
-                    <li
-                      key={topic}
-                      className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-300"
+          <div className="space-y-4">
+            {modules.map((m, index) => {
+              const open = !closedModules.includes(m.name);
+              return (
+                <motion.div
+                  key={m.name}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.06 }}
+                  className="overflow-hidden rounded-2xl border border-sistemas-line bg-sistemas-dark"
+                >
+                  <button
+                    onClick={() =>
+                      setClosedModules((c) =>
+                        open ? [...c, m.name] : c.filter((n) => n !== m.name),
+                      )
+                    }
+                    className="flex w-full items-start justify-between gap-4 p-6 text-left sm:p-8"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="font-mono text-xs text-sistemas-accent">
+                          bloque {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <h3 className="text-xl font-bold text-zinc-100 sm:text-2xl">
+                          {m.name}
+                        </h3>
+                      </div>
+                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-sistemas-gray">
+                        {m.blurb}
+                      </p>
+                      <p className="mt-2 font-mono text-xs text-sistemas-gray">
+                        {m.items.length + m.upcoming.length} piezas ·{" "}
+                        {MINUTES_TO_TEXT(m.minutes)}
+                      </p>
+                    </div>
+                    <span
+                      className={`mt-1 shrink-0 text-xl text-sistemas-gray transition-transform ${open ? "rotate-45" : ""}`}
                     >
-                      <span className="mt-0.5 text-sistemas-primary">▸</span>
-                      {topic}
-                    </li>
-                  ))}
-                </ul>
+                      +
+                    </span>
+                  </button>
 
-                <div className="mt-6 flex items-start gap-3 rounded-xl border border-sistemas-accent/25 bg-sistemas-accent/5 px-4 py-3">
-                  <span className="font-mono text-xs uppercase tracking-widest text-sistemas-accent">
-                    sales con
-                  </span>
-                  <span className="text-sm text-zinc-200">
-                    {session.artifact}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+                  <AnimatePresence initial={false}>
+                    {open && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <ul className="divide-y divide-sistemas-line border-t border-sistemas-line">
+                          {m.items.map((item, i) => (
+                            <li key={item.slug} className="px-6 py-4 sm:px-8">
+                              <div className="flex items-start gap-3">
+                                <span className="mt-0.5 w-6 shrink-0 font-mono text-xs text-sistemas-primary/60">
+                                  {String(i + 1).padStart(2, "0")}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                    <p className="font-semibold text-zinc-100">
+                                      {item.title}
+                                    </p>
+                                    <span className="font-mono text-xs text-sistemas-gray">
+                                      {MINUTES_TO_TEXT(item.minutes)}
+                                    </span>
+                                    {item.free && (
+                                      <a
+                                        href={`/cursos/${COURSE_SLUG}/${item.slug}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-2 py-0.5 text-[11px] font-bold text-sistemas-accent hover:bg-sistemas-accent/20"
+                                      >
+                                        gratis ▶
+                                      </a>
+                                    )}
+                                  </div>
+                                  {item.blurb && (
+                                    <p className="mt-1 text-sm leading-relaxed text-sistemas-gray">
+                                      {item.blurb}
+                                    </p>
+                                  )}
+                                  {item.materials.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {item.materials.map((r) => (
+                                        <span
+                                          key={r.slug}
+                                          className="inline-flex items-center gap-1 rounded-md border border-sistemas-line bg-sistemas-surface px-2 py-0.5 text-[11px] text-zinc-300"
+                                        >
+                                          <span className="text-sistemas-primary">
+                                            {MATERIAL_ICON[r.kind] ?? "•"}
+                                          </span>
+                                          {r.title}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                          {m.upcoming.map((u) => (
+                            <li key={u.title} className="px-6 py-4 sm:px-8">
+                              <div className="flex items-start gap-3">
+                                <span className="mt-0.5 w-6 shrink-0 font-mono text-xs text-amber-300/70">
+                                  {String(m.items.length + 1).padStart(2, "0")}
+                                </span>
+                                <div>
+                                  <p className="font-semibold text-zinc-100">
+                                    {u.title}
+                                  </p>
+                                  <p className="mt-1 text-sm text-amber-300/80">
+                                    {u.note}
+                                  </p>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
           </div>
 
-          <p className="mt-8 text-center font-mono text-xs text-sistemas-gray/70">
-            Temario revisado el 28 de agosto de 2026
-          </p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              [
+                "Repos",
+                "acp-agent-ui, acp-desde-cero y el código de cada entrega, con un tag por lección",
+              ],
+              [
+                "Slides y PDFs",
+                "Las diapositivas de cada webinar y sesión, y el PDF de las seis piezas",
+              ],
+              [
+                "Comunidad",
+                "Ghosty Teams, con el instructor y el grupo del taller",
+              ],
+              [
+                "GhostyCode + EasyBits",
+                "El agente de terminal open source y el trial de EasyBits para cajas y modelo",
+              ],
+            ].map(([title, text]) => (
+              <div
+                key={title}
+                className="rounded-xl border border-sistemas-line bg-sistemas-dark p-5"
+              >
+                <h3 className="font-bold text-sistemas-primary">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-sistemas-gray">
+                  {text}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -1346,10 +1042,10 @@ export default function SistemasAgenticosLanding() {
             <h3 className="text-xl font-bold text-danger">Todavía no, si…</h3>
             <ul className="mt-5 space-y-3.5">
               {[
-                "Estás aprendiendo a programar — este taller asume que ya construyes producto",
+                "Estás aprendiendo a programar — este programa asume que ya construyes producto",
                 "Buscas una introducción conceptual a la IA sin escribir código",
                 "Quieres una herramienta no-code — aquí diseñamos el sistema, no arrastramos cajitas",
-                "No tienes 2 horas a la semana para las sesiones más un rato para el código",
+                "No vas a sentarte a escribir código: aquí todo se construye",
               ].map((item) => (
                 <li
                   key={item}
@@ -1372,8 +1068,77 @@ export default function SistemasAgenticosLanding() {
         >
           Los cursos gringos de agentes están llenos de gente de backend
           aprendiendo a hacer interfaces. Tú ya sabes hacer producto — te falta
-          la capa de sistemas, y eso se aprende en seis sesiones bien dadas.
+          la capa de sistemas, y eso es lo que hay aquí, pieza por pieza.
         </motion.p>
+      </section>
+
+      {/* ============ TESTIMONIOS ============ */}
+      <section
+        id="testimonios"
+        className="relative z-10 scroll-mt-24 border-t border-sistemas-line/60 bg-sistemas-surface/30"
+      >
+        <div className="mx-auto w-full max-w-6xl px-6 py-20 lg:px-10">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mb-10 text-center"
+          >
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Quienes ya lo{" "}
+              <span className="text-sistemas-primary">tomaron</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
+              La primera edición fue en vivo, en septiembre de 2026. Esto es lo
+              que construyeron y cómo les fue.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {TESTIMONIALS.length > 0
+              ? TESTIMONIALS.map((t, i) => (
+                  <motion.figure
+                    key={t.src}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.45, delay: i * 0.08 }}
+                    className="overflow-hidden rounded-2xl border border-sistemas-line bg-sistemas-dark"
+                  >
+                    <video
+                      src={t.src}
+                      poster={t.poster}
+                      controls
+                      playsInline
+                      preload="none"
+                      className="aspect-[9/16] w-full bg-black object-cover sm:aspect-video"
+                    />
+                    <figcaption className="p-5">
+                      <p className="text-sm leading-relaxed text-zinc-200">
+                        «{t.quote}»
+                      </p>
+                      <p className="mt-3 text-sm font-semibold text-zinc-100">
+                        {t.name}
+                      </p>
+                      <p className="text-xs text-sistemas-gray">{t.role}</p>
+                    </figcaption>
+                  </motion.figure>
+                ))
+              : [0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-sistemas-line bg-sistemas-dark/60 p-6 text-center"
+                  >
+                    <p className="text-sm text-sistemas-gray">
+                      <span className="block text-2xl">🎥</span>
+                      Testimonio en video
+                      <span className="block text-xs">se sube esta semana</span>
+                    </p>
+                  </div>
+                ))}
+          </div>
+        </div>
       </section>
 
       {/* ============ INSTALA GHOSTYCODE ============ */}
@@ -1393,7 +1158,7 @@ export default function SistemasAgenticosLanding() {
             <span className="text-sistemas-primary">2 minutos</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
-            El taller corre sobre GhostyCode, nuestro agente de código en
+            El programa corre sobre GhostyCode, nuestro agente de código en
             terminal (open source). Los tokens del modelo y las sandboxes salen
             de tu cuenta de EasyBits.
           </p>
@@ -1436,7 +1201,7 @@ export default function SistemasAgenticosLanding() {
             step="05"
             title="Arranca"
             command="ghosty --yolo"
-            note="Pídele algo y, si responde, ya estás listo para la sesión 1. --yolo lo deja ejecutar sin pedirte permiso en cada paso; el idioma se cambia desde la configuración de Ghosty."
+            note="Pídele algo y, si responde, ya estás listo para la primera lección. --yolo lo deja ejecutar sin pedirte permiso en cada paso; el idioma se cambia desde la configuración de Ghosty."
           />
         </motion.div>
       </section>
@@ -1479,17 +1244,16 @@ export default function SistemasAgenticosLanding() {
                 Héctor Bliss
               </h3>
               <p className="mt-4 leading-relaxed text-sistemas-gray">
-                Lleva 10 años enseñando a programar y los últimos dos
-                construyendo y desplegando agentes en producción: coaching por
-                voz con speech-to-speech, automatización de WhatsApp, agentes con
-                sandbox de código. Los sistemas de este taller son los mismos que
-                mantiene corriendo con usuarios reales.
+                Llevo 10 años enseñando a programar. Últimamente me la paso
+                construyendo agentes y viendo qué se rompe cuando ya están en
+                manos de usuarios. Lo que sé lo aprendí ahí, y eso es lo que
+                enseño en este programa.
               </p>
               <div className="mt-6 flex flex-wrap gap-6">
                 {[
                   ["10", "años enseñando"],
                   ["2K+", "estudiantes"],
-                  ["100%", "en vivo y práctico"],
+                  ["100%", "código real, sin slides de relleno"],
                 ].map(([stat, label]) => (
                   <div key={label}>
                     <div className="text-2xl font-black text-sistemas-accent">
@@ -1512,74 +1276,129 @@ export default function SistemasAgenticosLanding() {
       {/* ============ PRECIO ============ */}
       <section
         id="precio"
-        className="relative z-10 mx-auto w-full max-w-5xl px-6 py-20 lg:px-10"
+        className="relative z-10 mx-auto w-full max-w-5xl scroll-mt-24 px-6 py-20 lg:px-10"
       >
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="overflow-hidden rounded-3xl border-2 border-sistemas-primary/40 bg-sistemas-surface/60"
+          className="mb-10 text-center"
         >
-          <div className="grid md:grid-cols-2">
-            <div className="p-8 sm:p-12">
-              <span className="rounded-full border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-1.5 text-xs font-bold text-sistemas-accent">
-                PRIMERA EDICIÓN · SEPTIEMBRE 2026
-              </span>
-              <div className="mt-6 flex items-baseline gap-3">
-                <span className="text-5xl font-black text-sistemas-primary">
-                  ${PRICE.toLocaleString()}
-                </span>
-                <span className="text-lg text-sistemas-gray">MXN</span>
-                <s className="text-xl text-sistemas-gray/60">
-                  ${PRICE_REGULAR.toLocaleString()}
-                </s>
-              </div>
-              <p className="mt-2 text-sm text-sistemas-gray">
-                3 y 6 meses sin intereses con tarjetas participantes · Factura
-                disponible · Descuento de primera edición aplicado
-                automáticamente
-              </p>
-              <div className="mt-8">
-                <CheckoutButton fetcher={fetcher} />
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-sistemas-gray">
-                Precio exclusivo de la primera edición — en siguientes
-                ediciones sube a ${PRICE_REGULAR.toLocaleString()}.
-              </p>
-              <p className="mt-4 text-sm text-sistemas-gray">
-                ¿Dudas? Mándanos un{" "}
-                <a
-                  href="https://wa.me/527712412825"
-                  className="text-sistemas-primary underline underline-offset-4"
-                >
-                  WhatsApp <FaWhatsapp className="inline" />
-                </a>
-              </p>
-            </div>
-            <div className="border-t border-sistemas-line bg-sistemas-dark/60 p-8 sm:p-12 md:border-l md:border-t-0">
-              <h3 className="font-bold text-zinc-100">Incluye</h3>
-              <div className="mt-4 rounded-xl border border-sistemas-accent/40 bg-sistemas-accent/10 px-4 py-3.5">
-                <p className="text-sm font-semibold leading-relaxed text-sistemas-accent">
-                  🎁 GhostyCode, nuestro agente de código en terminal, con todos
-                  los tokens de DeepSeek v4 Pro que vas a necesitar — sin pagar
-                  API aparte
-                </p>
-              </div>
-              <ul className="mt-5 space-y-3.5">
-                {INCLUDES.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3 text-sm leading-relaxed text-zinc-300"
-                  >
-                    <span className="mt-0.5 text-sistemas-primary">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Dos formas de <span className="text-sistemas-primary">entrar</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-sistemas-gray">
+            Las dos traen todo el contenido. La diferencia es si quieres una
+            sesión a solas sobre tu propio agente.
+          </p>
         </motion.div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Programa completo */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col rounded-3xl border border-sistemas-line bg-sistemas-surface/60 p-8 sm:p-10"
+          >
+            <span className="font-mono text-xs uppercase tracking-widest text-sistemas-gray">
+              {TIERS.programa.name}
+            </span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-5xl font-black text-zinc-100">
+                ${TIERS.programa.price.toLocaleString()}
+              </span>
+              <span className="text-lg text-sistemas-gray">MXN</span>
+            </div>
+            <p className="mt-2 text-sm text-sistemas-gray">
+              {totals.hours} h de video · {totals.materials} materiales · acceso
+              de por vida
+            </p>
+            <ul className="mt-6 flex-1 space-y-3">
+              {INCLUDES_BASE.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-3 text-sm leading-relaxed text-zinc-300"
+                >
+                  <span className="mt-0.5 text-sistemas-primary">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8">
+              <CheckoutButton
+                fetcher={fetcher}
+                tier="programa"
+                label="Quiero el programa"
+                variant="outline"
+                className="[&_button]:w-full"
+              />
+            </div>
+          </motion.div>
+
+          {/* Programa + Tu caso */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="relative flex flex-col rounded-3xl border-2 border-sistemas-primary/50 bg-sistemas-surface/80 p-8 sm:p-10"
+          >
+            <span className="absolute -top-3 left-8 rounded-full bg-sistemas-primary px-3 py-1 text-xs font-bold text-sistemas-dark">
+              Con acompañamiento
+            </span>
+            <span className="font-mono text-xs uppercase tracking-widest text-sistemas-primary">
+              {TIERS["tu-caso"].name}
+            </span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-5xl font-black text-sistemas-primary">
+                ${TIERS["tu-caso"].price.toLocaleString()}
+              </span>
+              <span className="text-lg text-sistemas-gray">MXN</span>
+            </div>
+            <p className="mt-2 text-sm text-sistemas-gray">
+              Todo el programa + 60 min a solas sobre tu agente
+            </p>
+            <ul className="mt-6 flex-1 space-y-3">
+              <li className="flex items-start gap-3 text-sm leading-relaxed text-zinc-300">
+                <span className="mt-0.5 text-sistemas-primary">✓</span>
+                Todo lo del programa completo
+              </li>
+              {INCLUDES_TU_CASO.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-3 text-sm leading-relaxed text-zinc-100"
+                >
+                  <span className="mt-0.5 text-sistemas-accent">★</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8">
+              <CheckoutButton
+                fetcher={fetcher}
+                tier="tu-caso"
+                label="Programa + Tu caso"
+                className="[&_button]:w-full"
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-sistemas-gray">
+          3 y 6 meses sin intereses con tarjetas participantes · Factura
+          disponible · ¿Dudas?{" "}
+          <a
+            href="https://wa.me/527712412825"
+            target="_blank"
+            rel="noopener"
+            className="text-sistemas-primary underline underline-offset-4"
+          >
+            WhatsApp <FaWhatsapp className="inline" />
+          </a>
+        </p>
       </section>
 
       {/* ============ FAQ ============ */}
@@ -1607,9 +1426,7 @@ export default function SistemasAgenticosLanding() {
                 >
                   {faq.q}
                   <span
-                    className={`ml-4 text-sistemas-gray transition-transform ${
-                      openFaq === i ? "rotate-45" : ""
-                    }`}
+                    className={`ml-4 text-sistemas-gray transition-transform ${openFaq === i ? "rotate-45" : ""}`}
                   >
                     +
                   </span>
@@ -1650,15 +1467,23 @@ export default function SistemasAgenticosLanding() {
             </span>
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-sistemas-gray">
-            Arrancamos el martes 1 de septiembre a las 8:00 PM (CDMX). El cupo
-            es limitado porque las sesiones son en vivo y se trabaja el código
-            de cada quien.
+            {totals.hours} horas de video, el código de cada pieza y el trial de
+            EasyBits para construir el tuyo. Empiezas hoy mismo.
           </p>
-          <div className="mt-10 flex justify-center">
-            <CheckoutButton fetcher={fetcher} label="Quiero mi lugar" />
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <CheckoutButton
+              fetcher={fetcher}
+              tier="programa"
+              label="Quiero el programa"
+            />
+            <CheckoutButton
+              fetcher={fetcher}
+              tier="tu-caso"
+              label="Con sesión 1-a-1"
+              variant="outline"
+            />
           </div>
 
-          {/* Contacto directo con el instructor */}
           <div className="mx-auto mt-12 max-w-md">
             <div className="mb-4 flex items-center justify-center gap-3">
               <img
@@ -1674,7 +1499,7 @@ export default function SistemasAgenticosLanding() {
               </p>
             </div>
             <a
-              href="https://wa.me/527712412825?text=Hola%20H%C3%A9ctorbliss%2C%20tengo%20dudas%20sobre%20el%20taller%20de%20Dise%C3%B1o%20de%20sistemas%20ag%C3%A9nticos"
+              href="https://wa.me/527712412825?text=Hola%20H%C3%A9ctorbliss%2C%20tengo%20dudas%20sobre%20el%20programa%20de%20Dise%C3%B1o%20de%20sistemas%20ag%C3%A9nticos"
               target="_blank"
               rel="noreferrer"
               className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-sistemas-primary/40 bg-sistemas-primary/10 px-6 text-sm font-bold text-sistemas-primary transition hover:bg-sistemas-primary/20 sm:w-auto"
