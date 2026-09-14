@@ -1,0 +1,10 @@
+import { PrismaClient } from "@prisma/client";
+import fs from "node:fs";
+const db = new PrismaClient();
+const t = await db.transcript.findFirst({ where: { videoId: "6aa385102fcb1ff28b7659ac" } });
+const segs = t!.segments as any[];
+const mm = (s:number)=>`${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+const out = segs.map((s:any)=>`[${mm(s.s)}→${mm(s.e)}] ${(s.texto??"").trim()}`).join("\n");
+fs.writeFileSync("/private/tmp/claude-501/-Users-bliss-fixter2025/725f7589-70a6-4e62-b51f-713b5cc61bf0/scratchpad/s4.txt", out);
+console.log(segs.length,"segmentos;",JSON.stringify(segs[0]).slice(0,300));
+process.exit(0);

@@ -28,6 +28,18 @@ const ExcalidrawWrapper = lazy(async () => {
                 lastVersion.current = data.version;
                 // Esperar a que carguen las fuentes: si se mide antes, el texto sale recortado
                 await document.fonts.ready;
+                // Imágenes: la escena trae `files` {id: {dataURL, mimeType}} y los
+                // elementos `image` apuntan a ese id con `fileId`.
+                if (data.files) {
+                  apiRef.current.addFiles(
+                    Object.entries(data.files).map(([id, f]: [string, any]) => ({
+                      id,
+                      dataURL: f.dataURL,
+                      mimeType: f.mimeType ?? "image/png",
+                      created: Date.now(),
+                    }))
+                  );
+                }
                 let elements = convertToExcalidrawElements(data.elements || []);
                 apiRef.current.updateScene({ elements });
                 // Las fuentes se piden al primer uso: al cabo de un momento, volver a medir

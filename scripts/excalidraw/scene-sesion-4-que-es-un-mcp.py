@@ -1,7 +1,7 @@
 """Escena: qué es un MCP y cómo entra al agente (sesión 4, slide 1). Lienzo 4:3.
 
 Uso: python3 scene-sesion-4-que-es-un-mcp.py [N]
-  1 el servidor y sus herramientas · 2 todas van al prompt · 3 quién hace qué · 4 new vs load
+  1 el servidor, la tool y lo que cuesta · 2 quién hace qué · 3 new vs load
 """
 import json, sys
 from pathlib import Path
@@ -23,7 +23,7 @@ def arrow(x, y, pts, stroke, sw=4, dash="solid"):
     els.append({"type": "arrow", "x": x, "y": y, "strokeColor": stroke, "strokeWidth": sw,
                 "strokeStyle": dash, "roundness": {"type": 2}, "points": pts})
 
-N = int(sys.argv[1]) if len(sys.argv) > 1 else 4
+N = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
 # --- lienzo 4:3 (1760 x 1320), esquinas invisibles para fijar el encuadre ---
 rect(120, 20, 1760, 1320, "transparent", "#ffffff", 1)
@@ -40,8 +40,8 @@ if N >= 1:
         M(210, 248 + i * 88, t, 30, VERDE)
     T(180, 490, "lo levantas una vez · trae varias", 24, GRIS)
 
-# --- 2. la tool por dentro, y a dónde va a dar ---
-if N >= 2:
+# --- (sigue la pieza 1) la tool por dentro, y a dónde va a dar ---
+if N >= 1:
     arrow(710, 300, [[0, 0], [50, -10], [100, 0]], GRIS, 3, "dashed")
     rect(840, 140, 660, 210, "#ffffff", VERDE)
     T(880, 158, "por dentro, una tool", 32, VERDE)
@@ -57,8 +57,8 @@ if N >= 2:
     T(880, 567, "≈ 48,000 tokens antes de que escribas nada", 24, ROJO)
     T(880, 608, "por eso EasyBits sólo carga 50 de las 200", 24, GRIS)
 
-# --- 3. quién hace qué ---
-if N >= 3:
+# --- 2. quién hace qué ---
+if N >= 2:
     rect(140, 680, 1600, 300, "#d3f9d8", VERDE)
     T(180, 698, "quién hace qué", 38, VERDE)
 
@@ -86,8 +86,8 @@ if N >= 3:
     T(880, 908, "http: el Agente abre la conexión a un servicio que ya escucha.", 26, GRIS)
     M(880, 944, "{ name, url, headers }", 22, GRIS)
 
-# --- 4. new vs load ---
-if N >= 4:
+# --- 3. new vs load ---
+if N >= 3:
     rect(140, 1010, 1600, 320, "#fff9db", AMBAR)
     T(180, 1028, "los dos declaran mcpServers[]", 38, AMBAR)
 

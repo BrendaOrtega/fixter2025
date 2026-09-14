@@ -56,6 +56,15 @@ export const VIDEOS: VideoItem[] = [
     duracion: "2:10",
   },
   {
+    slug: "las-4-memorias",
+    titulo: "Las cuatro memorias de un agente",
+    descripcion:
+      "Son cuatro y cada una vive en otro lado: la de trabajo se borra al cerrar la sesión, la episódica es un archivo que sobrevive a que borres la caja, la procedimental son skills que el agente se escribe solo, y la semántica llega como tool por MCP.",
+    src: `${CDN}/videos/sesion-03-las-4-memorias.mp4`,
+    poster: `${CDN}/videos/posters/sesion-03-las-4-memorias.jpg`,
+    duracion: "0:58",
+  },
+  {
     slug: "code-mode",
     titulo: "Doscientas tools no caben",
     descripcion:
