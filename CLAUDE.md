@@ -61,6 +61,21 @@ y se mete con `sidechaincompress` para que se agache al hablar. Precedente de do
 Herramientas: HyperFrames para las tarjetas (SVG animado a mano, nunca imágenes generadas), ffmpeg
 para el montaje. Ver `docs/webinar-sistemas-agenticos/SHORTS.md`.
 
+**Biblioteca de animaciones (desde el 14 sep 2026): revisarla ANTES de escribir un efecto a mano.**
+Vive en `videos/_shared/recipes/motion-anything/` (Apache-2.0, créditos en su `ATTRIBUTION.md`,
+leer su `README.md`): 85 recetas `web/` (texto cinético: `kinetic-headline`, `text-scramble`,
+`decrypted-text`, `falling-text`, `count-up`, `glitch-text`; entradas: `bounce-cards`,
+`stagger-list`; fondos: `dot-grid`, `pixel-transition`), 20 `slides/` para tarjetas
+(`fx-word-cascade`, `fx-letter-explode`, `fx-confetti`, `fx-shockwave`) y 94 clases `css/`
+tipo animate.css. Cada receta trae `SKILL.md` con cuándo usarla, `preview.html` y el archivo que
+se copia. Estrenada en `easybits/docs/mockups/motion-ui/mobile-agent.html` (kinetic-headline +
+text-scramble + confetti). Reglas: lo que anima con CSS/WAAPI es seek-safe y entra directo a
+HyperFrames; lo que corre con `requestAnimationFrame` o WebGL con reloj propio (shaders, canvas)
+no es determinista frame a frame — sólo en grabaciones de pantalla en tiempo real, o exponerle
+`seek(t)`. Y siguen mandando las reglas de la casa: paleta por marca, caricatura plana sin
+gradientes ni glow en FixterGeek, bucles finitos, SFX en cada animación (catálogo CC0 en
+`docs/shorts-taller/sfx/`, montado con ffmpeg fuera del render).
+
 ## Blog — Sistema de posts
 
 **Tres formatos**: `markdown` (default), `html` (full HTML), `tiptap` (JSON AST). El campo `contentFormat` en el modelo `Post` determina el renderizado.
