@@ -2,11 +2,11 @@
 # Mezcla del short: voz (ya en su lugar, arranca en 0) −15 LUFS, cama −26 con sidechain, SFX 0.7. Sin loudnorm al final.
 set -euo pipefail
 cd "$(dirname "$0")"
-T=27.2; BGM=/tmp/bgm-eve/06.mp3; BGSS=${1:-0}
+T=27.1; BGM=/tmp/bgm-eve/06.mp3; BGSS=${1:-0}
 S=../../shorts-taller/sfx
 R=$(ls -t renders/*.mp4 | head -1); TMP=$(mktemp -d)
 ffmpeg -y -loglevel error -i voice/voice.wav -af "loudnorm=I=-15:TP=-1.5:LRA=11" -ar 48000 -ac 2 $TMP/voice.wav
-ffmpeg -y -loglevel error -ss "$BGSS" -t 40 -i "$BGM" -af "loudnorm=I=-26:TP=-3:LRA=11,afade=t=in:d=0.3,afade=t=out:st=24.7:d=2.5" -ar 48000 -ac 2 $TMP/bgm.wav
+ffmpeg -y -loglevel error -ss "$BGSS" -t 40 -i "$BGM" -af "loudnorm=I=-26:TP=-3:LRA=11,afade=t=in:d=0.3,afade=t=out:st=24.6:d=2.5" -ar 48000 -ac 2 $TMP/bgm.wav
 # SFX (tiempo, archivo): del sfx.json de la composición
 python3 - > $TMP/sfx.txt <<'PY'
 import json

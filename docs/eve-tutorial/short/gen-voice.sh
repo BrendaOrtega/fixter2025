@@ -8,7 +8,7 @@ LINES=(
 "Le corto la luz en el paso tres."
 "Cuando vuelve, lee el registro y sigue en el cuatro. No repite nada."
 "En el video lo armamos con ib, el freimwork de Vércel. Con Póstgres y Dóquer, corriendo en una caja de Ísibits."
-"Está completo en yutub. Fixterguic. Sale hoy, no te lo pierdas."
+"Está completo en yutub. Sale hoy, no te lo pierdas. Fixterguic."
 )
 GAPS=(0.5 0.5 0.8 0.6 0.5 0.4); t=0; rm -f voice/list.txt; : > voice/marks.txt
 for i in "${!LINES[@]}"; do
