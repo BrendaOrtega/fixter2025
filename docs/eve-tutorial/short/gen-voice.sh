@@ -7,7 +7,7 @@ LINES=(
 "Este agente guarda un recibo por cada paso que termina."
 "Le corto la luz en el paso tres."
 "Cuando vuelve, lee sus recibos y sigue en el cuatro. No repite nada."
-"En el video lo armamos con ib, Póstgres y Dóquer, y lo corremos en una caja de Ísibits."
+"En el video lo armamos con ib, de Vércel, Póstgres y Dóquer, y lo corremos en una caja de Ísibits."
 "Está completo en yutub: fixterguic. Sale hoy."
 )
 GAPS=(0.5 0.5 0.8 0.6 0.5 0.4); t=0; rm -f voice/list.txt; : > voice/marks.txt
