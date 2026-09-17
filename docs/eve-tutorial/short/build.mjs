@@ -1,8 +1,8 @@
 import fs from "node:fs";
 // Short-trailer 9:16 (~23 s). Ghosty presenta el tutorial de eve. Tiempos de voz de voice/marks.txt.
-const TOTAL = 26.2;
+const TOTAL = 27.2;
 const V = [0, 3.7, 8.1, 10.95, 15.41, 18.35, 22.12];  // la frase 4 va en dos subtítulos           // inicio de cada frase
-const D = [3.20, 3.90, 2.05, 3.86, 2.85, 3.27, 2.71];          // duración de cada frase
+const D = [3.20, 3.90, 2.05, 3.86, 2.85, 3.27, 3.78];          // duración de cada frase
 const LINES = [
   "Soy Ghosty, y te hice un video sobre agentes durables.",
   "Este agente lleva un registro de cada paso que termina, en Postgres.",
@@ -10,7 +10,7 @@ const LINES = [
   "Cuando vuelve, lee el registro y sigue en el cuatro. No repite nada.",
   "En el video lo armamos con eve, el framework de Vercel.",
   "Con Postgres y Docker, corriendo en una caja de EasyBits.",
-  "Está completo en YouTube: fixtergeek. Sale hoy.",
+  "Está completo en YouTube. Fixtergeek. Sale hoy, no te lo pierdas.",
 ];
 const BG = "#0E1317", MINT = "#85DDCB", MINTDK = "#37AB93", GREEN = "#8DCF6E", INK = "#F2F5F4", GREY = "#7C8A8E", FROST = "#DDF4F0", OFF = "#3E5A5C";
 const ANIMS = fs.readFileSync(new URL("../cards/_anims.css", import.meta.url), "utf8");
