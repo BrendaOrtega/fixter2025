@@ -3,7 +3,9 @@ import path from "node:path";
 
 // Toma el <svg> de un style frame y lo envuelve en una composición HyperFrames 1920×1080
 // con una timeline GSAP pausada (window.__timelines.main). Cada tarjeta pasa su script.
-export function buildCard({ dir, frame, total, script, sfx }) {
+const ANIMS = fs.readFileSync(new URL("./_anims.css", import.meta.url), "utf8");
+
+export function buildCard({ dir, frame, total, script, sfx, css = "" }) {
   const src = fs.readFileSync(path.join(dir, "../../style-frames", frame), "utf8");
   const svg = src.slice(src.indexOf("<svg"), src.indexOf("</svg>") + 6).replace(/xlink:href="ghosty\.png"/g, 'xlink:href="assets/ghosty.png"');
   const html = `<!doctype html>
@@ -18,6 +20,10 @@ export function buildCard({ dir, frame, total, script, sfx }) {
       body { font-family: ui-monospace, Menlo, monospace; color: #F2F5F4; }
       .clip { position: absolute; inset: 0; }
       svg text { font-family: ui-monospace, Menlo, monospace; }
+      /* recetas CSS de motion-anything (Animate.css): seek-safe. Sobre SVG: transform-box fill-box. */
+      ${ANIMS}
+      .anim { transform-box: fill-box; transform-origin: 50% 50%; animation-fill-mode: both; animation-timing-function: ease; }
+      ${css}
     </style>
   </head>
   <body>

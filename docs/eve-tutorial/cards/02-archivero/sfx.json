@@ -1,14 +1,20 @@
 {
-  "drawer-open": [
-    0.6
+  "boing": [
+    0.8
   ],
   "chip-slide": [
     3
   ],
   "chip-place": [
-    3.85
+    3.92
+  ],
+  "rattle": [
+    3.95
+  ],
+  "pop": [
+    4.4
   ],
   "paper": [
-    5.6
+    6.2
   ]
 }

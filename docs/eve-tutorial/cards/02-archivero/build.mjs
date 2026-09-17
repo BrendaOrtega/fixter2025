@@ -3,16 +3,21 @@ import { buildCard } from "../_shared.mjs";
 const T = 12;
 buildCard({
   dir: new URL(".", import.meta.url).pathname, frame: "02-archivero.html", total: T,
-  script: `
-      // fotograma 0 completo: archivero, Ghosty con la 4 y charola ya están; se anima el viaje de la ficha
-      tl.to("#cabinet", { y: -10, duration: .35, ease: "back.out(2)" }, 0.6); tl.to("#cabinet", { y: 0, duration: .35 }, 1.4);
-      // Ghosty se mece y la ficha viaja al hueco punteado del cajón
-      tl.to("image", { y: -10, duration: .7, yoyo: true, repeat: 3, ease: "sine.inOut" }, 1.2);
-      tl.to("g[transform*='rotate(-16'] rect, g[transform*='rotate(-16'] text", { x: -200, y: -30, duration: .8, ease: "power2.inOut" }, 3.0);
-      tl.to("g[transform*='rotate(-16']", { opacity: 0, duration: .1 }, 3.8);
-      tl.to("#slot4", { fill: "#8DCF6E", strokeDasharray: "0 0", duration: .2 }, 3.85); tl.to("#slot4num", { opacity: 1, duration: .1 }, 3.9);
-      tl.to("#tray", { y: -10, duration: .35, ease: "back.out(2)" }, 5.6); tl.to("#tray", { y: 0, duration: .35 }, 6.4);
-      tl.to("#tray rect:nth-of-type(5)", { y: -6, duration: .3, yoyo: true, repeat: 3, ease: "sine.inOut" }, 6.4);
+  css: `
+      #ghosty { animation: jello 1.2s .8s both, tada .9s 4.0s both, swing 1.4s 7.0s both; }
+      #drawer-steps { animation: headshake .8s 3.95s both; }
+      #paper1 { animation: bounce 1s 4.4s both, rubberband 1s 6.2s both; }
+      #tray { animation: swing 1.2s 6.2s both; }
+      #ghosty, #drawer-steps, #paper1, #tray { transform-box: fill-box; transform-origin: 50% 100%; animation-fill-mode: both; }
   `,
-  sfx: { "drawer-open": [0.6], "chip-slide": [3.0], "chip-place": [3.85], "paper": [5.6] },
+  script: `
+      // fotograma 0 completo. Lo "vivo" va por CSS (recetas motion-anything); GSAP sólo mueve la ficha y cambia textos.
+      tl.to("#chip4hand", { x: -229, y: -55, duration: .9, ease: "power2.inOut" }, 3.0);
+      tl.to("#chip4hand", { opacity: 0, duration: .08 }, 3.9);
+      tl.to("#chip4path", { opacity: 0, duration: .2 }, 3.9);
+      tl.to("#slot4", { fill: "#8DCF6E", strokeDasharray: "0 0", duration: .15 }, 3.92);
+      tl.to("#slot4num", { opacity: 1, duration: .05 }, 3.95);
+      tl.set("#nextlbl", { textContent: "siguiente: paso 5" }, 4.5);
+  `,
+  sfx: { "boing": [0.8], "chip-slide": [3.0], "chip-place": [3.92], "rattle": [3.95], "pop": [4.4], "paper": [6.2] },
 });
