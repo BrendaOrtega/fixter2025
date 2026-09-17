@@ -131,7 +131,8 @@ tl.set("#frost polygon", { scale: 0, transformOrigin: "50% 50%" }, 0.01); tl.set
 // flota sólo mientras hay luz: se detiene en seco al apagarse y vuelve al reencender
 const KILL = V[2] + 1.2, BACK = V[3] + .4;
 tl.to("#ghosty image", { y: -14, duration: .8, yoyo: true, repeat: Math.floor(KILL / .8) - 1, ease: "sine.inOut" }, 0);
-tl.to("#ghosty image", { y: -14, duration: .8, yoyo: true, repeat: 31, ease: "sine.inOut" }, BACK);
+// el primer tramo termina en y=-14; el segundo arranca desde ahí hacia 0 (un "to -14" no se movería)
+tl.fromTo("#ghosty image", { y: -14 }, { y: 0, duration: .8, yoyo: true, repeat: 31, ease: "sine.inOut", immediateRender: false }, BACK);
 tl.to(".lamp:nth-of-type(3)", { opacity: .3, duration: .4, yoyo: true, repeat: Math.floor(KILL / .4) - 1, ease: "none" }, 0);
 tl.set(".lamp:nth-of-type(3)", { opacity: 1 }, KILL);
 tl.to(".lamp:nth-of-type(3)", { opacity: .3, duration: .4, yoyo: true, repeat: 60, ease: "none" }, BACK);
