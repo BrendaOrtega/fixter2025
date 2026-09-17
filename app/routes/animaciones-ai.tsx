@@ -18,12 +18,88 @@ import getMetaTags from "~/utils/getMetaTags";
 /// `Subscriber.tags` (ver `audienceTagsFor` en `~/.server/programas`).
 const WAITLIST_TAG = "animaciones-ai-waitlist";
 
-export const meta = () =>
-  getMetaTags({
-    title: "Animaciones con AI · Lista de espera",
+const PAGE_URL = "https://www.fixtergeek.com/animaciones-ai";
+const OG_IMAGE = "https://www.fixtergeek.com/courses/animaciones-ai-og.png";
+
+export const meta = () => {
+  // `url` es obligatorio: sin él getMetaTags pone canonical y og:url de la home y Google trata la
+  // página como duplicada. La imagen propia va con sus medidas reales (WhatsApp descarta si no cuadran).
+  const baseMeta = getMetaTags({
+    title: "Animaciones con AI: curso de Motion, 3D y micro-interacciones | FixterGeek",
     description:
-      "Construyes componentes 3D, presentaciones animadas y micro-interacciones con Motion y AI.",
+      "Curso en vivo de FixterGeek, octubre 2026. Construye componentes 3D, presentaciones animadas en HTML y micro-interacciones con Motion, GSAP, Three.js y agentes de AI. Apúntate a la lista de espera y recibe el precio de lanzamiento.",
+    url: PAGE_URL,
+    image: OG_IMAGE,
+    imageWidth: 1200,
+    imageHeight: 630,
+    keywords:
+      "curso animaciones, motion react, gsap, three.js, hyperframes, animaciones con AI, micro-interacciones, presentaciones animadas",
   });
+
+  // Sin `offers`: el curso aún no tiene precio y un InStock falso es peor que nada.
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Course",
+        "@id": `${PAGE_URL}#course`,
+        name: "Animaciones con AI",
+        description:
+          "Curso en vivo para construir componentes 3D, presentaciones animadas en HTML y micro-interacciones con Motion, GSAP, Three.js, HyperFrames y agentes de AI.",
+        url: PAGE_URL,
+        image: OG_IMAGE,
+        inLanguage: "es",
+        provider: {
+          "@type": "Organization",
+          name: "FixterGeek",
+          url: "https://www.fixtergeek.com",
+          logo: "https://www.fixtergeek.com/logo.png",
+        },
+        instructor: {
+          "@type": "Person",
+          name: "Héctor Bliss",
+          url: "https://www.hectorbliss.com",
+        },
+        hasCourseInstance: {
+          "@type": "CourseInstance",
+          courseMode: "Online",
+          startDate: "2026-10",
+        },
+        educationalLevel: "Intermediate",
+        coursePrerequisites: "JavaScript y React básicos",
+        teaches: [
+          "Componentes 3D con Three.js",
+          "Presentaciones animadas escritas en HTML",
+          "Micro-interacciones con Motion y GSAP",
+          "Shorts y video hechos con código con HyperFrames",
+          "Assets y escenas con Blender y agentes de AI",
+        ],
+      },
+      {
+        "@type": "WebPage",
+        "@id": `${PAGE_URL}#webpage`,
+        url: PAGE_URL,
+        name: "Animaciones con AI: curso de Motion, 3D y micro-interacciones | FixterGeek",
+        description:
+          "Lista de espera del curso Animaciones con AI de FixterGeek. Abre en octubre de 2026.",
+        isPartOf: { "@id": "https://www.fixtergeek.com/#website" },
+        about: { "@id": `${PAGE_URL}#course` },
+        inLanguage: "es",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${PAGE_URL}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Inicio", item: "https://www.fixtergeek.com" },
+          { "@type": "ListItem", position: 2, name: "Cursos", item: "https://www.fixtergeek.com/cursos" },
+          { "@type": "ListItem", position: 3, name: "Animaciones con AI", item: PAGE_URL },
+        ],
+      },
+    ],
+  };
+
+  return [...baseMeta, { "script:ld+json": schemaOrg }];
+};
 
 // Límite por IP en memoria: 5 altas por hora por dirección. Suficiente contra
 // ráfagas de bots; se reinicia con cada deploy y no necesita tabla.

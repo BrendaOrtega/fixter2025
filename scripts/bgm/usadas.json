@@ -404,5 +404,54 @@
     "autor": "Doctor Frost",
     "licencia": "CC BY 3.0 (pide crédito)",
     "video": "videos/short-03"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1674218",
+    "titulo": "Spencer Newton - Right Now (Original Mix)(Electro House)",
+    "autor": "Spencer Newton",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "shorts sesión 5 · a-industria"
+  },
+  {
+    "fuente": "jamendo (álbum Techbloom-2, 2018; Openverse caído al registrar, sin id de pista)",
+    "titulo": "Thermostat",
+    "autor": "Z Asmut",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "shorts sesión 5 · b-peludin"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1406209",
+    "titulo": "Thyone [Drum and Bass]",
+    "autor": "Hardcore Scm",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "shorts sesión 5 · c-adrede"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/797836",
+    "titulo": "The old lady and the lonely kid with his drums",
+    "autor": "NOGO",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "shorts sesión 5 · d-subagentes"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/706518",
+    "titulo": "DJ John - Last flight (Drum&Bass Mix)",
+    "autor": "DJ John",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "shorts sesión 5 · e-techo"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1357783",
+    "titulo": "Baal V",
+    "autor": "CHASMA",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "descartada (rfc-9727: inadecuada)"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1674209",
+    "titulo": "Spencer Newton - Bounce (Original Mix)(Electro House)",
+    "autor": "Spencer Newton",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/rfc-9727-api-catalog"
   }
 ]

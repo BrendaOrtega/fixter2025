@@ -21,6 +21,8 @@ const Title = () => {
       <h1 className="mt-3 flex flex-wrap justify-center gap-x-[0.25em] text-[2.2rem] font-extrabold leading-[0.95] tracking-tight sm:text-7xl" style={{ color: INK }}>
         {words.map((w, wi) => (
           <span key={w} className="inline-flex overflow-hidden" style={{ color: wi === 2 ? GREEN : INK }}>
+            {/* el espacio real va dentro del span: sin él el crawler lee "AnimacionesconAI" */}
+            {wi > 0 && " "}
             {w.split("").map((ch, i) => (
               <motion.span key={i} initial={{ y: "110%", rotate: 8 }} animate={{ y: 0, rotate: 0 }} transition={{ ...spring, delay: 0.35 + (wi * 6 + i) * 0.035 }} className="inline-block">
                 {ch}
