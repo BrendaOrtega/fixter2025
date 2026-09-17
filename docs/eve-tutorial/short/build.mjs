@@ -1,14 +1,14 @@
 import fs from "node:fs";
 // Short-trailer 9:16 (~23 s). Ghosty presenta el tutorial de eve. Tiempos de voz de voice/marks.txt.
-const TOTAL = 25.5;
-const V = [0, 3.7, 8.1, 10.95, 15.41, 21.48];           // inicio de cada frase
-const D = [3.20, 3.90, 2.05, 3.86, 5.57, 2.71];          // duración de cada frase
+const TOTAL = 26.2;
+const V = [0, 3.7, 8.1, 10.95, 15.41, 22.14];           // inicio de cada frase
+const D = [3.20, 3.90, 2.05, 3.86, 6.23, 2.71];          // duración de cada frase
 const LINES = [
   "Soy Ghosty, y te hice un video sobre agentes durables.",
   "Este agente lleva un registro de cada paso que termina, en Postgres.",
   "Le corto la luz en el paso tres.",
   "Cuando vuelve, lee el registro y sigue en el cuatro. No repite nada.",
-  "En el video lo armamos con eve, de Vercel, Postgres y Docker, y lo corremos en una caja de EasyBits.",
+  "En el video lo armamos con eve, el framework de Vercel. Con Postgres y Docker, corriendo en una caja de EasyBits.",
   "Está completo en YouTube: fixtergeek. Sale hoy.",
 ];
 const BG = "#0E1317", MINT = "#85DDCB", MINTDK = "#37AB93", GREEN = "#8DCF6E", INK = "#F2F5F4", GREY = "#7C8A8E", FROST = "#DDF4F0", OFF = "#3E5A5C";
@@ -36,14 +36,14 @@ body { font-family:"Space Mono", monospace; color:${INK}; }
 .clip { position:absolute; inset:0; }
 ${ANIMS}
 .anim { transform-box: fill-box; transform-origin: 50% 100%; animation-fill-mode: both; }
-#ghosty { animation: jello 1.3s .1s both, bounce 1.1s 3.8s both, headshake 1s 8.2s both, tada 1s 11.1s both, bounce 1.2s 21.5s both; transform-box: fill-box; transform-origin: 50% 100%; }
+#ghosty { animation: jello 1.3s .1s both, bounce 1.1s 3.8s both, headshake 1s 8.2s both, tada 1s 11.1s both, bounce 1.2s 22.2s both; transform-box: fill-box; transform-origin: 50% 100%; }
 #stack { animation: bounce 1.1s 3.9s both; transform-box: fill-box; transform-origin: 50% 100%; }
-#ic1 { animation: bounce 1s 16.8s both; } #ic2 { animation: bounce 1s 17.8s both; } #ic3 { animation: bounce 1s 18.8s both; }
+#ic1 { animation: bounce 1s 17.3s both; } #ic2 { animation: bounce 1s 18.5s both; } #ic3 { animation: bounce 1s 19.7s both; }
 #ic1,#ic2,#ic3 { transform-box: fill-box; transform-origin: 50% 100%; }
 #box, #pieces, #cta { transform: translate(150px,-25px) scale(.86); transform-origin: 0 0; } #cable { transform: translateY(-345px); }
 .slice { transform-box: fill-box; transform-origin: 0% 50%; }
 #journal { animation: swing 1s 3.8s both; transform-box: fill-box; transform-origin: 50% 0%; }
-#logo { animation: tada 1s 22.4s both; transform-box: fill-box; transform-origin: 50% 50%; }
+#logo { animation: tada 1s 23.1s both; transform-box: fill-box; transform-origin: 50% 50%; }
 .cap { top:1215px; bottom:auto; height:200px; display:flex; align-items:center; justify-content:center; padding:0 70px; z-index:20; }
 .capin { font-family:"Big Shoulders Display", sans-serif; font-weight:900; font-size:72px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; }
 .w { color:${GREY}; display:inline-block; }
@@ -174,6 +174,6 @@ window.__timelines["main"] = tl;
 </script>
 </body></html>`;
 fs.writeFileSync(new URL("./index.html", import.meta.url), html);
-const sfx = { "boing": [0.1], "paper": [V[1]+.95, V[1]+1.75, V[1]+2.55, V[3]+1.75, V[3]+2.45, V[3]+3.15], "cable-yank": [V[2]+.9], "power-down": [V[2]+1.2], "frost": [V[2]+1.3], "power-up": [V[3]+.3], "melt": [V[3]+.4], "tick": [V[3]+.8, V[3]+.95, V[3]+1.1], "riser": [V[4]+.2], "hit": [V[4]+.42], "pop": [16.8, 17.8, 18.8], "stamp": [V[5]], "tada": [22.4] };
+const sfx = { "boing": [0.1], "paper": [V[1]+.95, V[1]+1.75, V[1]+2.55, V[3]+1.75, V[3]+2.45, V[3]+3.15], "cable-yank": [V[2]+.9], "power-down": [V[2]+1.2], "frost": [V[2]+1.3], "power-up": [V[3]+.3], "melt": [V[3]+.4], "tick": [V[3]+.8, V[3]+.95, V[3]+1.1], "riser": [V[4]+.2], "hit": [V[4]+.42], "pop": [17.3, 18.5, 19.7], "stamp": [V[5]], "tada": [23.1] };
 fs.writeFileSync(new URL("./sfx.json", import.meta.url), JSON.stringify(sfx, null, 2));
 console.log("index.html", html.length, "bytes · total", TOTAL);
