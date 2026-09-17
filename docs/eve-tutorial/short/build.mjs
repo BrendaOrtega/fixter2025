@@ -37,7 +37,7 @@ body { font-family:"Space Mono", monospace; color:${INK}; }
 .clip { position:absolute; inset:0; }
 ${ANIMS}
 .anim { transform-box: fill-box; transform-origin: 50% 100%; animation-fill-mode: both; }
-#ghosty { animation: jello 1.3s .1s both, bounce 1.1s 3.8s both, headshake 1s 8.2s both, tada 1s 11.1s both, bounce 1.2s 22.2s both; transform-box: fill-box; transform-origin: 50% 100%; }
+#ghosty { animation: jello 1.3s .1s both, bounce 1.1s 3.8s both, headshake 1s 8.2s both, tada 1s 11.5s both, bounce 1.2s 22.2s both; transform-box: fill-box; transform-origin: 50% 100%; }
 #stack { animation: bounce 1.1s 3.9s both; transform-box: fill-box; transform-origin: 50% 100%; }
 #ic1 { animation: bounce 1s 17.3s both; } #ic2 { animation: bounce 1s 18.5s both; } #ic3 { animation: bounce 1s 19.7s both; }
 #ic1,#ic2,#ic3 { transform-box: fill-box; transform-origin: 50% 100%; }
@@ -128,8 +128,13 @@ const tl = gsap.timeline({ paused: true });
 const V = ${JSON.stringify(V)}, D = ${JSON.stringify(D)}, GREY = "${GREY}", INK = "${INK}", MINT = "${MINT}";
 tl.set("#frost polygon", { scale: 0, transformOrigin: "50% 50%" }, 0.01); tl.set("#frost", { opacity: 1 }, V[2] + 1.25);
 // vida continua: Ghosty flota en bucle finito; lámpara blanca parpadea; recibos de la libreta se mecen con ella
-tl.to("#ghosty image", { y: -14, duration: .8, yoyo: true, repeat: 27, ease: "sine.inOut" }, 0);
-tl.to(".lamp:nth-of-type(3)", { opacity: .3, duration: .4, yoyo: true, repeat: 50, ease: "none" }, 0);
+// flota sólo mientras hay luz: se detiene en seco al apagarse y vuelve al reencender
+const KILL = V[2] + 1.2, BACK = V[3] + .4;
+tl.to("#ghosty image", { y: -14, duration: .8, yoyo: true, repeat: Math.floor(KILL / .8) - 1, ease: "sine.inOut" }, 0);
+tl.to("#ghosty image", { y: -14, duration: .8, yoyo: true, repeat: 31, ease: "sine.inOut" }, BACK);
+tl.to(".lamp:nth-of-type(3)", { opacity: .3, duration: .4, yoyo: true, repeat: Math.floor(KILL / .4) - 1, ease: "none" }, 0);
+tl.set(".lamp:nth-of-type(3)", { opacity: 1 }, KILL);
+tl.to(".lamp:nth-of-type(3)", { opacity: .3, duration: .4, yoyo: true, repeat: 60, ease: "none" }, BACK);
 tl.to(".chip", { y: -4, duration: .5, yoyo: true, repeat: 6, stagger: .08, ease: "sine.inOut" }, .3);
 // recibo: la ficha se pinta verde y un papelito vuela a la libreta, donde queda la línea
 const done = (n, t) => {
