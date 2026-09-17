@@ -1,0 +1,99 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Style frame 01 · Ghosty congelado con la ficha 4</title>
+<style>
+  :root{--ink:#0E1317;--mint:#85DDCB;--mintdk:#37AB93;--green:#8DCF6E;--paper:#F2F5F4;--shade:#D9D3C4;--grey:#7C8A8E;--frost:#DDF4F0}
+  html,body{margin:0;background:var(--ink)}
+  body{width:1920px;height:1080px;overflow:hidden;font-family:ui-monospace,Menlo,monospace}
+</style>
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <!-- fondo: malla punteada de la casa -->
+  <defs>
+    <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse">
+      <circle cx="24" cy="24" r="2.2" fill="#1C262B"/>
+    </pattern>
+    <clipPath id="boxHole"><rect x="1010" y="230" width="640" height="560" rx="14"/></clipPath>
+  </defs>
+  <rect width="1920" height="1080" fill="#0E1317"/>
+  <rect width="1920" height="1080" fill="url(#dots)"/>
+
+  <!-- ===== IZQUIERDA: terminal (lo que graba bliss, aquí como maqueta) ===== -->
+  <g id="terminal">
+    <rect x="128" y="248" width="720" height="560" rx="14" fill="#0E1317" transform="translate(12,12)"/>
+    <rect x="128" y="248" width="720" height="560" rx="14" fill="#141C21" stroke="#F2F5F4" stroke-width="4"/>
+    <rect x="128" y="248" width="720" height="52" rx="14" fill="#F2F5F4"/>
+    <rect x="128" y="286" width="720" height="14" fill="#F2F5F4"/>
+    <circle cx="164" cy="274" r="9" fill="#0E1317"/><circle cx="192" cy="274" r="9" fill="#7C8A8E"/><circle cx="220" cy="274" r="9" fill="#85DDCB"/>
+    <text x="488" y="282" text-anchor="middle" font-size="20" font-weight="700" fill="#0E1317">eve dev --no-ui</text>
+    <g font-size="28" fill="#F2F5F4">
+      <text x="168" y="360">[process_batch] <tspan fill="#8DCF6E">paso 1</tspan> · pid 96343</text>
+      <text x="168" y="410">[process_batch] <tspan fill="#8DCF6E">paso 2</tspan> · pid 96343</text>
+      <text x="168" y="460">[process_batch] <tspan fill="#8DCF6E">paso 3</tspan> · pid 96343</text>
+      <text x="168" y="540" fill="#85DDCB">$ pkill -9 -f "eve dev"</text>
+      <rect x="168" y="572" width="18" height="34" fill="#F2F5F4"/>
+    </g>
+  </g>
+
+  <!-- ===== DERECHA: la caja-servidor en corte, con Ghosty adentro ===== -->
+  <g id="box">
+    <!-- sombra dura -->
+    <rect x="1000" y="220" width="660" height="580" rx="16" fill="#0E1317" transform="translate(16,16)"/>
+    <!-- tapa isométrica -->
+    <polygon points="1000,220 1040,180 1700,180 1660,220" fill="#37AB93" stroke="#F2F5F4" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="1660,220 1700,180 1700,760 1660,800" fill="#2C8C79" stroke="#F2F5F4" stroke-width="4" stroke-linejoin="round"/>
+    <!-- frente, apagado: gris azulado en vez de menta -->
+    <rect x="1000" y="220" width="660" height="580" rx="16" fill="#3E5A5C" stroke="#F2F5F4" stroke-width="4"/>
+    <!-- lámparas apagadas -->
+    <g stroke="#F2F5F4" stroke-width="3">
+      <circle cx="1040" cy="770" r="9" fill="#7C8A8E"/><circle cx="1070" cy="770" r="9" fill="#7C8A8E"/><circle cx="1100" cy="770" r="9" fill="#7C8A8E"/>
+    </g>
+    <text x="1620" y="778" text-anchor="end" font-size="20" font-weight="700" fill="#F2F5F4">sb_af93 · off</text>
+
+    <!-- interior (hueco) -->
+    <rect x="1010" y="230" width="640" height="520" rx="14" fill="#0E1317"/>
+    <g clip-path="url(#boxHole)">
+      <!-- piso -->
+      <rect x="1010" y="640" width="640" height="120" fill="#1C262B"/>
+      <!-- mesa -->
+      <rect x="1140" y="560" width="400" height="18" rx="4" fill="#F2F5F4"/>
+      <rect x="1160" y="578" width="14" height="80" fill="#F2F5F4"/><rect x="1506" y="578" width="14" height="80" fill="#F2F5F4"/>
+      <!-- fichas 1..3 hechas (verde con palomita), 5 y 6 esperando, la 4 en la mano -->
+      <g font-size="30" font-weight="900" text-anchor="middle">
+        <rect x="1150" y="500" width="56" height="56" rx="8" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="3"/><text x="1178" y="540" fill="#0E1317">1</text>
+        <rect x="1216" y="500" width="56" height="56" rx="8" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="3"/><text x="1244" y="540" fill="#0E1317">2</text>
+        <rect x="1282" y="500" width="56" height="56" rx="8" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="3"/><text x="1310" y="540" fill="#0E1317">3</text>
+        <rect x="1414" y="500" width="56" height="56" rx="8" fill="#7C8A8E" stroke="#F2F5F4" stroke-width="3"/><text x="1442" y="540" fill="#0E1317">5</text>
+        <rect x="1480" y="500" width="56" height="56" rx="8" fill="#7C8A8E" stroke="#F2F5F4" stroke-width="3"/><text x="1508" y="540" fill="#0E1317">6</text>
+      </g>
+      <!-- Ghosty oficial, sin repintar, inclinado a medio movimiento -->
+      <g transform="rotate(-8 1330 420)">
+        <image xlink:href="ghosty.png" x="1230" y="268" width="200" height="232" preserveAspectRatio="xMidYMid meet"/>
+      </g>
+      <!-- la ficha 4 en el aire, a medio camino hacia la mesa -->
+      <g transform="rotate(14 1400 450)">
+        <rect x="1372" y="422" width="56" height="56" rx="8" fill="#85DDCB" stroke="#F2F5F4" stroke-width="3"/>
+        <text x="1400" y="462" font-size="30" font-weight="900" text-anchor="middle" fill="#0E1317">4</text>
+      </g>
+      <!-- escarcha: picos blancos en los bordes del hueco -->
+      <g fill="#DDF4F0">
+        <polygon points="1010,230 1090,230 1060,262 1130,246 1100,290 1010,300"/>
+        <polygon points="1650,230 1570,230 1600,268 1540,256 1580,304 1650,310"/>
+        <polygon points="1010,750 1010,680 1050,720 1070,690 1100,750"/>
+        <polygon points="1650,750 1650,670 1610,716 1590,690 1560,750"/>
+      </g>
+      <!-- copos sueltos -->
+      <g fill="#DDF4F0">
+        <circle cx="1120" cy="340" r="5"/><circle cx="1540" cy="380" r="4"/><circle cx="1480" cy="300" r="6"/><circle cx="1180" cy="440" r="4"/><circle cx="1600" cy="600" r="5"/>
+      </g>
+    </g>
+    <!-- borde del hueco -->
+    <rect x="1010" y="230" width="640" height="520" rx="14" fill="none" stroke="#F2F5F4" stroke-width="4"/>
+  </g>
+
+  <!-- ===== etiqueta del beat ===== -->
+  <g>
+    <rect x="1000" y="860" width="440" height="64" rx="12" fill="#0E1317" transform="translate(8,8)"/>
+    <rect x="1000" y="860" width="440" height="64" rx="12" fill="#85DDCB" stroke="#F2F5F4" stroke-width="4"/>
+    <text x="1220" y="903" text-anchor="middle" font-size="30" font-weight="900" fill="#0E1317">congelado en el paso 4</text>
+  </g>
+</svg>

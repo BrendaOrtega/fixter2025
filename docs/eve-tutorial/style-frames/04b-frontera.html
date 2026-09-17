@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Style frame 04b · Qué cruza la frontera</title>
+<style>html,body{margin:0;background:#0E1317}body{width:1920px;height:1080px;overflow:hidden;font-family:ui-monospace,Menlo,monospace}</style>
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs><pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="24" cy="24" r="2.2" fill="#1C262B"/></pattern></defs>
+  <rect width="1920" height="1080" fill="#0E1317"/><rect width="1920" height="1080" fill="url(#dots)"/>
+
+  <g id="title">
+    <text x="960" y="110" text-anchor="middle" font-size="56" font-weight="900" fill="#F2F5F4">Qué cruza la frontera y qué no</text>
+    <text x="960" y="160" text-anchor="middle" font-size="28" fill="#85DDCB">una llamada de tool: va un comando, vuelve un resultado</text>
+  </g>
+
+  <!-- frontera vertical -->
+  <g id="border">
+    <line x1="960" y1="230" x2="960" y2="800" stroke="#F2F5F4" stroke-width="6" stroke-dasharray="18 14"/>
+    <rect x="880" y="230" width="160" height="44" rx="8" fill="#F2F5F4"/>
+    <text x="960" y="261" text-anchor="middle" font-size="22" font-weight="900" fill="#0E1317">frontera</text>
+  </g>
+
+  <!-- lado runtime -->
+  <g id="left">
+    <text x="520" y="320" text-anchor="middle" font-size="30" font-weight="900" fill="#85DDCB">app runtime</text>
+    <g id="left-ghost"><image xlink:href="ghosty.png" x="200" y="380" width="180" height="210" preserveAspectRatio="xMidYMid meet"/></g>
+    <g id="secrets">
+      <rect x="420" y="620" width="380" height="120" rx="12" fill="#0E1317" transform="translate(10,10)"/>
+      <rect x="420" y="620" width="380" height="120" rx="12" fill="#141C21" stroke="#85DDCB" stroke-width="4"/>
+      <text x="610" y="668" text-anchor="middle" font-size="24" font-weight="900" fill="#F2F5F4">🔑 ANTHROPIC_API_KEY</text>
+      <text x="610" y="708" text-anchor="middle" font-size="24" font-weight="900" fill="#F2F5F4">🔑 tokens de MCP</text>
+    </g>
+    <text x="610" y="790" text-anchor="middle" font-size="24" fill="#85DDCB" font-weight="900">se quedan de este lado</text>
+  </g>
+
+  <!-- lado sandbox -->
+  <g id="right">
+    <text x="1400" y="320" text-anchor="middle" font-size="30" font-weight="900" fill="#85DDCB">sandbox</text>
+    <rect x="1120" y="360" width="560" height="260" rx="12" fill="#0E1317" transform="translate(10,10)"/>
+    <rect x="1120" y="360" width="560" height="260" rx="12" fill="#141C21" stroke="#F2F5F4" stroke-width="4"/>
+    <g id="shell" font-size="26" fill="#F2F5F4">
+      <text x="1150" y="410" fill="#85DDCB">/workspace $</text>
+      <text x="1150" y="460">python analysis/run.py</text>
+      <text x="1150" y="510" fill="#8DCF6E">promedio: 7.4</text>
+      <text x="1150" y="560" fill="#7C8A8E">exit 0</text>
+    </g>
+    <g id="net">
+      <line x1="1690" y1="490" x2="1780" y2="490" stroke="#7C8A8E" stroke-width="6" stroke-dasharray="12 12"/>
+      <circle cx="1820" cy="490" r="34" fill="#0E1317" stroke="#F2F5F4" stroke-width="4"/>
+      <line x1="1796" y1="466" x2="1844" y2="514" stroke="#F2F5F4" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    <text x="1400" y="700" text-anchor="middle" font-size="24" fill="#7C8A8E">si necesita internet, tú abres la puerta (allow-all)</text>
+    <text x="1400" y="740" text-anchor="middle" font-size="24" fill="#7C8A8E">o la dejas cerrada (deny-all), como el ejemplo oficial</text>
+  </g>
+
+  <!-- flechas que cruzan -->
+  <g id="arrow-cmd" fill="none" stroke="#F2F5F4" stroke-width="7" stroke-linecap="round">
+    <path d="M400,440 C700,440 800,430 1100,430"/>
+    <polygon points="1110,430 1086,416 1086,444" fill="#F2F5F4" stroke="none"/>
+  </g>
+  <rect x="640" y="380" width="380" height="40" rx="8" fill="#0E1317"/>
+  <text x="830" y="408" text-anchor="middle" font-size="22" font-weight="900" fill="#F2F5F4">va: el comando (bash, write_file)</text>
+
+  <g id="arrow-res" fill="none" stroke="#8DCF6E" stroke-width="7" stroke-linecap="round">
+    <path d="M1100,560 C800,560 700,570 400,570"/>
+    <polygon points="390,570 414,556 414,584" fill="#8DCF6E" stroke="none"/>
+  </g>
+  <rect x="600" y="585" width="460" height="40" rx="8" fill="#0E1317"/>
+  <text x="830" y="613" text-anchor="middle" font-size="22" font-weight="900" fill="#8DCF6E">vuelve: exitCode + stdout + stderr</text>
+
+  <g id="footer">
+    <text x="960" y="900" text-anchor="middle" font-size="26" fill="#F2F5F4">el modelo nunca toca una llave: pide, y el runtime ejecuta por él del lado seguro</text>
+  </g>
+</svg>

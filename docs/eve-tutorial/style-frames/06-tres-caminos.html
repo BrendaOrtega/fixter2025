@@ -1,0 +1,89 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Style frame 06 · Tres formas de no perder el trabajo</title>
+<style>html,body{margin:0;background:#0E1317}body{width:1920px;height:1080px;overflow:hidden;font-family:ui-monospace,Menlo,monospace}</style>
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs><pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="24" cy="24" r="2.2" fill="#1C262B"/></pattern></defs>
+  <rect width="1920" height="1080" fill="#0E1317"/><rect width="1920" height="1080" fill="url(#dots)"/>
+
+  <g id="title">
+    <text x="960" y="100" text-anchor="middle" font-size="56" font-weight="900" fill="#F2F5F4">Tres formas de no perder el trabajo</text>
+    <text x="960" y="150" text-anchor="middle" font-size="28" fill="#85DDCB">Ghosty con la ficha 4 en la mano, tres maneras de sobrevivir al apagón</text>
+  </g>
+
+  <!-- ===== Columna 1: journal a mano ===== -->
+  <g id="col-journal">
+    <rect x="110" y="220" width="540" height="600" rx="16" fill="#0E1317" transform="translate(12,12)"/>
+    <rect x="110" y="220" width="540" height="600" rx="16" fill="#141C21" stroke="#85DDCB" stroke-width="4"/>
+    <rect x="110" y="220" width="540" height="60" rx="16" fill="#85DDCB"/><rect x="110" y="260" width="540" height="20" fill="#85DDCB"/>
+    <text x="380" y="262" text-anchor="middle" font-size="28" font-weight="900" fill="#0E1317">1 · journal a mano</text>
+    <!-- libreta -->
+    <g id="notebook">
+      <rect x="160" y="330" width="220" height="260" rx="8" fill="#F2F5F4" stroke="#0E1317" stroke-width="4"/>
+      <line x1="200" y1="330" x2="200" y2="590" stroke="#D9D3C4" stroke-width="3"/>
+      <g font-size="24" font-weight="900" fill="#0E1317">
+        <text x="215" y="380">paso 1 ✓</text><text x="215" y="424">paso 2 ✓</text><text x="215" y="468">paso 3 ✓</text>
+        <text x="215" y="512" fill="#7C8A8E">paso 4 …</text>
+      </g>
+    </g>
+    <g id="journal-ghost"><image xlink:href="ghosty.png" x="420" y="360" width="180" height="210" preserveAspectRatio="xMidYMid meet"/></g>
+    <g id="journal-notes" font-size="22" fill="#F2F5F4">
+      <text x="380" y="650" text-anchor="middle">una tabla steps(run, n, resultado)</text>
+      <text x="380" y="690" text-anchor="middle">tú escribes runStep(id, fn)</text>
+      <text x="380" y="730" text-anchor="middle" fill="#85DDCB">lo hacemos en la sesión 6</text>
+      <text x="380" y="790" text-anchor="middle" fill="#7C8A8E">exige: código determinista</text>
+    </g>
+  </g>
+
+  <!-- ===== Columna 2: motor ===== -->
+  <g id="col-engine">
+    <rect x="690" y="220" width="540" height="600" rx="16" fill="#0E1317" transform="translate(12,12)"/>
+    <rect x="690" y="220" width="540" height="600" rx="16" fill="#141C21" stroke="#8DCF6E" stroke-width="4"/>
+    <rect x="690" y="220" width="540" height="60" rx="16" fill="#8DCF6E"/><rect x="690" y="260" width="540" height="20" fill="#8DCF6E"/>
+    <text x="960" y="262" text-anchor="middle" font-size="28" font-weight="900" fill="#0E1317">2 · motor</text>
+    <!-- cilindro postgres pequeño -->
+    <g id="engine-db">
+      <rect x="740" y="380" width="200" height="170" fill="#37AB93" stroke="#F2F5F4" stroke-width="4"/>
+      <ellipse cx="840" cy="550" rx="100" ry="24" fill="#37AB93" stroke="#F2F5F4" stroke-width="4"/>
+      <ellipse cx="840" cy="380" rx="100" ry="24" fill="#85DDCB" stroke="#F2F5F4" stroke-width="4"/>
+      <text x="840" y="470" text-anchor="middle" font-size="22" font-weight="900" fill="#0E1317">steps</text>
+    </g>
+    <g id="engine-ghost"><image xlink:href="ghosty.png" x="990" y="360" width="180" height="210" preserveAspectRatio="xMidYMid meet"/></g>
+    <g id="engine-notes" font-size="22" fill="#F2F5F4">
+      <text x="960" y="650" text-anchor="middle">eve + Workflow SDK (Postgres)</text>
+      <text x="960" y="690" text-anchor="middle">Restate, Temporal, Inngest…</text>
+      <text x="960" y="730" text-anchor="middle" fill="#8DCF6E">el motor replaya por ti</text>
+      <text x="960" y="790" text-anchor="middle" fill="#7C8A8E">exige: "use step" e idempotencia</text>
+    </g>
+  </g>
+
+  <!-- ===== Columna 3: imagen (hibernar) ===== -->
+  <g id="col-snapshot">
+    <rect x="1270" y="220" width="540" height="600" rx="16" fill="#0E1317" transform="translate(12,12)"/>
+    <rect x="1270" y="220" width="540" height="600" rx="16" fill="#141C21" stroke="#F2F5F4" stroke-width="4"/>
+    <rect x="1270" y="220" width="540" height="60" rx="16" fill="#F2F5F4"/><rect x="1270" y="260" width="540" height="20" fill="#F2F5F4"/>
+    <text x="1540" y="262" text-anchor="middle" font-size="28" font-weight="900" fill="#0E1317">3 · imagen de la caja</text>
+    <!-- caja escarchada con ghosty adentro -->
+    <g id="frozen-box">
+      <rect x="1330" y="330" width="420" height="260" rx="12" fill="#3E5A5C" stroke="#F2F5F4" stroke-width="4"/>
+      <rect x="1350" y="350" width="380" height="200" rx="8" fill="#0E1317"/>
+      <image xlink:href="ghosty.png" x="1470" y="365" width="150" height="175" preserveAspectRatio="xMidYMid meet"/>
+      <g id="frost" fill="#DDF4F0">
+        <polygon points="1350,350 1410,350 1385,392"/><polygon points="1480,350 1520,350 1500,380"/><polygon points="1660,350 1730,350 1695,400"/>
+        <polygon points="1350,550 1350,500 1380,550"/><polygon points="1730,550 1730,490 1690,550"/>
+      </g>
+      <text x="1540" y="580" text-anchor="middle" font-size="20" font-weight="900" fill="#DDF4F0">.mem + .ext4</text>
+    </g>
+    <g id="snapshot-notes" font-size="22" fill="#F2F5F4">
+      <text x="1540" y="650" text-anchor="middle">hibernar la caja completa</text>
+      <text x="1540" y="690" text-anchor="middle">memoria y disco, proceso incluido</text>
+      <text x="1540" y="730" text-anchor="middle" fill="#85DDCB">sin tocar el código del agente</text>
+      <text x="1540" y="790" text-anchor="middle" fill="#7C8A8E">exige: reintentar la llamada en vuelo</text>
+    </g>
+  </g>
+
+  <g id="footer">
+    <text x="960" y="900" text-anchor="middle" font-size="26" fill="#7C8A8E">en los tres, una llamada a la mitad (cobro, correo, modelo) se repite: la idempotencia no la regala nadie</text>
+    <text x="960" y="944" text-anchor="middle" font-size="26" fill="#F2F5F4">journal chico para los efectos externos + hibernación para estacionar: así lo mezclamos nosotros</text>
+  </g>
+</svg>

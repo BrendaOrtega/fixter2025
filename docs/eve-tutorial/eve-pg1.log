@@ -1,0 +1,9 @@
+☰eve  v0.58.1
+[Graphile Worker] WARNING: having maxPoolSize (10) smaller than concurrency (50) may lead to non-optimal performance. {
+  "max": 10,
+  "concurrency": 50
+}
+[DEV] server listening at http://127.0.0.1:2000/
+[process_batch] paso 1 @ 2026-09-17T14:28:52.888Z pid 1664
+[process_batch] paso 2 @ 2026-09-17T14:28:57.956Z pid 1664
+[process_batch] paso 3 @ 2026-09-17T14:29:03.029Z pid 1664

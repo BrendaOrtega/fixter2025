@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Style frame 02 · El World: archivero y charola</title>
+<style>
+  html,body{margin:0;background:#0E1317}
+  body{width:1920px;height:1080px;overflow:hidden;font-family:ui-monospace,Menlo,monospace}
+</style>
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="24" cy="24" r="2.2" fill="#1C262B"/></pattern>
+  </defs>
+  <rect width="1920" height="1080" fill="#0E1317"/>
+  <rect width="1920" height="1080" fill="url(#dots)"/>
+  <!-- piso -->
+  <rect x="0" y="780" width="1920" height="300" fill="#151E23"/>
+  <line x1="0" y1="780" x2="1920" y2="780" stroke="#F2F5F4" stroke-width="4"/>
+
+  <!-- ===== Archivero = Storage (tres cajones) ===== -->
+  <g id="cabinet">
+    <rect x="240" y="260" width="420" height="520" rx="12" fill="#0E1317" transform="translate(14,14)"/>
+    <rect x="240" y="260" width="420" height="520" rx="12" fill="#37AB93" stroke="#F2F5F4" stroke-width="5"/>
+    <!-- runs -->
+    <rect x="268" y="290" width="364" height="140" rx="10" fill="#85DDCB" stroke="#F2F5F4" stroke-width="5"/>
+    <rect x="420" y="380" width="60" height="16" rx="8" fill="#F2F5F4"/>
+    <text x="292" y="336" font-size="34" font-weight="900" fill="#0E1317">runs</text>
+    <!-- steps: abierto, sobresale -->
+    <rect x="268" y="452" width="420" height="140" rx="10" fill="#0E1317" transform="translate(12,12)"/>
+    <rect x="268" y="452" width="420" height="140" rx="10" fill="#85DDCB" stroke="#F2F5F4" stroke-width="5"/>
+    <text x="292" y="498" font-size="34" font-weight="900" fill="#0E1317">steps</text>
+    <g font-size="30" font-weight="900" text-anchor="middle" fill="#0E1317">
+      <rect x="292" y="516" width="58" height="58" rx="8" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="4"/><text x="321" y="557">1</text>
+      <rect x="362" y="516" width="58" height="58" rx="8" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="4"/><text x="391" y="557">2</text>
+      <rect x="432" y="516" width="58" height="58" rx="8" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="4"/><text x="461" y="557">3</text>
+      <rect x="502" y="516" width="58" height="58" rx="8" fill="none" stroke="#F2F5F4" stroke-width="4" stroke-dasharray="8 8"/>
+    </g>
+    <!-- eventos -->
+    <rect x="268" y="614" width="364" height="140" rx="10" fill="#85DDCB" stroke="#F2F5F4" stroke-width="5"/>
+    <rect x="420" y="704" width="60" height="16" rx="8" fill="#F2F5F4"/>
+    <text x="292" y="660" font-size="34" font-weight="900" fill="#0E1317">eventos</text>
+  </g>
+  <text x="450" y="860" text-anchor="middle" font-size="34" font-weight="900" fill="#85DDCB">Storage</text>
+  <text x="450" y="900" text-anchor="middle" font-size="24" fill="#7C8A8E">lo que ya pasó</text>
+
+  <!-- ===== Ghosty al centro, llevando la ficha 4 al cajón ===== -->
+  <g transform="rotate(-10 960 520)">
+    <image xlink:href="ghosty.png" x="810" y="380" width="300" height="350" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g transform="rotate(-16 760 600)">
+    <rect x="720" y="560" width="80" height="80" rx="10" fill="#0E1317" transform="translate(8,8)"/>
+    <rect x="720" y="560" width="80" height="80" rx="10" fill="#85DDCB" stroke="#F2F5F4" stroke-width="5"/>
+    <text x="760" y="616" font-size="44" font-weight="900" text-anchor="middle" fill="#0E1317">4</text>
+  </g>
+  <path d="M700,600 q-60,-20 -110,-30" fill="none" stroke="#F2F5F4" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 14"/>
+  <text x="960" y="860" text-anchor="middle" font-size="34" font-weight="900" fill="#F2F5F4">Ghosty</text>
+  <text x="960" y="900" text-anchor="middle" font-size="24" fill="#7C8A8E">guarda cada paso antes de seguir</text>
+
+  <!-- ===== Charola = Queue (pendientes) ===== -->
+  <g id="tray">
+    <rect x="1260" y="720" width="440" height="60" rx="10" fill="#0E1317" transform="translate(14,14)"/>
+    <rect x="1260" y="720" width="440" height="60" rx="10" fill="#37AB93" stroke="#F2F5F4" stroke-width="5"/>
+    <rect x="1260" y="600" width="24" height="140" fill="#37AB93" stroke="#F2F5F4" stroke-width="5"/>
+    <rect x="1676" y="600" width="24" height="140" fill="#37AB93" stroke="#F2F5F4" stroke-width="5"/>
+    <!-- papeles: 6, 5 abajo; el de arriba dice "paso 4" -->
+    <rect x="1310" y="690" width="340" height="34" rx="6" fill="#D9D3C4" stroke="#0E1317" stroke-width="4"/>
+    <rect x="1320" y="656" width="340" height="34" rx="6" fill="#E8E4D8" stroke="#0E1317" stroke-width="4"/>
+    <rect x="1330" y="622" width="340" height="34" rx="6" fill="#F2F5F4" stroke="#0E1317" stroke-width="4"/>
+    <text x="1500" y="647" text-anchor="middle" font-size="24" font-weight="900" fill="#0E1317">siguiente: paso 4</text>
+  </g>
+  <text x="1480" y="860" text-anchor="middle" font-size="34" font-weight="900" fill="#85DDCB">Queue</text>
+  <text x="1480" y="900" text-anchor="middle" font-size="24" fill="#7C8A8E">lo que sigue</text>
+
+  <!-- ===== título ===== -->
+  <text x="960" y="150" text-anchor="middle" font-size="56" font-weight="900" fill="#F2F5F4">El World, sin branding</text>
+  <text x="960" y="200" text-anchor="middle" font-size="28" fill="#85DDCB">un archivero de lo que ya pasó + una charola de lo que sigue</text>
+</svg>

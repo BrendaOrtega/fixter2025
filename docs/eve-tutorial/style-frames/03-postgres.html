@@ -1,0 +1,108 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Style frame 03 · El estado sale del proceso (Postgres)</title>
+<style>
+  html,body{margin:0;background:#0E1317}
+  body{width:1920px;height:1080px;overflow:hidden;font-family:ui-monospace,Menlo,monospace}
+  /* Cada pieza animable es un <g id> sin transform: GSAP usa svgOrigin sobre coordenadas absolutas */
+</style>
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="24" cy="24" r="2.2" fill="#1C262B"/></pattern>
+  </defs>
+  <rect width="1920" height="1080" fill="#0E1317"/>
+  <rect width="1920" height="1080" fill="url(#dots)"/>
+
+  <g id="title">
+    <text x="960" y="110" text-anchor="middle" font-size="56" font-weight="900" fill="#F2F5F4">El estado sale del proceso</text>
+    <text x="960" y="160" text-anchor="middle" font-size="28" fill="#85DDCB">cada step es un checkpoint en Postgres; una instancia nueva lo lee y reanuda</text>
+  </g>
+
+  <!-- ===== Instancia 1: proceso terminado ===== -->
+  <g id="instance1">
+    <rect x="130" y="300" width="460" height="420" rx="16" fill="#0E1317" transform="translate(12,12)"/>
+    <rect x="130" y="300" width="460" height="420" rx="16" fill="#141C21" stroke="#7C8A8E" stroke-width="4"/>
+    <rect x="130" y="300" width="460" height="56" rx="16" fill="#7C8A8E"/>
+    <rect x="130" y="340" width="460" height="16" fill="#7C8A8E"/>
+    <text x="360" y="338" text-anchor="middle" font-size="24" font-weight="900" fill="#0E1317">instancia 1 · pid 1664</text>
+    <g id="instance1-log" font-size="28" fill="#7C8A8E">
+      <text x="170" y="420">step 1 ✓</text>
+      <text x="170" y="470">step 2 ✓</text>
+      <text x="170" y="520">step 3 ✓</text>
+      <text x="170" y="590" fill="#F2F5F4">kill -9</text>
+    </g>
+    <g id="instance1-ghost-gone" opacity="0.25">
+      <image xlink:href="ghosty.png" x="400" y="440" width="150" height="175" preserveAspectRatio="xMidYMid meet"/>
+    </g>
+    <text x="360" y="770" text-anchor="middle" font-size="26" font-weight="900" fill="#7C8A8E">proceso terminado</text>
+  </g>
+
+  <!-- ===== Postgres: base de datos compartida (cilindro) ===== -->
+  <g id="postgres">
+    <g id="postgres-body">
+      <ellipse cx="960" cy="730" rx="200" ry="40" fill="#0E1317" transform="translate(12,12)"/>
+      <rect x="760" y="400" width="400" height="330" fill="#37AB93" stroke="#F2F5F4" stroke-width="5"/>
+      <ellipse cx="960" cy="730" rx="200" ry="40" fill="#37AB93" stroke="#F2F5F4" stroke-width="5"/>
+      <ellipse cx="960" cy="400" rx="200" ry="40" fill="#85DDCB" stroke="#F2F5F4" stroke-width="5"/>
+    </g>
+    <!-- tablas como filas dentro del cilindro -->
+    <g id="table-runs">
+      <rect x="800" y="460" width="320" height="52" rx="8" fill="#85DDCB" stroke="#F2F5F4" stroke-width="4"/>
+      <text x="820" y="495" font-size="26" font-weight="900" fill="#0E1317">workflow_runs</text>
+    </g>
+    <g id="table-steps">
+      <rect x="800" y="524" width="320" height="96" rx="8" fill="#85DDCB" stroke="#F2F5F4" stroke-width="4"/>
+      <text x="820" y="559" font-size="26" font-weight="900" fill="#0E1317">workflow_steps</text>
+      <g id="step-rows" font-size="22" font-weight="900" text-anchor="middle" fill="#0E1317">
+        <rect id="row1" x="820" y="574" width="34" height="34" rx="6" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="3"/><text x="837" y="599">1</text>
+        <rect id="row2" x="860" y="574" width="34" height="34" rx="6" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="3"/><text x="877" y="599">2</text>
+        <rect id="row3" x="900" y="574" width="34" height="34" rx="6" fill="#8DCF6E" stroke="#F2F5F4" stroke-width="3"/><text x="917" y="599">3</text>
+      </g>
+    </g>
+    <g id="table-events">
+      <rect x="800" y="632" width="320" height="52" rx="8" fill="#85DDCB" stroke="#F2F5F4" stroke-width="4"/>
+      <text x="820" y="667" font-size="26" font-weight="900" fill="#0E1317">workflow_events</text>
+    </g>
+    <text x="960" y="810" text-anchor="middle" font-size="26" font-weight="900" fill="#85DDCB">Postgres · estado durable</text>
+  </g>
+
+  <!-- ===== Instancia 2: reanuda ===== -->
+  <g id="instance2">
+    <rect x="1330" y="300" width="460" height="420" rx="16" fill="#0E1317" transform="translate(12,12)"/>
+    <rect x="1330" y="300" width="460" height="420" rx="16" fill="#141C21" stroke="#85DDCB" stroke-width="4"/>
+    <rect x="1330" y="300" width="460" height="56" rx="16" fill="#85DDCB"/>
+    <rect x="1330" y="340" width="460" height="16" fill="#85DDCB"/>
+    <text x="1560" y="338" text-anchor="middle" font-size="24" font-weight="900" fill="#0E1317">instancia 2 · pid 2327</text>
+    <g id="instance2-log" font-size="28" fill="#7C8A8E">
+      <text x="1370" y="420">step 1 · leído</text>
+      <text x="1370" y="470">step 2 · leído</text>
+      <text x="1370" y="520">step 3 · leído</text>
+      <text x="1370" y="590" fill="#8DCF6E" font-weight="900">step 4 ▶</text>
+    </g>
+    <g id="instance2-ghost">
+      <image xlink:href="ghosty.png" x="1630" y="410" width="150" height="175" preserveAspectRatio="xMidYMid meet"/>
+    </g>
+    <g id="chip4">
+      <rect x="1596" y="600" width="56" height="56" rx="8" fill="#85DDCB" stroke="#F2F5F4" stroke-width="4"/>
+      <text x="1624" y="640" font-size="30" font-weight="900" text-anchor="middle" fill="#0E1317">4</text>
+    </g>
+    <text x="1560" y="770" text-anchor="middle" font-size="26" font-weight="900" fill="#85DDCB">reanuda en el step 4</text>
+  </g>
+
+  <!-- ===== Flechas (animables con stroke-dashoffset) ===== -->
+  <g id="arrow-checkpoint" fill="none" stroke="#F2F5F4" stroke-width="6" stroke-linecap="round">
+    <path d="M600,470 C680,470 700,520 750,520"/>
+    <polygon points="760,520 738,506 738,534" fill="#F2F5F4" stroke="none"/>
+  </g>
+  <text x="675" y="440" text-anchor="middle" font-size="22" font-weight="900" fill="#F2F5F4">checkpoint</text>
+  <g id="arrow-resume" fill="none" stroke="#8DCF6E" stroke-width="6" stroke-linecap="round">
+    <path d="M1170,520 C1230,520 1250,470 1320,470"/>
+    <polygon points="1330,470 1308,456 1308,484" fill="#8DCF6E" stroke="none"/>
+  </g>
+  <text x="1245" y="440" text-anchor="middle" font-size="22" font-weight="900" fill="#8DCF6E">reanudar</text>
+
+  <g id="footer">
+    <text x="960" y="900" text-anchor="middle" font-size="26" fill="#7C8A8E">world local: el estado vivía en el disco del proceso (.eve/.workflow-data)</text>
+    <text x="960" y="944" text-anchor="middle" font-size="26" fill="#F2F5F4">world-postgres: el estado vive en la base; cualquier instancia lo lee</text>
+  </g>
+</svg>
