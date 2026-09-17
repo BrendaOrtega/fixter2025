@@ -153,8 +153,8 @@ La tercera es la imagen de la caja: EasyBits suspende la microVM completa, memor
 Al volver, el proceso ni se enteró.
 Te exige reintentar la llamada HTTP que estaba en vuelo, porque esa sí muere.
 > 
-En las tres, si la luz se va a mitad de un cobro, el cobro se hace otra vez.
-Eso lo resuelve un id único por cobro, aparte del checkpoint.
+En las tres, lo que ya se hizo se queda hecho: si el agente ya generó doscientas páginas del reporte, al volver sigue en la doscientos uno.
+Y para lo que sale al mundo, un cobro o un correo, cada llamada lleva su id y se manda una sola vez.
 > 
 Si te gustaría construir la primera forma desde cero, en una sesión, dímelo en los comentarios.
 Y si quieres armar agentes así, con su caja, su memoria y sus canales, el programa Sistemas Agénticos está en fixtergeek punto com.

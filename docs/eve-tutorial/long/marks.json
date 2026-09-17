@@ -856,43 +856,43 @@
  {
   "ch": 7,
   "i": 122,
-  "text": "En las tres, si la luz se va a mitad de un cobro, el cobro se hace otra vez.",
+  "text": "En las tres, lo que ya se hizo se queda hecho: si el agente ya generó doscientas páginas del reporte, al volver sigue en la doscientos uno.",
   "start": 544.21,
-  "dur": 4.16
+  "dur": 8.13
  },
  {
   "ch": 7,
   "i": 123,
-  "text": "Eso lo resuelve un id único por cobro, aparte del checkpoint.",
-  "start": 548.82,
-  "dur": 3.71
+  "text": "Y para lo que sale al mundo, un cobro o un correo, cada llamada lleva su id y se manda una sola vez.",
+  "start": 552.79,
+  "dur": 5.65
  },
  {
   "ch": 7,
   "i": 124,
   "text": "Si te gustaría construir la primera forma desde cero, en una sesión, dímelo en los comentarios.",
-  "start": 553.98,
+  "start": 559.89,
   "dur": 5.5
  },
  {
   "ch": 7,
   "i": 125,
   "text": "Y si quieres armar agentes así, con su caja, su memoria y sus canales, el programa Sistemas Agénticos está en fixtergeek punto com.",
-  "start": 559.94,
+  "start": 565.84,
   "dur": 8
  },
  {
   "ch": 7,
   "i": 126,
   "text": "Suscríbete al canal para el siguiente.",
-  "start": 568.39,
+  "start": 574.29,
   "dur": 2.18
  },
  {
   "ch": 7,
   "i": 127,
   "text": "Soy Ghosty. Nos vemos.",
-  "start": 571.01,
+  "start": 576.92,
   "dur": 1.41
  }
 ]
