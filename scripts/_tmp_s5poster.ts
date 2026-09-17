@@ -1,0 +1,10 @@
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PrismaClient } from "@prisma/client";
+import { readFileSync } from "node:fs";
+const s3 = new S3Client({ region: "auto", endpoint: "https://t3.storage.dev", forcePathStyle: true });
+const db = new PrismaClient();
+const Key = "fixtergeek/videos/6a78ff744a8e00e3b2eea500/6aa8ca89e44efff001de95ab/hls/poster.jpg";
+await s3.send(new PutObjectCommand({ Bucket: "wild-bird-2039", Key, Body: readFileSync(process.env.HOME + "/grabaciones-taller/poster.jpg"), ContentType: "image/jpeg", CacheControl: "public, max-age=31536000", ACL: "public-read" }));
+const url = `https://t3.storage.dev/wild-bird-2039/${Key}`;
+await db.video.update({ where: { slug: "sesion-5-un-backend-n-canales" }, data: { poster: url } });
+console.log(url); process.exit(0);

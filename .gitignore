@@ -12,3 +12,9 @@
 # Estado local de ghosty
 .ghosty/
 docs/shorts-taller/**/assets/_work/
+
+# Shorts: los renders y snapshots se regeneran; no van al repo
+docs/shorts-taller/**/renders/
+docs/shorts-taller/**/snapshots/
+docs/shorts-taller/**/render.log
+scripts/excalidraw/__pycache__/
