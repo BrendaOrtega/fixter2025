@@ -120,10 +120,10 @@ for (const ch of Object.keys(scenes).map(Number)) {
   const axisIn = inVar === "A" ? "x" : "y", offIn = inVar === "A" ? 2500 : 1200;
   const axisOut = outVar === "A" ? "x" : "y", offOut = outVar === "A" ? -2500 : -1200;
   if (ch > 0) {
-    tl += `tl.set("#wipein", { opacity: 1 }, 0.001); tl.set("#wipein .slice", { ${axisIn}: 0 }, 0.001);`;
+    tl += ``;
     if (sealIn) tl += `tl.set("#sealin", { scale: 1, transformOrigin: "50% 50%" }, 0.001); tl.to("#sealin", { scale: 0, duration: .3, ease: "back.in(1.8)" }, 0.05);`;
     tl += `tl.to("#wipein .slice", { ${axisIn}: ${offIn}, duration: .55, stagger: .035, ease: "power2.inOut" }, 0.1); tl.set("#wipein", { opacity: 0 }, 0.95);\n`;
-  } else tl += `tl.set("#wipein", { opacity: 0 }, 0.001);\n`;
+  } else tl += ``;
   if (ch < 7) {
     const W0 = +(TOTAL - 0.95).toFixed(2);
     tl += `tl.set("#wipeout .slice", { ${axisOut}: ${offOut} }, 0.001); tl.set("#wipeout", { opacity: 1 }, ${W0}); tl.to("#wipeout .slice", { ${axisOut}: 0, duration: .55, stagger: .035, ease: "power2.inOut" }, ${W0});`;
@@ -185,7 +185,7 @@ ${ANIMS}
 ${html}
 ${caps}
 <svg id="wipeout" class="wipe" width="1920" height="1080" viewBox="0 0 1920 1080">${slicesOut}${seal}</svg>
-<svg id="wipein" class="wipe" width="1920" height="1080" viewBox="0 0 1920 1080">${slicesIn}${sealIn}</svg>
+<svg id="wipein" class="wipe" style="opacity:${ch > 0 ? 1 : 0}" width="1920" height="1080" viewBox="0 0 1920 1080">${slicesIn}${sealIn}</svg>
 </div>
 <script>
 window.__timelines = window.__timelines || {};
