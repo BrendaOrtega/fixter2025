@@ -1,0 +1,11 @@
+$ eb.sandboxes.get("sb_17c429d2-aef5-4f36-8aae-e7b634dfbb70")
+template: node
+status: running
+name: eve-eve-sbx-ses-easybits-4c4164b5039c3606-c6c47d291d1f-wrun_
+metadata: {
+  "agent": "eve-demo",
+  "channel": "http",
+  "eve_session": "eve-sbx-ses-easybits-4c4164b5039c3606-c6c47d291d1f-wrun_01M2R3ZE6RD50HGHC07VWGBZCB-__root__",
+  "ip": "172.20.0.76",
+  "sessionId": "wrun_01M2R3ZE6RD50HGHC07VWGBZCB"
+}

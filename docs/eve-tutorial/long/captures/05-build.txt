@@ -1,0 +1,8 @@
+$ npx eve build 2>&1 | tail -5
+  ├─ .eve/builds/mu5r5wp6-ccb49c53-6054-43c3-96c1-3733a703d162/output/server/index.mjs (870 kB) (242 kB gzip)
+  └─ .eve/builds/mu5r5wp6-ccb49c53-6054-43c3-96c1-3733a703d162/output/server/package.json (301 B) (196 B gzip)
+Σ Total size: 11 MB (2.53 MB gzip)
+[nitro] ✔ You can preview this build using npx nitro preview
+[BUILD] built output at /data/eve-demo/.output
+
+[exit 0]

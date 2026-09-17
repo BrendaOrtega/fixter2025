@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es" data-resolution="landscape"><head><meta charset="UTF-8" /><meta name="viewport" content="width=1920, height=1080" />
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script><script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/TextPlugin.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1920px; height:1080px; overflow:hidden; background:#0E1317; }
+body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: radial-gradient(#1C262B 2.2px, transparent 2.2px); background-size: 48px 48px; }
+.clip { position:absolute; inset:0; }
+@keyframes tada {
+  from {
+    transform: scale3d(1, 1, 1);
+  }
+
+  10%,
+  20% {
+    transform: scale3d(0.9, 0.9, 0.9) rotate3d(0, 0, 1, -3deg);
+  }
+
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg);
+  }
+
+  40%,
+  60%,
+  80% {
+    transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg);
+  }
+
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+@keyframes jello {
+  from,
+  11.1%,
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+
+  22.2% {
+    transform: skewX(-12.5deg) skewY(-12.5deg);
+  }
+
+  33.3% {
+    transform: skewX(6.25deg) skewY(6.25deg);
+  }
+
+  44.4% {
+    transform: skewX(-3.125deg) skewY(-3.125deg);
+  }
+
+  55.5% {
+    transform: skewX(1.5625deg) skewY(1.5625deg);
+  }
+
+  66.6% {
+    transform: skewX(-0.78125deg) skewY(-0.78125deg);
+  }
+
+  77.7% {
+    transform: skewX(0.390625deg) skewY(0.390625deg);
+  }
+
+  88.8% {
+    transform: skewX(-0.1953125deg) skewY(-0.1953125deg);
+  }
+}
+@keyframes bounce {
+  from,
+  20%,
+  53%,
+  to {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0);
+  }
+
+  40%,
+  43% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -30px, 0) scaleY(1.1);
+  }
+
+  70% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -15px, 0) scaleY(1.05);
+  }
+
+  80% {
+    transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0) scaleY(0.95);
+  }
+
+  90% {
+    transform: translate3d(0, -4px, 0) scaleY(1.02);
+  }
+}
+@keyframes headShake {
+  0% {
+    transform: translateX(0);
+  }
+
+  6.5% {
+    transform: translateX(-6px) rotateY(-9deg);
+  }
+
+  18.5% {
+    transform: translateX(5px) rotateY(7deg);
+  }
+
+  31.5% {
+    transform: translateX(-3px) rotateY(-5deg);
+  }
+
+  43.5% {
+    transform: translateX(2px) rotateY(3deg);
+  }
+
+  50% {
+    transform: translateX(0);
+  }
+}
+@keyframes rubberBand {
+  from {
+    transform: scale3d(1, 1, 1);
+  }
+
+  30% {
+    transform: scale3d(1.25, 0.75, 1);
+  }
+
+  40% {
+    transform: scale3d(0.75, 1.25, 1);
+  }
+
+  50% {
+    transform: scale3d(1.15, 0.85, 1);
+  }
+
+  65% {
+    transform: scale3d(0.95, 1.05, 1);
+  }
+
+  75% {
+    transform: scale3d(1.05, 0.95, 1);
+  }
+
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+@keyframes swing {
+  20% {
+    transform: rotate3d(0, 0, 1, 15deg);
+  }
+
+  40% {
+    transform: rotate3d(0, 0, 1, -10deg);
+  }
+
+  60% {
+    transform: rotate3d(0, 0, 1, 5deg);
+  }
+
+  80% {
+    transform: rotate3d(0, 0, 1, -5deg);
+  }
+
+  to {
+    transform: rotate3d(0, 0, 1, 0deg);
+  }
+}
+@keyframes wobble {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  15% {
+    transform: translate3d(-25%, 0, 0) rotate3d(0, 0, 1, -5deg);
+  }
+
+  30% {
+    transform: translate3d(20%, 0, 0) rotate3d(0, 0, 1, 3deg);
+  }
+
+  45% {
+    transform: translate3d(-15%, 0, 0) rotate3d(0, 0, 1, -3deg);
+  }
+
+  60% {
+    transform: translate3d(10%, 0, 0) rotate3d(0, 0, 1, 2deg);
+  }
+
+  75% {
+    transform: translate3d(-5%, 0, 0) rotate3d(0, 0, 1, -1deg);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.cardv { object-fit: contain; width:1600px; height:900px; left:160px; top:0; inset:auto; position:absolute; }
+.brollv { object-fit: cover; width:1920px; height:900px; inset:auto; position:absolute; left:0; top:0; }
+.panel { position:absolute; left:160px; top:40px; width:1600px; height:840px; border:5px solid #F2F5F4; border-radius:16px; background:#141C21; overflow:hidden; box-shadow: 14px 14px 0 #0E1317; }
+.panel.web img { width:100%; height:100%; object-fit:cover; object-position: top; display:block; transform-origin: 50% 50%; }
+.term .bar { height:52px; background:#F2F5F4; display:flex; align-items:center; padding:0 20px; gap:12px; }
+.term .bar i { width:16px; height:16px; border-radius:50%; background:#7C8A8E; display:block; } .term .bar i:nth-child(1){ background:#0E1317; } .term .bar i:nth-child(3){ background:#85DDCB; }
+.term .bar b { color:#0E1317; font-size:20px; margin-left:auto; margin-right:auto; }
+.term .body { padding:26px 34px; font-size:25px; line-height:1.55; white-space:pre; }
+.term .body.big { font-size:40px; line-height:1.5; }
+.term.code .body { font-size:22px; line-height:1.38; }
+.ln { opacity:0; border-radius:6px; padding:0 8px; margin:0 -8px; color:#F2F5F4; }
+.ln.cmd { color:#85DDCB; }
+.tree-foot, .pieces-foot { opacity:0; margin-top:28px; color:#7C8A8E; font-size:28px; white-space:normal; } .tree-foot b { color:#8DCF6E; }
+.pieces { padding:50px 70px; } .pieces h2 { font-family:"Big Shoulders Display"; font-size:56px; margin-bottom:26px; color:#F2F5F4; }
+.piece { display:flex; align-items:center; gap:24px; padding:16px 22px; margin-bottom:12px; border:4px solid #85DDCB; border-radius:12px; background:#0E1317; opacity:0; transform: translateY(20px); }
+.piece .num { width:56px; height:56px; border-radius:12px; background:#85DDCB; color:#0E1317; font-weight:700; font-size:30px; display:flex; align-items:center; justify-content:center; }
+.piece b { font-size:32px; display:block; } .piece small { font-size:22px; color:#7C8A8E; }
+.pieces-foot { font-size:24px; margin-top:14px; }
+.levels { position:absolute; left:160px; top:60px; width:1600px; height:800px; display:flex; align-items:center; justify-content:center; }
+.lv { border:5px solid #85DDCB; border-radius:20px; padding:30px 40px; background:#141C21; opacity:0; transform: scale(.9); width:100%; }
+.lv > .lv { margin-top:20px; border-color:#8DCF6E; } .lv > .lv > .lv { border-color:#F2F5F4; }
+.lv b { font-family:"Big Shoulders Display"; font-size:52px; display:block; } .lv em { font-style:normal; color:#7C8A8E; font-size:26px; } .lv small { display:block; margin-top:8px; color:#8DCF6E; font-size:30px; font-weight:700; opacity:0; }
+.ghost { position:absolute; left:1750px; top:700px; width:150px; height:174px; transform-origin: 50% 100%; } .ghost img { width:100%; height:100%; object-fit:contain; display:block; }
+.newagent { padding:70px 90px; } .newagent h2 { font-family:"Big Shoulders Display"; font-size:72px; margin-bottom:30px; } .newagent p { font-size:34px; color:#7C8A8E; margin-bottom:22px; }
+.newagent .box { position:relative; border:4px solid #7C8A8E; border-radius:14px; height:300px; padding:28px; font-size:34px; color:#F2F5F4; line-height:1.4; } .newagent .cursor { display:inline-block; width:4px; height:38px; background:#F2F5F4; vertical-align:-6px; margin-left:4px; }
+.newagent .btn { position:absolute; right:24px; bottom:24px; border:3px solid #7C8A8E; border-radius:12px; padding:12px 30px; color:#7C8A8E; font-size:30px; }
+.newagent .chips { margin-top:26px; display:flex; gap:16px; } .newagent .chips span { border:3px solid #F2F5F4; border-radius:999px; padding:10px 24px; font-size:26px; }
+.newagent .foot { margin-top:40px; color:#7C8A8E; font-size:28px; text-align:center; }
+.cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
+.cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
+.cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:#7C8A8E; } .cta .url { color:#85DDCB; font-size:44px; font-weight:700; } .cta .sub { color:#8DCF6E; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
+.capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 #0E1317; }
+.w { color:#7C8A8E; }
+#wipe { position:absolute; inset:0; z-index:50; } .slice { transform-box: fill-box; }
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="29.59" data-width="1920" data-height="1080">
+<video class="clip brollv" id="s0v" data-start="0" data-duration="2.56" data-media-start="1" src="broll/plug.mp4" muted playsinline preload="auto"></video><div class="clip scene " id="s0" data-start="0" data-duration="2.56"><div class="ghost" id="s0-ghost" style="animation: bounce 1.2s 0.00s both, jello 1.2s 1.28s both;"><img src="assets/ghosty.png"></div></div>
+<video class="clip cardv" id="s1v" data-start="2.56" data-duration="15.22" src="assets/card-01-congelado-long-ch0-1.mp4" muted playsinline preload="auto"></video>
+<div class="clip scene " id="s2" data-start="17.78" data-duration="8.11"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve dev --no-ui</b></div><div class="body"><div class="ln cmd" id="s2l0">$ npx eve dev --no-ui</div><div class="ln" id="s2l1">[DEV] server listening at http://127.0.0.1:2000/</div><div class="ln cmd" id="s2l2">$ curl -X POST :2000/eve/v1/session -d '{"message":"Procesa el lote con 6 pasos."}'</div><div class="ln" id="s2l3">{"ok":true,"sessionId":"wrun_01M2QVQYJYT89WVRWD1MHBNDAE","status":"accepted"}</div><div class="ln" id="s2l4">[process_batch] paso 1 @ 14:18:49 pid 96343</div><div class="ln" id="s2l5">[process_batch] paso 2 @ 14:18:54 pid 96343</div><div class="ln" id="s2l6">[process_batch] paso 3 @ 14:18:59 pid 96343</div><div class="ln cmd" id="s2l7">$ pkill -9 -f "eve dev --no-ui"</div><div class="ln cmd" id="s2l8">$ npx eve dev --no-ui</div><div class="ln" id="s2l9">[DEV] server listening at http://127.0.0.1:2000/</div><div class="ln" id="s2l10">[process_batch] paso 4 @ 14:19:11 pid 97510</div><div class="ln" id="s2l11">[process_batch] paso 5 @ 14:19:16 pid 97510</div><div class="ln" id="s2l12">[process_batch] paso 6 @ 14:19:21 pid 97510</div><div class="ln" id="s2l13">{"type":"turn.completed","data":{"turnId":"turn_0"}}</div></div></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 17.78s both, jello 1.2s 21.84s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s3" data-start="25.89" data-duration="3.7"><div class="panel web"><img src="captures/web/eve-hero.png"></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 25.89s both, jello 1.2s 27.74s both;"><img src="assets/ghosty.png"></div></div>
+
+<div class="clip cap" data-start="0.00" data-duration="2.56"><div class="capin"><span class="w" id="c0_0w0">Soy</span> <span class="w" id="c0_0w1">Ghosty,</span> <span class="w" id="c0_0w2">y</span> <span class="w" id="c0_0w3">te</span> <span class="w" id="c0_0w4">hice</span> <span class="w" id="c0_0w5">un</span> <span class="w" id="c0_0w6">tutorial.</span></div></div>
+<div class="clip cap" data-start="2.56" data-duration="2.05"><div class="capin"><span class="w" id="c1_0w0">Este</span> <span class="w" id="c1_0w1">agente</span> <span class="w" id="c1_0w2">tiene</span> <span class="w" id="c1_0w3">una</span> <span class="w" id="c1_0w4">tarea</span> <span class="w" id="c1_0w5">de</span> <span class="w" id="c1_0w6">seis</span> <span class="w" id="c1_0w7">pasos,</span></div></div>
+<div class="clip cap" data-start="4.61" data-duration="1.73"><div class="capin"><span class="w" id="c1_1w0">y</span> <span class="w" id="c1_1w1">va</span> <span class="w" id="c1_1w2">en</span> <span class="w" id="c1_1w3">el</span> <span class="w" id="c1_1w4">tres.</span></div></div>
+<div class="clip cap" data-start="6.34" data-duration="1.64"><div class="capin"><span class="w" id="c2_0w0">Le</span> <span class="w" id="c2_0w1">corto</span> <span class="w" id="c2_0w2">la</span> <span class="w" id="c2_0w3">luz.</span></div></div>
+<div class="clip cap" data-start="7.98" data-duration="1.88"><div class="capin"><span class="w" id="c3_0w0">Lo</span> <span class="w" id="c3_0w1">vuelvo</span> <span class="w" id="c3_0w2">a</span> <span class="w" id="c3_0w3">encender.</span></div></div>
+<div class="clip cap" data-start="9.86" data-duration="1.77"><div class="capin"><span class="w" id="c4_0w0">Y</span> <span class="w" id="c4_0w1">sigue</span> <span class="w" id="c4_0w2">en</span> <span class="w" id="c4_0w3">el</span> <span class="w" id="c4_0w4">paso</span> <span class="w" id="c4_0w5">cuatro,</span></div></div>
+<div class="clip cap" data-start="11.63" data-duration="2.80"><div class="capin"><span class="w" id="c4_1w0">con</span> <span class="w" id="c4_1w1">otro</span> <span class="w" id="c4_1w2">número</span> <span class="w" id="c4_1w3">de</span> <span class="w" id="c4_1w4">proceso,</span> <span class="w" id="c4_1w5">sin</span> <span class="w" id="c4_1w6">repetir</span> <span class="w" id="c4_1w7">nada.</span></div></div>
+<div class="clip cap" data-start="14.43" data-duration="3.35"><div class="capin"><span class="w" id="c5_0w0">Ese</span> <span class="w" id="c5_0w1">comportamiento</span> <span class="w" id="c5_0w2">tiene</span> <span class="w" id="c5_0w3">nombre:</span> <span class="w" id="c5_0w4">agente</span> <span class="w" id="c5_0w5">durable.</span></div></div>
+<div class="clip cap" data-start="17.78" data-duration="3.48"><div class="capin"><span class="w" id="c6_0w0">En</span> <span class="w" id="c6_0w1">los</span> <span class="w" id="c6_0w2">siguientes</span> <span class="w" id="c6_0w3">doce</span> <span class="w" id="c6_0w4">minutos</span> <span class="w" id="c6_0w5">vemos</span> <span class="w" id="c6_0w6">quién</span> <span class="w" id="c6_0w7">lo</span> <span class="w" id="c6_0w8">ofrece</span> <span class="w" id="c6_0w9">así,</span></div></div>
+<div class="clip cap" data-start="21.26" data-duration="4.63"><div class="capin"><span class="w" id="c6_1w0">cómo</span> <span class="w" id="c6_1w1">lo</span> <span class="w" id="c6_1w2">construyeron</span> <span class="w" id="c6_1w3">por</span> <span class="w" id="c6_1w4">dentro,</span> <span class="w" id="c6_1w5">y</span> <span class="w" id="c6_1w6">cómo</span> <span class="w" id="c6_1w7">correrlo</span> <span class="w" id="c6_1w8">en</span> <span class="w" id="c6_1w9">tu</span> <span class="w" id="c6_1w10">propia</span> <span class="w" id="c6_1w11">infraestructura.</span></div></div>
+<div class="clip cap" data-start="25.89" data-duration="3.25"><div class="capin"><span class="w" id="c7_0w0">El</span> <span class="w" id="c7_0w1">framework</span> <span class="w" id="c7_0w2">se</span> <span class="w" id="c7_0w3">llama</span> <span class="w" id="c7_0w4">eve,</span> <span class="w" id="c7_0w5">y</span> <span class="w" id="c7_0w6">lo</span> <span class="w" id="c7_0w7">hace</span> <span class="w" id="c7_0w8">Vercel.</span></div></div>
+<svg id="wipe" width="1920" height="1080" viewBox="0 0 1920 1080"><polygon class="slice" points="-200,-300 2200,-530 2200,-260 -200,-30" fill="#85DDCB"/><polygon class="slice" points="-200,-100 2200,-330 2200,-60 -200,170" fill="#8DCF6E"/><polygon class="slice" points="-200,100 2200,-130 2200,140 -200,370" fill="#F2F5F4"/><polygon class="slice" points="-200,300 2200,70 2200,340 -200,570" fill="#85DDCB"/><polygon class="slice" points="-200,500 2200,270 2200,540 -200,770" fill="#8DCF6E"/><polygon class="slice" points="-200,700 2200,470 2200,740 -200,970" fill="#F2F5F4"/><polygon class="slice" points="-200,900 2200,670 2200,940 -200,1170" fill="#85DDCB"/><polygon class="slice" points="-200,1100 2200,870 2200,1140 -200,1370" fill="#8DCF6E"/></svg>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+
+
+tl.to("#s2l0", { opacity: 1, duration: .05 }, 18.18);tl.to("#s2l1", { opacity: 1, duration: .05 }, 18.67);tl.to("#s2l2", { opacity: 1, duration: .05 }, 19.17);tl.to("#s2l3", { opacity: 1, duration: .05 }, 19.66);tl.to("#s2l4", { opacity: 1, duration: .05 }, 20.15);tl.to("#s2l5", { opacity: 1, duration: .05 }, 20.65);tl.to("#s2l6", { opacity: 1, duration: .05 }, 21.14);tl.to("#s2l7", { opacity: 1, duration: .05 }, 21.63);tl.to("#s2l8", { opacity: 1, duration: .05 }, 22.13);tl.to("#s2l9", { opacity: 1, duration: .05 }, 22.62);tl.to("#s2l10", { opacity: 1, duration: .05 }, 23.12);tl.to("#s2l11", { opacity: 1, duration: .05 }, 23.61);tl.to("#s2l12", { opacity: 1, duration: .05 }, 24.10);tl.to("#s2l13", { opacity: 1, duration: .05 }, 24.60);
+tl.fromTo("#s3 img", { scale: 1, x: 0, y: 0 }, { scale: 1.08, x: -30, y: -18, duration: 999, ease: "none" }, 0);
+tl.set("#c0_0w0", { color: "#85DDCB" }, 0.00); tl.set("#c0_0w0", { color: "#F2F5F4" }, 0.30);tl.set("#c0_0w1", { color: "#85DDCB" }, 0.30); tl.set("#c0_0w1", { color: "#F2F5F4" }, 0.60);tl.set("#c0_0w2", { color: "#85DDCB" }, 0.60); tl.set("#c0_0w2", { color: "#F2F5F4" }, 0.90);tl.set("#c0_0w3", { color: "#85DDCB" }, 0.90); tl.set("#c0_0w3", { color: "#F2F5F4" }, 1.21);tl.set("#c0_0w4", { color: "#85DDCB" }, 1.21); tl.set("#c0_0w4", { color: "#F2F5F4" }, 1.51);tl.set("#c0_0w5", { color: "#85DDCB" }, 1.51); tl.set("#c0_0w5", { color: "#F2F5F4" }, 1.81);tl.set("#c0_0w6", { color: "#85DDCB" }, 1.81); tl.set("#c0_0w6", { color: "#F2F5F4" }, 2.11);tl.set("#c1_0w0", { color: "#85DDCB" }, 2.56); tl.set("#c1_0w0", { color: "#F2F5F4" }, 2.82);tl.set("#c1_0w1", { color: "#85DDCB" }, 2.82); tl.set("#c1_0w1", { color: "#F2F5F4" }, 3.07);tl.set("#c1_0w2", { color: "#85DDCB" }, 3.07); tl.set("#c1_0w2", { color: "#F2F5F4" }, 3.33);tl.set("#c1_0w3", { color: "#85DDCB" }, 3.33); tl.set("#c1_0w3", { color: "#F2F5F4" }, 3.58);tl.set("#c1_0w4", { color: "#85DDCB" }, 3.58); tl.set("#c1_0w4", { color: "#F2F5F4" }, 3.84);tl.set("#c1_0w5", { color: "#85DDCB" }, 3.84); tl.set("#c1_0w5", { color: "#F2F5F4" }, 4.10);tl.set("#c1_0w6", { color: "#85DDCB" }, 4.10); tl.set("#c1_0w6", { color: "#F2F5F4" }, 4.35);tl.set("#c1_0w7", { color: "#85DDCB" }, 4.35); tl.set("#c1_0w7", { color: "#F2F5F4" }, 4.61);tl.set("#c1_1w0", { color: "#85DDCB" }, 4.61); tl.set("#c1_1w0", { color: "#F2F5F4" }, 4.87);tl.set("#c1_1w1", { color: "#85DDCB" }, 4.87); tl.set("#c1_1w1", { color: "#F2F5F4" }, 5.12);tl.set("#c1_1w2", { color: "#85DDCB" }, 5.12); tl.set("#c1_1w2", { color: "#F2F5F4" }, 5.38);tl.set("#c1_1w3", { color: "#85DDCB" }, 5.38); tl.set("#c1_1w3", { color: "#F2F5F4" }, 5.63);tl.set("#c1_1w4", { color: "#85DDCB" }, 5.63); tl.set("#c1_1w4", { color: "#F2F5F4" }, 5.89);tl.set("#c2_0w0", { color: "#85DDCB" }, 6.34); tl.set("#c2_0w0", { color: "#F2F5F4" }, 6.64);tl.set("#c2_0w1", { color: "#85DDCB" }, 6.64); tl.set("#c2_0w1", { color: "#F2F5F4" }, 6.93);tl.set("#c2_0w2", { color: "#85DDCB" }, 6.93); tl.set("#c2_0w2", { color: "#F2F5F4" }, 7.23);tl.set("#c2_0w3", { color: "#85DDCB" }, 7.23); tl.set("#c2_0w3", { color: "#F2F5F4" }, 7.53);tl.set("#c3_0w0", { color: "#85DDCB" }, 7.98); tl.set("#c3_0w0", { color: "#F2F5F4" }, 8.34);tl.set("#c3_0w1", { color: "#85DDCB" }, 8.34); tl.set("#c3_0w1", { color: "#F2F5F4" }, 8.70);tl.set("#c3_0w2", { color: "#85DDCB" }, 8.70); tl.set("#c3_0w2", { color: "#F2F5F4" }, 9.05);tl.set("#c3_0w3", { color: "#85DDCB" }, 9.05); tl.set("#c3_0w3", { color: "#F2F5F4" }, 9.41);tl.set("#c4_0w0", { color: "#85DDCB" }, 9.86); tl.set("#c4_0w0", { color: "#F2F5F4" }, 10.15);tl.set("#c4_0w1", { color: "#85DDCB" }, 10.15); tl.set("#c4_0w1", { color: "#F2F5F4" }, 10.45);tl.set("#c4_0w2", { color: "#85DDCB" }, 10.45); tl.set("#c4_0w2", { color: "#F2F5F4" }, 10.74);tl.set("#c4_0w3", { color: "#85DDCB" }, 10.74); tl.set("#c4_0w3", { color: "#F2F5F4" }, 11.04);tl.set("#c4_0w4", { color: "#85DDCB" }, 11.04); tl.set("#c4_0w4", { color: "#F2F5F4" }, 11.33);tl.set("#c4_0w5", { color: "#85DDCB" }, 11.33); tl.set("#c4_0w5", { color: "#F2F5F4" }, 11.63);tl.set("#c4_1w0", { color: "#85DDCB" }, 11.63); tl.set("#c4_1w0", { color: "#F2F5F4" }, 11.92);tl.set("#c4_1w1", { color: "#85DDCB" }, 11.92); tl.set("#c4_1w1", { color: "#F2F5F4" }, 12.21);tl.set("#c4_1w2", { color: "#85DDCB" }, 12.21); tl.set("#c4_1w2", { color: "#F2F5F4" }, 12.51);tl.set("#c4_1w3", { color: "#85DDCB" }, 12.51); tl.set("#c4_1w3", { color: "#F2F5F4" }, 12.80);tl.set("#c4_1w4", { color: "#85DDCB" }, 12.80); tl.set("#c4_1w4", { color: "#F2F5F4" }, 13.10);tl.set("#c4_1w5", { color: "#85DDCB" }, 13.10); tl.set("#c4_1w5", { color: "#F2F5F4" }, 13.39);tl.set("#c4_1w6", { color: "#85DDCB" }, 13.39); tl.set("#c4_1w6", { color: "#F2F5F4" }, 13.69);tl.set("#c4_1w7", { color: "#85DDCB" }, 13.69); tl.set("#c4_1w7", { color: "#F2F5F4" }, 13.98);tl.set("#c5_0w0", { color: "#85DDCB" }, 14.43); tl.set("#c5_0w0", { color: "#F2F5F4" }, 14.91);tl.set("#c5_0w1", { color: "#85DDCB" }, 14.91); tl.set("#c5_0w1", { color: "#F2F5F4" }, 15.40);tl.set("#c5_0w2", { color: "#85DDCB" }, 15.40); tl.set("#c5_0w2", { color: "#F2F5F4" }, 15.88);tl.set("#c5_0w3", { color: "#85DDCB" }, 15.88); tl.set("#c5_0w3", { color: "#F2F5F4" }, 16.36);tl.set("#c5_0w4", { color: "#85DDCB" }, 16.36); tl.set("#c5_0w4", { color: "#F2F5F4" }, 16.85);tl.set("#c5_0w5", { color: "#85DDCB" }, 16.85); tl.set("#c5_0w5", { color: "#F2F5F4" }, 17.33);tl.set("#c6_0w0", { color: "#85DDCB" }, 17.78); tl.set("#c6_0w0", { color: "#F2F5F4" }, 18.13);tl.set("#c6_0w1", { color: "#85DDCB" }, 18.13); tl.set("#c6_0w1", { color: "#F2F5F4" }, 18.48);tl.set("#c6_0w2", { color: "#85DDCB" }, 18.48); tl.set("#c6_0w2", { color: "#F2F5F4" }, 18.82);tl.set("#c6_0w3", { color: "#85DDCB" }, 18.82); tl.set("#c6_0w3", { color: "#F2F5F4" }, 19.17);tl.set("#c6_0w4", { color: "#85DDCB" }, 19.17); tl.set("#c6_0w4", { color: "#F2F5F4" }, 19.52);tl.set("#c6_0w5", { color: "#85DDCB" }, 19.52); tl.set("#c6_0w5", { color: "#F2F5F4" }, 19.87);tl.set("#c6_0w6", { color: "#85DDCB" }, 19.87); tl.set("#c6_0w6", { color: "#F2F5F4" }, 20.22);tl.set("#c6_0w7", { color: "#85DDCB" }, 20.22); tl.set("#c6_0w7", { color: "#F2F5F4" }, 20.57);tl.set("#c6_0w8", { color: "#85DDCB" }, 20.57); tl.set("#c6_0w8", { color: "#F2F5F4" }, 20.91);tl.set("#c6_0w9", { color: "#85DDCB" }, 20.91); tl.set("#c6_0w9", { color: "#F2F5F4" }, 21.26);tl.set("#c6_1w0", { color: "#85DDCB" }, 21.26); tl.set("#c6_1w0", { color: "#F2F5F4" }, 21.61);tl.set("#c6_1w1", { color: "#85DDCB" }, 21.61); tl.set("#c6_1w1", { color: "#F2F5F4" }, 21.96);tl.set("#c6_1w2", { color: "#85DDCB" }, 21.96); tl.set("#c6_1w2", { color: "#F2F5F4" }, 22.31);tl.set("#c6_1w3", { color: "#85DDCB" }, 22.31); tl.set("#c6_1w3", { color: "#F2F5F4" }, 22.65);tl.set("#c6_1w4", { color: "#85DDCB" }, 22.65); tl.set("#c6_1w4", { color: "#F2F5F4" }, 23.00);tl.set("#c6_1w5", { color: "#85DDCB" }, 23.00); tl.set("#c6_1w5", { color: "#F2F5F4" }, 23.35);tl.set("#c6_1w6", { color: "#85DDCB" }, 23.35); tl.set("#c6_1w6", { color: "#F2F5F4" }, 23.70);tl.set("#c6_1w7", { color: "#85DDCB" }, 23.70); tl.set("#c6_1w7", { color: "#F2F5F4" }, 24.05);tl.set("#c6_1w8", { color: "#85DDCB" }, 24.05); tl.set("#c6_1w8", { color: "#F2F5F4" }, 24.40);tl.set("#c6_1w9", { color: "#85DDCB" }, 24.40); tl.set("#c6_1w9", { color: "#F2F5F4" }, 24.74);tl.set("#c6_1w10", { color: "#85DDCB" }, 24.74); tl.set("#c6_1w10", { color: "#F2F5F4" }, 25.09);tl.set("#c6_1w11", { color: "#85DDCB" }, 25.09); tl.set("#c6_1w11", { color: "#F2F5F4" }, 25.44);tl.set("#c7_0w0", { color: "#85DDCB" }, 25.89); tl.set("#c7_0w0", { color: "#F2F5F4" }, 26.16);tl.set("#c7_0w1", { color: "#85DDCB" }, 26.16); tl.set("#c7_0w1", { color: "#F2F5F4" }, 26.43);tl.set("#c7_0w2", { color: "#85DDCB" }, 26.43); tl.set("#c7_0w2", { color: "#F2F5F4" }, 26.71);tl.set("#c7_0w3", { color: "#85DDCB" }, 26.71); tl.set("#c7_0w3", { color: "#F2F5F4" }, 26.98);tl.set("#c7_0w4", { color: "#85DDCB" }, 26.98); tl.set("#c7_0w4", { color: "#F2F5F4" }, 27.25);tl.set("#c7_0w5", { color: "#85DDCB" }, 27.25); tl.set("#c7_0w5", { color: "#F2F5F4" }, 27.52);tl.set("#c7_0w6", { color: "#85DDCB" }, 27.52); tl.set("#c7_0w6", { color: "#F2F5F4" }, 27.80);tl.set("#c7_0w7", { color: "#85DDCB" }, 27.80); tl.set("#c7_0w7", { color: "#F2F5F4" }, 28.07);tl.set("#c7_0w8", { color: "#85DDCB" }, 28.07); tl.set("#c7_0w8", { color: "#F2F5F4" }, 28.34);tl.set("#wipe", { opacity: 0 }, 0.001);
+tl.set("#wipe", { opacity: 1 }, 29.14); tl.set(".slice", { scaleX: 0, transformOrigin: "0% 50%" }, 29.13); tl.to(".slice", { scaleX: 1, transformOrigin: "0% 50%", duration: .28, stagger: .025, ease: "back.out(1.3)" }, 29.14);
+
+tl.set({}, {}, 29.59);
+window.__timelines["main"] = tl;
+</script></body></html>

@@ -1,0 +1,16 @@
+$ eb.sandboxes.create({ template: "eve-nitro" })
+sandboxId: sb_75940a4d-17e1-45dc-981a-9e847d6c0eef · status: running
+$ node -v && npx eve --version
+v24.21.0
+0.58.1
+$ npm i @easybits.cloud/eve-sandbox @workflow/world-postgres@5.0.0-beta.44
+$ cat agent/sandbox.ts
+import { defineSandbox } from "eve/sandbox";
+import { easybits } from "@easybits.cloud/eve-sandbox";
+export default defineSandbox({
+  backend: easybits({ template: "node" }),   // lee EASYBITS_API_KEY
+});
+$ apt-get install -y postgresql && service postgresql start
+PostgreSQL 15.19 (Debian 15.19-0+deb12u1)
+$ node node_modules/@workflow/world-postgres/bin/setup.js
+✅ Database schema created successfully!

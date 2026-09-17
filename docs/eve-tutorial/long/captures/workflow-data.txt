@@ -1,0 +1,6 @@
+$ ls .eve/.workflow-data
+events   hooks   runs   steps   streams   waits   version.txt
+$ ls .eve/.workflow-data/steps | head -3
+step_01M2QWAC54KG906JJQBFNQ2MNM
+step_01M2QWADZSEH3ZKJY1G2FSE7S5
+step_01M2QWADZSEH3ZKJY1G2FSE7S6

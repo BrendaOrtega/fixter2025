@@ -2,11 +2,11 @@ import fs from "node:fs";
 
 // ---- tiempos (segundos). Declarar antes de usar.
 const TOTAL = 15.0;
-const T_STEP = [1.2, 2.4, 3.6];   // fichas 1, 2, 3 se colocan
-const T_KILL = 5.2;               // se escribe pkill y se apaga la caja
-const T_FROZEN = 5.9;             // escarcha y etiqueta
-const T_RESTART = 9.0;            // se escribe eve dev y reencienden las lámparas
-const T_STEP2 = [10.3, 11.5, 12.7]; // fichas 4, 5, 6
+const T_STEP = process.env.LONG ? [0.8, 1.7, 2.6] : [1.2, 2.4, 3.6];   // fichas 1, 2, 3 se colocan
+const T_KILL = process.env.LONG ? 4.1 : 5.2;               // se escribe pkill y se apaga la caja
+const T_FROZEN = process.env.LONG ? 4.8 : 5.9;             // escarcha y etiqueta
+const T_RESTART = process.env.LONG ? 5.5 : 9.0;            // se escribe eve dev y reencienden las lámparas
+const T_STEP2 = process.env.LONG ? [7.9, 8.9, 9.9] : [10.3, 11.5, 12.7]; // fichas 4, 5, 6
 
 const BG = "#0E1317", MINT = "#85DDCB", MINTDK = "#37AB93", GREEN = "#8DCF6E", INK = "#F2F5F4", GREY = "#7C8A8E", FROST = "#DDF4F0", OFF = "#3E5A5C";
 

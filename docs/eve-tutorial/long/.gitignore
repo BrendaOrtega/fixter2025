@@ -1,0 +1,10 @@
+renders/
+assets/card-*.mp4
+video-mudo.mp4
+concat.txt
+eve-agentes-durables.mp4
+broll/*.mp4
+broll/*.ogv
+voice/*.wav
+eb/node_modules/
+eb/state.json

@@ -1,0 +1,6 @@
+$ curl -s https://sb-75940a4d-17e1-45dc-981a-9e847d6c0eef-3000.sandboxes.easybits.cloud/eve/v1/health; echo; curl -s -o /dev/null -w 'sin credenciales: %{http_code}\n' https://sb-75940a4d-17e1-45dc-981a-9e847d6c0eef-3000.sandboxes.easybits.cloud/eve/v1/info; curl -s -o /dev/null -w 'con credenciales: %{http_code}\n' -u ghosty:tutorial-eve-2026 https://sb-75940a4d-17e1-45dc-981a-9e847d6c0eef-3000.sandboxes.easybits.cloud/eve/v1/info
+{"ok":true,"status":"ready","workflowId":"workflow//eve//workflowEntry"}
+sin credenciales: 401
+con credenciales: 200
+
+[exit 0]

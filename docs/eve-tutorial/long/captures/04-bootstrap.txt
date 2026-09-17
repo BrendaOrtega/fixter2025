@@ -1,0 +1,19 @@
+$ node node_modules/@workflow/world-postgres/bin/setup.js 2>&1 | tail -4 && PGPASSWORD=eve psql -h 127.0.0.1 -U eve -d eve_demo -Atc "select schemaname||'.'||tablename from pg_tables where schemaname in ('workflow','graphile_worker') order by 1"
+📍 Connection: postgres://[redacted]@127.0.0.1:5432/eve_demo
+📂 Running migrations from: /data/eve-demo/node_modules/@workflow/world-postgres/src/drizzle/migrations
+📂 Bootstrapping graphile-worker schema...
+✅ Database schema created successfully!
+graphile_worker._private_job_queues
+graphile_worker._private_jobs
+graphile_worker._private_known_crontabs
+graphile_worker._private_tasks
+graphile_worker.migrations
+workflow.workflow_event_slots
+workflow.workflow_events
+workflow.workflow_hooks
+workflow.workflow_runs
+workflow.workflow_steps
+workflow.workflow_stream_chunks
+workflow.workflow_waits
+
+[exit 0]

@@ -1,0 +1,9 @@
+$ node -v && npx eve --version 2>/dev/null | tail -1 && nproc && free -h | head -2 && df -h /data | tail -1
+v24.21.0
+0.58.1
+2
+               total        used        free      shared  buff/cache   available
+Mem:           1.9Gi       198Mi       1.8Gi       908Ki       118Mi       1.8Gi
+/dev/vdb        3.9G   24K  3.9G   1% /data
+
+[exit 0]

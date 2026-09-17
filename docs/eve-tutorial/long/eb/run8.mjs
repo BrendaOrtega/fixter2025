@@ -1,0 +1,11 @@
+import fs from "node:fs";
+import { EasybitsClient } from "@easybits.cloud/sdk";
+const env = Object.fromEntries(fs.readFileSync(process.env.HOME + "/nanoclaw/.env", "utf8").split("\n").filter((l) => l.includes("=") && !l.startsWith("#")).map((l) => { const i = l.indexOf("="); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^"|"$/g, "")]; }));
+const eb = new EasybitsClient({ apiKey: env.EASYBITS_API_KEY });
+const state = JSON.parse(fs.readFileSync("state.json"));
+const sbx = await eb.sandboxes.get(state.sandboxId);
+await sbx.execBackground("dockerd --iptables=false > /tmp/dockerd.log 2>&1");
+await new Promise((r) => setTimeout(r, 12000));
+const r = await sbx.exec("service postgresql start; docker info --format 'driver: {{.Driver}} · {{.ServerVersion}}'; docker pull -q debian:bookworm-slim 2>&1 | tail -1; docker run --rm debian:bookworm-slim bash -c 'echo bash-ok && id' 2>&1 | tail -2", { cwd: "/data", timeoutSeconds: 600 });
+const out = `$ docker info --format 'driver: {{.Driver}} · {{.ServerVersion}}'; docker pull -q debian:bookworm-slim; docker run --rm debian:bookworm-slim bash -c 'echo bash-ok && id'\n${r.stdout}\n[exit ${r.exitCode}]`;
+fs.writeFileSync("../captures/19-docker-pull.txt", out); console.log(out);

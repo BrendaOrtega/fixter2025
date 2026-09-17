@@ -1,0 +1,11 @@
+$ cat agent/sandbox.ts && npx eve build 2>&1 | tail -1
+import { defineSandbox } from "eve/sandbox";
+import { docker } from "eve/sandbox/docker";
+
+// Un contenedor por sesión, sin salida a internet: el modelo corre bash aquí, no en el app runtime
+export default defineSandbox({
+  backend: docker({ image: "debian:bookworm-slim", networkPolicy: "deny-all" }),
+});
+[BUILD] built output at /data/eve-demo/.output
+
+[exit 0]

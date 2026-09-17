@@ -1,0 +1,14 @@
+$ PGPASSWORD=eve psql -h 127.0.0.1 -U eve -d eve_demo -c "select id, status, started_at::time from workflow.workflow_runs order by started_at" -c "select count(*) as steps, count(*) filter (where status='completed') as done from workflow.workflow_steps"
+               id                | status  |  started_at  
+---------------------------------+---------+--------------
+ wrun_01M2R3ZE6RD50HGHC07VWGBZCB | running | 16:42:41.274
+ wrun_01M2R3ZEB0GP58ZMYXSPT4NRP0 | running | 16:42:41.38
+(2 rows)
+
+ steps | done 
+-------+------
+     4 |    4
+(1 row)
+
+
+[exit 0]

@@ -1,0 +1,13 @@
+$ cat agent/sandbox.ts && npm i @easybits.cloud/eve-sandbox @workflow/world-postgres@5.0.0-beta.44 2>&1 | tail -3
+import { defineSandbox } from "eve/sandbox";
+import { easybits } from "@easybits.cloud/eve-sandbox";
+
+// Cada sesión del agente corre su bash en una caja hija de EasyBits (fork de un snapshot)
+export default defineSandbox({
+  backend: easybits({ template: "node" }),
+});
+npm warn install-scripts   cbor-extract@2.2.2 (install: node-gyp-build-optional-packages)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+
+[exit 0]

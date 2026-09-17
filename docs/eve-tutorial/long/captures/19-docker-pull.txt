@@ -1,0 +1,7 @@
+$ docker info --format 'driver: {{.Driver}} · {{.ServerVersion}}'; docker pull -q debian:bookworm-slim; docker run --rm debian:bookworm-slim bash -c 'echo bash-ok && id'
+driver: overlay2 · 20.10.24+dfsg1
+docker.io/library/debian:bookworm-slim
+bash-ok
+uid=0(root) gid=0(root) groups=0(root)
+
+[exit 0]

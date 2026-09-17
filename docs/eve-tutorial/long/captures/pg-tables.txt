@@ -1,0 +1,11 @@
+$ psql -d eve_demo -c "\dt workflow.*"
+ workflow | workflow_runs           | table
+ workflow | workflow_steps          | table
+ workflow | workflow_events         | table
+ workflow | workflow_hooks          | table
+ workflow | workflow_waits          | table
+ workflow | workflow_stream_chunks  | table
+$ psql -d eve_demo -c "\dt graphile_worker.*"
+ graphile_worker | _private_jobs        | table
+ graphile_worker | _private_job_queues  | table
+ graphile_worker | _private_tasks       | table

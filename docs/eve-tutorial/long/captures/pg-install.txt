@@ -1,0 +1,15 @@
+$ npm view @workflow/world-postgres version
+4.3.7
+$ npm i @workflow/world-postgres@5.0.0-beta.44
+added 1 package
+$ node node_modules/@workflow/world-postgres/bin/setup.js
+🔧 Setting up database schema...
+📂 Running migrations from: node_modules/@workflow/world-postgres/src/drizzle/migrations
+📂 Bootstrapping graphile-worker schema...
+✅ Database schema created successfully!
+$ cat agent/agent.ts
+export default defineAgent({
+  model: anthropic("claude-sonnet-5"),
+  experimental: { workflow: { world: "@workflow/world-postgres" } },
+});
+$ export WORKFLOW_POSTGRES_URL=postgres://bliss@localhost:5432/eve_demo

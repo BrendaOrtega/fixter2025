@@ -1,0 +1,3 @@
+$ curl -s -u ghosty:tutorial-eve-2026 -X POST http://127.0.0.1:3000/eve/v1/session -H 'content-type: application/json' -d '{"message":"Con bash: crea /workspace/nota.txt con el texto hola, luego ejecuta hostname && cat /workspace/nota.txt && ( (exec 3<>/dev/tcp/example.com/443) 2>/dev/null && echo internet-ok || echo internet-bloqueado ). Devuélveme la salida tal cual."}'
+{"ok":true,"sessionId":"wrun_01M2R4KP883EAK2FQR5C4H1D76","status":"accepted"}
+[exit 0]

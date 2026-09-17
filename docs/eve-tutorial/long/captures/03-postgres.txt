@@ -1,0 +1,7 @@
+$ whoami; which psql || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql > /dev/null 2>&1); service postgresql start; su postgres -c "psql -c \"create user eve with password 'eve';\""; su postgres -c 'psql -c "create database eve_demo owner eve;"'; su postgres -c 'psql -Atc "select version()"'
+root
+CREATE ROLE
+CREATE DATABASE
+PostgreSQL 15.19 (Debian 15.19-0+deb12u1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+
+[exit 0]

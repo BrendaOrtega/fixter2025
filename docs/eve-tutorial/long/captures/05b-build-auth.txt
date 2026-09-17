@@ -1,0 +1,15 @@
+$ cat agent/channels/eve.ts && npx eve build 2>&1 | tail -2
+import { eveChannel } from "eve/channels/eve";
+import { httpBasic, localDev } from "eve/channels/auth";
+
+// En producción eve rechaza todo si no hay un autenticador: aquí, usuario y contraseña del entorno
+export default eveChannel({
+  auth: [
+    localDev(),
+    httpBasic({ username: process.env.ROUTE_AUTH_USER!, password: process.env.ROUTE_AUTH_PASSWORD! }),
+  ],
+});
+[nitro] ✔ You can preview this build using npx nitro preview
+[BUILD] built output at /data/eve-demo/.output
+
+[exit 0]

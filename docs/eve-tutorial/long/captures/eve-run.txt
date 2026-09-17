@@ -1,0 +1,14 @@
+$ npx eve dev --no-ui
+[DEV] server listening at http://127.0.0.1:2000/
+$ curl -X POST :2000/eve/v1/session -d '{"message":"Procesa el lote con 6 pasos."}'
+{"ok":true,"sessionId":"wrun_01M2QVQYJYT89WVRWD1MHBNDAE","status":"accepted"}
+[process_batch] paso 1 @ 14:18:49 pid 96343
+[process_batch] paso 2 @ 14:18:54 pid 96343
+[process_batch] paso 3 @ 14:18:59 pid 96343
+$ pkill -9 -f "eve dev --no-ui"
+$ npx eve dev --no-ui
+[DEV] server listening at http://127.0.0.1:2000/
+[process_batch] paso 4 @ 14:19:11 pid 97510
+[process_batch] paso 5 @ 14:19:16 pid 97510
+[process_batch] paso 6 @ 14:19:21 pid 97510
+{"type":"turn.completed","data":{"turnId":"turn_0"}}

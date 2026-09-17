@@ -1,0 +1,12 @@
+$ stream de la sesión wrun_01M2R4KP883EAK2FQR5C4H1D76
+actions.requested  {"actions":[{"callId":"toolu_012awGsfqNRVkM7k2soPXkzp","input":{"command":"echo \"hola\" > /workspace/nota.txt && hostname && cat /workspace/nota.txt && ( (exec 3<>/dev/tcp/example.com/443) 2>/dev/null && echo internet-ok || echo internet-bloqueado )"},"kind":"tool-call","toolName":"bash"}],"presentation":{"toolu_012awGsfqNRVkM7k2soPXkzp":{"label":"Run echo \"hola\" > /workspace/nota.txt && hostname && cat /workspace
+action.result  {"result":{"callId":"toolu_012awGsfqNRVkM7k2soPXkzp","kind":"tool-result","output":{"exitCode":0,"stderr":"","stdout":"0ac86462ab4f\nhola\ninternet-bloqueado\n","truncated":false},"toolName":"bash"},"sequence":0,"status":"completed","stepIndex":0,"turnId":"turn_0"}
+
+── respuesta del agente:
+Salida tal cual:
+
+```
+0ac86462ab4f
+hola
+internet-bloqueado
+```

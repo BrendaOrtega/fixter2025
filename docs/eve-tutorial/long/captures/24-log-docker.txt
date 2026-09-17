@@ -1,0 +1,9 @@
+$ tail -6 /data/eve-start.log
+➜ Listening on: http://localhost:3000/ (all interfaces)
+[Graphile Worker] WARNING: having maxPoolSize (10) smaller than concurrency (50) may lead to non-optimal performance. {
+  "max": 10,
+  "concurrency": 50
+}
+[START] server listening at http://localhost:3000/
+
+[exit 0]

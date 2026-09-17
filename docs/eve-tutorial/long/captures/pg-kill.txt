@@ -1,0 +1,13 @@
+$ npx eve dev --no-ui
+[process_batch] paso 1 @ 14:28:52 pid 1664
+[process_batch] paso 2 @ 14:28:57 pid 1664
+[process_batch] paso 3 @ 14:29:03 pid 1664
+$ pkill -9 -f "eve dev --no-ui"
+$ psql -d eve_demo -c "select count(*) filter (where status='completed') from workflow.workflow_steps"
+ 14
+$ npx eve dev --no-ui
+[process_batch] paso 4 @ 14:29:16 pid 2327
+[process_batch] paso 5 @ 14:29:21 pid 2327
+[process_batch] paso 6 @ 14:29:26 pid 2327
+$ psql -d eve_demo -c "select id, status from workflow.workflow_runs"
+ wrun_01M2QWADZSVSN5EWABQ3F7A467 | completed

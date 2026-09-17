@@ -1,0 +1,3 @@
+$ curl -s -u ghosty:tutorial-eve-2026 -X POST https://sb-75940a4d-17e1-45dc-981a-9e847d6c0eef-3000.sandboxes.easybits.cloud/eve/v1/session -H 'content-type: application/json' -d '{"message":"Con bash, ejecuta: uname -a && hostname && cat /etc/os-release | head -2. Devuélveme la salida tal cual."}'
+{"ok":true,"sessionId":"wrun_01M2R3ZE6RD50HGHC07VWGBZCB","status":"accepted"}
+[exit 0]

@@ -1,0 +1,4 @@
+$ eb.sandboxes.create({ template: "eve-nitro" })
+sandboxId: sb_75940a4d-17e1-45dc-981a-9e847d6c0eef
+status: running
+template: eve-nitro

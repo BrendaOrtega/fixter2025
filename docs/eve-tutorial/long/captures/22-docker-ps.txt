@@ -1,0 +1,6 @@
+$ docker ps --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+CONTAINER ID   IMAGE                  STATUS              NAMES
+0ac86462ab4f   debian:bookworm-slim   Up About a minute   eve-sbx-ses-docker-4c4164b5039c3606-c6c47d291d1f-wrun_01M2R4KP883EAK2FQR5C4H1D76-__root__
+7af814c88eac   debian:bookworm-slim   Up 2 minutes        eve-sbx-ses-docker-4c4164b5039c3606-c6c47d291d1f-wrun_01M2R4GMRXDVXYAMVPNPFQ3D17-__root__
+
+[exit 0]

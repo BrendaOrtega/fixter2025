@@ -1,0 +1,13 @@
+$ cat agent/sandbox.ts
+import { defineSandbox } from "eve/sandbox";
+import { docker } from "eve/sandbox/docker";
+export default defineSandbox({
+  backend: docker({ image: "debian:bookworm-slim", networkPolicy: "deny-all" }),
+});
+$ curl -u ghosty:*** -X POST :3000/eve/v1/session -d '{"message":"Con bash: crea nota.txt y prueba internet"}'
+{"ok":true,"sessionId":"wrun_01M2R4KP883EAK2FQR5C4H1D76"}
+  bash → echo "hola" > /workspace/nota.txt && hostname && cat /workspace/nota.txt && (…/dev/tcp/example.com/443 …)
+  stdout: 0ac86462ab4f · hola · internet-bloqueado
+$ docker ps --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+0ac86462ab4f   debian:bookworm-slim   Up About a minute   eve-sbx-ses-docker-…-wrun_01M2R4KP…
+7af814c88eac   debian:bookworm-slim   Up 2 minutes        eve-sbx-ses-docker-…-wrun_01M2R4GM…

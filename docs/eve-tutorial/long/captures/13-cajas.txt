@@ -1,0 +1,4 @@
+$ eb.sandboxes.list()
+sb_75940a4d-17e1-45dc-981a-9e847d6c0eef  eve-nitro   running     eve-tutorial-madre      {"exposedPorts":"3000","ip":"172.20.0.74","proyecto":"tutorial-eve"}
+sb_22c34f55-f8b3-47dc-82ee-155d789eb4a8  node        suspended   eve-sess-mu5og96f       {"agent":"smoke","eve_session":"sess-mu5og96f","eve_template":"smoke-mu5og0cd","forkedFrom
+sb_17c429d2-aef5-4f36-8aae-e7b634dfbb70  node        running     eve-eve-sbx-ses-easybits-4c4164b5039c3606-c6c47d291d1f-wrun_  {"agent":"eve-demo","channel":"http","eve_session":"eve-sbx-ses-easybits-4c4164b5039c3606-
