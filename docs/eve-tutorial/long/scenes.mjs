@@ -24,7 +24,9 @@ export const scenes = {
     { from: 49, to: 50, kind: "term", title: "ls .eve/.workflow-data", file: "workflow-data.txt" },
     { from: 51, to: 51, kind: "card", src: "02a-por-que-world" },
     { from: 52, to: 56, kind: "card", src: "02-archivero" },
-    { from: 57, to: 59, kind: "web", src: "captures/web/worlds.png" },
+    { from: 57, to: 57, kind: "web", src: "captures/web/worlds-managed.png" },
+    { from: 58, to: 58, kind: "web", src: "captures/web/worlds-selfhosted.png" },
+    { from: 59, to: 59, kind: "web", src: "captures/web/worlds-community.png" },
     { from: 60, to: 64, kind: "code", file: "sandbox-backend.ts", hl: { 61: [1, 12], 62: [14, 18], 64: [1, 1] } },
   ],
   4: [
@@ -41,9 +43,10 @@ export const scenes = {
   ],
   6: [
     { from: 97, to: 101, kind: "card", src: "05-easybits" },
-    { from: 102, to: 106, kind: "term", title: "eve-demo", file: "eb-install.txt" },
+    { from: 102, to: 102, kind: "web", src: "captures/web/npm-eve-sandbox.png" },
+    { from: 103, to: 106, kind: "term", title: "eve-demo", file: "eb-install.txt" },
     { from: 107, to: 110, kind: "term", title: "eve build && eve start", file: "eb-start.txt" },
-    { from: 111, to: 111, kind: "broll", src: "broll/lights.mp4", ghost: true },
+    { from: 111, to: 111, kind: "web", src: "captures/web/npm-easybits-org.png" },
   ],
   7: [
     { from: 112, to: 123, kind: "card", src: "06-tres-caminos-long" },

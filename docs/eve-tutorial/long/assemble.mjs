@@ -12,15 +12,16 @@ const T = parseFloat(sh("ffprobe -v error -show_entries format=duration -of csv=
 console.log("video", T.toFixed(2), "s");
 // SFX: cortinillas en cada frontera + los sfx.json de cada tarjeta desplazados a su escena
 const S = "../../shorts-taller/sfx"; const sfx = [];
-for (let c = 1; c <= 7; c++) { sfx.push([chStart(c) - 0.45, "riser.wav"]); sfx.push([chStart(c) - 0.1, "hit-sub.wav"]); }
+// la cortinilla de salida arranca en chStart−0.75 y cubre todo hacia chStart−0.3
+for (let c = 1; c <= 7; c++) { sfx.push([chStart(c) - 0.95, "riser.wav"]); sfx.push([chStart(c) - 0.22, "hit-sub.wav"]); }
 const map = { "chip-place": "pop", "key-type": "tick", "power-down": "hit-low", "frost-crack": "card", "power-up": "coin", "melt-whoosh": "whoosh-fly", "pop": "pop", "boing": "pop", "chip-slide": "whoosh-short", "rattle": "block", "paper": "paper", "whoosh-soft": "whoosh-short", "drawer-open": "block", "tick": "tick", "whoosh-short": "whoosh-short", "hit-low": "hit-low", "card": "card", "stamp": "stamp", "tada": "ding" };
 for (const [ch, list] of Object.entries(scenes)) for (const s of list) if (s.kind === "card") {
-  const dir = `../cards/${s.src.replace(/-long$/, "")}/sfx.json`; if (!fs.existsSync(dir)) continue;
+  const dir = `../cards/${s.src.replace(/-long$/, "")}/${s.src.endsWith("-long") ? "sfx-long.json" : "sfx.json"}`; if (!fs.existsSync(dir)) continue;
   const base = marks[s.from].start; const j = JSON.parse(fs.readFileSync(dir, "utf8"));
   for (const [k, ts] of Object.entries(j)) for (const t of ts) if (map[k]) sfx.push([base + t, map[k] + ".wav"]);
 }
 let last = null; const sfxOk = sfx.sort((a, b) => a[0] - b[0]).filter(([t, f]) => { if (last && last[1] === f && t - last[0] < 0.3) return false; last = [t, f]; return true; });
-console.log("sfx", sfxOk.length);
+console.log("sfx", sfxOk.length); fs.writeFileSync("sfx-timeline.json", JSON.stringify(sfxOk));
 const BGM_A = "/tmp/bgm-pick/synths.mp3", BGM_B = "/tmp/bgm-pick/uplifting.mp3"; const T6 = chStart(6);
 sh(`ffmpeg -y -loglevel error -i voice/voice.wav -af "loudnorm=I=-15:TP=-1.5:LRA=11" -ar 48000 -ac 2 /tmp/v.wav`);
 // cama A (ambiente) hasta el capítulo 6; ahí entra la cama B (más movida) con un cruce de 2 s

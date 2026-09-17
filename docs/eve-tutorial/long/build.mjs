@@ -69,7 +69,7 @@ function renderScene(s, ch, idx) {
     return { html: clip(`<div class="panel term tree"><div class="bar"><i></i><i></i><i></i><b>el agente es un directorio</b></div><div class="body big">${rows}<div class="tree-foot">tools/get_weather.ts  →  la tool <b>get_weather</b></div></div></div>${ghost(id, t0, dur)}`), tl };
   }
   if (s.kind === "levels") {
-    [26, 27, 28].forEach((mk, i) => { tl += `tl.to("#${id}v${i}", { opacity: 1, scale: 1, duration: .4, ease: "back.out(1.5)" }, ${(marks[mk].start - chStart(ch)).toFixed(2)});`; });
+    [26, 27, 28].forEach((mk, i) => { tl += `tl.to("#${id}v${i}", { opacity: 1, scale: 1, duration: .4, ease: "back.out(1.5)" }, ${Math.max(0.5, marks[mk].start - chStart(ch) - 0.3).toFixed(2)});`; });
     tl += `tl.to("#${id}v2", { boxShadow: "0 0 0 8px ${GREEN}", duration: .3 }, ${(marks[29].start - chStart(ch)).toFixed(2)}); tl.to("#${id}v2 small", { opacity: 1, duration: .2 }, ${(marks[29].start - chStart(ch)).toFixed(2)});`;
     return { html: clip(`<div class="levels"><div class="lv" id="${id}v0"><b>sesión</b><em>la conversación completa · días</em><div class="lv" id="${id}v1"><b>turno</b><em>un mensaje y todo lo que dispara</em><div class="lv" id="${id}v2"><b>step</b><em>una llamada al modelo + sus tools</em><small>= checkpoint</small></div></div></div></div>${ghost(id, t0, dur)}`), tl };
   }
@@ -96,7 +96,7 @@ for (const ch of Object.keys(scenes).map(Number)) {
   // karaoke: una frase a la vez; frases largas se parten en la coma más cercana al centro
   const chunks = [];
   marks.filter((m) => m.ch === ch).forEach((m, k, arr) => {
-    const t0 = m.start - start; const tEnd = Math.min((arr[k + 1] ? arr[k + 1].start : end) - start, ch < 7 ? TOTAL - 0.75 : TOTAL);
+    const t0 = m.start - start; const tEnd = Math.min((arr[k + 1] ? arr[k + 1].start : end) - start, ch < 7 ? TOTAL - 0.95 : TOTAL);
     const ws = m.text.split(" ");
     let parts = [ws];
     if (ws.length > 11) { let best = -1, bd = 99; ws.forEach((w, j) => { if (/[,.;:]$/.test(w) && j < ws.length - 2) { const d = Math.abs(j - ws.length / 2); if (d < bd) { bd = d; best = j; } } }); if (best < 0) best = Math.floor(ws.length / 2) - 1; parts = [ws.slice(0, best + 1), ws.slice(best + 1)]; }
@@ -116,15 +116,18 @@ for (const ch of Object.keys(scenes).map(Number)) {
   const slicesIn = Array.from({ length: 8 }, (_, k) => (inVar === "A" ? varA(k) : varB(k))).join("");
   const seal = [3, 6].includes(ch) ? `<image href="assets/ghosty.png" id="seal" x="810" y="290" width="300" height="348"/>` : "";
   const sealIn = [4, 7].includes(ch) ? `<image href="assets/ghosty.png" id="sealin" x="810" y="290" width="300" height="348"/>` : "";
+  // Movimiento por traslación (no por escala): sin temblor. 0.55 s con power2.inOut; las rebanadas van escalonadas 0.035 s.
+  const axisIn = inVar === "A" ? "x" : "y", offIn = inVar === "A" ? 2500 : 1200;
+  const axisOut = outVar === "A" ? "x" : "y", offOut = outVar === "A" ? -2500 : -1200;
   if (ch > 0) {
-    tl += `tl.set("#wipein", { opacity: 1 }, 0.001); tl.set("#wipein .slice", { ${inVar === "A" ? 'scaleX: 1, transformOrigin: "100% 50%"' : 'scaleY: 1, transformOrigin: "50% 100%"'} }, 0.001);`;
-    if (sealIn) tl += `tl.set("#sealin", { scale: 1, transformOrigin: "50% 50%" }, 0.001); tl.to("#sealin", { scale: 0, duration: .25, ease: "back.in(2)" }, 0.05);`;
-    tl += `tl.to("#wipein .slice", { ${inVar === "A" ? "scaleX" : "scaleY"}: 0, duration: .3, stagger: .03, ease: "power2.in" }, 0.12); tl.set("#wipein", { opacity: 0 }, 0.7);\n`;
+    tl += `tl.set("#wipein", { opacity: 1 }, 0.001); tl.set("#wipein .slice", { ${axisIn}: 0 }, 0.001);`;
+    if (sealIn) tl += `tl.set("#sealin", { scale: 1, transformOrigin: "50% 50%" }, 0.001); tl.to("#sealin", { scale: 0, duration: .3, ease: "back.in(1.8)" }, 0.05);`;
+    tl += `tl.to("#wipein .slice", { ${axisIn}: ${offIn}, duration: .55, stagger: .035, ease: "power2.inOut" }, 0.1); tl.set("#wipein", { opacity: 0 }, 0.95);\n`;
   } else tl += `tl.set("#wipein", { opacity: 0 }, 0.001);\n`;
   if (ch < 7) {
-    const W0 = +(TOTAL - 0.75).toFixed(2);
-    tl += `tl.set("#wipeout", { opacity: 1 }, ${W0}); tl.set("#wipeout .slice", { ${outVar === "A" ? 'scaleX: 0, transformOrigin: "0% 50%"' : 'scaleY: 0, transformOrigin: "50% 0%"'} }, 0.001); tl.to("#wipeout .slice", { ${outVar === "A" ? "scaleX" : "scaleY"}: 1, duration: .3, stagger: .03, ease: "back.out(1.2)" }, ${W0});`;
-    if (seal) tl += `tl.set("#seal", { scale: 0, transformOrigin: "50% 50%" }, 0.001); tl.to("#seal", { scale: 1, duration: .28, ease: "back.out(2.5)" }, ${(W0 + .4).toFixed(2)});`;
+    const W0 = +(TOTAL - 0.95).toFixed(2);
+    tl += `tl.set("#wipeout .slice", { ${axisOut}: ${offOut} }, 0.001); tl.set("#wipeout", { opacity: 1 }, ${W0}); tl.to("#wipeout .slice", { ${axisOut}: 0, duration: .55, stagger: .035, ease: "power2.inOut" }, ${W0});`;
+    if (seal) tl += `tl.set("#seal", { scale: 0, transformOrigin: "50% 50%" }, 0.001); tl.to("#seal", { scale: 1, duration: .3, ease: "back.out(2)" }, ${(W0 + .55).toFixed(2)});`;
     tl += "\n";
   } else tl += `tl.set("#wipeout", { opacity: 0 }, 0.001);\n`;
   const page = `<!doctype html>
