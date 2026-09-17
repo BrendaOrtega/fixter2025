@@ -1,13 +1,13 @@
 import fs from "node:fs";
 // Short-trailer 9:16 (~23 s). Ghosty presenta el tutorial de eve. Tiempos de voz de voice/marks.txt.
-const TOTAL = 25.0;
-const V = [0, 3.7, 7.44, 10.29, 14.86, 20.93];           // inicio de cada frase
-const D = [3.20, 3.24, 2.05, 3.97, 5.57, 2.71];          // duración de cada frase
+const TOTAL = 25.5;
+const V = [0, 3.7, 8.1, 10.95, 15.41, 21.48];           // inicio de cada frase
+const D = [3.20, 3.90, 2.05, 3.86, 5.57, 2.71];          // duración de cada frase
 const LINES = [
   "Soy Ghosty, y te hice un video sobre agentes durables.",
-  "Este agente guarda un recibo por cada paso que termina.",
+  "Este agente lleva un registro de cada paso que termina, en Postgres.",
   "Le corto la luz en el paso tres.",
-  "Cuando vuelve, lee sus recibos y sigue en el cuatro. No repite nada.",
+  "Cuando vuelve, lee el registro y sigue en el cuatro. No repite nada.",
   "En el video lo armamos con eve, de Vercel, Postgres y Docker, y lo corremos en una caja de EasyBits.",
   "Está completo en YouTube: fixtergeek. Sale hoy.",
 ];
@@ -20,7 +20,7 @@ const caps = LINES.map((l, i) => {
   return `<div class="clip cap" id="cap${i}" data-start="${V[i]}" data-duration="${(i < 5 ? V[i + 1] - V[i] : TOTAL - V[i]).toFixed(2)}"><div class="capin">${words}</div></div>`;
 }).join("\n");
 const chip = (n, x) => `<g class="chip" id="chip${n}"><rect x="${x}" y="1010" width="72" height="72" rx="10" fill="${GREY}" stroke="${INK}" stroke-width="4"/><text x="${x + 36}" y="1062" font-size="40" font-weight="900" text-anchor="middle" fill="${BG}">${n}</text></g>`;
-// recibo: papelito que vuela de la ficha a la libreta
+// resultado del paso: papelito que vuela de la ficha a la lista de guardado
 const receipt = (n) => `<g class="receipt" id="rc${n}" opacity="0"><rect x="0" y="0" width="70" height="40" rx="6" fill="${INK}" stroke="${BG}" stroke-width="3"/><text x="35" y="28" font-size="22" font-weight="700" text-anchor="middle" fill="${BG}">${n} ✓</text></g>`;
 
 const html = `<!doctype html>
@@ -36,14 +36,14 @@ body { font-family:"Space Mono", monospace; color:${INK}; }
 .clip { position:absolute; inset:0; }
 ${ANIMS}
 .anim { transform-box: fill-box; transform-origin: 50% 100%; animation-fill-mode: both; }
-#ghosty { animation: jello 1.3s .1s both, bounce 1.1s 3.8s both, headshake 1s 7.5s both, tada 1s 10.4s both, bounce 1.2s 20.5s both; transform-box: fill-box; transform-origin: 50% 100%; }
+#ghosty { animation: jello 1.3s .1s both, bounce 1.1s 3.8s both, headshake 1s 8.2s both, tada 1s 11.1s both, bounce 1.2s 21.5s both; transform-box: fill-box; transform-origin: 50% 100%; }
 #stack { animation: bounce 1.1s 3.9s both; transform-box: fill-box; transform-origin: 50% 100%; }
-#ic1 { animation: bounce 1s 16.2s both; } #ic2 { animation: bounce 1s 17.2s both; } #ic3 { animation: bounce 1s 18.2s both; }
+#ic1 { animation: bounce 1s 16.8s both; } #ic2 { animation: bounce 1s 17.8s both; } #ic3 { animation: bounce 1s 18.8s both; }
 #ic1,#ic2,#ic3 { transform-box: fill-box; transform-origin: 50% 100%; }
-#box, #pieces, #cta { transform: translateY(-110px); } #cable { transform: translateY(-330px); }
+#box, #pieces, #cta { transform: translate(150px,-25px) scale(.86); transform-origin: 0 0; } #cable { transform: translateY(-345px); }
 .slice { transform-box: fill-box; transform-origin: 0% 50%; }
 #journal { animation: swing 1s 3.8s both; transform-box: fill-box; transform-origin: 50% 0%; }
-#logo { animation: tada 1s 21.9s both; transform-box: fill-box; transform-origin: 50% 50%; }
+#logo { animation: tada 1s 22.4s both; transform-box: fill-box; transform-origin: 50% 50%; }
 .cap { top:1215px; bottom:auto; height:200px; display:flex; align-items:center; justify-content:center; padding:0 70px; z-index:20; }
 .capin { font-family:"Big Shoulders Display", sans-serif; font-weight:900; font-size:72px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; }
 .w { color:${GREY}; display:inline-block; }
@@ -75,9 +75,9 @@ ${ANIMS}
         ${[1,2,3,4,5,6].map((n, i) => chip(n, 180 + i * 84)).join("")}
       </g>
       <g id="ghosty"><image xlink:href="assets/ghosty.png" x="330" y="660" width="300" height="348" preserveAspectRatio="xMidYMid meet"/></g>
-      <!-- la libreta de recibos: aquí guarda cada paso terminado -->
+      <!-- los checkpoints: aquí queda el resultado de cada paso terminado -->
       <g id="journal"><rect x="700" y="700" width="190" height="270" rx="10" fill="${INK}" stroke="${BG}" stroke-width="4"/><line x1="732" y1="700" x2="732" y2="970" stroke="#D9D3C4" stroke-width="4"/>
-        <text x="810" y="745" text-anchor="middle" font-size="24" font-weight="700" fill="${GREY}">recibos</text>
+        <text x="810" y="745" text-anchor="middle" font-size="24" font-weight="700" fill="${GREY}">registro</text>
         ${[1,2,3,4,5,6].map((n) => `<text class="jl" id="jl${n}" x="750" y="${745 + n * 36}" font-size="26" font-weight="700" fill="${BG}" opacity="0">paso ${n} ✓</text>`).join("")}
       </g>
       ${[1,2,3,4,5,6].map(receipt).join("")}
@@ -96,7 +96,7 @@ ${ANIMS}
   <g id="cable">
     <g id="outlet"><rect x="30" y="1290" width="120" height="150" rx="14" fill="${INK}" stroke="${BG}" stroke-width="4"/><rect x="62" y="1330" width="14" height="40" rx="4" fill="${BG}"/><rect x="104" y="1330" width="14" height="40" rx="4" fill="${BG}"/><circle cx="90" cy="1312" r="5" fill="${GREY}"/><circle cx="90" cy="1418" r="5" fill="${GREY}"/></g>
     <g id="plug"><rect x="150" y="1318" width="80" height="64" rx="12" fill="${MINT}" stroke="${BG}" stroke-width="4"/><rect x="132" y="1332" width="22" height="12" rx="3" fill="${GREY}"/><rect x="132" y="1356" width="22" height="12" rx="3" fill="${GREY}"/></g>
-    <path id="cord" d="M230,1350 C330,1350 330,1290 250,1275 C180,1262 150,1250 150,1236" fill="none" stroke="${INK}" stroke-width="10" stroke-linecap="round"/>
+    <path id="cord" d="M230,1350 C250,1350 255,1350 272,1350" fill="none" stroke="${INK}" stroke-width="10" stroke-linecap="round"/>
   </g>
 
   <!-- tres piezas del tutorial (aparecen sobre la caja en el beat 5) -->
@@ -142,14 +142,14 @@ const done = (n, t) => {
 done(1, V[1] + .9); done(2, V[1] + 1.7); done(3, V[1] + 2.5);
 // beat 3: Ghosty jala el cable → el cable se desprende, la caja se apaga, escarcha
 tl.to("#plug", { x: 90, y: 30, rotation: 35, transformOrigin: "50% 50%", duration: .3, ease: "power2.in" }, V[2] + .9);
-tl.to("#cord", { attr: { d: "M300,1400 C380,1400 380,1300 260,1280 C190,1268 150,1250 150,1236" }, duration: .3, ease: "power2.in" }, V[2] + .9);
+tl.to("#cord", { attr: { d: "M300,1400 C330,1400 290,1360 272,1350" }, duration: .3, ease: "power2.in" }, V[2] + .9);
 tl.to("#boxfront", { fill: "${OFF}", duration: .12 }, V[2] + 1.2);
 tl.to(".lamp", { fill: GREY, duration: .1, stagger: .05 }, V[2] + 1.2);
 tl.set("#boxlbl", { textContent: "sb_af93 · off", fill: INK }, V[2] + 1.25);
 tl.to("#frost polygon", { scale: 1, duration: .45, stagger: .08, ease: "power2.out" }, V[2] + 1.3);
 // beat 4: enchufa, reencienden, se derrite; lee los recibos (parpadean) y sigue con 4-6
 tl.to("#plug", { x: 0, y: 0, rotation: 0, duration: .3, ease: "power2.out" }, V[3]);
-tl.to("#cord", { attr: { d: "M230,1350 C330,1350 330,1290 250,1275 C180,1262 150,1250 150,1236" }, duration: .3, ease: "power2.out" }, V[3]);
+tl.to("#cord", { attr: { d: "M230,1350 C250,1350 255,1350 272,1350" }, duration: .3, ease: "power2.out" }, V[3]);
 tl.to("#boxfront", { fill: MINT, duration: .2 }, V[3] + .3);
 tl.to(".lamp", { fill: (i) => (i === 2 ? INK : "${GREEN}"), duration: .1, stagger: .06 }, V[3] + .3);
 tl.set("#boxlbl", { textContent: "sb_af93 · on", fill: "${BG}" }, V[3] + .4);
@@ -174,6 +174,6 @@ window.__timelines["main"] = tl;
 </script>
 </body></html>`;
 fs.writeFileSync(new URL("./index.html", import.meta.url), html);
-const sfx = { "boing": [0.1], "paper": [V[1]+.95, V[1]+1.75, V[1]+2.55, V[3]+1.75, V[3]+2.45, V[3]+3.15], "cable-yank": [V[2]+.9], "power-down": [V[2]+1.2], "frost": [V[2]+1.3], "power-up": [V[3]+.3], "melt": [V[3]+.4], "tick": [V[3]+.8, V[3]+.95, V[3]+1.1], "riser": [V[4]+.2], "hit": [V[4]+.42], "pop": [16.2, 17.2, 18.2], "stamp": [V[5]], "tada": [21.9] };
+const sfx = { "boing": [0.1], "paper": [V[1]+.95, V[1]+1.75, V[1]+2.55, V[3]+1.75, V[3]+2.45, V[3]+3.15], "cable-yank": [V[2]+.9], "power-down": [V[2]+1.2], "frost": [V[2]+1.3], "power-up": [V[3]+.3], "melt": [V[3]+.4], "tick": [V[3]+.8, V[3]+.95, V[3]+1.1], "riser": [V[4]+.2], "hit": [V[4]+.42], "pop": [16.8, 17.8, 18.8], "stamp": [V[5]], "tada": [22.4] };
 fs.writeFileSync(new URL("./sfx.json", import.meta.url), JSON.stringify(sfx, null, 2));
 console.log("index.html", html.length, "bytes · total", TOTAL);

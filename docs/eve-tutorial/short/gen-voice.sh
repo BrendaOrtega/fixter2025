@@ -4,9 +4,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 LINES=(
 "Soy Gósti, y te hice un video sobre agentes durables."
-"Este agente guarda un recibo por cada paso que termina."
+"Este agente lleva un registro de cada paso que termina, en Póstgres."
 "Le corto la luz en el paso tres."
-"Cuando vuelve, lee sus recibos y sigue en el cuatro. No repite nada."
+"Cuando vuelve, lee el registro y sigue en el cuatro. No repite nada."
 "En el video lo armamos con ib, de Vércel, Póstgres y Dóquer, y lo corremos en una caja de Ísibits."
 "Está completo en yutub: fixterguic. Sale hoy."
 )
