@@ -1,10 +1,20 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Style frame 02 · El World: archivero y charola</title>
-<style>
-  html,body{margin:0;background:#0E1317}
-  body{width:1920px;height:1080px;overflow:hidden;font-family:ui-monospace,Menlo,monospace}
-</style>
+<html lang="es" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0E1317; }
+      body { font-family: ui-monospace, Menlo, monospace; color: #F2F5F4; }
+      .clip { position: absolute; inset: 0; }
+      svg text { font-family: ui-monospace, Menlo, monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+      <div class="clip" id="scene" data-start="0" data-duration="12">
 <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="24" cy="24" r="2.2" fill="#1C262B"/></pattern>
@@ -43,7 +53,7 @@
 
   <!-- ===== Ghosty al centro, llevando la ficha 4 al cajón ===== -->
   <g transform="rotate(-10 960 520)">
-    <image xlink:href="ghosty.png" x="810" y="380" width="300" height="350" preserveAspectRatio="xMidYMid meet"/>
+    <image xlink:href="assets/ghosty.png" x="810" y="380" width="300" height="350" preserveAspectRatio="xMidYMid meet"/>
   </g>
   <g transform="rotate(-16 760 600)">
     <rect x="720" y="560" width="80" height="80" rx="10" fill="#0E1317" transform="translate(8,8)"/>
@@ -73,3 +83,28 @@
   <text x="960" y="150" text-anchor="middle" font-size="56" font-weight="900" fill="#F2F5F4">El World, sin branding</text>
   <text x="960" y="200" text-anchor="middle" font-size="28" fill="#85DDCB">un archivero de lo que ya pasó + una charola de lo que sigue</text>
 </svg>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      // entrada estándar de un elemento: sube 24px con rebote suave (sin scale ni svgOrigin: sin vibración)
+      const rise = (sel, t, d = .45) => tl.from(sel, { y: 24, opacity: 0, duration: d, ease: "power3.out", immediateRender: false }, t);
+      const pop = (sel, t) => tl.from(sel, { opacity: 0, duration: .2, immediateRender: false }, t);
+      const draw = (sel, t, d = .6) => { tl.set(sel, { strokeDasharray: 2000, strokeDashoffset: 2000 }, 0); tl.to(sel, { strokeDashoffset: 0, duration: d, ease: "power2.inOut" }, t); };
+
+      // fotograma 0 completo: archivero, Ghosty con la 4 y charola ya están; se anima el viaje de la ficha
+      tl.to("#cabinet", { y: -10, duration: .35, ease: "back.out(2)" }, 0.6); tl.to("#cabinet", { y: 0, duration: .35 }, 1.4);
+      // Ghosty se mece y la ficha viaja al hueco punteado del cajón
+      tl.to("image", { y: -10, duration: .7, yoyo: true, repeat: 3, ease: "sine.inOut" }, 1.2);
+      tl.to("g[transform*='rotate(-16'] rect, g[transform*='rotate(-16'] text", { x: -200, y: -30, duration: .8, ease: "power2.inOut" }, 3.0);
+      tl.to("g[transform*='rotate(-16']", { opacity: 0, duration: .1 }, 3.8);
+      tl.to("#slot4", { fill: "#8DCF6E", strokeDasharray: "0 0", duration: .2 }, 3.85); tl.to("#slot4num", { opacity: 1, duration: .1 }, 3.9);
+      tl.to("#tray", { y: -10, duration: .35, ease: "back.out(2)" }, 5.6); tl.to("#tray", { y: 0, duration: .35 }, 6.4);
+      tl.to("#tray rect:nth-of-type(5)", { y: -6, duration: .3, yoyo: true, repeat: 3, ease: "sine.inOut" }, 6.4);
+  
+      tl.set({}, {}, 12);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

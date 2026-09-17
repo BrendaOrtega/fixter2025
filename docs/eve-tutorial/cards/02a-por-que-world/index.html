@@ -1,14 +1,24 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Style frame 02a · Por qué le llaman World</title>
-<style>
-  html,body{margin:0;background:#0E1317}
-  body{width:1920px;height:1080px;overflow:hidden;font-family:ui-monospace,Menlo,monospace}
-</style>
+<html lang="es" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0E1317; }
+      body { font-family: ui-monospace, Menlo, monospace; color: #F2F5F4; }
+      .clip { position: absolute; inset: 0; }
+      svg text { font-family: ui-monospace, Menlo, monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+      <div class="clip" id="scene" data-start="0" data-duration="12">
 <svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="24" cy="24" r="2.2" fill="#1C262B"/></pattern>
-    <symbol id="ghosty" viewBox="0 0 120 140"><image xlink:href="ghosty.png" x="0" y="0" width="120" height="140" preserveAspectRatio="xMidYMid meet"/></symbol>
+    <symbol id="ghosty" viewBox="0 0 120 140"><image xlink:href="assets/ghosty.png" x="0" y="0" width="120" height="140" preserveAspectRatio="xMidYMid meet"/></symbol>
     <symbol id="ficha" viewBox="0 0 60 60">
       <rect x="4" y="4" width="52" height="52" rx="8" fill="#85DDCB" stroke="#F2F5F4" stroke-width="4"/>
       <text x="30" y="43" font-family="ui-monospace,Menlo,monospace" font-size="30" font-weight="900" text-anchor="middle" fill="#0E1317">4</text>
@@ -74,3 +84,24 @@
   <text x="960" y="916" text-anchor="middle" font-size="26" font-weight="900" fill="#0E1317">"A World is the abstraction that allows workflows to run on any infrastructure."</text>
   <text x="960" y="956" text-anchor="middle" font-size="22" fill="#0E1317">el código del agente no cambia; cambia el mundo donde vive — workflow-sdk.dev/worlds</text>
 </svg>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      // entrada estándar de un elemento: sube 24px con rebote suave (sin scale ni svgOrigin: sin vibración)
+      const rise = (sel, t, d = .45) => tl.from(sel, { y: 24, opacity: 0, duration: d, ease: "power3.out", immediateRender: false }, t);
+      const pop = (sel, t) => tl.from(sel, { opacity: 0, duration: .2, immediateRender: false }, t);
+      const draw = (sel, t, d = .6) => { tl.set(sel, { strokeDasharray: 2000, strokeDashoffset: 2000 }, 0); tl.to(sel, { strokeDashoffset: 0, duration: d, ease: "power2.inOut" }, t); };
+
+      // fotograma 0 completo; lo que se anima es el foco: cada mundo se levanta un poco cuando se nombra
+      const focus = (sel, t) => { tl.to(sel, { y: -16, duration: .35, ease: "back.out(2)" }, t); tl.to(sel, { y: 0, duration: .35, ease: "power2.inOut" }, t + 1.6); };
+      focus("#w1", 1.0); focus("#w2", 3.2); focus("#w3", 5.4);
+      // los tres Ghosty se mecen a la vez: misma ficha, mismo personaje
+      tl.to("#w1 use[href='#ghosty'], #w2 use[href='#ghosty'], #w3 use[href='#ghosty']", { y: -10, duration: .7, yoyo: true, repeat: 5, ease: "sine.inOut" }, 7.6);
+  
+      tl.set({}, {}, 12);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

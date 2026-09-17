@@ -1,0 +1,10 @@
+{
+  "name": "eve-card-02a-por-que-world",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "npx --yes hyperframes@0.8.27 check .",
+    "render": "npx --yes hyperframes@0.8.27 render ."
+  }
+}
