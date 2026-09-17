@@ -1,14 +1,15 @@
 import fs from "node:fs";
 // Short-trailer 9:16 (~23 s). Ghosty presenta el tutorial de eve. Tiempos de voz de voice/marks.txt.
 const TOTAL = 26.2;
-const V = [0, 3.7, 8.1, 10.95, 15.41, 22.12];           // inicio de cada frase
-const D = [3.20, 3.90, 2.05, 3.86, 6.21, 2.71];          // duración de cada frase
+const V = [0, 3.7, 8.1, 10.95, 15.41, 18.35, 22.12];  // la frase 4 va en dos subtítulos           // inicio de cada frase
+const D = [3.20, 3.90, 2.05, 3.86, 2.85, 3.27, 2.71];          // duración de cada frase
 const LINES = [
   "Soy Ghosty, y te hice un video sobre agentes durables.",
   "Este agente lleva un registro de cada paso que termina, en Postgres.",
   "Le corto la luz en el paso tres.",
   "Cuando vuelve, lee el registro y sigue en el cuatro. No repite nada.",
-  "En el video lo armamos con eve, el framework de Vercel. Con Postgres y Docker, corriendo en una caja de EasyBits.",
+  "En el video lo armamos con eve, el framework de Vercel.",
+  "Con Postgres y Docker, corriendo en una caja de EasyBits.",
   "Está completo en YouTube: fixtergeek. Sale hoy.",
 ];
 const BG = "#0E1317", MINT = "#85DDCB", MINTDK = "#37AB93", GREEN = "#8DCF6E", INK = "#F2F5F4", GREY = "#7C8A8E", FROST = "#DDF4F0", OFF = "#3E5A5C";
@@ -17,7 +18,7 @@ const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 // karaoke: una línea a la vez, palabra en curso en menta, dichas en tinta, por decir en gris
 const caps = LINES.map((l, i) => {
   const words = l.split(" ").map((w, j) => `<span class="w" id="w${i}_${j}">${esc(w)}</span>`).join(" ");
-  return `<div class="clip cap" id="cap${i}" data-start="${V[i]}" data-duration="${(i < 5 ? V[i + 1] - V[i] : TOTAL - V[i]).toFixed(2)}"><div class="capin">${words}</div></div>`;
+  return `<div class="clip cap" id="cap${i}" data-start="${V[i]}" data-duration="${(i === 3 ? V[4] - 0.75 - V[3] : i < 6 ? V[i + 1] - V[i] : TOTAL - V[i]).toFixed(2)}"><div class="capin">${words}</div></div>`;
 }).join("\n");
 const chip = (n, x) => `<g class="chip" id="chip${n}"><rect x="${x}" y="1010" width="72" height="72" rx="10" fill="${GREY}" stroke="${INK}" stroke-width="4"/><text x="${x + 36}" y="1062" font-size="40" font-weight="900" text-anchor="middle" fill="${BG}">${n}</text></g>`;
 // resultado del paso: papelito que vuela de la ficha a la lista de guardado
@@ -156,17 +157,18 @@ tl.set("#boxlbl", { textContent: "sb_af93 · on", fill: "${BG}" }, V[3] + .4);
 tl.to("#frost polygon", { scale: 0, duration: .4, stagger: .04, ease: "power2.in" }, V[3] + .4);
 tl.to("#jl1, #jl2, #jl3", { fill: MINT, duration: .15, stagger: .15, yoyo: true, repeat: 1 }, V[3] + .8);
 done(4, V[3] + 1.7); done(5, V[3] + 2.4); done(6, V[3] + 3.1);
-// beat 5: cortinilla de rebanadas (entra y sale) y detrás las tres piezas
-tl.set("#wipe", { opacity: 1 }, V[4] + .2); tl.to("#cap4", { opacity: 0, duration: .1 }, V[4] + .15); tl.to("#cap4", { opacity: 1, duration: .1 }, V[4] + .95);
+// beat 5: cortinilla en el silencio previo a la frase 4; las piezas ya están cuando entra el subtítulo
+const W = V[4] - 0.75;
+tl.set("#wipe", { opacity: 1 }, W);
 tl.set(".slice", { scaleX: 0 }, 0.01);
-tl.to(".slice", { scaleX: 1, duration: .22, stagger: .02, ease: "back.out(1.4)" }, V[4] + .2);
-tl.to(".slice", { scaleX: 0, transformOrigin: "100% 50%", duration: .2, stagger: .02, ease: "power2.in" }, V[4] + .55);
-tl.set("#wipe", { opacity: 0 }, V[4] + .95);
+tl.to(".slice", { scaleX: 1, duration: .22, stagger: .02, ease: "back.out(1.4)" }, W);
+tl.to(".slice", { scaleX: 0, transformOrigin: "100% 50%", duration: .2, stagger: .02, ease: "power2.in" }, W + .38);
+tl.set("#wipe", { opacity: 0 }, W + .8);
 // beat 5: las tres piezas tapan la caja
-tl.set("#pieces", { opacity: 1 }, V[4] + .45);
-tl.to("#pieces", { opacity: 0, duration: .12 }, V[5] - .2); tl.set("#pieces", { opacity: 0 }, V[5] - .05);
+tl.set("#pieces", { opacity: 1 }, V[4] - .45);
+tl.to("#pieces", { opacity: 0, duration: .12 }, V[6] - .2); tl.set("#pieces", { opacity: 0 }, V[6] - .05);
 // beat 6: CTA
-tl.to("#cta", { opacity: 1, duration: .15 }, V[5]);
+tl.to("#cta", { opacity: 1, duration: .15 }, V[6]);
 // karaoke: reparto uniforme de palabras por frase
 ${LINES.map((l, i) => { const ws = l.split(" "); return ws.map((w, j) => { const t0 = V[i] + (D[i] * j) / ws.length; return `tl.set("#w${i}_${j}", { color: MINT, scale: 1.08 }, ${t0.toFixed(2)}); tl.set("#w${i}_${j}", { color: INK, scale: 1 }, ${(V[i] + (D[i] * (j + 1)) / ws.length).toFixed(2)});`; }).join(" "); }).join("\n")}
 tl.set({}, {}, ${TOTAL});
@@ -174,6 +176,6 @@ window.__timelines["main"] = tl;
 </script>
 </body></html>`;
 fs.writeFileSync(new URL("./index.html", import.meta.url), html);
-const sfx = { "boing": [0.1], "paper": [V[1]+.95, V[1]+1.75, V[1]+2.55, V[3]+1.75, V[3]+2.45, V[3]+3.15], "cable-yank": [V[2]+.9], "power-down": [V[2]+1.2], "frost": [V[2]+1.3], "power-up": [V[3]+.3], "melt": [V[3]+.4], "tick": [V[3]+.8, V[3]+.95, V[3]+1.1], "riser": [V[4]+.2], "hit": [V[4]+.42], "pop": [17.3, 18.5, 19.7], "stamp": [V[5]], "tada": [23.1] };
+const sfx = { "boing": [0.1], "paper": [V[1]+.95, V[1]+1.75, V[1]+2.55, V[3]+1.75, V[3]+2.45, V[3]+3.15], "cable-yank": [V[2]+.9], "power-down": [V[2]+1.2], "frost": [V[2]+1.3], "power-up": [V[3]+.3], "melt": [V[3]+.4], "tick": [V[3]+.8, V[3]+.95, V[3]+1.1], "riser": [V[4]-.75], "hit": [V[4]-.5], "pop": [17.3, 18.5, 19.7], "stamp": [V[6]], "tada": [23.1] };
 fs.writeFileSync(new URL("./sfx.json", import.meta.url), JSON.stringify(sfx, null, 2));
 console.log("index.html", html.length, "bytes · total", TOTAL);
