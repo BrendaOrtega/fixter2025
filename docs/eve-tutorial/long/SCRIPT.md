@@ -10,7 +10,7 @@ Le corto la luz.
 Lo vuelvo a encender.
 Y sigue en el paso cuatro, con otro número de proceso, sin repetir nada.
 Ese comportamiento tiene nombre: agente durable.
-En los siguientes doce minutos vemos quién lo ofrece así, cómo lo construyeron por dentro, y cómo correrlo en tu propia infraestructura.
+En los siguientes diez minutos vemos quién lo ofrece así, cómo lo construyeron por dentro, y cómo correrlo en tu propia infraestructura.
 El framework se llama eve, y lo hace Vercel.
 
 ## 1 · Lo que vende Vercel
@@ -73,7 +73,7 @@ Y Streamer transmite los eventos al cliente.
 Quien implemente esas tres interfaces puede correr eve.
 Vercel tiene su world.
 Hay uno local que escribe en disco, y uno de Postgres.
-Y la comunidad tiene MongoDB, MySQL, Cloudflare Durable Objects, NATS, SurrealDB y Upstash.
+Y la comunidad ya publicó los suyos: Mongo, MySQL, Cloudflare, NATS, SurrealDB y Upstash.
 > 
 La segunda pieza es el sandbox, y también es un adaptador.
 Tiene un nombre, un create, un prewarm, y el handle que devuelve tiene run, write text file, read text file, stop, delete y capture state.
@@ -139,7 +139,7 @@ La caja recibe una URL pública que pasa todo el path al puerto, así que las do
 En el ejemplo de Vercel eso lo hacía Caddy con dos reglas.
 Health responde, y un turno con bash corre en la caja hija.
 > 
-Falta una pieza, y ya está en camino: el world sobre la base de EasyBits, para que el estado también viva ahí sin instalar Postgres.
+Y la última pieza también existe: easybits eve world, el World sobre la base de EasyBits, para que el estado viva ahí sin instalar Postgres.
 
 ## 7 · Tres formas de no perder el trabajo
 Se va la luz con la ficha cuatro en la mano.
@@ -156,7 +156,7 @@ Te exige reintentar la llamada HTTP que estaba en vuelo, porque esa sí muere.
 En las tres, si la luz se va a mitad de un cobro, el cobro se hace otra vez.
 Eso lo resuelve un id único por cobro, aparte del checkpoint.
 > 
-La primera forma la construimos juntos, desde cero, en la sesión seis de Sistemas Agénticos.
-Está en fixtergeek punto com, diagonal sistemas agénticos.
-Y si este video te sirvió, suscríbete al canal.
-Soy Ghosty. Nos vemos en el siguiente.
+Si te gustaría construir la primera forma desde cero, en una sesión, dímelo en los comentarios.
+Y si quieres armar agentes así, con su caja, su memoria y sus canales, el programa Sistemas Agénticos está en fixtergeek punto com.
+Suscríbete al canal para el siguiente.
+Soy Ghosty. Nos vemos.

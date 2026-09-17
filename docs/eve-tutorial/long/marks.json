@@ -44,7 +44,7 @@
  {
   "ch": 0,
   "i": 6,
-  "text": "En los siguientes doce minutos vemos quién lo ofrece así, cómo lo construyeron por dentro, y cómo correrlo en tu propia infraestructura.",
+  "text": "En los siguientes diez minutos vemos quién lo ofrece así, cómo lo construyeron por dentro, y cómo correrlo en tu propia infraestructura.",
   "start": 17.78,
   "dur": 7.66
  },
@@ -361,538 +361,538 @@
   "i": 51,
   "text": "En el código esa carpeta se llama World.",
   "start": 226.48,
-  "dur": 2.6
+  "dur": 2.58
  },
  {
   "ch": 3,
   "i": 52,
   "text": "Un World es la unión de tres interfaces.",
-  "start": 229.53,
-  "dur": 2.6
+  "start": 229.51,
+  "dur": 2.65
  },
  {
   "ch": 3,
   "i": 53,
   "text": "Storage guarda runs, steps, eventos y hooks.",
-  "start": 232.59,
-  "dur": 2.6
+  "start": 232.61,
+  "dur": 2.65
  },
  {
   "ch": 3,
   "i": 54,
   "text": "Queue encola el siguiente paso a ejecutar.",
-  "start": 235.64,
+  "start": 235.7,
   "dur": 2.47
  },
  {
   "ch": 3,
   "i": 55,
   "text": "Y Streamer transmite los eventos al cliente.",
-  "start": 238.56,
+  "start": 238.63,
   "dur": 2.79
  },
  {
   "ch": 3,
   "i": 56,
   "text": "Quien implemente esas tres interfaces puede correr eve.",
-  "start": 241.81,
+  "start": 241.87,
   "dur": 3.18
  },
  {
   "ch": 3,
   "i": 57,
   "text": "Vercel tiene su world.",
-  "start": 245.44,
-  "dur": 1.51
+  "start": 245.5,
+  "dur": 1.58
  },
  {
   "ch": 3,
   "i": 58,
   "text": "Hay uno local que escribe en disco, y uno de Postgres.",
-  "start": 247.4,
+  "start": 247.53,
   "dur": 2.84
  },
  {
   "ch": 3,
   "i": 59,
-  "text": "Y la comunidad tiene MongoDB, MySQL, Cloudflare Durable Objects, NATS, SurrealDB y Upstash.",
-  "start": 250.69,
-  "dur": 5.76
+  "text": "Y la comunidad ya publicó los suyos: Mongo, MySQL, Cloudflare, NATS, SurrealDB y Upstash.",
+  "start": 250.82,
+  "dur": 5.61
  },
  {
   "ch": 3,
   "i": 60,
   "text": "La segunda pieza es el sandbox, y también es un adaptador.",
-  "start": 257.9,
+  "start": 257.88,
   "dur": 3.56
  },
  {
   "ch": 3,
   "i": 61,
   "text": "Tiene un nombre, un create, un prewarm, y el handle que devuelve tiene run, write text file, read text file, stop, delete y capture state.",
-  "start": 261.91,
+  "start": 261.89,
   "dur": 7.83
  },
  {
   "ch": 3,
   "i": 62,
   "text": "eve trae cuatro: Vercel Sandbox, Docker, microsandbox y just bash, y los prueba en ese orden.",
-  "start": 270.19,
+  "start": 270.17,
   "dur": 5.61
  },
  {
   "ch": 3,
   "i": 63,
   "text": "Lo demás del runtime es Nitro para las rutas HTTP y el AI SDK para el modelo.",
-  "start": 276.25,
+  "start": 276.23,
   "dur": 5.29
  },
  {
   "ch": 3,
   "i": 64,
   "text": "Dos contratos: un World y un Sandbox Backend.",
-  "start": 281.99,
+  "start": 281.97,
   "dur": 2.86
  },
  {
   "ch": 4,
   "i": 65,
   "text": "El world local escribe en disco y corre en un solo proceso.",
-  "start": 286.9,
+  "start": 286.88,
   "dur": 3.48
  },
  {
   "ch": 4,
   "i": 66,
   "text": "Sirve para desarrollar y para un agente en una máquina.",
-  "start": 290.83,
+  "start": 290.81,
   "dur": 3.03
  },
  {
   "ch": 4,
   "i": 67,
   "text": "Para dos procesos, o para sobrevivir un redeploy donde el disco se va, se necesita un world compartido.",
-  "start": 294.31,
+  "start": 294.29,
   "dur": 5.85
  },
  {
   "ch": 4,
   "i": 68,
   "text": "El de referencia es Postgres.",
-  "start": 300.6,
+  "start": 300.58,
   "dur": 1.9
  },
  {
   "ch": 4,
   "i": 69,
   "text": "Una sola base resuelve las tres interfaces.",
-  "start": 302.95,
+  "start": 302.93,
   "dur": 2.75
  },
  {
   "ch": 4,
   "i": 70,
   "text": "Las tablas son el Storage.",
-  "start": 306.15,
+  "start": 306.13,
   "dur": 1.77
  },
  {
   "ch": 4,
   "i": 71,
   "text": "La cola se hace con select for update skip locked, sobre graphile worker.",
-  "start": 308.37,
+  "start": 308.35,
   "dur": 4.22
  },
  {
   "ch": 4,
   "i": 72,
   "text": "Y listen notify despierta al worker sin polling.",
-  "start": 313.05,
+  "start": 313.03,
   "dur": 2.99
  },
  {
   "ch": 4,
   "i": 73,
   "text": "Se instala el paquete world postgres.",
-  "start": 317.48,
+  "start": 317.46,
   "dur": 2.3
  },
  {
   "ch": 4,
   "i": 74,
   "text": "Cuidado con la versión: en npm, latest es la línea cuatro, y eve usa la cinco punto cero beta.",
-  "start": 320.24,
+  "start": 320.22,
   "dur": 5.97
  },
  {
   "ch": 4,
   "i": 75,
   "text": "Hay que pinnear la beta que trae eve, o el runtime rechaza el protocolo.",
-  "start": 326.66,
+  "start": 326.64,
   "dur": 4.12
  },
  {
   "ch": 4,
   "i": 76,
   "text": "El bootstrap crea dos esquemas: workflow, con runs, steps, events, hooks, waits y stream chunks; y graphile worker, con la cola.",
-  "start": 331.23,
+  "start": 331.21,
   "dur": 7.38
  },
  {
   "ch": 4,
   "i": 77,
   "text": "En agent punto ts se declara el world, y la URL de la base va en la variable de entorno.",
-  "start": 339.06,
+  "start": 339.04,
   "dur": 5.7
  },
  {
   "ch": 4,
   "i": 78,
   "text": "Misma prueba.",
-  "start": 346.21,
+  "start": 346.19,
   "dur": 1
  },
  {
   "ch": 4,
   "i": 79,
   "text": "Arranca el agente, pide la tarea, y en la tabla steps van apareciendo filas.",
-  "start": 347.66,
+  "start": 347.64,
   "dur": 4.35
  },
  {
   "ch": 4,
   "i": 80,
   "text": "Mato el proceso en el paso tres.",
-  "start": 352.46,
+  "start": 352.44,
   "dur": 2.05
  },
  {
   "ch": 4,
   "i": 81,
   "text": "En la tabla quedan las filas completadas.",
-  "start": 354.96,
+  "start": 354.94,
   "dur": 2.33
  },
  {
   "ch": 4,
   "i": 82,
   "text": "Arranco de nuevo, con otro pid, y aparecen las tres que faltaban.",
-  "start": 357.73,
+  "start": 357.71,
   "dur": 3.73
  },
  {
   "ch": 4,
   "i": 83,
   "text": "El agente ya no depende del disco de la máquina.",
-  "start": 361.92,
+  "start": 361.9,
   "dur": 2.86
  },
  {
   "ch": 5,
   "i": 84,
   "text": "El agente vive en dos lugares.",
-  "start": 366.83,
+  "start": 366.81,
   "dur": 1.98
  },
  {
   "ch": 5,
   "i": 85,
   "text": "El app runtime es tu proceso Node: habla con el modelo, guarda las llaves, escribe los checkpoints y decide qué tool llamar.",
-  "start": 369.26,
+  "start": 369.24,
   "dur": 6.83
  },
  {
   "ch": 5,
   "i": 86,
   "text": "El sandbox es donde corre bash: tiene su workspace, no tiene llaves, y su red la decides tú.",
-  "start": 376.54,
+  "start": 376.52,
   "dur": 5.21
  },
  {
   "ch": 5,
   "i": 87,
   "text": "Entre los dos hay una frontera.",
-  "start": 383.19,
+  "start": 383.17,
   "dur": 1.98
  },
  {
   "ch": 5,
   "i": 88,
   "text": "De un lado va el comando: bash, write file.",
-  "start": 385.63,
+  "start": 385.61,
   "dur": 2.45
  },
  {
   "ch": 5,
   "i": 89,
   "text": "Del otro vuelve el resultado: exit code, stdout, stderr.",
-  "start": 388.53,
+  "start": 388.51,
   "dur": 4.2
  },
  {
   "ch": 5,
   "i": 90,
   "text": "Las llaves se quedan del lado del runtime.",
-  "start": 393.18,
+  "start": 393.16,
   "dur": 2.45
  },
  {
   "ch": 5,
   "i": 91,
   "text": "El modelo nunca toca una.",
-  "start": 396.09,
+  "start": 396.06,
   "dur": 1.81
  },
  {
   "ch": 5,
   "i": 92,
   "text": "En el ejemplo oficial de self hosting los dos corren en la misma máquina: el runtime como proceso y el sandbox como contenedor de Docker.",
-  "start": 399.35,
+  "start": 399.33,
   "dur": 8.02
  },
  {
   "ch": 5,
   "i": 93,
   "text": "El backend de Docker levanta un contenedor por sesión con la imagen de eve y lo deja vivo entre turnos.",
-  "start": 407.82,
+  "start": 407.8,
   "dur": 5.87
  },
  {
   "ch": 5,
   "i": 94,
   "text": "Así el workspace conserva los archivos.",
-  "start": 414.14,
+  "start": 414.12,
   "dur": 2.35
  },
  {
   "ch": 5,
   "i": 95,
   "text": "La política de red en Docker sólo sabe todo o nada: allow all o deny all.",
-  "start": 416.93,
+  "start": 416.91,
   "dur": 4.25
  },
  {
   "ch": 5,
   "i": 96,
   "text": "Para un agente que ejecuta Python sobre un CSV, deny all alcanza.",
-  "start": 421.63,
+  "start": 421.61,
   "dur": 4.18
  },
  {
   "ch": 6,
   "i": 97,
   "text": "Ahora lo mismo en EasyBits, donde las dos son cajas.",
-  "start": 427.86,
+  "start": 427.84,
   "dur": 2.73
  },
  {
   "ch": 6,
   "i": 98,
   "text": "La caja madre corre eve.",
-  "start": 431.04,
+  "start": 431.02,
   "dur": 1.71
  },
  {
   "ch": 6,
   "i": 99,
   "text": "Es una microVM de Firecracker con Node veinticuatro, eve, y Postgres instalado adentro.",
-  "start": 433.2,
+  "start": 433.18,
   "dur": 5.35
  },
  {
   "ch": 6,
   "i": 100,
   "text": "Cuando el modelo pide bash, eve le pide a EasyBits una caja hija.",
-  "start": 439,
+  "start": 438.98,
   "dur": 3.65
  },
  {
   "ch": 6,
   "i": 101,
   "text": "Una caja por sesión.",
-  "start": 443.1,
+  "start": 443.08,
   "dur": 1.47
  },
  {
   "ch": 6,
   "i": 102,
   "text": "El adaptador se llama easybits eve sandbox.",
-  "start": 446.02,
+  "start": 446,
   "dur": 2.69
  },
  {
   "ch": 6,
   "i": 103,
   "text": "En sandbox punto ts se declara backend easybits, y lee la llave del entorno.",
-  "start": 449.16,
+  "start": 449.14,
   "dur": 4.71
  },
  {
   "ch": 6,
   "i": 104,
   "text": "prewarm hace un snapshot de la caja preparada.",
-  "start": 454.33,
+  "start": 454.3,
   "dur": 2.88
  },
  {
   "ch": 6,
   "i": 105,
   "text": "create hace un fork de ese snapshot, en unos siete segundos.",
-  "start": 457.66,
+  "start": 457.63,
   "dur": 3.52
  },
  {
   "ch": 6,
   "i": 106,
   "text": "stop la suspende, y resume la despierta en tres.",
-  "start": 461.63,
+  "start": 461.6,
   "dur": 2.92
  },
  {
   "ch": 6,
   "i": 107,
   "text": "Build, start, y se expone el puerto tres mil.",
-  "start": 466,
+  "start": 465.98,
   "dur": 2.71
  },
  {
   "ch": 6,
   "i": 108,
   "text": "La caja recibe una URL pública que pasa todo el path al puerto, así que las dos rutas que eve necesita, diagonal eve y diagonal punto well known diagonal workflow, llegan sin proxy.",
-  "start": 469.16,
+  "start": 469.14,
   "dur": 10.43
  },
  {
   "ch": 6,
   "i": 109,
   "text": "En el ejemplo de Vercel eso lo hacía Caddy con dos reglas.",
-  "start": 480.04,
+  "start": 480.02,
   "dur": 3.41
  },
  {
   "ch": 6,
   "i": 110,
   "text": "Health responde, y un turno con bash corre en la caja hija.",
-  "start": 483.9,
+  "start": 483.88,
   "dur": 3.35
  },
  {
   "ch": 6,
   "i": 111,
-  "text": "Falta una pieza, y ya está en camino: el world sobre la base de EasyBits, para que el estado también viva ahí sin instalar Postgres.",
-  "start": 488.7,
-  "dur": 7.47
+  "text": "Y la última pieza también existe: easybits eve world, el World sobre la base de EasyBits, para que el estado viva ahí sin instalar Postgres.",
+  "start": 488.68,
+  "dur": 8.06
  },
  {
   "ch": 7,
   "i": 112,
   "text": "Se va la luz con la ficha cuatro en la mano.",
-  "start": 498.22,
+  "start": 498.79,
   "dur": 2.52
  },
  {
   "ch": 7,
   "i": 113,
   "text": "Hay tres formas de que el trabajo sobreviva.",
-  "start": 501.19,
+  "start": 501.76,
   "dur": 2.65
  },
  {
   "ch": 7,
   "i": 114,
   "text": "La primera es el journal a mano: guardas el resultado de cada paso en una tabla, tú escribes run step, y al volver lees la tabla y sigues en el cuatro.",
-  "start": 504.28,
+  "start": 504.86,
   "dur": 8.75
  },
  {
   "ch": 7,
   "i": 115,
   "text": "Te exige código determinista.",
-  "start": 513.48,
+  "start": 514.05,
   "dur": 2.09
  },
  {
   "ch": 7,
   "i": 116,
   "text": "La segunda es el motor: eve con el Workflow SDK, Restate, Temporal.",
-  "start": 516.02,
+  "start": 516.59,
   "dur": 4.35
  },
  {
   "ch": 7,
   "i": 117,
   "text": "Guarda lo mismo, pero el motor reproduce por ti.",
-  "start": 520.82,
+  "start": 521.4,
   "dur": 2.77
  },
  {
   "ch": 7,
   "i": 118,
   "text": "Te exige marcar cada paso con use step.",
-  "start": 524.04,
+  "start": 524.62,
   "dur": 2.45
  },
  {
   "ch": 7,
   "i": 119,
   "text": "La tercera es la imagen de la caja: EasyBits suspende la microVM completa, memoria y disco, con el proceso adentro.",
-  "start": 526.95,
+  "start": 527.52,
   "dur": 7.15
  },
  {
   "ch": 7,
   "i": 120,
   "text": "Al volver, el proceso ni se enteró.",
-  "start": 534.54,
+  "start": 535.12,
   "dur": 2.22
  },
  {
   "ch": 7,
   "i": 121,
   "text": "Te exige reintentar la llamada HTTP que estaba en vuelo, porque esa sí muere.",
-  "start": 537.21,
+  "start": 537.79,
   "dur": 4.97
  },
  {
   "ch": 7,
   "i": 122,
   "text": "En las tres, si la luz se va a mitad de un cobro, el cobro se hace otra vez.",
-  "start": 543.63,
+  "start": 544.21,
   "dur": 4.16
  },
  {
   "ch": 7,
   "i": 123,
   "text": "Eso lo resuelve un id único por cobro, aparte del checkpoint.",
-  "start": 548.24,
+  "start": 548.82,
   "dur": 3.71
  },
  {
   "ch": 7,
   "i": 124,
-  "text": "La primera forma la construimos juntos, desde cero, en la sesión seis de Sistemas Agénticos.",
-  "start": 553.41,
-  "dur": 5.42
+  "text": "Si te gustaría construir la primera forma desde cero, en una sesión, dímelo en los comentarios.",
+  "start": 553.98,
+  "dur": 5.5
  },
  {
   "ch": 7,
   "i": 125,
-  "text": "Está en fixtergeek punto com, diagonal sistemas agénticos.",
-  "start": 559.27,
-  "dur": 3.63
+  "text": "Y si quieres armar agentes así, con su caja, su memoria y sus canales, el programa Sistemas Agénticos está en fixtergeek punto com.",
+  "start": 559.94,
+  "dur": 8
  },
  {
   "ch": 7,
   "i": 126,
-  "text": "Y si este video te sirvió, suscríbete al canal.",
-  "start": 563.35,
-  "dur": 2.79
+  "text": "Suscríbete al canal para el siguiente.",
+  "start": 568.39,
+  "dur": 2.18
  },
  {
   "ch": 7,
   "i": 127,
-  "text": "Soy Ghosty. Nos vemos en el siguiente.",
-  "start": 566.6,
-  "dur": 2.26
+  "text": "Soy Ghosty. Nos vemos.",
+  "start": 571.01,
+  "dur": 1.41
  }
 ]

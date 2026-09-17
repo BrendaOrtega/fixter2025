@@ -3,7 +3,7 @@
 export const CAPTURE = (f) => `captures/${f}`;
 export const scenes = {
   0: [
-    { from: 0, to: 0, kind: "broll", src: "broll/plug.mp4", ghost: true },
+    { from: 0, to: 0, kind: "hello" },
     { from: 1, to: 5, kind: "card", src: "01-congelado-long" },            // la tarjeta 01 completa (15 s) ≈ marks 1–5
     { from: 6, to: 6, kind: "term", title: "eve dev --no-ui", file: "eve-run.txt" },
     { from: 7, to: 7, kind: "web", src: "captures/web/eve-hero.png" },
@@ -46,7 +46,7 @@ export const scenes = {
     { from: 111, to: 111, kind: "broll", src: "broll/lights.mp4", ghost: true },
   ],
   7: [
-    { from: 112, to: 123, kind: "card", src: "06-tres-caminos" },
+    { from: 112, to: 123, kind: "card", src: "06-tres-caminos-long" },
     { from: 124, to: 127, kind: "cta" },
   ],
 };

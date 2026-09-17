@@ -13,7 +13,7 @@ console.log("video", T.toFixed(2), "s");
 // SFX: cortinillas en cada frontera + los sfx.json de cada tarjeta desplazados a su escena
 const S = "../../shorts-taller/sfx"; const sfx = [];
 for (let c = 1; c <= 7; c++) { sfx.push([chStart(c) - 0.45, "riser.wav"]); sfx.push([chStart(c) - 0.1, "hit-sub.wav"]); }
-const map = { "chip-place": "pop", "key-type": "tick", "power-down": "hit-low", "frost-crack": "card", "power-up": "coin", "melt-whoosh": "whoosh-fly", "pop": "pop", "boing": "pop", "chip-slide": "whoosh-short", "rattle": "block", "paper": "paper", "whoosh-soft": "whoosh-short", "drawer-open": "block", "tick": "tick", "whoosh-short": "whoosh-short", "hit-low": "hit-low", "8bit-alarm": "8bit-alarm", "card": "card", "stamp": "stamp", "tada": "ding" };
+const map = { "chip-place": "pop", "key-type": "tick", "power-down": "hit-low", "frost-crack": "card", "power-up": "coin", "melt-whoosh": "whoosh-fly", "pop": "pop", "boing": "pop", "chip-slide": "whoosh-short", "rattle": "block", "paper": "paper", "whoosh-soft": "whoosh-short", "drawer-open": "block", "tick": "tick", "whoosh-short": "whoosh-short", "hit-low": "hit-low", "card": "card", "stamp": "stamp", "tada": "ding" };
 for (const [ch, list] of Object.entries(scenes)) for (const s of list) if (s.kind === "card") {
   const dir = `../cards/${s.src.replace(/-long$/, "")}/sfx.json`; if (!fs.existsSync(dir)) continue;
   const base = marks[s.from].start; const j = JSON.parse(fs.readFileSync(dir, "utf8"));
@@ -21,9 +21,12 @@ for (const [ch, list] of Object.entries(scenes)) for (const s of list) if (s.kin
 }
 let last = null; const sfxOk = sfx.sort((a, b) => a[0] - b[0]).filter(([t, f]) => { if (last && last[1] === f && t - last[0] < 0.3) return false; last = [t, f]; return true; });
 console.log("sfx", sfxOk.length);
-const BGM = "/tmp/bgm-long/02.mp3";
+const BGM_A = "/tmp/bgm-pick/synths.mp3", BGM_B = "/tmp/bgm-pick/uplifting.mp3"; const T6 = chStart(6);
 sh(`ffmpeg -y -loglevel error -i voice/voice.wav -af "loudnorm=I=-15:TP=-1.5:LRA=11" -ar 48000 -ac 2 /tmp/v.wav`);
-sh(`ffmpeg -y -loglevel error -stream_loop 3 -i ${BGM} -t ${T + 2} -af "loudnorm=I=-26:TP=-3:LRA=11,afade=t=in:d=1,afade=t=out:st=${(T - 3).toFixed(1)}:d=3" -ar 48000 -ac 2 /tmp/b.wav`);
+// cama A (ambiente) hasta el capítulo 6; ahí entra la cama B (más movida) con un cruce de 2 s
+sh(`ffmpeg -y -loglevel error -stream_loop 3 -i ${BGM_A} -t ${(T6 + 2).toFixed(2)} -af "loudnorm=I=-26:TP=-3:LRA=11,afade=t=in:d=1" -ar 48000 -ac 2 /tmp/bA.wav`);
+sh(`ffmpeg -y -loglevel error -stream_loop 3 -i ${BGM_B} -t ${(T - T6 + 4).toFixed(2)} -af "loudnorm=I=-25:TP=-3:LRA=11,afade=t=out:st=${(T - T6 - 1).toFixed(1)}:d=3" -ar 48000 -ac 2 /tmp/bB.wav`);
+sh(`ffmpeg -y -loglevel error -i /tmp/bA.wav -i /tmp/bB.wav -filter_complex "[0:a][1:a]acrossfade=d=2:c1=tri:c2=tri[b]" -map "[b]" /tmp/b.wav`);
 const inputs = ["-i /tmp/v.wav", "-i /tmp/b.wav"]; let F = ""; let mix = "[vb][bd]"; let n = 2;
 sfxOk.forEach(([t, f], i) => { inputs.push(`-i ${S}/${f}`); F += `[${i + 2}:a]volume=0.7,adelay=${Math.round(t * 1000)}:all=1,apad=whole_dur=${T}[s${i}];`; mix += `[s${i}]`; n++; });
 sh(`ffmpeg -y -loglevel error ${inputs.join(" ")} -filter_complex "[0:a]apad=whole_dur=${T},asplit=2[va][vb];[1:a]atrim=0:${T},apad=whole_dur=${T}[bg];${F}[bg][va]sidechaincompress=threshold=0.02:ratio=8:attack=8:release=500[bd];${mix}amix=inputs=${n}:normalize=0:duration=first[m];[m]atrim=0:${T}[out]" -map "[out]" -ar 48000 /tmp/premix.wav`);

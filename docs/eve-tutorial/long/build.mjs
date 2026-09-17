@@ -7,10 +7,20 @@ const TOTAL_VOICE = marks.at(-1).start + marks.at(-1).dur + 1.2;
 const BG = "#0E1317", MINT = "#85DDCB", MINTDK = "#37AB93", GREEN = "#8DCF6E", INK = "#F2F5F4", GREY = "#7C8A8E", PANEL = "#141C21";
 const ANIMS = fs.readFileSync("assets/_anims.css", "utf8");
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// resaltado mínimo con la paleta dracula (comentarios, cadenas, palabras clave, números, funciones)
+const KW = /\b(import|from|export|default|async|function|await|return|const|let|for|if|else|interface|yield|new|of|true|false|null)\b/g;
+const hlCode = (l) => {
+  if (/^\s*\/\//.test(l)) return `<span class="c">${esc(l)}</span>`;
+  const parts = []; let rest = l;
+  const re = /("[^"]*"|'[^']*'|`[^`]*`|\/\/.*$)/;
+  while (rest.length) { const m = rest.match(re); if (!m) { parts.push(code(rest)); break; } parts.push(code(rest.slice(0, m.index))); parts.push(m[1].startsWith("//") ? `<span class="c">${esc(m[1])}</span>` : `<span class="s">${esc(m[1])}</span>`); rest = rest.slice(m.index + m[1].length); }
+  return parts.join("");
+};
+const code = (t) => esc(t).replace(KW, '<span class="k">$1</span>').replace(/\b(\d+)\b/g, '<span class="n">$1</span>').replace(/\b([a-zA-Z_]\w*)(?=\()/g, '<span class="f">$1</span>');
 const WIPE = 0.45; // cortinilla: entra al final del capítulo y sale al inicio del siguiente
 // límites de capítulo: empieza 0.8 s antes de su primera frase (mitad del hueco de 1.6 s)
-const chStart = (ch) => (ch === 0 ? 0 : +(marks.find((m) => m.ch === ch).start - 0.8).toFixed(2));
-const chEnd = (ch) => (ch === 7 ? +TOTAL_VOICE.toFixed(2) : chStart(ch + 1));
+const chStart = (ch) => (ch === 0 ? 0 : Math.round((marks.find((m) => m.ch === ch).start - 0.8) * 30) / 30);
+const chEnd = (ch) => (ch === 7 ? Math.round(TOTAL_VOICE * 30) / 30 : chStart(ch + 1));
 const sceneEnd = (s, ch) => (s.to + 1 < marks.length && marks[s.to + 1].ch === ch ? marks[s.to + 1].start : chEnd(ch));
 
 const kb = (id) => `tl.fromTo("#${id} img", { scale: 1, x: 0, y: 0 }, { scale: 1.08, x: -30, y: -18, duration: 999, ease: "none" }, 0);`;
@@ -18,9 +28,11 @@ const lines = (file) => fs.readFileSync("captures/" + file, "utf8").replace(/\n$
 const ghost = (id, t0, dur) => `<div class="ghost" id="${id}-ghost" style="animation: bounce 1.2s ${t0.toFixed(2)}s both, jello 1.2s ${(t0 + dur / 2).toFixed(2)}s both;"><img src="assets/ghosty.png"></div>`;
 
 function renderScene(s, ch, idx) {
-  const t0 = +(marks[s.from].start - chStart(ch)).toFixed(2); const t1 = +(sceneEnd(s, ch) - chStart(ch)).toFixed(2); const dur = +(t1 - t0).toFixed(2);
+  const t0 = idx === 0 ? 0 : +(marks[s.from].start - chStart(ch)).toFixed(2); const t1 = +(sceneEnd(s, ch) - chStart(ch)).toFixed(2); const dur = +(t1 - t0).toFixed(2);
   const id = `s${idx}`; const clip = (inner, cls = "") => `<div class="clip scene ${cls}" id="${id}" data-start="${t0}" data-duration="${dur}">${inner}</div>`;
   let tl = "";
+  // entrada de escena: la nueva sube 40 px con rebote corto; la anterior ya se fue (data-duration)
+  if (idx > 0) tl += `tl.from("#${id} > *", { y: 40, opacity: 0, duration: .38, ease: "back.out(1.4)", immediateRender: false }, ${t0});`;
   if (s.kind === "card") {
     const src = `../cards/${s.src}.preview.mp4`; const out = `assets/card-${s.src}-ch${ch}-${idx}.mp4`;
     const len = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of csv=p=0 ${src}`).toString());
@@ -36,11 +48,11 @@ function renderScene(s, ch, idx) {
   }
   if (s.kind === "term" || s.kind === "code") {
     const ls = lines(s.file); const n = ls.length; const step = Math.max(0.12, (dur - 1.2) / n);
-    const rows = ls.map((l, i) => `<div class="ln${l.startsWith("$ ") ? " cmd" : ""}" id="${id}l${i}">${esc(l) || "&nbsp;"}</div>`).join("");
+    const rows = ls.map((l, i) => `<div class="ln${l.startsWith("$ ") ? " cmd" : ""}" id="${id}l${i}">${(s.kind === "code" ? hlCode(l) : esc(l)) || "&nbsp;"}</div>`).join("");
     if (s.kind === "term") ls.forEach((_, i) => { tl += `tl.to("#${id}l${i}", { opacity: 1, duration: .05 }, ${(t0 + 0.4 + i * step).toFixed(2)});`; });
     else {
       ls.forEach((_, i) => { tl += `tl.to("#${id}l${i}", { opacity: 1, duration: .05 }, ${(t0 + 0.2 + i * 0.06).toFixed(2)});`; });
-      for (const [mk, [a, b]] of Object.entries(s.hl || {})) { const t = +(marks[+mk].start - chStart(ch)).toFixed(2); for (let i = a; i <= b; i++) tl += `tl.to("#${id}l${i}", { backgroundColor: "rgba(133,221,203,.18)", color: "${INK}", duration: .15 }, ${t});`; tl += `tl.to("#${id} .ln", { backgroundColor: "rgba(0,0,0,0)", duration: .15 }, ${t});`.replace(/\.15 \}, (\S+)\);$/, ".15 }, $1 - .01);"); }
+      for (const [mk, [a, b]] of Object.entries(s.hl || {})) { const t = +(marks[+mk].start - chStart(ch)).toFixed(2); for (let i = a; i <= b; i++) tl += `tl.to("#${id}l${i}", { backgroundColor: "rgba(189,147,249,.22)", duration: .15 }, ${t});`; tl += `tl.to("#${id} .ln", { backgroundColor: "rgba(0,0,0,0)", duration: .15 }, ${t});`.replace(/\.15 \}, (\S+)\);$/, ".15 }, $1 - .01);"); }
     }
     return { html: clip(`<div class="panel term${s.kind === "code" ? " code" : ""}"><div class="bar"><i></i><i></i><i></i><b>${esc(s.title || s.file)}</b></div><div class="body">${rows}</div></div>${ghost(id, t0, dur)}`), tl };
   }
@@ -48,7 +60,7 @@ function renderScene(s, ch, idx) {
     const items = [["Vercel Workflows", "estado y checkpoints", 11], ["AI Gateway", "llamadas al modelo", 12], ["Vercel Sandbox", "código aislado", 13], ["Vercel Connect", "MCP y HTTP", 14], ["Chat SDK", "Slack · Discord · WhatsApp · Telegram · Teams · cron · API", 15]];
     const rows = items.map(([a, b, mk], i) => { tl += `tl.to("#${id}p${i}", { opacity: 1, y: 0, duration: .35, ease: "back.out(1.6)" }, ${(marks[mk].start - chStart(ch)).toFixed(2)});`; return `<div class="piece" id="${id}p${i}"><span class="num">${i + 1}</span><div><b>${a}</b><small>${b}</small></div></div>`; }).join("");
     tl += `tl.to("#${id} .pieces-foot", { opacity: 1, duration: .3 }, ${(marks[16].start - chStart(ch)).toFixed(2)});`;
-    return { html: clip(`<div class="panel pieces"><h2>Managed · las cinco piezas son de Vercel</h2>${rows}<div class="pieces-foot">Apache 2.0: el código se lee y se corre donde sea · lo que cobra Vercel es operar estas cinco</div></div>${ghost(id, t0, dur)}`), tl };
+    return { html: clip(`<div class="panel pieces"><h2>Managed · las cinco piezas son de Vercel</h2>${rows}<div class="pieces-foot">Apache 2.0: el código se corre donde sea · Vercel cobra por operar estas cinco</div></div>${ghost(id, t0, dur)}`), tl };
   }
   if (s.kind === "tree") {
     const items = [["agent/", null], ["├─ instructions.md", 19], ["├─ tools/get_weather.ts", 20], ["├─ skills/plan_a_trip.md", 21], ["├─ channels/slack.ts", 22], ["├─ schedules/weekly_recap.ts", 23], ["├─ memory/profile.ts", 24], ["└─ agent.ts", null]];
@@ -63,14 +75,17 @@ function renderScene(s, ch, idx) {
   }
   if (s.kind === "newagent") {
     // el formulario "Build an agent" de eve.dev, redibujado plano (texto literal de la captura de bliss)
-    const ph = "Help me triage my issues on Linear, create issues from Vercel alerts & Stripe disputes…";
+    const ph = "Ayúdame a clasificar mis issues en Linear y crea issues desde las alertas de Vercel y las disputas de Stripe…";
     tl += `tl.to("#${id} .typed", { text: { value: ${JSON.stringify(ph)} }, duration: 3.2, ease: "none" }, ${(t0 + .4).toFixed(2)});`;
     tl += `tl.to("#${id} .btn", { backgroundColor: "${MINT}", color: "${BG}", duration: .2 }, ${(marks[9].start - chStart(ch) + 1.2).toFixed(2)}); tl.to("#${id} .foot", { color: "${MINT}", duration: .2 }, ${(marks[9].start - chStart(ch) + 1.5).toFixed(2)});`;
-    return { html: clip(`<div class="panel newagent"><h2>Build an agent</h2><p>What should this agent do?</p><div class="box"><span class="typed"></span><span class="cursor"></span><span class="btn">Continue</span></div><div class="chips"><span>Ask Notion Questions In Slack</span><span>Triage Linear Issues In Slack</span></div><div class="foot">You'll create or log in to your Vercel account before building.</div></div>${ghost(id, t0, dur)}`), tl };
+    return { html: clip(`<div class="panel newagent"><h2>Construye un agente</h2><p>¿Qué debe hacer este agente?</p><div class="box"><span class="typed"></span><span class="cursor"></span><span class="btn">Continuar</span></div><div class="chips"><span>Preguntas a Notion desde Slack</span><span>Clasificar issues de Linear en Slack</span></div><div class="foot">Antes de construir, creas o entras a tu cuenta de Vercel.</div></div>${ghost(id, t0, dur)}`), tl };
+  }
+  if (s.kind === "hello") {
+    return { html: clip(`<div class="hello"><div class="hello-ghost"><img src="assets/ghosty.png"></div><div class="hello-txt"><b>Soy Ghosty</b><span>agentes durables con eve</span></div></div>`), tl };
   }
   if (s.kind === "cta") {
     tl += `tl.from("#${id} .cta-in", { y: 30, opacity: 0, duration: .5, stagger: .25, ease: "power3.out", immediateRender: false }, ${t0 + .2});`;
-    return { html: clip(`<div class="cta"><img class="cta-in logo" src="assets/logo.png"><h1 class="cta-in">Sesión 6 · Agentes durables</h1><p class="cta-in">la construimos desde cero, en la caja del taller</p><p class="cta-in url">fixtergeek.com/sistemas-agenticos</p><p class="cta-in sub">suscríbete al canal · youtube.com/@fixtergeek</p><div class="cta-in ghost big"><img src="assets/ghosty.png"></div></div>`), tl };
+    return { html: clip(`<div class="cta"><img class="cta-in logo" src="assets/logo.png"><h1 class="cta-in">¿Lo construimos desde cero?</h1><p class="cta-in">dímelo en los comentarios</p><p class="cta-in url">fixtergeek.com/sistemas-agenticos</p><p class="cta-in sub">suscríbete · youtube.com/@fixtergeek</p><div class="cta-in ghost big"><img src="assets/ghosty.png"></div></div>`), tl };
   }
 }
 
@@ -81,7 +96,7 @@ for (const ch of Object.keys(scenes).map(Number)) {
   // karaoke: una frase a la vez; frases largas se parten en la coma más cercana al centro
   const chunks = [];
   marks.filter((m) => m.ch === ch).forEach((m, k, arr) => {
-    const t0 = m.start - start; const tEnd = Math.min((arr[k + 1] ? arr[k + 1].start : end) - start, ch < 7 ? TOTAL - WIPE : TOTAL);
+    const t0 = m.start - start; const tEnd = Math.min((arr[k + 1] ? arr[k + 1].start : end) - start, ch < 7 ? TOTAL - 0.75 : TOTAL);
     const ws = m.text.split(" ");
     let parts = [ws];
     if (ws.length > 11) { let best = -1, bd = 99; ws.forEach((w, j) => { if (/[,.;:]$/.test(w) && j < ws.length - 2) { const d = Math.abs(j - ws.length / 2); if (d < bd) { bd = d; best = j; } } }); if (best < 0) best = Math.floor(ws.length / 2) - 1; parts = [ws.slice(0, best + 1), ws.slice(best + 1)]; }
@@ -92,11 +107,26 @@ for (const ch of Object.keys(scenes).map(Number)) {
     c.words.forEach((w, j) => { const a = c.a + (c.dur * j) / c.words.length, b = c.a + (c.dur * (j + 1)) / c.words.length; tl += `tl.set("#${c.id}w${j}", { color: "${MINT}" }, ${a.toFixed(2)}); tl.set("#${c.id}w${j}", { color: "${INK}" }, ${b.toFixed(2)});`; });
     return `<div class="clip cap" data-start="${c.a.toFixed(2)}" data-duration="${(c.b - c.a).toFixed(2)}"><div class="capin">${c.words.map((w, j) => `<span class="w" id="${c.id}w${j}">${esc(w)}</span>`).join(" ")}</div></div>`;
   }).join("\n");
-  // cortinilla
-  const slices = Array.from({ length: 8 }, (_, k) => { const i = k - 1; return `<polygon class="slice" points="-200,${i * 200 - 100} 2200,${i * 200 - 330} 2200,${i * 200 - 60} -200,${i * 200 + 170}" fill="${[MINT, GREEN, INK][k % 3]}"/>`; }).join("");
-  if (ch > 0) tl += `tl.set("#wipe", { opacity: 1 }, 0.001); tl.to(".slice", { scaleX: 0, transformOrigin: "100% 50%", duration: .28, stagger: .025, ease: "power2.in" }, 0.05); tl.set("#wipe", { opacity: 0 }, ${WIPE + .05});\n`;
-  else tl += `tl.set("#wipe", { opacity: 0 }, 0.001);\n`;
-  if (ch < 7) tl += `tl.set("#wipe", { opacity: 1 }, ${(TOTAL - WIPE).toFixed(2)}); tl.set(".slice", { scaleX: ${ch > 0 ? 0 : 0}, transformOrigin: "0% 50%" }, ${(TOTAL - WIPE - .01).toFixed(2)}); tl.to(".slice", { scaleX: 1, transformOrigin: "0% 50%", duration: .28, stagger: .025, ease: "back.out(1.3)" }, ${(TOTAL - WIPE).toFixed(2)});\n`;
+  // cortinilla: variante A (rebanadas diagonales, izquierda→derecha) en capítulos pares; B (barras verticales que caen) en impares.
+  // Cubre por completo los últimos 0.15 s del capítulo y los primeros 0.1 s del siguiente; Ghosty sella en 3 y 6.
+  const varA = (k) => { const i = k - 1; return `<polygon class="slice" points="-200,${i * 200 - 100} 2200,${i * 200 - 330} 2200,${i * 200 - 60} -200,${i * 200 + 170}" fill="${[MINT, GREEN, INK][k % 3]}"/>`; };
+  const varB = (k) => `<rect class="slice" x="${k * 240}" y="-20" width="244" height="1120" fill="${[MINT, GREEN, INK][k % 3]}"/>`;
+  const outVar = ch % 2 === 0 ? "A" : "B", inVar = (ch - 1) % 2 === 0 ? "A" : "B";
+  const slicesOut = Array.from({ length: 8 }, (_, k) => (outVar === "A" ? varA(k) : varB(k))).join("");
+  const slicesIn = Array.from({ length: 8 }, (_, k) => (inVar === "A" ? varA(k) : varB(k))).join("");
+  const seal = [3, 6].includes(ch) ? `<image href="assets/ghosty.png" id="seal" x="810" y="290" width="300" height="348"/>` : "";
+  const sealIn = [4, 7].includes(ch) ? `<image href="assets/ghosty.png" id="sealin" x="810" y="290" width="300" height="348"/>` : "";
+  if (ch > 0) {
+    tl += `tl.set("#wipein", { opacity: 1 }, 0.001); tl.set("#wipein .slice", { ${inVar === "A" ? 'scaleX: 1, transformOrigin: "100% 50%"' : 'scaleY: 1, transformOrigin: "50% 100%"'} }, 0.001);`;
+    if (sealIn) tl += `tl.set("#sealin", { scale: 1, transformOrigin: "50% 50%" }, 0.001); tl.to("#sealin", { scale: 0, duration: .25, ease: "back.in(2)" }, 0.05);`;
+    tl += `tl.to("#wipein .slice", { ${inVar === "A" ? "scaleX" : "scaleY"}: 0, duration: .3, stagger: .03, ease: "power2.in" }, 0.12); tl.set("#wipein", { opacity: 0 }, 0.7);\n`;
+  } else tl += `tl.set("#wipein", { opacity: 0 }, 0.001);\n`;
+  if (ch < 7) {
+    const W0 = +(TOTAL - 0.75).toFixed(2);
+    tl += `tl.set("#wipeout", { opacity: 1 }, ${W0}); tl.set("#wipeout .slice", { ${outVar === "A" ? 'scaleX: 0, transformOrigin: "0% 50%"' : 'scaleY: 0, transformOrigin: "50% 0%"'} }, 0.001); tl.to("#wipeout .slice", { ${outVar === "A" ? "scaleX" : "scaleY"}: 1, duration: .3, stagger: .03, ease: "back.out(1.2)" }, ${W0});`;
+    if (seal) tl += `tl.set("#seal", { scale: 0, transformOrigin: "50% 50%" }, 0.001); tl.to("#seal", { scale: 1, duration: .28, ease: "back.out(2.5)" }, ${(W0 + .4).toFixed(2)});`;
+    tl += "\n";
+  } else tl += `tl.set("#wipeout", { opacity: 0 }, 0.001);\n`;
   const page = `<!doctype html>
 <html lang="es" data-resolution="landscape"><head><meta charset="UTF-8" /><meta name="viewport" content="width=1920, height=1080" />
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -116,15 +146,16 @@ ${ANIMS}
 .term .bar b { color:${BG}; font-size:20px; margin-left:auto; margin-right:auto; }
 .term .body { padding:26px 34px; font-size:25px; line-height:1.55; white-space:pre; }
 .term .body.big { font-size:40px; line-height:1.5; }
-.term.code .body { font-size:22px; line-height:1.38; }
+.term.code .body { font-size:22px; line-height:1.38; background:#282a36; color:#f8f8f2; } .term.code .ln { color:#f8f8f2; }
+.code .c { color:#6272a4; } .code .s { color:#f1fa8c; } .code .k { color:#ff79c6; } .code .n { color:#bd93f9; } .code .f { color:#50fa7b; }
 .ln { opacity:0; border-radius:6px; padding:0 8px; margin:0 -8px; color:${INK}; }
 .ln.cmd { color:${MINT}; }
 .tree-foot, .pieces-foot { opacity:0; margin-top:28px; color:${GREY}; font-size:28px; white-space:normal; } .tree-foot b { color:${GREEN}; }
-.pieces { padding:50px 70px; } .pieces h2 { font-family:"Big Shoulders Display"; font-size:56px; margin-bottom:26px; color:${INK}; }
-.piece { display:flex; align-items:center; gap:24px; padding:16px 22px; margin-bottom:12px; border:4px solid ${MINT}; border-radius:12px; background:${BG}; opacity:0; transform: translateY(20px); }
+.pieces { padding:36px 70px; } .pieces h2 { font-family:"Big Shoulders Display"; font-size:52px; margin-bottom:18px; color:${INK}; }
+.piece { display:flex; align-items:center; gap:24px; padding:10px 22px; margin-bottom:10px; border:4px solid ${MINT}; border-radius:12px; background:${BG}; opacity:0; transform: translateY(20px); }
 .piece .num { width:56px; height:56px; border-radius:12px; background:${MINT}; color:${BG}; font-weight:700; font-size:30px; display:flex; align-items:center; justify-content:center; }
-.piece b { font-size:32px; display:block; } .piece small { font-size:22px; color:${GREY}; }
-.pieces-foot { font-size:24px; margin-top:14px; }
+.piece b { font-size:30px; display:block; } .piece small { font-size:20px; color:${GREY}; }
+.pieces-foot { font-size:22px; margin-top:10px; }
 .levels { position:absolute; left:160px; top:60px; width:1600px; height:800px; display:flex; align-items:center; justify-content:center; }
 .lv { border:5px solid ${MINT}; border-radius:20px; padding:30px 40px; background:${PANEL}; opacity:0; transform: scale(.9); width:100%; }
 .lv > .lv { margin-top:20px; border-color:${GREEN}; } .lv > .lv > .lv { border-color:${INK}; }
@@ -135,6 +166,9 @@ ${ANIMS}
 .newagent .btn { position:absolute; right:24px; bottom:24px; border:3px solid ${GREY}; border-radius:12px; padding:12px 30px; color:${GREY}; font-size:30px; }
 .newagent .chips { margin-top:26px; display:flex; gap:16px; } .newagent .chips span { border:3px solid ${INK}; border-radius:999px; padding:10px 24px; font-size:26px; }
 .newagent .foot { margin-top:40px; color:${GREY}; font-size:28px; text-align:center; }
+.hello { position:absolute; left:0; top:0; width:1920px; height:900px; display:flex; align-items:center; justify-content:center; gap:80px; }
+.hello-ghost { width:420px; height:487px; transform-origin: 50% 100%; animation: jello 1.4s .2s both, swing 1.4s 1.9s both; } .hello-ghost img { width:100%; height:100%; object-fit:contain; }
+.hello-txt b { display:block; font-family:"Big Shoulders Display"; font-size:150px; line-height:1; color:${INK}; } .hello-txt span { font-size:40px; color:${MINT}; }
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:${GREY}; } .cta .url { color:${MINT}; font-size:44px; font-weight:700; } .cta .sub { color:${GREEN}; }
@@ -142,12 +176,13 @@ ${ANIMS}
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 ${BG}; }
 .w { color:${GREY}; }
-#wipe { position:absolute; inset:0; z-index:50; } .slice { transform-box: fill-box; }
+.wipe { position:absolute; inset:0; z-index:50; opacity:0; } .slice { transform-box: fill-box; }
 </style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="${TOTAL}" data-width="1920" data-height="1080">
 ${html}
 ${caps}
-<svg id="wipe" width="1920" height="1080" viewBox="0 0 1920 1080">${slices}</svg>
+<svg id="wipeout" class="wipe" width="1920" height="1080" viewBox="0 0 1920 1080">${slicesOut}${seal}</svg>
+<svg id="wipein" class="wipe" width="1920" height="1080" viewBox="0 0 1920 1080">${slicesIn}${sealIn}</svg>
 </div>
 <script>
 window.__timelines = window.__timelines || {};

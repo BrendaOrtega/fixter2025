@@ -1,117 +1,117 @@
 
-◆  Rendering ch1 → /Users/bliss/fixter2025/docs/eve-tutorial/long/ch1/renders/ch1_2026-09-17_11-12-27.mp4
+◆  Rendering ch1 → /Users/bliss/fixter2025/docs/eve-tutorial/long/ch1/renders/ch1_2026-09-17_12-23-49.mp4
    30fps · standard · auto workers (10 cores detected)
    GPU: browser GPU (auto-detect)
 
 [?25l│
 ◇  Browser: cache
 [?25h
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="0.80"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="0.79"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="4.90"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="4.89"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="8.05"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="8.04"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="11.03"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="11.02"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="14.42"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="14.41"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="17.75"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="17.74"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="20.87"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="20.86"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="24.69"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="24.68"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="29.30"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="29.29"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="32.17"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="32.16"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="35.17"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="35.16"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="36.64"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="36.63"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="39.73"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="39.72"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="44.17"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="44.16"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
   ⚠ studio_missing_editable_id: <div class="cap" data-start="45.98"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="48.25"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="48.24"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="51.39"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="51.38"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="54.80"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="54.79"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="58.79"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="58.78"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="61.61"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="61.60"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="63.45"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="63.44"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="66.82"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="66.81"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
-  ⚠ studio_missing_editable_id: <div class="cap" data-start="70.37"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
+  ⚠ studio_missing_editable_id: <div class="cap" data-start="70.36"> has no id, so Studio cannot use a stable edit target for its timeline and canvas controls.
     Fix: Add a stable, human-readable id such as id="hero-title" or id="scene-1-card" to every timeline-visible element you want agents or Studio to edit.
   ⚠ duplicate_media_discovery_risk: Detected 4 matching img entries with the same source/start/duration.
     Fix: Avoid duplicated media nodes that can be discovered twice during compilation.
   Continuing render despite lint issues. Use --strict to block errors.
 
-[INFO] [Render] Pipeline started {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","platform":"darwin","arch":"arm64","nodeVersion":"v24.21.0","fps":{"num":30,"den":1},"format":"mp4","quality":"standard","browserGpuMode":"auto","forceScreenshot":false,"protocolTimeout":300000,"browserTimeout":120000,"pageNavigationTimeout":60000,"playerReadyTimeout":45000}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"pipeline","status":"checkpoint","elapsedMs":1,"message":"started","format":"mp4","quality":"standard","browserGpuMode":"auto","forceScreenshot":false,"protocolTimeoutMs":300000,"pageNavigationTimeoutMs":60000,"playerReadyTimeoutMs":45000,"requestedWorkers":"auto"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"compile","status":"start","elapsedMs":2,"needsAlpha":false}
+[INFO] [Render] Pipeline started {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","platform":"darwin","arch":"arm64","nodeVersion":"v24.21.0","fps":{"num":30,"den":1},"format":"mp4","quality":"standard","browserGpuMode":"auto","forceScreenshot":false,"protocolTimeout":300000,"browserTimeout":120000,"pageNavigationTimeout":60000,"playerReadyTimeout":45000}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"pipeline","status":"checkpoint","elapsedMs":2,"message":"started","format":"mp4","quality":"standard","browserGpuMode":"auto","forceScreenshot":false,"protocolTimeoutMs":300000,"pageNavigationTimeoutMs":60000,"playerReadyTimeoutMs":45000,"requestedWorkers":"auto"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"compile","status":"start","elapsedMs":2,"needsAlpha":false}
   █░░░░░░░░░░░░░░░░░░░░░░░░  5%  Compiling composition
 [INFO] [Compiler] Fetched 4 font face(s) for "Space Mono" from Google Fonts (cached to /Users/bliss/.cache/hyperframes/fonts/space-mono)
 [INFO] [Compiler] Fetched 9 font face(s) for "Big Shoulders Display" from Google Fonts (cached to /Users/bliss/.cache/hyperframes/fonts/big-shoulders-display)
 [INFO] [Compiler] Injected deterministic @font-face rules for 2 requested font families
 [INFO] [Compiler] Inlined CDN script: https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js
 [INFO] [Compiler] Inlined CDN script: https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/TextPlugin.min.js
-[INFO] [Render] Fast capture: composition uses a CSS 3D rendering context (perspective / preserve-3d / backface-visibility) — disabling drawElementImage for this render. Capture uses the platform's baseline route. {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] Compiled composition metadata {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","entryFile":"index.html","staticDuration":74.53,"width":1920,"height":1080,"videoCount":0,"audioCount":0,"renderModeHints":{"recommendScreenshot":false,"reasons":[]}}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"compile","status":"end","elapsedMs":974,"durationMs":972,"needsAlpha":false}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"compile","status":"checkpoint","elapsedMs":974,"message":"composition metadata resolved","width":1920,"height":1080,"videoCount":0,"audioCount":0,"imageCount":5,"deviceScaleFactor":1,"forceScreenshot":false,"compositionHash":"900c6a3e06afe497"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"browser_probe","status":"start","elapsedMs":974,"forceScreenshot":false,"stagePhase":"calibrating"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"browser_probe","status":"end","elapsedMs":979,"durationMs":5,"forceScreenshot":false,"stagePhase":"calibrating"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"browser_probe","status":"checkpoint","elapsedMs":980,"message":"duration resolved","durationSeconds":74.53,"totalFrames":2236,"compositionHash":"900c6a3e06afe497","beginFrameStalled":false}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"video_extract","status":"start","elapsedMs":980,"videoCount":0}
+[INFO] [Render] Fast capture: composition uses a CSS 3D rendering context (perspective / preserve-3d / backface-visibility) — disabling drawElementImage for this render. Capture uses the platform's baseline route. {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] Compiled composition metadata {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","entryFile":"index.html","staticDuration":74.53,"width":1920,"height":1080,"videoCount":0,"audioCount":0,"renderModeHints":{"recommendScreenshot":false,"reasons":[]}}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"compile","status":"end","elapsedMs":978,"durationMs":976,"needsAlpha":false}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"compile","status":"checkpoint","elapsedMs":979,"message":"composition metadata resolved","width":1920,"height":1080,"videoCount":0,"audioCount":0,"imageCount":5,"deviceScaleFactor":1,"forceScreenshot":false,"compositionHash":"6202e061cbf789e3"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"browser_probe","status":"start","elapsedMs":979,"forceScreenshot":false,"stagePhase":"calibrating"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"browser_probe","status":"end","elapsedMs":984,"durationMs":5,"forceScreenshot":false,"stagePhase":"calibrating"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"browser_probe","status":"checkpoint","elapsedMs":985,"message":"duration resolved","durationSeconds":74.53,"totalFrames":2236,"compositionHash":"6202e061cbf789e3","beginFrameStalled":false}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"video_extract","status":"start","elapsedMs":985,"videoCount":0}
   ██░░░░░░░░░░░░░░░░░░░░░░░  10%  Extracting video frames
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"video_extract","status":"end","elapsedMs":981,"durationMs":1,"videoCount":0}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"video_extract","status":"checkpoint","elapsedMs":982,"message":"frames resolved","videoCount":0,"extractedVideoCount":0,"totalFramesExtracted":0,"maxFramesPerVideo":0,"avgFramesPerExtractedVideo":null,"vfrPreflightCount":null,"vfrPreflightMs":null,"cacheHits":null,"cacheMisses":null,"transientRetries":null,"minVideoFrameCoverageRatio":null,"authoredTimedClipCount":28}
-[INFO] [Render] No HDR sources detected — rendering SDR {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"hdr_detection","status":"checkpoint","elapsedMs":983,"message":"resolved","requestedHdrMode":"auto","effectiveHdr":"sdr","nativeHdrVideoCount":0,"nativeHdrImageCount":0}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"audio_process","status":"start","elapsedMs":983,"audioCount":0}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"video_extract","status":"end","elapsedMs":986,"durationMs":1,"videoCount":0}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"video_extract","status":"checkpoint","elapsedMs":987,"message":"frames resolved","videoCount":0,"extractedVideoCount":0,"totalFramesExtracted":0,"maxFramesPerVideo":0,"avgFramesPerExtractedVideo":null,"vfrPreflightCount":null,"vfrPreflightMs":null,"cacheHits":null,"cacheMisses":null,"transientRetries":null,"minVideoFrameCoverageRatio":null,"authoredTimedClipCount":28}
+[INFO] [Render] No HDR sources detected — rendering SDR {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"hdr_detection","status":"checkpoint","elapsedMs":987,"message":"resolved","requestedHdrMode":"auto","effectiveHdr":"sdr","nativeHdrVideoCount":0,"nativeHdrImageCount":0}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"audio_process","status":"start","elapsedMs":987,"audioCount":0}
   █████░░░░░░░░░░░░░░░░░░░░  20%  Processing audio tracks
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"audio_process","status":"end","elapsedMs":983,"durationMs":0,"audioCount":0}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"file_server","status":"start","elapsedMs":983,"reused":false}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"audio_process","status":"end","elapsedMs":987,"durationMs":0,"audioCount":0}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"file_server","status":"start","elapsedMs":987,"reused":false}
   ██████░░░░░░░░░░░░░░░░░░░  25%  Starting frame capture
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"file_server","status":"end","elapsedMs":985,"durationMs":2}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"file_server","status":"end","elapsedMs":990,"durationMs":3}
 [hyperframes] browserGpuMode probe → hardware (WebGL renderer vendor="Google Inc. (Apple)" renderer="ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)")
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"capture_calibration","status":"start","elapsedMs":1119,"stagePhase":"calibrating","forceScreenshot":false,"totalFrames":2236,"framesCompleted":0,"captureMode":"beginframe","captureOperation":"beginFrame"}
-[INFO] [Render] Calibration config {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","protocolTimeout":30000,"parentProtocolTimeout":300000,"forceScreenshot":false,"totalFrames":2236}
-[INFO] Launching browser for capture calibration... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"capture_calibration","status":"start","elapsedMs":1154,"stagePhase":"calibrating","forceScreenshot":false,"totalFrames":2236,"framesCompleted":0,"captureMode":"beginframe","captureOperation":"beginFrame"}
+[INFO] [Render] Calibration config {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","protocolTimeout":30000,"parentProtocolTimeout":300000,"forceScreenshot":false,"totalFrames":2236}
+[INFO] Launching browser for capture calibration... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
 [BrowserManager] Browser launched (HeadlessChrome/152.0.7977.30, screenshot, gl=--use-gl=angle --use-angle=metal, headlessShell=true, platform=darwin)
-[INFO] Initializing calibration session... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
+[INFO] Initializing calibration session... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
 [initSession:screenshot] page.goto start (0ms)
 [HyperFrames] render runtime fps [object Object]
-[initSession:screenshot] page.goto complete (226ms)
-[initSession:screenshot] GSAP proxy flush complete (227ms)
-[initSession:screenshot] pollHfReady complete (227ms)
-[initSession:screenshot] pollSubCompositionTimelines complete (ready) (228ms)
-[initSession:screenshot] applyVideoMetadataHints complete (228ms)
-[initSession:screenshot] media + fonts + tailwind ready (254ms)
-[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (258ms)
-[INFO] Calibration session ready, capturing test frames... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] Calibration: capturing test frame 1/5... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] Calibration: capturing test frame 2/5... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] Calibration: capturing test frame 3/5... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] Calibration: capturing test frame 4/5... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] Calibration: capturing test frame 5/5... {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] Calibration complete, estimated cost: 51ms/frame (p95) {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"capture_calibration","status":"end","elapsedMs":1745,"durationMs":626,"stagePhase":"calibrating","forceScreenshot":false,"totalFrames":2236,"framesCompleted":0,"captureMode":"beginframe","captureOperation":"beginFrame"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"capture_calibration","status":"checkpoint","elapsedMs":1745,"message":"resolved","forceScreenshot":false,"multiplier":1,"p95Ms":51}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"worker_resolution","status":"checkpoint","elapsedMs":1746,"message":"resolved","workerCount":4}
-[INFO] streaming-encode gate {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","enabled":false,"configFlag":true,"outputFormat":"mp4","workerCount":4,"durationSeconds":74.53,"maxDurationSeconds":240}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"capture_strategy","status":"checkpoint","elapsedMs":1746,"message":"resolved","workerCount":4,"forceScreenshot":false,"captureBeyondViewport":null,"useStreamingEncode":false,"useLayeredComposite":false,"usePageSideCompositing":false,"hasHdrContent":false,"hasShaderTransitions":false,"isPngSequence":false}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"capture_disk","status":"start","elapsedMs":1746,"stagePhase":"capturing","needsAlpha":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":0,"captureMode":"beginframe","captureOperation":"beginFrame"}
+[initSession:screenshot] page.goto complete (245ms)
+[initSession:screenshot] GSAP proxy flush complete (245ms)
+[initSession:screenshot] pollHfReady complete (245ms)
+[initSession:screenshot] pollSubCompositionTimelines complete (ready) (246ms)
+[initSession:screenshot] applyVideoMetadataHints complete (247ms)
+[initSession:screenshot] media + fonts + tailwind ready (275ms)
+[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (280ms)
+[INFO] Calibration session ready, capturing test frames... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] Calibration: capturing test frame 1/5... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] Calibration: capturing test frame 2/5... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] Calibration: capturing test frame 3/5... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] Calibration: capturing test frame 4/5... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] Calibration: capturing test frame 5/5... {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] Calibration complete, estimated cost: 52ms/frame (p95) {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"capture_calibration","status":"end","elapsedMs":1810,"durationMs":655,"stagePhase":"calibrating","forceScreenshot":false,"totalFrames":2236,"framesCompleted":0,"captureMode":"beginframe","captureOperation":"beginFrame"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"capture_calibration","status":"checkpoint","elapsedMs":1810,"message":"resolved","forceScreenshot":false,"multiplier":1,"p95Ms":52}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"worker_resolution","status":"checkpoint","elapsedMs":1810,"message":"resolved","workerCount":4}
+[INFO] streaming-encode gate {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","enabled":false,"configFlag":true,"outputFormat":"mp4","workerCount":4,"durationSeconds":74.53,"maxDurationSeconds":240}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"capture_strategy","status":"checkpoint","elapsedMs":1811,"message":"resolved","workerCount":4,"forceScreenshot":false,"captureBeyondViewport":null,"useStreamingEncode":false,"useLayeredComposite":false,"usePageSideCompositing":false,"hasHdrContent":false,"hasShaderTransitions":false,"isPngSequence":false}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"capture_disk","status":"start","elapsedMs":1811,"stagePhase":"capturing","needsAlpha":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":0,"captureMode":"beginframe","captureOperation":"beginFrame"}
 [BrowserManager] Browser launched (HeadlessChrome/152.0.7977.30, screenshot, gl=--use-gl=angle --use-angle=metal, headlessShell=true, platform=darwin)
 [initSession:screenshot] page.goto start (0ms)
 [initSession:screenshot] page.goto start (0ms)
@@ -121,34 +121,34 @@
 [HyperFrames] render runtime fps [object Object]
 [HyperFrames] render runtime fps [object Object]
 [HyperFrames] render runtime fps [object Object]
-[initSession:screenshot] page.goto complete (225ms)
-[initSession:screenshot] page.goto complete (229ms)
-[initSession:screenshot] page.goto complete (233ms)
-[initSession:screenshot] page.goto complete (234ms)
-[initSession:screenshot] GSAP proxy flush complete (235ms)
-[initSession:screenshot] GSAP proxy flush complete (234ms)
-[initSession:screenshot] GSAP proxy flush complete (236ms)
-[initSession:screenshot] GSAP proxy flush complete (237ms)
-[initSession:screenshot] pollHfReady complete (237ms)
-[initSession:screenshot] pollHfReady complete (235ms)
-[initSession:screenshot] pollHfReady complete (237ms)
-[initSession:screenshot] pollHfReady complete (238ms)
-[initSession:screenshot] pollSubCompositionTimelines complete (ready) (238ms)
-[initSession:screenshot] applyVideoMetadataHints complete (238ms)
-[initSession:screenshot] pollSubCompositionTimelines complete (ready) (241ms)
-[initSession:screenshot] applyVideoMetadataHints complete (241ms)
+[initSession:screenshot] page.goto complete (237ms)
+[initSession:screenshot] page.goto complete (238ms)
+[initSession:screenshot] page.goto complete (239ms)
+[initSession:screenshot] page.goto complete (240ms)
+[initSession:screenshot] GSAP proxy flush complete (240ms)
+[initSession:screenshot] GSAP proxy flush complete (240ms)
+[initSession:screenshot] GSAP proxy flush complete (241ms)
+[initSession:screenshot] GSAP proxy flush complete (240ms)
+[initSession:screenshot] pollHfReady complete (241ms)
+[initSession:screenshot] pollHfReady complete (241ms)
+[initSession:screenshot] pollHfReady complete (242ms)
+[initSession:screenshot] pollHfReady complete (241ms)
 [initSession:screenshot] pollSubCompositionTimelines complete (ready) (242ms)
 [initSession:screenshot] applyVideoMetadataHints complete (242ms)
 [initSession:screenshot] pollSubCompositionTimelines complete (ready) (243ms)
 [initSession:screenshot] applyVideoMetadataHints complete (243ms)
-[initSession:screenshot] media + fonts + tailwind ready (263ms)
-[initSession:screenshot] media + fonts + tailwind ready (265ms)
-[initSession:screenshot] media + fonts + tailwind ready (265ms)
-[initSession:screenshot] media + fonts + tailwind ready (265ms)
-[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (270ms)
-[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (272ms)
-[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (272ms)
-[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (273ms)
+[initSession:screenshot] pollSubCompositionTimelines complete (ready) (244ms)
+[initSession:screenshot] applyVideoMetadataHints complete (244ms)
+[initSession:screenshot] pollSubCompositionTimelines complete (ready) (243ms)
+[initSession:screenshot] applyVideoMetadataHints complete (243ms)
+[initSession:screenshot] media + fonts + tailwind ready (272ms)
+[initSession:screenshot] media + fonts + tailwind ready (272ms)
+[initSession:screenshot] media + fonts + tailwind ready (272ms)
+[initSession:screenshot] media + fonts + tailwind ready (272ms)
+[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (280ms)
+[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (280ms)
+[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (280ms)
+[initSession:screenshot] static-frame dedup: disabled (running CSS/WAAPI animation) (280ms)
   ██████░░░░░░░░░░░░░░░░░░░  26%  Capturing frame 30/2236 (4 workers)
   ██████░░░░░░░░░░░░░░░░░░░  26%  Capturing frame 60/2236 (4 workers)
   ██████░░░░░░░░░░░░░░░░░░░  27%  Capturing frame 90/2236 (4 workers)
@@ -224,15 +224,15 @@
   █████████████████░░░░░░░░  69%  Capturing frame 2190/2236 (4 workers)
   █████████████████░░░░░░░░  70%  Capturing frame 2220/2236 (4 workers)
   █████████████████░░░░░░░░  70%  Capturing frame 2236/2236 (4 workers)
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"capture_disk","status":"end","elapsedMs":27223,"durationMs":25477,"stagePhase":"capturing","needsAlpha":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"encode","status":"start","elapsedMs":27224,"stagePhase":"capturing","hasAudio":false,"isPngSequence":false,"isGif":false,"chunkedEncode":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"capture_disk","status":"end","elapsedMs":27326,"durationMs":25515,"stagePhase":"capturing","needsAlpha":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"encode","status":"start","elapsedMs":27327,"stagePhase":"capturing","hasAudio":false,"isPngSequence":false,"isGif":false,"chunkedEncode":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
   ██████████████████░░░░░░░  75%  Encoding video
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"encode","status":"end","elapsedMs":37523,"durationMs":10299,"stagePhase":"capturing","hasAudio":false,"isPngSequence":false,"isGif":false,"chunkedEncode":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"assemble","status":"start","elapsedMs":37523,"stagePhase":"capturing","hasAudio":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"encode","status":"end","elapsedMs":38228,"durationMs":10901,"stagePhase":"capturing","hasAudio":false,"isPngSequence":false,"isGif":false,"chunkedEncode":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"assemble","status":"start","elapsedMs":38229,"stagePhase":"capturing","hasAudio":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
   ██████████████████████░░░  90%  Assembling final video
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"assemble","status":"end","elapsedMs":37567,"durationMs":44,"stagePhase":"capturing","hasAudio":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
-[INFO] [Render:trace] {"renderJobId":"d10016fe-aaba-41ac-9d9b-b137d0a61632","phase":"pipeline","status":"checkpoint","elapsedMs":37612,"message":"artifact validated","totalElapsedMs":37605}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"assemble","status":"end","elapsedMs":38274,"durationMs":45,"stagePhase":"capturing","hasAudio":false,"workerCount":4,"forceScreenshot":false,"totalFrames":2236,"framesCompleted":2236,"captureMode":"beginframe","captureOperation":"encode"}
+[INFO] [Render:trace] {"renderJobId":"3211fce1-901a-4062-81cd-71a59567ce7b","phase":"pipeline","status":"checkpoint","elapsedMs":38319,"message":"artifact validated","totalElapsedMs":38312}
   █████████████████████████  100%  Render complete
 
-◇  /Users/bliss/fixter2025/docs/eve-tutorial/long/ch1/renders/ch1_2026-09-17_11-12-27.mp4
-   2.9 MB · 1m 14.5s video · rendered in 37.7s
+◇  /Users/bliss/fixter2025/docs/eve-tutorial/long/ch1/renders/ch1_2026-09-17_12-23-49.mp4
+   3.2 MB · 1m 14.5s video · rendered in 38.6s

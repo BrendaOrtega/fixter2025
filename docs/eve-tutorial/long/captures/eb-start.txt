@@ -6,7 +6,7 @@ $ sbx.exposePort(3000)
 https://sb-75940a4d-17e1-45dc-981a-9e847d6c0eef-3000.sandboxes.easybits.cloud
 $ curl https://sb-75940a4d-…-3000.sandboxes.easybits.cloud/eve/v1/health
 {"ok":true,"status":"ready","workflowId":"workflow//eve//workflowEntry"}
-$ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"Con bash, ejecuta: uname -a && hostname"}'
+$ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"ejecuta uname -a $ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"Con bash, ejecuta: uname -a && hostname"}'$ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"Con bash, ejecuta: uname -a && hostname"}' hostname"}'
 {"ok":true,"sessionId":"wrun_01M2R3ZE6RD50HGHC07VWGBZCB"}
   bash → uname -a && hostname
   stdout: Linux 172.20.0.76 6.1.141 … x86_64 GNU/Linux · 172.20.0.76
