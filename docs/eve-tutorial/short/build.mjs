@@ -1,8 +1,8 @@
 import fs from "node:fs";
 // Short-trailer 9:16 (~23 s). Ghosty presenta el tutorial de eve. Tiempos de voz de voice/marks.txt.
-const TOTAL = 27.1;
+const TOTAL = 28.8;
 const V = [0, 3.7, 8.1, 10.95, 15.41, 18.35, 22.12];  // la frase 4 va en dos subtítulos           // inicio de cada frase
-const D = [3.20, 3.90, 2.05, 3.86, 2.85, 3.27, 3.69];          // duración de cada frase
+const D = [3.20, 3.90, 2.05, 3.86, 2.85, 3.27, 5.41];          // duración de cada frase
 const LINES = [
   "Soy Ghosty, y te hice un video sobre agentes durables.",
   "Este agente lleva un registro de cada paso que termina, en Postgres.",
