@@ -202,6 +202,60 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
     transform: translate3d(0, 0, 0);
   }
 }
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
 
 .cardv { object-fit: contain; width:1600px; height:900px; left:160px; top:0; inset:auto; position:absolute; }
 .brollv { object-fit: cover; width:1920px; height:900px; inset:auto; position:absolute; left:0; top:0; }
@@ -238,7 +292,7 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:#7C8A8E; } .cta .url { color:#85DDCB; font-size:44px; font-weight:700; } .cta .sub { color:#8DCF6E; }
-.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; } .cta-in { animation-fill-mode: both; }
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 #0E1317; }
 .w { color:#7C8A8E; }
@@ -246,9 +300,9 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 </style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="79.93" data-width="1920" data-height="1080">
 <video class="clip cardv" id="s0v" data-start="0" data-duration="16.86" src="assets/card-03-postgres-ch4-0.mp4" muted playsinline preload="auto"></video>
-<div class="clip scene " id="s1" data-start="16.86" data-duration="14.53"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>psql eve_demo</b></div><div class="body"><div class="ln cmd" id="s1l0">$ psql -d eve_demo -c "\dt workflow.*"</div><div class="ln" id="s1l1"> workflow | workflow_runs           | table</div><div class="ln" id="s1l2"> workflow | workflow_steps          | table</div><div class="ln" id="s1l3"> workflow | workflow_events         | table</div><div class="ln" id="s1l4"> workflow | workflow_hooks          | table</div><div class="ln" id="s1l5"> workflow | workflow_waits          | table</div><div class="ln" id="s1l6"> workflow | workflow_stream_chunks  | table</div><div class="ln cmd" id="s1l7">$ psql -d eve_demo -c "\dt graphile_worker.*"</div><div class="ln" id="s1l8"> graphile_worker | _private_jobs        | table</div><div class="ln" id="s1l9"> graphile_worker | _private_job_queues  | table</div><div class="ln" id="s1l10"> graphile_worker | _private_tasks       | table</div></div></div><div class="ghost" id="s1-ghost" style="animation: bounce 1.2s 16.86s both, jello 1.2s 24.13s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s2" data-start="31.39" data-duration="28.73"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve-demo</b></div><div class="body"><div class="ln cmd" id="s2l0">$ npm view @workflow/world-postgres version</div><div class="ln" id="s2l1">4.3.7</div><div class="ln cmd" id="s2l2">$ npm i @workflow/world-postgres@5.0.0-beta.44</div><div class="ln" id="s2l3">added 1 package</div><div class="ln cmd" id="s2l4">$ node node_modules/@workflow/world-postgres/bin/setup.js</div><div class="ln" id="s2l5">🔧 Setting up database schema...</div><div class="ln" id="s2l6">📂 Running migrations from: node_modules/@workflow/world-postgres/src/drizzle/migrations</div><div class="ln" id="s2l7">📂 Bootstrapping graphile-worker schema...</div><div class="ln" id="s2l8">✅ Database schema created successfully!</div><div class="ln cmd" id="s2l9">$ cat agent/agent.ts</div><div class="ln" id="s2l10">export default defineAgent({</div><div class="ln" id="s2l11">  model: anthropic("claude-sonnet-5"),</div><div class="ln" id="s2l12">  experimental: { workflow: { world: "@workflow/world-postgres" } },</div><div class="ln" id="s2l13">});</div><div class="ln cmd" id="s2l14">$ export WORKFLOW_POSTGRES_URL=postgres://bliss@localhost:5432/eve_demo</div></div></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 31.39s both, jello 1.2s 45.76s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s3" data-start="60.12" data-duration="19.81"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve dev --no-ui · psql</b></div><div class="body"><div class="ln cmd" id="s3l0">$ npx eve dev --no-ui</div><div class="ln" id="s3l1">[process_batch] paso 1 @ 14:28:52 pid 1664</div><div class="ln" id="s3l2">[process_batch] paso 2 @ 14:28:57 pid 1664</div><div class="ln" id="s3l3">[process_batch] paso 3 @ 14:29:03 pid 1664</div><div class="ln cmd" id="s3l4">$ pkill -9 -f "eve dev --no-ui"</div><div class="ln cmd" id="s3l5">$ psql -d eve_demo -c "select count(*) filter (where status='completed') from workflow.workflow_steps"</div><div class="ln" id="s3l6"> 14</div><div class="ln cmd" id="s3l7">$ npx eve dev --no-ui</div><div class="ln" id="s3l8">[process_batch] paso 4 @ 14:29:16 pid 2327</div><div class="ln" id="s3l9">[process_batch] paso 5 @ 14:29:21 pid 2327</div><div class="ln" id="s3l10">[process_batch] paso 6 @ 14:29:26 pid 2327</div><div class="ln cmd" id="s3l11">$ psql -d eve_demo -c "select id, status from workflow.workflow_runs"</div><div class="ln" id="s3l12"> wrun_01M2QWADZSVSN5EWABQ3F7A467 | completed</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 60.12s both, jello 1.2s 70.02s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s1" data-start="16.86" data-duration="14.53"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>psql eve_demo</b></div><div class="body"><div class="ln cmd" id="s1l0">$ psql -d eve_demo -c "\dt workflow.*"</div><div class="ln" id="s1l1"> workflow | workflow_runs           | table</div><div class="ln" id="s1l2"> workflow | workflow_steps          | table</div><div class="ln" id="s1l3"> workflow | workflow_events         | table</div><div class="ln" id="s1l4"> workflow | workflow_hooks          | table</div><div class="ln" id="s1l5"> workflow | workflow_waits          | table</div><div class="ln" id="s1l6"> workflow | workflow_stream_chunks  | table</div><div class="ln cmd" id="s1l7">$ psql -d eve_demo -c "\dt graphile_worker.*"</div><div class="ln" id="s1l8"> graphile_worker | _private_jobs        | table</div><div class="ln" id="s1l9"> graphile_worker | _private_job_queues  | table</div><div class="ln" id="s1l10"> graphile_worker | _private_tasks       | table</div></div></div><div class="ghost" id="s1-ghost" style="animation: bounce 1.2s 16.96s both, jello 1.2s 24.13s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s2" data-start="31.39" data-duration="28.73"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve-demo</b></div><div class="body"><div class="ln cmd" id="s2l0">$ npm view @workflow/world-postgres version</div><div class="ln" id="s2l1">4.3.7</div><div class="ln cmd" id="s2l2">$ npm i @workflow/world-postgres@5.0.0-beta.44</div><div class="ln" id="s2l3">added 1 package</div><div class="ln cmd" id="s2l4">$ node node_modules/@workflow/world-postgres/bin/setup.js</div><div class="ln" id="s2l5">🔧 Setting up database schema...</div><div class="ln" id="s2l6">📂 Running migrations from: node_modules/@workflow/world-postgres/src/drizzle/migrations</div><div class="ln" id="s2l7">📂 Bootstrapping graphile-worker schema...</div><div class="ln" id="s2l8">✅ Database schema created successfully!</div><div class="ln cmd" id="s2l9">$ cat agent/agent.ts</div><div class="ln" id="s2l10">export default defineAgent({</div><div class="ln" id="s2l11">  model: anthropic("claude-sonnet-5"),</div><div class="ln" id="s2l12">  experimental: { workflow: { world: "@workflow/world-postgres" } },</div><div class="ln" id="s2l13">});</div><div class="ln cmd" id="s2l14">$ export WORKFLOW_POSTGRES_URL=postgres://bliss@localhost:5432/eve_demo</div></div></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 31.49s both, jello 1.2s 45.76s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s3" data-start="60.12" data-duration="19.81"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve dev --no-ui · psql</b></div><div class="body"><div class="ln cmd" id="s3l0">$ npx eve dev --no-ui</div><div class="ln" id="s3l1">[process_batch] paso 1 @ 14:28:52 pid 1664</div><div class="ln" id="s3l2">[process_batch] paso 2 @ 14:28:57 pid 1664</div><div class="ln" id="s3l3">[process_batch] paso 3 @ 14:29:03 pid 1664</div><div class="ln cmd" id="s3l4">$ pkill -9 -f "eve dev --no-ui"</div><div class="ln cmd" id="s3l5">$ psql -d eve_demo -c "select count(*) filter (where status='completed') from workflow.workflow_steps"</div><div class="ln" id="s3l6"> 14</div><div class="ln cmd" id="s3l7">$ npx eve dev --no-ui</div><div class="ln" id="s3l8">[process_batch] paso 4 @ 14:29:16 pid 2327</div><div class="ln" id="s3l9">[process_batch] paso 5 @ 14:29:21 pid 2327</div><div class="ln" id="s3l10">[process_batch] paso 6 @ 14:29:26 pid 2327</div><div class="ln cmd" id="s3l11">$ psql -d eve_demo -c "select id, status from workflow.workflow_runs"</div><div class="ln" id="s3l12"> wrun_01M2QWADZSVSN5EWABQ3F7A467 | completed</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 60.22s both, jello 1.2s 70.02s both;"><img src="assets/ghosty.png"></div></div>
 
 <div class="clip cap" data-start="0.81" data-duration="1.74"><div class="capin"><span class="w" id="c65_0w0">El</span> <span class="w" id="c65_0w1">world</span> <span class="w" id="c65_0w2">local</span> <span class="w" id="c65_0w3">escribe</span> <span class="w" id="c65_0w4">en</span> <span class="w" id="c65_0w5">disco</span></div></div>
 <div class="clip cap" data-start="2.55" data-duration="2.19"><div class="capin"><span class="w" id="c65_1w0">y</span> <span class="w" id="c65_1w1">corre</span> <span class="w" id="c65_1w2">en</span> <span class="w" id="c65_1w3">un</span> <span class="w" id="c65_1w4">solo</span> <span class="w" id="c65_1w5">proceso.</span></div></div>

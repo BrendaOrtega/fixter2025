@@ -202,6 +202,60 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
     transform: translate3d(0, 0, 0);
   }
 }
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
 
 .cardv { object-fit: contain; width:1600px; height:900px; left:160px; top:0; inset:auto; position:absolute; }
 .brollv { object-fit: cover; width:1920px; height:900px; inset:auto; position:absolute; left:0; top:0; }
@@ -238,7 +292,7 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:#7C8A8E; } .cta .url { color:#85DDCB; font-size:44px; font-weight:700; } .cta .sub { color:#8DCF6E; }
-.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; } .cta-in { animation-fill-mode: both; }
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 #0E1317; }
 .w { color:#7C8A8E; }
@@ -246,10 +300,10 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 </style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="70.97" data-width="1920" data-height="1080">
 <video class="clip cardv" id="s0v" data-start="0" data-duration="18.97" src="assets/card-05-easybits-ch6-0.mp4" muted playsinline preload="auto"></video>
-<div class="clip scene " id="s1" data-start="18.97" data-duration="3.14"><div class="panel web"><img src="captures/web/npm-eve-sandbox.png"></div><div class="ghost" id="s1-ghost" style="animation: bounce 1.2s 18.97s both, jello 1.2s 20.54s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s2" data-start="22.11" data-duration="16.84"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve-demo</b></div><div class="body"><div class="ln cmd" id="s2l0">$ eb.sandboxes.create({ template: "eve-nitro" })</div><div class="ln" id="s2l1">sandboxId: sb_75940a4d-17e1-45dc-981a-9e847d6c0eef · status: running</div><div class="ln cmd" id="s2l2">$ node -v &amp;&amp; npx eve --version</div><div class="ln" id="s2l3">v24.21.0</div><div class="ln" id="s2l4">0.58.1</div><div class="ln cmd" id="s2l5">$ npm i @easybits.cloud/eve-sandbox @workflow/world-postgres@5.0.0-beta.44</div><div class="ln cmd" id="s2l6">$ cat agent/sandbox.ts</div><div class="ln" id="s2l7">import { defineSandbox } from "eve/sandbox";</div><div class="ln" id="s2l8">import { easybits } from "@easybits.cloud/eve-sandbox";</div><div class="ln" id="s2l9">export default defineSandbox({</div><div class="ln" id="s2l10">  backend: easybits({ template: "node" }),   // lee EASYBITS_API_KEY</div><div class="ln" id="s2l11">});</div><div class="ln cmd" id="s2l12">$ apt-get install -y postgresql &amp;&amp; service postgresql start</div><div class="ln" id="s2l13">PostgreSQL 15.19 (Debian 15.19-0+deb12u1)</div><div class="ln cmd" id="s2l14">$ node node_modules/@workflow/world-postgres/bin/setup.js</div><div class="ln" id="s2l15">✅ Database schema created successfully!</div></div></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 22.11s both, jello 1.2s 30.53s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s3" data-start="38.95" data-duration="22.7"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve build &amp;&amp; eve start</b></div><div class="body"><div class="ln cmd" id="s3l0">$ npx eve build</div><div class="ln" id="s3l1">[BUILD] built output at /data/eve-demo/.output</div><div class="ln cmd" id="s3l2">$ PORT=3000 npx eve start --host 0.0.0.0</div><div class="ln" id="s3l3">[START] server listening at http://localhost:3000/</div><div class="ln cmd" id="s3l4">$ sbx.exposePort(3000)</div><div class="ln" id="s3l5">https://sb-75940a4d-17e1-45dc-981a-9e847d6c0eef-3000.sandboxes.easybits.cloud</div><div class="ln cmd" id="s3l6">$ curl https://sb-75940a4d-…-3000.sandboxes.easybits.cloud/eve/v1/health</div><div class="ln" id="s3l7">{"ok":true,"status":"ready","workflowId":"workflow//eve//workflowEntry"}</div><div class="ln cmd" id="s3l8">$ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"ejecuta uname -a $ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"Con bash, ejecuta: uname -a &amp;&amp; hostname"}'$ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"Con bash, ejecuta: uname -a &amp;&amp; hostname"}' hostname"}'</div><div class="ln" id="s3l9">{"ok":true,"sessionId":"wrun_01M2R3ZE6RD50HGHC07VWGBZCB"}</div><div class="ln" id="s3l10">  bash → uname -a &amp;&amp; hostname</div><div class="ln" id="s3l11">  stdout: Linux 172.20.0.76 6.1.141 … x86_64 GNU/Linux · 172.20.0.76</div><div class="ln cmd" id="s3l12">$ eb.sandboxes.list()</div><div class="ln" id="s3l13">sb_75940a4d…  eve-nitro   running   eve-tutorial-madre</div><div class="ln" id="s3l14">sb_17c429d2…  node        running   eve-eve-sbx-ses-easybits-…-wrun_01M2R3ZE…</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 38.95s both, jello 1.2s 50.30s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s4" data-start="61.65" data-duration="9.32"><div class="panel web"><img src="captures/web/npm-easybits-org.png"></div><div class="ghost" id="s4-ghost" style="animation: bounce 1.2s 61.65s both, jello 1.2s 66.31s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s1" data-start="18.97" data-duration="3.14"><div class="panel web"><img src="captures/web/npm-eve-sandbox.png"></div><div class="ghost" id="s1-ghost" style="animation: bounce 1.2s 19.07s both, jello 1.2s 20.54s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s2" data-start="22.11" data-duration="16.84"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve-demo</b></div><div class="body"><div class="ln cmd" id="s2l0">$ eb.sandboxes.create({ template: "eve-nitro" })</div><div class="ln" id="s2l1">sandboxId: sb_75940a4d-17e1-45dc-981a-9e847d6c0eef · status: running</div><div class="ln cmd" id="s2l2">$ node -v &amp;&amp; npx eve --version</div><div class="ln" id="s2l3">v24.21.0</div><div class="ln" id="s2l4">0.58.1</div><div class="ln cmd" id="s2l5">$ npm i @easybits.cloud/eve-sandbox @workflow/world-postgres@5.0.0-beta.44</div><div class="ln cmd" id="s2l6">$ cat agent/sandbox.ts</div><div class="ln" id="s2l7">import { defineSandbox } from "eve/sandbox";</div><div class="ln" id="s2l8">import { easybits } from "@easybits.cloud/eve-sandbox";</div><div class="ln" id="s2l9">export default defineSandbox({</div><div class="ln" id="s2l10">  backend: easybits({ template: "node" }),   // lee EASYBITS_API_KEY</div><div class="ln" id="s2l11">});</div><div class="ln cmd" id="s2l12">$ apt-get install -y postgresql &amp;&amp; service postgresql start</div><div class="ln" id="s2l13">PostgreSQL 15.19 (Debian 15.19-0+deb12u1)</div><div class="ln cmd" id="s2l14">$ node node_modules/@workflow/world-postgres/bin/setup.js</div><div class="ln" id="s2l15">✅ Database schema created successfully!</div></div></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 22.21s both, jello 1.2s 30.53s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s3" data-start="38.95" data-duration="22.7"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>eve build &amp;&amp; eve start</b></div><div class="body"><div class="ln cmd" id="s3l0">$ npx eve build</div><div class="ln" id="s3l1">[BUILD] built output at /data/eve-demo/.output</div><div class="ln cmd" id="s3l2">$ PORT=3000 npx eve start --host 0.0.0.0</div><div class="ln" id="s3l3">[START] server listening at http://localhost:3000/</div><div class="ln cmd" id="s3l4">$ sbx.exposePort(3000)</div><div class="ln" id="s3l5">https://sb-75940a4d-17e1-45dc-981a-9e847d6c0eef-3000.sandboxes.easybits.cloud</div><div class="ln cmd" id="s3l6">$ curl https://sb-75940a4d-…-3000.sandboxes.easybits.cloud/eve/v1/health</div><div class="ln" id="s3l7">{"ok":true,"status":"ready","workflowId":"workflow//eve//workflowEntry"}</div><div class="ln cmd" id="s3l8">$ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"ejecuta uname -a $ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"Con bash, ejecuta: uname -a &amp;&amp; hostname"}'$ curl -u ghosty:*** -X POST …/eve/v1/session -d '{"message":"Con bash, ejecuta: uname -a &amp;&amp; hostname"}' hostname"}'</div><div class="ln" id="s3l9">{"ok":true,"sessionId":"wrun_01M2R3ZE6RD50HGHC07VWGBZCB"}</div><div class="ln" id="s3l10">  bash → uname -a &amp;&amp; hostname</div><div class="ln" id="s3l11">  stdout: Linux 172.20.0.76 6.1.141 … x86_64 GNU/Linux · 172.20.0.76</div><div class="ln cmd" id="s3l12">$ eb.sandboxes.list()</div><div class="ln" id="s3l13">sb_75940a4d…  eve-nitro   running   eve-tutorial-madre</div><div class="ln" id="s3l14">sb_17c429d2…  node        running   eve-eve-sbx-ses-easybits-…-wrun_01M2R3ZE…</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 39.05s both, jello 1.2s 50.30s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s4" data-start="61.65" data-duration="9.32"><div class="panel web"><img src="captures/web/npm-easybits-org.png"></div><div class="ghost" id="s4-ghost" style="animation: bounce 1.2s 61.75s both, jello 1.2s 66.31s both;"><img src="assets/ghosty.png"></div></div>
 
 <div class="clip cap" data-start="0.81" data-duration="3.18"><div class="capin"><span class="w" id="c97_0w0">Ahora</span> <span class="w" id="c97_0w1">lo</span> <span class="w" id="c97_0w2">mismo</span> <span class="w" id="c97_0w3">en</span> <span class="w" id="c97_0w4">EasyBits,</span> <span class="w" id="c97_0w5">donde</span> <span class="w" id="c97_0w6">las</span> <span class="w" id="c97_0w7">dos</span> <span class="w" id="c97_0w8">son</span> <span class="w" id="c97_0w9">cajas.</span></div></div>
 <div class="clip cap" data-start="3.99" data-duration="2.16"><div class="capin"><span class="w" id="c98_0w0">La</span> <span class="w" id="c98_0w1">caja</span> <span class="w" id="c98_0w2">madre</span> <span class="w" id="c98_0w3">corre</span> <span class="w" id="c98_0w4">eve.</span></div></div>

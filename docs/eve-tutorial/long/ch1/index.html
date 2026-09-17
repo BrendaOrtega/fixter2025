@@ -202,6 +202,60 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
     transform: translate3d(0, 0, 0);
   }
 }
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
 
 .cardv { object-fit: contain; width:1600px; height:900px; left:160px; top:0; inset:auto; position:absolute; }
 .brollv { object-fit: cover; width:1920px; height:900px; inset:auto; position:absolute; left:0; top:0; }
@@ -238,17 +292,17 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:#7C8A8E; } .cta .url { color:#85DDCB; font-size:44px; font-weight:700; } .cta .sub { color:#8DCF6E; }
-.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; } .cta-in { animation-fill-mode: both; }
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 #0E1317; }
 .w { color:#7C8A8E; }
 .wipe { position:absolute; inset:0; z-index:50; opacity:0; } .slice { transform-box: fill-box; }
 </style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="74.53" data-width="1920" data-height="1080">
-<div class="clip scene " id="s0" data-start="0" data-duration="11.02"><div class="panel newagent"><h2>Construye un agente</h2><p>¿Qué debe hacer este agente?</p><div class="box"><span class="typed"></span><span class="cursor"></span><span class="btn">Continuar</span></div><div class="chips"><span>Preguntas a Notion desde Slack</span><span>Clasificar issues de Linear en Slack</span></div><div class="foot">Antes de construir, creas o entras a tu cuenta de Vercel.</div></div><div class="ghost" id="s0-ghost" style="animation: bounce 1.2s 0.00s both, jello 1.2s 5.51s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s1" data-start="11.02" data-duration="33.14"><div class="panel pieces"><h2>Managed · las cinco piezas son de Vercel</h2><div class="piece" id="s1p0"><span class="num">1</span><div><b>Vercel Workflows</b><small>estado y checkpoints</small></div></div><div class="piece" id="s1p1"><span class="num">2</span><div><b>AI Gateway</b><small>llamadas al modelo</small></div></div><div class="piece" id="s1p2"><span class="num">3</span><div><b>Vercel Sandbox</b><small>código aislado</small></div></div><div class="piece" id="s1p3"><span class="num">4</span><div><b>Vercel Connect</b><small>MCP y HTTP</small></div></div><div class="piece" id="s1p4"><span class="num">5</span><div><b>Chat SDK</b><small>Slack · Discord · WhatsApp · Telegram · Teams · cron · API</small></div></div><div class="pieces-foot">Apache 2.0: el código se corre donde sea · Vercel cobra por operar estas cinco</div></div><div class="ghost" id="s1-ghost" style="animation: bounce 1.2s 11.02s both, jello 1.2s 27.59s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s2" data-start="44.16" data-duration="4.08"><div class="panel web"><img src="captures/web/eve-directory.png"></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 44.16s both, jello 1.2s 46.20s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s3" data-start="48.24" data-duration="26.29"><div class="panel term tree"><div class="bar"><i></i><i></i><i></i><b>el agente es un directorio</b></div><div class="body big"><div class="ln" id="s3t0" style="opacity:1">agent/</div><div class="ln" id="s3t1" style="opacity:1">├─ instructions.md</div><div class="ln" id="s3t2" style="opacity:1">├─ tools/get_weather.ts</div><div class="ln" id="s3t3" style="opacity:1">├─ skills/plan_a_trip.md</div><div class="ln" id="s3t4" style="opacity:1">├─ channels/slack.ts</div><div class="ln" id="s3t5" style="opacity:1">├─ schedules/weekly_recap.ts</div><div class="ln" id="s3t6" style="opacity:1">├─ memory/profile.ts</div><div class="ln" id="s3t7" style="opacity:1">└─ agent.ts</div><div class="tree-foot">tools/get_weather.ts  →  la tool <b>get_weather</b></div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 48.24s both, jello 1.2s 61.39s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s0" data-start="0" data-duration="11.02"><div class="panel newagent"><h2>Construye un agente</h2><p>¿Qué debe hacer este agente?</p><div class="box"><span class="typed"></span><span class="cursor"></span><span class="btn">Continuar</span></div><div class="chips"><span>Preguntas a Notion desde Slack</span><span>Clasificar issues de Linear en Slack</span></div><div class="foot">Antes de construir, creas o entras a tu cuenta de Vercel.</div></div><div class="ghost" id="s0-ghost" style="animation: bounce 1.2s 0.10s both, jello 1.2s 5.51s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s1" data-start="11.02" data-duration="33.14"><div class="panel pieces"><h2>Managed · las cinco piezas son de Vercel</h2><div class="piece" id="s1p0"><span class="num">1</span><div><b>Vercel Workflows</b><small>estado y checkpoints</small></div></div><div class="piece" id="s1p1"><span class="num">2</span><div><b>AI Gateway</b><small>llamadas al modelo</small></div></div><div class="piece" id="s1p2"><span class="num">3</span><div><b>Vercel Sandbox</b><small>código aislado</small></div></div><div class="piece" id="s1p3"><span class="num">4</span><div><b>Vercel Connect</b><small>MCP y HTTP</small></div></div><div class="piece" id="s1p4"><span class="num">5</span><div><b>Chat SDK</b><small>Slack · Discord · WhatsApp · Telegram · Teams · cron · API</small></div></div><div class="pieces-foot">Apache 2.0: el código se corre donde sea · Vercel cobra por operar estas cinco</div></div><div class="ghost" id="s1-ghost" style="animation: bounce 1.2s 11.12s both, jello 1.2s 27.59s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s2" data-start="44.16" data-duration="4.08"><div class="panel web"><img src="captures/web/eve-directory.png"></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 44.26s both, jello 1.2s 46.20s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s3" data-start="48.24" data-duration="26.29"><div class="panel term tree"><div class="bar"><i></i><i></i><i></i><b>el agente es un directorio</b></div><div class="body big"><div class="ln" id="s3t0" style="opacity:1">agent/</div><div class="ln" id="s3t1" style="opacity:1">├─ instructions.md</div><div class="ln" id="s3t2" style="opacity:1">├─ tools/get_weather.ts</div><div class="ln" id="s3t3" style="opacity:1">├─ skills/plan_a_trip.md</div><div class="ln" id="s3t4" style="opacity:1">├─ channels/slack.ts</div><div class="ln" id="s3t5" style="opacity:1">├─ schedules/weekly_recap.ts</div><div class="ln" id="s3t6" style="opacity:1">├─ memory/profile.ts</div><div class="ln" id="s3t7" style="opacity:1">└─ agent.ts</div><div class="tree-foot">tools/get_weather.ts  →  la tool <b>get_weather</b></div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 48.34s both, jello 1.2s 61.39s both;"><img src="assets/ghosty.png"></div></div>
 
 <div class="clip cap" data-start="0.79" data-duration="4.10"><div class="capin"><span class="w" id="c8_0w0">En</span> <span class="w" id="c8_0w1">la</span> <span class="w" id="c8_0w2">versión</span> <span class="w" id="c8_0w3">administrada,</span> <span class="w" id="c8_0w4">el</span> <span class="w" id="c8_0w5">agente</span> <span class="w" id="c8_0w6">se</span> <span class="w" id="c8_0w7">pide</span> <span class="w" id="c8_0w8">con</span> <span class="w" id="c8_0w9">una</span> <span class="w" id="c8_0w10">frase.</span></div></div>
 <div class="clip cap" data-start="4.89" data-duration="3.15"><div class="capin"><span class="w" id="c9_0w0">Escribes</span> <span class="w" id="c9_0w1">qué</span> <span class="w" id="c9_0w2">debe</span> <span class="w" id="c9_0w3">hacer,</span> <span class="w" id="c9_0w4">entras</span> <span class="w" id="c9_0w5">con</span> <span class="w" id="c9_0w6">tu</span> <span class="w" id="c9_0w7">cuenta</span> <span class="w" id="c9_0w8">de</span> <span class="w" id="c9_0w9">Vercel,</span></div></div>

@@ -202,6 +202,60 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
     transform: translate3d(0, 0, 0);
   }
 }
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
 
 .cardv { object-fit: contain; width:1600px; height:900px; left:160px; top:0; inset:auto; position:absolute; }
 .brollv { object-fit: cover; width:1920px; height:900px; inset:auto; position:absolute; left:0; top:0; }
@@ -238,17 +292,17 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:#7C8A8E; } .cta .url { color:#85DDCB; font-size:44px; font-weight:700; } .cta .sub { color:#8DCF6E; }
-.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; } .cta-in { animation-fill-mode: both; }
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 #0E1317; }
 .w { color:#7C8A8E; }
 .wipe { position:absolute; inset:0; z-index:50; opacity:0; } .slice { transform-box: fill-box; }
 </style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="113.63" data-width="1920" data-height="1080">
-<div class="clip scene " id="s0" data-start="0" data-duration="17.1"><div class="levels"><div class="lv" id="s0v0"><b>sesión</b><em>la conversación completa · días</em><div class="lv" id="s0v1"><b>turno</b><em>un mensaje y todo lo que dispara</em><div class="lv" id="s0v2"><b>step</b><em>una llamada al modelo + sus tools</em><small>= checkpoint</small></div></div></div></div><div class="ghost" id="s0-ghost" style="animation: bounce 1.2s 0.00s both, jello 1.2s 8.55s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s0" data-start="0" data-duration="17.1"><div class="levels"><div class="lv" id="s0v0"><b>sesión</b><em>la conversación completa · días</em><div class="lv" id="s0v1"><b>turno</b><em>un mensaje y todo lo que dispara</em><div class="lv" id="s0v2"><b>step</b><em>una llamada al modelo + sus tools</em><small>= checkpoint</small></div></div></div></div><div class="ghost" id="s0-ghost" style="animation: bounce 1.2s 0.10s both, jello 1.2s 8.55s both;"><img src="assets/ghosty.png"></div></div>
 <video class="clip cardv" id="s1v" data-start="17.1" data-duration="22.83" src="assets/card-01-congelado-ch2-1.mp4" muted playsinline preload="auto"></video>
-<div class="clip scene " id="s2" data-start="39.93" data-duration="39.59"><div class="panel term code"><div class="bar"><i></i><i></i><i></i><b>process_batch.ts</b></div><div class="body"><div class="ln" id="s2l0"><span class="c">// N pasos lentos; cada uno es un checkpoint</span></div><div class="ln" id="s2l1"><span class="k">export</span> <span class="k">default</span> <span class="f">defineWorkflowTool</span>({</div><div class="ln" id="s2l2">  description: <span class="s">"Procesa un lote en N pasos lentos (demo de durabilidad)."</span>,</div><div class="ln" id="s2l3">  inputSchema: z.<span class="f">object</span>({ steps: z.<span class="f">number</span>().<span class="f">int</span>().<span class="f">min</span>(<span class="n">1</span>).<span class="f">max</span>(<span class="n">20</span>).<span class="k">default</span>(<span class="n">6</span>) }),</div><div class="ln" id="s2l4">  <span class="k">async</span> *<span class="f">execute</span>({ steps }) {</div><div class="ln" id="s2l5">    <span class="s">"use workflow"</span>;</div><div class="ln" id="s2l6">    <span class="k">const</span> done: string[] = [];</div><div class="ln" id="s2l7">    <span class="k">for</span> (<span class="k">let</span> i = <span class="n">1</span>; i &lt;= steps; i++) {</div><div class="ln" id="s2l8">      <span class="k">const</span> stamp = <span class="k">await</span> <span class="f">runStep</span>(i);</div><div class="ln" id="s2l9">      done.<span class="f">push</span>(stamp);</div><div class="ln" id="s2l10">      <span class="k">yield</span> { progress: <span class="s">`${i}/${steps}`</span>, stamp };</div><div class="ln" id="s2l11">      <span class="k">await</span> <span class="f">sleep</span>(<span class="s">"5s"</span>);</div><div class="ln" id="s2l12">    }</div><div class="ln" id="s2l13">    <span class="k">return</span> { done };</div><div class="ln" id="s2l14">  },</div><div class="ln" id="s2l15">});</div><div class="ln" id="s2l16">&nbsp;</div><div class="ln" id="s2l17"><span class="c">// reloj y log viven en el step: el cuerpo se replaya</span></div><div class="ln" id="s2l18"><span class="k">async</span> <span class="k">function</span> <span class="f">runStep</span>(i: number) {</div><div class="ln" id="s2l19">  <span class="s">"use step"</span>;</div><div class="ln" id="s2l20">  <span class="k">const</span> stamp = <span class="s">`paso ${i} @ ${new Date().toISOString()} pid ${process.pid}`</span>;</div><div class="ln" id="s2l21">  console.<span class="f">log</span>(<span class="s">`[process_batch] ${stamp}`</span>);</div><div class="ln" id="s2l22">  <span class="k">return</span> stamp;</div><div class="ln" id="s2l23">}</div></div></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 39.93s both, jello 1.2s 59.73s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s3" data-start="79.52" data-duration="34.11"><div class="panel term code"><div class="bar"><i></i><i></i><i></i><b>approval.ts</b></div><div class="body"><div class="ln" id="s3l0"><span class="c">// un step interrumpido se vuelve a ejecutar completo</span></div><div class="ln" id="s3l1"><span class="k">async</span> <span class="k">function</span> <span class="f">chargeCard</span>(input) {</div><div class="ln" id="s3l2">  <span class="s">"use step"</span>;</div><div class="ln" id="s3l3"><span class="c">  // idempotente: el mismo id nunca cobra dos veces</span></div><div class="ln" id="s3l4">  <span class="k">return</span> stripe.charges.<span class="f">create</span>(</div><div class="ln" id="s3l5">    { amount: input.amount, customer: input.customer },</div><div class="ln" id="s3l6">    { idempotencyKey: input.chargeId },</div><div class="ln" id="s3l7">  );</div><div class="ln" id="s3l8">}</div><div class="ln" id="s3l9"><span class="k">export</span> <span class="k">default</span> <span class="f">defineTool</span>({</div><div class="ln" id="s3l10">  description: <span class="s">"Cobra una tarjeta."</span>,</div><div class="ln" id="s3l11">  approval: <span class="f">always</span>(),          <span class="c">// una persona aprueba antes de correr</span></div><div class="ln" id="s3l12">  <span class="k">async</span> <span class="f">execute</span>(input) { <span class="k">return</span> <span class="f">chargeCard</span>(input); },</div><div class="ln" id="s3l13">});</div><div class="ln" id="s3l14"><span class="c">// o el agente pregunta y la sesión se estaciona hasta la respuesta</span></div><div class="ln" id="s3l15"><span class="k">const</span> answer = <span class="k">await</span> ctx.<span class="f">ask</span>({</div><div class="ln" id="s3l16">  prompt: <span class="s">"¿Cobro $1,200 a la tarjeta terminada en 4242?"</span>,</div><div class="ln" id="s3l17">  display: <span class="s">"confirmation"</span>,</div><div class="ln" id="s3l18">});</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 79.52s both, jello 1.2s 96.57s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s2" data-start="39.93" data-duration="39.59"><div class="panel term code"><div class="bar"><i></i><i></i><i></i><b>process_batch.ts</b></div><div class="body"><div class="ln" id="s2l0"><span class="c">// N pasos lentos; cada uno es un checkpoint</span></div><div class="ln" id="s2l1"><span class="k">export</span> <span class="k">default</span> <span class="f">defineWorkflowTool</span>({</div><div class="ln" id="s2l2">  description: <span class="s">"Procesa un lote en N pasos lentos (demo de durabilidad)."</span>,</div><div class="ln" id="s2l3">  inputSchema: z.<span class="f">object</span>({ steps: z.<span class="f">number</span>().<span class="f">int</span>().<span class="f">min</span>(<span class="n">1</span>).<span class="f">max</span>(<span class="n">20</span>).<span class="k">default</span>(<span class="n">6</span>) }),</div><div class="ln" id="s2l4">  <span class="k">async</span> *<span class="f">execute</span>({ steps }) {</div><div class="ln" id="s2l5">    <span class="s">"use workflow"</span>;</div><div class="ln" id="s2l6">    <span class="k">const</span> done: string[] = [];</div><div class="ln" id="s2l7">    <span class="k">for</span> (<span class="k">let</span> i = <span class="n">1</span>; i &lt;= steps; i++) {</div><div class="ln" id="s2l8">      <span class="k">const</span> stamp = <span class="k">await</span> <span class="f">runStep</span>(i);</div><div class="ln" id="s2l9">      done.<span class="f">push</span>(stamp);</div><div class="ln" id="s2l10">      <span class="k">yield</span> { progress: <span class="s">`${i}/${steps}`</span>, stamp };</div><div class="ln" id="s2l11">      <span class="k">await</span> <span class="f">sleep</span>(<span class="s">"5s"</span>);</div><div class="ln" id="s2l12">    }</div><div class="ln" id="s2l13">    <span class="k">return</span> { done };</div><div class="ln" id="s2l14">  },</div><div class="ln" id="s2l15">});</div><div class="ln" id="s2l16">&nbsp;</div><div class="ln" id="s2l17"><span class="c">// reloj y log viven en el step: el cuerpo se replaya</span></div><div class="ln" id="s2l18"><span class="k">async</span> <span class="k">function</span> <span class="f">runStep</span>(i: number) {</div><div class="ln" id="s2l19">  <span class="s">"use step"</span>;</div><div class="ln" id="s2l20">  <span class="k">const</span> stamp = <span class="s">`paso ${i} @ ${new Date().toISOString()} pid ${process.pid}`</span>;</div><div class="ln" id="s2l21">  console.<span class="f">log</span>(<span class="s">`[process_batch] ${stamp}`</span>);</div><div class="ln" id="s2l22">  <span class="k">return</span> stamp;</div><div class="ln" id="s2l23">}</div></div></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 40.03s both, jello 1.2s 59.73s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s3" data-start="79.52" data-duration="34.11"><div class="panel term code"><div class="bar"><i></i><i></i><i></i><b>approval.ts</b></div><div class="body"><div class="ln" id="s3l0"><span class="c">// un step interrumpido se vuelve a ejecutar completo</span></div><div class="ln" id="s3l1"><span class="k">async</span> <span class="k">function</span> <span class="f">chargeCard</span>(input) {</div><div class="ln" id="s3l2">  <span class="s">"use step"</span>;</div><div class="ln" id="s3l3"><span class="c">  // idempotente: el mismo id nunca cobra dos veces</span></div><div class="ln" id="s3l4">  <span class="k">return</span> stripe.charges.<span class="f">create</span>(</div><div class="ln" id="s3l5">    { amount: input.amount, customer: input.customer },</div><div class="ln" id="s3l6">    { idempotencyKey: input.chargeId },</div><div class="ln" id="s3l7">  );</div><div class="ln" id="s3l8">}</div><div class="ln" id="s3l9"><span class="k">export</span> <span class="k">default</span> <span class="f">defineTool</span>({</div><div class="ln" id="s3l10">  description: <span class="s">"Cobra una tarjeta."</span>,</div><div class="ln" id="s3l11">  approval: <span class="f">always</span>(),          <span class="c">// una persona aprueba antes de correr</span></div><div class="ln" id="s3l12">  <span class="k">async</span> <span class="f">execute</span>(input) { <span class="k">return</span> <span class="f">chargeCard</span>(input); },</div><div class="ln" id="s3l13">});</div><div class="ln" id="s3l14"><span class="c">// o el agente pregunta y la sesión se estaciona hasta la respuesta</span></div><div class="ln" id="s3l15"><span class="k">const</span> answer = <span class="k">await</span> ctx.<span class="f">ask</span>({</div><div class="ln" id="s3l16">  prompt: <span class="s">"¿Cobro $1,200 a la tarjeta terminada en 4242?"</span>,</div><div class="ln" id="s3l17">  display: <span class="s">"confirmation"</span>,</div><div class="ln" id="s3l18">});</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 79.62s both, jello 1.2s 96.57s both;"><img src="assets/ghosty.png"></div></div>
 
 <div class="clip cap" data-start="0.79" data-duration="4.10"><div class="capin"><span class="w" id="c26_0w0">Una</span> <span class="w" id="c26_0w1">sesión</span> <span class="w" id="c26_0w2">es</span> <span class="w" id="c26_0w3">la</span> <span class="w" id="c26_0w4">conversación</span> <span class="w" id="c26_0w5">completa,</span> <span class="w" id="c26_0w6">y</span> <span class="w" id="c26_0w7">puede</span> <span class="w" id="c26_0w8">durar</span> <span class="w" id="c26_0w9">días.</span></div></div>
 <div class="clip cap" data-start="4.89" data-duration="2.03"><div class="capin"><span class="w" id="c27_0w0">Un</span> <span class="w" id="c27_0w1">turno</span> <span class="w" id="c27_0w2">es</span> <span class="w" id="c27_0w3">un</span> <span class="w" id="c27_0w4">mensaje</span> <span class="w" id="c27_0w5">del</span> <span class="w" id="c27_0w6">usuario</span></div></div>

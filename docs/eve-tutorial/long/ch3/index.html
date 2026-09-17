@@ -202,6 +202,60 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
     transform: translate3d(0, 0, 0);
   }
 }
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
 
 .cardv { object-fit: contain; width:1600px; height:900px; left:160px; top:0; inset:auto; position:absolute; }
 .brollv { object-fit: cover; width:1920px; height:900px; inset:auto; position:absolute; left:0; top:0; }
@@ -238,20 +292,20 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:#7C8A8E; } .cta .url { color:#85DDCB; font-size:44px; font-weight:700; } .cta .sub { color:#8DCF6E; }
-.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; } .cta-in { animation-fill-mode: both; }
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 #0E1317; }
 .w { color:#7C8A8E; }
 .wipe { position:absolute; inset:0; z-index:50; opacity:0; } .slice { transform-box: fill-box; }
 </style></head><body>
 <div id="root" data-composition-id="main" data-start="0" data-duration="68.3" data-width="1920" data-height="1080">
-<div class="clip scene " id="s0" data-start="0" data-duration="8.71"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>ls .eve/.workflow-data</b></div><div class="body"><div class="ln cmd" id="s0l0">$ ls .eve/.workflow-data</div><div class="ln" id="s0l1">events   hooks   runs   steps   streams   waits   version.txt</div><div class="ln cmd" id="s0l2">$ ls .eve/.workflow-data/steps | head -3</div><div class="ln" id="s0l3">step_01M2QWAC54KG906JJQBFNQ2MNM</div><div class="ln" id="s0l4">step_01M2QWADZSEH3ZKJY1G2FSE7S5</div><div class="ln" id="s0l5">step_01M2QWADZSEH3ZKJY1G2FSE7S6</div></div></div><div class="ghost" id="s0-ghost" style="animation: bounce 1.2s 0.00s both, jello 1.2s 4.36s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s0" data-start="0" data-duration="8.71"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>ls .eve/.workflow-data</b></div><div class="body"><div class="ln cmd" id="s0l0">$ ls .eve/.workflow-data</div><div class="ln" id="s0l1">events   hooks   runs   steps   streams   waits   version.txt</div><div class="ln cmd" id="s0l2">$ ls .eve/.workflow-data/steps | head -3</div><div class="ln" id="s0l3">step_01M2QWAC54KG906JJQBFNQ2MNM</div><div class="ln" id="s0l4">step_01M2QWADZSEH3ZKJY1G2FSE7S5</div><div class="ln" id="s0l5">step_01M2QWADZSEH3ZKJY1G2FSE7S6</div></div></div><div class="ghost" id="s0-ghost" style="animation: bounce 1.2s 0.10s both, jello 1.2s 4.36s both;"><img src="assets/ghosty.png"></div></div>
 <video class="clip cardv" id="s1v" data-start="8.71" data-duration="3.03" src="assets/card-02a-por-que-world-ch3-1.mp4" muted playsinline preload="auto"></video>
 <video class="clip cardv" id="s2v" data-start="11.74" data-duration="15.99" src="assets/card-02-archivero-ch3-2.mp4" muted playsinline preload="auto"></video>
-<div class="clip scene " id="s3" data-start="27.73" data-duration="2.03"><div class="panel web"><img src="captures/web/worlds-managed.png"></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 27.73s both, jello 1.2s 28.75s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s4" data-start="29.76" data-duration="3.29"><div class="panel web"><img src="captures/web/worlds-selfhosted.png"></div><div class="ghost" id="s4-ghost" style="animation: bounce 1.2s 29.76s both, jello 1.2s 31.41s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s5" data-start="33.05" data-duration="7.06"><div class="panel web"><img src="captures/web/worlds-community.png"></div><div class="ghost" id="s5-ghost" style="animation: bounce 1.2s 33.05s both, jello 1.2s 36.58s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s6" data-start="40.11" data-duration="28.19"><div class="panel term code"><div class="bar"><i></i><i></i><i></i><b>sandbox-backend.ts</b></div><div class="body"><div class="ln" id="s6l0"><span class="k">interface</span> SandboxBackend {</div><div class="ln" id="s6l1">  name: string;</div><div class="ln" id="s6l2">  prewarm?(opts: { templateKey; bootstrap; seedFiles }): Promise&lt;void&gt;;</div><div class="ln" id="s6l3">  <span class="f">create</span>(opts: { templateKey; sessionKey; existingMetadata }): Promise&lt;SandboxSession&gt;;</div><div class="ln" id="s6l4">}</div><div class="ln" id="s6l5"><span class="k">interface</span> SandboxSession {</div><div class="ln" id="s6l6">  <span class="f">run</span>({ command }): Promise&lt;{ exitCode; stdout; stderr }&gt;;</div><div class="ln" id="s6l7">  <span class="f">writeTextFile</span>({ path, content }): Promise&lt;void&gt;;</div><div class="ln" id="s6l8">  <span class="f">readTextFile</span>({ path }): Promise&lt;string | <span class="k">null</span>&gt;;</div><div class="ln" id="s6l9">  <span class="f">stop</span>(): Promise&lt;void&gt;;</div><div class="ln" id="s6l10">  <span class="f">delete</span>(): Promise&lt;void&gt;;</div><div class="ln" id="s6l11">  <span class="f">captureState</span>(): { backendName; sessionKey; metadata };</div><div class="ln" id="s6l12">}</div><div class="ln" id="s6l13"><span class="c">// los cuatro que trae eve, en el orden en que los prueba</span></div><div class="ln" id="s6l14"><span class="f">defaultBackend</span>()  <span class="c">// Vercel Sandbox → Docker → microsandbox → just-bash</span></div><div class="ln" id="s6l15"><span class="f">vercel</span>()</div><div class="ln" id="s6l16"><span class="f">docker</span>({ networkPolicy: <span class="s">"deny-all"</span> })</div><div class="ln" id="s6l17"><span class="f">microsandbox</span>()</div><div class="ln" id="s6l18"><span class="f">justbash</span>()</div></div></div><div class="ghost" id="s6-ghost" style="animation: bounce 1.2s 40.11s both, jello 1.2s 54.20s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s3" data-start="27.73" data-duration="2.03"><div class="panel web"><img src="captures/web/worlds-managed.png"></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 27.83s both, jello 1.2s 28.75s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s4" data-start="29.76" data-duration="3.29"><div class="panel web"><img src="captures/web/worlds-selfhosted.png"></div><div class="ghost" id="s4-ghost" style="animation: bounce 1.2s 29.86s both, jello 1.2s 31.41s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s5" data-start="33.05" data-duration="7.06"><div class="panel web"><img src="captures/web/worlds-community.png"></div><div class="ghost" id="s5-ghost" style="animation: bounce 1.2s 33.15s both, jello 1.2s 36.58s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s6" data-start="40.11" data-duration="28.19"><div class="panel term code"><div class="bar"><i></i><i></i><i></i><b>sandbox-backend.ts</b></div><div class="body"><div class="ln" id="s6l0"><span class="k">interface</span> SandboxBackend {</div><div class="ln" id="s6l1">  name: string;</div><div class="ln" id="s6l2">  prewarm?(opts: { templateKey; bootstrap; seedFiles }): Promise&lt;void&gt;;</div><div class="ln" id="s6l3">  <span class="f">create</span>(opts: { templateKey; sessionKey; existingMetadata }): Promise&lt;SandboxSession&gt;;</div><div class="ln" id="s6l4">}</div><div class="ln" id="s6l5"><span class="k">interface</span> SandboxSession {</div><div class="ln" id="s6l6">  <span class="f">run</span>({ command }): Promise&lt;{ exitCode; stdout; stderr }&gt;;</div><div class="ln" id="s6l7">  <span class="f">writeTextFile</span>({ path, content }): Promise&lt;void&gt;;</div><div class="ln" id="s6l8">  <span class="f">readTextFile</span>({ path }): Promise&lt;string | <span class="k">null</span>&gt;;</div><div class="ln" id="s6l9">  <span class="f">stop</span>(): Promise&lt;void&gt;;</div><div class="ln" id="s6l10">  <span class="f">delete</span>(): Promise&lt;void&gt;;</div><div class="ln" id="s6l11">  <span class="f">captureState</span>(): { backendName; sessionKey; metadata };</div><div class="ln" id="s6l12">}</div><div class="ln" id="s6l13"><span class="c">// los cuatro que trae eve, en el orden en que los prueba</span></div><div class="ln" id="s6l14"><span class="f">defaultBackend</span>()  <span class="c">// Vercel Sandbox → Docker → microsandbox → just-bash</span></div><div class="ln" id="s6l15"><span class="f">vercel</span>()</div><div class="ln" id="s6l16"><span class="f">docker</span>({ networkPolicy: <span class="s">"deny-all"</span> })</div><div class="ln" id="s6l17"><span class="f">microsandbox</span>()</div><div class="ln" id="s6l18"><span class="f">justbash</span>()</div></div></div><div class="ghost" id="s6-ghost" style="animation: bounce 1.2s 40.21s both, jello 1.2s 54.20s both;"><img src="assets/ghosty.png"></div></div>
 
 <div class="clip cap" data-start="0.79" data-duration="2.82"><div class="capin"><span class="w" id="c49_0w0">Sin</span> <span class="w" id="c49_0w1">el</span> <span class="w" id="c49_0w2">branding,</span> <span class="w" id="c49_0w3">el</span> <span class="w" id="c49_0w4">estado</span> <span class="w" id="c49_0w5">durable</span> <span class="w" id="c49_0w6">es</span> <span class="w" id="c49_0w7">esto:</span></div></div>
 <div class="clip cap" data-start="3.62" data-duration="2.22"><div class="capin"><span class="w" id="c49_1w0">una</span> <span class="w" id="c49_1w1">carpeta</span> <span class="w" id="c49_1w2">con</span> <span class="w" id="c49_1w3">seis</span> <span class="w" id="c49_1w4">subcarpetas.</span></div></div>

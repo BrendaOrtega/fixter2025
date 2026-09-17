@@ -25,7 +25,7 @@ const sceneEnd = (s, ch) => (s.to + 1 < marks.length && marks[s.to + 1].ch === c
 
 const kb = (id) => `tl.fromTo("#${id} img", { scale: 1, x: 0, y: 0 }, { scale: 1.08, x: -30, y: -18, duration: 999, ease: "none" }, 0);`;
 const lines = (file) => fs.readFileSync("captures/" + file, "utf8").replace(/\n$/, "").split("\n");
-const ghost = (id, t0, dur) => `<div class="ghost" id="${id}-ghost" style="animation: bounce 1.2s ${t0.toFixed(2)}s both, jello 1.2s ${(t0 + dur / 2).toFixed(2)}s both;"><img src="assets/ghosty.png"></div>`;
+const ghost = (id, t0, dur) => `<div class="ghost" id="${id}-ghost" style="animation: bounce 1.2s ${(t0 + .1).toFixed(2)}s both, jello 1.2s ${(t0 + dur / 2).toFixed(2)}s both;"><img src="assets/ghosty.png"></div>`;
 
 function renderScene(s, ch, idx) {
   const t0 = idx === 0 ? 0 : +(marks[s.from].start - chStart(ch)).toFixed(2); const t1 = +(sceneEnd(s, ch) - chStart(ch)).toFixed(2); const dur = +(t1 - t0).toFixed(2);
@@ -84,8 +84,10 @@ function renderScene(s, ch, idx) {
     return { html: clip(`<div class="hello"><div class="hello-ghost"><img src="assets/ghosty.png"></div><div class="hello-txt"><b>Soy Ghosty</b><span>agentes durables con eve</span></div></div>`), tl };
   }
   if (s.kind === "cta") {
-    tl += `tl.from("#${id} .cta-in", { y: 30, opacity: 0, duration: .5, stagger: .25, ease: "power3.out", immediateRender: false }, ${t0 + .2});`;
-    return { html: clip(`<div class="cta"><img class="cta-in logo" src="assets/logo.png"><h1 class="cta-in">¿Lo construimos desde cero?</h1><p class="cta-in">dímelo en los comentarios</p><p class="cta-in url">fixtergeek.com/sistemas-agenticos</p><p class="cta-in sub">suscríbete · youtube.com/@fixtergeek</p><div class="cta-in ghost big"><img src="assets/ghosty.png"></div></div>`), tl };
+    // entrada con backInUp escalonada (CSS, sin doble "from" que parpadee); sin la entrada genérica de escena
+    tl = "";
+    const d = (k) => `style="animation: backInUp .8s ${(t0 + .3 + k * .35).toFixed(2)}s both"`;
+    return { html: clip(`<div class="cta"><img class="cta-in logo" src="assets/logo.png" ${d(0)}><h1 class="cta-in" ${d(1)}>¿Lo construimos desde cero?</h1><p class="cta-in" ${d(2)}>dímelo en los comentarios</p><p class="cta-in url" ${d(3)}>fixtergeek.com/sistemas-agenticos</p><p class="cta-in sub" ${d(4)}>suscríbete · youtube.com/@fixtergeek</p><div class="ghost big" style="animation: backInUp .8s ${(t0 + 2.1).toFixed(2)}s both, swing 1.5s ${(t0 + 3.2).toFixed(2)}s both, tada 1s ${(t0 + 6).toFixed(2)}s both"><img src="assets/ghosty.png"></div></div>`), tl };
   }
 }
 
@@ -175,7 +177,7 @@ ${ANIMS}
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:${GREY}; } .cta .url { color:${MINT}; font-size:44px; font-weight:700; } .cta .sub { color:${GREEN}; }
-.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; } .cta-in { animation-fill-mode: both; }
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 ${BG}; }
 .w { color:${GREY}; }

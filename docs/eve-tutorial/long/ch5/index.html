@@ -202,6 +202,60 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
     transform: translate3d(0, 0, 0);
   }
 }
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes backInUp {
+  0% {
+    transform: translateY(1200px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.7);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
 
 .cardv { object-fit: contain; width:1600px; height:900px; left:160px; top:0; inset:auto; position:absolute; }
 .brollv { object-fit: cover; width:1920px; height:900px; inset:auto; position:absolute; left:0; top:0; }
@@ -238,7 +292,7 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 .cta { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding-bottom:180px; }
 .cta .logo { width:560px; filter: drop-shadow(0 0 14px rgba(133,221,203,.9)); }
 .cta h1 { font-family:"Big Shoulders Display"; font-size:84px; } .cta p { font-size:32px; color:#7C8A8E; } .cta .url { color:#85DDCB; font-size:44px; font-weight:700; } .cta .sub { color:#8DCF6E; }
-.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; animation: swing 1.5s 1s both, tada 1s 3.5s both; }
+.cta .ghost.big { position:absolute; left:1560px; top:560px; width:220px; height:255px; } .cta-in { animation-fill-mode: both; }
 .cap { top:905px; bottom:auto; height:175px; display:flex; align-items:center; justify-content:center; padding:0 120px; z-index:20; }
 .capin { font-family:"Big Shoulders Display"; font-weight:900; font-size:64px; line-height:1.05; text-align:center; text-transform:uppercase; letter-spacing:1px; text-shadow: 4px 4px 0 #0E1317; }
 .w { color:#7C8A8E; }
@@ -247,8 +301,8 @@ body { font-family:"Space Mono", monospace; color:#F2F5F4; background-image: rad
 <div id="root" data-composition-id="main" data-start="0" data-duration="61.03" data-width="1920" data-height="1080">
 <video class="clip cardv" id="s0v" data-start="0" data-duration="17.17" src="assets/card-04a-dos-lugares-ch5-0.mp4" muted playsinline preload="auto"></video>
 <video class="clip cardv" id="s1v" data-start="17.17" data-duration="16.16" src="assets/card-04b-frontera-ch5-1.mp4" muted playsinline preload="auto"></video>
-<div class="clip scene " id="s2" data-start="33.33" data-duration="8.47"><div class="panel web"><img src="captures/web/steve.png"></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 33.33s both, jello 1.2s 37.56s both;"><img src="assets/ghosty.png"></div></div>
-<div class="clip scene " id="s3" data-start="41.8" data-duration="19.23"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>caja eve-nitro · docker</b></div><div class="body"><div class="ln cmd" id="s3l0">$ cat agent/sandbox.ts</div><div class="ln" id="s3l1">import { defineSandbox } from "eve/sandbox";</div><div class="ln" id="s3l2">import { docker } from "eve/sandbox/docker";</div><div class="ln" id="s3l3">export default defineSandbox({</div><div class="ln" id="s3l4">  backend: docker({ image: "debian:bookworm-slim", networkPolicy: "deny-all" }),</div><div class="ln" id="s3l5">});</div><div class="ln cmd" id="s3l6">$ curl -u ghosty:*** -X POST :3000/eve/v1/session -d '{"message":"crea nota.txt y prueba internet"}'</div><div class="ln" id="s3l7">{"ok":true,"sessionId":"wrun_01M2R4KP883EAK2FQR5C4H1D76"}</div><div class="ln" id="s3l8">  bash → echo "hola" &gt; /workspace/nota.txt &amp;&amp; hostname &amp;&amp; cat /workspace/nota.txt &amp;&amp; (…/dev/tcp/example.com/443 …)</div><div class="ln" id="s3l9">  stdout: 0ac86462ab4f · hola · internet-bloqueado</div><div class="ln cmd" id="s3l10">$ docker ps --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'</div><div class="ln" id="s3l11">0ac86462ab4f   debian:bookworm-slim   Up About a minute   eve-sbx-ses-docker-…-wrun_01M2R4KP…</div><div class="ln" id="s3l12">7af814c88eac   debian:bookworm-slim   Up 2 minutes        eve-sbx-ses-docker-…-wrun_01M2R4GM…</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 41.80s both, jello 1.2s 51.41s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s2" data-start="33.33" data-duration="8.47"><div class="panel web"><img src="captures/web/steve.png"></div><div class="ghost" id="s2-ghost" style="animation: bounce 1.2s 33.43s both, jello 1.2s 37.56s both;"><img src="assets/ghosty.png"></div></div>
+<div class="clip scene " id="s3" data-start="41.8" data-duration="19.23"><div class="panel term"><div class="bar"><i></i><i></i><i></i><b>caja eve-nitro · docker</b></div><div class="body"><div class="ln cmd" id="s3l0">$ cat agent/sandbox.ts</div><div class="ln" id="s3l1">import { defineSandbox } from "eve/sandbox";</div><div class="ln" id="s3l2">import { docker } from "eve/sandbox/docker";</div><div class="ln" id="s3l3">export default defineSandbox({</div><div class="ln" id="s3l4">  backend: docker({ image: "debian:bookworm-slim", networkPolicy: "deny-all" }),</div><div class="ln" id="s3l5">});</div><div class="ln cmd" id="s3l6">$ curl -u ghosty:*** -X POST :3000/eve/v1/session -d '{"message":"crea nota.txt y prueba internet"}'</div><div class="ln" id="s3l7">{"ok":true,"sessionId":"wrun_01M2R4KP883EAK2FQR5C4H1D76"}</div><div class="ln" id="s3l8">  bash → echo "hola" &gt; /workspace/nota.txt &amp;&amp; hostname &amp;&amp; cat /workspace/nota.txt &amp;&amp; (…/dev/tcp/example.com/443 …)</div><div class="ln" id="s3l9">  stdout: 0ac86462ab4f · hola · internet-bloqueado</div><div class="ln cmd" id="s3l10">$ docker ps --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'</div><div class="ln" id="s3l11">0ac86462ab4f   debian:bookworm-slim   Up About a minute   eve-sbx-ses-docker-…-wrun_01M2R4KP…</div><div class="ln" id="s3l12">7af814c88eac   debian:bookworm-slim   Up 2 minutes        eve-sbx-ses-docker-…-wrun_01M2R4GM…</div></div></div><div class="ghost" id="s3-ghost" style="animation: bounce 1.2s 41.90s both, jello 1.2s 51.41s both;"><img src="assets/ghosty.png"></div></div>
 
 <div class="clip cap" data-start="0.81" data-duration="2.43"><div class="capin"><span class="w" id="c84_0w0">El</span> <span class="w" id="c84_0w1">agente</span> <span class="w" id="c84_0w2">vive</span> <span class="w" id="c84_0w3">en</span> <span class="w" id="c84_0w4">dos</span> <span class="w" id="c84_0w5">lugares.</span></div></div>
 <div class="clip cap" data-start="3.24" data-duration="3.41"><div class="capin"><span class="w" id="c85_0w0">El</span> <span class="w" id="c85_0w1">app</span> <span class="w" id="c85_0w2">runtime</span> <span class="w" id="c85_0w3">es</span> <span class="w" id="c85_0w4">tu</span> <span class="w" id="c85_0w5">proceso</span> <span class="w" id="c85_0w6">Node:</span> <span class="w" id="c85_0w7">habla</span> <span class="w" id="c85_0w8">con</span> <span class="w" id="c85_0w9">el</span> <span class="w" id="c85_0w10">modelo,</span></div></div>

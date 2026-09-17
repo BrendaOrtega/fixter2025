@@ -13,7 +13,8 @@ console.log("video", T.toFixed(2), "s");
 // SFX: cortinillas en cada frontera + los sfx.json de cada tarjeta desplazados a su escena
 const S = "../../shorts-taller/sfx"; const sfx = [];
 // la cortinilla de salida arranca en chStart−0.75 y cubre todo hacia chStart−0.3
-for (let c = 1; c <= 7; c++) { sfx.push([chStart(c) - 0.95, "riser.wav"]); sfx.push([chStart(c) - 0.22, "hit-sub.wav"]); }
+// un solo sonido por cortinilla (whoosh-fly, 0.89 s), centrado en la frontera: la mitad del barrido
+for (let c = 1; c <= 7; c++) sfx.push([chStart(c) - 0.44, "whoosh-fly.wav"]);
 const map = { "chip-place": "pop", "key-type": "tick", "power-down": "hit-low", "frost-crack": "card", "power-up": "coin", "melt-whoosh": "whoosh-fly", "pop": "pop", "boing": "pop", "chip-slide": "whoosh-short", "rattle": "block", "paper": "paper", "whoosh-soft": "whoosh-short", "drawer-open": "block", "tick": "tick", "whoosh-short": "whoosh-short", "hit-low": "hit-low", "card": "card", "stamp": "stamp", "tada": "ding" };
 for (const [ch, list] of Object.entries(scenes)) for (const s of list) if (s.kind === "card") {
   const dir = `../cards/${s.src.replace(/-long$/, "")}/${s.src.endsWith("-long") ? "sfx-long.json" : "sfx.json"}`; if (!fs.existsSync(dir)) continue;
