@@ -166,9 +166,9 @@ tl.to(".slice", { scaleX: 0, transformOrigin: "100% 50%", duration: .2, stagger:
 tl.set("#wipe", { opacity: 0 }, W + .8);
 // beat 5: las tres piezas tapan la caja
 tl.set("#pieces", { opacity: 1 }, V[4] - .45);
-tl.to("#pieces", { opacity: 0, duration: .12 }, V[6] - .2); tl.set("#pieces", { opacity: 0 }, V[6] - .05);
+tl.set("#pieces", { opacity: 0 }, V[6] + .2);  // se apaga cuando el CTA ya está encima: sin flash de la caja
 // beat 6: CTA
-tl.to("#cta", { opacity: 1, duration: .15 }, V[6]);
+tl.set("#cta", { opacity: 1 }, V[6]); tl.from("#cta", { y: 40, duration: .35, ease: "back.out(1.6)", immediateRender: false }, V[6]);
 // karaoke: reparto uniforme de palabras por frase
 ${LINES.map((l, i) => { const ws = l.split(" "); return ws.map((w, j) => { const t0 = V[i] + (D[i] * j) / ws.length; return `tl.set("#w${i}_${j}", { color: MINT, scale: 1.08 }, ${t0.toFixed(2)}); tl.set("#w${i}_${j}", { color: INK, scale: 1 }, ${(V[i] + (D[i] * (j + 1)) / ws.length).toFixed(2)});`; }).join(" "); }).join("\n")}
 tl.set({}, {}, ${TOTAL});
