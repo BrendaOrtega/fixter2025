@@ -7,7 +7,7 @@ LINES=(
 "Este agente lleva un registro de cada paso que termina, en Póstgres."
 "Le corto la luz en el paso tres."
 "Cuando vuelve, lee el registro y sigue en el cuatro. No repite nada."
-"En el video lo armamos con ib, el framework de Vércel. Con Póstgres y Dóquer, corriendo en una caja de Ísibits."
+"En el video lo armamos con ib, el freimwork de Vércel. Con Póstgres y Dóquer, corriendo en una caja de Ísibits."
 "Está completo en yutub: fixterguic. Sale hoy."
 )
 GAPS=(0.5 0.5 0.8 0.6 0.5 0.4); t=0; rm -f voice/list.txt; : > voice/marks.txt
