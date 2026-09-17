@@ -8,7 +8,7 @@
 
   <g id="title">
     <text x="960" y="100" text-anchor="middle" font-size="56" font-weight="900" fill="#F2F5F4">Tres formas de no perder el trabajo</text>
-    <text x="960" y="150" text-anchor="middle" font-size="28" fill="#85DDCB">Ghosty con la ficha 4 en la mano, tres maneras de sobrevivir al apagón</text>
+    <text x="960" y="150" text-anchor="middle" font-size="28" fill="#85DDCB">se va la luz con la ficha 4 en la mano: qué queda guardado en cada caso</text>
   </g>
 
   <!-- ===== Columna 1: journal a mano ===== -->
@@ -27,11 +27,11 @@
       </g>
     </g>
     <g id="journal-ghost"><image xlink:href="ghosty.png" x="420" y="360" width="180" height="210" preserveAspectRatio="xMidYMid meet"/></g>
-    <g id="journal-notes" font-size="22" fill="#F2F5F4">
-      <text x="380" y="650" text-anchor="middle">una tabla steps(run, n, resultado)</text>
-      <text x="380" y="690" text-anchor="middle">tú escribes runStep(id, fn)</text>
-      <text x="380" y="730" text-anchor="middle" fill="#85DDCB">lo hacemos en la sesión 6</text>
-      <text x="380" y="790" text-anchor="middle" fill="#7C8A8E">exige: código determinista</text>
+    <g id="journal-notes" font-size="21" fill="#F2F5F4">
+      <text x="380" y="650" text-anchor="middle">guarda: el resultado de cada paso</text>
+      <text x="380" y="690" text-anchor="middle">quién lo escribe: tú, en SQLite</text>
+      <text x="380" y="730" text-anchor="middle" fill="#85DDCB">al volver: lee la libreta, sigue en el 4</text>
+      <text x="380" y="790" text-anchor="middle" fill="#7C8A8E">costo: tu código debe ser determinista</text>
     </g>
   </g>
 
@@ -49,11 +49,11 @@
       <text x="840" y="470" text-anchor="middle" font-size="22" font-weight="900" fill="#0E1317">steps</text>
     </g>
     <g id="engine-ghost"><image xlink:href="ghosty.png" x="990" y="360" width="180" height="210" preserveAspectRatio="xMidYMid meet"/></g>
-    <g id="engine-notes" font-size="22" fill="#F2F5F4">
-      <text x="960" y="650" text-anchor="middle">eve + Workflow SDK (Postgres)</text>
-      <text x="960" y="690" text-anchor="middle">Restate, Temporal, Inngest…</text>
-      <text x="960" y="730" text-anchor="middle" fill="#8DCF6E">el motor replaya por ti</text>
-      <text x="960" y="790" text-anchor="middle" fill="#7C8A8E">exige: "use step" e idempotencia</text>
+    <g id="engine-notes" font-size="21" fill="#F2F5F4">
+      <text x="960" y="650" text-anchor="middle">guarda: lo mismo, en Postgres</text>
+      <text x="960" y="690" text-anchor="middle">quién lo escribe: el motor (eve, Restate)</text>
+      <text x="960" y="730" text-anchor="middle" fill="#8DCF6E">al volver: re-ejecuta y salta lo hecho</text>
+      <text x="960" y="790" text-anchor="middle" fill="#7C8A8E">costo: marcar cada paso con "use step"</text>
     </g>
   </g>
 
@@ -65,25 +65,41 @@
     <text x="1540" y="262" text-anchor="middle" font-size="28" font-weight="900" fill="#0E1317">3 · imagen de la caja</text>
     <!-- caja escarchada con ghosty adentro -->
     <g id="frozen-box">
-      <rect x="1330" y="330" width="420" height="260" rx="12" fill="#3E5A5C" stroke="#F2F5F4" stroke-width="4"/>
+      <rect x="1330" y="330" width="420" height="260" rx="12" fill="#4A6C74" stroke="#F2F5F4" stroke-width="4"/>
       <rect x="1350" y="350" width="380" height="200" rx="8" fill="#0E1317"/>
       <image xlink:href="ghosty.png" x="1470" y="365" width="150" height="175" preserveAspectRatio="xMidYMid meet"/>
-      <g id="frost" fill="#DDF4F0">
-        <polygon points="1350,350 1410,350 1385,392"/><polygon points="1480,350 1520,350 1500,380"/><polygon points="1660,350 1730,350 1695,400"/>
-        <polygon points="1350,550 1350,500 1380,550"/><polygon points="1730,550 1730,490 1690,550"/>
+      <g id="frost">
+        <rect x="1350" y="350" width="380" height="200" rx="8" fill="#DDF4F0" fill-opacity="0.12"/>
+        <!-- franja dentada arriba -->
+        <polygon points="1350,350 1730,350 1730,356 1700,366 1670,356 1640,368 1610,357 1580,370 1550,358 1520,369 1490,357 1460,368 1430,356 1400,367 1370,357 1350,364" fill="#EAF8F6"/>
+        <!-- franja dentada abajo -->
+        <polygon points="1350,550 1730,550 1730,544 1700,534 1670,544 1640,532 1610,543 1580,530 1550,542 1520,531 1490,543 1460,532 1430,544 1400,533 1370,543 1350,536" fill="#EAF8F6"/>
+        <!-- laterales -->
+        <polygon points="1350,350 1356,350 1366,380 1356,410 1368,440 1357,470 1367,500 1358,530 1350,550" fill="#EAF8F6"/>
+        <polygon points="1730,350 1724,350 1714,380 1724,410 1712,440 1723,470 1713,500 1722,530 1730,550" fill="#EAF8F6"/>
+        <!-- carámbanos colgando -->
+        <g fill="#EAF8F6" stroke="#B7E9E1" stroke-width="2" stroke-linejoin="round">
+          <polygon points="1392,364 1420,364 1406,430"/><polygon points="1450,364 1470,364 1460,410"/><polygon points="1620,364 1650,364 1635,436"/><polygon points="1680,364 1698,364 1689,404"/>
+        </g>
+        <g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><line x1="1398" y1="378" x2="1404" y2="414"/><line x1="1626" y1="378" x2="1632" y2="420"/></g>
+        <!-- cristal de hielo -->
+        <g stroke="#EAF8F6" stroke-width="3" stroke-linecap="round">
+          <line x1="1400" y1="500" x2="1430" y2="500"/><line x1="1415" y1="485" x2="1415" y2="515"/><line x1="1405" y1="490" x2="1425" y2="510"/><line x1="1425" y1="490" x2="1405" y2="510"/>
+        </g>
       </g>
-      <text x="1540" y="580" text-anchor="middle" font-size="20" font-weight="900" fill="#DDF4F0">.mem + .ext4</text>
     </g>
-    <g id="snapshot-notes" font-size="22" fill="#F2F5F4">
-      <text x="1540" y="650" text-anchor="middle">hibernar la caja completa</text>
-      <text x="1540" y="690" text-anchor="middle">memoria y disco, proceso incluido</text>
-      <text x="1540" y="730" text-anchor="middle" fill="#85DDCB">sin tocar el código del agente</text>
-      <text x="1540" y="790" text-anchor="middle" fill="#7C8A8E">exige: reintentar la llamada en vuelo</text>
+    <text x="1540" y="580" text-anchor="middle" font-size="20" font-weight="900" fill="#DDF4F0">.mem + .ext4</text>
+    </g>
+    <g id="snapshot-notes" font-size="21" fill="#F2F5F4">
+      <text x="1540" y="650" text-anchor="middle">guarda: la memoria y el disco enteros</text>
+      <text x="1540" y="690" text-anchor="middle">quién lo escribe: EasyBits (suspend)</text>
+      <text x="1540" y="730" text-anchor="middle" fill="#85DDCB">al volver: el proceso ni se enteró</text>
+      <text x="1540" y="790" text-anchor="middle" fill="#7C8A8E">costo: la llamada HTTP en vuelo muere</text>
     </g>
   </g>
 
   <g id="footer">
-    <text x="960" y="900" text-anchor="middle" font-size="26" fill="#7C8A8E">en los tres, una llamada a la mitad (cobro, correo, modelo) se repite: la idempotencia no la regala nadie</text>
-    <text x="960" y="944" text-anchor="middle" font-size="26" fill="#F2F5F4">journal chico para los efectos externos + hibernación para estacionar: así lo mezclamos nosotros</text>
+    <text x="960" y="900" text-anchor="middle" font-size="26" fill="#7C8A8E">un cobro a la mitad se repite en los tres; lo evita una llave de idempotencia, no el checkpoint</text>
+    <text x="960" y="944" text-anchor="middle" font-size="26" fill="#F2F5F4">en EasyBits usamos 1 para los efectos externos y 3 para esperar días sin gastar cómputo</text>
   </g>
 </svg>
