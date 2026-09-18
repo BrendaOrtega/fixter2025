@@ -1,0 +1,7 @@
+# Réplica B — recetas motion-anything, sólo CSS keyframes
+
+- **Técnica**: página HyperFrames sin timeline (`data-no-timeline`); todo son CSS keyframes con `animation-delay` absoluto y un PRNG sembrado (mulberry32) que genera el DOM al cargar. Render con `npx hyperframes render . -o out.mp4` (adaptador `css`, 225 cuadros, 7 s de render). `start_time` 0, `blackdetect` 0, cuadro 0 = video de fondo.
+- **Recetas adaptadas** (las originales usan rAF/hover, no seek-safe): `web/text-scramble` → capas de glifos por carácter encendidas por ventana (`fill: none`); typewriter → una capa por letra con `fill: forwards` + cursor rosa en `steps(n)`; `web/pixel-transition` → retícula 16×9 de tiles con `--t` aleatorio sembrado; `web/dot-grid` descartada (rAF) → retícula CSS con `linear-gradient`.
+- **Trampa**: `animation-fill-mode: both` rellena hacia atrás durante el delay, así que un `hold` de opacidad 1 aparecía desde el cuadro 0; hay que usar `forwards`.
+- **Se acerca**: posición y ritmo de la ventana (las coordenadas del BRIEF estaban a media escala; las reales son x≈100, y≈255, ancho 415, mono 26 px), typewriter con cursor, leader line, cortinilla de píxeles, pill + conector + caption final.
+- **No se acerca**: el scramble original es más "glitch" (más glifos por letra); la ventana original deriva con la cámara (aquí una traslación lineal aproximada); la retícula final del original es más tenue y con menos líneas; el cuadro 0 del clip de referencia es un plano abierto suelto, no un bug nuestro.

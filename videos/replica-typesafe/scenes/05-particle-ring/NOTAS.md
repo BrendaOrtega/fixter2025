@@ -1,0 +1,5 @@
+- Técnica: 900 `<circle>` en un SVG con posiciones por PRNG (mulberry32, semilla fija); cada partícula viaja radialmente (mismo ángulo) del anillo grueso al contorno elíptico de la O; GSAP en una sola timeline pausada, escena en dos clips (video congelado + "Automation" scramble / escena negra con piso en perspectiva CSS). Render con 900 puntos: 6.5 s, sin problema (1500 también cabría).
+- Recetas/bloques: ninguno directo; `text-scramble` de motion-anything corre con rAF, así que el scramble se rehízo con `tl.set` por letra (rosa → blanco). Piso: dos `linear-gradient` con `rotateX(68deg)` y `perspective`.
+- Se acerca: el corte a negro en el cuadro 44, el anillo que encoge hasta la O de puntos (cuadro por cuadro casi igual), el orden de aparición de las letras alrededor de la O (n, e, m, t, s, y, S), "Models" en typewriter y el tamaño final de "System One".
+- No se acerca: en la referencia las partículas tienen profundidad 3D (brillo y tamaño por distancia) y la O de puntos rota sutilmente; el scramble de "Automation" en el original deja huecos y respeta más las letras reales; el piso original es más sutil y con leve ondulación.
+- Parecido honesto: 4/5.

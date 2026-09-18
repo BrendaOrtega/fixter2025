@@ -1,0 +1,7 @@
+# Réplica A — HyperFrames + GSAP (una sola timeline pausada)
+
+- Técnica: composición estándar (`data-composition-id="main"`, 1280×720, 7.5 s), el clip de referencia como `<video class="clip">` de fondo; typewriter con spans por caracter (`width:0` → `set width:auto` por índice), cursor rosa como span; cortinilla de 16×9 divs de 80 px con orden aleatorio por PRNG mulberry32 (semilla 20260917); conector del diagrama con `strokeDashoffset`.
+- Se acerca: geometría de la ventana (x 120, y 200, 400 px), deriva lenta arriba-derecha como en el original, ritmo del typewriter y de las líneas CO-CREATED/ChatGPT/RLHF, leader line, pill rosa + retícula final.
+- No se acerca: la mono del original es más ancha/pesada que JetBrains Mono (~28 px vs 26); el cursor original es un bloque de varios caracteres semitransparente; los píxeles del original tienen tonos de la escena (translúcidos), los míos son opacos blanco/gris.
+- Ojo: `ref/clip.mp4` ya trae el overlay original quemado, así que en `out.mp4` se ven los dos encimados (sirve para comparar, pero no es un render limpio). El BRIEF midió la ventana a escala de la hoja (x 180, y 90, 15 px): las medidas reales son ~1.75× más grandes.
+- Verificado sobre out.mp4: `start_time=0`, 225 frames a 30 fps, `blackdetect` sin negros, frame 0 con el video (`f0.png`). `check` pasa lint/runtime/motion; contraste falla por texto blanco sobre video claro, igual que la referencia.

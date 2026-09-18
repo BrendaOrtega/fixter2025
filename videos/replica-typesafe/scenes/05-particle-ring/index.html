@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe — particle ring → System One</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=block" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #000; font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      #bg { width: 1280px; height: 720px; object-fit: cover; }
+
+      /* ---- "Automation" con scramble rosa → blanco ---- */
+      #automation {
+        position: absolute; left: 0; width: 1280px; top: 468px; text-align: center;
+        font-size: 170px; font-weight: 400; letter-spacing: -0.045em; color: #fff; line-height: 1; white-space: pre;
+      }
+      #automation .ch { display: inline-block; opacity: 0; }
+
+      /* ---- escena negra ---- */
+      #dark { background: #000; }
+      /* piso: retícula en perspectiva, muy tenue */
+      #floor-wrap { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; perspective: 520px; perspective-origin: 50% 47%; overflow: hidden; }
+      #floor {
+        position: absolute; left: -1360px; top: 440px; width: 4000px; height: 2400px;
+        transform-origin: 50% 0; transform: rotateX(68deg);
+        background-image: linear-gradient(rgba(255,255,255,0.20) 2px, transparent 2px),
+                          linear-gradient(90deg, rgba(255,255,255,0.20) 2px, transparent 2px);
+        background-size: 110px 110px;
+      }
+      #particles { position: absolute; left: 0; top: 0; }
+      #particles circle { fill: #fff; }
+
+      /* ---- "System One" ---- */
+      #headline {
+        position: absolute; left: 0; width: 1280px; top: 268px; text-align: center;
+        font-size: 186px; font-weight: 400; letter-spacing: -0.045em; color: #fff; line-height: 1; white-space: pre;
+      }
+      #headline .ch { display: inline-block; opacity: 0; }
+      #models {
+        position: absolute; left: 0; width: 1280px; top: 490px; text-align: center;
+        font-size: 66px; font-weight: 400; letter-spacing: -0.02em; color: #fff; white-space: pre;
+      }
+      #models .ch { display: inline-block; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="3.2">
+      <img id="bg" class="clip" src="assets/bg.png" data-start="0" data-duration="1.46" data-track-index="0" />
+      <div id="automation" class="clip" data-start="0" data-duration="1.46" data-track-index="1"></div>
+
+      <section id="dark" class="clip" data-start="1.46" data-duration="1.74" data-track-index="2">
+        <div id="floor-wrap"><div id="floor"></div></div>
+        <svg id="particles" width="1280" height="720" viewBox="0 0 1280 720"></svg>
+        <div id="headline"></div>
+        <div id="models"></div>
+      </section>
+    </div>
+
+    <script>
+      // PRNG con semilla fija: todo el azar es reproducible cuadro a cuadro
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(20260917);
+
+      // parte una frase en spans por letra
+      function splitChars(el, text) {
+        el.textContent = "";
+        return [...text].map((c) => {
+          const s = document.createElement("span");
+          s.className = "ch"; s.textContent = c; s.dataset.char = c;
+          el.appendChild(s); return s;
+        });
+      }
+
+      const N = 900; // partículas (probado: 900 renderiza sin problema)
+      const CX = 640, CY = 360;
+      const GLYPHS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*+";
+
+      const autoChars = splitChars(document.getElementById("automation"), "Automation");
+      const headChars = splitChars(document.getElementById("headline"), "System One");
+      const modelChars = splitChars(document.getElementById("models"), "Models");
+
+      // ---- partículas: anillo grueso con ruido → contorno de la "O" ----
+      const svg = document.getElementById("particles");
+      const dots = [];
+      for (let i = 0; i < N; i++) {
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        // anillo inicial: radio 150–290 con densidad hacia el centro del anillo, ligeramente alto
+        const a = rand() * Math.PI * 2;
+        const rr = 150 + Math.pow(rand(), 0.7) * 150 + (rand() - 0.5) * 30;
+        const x0 = CX + Math.cos(a) * rr * 0.98, y0 = CY - 5 + Math.sin(a) * rr * 1.06;
+        // destino: elipse de la "O" (rx 66, ry 84) con un poco de grosor
+        const b = a + (rand() - 0.5) * 0.25; // misma dirección: el anillo encoge radialmente, sin cruzarse
+        const th = 0.86 + rand() * 0.24;
+        const x1 = CX + Math.cos(b) * 66 * th, y1 = CY + Math.sin(b) * 84 * th;
+        c.setAttribute("cx", x0); c.setAttribute("cy", y0); c.setAttribute("r", 3.6 + rand() * 1.4);
+        svg.appendChild(c);
+        dots.push({ el: c, x1, y1, delay: rand() * 0.08 });
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      // ---- 0.2–0.75 s: "Automation" se descifra en rosa y aterriza en blanco ----
+      autoChars.forEach((s) => {
+        const start = 0.2 + rand() * 0.22;
+        const steps = 3 + Math.floor(rand() * 4);
+        tl.set(s, { opacity: 1, color: "#ee6f9f", textContent: GLYPHS[Math.floor(rand() * GLYPHS.length)] }, start);
+        for (let k = 1; k <= steps; k++) {
+          tl.set(s, { textContent: rand() < 0.55 ? s.dataset.char : GLYPHS[Math.floor(rand() * GLYPHS.length)] }, start + k * 0.05);
+        }
+        tl.set(s, { textContent: s.dataset.char }, start + (steps + 1) * 0.05);
+        tl.to(s, { color: "#ffffff", duration: 0.12, ease: "none" }, start + (steps + 1) * 0.05 + 0.05);
+      });
+
+      // ---- 1.47–1.95 s: el anillo se condensa hasta la "O" (los tiempos son locales al clip #dark) ----
+      const D = 1.46;
+      dots.forEach((d) => {
+        tl.to(d.el, { attr: { cx: d.x1, cy: d.y1, r: 3.2 }, duration: 0.3, ease: "power1.inOut" }, D + d.delay);
+      });
+      // la "O" de puntos deriva a la derecha y se estrecha antes del corte a tipografía
+      tl.to(svg, { x: 70, scale: 0.93, transformOrigin: "640px 360px", duration: 0.18, ease: "power1.in" }, D + 0.32);
+      tl.set(svg, { opacity: 0 }, D + 0.5);
+
+      // ---- 2.03 s: las letras nacen en el centro y se abren; la O es la de "One" ----
+      // cada letra parte del punto donde estaba la O de puntos (x 710) y va a su sitio
+      const spreadAt = D + 0.5;
+      const oIndex = 7; // índice de la "O" en "System One"
+      // se calcula tras cargar la fuente para que los anchos sean los reales
+      function buildSpread() {
+        const rootRect = document.getElementById("root").getBoundingClientRect();
+        headChars.forEach((s, i) => {
+          const r = s.getBoundingClientRect();
+                    const dist = Math.abs(i - oIndex);
+          const delay = i === oIndex ? 0 : 0.02 + dist * 0.045;
+          tl.set(s, { opacity: 1 }, spreadAt + delay);
+          // tracking abierto que se cierra: cada glifo viaja desde fuera hacia su sitio (nunca letter-spacing)
+          const cx = s.getBoundingClientRect().left - rootRect.left + s.getBoundingClientRect().width / 2;
+          tl.fromTo(s, { x: (cx - 640) * 0.12 }, { x: 0, duration: 0.45, ease: "power2.out", immediateRender: false }, spreadAt);
+        });
+        // el bloque entero nace un poco más chico y apretado, y se abre
+        tl.fromTo("#headline", { scale: 0.9, x: 40 }, { scale: 1, x: 0, duration: 0.45, ease: "power2.out", immediateRender: false }, spreadAt);
+        // "Models" se escribe letra por letra
+        modelChars.forEach((s, i) => tl.set(s, { opacity: 1 }, D + 0.8 + i * 0.075));
+        tl.set({}, {}, 3.2); // fija la duración total
+        window.__timelines = window.__timelines || {};
+        window.__timelines["main"] = tl;
+      }
+      document.fonts.ready.then(buildSpread);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #fbfbfb; }
+      body { font-family: Inter, system-ui, sans-serif; color: #111; }
+      .clip { position: absolute; inset: 0; }
+      #root { overflow: hidden; background: #fbfbfb; }
+
+      /* mundo: tres secciones en fila; la cámara desplaza #world */
+      #world { position: absolute; left: 0; top: 0; width: 4800px; height: 720px; will-change: transform; }
+      /* retícula fina + celdas grises sueltas, como el original */
+      #grid { position: absolute; left: 0; top: 0; width: 4800px; height: 720px;
+        background-image: linear-gradient(#e9e9e9 1px, transparent 1px), linear-gradient(90deg, #e9e9e9 1px, transparent 1px);
+        background-size: 128px 128px; background-position: -2px -2px; }
+      .cell { position: absolute; width: 128px; height: 128px; background: #f1f1f1; }
+      .cell.brown { background: #7f6a4d; width: 128px; height: 128px; }
+      .sec { position: absolute; top: 0; width: 1280px; height: 720px; }
+
+      /* ---- tipografía compartida ---- */
+      .big { position: absolute; font-size: 66px; font-weight: 400; letter-spacing: -2px; white-space: nowrap; line-height: 1; }
+      .big .w { display: inline-block; }
+      .mono { font-family: "Geist Mono", ui-monospace, monospace; font-weight: 600; font-size: 25px; letter-spacing: 1px; white-space: pre; }
+      .ch { display: inline-block; width: 0; overflow: hidden; vertical-align: bottom; }
+      .cursor { display: inline-block; width: 3px; height: 1em; background: #ee6f9f; vertical-align: text-bottom; margin-left: 2px; }
+      /* esquinas ¬ y L de los cuadros de texto */
+      .br { position: absolute; width: 14px; height: 14px; }
+      .br.tr { border-top: 2px solid #111; border-right: 2px solid #111; }
+      .br.bl { border-bottom: 2px solid #111; border-left: 2px solid #111; }
+
+      /* ---- sección 1: RLHF ---- */
+      #rlhf { position: absolute; left: 255px; top: 256px; width: 382px; height: 126px; }
+      #rlhf .tab { position: absolute; left: 0; top: 0; width: 127px; height: 126px; background: #e8679a; }
+      #rlhf .pill { position: absolute; left: 127px; top: 0; width: 255px; height: 126px; background: #e8679a; display: grid; place-items: center;
+        font-size: 44px; font-weight: 500; letter-spacing: -1px; }
+      #conn { position: absolute; left: 0; top: 240px; overflow: visible; }
+      #dash { position: absolute; left: 637px; top: 318px; height: 3px; width: 0; background: #111; }
+      #logos { position: absolute; left: 790px; top: 262px; height: 100px; display: flex; gap: 46px; }
+      #logos svg { width: 100px; height: 100px; flex: none; }
+      #line1 { left: 790px; top: 418px; transform: translateX(-50%); }
+      #line2 { left: 843px; top: 428px; }
+      #bulb { display: inline-block; width: 46px; height: 46px; vertical-align: -6px; margin-left: 12px; }
+
+      /* ---- sección 2: instrucción ---- */
+      #instr { position: absolute; left: 402px; top: 163px; }
+      #chevrons { position: absolute; left: 480px; top: 290px; width: 22px; }
+      #chevrons svg { display: block; width: 22px; height: 12px; margin-bottom: 1px; }
+      .pill2 { position: absolute; top: 388px; height: 46px; border-radius: 8px; display: flex; align-items: center; padding: 0 12px; font-size: 27px; letter-spacing: -0.5px; }
+      #human { left: 350px; background: #ececec; gap: 6px; }
+      #human::before { content: ""; position: absolute; left: -10px; top: 22px; width: 8px; height: 2px; background: #333; }
+      #layers { position: absolute; left: 514px; top: 394px; width: 36px; height: 36px; background: #ececec; border-radius: 8px; display: grid; place-items: center; }
+      #core { position: absolute; left: 592px; top: 363px; width: 96px; height: 96px; }
+      #response { left: 727px; background: #111; color: #fff; padding: 0 16px; }
+      #line3 { left: 306px; top: 548px; }
+
+      /* ---- sección 3: chat ---- */
+      #chat { position: absolute; left: 209px; top: 70px; width: 842px; height: 430px; background: #fdfdfd; }
+      #chat .bar { position: absolute; left: 0; top: 0; width: 842px; height: 43px; background: #1d1d1d; color: #eee; font-size: 22px; font-weight: 600; display: flex; align-items: center; padding-left: 12px; gap: 6px; }
+      .bubble { position: absolute; font-size: 25px; line-height: 1.4; letter-spacing: -0.4px; padding: 14px 20px; border-radius: 16px; }
+      #b1 { right: 42px; top: 86px; width: 380px; background: #e9f2fd; }
+      #b2 { left: 46px; top: 232px; width: 380px; background: #ececec; }
+      #b2icons { position: absolute; left: 66px; top: 344px; display: flex; gap: 12px; }
+      #b2icons svg { width: 20px; height: 20px; stroke: #777; fill: none; stroke-width: 1.6; }
+      #line4 { left: 524px; top: 524px; }
+      #chaticon { display: inline-block; width: 58px; height: 58px; vertical-align: -6px; margin-left: 10px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="10.2">
+      <div id="world" class="clip" data-start="0" data-duration="10.2">
+        <div id="grid"></div>
+        <!-- celdas grises sueltas de la retícula -->
+        <div class="cell" style="left:126px;top:254px"></div>
+        <div class="cell" style="left:126px;top:382px"></div>
+        <div class="cell brown" id="brown" style="left:1022px;top:126px"></div>
+        <div class="cell" style="left:1918px;top:126px"></div>
+        <div class="cell" style="left:2686px;top:510px"></div>
+        <div class="cell" style="left:3454px;top:0px"></div>
+        <div class="cell" style="left:4222px;top:382px"></div>
+
+        <!-- ====== sección 1 ====== -->
+        <section class="sec" id="s1" style="left:0">
+          <svg id="conn" width="400" height="240" viewBox="0 0 400 240">
+            <path id="connpath" d="M -20 213 H 165 Q 193 213 193 185 V 106 Q 193 78 221 78 H 255" fill="none" stroke="#111" stroke-width="3" />
+          </svg>
+          <div id="rlhf">
+            <div class="tab"></div><div class="pill">RLHF</div>
+            <div class="br tr" style="left:362px;top:5px"></div>
+            <div class="br bl" style="left:132px;top:105px"></div>
+          </div>
+          <div id="dash"></div>
+          <div id="logos">
+            <!-- OpenAI: seis lóbulos rotados -->
+            <svg id="lg-openai" viewBox="0 0 100 100">
+              <g fill="none" stroke="#111" stroke-width="7" stroke-linejoin="round">
+                <path d="M50 14 a18 18 0 0 1 18 18 v14 l-12 -7 v-7 a6 6 0 0 0 -6 -6 h-8 a6 6 0 0 0 -6 6 l-12 7 v-14 a18 18 0 0 1 18 -18 z" transform="rotate(0 50 50)"/>
+                <path d="M50 14 a18 18 0 0 1 18 18 v14 l-12 -7 v-7 a6 6 0 0 0 -6 -6 h-8 a6 6 0 0 0 -6 6 l-12 7 v-14 a18 18 0 0 1 18 -18 z" transform="rotate(120 50 50)"/>
+                <path d="M50 14 a18 18 0 0 1 18 18 v14 l-12 -7 v-7 a6 6 0 0 0 -6 -6 h-8 a6 6 0 0 0 -6 6 l-12 7 v-14 a18 18 0 0 1 18 -18 z" transform="rotate(240 50 50)"/>
+                <path d="M50 14 a18 18 0 0 1 18 18 v14 l-12 -7 v-7 a6 6 0 0 0 -6 -6 h-8 a6 6 0 0 0 -6 6 l-12 7 v-14 a18 18 0 0 1 18 -18 z" transform="rotate(60 50 50)"/>
+                <path d="M50 14 a18 18 0 0 1 18 18 v14 l-12 -7 v-7 a6 6 0 0 0 -6 -6 h-8 a6 6 0 0 0 -6 6 l-12 7 v-14 a18 18 0 0 1 18 -18 z" transform="rotate(180 50 50)"/>
+                <path d="M50 14 a18 18 0 0 1 18 18 v14 l-12 -7 v-7 a6 6 0 0 0 -6 -6 h-8 a6 6 0 0 0 -6 6 l-12 7 v-14 a18 18 0 0 1 18 -18 z" transform="rotate(300 50 50)"/>
+              </g>
+            </svg>
+            <!-- Anthropic: estrella de doce rayos salmón -->
+            <svg id="lg-anthropic" viewBox="0 0 100 100">
+              <g stroke="#e07a5f" stroke-width="7" stroke-linecap="round">
+                <line x1="50" y1="8" x2="50" y2="92"/><line x1="8" y1="50" x2="92" y2="50"/>
+                <line x1="20" y1="20" x2="80" y2="80"/><line x1="80" y1="20" x2="20" y2="80"/>
+                <line x1="30" y1="12" x2="70" y2="88"/><line x1="70" y1="12" x2="30" y2="88"/>
+                <line x1="12" y1="30" x2="88" y2="70"/><line x1="88" y1="30" x2="12" y2="70"/>
+              </g>
+            </svg>
+            <!-- Gemini: estrella de cuatro puntas con degradado (es el logo) -->
+            <svg id="lg-gemini" viewBox="0 0 100 100">
+              <defs><linearGradient id="gemg" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#1e88e5"/><stop offset=".45" stop-color="#7c5cff"/><stop offset=".75" stop-color="#e64a8a"/><stop offset="1" stop-color="#ff9a3c"/>
+              </linearGradient></defs>
+              <path d="M50 4 C52 30 70 48 96 50 C70 52 52 70 50 96 C48 70 30 52 4 50 C30 48 48 30 50 4 Z" fill="url(#gemg)"/>
+            </svg>
+            <!-- Otro: anillo con barra diagonal -->
+            <svg id="lg-other" viewBox="0 0 100 100">
+              <path d="M62 16 A36 36 0 1 0 84 40" fill="none" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+              <line x1="30" y1="76" x2="88" y2="12" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="big" id="line1">
+            <span class="w" id="w-post">The post</span><svg id="bulb" viewBox="0 0 46 46" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round">
+              <path d="M23 9 a10 10 0 0 0 -6 18 v4 h12 v-4 a10 10 0 0 0 -6 -18 z"/><path d="M19 35 h8 M20 39 h6"/>
+              <g stroke="#bbb"><line x1="23" y1="2" x2="23" y2="5"/><line x1="8" y1="8" x2="10" y2="10"/><line x1="38" y1="8" x2="36" y2="10"/><line x1="4" y1="19" x2="7" y2="19"/><line x1="42" y1="19" x2="39" y2="19"/></g>
+            </svg><span class="w" id="w-training">&nbsp;training</span><span class="w" id="w-algorithm">&nbsp;algorithm</span>
+            <div class="br tr" style="left:-48px;top:-158px"></div>
+            <div class="br bl" style="left:-24px;top:74px"></div>
+          </div>
+          <div class="big" id="line2">
+            <span class="w" id="w-behind">behind</span><span class="w" id="w-most">&nbsp;most</span><span class="w" id="w-frontier">&nbsp;frontier</span><span class="w" id="w-ai">&nbsp;&nbsp;AI</span>
+            <div class="br tr" style="left:794px;top:-38px"></div>
+            <div class="br bl" style="left:-48px;top:74px"></div>
+          </div>
+        </section>
+
+        <!-- ====== sección 2 ====== -->
+        <section class="sec" id="s2" style="left:1600px">
+          <div class="mono" id="instr"><span class="cursor" id="cur2"></span></div>
+          <div id="chevrons">
+            <svg viewBox="0 0 22 12"><path d="M2 2 L11 10 L20 2" fill="#111"/></svg>
+            <svg viewBox="0 0 22 12"><path d="M2 2 L11 10 L20 2" fill="#111"/></svg>
+            <svg viewBox="0 0 22 12"><path d="M2 2 L11 10 L20 2" fill="#111"/></svg>
+          </div>
+          <div class="pill2" id="human">
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#111" stroke-width="1.8"><circle cx="13" cy="10" r="7"/><path d="M13 17 v6 M9 23 h8 M10 10 a3 3 0 0 1 6 0 v4 h-6 z"/></svg>
+            Human
+          </div>
+          <div id="layers"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 L21 8 L12 13 L3 8 Z"/><path d="M3 12 L12 17 L21 12"/><path d="M3 16 L12 21 L21 16"/></svg></div>
+          <!-- núcleo: punto negro con órbitas punteadas -->
+          <svg id="core" viewBox="0 0 96 96">
+            <g id="orbits" fill="none" stroke="#333" stroke-width="1.2" stroke-dasharray="1 9" stroke-linecap="round">
+              <ellipse cx="48" cy="48" rx="42" ry="26" transform="rotate(-30 48 48)"/>
+              <ellipse cx="48" cy="48" rx="42" ry="26" transform="rotate(35 48 48)"/>
+              <ellipse cx="48" cy="48" rx="42" ry="26" transform="rotate(95 48 48)"/>
+            </g>
+            <circle id="dot" cx="48" cy="48" r="11" fill="#111"/>
+          </svg>
+          <div class="pill2" id="response">Response</div>
+          <div class="big" id="line3">
+            <span class="w" id="w-instruction">Instruction</span><span class="w" id="w-following">&nbsp;Following</span>
+            <div class="br tr" style="left:600px;top:-24px"></div>
+            <div class="br bl" style="left:-14px;top:74px"></div>
+          </div>
+        </section>
+
+        <!-- ====== sección 3 ====== -->
+        <section class="sec" id="s3" style="left:3200px">
+          <div id="chat">
+            <div class="bar">ChatGPT <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ccc" stroke-width="1.8"><path d="M3 5 L7 9 L11 5"/></svg></div>
+            <div class="bubble" id="b1">Summarize this document in three bullet points.</div>
+            <div class="bubble" id="b2">Sure. Here are Three key points of the document:</div>
+            <div id="b2icons">
+              <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M12 16V4 M7 9l5-5 5 5 M4 20h16"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-3-6.2 M20 4v5h-5"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1 M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+            </div>
+          </div>
+          <div class="big" id="line4">
+            <span class="w" id="w-chat">Chat</span><svg id="chaticon" viewBox="0 0 58 58" fill="none" stroke="#111" stroke-width="2.6" stroke-linejoin="round">
+              <path d="M8 12 h34 a4 4 0 0 1 4 4 v20 a4 4 0 0 1 -4 4 h-22 l-10 8 v-8 h-2 a4 4 0 0 1 -4 -4 v-20 a4 4 0 0 1 4 -4 z"/>
+              <path d="M16 22 h18 M16 30 h12"/>
+              <path d="M49 6 c1 4 2 5 6 6 c-4 1 -5 2 -6 6 c-1 -4 -2 -5 -6 -6 c4 -1 5 -2 6 -6 z" fill="#111" stroke="none"/>
+            </svg>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // typewriter mono: spans por caracter abiertos por índice
+      function buildTyped(el, text) {
+        const cur = el.querySelector(".cursor");
+        text.split("").forEach((c) => {
+          const s = document.createElement("span"); s.className = "ch"; s.textContent = c;
+          el.insertBefore(s, cur);
+        });
+        return el.querySelectorAll(".ch");
+      }
+      const instrChars = buildTyped(document.getElementById("instr"), "INSTRUCTION");
+
+      // ---- estado inicial (fotograma 0: RLHF + conector + "The post" completos) ----
+      gsap.set(["#w-training", "#w-algorithm", "#line2", "#logos svg", "#w-most", "#w-frontier", "#w-ai"], { autoAlpha: 0 });
+      gsap.set("#logos svg", { scale: 0.4, transformOrigin: "50% 50%" });
+      gsap.set("#line2 .w", { autoAlpha: 0, y: 14 });
+      gsap.set(["#line1 .w"], { y: 0 });
+      gsap.set("#dash", { width: 0 });
+      // sección 2
+      gsap.set(["#human", "#layers", "#core", "#response", "#chevrons svg", "#line3 .w", "#line3 .br"], { autoAlpha: 0 });
+      gsap.set(["#human", "#response"], { scale: 0.85, transformOrigin: "50% 50%" });
+      gsap.set("#dot", { scale: 0, transformOrigin: "50% 50%" });
+      gsap.set("#orbits", { scale: 0.5, transformOrigin: "50% 50%", autoAlpha: 0 });
+      gsap.set("#line3 .w", { y: 14 });
+      // sección 3
+      gsap.set(["#b1", "#b2", "#b2icons", "#line4 .w", "#chaticon"], { autoAlpha: 0 });
+      gsap.set("#chat .bar", { scaleX: 0.05, transformOrigin: "0 50%" });
+      gsap.set(["#b1", "#b2"], { y: 16 });
+      gsap.set("#line4 .w", { y: 14 });
+
+      // ---- cámara: paneo lento en la sección 1, saltos a las 2 y 3 ----
+      tl.to("#world", { x: -780, duration: 3.2, ease: "none" }, 0)
+        .to("#world", { x: -1600, duration: 0.8, ease: "power2.inOut" }, 3.2)
+        .to("#world", { y: -100, duration: 0.5, ease: "power2.inOut" }, 6.35)
+        .to("#world", { x: -3200, y: 0, duration: 0.5, ease: "power3.inOut" }, 7.8);
+
+      // ---- sección 1 ----
+      tl.to("#brown", { autoAlpha: 0, duration: 0.2 }, 0.2);
+      const wordIn = (sel, at) => tl.to(sel, { autoAlpha: 1, y: 0, duration: 0.2, ease: "power2.out" }, at);
+      tl.to("#dash", { width: 140, duration: 0.5, ease: "power2.out" }, 0.3);
+      wordIn("#w-training", 0.25);
+      wordIn("#w-algorithm", 0.5);
+      tl.to("#lg-openai", { autoAlpha: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 0.75);
+      // cambio de renglón: sale "The post…", entra "behind"
+      tl.to("#line1", { autoAlpha: 0, y: -12, duration: 0.2 }, 1.0);
+      tl.set("#line2", { autoAlpha: 1 }, 1.0);
+      wordIn("#w-behind", 1.02);
+      tl.to("#lg-anthropic", { autoAlpha: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 1.0);
+      tl.to("#lg-gemini", { autoAlpha: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 1.25);
+      wordIn("#w-most", 1.5);
+      tl.to("#lg-other", { autoAlpha: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 1.5);
+      wordIn("#w-frontier", 1.75);
+      wordIn("#w-ai", 2.0);
+
+      // ---- sección 2 ----
+      const step = 0.045;
+      instrChars.forEach((c, i) => tl.set(c, { width: "auto" }, 4.0 + i * step));
+      tl.set("#cur2", { autoAlpha: 0 }, 4.0 + instrChars.length * step + 0.3);
+      tl.to("#human", { autoAlpha: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 4.05);
+      tl.to("#layers", { autoAlpha: 1, duration: 0.25 }, 4.3);
+      tl.to("#chevrons svg", { autoAlpha: 1, duration: 0.15, stagger: 0.5 }, 4.5);
+      tl.to("#core", { autoAlpha: 1, duration: 0.1 }, 4.75);
+      tl.to("#dot", { scale: 1, duration: 0.35, ease: "back.out(2)" }, 4.75);
+      tl.to("#orbits", { autoAlpha: 1, scale: 1, duration: 0.5, ease: "power2.out" }, 5.0);
+      tl.to("#orbits", { rotation: 40, duration: 4.5, ease: "none", transformOrigin: "50% 50%" }, 5.0);
+      tl.to("#response", { autoAlpha: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 5.25);
+      tl.to("#line3 .br", { autoAlpha: 1, duration: 0.2 }, 6.45);
+      wordIn("#w-instruction", 6.5);
+      wordIn("#w-following", 6.75);
+
+      // ---- sección 3 ----
+      tl.to("#chat .bar", { scaleX: 1, duration: 0.35, ease: "power3.out" }, 8.0);
+      tl.to("#b1", { autoAlpha: 1, y: 0, duration: 0.3, ease: "power2.out" }, 8.1);
+      tl.to("#b2", { autoAlpha: 1, y: 0, duration: 0.3, ease: "power2.out" }, 8.45);
+      tl.to("#b2icons", { autoAlpha: 1, duration: 0.2 }, 8.6);
+      wordIn("#w-chat", 8.5);
+      tl.to("#chaticon", { autoAlpha: 1, duration: 0.2 }, 8.75);
+
+      tl.set({}, {}, 10.2); // fija la duración total
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

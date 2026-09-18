@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #e877a0; }
+      body { font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      #dither { position: absolute; inset: 0; width: 1280px; height: 720px; }
+      /* panel: mismo rosa un pelo más saturado, borde oscuro fino */
+      #panel { position: absolute; left: 40px; top: 46px; width: 1200px; height: 646px; background: #ef75a0; border: 3px solid #1a1017; }
+      /* celda del logo, esquina superior izquierda */
+      #logo { position: absolute; left: 4px; top: 2px; width: 82px; height: 82px; border-right: 2px solid #1a1017; border-bottom: 2px solid #1a1017; display: flex; align-items: center; justify-content: center; }
+      /* etiqueta DISCLAIMER en mono, se teclea con caret */
+      #label { position: absolute; left: 110px; top: 8px; height: 56px; font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; font-size: 42px; line-height: 56px; color: #fff; white-space: pre; }
+      #label .txt { background: #0a0a0a; padding: 0 12px; }
+      #label .txt:empty { padding: 0; }
+      #caret { display: inline-block; width: 2px; height: 46px; background: #1a1017; vertical-align: middle; margin-left: 2px; }
+      /* párrafo: las palabras arrancan en gris-vino y se encienden a negro */
+      #para { position: absolute; left: 56px; top: 122px; width: 1078px; font-size: 34px; line-height: 52px; letter-spacing: -1.1px; font-weight: 400; color: #a04d70; }
+      #para .w { color: #a04d70; }
+      #para .w.on { color: #000; }
+      /* fundido final a negro */
+      #fade { position: absolute; inset: 0; background: #000; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="28" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="28">
+        <canvas id="dither" width="1280" height="720"></canvas>
+        <div id="panel">
+          <div id="logo">
+            <svg width="48" height="48" viewBox="0 0 40 40" fill="none" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round">
+              <path d="M20 3 L35 11.5 V28.5 L20 37 L5 28.5 V11.5 Z"/>
+              <path d="M20 3 V20 M20 20 L35 28.5 M20 20 L5 28.5"/>
+            </svg>
+          </div>
+          <div id="label"><span class="txt"></span><span id="caret"></span></div>
+          <p id="para"></p>
+        </div>
+        <div id="fade"></div>
+      </div>
+    </div>
+    <script>
+      // Manchas de half-tone en las esquinas: densidad radial cuantizada con Bayer 4x4 (estático, determinista)
+      (function () {
+        const c = document.getElementById("dither"), g = c.getContext("2d");
+        const B = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+        const blobs = [[20,700,330],[640,740,300],[1300,380,230],[1290,-10,120],[440,-40,140]];
+        let s = 20240915; const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+        g.fillStyle = "#1c1218";
+        const px = 3;
+        for (let y = 0; y < 720; y += px) for (let x = 0; x < 1280; x += px) {
+          let d = 0.015;
+          for (const [bx, by, r] of blobs) { const q = Math.hypot(x - bx, y - by) / r; if (q < 1.3) d = Math.max(d, Math.pow(Math.max(0, 1 - q * 0.78), 1.5) * 0.9); }
+          d += (rnd() - 0.5) * 0.08;
+          if (d > (B[(y / px) & 3][(x / px) & 3] + 0.5) / 16) g.fillRect(x, y, px - 1, px - 1);
+        }
+      })();
+
+      const TEXT = "Do not use Jev if you enjoy waiting seconds for responses or paying for words you never asked for. Side effects may include fewer retries, fewer parsers, fewer broken schemas, and intelligence running inside every software loop. Your software may begin moderating every message, routing every ticket, reviewing every document, and making millions of background decisions that were previously too slow or expensive to automate. Entire software categories may be rewritten in the process. As costs fall, usage may increase dramatically. Ask your developer if your industry is ready.";
+      const para = document.getElementById("para");
+      const words = TEXT.split(" ").map((w, i) => { const s = document.createElement("span"); s.className = "w"; s.textContent = w; para.appendChild(s); if (i < 88) para.appendChild(document.createTextNode(" ")); return s; });
+
+      // Puntos medidos en la hoja de contactos: [segundo, palabras encendidas]; entre puntos se interpola lineal
+      const KEYS = [[0.5,0],[0.75,2],[1.0,3],[1.25,4],[1.5,5],[1.75,7],[2.0,8],[2.25,9],[2.5,11],[2.75,11],[3.0,12],[3.25,13],[3.5,14],[3.75,16],[4.0,17],[4.25,18],[4.5,19],[4.75,20],[5.0,21],[5.25,22],[5.5,23],[5.75,24],[6.25,25],[6.5,26],[6.75,27],[7.25,28],[7.75,30],[8.25,31],[8.5,32],[9,34],[10,37],[11,42],[12,45],[13,48],[14,53],[15,55],[16,58],[17,61],[18,65],[19,68],[20,73],[21,75],[22,78],[23,81],[24,84],[25,88],[26,89]];
+      const onTime = []; // instante en que se enciende cada palabra (índice 0..88)
+      for (let k = 0; k < KEYS.length - 1; k++) {
+        const [t0, n0] = KEYS[k], [t1, n1] = KEYS[k + 1];
+        for (let n = n0; n < n1; n++) onTime[n] = t0 + (t1 - t0) * (n - n0) / (n1 - n0);
+      }
+
+      const LABEL = "DISCLAIMER";
+      const txt = document.querySelector("#label .txt");
+      const tl = gsap.timeline({ paused: true });
+      // etiqueta tecleada letra por letra en el primer medio segundo; el caret parpadea y se va
+      for (let i = 1; i <= LABEL.length; i++) tl.call(() => { txt.textContent = LABEL.slice(0, i); }, null, 0.04 + i * 0.045);
+      tl.call(() => { txt.textContent = ""; }, null, 0);
+      tl.set("#caret", { opacity: 0 }, 0.6);
+      // karaoke: cada palabra pasa de vino a negro cuando la lectura llega a ella
+      words.forEach((w, i) => { tl.to(w, { color: "#000", duration: 0.12, ease: "none" }, onTime[i]); });
+      // fundido final a negro
+      tl.to("#fade", { opacity: 1, duration: 1.5, ease: "power2.in" }, 26.3);
+      tl.to({}, { duration: 0.001 }, 28);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

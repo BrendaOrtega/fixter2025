@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe wheel list</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #000; font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      #wheel { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+      #dot { position: absolute; left: 154px; top: 310px; width: 52px; height: 52px; border-radius: 50%; background: #fff; }
+      /* cada renglón nace horizontal y se coloca por rotación alrededor del pivote fuera de cuadro */
+      .item { position: absolute; left: 400px; top: 282px; height: 108px; line-height: 108px; font-size: 96px; font-weight: 500; letter-spacing: -0.03em; color: #8a8a8a; white-space: nowrap; transform-origin: -40px 54px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="4.7">
+      <section class="clip" data-start="0" data-duration="4.7" data-track-index="0">
+        <!-- el disco no gira: círculo fijo en SVG para que el borde salga limpio -->
+        <svg class="clip" width="1280" height="720"><circle cx="-456" cy="336" r="786" fill="#090909"/></svg>
+        <div id="wheel">
+          <div id="dot"></div>
+          <div class="item">Mode dropping</div>
+          <div class="item">Overconfidence</div>
+          <div class="item">Lack of reliability</div>
+        </div>
+      </section>
+    </div>
+    <script>
+      // modelo medido: carriles de 130 px; cada renglón se inclina sobre su extremo izquierdo
+      // (±6° la vecina, ±12° la siguiente) y la lista entera sube 55 px por paso
+      // modelo medido: las inactivas se acomodan a distancia fija del activo (y, inclinación)
+      // y el activo baja 75 px por paso; el punto baja 42
+      const OFF = { "3": [420, 21], "-2": [-270, -12], "-1": [-120, -6], "0": [0, 0], "1": [140, 7], "2": [280, 14] };
+      const RISE = 75;
+      const pose = (i, k) => { const [dy, r] = OFF[String(i - k)]; return { y: k * RISE + dy, rotation: r }; };
+      const items = gsap.utils.toArray(".item");
+      const tl = gsap.timeline({ paused: true });
+      
+      // fotograma 0: la lista viene un carril más abajo, el primero ya activo
+      items.forEach((el, i) => gsap.set(el, pose(i, -1)));
+      gsap.set(items[0], { color: "#fff" });
+
+      // entrada: cada renglón llega a su carril con el primero horizontal
+      items.forEach((el, i) => tl.to(el, { ...pose(i, 0), duration: 0.7, ease: "power3.out" }, 0));
+
+      function step(k, at) {
+        items.forEach((el, i) => tl.to(el, { ...pose(i, k), duration: 0.5, ease: "power3.inOut" }, at));
+        tl.to("#dot", { y: 42 * k, duration: 0.5, ease: "power3.inOut" }, at);
+        tl.to(items[k - 1], { color: "#8a8a8a", duration: 0.2 }, at + 0.2);
+        tl.to(items[k], { color: "#fff", duration: 0.2 }, at + 0.2);
+      }
+      step(1, 1.2);
+      step(2, 2.3);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

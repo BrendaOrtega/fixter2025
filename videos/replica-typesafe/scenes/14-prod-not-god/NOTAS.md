@@ -1,0 +1,5 @@
+- Técnica: GSAP en una timeline pausada; tres clips (still del entrevistado → logo → cajas → cierre). Las cajas viven en ventanas con `overflow:hidden` ancladas a la línea guía y entran con `back.out`, así el recorte en la línea sale gratis.
+- Recetas: `bounce-cards` revisada (sólo sirvió la idea del cubic-bezier con rebote; sus cards fan-out no aplican); `dot-grid` es canvas con rAF (no seek-safe), así que la retícula de cruces es un `<pattern>` SVG estático. Logo y brackets dibujados a mano en SVG.
+- Se acerca: tiempos (0.5 / 2.3 / 4.7), tamaños y posición de las tres cajas, línea guía, esquinas, brackets convergiendo, wordmark letra por letra en rosa → blanco.
+- No se acerca: el logo es una aproximación (hexágono + trazos internos, no la geometría exacta); el plano del entrevistado es `ref/f_001.png` congelado con el rótulo ya horneado (no hay cuadro limpio); no hay motion blur en las cajas.
+- Verificado sobre out.mp4: start_time 0, 255 cuadros, frame 0 con la tarjeta; blackdetect marca 0.5–2.3 y 4.7–8.5 igual que la referencia (logo pequeño sobre negro). Parecido: 4/5.

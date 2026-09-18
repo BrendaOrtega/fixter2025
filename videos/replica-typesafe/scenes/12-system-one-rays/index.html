@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe — System One + rays (12)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Caveat:wght@500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #000; font-family: Inter, system-ui, sans-serif; color: #fff; }
+      .clip { position: absolute; inset: 0; }
+      .shot { width: 1280px; height: 720px; object-fit: cover; display: block; }
+
+      /* ---- subtítulo del entrevistado (abajo-izquierda, letra por letra) ---- */
+      .caption { position: absolute; left: 66px; top: 350px; font-size: 100px; font-weight: 500; letter-spacing: -3px; line-height: 110px; white-space: pre; }
+      .caption .ch { display: inline-block; visibility: hidden; }
+      .caption .cursor { position: absolute; width: 58px; height: 26px; background: #111; visibility: hidden; }
+
+      /* ---- escena negra: piso de malla en perspectiva ---- */
+      #floor-wrap { position: absolute; left: -640px; top: 420px; width: 2560px; height: 900px; perspective: 520px; perspective-origin: 50% 0; }
+      #floor {
+        width: 100%; height: 100%; transform-origin: 50% 0; transform: rotateX(72deg);
+        background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.32) 0 1px, transparent 1px 90px),
+                          repeating-linear-gradient(90deg, rgba(255,255,255,0.32) 0 1px, transparent 1px 90px);
+        background-size: 90px 90px;
+      }
+      /* oscurece la malla hacia el horizonte (máscara, no textura) */
+      #floor-fade { position: absolute; left: 0; top: 400px; width: 1280px; height: 120px; background: #000; opacity: 0.7; }
+
+      #title { position: absolute; left: 205px; top: 290px; font-size: 64px; font-weight: 500; letter-spacing: -1.5px; white-space: pre; line-height: 80px; }
+      #title .w { display: inline-block; visibility: hidden; }
+      #public { position: absolute; left: 400px; top: 148px; font-size: 54px; font-weight: 400; letter-spacing: -1px; transform: rotate(-3deg); transform-origin: left bottom; }
+      #public .ch { display: inline-block; visibility: hidden; }
+      #vee { position: absolute; left: 0; top: 0; overflow: visible; }
+
+      /* ---- rayos + "Nx faster" ---- */
+      #rays-scene { background: #000; }
+      #rays { position: absolute; left: 0; top: 0; }
+      #speed { position: absolute; left: 0; right: 0; top: 296px; text-align: center; font-size: 112px; font-weight: 400; letter-spacing: -3px; line-height: 120px; white-space: nowrap; }
+      #speed .n { display: inline-block; }
+      #speed svg { display: inline-block; vertical-align: -6px; margin: 0 14px 0 20px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="6.5">
+
+      <!-- toma 1: entrevistado (cuadro limpio congelado) -->
+      <section id="shot1" class="clip" data-start="0" data-duration="1.67" data-track-index="0">
+        <img class="shot" src="assets/shot1.jpg" alt="" />
+        <div class="caption" id="cap1"></div>
+      </section>
+
+      <!-- escena negra: "The first System One model" + Public -->
+      <section id="system-one" class="clip" data-start="1.67" data-duration="2.43" data-track-index="0" style="background:#000">
+        <div id="floor-wrap"><div id="floor"></div></div>
+        <div id="floor-fade"></div>
+        <div id="title"></div>
+        <div id="public"></div>
+        <svg id="vee" width="1280" height="720" viewBox="0 0 1280 720" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+          <path id="vee-l" d="M400 214 C 420 250, 445 285, 470 302" />
+          <path id="vee-r" d="M560 224 C 530 250, 495 285, 470 302" />
+        </svg>
+      </section>
+
+      <!-- rayos + contador -->
+      <section id="rays-scene" class="clip" data-start="4.1" data-duration="1.55" data-track-index="0">
+        <svg id="rays" width="1280" height="720" viewBox="0 0 1280 720"></svg>
+        <div id="speed"><span class="n" id="num">0</span>x<svg width="104" height="104" viewBox="0 0 104 104" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"><circle cx="52" cy="58" r="40" /><path d="M52 58 L66 40" /><path d="M42 12 H62" /></svg>faster</div>
+      </section>
+
+      <!-- toma 2: entrevistado de perfil -->
+      <section id="shot2" class="clip" data-start="5.65" data-duration="0.85" data-track-index="0">
+        <img class="shot" src="assets/shot2.jpg" alt="" />
+        <div class="caption" id="cap2" style="left:98px; top:462px"><div class="cursor" id="cur2" style="left:-36px; top:132px"></div></div>
+      </section>
+    </div>
+
+    <script>
+      // PRNG con semilla fija (mulberry32) para los rayos
+      function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+      const rnd = mulberry32(20260917);
+      const PINK = "#ee6f9f";
+
+      // Construye un subtítulo por palabras y letras; devuelve los spans por palabra
+      function buildCaption(el, lines) {
+        const words = [];
+        lines.forEach((line, li) => {
+          line.split(" ").forEach((word) => {
+            const w = document.createElement("span"); w.className = "w";
+            const chars = [];
+            for (const c of word) { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; w.appendChild(s); chars.push(s); }
+            el.appendChild(w); words.push({ el: w, chars });
+            el.appendChild(document.createTextNode(" "));
+          });
+          if (li < lines.length - 1) el.appendChild(document.createElement("br"));
+        });
+        return words;
+      }
+      // Escribe palabra por palabra: letras aparecen en rosa, la palabra pasa a blanco al terminar
+      function typeWords(tl, words, at, perChar, gap, rest) {
+        let t = at;
+        words.forEach((w) => {
+          tl.set(w.el, { color: PINK }, t);
+          w.chars.forEach((c, i) => tl.set(c, { visibility: "visible" }, t + i * perChar));
+          t += w.chars.length * perChar + (rest || 0.1);
+          tl.set(w.el, { color: "#fff" }, t);
+          t += gap;
+        });
+        return t;
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      // --- toma 1: "We're / releasing / Jev" ---
+      const cap1 = buildCaption(document.getElementById("cap1"), ["We're", "releasing", "Jev"]);
+      typeWords(tl, cap1, 0.1, 0.02, 0.05, 0.1);
+
+      // --- escena negra ---
+      const titleWords = buildCaption(document.getElementById("title"), ["The first System One model"]);
+      const T0 = 1.67;
+      // el título se escribe por palabras; "first" y "model" lucen rosa mientras entran
+      const wordTimes = [0.02, 0.08, 0.28, 0.5, 0.78];
+      titleWords.forEach((w, i) => {
+        const at = T0 + wordTimes[i];
+        const pink = i === 1 || i === 4;
+        tl.set(w.el, { color: pink ? PINK : "#fff" }, at);
+        w.chars.forEach((c, k) => tl.set(c, { visibility: "visible" }, at + k * 0.008));
+        if (pink) tl.set(w.el, { color: "#fff" }, at + 0.22);
+      });
+      const pub = buildCaption(document.getElementById("public"), ["Public"])[0];
+      pub.chars.forEach((c, k) => tl.set(c, { visibility: "visible" }, T0 + 0.4 + k * 0.02));
+      ["#vee-l", "#vee-r"].forEach((sel) => {
+        const p = document.querySelector(sel); const L = p.getTotalLength();
+        gsap.set(p, { strokeDasharray: L, strokeDashoffset: L });
+        tl.to(p, { strokeDashoffset: 0, duration: 0.35, ease: "power2.out" }, T0 + 0.45);
+      });
+      // la malla del piso avanza despacio hacia la cámara
+      tl.fromTo("#floor", { backgroundPositionY: "0px" }, { backgroundPositionY: "90px", duration: 2.43, ease: "none" }, T0);
+
+      // --- rayos ---
+      const R0 = 4.1, CX = 640, CY = 360;
+      const raysSvg = document.getElementById("rays");
+      const rays = [];
+      for (let i = 0; i < 160; i++) {
+        const a = rnd() * Math.PI * 2;
+        const r0 = 140 + rnd() * 160, r1 = r0 + 200 + rnd() * 700;
+        const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        l.setAttribute("x1", CX + Math.cos(a) * r0); l.setAttribute("y1", CY + Math.sin(a) * r0);
+        l.setAttribute("x2", CX + Math.cos(a) * r1); l.setAttribute("y2", CY + Math.sin(a) * r1);
+        l.setAttribute("stroke", "#fff"); l.setAttribute("stroke-width", (0.8 + rnd() * 1.6).toFixed(2));
+        const dashed = rnd() < 0.45;
+        const len = r1 - r0;
+        if (dashed) l.setAttribute("stroke-dasharray", `${(3 + rnd() * 4).toFixed(1)} ${(6 + rnd() * 8).toFixed(1)}`);
+        else l.setAttribute("stroke-dasharray", `${len} ${len}`);
+        l.setAttribute("stroke-linecap", "round"); l.setAttribute("opacity", "0");
+        raysSvg.appendChild(l); rays.push({ el: l, dashed, len, delay: rnd() * 0.45, dur: 0.35 + rnd() * 0.5 });
+      }
+      rays.forEach((r) => {
+        const at = R0 + r.delay;
+        if (r.dashed) {
+          // los punteados corren hacia afuera y parpadean
+          tl.fromTo(r.el, { strokeDashoffset: 0 }, { strokeDashoffset: -r.len, duration: 1.5, ease: "none" }, R0);
+          tl.fromTo(r.el, { opacity: 0 }, { opacity: 0.35 + rnd() * 0.5, duration: 0.15, repeat: 3, yoyo: true, repeatDelay: 0.1 + rnd() * 0.2 }, at);
+        } else {
+          // los sólidos se estiran desde el centro y se apagan
+          tl.fromTo(r.el, { strokeDashoffset: r.len, opacity: 0.6 + rnd() * 0.4 }, { strokeDashoffset: -r.len, duration: r.dur, ease: "power1.in" }, at);
+          tl.to(r.el, { opacity: 0, duration: 0.15 }, at + r.dur - 0.1);
+        }
+      });
+      // contador 0 → 100 (count-up con tween sobre un objeto, determinista)
+      const num = document.getElementById("num"); const cnt = { v: 0 };
+      tl.set(num, { textContent: "0" }, R0);
+      tl.to(cnt, { v: 100, duration: 1.25, ease: "power2.out", onUpdate() { num.textContent = String(Math.round(cnt.v)); } }, R0 + 0.05);
+      tl.fromTo("#speed", { scale: 0.96 }, { scale: 1, duration: 0.6, ease: "power2.out" }, R0);
+
+      // --- toma 2: "Real-time AI / is finally po" ---
+      const cap2 = buildCaption(document.getElementById("cap2"), ["Real-time AI", "is finally po"]);
+      const S2 = 5.65;
+      tl.set("#cur2", { visibility: "visible" }, S2 + 0.05);
+      typeWords(tl, cap2, S2 + 0.15, 0.036, 0.05, 0.1);
+      // la última palabra queda rosa (el clip corta a medio escribir)
+      tl.set(cap2[cap2.length - 1].el, { color: PINK }, 6.49);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

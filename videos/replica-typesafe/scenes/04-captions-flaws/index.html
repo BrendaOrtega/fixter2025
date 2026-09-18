@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe — 04 captions flaws</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #000;
+              font-family: Inter, system-ui, sans-serif; color: #fff; }
+      .clip { position: absolute; inset: 0; }
+      .plate { width: 1280px; height: 720px; object-fit: cover; display: block; }
+
+      /* ---- tarjeta previa (cola de la escena anterior) ---- */
+      #prev { background: #000; }
+      #prev .ring { position: absolute; left: -640px; top: -260px; width: 1080px; height: 1080px; border-radius: 50%;
+                    border: 1px solid #2a2a2a; }
+      #prev .dot { position: absolute; left: 44px; top: 94px; width: 22px; height: 22px; border-radius: 50%; background: #fff; }
+      #prev .list { position: absolute; left: 100px; top: 20px; font-size: 31px; line-height: 40px; color: #6f6f6f;
+                    transform: perspective(700px) rotateY(-14deg) rotateX(16deg); transform-origin: left center; }
+      #prev .list div:last-child { color: #fff; font-size: 32px; }
+
+      /* ---- palabras y letras ---- */
+      .w { display: inline-block; opacity: 0; white-space: pre; }
+      .pink { color: #ee6f9f; }
+      .ch { display: inline-block; opacity: 0; color: #ee6f9f; }
+
+      /* ---- caption grande "These flaws mean that" ---- */
+      #flaws { position: absolute; left: 22px; top: 158px; font-size: 104px; font-weight: 500;
+               letter-spacing: -0.045em; white-space: nowrap; }
+
+      /* ---- cajas con borde ---- */
+      .box { position: absolute; box-sizing: border-box; border: 1.5px solid #fff; overflow: hidden;
+             transform-origin: left center; white-space: nowrap; transform: scaleX(0); }
+      .box .txt { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 500;
+                  letter-spacing: -0.03em; white-space: pre; }
+      /* marcas de esquina afuera de la caja */
+      .mark { position: absolute; width: 12px; height: 12px; border: 1.5px solid #fff; opacity: 0; }
+      .mark.tr { border-left: none; border-bottom: none; }
+      .mark.bl { border-right: none; border-top: none; }
+      #leader { position: absolute; left: 0; top: 0; overflow: visible; }
+
+      #llms { left: 60px; top: 195px; width: 485px; height: 95px; font-size: 66px; }
+      #humans { left: 665px; top: 570px; width: 545px; height: 86px; font-size: 56px; }
+      #at { left: 86px; top: 82px; width: 322px; height: 86px; font-size: 40px; }
+      #at .txt { display: flex; align-items: center; gap: 10px; }
+      #at svg { width: 30px; height: 30px; display: block; opacity: 0; }
+      #at .txt span:first-child { opacity: 0; }
+      #spent { left: 745px; top: 560px; width: 450px; height: 88px; font-size: 42px; }
+      #stealth { left: 415px; top: 578px; width: 447px; height: 88px; font-size: 42px; }
+
+      /* ---- captions de dos líneas, abajo a la izquierda ---- */
+      .two { position: absolute; left: 86px; font-size: 78px; font-weight: 500; letter-spacing: -0.04em; line-height: 98px;
+             white-space: nowrap; }
+      #auto { top: 468px; }
+      #ready { top: 468px; }
+      #newtype { top: 468px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="13.3">
+      <!-- planos congelados, cortados donde corta la referencia -->
+      <img class="clip plate" src="assets/frontal-blue.jpg" data-start="0.2" data-duration="2.97" data-track-index="0" />
+      <img class="clip plate" src="assets/profile-blue.jpg" data-start="3.17" data-duration="2.96" data-track-index="0" />
+      <img class="clip plate" src="assets/frontal-black.jpg" data-start="6.13" data-duration="3.0" data-track-index="0" />
+      <img class="clip plate" src="assets/profile-black.jpg" data-start="9.13" data-duration="3.29" data-track-index="0" />
+      <img id="plate-end" class="clip plate" src="assets/frontal-black-end.jpg" data-start="12.43" data-duration="0.87" data-track-index="0" />
+
+      <!-- cola de la tarjeta anterior (0–0.2 s) -->
+      <section id="prev" class="clip" data-start="0" data-duration="0.2" data-track-index="1">
+        <div class="ring"></div>
+        <div class="dot"></div>
+        <div class="list"><div>Mode dropping</div><div>Overconfidence</div><div>Lack of reliability</div></div>
+      </section>
+
+      <!-- plano A: These flaws mean that → LLMs require ⟶ humans-in-the-loop -->
+      <section id="planeA" class="clip" data-start="0.2" data-duration="2.97" data-track-index="2">
+        <div id="flaws"><span class="w">These </span><span class="w">flaws </span><span class="w">mean </span><span class="w">that</span></div>
+        <div id="llms" class="box"><div class="txt" data-type="LLMs require"></div></div>
+        <div class="mark tr" style="left:551px;top:189px"></div>
+        <div class="mark bl" style="left:54px;top:290px"></div>
+        <svg id="leader" width="1280" height="720"><line id="leader-line" x1="545" y1="290" x2="665" y2="575" stroke="#fff" stroke-width="1.5" /></svg>
+        <div id="humans" class="box"><div class="txt" data-type="humans-in-the-loop"></div></div>
+        <div class="mark tr" style="left:1216px;top:564px"></div>
+        <div class="mark bl" style="left:659px;top:656px"></div>
+      </section>
+
+      <!-- plano B: No true automation can be done. -->
+      <section class="clip" data-start="3.17" data-duration="2.96" data-track-index="2">
+        <div id="auto" class="two">
+          <div><span class="w">No </span><span class="w">true </span><span id="automation" data-letters="automation"></span></div>
+          <div><span class="w">can </span><span class="w">be </span><span class="w">done.</span></div>
+        </div>
+      </section>
+
+      <!-- plano C: At TypeSafe / we've spent 2 years / building in stealth -->
+      <section class="clip" data-start="6.13" data-duration="3.0" data-track-index="2">
+        <div id="at" class="box"><div class="txt"><span>At</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M12 2l8 4.6v9.2L12 22l-8-4.6V6.6z"/><path d="M12 2v10l8 4.6M12 12L4 16.6"/></svg>
+          <span data-type="TypeSafe"></span></div></div>
+        <div class="mark tr" style="left:414px;top:76px"></div>
+        <div class="mark bl" style="left:80px;top:168px"></div>
+        <div id="spent" class="box"><div class="txt" data-type="we've spent 2 years"></div></div>
+        <div id="stealth" class="box"><div class="txt" data-type="building in stealth"></div></div>
+        <div class="mark tr" id="stealth-tr" style="left:868px;top:572px"></div>
+        <div class="mark bl" id="stealth-bl" style="left:409px;top:666px"></div>
+      </section>
+
+      <!-- plano D: We're now ready.. / New type of foundation model -->
+      <section class="clip" data-start="9.13" data-duration="3.29" data-track-index="2">
+        <div id="ready" class="two">
+          <div><span class="w">We're</span></div>
+          <div><span class="w">now </span><span class="w">ready</span><span class="w pink">..</span></div>
+        </div>
+        <div id="newtype" class="two">
+          <div><span class="w">New </span><span class="w">type </span><span class="w">of</span></div>
+          <div><span class="w">foundation </span><span class="w">model</span></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const PINK = "#ee6f9f";
+      const tl = gsap.timeline({ paused: true });
+      // estado inicial de las palabras (desplazadas arriba) fuera de la timeline
+      gsap.set(".w", { y: -14 });
+
+      // Cada palabra: entra cayendo en rosa y a los `hold` s pasa a blanco
+      function word(el, t, hold = 0.17, stayPink = false) {
+        tl.to(el, { opacity: 1, y: 0, color: PINK, duration: 0.12, ease: "power2.out" }, t);
+        if (!stayPink) tl.to(el, { color: "#fff", duration: 0.08 }, t + hold);
+      }
+
+      // Texto tecleado dentro de una caja: cada carácter se abre por índice
+      function typed(el, t, step = 0.035) {
+        const text = el.dataset.type;
+        el.textContent = "";
+        [...text].forEach((c, i) => {
+          const s = document.createElement("span");
+          s.textContent = c; s.style.opacity = 0; s.style.whiteSpace = "pre";
+          el.appendChild(s);
+          tl.set(s, { opacity: 1 }, t + i * step);
+        });
+        return t + text.length * step;
+      }
+
+      // Caja que crece desde la izquierda
+      function box(el, t, dur = 0.45) {
+        tl.to(el, { scaleX: 1, duration: dur, ease: "power3.out" }, t);
+      }
+      function marks(sel, t) { tl.to(sel, { opacity: 1, duration: 0.05 }, t); }
+
+      // ---- 0–0.2 tarjeta anterior deslizándose ----
+      tl.to("#prev .list, #prev .dot, #prev .ring", { x: -60, duration: 0.2, ease: "none" }, 0);
+
+      // ---- plano A ----
+      const flaws = document.querySelectorAll("#flaws .w");
+      word(flaws[0], 0.37); word(flaws[1], 0.53); word(flaws[2], 0.9); word(flaws[3], 1.07);
+      tl.to("#flaws", { x: 1500, duration: 0.7, ease: "power2.in" }, 1.25);
+
+      box("#llms", 1.25); typed(document.querySelector("#llms .txt"), 1.3, 0.04); marks("#planeA .mark", 1.7);
+      const leader = document.getElementById("leader-line");
+      const L = Math.hypot(665 - 545, 575 - 290);
+      gsap.set(leader, { strokeDasharray: L, strokeDashoffset: L });
+      tl.to(leader, { strokeDashoffset: 0, duration: 0.3, ease: "power2.inOut" }, 1.6);
+      box("#humans", 1.8); typed(document.querySelector("#humans .txt"), 1.85, 0.045);
+
+      // ---- plano B ----
+      const auto = document.querySelectorAll("#auto .w");
+      word(auto[0], 3.8); word(auto[1], 3.92);
+      // "automation": letra por letra cayendo (idea de la receta falling-text, aquí sobre la timeline)
+      const autoEl = document.getElementById("automation");
+      [...autoEl.dataset.letters].forEach((c, i) => {
+        const s = document.createElement("span"); s.className = "ch"; s.textContent = c; autoEl.appendChild(s); gsap.set(s, { y: -30 });
+        const t = 4.05 + i * 0.033;
+        tl.to(s, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, t);
+        tl.to(s, { color: "#fff", duration: 0.08 }, t + 0.15);
+      });
+      word(auto[2], 4.65); word(auto[3], 4.85); word(auto[4], 5.1);
+
+      // ---- plano C ----
+      box("#at", 6.3, 0.4);
+      tl.to("#at .txt span:first-child", { opacity: 1, duration: 0.05 }, 6.36);
+      tl.to("#at svg", { opacity: 1, duration: 0.05 }, 6.4);
+      typed(document.querySelector("#at [data-type]"), 6.45, 0.035);
+      marks("#at ~ .mark:not(#stealth-tr):not(#stealth-bl)", 6.6);
+
+      box("#spent", 6.95, 0.35); typed(document.querySelector("#spent .txt"), 6.98, 0.02);
+      tl.to("#spent", { opacity: 0, duration: 0.08 }, 8.12);
+      box("#stealth", 8.2, 0.35); typed(document.querySelector("#stealth .txt"), 8.25, 0.03);
+      marks("#stealth-tr, #stealth-bl", 8.5);
+
+      // ---- plano D ----
+      const ready = document.querySelectorAll("#ready .w");
+      tl.to(ready[0], { opacity: 1, y: 0, color: "#fff", duration: 0.12, ease: "power2.out" }, 9.2);
+      tl.to(ready[1], { opacity: 1, y: 0, color: "#fff", duration: 0.12, ease: "power2.out" }, 9.33);
+      tl.to(ready[2], { opacity: 1, y: 0, color: "#fff", duration: 0.12, ease: "power2.out" }, 9.48);
+      word(ready[3], 9.55, 0.25);
+      tl.to("#ready", { opacity: 0, y: 20, duration: 0.12, ease: "power2.in" }, 10.35);
+
+      const nt = document.querySelectorAll("#newtype .w");
+      tl.to(nt[0], { opacity: 1, y: 0, color: "#fff", duration: 0.12, ease: "power2.out" }, 10.45);
+      tl.to(nt[1], { opacity: 1, y: 0, color: "#fff", duration: 0.12, ease: "power2.out" }, 10.5);
+      word(nt[2], 10.55, 0.25); word(nt[3], 11.15, 0.25); word(nt[4], 11.45, 0.25);
+
+      
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

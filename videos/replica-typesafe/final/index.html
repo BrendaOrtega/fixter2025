@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe lower-third (final)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #111; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #111; }
+      .clip { position: absolute; inset: 0; }
+      /* fondo: cuadro limpio congelado con respiración mínima de cámara */
+      #bg { width: 1280px; height: 720px; object-fit: cover; transform-origin: 60% 45%; }
+
+      /* ---- ventana retro ---- */
+      #overlay { font-family: "Geist Mono", monospace; font-weight: 500; color: #fff; font-size: 27px; letter-spacing: 0.01em; }
+      #win { position: absolute; left: 80px; top: 285px; width: 425px; transform-origin: left top; }
+      #titlebar {
+        position: relative; height: 78px; box-sizing: border-box;
+        border: 2px solid rgba(255,255,255,0.92); display: flex; align-items: center; gap: 16px; padding: 0 22px;
+        transform-origin: left center;
+      }
+      #titlebar .x { margin-left: auto; font-size: 26px; }
+      #body {
+        box-sizing: border-box; border: 2px solid rgba(255,255,255,0.92); border-top: none;
+        padding: 14px 22px 10px; line-height: 44px; overflow: hidden;
+      }
+      .line { white-space: pre; height: 44px; }
+      .ch { display: inline-block; width: 0; overflow: hidden; white-space: pre; vertical-align: top; }
+      /* el nombre entra con tracking abierto que se cierra */
+      #name .ch { width: auto; opacity: 0; margin-right: 0; }
+      .cursor { display: inline-block; width: 30px; height: 28px; background: rgba(232,103,154,0.85); vertical-align: -3px; margin-left: 2px; }
+
+      .bracket { position: absolute; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.8); }
+      #leader { position: absolute; left: 0; top: 0; overflow: visible; }
+
+      /* ---- cortinilla: cada celda muestrea el fondo y le pone un velo ---- */
+      #pixels { display: grid; grid-template-columns: repeat(16, 80px); grid-template-rows: repeat(9, 80px); }
+      .px { position: relative; width: 80px; height: 80px; background-image: url(assets/bg.png); background-size: 1280px 720px; }
+      .px::after { content: ""; position: absolute; inset: 0; background: var(--veil); }
+
+      /* ---- diagrama final ---- */
+      #diagram {
+        background-color: #fff;
+        background-image: linear-gradient(#ececec 1px, transparent 1px), linear-gradient(90deg, #ececec 1px, transparent 1px);
+        background-size: 64px 64px; font-family: Inter, system-ui, sans-serif; color: #111;
+      }
+      #pill { position: absolute; left: 330px; top: 318px; width: 176px; height: 64px; background: #ee6f9f;
+              display: grid; place-items: center; font-size: 30px; font-weight: 500; letter-spacing: -0.01em; }
+      #pill-shadow { position: absolute; left: 270px; top: 318px; width: 70px; height: 64px; background: #f4a9c4; }
+      #connector { position: absolute; left: 40px; top: 300px; overflow: visible; }
+      #caption { position: absolute; left: 560px; top: 440px; font-size: 32px; letter-spacing: -0.02em; white-space: pre; }
+      #caption .ch { vertical-align: baseline; }
+      .end-bracket { position: absolute; left: 538px; top: 484px; width: 12px; height: 12px; border-left: 1.5px solid #111; border-bottom: 1.5px solid #111; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="7.5">
+      <img id="bg" class="clip" src="assets/bg.png" data-start="0" data-duration="7.5" data-track-index="0" />
+
+      <section id="overlay" class="clip" data-start="0" data-duration="7.0" data-track-index="1">
+        <div id="win">
+          <!-- brackets fuera del cuadro; viajan con la ventana -->
+          <div class="bracket" style="left:-14px; bottom:-14px; border-top:none; border-right:none"></div>
+          <div class="bracket" style="right:-14px; top:-14px; border-left:none; border-bottom:none"></div>
+          <!-- línea guía sale de la esquina inferior derecha -->
+          <svg id="leader" width="600" height="600" viewBox="0 0 600 600">
+            <line id="leader-line" x1="425" y1="145" x2="425" y2="145" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" />
+            <path id="leader-end" d="M536 322 v12 h12" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" />
+          </svg>
+          <div id="titlebar">
+            <svg width="26" height="26" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.1">
+              <polygon points="7,1 12.5,4 12.5,10 7,13 1.5,10 1.5,4" /><polygon points="7,4 9.5,5.5 9.5,8.5 7,10 4.5,8.5 4.5,5.5" />
+            </svg>
+            <span id="name" class="tw" data-text="DIOGO ALMEIDA"></span>
+            <span class="x">×</span>
+          </div>
+          <div id="body">
+            <div class="line"><span class="tw" data-text="founder of TypeSafe AI"></span><span class="cursor" id="cursor1"></span></div>
+            <div class="line"><span class="tw" data-text="CO-CREATED"></span></div>
+            <div class="line"><span class="tw" data-text="↳ ChatGPT"></span></div>
+            <div class="line"><span class="tw" data-text="↳ RLHF"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="diagram" class="clip" data-start="6.3" data-duration="1.2" data-track-index="2">
+        <svg id="connector" width="320" height="220" viewBox="0 0 320 220">
+          <path id="connector-path" d="M0 190 H160 Q184 190 184 166 V60 Q184 40 204 40 H300" fill="none" stroke="#111" stroke-width="2" />
+        </svg>
+        <div id="pill-shadow"></div>
+        <div id="pill">RLHF</div>
+        <div id="caption"><span class="tw" data-text="The post ⚲ training algorithm"></span></div>
+        <div class="end-bracket"></div>
+      </section>
+
+      <section id="pixels" class="clip" data-start="5.9" data-duration="1.6" data-track-index="3"></section>
+    </div>
+
+    <script>
+      // PRNG con semilla fija: orden y velos de las celdas deterministas
+      function mulberry32(seed) {
+        return function () {
+          seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(20260917);
+
+      document.querySelectorAll(".tw").forEach((el) => {
+        el.textContent = "";
+        for (const c of el.dataset.text) {
+          const s = document.createElement("span");
+          s.className = "ch"; s.textContent = c; el.appendChild(s);
+        }
+      });
+
+      // celdas: cada una muestra su pedazo del fondo con un velo blanco/gris de opacidad variable
+      const pixels = document.getElementById("pixels");
+      const veils = ["rgba(255,255,255,0.92)", "rgba(255,255,255,0.7)", "rgba(230,230,230,0.6)", "rgba(120,120,120,0.55)", "rgba(60,60,60,0.5)"];
+      const cells = [];
+      for (let i = 0; i < 16 * 9; i++) {
+        const d = document.createElement("div");
+        const col = i % 16, row = Math.floor(i / 16);
+        d.className = "px";
+        d.style.backgroundPosition = `${-col * 80}px ${-row * 80}px`;
+        d.style.setProperty("--veil", veils[Math.floor(rand() * veils.length)]);
+        pixels.appendChild(d); cells.push(d);
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      function typewrite(el, at, dur) {
+        const chars = el.querySelectorAll(".ch");
+        const step = dur / chars.length;
+        chars.forEach((c, i) => tl.set(c, { width: "auto" }, at + i * step));
+      }
+      const tw = document.querySelectorAll("#overlay .tw");
+
+      // estado inicial: fotograma 0 con fondo y brackets, nada más
+      gsap.set("#titlebar", { autoAlpha: 0, scaleX: 0.3 });
+      gsap.set("#body", { autoAlpha: 0, height: 0 });
+      gsap.set("#cursor1", { autoAlpha: 0 });
+      gsap.set("#leader-end", { autoAlpha: 0 });
+      gsap.set("#pixels", { autoAlpha: 0 });
+      cells.forEach((c) => gsap.set(c, { autoAlpha: 0 }));
+
+      // respiración de cámara sobre el cuadro congelado
+      tl.fromTo("#bg", { scale: 1.0 }, { scale: 1.018, duration: 7.5, ease: "none" }, 0);
+
+      // deriva medida: (80,285) → (120,200), escala 1 → 1.06
+      tl.fromTo("#win", { x: 0, y: 0, scale: 1 }, { x: 40, y: -85, scale: 1.06, duration: 6.5, ease: "power1.out" }, 0.25);
+
+      // 0.25 s: barra de título se abre; el nombre cae con tracking abierto que se cierra
+      tl.to("#titlebar", { autoAlpha: 1, scaleX: 1, duration: 0.22, ease: "power3.out" }, 0.25);
+      const nameChars = document.querySelectorAll("#name .ch");
+      tl.fromTo(nameChars, { opacity: 0, marginRight: 14 }, { opacity: 1, marginRight: 0, duration: 0.5, ease: "power3.out", stagger: 0.025 }, 0.32);
+
+      // 0.75 s: cuerpo se abre con rebote corto y escribe con cursor rosa
+      tl.to("#body", { autoAlpha: 1, height: 68, duration: 0.28, ease: "back.out(1.4)" }, 0.75);
+      tl.set("#cursor1", { autoAlpha: 1 }, 0.82);
+      typewrite(tw[1], 0.9, 1.1);
+      tl.to("#cursor1", { autoAlpha: 0, duration: 0.05 }, 2.05);
+      tl.set("#cursor1", { display: "none" }, 2.1);
+
+      // 2.0 s: línea guía se dibuja desde la esquina + marca al final
+      tl.to("#leader-line", { attr: { x2: 542, y2: 330 }, duration: 0.55, ease: "power2.inOut" }, 2.0);
+      tl.to("#leader-end", { autoAlpha: 1, duration: 0.1 }, 2.55);
+
+      // 4.0 / 4.75 / 5.25 s: el cuerpo crece renglón por renglón con rebote
+      tl.to("#body", { height: 112, duration: 0.22, ease: "back.out(1.4)" }, 3.92);
+      typewrite(tw[2], 4.0, 0.25);
+      tl.to("#body", { height: 156, duration: 0.22, ease: "back.out(1.4)" }, 4.67);
+      typewrite(tw[3], 4.75, 0.25);
+      tl.to("#body", { height: 200, duration: 0.22, ease: "back.out(1.4)" }, 5.17);
+      typewrite(tw[4], 5.25, 0.25);
+
+      // 6.0–6.6 s: las celdas aparecen y PERSISTEN; 6.7–7.3 se disuelven sobre el blanco
+      tl.set("#pixels", { autoAlpha: 1 }, 6.0);
+      const order = cells.map((c) => ({ c, r: rand() }));
+      order.forEach(({ c, r }) => {
+        tl.set(c, { autoAlpha: 1 }, 6.0 + r * 0.6);
+        tl.to(c, { autoAlpha: 0, duration: 0.12 }, 6.7 + r * 0.6);
+      });
+      // la ventana se apaga debajo de las celdas
+      tl.to("#overlay", { autoAlpha: 0, duration: 0.3 }, 6.4);
+
+      // 6.55 s: diagrama — pill con rebote, conector que se dibuja, texto que se escribe
+      const path = document.getElementById("connector-path");
+      const len = path.getTotalLength();
+      gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+      tl.from("#pill", { x: -50, duration: 0.4, ease: "back.out(1.6)" }, 6.55);
+      tl.from("#pill-shadow", { x: -90, autoAlpha: 0.3, duration: 0.4, ease: "back.out(1.6)" }, 6.6);
+      tl.to(path, { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 6.7);
+      typewrite(document.querySelector("#caption .tw"), 6.8, 0.65);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

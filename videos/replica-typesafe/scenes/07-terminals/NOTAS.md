@@ -1,0 +1,5 @@
+- Técnica: dos `.win` con scale+back.out, typewriter por `.ch` con `tl.set`, líneas JSON con `visibility` por set (0.008 s izq / 0.115 s der), contadores de cost/completed con tween sobre un objeto; todo en una timeline GSAP pausada.
+- Recetas/bloques: ninguno; hecho a mano (los bloques `code-snippet-*-terminal` del registry son ventanas Apple con tipeo, no dos terminales en carrera).
+- Se acerca: layout de ventanas (15/646 px, 619×686), títulos, orden y ritmo (comandos 1.25–3.8 s, JSON izq a 4 s, der a 9 s, cierre 12.4 s), etiquetas beige con esquinas.
+- No se acerca: el cuadro 0 de la ref es el residuo de la escena anterior (entrevistado con "The Improvements are clear"); aquí arranca ya en rosa con la ventana chica. Tipografía Geist Mono vs la de la ref (más condensada), micro-diferencias de color de tokens.
+- Parecido: 4/5.

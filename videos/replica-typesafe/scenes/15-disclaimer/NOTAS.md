@@ -1,0 +1,5 @@
+- Técnica: panel HTML sobre canvas de dither Bayer 4x4 (PRNG con semilla); párrafo partido en `<span>` por palabra y una timeline GSAP que enciende cada palabra (vino → negro) en el instante medido en la hoja de contactos (48 puntos, interpolación lineal entre ellos); etiqueta "DISCLAIMER" tecleada con `tl.call`; fundido a negro 26.3→27.8 s.
+- Recetas/bloques: ninguno del registry; el dither es el mismo Bayer de `3-pink-cards`.
+- Se acerca: layout del panel, celda del logo, etiqueta mono, wrap del párrafo (misma partición de líneas), ritmo del karaoke ±0.3 s, cierre a negro.
+- No se acerca: el glifo del logo es una aproximación (hexágono con ejes), las manchas de dither no coinciden en forma con la referencia y el gris del texto apagado es un poco más rosado.
+- Parecido: 4/5.

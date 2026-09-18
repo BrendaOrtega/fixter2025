@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #2a2622; }
+      .clip { position: absolute; inset: 0; }
+      video { width: 1280px; height: 720px; object-fit: cover; }
+      /* toda la capa de overlay es un solo SVG encima del video */
+      #ui { position: absolute; inset: 0; width: 1280px; height: 720px; }
+      .mono { font-family: "IBM Plex Mono", monospace; font-size: 23px; fill: #f4f2ee; }
+      .line { fill: none; stroke: #f4f2ee; stroke-width: 1.5; }
+      .sans { font-family: "Inter", sans-serif; font-size: 28px; fill: #111; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="7.5" data-width="1280" data-height="720">
+      <video id="bg" class="clip" src="assets/clip.mp4" data-start="0" data-duration="7.5" data-track-index="0" muted playsinline></video>
+      <svg id="ui" viewBox="0 0 1280 720">
+        <!-- todo el bloque de ventana va en un <g> que deriva despacio (la referencia empuja la cámara) -->
+        <g id="win">
+        <!-- marcas de esquina: ya están desde el cuadro 0, tenues -->
+        <path id="ctr" class="line" d="M508 192 h14 v14" opacity=".55" />
+        <path id="cbl" class="line" d="M128 452 h-14 v-14" opacity=".55" />
+        <!-- barra de título: el borde se dibuja con dashoffset -->
+        <rect id="bar" class="line" x="122" y="200" width="398" height="72" />
+        <!-- glifo hexagonal de la marca -->
+        <g id="glyph" opacity="0">
+          <path class="line" d="M158 220 l12 7 v14 l-12 7 l-12 -7 v-14 z" />
+          <path class="line" d="M152 228 l12 6 M158 226 l-6 10 M164 228 l-6 10" stroke-width="1.2" />
+        </g>
+        <text id="name" class="mono" x="184" y="245" font-weight="500"></text>
+        <text id="close" class="mono" x="480" y="245" opacity="0">×</text>
+        <!-- cuerpo de la ventana -->
+        <rect id="body" class="line" x="122" y="272" width="398" height="60" />
+        <text id="role" class="mono" x="146" y="316"></text>
+        <text id="co" class="mono" x="146" y="357" font-weight="500"></text>
+        <text id="l1" class="mono" x="146" y="390"></text>
+        <text id="l2" class="mono" x="146" y="423"></text>
+        <!-- cursor rosa que corre delante del texto -->
+        <rect id="cursor" x="146" y="296" width="14" height="26" fill="#e8679a" opacity="0" />
+        <!-- leader line hacia abajo-derecha, con marca al final -->
+        <path id="leader" class="line" d="M490 492 L610 612" />
+        <path id="lend" class="line" d="M604 606 l6 6 h-6 M610 612 v-8" opacity="0" />
+        </g>
+        <!-- escena final: blanco con retícula y el diagrama -->
+        <g id="end" opacity="0">
+          <rect width="1280" height="720" fill="#fff" />
+          <path id="gridp" stroke="#e6e6e6" stroke-width="1" fill="none" />
+          <path id="conn" d="M60 470 h60 v-55 q0 -8 8 -8 h72" fill="none" stroke="#111" stroke-width="2" />
+          <rect x="200" y="380" width="120" height="52" rx="6" fill="#ee6f9f" />
+          <text class="sans" x="260" y="415" text-anchor="middle" fill="#1a1a1a">RLHF</text>
+          <text id="final" class="sans" x="340" y="470"></text>
+        </g>
+        <!-- cortinilla de píxeles -->
+        <g id="pix"></g>
+      </svg>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const from = (sel, v, t) => tl.from(sel, { immediateRender: false, ...v }, t);
+      const set = (sel, v, t) => tl.set(sel, v, t);
+      const CH = "!<>-_/[]{}=+*^?#";
+
+      // retícula del fondo blanco
+      let g = "";
+      for (let x = 0; x <= 1280; x += 40) g += `M${x} 0 V720 `;
+      for (let y = 0; y <= 720; y += 40) g += `M0 ${y} H1280 `;
+      document.getElementById("gridp").setAttribute("d", g);
+
+      // bordes que se dibujan: dashoffset del perímetro
+      function draw(sel, t, dur) {
+        const el = document.querySelector(sel);
+        const len = el.getTotalLength();
+        el.style.strokeDasharray = len; el.style.strokeDashoffset = len;
+        tl.to(el, { strokeDashoffset: 0, duration: dur, ease: "power2.out" }, t);
+      }
+      // texto por carácter en <tspan>; scramble determinista (sin Math.random)
+      function type(sel, text, t, dur, scramble) {
+        const el = document.querySelector(sel);
+        el.textContent = "";
+        const spans = [...text].map((c) => {
+          const s = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          s.textContent = c; s.setAttribute("opacity", "0"); el.appendChild(s); return s;
+        });
+        const step = dur / text.length;
+        spans.forEach((s, i) => {
+          set(s, { opacity: 1 }, t + i * step);
+          if (scramble && text[i] !== " ") {
+            set(s, { textContent: CH[(i * 7) % CH.length] }, t + i * step);
+            set(s, { textContent: CH[(i * 3 + 5) % CH.length] }, t + i * step + step * .5);
+            set(s, { textContent: text[i] }, t + i * step + step * 1.2);
+          }
+        });
+        return step;
+      }
+      // cursor rosa: salta delante de cada carácter (ancho de celda mono ≈ 14.4 px)
+      function cursor(x0, y, text, t, dur) {
+        const step = dur / text.length, cw = 14.4;
+        set("#cursor", { attr: { y }, opacity: 1 }, t);
+        for (let i = 0; i <= text.length; i++) set("#cursor", { attr: { x: x0 + i * cw + (i < text.length ? 2 : 6) } }, t + i * step);
+        set("#cursor", { opacity: 0 }, t + dur + .25);
+      }
+
+      // deriva lenta de toda la ventana: en la referencia arranca más grande y abajo-izquierda y se asienta hacia 5.5 s
+      tl.fromTo("#win", { x: -36, y: 62, scale: 1.06 }, { x: 4, y: 12, scale: 1.01, duration: 5.5, ease: "none", svgOrigin: "0 0", immediateRender: true }, 0);
+      // la marca inferior izquierda sigue al borde inferior del cuerpo
+      tl.set("#cbl", { y: -110 }, 0);
+      tl.to("#cbl", { y: -70, duration: .2 }, 3.95);
+      tl.to("#cbl", { y: -35, duration: .2 }, 4.7);
+      tl.to("#cbl", { y: 0, duration: .2 }, 5.2);
+      // el cuerpo crece con cada renglón nuevo
+      tl.to("#body", { attr: { height: 100 }, duration: .2, ease: "power2.out" }, 3.95);
+      tl.to("#body", { attr: { height: 135 }, duration: .2, ease: "power2.out" }, 4.7);
+      tl.to("#body", { attr: { height: 170 }, duration: .2, ease: "power2.out" }, 5.2);
+      // 0.25–0.5: barra de título + nombre scramble
+      draw("#bar", .25, .3);
+      set("#glyph", { opacity: 1 }, .3);
+      type("#name", "DIOGO ALMEIDA", .28, .3, true);
+      set("#close", { opacity: 1 }, .5);
+      set("#ctr, #cbl", { opacity: 1 }, .5);
+      // 0.75–2.0: cuerpo + rol con cursor
+      draw("#body", .75, .35);
+      type("#role", "founder of TypeSafe AI", .7, 1.05, false);
+      cursor(146, 296, "founder of TypeSafe AI", .7, 1.05);
+      // 2.0–3.75: leader line
+      draw("#leader", 2.1, .6);
+      set("#lend", { opacity: 1 }, 2.7);
+      // 4.0 / 4.75 / 5.25: co-created y las dos ramas
+      type("#co", "CO-CREATED", 4.0, .25, true);
+      type("#l1", "└ ChatGPT", 4.75, .25, true);
+      type("#l2", "└ RLHF", 5.25, .25, true);
+
+      // 6.0–6.75: cortinilla de píxeles (grid 16×9 de 80 px, orden seudoaleatorio con semilla fija)
+      const pix = document.getElementById("pix"), NS = "http://www.w3.org/2000/svg";
+      const tones = ["#ffffff", "#f2f2f2", "#8a8a8a", "#5c5c5c", "#d9d9d9"];
+      let seed = 7;
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      const blocks = [];
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 16; c++) {
+        const b = document.createElementNS(NS, "rect");
+        b.setAttribute("x", c * 80); b.setAttribute("y", r * 80); b.setAttribute("width", 80); b.setAttribute("height", 80);
+        b.setAttribute("fill", tones[Math.floor(rnd() * tones.length)]); b.setAttribute("opacity", "0");
+        pix.appendChild(b); blocks.push(b);
+      }
+      const order = blocks.map((b) => [b, rnd()]).sort((a, b) => a[1] - b[1]).map((p) => p[0]);
+      order.forEach((b, i) => {
+        const t0 = 6.0 + (i / order.length) * .6;
+        set(b, { opacity: 1 }, t0);
+        // los grises se van, los blancos se quedan hasta que entra el fondo blanco
+        if (b.getAttribute("fill") !== "#ffffff") set(b, { opacity: 0 }, t0 + .35 + rnd() * .3);
+      });
+      set("#end", { opacity: 1 }, 6.55);
+      set("#bar, #body, #name, #close, #role, #co, #l1, #l2, #glyph, #leader, #lend, #ctr, #cbl", { opacity: 0 }, 6.6);
+      set("#pix", { opacity: 0 }, 7.0);
+      // 6.75–7.5: conector y texto final
+      draw("#conn", 6.6, .35);
+      type("#final", "The post ⚲ training algorithm", 6.75, .7, false);
+
+      tl.set({}, {}, 7.5);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

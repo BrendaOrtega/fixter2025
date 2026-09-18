@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe lower-third (A)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #111; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #111; }
+      .clip { position: absolute; inset: 0; }
+      #bg { width: 1280px; height: 720px; object-fit: cover; }
+
+      /* ---- ventana retro ---- */
+      #overlay { font-family: "JetBrains Mono", "IBM Plex Mono", monospace; color: #fff; font-size: 26px; }
+      #win { position: absolute; left: 120px; top: 200px; width: 400px; }
+      #titlebar {
+        position: relative; height: 72px; box-sizing: border-box;
+        border: 1px solid #fff; display: flex; align-items: center; gap: 14px; padding: 0 22px;
+        letter-spacing: 0.5px; transform-origin: left center;
+      }
+      #titlebar .x { margin-left: auto; font-size: 24px; }
+      #body {
+        box-sizing: border-box; border: 1px solid #fff; border-top: none;
+        padding: 14px 22px 10px; line-height: 33px; overflow: hidden;
+      }
+      .line { white-space: pre; height: 33px; }
+      /* cada caracter empieza colapsado; el typewriter lo abre por índice */
+      .ch { display: inline-block; width: 0; overflow: hidden; white-space: pre; vertical-align: top; }
+      .cursor { display: inline-block; width: 14px; height: 26px; background: #e8679a; vertical-align: -2px; margin-left: 1px; }
+
+      /* marcas de esquina y línea guía */
+      .bracket { position: absolute; width: 14px; height: 14px; border: 1px solid rgba(255,255,255,0.75); }
+      .bracket.tl { border-right: none; border-bottom: none; }
+      .bracket.br { border-left: none; border-top: none; }
+      #leader { position: absolute; left: 0; top: 0; overflow: visible; }
+
+      /* ---- cortinilla de píxeles ---- */
+      #pixels { display: grid; grid-template-columns: repeat(16, 80px); grid-template-rows: repeat(9, 80px); }
+      .px { width: 80px; height: 80px; }
+
+      /* ---- diagrama final ---- */
+      #diagram {
+        background-color: #fff;
+        background-image: linear-gradient(#e6e6e6 1px, transparent 1px), linear-gradient(90deg, #e6e6e6 1px, transparent 1px);
+        background-size: 64px 64px; font-family: Inter, system-ui, sans-serif; color: #111;
+      }
+      #pill { position: absolute; left: 430px; top: 300px; width: 180px; height: 52px; background: #ee6f9f;
+              display: grid; place-items: center; font-size: 24px; font-weight: 500; }
+      #pill-shadow { position: absolute; left: 400px; top: 300px; width: 60px; height: 52px; background: #f4a9c4; }
+      #connector { position: absolute; left: 180px; top: 300px; overflow: visible; }
+      #caption { position: absolute; left: 660px; top: 428px; font-size: 28px; white-space: pre; }
+      #caption .ch { vertical-align: baseline; }
+      .end-bracket { position: absolute; left: 640px; top: 470px; width: 10px; height: 10px; border-left: 1px solid #111; border-bottom: 1px solid #111; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="7.5">
+      <!-- capa de fondo: el clip real para comparar de forma justa -->
+      <video id="bg" class="clip" src="assets/clip.mp4" data-start="0" data-duration="7.5" data-track-index="0" muted playsinline></video>
+
+      <section id="overlay" class="clip" data-start="0" data-duration="6.7" data-track-index="1">
+        <svg id="leader" width="1280" height="720" viewBox="0 0 1280 720">
+          <line id="leader-line" x1="490" y1="490" x2="610" y2="612" stroke="rgba(255,255,255,0.8)" stroke-width="1" />
+        </svg>
+        <div class="bracket br" id="leader-end" style="left:604px; top:606px"></div>
+
+        <div id="win">
+          <!-- marcas de esquina viajan con la ventana -->
+          <div class="bracket" style="left:-8px; bottom:-10px; border-top:none; border-right:none"></div>
+          <div class="bracket" style="right:-10px; top:-8px; border-left:none; border-bottom:none"></div>
+          <div id="titlebar">
+            <svg width="24" height="24" viewBox="0 0 14 14" fill="none" stroke="#fff" stroke-width="1.2">
+              <polygon points="7,1 12.5,4 12.5,10 7,13 1.5,10 1.5,4" /><polygon points="7,4 9.5,5.5 9.5,8.5 7,10 4.5,8.5 4.5,5.5" />
+            </svg>
+            <span class="tw" data-text="DIOGO ALMEIDA"></span>
+            <span class="x">×</span>
+          </div>
+          <div id="body">
+            <div class="line"><span class="tw" data-text="founder of TypeSafe AI"></span><span class="cursor" id="cursor1"></span></div>
+            <div class="line"><span class="tw" data-text="CO-CREATED"></span></div>
+            <div class="line"><span class="tw" data-text="└ ChatGPT"></span></div>
+            <div class="line"><span class="tw" data-text="└ RLHF"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="diagram" class="clip" data-start="6.3" data-duration="1.2" data-track-index="2">
+        <svg id="connector" width="300" height="200" viewBox="0 0 300 200">
+          <path id="connector-path" d="M0 170 H60 Q80 170 80 150 V40 Q80 26 94 26 H250" fill="none" stroke="#111" stroke-width="1.5" />
+        </svg>
+        <div id="pill-shadow"></div>
+        <div id="pill">RLHF</div>
+        <div id="caption"><span class="tw" data-text="The post ⚲ training algorithm"></span></div>
+        <div class="end-bracket"></div>
+      </section>
+
+      <section id="pixels" class="clip" data-start="5.9" data-duration="1.6" data-track-index="3"></section>
+    </div>
+
+    <script>
+      // PRNG con semilla fija: el orden de los píxeles es determinista frame a frame
+      function mulberry32(seed) {
+        return function () {
+          seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(20260917);
+
+      // partir cada .tw en spans por caracter (colapsados)
+      document.querySelectorAll(".tw").forEach((el) => {
+        el.textContent = "";
+        for (const c of el.dataset.text) {
+          const s = document.createElement("span");
+          s.className = "ch"; s.textContent = c; el.appendChild(s);
+        }
+      });
+
+      // cuadrícula de píxeles
+      const pixels = document.getElementById("pixels");
+      const tones = ["#fff", "#fff", "#e9e9e9", "#c9c9c9", "#8d8d8d"];
+      const cells = [];
+      for (let i = 0; i < 16 * 9; i++) {
+        const d = document.createElement("div");
+        d.className = "px"; d.style.background = tones[Math.floor(rand() * tones.length)];
+        pixels.appendChild(d); cells.push(d);
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      // typewriter: abre los caracteres por índice con sets de duración 0
+      function typewrite(el, at, dur) {
+        const chars = el.querySelectorAll(".ch");
+        const step = dur / chars.length;
+        chars.forEach((c, i) => tl.set(c, { width: "auto" }, at + i * step));
+      }
+      const tw = document.querySelectorAll("#overlay .tw");
+
+      // estado inicial (fotograma 0: sólo el video y los brackets)
+      gsap.set("#titlebar", { autoAlpha: 0, scaleX: 0.2 });
+      gsap.set("#body", { autoAlpha: 0, height: 0 });
+      gsap.set("#cursor1", { autoAlpha: 0 });
+      gsap.set("#leader-end", { autoAlpha: 0 });
+      gsap.set("#leader-line", { attr: { x2: 490, y2: 490 } });
+      gsap.set("#pixels", { autoAlpha: 0 });
+      cells.forEach((c) => gsap.set(c, { autoAlpha: 0 }));
+
+      // la ventana deriva lento hacia arriba-derecha, como en la referencia
+      tl.fromTo("#win", { x: -45, y: 78 }, { x: 8, y: 0, duration: 6.0, ease: "none" }, 0.25);
+
+      // 0.25 s: barra de título se abre y escribe el nombre
+      tl.to("#titlebar", { autoAlpha: 1, scaleX: 1, duration: 0.2, ease: "power3.out" }, 0.25);
+      typewrite(tw[0], 0.3, 0.3);
+
+      // 0.75 s: cuerpo se abre y escribe con cursor rosa
+      tl.to("#body", { autoAlpha: 1, height: 58, duration: 0.2, ease: "power2.out" }, 0.75);
+      tl.set("#cursor1", { autoAlpha: 1 }, 0.8);
+      typewrite(tw[1], 0.85, 1.15);
+      tl.to("#cursor1", { autoAlpha: 0, duration: 0.05 }, 2.0);
+      tl.set("#cursor1", { display: "none" }, 2.05);
+
+      // 2.0 s: línea guía + marca de esquina al final
+      tl.to("#leader-line", { attr: { x2: 610, y2: 612 }, duration: 0.6, ease: "power2.inOut" }, 2.0);
+      tl.to("#leader-end", { autoAlpha: 1, duration: 0.1 }, 2.6);
+
+      // 4.0 s: CO-CREATED; 4.75: ChatGPT; 5.25: RLHF (el cuerpo crece por línea)
+      tl.to("#body", { height: 91, duration: 0.15, ease: "power2.out" }, 3.95);
+      typewrite(tw[2], 4.0, 0.25);
+      tl.to("#body", { height: 124, duration: 0.15, ease: "power2.out" }, 4.7);
+      typewrite(tw[3], 4.75, 0.25);
+      tl.to("#body", { height: 157, duration: 0.15, ease: "power2.out" }, 5.2);
+      typewrite(tw[4], 5.25, 0.25);
+
+      // 6.0–6.75 s: cortinilla de píxeles con orden aleatorio determinista
+      tl.set("#pixels", { autoAlpha: 1 }, 6.0);
+      const order = cells.map((c) => ({ c, r: rand() }));
+      order.forEach(({ c, r }) => {
+        tl.set(c, { autoAlpha: 1 }, 6.0 + r * 0.55);
+        tl.set(c, { autoAlpha: 0 }, 6.6 + r * 0.6);
+      });
+
+      // 6.75 s: diagrama — conector se dibuja y el texto se escribe
+      const path = document.getElementById("connector-path");
+      const len = path.getTotalLength();
+      gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+      tl.to(path, { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 6.7);
+      tl.from("#pill", { x: -40, duration: 0.3, ease: "power2.out" }, 6.55);
+      tl.from("#pill-shadow", { x: -80, autoAlpha: 0.4, duration: 0.3, ease: "power2.out" }, 6.6);
+      typewrite(document.querySelector("#caption .tw"), 6.75, 0.7);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

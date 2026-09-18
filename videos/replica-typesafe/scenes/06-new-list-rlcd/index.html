@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe 06 — New list + RLCD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #000; font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+
+      /* ---- piso en perspectiva (escenas negras) ---- */
+      .floor-wrap { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; perspective: 500px; overflow: hidden; }
+      .floor {
+        position: absolute; left: -1280px; top: 430px; width: 3840px; height: 1600px;
+        transform-origin: 50% 0; transform: rotateX(72deg);
+        background-image: linear-gradient(rgba(255,255,255,0.16) 2px, transparent 2px),
+                          linear-gradient(90deg, rgba(255,255,255,0.16) 2px, transparent 2px);
+        background-size: 120px 120px;
+      }
+
+      /* ---- tarjeta previa "System One" (cuadro 0) ---- */
+      #title-card { background: #000; color: #fff; }
+      #title-card .big { position: absolute; left: 0; width: 1280px; top: 272px; text-align: center; font-size: 170px; letter-spacing: -7px; line-height: 1; }
+      #title-card .sub { position: absolute; left: 0; width: 1280px; top: 495px; text-align: center; font-size: 62px; letter-spacing: -1px; }
+
+      /* ---- lista blanca ---- */
+      #list-scene { background: #fff; color: #111; }
+      #new { position: absolute; left: 125px; top: 288px; font-size: 92px; letter-spacing: -3px; line-height: 1; }
+      #icon-box {
+        position: absolute; left: 340px; top: 277px; width: 118px; height: 118px; box-sizing: border-box;
+        border: 2px solid #e4e4ea; border-radius: 22px; background: #fff;
+      }
+      #icon-box svg { position: absolute; left: 0; top: 0; width: 118px; height: 118px; opacity: 0; }
+      #icon-box svg.on { opacity: 1; }
+      #items { position: absolute; left: 497px; top: 288px; }
+      .item { position: absolute; left: 0; font-size: 92px; letter-spacing: -3px; line-height: 1; white-space: nowrap; color: #8f8f8f; }
+      .item.active { color: #111; }
+
+      /* ---- RLCD ---- */
+      #rlcd-scene { background: #000; color: #fff; }
+      #rlcd { position: absolute; left: 0; width: 1280px; text-align: center; top: 297px; font-size: 96px; letter-spacing: -3px; line-height: 1; }
+      #wires { position: absolute; left: 0; top: 0; overflow: visible; }
+      #wires path { fill: none; stroke: #fff; stroke-width: 4; stroke-dasharray: 1; stroke-dashoffset: 1; }
+      .node {
+        position: absolute; height: 74px; box-sizing: border-box; border: 2px solid #fff; overflow: hidden; white-space: nowrap;
+        font-size: 46px; letter-spacing: -1px; line-height: 70px; padding-left: 18px; opacity: 0;
+      }
+      .node .txt { display: inline-block; }
+      .node .br { position: absolute; width: 10px; height: 10px; border: 2px solid #fff; }
+      .node .br.tr { right: 4px; top: 4px; border-left: none; border-bottom: none; }
+      .node .br.bl { left: 4px; bottom: 4px; border-right: none; border-top: none; }
+
+      /* ---- entrevistado + caption ---- */
+      #talk-scene img { position: absolute; inset: 0; width: 1280px; height: 720px; }
+      #caption { position: absolute; left: 95px; top: 95px; font-size: 62px; line-height: 68px; letter-spacing: -1.5px; color: #fff; }
+      #caption .w { display: block; opacity: 0; color: #ee6f9f; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="9.3">
+
+      <!-- 0.0–0.2: cola de la tarjeta anterior "System One / Models" -->
+      <section id="title-card" class="clip" data-start="0" data-duration="0.2" data-track-index="0">
+        <div class="floor-wrap"><div class="floor"></div></div>
+        <div class="big">System One</div>
+        <div class="sub">Models</div>
+      </section>
+
+      <!-- 0.2–4.0: lista blanca -->
+      <section id="list-scene" class="clip" data-start="0.2" data-duration="3.8" data-track-index="0">
+        <div id="new">New</div>
+        <div id="icon-box">
+          <!-- arquitectura: diagrama de flujo -->
+          <svg id="ic-arch" class="on" viewBox="0 0 118 118" fill="none" stroke="#25254a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="46" y="28" width="30" height="16" rx="3" />
+            <path d="M61 44 v14 M40 58 h42 M40 58 v12 M82 58 v12" />
+            <rect x="26" y="70" width="26" height="14" rx="3" />
+            <circle cx="82" cy="80" r="8" />
+          </svg>
+          <!-- sampler: forma de onda -->
+          <svg id="ic-samp" viewBox="0 0 118 118" fill="none" stroke="#25254a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 60 h12 l8 -24 l8 44 l8 -30 l8 20 l8 -10 h22" />
+            <circle cx="58" cy="60" r="4" fill="#25254a" stroke="none" />
+          </svg>
+          <!-- training: flechas en bucle -->
+          <svg id="ic-train" viewBox="0 0 118 118" fill="none" stroke="#25254a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M40 46 a20 20 0 0 1 36 -6" />
+            <path d="M70 32 l6 8 l-10 2" />
+            <path d="M78 72 a20 20 0 0 1 -36 6" />
+            <path d="M48 86 l-6 -8 l10 -2" />
+            <circle cx="36" cy="60" r="7" /><circle cx="82" cy="60" r="7" />
+          </svg>
+        </div>
+        <div id="items">
+          <div class="item active" style="top:0">Architecture</div>
+          <div class="item" style="top:130px; opacity:0; transform:translateY(24px)">Sampler</div>
+          <div class="item" style="top:260px; opacity:0; transform:translateY(24px)">Training algorithm</div>
+        </div>
+      </section>
+
+      <!-- 4.0–7.0: RLCD sobre negro -->
+      <section id="rlcd-scene" class="clip" data-start="4" data-duration="3" data-track-index="0">
+        <div class="floor-wrap"><div class="floor"></div></div>
+        <svg id="wires" width="1280" height="720" viewBox="0 0 1280 720">
+          <!-- Reinforcement: sale por la izquierda de RLCD, baja en L con curva -->
+          <path id="w-reinf" pathLength="1" d="M515 350 H472 Q455 350 455 367 V478 Q455 492 441 492 H422" />
+          <!-- Learning: baja recto -->
+          <path id="w-learn" pathLength="1" d="M630 392 V515" />
+          <!-- Calibrated: sube recto -->
+          <path id="w-calib" pathLength="1" d="M682 297 V158" />
+          <!-- Decisions: a la derecha -->
+          <path id="w-decis" pathLength="1" d="M795 345 H963" />
+        </svg>
+        <div id="rlcd">RLCD</div>
+        <div class="node" id="n-reinf" style="left:65px; top:455px; width:357px"><span class="txt">Reinforcement</span><i class="br tr"></i><i class="br bl"></i></div>
+        <div class="node" id="n-learn" style="left:507px; top:515px; width:245px"><span class="txt">Learning</span><i class="br tr"></i><i class="br bl"></i></div>
+        <div class="node" id="n-calib" style="left:556px; top:85px; width:252px"><span class="txt">Calibrated</span><i class="br tr"></i><i class="br bl"></i></div>
+        <div class="node" id="n-decis" style="left:963px; top:304px; width:244px"><span class="txt">Decisions</span><i class="br tr"></i><i class="br bl"></i></div>
+      </section>
+
+      <!-- 7.0–9.3: entrevistado con caption -->
+      <section id="talk-scene" class="clip" data-start="7" data-duration="2.3" data-track-index="0">
+        <img src="assets/interviewee.png" alt="" />
+        <div id="caption">
+          <span class="w">The</span>
+          <span class="w">Improvements</span>
+          <span class="w">are clear</span>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const T0 = 0.2; // inicio de la lista
+
+      // ---- lista: entrada escalonada de los ítems (0.2 / 0.3 / 0.4 s) ----
+      tl.fromTo("#list-scene > *", { y: 14 }, { y: 0, duration: 0.25, ease: "power2.out", immediateRender: false }, T0);
+      tl.to(".item:nth-child(2)", { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, T0 + 0.1);
+      tl.to(".item:nth-child(3)", { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }, T0 + 0.2);
+
+      // ---- lista: ítem activo y desplazamiento vertical ----
+      const items = gsap.utils.toArray(".item");
+      const icons = ["#ic-arch", "#ic-samp", "#ic-train"];
+      const stepAt = [T0, 1.95, 2.95]; // Architecture / Sampler / Training
+      stepAt.forEach((t, i) => {
+        if (i === 0) return;
+        // la lista sube 130 px por paso con un ease rápido
+        tl.to("#items", { y: -130 * i, duration: 0.35, ease: "power3.out" }, t);
+        // color del activo / inactivos (instantáneo, como en la referencia)
+        tl.to(items[i], { color: "#111111", duration: 0.15 }, t);
+        tl.to(items[i - 1], { color: "#8f8f8f", duration: 0.15 }, t);
+        // cambio de icono: el anterior se encoge y el nuevo entra con rebote
+        tl.to(icons[i - 1], { opacity: 0, scale: 0.6, duration: 0.15, ease: "power2.in" }, t);
+        tl.fromTo(icons[i], { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)", immediateRender: false }, t + 0.12);
+      });
+
+      // ---- RLCD: título sube ligeramente al entrar ----
+      const R = 4.0;
+      tl.fromTo("#rlcd", { y: 40 }, { y: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, R);
+
+      // cada nodo: la línea se dibuja, la caja aparece angosta y crece con el texto (efecto typewriter)
+      function node(wire, box, tStart, drawDur, textLen) {
+        const el = document.querySelector(box);
+        const fullW = parseInt(el.style.width, 10);
+        tl.to(wire, { strokeDashoffset: 0, duration: drawDur, ease: "none" }, tStart);
+        tl.set(el, { opacity: 1, width: 40 }, tStart + 0.05);
+        // el ancho crece por pasos = una letra por paso
+        tl.to(el, { width: fullW, duration: 0.45, ease: "steps(" + textLen + ")" }, tStart + 0.05);
+      }
+      node("#w-reinf", "#n-reinf", R + 0.2, 0.35, 13);
+      node("#w-learn", "#n-learn", R + 0.55, 0.25, 8);
+      node("#w-calib", "#n-calib", R + 0.95, 0.25, 10);
+      node("#w-decis", "#n-decis", R + 1.25, 0.25, 9);
+
+      // ---- caption: cada palabra entra rosa y se vuelve blanca ----
+      const K = 7.0;
+      const words = gsap.utils.toArray("#caption .w");
+      [K + 0.02, K + 0.25, K + 0.5].forEach((t, i) => {
+        tl.set(words[i], { opacity: 1 }, t);
+        tl.to(words[i], { color: "#ffffff", duration: 0.2, ease: "none" }, t + 0.12);
+      });
+
+      // relleno para cubrir toda la duración
+      tl.to({}, { duration: 0.001 }, 9.3);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

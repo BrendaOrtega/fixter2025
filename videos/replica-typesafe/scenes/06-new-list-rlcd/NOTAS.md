@@ -1,0 +1,5 @@
+- Técnica: una sola timeline GSAP; lista con desplazamiento `y` por pasos (power3.out) e iconos SVG a mano que se intercambian con `back.out`; cables del RLCD con `pathLength=1` + `stroke-dashoffset`; cajas que crecen en `width` con `steps(n)` (una letra por paso) en vez de typewriter por spans; caption por palabra rosa → blanco.
+- Recetas/bloques: ninguna del registry ni de motion-anything (todo es CSS/GSAP seek-safe). Piso en perspectiva con `rotateX` y retícula de líneas duras.
+- Entrevistado: `assets/interviewee.png` = f_036 con el "The" tapado con un parche de la misma fila de listones (no hay cuadro limpio en el clip).
+- Se acerca: posiciones/tamaños de la lista, iconos por ítem, geometría de cajas y cables del RLCD, tiempos de cada nodo, caption por palabras.
+- No se acerca: el ref dibuja los cables con un "cursor" luminoso y la tipografía es más estrecha (Helvetica Neue) que Inter; el piso del ref es más tenue y el patch del entrevistado se nota si uno lo busca. Calificación: 4/5.

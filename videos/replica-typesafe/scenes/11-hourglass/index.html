@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe hourglass</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #000; }
+      .clip { position: absolute; inset: 0; }
+      .clip img { width: 1280px; height: 720px; display: block; }
+      #scene { background: #000; }
+      svg { display: block; }
+      text { font-family: Inter, system-ui, sans-serif; fill: #fff; }
+      .thin { stroke: #fff; stroke-width: 1.2; fill: none; }
+      .icon { stroke: #fff; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .box { stroke: #3a3a3a; stroke-width: 1; fill: #000; }
+      .wire { stroke: #4a4a4a; stroke-width: 1; fill: none; }
+      .pulse { stroke: #fff; stroke-width: 1.2; fill: none; }
+      .sq { stroke: #2e2e2e; stroke-width: 1; fill: #000; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="4.5">
+      <!-- cola de la escena anterior: cuadro congelado del entrevistado -->
+      <div class="clip" data-start="0" data-duration="0.17" data-track-index="0"><img src="assets/bg-in.png" alt="" /></div>
+      <!-- cabeza de la escena siguiente -->
+      <div class="clip" data-start="4.0" data-duration="0.5" data-track-index="0"><img src="assets/bg-out.png" alt="" /></div>
+
+      <section id="scene" class="clip" data-start="0.17" data-duration="3.83" data-track-index="1">
+        <svg id="svg" width="1280" height="720" viewBox="0 0 1280 720">
+          <defs>
+            <!-- retícula de puntos detrás del centro -->
+            <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="10" cy="10" r="1" fill="#242424" />
+            </pattern>
+            <!-- logo hexagonal de la marca (aprox.) -->
+            <g id="logo">
+              <path d="M0,-40 L34,-20 L34,20 L0,40 L-34,20 L-34,-20 Z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round" />
+              <path d="M0,-40 L0,-6 L-22,7 M0,-6 L22,7 M0,40 L0,24 L22,10 L22,-12" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" />
+            </g>
+            <!-- iconos (trazo simple) -->
+            <g id="ic0" class="icon"><circle cx="-3" cy="-3" r="9"/><path d="M4,4 L10,10 M-7,-5 h8 M-7,-1 h6"/></g>
+            <g id="ic1" class="icon"><rect x="-10" y="-4" width="14" height="16" rx="2"/><path d="M-4,-10 h10 l4,4 v10"/></g>
+            <g id="ic2" class="icon"><path d="M-2,-10 a10,10 0 1,0 10,10 h-10 z"/><path d="M8,-8 l2,3 3,1 -3,1 -2,3 -2,-3 -3,-1 3,-1 z"/></g>
+            <g id="ic3" class="icon"><path d="M0,-11 L10,-7 v7 c0,6 -5,9 -10,12 c-5,-3 -10,-6 -10,-12 v-7 z M0,-11 v22"/></g>
+            <g id="ic4" class="icon"><path d="M-10,0 h6 M-4,0 v-8 h8 M-4,0 h8 M-4,0 v8 h8"/><circle cx="7" cy="-8" r="2"/><circle cx="7" cy="0" r="2"/><circle cx="7" cy="8" r="2"/></g>
+            <g id="ic5" class="icon"><circle cx="-2" cy="-2" r="9"/><path d="M-11,-2 h18 M-2,-11 c-5,5 -5,13 0,18"/><rect x="3" y="3" width="9" height="7" rx="1"/></g>
+            <g id="ic6" class="icon"><path d="M-6,4 a6,6 0 1,1 12,0 M-9,0 a9,9 0 1,1 18,0 M0,4 v6"/><path d="M-11,-8 v-3 h3 M8,-11 h3 v3 M-11,8 v3 h3 M11,8 v3 h-3"/></g>
+            <g id="ic7" class="icon"><path d="M0,-9 c-6,-4 -12,2 -9,6 c-3,4 1,10 6,8 c1,3 4,3 3,0 v-14 M0,-9 c6,-4 12,2 9,6 c3,4 -1,10 -6,8 c-1,3 -4,3 -3,0"/></g>
+            <g id="ic8" class="icon"><path d="M-8,6 a5,5 0 0,1 0,-10 a7,7 0 0,1 14,-2 a5,5 0 0,1 2,12 z"/><path d="M0,0 v8 M-4,4 h8"/></g>
+            <g id="ic9" class="icon"><rect x="-10" y="-10" width="13" height="13" rx="2"/><rect x="-3" y="-3" width="13" height="13" rx="2"/><path d="M1,1 l5,3 -5,3 z"/></g>
+          </defs>
+
+          <rect x="420" y="130" width="440" height="460" fill="url(#dots)" />
+
+          <!-- FASE 3: curvas del reloj de arena, cuadritos y etiquetas -->
+          <g id="hourglass">
+            <g id="wires"></g>
+            <g id="squares"></g>
+            <g id="pulses"></g>
+            <g id="labels">
+              <g id="lab-top">
+                <rect x="525" y="132" width="230" height="70" class="thin" />
+                <path d="M525,202 L605,320 M755,202 L675,320" class="thin" id="funnel-top" />
+                <path d="M739,140 h8 v8 M533,194 v-8 h-8" class="thin" stroke-width="1" />
+                <text x="640" y="180" font-size="34" text-anchor="middle">Possibilities</text>
+              </g>
+              <g id="lab-bot">
+                <rect x="525" y="520" width="230" height="66" class="thin" />
+                <path d="M525,520 L605,390 M755,520 L675,390" class="thin" id="funnel-bot" />
+                <path d="M739,528 h8 v8 M533,578 v-8 h-8" class="thin" stroke-width="1" />
+                <text x="640" y="566" font-size="34" text-anchor="middle">Applications</text>
+              </g>
+            </g>
+          </g>
+
+          <!-- FASE 1: dos mallas dither a los lados -->
+          <g id="phase1">
+            <line id="p1-l" x1="330" y1="362" x2="525" y2="354" class="wire" />
+            <line id="p1-r" x1="755" y1="354" x2="950" y2="358" class="wire" />
+            <g id="mesh-l" transform="translate(262,362)"><rect x="-67" y="-67" width="134" height="134" class="box" /><g id="mesh-l-dots"></g></g>
+            <g id="mesh-r" transform="translate(1017,358)"><rect x="-67" y="-67" width="134" height="134" class="box" /><g id="mesh-r-dots"></g></g>
+          </g>
+
+          <!-- FASE 2: iconos radiales -->
+          <g id="phase2a"></g>
+          <g id="phase2b"></g>
+
+          <!-- centro: cuadro con brackets + logo -->
+          <g id="center">
+            <rect x="525" y="239" width="230" height="230" class="box" stroke="#555" />
+            <path d="M730,258 h10 v10 M550,450 v10 h-10" class="thin" />
+            <use href="#logo" x="640" y="354" />
+          </g>
+        </svg>
+      </section>
+    </div>
+
+    <script>
+      // PRNG con semilla fija (mulberry32)
+      function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+      const rnd = mulberry32(11);
+      const NS = "http://www.w3.org/2000/svg";
+      const el = (tag, attrs, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; };
+      const $ = (id) => document.getElementById(id);
+
+      // --- fase 1: mallas de puntos (cruz y luna) ---
+      function mesh(parent, shape) {
+        for (let i = -5; i <= 5; i++) for (let j = -5; j <= 5; j++) {
+          const on = shape === "plus" ? (Math.abs(i) <= 0 || Math.abs(j) <= 0) : (i * i + j * j <= 16 && (i + 1) * (i + 1) + (j - 1) * (j - 1) > 9);
+          const w = 1 - Math.hypot(i, j) / 9; // efecto esfera: puntos más chicos en el borde
+          el("rect", { x: i * 9 - 3, y: j * 9 - 3, width: 6 * w + 1, height: 6 * w + 1, fill: on ? "#ddd" : "#333" }, parent);
+        }
+      }
+      mesh($("mesh-l-dots"), "plus"); mesh($("mesh-r-dots"), "moon");
+
+      // --- fase 2: iconos en cajitas conectados al centro ---
+      function iconBox(parent, x, y, size, ic) {
+        const g = el("g", { class: "ibox", transform: `translate(${x},${y})` }, parent);
+        el("rect", { x: -size / 2, y: -size / 2, width: size, height: size, class: "box" }, g);
+        const s = size / 60;
+        el("use", { href: "#" + ic, transform: `scale(${s})` }, g);
+        return g;
+      }
+      function wire(parent, x1, y1, x2, y2, cls) {
+        const mx = (x1 + x2) / 2;
+        return el("path", { d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`, class: cls || "wire" }, parent);
+      }
+      const p2a = { boxes: [], wires: [] };
+      [[315, 182, "ic6"], [325, 362, "ic4"], [308, 542, "ic8"], [970, 176, "ic9"], [955, 356, "ic4"], [965, 538, "ic1"]].forEach(([x, y, ic], i) => {
+        p2a.boxes.push(iconBox($("phase2a"), x, y, 92, ic));
+        const left = x < 640;
+        p2a.wires.push(wire($("phase2a"), left ? x + 46 : x - 46, y, left ? 543 : 737, 354));
+      });
+      const p2b = { boxes: [], wires: [] };
+      const icons = ["ic0", "ic1", "ic2", "ic3", "ic4", "ic5", "ic6", "ic7", "ic8", "ic9"];
+      for (let i = 0; i < 10; i++) {
+        const left = i < 5, k = i % 5;
+        const x = left ? 365 : 910, y = 172 + k * 96;
+        p2b.boxes.push(iconBox($("phase2b"), x, y, 62, icons[i]));
+        p2b.wires.push(wire($("phase2b"), left ? x + 31 : x - 31, y, left ? 575 : 705, 354));
+      }
+
+      // --- fase 3: decenas de curvas que convergen al centro ---
+      const wires3 = [], squares = [], pulses = [];
+      for (let side = 0; side < 2; side++) {
+        const left = side === 0;
+        for (let i = 0; i < 16; i++) {
+          const y0 = 70 + i * 38 + rnd() * 20;
+          const x0 = left ? -20 + rnd() * 120 : 1300 - rnd() * 120;
+          const ye = 330 + rnd() * 48;
+          const xe = left ? 604 : 676;
+          const xm = left ? 430 + rnd() * 60 : 850 - rnd() * 60;
+          const d = `M${x0},${y0} C${xm - (left ? 120 : -120)},${y0} ${xm},${ye} ${xe},${ye}`;
+          wires3.push(el("path", { d, class: "wire" }, $("wires")));
+          if (rnd() < 0.5) pulses.push(el("path", { d, class: "pulse" }, $("pulses")));
+          // cuadritos a lo largo de la curva
+          const n = 1 + Math.floor(rnd() * 2);
+          for (let s = 0; s < n; s++) {
+            const t = 0.15 + rnd() * 0.6;
+            const p = wires3[wires3.length - 1].getPointAtLength(t * wires3[wires3.length - 1].getTotalLength());
+            const sz = 22 + rnd() * 16;
+            squares.push(el("rect", { x: p.x - sz / 2, y: p.y - sz / 2, width: sz, height: sz, class: "sq" }, $("squares")));
+          }
+        }
+      }
+
+      // trazo con dashoffset
+      function prepDraw(paths) { paths.forEach((p) => { const L = p.getTotalLength(); p.style.strokeDasharray = L; p.style.strokeDashoffset = L; }); }
+      prepDraw([$("p1-l"), $("p1-r"), ...p2a.wires, ...p2b.wires, ...wires3, $("funnel-top"), $("funnel-bot")]);
+      const draw = (tl, paths, at, dur, stagger) => tl.to(paths, { strokeDashoffset: 0, duration: dur, ease: "power2.inOut", stagger }, at);
+
+      // pulsos: segmento blanco corto que recorre la curva
+      pulses.forEach((p) => { const L = p.getTotalLength(); p.style.strokeDasharray = `60 ${L}`; p.style.strokeDashoffset = L + 60; });
+
+      const tl = gsap.timeline({ paused: true });
+      const C = { svgOrigin: "640 354" };
+
+      // FASE 1 (0–0.8 s): cuadro central crece, mallas y líneas
+      gsap.set("#center", { scale: 0.55, ...C });
+      gsap.set("#phase1 .box", { transformOrigin: "50% 50%" });
+      gsap.set(["#mesh-l", "#mesh-r"], { opacity: 0 });
+      gsap.set([...p2a.boxes, ...p2b.boxes], { opacity: 0 });
+      gsap.set("#hourglass", { opacity: 0 });
+      gsap.set(["#lab-top", "#lab-bot"], { scale: 0, svgOrigin: "640 354" });
+      gsap.set(squares, { opacity: 0 });
+
+      tl.to("#center", { scale: 1, duration: 0.45, ease: "back.out(1.4)", ...C }, 0)
+        .to(["#mesh-l", "#mesh-r"], { opacity: 1, duration: 0.3 }, 0.05);
+      draw(tl, [$("p1-l"), $("p1-r")], 0.15, 0.45, 0);
+
+      // FASE 2a (0.8–1.55 s): 6 iconos
+      tl.to("#center", { scale: 195 / 230, duration: 0.35, ease: "power3.inOut", ...C }, 0.58)
+        .to(["#mesh-l", "#mesh-r", "#p1-l", "#p1-r"], { opacity: 0, duration: 0.2 }, 0.58)
+        .to(p2a.boxes, { opacity: 1, duration: 0.15, stagger: 0.04 }, 0.62);
+      draw(tl, p2a.wires, 0.66, 0.45, 0.05);
+
+      // FASE 2b (1.55–2.1 s): 10 iconos más chicos
+      tl.to("#center", { scale: 130 / 230, duration: 0.35, ease: "power3.inOut", ...C }, 1.43)
+        .to([...p2a.boxes, ...p2a.wires], { opacity: 0, duration: 0.15 }, 1.43)
+        .to(p2b.boxes, { opacity: 1, duration: 0.12, stagger: 0.03 }, 1.48);
+      draw(tl, p2b.wires, 1.5, 0.4, 0.04);
+
+      // FASE 3 (2.1 s →): colapso al reloj de arena
+      tl.to("#center", { scale: 70 / 230, duration: 0.4, ease: "power3.inOut", ...C }, 1.98)
+        .to([...p2b.boxes, ...p2b.wires], { opacity: 0, duration: 0.3 }, 2.0)
+        .to("#hourglass", { opacity: 1, duration: 0.1 }, 1.98)
+        .to(["#lab-top", "#lab-bot"], { scale: 1, duration: 0.3, ease: "back.out(1.6)", svgOrigin: "640 354" }, 2.0)
+        .to(squares, { opacity: 1, duration: 0.2, stagger: 0.01 }, 2.1);
+      draw(tl, [$("funnel-top"), $("funnel-bot")], 2.1, 0.35, 0);
+      draw(tl, wires3, 2.05, 0.7, 0.02);
+      // pulsos escalonados sobre las curvas
+      pulses.forEach((p, i) => {
+        const L = p.getTotalLength();
+        tl.fromTo(p, { strokeDashoffset: L + 60 }, { strokeDashoffset: -60, duration: 0.9, ease: "power1.inOut" }, 2.4 + (i % 7) * 0.15);
+      });
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

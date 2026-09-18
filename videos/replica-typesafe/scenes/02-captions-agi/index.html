@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe — captions AGI (02)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #111; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #fff; font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      .still { width: 1280px; height: 720px; object-fit: cover; }
+      /* parche que tapa el caption quemado del cuadro congelado, tomado del mismo cuadro más arriba/abajo */
+      .patch { position: absolute; background-size: 1280px 720px; }
+
+      /* ---- captions cinéticos sobre el entrevistado ---- */
+      .cap { position: absolute; left: 50px; color: #fff; letter-spacing: -0.035em; font-weight: 400; white-space: normal; }
+      #cap1 { top: 212px; font-size: 106px; } #cap1 .ln { height: 112px; }
+      #cap2 { top: 311px; font-size: 84px; } #cap2 .ln { height: 86px; }
+      .cap { line-height: 1; } .cap .ln { display: block; }
+      .w { display: inline-block; line-height: 1; vertical-align: top; white-space: pre; }
+      .w.pink { color: #ee6f9f; }
+      /* typewriter: cada caracter empieza colapsado */
+      .ch { display: inline-block; width: 0; overflow: hidden; white-space: pre; vertical-align: top; }
+
+      /* caja AGI? dentro del clip (contorno blanco → relleno blanco) */
+      #agi-live { position: absolute; left: 325px; top: 465px; width: 165px; height: 84px; box-sizing: border-box;
+        border: 1.5px solid #fff; color: #fff; font-size: 58px; letter-spacing: -0.03em; display: grid; place-items: center;
+        transform-origin: left center; }
+      #agi-live .mk { position: absolute; width: 8px; height: 8px; border: 1px solid #fff; }
+
+      /* ---- cortinilla de píxeles ---- */
+      #pixels { display: grid; grid-template-columns: repeat(10, 128px); grid-template-rows: repeat(6, 128px); }
+      .px { width: 128px; height: 128px; background-size: 1280px 720px; }
+
+      /* ---- diagrama sobre retícula blanca (mundo que la cámara desplaza) ---- */
+      #diagram { background: #fff; color: #111; overflow: hidden; }
+      #world { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+      #grid { position: absolute; left: -2000px; top: -2000px; width: 5000px; height: 5000px;
+        background-image: linear-gradient(#ececec 1px, transparent 1px), linear-gradient(90deg, #ececec 1px, transparent 1px);
+        background-size: 128px 128px; background-position: 164px 187px; }
+      #agi-box { position: absolute; left: 162px; top: 185px; width: 258px; height: 132px; box-sizing: border-box; background: #fff;
+        border: 2px solid #111; font-size: 76px; letter-spacing: -0.03em; display: grid; place-items: center; }
+      #cell-light { position: absolute; left: 164px; top: 443px; width: 126px; height: 127px; background: #f3b4cb; }
+      #cell-pink { position: absolute; left: 164px; top: 443px; width: 128px; height: 127px; background: #ee6f9f; }
+      #connector { position: absolute; left: 0; top: 0; overflow: visible; }
+      #answer { position: absolute; left: 430px; top: 470px; font-size: 66px; letter-spacing: -0.045em; white-space: pre; }
+      #but { position: absolute; left: 975px; top: 571px; width: 195px; height: 125px; background: #111; color: #fff;
+        font-size: 72px; letter-spacing: -0.03em; display: grid; place-items: center; transform-origin: center; }
+      #but .mk { position: absolute; width: 12px; height: 12px; border: 1.5px solid #fff; }
+      #question { position: absolute; left: 852px; top: 725px; font-size: 66px; letter-spacing: -0.045em; white-space: pre; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="8.3">
+      <!-- plano frontal (cuadro congelado) -->
+      <section class="clip" data-start="0" data-duration="0.75" data-track-index="0">
+        <img class="still" src="assets/front.png" alt="" />
+        <div class="patch" style="left:40px; top:215px; width:520px; height:210px; background-image:url(assets/front.png); background-position:-40px -5px"></div>
+        <div id="cap1" class="cap">
+          <span class="ln"><span class="w">We asked</span></span>
+          <span class="ln"><span class="w pink" id="w-our">our</span><span class="w tw" data-text="selves" id="w-selves"></span></span>
+        </div>
+      </section>
+
+      <!-- plano lateral (cuadro congelado) + captions palabra por palabra -->
+      <section class="clip" data-start="0.75" data-duration="3.65" data-track-index="1">
+        <img class="still" src="assets/side.png" alt="" />
+        <div class="patch" style="left:40px; top:310px; width:160px; height:90px; background-image:url(assets/side.png); background-position:-40px -400px"></div>
+        <div id="cap2" class="cap">
+          <span class="ln"><span class="w tw pink" data-text="Are" id="w-are"></span><span class="w tw" data-text=" models" id="w-models"></span><span class="w tw pink" data-text=" that" id="w-that"></span></span>
+          <span class="ln"><span class="w tw" data-text="are" id="w-are2"></span><span class="w tw pink" data-text=" superhuman" id="w-super"></span></span>
+          <span class="ln"><span class="w tw" data-text="at" id="w-at"></span><span class="w tw" data-text=" chat" id="w-chat"></span></span>
+        </div>
+        <div id="agi-live">AGI?
+          <span class="mk" style="left:-4px; bottom:-4px; border-top:none; border-right:none"></span>
+          <span class="mk" style="right:-4px; top:-4px; border-left:none; border-bottom:none"></span>
+        </div>
+      </section>
+
+      <!-- diagrama final: el mundo se desplaza como si la cámara paneara -->
+      <section id="diagram" class="clip" data-start="4.35" data-duration="3.95" data-track-index="2">
+        <div id="world">
+          <div id="grid"></div>
+          <div id="cell-light"></div>
+          <div id="cell-pink"></div>
+          <svg id="connector" width="1280" height="720" viewBox="0 0 1280 720">
+            <path id="conn-path" d="M240 317 V478 Q240 506 268 506 H350" fill="none" stroke="#111" stroke-width="2.5" />
+            <circle id="conn-dot" cx="350" cy="506" r="13" fill="#111" />
+          </svg>
+          <div id="agi-box">AGI?</div>
+          <div id="answer"><span class="tw" data-text="The answer was obviously not"></span></div>
+          <div id="but">But
+            <span class="mk" style="left:6px; bottom:6px; border-top:none; border-right:none"></span>
+            <span class="mk" style="right:6px; top:6px; border-left:none; border-bottom:none"></span>
+          </div>
+          <div id="question"><span class="tw" data-text="The 💰 trillion-dollar question is"></span></div>
+        </div>
+      </section>
+
+      <section id="pixels" class="clip" data-start="3.9" data-duration="1.3" data-track-index="3"></section>
+    </div>
+
+    <script>
+      // PRNG con semilla fija: la cortinilla es determinista frame a frame
+      function mulberry32(seed) {
+        return function () {
+          seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(20260917);
+
+      // partir cada .tw en spans por caracter (colapsados)
+      document.querySelectorAll(".tw").forEach((el) => {
+        el.textContent = "";
+        for (const c of el.dataset.text) {
+          const s = document.createElement("span");
+          s.className = "ch"; s.textContent = c; el.appendChild(s);
+        }
+      });
+
+      // cuadrícula de píxeles: casi todo blanco, algunos grises y unos parches del propio video
+      const pixels = document.getElementById("pixels");
+      const tones = ["#fff", "#fff", "#fff", "#fff", "#fff", "#ededed", "#d9d9d9", "#9a9a9a"];
+      const cells = [];
+      for (let i = 0; i < 60; i++) {
+        const d = document.createElement("div");
+        d.className = "px";
+        if (rand() < 0.08) {
+          d.style.backgroundImage = "url(assets/side.png)";
+          d.style.backgroundPosition = `-${(i % 10) * 128}px -${Math.floor(i / 10) * 128}px`;
+        } else {
+          d.style.background = tones[Math.floor(rand() * tones.length)];
+        }
+        pixels.appendChild(d); cells.push(d);
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      // typewriter: abre los caracteres por índice con sets de duración 0
+      function typewrite(sel, at, perChar = 0.03) {
+        const chars = document.querySelectorAll(sel + " .ch");
+        chars.forEach((c, i) => tl.set(c, { width: "auto" }, at + i * perChar));
+      }
+      // la palabra destacada entra en rosa y pasa a blanco
+      function toWhite(sel, at) { tl.to(sel, { color: "#fff", duration: 0.12, ease: "none" }, at); }
+
+      // ---- plano 1: "We asked / our|selves" ----
+      typewrite("#w-selves", 0.02, 0.05);
+      toWhite("#w-our", 0.45);
+
+      // ---- plano 2: palabra por palabra ----
+      typewrite("#w-are", 0.75, 0.04);   toWhite("#w-are", 1.0);
+      typewrite("#w-models", 1.25);
+      typewrite("#w-that", 1.5);         toWhite("#w-that", 1.72);
+      typewrite("#w-are2", 1.75);
+      typewrite("#w-super", 2.0, 0.025); toWhite("#w-super", 2.28);
+      typewrite("#w-at", 2.5);
+      typewrite("#w-chat", 2.75);
+
+      // 3.25 s: la caja AGI? crece desde un punto; al final se rellena de blanco
+      gsap.set("#agi-live", { autoAlpha: 0, scale: 0.15 });
+      tl.to("#agi-live", { autoAlpha: 1, scale: 0.45, duration: 0.2, ease: "power2.out" }, 3.2);
+      tl.to("#agi-live", { scale: 1, duration: 0.45, ease: "power3.out" }, 3.4);
+      tl.to("#agi-live", { backgroundColor: "#fff", color: "#111", borderColor: "#111", duration: 0.08 }, 4.15);
+
+      // ---- cortinilla de píxeles 3.95–5.1 ----
+      gsap.set("#pixels", { autoAlpha: 0 });
+      cells.forEach((c) => gsap.set(c, { autoAlpha: 0 }));
+      tl.set("#pixels", { autoAlpha: 1 }, 3.95);
+      cells.forEach((c) => {
+        const r = rand();
+        tl.set(c, { autoAlpha: 1 }, 3.95 + r * 0.5);
+        tl.set(c, { autoAlpha: 0 }, 4.5 + rand() * 0.6);
+      });
+
+      // ---- diagrama: cámara (desplazamiento del mundo) ----
+      tl.fromTo("#world", { x: 200, y: 300 }, { x: 56, y: 80, duration: 0.65, ease: "power1.out" }, 4.35);
+      tl.to("#world", { x: 0, y: 0, duration: 0.25, ease: "power1.out" }, 5.0);
+      tl.to("#world", { x: -130, y: -113, duration: 1.3, ease: "none" }, 5.25);
+      tl.to("#world", { x: -440, y: -263, duration: 0.3, ease: "power2.inOut" }, 6.55);
+      tl.to("#world", { x: -570, y: -330, duration: 1.45, ease: "none" }, 6.85);
+
+      // la caja empieza pegada a la celda rosa y sube; el conector se dibuja detrás
+      const path = document.getElementById("conn-path");
+      const len = path.getTotalLength();
+      gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+      gsap.set("#agi-box", { y: 128 });
+      gsap.set("#cell-light", { autoAlpha: 0 });
+      gsap.set("#conn-dot", { attr: { cx: 222, cy: 560 } });
+      tl.to("#agi-box", { y: 0, duration: 0.35, ease: "power2.inOut" }, 4.7);
+      tl.to(path, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, 4.75);
+      // la celda rosa se corre una casilla a la derecha y deja una estela clara
+      tl.set("#cell-light", { autoAlpha: 1 }, 5.05);
+      tl.to("#cell-pink", { x: 126, duration: 0.2, ease: "power2.out" }, 5.05);
+      tl.to("#conn-dot", { attr: { cx: 350, cy: 506 }, duration: 0.3, ease: "power2.out" }, 4.95);
+
+      // "The answer was obviously not": palabra por palabra
+      const answerChars = document.querySelectorAll("#answer .ch");
+      const answerStarts = { 0: 4.9, 4: 5.15, 11: 5.45, 15: 5.7, 25: 5.95 };
+      let at = 4.9;
+      answerChars.forEach((c, i) => { if (answerStarts[i] !== undefined) at = answerStarts[i]; tl.set(c, { width: "auto" }, at); at += 0.025; });
+
+      // 6.5 s: "But" cae en su caja negra; luego la pregunta, palabra por palabra
+      gsap.set("#but", { autoAlpha: 0, scale: 0.6 });
+      tl.to("#but", { autoAlpha: 1, scale: 1, duration: 0.25, ease: "back.out(2)" }, 6.5);
+      const qChars = document.querySelectorAll("#question .ch");
+      const qStarts = { 0: 6.75, 4: 6.85, 6: 7.0, 14: 7.25, 22: 7.5, 31: 7.75 };
+      at = 6.75;
+      qChars.forEach((c, i) => { if (qStarts[i] !== undefined) at = qStarts[i]; tl.set(c, { width: "auto" }, at); at += 0.025; });
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

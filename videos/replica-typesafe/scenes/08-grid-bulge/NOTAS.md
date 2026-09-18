@@ -1,0 +1,5 @@
+- Técnica: una sola timeline GSAP; malla 6×6 en SVG con 36 posiciones/tamaños precalculados por función de barril (`barrel(u)=u·190·(1−0.1u²)`, tamaño `64·(1−0.3u²)(1−0.3v²)`), llenado secuencial a ~11.5 celdas/s con contador por `tl.call`; dither de esquinas pintado una vez en canvas con mulberry32 (densidad radial, sin gradiente); typewriter por caracter con `tl.set`.
+- Recetas/bloques: ninguna del registry ni de motion-anything (el `dither` de la biblioteca es shader WebGL, no seek-safe); todo a mano con GSAP.
+- Se acerca: los tres cortes (0.63 / 3.33 / 7.3 s medidos con `select=scene`), panel LLM con etiqueta y contador, texto por palabras + conector con punto, escena blanca con cajas, mini malla rosa, "But" rosa→negro, ventanas blancas sobre el entrevistado.
+- No se acerca: las celdas de la referencia van más apretadas y deformadas (no sólo escaladas); las terminales son texto genérico; el fondo del entrevistado es un cuadro congelado (`assets/still.png`, frame 219) porque el clip nunca está limpio; los anillos/líneas grises del fondo blanco son aproximados.
+- Parecido: 3.5/5.

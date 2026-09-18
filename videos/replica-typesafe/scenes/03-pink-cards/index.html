@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #ee6f9f; }
+      body { font-family: Inter, system-ui, sans-serif; color: #111; }
+      .clip { position: absolute; inset: 0; }
+      #dither { position: absolute; inset: 0; width: 1280px; height: 720px; }
+      /* ventana retro: blanca, borde negro, barra de título negra */
+      .win { position: absolute; background: #fff; border: 2px solid #111; }
+      .win .bar { height: 24px; background: #111; }
+      .why { width: 350px; height: 162px; left: 465px; top: 280px; }
+      .why .label { position: absolute; left: 0; right: 0; top: 34px; text-align: center; font-size: 60px; font-weight: 500; letter-spacing: -2px; }
+      .why.back { border-width: 2px; }
+      .why.back .bar { display: none; }
+      /* tarjetas de modelos: texto mono, título invertido */
+      .card { width: 245px; height: 212px; font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; font-size: 18px; line-height: 1.55; }
+      .card .body { padding: 8px 10px; }
+      .card .ttl { display: inline-block; background: #111; color: #fff; font-size: 34px; font-weight: 700; line-height: 1.1; padding: 2px 6px; margin-bottom: 4px; }
+      .card .tag { background: #ddd; padding: 0 3px; margin-right: 6px; }
+      #lm { left: 233px; top: 265px; z-index: 2; }
+      #llm { left: 500px; top: 275px; width: 255px; z-index: 1; }
+      #rlhf { left: 780px; top: 285px; width: 270px; z-index: 3; }
+      #caption { position: absolute; left: 0; right: 0; top: 355px; text-align: center; font-size: 56px; font-weight: 600; letter-spacing: -3px; line-height: 1.4; }
+      #caption .w { display: inline-block; margin: 0 8px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="6">
+        <canvas id="dither" width="1280" height="720"></canvas>
+        <div id="stack">
+          <div class="win why back" id="w1" style="left:447px;top:190px;width:283px;height:130px"></div>
+          <div class="win why back" id="w2" style="left:475px;top:232px;width:283px;height:110px"></div>
+          <div class="win why back" id="w3" style="left:500px;top:340px;width:283px;height:135px"></div>
+          <div class="win why" id="w4"><div class="bar"></div><div class="label">Why Not?</div></div>
+        </div>
+        <div class="win card" id="lm"><div class="bar"></div><div class="body"><span class="ttl">LM</span><br>berts<br>&lt;low intelligence&gt;<br><span class="tag">✤ gpt</span></div></div>
+        <div class="win card" id="llm"><div class="bar"></div><div class="body"><span class="ttl">LLM</span><br>pre-trained models<br>&lt;high intelligence&gt;<br><span class="tag">✤ gpt</span><span class="tag">✤ llama</span></div></div>
+        <div class="win card" id="rlhf"><div class="bar"></div><div class="body"><span class="ttl">RLHF</span><br>chat models<br>&lt;easy assistance&gt;<br><span class="tag">✤ chat gpt</span><span class="tag">✤ claude</span></div></div>
+        <div id="caption"><span class="w">That</span><span class="w">are</span><span class="w">optimized</span><br><span class="w">for</span><span class="w">human</span><span class="w">preferences</span></div>
+      </div>
+    </div>
+    <script>
+      // Manchas de half-tone: densidad radial cuantizada con matriz Bayer 4x4 (estático, determinista)
+      (function () {
+        const c = document.getElementById("dither"), g = c.getContext("2d");
+        const B = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+        const blobs = [[440,-60,270],[1250,300,240],[40,640,260],[960,740,260],[-40,140,150]];
+        let s = 1234567; const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+        g.fillStyle = "#1c1218";
+        const px = 2;
+        for (let y = 0; y < 720; y += px) for (let x = 0; x < 1280; x += px) {
+          let d = 0.012;
+          for (const [bx, by, r] of blobs) { const q = Math.hypot(x - bx, y - by) / r; if (q < 1) d = Math.max(d, q < 0.5 ? 1 : Math.pow((1 - q) / 0.5, 1.9)); }
+          d = Math.min(0.72, d);
+          if (d > rnd() * 1.15) g.fillRect(x, y, px, px);
+        }
+      })();
+
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#w2", "#w3", "#w4"], { scale: 0, transformOrigin: "50% 50%" });
+      gsap.set([".card", "#caption .w"], { scale: 0, transformOrigin: "50% 50%" });
+      // cascada de ventanas "Why Not?"
+      tl.to("#w2", { scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 0.05)
+        .to("#w3", { scale: 1, duration: 0.3, ease: "back.out(1.6)" }, 0.18)
+        .to("#w4", { scale: 1, duration: 0.35, ease: "back.out(1.6)" }, 0.3)
+        // la pila se va y entran las tres tarjetas con stagger
+        .to("#stack", { scale: 0, duration: 0.18, ease: "power2.in", transformOrigin: "50% 50%" }, 1.85)
+        .to("#lm", { scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 1.95)
+        .to("#llm", { scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 2.05)
+        .to("#rlhf", { scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 2.15)
+        // suben, se encaballan y se ladean
+        .to("#lm", { x: 110, y: -160, rotation: -8, duration: 0.4, ease: "power2.inOut" }, 3.0)
+        .to("#llm", { x: 10, y: -170, rotation: -3, duration: 0.4, ease: "power2.inOut" }, 3.0)
+        .to("#rlhf", { x: -85, y: -180, rotation: -8, duration: 0.4, ease: "power2.inOut" }, 3.0);
+      // el texto se escribe palabra por palabra
+      [3.15, 3.35, 3.5, 3.95, 4.2, 4.45].forEach((t, i) => tl.to(`#caption .w:nth-of-type(${i + 1})`, { scale: 1, duration: 0.25, ease: "back.out(2)" }, t));
+      tl.to({}, { duration: 0.01 }, 5.99);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Replica TypeSafe terminals (07)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #e8779c; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #e8779c;
+              font-family: "Geist Mono", "JetBrains Mono", monospace; }
+      .clip { position: absolute; inset: 0; }
+
+      /* ---- ventanas de terminal ---- */
+      .win { position: absolute; top: 18px; width: 619px; height: 686px; background: #3b2b2f; border-radius: 16px;
+             overflow: hidden; transform-origin: center center; }
+      #win-l { left: 15px; }
+      #win-r { left: 646px; }
+      .bar { position: absolute; left: 0; top: 0; width: 100%; height: 40px; }
+      .dot { position: absolute; top: 13px; width: 13px; height: 13px; border-radius: 50%; }
+      .dot.r { left: 12px; background: #f43a3a; } .dot.y { left: 32px; background: #e0b52d; } .dot.g { left: 52px; background: #3ed13e; }
+      .title { position: absolute; top: 10px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 16px; letter-spacing: 0.5px; white-space: pre; }
+      .title .ch { display: inline-block; }
+      .body { position: absolute; left: 24px; top: 42px; right: 14px; bottom: 0; font-size: 12.5px; line-height: 18px; color: #f2e4e6; }
+      .line { white-space: nowrap !important; height: 18px; overflow: hidden; text-overflow: ellipsis; }
+      .cmd { font-size: 13.5px; height: 27px; line-height: 20px; }
+      .status { color: #bfa6ab; height: 27px; line-height: 27px; }
+      .json .line { visibility: hidden; }
+      .json .line.on { visibility: visible; }
+      .k { color: #ee8db0; } .v { color: #f2e4e6; } .n { color: #f0b7cb; }
+      .indent { padding-left: 14px; }
+      .foot { position: absolute; left: 26px; top: 628px; font-size: 12.5px; color: #bfa6ab; white-space: pre; line-height: 18px; }
+      .ch { display: inline-block; width: 0; overflow: hidden; white-space: pre; vertical-align: top; }
+      .caret { display: inline-block; width: 2px; height: 14px; background: #f2e4e6; vertical-align: -2px; }
+
+      /* ---- etiquetas del pie ---- */
+      .badge { position: absolute; top: 665px; height: 44px; padding: 0 22px; white-space: nowrap; background: #efe5d8; color: #2a1f22;
+               font-size: 21px; line-height: 44px; letter-spacing: 0.3px; border-radius: 3px; transform-origin: center center; }
+      .badge i { position: absolute; width: 10px; height: 10px; border: 1.5px solid #6b5a5e; }
+      .badge i.tl { left: 4px; top: 4px; border-right: none; border-bottom: none; }
+      .badge i.tr { right: 4px; top: 4px; border-left: none; border-bottom: none; }
+      .badge i.bl { left: 4px; bottom: 4px; border-right: none; border-top: none; }
+      .badge i.br { right: 4px; bottom: 4px; border-left: none; border-top: none; }
+      #badge-l { left: 230px; width: 146px; } #badge-r { left: 862px; width: 146px; text-align: center; } #badge-l { text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="12.7">
+      <section id="scene" class="clip" data-start="0" data-duration="12.7" data-track-index="0">
+        <div class="win" id="win-l">
+          <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <div class="title tw" data-text="TYPESAFE"></div></div>
+          <div class="body">
+            <div class="line cmd">$ <span class="tw" data-text="uv run typesafe-race ask typesafe"></span><span class="caret"></span></div>
+            <div class="line status">Sending request to parallel TypeSafe API...</div>
+            <div class="json" id="json-l"></div>
+          </div>
+          <div class="foot" id="foot-l"></div>
+        </div>
+        <div class="win" id="win-r">
+          <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <div class="title tw" data-text="LLM"></div></div>
+          <div class="body">
+            <div class="line cmd">$ <span class="tw" data-text="uv run typesafe-race ask llm"></span><span class="caret"></span></div>
+            <div class="line status">Sending request to autoregressive OpenAI API. Waiting for first token...</div>
+            <div class="json" id="json-r"></div>
+          </div>
+          <div class="foot" id="foot-r"></div>
+        </div>
+        <div class="badge" id="badge-l"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>typesafe</div>
+        <div class="badge" id="badge-r"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>gpt-5.6-terra</div>
+      </section>
+    </div>
+
+    <script>
+      // ---- datos del JSON (las 27 preguntas y sus dos respuestas) ----
+      const ROWS = [
+        ["Revenue currently impacted?", 'nou', 0.85, "true"],
+        ["What business impact?", 'choice:degraded', 0.96, '"degraded"'],
+        ["Integration issue present?", 'nou', 0.9, "true"],
+        ["Account health status?", 'choice:watch', 0.31, '"watch"'],
+        ["Which incident scope?", 'choice:single_account', 0.75, '"single_account"'],
+        ["Security concern present?", 'nou', 0.68, "true"],
+        ["Duplicate charge reported?", 'nou', 0.64, "true"],
+        ["Churn likelihood level?", 'score:1.6', 0.6, "1"],
+        ["Scope certainty level?", 'score:2.77', 0.77, "3"],
+        ["Human attention needed?", 'nou', 0.95, "true"],
+        ["Security risk level?", 'score:1.07', 0.84, "1"],
+        ["Immediate feature request?", 'nou', 0.03, "false"],
+        ["Partner launch endangered?", 'nou', 0.89, "true"],
+        ["Credible churn risk?", 'nou', 0.72, "false"],
+        ["Production capability down?", 'nou', 0.93, "true"],
+        ["Customer data exposed?", 'nou', 0.07, "false"],
+        ["Server error reported?", 'nou', 0.88, "true"],
+        ["Financial impact level?", 'score:1.86', 0.85, "2"],
+        ["Which response deadline?", 'choice:today', 0.98, '"today"'],
+        ["Repeated production failures?", 'nou', 0.85, "true"],
+        ["Which primary department?", 'choice:technical', 1.0, '"technical"'],
+        ["Which requested resolution?", 'choice:restore_service', 1.0, '"restore_service"'],
+        ["Language personally threatening?", 'nou', 0.03, "false"],
+        ["Concrete deadline stated?", 'nou', 0.9, "true"],
+        ["Which issue category?", 'choice:integration_failure', 0.9, '"integration_failure"'],
+        ["Technical specificity level?", 'score:2.99', 0.98, "3"],
+        ["Resolution complexity level?", 'score:1.99', 0.98, "2"],
+      ];
+      // valor izquierdo (TypeSafe): objeto con probabilidad/tipo, recortado con puntos suspensivos
+      function leftValue([q, kind, conf]) {
+        const [t, x] = kind.split(":");
+        if (t === "nou") return `{<span class="k">"noul"</span>: <span class="n">${conf}</span>, <span class="k">"type"</span>: <span class="v">"noul"</span>},`;
+        if (t === "choice") return `{<span class="k">"choice"</span>: <span class="v">"${x}"</span>, <span class="k">"confidence"</span>: <span class="n">${conf}</span>, <span class="k">"probabili</span>…`;
+        return `{<span class="k">"score"</span>: <span class="n">${x}</span>, <span class="k">"confidence"</span>: <span class="n">${conf}</span>, <span class="k">"legend"</span>: {<span class="k">"0"</span>: …`;
+      }
+      function buildJson(id, right) {
+        const box = document.getElementById(id);
+        const mk = (html, cls = "") => { const d = document.createElement("div"); d.className = "line " + cls; d.innerHTML = html; box.appendChild(d); return d; };
+        mk('<span class="k">{</span>');
+        ROWS.forEach((r) => {
+          const val = right ? `<span class="${/^"/.test(r[3]) ? "v" : "n"}">${r[3]}</span>,` : leftValue(r);
+          mk(`<span class="k">"${r[0]}"</span>: ${val}`, "indent");
+        });
+        mk('<span class="k">}</span>');
+        return box.querySelectorAll(".line");
+      }
+      const linesL = buildJson("json-l", false);
+      const linesR = buildJson("json-r", true);
+
+      // partir cada .tw en spans por caracter (colapsados)
+      document.querySelectorAll(".tw").forEach((el) => {
+        el.textContent = "";
+        for (const c of el.dataset.text) { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; el.appendChild(s); }
+      });
+
+      const tl = gsap.timeline({ paused: true });
+      function typewrite(el, at, dur) {
+        const chars = el.querySelectorAll(".ch"); const step = dur / chars.length;
+        chars.forEach((c, i) => tl.set(c, { width: "auto" }, at + i * step));
+      }
+      // contador de texto: cost y completed suben hasta el valor final
+      function counter(el, at, dur, cost, secs) {
+        const o = { p: 0 };
+        tl.to(o, { p: 1, duration: dur, ease: "power2.out", onUpdate() {
+          el.textContent = `cost $${(cost * o.p).toFixed(6)}\ncompleted in ${(secs * o.p).toFixed(3)}s`;
+        } }, at);
+      }
+
+      // ---- ventanas: entran chicas y crecen con rebote ----
+      tl.set(["#win-l", "#win-r"], { scale: 0.22 }, 0);
+      tl.set("#win-r", { opacity: 0 }, 0);
+      tl.to("#win-l", { scale: 1, duration: 0.75, ease: "back.out(1.4)" }, 0.15);
+      tl.set("#win-r", { opacity: 1 }, 0.35);
+      tl.to("#win-r", { scale: 1, duration: 0.75, ease: "back.out(1.4)" }, 0.4);
+      tl.from(["#badge-l", "#badge-r"], { scale: 0.05, duration: 0.5, ease: "back.out(1.6)", immediateRender: true }, 0.55);
+      typewrite(document.querySelector("#win-l .title"), 0.6, 0.35);
+      typewrite(document.querySelector("#win-r .title"), 0.85, 0.2);
+
+      // ---- comandos: se teclean en paralelo ----
+      const cmdL = document.querySelector("#win-l .cmd .tw"), cmdR = document.querySelector("#win-r .cmd .tw");
+      tl.set([".status", ".foot"], { autoAlpha: 0 }, 0);
+      tl.set(".cmd", { autoAlpha: 0 }, 0);
+      tl.set(".cmd", { autoAlpha: 1 }, 1.2);
+      typewrite(cmdL, 1.25, 2.3);
+      typewrite(cmdR, 1.25, 2.5);
+      // parpadeo del cursor por sets (determinista) y se apaga al ejecutar
+      for (let t = 1.2; t < 3.4; t += 0.5) { tl.set(".caret", { opacity: 0 }, t + 0.25); tl.set(".caret", { opacity: 1 }, t + 0.5); }
+      tl.set(".caret", { opacity: 0 }, 3.95);
+      tl.set(".status", { autoAlpha: 1 }, 4.0);
+
+      // ---- izquierda: todo el JSON en 0.25 s ----
+      linesL.forEach((l, i) => tl.set(l, { visibility: "visible" }, 4.05 + i * 0.008));
+      tl.set("#foot-l", { autoAlpha: 1 }, 4.3);
+      counter(document.getElementById("foot-l"), 4.3, 0.35, 0.000081, 0.114);
+
+      // ---- derecha: línea por línea, 9 s de espera y luego ~9 líneas/s ----
+      linesR.forEach((l, i) => tl.set(l, { visibility: "visible" }, 9.0 + i * 0.115));
+      tl.set("#foot-r", { autoAlpha: 1 }, 12.35);
+      counter(document.getElementById("foot-r"), 12.35, 0.3, 0.013880, 8.566);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

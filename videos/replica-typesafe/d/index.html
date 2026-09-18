@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Réplica D — ventana TypeSafe con bloques del registry</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; }
+  #main { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #222; }
+  #bg { position: absolute; inset: 0; width: 1280px; height: 720px; object-fit: cover; }
+
+  /* ---- Ventana retro (escrita a mano; el registry no trae una ventana sin relleno) ---- */
+  #win {
+    position: absolute; left: 180px; top: 90px; width: 340px;
+    font: 400 15px/1.5 "IBM Plex Mono", monospace; color: #fff;
+    letter-spacing: 0.02em;
+  }
+  #win .titlebar {
+    display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px;
+    border: 1px solid #fff; opacity: 0;
+  }
+  #win .titlebar .close { margin-left: auto; }
+  #win .body {
+    border: 1px solid #fff; border-top: 0; padding: 6px 10px 8px;
+    overflow: hidden; height: 0; opacity: 0;
+  }
+  #win .body .row { height: 22px; white-space: nowrap; }
+  #win .body .row.sub { padding-left: 8px; }
+
+  /* Registry: typewriter — patrón max-width/progress + caret (adaptado a caret rosa) */
+  .hf-catalog-typewriter { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+  .hf-catalog-typewriter span {
+    display: inline-block; max-width: calc(var(--hf-type-progress, 0) * 100%);
+    overflow: hidden; white-space: nowrap;
+  }
+  .hf-catalog-typewriter i {
+    display: block; width: 9px; height: 15px;
+    background: #e8679a; opacity: var(--hf-caret-opacity, 0);
+  }
+
+  /* Registry: telemetry-hud — brackets de esquina (mismo path, dibujados por dashoffset) */
+  .th-bracket { position: absolute; width: 14px; height: 14px; overflow: visible; }
+  .th-bracket path { fill: none; stroke: #fff; stroke-width: 1.4; opacity: 0.85; }
+  .th-bracket-tl { left: 168px; top: 78px; }
+  .th-bracket-br { left: 528px; top: 258px; transform: rotate(180deg); }
+  .th-bracket-tip { left: 588px; top: 318px; transform: rotate(180deg); }
+
+  /* Leader line (SVG a mano) */
+  #leader { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; pointer-events: none; }
+  #leader line { stroke: #fff; stroke-width: 1; opacity: 0.8; }
+
+  /* ---- Escena B: fondo blanco con retícula + diagrama ---- */
+  #sceneB {
+    position: absolute; inset: 0; background: #fff; opacity: 0;
+    background-image:
+      linear-gradient(to right, #e6e6e6 1px, transparent 1px),
+      linear-gradient(to bottom, #e6e6e6 1px, transparent 1px);
+    background-size: 80px 80px;
+    font-family: Inter, sans-serif;
+  }
+  #sceneB .pill {
+    position: absolute; left: 500px; top: 190px; padding: 6px 22px;
+    background: #e8679a; color: #111; font: 500 24px/1.4 Inter, sans-serif;
+  }
+  #sceneB .pill-shadow { position: absolute; left: 470px; top: 200px; width: 40px; height: 40px; background: #f3bcd0; }
+  #sceneB svg.conn { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+  #sceneB svg.conn path { fill: none; stroke: #111; stroke-width: 2; }
+  #sceneB .post {
+    position: absolute; left: 560px; top: 300px; font: 400 28px/1.3 Inter, sans-serif; color: #111;
+  }
+  #sceneB .post .hf-catalog-typewriter i { width: 12px; height: 26px; background: #111; }
+
+  /* Registry: grid-pixelate-wipe — celdas blancas/grises (16×9 = 80 px) */
+  #grid-pixelate-overlay {
+    position: absolute; inset: 0; display: grid; pointer-events: none; z-index: 50;
+  }
+  #grid-pixelate-overlay .grid-cell {
+    background: var(--grid-color, #fff); transform: scale(0); transform-origin: center center;
+  }
+</style>
+</head>
+<body>
+<div id="main" data-composition-id="main" data-width="1280" data-height="720" data-fps="30" data-duration="7.5">
+  <!-- Video real de fondo: fotograma 0 lleno, nunca negro -->
+  <video id="bg" class="clip" src="../ref/clip.mp4" data-start="0" data-duration="7.5" data-track-index="0" muted></video>
+
+  <!-- Brackets del registry (telemetry-hud) -->
+  <svg class="th-bracket th-bracket-tl" viewBox="0 0 48 48"><path d="M 46 3 L 12 3 Q 3 3 3 12 L 3 46"></path></svg>
+  <svg class="th-bracket th-bracket-br" viewBox="0 0 48 48"><path d="M 46 3 L 12 3 Q 3 3 3 12 L 3 46"></path></svg>
+  <svg class="th-bracket th-bracket-tip" viewBox="0 0 48 48"><path d="M 46 3 L 12 3 Q 3 3 3 12 L 3 46"></path></svg>
+  <svg id="leader"><line x1="520" y1="270" x2="520" y2="270"></line></svg>
+
+  <!-- Ventana -->
+  <div id="win">
+    <div class="titlebar">
+      <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,1 12.5,4 12.5,10 7,13 1.5,10 1.5,4" fill="none" stroke="#fff" stroke-width="1.2"/><circle cx="7" cy="7" r="2" fill="none" stroke="#fff" stroke-width="1.2"/></svg>
+      <div class="hf-catalog-typewriter tw-name"><span>DIOGO ALMEIDA</span></div>
+      <span class="close">×</span>
+    </div>
+    <div class="body">
+      <div class="row"><div class="hf-catalog-typewriter tw-role"><span>founder of TypeSafe AI</span><i></i></div></div>
+      <div class="row"><div class="hf-catalog-typewriter tw-co"><span>CO-CREATED</span></div></div>
+      <div class="row sub"><div class="hf-catalog-typewriter tw-gpt"><span>└ ChatGPT</span></div></div>
+      <div class="row sub"><div class="hf-catalog-typewriter tw-rlhf"><span>└ RLHF</span></div></div>
+    </div>
+  </div>
+
+  <!-- Escena B -->
+  <div id="sceneB">
+    <div class="pill-shadow"></div>
+    <svg class="conn"><path d="M 380 330 L 440 330 Q 470 330 470 300 L 470 240 Q 470 215 495 215 L 500 215"></path></svg>
+    <div class="pill">RLHF</div>
+    <div class="post hf-catalog-typewriter tw-post"><span>The post ⚲ training algorithm</span><i></i></div>
+  </div>
+
+  <!-- Cortinilla del registry -->
+  <div id="grid-pixelate-overlay"></div>
+</div>
+
+<script>
+  // grid-pixelate-wipe: generación de celdas (del registry), con tono aleatorio determinista
+  (function () {
+    const COLS = 16, ROWS = 9;
+    const overlay = document.getElementById("grid-pixelate-overlay");
+    overlay.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+    overlay.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
+    let seed = 7;
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const tones = ["#fff", "#fff", "#f4f4f4", "#d9d9d9", "#9a9a9a", "#5a5a5a"];
+    for (let i = 0; i < COLS * ROWS; i++) {
+      const cell = document.createElement("div");
+      cell.className = "grid-cell";
+      cell.style.setProperty("--grid-color", tones[Math.floor(rand() * tones.length)]);
+      overlay.appendChild(cell);
+    }
+  })();
+
+  (function () {
+    const tl = gsap.timeline({ paused: true });
+    const type = (sel, at, dur, chars) =>
+      tl.fromTo(sel, { "--hf-type-progress": 0 }, { "--hf-type-progress": 1, duration: dur, ease: `steps(${chars})` }, at);
+
+    // Brackets: dashoffset como atributo (receta de telemetry-hud)
+    document.querySelectorAll(".th-bracket path").forEach((p, i) => {
+      const len = p.getTotalLength();
+      p.setAttribute("stroke-dasharray", len);
+      if (i < 2) { p.setAttribute("stroke-dashoffset", 0); return; } // tl y br ya están en el frame 0
+      p.setAttribute("stroke-dashoffset", len);
+      tl.fromTo(p, { attr: { "stroke-dashoffset": len } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.3, ease: "power1.out" }, 2.8);
+    });
+
+    // 0.25 s: barra de título + nombre
+    tl.set("#win .titlebar", { opacity: 1 }, 0.25);
+    type(".tw-name", 0.25, 0.3, 13);
+
+    // 0.75 s: se abre el cuerpo y escribe el rol con caret rosa
+    tl.set("#win .body", { opacity: 1 }, 0.75);
+    tl.to("#win .body", { height: 36, duration: 0.2, ease: "power2.out" }, 0.75);
+    tl.set(".tw-role", { "--hf-caret-opacity": 1 }, 0.75);
+    type(".tw-role", 0.8, 1.2, 22);
+    tl.set(".tw-role", { "--hf-caret-opacity": 0 }, 2.05);
+
+    // 2.0–3.75 s: leader line desde la esquina inferior derecha de la ventana
+    tl.to("#leader line", { attr: { x2: 590, y2: 320 }, duration: 0.6, ease: "power2.inOut" }, 2.2);
+
+    // 4.0 s CO-CREATED; 4.75 ChatGPT; 5.25 RLHF (el cuerpo crece con cada línea)
+    tl.to("#win .body", { height: 58, duration: 0.15 }, 3.95);
+    type(".tw-co", 4.0, 0.25, 10);
+    tl.to("#win .body", { height: 80, duration: 0.15 }, 4.7);
+    type(".tw-gpt", 4.75, 0.25, 9);
+    tl.to("#win .body", { height: 102, duration: 0.15 }, 5.2);
+    type(".tw-rlhf", 5.25, 0.25, 6);
+
+    // 6.0–6.75 s: cortinilla de píxeles (grid-pixelate-wipe, stagger random)
+    tl.to("#grid-pixelate-overlay .grid-cell", {
+      scale: 1, duration: 0.05, stagger: { amount: 0.6, from: "random" }, ease: "none",
+    }, 6.0);
+    tl.set("#sceneB", { opacity: 1 }, 6.5);
+    tl.to("#grid-pixelate-overlay .grid-cell", {
+      scale: 0, duration: 0.05, stagger: { amount: 0.5, from: "random" }, ease: "none",
+    }, 6.55);
+
+    // 6.75–7.5 s: se escribe el texto del diagrama
+    tl.set(".tw-post", { "--hf-caret-opacity": 1 }, 6.7);
+    type(".tw-post", 6.75, 0.75, 29);
+
+    window.__timelines["main"] = tl;
+  })();
+</script>
+</body>
+</html>

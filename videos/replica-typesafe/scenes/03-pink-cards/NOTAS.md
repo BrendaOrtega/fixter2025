@@ -1,0 +1,5 @@
+- Técnica: HyperFrames + GSAP en una timeline; ventanas retro en HTML/CSS (borde 2px, barra negra), tarjetas en Geist Mono con título invertido, texto en Inter 600 palabra por palabra con `back.out`.
+- Half-tone: canvas dibujado una vez al cargar (determinista, PRNG mulberry32): umbral estocástico sobre densidad radial de 5 manchas, pixel 2px; sin gradiente. No usé la receta `dither` de motion-anything porque es WebGL con reloj propio.
+- Se acerca: fondo y manchas, cascada "Why Not?", fila de tres tarjetas (posición/tamaño medidos), subida+ladeo y aparición de palabras a los mismos tiempos.
+- No se acerca: la tipografía pixel de las tarjetas del original (mono más delgada, letras más estrechas), el frame 0 del ref es la escena anterior (blanca) y aquí empieza en rosa; la cascada inicial del ref tiene ventanas más chicas y sin barra.
+- Parecido: 4/5.

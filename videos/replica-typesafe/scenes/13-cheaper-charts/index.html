@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, height=720" />
+<title>13 cheaper charts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  body { margin: 0; background: #000; font-family: Inter, system-ui, sans-serif; color: #fff; }
+  #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #000; }
+  .clip { position: absolute; inset: 0; overflow: hidden; }
+  .talent { position: absolute; inset: 0; width: 1280px; height: 720px; object-fit: cover; }
+
+  /* ---- escena A: entrevistado ---- */
+  #caption { position: absolute; left: 20px; top: 545px; font-size: 52px; font-weight: 500; line-height: 1.02; letter-spacing: -0.02em; color: #f1f1f1; text-shadow: 0 2px 12px rgba(0,0,0,.35); }
+  #bigx { position: absolute; left: 306px; top: 78px; font-size: 300px; font-weight: 500; letter-spacing: -0.045em; line-height: 1; color: #fff; white-space: nowrap; }
+  .box { position: absolute; background: #fff; color: #000; white-space: nowrap; overflow: hidden; box-sizing: border-box; }
+  .box .txt { display: inline-block; white-space: nowrap; }
+  .corner { position: absolute; width: 8px; height: 8px; border: 2px solid #fff; }
+  #cheaper { left: 115px; top: 478px; height: 84px; padding: 0 22px; font-size: 62px; font-weight: 400; letter-spacing: -0.03em; line-height: 84px; }
+
+  /* ---- escena B: negro / equivalencia ---- */
+  #billion { left: 371px; top: 96px; height: 124px; padding: 0 18px; font-size: 104px; font-weight: 400; letter-spacing: -0.04em; line-height: 122px; }
+  #million { left: 500px; top: 560px; height: 62px; padding: 0 12px; font-size: 42px; font-weight: 400; letter-spacing: -0.03em; line-height: 60px; }
+
+  /* ---- escena C: tabla rosa ---- */
+  #pink { background: #ee6f9f; color: #1b0a12; }
+  #tableWrap { position: absolute; inset: 0; transform-origin: 0 0; }
+  #tblTitle { position: absolute; left: 40px; top: 30px; font-size: 38px; font-weight: 700; letter-spacing: -0.03em; }
+  #tblSub { position: absolute; right: 42px; top: 42px; font-size: 17px; font-weight: 400; }
+  .mono { font-family: "Geist Mono", ui-monospace, monospace; }
+  .rowName { position: absolute; left: 46px; font-size: 19px; }
+  .bar { position: absolute; height: 22px; background: #c25a83; transform-origin: 0 50%; }
+  .val { position: absolute; font-size: 19px; }
+  .hdr { position: absolute; top: 98px; font-size: 16px; font-weight: 600; }
+  .tick { position: absolute; top: 668px; font-size: 16px; color: #a9506f; }
+  .grid { position: absolute; top: 128px; width: 1px; height: 522px; background: rgba(0,0,0,.14); }
+  .dash { position: absolute; left: 30px; width: 1220px; border-top: 1px dashed #b45178; }
+
+  /* ---- escena D: scatter ---- */
+  #scatterWrap { position: absolute; inset: 0; transform-origin: 0 0; }
+  #scTitle { position: absolute; left: 0; width: 1280px; text-align: center; top: 40px; font-size: 42px; font-weight: 700; letter-spacing: -0.03em; }
+  #legend { position: absolute; left: 155px; top: 116px; font-size: 15px; display: flex; gap: 26px; }
+  #legend span { display: flex; align-items: center; gap: 6px; }
+  #legend i { display: inline-block; width: 10px; height: 10px; }
+  .lbl { font-family: Inter; font-size: 16px; fill: #fff; }
+  .axl { font-family: Inter; font-size: 15px; fill: #ddd; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="16">
+
+  <!-- ESCENA A · entrevistado con 100x y "Cheaper" -->
+  <section id="sceneA" class="clip" data-start="0" data-duration="3">
+    <img class="talent" src="assets/talent.png" alt="" />
+    <div id="caption">Real-time AI<br/>is finally possible</div>
+    <div id="bigx"><span id="bigNum">0</span>x</div>
+    <svg id="leader" style="position:absolute;inset:0" width="1280" height="720" viewBox="0 0 1280 720">
+      <path id="leaderPath" d="M300 478 L375 366" stroke="#fff" stroke-width="2" fill="none"/>
+    </svg>
+    <div id="cheaper" class="box"><span class="txt">Cheaper</span>
+      <i class="corner" style="left:0;bottom:0;border-width:0 0 2px 2px;border-color:#000"></i>
+      <i class="corner" style="right:0;top:0;border-width:2px 2px 0 0;border-color:#000"></i>
+    </div>
+  </section>
+
+  <!-- ESCENA B · fondo negro, $42/billion = $0.042/million -->
+  <section id="sceneB" class="clip" data-start="3" data-duration="3.1" style="background:#000">
+    <svg width="1280" height="720" viewBox="0 0 1280 720" style="position:absolute;inset:0">
+      <g stroke="#3a3a3a" fill="none" stroke-width="1.5">
+        <circle id="ringOut" cx="640" cy="390" r="230"/>
+        <circle id="ringIn" cx="640" cy="390" r="90"/>
+        <line id="crossV" x1="640" y1="160" x2="640" y2="620"/>
+        <line id="crossH" x1="410" y1="390" x2="870" y2="390"/>
+      </g>
+      <circle id="dot" cx="640" cy="390" r="4" fill="#666"/>
+      <g id="eq" fill="#fff" transform="translate(640 390)">
+        <rect x="-34" y="-20" width="68" height="12"/>
+        <rect x="-34" y="8" width="68" height="12"/>
+      </g>
+    </svg>
+    <div id="billion" class="box"><span class="txt">$<span id="bilNum">12</span> / billion</span>
+      <i class="corner" style="left:0;bottom:0;border-width:0 0 2px 2px;border-color:#000"></i>
+      <i class="corner" style="right:0;top:0;border-width:2px 2px 0 0;border-color:#000"></i>
+    </div>
+    <div id="million" class="box"><span class="txt">$0.042 / million</span>
+      <i class="corner" style="left:0;bottom:0;border-width:0 0 2px 2px;border-color:#000"></i>
+      <i class="corner" style="right:0;top:0;border-width:2px 2px 0 0;border-color:#000"></i>
+    </div>
+  </section>
+
+  <!-- ESCENA C · tabla rosa de precios -->
+  <section id="pink" class="clip" data-start="6.1" data-duration="3.9">
+    <div id="tableWrap">
+      <div id="tblTitle">Intelligence, at a fraction of the cost.</div>
+      <div id="tblSub">Price per million tokens (USD)&nbsp; / &nbsp;Lower is better</div>
+      <div class="dash" style="top:88px"></div>
+      <div class="dash" style="top:650px"></div>
+      <div style="position:absolute;left:698px;top:90px;width:2px;height:560px;background:#1b0a12"></div>
+      <div class="hdr" style="left:494px">INPUT</div>
+      <div class="hdr" style="left:940px">OUTPUT</div>
+      <div id="rows"></div>
+      <div id="jevFrame" style="position:absolute;left:30px;top:508px;width:1220px;height:50px;border:2px solid #fff;box-sizing:border-box;">
+        <i class="corner" style="left:-8px;bottom:-8px;border-width:0 0 2px 2px"></i>
+        <i class="corner" style="right:-8px;top:-8px;border-width:2px 2px 0 0"></i>
+      </div>
+    </div>
+    <div id="pinkDim" style="position:absolute;inset:0;background:#2a0b18;opacity:0;pointer-events:none"></div>
+    <!-- dither en el borde: ruido con umbral, nunca gradiente -->
+    <svg style="position:absolute;inset:0" width="1280" height="720">
+      <defs>
+        <filter id="dither" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="7" stitchTiles="stitch"/>
+          <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 0"/>
+          <feComponentTransfer><feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 0 1"/></feComponentTransfer>
+        </filter>
+        <mask id="edgeMask">
+          <rect width="1280" height="720" fill="#fff"/>
+          <rect x="30" y="18" width="1220" height="690" rx="4" fill="#000"/>
+        </mask>
+      </defs>
+      <rect width="1280" height="720" fill="#1b0a12" filter="url(#dither)" mask="url(#edgeMask)" opacity="0.9"/>
+    </svg>
+  </section>
+
+  <!-- ESCENA D · scatter Intelligence / Cost -->
+  <section id="sceneD" class="clip" data-start="10" data-duration="5.5" style="background:#000">
+    <div id="scatterWrap">
+      <div id="scTitle">Intelligence / Cost</div>
+      <div id="legend">
+        <span><i style="background:#ee4d8b"></i>TypeSafe</span>
+        <span><i style="background:#2ea7f0"></i>OpenAI</span>
+        <span><i style="background:#d4634f"></i>Anthropic</span>
+        <span><i style="background:#7a3fd4"></i>Fireworks</span>
+        <span><i style="background:#fff;transform:rotate(45deg);width:8px;height:8px"></i>Workflow</span>
+        <span><i style="background:#fff;border-radius:50%"></i>Prompt</span>
+      </div>
+      <svg id="sc" width="1280" height="720" viewBox="0 0 1280 720" style="position:absolute;inset:0"></svg>
+      <div style="position:absolute;left:52px;top:280px;transform:rotate(-90deg);transform-origin:0 0;font-size:26px;font-weight:600;white-space:nowrap;left:80px;top:420px">Intelligence</div>
+      <div style="position:absolute;left:0;width:1280px;text-align:center;top:652px;font-size:26px;font-weight:600">Cost per workflow</div>
+    </div>
+    <div id="scDim" style="position:absolute;inset:0;background:#000;opacity:0"></div>
+    <svg style="position:absolute;inset:0" width="1280" height="720">
+      <rect y="690" width="1280" height="30" fill="#fff" filter="url(#dither)" opacity="0.85"/>
+      <rect width="1280" height="10" fill="#fff" filter="url(#dither)" opacity="0.6"/>
+    </svg>
+  </section>
+
+  <!-- ESCENA E · vuelve el entrevistado (perfil) -->
+  <section id="sceneE" class="clip" data-start="15.5" data-duration="0.5">
+    <img class="talent" src="assets/talent-end.png" alt="" />
+  </section>
+</div>
+
+<script>
+// ---------- datos de la tabla (los valores finales que muestra la referencia) ----------
+const ROWS = [
+  ["GPT-6 Astra", 10, 50], ["Claude Fable 5.1", 10, 50], ["Claude Opus 5", 5, 25],
+  ["GPT-5.6 Sol*", 4, 20], ["GPT-5.6 Terra", 2, 12], ["Claude Sonnet 5", 2, 10],
+  ["Claude Haiku 4.5", 1, 5], ["GPT-5.6 Luna", 0.2, 1.2],
+];
+const ROW_Y = [138, 184, 229, 278, 323, 374, 421, 464];
+const IN_X = 317, IN_PX = 26.5, OUT_X = 700, OUT_PX = 6.74;
+const rowsEl = document.getElementById("rows");
+let html = "";
+ROWS.forEach(([name, inp, out], i) => {
+  const y = ROW_Y[i];
+  html += `<div class="row" data-i="${i}" style="position:absolute;left:0;top:0;width:1280px;height:720px;pointer-events:none">
+    <div class="rowName mono" style="top:${y}px">${name}</div>
+    <div class="bar" style="left:${IN_X}px;top:${y}px;width:${inp * IN_PX}px"></div>
+    <div class="val mono" style="left:${IN_X + inp * IN_PX + 12}px;top:${y}px"><span class="cnt" data-v="${inp}">$0</span></div>
+    <div class="bar" style="left:${OUT_X}px;top:${y}px;width:${out * OUT_PX}px"></div>
+    <div class="val mono" style="left:${OUT_X + out * OUT_PX + 12}px;top:${y}px"><span class="cnt" data-v="${out}">$0</span></div>
+  </div>`;
+});
+html += `<div class="row" data-i="8" style="position:absolute;inset:0"><div class="rowName mono" style="top:520px;font-weight:600">Jev (TypeSafe AI)</div>
+  <div class="val mono" style="left:${IN_X + 14}px;top:520px;font-weight:600">$0.0</div>
+  <div class="val mono" style="left:${OUT_X + 14}px;top:520px;font-weight:600">FREE</div></div>`;
+// ticks
+[["$0",0],["$2.5",2.5],["$5",5],["$7.5",7.5],["$20",10]].forEach(([t,v]) => {
+  html += `<div class="tick mono" style="left:${IN_X + v*IN_PX - 8}px">${t}</div><div class="grid" style="left:${IN_X + v*IN_PX}px"></div>`;
+});
+[["$0",0],["$10",10],["$20",20],["$30",30],["$40",40],["$50",50]].forEach(([t,v]) => {
+  html += `<div class="tick mono" style="left:${OUT_X + v*OUT_PX - 8}px">${t}</div><div class="grid" style="left:${OUT_X + v*OUT_PX}px"></div>`;
+});
+rowsEl.innerHTML = html;
+
+// ---------- scatter ----------
+const PX0 = 160, PX1 = 1172, PY0 = 148, PY1 = 598; // área de trazado
+const lx = c => PX0 + (Math.log10(c) + 4) / 4 * (PX1 - PX0);
+const ly = p => PY1 - (p - 10) / 80 * (PY1 - PY0);
+const COL = { openai:"#2ea7f0", anthropic:"#d4634f", fireworks:"#7a3fd4", typesafe:"#ee4d8b" };
+const PTS = [
+  ["luna","openai","d",0.0003,67,-2,-14],["DS v4 flash","fireworks","d",0.00055,65,10,-4],
+  ["terra","openai","d",0.0035,68,6,-14],["DS v4 pro","fireworks","d",0.0045,66,10,-6],
+  ["sol","openai","d",0.008,74,-10,-20],["sonnet 5","anthropic","d",0.012,68,10,-8],
+  ["opus 5","anthropic","d",0.018,73,10,-8],
+  ["luna","openai","c",0.0078,51,10,-6],["DS v4 flash","fireworks","c",0.013,59,10,-8],
+  ["haiku 4.5","anthropic","c",0.02,54,10,-8],["DS v4 pro","openai","c",0.075,62,10,-10],
+  ["terra","fireworks","c",0.09,60,-40,14],["sol","openai","c",0.2,64,10,-4],
+  ["sonnet 5","anthropic","c",0.23,61,10,10],["opus 5","anthropic","c",0.35,65,10,-6],
+  ["","typesafe","d",0.0009,68,0,0],
+];
+const NS = "http://www.w3.org/2000/svg";
+const sc = document.getElementById("sc");
+const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+// retícula roja tenue
+[10,30,50,70,90].forEach(p => sc.appendChild(el("line",{x1:PX0,y1:ly(p),x2:PX1,y2:ly(p),stroke:"#e8679a",'stroke-opacity':.35,'stroke-width':1.2,class:"grid"})));
+[0.0001,0.001,0.01,0.1,1].forEach(c => sc.appendChild(el("line",{x1:lx(c),y1:PY0,x2:lx(c),y2:PY1,stroke:"#e8679a",'stroke-opacity':.35,'stroke-width':1.2,class:"grid"})));
+for (let d = -4; d < 0; d++) for (let m = 2; m < 10; m++) sc.appendChild(el("line",{x1:lx(m*10**d),y1:PY0,x2:lx(m*10**d),y2:PY1,stroke:"#e8679a",'stroke-opacity':.1,class:"grid"}));
+[10,30,50,70,90].forEach(p => { const t = el("text",{x:PX0-8,y:ly(p)+5,'text-anchor':"end",class:"axl grid"}); t.textContent = p+"%"; sc.appendChild(t); });
+[["$0.0001",0.0001],["$0.001",0.001],["$0.01",0.01],["$0.1",0.1],["$.1",1]].forEach(([t,c]) => { const e = el("text",{x:lx(c),y:PY1+30,'text-anchor':"middle",class:"axl grid"}); e.textContent = t; sc.appendChild(e); });
+// puntos con stagger
+PTS.forEach(([name,prov,shape,c,p,dx,dy]) => {
+  const x = lx(c), y = ly(p);
+  const g = el("g",{class:"pt",transform:`translate(${x} ${y})`});
+  const m = shape === "d" ? el("rect",{x:-8,y:-8,width:16,height:16,transform:"rotate(45)",fill:COL[prov]}) : el("circle",{r:8,fill:COL[prov]});
+  g.appendChild(m);
+  if (name) { const t = el("text",{x:dx+8,y:dy+6,class:"lbl"}); t.textContent = name; g.appendChild(t); }
+  sc.appendChild(g);
+});
+// marco Jev alrededor del punto rosa
+const jx = lx(0.0009), jy = ly(68);
+const jev = el("g",{id:"jev"});
+jev.appendChild(el("rect",{id:"jevBox",x:jx-58,y:jy-72,width:116,height:90,fill:"none",stroke:"#fff",'stroke-width':1.5}));
+jev.appendChild(el("path",{d:`M${jx-64} ${jy+10} v10 h10 M${jx+64} ${jy-78} v-10 h-10`,stroke:"#fff",'stroke-width':1.5,fill:"none"}));
+const tag = el("g",{id:"jevTag"});
+tag.appendChild(el("rect",{x:jx-44,y:jy-64,width:88,height:40,rx:3,fill:"#ee6f9f"}));
+const tt = el("text",{x:jx,y:jy-36,'text-anchor':"middle",style:"font-family:Inter;font-size:26px;font-weight:700;fill:#1b0a12"}); tt.textContent = "Jev"; tag.appendChild(tt);
+jev.appendChild(tag);
+sc.appendChild(jev);
+
+// ---------- timeline ----------
+const tl = gsap.timeline({ paused: true });
+const bigNum = { v: 0 }, bil = { v: 12 };
+
+// A · caption sale; el contador sube a 100x; Cheaper se teclea
+tl.to("#caption", { opacity: 0, y: -10, duration: 0.3, ease: "power2.in" }, 0.05);
+tl.set("#bigx", { opacity: 0 }, 0);
+tl.set("#leaderPath", { strokeDasharray: 140, strokeDashoffset: 140 }, 0);
+tl.set("#cheaper", { width: 0, opacity: 0 }, 0);
+tl.to("#bigx", { opacity: 1, duration: 0.15 }, 0.95);
+tl.to(bigNum, { v: 100, duration: 1.05, ease: "power2.out", onUpdate: () => { document.getElementById("bigNum").textContent = Math.round(bigNum.v); } }, 0.95);
+tl.to("#cheaper", { opacity: 1, duration: 0.05 }, 1.2);
+tl.to("#cheaper", { width: 282, duration: 0.55, ease: "steps(7)" }, 1.2);
+tl.to("#leaderPath", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, 1.3);
+
+// B · anillos, el "=" gira a su lugar, contadores
+const B = 3;
+tl.set(["#ringOut","#ringIn"], { strokeDasharray: 1500, strokeDashoffset: 1500 }, 0);
+tl.set(["#crossV","#crossH"], { strokeDasharray: 460, strokeDashoffset: 460 }, 0);
+tl.set("#eq", { rotation: -60, scale: 0.2, transformOrigin: "50% 50%", opacity: 0 }, 0);
+tl.set(["#billion","#million"], { width: 0, opacity: 0 }, 0);
+tl.to("#dot", { attr: { r: 0 }, duration: 0.5 }, B + 0.5);
+tl.to(["#ringOut","#ringIn"], { strokeDashoffset: 0, duration: 1.0, ease: "power2.out" }, B + 0.05);
+tl.to(["#crossV","#crossH"], { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" }, B + 0.15);
+tl.to("#eq", { opacity: 1, duration: 0.1 }, B + 0.2);
+tl.to("#eq", { rotation: 0, scale: 1, duration: 0.7, ease: "back.out(1.4)" }, B + 0.2);
+tl.to("#billion", { opacity: 1, duration: 0.05 }, B + 0.2);
+tl.to("#billion", { width: 538, duration: 0.5, ease: "steps(8)" }, B + 0.2);
+tl.to(bil, { v: 42, duration: 1.0, ease: "power3.out", onUpdate: () => { document.getElementById("bilNum").textContent = Math.round(bil.v); } }, B + 0.25);
+tl.to("#million", { opacity: 1, duration: 0.05 }, B + 0.95);
+tl.to("#million", { width: 280, duration: 0.55, ease: "steps(9)" }, B + 0.95);
+
+// C · tabla: filas en cascada, barras y valores cuentan; luego zoom a Jev
+const C = 6.1;
+tl.set(".row", { opacity: 0 }, 0);
+tl.set(".bar", { scaleX: 0 }, 0);
+tl.set("#jevFrame", { opacity: 0 }, 0);
+tl.to(".row", { opacity: 1, duration: 0.05, stagger: 0.09 }, C + 0.25);
+tl.to(".bar", { scaleX: 1, duration: 0.9, ease: "power3.out", stagger: 0.04 }, C + 0.35);
+document.querySelectorAll(".cnt").forEach((n, i) => {
+  const o = { v: 0 }, target = +n.dataset.v;
+  const fmt = v => target < 1 ? "$" + v.toFixed(1) : target % 1 ? "$" + v.toFixed(1) : "$" + Math.round(v);
+  tl.to(o, { v: target, duration: 0.9, ease: "power3.out", onUpdate: () => { n.textContent = fmt(o.v); } }, C + 0.35 + Math.floor(i / 2) * 0.04);
+});
+tl.to("#tableWrap", { x: 12, y: -173, scale: 1.3, duration: 0.6, ease: "power3.inOut" }, C + 1.4);
+tl.to("#pinkDim", { opacity: 0.5, duration: 0.5 }, C + 1.5);
+tl.to("#jevFrame", { opacity: 1, duration: 0.15 }, C + 1.85);
+tl.fromTo("#jevFrame", { scaleX: 0.9 }, { scaleX: 1, duration: 0.35, ease: "power2.out" }, C + 1.85);
+
+// D · scatter: retícula, puntos en stagger, marco Jev, empuje de cámara
+const D = 10;
+tl.set("#sc .grid", { opacity: 0 }, 0);
+tl.set("#sc .pt", { opacity: 0, scale: 0.3, transformOrigin: "50% 50%" }, 0);
+tl.set("#jev", { opacity: 0 }, 0);
+tl.set("#jevBox", { strokeDasharray: 412, strokeDashoffset: 412 }, 0);
+tl.set("#jevTag", { scale: 0, transformOrigin: "50% 50%" }, 0);
+tl.set(["#scTitle","#legend"], { opacity: 0, y: 10 }, 0);
+tl.to(["#scTitle","#legend"], { opacity: 1, y: 0, duration: 0.4, stagger: 0.1 }, D + 0.05);
+tl.to("#sc .grid", { opacity: 1, duration: 0.35, stagger: 0.008 }, D + 0.15);
+tl.to("#sc .pt", { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)", stagger: 0.07 }, D + 0.7);
+tl.to("#jev", { opacity: 1, duration: 0.05 }, D + 2.4);
+tl.to("#jevBox", { strokeDashoffset: 0, duration: 0.5, ease: "power2.inOut" }, D + 2.4);
+tl.to("#jevTag", { scale: 1, duration: 0.45, ease: "back.out(1.7)" }, D + 2.55);
+tl.to("#scatterWrap", { x: -28, y: -25, scale: 1.32, duration: 1.0, ease: "power2.inOut" }, D + 2.8);
+tl.to("#scatterWrap", { x: -60, y: -40, scale: 1.45, duration: 1.6, ease: "none" }, D + 3.9);
+tl.to("#scDim", { opacity: 0.35, duration: 0.6 }, D + 4.7);
+
+window.__timelines["main"] = tl;
+</script>
+</body>
+</html>

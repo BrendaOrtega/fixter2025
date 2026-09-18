@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #000; }
+      body { font-family: Inter, system-ui, sans-serif; color: #111; }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      .mono { font-family: "Geist Mono", ui-monospace, monospace; }
+
+      /* ---- parte 1: tarjeta negra "Instead of words" ---- */
+      #card { background: #000; }
+      #headline { position: absolute; left: 0; right: 0; top: 300px; text-align: center; color: #fff; font-size: 92px; font-weight: 500; letter-spacing: -3px; white-space: nowrap; }
+      #headline .w { display: inline-block; }
+      #words { position: relative; display: inline-block; padding: 0 14px; margin-left: 12px; }
+      #words .box { position: absolute; inset: 6px -4px 8px -4px; border: 2px solid #fff; }
+      #words .cr { position: absolute; width: 14px; height: 14px; border: 2px solid #fff; }
+      #words .cr.tr { right: -12px; top: 0; border-left: 0; border-bottom: 0; }
+      #words .cr.bl { left: -12px; bottom: 0; border-right: 0; border-top: 0; }
+      .chat { position: absolute; color: #fff; font-size: 24px; white-space: nowrap; overflow: hidden; }
+      .chat i { font-style: normal; color: #ee6f9f; }
+      #chat1 { left: 128px; top: 162px; }
+      #chat2 { left: 882px; top: 522px; }
+
+      /* ---- parte 2: panel rosa con gráfica ---- */
+      #chart { background: #ee6f9f; }
+      #panel { position: absolute; inset: 0; transform-origin: 50% 50%; }
+      #frame { position: absolute; left: 20px; top: 20px; width: 1240px; height: 680px; border: 2px solid rgba(20,10,15,0.75); }
+      #portrait { position: absolute; left: 41px; top: 78px; width: 407px; height: 600px; object-fit: cover; }
+      #dither { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; pointer-events: none; }
+      #ttl { position: absolute; left: 470px; top: 88px; font-size: 34px; font-weight: 600; letter-spacing: -1.2px; white-space: nowrap; }
+      #ttl .w { display: inline-block; margin-right: 8px; }
+      .row { position: absolute; left: 463px; width: 780px; height: 54px; font-family: "Geist Mono", ui-monospace, monospace; font-size: 19px; font-weight: 500; color: #1a1216; }
+      .row .sep { position: absolute; left: 0; right: 0; top: 0; border-top: 2px dotted rgba(20,10,15,0.35); }
+      .row .prov { position: absolute; left: 10px; top: 16px; background: #221219; color: #ee6f9f; padding: 0 3px; line-height: 22px; }
+      .row .name { position: absolute; right: 485px; top: 16px; line-height: 22px; white-space: nowrap; }
+      .row .bar { position: absolute; left: 310px; top: 12px; height: 30px; background: #c25580; transform-origin: 0 50%; }
+      .row .val { position: absolute; top: 16px; line-height: 22px; white-space: nowrap; }
+      #axis { position: absolute; left: 463px; top: 640px; width: 780px; height: 40px; }
+      #axis .base { position: absolute; left: 0; right: 0; top: 0; border-top: 2px dotted rgba(20,10,15,0.35); }
+      #axis .gl { position: absolute; top: -480px; height: 482px; border-left: 2px dotted rgba(20,10,15,0.25); }
+      #axis .tk { position: absolute; top: 10px; font-family: "Geist Mono", monospace; font-size: 13px; color: rgba(20,10,15,0.5); transform: translateX(-50%); }
+      #dim { position: absolute; inset: 0; background: #2a0f1c; opacity: 0; }
+      #hl { position: absolute; left: 445px; top: 150px; width: 815px; height: 56px; background: #fff; border: 4px solid #fff; box-shadow: 0 0 0 4px #2a0f1c, 0 0 0 6px #fff; transform-origin: 50% 50%; }
+      #hl .cr { position: absolute; width: 12px; height: 12px; border: 2px solid #fff; }
+      #hl .cr.tr { right: -18px; top: -2px; border-left: 0; border-bottom: 0; }
+      #hl .cr.bl { left: -18px; bottom: -2px; border-right: 0; border-top: 0; }
+      #hl .txt { position: absolute; left: 30px; top: 14px; font-family: "Geist Mono", monospace; font-size: 19px; font-weight: 500; color: #111; white-space: nowrap; }
+      #hl .txt .m { margin-left: 92px; }
+      #hl .txt .v { margin-left: 30px; }
+      #tag { position: absolute; left: 20px; top: 20px; height: 40px; padding: 0 12px 0 10px; background: #1a1216; color: #f4dce6; font-family: "Geist Mono", monospace; font-size: 19px; line-height: 40px; letter-spacing: 1px; transform-origin: 0 50%; }
+      #tag svg { vertical-align: -5px; margin-right: 6px; }
+
+      /* ---- parte 3: entrevistado con lista ---- */
+      #face { position: absolute; inset: 0; width: 1280px; height: 720px; }
+      #list { position: absolute; left: 44px; bottom: 44px; }
+      .item { position: relative; height: 112px; overflow: visible; color: #fff; font-size: 90px; font-weight: 500; letter-spacing: -3.5px; white-space: nowrap; display: flex; align-items: center; }
+      .item svg { width: 76px; height: 76px; margin-right: 16px; flex: none; }
+      .item .t { display: inline-block; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="7.3" data-width="1280" data-height="720">
+
+      <!-- 0–1.0 s: tarjeta negra, "Instead of words" -->
+      <div class="clip" id="card" data-start="0" data-duration="1.0">
+        <div class="chat mono" id="chat1"><span id="c1">You’re absolutely right…</span></div>
+        <div id="headline"><span class="w" id="w1">Instead</span> <span class="w" id="w2">of</span><span id="words"><span class="box"></span><span class="cr tr"></span><span class="cr bl"></span><span class="w" id="w3">words</span></span></div>
+        <div class="chat mono" id="chat2"><span id="c2">My recommendation</span></div>
+      </div>
+
+      <!-- 1.0–3.65 s: panel rosa con la gráfica -->
+      <div class="clip" id="chart" data-start="1.0" data-duration="2.65">
+        <div id="panel">
+          <div id="frame"></div>
+          <img id="portrait" src="portrait.png" alt="" />
+          <div id="ttl"><span class="w">Structured</span><span class="w">output</span><span class="w">error</span><span class="w">rate</span></div>
+          <div id="rows"></div>
+          <div id="axis"><div class="base"></div></div>
+          <div id="dim"></div>
+          <div id="hl"><span class="cr tr"></span><span class="cr bl"></span><div class="txt">TypeSafe<span class="m">Jev-1.0</span><span class="v">0.00%</span></div></div>
+          <div id="tag"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#f4dce6" stroke-width="1.6"><circle cx="11" cy="11" r="9"/><path d="M7 11a4 4 0 0 1 8 0a4 4 0 0 1-8 0M11 2v4M11 16v4"/></svg>DIOGO ALMEIDA</div>
+        </div>
+        <canvas id="dither" width="1280" height="720"></canvas>
+      </div>
+
+      <!-- 3.65–7.3 s: entrevistado y lista -->
+      <div class="clip" id="talk" data-start="3.65" data-duration="3.65">
+        <img id="face" src="face.png" alt="" />
+        <div id="list">
+          <div class="item" id="i1"><svg viewBox="0 0 76 76" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="38" cy="38" r="30"/><path d="M24 39l9 9 19-19"/></svg><span class="t">Reliable</span></div>
+          <div class="item" id="i2"><svg viewBox="0 0 76 76" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20h22M8 38h14M8 56h22"/><path d="M48 10L34 42h16l-6 24 20-34H50z"/></svg><span class="t">Fast</span></div>
+          <div class="item" id="i3"><svg viewBox="0 0 76 76" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="10" width="26" height="26" rx="4"/><rect x="40" y="40" width="26" height="26" rx="4"/><path d="M36 23h12a8 8 0 0 1 8 8v9M40 53H28a8 8 0 0 1-8-8v-9"/></svg><span class="t">Self-consistent</span></div>
+          <div class="item" id="i4"><svg viewBox="0 0 76 76" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 14c-8 0-8 6-8 12s0 8-6 12c6 4 6 6 6 12s0 12 8 12M54 14c8 0 8 6 8 12s0 8 6 12c-6 4-6 6-6 12s0 12-8 12"/><circle cx="30" cy="38" r="2.5" fill="#fff"/><circle cx="38" cy="38" r="2.5" fill="#fff"/><circle cx="46" cy="38" r="2.5" fill="#fff"/></svg><span class="t">Type-safe</span></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ---- datos de la gráfica (leídos del cuadro final de la referencia) ----
+      const ROWS = [
+        { prov: "OpenAI", name: "GPT-5.6 Luna", v: 0.49 },
+        { prov: "", name: "GPT-5.6 Terra", v: 0.58 },
+        { prov: "", name: "GPT-5.6 Sol", v: 1.93 },
+        { prov: "Anthropic", name: "Claude Sonnet 5", v: 12.6 },
+        { prov: "", name: "Claude Opus 5", v: 3.76 },
+        { prov: "", name: "Claude Fable 5.1", v: 7.99 },
+        { prov: "Google", name: "Gemini 3.8 Flash", v: 2.38 },
+        { prov: "", name: "Gemini 3.1 Pro", v: 1.92 },
+      ];
+      const PX_PER_PCT = 37.6; // 0% en x 773, 10% en x 1151
+      const ROW_Y0 = 213, ROW_H = 53.5; // la fila 0 (TypeSafe) va en y 160 y la tapa el resaltado
+      const rows = document.getElementById("rows");
+      // fila TypeSafe: sólo se ve antes del resaltado
+      const mk = (i, r, y) => {
+        const el = document.createElement("div");
+        el.className = "row"; el.id = "r" + i; el.style.top = y + "px";
+        const w = Math.max(2, r.v * PX_PER_PCT);
+        el.innerHTML = `<div class="sep"></div>${r.prov ? `<span class="prov">${r.prov}</span>` : ""}<span class="name">${r.name}</span><div class="bar" style="width:${w}px"></div><span class="val" style="left:${310 + w + 10}px">0.00%</span>`;
+        // los valores que caben van dentro de la barra; Sonnet queda a la derecha adentro
+        if (r.v > 10) el.querySelector(".val").style.left = (310 + w - 66) + "px";
+        rows.appendChild(el);
+      };
+      mk(0, { prov: "TypeSafe", name: "Jev-1.0", v: 0 }, 160);
+      ROWS.forEach((r, i) => mk(i + 1, r, ROW_Y0 + i * ROW_H));
+      // eje con líneas de guía
+      const axis = document.getElementById("axis");
+      [0, 5, 10].forEach((p) => {
+        const x = 310 + p * PX_PER_PCT;
+        axis.insertAdjacentHTML("beforeend", `<div class="gl" style="left:${x}px"></div><span class="tk" style="left:${x}px">${p}%</span>`);
+      });
+
+      // Dither: manchas half-tone con matriz Bayer, estático y determinista (mulberry32)
+      (function () {
+        const c = document.getElementById("dither"), g = c.getContext("2d");
+        const B = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+        const blobs = [[760,760,210],[1290,720,120]];
+        let s = 987654; const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+        g.fillStyle = "#1c1218"; const px = 3;
+        for (let y = 600; y < 720; y += px) for (let x = 0; x < 1280; x += px) {
+          let d = 0;
+          for (const [bx, by, r] of blobs) { const q = Math.hypot(x - bx, y - by) / r; if (q < 1.2) d = Math.max(d, Math.pow(Math.max(0, 1 - q * 0.85), 1.5) * 0.9); }
+          d += (rnd() - 0.5) * 0.08;
+          if (d > (B[(y / px) & 3][(x / px) & 3] + 0.5) / 16) g.fillRect(x, y, px - 1, px - 1);
+        }
+      })();
+
+      // ---- timeline única y pausada ----
+      const tl = gsap.timeline({ paused: true });
+      const typeIn = (sel, text, t, dur) => {
+        const el = document.querySelector(sel); const o = { n: 0 };
+        el.textContent = "";
+        tl.to(o, { n: text.length, duration: dur, ease: "none", onUpdate() {
+          const k = Math.round(o.n); const s = text.slice(0, k);
+          // las últimas dos letras salen en rosa, como cursor de chat
+          el.innerHTML = s.slice(0, Math.max(0, k - 2)) + "<i>" + s.slice(Math.max(0, k - 2)) + "</i>";
+        } }, t);
+      };
+
+      // parte 1: "Instead of" ya está en el cuadro 0; "words" cae con su caja
+      gsap.set("#words", { scale: 0, transformOrigin: "50% 50%" });
+      gsap.set("#words .box, #words .cr", { opacity: 0 });
+      typeIn("#c1", "You’re absolutely right…", 0, 0.8);
+      typeIn("#c2", "My recommendation", 0.35, 0.65);
+      tl.to("#words", { scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 0.18)
+        .to("#words .box, #words .cr", { opacity: 1, duration: 0.05 }, 0.36);
+
+      // parte 2: panel entra con zoom, filas en cascada, barras y contadores
+      const T2 = 1.0;
+      gsap.set("#panel", { scale: 0.76 });
+      gsap.set(".row", { opacity: 0, x: -12 });
+      gsap.set(".row .bar", { scaleX: 0 });
+      gsap.set("#ttl .w", { opacity: 0, x: 24 });
+      gsap.set("#hl", { opacity: 0, scale: 0.9 });
+      gsap.set("#tag", { scaleX: 0 });
+      tl.to("#panel", { scale: 1, duration: 0.7, ease: "power2.out" }, T2)
+        .to("#ttl .w", { opacity: 1, x: 0, duration: 0.3, stagger: 0.06, ease: "power2.out" }, T2 + 0.02)
+        .to(".row", { opacity: 1, x: 0, duration: 0.25, stagger: 0.05, ease: "power2.out" }, T2 + 0.15);
+      document.querySelectorAll(".row").forEach((el, i) => {
+        const v = i === 0 ? 0 : ROWS[i - 1].v; const o = { n: 0 }; const val = el.querySelector(".val");
+        const t0 = T2 + 0.35 + i * 0.07;
+        tl.to(el.querySelector(".bar"), { scaleX: 1, duration: 1.2, ease: "power3.out" }, t0);
+        tl.to(o, { n: v, duration: 1.4, ease: "power3.out", onUpdate() { val.textContent = o.n.toFixed(2) + "%"; } }, t0);
+      });
+      // se oscurece el panel y se resalta la fila de TypeSafe
+      tl.to("#dim", { opacity: 0.42, duration: 0.25 }, T2 + 1.2)
+        .to("#r0", { opacity: 0, duration: 0.1 }, T2 + 1.2)
+        .to("#hl", { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, T2 + 1.2)
+        .to("#tag", { scaleX: 1, duration: 0.3, ease: "power3.out" }, T2 + 1.25);
+
+      // parte 3: lista ítem por ítem con icono
+      const T3 = 3.65;
+      gsap.set(".item", { opacity: 0, y: 30, height: 0 });
+      gsap.set(".item svg", { scale: 0, transformOrigin: "50% 50%" });
+      [0.3, 0.8, 1.55, 2.3].forEach((d, i) => {
+        tl.to(`#i${i + 1}`, { height: 112, duration: 0.35, ease: "power3.out" }, T3 + d)
+          .to(`#i${i + 1}`, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, T3 + d + 0.05)
+          .to(`#i${i + 1} svg`, { scale: 1, duration: 0.4, ease: "back.out(2)" }, T3 + d + 0.08);
+      });
+      tl.to({}, { duration: 0.01 }, 7.29);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+- Técnica: una timeline GSAP pausada; malla 8×8 en SVG con barril calculado por celda (x/y con 1+K(1−v²)); cubos isométricos como 3 polígonos SVG por barra, altura tuiteada sobre un objeto JS con `onUpdate` que reescribe `points` (seek-safe); zoom con `svgOrigin` en un `<g>`; dither de esquinas con cuadritos por mulberry32 y densidad radial; fondo del entrevistado = cuadro de 1.8 s parchado (banda limpia sobre el "We are").
+- Recetas/bloques: ninguno del registry; typewriter por spans (`display`, no `width:auto` — este último medía 0 si la fuente no había cargado) tomado de `../../a/index.html`.
+- Se acerca: tiempos de los tres bloques (captions 0–1.75, malla secuencial→paralela, corte a rosa a 6.4), etiquetas con brackets, leyenda CONFIDENCE/THRESHOLD, logo y crecimiento de marco, zoom final con "Confidence level".
+- No se acerca: los cubos de la referencia son más altos y con más contraste de caras; el zoom final encuadra distinto (la ref deja la placa rosa más visible a la izquierda); la malla blanca de la ref late con más bulto y sus celdas son más redondas; falta el dither fino tipo half-tone (el mío es más grueso).
+- Parecido: 3/5.
