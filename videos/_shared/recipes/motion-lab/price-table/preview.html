@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, height=720" />
+<title>price-table</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; }
+  body { font-family: Inter, system-ui, sans-serif; }
+  #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); color: var(--ink); }
+  .mono { font-family: "Geist Mono", ui-monospace, monospace; }
+  #wrap { position: absolute; inset: 0; transform-origin: 0 0; }
+  #title { position: absolute; left: 40px; top: 30px; font-size: 38px; font-weight: 700; letter-spacing: -1px; }
+  #subtitle { position: absolute; right: 42px; top: 44px; font-size: 17px; color: var(--muted); }
+  .dash { position: absolute; left: 30px; width: 1220px; border-top: 2px dashed var(--muted); opacity: .6; }
+  #split { position: absolute; top: 90px; width: 2px; height: 560px; background: var(--ink); }
+  .hdr { position: absolute; top: 98px; font-size: 16px; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
+  .rowName { position: absolute; left: 46px; font-size: 19px; white-space: nowrap; }
+  .bar { position: absolute; height: 22px; background: var(--accent2); transform-origin: 0 50%; }
+  .val { position: absolute; font-size: 19px; white-space: nowrap; }
+  .tick { position: absolute; top: 668px; font-size: 15px; color: var(--muted); transform: translateX(-50%); }
+  .grid { position: absolute; top: 128px; width: 2px; height: 522px; background: var(--muted); opacity: .25; }
+  /* marco de la fila destacada: borde de tinta, sombra dura de acento, esquinas */
+  #hlFrame { position: absolute; left: 30px; width: 1220px; height: 50px; border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--accent); }
+  .corner { position: absolute; width: 12px; height: 12px; border: 3px solid var(--accent); }
+  #dim { position: absolute; inset: 0; background: var(--bg); opacity: 0; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="3.8">
+  <div id="wrap">
+    <div id="title"></div>
+    <div id="subtitle"></div>
+    <div class="dash" style="top:88px"></div>
+    <div class="dash" style="top:650px"></div>
+    <div id="split"></div>
+    <div id="cols"></div>
+    <div id="rows"></div>
+    <div id="dim"></div>
+    <div id="front"></div>
+    <div id="hlFrame">
+      <i class="corner" style="left:-10px;bottom:-10px;border-width:0 0 3px 3px"></i>
+      <i class="corner" style="right:-10px;top:-10px;border-width:3px 3px 0 0"></i>
+    </div>
+  </div>
+</div>
+<script>
+  // Parámetros: TODO lo que cambia entre usos vive aquí
+  const PARAMS = {
+    palette: "fixtergeek",              // "fixtergeek" | "easybits"
+    title: "Inteligencia, a una fracción del costo.",
+    subtitle: "Precio por millón de tokens (USD) / menor es mejor",
+    // dos columnas: encabezado, tope de la escala y marcas del eje
+    columns: [
+      { name: "INPUT",  max: 10, ticks: [0, 2.5, 5, 7.5, 10] },
+      { name: "OUTPUT", max: 50, ticks: [0, 10, 20, 30, 40, 50] },
+    ],
+    prefix: "$",                        // se antepone al valor
+    // values = un número por columna; text = celda de texto en lugar de barra (p. ej. "GRATIS")
+    rows: [
+      { label: "Modelo XL",       values: [10, 50] },
+      { label: "Modelo L",        values: [5, 25] },
+      { label: "Modelo M",        values: [4, 20] },
+      { label: "Modelo S",        values: [2, 12] },
+      { label: "Modelo XS",       values: [1, 5] },
+      { label: "Modelo nano",     values: [0.2, 1.2] },
+      { label: "Ghosty (taller)", values: [0, 0], text: ["$0.0", "GRATIS"] },
+    ],
+    highlightRow: 6,                    // fila que se enmarca al final (-1 = ninguna)
+    timings: { rowStagger: 0.09, barDur: 0.9, zoomAt: 1.6, zoomScale: 1.3, hold: 1.4 },
+  };
+  const PALETTES = {
+    fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+    easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+  };
+  const root = document.getElementById("root");
+  const pal = PALETTES[PARAMS.palette];
+  for (const k in pal) root.style.setProperty("--" + k, pal[k]);
+  document.body.style.background = pal.bg;
+
+  // ---- geometría: dos columnas de barras; la máxima deja 90 px para su valor ----
+  const COL_X = [317, 700], COL_W = 290, ROW_Y0 = 138;
+  const N = PARAMS.rows.length, ROW_H = Math.min(52, Math.floor(480 / N));
+  const pxPer = PARAMS.columns.map((c) => COL_W / c.max);
+  const fmt = (v, target) => PARAMS.prefix + (target < 1 || target % 1 ? v.toFixed(1) : Math.round(v));
+  document.getElementById("title").textContent = PARAMS.title;
+  document.getElementById("subtitle").textContent = PARAMS.subtitle;
+  document.getElementById("split").style.left = COL_X[1] - 2 + "px";
+
+  let html = "";
+  PARAMS.columns.forEach((c, j) => {
+    html += `<div class="hdr" style="left:${COL_X[j] + COL_W / 2 - 30}px">${c.name}</div>`;
+    c.ticks.forEach((t) => {
+      const x = COL_X[j] + t * pxPer[j];
+      html += `<div class="tick mono" style="left:${x}px">${PARAMS.prefix}${t}</div><div class="grid" style="left:${x}px"></div>`;
+    });
+  });
+  document.getElementById("cols").innerHTML = html;
+  html = "";
+  PARAMS.rows.forEach((r, i) => {
+    const y = ROW_Y0 + i * ROW_H;
+    html += `<div class="row" id="row${i}" style="position:absolute;inset:0;pointer-events:none"><div class="rowName mono" style="top:${y}px${r.text ? ";font-weight:600" : ""}">${r.label}</div>`;
+    PARAMS.columns.forEach((c, j) => {
+      if (r.text) { html += `<div class="val mono" style="left:${COL_X[j] + 14}px;top:${y}px;font-weight:600;color:var(--accent)">${r.text[j]}</div>`; return; }
+      const w = r.values[j] * pxPer[j];
+      html += `<div class="bar" style="left:${COL_X[j]}px;top:${y}px;width:${w}px"></div>` +
+        `<div class="val mono" style="left:${COL_X[j] + w + 12}px;top:${y}px"><span class="cnt" data-v="${r.values[j]}">${fmt(0, r.values[j])}</span></div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById("rows").innerHTML = html;
+  const H = PARAMS.highlightRow, frame = document.getElementById("hlFrame");
+  // la fila destacada pasa encima de #dim para no oscurecerse
+  if (H >= 0) { frame.style.top = ROW_Y0 + H * ROW_H - 13 + "px"; document.getElementById("front").appendChild(document.getElementById("row" + H)); }
+  else frame.style.display = "none";
+
+  // ---- timeline única y pausada ----
+  const T = PARAMS.timings;
+  const tl = gsap.timeline({ paused: true });
+  // cuadro 0 completo: título, ejes y nombres visibles; las barras crecen
+  gsap.set(".bar", { scaleX: 0 });
+  gsap.set("#hlFrame", { opacity: 0 });
+  tl.from(".row", { opacity: 0, x: -10, duration: 0.25, stagger: T.rowStagger, ease: "power2.out", immediateRender: false }, 0.1);
+  tl.to(".bar", { scaleX: 1, duration: T.barDur, ease: "power3.out", stagger: 0.04 }, 0.35);
+  document.querySelectorAll(".cnt").forEach((n, i) => {
+    const o = { v: 0 }, target = +n.dataset.v;
+    tl.to(o, { v: target, duration: T.barDur, ease: "power3.out", onUpdate: () => { n.textContent = fmt(o.v, target); } }, 0.35 + Math.floor(i / PARAMS.columns.length) * 0.04);
+  });
+  if (H >= 0) {
+    // la cámara empuja hacia la fila destacada anclada a la izquierda (los nombres no se cortan)
+    const fy = ROW_Y0 + H * ROW_H + 12;
+    const s = T.zoomScale;
+    const ty = Math.max(-(720 * s - 720), Math.min(0, 360 - fy * s));
+    tl.to("#wrap", { x: 0, y: ty, scale: s, duration: 0.6, ease: "power3.inOut" }, T.zoomAt);
+    tl.to("#dim", { opacity: 0.5, duration: 0.5 }, T.zoomAt + 0.1);
+    tl.to("#hlFrame", { opacity: 1, duration: 0.15 }, T.zoomAt + 0.45);
+    tl.fromTo("#hlFrame", { scaleX: 0.9 }, { scaleX: 1, duration: 0.35, ease: "back.out(1.6)", immediateRender: false }, T.zoomAt + 0.45);
+  }
+  const DUR = (H >= 0 ? T.zoomAt + 0.8 : 0.35 + N * 0.04 + T.barDur) + T.hold;
+  // data-duration del #root debe coincidir con DUR (el renderizador lee el atributo estático)
+  if (Math.abs(parseFloat(root.dataset.duration) - DUR) > 0.05) console.warn("data-duration ≠ " + DUR.toFixed(2));
+  tl.to({}, { duration: 0.01 }, DUR - 0.01);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+</script>
+</body>
+</html>

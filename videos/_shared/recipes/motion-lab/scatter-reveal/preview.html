@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, height=720" />
+<title>scatter-reveal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; }
+  body { font-family: Inter, system-ui, sans-serif; }
+  #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); color: var(--ink); }
+  #wrap { position: absolute; inset: 0; transform-origin: 0 0; }
+  #title { position: absolute; left: 0; width: 1280px; text-align: center; top: 36px; font-size: 40px; font-weight: 700; letter-spacing: -1px; }
+  #legend { position: absolute; left: 160px; top: 104px; font-size: 15px; display: flex; gap: 26px; }
+  #legend span { display: flex; align-items: center; gap: 7px; }
+  #legend i { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--ink); }
+  #legend i.diamond { transform: rotate(45deg); width: 10px; height: 10px; }
+  #legend i.circle { border-radius: 50%; }
+  .lbl { font-family: Inter; font-size: 16px; font-weight: 500; fill: var(--ink); }
+  .axl { font-family: "Geist Mono", monospace; font-size: 14px; fill: var(--muted); }
+  #yLabel { position: absolute; left: 80px; top: 420px; transform: rotate(-90deg); transform-origin: 0 0; font-size: 24px; font-weight: 600; white-space: nowrap; }
+  #xLabel { position: absolute; left: 0; width: 1280px; text-align: center; top: 660px; font-size: 24px; font-weight: 600; }
+  #dim { position: absolute; inset: 0; background: var(--bg); opacity: 0; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="5.2">
+  <div id="wrap">
+    <div id="title"></div>
+    <div id="legend"></div>
+    <svg id="sc" width="1280" height="720" viewBox="0 0 1280 720" style="position:absolute;inset:0"></svg>
+    <div id="yLabel"></div>
+    <div id="xLabel"></div>
+  </div>
+  <div id="dim"></div>
+</div>
+<script>
+  // Parámetros: TODO lo que cambia entre usos vive aquí
+  const PARAMS = {
+    palette: "fixtergeek",              // "fixtergeek" | "easybits"
+    title: "Calidad / Costo por tarea",
+    axes: {
+      x: { label: "Costo por tarea (USD)", scale: "log", min: 0.0001, max: 1, ticks: [0.0001, 0.001, 0.01, 0.1, 1], fmt: (v) => "$" + v },
+      y: { label: "Calidad", scale: "linear", min: 10, max: 90, ticks: [10, 30, 50, 70, 90], fmt: (v) => v + "%" },
+    },
+    // color: índice en SERIES de la paleta (validado con el skill dataviz). shape: "circle" | "diamond"
+    // points: [x, y, etiqueta, dx, dy] — dx/dy desplazan la etiqueta
+    series: [
+      { name: "Ghosty",   color: 0, shape: "diamond", points: [[0.0009, 68, "Ghosty 2.1", 8, 24]] },
+      { name: "Nube A",   color: 1, shape: "circle",  points: [[0.0003, 55, "A nano", 10, -8], [0.0035, 62, "A mini", 10, -8], [0.02, 74, "A pro", 10, -8]] },
+      { name: "Nube B",   color: 2, shape: "circle",  points: [[0.012, 60, "B lite", 10, 12], [0.075, 66, "B std", 10, -8], [0.35, 72, "B max", 10, -8]] },
+      { name: "Nube C",   color: 3, shape: "circle",  points: [[0.0055, 48, "C flash", 10, 14], [0.2, 58, "C pro", 10, 12]] },
+    ],
+    // marco que se dibuja alrededor de un punto: serie e índice del punto, más su rótulo
+    focus: { series: 0, point: 0, tag: "Ghosty" },
+    timings: { gridAt: 0.15, pointsAt: 0.6, pointStagger: 0.08, focusAt: 2.2, zoomAt: 2.6, hold: 1.4 },
+    seed: 7,
+  };
+  const PALETTES = {
+    fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E",
+                  series: ["#199E70", "#D95926", "#9085E9", "#C98500"] },   // validate_palette.js --mode dark: PASS
+    easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99",
+                  series: ["#9085E9", "#C98500", "#199E70", "#D95926"] },   // PASS sobre #0b0b0f
+  };
+  const root = document.getElementById("root");
+  const pal = PALETTES[PARAMS.palette];
+  for (const k in pal) if (typeof pal[k] === "string") root.style.setProperty("--" + k, pal[k]);
+  document.body.style.background = pal.bg;
+
+  // ---- escalas: área de trazado y lineal/log por eje ----
+  const PX0 = 160, PX1 = 1172, PY0 = 140, PY1 = 598;
+  const A = PARAMS.axes;
+  const norm = (ax, v) => ax.scale === "log" ? (Math.log10(v) - Math.log10(ax.min)) / (Math.log10(ax.max) - Math.log10(ax.min)) : (v - ax.min) / (ax.max - ax.min);
+  const sx = (v) => PX0 + norm(A.x, v) * (PX1 - PX0);
+  const sy = (v) => PY1 - norm(A.y, v) * (PY1 - PY0);
+  const NS = "http://www.w3.org/2000/svg";
+  const sc = document.getElementById("sc");
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  document.getElementById("title").textContent = PARAMS.title;
+  document.getElementById("xLabel").textContent = A.x.label;
+  document.getElementById("yLabel").textContent = A.y.label;
+  document.getElementById("legend").innerHTML = PARAMS.series.map((s) => `<span><i class="${s.shape}" style="background:${pal.series[s.color]}"></i>${s.name}</span>`).join("");
+
+  // retícula: líneas mayores en los ticks; en log, menores en 2..9 de cada década
+  const gridLine = (x1, y1, x2, y2, op) => sc.appendChild(el("line", { x1, y1, x2, y2, stroke: pal.muted, "stroke-opacity": op, "stroke-width": 1.5, class: "grid" }));
+  A.y.ticks.forEach((v) => gridLine(PX0, sy(v), PX1, sy(v), 0.45));
+  A.x.ticks.forEach((v) => gridLine(sx(v), PY0, sx(v), PY1, 0.45));
+  if (A.x.scale === "log") for (let d = Math.log10(A.x.min); d < Math.log10(A.x.max); d++) for (let m = 2; m < 10; m++) gridLine(sx(m * 10 ** d), PY0, sx(m * 10 ** d), PY1, 0.15);
+  if (A.y.scale === "log") for (let d = Math.log10(A.y.min); d < Math.log10(A.y.max); d++) for (let m = 2; m < 10; m++) gridLine(PX0, sy(m * 10 ** d), PX1, sy(m * 10 ** d), 0.15);
+  A.y.ticks.forEach((v) => { const t = el("text", { x: PX0 - 10, y: sy(v) + 5, "text-anchor": "end", class: "axl grid" }); t.textContent = A.y.fmt(v); sc.appendChild(t); });
+  A.x.ticks.forEach((v) => { const t = el("text", { x: sx(v), y: PY1 + 28, "text-anchor": "middle", class: "axl grid" }); t.textContent = A.x.fmt(v); sc.appendChild(t); });
+
+  // puntos: cada uno en un <g> con transform absoluto; anillo de 2 px del fondo para que no se peguen
+  const ptEls = [];
+  PARAMS.series.forEach((s, si) => {
+    s.points.forEach((p, pi) => {
+      const [xv, yv, name, dx = 10, dy = -8] = p;
+      const g = el("g", { class: "pt", id: `pt-${si}-${pi}`, transform: `translate(${sx(xv)} ${sy(yv)})` });
+      const fill = pal.series[s.color];
+      g.appendChild(s.shape === "diamond"
+        ? el("rect", { x: -9, y: -9, width: 18, height: 18, transform: "rotate(45)", fill, stroke: pal.bg, "stroke-width": 2 })
+        : el("circle", { r: 9, fill, stroke: pal.bg, "stroke-width": 2 }));
+      if (name) { const t = el("text", { x: dx + 8, y: dy + 6, class: "lbl" }); t.textContent = name; g.appendChild(t); }
+      sc.appendChild(g); ptEls.push([g, sx(xv), sy(yv)]);
+    });
+  });
+  // marco alrededor del punto de foco: rectángulo que se dibuja + esquinas + rótulo con sombra dura
+  const F = PARAMS.focus, fp = PARAMS.series[F.series].points[F.point];
+  const fx = sx(fp[0]), fy = sy(fp[1]);
+  const focus = el("g", { id: "focus" });
+  focus.appendChild(el("rect", { id: "focusBox", x: fx - 58, y: fy - 74, width: 116, height: 92, fill: "none", stroke: pal.ink, "stroke-width": 2 }));
+  focus.appendChild(el("path", { d: `M${fx - 64} ${fy + 12} v10 h10 M${fx + 64} ${fy - 80} v-10 h-10`, stroke: pal.accent, "stroke-width": 3, fill: "none" }));
+  const tag = el("g", { id: "focusTag" });
+  tag.appendChild(el("rect", { x: fx - 40, y: fy - 62, width: 88, height: 40, fill: pal.ink }));
+  tag.appendChild(el("rect", { x: fx - 44, y: fy - 66, width: 88, height: 40, fill: pal.accent }));
+  const tt = el("text", { x: fx, y: fy - 38, "text-anchor": "middle", style: `font-family:Inter;font-size:24px;font-weight:700;fill:${pal.bg}` }); tt.textContent = F.tag; tag.appendChild(tt);
+  focus.appendChild(tag); sc.appendChild(focus);
+
+  // ---- timeline única y pausada ----
+  const T = PARAMS.timings;
+  const tl = gsap.timeline({ paused: true });
+  // cuadro 0 completo: título, leyenda, ejes y retícula visibles; los puntos entran con stagger
+  // svgOrigin en el punto (coordenadas absolutas del SVG); GSAP reescribe el transform, por eso se guardan aparte
+  ptEls.forEach(([g, x, y]) => gsap.set(g, { opacity: 0, scale: 0.3, svgOrigin: `${x} ${y}` }));
+  gsap.set("#focus", { opacity: 0 });
+  gsap.set("#focusBox", { strokeDasharray: 416, strokeDashoffset: 416 });
+  gsap.set("#focusTag", { scale: 0, svgOrigin: `${fx} ${fy - 46}` });
+  tl.from("#sc .grid", { opacity: 0, duration: 0.35, stagger: 0.008, immediateRender: false }, T.gridAt);
+  tl.to("#sc .pt", { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)", stagger: T.pointStagger }, T.pointsAt);
+  tl.to("#focus", { opacity: 1, duration: 0.05 }, T.focusAt);
+  tl.to("#focusBox", { strokeDashoffset: 0, duration: 0.5, ease: "power2.inOut" }, T.focusAt);
+  tl.to("#focusTag", { scale: 1, duration: 0.45, ease: "back.out(1.7)" }, T.focusAt + 0.15);
+  // empuje de cámara hacia el foco, sin salirse del lienzo
+  const s = 1.4, tx = Math.max(-(1280 * s - 1280), Math.min(0, 640 - fx * s)), ty = Math.max(-(720 * s - 720), Math.min(0, 360 - fy * s));
+  tl.to("#wrap", { x: tx, y: ty, scale: s, duration: 1.2, ease: "power2.inOut" }, T.zoomAt);
+  const DUR = T.zoomAt + 1.2 + T.hold;
+  // data-duration del #root debe coincidir con DUR (el renderizador lee el atributo estático)
+  if (Math.abs(parseFloat(root.dataset.duration) - DUR) > 0.05) console.warn("data-duration ≠ " + DUR.toFixed(2));
+  tl.to({}, { duration: 0.01 }, DUR - 0.01);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+</script>
+</body>
+</html>

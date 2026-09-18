@@ -76,6 +76,16 @@ no es determinista frame a frame — sólo en grabaciones de pantalla en tiempo 
 gradientes ni glow en FixterGeek, bucles finitos, SFX en cada animación (catálogo CC0 en
 `docs/shorts-taller/sfx/`, montado con ffmpeg fuera del render).
 
+**motion-lab (desde el 17 sep 2026)**: `videos/_shared/recipes/motion-lab/` — 15 mecánicas medidas
+cuadro a cuadro al replicar un video real (ventana retro con typewriter, lista inclinada,
+cortinilla que muestrea la escena, partículas que colapsan a una letra, malla de barril, cubos
+isométricos, barras/tabla/scatter, árbol de nodos, reloj de arena, rayos con contador, karaoke por
+palabra, cajas apiladas, dither). Cada una es una composición HyperFrames + GSAP con un bloque
+`PARAMS`, determinista y en las dos paletas; su `README.md` lista las trampas del renderizador
+(`data-duration` estático, `tl.set` en vez de `gsap.set`, typewriter por `display`). Galería con
+previews: <https://blissito.github.io/ghosty-reel/motion-lab/>. El laboratorio de origen está en
+`videos/replica-typesafe/README.md`.
+
 ## Blog — Sistema de posts
 
 **Tres formatos**: `markdown` (default), `html` (full HTML), `tiptap` (JSON AST). El campo `contentFormat` en el modelo `Post` determina el renderizado.

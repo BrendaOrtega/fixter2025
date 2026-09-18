@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>pixel-wipe-sampled</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: var(--bg, #0E1317); }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      /* escena A: la que se va (SVG dibujado, el mismo que muestrean las celdas) */
+      #scene-a svg { width: 1280px; height: 720px; display: block; }
+      /* escena B: la que llega debajo de las celdas */
+      #scene-b { background: var(--ink); color: var(--bg); }
+      #scene-b .grid { position: absolute; inset: 0;
+        background-image: linear-gradient(var(--muted) 1px, transparent 1px), linear-gradient(90deg, var(--muted) 1px, transparent 1px);
+        background-size: 64px 64px; opacity: 0.25; }
+      #pill { position: absolute; left: 330px; top: 318px; width: 220px; height: 64px; background: var(--accent);
+              display: grid; place-items: center; font-size: 30px; font-weight: 500; font-family: "Geist Mono", monospace; }
+      #pill-shadow { position: absolute; left: 270px; top: 318px; width: 70px; height: 64px; background: var(--accent2); }
+      #caption { position: absolute; left: 600px; top: 334px; font-size: 32px; letter-spacing: -0.02em; white-space: pre; }
+
+      /* ---- cortinilla: cada celda muestrea la escena A y le pone un velo ---- */
+      #pixels { display: grid; }
+      .px { position: relative; background-size: 1280px 720px; background-repeat: no-repeat; }
+      .px::after { content: ""; position: absolute; inset: 0; background: var(--veil); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="4.02">
+      <section id="scene-a" class="clip" data-start="0" data-duration="2.6" data-track-index="0"></section>
+      <section id="scene-b" class="clip" data-start="1.6" data-duration="2.4" data-track-index="1">
+        <div class="grid"></div>
+        <div id="pill-shadow"></div>
+        <div id="pill">Ghosty</div>
+        <div id="caption">el agente en su sandbox</div>
+      </section>
+      <section id="pixels" class="clip" data-start="0.9" data-duration="1.9" data-track-index="2"></section>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",     // "fixtergeek" | "easybits"
+        cell: 80,                  // px por celda (1280 y 720 deben ser múltiplos)
+        seed: 20260917,            // semilla del orden y los velos
+        // velos por celda (color + alfa); se sortean con la semilla
+        veils: ["rgba(242,245,244,0.92)", "rgba(242,245,244,0.7)", "rgba(133,221,203,0.6)", "rgba(124,138,142,0.55)", "rgba(14,19,23,0.5)"],
+        timings: {
+          start: 1.0,              // s en que empiezan a aparecer las celdas
+          appear: 0.6,             // ventana en la que aparecen todas (persisten)
+          hold: 0.1,               // pausa con la retícula completa
+          dissolve: 0.6,           // ventana en la que se disuelven (revelan la escena B)
+          cellFade: 0.12,          // duración del fundido de cada celda
+          tail: 1.6,               // s de escena B a solas al final
+        },
+        // escena A dibujada (SVG); el fondo de la cortinilla se genera de aquí mismo
+        sceneA: (P) => `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+            <rect width="1280" height="720" fill="${P.bg}"/>
+            <rect x="0" y="540" width="1280" height="180" fill="${P.muted}" opacity="0.25"/>
+            <g transform="translate(180 120)">
+              <rect x="20" y="20" width="520" height="360" fill="${P.muted}" opacity="0.5"/>
+              <rect x="0" y="0" width="520" height="360" fill="${P.bg}" stroke="${P.ink}" stroke-width="8"/>
+              <rect x="0" y="0" width="520" height="56" fill="${P.ink}"/>
+              <circle cx="36" cy="28" r="12" fill="${P.accent}"/><circle cx="76" cy="28" r="12" fill="${P.accent2}"/><circle cx="116" cy="28" r="12" fill="${P.muted}"/>
+              <rect x="40" y="96" width="300" height="18" fill="${P.accent}"/>
+              <rect x="40" y="140" width="420" height="18" fill="${P.ink}" opacity="0.6"/>
+              <rect x="40" y="184" width="200" height="18" fill="${P.accent2}"/>
+              <rect x="40" y="228" width="360" height="18" fill="${P.ink}" opacity="0.6"/>
+              <rect x="40" y="272" width="140" height="18" fill="${P.accent}"/>
+            </g>
+            <g transform="translate(820 200)">
+              <rect x="18" y="18" width="260" height="260" fill="${P.muted}" opacity="0.5"/>
+              <rect x="0" y="0" width="260" height="260" fill="${P.accent}" stroke="${P.ink}" stroke-width="8"/>
+              <circle cx="90" cy="110" r="18" fill="${P.bg}"/><circle cx="170" cy="110" r="18" fill="${P.bg}"/>
+            </g>
+          </svg>`,
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const [k, v] of Object.entries(P)) root.style.setProperty(`--${k}`, v);
+      document.body.style.setProperty("--bg", P.bg);
+
+      // PRNG con semilla fija: orden y velos de las celdas deterministas
+      function mulberry32(seed) {
+        return function () {
+          seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(PARAMS.seed);
+
+      // escena A: se pinta y se serializa como data URI para que las celdas la muestreen
+      const svgText = PARAMS.sceneA(P).trim();
+      document.getElementById("scene-a").innerHTML = svgText;
+      const bgUri = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgText)}")`;
+
+      // tiempos derivados
+      const T = PARAMS.timings;
+      const tIn = T.start, tOut = T.start + T.appear + T.hold, tEnd = tOut + T.dissolve + T.cellFade;
+      // ojo: el CLI lee el data-duration ESTÁTICO del HTML; debe coincidir con este cálculo
+      const DUR = tEnd + T.tail;
+      root.dataset.duration = DUR;
+      document.getElementById("scene-a").dataset.duration = tOut + 0.05;
+      document.getElementById("scene-b").dataset.start = tIn + T.appear;
+      document.getElementById("scene-b").dataset.duration = DUR - (tIn + T.appear);
+      document.getElementById("pixels").dataset.start = tIn - 0.05;
+      document.getElementById("pixels").dataset.duration = tEnd - tIn + 0.1;
+
+      // retícula de celdas
+      const cols = Math.ceil(1280 / PARAMS.cell), rows = Math.ceil(720 / PARAMS.cell);
+      const pixels = document.getElementById("pixels");
+      pixels.style.gridTemplateColumns = `repeat(${cols}, ${PARAMS.cell}px)`;
+      pixels.style.gridTemplateRows = `repeat(${rows}, ${PARAMS.cell}px)`;
+      const cells = [];
+      for (let i = 0; i < cols * rows; i++) {
+        const d = document.createElement("div");
+        const col = i % cols, row = Math.floor(i / cols);
+        d.className = "px";
+        d.style.width = d.style.height = PARAMS.cell + "px";
+        d.style.backgroundImage = bgUri;
+        d.style.backgroundPosition = `${-col * PARAMS.cell}px ${-row * PARAMS.cell}px`;
+        d.style.setProperty("--veil", PARAMS.veils[Math.floor(rand() * PARAMS.veils.length)]);
+        pixels.appendChild(d); cells.push(d);
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      cells.forEach((c) => gsap.set(c, { autoAlpha: 0 }));
+
+      // las celdas aparecen y PERSISTEN; luego se disuelven en el mismo orden sobre la escena B
+      cells.forEach((c) => {
+        const r = rand();
+        tl.set(c, { autoAlpha: 1 }, tIn + r * T.appear);
+        tl.to(c, { autoAlpha: 0, duration: T.cellFade }, tOut + r * T.dissolve);
+      });
+
+      // escena B: pill con rebote, sombra y texto que llega cuando las celdas se van
+      const tB = tOut - 0.15;
+      tl.from("#pill", { x: -50, autoAlpha: 0, duration: 0.4, ease: "back.out(1.6)" }, tB);
+      tl.from("#pill-shadow", { x: -90, autoAlpha: 0, duration: 0.4, ease: "back.out(1.6)" }, tB + 0.05);
+      tl.from("#caption", { autoAlpha: 0, x: 20, duration: 0.35, ease: "power2.out" }, tB + 0.3);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

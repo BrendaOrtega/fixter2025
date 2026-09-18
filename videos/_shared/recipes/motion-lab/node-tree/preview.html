@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>motion-lab — node-tree</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: var(--bg, #0E1317); }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
+      #wires { position: absolute; left: 0; top: 0; overflow: visible; }
+      #wires path.live { fill: none; stroke: var(--accent); stroke-width: 4; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: square; }
+      /* pista fantasma: el cable ya está en el cuadro 0, el vivo se dibuja encima */
+      #wires path.track { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 6 8; opacity: 0.7; }
+      #dots { position: absolute; left: 0; top: 0; }
+      #center { position: absolute; left: 0; width: 1280px; text-align: center; font-size: 96px; letter-spacing: -3px; line-height: 1; white-space: nowrap; }
+      .node {
+        position: absolute; height: 74px; box-sizing: border-box; border: 2px solid var(--ink); overflow: hidden; white-space: nowrap;
+        font-family: "Geist Mono", ui-monospace, monospace; font-size: 40px; line-height: 70px; padding-left: 18px;
+        background: var(--bg); border-color: var(--muted);
+      }
+      .node .ghost { color: var(--muted); }
+      .node .live { position: absolute; left: 18px; top: 0; color: var(--ink); }
+      .node .ch { display: none; }
+      .node .br { position: absolute; width: 10px; height: 10px; border: 2px solid var(--accent2); opacity: 0; }
+      .node .br.tr { right: 4px; top: 4px; border-left: none; border-bottom: none; }
+      .node .br.bl { left: 4px; bottom: 4px; border-right: none; border-top: none; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="3.5">
+      <svg id="dots" width="1280" height="720" viewBox="0 0 1280 720">
+        <defs><pattern id="dotp" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1.6" fill="var(--muted)" opacity="0.55" /></pattern></defs>
+        <rect width="1280" height="720" fill="url(#dotp)" />
+      </svg>
+      <svg id="wires" width="1280" height="720" viewBox="0 0 1280 720"></svg>
+      <div id="center"></div>
+      <div id="nodes"></div>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",              // "fixtergeek" | "easybits"
+        center: "Ghosty",                   // texto del nodo central
+        centerY: 360,                       // centro vertical del nodo central
+        // side: "left" | "right" | "top" | "bottom"; offset: desplazamiento perpendicular (px)
+        nodes: [
+          { label: "ACP", side: "left", offset: 120 },
+          { label: "Sandbox", side: "bottom", offset: 0 },
+          { label: "Memoria", side: "top", offset: 40 },
+          { label: "Tools", side: "right", offset: -20 },
+        ],
+        gap: 150,                           // distancia entre el nodo central y las cajas
+        timings: {
+          start: 0.2,                       // cuándo empieza la primera caja
+          stagger: 0.35,                    // separación entre cajas
+          draw: 0.3,                        // duración del trazo del cable
+          type: 0.45,                       // duración del tecleo del texto
+          centerRise: 0.5,                  // el central sube ligeramente al entrar
+        },
+        duration: 3.5,
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const root = document.getElementById("root");
+      const pal = PALETTES[PARAMS.palette];
+      for (const k in pal) root.style.setProperty("--" + k, pal[k]);
+      document.documentElement.style.setProperty("--bg", pal.bg);
+      root.dataset.duration = PARAMS.duration;
+
+      // ---- nodo central ----
+      const CX = 640, CY = PARAMS.centerY;
+      const centerEl = document.getElementById("center");
+      centerEl.textContent = PARAMS.center;
+      centerEl.style.top = (CY - 48) + "px";
+      const CHAR_W = 52;                   // ancho aproximado por letra a 96 px (sin medir fuente)
+      const halfW = (PARAMS.center.length * CHAR_W) / 2 + 24;
+      const halfH = 56;
+
+      // ---- cajas y cables ----
+      const NS = "http://www.w3.org/2000/svg";
+      const wiresSvg = document.getElementById("wires");
+      const nodesWrap = document.getElementById("nodes");
+      const NODE_CHAR = 25;                // ancho por letra a 40 px de mono
+      const built = PARAMS.nodes.map((n, i) => {
+        const w = n.label.length * NODE_CHAR + 44, h = 74;
+        let x, y, d;
+        const g = PARAMS.gap, r = 14;
+        // el cable sale del borde del central y llega al borde de la caja, con esquinas en L
+        if (n.side === "left" || n.side === "right") {
+          const sgn = n.side === "left" ? -1 : 1;
+          const x0 = CX + sgn * halfW, x1 = CX + sgn * (halfW + g);
+          y = CY + n.offset - h / 2;
+          x = n.side === "left" ? x1 - w : x1;
+          if (n.offset === 0) d = `M${x0} ${CY} H${x1}`;
+          else {
+            const xm = x0 + sgn * g * 0.4, ys = Math.sign(n.offset);
+            d = `M${x0} ${CY} H${xm - sgn * r} Q${xm} ${CY} ${xm} ${CY + ys * r} V${CY + n.offset - ys * r} Q${xm} ${CY + n.offset} ${xm + sgn * r} ${CY + n.offset} H${x1}`;
+          }
+        } else {
+          const sgn = n.side === "top" ? -1 : 1;
+          const y0 = CY + sgn * halfH, y1 = CY + sgn * (halfH + g);
+          x = CX + n.offset - w / 2;
+          y = n.side === "top" ? y1 - h : y1;
+          if (n.offset === 0) d = `M${CX} ${y0} V${y1}`;
+          else {
+            const ym = y0 + sgn * g * 0.5, xs = Math.sign(n.offset);
+            d = `M${CX} ${y0} V${ym - sgn * r} Q${CX} ${ym} ${CX + xs * r} ${ym} H${CX + n.offset - xs * r} Q${CX + n.offset} ${ym} ${CX + n.offset} ${ym + sgn * r} V${y1}`;
+          }
+        }
+        const track = document.createElementNS(NS, "path");
+        track.setAttribute("d", d); track.setAttribute("class", "track");
+        wiresSvg.appendChild(track);
+        const p = document.createElementNS(NS, "path");
+        p.setAttribute("d", d); p.setAttribute("pathLength", "1"); p.setAttribute("class", "live");
+        wiresSvg.appendChild(p);
+        const box = document.createElement("div");
+        box.className = "node";
+        box.style.cssText = `left:${x}px; top:${y}px; width:${w}px`;
+        // etiqueta fantasma (gris, desde el cuadro 0) y encima la viva que se teclea en tinta
+        const ghost = document.createElement("span"); ghost.className = "ghost"; ghost.textContent = n.label; box.appendChild(ghost);
+        const live = document.createElement("span"); live.className = "live"; box.appendChild(live);
+        const chars = [];
+        for (const c of n.label) { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; live.appendChild(s); chars.push(s); }
+        box.insertAdjacentHTML("beforeend", '<i class="br tr"></i><i class="br bl"></i>');
+        nodesWrap.appendChild(box);
+        return { wire: p, box, chars, w };
+      });
+
+      // ---- timeline ----
+      const tl = gsap.timeline({ paused: true });
+      const T = PARAMS.timings;
+      tl.fromTo(centerEl, { y: 40 }, { y: 0, duration: T.centerRise, ease: "power2.out", immediateRender: false }, 0);
+      built.forEach((b, i) => {
+        const at = T.start + i * T.stagger;
+        tl.to(b.wire, { strokeDashoffset: 0, duration: T.draw, ease: "none" }, at);
+        // al llegar el cable la caja pasa de gris a tinta y el texto se teclea encima del fantasma (por display)
+        const t1 = at + T.draw;
+        tl.to(b.box, { borderColor: pal.ink, duration: 0.15 }, t1);
+        tl.fromTo(b.box, { scale: 0.96 }, { scale: 1, duration: 0.3, ease: "back.out(3)", immediateRender: false }, t1);
+        b.chars.forEach((c, k) => tl.set(c, { display: "inline" }, t1 + k * (T.type / b.chars.length)));
+        tl.to(b.box.querySelectorAll(".br"), { opacity: 1, duration: 0.1 }, t1 + T.type);
+      });
+      tl.to({}, { duration: 0.001 }, PARAMS.duration);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

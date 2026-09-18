@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>window-lower-third</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: var(--bg, #0E1317); }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); }
+      .clip { position: absolute; inset: 0; }
+      /* fondo dibujado: sustituye la foto/plano sobre el que flota la ventana */
+      #bg { width: 1280px; height: 720px; transform-origin: 60% 45%; }
+
+      /* ---- ventana retro ---- */
+      #overlay { font-family: "Geist Mono", monospace; font-weight: 500; color: var(--ink); font-size: 27px; letter-spacing: 0.01em; }
+      #win { position: absolute; transform-origin: left top; }
+      #titlebar {
+        position: relative; height: 78px; box-sizing: border-box;
+        border: 2px solid var(--ink); display: flex; align-items: center; gap: 16px; padding: 0 22px;
+        transform-origin: left center; background: var(--bg);
+      }
+      #titlebar .x { margin-left: auto; font-size: 26px; }
+      #body {
+        box-sizing: border-box; border: 2px solid var(--ink); border-top: none;
+        padding: 14px 22px 10px; line-height: 44px; overflow: hidden; background: var(--bg);
+      }
+      .line { white-space: pre; height: 44px; }
+      /* typewriter: se revela por display, nunca por width:auto */
+      .ch { display: none; white-space: pre; vertical-align: top; }
+      #name .ch { display: inline-block; opacity: 0; }
+      .cursor { display: inline-block; width: 30px; height: 28px; background: var(--accent); vertical-align: -3px; margin-left: 2px; }
+
+      .bracket { position: absolute; width: 16px; height: 16px; border: 2px solid var(--ink); }
+      #leader { position: absolute; left: 0; top: 0; overflow: visible; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="5">
+      <!-- fondo: escritorio con monitor, caricatura plana; respira como una cámara -->
+      <svg id="bg" class="clip" viewBox="0 0 1280 720" data-start="0" data-duration="5" data-track-index="0">
+        <rect width="1280" height="720" fill="var(--bg)" />
+        <rect x="0" y="520" width="1280" height="200" fill="var(--muted)" opacity="0.25" />
+        <g transform="translate(720 140)">
+          <rect x="18" y="18" width="420" height="280" fill="var(--muted)" opacity="0.5" />
+          <rect x="0" y="0" width="420" height="280" fill="var(--bg)" stroke="var(--ink)" stroke-width="6" />
+          <rect x="24" y="24" width="372" height="232" fill="var(--accent)" opacity="0.18" />
+          <rect x="40" y="56" width="180" height="14" fill="var(--accent)" />
+          <rect x="40" y="90" width="260" height="14" fill="var(--ink)" opacity="0.6" />
+          <rect x="40" y="124" width="120" height="14" fill="var(--accent2)" />
+          <rect x="180" y="280" width="60" height="70" fill="var(--ink)" />
+          <rect x="120" y="350" width="180" height="16" fill="var(--ink)" />
+        </g>
+        <g transform="translate(420 470)">
+          <rect x="8" y="8" width="180" height="30" fill="var(--muted)" opacity="0.5" />
+          <rect x="0" y="0" width="180" height="30" fill="var(--accent2)" stroke="var(--ink)" stroke-width="4" />
+        </g>
+      </svg>
+
+      <section id="overlay" class="clip" data-start="0" data-duration="5" data-track-index="1">
+        <div id="win">
+          <!-- brackets fuera del cuadro; viajan con la ventana -->
+          <div class="bracket" style="left:-14px; bottom:-14px; border-top:none; border-right:none"></div>
+          <div class="bracket" style="right:-14px; top:-14px; border-left:none; border-bottom:none"></div>
+          <!-- línea guía sale de la esquina inferior derecha -->
+          <svg id="leader" width="600" height="600" viewBox="0 0 600 600">
+            <line id="leader-line" stroke="var(--ink)" stroke-width="1.5" />
+            <path id="leader-end" fill="none" stroke="var(--ink)" stroke-width="2" />
+          </svg>
+          <div id="titlebar">
+            <svg width="26" height="26" viewBox="0 0 14 14" fill="none" stroke="var(--ink)" stroke-width="1.1">
+              <polygon points="7,1 12.5,4 12.5,10 7,13 1.5,10 1.5,4" /><polygon points="7,4 9.5,5.5 9.5,8.5 7,10 4.5,8.5 4.5,5.5" />
+            </svg>
+            <span id="name" class="tw"></span>
+            <span class="x">×</span>
+          </div>
+          <div id="body"></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",                 // "fixtergeek" | "easybits"
+        title: "HÉCTOR BLISS",                 // barra de título, entra con tracking que se cierra
+        lines: [                               // renglones del cuerpo; el primero lleva cursor
+          "fundador de FixterGeek",
+          "IMPARTE",
+          "↳ Sistemas agénticos",
+          "↳ Claude Code",
+        ],
+        position: { x: 80, y: 285, width: 425 }, // dónde nace la ventana
+        drift: { x: 40, y: -85, scale: 1.06, duration: 4.5 }, // deriva lenta de toda la ventana
+        firstLineTyping: 1.1,                  // s que tarda el primer renglón (los demás van rápido)
+        lineEvery: 0.6,                        // s entre renglones 2..n
+        leader: { x2: 542, y2: 330 },          // hasta dónde se dibuja la línea guía (rel. a la ventana)
+        cameraBreath: 1.018,                   // escala final del fondo
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const root = document.getElementById("root");
+      for (const [k, v] of Object.entries(PALETTES[PARAMS.palette])) root.style.setProperty(`--${k}`, v);
+      document.body.style.setProperty("--bg", PALETTES[PARAMS.palette].bg);
+
+      // duración total derivada de los parámetros
+      const LINE_H = 44, PAD = 24, BAR = 78;
+      const tBody = 0.75;
+      const tLine = (i) => (i === 0 ? tBody + 0.15 : tBody + 0.15 + PARAMS.firstLineTyping + 0.9 + (i - 1) * PARAMS.lineEvery);
+      // ojo: el CLI lee el data-duration ESTÁTICO del HTML; debe coincidir con este cálculo
+      const DUR = Math.max(3, tLine(PARAMS.lines.length - 1) + 0.9);
+      root.dataset.duration = DUR;
+      document.querySelectorAll("[data-track-index]").forEach((el) => (el.dataset.duration = DUR));
+
+      // geometría
+      const win = document.getElementById("win");
+      Object.assign(win.style, { left: PARAMS.position.x + "px", top: PARAMS.position.y + "px", width: PARAMS.position.width + "px" });
+      const lineEl = document.getElementById("leader-line");
+      const cornerX = PARAMS.position.width, cornerY = BAR + LINE_H + PAD + 4;
+      lineEl.setAttribute("x1", cornerX); lineEl.setAttribute("y1", cornerY);
+      lineEl.setAttribute("x2", cornerX); lineEl.setAttribute("y2", cornerY);
+      document.getElementById("leader-end").setAttribute("d", `M${PARAMS.leader.x2 - 6} ${PARAMS.leader.y2 - 8} v12 h12`);
+
+      // texto → spans por carácter
+      const split = (el, text) => {
+        el.textContent = "";
+        for (const c of text) { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; el.appendChild(s); }
+      };
+      split(document.getElementById("name"), PARAMS.title);
+      const body = document.getElementById("body");
+      const lineSpans = PARAMS.lines.map((t, i) => {
+        const line = document.createElement("div"); line.className = "line";
+        const tw = document.createElement("span"); tw.className = "tw"; split(tw, t); line.appendChild(tw);
+        if (i === 0) { const cur = document.createElement("span"); cur.className = "cursor"; cur.id = "cursor1"; line.appendChild(cur); }
+        body.appendChild(line); return tw;
+      });
+
+      const tl = gsap.timeline({ paused: true });
+      function typewrite(el, at, dur) {
+        const chars = el.querySelectorAll(".ch");
+        const step = dur / chars.length;
+        chars.forEach((c, i) => tl.set(c, { display: "inline-block" }, at + i * step));
+      }
+
+      // fotograma 0: fondo, brackets y ventana con barra ya visible (nunca vacío)
+      gsap.set("#titlebar", { autoAlpha: 0, scaleX: 0.3 });
+      gsap.set("#body", { autoAlpha: 0, height: 0 });
+      gsap.set("#cursor1", { autoAlpha: 0 });
+      gsap.set("#leader-end", { autoAlpha: 0 });
+
+      // respiración de cámara sobre el fondo
+      tl.fromTo("#bg", { scale: 1 }, { scale: PARAMS.cameraBreath, duration: DUR, ease: "none" }, 0);
+      // deriva de toda la ventana
+      tl.fromTo("#win", { x: 0, y: 0, scale: 1 }, { x: PARAMS.drift.x, y: PARAMS.drift.y, scale: PARAMS.drift.scale, duration: PARAMS.drift.duration, ease: "power1.out" }, 0.25);
+
+      // 0.25 s: barra se estira; el nombre entra con tracking abierto que se cierra
+      tl.to("#titlebar", { autoAlpha: 1, scaleX: 1, duration: 0.22, ease: "power3.out" }, 0.25);
+      tl.fromTo("#name .ch", { opacity: 0, marginRight: 14 }, { opacity: 1, marginRight: 0, duration: 0.5, ease: "power3.out", stagger: 0.025 }, 0.32);
+
+      // cuerpo se abre con rebote y escribe con cursor
+      const h = (n) => n * LINE_H + PAD;
+      tl.to("#body", { autoAlpha: 1, height: h(1), duration: 0.28, ease: "back.out(1.4)" }, tBody);
+      tl.set("#cursor1", { autoAlpha: 1 }, tBody + 0.07);
+      typewrite(lineSpans[0], tLine(0), PARAMS.firstLineTyping);
+      tl.to("#cursor1", { autoAlpha: 0, duration: 0.05 }, tLine(0) + PARAMS.firstLineTyping + 0.05);
+      tl.set("#cursor1", { display: "none" }, tLine(0) + PARAMS.firstLineTyping + 0.1);
+
+      // línea guía se dibuja desde la esquina + marca al final
+      const tLeader = tLine(0) + PARAMS.firstLineTyping;
+      tl.to("#leader-line", { attr: { x2: PARAMS.leader.x2, y2: PARAMS.leader.y2 }, duration: 0.55, ease: "power2.inOut" }, tLeader);
+      tl.to("#leader-end", { autoAlpha: 1, duration: 0.1 }, tLeader + 0.55);
+
+      // renglones 2..n: el cuerpo crece con rebote y cada uno se escribe rápido
+      for (let i = 1; i < lineSpans.length; i++) {
+        tl.to("#body", { height: h(i + 1), duration: 0.22, ease: "back.out(1.4)" }, tLine(i) - 0.08);
+        typewrite(lineSpans[i], tLine(i), 0.25);
+      }
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

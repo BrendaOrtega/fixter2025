@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>motion-lab — particle-collapse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=block" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #0E1317; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      /* retícula de puntos de fondo: tenue, para que el cuadro 0 no sea un fondo plano */
+      #dotgrid { position: absolute; left: 0; top: 0; }
+      #dotgrid circle { fill: var(--muted); opacity: 0.55; }
+      #frame { fill: none; stroke: var(--muted); stroke-width: 2; }
+      #tag { position: absolute; left: 44px; top: 36px; font-family: "Geist Mono", monospace; font-size: 20px; letter-spacing: 0.1em; color: var(--muted); }
+      #particles { position: absolute; left: 0; top: 0; }
+      #particles circle { fill: var(--accent); }
+      /* palabra: cada letra es un span; la del glifo nace donde estaban los puntos */
+      #word {
+        position: absolute; left: 0; width: 1280px; top: 0; text-align: center;
+        font-weight: 500; letter-spacing: -0.04em; color: var(--ink); line-height: 1; white-space: pre;
+      }
+      #word .ch { display: inline-block; opacity: 0; }
+      #word .ch.glyph { color: var(--accent); }
+      #caption {
+        position: absolute; left: 0; width: 1280px; text-align: center;
+        font-family: "Geist Mono", monospace; font-size: 26px; letter-spacing: 0.08em; color: var(--muted);
+      }
+      #caption .ch { visibility: hidden; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="4">
+      <svg id="dotgrid" class="clip" width="1280" height="720" viewBox="0 0 1280 720"><rect id="frame" x="24" y="24" width="1232" height="672" rx="10" /></svg>
+      <div id="tag" class="clip"></div>
+      <svg id="particles" class="clip" width="1280" height="720" viewBox="0 0 1280 720"></svg>
+      <div id="word" class="clip"></div>
+      <div id="caption" class="clip"></div>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",     // "fixtergeek" | "easybits"
+        word: "Ghosty",            // palabra final
+        glyphIndex: 2,             // índice de la letra a la que colapsan los puntos (mejor una redonda: o, e, a, G)
+        caption: "agente en caja", // renglón mono debajo (vacío = sin renglón)
+        tag: "FIXTERGEEK / 2026",   // etiqueta mono arriba a la izquierda (presente desde el cuadro 0)
+        fontSize: 190,             // px de la palabra
+        wordY: 250,                // top de la palabra
+        count: 700,                // partículas
+        seed: 20260917,            // semilla del PRNG
+        spread: 230,               // radio medio del anillo inicial (px)
+        timings: {
+          collapse: 0.5,           // cuándo arranca el colapso (s)
+          collapseDur: 0.55,       // duración del viaje al contorno
+          reveal: 1.35,            // cuándo aparece la letra y se abre el resto de la palabra
+          revealDur: 0.5,          // duración de la apertura
+          caption: 2.0,            // cuándo se escribe el renglón mono
+          total: 4,                // duración total
+        },
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const root = document.getElementById("root");
+      const PAL = PALETTES[PARAMS.palette];
+      for (const k in PAL) root.style.setProperty("--" + k, PAL[k]);
+      document.body.style.background = PAL.bg;
+      root.dataset.duration = PARAMS.timings.total;
+
+      // PRNG con semilla fija: el azar se repite cuadro a cuadro
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(PARAMS.seed);
+      const SVG = "http://www.w3.org/2000/svg";
+      const T = PARAMS.timings;
+
+      // retícula de puntos: el fondo nunca es plano
+      const dotgrid = document.getElementById("dotgrid");
+      for (let x = 60; x < 1240; x += 40) for (let y = 60; y < 680; y += 40) {
+        const c = document.createElementNS(SVG, "circle");
+        c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 2);
+        dotgrid.appendChild(c);
+      }
+
+      // palabra en spans
+      const wordEl = document.getElementById("word");
+      wordEl.style.fontSize = PARAMS.fontSize + "px";
+      wordEl.style.top = PARAMS.wordY + "px";
+      const chars = [...PARAMS.word].map((ch, i) => {
+        const s = document.createElement("span");
+        s.className = "ch" + (i === PARAMS.glyphIndex ? " glyph" : "");
+        s.textContent = ch; wordEl.appendChild(s); return s;
+      });
+      document.getElementById("tag").textContent = PARAMS.tag;
+      const capEl = document.getElementById("caption");
+      capEl.style.top = PARAMS.wordY + PARAMS.fontSize + 40 + "px";
+      const capChars = [...PARAMS.caption].map((ch) => {
+        const s = document.createElement("span"); s.className = "ch";
+        s.innerHTML = ch === " " ? "&nbsp;" : ch; capEl.appendChild(s); return s;
+      });
+
+      // contorno del glifo: se rasteriza en un canvas fuera de pantalla y se toman los píxeles de borde
+      function glyphContour(span) {
+        const rr = root.getBoundingClientRect(), r = span.getBoundingClientRect();
+        const left = r.left - rr.left, top = r.top - rr.top;
+        // lienzo con holgura de medio em por lado: el glifo nunca se recorta
+        const pad = Math.ceil(PARAMS.fontSize * 0.5);
+        const w = Math.ceil(r.width) + pad * 2, h = Math.ceil(r.height) + pad * 2;
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        const ctx = cv.getContext("2d", { willReadFrequently: true });
+        ctx.font = `500 ${PARAMS.fontSize}px Inter`;
+        ctx.textBaseline = "alphabetic"; ctx.fillStyle = "#fff";
+        // con line-height:1 el navegador centra el área de contenido en la caja: la línea base queda en
+        // top + alto/2 + (ascenso - descenso)/2 — misma fórmula aquí para que los puntos calcen con la letra
+        const m = ctx.measureText(span.textContent);
+        const baseline = pad + r.height / 2 + (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+        ctx.fillText(span.textContent, pad, baseline);
+        const px = ctx.getImageData(0, 0, w, h).data;
+        const on = (x, y) => x >= 0 && y >= 0 && x < w && y < h && px[(y * w + x) * 4 + 3] > 128;
+        const pts = [];
+        for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+          if (on(x, y) && (!on(x - 1, y) || !on(x + 1, y) || !on(x, y - 1) || !on(x, y + 1))) pts.push([left + x - pad, top + y - pad]);
+        }
+        // centro del glifo = centro de su tinta
+        let sx = 0, sy = 0; pts.forEach((p) => { sx += p[0]; sy += p[1]; });
+        return { pts, cx: sx / pts.length, cy: sy / pts.length };
+      }
+
+      const tl = gsap.timeline({ paused: true });
+
+      function build() {
+        const { pts, cx, cy } = glyphContour(chars[PARAMS.glyphIndex]);
+        const svg = document.getElementById("particles");
+        // partículas: anillo grueso alrededor del centro del glifo → punto del contorno en la misma dirección
+        for (let i = 0; i < PARAMS.count; i++) {
+          const a = rand() * Math.PI * 2;
+          const rad = PARAMS.spread * (0.65 + Math.pow(rand(), 0.7) * 0.7);
+          const x0 = cx + Math.cos(a) * rad, y0 = cy + Math.sin(a) * rad * 0.9;
+          // destino: el punto del contorno más cercano en ángulo (sin cruces: cada punto viaja radialmente)
+          let best = pts[0], bd = 1e9;
+          const sample = 40;
+          for (let k = 0; k < sample; k++) {
+            const p = pts[Math.floor(rand() * pts.length)];
+            // diferencia angular envuelta a [0, π]
+            let da = Math.atan2(p[1] - cy, p[0] - cx) - a;
+            da = Math.abs(((da % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+            const d = da;
+            if (d < bd) { bd = d; best = p; }
+          }
+          const c = document.createElementNS(SVG, "circle");
+          c.setAttribute("cx", x0.toFixed(1)); c.setAttribute("cy", y0.toFixed(1)); c.setAttribute("r", (3 + rand() * 1.6).toFixed(1));
+          svg.appendChild(c);
+          tl.to(c, { attr: { cx: best[0] + (rand() - 0.5) * 2, cy: best[1] + (rand() - 0.5) * 2, r: 2.6 }, duration: T.collapseDur, ease: "power2.inOut" }, T.collapse + rand() * 0.12);
+        }
+        // los puntos se apagan y la letra ocupa su lugar
+        tl.to(svg, { opacity: 0, duration: 0.15, ease: "none" }, T.reveal);
+        tl.set(chars[PARAMS.glyphIndex], { opacity: 1 }, T.reveal);
+        // el resto de letras nace desde el glifo y viaja a su sitio (nunca letter-spacing)
+        const rr = root.getBoundingClientRect();
+        chars.forEach((s, i) => {
+          if (i === PARAMS.glyphIndex) return;
+          const b = s.getBoundingClientRect();
+          const scx = b.left - rr.left + b.width / 2;
+          const dist = Math.abs(i - PARAMS.glyphIndex);
+          tl.set(s, { opacity: 1 }, T.reveal + 0.02 + dist * 0.05);
+          tl.fromTo(s, { x: (cx - scx) * 0.35 }, { x: 0, duration: T.revealDur, ease: "power3.out", immediateRender: false }, T.reveal + 0.02 + dist * 0.05);
+        });
+        // renglón mono en typewriter (por display/visibility, nunca por width)
+        capChars.forEach((s, k) => tl.set(s, { visibility: "visible" }, T.caption + k * 0.035));
+        tl.set({}, {}, T.total); // fija la duración total
+        window.__timelines = window.__timelines || {};
+        window.__timelines["main"] = tl;
+      }
+      document.fonts.ready.then(build);
+    </script>
+  </body>
+</html>

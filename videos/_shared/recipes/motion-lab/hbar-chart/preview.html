@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280, height=720" />
+<title>hbar-chart</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; }
+  body { font-family: Inter, system-ui, sans-serif; }
+  #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); color: var(--ink); }
+  .mono { font-family: "Geist Mono", ui-monospace, monospace; }
+  #panel { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  #frame { position: absolute; left: 20px; top: 20px; width: 1240px; height: 680px; border: 2px solid var(--muted); }
+  #title { position: absolute; left: 60px; top: 56px; font-size: 40px; font-weight: 700; letter-spacing: -1.2px; white-space: nowrap; }
+  #title .w { display: inline-block; margin-right: 11px; }
+  #unit { position: absolute; right: 60px; top: 70px; font-size: 16px; color: var(--muted); }
+  .row { position: absolute; left: 60px; width: 1160px; height: 54px; font-size: 19px; font-weight: 500; }
+  .row .sep { position: absolute; left: 0; right: 0; top: 0; border-top: 2px dotted var(--muted); opacity: .55; }
+  /* cajita de grupo: fondo de acento, texto del fondo, sombra dura */
+  .row .group { position: absolute; left: 0; top: 14px; padding: 0 8px; line-height: 26px; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 15px; letter-spacing: .5px; box-shadow: 3px 3px 0 var(--ink); }
+  .row .label { position: absolute; left: 150px; top: 16px; line-height: 22px; white-space: nowrap; }
+  .row .bar { position: absolute; top: 12px; height: 30px; background: var(--accent2); transform-origin: 0 50%; }
+  .row .val { position: absolute; top: 16px; line-height: 22px; white-space: nowrap; }
+  #axis { position: absolute; left: 60px; width: 1160px; top: 0; height: 40px; }
+  #axis .base { position: absolute; left: 0; right: 0; top: 0; border-top: 2px dotted var(--muted); opacity: .55; }
+  #axis .gl { position: absolute; border-left: 2px dotted var(--muted); opacity: .35; }
+  #axis .tk { position: absolute; top: 10px; font-size: 13px; color: var(--muted); transform: translateX(-50%); }
+  #dim { position: absolute; inset: 0; background: var(--bg); opacity: 0; }
+  /* resaltado: la fila ganadora vuelve a dibujarse encima, enmarcada */
+  #hl { position: absolute; left: 44px; width: 1192px; height: 56px; background: var(--bg); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--accent); transform-origin: 50% 50%; }
+  #hl .cr { position: absolute; width: 14px; height: 14px; border: 3px solid var(--ink); }
+  #hl .cr.tr { right: -20px; top: -3px; border-left: 0; border-bottom: 0; }
+  #hl .cr.bl { left: -20px; bottom: -3px; border-right: 0; border-top: 0; }
+  #hl .txt { position: absolute; left: 16px; top: 12px; font-size: 19px; font-weight: 700; white-space: nowrap; }
+  #hl .txt .g { display: inline-block; padding: 0 8px; line-height: 26px; background: var(--accent); color: var(--bg); font-size: 15px; margin-right: 32px; }
+  #hl .txt .v { margin-left: 36px; color: var(--accent); }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="3.9">
+  <div id="panel">
+    <div id="frame"></div>
+    <div id="title"></div>
+    <div id="unit"></div>
+    <div id="rows"></div>
+    <div id="axis"><div class="base"></div></div>
+    <div id="dim"></div>
+    <div id="hl"><span class="cr tr"></span><span class="cr bl"></span><div class="txt mono"></div></div>
+  </div>
+</div>
+<script>
+  // Parámetros: TODO lo que cambia entre usos vive aquí
+  const PARAMS = {
+    palette: "fixtergeek",              // "fixtergeek" | "easybits"
+    title: "Tasa de error en salida estructurada",
+    unit: "%",                          // sufijo del valor y de los ticks
+    decimals: 2,                        // decimales del contador
+    max: 10,                            // valor del último tick (escala del eje)
+    ticks: [0, 5, 10],                  // marcas del eje
+    // group = etiqueta de la cajita (vacío = misma casa que la fila anterior)
+    rows: [
+      { group: "Ghosty",   label: "Ghosty 2.1",     value: 0.12 },
+      { group: "Formmy",   label: "Formmy Voice",   value: 0.49 },
+      { group: "",         label: "Formmy Chat",    value: 1.93 },
+      { group: "EasyBits", label: "Sandbox agent",  value: 3.76 },
+      { group: "",         label: "Sandbox worker", value: 7.99 },
+      { group: "Otros",    label: "Modelo A",       value: 2.38 },
+      { group: "",         label: "Modelo B",       value: 1.92 },
+      { group: "",         label: "Modelo C",       value: 9.6 },
+    ],
+    highlight: 0,                       // índice de la fila que se enmarca al final (-1 = ninguna)
+    timings: { zoomIn: 0.7, rowStagger: 0.05, barDur: 1.2, highlightAt: 2.4, hold: 1.2 },
+  };
+  const PALETTES = {
+    fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+    easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+  };
+  const root = document.getElementById("root");
+  const pal = PALETTES[PARAMS.palette];
+  for (const k in pal) root.style.setProperty("--" + k, pal[k]);
+  document.body.style.background = pal.bg;
+
+  // ---- geometría: la barra arranca en x 380 y el eje termina en x 1100 (dentro de .row) ----
+  // la barra máxima deja 100 px para su valor a la derecha
+  const BAR_X = 380, BAR_W = 620, ROW_Y0 = 150, ROW_H = 54;
+  const pxPer = BAR_W / PARAMS.max;
+  const fmt = (v) => v.toFixed(PARAMS.decimals) + PARAMS.unit;
+
+  document.getElementById("title").innerHTML = PARAMS.title.split(" ").map((w) => `<span class="w">${w}</span>`).join("");
+  document.getElementById("unit").textContent = PARAMS.unit ? `valores en ${PARAMS.unit} · menor es mejor` : "menor es mejor";
+
+  const rowsEl = document.getElementById("rows");
+  PARAMS.rows.forEach((r, i) => {
+    const el = document.createElement("div");
+    el.className = "row"; el.id = "row" + i; el.style.top = ROW_Y0 + i * ROW_H + "px";
+    const w = Math.max(2, r.value * pxPer);
+    el.innerHTML = `<div class="sep"></div>${r.group ? `<span class="group">${r.group}</span>` : ""}<span class="label">${r.label}</span>` +
+      `<div class="bar" style="left:${BAR_X}px;width:${w}px"></div>` +
+      `<span class="val mono" style="left:${BAR_X + w + 10}px">${fmt(0)}</span>`;
+    rowsEl.appendChild(el);
+  });
+  // eje bajo la última fila, con guías verticales
+  const axisY = ROW_Y0 + PARAMS.rows.length * ROW_H;
+  const axis = document.getElementById("axis");
+  axis.style.top = axisY + "px";
+  PARAMS.ticks.forEach((t) => {
+    const x = BAR_X + t * pxPer;
+    axis.insertAdjacentHTML("beforeend", `<div class="gl" style="left:${x}px;top:${-(axisY - ROW_Y0)}px;height:${axisY - ROW_Y0 + 2}px"></div><span class="tk mono" style="left:${x}px">${t}${PARAMS.unit}</span>`);
+  });
+  // tarjeta de resaltado sobre la fila elegida
+  const H = PARAMS.highlight, hl = document.getElementById("hl");
+  if (H >= 0) {
+    const r = PARAMS.rows[H];
+    // el grupo de la fila: el suyo o el heredado de arriba
+    let g = ""; for (let i = H; i >= 0 && !g; i--) g = PARAMS.rows[i].group;
+    hl.style.top = ROW_Y0 + H * ROW_H - 1 + "px";
+    hl.querySelector(".txt").innerHTML = `<span class="g">${g}</span>${r.label}<span class="v">${fmt(r.value)}</span>`;
+  } else hl.style.display = "none";
+
+  // ---- timeline única y pausada ----
+  const T = PARAMS.timings;
+  const tl = gsap.timeline({ paused: true });
+  // cuadro 0 completo: panel al 76 % con marco, título y filas ya visibles; las barras crecen
+  gsap.set("#panel", { scale: 0.76 });
+  gsap.set(".row .bar", { scaleX: 0 });
+  gsap.set("#hl", { opacity: 0, scale: 0.9 });
+  tl.to("#panel", { scale: 1, duration: T.zoomIn, ease: "power2.out" }, 0)
+    .from("#title .w", { x: 24, duration: 0.3, stagger: 0.06, ease: "power2.out", immediateRender: false }, 0.02)
+    .from(".row", { opacity: 0, x: -12, duration: 0.25, stagger: T.rowStagger, ease: "power2.out", immediateRender: false }, 0.15);
+  PARAMS.rows.forEach((r, i) => {
+    const o = { n: 0 }; const val = document.querySelector(`#row${i} .val`);
+    const t0 = 0.35 + i * (T.rowStagger + 0.02);
+    // el valor viaja pegado a la punta de la barra mientras cuenta
+    const xEnd = parseFloat(val.style.left), xFrom = Math.min(xEnd, BAR_X + 10);
+    const place = () => { val.textContent = fmt(o.n); val.style.left = xFrom + (xEnd - xFrom) * (o.n / (r.value || 1)) + "px"; };
+    place();
+    tl.to(`#row${i} .bar`, { scaleX: 1, duration: T.barDur, ease: "power3.out" }, t0);
+    tl.to(o, { n: r.value, duration: T.barDur, ease: "power3.out", onUpdate: place }, t0);
+  });
+  if (H >= 0) {
+    tl.to("#dim", { opacity: 0.55, duration: 0.25 }, T.highlightAt)
+      .to(`#row${H}`, { opacity: 0, duration: 0.1 }, T.highlightAt)
+      .to("#hl", { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, T.highlightAt);
+  }
+  const DUR = (H >= 0 ? T.highlightAt + 0.3 : 0.35 + PARAMS.rows.length * (T.rowStagger + 0.02) + T.barDur) + T.hold;
+  // data-duration del #root debe coincidir con DUR (el renderizador lee el atributo estático)
+  if (Math.abs(parseFloat(root.dataset.duration) - DUR) > 0.05) console.warn("data-duration ≠ " + DUR.toFixed(2));
+  tl.to({}, { duration: 0.01 }, DUR - 0.01);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["main"] = tl;
+</script>
+</body>
+</html>

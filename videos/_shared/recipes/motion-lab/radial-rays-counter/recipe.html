@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>motion-lab — radial-rays-counter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: var(--bg, #0E1317); }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
+      #rays { position: absolute; left: 0; top: 0; }
+      #speed { position: absolute; left: 0; right: 0; top: 280px; text-align: center; font-size: 132px; font-weight: 500; letter-spacing: -4px; line-height: 150px; white-space: nowrap; }
+      #speed .n { display: inline-block; font-family: "Geist Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; color: var(--accent); }
+      #speed .suffix { color: var(--ink); }
+      #label { position: absolute; left: 0; right: 0; top: 440px; text-align: center; font-size: 40px; letter-spacing: -1px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="3">
+      <svg id="rays" width="1280" height="720" viewBox="0 0 1280 720"></svg>
+      <div id="speed"><span class="n" id="num">0</span><span class="suffix" id="suffix"></span></div>
+      <div id="label"></div>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",              // "fixtergeek" | "easybits"
+        from: 0,                            // número inicial
+        to: 240,                            // número final
+        suffix: " tools",                   // sufijo pegado al número
+        label: "listas en la caja",         // texto chico bajo el número
+        rayCount: 160,                      // rayos
+        seed: 20260917,                     // semilla del PRNG
+        timings: {
+          count: 1.25,                      // duración del conteo
+          raySpread: 0.45,                  // ventana de arranque de los rayos (stagger aleatorio)
+          rayDur: 0.6,                      // duración base de cada rayo
+          punch: 0.6,                       // escala del número al entrar
+        },
+        duration: 3,
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const root = document.getElementById("root");
+      const pal = PALETTES[PARAMS.palette];
+      for (const k in pal) root.style.setProperty("--" + k, pal[k]);
+      document.documentElement.style.setProperty("--bg", pal.bg);
+      root.dataset.duration = PARAMS.duration;
+
+      // PRNG con semilla fija (mulberry32)
+      function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+      const rnd = mulberry32(PARAMS.seed);
+      const NS = "http://www.w3.org/2000/svg";
+
+      document.getElementById("suffix").textContent = PARAMS.suffix;
+      document.getElementById("label").textContent = PARAMS.label;
+
+      // --- rayos: finos, desde un anillo alrededor del número hacia afuera ---
+      // cada rayo trae una pista gris fija (cuadro 0 completo) y encima el trazo vivo que se estira
+      const CX = 640, CY = 360;
+      const svg = document.getElementById("rays");
+      const rays = [];
+      for (let i = 0; i < PARAMS.rayCount; i++) {
+        const a = rnd() * Math.PI * 2;
+        const r0 = 200 + rnd() * 120, r1 = r0 + 200 + rnd() * 700;
+        const x1 = CX + Math.cos(a) * r0, y1 = CY + Math.sin(a) * r0, x2 = CX + Math.cos(a) * r1, y2 = CY + Math.sin(a) * r1;
+        const len = r1 - r0;
+        const mk = (stroke, w, op) => { const l = document.createElementNS(NS, "line"); l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2); l.setAttribute("stroke", stroke); l.setAttribute("stroke-width", w); l.setAttribute("stroke-linecap", "round"); l.setAttribute("opacity", op); svg.appendChild(l); return l; };
+        mk(pal.muted, "0.8", "0.35");
+        const dashed = rnd() < 0.45;
+        const live = mk(dashed ? pal.accent2 : pal.accent, (1 + rnd() * 1.8).toFixed(2), "0");
+        if (dashed) live.setAttribute("stroke-dasharray", `${(3 + rnd() * 4).toFixed(1)} ${(6 + rnd() * 8).toFixed(1)}`);
+        // sólido: linecap butt, porque con round un dash de largo 0 pinta un punto en el cuadro 0
+        else { live.setAttribute("stroke-dasharray", `${len} ${len}`); live.setAttribute("stroke-linecap", "butt"); }
+        rays.push({ el: live, dashed, len, delay: rnd() * PARAMS.timings.raySpread, dur: PARAMS.timings.rayDur * (0.6 + rnd() * 0.8) });
+      }
+
+      const tl = gsap.timeline({ paused: true });
+      const T = PARAMS.timings;
+      rays.forEach((r) => {
+        const at = r.delay;
+        if (r.dashed) {
+          // los punteados corren hacia afuera y parpadean (repeat finito)
+          tl.fromTo(r.el, { strokeDashoffset: 0 }, { strokeDashoffset: -r.len, duration: T.count + 0.3, ease: "none" }, 0);
+          tl.fromTo(r.el, { opacity: 0 }, { opacity: 0.35 + rnd() * 0.5, duration: 0.15, repeat: 3, yoyo: true, repeatDelay: 0.1 + rnd() * 0.2 }, at);
+        } else {
+          // los sólidos se estiran desde el centro y se apagan
+          tl.fromTo(r.el, { strokeDashoffset: r.len, opacity: 0.6 + rnd() * 0.4 }, { strokeDashoffset: -r.len, duration: r.dur, ease: "power1.in" }, at);
+          tl.to(r.el, { opacity: 0, duration: 0.15 }, at + r.dur - 0.1);
+        }
+      });
+
+      // contador from → to (tween sobre un objeto, determinista)
+      const num = document.getElementById("num"); const cnt = { v: PARAMS.from };
+      num.textContent = String(PARAMS.from);
+      tl.to(cnt, { v: PARAMS.to, duration: T.count, ease: "power2.out", onUpdate() { num.textContent = String(Math.round(cnt.v)); } }, 0.05);
+      tl.fromTo("#speed", { scale: 0.92 }, { scale: 1, duration: T.punch, ease: "back.out(2)", immediateRender: false }, 0);
+      tl.fromTo("#label", { y: 12 }, { y: 0, duration: 0.4, ease: "power2.out", immediateRender: false }, 0.3);
+      tl.to({}, { duration: 0.001 }, PARAMS.duration);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

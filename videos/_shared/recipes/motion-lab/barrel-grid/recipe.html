@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>motion-lab — barrel-grid</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=block" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: #0E1317; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      .mono { font-family: "Geist Mono", monospace; }
+      /* panel: la malla nunca va del color del fondo; lleva placa tintada y borde */
+      #panel { position: absolute; left: 700px; top: 40px; width: 540px; height: 640px; border: 3px solid var(--muted); border-radius: 12px; box-sizing: border-box; background: var(--panel); transform-origin: 0% 50%; }
+      #panel::before { content: ""; position: absolute; left: 14px; top: 14px; right: 14px; bottom: 14px; border: 1px dashed var(--muted); border-radius: 6px; opacity: 0.6; }
+      #grid { position: absolute; left: 0; top: 0; overflow: visible; }
+      #grid rect { stroke: var(--bg); stroke-width: 2; }
+      /* contador estilo etiqueta con esquinas */
+      #counter { position: absolute; left: 24px; bottom: 24px; background: var(--ink); color: var(--bg); font-size: 22px; padding: 10px 22px; border-radius: 4px; box-shadow: 6px 6px 0 var(--muted); transform-origin: 0% 100%; }
+      #counter::before, #counter::after { content: ""; position: absolute; width: 8px; height: 8px; border: 1.5px solid var(--bg); }
+      #counter::before { left: 6px; top: 6px; border-right: none; border-bottom: none; }
+      #counter::after { right: 6px; bottom: 6px; border-left: none; border-top: none; }
+      /* titular a la izquierda, palabra por palabra */
+      #headline { position: absolute; left: 60px; top: 150px; width: 600px; font-size: 76px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink); }
+      #headline .w { display: inline-block; margin-right: 0.22em; }
+      #headline .w.accent { color: var(--accent); }
+      #label { position: absolute; left: 60px; top: 420px; display: inline-block; border: 2px solid var(--accent); color: var(--accent); font-size: 22px; letter-spacing: 0.08em; padding: 10px 18px; border-radius: 4px; white-space: nowrap; overflow: hidden; }
+      #label .ch { visibility: hidden; }
+      #leader { position: absolute; left: 0; top: 0; overflow: visible; }
+      #leader path { fill: none; stroke: var(--accent); stroke-width: 3; }
+      #leader circle { fill: var(--accent); }
+      #kicker { position: absolute; left: 60px; top: 88px; font-size: 20px; letter-spacing: 0.12em; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="5">
+      <div id="kicker" class="mono"></div>
+      <div id="headline"></div>
+      <div id="label" class="mono"></div>
+      <svg id="leader" width="1280" height="720" viewBox="0 0 1280 720"><path id="leader-path" d="M 380 445 C 520 445, 560 520, 700 520" /><circle id="leader-dot" cx="700" cy="520" r="6" /></svg>
+      <div id="panel">
+        <svg id="grid" width="540" height="640" viewBox="0 0 540 640"></svg>
+        <div id="counter" class="mono"><span id="count">0</span>/<span id="total">0</span> <span id="counter-word">LISTAS</span></div>
+      </div>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",       // "fixtergeek" | "easybits"
+        rows: 6, cols: 6,            // malla n×m
+        mode: "sequential",          // "sequential" (una por una, con contador) | "parallel" (todas a la vez)
+        bulge: 0.12,                 // distorsión de barril: 0 = malla plana, 0.2 = lente marcada
+        cell: 62,                    // lado máximo de celda (px, al centro)
+        pitch: 76,                   // separación entre centros (px, al centro)
+        seed: 7,                     // semilla del PRNG (orden aleatorio en modo parallel)
+        headline: ["Cada", "tarea", "en", "su", "sandbox"], // titular por palabras
+        accentWord: 4,               // índice de la palabra con color de acento (-1 = ninguna)
+        kicker: "TALLER · SISTEMAS AGÉNTICOS",
+        label: "Ejecución secuencial",// etiqueta mono junto a la línea guía
+        counterWord: "LISTAS",       // palabra del contador
+        timings: {
+          panel: 0.2,                // entra el panel (s)
+          words: [0.3, 0.45, 0.55, 0.65, 0.8], // aparición de cada palabra del titular
+          label: 0.9,                // etiqueta + línea guía
+          fill: 1.3,                 // arranca el llenado
+          fillDur: 2.6,              // duración total del llenado (sequential: repartido; parallel: 0.35 s de tanda)
+          total: 5,
+        },
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E", panel: "#16202A", empty: "#2A3942" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99", panel: "#15131f", empty: "#2b2740" },
+      };
+      const root = document.getElementById("root");
+      const PAL = PALETTES[PARAMS.palette];
+      for (const k in PAL) root.style.setProperty("--" + k, PAL[k]);
+      document.body.style.background = PAL.bg;
+      root.dataset.duration = PARAMS.timings.total;
+
+      // PRNG con semilla fija
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = (a + 0x6d2b79f5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const rand = mulberry32(PARAMS.seed);
+      const SVG = "http://www.w3.org/2000/svg";
+      const T = PARAMS.timings;
+
+      // textos
+      document.getElementById("kicker").textContent = PARAMS.kicker;
+      document.getElementById("counter-word").textContent = PARAMS.counterWord;
+      const headEl = document.getElementById("headline");
+      const words = PARAMS.headline.map((w, i) => {
+        const s = document.createElement("span"); s.className = "w" + (i === PARAMS.accentWord ? " accent" : "");
+        s.textContent = w; headEl.appendChild(s); return s;
+      });
+      const labelEl = document.getElementById("label");
+      const labelChars = [...PARAMS.label].map((c) => {
+        const s = document.createElement("span"); s.className = "ch"; s.innerHTML = c === " " ? "&nbsp;" : c; labelEl.appendChild(s); return s;
+      });
+
+      // ---- malla con distorsión de barril precalculada por celda ----
+      // u,v ∈ [-1,1]; las esquinas se meten y los lados se abultan; el tamaño baja hacia las orillas
+      const { rows, cols, bulge, cell, pitch } = PARAMS;
+      const CX = 270, CY = 300; // centro dentro del panel
+      const hu = (cols - 1) / 2, hv = (rows - 1) / 2;
+      const cells = [];
+      const gridSvg = document.getElementById("grid");
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const u = hu ? (c - hu) / hu : 0, v = hv ? (r - hv) / hv : 0;
+        const x = CX + u * hu * pitch * (1 + bulge * (1 - v * v));
+        const y = CY + v * hv * pitch * (1 + bulge * (1 - u * u));
+        const s = cell * (1 - 2.2 * bulge * (u * u + v * v) / 2);
+        const rc = document.createElementNS(SVG, "rect");
+        rc.setAttribute("x", (x - s / 2).toFixed(1)); rc.setAttribute("y", (y - s / 2).toFixed(1));
+        rc.setAttribute("width", s.toFixed(1)); rc.setAttribute("height", s.toFixed(1)); rc.setAttribute("rx", (s * 0.2).toFixed(1));
+        rc.setAttribute("fill", PAL.empty); // celda vacía
+        gridSvg.appendChild(rc); cells.push(rc);
+      }
+      const N = cells.length;
+      document.getElementById("total").textContent = N;
+
+      const tl = gsap.timeline({ paused: true });
+      // panel y contador entran (desde una escala visible: el cuadro 0 ya los muestra)
+      tl.fromTo("#panel", { scale: 0.9, x: -40 }, { scale: 1, x: 0, duration: 0.8, ease: "power3.out" }, T.panel);
+      tl.fromTo("#counter", { scale: 0.6 }, { scale: 1, duration: 0.8, ease: "power3.out" }, T.panel);
+      // titular palabra por palabra con rebote (impacto en 1/3 del tween)
+      words.forEach((w, i) => {
+        const at = T.words[i] ?? T.words[T.words.length - 1] + 0.1 * (i - T.words.length + 1);
+        // visibles desde el cuadro 0 (chicas y bajas); lo que se anima es el pop, no la aparición
+        tl.fromTo(w, { scale: 0.7, y: 12, opacity: 0.6 }, { scale: 1, y: 0, opacity: 1, duration: 0.3, ease: "back.out(2)" }, at);
+      });
+      // etiqueta: caja crece y se escribe; la línea guía se dibuja y el punto llega
+      const lp = document.getElementById("leader-path"), L = lp.getTotalLength();
+      // los estados iniciales van DENTRO de la timeline (un gsap.set fuera no sobrevive al seek del render)
+      tl.set(lp, { strokeDasharray: `${L} ${L}`, strokeDashoffset: L }, 0);
+      tl.set("#leader-dot", { scale: 0, svgOrigin: "700 520" }, 0);
+      tl.set("#label", { autoAlpha: 0 }, 0);
+      tl.to("#label", { autoAlpha: 1, duration: 0.2 }, T.label);
+      labelChars.forEach((c, k) => tl.set(c, { visibility: "visible" }, T.label + 0.1 + k * 0.025));
+      tl.to(lp, { strokeDashoffset: 0, duration: 0.5, ease: "power2.inOut" }, T.label + 0.2);
+      tl.to("#leader-dot", { scale: 1, duration: 0.25, ease: "back.out(3)" }, T.label + 0.65);
+
+      // ---- llenado ----
+      const countEl = document.getElementById("count");
+      function fillCell(rc, t) {
+        tl.fromTo(rc, { attr: { fill: PAL.empty } }, { attr: { fill: PAL.accent }, duration: 0.08 }, t);
+        // pop con rebote: el impacto cae en 1/3 del tween (back.out(2))
+        tl.fromTo(rc, { scale: 1.25 }, { scale: 1, duration: 0.25, ease: "back.out(2)", immediateRender: false, transformOrigin: "50% 50%" }, t);
+      }
+      if (PARAMS.mode === "sequential") {
+        // una por una, fila por fila; el contador sube con cada celda
+        cells.forEach((rc, k) => {
+          const t = T.fill + (k * T.fillDur) / N;
+          fillCell(rc, t);
+          tl.call(() => { countEl.textContent = String(k + 1); }, null, t);
+        });
+      } else {
+        // todas casi a la vez, en orden aleatorio determinista dentro de 0.35 s; el contador salta a N
+        const order = cells.map((rc, k) => ({ rc, r: rand() })).sort((a, b) => a.r - b.r);
+        order.forEach(({ rc }, k) => fillCell(rc, T.fill + (k * 0.35) / N));
+        tl.call(() => { countEl.textContent = String(N); }, null, T.fill + 0.35);
+        tl.fromTo("#counter", { scale: 1.15 }, { scale: 1, duration: 0.3, ease: "back.out(2)", immediateRender: false }, T.fill + 0.35);
+      }
+      // pulso suave de la malla mientras espera el corte
+      const settled = PARAMS.mode === "sequential" ? T.fill + T.fillDur : T.fill + 0.5;
+      tl.to("#grid", { scale: 1.02, transformOrigin: "270px 300px", duration: 0.5, yoyo: true, repeat: 1, ease: "sine.inOut" }, settled + 0.1);
+      // el contador debe leer 0 al inicio en cualquier seek (los call no se revierten solos)
+      tl.call(() => { countEl.textContent = "0"; }, null, 0);
+      tl.set({}, {}, T.total);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

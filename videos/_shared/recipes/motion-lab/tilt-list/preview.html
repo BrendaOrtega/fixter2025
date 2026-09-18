@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>tilt-list</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: var(--bg, #0E1317); }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      #wheel { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+      /* el punto marca el carril activo y baja con la lista */
+      #dot { position: absolute; left: 154px; top: 310px; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); }
+      /* cada renglón nace horizontal y se inclina sobre su extremo izquierdo */
+      .item { position: absolute; left: 400px; top: 282px; height: 108px; line-height: 108px; font-weight: 500; letter-spacing: -0.03em; color: var(--muted); white-space: nowrap; transform-origin: -40px 54px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="4.2">
+      <section class="clip" data-start="0" data-duration="4.2" data-track-index="0">
+        <!-- el disco no gira: círculo fijo en SVG, tintado con la paleta (nunca negro) -->
+        <svg class="clip" width="1280" height="720"><circle id="disc" cx="-456" cy="336" r="786" /></svg>
+        <div id="wheel">
+          <div id="dot"></div>
+        </div>
+      </section>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",                 // "fixtergeek" | "easybits"
+        items: ["Memoria episódica", "Memoria procedimental", "Memoria semántica"], // renglones
+        stepEvery: 1.1,                        // s entre un activo y el siguiente
+        startAt: 1.2,                          // s en que ocurre el primer paso
+        // tabla medida: distancia al activo → [desplazamiento y (px), inclinación (°)]
+        offsets: { "-3": [-420, -21], "-2": [-270, -12], "-1": [-120, -6], "0": [0, 0], "1": [140, 7], "2": [280, 14], "3": [420, 21] },
+        rise: 75,                              // px que baja el activo por paso
+        dotRise: 42,                           // px que baja el punto por paso
+        fontSize: 80,
+        stepDuration: 0.5,
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E", panel: "#1A2228" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99", panel: "#17171f" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const [k, v] of Object.entries(P)) root.style.setProperty(`--${k}`, v);
+      document.body.style.setProperty("--bg", P.bg);
+      document.getElementById("disc").setAttribute("fill", P.panel);
+
+      // duración derivada
+      const n = PARAMS.items.length;
+      // ojo: el CLI lee el data-duration ESTÁTICO del HTML; debe coincidir con este cálculo
+      const DUR = PARAMS.startAt + (n - 1) * PARAMS.stepEvery + 0.8;
+      root.dataset.duration = DUR;
+      root.querySelector("section").dataset.duration = DUR;
+
+      // renglones
+      const wheel = document.getElementById("wheel");
+      PARAMS.items.forEach((t) => {
+        const d = document.createElement("div"); d.className = "item"; d.textContent = t;
+        d.style.fontSize = PARAMS.fontSize + "px"; wheel.appendChild(d);
+      });
+      const items = gsap.utils.toArray(".item");
+
+      // pose de cada renglón i cuando el activo es k; fuera de la tabla se extrapola
+      const pose = (i, k) => {
+        const d = i - k;
+        const key = String(Math.max(-3, Math.min(3, d)));
+        let [dy, r] = PARAMS.offsets[key];
+        if (Math.abs(d) > 3) { dy += (d - Math.sign(d) * 3) * 140; r += (d - Math.sign(d) * 3) * 7; }
+        return { y: k * PARAMS.rise + dy, rotation: r };
+      };
+
+      const tl = gsap.timeline({ paused: true });
+
+      // fotograma 0: la lista viene un carril más abajo, el primero ya activo
+      items.forEach((el, i) => gsap.set(el, pose(i, -1)));
+      gsap.set(items[0], { color: P.ink });
+
+      // entrada: cada renglón llega a su carril con el primero horizontal
+      items.forEach((el, i) => tl.to(el, { ...pose(i, 0), duration: 0.7, ease: "power3.out" }, 0));
+
+      // paso: todos giran a su nueva pose, el punto baja, el color cambia a mitad del giro
+      function step(k, at) {
+        const d = PARAMS.stepDuration;
+        items.forEach((el, i) => tl.to(el, { ...pose(i, k), duration: d, ease: "power3.inOut" }, at));
+        tl.to("#dot", { y: PARAMS.dotRise * k, duration: d, ease: "power3.inOut" }, at);
+        tl.to(items[k - 1], { color: P.muted, duration: 0.2 }, at + d * 0.4);
+        tl.to(items[k], { color: P.ink, duration: 0.2 }, at + d * 0.4);
+      }
+      for (let k = 1; k < n; k++) step(k, PARAMS.startAt + (k - 1) * PARAMS.stepEvery);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

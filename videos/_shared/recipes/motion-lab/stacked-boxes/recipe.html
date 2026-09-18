@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      /* retícula de cruces de fondo */
+      #grid { position: absolute; inset: 0; }
+      /* cada caja vive en una ventana recortada que termina en la línea guía: así "sale" de la línea */
+      .win { position: absolute; top: 0; height: 720px; overflow: hidden; }
+      .box { position: absolute; border: 2px solid var(--ink); display: flex; align-items: center; padding: 0 30px; font-weight: 400; letter-spacing: -3px; white-space: nowrap; line-height: 1; }
+      /* esquinas pequeñas por fuera de la caja, del lado que mira al borde */
+      .corner { position: absolute; width: 14px; height: 14px; border: 2px solid var(--accent); }
+      .corner.tl { left: -12px; top: -12px; border-right: 0; border-bottom: 0; }
+      .corner.bl { left: -12px; bottom: -12px; border-right: 0; border-top: 0; }
+      .corner.tr { right: -12px; top: -12px; border-left: 0; border-bottom: 0; }
+      .corner.br { right: -12px; bottom: -12px; border-left: 0; border-top: 0; }
+      /* líneas guía: la vertical entra con rebote, las horizontales se dibujan */
+      #vline { position: absolute; top: 0; width: 2px; height: 720px; background: var(--accent); }
+      .hline { position: absolute; left: 0; width: 1280px; height: 1px; background: var(--ink); opacity: 0.6; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="4" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="4">
+        <svg id="grid" width="1280" height="720">
+          <defs>
+            <pattern id="plus" width="45" height="45" patternUnits="userSpaceOnUse">
+              <path d="M22.5 15 V30 M15 22.5 H30" stroke="var(--muted)" stroke-width="1.5" opacity="0.35" />
+            </pattern>
+          </defs>
+          <rect width="1280" height="720" fill="url(#plus)" />
+        </svg>
+        <div id="hlines"></div>
+        <div id="boxes"></div>
+        <div id="vline"></div>
+      </div>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",                 // "fixtergeek" | "easybits"
+        // cajas: x,y = esquina superior izquierda; `side` la pone del lado izq/der de la guía vertical
+        boxes: [
+          { text: "Construimos", x: 180, y: 158, height: 156, fontSize: 92, from: "edge" },
+          { text: "prod",        x: 805, y: 312, height: 152, fontSize: 100, from: "line" },
+          { text: "no demos",    x: 330, y: 460, height: 152, fontSize: 92, from: "line" },
+        ],
+        guides: { vertical: 805, horizontal: true, corners: true }, // x de la línea vertical; horizontales bajo cada caja
+        ease: "back.out(1.3)",                 // ease de entrada de cajas y línea vertical
+        timings: { start: 0.2, gap: 0.55, duration: 0.65, hlineDuration: 0.5 },
+        grid: true,                            // retícula de cruces de fondo
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const k of ["bg", "ink", "accent", "accent2", "muted"]) root.style.setProperty("--" + k, P[k]);
+      document.getElementById("grid").style.display = PARAMS.grid ? "" : "none";
+
+      const V = PARAMS.guides.vertical;
+      const vline = document.getElementById("vline");
+      vline.style.left = V + "px";
+      const boxesEl = document.getElementById("boxes"), hlinesEl = document.getElementById("hlines");
+
+      // construir cada caja dentro de su ventana (izquierda o derecha de la guía)
+      const built = PARAMS.boxes.map((b, i) => {
+        const left = b.x < V;                         // ¿vive a la izquierda de la guía?
+        const win = document.createElement("div"); win.className = "win";
+        win.style.left = left ? "0" : V + "px"; win.style.width = (left ? V : 1280 - V) + "px";
+        const box = document.createElement("div"); box.className = "box"; box.textContent = b.text;
+        Object.assign(box.style, { left: (left ? b.x : b.x - V) + "px", top: b.y + "px", height: b.height + "px", fontSize: b.fontSize + "px" });
+        if (PARAMS.guides.corners) { // esquinas del lado que mira al borde exterior
+          const cls = left ? ["tl", "bl"] : ["tr", "br"];
+          cls.forEach((c) => { const d = document.createElement("div"); d.className = "corner " + c; box.appendChild(d); });
+        }
+        win.appendChild(box); boxesEl.appendChild(win);
+        let hl = null;
+        if (PARAMS.guides.horizontal) { // línea horizontal a la altura del pie de la caja
+          hl = document.createElement("div"); hl.className = "hline"; hl.style.top = (b.y + b.height) + "px"; hlinesEl.appendChild(hl);
+        }
+        return { b, box, hl, left };
+      });
+
+      const T = PARAMS.timings;
+      const tl = gsap.timeline({ paused: true });
+      // la guía vertical entra con rebote desde la izquierda
+      gsap.set(vline, { x: -90 });
+      tl.to(vline, { x: 0, duration: T.duration, ease: PARAMS.ease }, T.start);
+      built.forEach(({ b, box, hl, left }, i) => {
+        const t0 = T.start + i * T.gap;
+        // posición inicial: fuera del borde de la pantalla o escondida detrás de la línea guía.
+        // Sin medir el ancho (la fuente puede no haber cargado al construir el timeline): recorrido fijo de 1280 px
+        let x0;
+        if (b.from === "edge") x0 = left ? -1280 : 1280;
+        else x0 = left ? (V - b.x + 40) : -1280;
+        gsap.set(box, { x: x0 });
+        tl.to(box, { x: 0, duration: T.duration, ease: PARAMS.ease }, t0);
+        if (hl) { // la línea se dibuja desde la guía vertical hacia ambos lados
+          gsap.set(hl, { scaleX: 0, transformOrigin: (V / 1280 * 100) + "% 50%" });
+          tl.to(hl, { scaleX: 1, duration: T.hlineDuration, ease: "power2.out" }, t0 + T.duration * 0.6);
+        }
+      });
+      tl.to({}, { duration: 0.001 }, parseFloat(root.dataset.duration) - 0.001);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

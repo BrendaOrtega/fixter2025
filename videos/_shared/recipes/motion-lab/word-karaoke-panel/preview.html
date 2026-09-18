@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; }
+      /* panel: tintado con el acento (plano, sin gradiente) y borde de tinta */
+      #panel { position: absolute; background: var(--panel); border: 3px solid var(--ink); }
+      /* celda del logo, esquina superior izquierda */
+      #logo { position: absolute; left: 0; top: 0; width: 82px; height: 82px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; }
+      /* etiqueta mono: se teclea letra por letra (cada letra se revela por display) */
+      #label { position: absolute; left: 106px; top: 10px; height: 56px; font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; font-size: 42px; line-height: 56px; color: var(--bg); white-space: pre; }
+      #label .txt { background: var(--accent); padding: 0 12px; }
+      #label .txt:not(:has(.on)) { padding: 0; }
+      #label .ch { display: none; }
+      #label .ch.on { display: inline; }
+      #caret { display: inline-block; width: 3px; height: 46px; background: var(--ink); vertical-align: middle; margin-left: 4px; }
+      /* párrafo: las palabras arrancan en --muted y se encienden a --ink */
+      #para { position: absolute; left: 24px; top: 118px; right: 24px; font-weight: 400; color: var(--muted); }
+      #para .w { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="7.1" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="7.1">
+        <div id="panel">
+          <div id="logo">
+            <svg width="48" height="48" viewBox="0 0 40 40" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round">
+              <path d="M20 3 L35 11.5 V28.5 L20 37 L5 28.5 V11.5 Z"/>
+              <path d="M20 3 V20 M20 20 L35 28.5 M20 20 L5 28.5"/>
+            </svg>
+          </div>
+          <div id="label"><span class="txt"></span><span id="caret"></span></div>
+          <p id="para"></p>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",                 // "fixtergeek" | "easybits"
+        label: "AVISO",                        // etiqueta mono que se teclea
+        text: "Este taller no es para quien quiera un chatbot. Es para quien quiera que el agente trabaje solo dentro de una caja.",
+        wordTimes: null,                       // [s, s, ...] instante en que se enciende cada palabra; null = ritmo fijo
+        wordsPerSecond: 4,                   // ritmo fijo cuando wordTimes es null
+        firstWordAt: 0.7,                      // cuándo se enciende la primera palabra (ritmo fijo)
+        labelStart: 0.05,                      // cuándo empieza a teclearse la etiqueta
+        charStep: 0.045,                       // segundos por letra de la etiqueta
+        lightDuration: 0.12,                   // cuánto tarda cada palabra en encenderse
+        tail: 1.0,                             // segundos de aire tras la última palabra
+        panel: { left: 40, top: 46, width: 1200, height: 646, tint: 0.12 }, // tint = mezcla de --accent sobre --bg
+        fontSize: 34, lineHeight: 52, letterSpacing: -1.1,
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const k of ["bg", "ink", "accent", "accent2", "muted"]) root.style.setProperty("--" + k, P[k]);
+      root.style.setProperty("--panel", `color-mix(in srgb, ${P.accent} ${Math.round(PARAMS.panel.tint * 100)}%, ${P.bg})`);
+
+      // panel y tipografía
+      const panel = document.getElementById("panel");
+      Object.assign(panel.style, { left: PARAMS.panel.left + "px", top: PARAMS.panel.top + "px", width: PARAMS.panel.width + "px", height: PARAMS.panel.height + "px" });
+      const para = document.getElementById("para");
+      Object.assign(para.style, { fontSize: PARAMS.fontSize + "px", lineHeight: PARAMS.lineHeight + "px", letterSpacing: PARAMS.letterSpacing + "px" });
+
+      // etiqueta: una span por letra, oculta por display (no por width: mide 0 si la fuente no cargó)
+      const txt = document.querySelector("#label .txt");
+      const chars = PARAMS.label.split("").map((c) => { const s = document.createElement("span"); s.className = "ch"; s.textContent = c; txt.appendChild(s); return s; });
+
+      // párrafo: una span por palabra
+      const wordsList = PARAMS.text.split(" ");
+      const words = wordsList.map((w, i) => { const s = document.createElement("span"); s.className = "w"; s.textContent = w; para.appendChild(s); if (i < wordsList.length - 1) para.appendChild(document.createTextNode(" ")); return s; });
+
+      // instante de encendido de cada palabra: lista explícita o ritmo fijo
+      const onTime = words.map((_, i) => PARAMS.wordTimes ? PARAMS.wordTimes[i] : PARAMS.firstWordAt + i / PARAMS.wordsPerSecond);
+      // duración real de la pieza: el data-duration del HTML debe coincidir (el render lo lee estático, no del DOM)
+      const DUR = Math.max(...onTime) + PARAMS.lightDuration + PARAMS.tail;
+      if (Math.abs(DUR - parseFloat(root.dataset.duration)) > 0.05) console.warn(`data-duration debería ser ${DUR.toFixed(2)}`);
+
+      const tl = gsap.timeline({ paused: true });
+      // etiqueta tecleada; el caret se apaga al terminar
+      chars.forEach((c, i) => tl.set(c, { className: "ch on" }, PARAMS.labelStart + (i + 1) * PARAMS.charStep));
+      tl.set("#caret", { opacity: 0 }, PARAMS.labelStart + (chars.length + 2) * PARAMS.charStep);
+      // karaoke: cada palabra pasa de --muted a --ink cuando la lectura llega a ella
+      words.forEach((w, i) => tl.to(w, { color: P.ink, duration: PARAMS.lightDuration, ease: "none" }, onTime[i]));
+      tl.to({}, { duration: 0.001 }, DUR - 0.001);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
