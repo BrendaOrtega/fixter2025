@@ -26,6 +26,10 @@ export const meta = () =>
     description:
       "Próximamente: taller en vivo para pasar de una spec a producción con agentes de código trabajando en paralelo, con tu editor y tu stack. Apúntate a la lista de espera.",
     url: PAGE_URL,
+    // imagen propia con sus medidas reales (WhatsApp descarta la vista previa si no cuadran)
+    image: "https://www.fixtergeek.com/courses/software-factory-og.png",
+    imageWidth: 1200,
+    imageHeight: 630,
   });
 
 // Límite por IP en memoria: 5 altas por hora. Se reinicia con cada deploy.
