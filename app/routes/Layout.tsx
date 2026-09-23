@@ -32,12 +32,14 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
     location.pathname.startsWith('/s/');
   // El promo flotante promociona Animaciones con AI; no mostrarlo en su propia landing
   const isSistemasRoute = location.pathname.startsWith('/animaciones-ai');
+  // Landing de una sola pantalla: el promo flotante la taparía
+  const isFactoryRoute = location.pathname.startsWith('/software-factory');
 
   return (
     <>
       {!isBookRoute && !isAdminRoute && !isExcalidrawDemo && <NavBar user={user} />}
       {children}
-      {!isBookRoute && !isAdminRoute && !isViewerRoute && !isCoachRoute && !isExcalidrawDemo && !isSecuenciasRoute && !isSistemasRoute && <FloatingPromo />}
+      {!isBookRoute && !isAdminRoute && !isViewerRoute && !isCoachRoute && !isExcalidrawDemo && !isSecuenciasRoute && !isSistemasRoute && !isFactoryRoute && <FloatingPromo />}
       {/* <WebinarBanner /> */}
       {/* <GlobalBanner /> */}
     </>

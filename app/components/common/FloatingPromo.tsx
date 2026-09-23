@@ -4,6 +4,8 @@ import { useNavigate } from "react-router";
 import { BiCodeAlt, BiX } from "react-icons/bi";
 import { LAYER } from "~/utils/layers";
 
+const DISMISS_KEY = "software-factory-promo-dismissed";
+
 export const FloatingPromo = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -12,7 +14,7 @@ export const FloatingPromo = () => {
 
   useEffect(() => {
     // Verificar si el usuario ya lo desechó y si aún está vigente
-    const dismissedData = localStorage.getItem("animaciones-ai-promo-dismissed");
+    const dismissedData = localStorage.getItem(DISMISS_KEY);
     if (dismissedData) {
       const { timestamp } = JSON.parse(dismissedData);
       const oneDayInMs = 24 * 60 * 60 * 1000; // 24 horas
@@ -22,7 +24,7 @@ export const FloatingPromo = () => {
         return;
       } else {
         // Ha pasado el tiempo, remover y mostrar de nuevo
-        localStorage.removeItem("animaciones-ai-promo-dismissed");
+        localStorage.removeItem(DISMISS_KEY);
       }
     }
 
@@ -36,7 +38,7 @@ export const FloatingPromo = () => {
 
   const handleDismiss = () => {
     localStorage.setItem(
-      "animaciones-ai-promo-dismissed",
+      DISMISS_KEY,
       JSON.stringify({
         timestamp: Date.now(),
       }),
@@ -46,7 +48,7 @@ export const FloatingPromo = () => {
   };
 
   const handleClick = () => {
-    navigate("/animaciones-ai");
+    navigate("/software-factory");
   };
 
   if (isDismissed) return null;
@@ -96,17 +98,17 @@ export const FloatingPromo = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <BiCodeAlt className="text-2xl text-[#8DCF6E]" />
                       <h3 className="font-bold text-gray-900 dark:text-white">
-                        Nuevo curso · Octubre 2026
+                        Próximamente · Taller en vivo
                       </h3>
                     </div>
 
                     <h4 className="font-semibold text-sm text-gray-900 dark:text-white mb-2">
-                      Animaciones con AI
+                      Software Factory
                     </h4>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      Construyes componentes 3D, presentaciones animadas y
-                      micro-interacciones con Motion y AI.
+                      Agentes de código que toman tickets, abren PRs y
+                      despliegan mientras tú revisas.
                     </p>
 
                     <div className="flex items-center justify-between">
@@ -119,7 +121,7 @@ export const FloatingPromo = () => {
                         onClick={handleClick}
                         className="bg-[#8DCF6E] text-[#0E1317] text-xs font-bold px-4 py-2 rounded-full transition-colors"
                       >
-                        Quiero mi lugar →
+                        Quiero enterarme →
                       </motion.button>
                     </div>
                   </div>
@@ -156,9 +158,9 @@ export const FloatingPromo = () => {
                         className="overflow-hidden"
                       >
                         <div className="whitespace-nowrap text-white">
-                          <p className="font-bold text-sm">Animaciones con AI</p>
+                          <p className="font-bold text-sm">Software Factory</p>
                           <p className="text-xs opacity-90">
-                            Nuevo curso • Octubre 2026
+                            Próximamente · Taller en vivo
                           </p>
                         </div>
                       </motion.div>
