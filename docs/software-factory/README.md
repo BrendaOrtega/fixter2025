@@ -96,3 +96,7 @@ Lecturas que se parecen a lo que queremos enseñar:
 - [ ] Repo plantilla: stack, CI y spec de ejemplo.
 - [ ] Decidir la herramienta en vivo (Claude Code vs Codex) y el precio final.
 - [ ] Fechas, y abrir la venta con early bird a quienes confirmaron en la lista.
+
+## Producto (Ghosty como fábrica, al estilo de Factory.ai)
+Mercado, stack y precios de Factory, comparación con Ghosty y escenarios de ingreso en MXN:
+`~/ghosty-studio/docs/claude/software-factory-producto.md`. Mañana (24-sep) se explora Factory en vivo.
