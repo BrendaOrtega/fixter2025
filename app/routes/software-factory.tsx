@@ -65,6 +65,9 @@ export const meta = () => {
           "Partir una spec en tickets y repartirlos entre agentes en paralelo",
           "Verificar el trabajo de los agentes con PRs, checks y revisión",
           "Desplegar a producción desde el tablero",
+          "Poner puertas deterministas (tests, tipos, CI) que el agente no se puede saltar",
+          "Separar al agente que genera del que valida",
+          "Medir el costo en tokens y la calidad de cada ticket",
         ],
       },
       {
@@ -156,7 +159,10 @@ const BACKLOG = [
   "Scraper de precios", "Video con subtítulos IA", "Pruebas A/B", "Roles y permisos", "Modo oscuro",
 ];
 
-type Ticket = { id: number; label: string; agent: string; col: number; age: number; dwell: number };
+type Ticket = { id: number; label: string; agent: string; col: number; age: number; dwell: number; cost: string };
+
+// lo que costó el ticket en tokens: se enseña desde PR, porque medirlo es parte del taller
+const rollCost = () => `$${(0.12 + Math.random() * 0.8).toFixed(2)}`;
 
 // quién toma cada ticket; Ghosty aparece seguido a propósito
 const AGENTS = ["👾 Ghosty", "🤖 Claude Code", "🤖 Codex", "👾 Ghosty", "🤖 Cursor", "🤖 Antigravity", "👾 Ghosty"];
@@ -191,17 +197,17 @@ const pick = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.le
 // siguiente ticket del backlog: al azar, sin repetir lo que ya está a la vista
 const newTicket = (id: number, onBoard: Ticket[]): Ticket => {
   const visible = new Set(onBoard.map((t) => t.label));
-  return { id, label: pick(BACKLOG.filter((l) => !visible.has(l))), agent: pick(AGENTS), col: 0, age: 0, dwell: rollDwell(0) };
+  return { id, label: pick(BACKLOG.filter((l) => !visible.has(l))), agent: pick(AGENTS), col: 0, age: 0, dwell: rollDwell(0), cost: rollCost() };
 };
 const MAX_PER_COLUMN = [3, 3, 2]; // tope de tarjetas en Spec, Agentes y PR
 
 const INITIAL_FACTORY: FactoryState = {
   tickets: [
-    { id: 0, label: BACKLOG[0], agent: AGENTS[0], col: 2, age: 0, dwell: 3 },
-    { id: 1, label: BACKLOG[1], agent: AGENTS[1], col: 1, age: 3, dwell: 7 },
-    { id: 2, label: BACKLOG[2], agent: AGENTS[2], col: 1, age: 1, dwell: 6 },
-    { id: 3, label: BACKLOG[3], agent: AGENTS[3], col: 0, age: 1, dwell: 1 },
-    { id: 4, label: BACKLOG[4], agent: AGENTS[4], col: 0, age: 0, dwell: 1 },
+    { id: 0, label: BACKLOG[0], agent: AGENTS[0], col: 2, age: 0, dwell: 3, cost: "$0.38" },
+    { id: 1, label: BACKLOG[1], agent: AGENTS[1], col: 1, age: 3, dwell: 7, cost: "$0.61" },
+    { id: 2, label: BACKLOG[2], agent: AGENTS[2], col: 1, age: 1, dwell: 6, cost: "$0.24" },
+    { id: 3, label: BACKLOG[3], agent: AGENTS[3], col: 0, age: 1, dwell: 1, cost: "$0.47" },
+    { id: 4, label: BACKLOG[4], agent: AGENTS[4], col: 0, age: 0, dwell: 1, cost: "$0.19" },
   ],
   shipped: [],
   movingId: null,
@@ -352,7 +358,8 @@ const FactoryBoard = () => {
                   ) : (
                     icon
                   )}
-                  {L.colW > 150 && ` ${text}`}
+                  {/* desde PR la tarjeta enseña lo que costó; el icono ya dice el estado */}
+                  {t.col >= 2 && !L.compact ? ` ${t.cost}` : L.colW > 150 && ` ${text}`}
                 </p>
               </motion.div>
             );
@@ -454,7 +461,7 @@ const GhostyPeek = () => {
 // Pulso de atención compartido por «Próximamente» y el botón: mismos tiempos = mismo instante.
 const ATTENTION = { duration: 1.1, times: [0, 0.2, 0.4, 0.6, 0.8, 1], repeat: Infinity, repeatDelay: 21 };
 
-const POINTS = ["De una spec a producción", "Agentes en paralelo con verificación", "Tu editor y tu stack", "Tú y tu equipo"];
+const POINTS = ["Sobre tu propio repo", "Agentes en paralelo con revisión", "Mides costo y calidad por ticket", "Descuento para grupos"];
 
 export default function Route() {
   const fetcher = useFetcher<typeof action>();
@@ -496,7 +503,11 @@ export default function Route() {
           <OscillatingTitle />
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-3 max-w-xl text-base sm:mt-5 sm:text-xl lg:text-2xl" style={{ color: `${INK}cc` }}>
-            Monta tu propia fábrica de software: agentes de código que toman tickets, abren PRs y despliegan mientras tú revisas.
+            Monta tu fábrica de software sobre tu propio repo: agentes de código que toman tickets, abren PRs y despliegan. Tú apruebas.
+          </motion.p>
+          {/* "software factory" hoy se usa para vender outsourcing y para prometer agentes que programan solos */}
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-2 hidden max-w-xl text-sm sm:block lg:text-base" style={{ color: MUTE }}>
+            No es outsourcing, y los agentes no programan solos: aprendes el sistema que hace confiable lo que generan.
           </motion.p>
 
           <ul className="mt-5 hidden flex-wrap gap-2.5 sm:flex">
@@ -563,7 +574,7 @@ export default function Route() {
               </fetcher.Form>
             )}
             {error && <p role="alert" className="mt-2 text-sm" style={{ color: GREEN }}>{error}</p>}
-            {!done && <p className="mt-3 text-sm" style={{ color: MUTE }}>Sin spam. Sólo te avisamos cuando abra.</p>}
+            {!done && <p className="mt-3 text-sm" style={{ color: MUTE }}>Sin spam. Sólo te avisamos cuando abra · hay descuento para grupos.</p>}
           </div>
         </div>
 
