@@ -26,6 +26,8 @@ import {
 import { db } from "~/.server/db";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
 import { sendBookPurchaseInvite } from "~/mailSenders/sendBookPurchaseInvite";
+import { checkSignupRequest, claimEmailSend, clientIp, requestOwnsEmail } from "~/.server/signup-guard";
+import { setSubscriberCookie as signSubscriberCookie } from "~/.server/subscriberCookie";
 
 const BOOK_SLUG = "ai-sdk" as const;
 
@@ -84,17 +86,21 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 
   if (intent === "subscribe") {
-    const result = await handleBookSubscribe(email, BOOK_SLUG);
+    const guard = await checkSignupRequest(request, formData, { email, label: `book:${BOOK_SLUG}` });
+    if (!guard.ok) {
+      return guard.fake ? data({ success: true, step: "verify" }) : data({ error: guard.error }, { status: 400 });
+    }
+    const result = await handleBookSubscribe(email, BOOK_SLUG, {
+      ownsEmail: await requestOwnsEmail(request, email),
+      canSend: () => claimEmailSend(email, `otp:book`, guard.ip, "otp"),
+    });
     if (result.error) {
       return data({ error: result.error }, { status: 400 });
     }
-    // Si ya está suscrito, setear cookie y dar acceso directo
+    // Ya suscrito y la petición ya es suya: cookie FIRMADA (antes iba en texto plano)
     if (result.alreadySubscribed) {
       const headers = new Headers();
-      headers.append(
-        "Set-Cookie",
-        `fixtergeek_subscriber=${encodeURIComponent(email)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`
-      );
+      headers.append("Set-Cookie", await signSubscriberCookie(email));
       return data({ success: true, alreadySubscribed: true }, { headers });
     }
     return result;
@@ -102,7 +108,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   if (intent === "verify") {
     const code = formData.get("code") as string;
-    const result = await handleBookVerify(email, code, BOOK_SLUG);
+    const result = await handleBookVerify(email, code, BOOK_SLUG, clientIp(request));
     if (result.error) {
       return data({ error: result.error }, { status: 400 });
     }
@@ -127,9 +133,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
     });
 
     if (user) {
-      // Usuario compró el libro - enviar magic link
+      // Usuario compró el libro - enviar magic link (1 cada 24 h y 3 en total por dirección)
       try {
-        await sendBookDownloadLink({
+        const guard = await checkSignupRequest(request, formData, { email, label: `book-link:${BOOK_SLUG}` });
+        if (guard.ok && (await claimEmailSend(email, `book-link:${BOOK_SLUG}`, guard.ip, "confirm")))
+          await sendBookDownloadLink({
           to: email,
           bookSlug: BOOK_SLUG,
           userName: user.displayName || undefined,

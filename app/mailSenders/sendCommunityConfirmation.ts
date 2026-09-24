@@ -1,6 +1,7 @@
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import { sendSesEmailDirect } from "~/utils/sesTransport";
 import { generateCommunitySubscribeToken } from "~/utils/tokens";
+import { escapeHtml } from "~/utils/escapeHtml";
 
 const SEQUENCE_FROM = "FixterGeek <secuencias@fixtergeek.com>";
 
@@ -32,7 +33,7 @@ export async function sendCommunityConfirmation({
 
   const inner = `
     <h1 style="margin:0 0 12px 0;font-size:22px;color:#19262A;">
-      ${name ? `${name}, falta un clic` : "Falta un clic"}
+      ${name ? `${escapeHtml(name)}, falta un clic` : "Falta un clic"}
     </h1>
     <p style="margin:0 0 16px 0;">
       Confirma tu correo para entrar a <strong>${communityName}</strong>.

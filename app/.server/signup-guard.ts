@@ -118,3 +118,32 @@ export async function claimEmailSend(
   await db.emailSendLog.create({ data: { email: key, purpose, ip } });
   return true;
 }
+
+/**
+ * ¿La petición YA prueba que es dueña de `email`? Sesión, cookie de miembro o cookie de
+ * suscriptor con ese mismo correo. Si no, escribir el correo de otro NO debe entregar su
+ * identidad: se manda un link de acceso (`sendAccessLink`) y entra sólo quien abre el buzón.
+ */
+export async function requestOwnsEmail(request: Request, email: string): Promise<boolean> {
+  const { getUserOrNull } = await import("~/.server/dbGetters");
+  const { getMemberEmail } = await import("~/.server/memberCookie");
+  const { subscriberEmailFrom } = await import("~/.server/videoAccess");
+  const target = email.trim().toLowerCase();
+  const user = await getUserOrNull(request);
+  const known = [user?.email, await getMemberEmail(request), await subscriberEmailFrom(request)];
+  return known.some((e) => e?.trim().toLowerCase() === target);
+}
+
+/**
+ * Intentos fallidos de un código OTP: 5 en 10 min y el código se invalida. Sin esto un
+ * código de 6 dígitos se podía adivinar a fuerza bruta (no había tope de intentos).
+ */
+const MAX_CODE_FAILURES = 5;
+export async function registerCodeFailure(email: string, scope: string, ip: string): Promise<boolean> {
+  const key = normalizeEmail(email);
+  await db.emailSendLog.create({ data: { email: key, purpose: `attempt:code-fail:${scope}`, ip } });
+  const fails = await db.emailSendLog.count({
+    where: { email: key, purpose: `attempt:code-fail:${scope}`, createdAt: { gt: new Date(Date.now() - 10 * 60 * 1000) } },
+  });
+  return fails >= MAX_CODE_FAILURES;
+}

@@ -8,6 +8,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 // Cookie name for subscriber email
 export { SUBSCRIBER_COOKIE, setSubscriberCookie } from "../subscriberCookie";
 import { subscriberEmail as readSubscriberEmail, setSubscriberCookie as signSubscriberCookie } from "../subscriberCookie";
+import { registerCodeFailure } from "~/.server/signup-guard";
 
 // Configuración centralizada de libros
 export const BOOK_CONFIG = {
@@ -244,7 +245,10 @@ export async function handleBookCheckout(
  */
 export async function handleBookSubscribe(
   email: string,
-  bookSlug: BookSlug
+  bookSlug: BookSlug,
+  // `ownsEmail`: la petición ya es de ese correo (sesión/cookie). `canSend`: el guard da cupo.
+  // Sin `ownsEmail`, un confirmado ya NO entra directo: escribir el correo de otro bastaba.
+  { ownsEmail, canSend }: { ownsEmail: boolean; canSend: () => Promise<boolean> }
 ): Promise<{ success: boolean; step?: string; alreadySubscribed?: boolean; error?: string }> {
   if (!email) {
     return { success: false, error: "Email requerido" };
@@ -257,7 +261,7 @@ export async function handleBookSubscribe(
     where: { email },
   });
 
-  if (existingSubscriber?.confirmed && existingSubscriber.tags.includes(tag)) {
+  if (ownsEmail && existingSubscriber?.confirmed && existingSubscriber.tags.includes(tag)) {
     // Ya está suscrito y confirmado - no enviar email
     return { success: true, alreadySubscribed: true };
   }
@@ -279,15 +283,18 @@ export async function handleBookSubscribe(
   });
 
   // Si ya está confirmado pero no tenía el tag, no necesita verificar de nuevo
-  if (existingSubscriber?.confirmed) {
+  if (ownsEmail && existingSubscriber?.confirmed) {
     return { success: true, alreadySubscribed: true };
   }
 
-  // Generate and save verification code
+  // Sin cupo (1/min, 10/día por dirección) sigue valiendo el código anterior
+  if (!(await canSend())) return { success: true, step: "verify" };
+
+  // Generate and save verification code (caduca a los 10 min)
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   await db.subscriber.update({
     where: { email },
-    data: { verificationCode: code },
+    data: { verificationCode: code, codeExpiresAt: new Date(Date.now() + 10 * 60 * 1000) },
   });
 
   // Send verification email
@@ -302,7 +309,8 @@ export async function handleBookSubscribe(
 export async function handleBookVerify(
   email: string,
   code: string,
-  bookSlug: BookSlug
+  bookSlug: BookSlug,
+  ip: string
 ): Promise<{
   success: boolean;
   verified?: boolean;
@@ -315,8 +323,17 @@ export async function handleBookVerify(
     where: { email },
   });
 
-  if (!subscriber || subscriber.verificationCode !== code) {
-    return { success: false, error: "Código inválido" };
+  if (
+    !subscriber ||
+    subscriber.verificationCode !== code ||
+    (subscriber.codeExpiresAt && subscriber.codeExpiresAt < new Date())
+  ) {
+    // 5 fallos en 10 min → el código muere (fuerza bruta)
+    if (subscriber && (await registerCodeFailure(email, `book:${bookSlug}`, ip))) {
+      await db.subscriber.update({ where: { email }, data: { verificationCode: null, codeExpiresAt: null } });
+      return { success: false, error: "Demasiados intentos. Pide un código nuevo." };
+    }
+    return { success: false, error: "Código inválido o expirado" };
   }
 
   // Confirm and add tag (solo si no existe)

@@ -11,7 +11,7 @@ import type { Route } from "./+types/s.$id";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { formatUnlock } from "~/utils/formatUnlock";
-import { checkSignupEmail } from "~/.server/anti-bot";
+import { checkSignupRequest, claimEmailSend } from "~/.server/signup-guard";
 import { normalizePhone } from "~/.server/phone";
 import { sendSequenceConfirmation } from "~/mailSenders/sendSequenceConfirmation";
 import getMetaTags from "~/utils/getMetaTags";
@@ -158,11 +158,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ error: "Acción no reconocida" }, { status: 400 });
   }
 
-  // Honeypot: si un bot llenó el campo oculto, fingimos éxito y no hacemos nada.
-  if (formData.get("website")) {
-    return data({ success: true, needsConfirmation: true });
-  }
-
   // Con sesión el correo lo pone el servidor: además de ahorrarle el trámite a
   // quien ya tiene cuenta, impide que se suscriba a un tercero escribiendo su
   // dirección. Sin sesión sigue mandando el formulario, como siempre.
@@ -187,18 +182,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     phone = parsed.phone;
   }
 
-  // Anti-bot: nombre generado, dominio desechable o truco de puntos en gmail →
-  // fingir éxito y no crear.
-  if (checkSignupEmail(email, name).blocked) {
-    return data({ success: true, needsConfirmation: true });
-  }
-
-  const blocked = await db.emailBlacklist.findUnique({ where: { email } });
-  if (blocked) {
-    return data(
-      { error: "Este correo no puede suscribirse en este momento." },
-      { status: 400 }
-    );
+  // Guard anti-spam compartido: honeypot, tiempo, nombre generado, desechables, lista
+  // negra y límite por IP. Bot → éxito fingido sin crear nada.
+  const guard = await checkSignupRequest(request, formData, { email, name, label: `seq:${params.id}` });
+  if (!guard.ok) {
+    return guard.fake
+      ? data({ success: true, needsConfirmation: true })
+      : data({ error: guard.error }, { status: 400 });
   }
 
   if (!params.id) {
@@ -259,7 +249,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ success: true, enrolled: true });
   }
 
-  // No confirmado → doble opt-in.
+  // No confirmado → doble opt-in. Como mucho 1 cada 24 h y 3 en total por dirección:
+  // antes cada envío del form le reenviaba la confirmación a quien escribieran.
+  if (!(await claimEmailSend(email, `confirm:seq:${sequence.id}`, guard.ip, "confirm"))) {
+    return data({ success: true, needsConfirmation: true });
+  }
   await sendSequenceConfirmation({
     email,
     name,

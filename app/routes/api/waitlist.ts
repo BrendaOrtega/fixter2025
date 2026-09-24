@@ -1,6 +1,6 @@
 import { type ActionFunctionArgs, data } from "react-router";
 import { db } from "~/.server/db";
-import { checkSignupEmail } from "~/.server/anti-bot";
+import { checkSignupRequest } from "~/.server/signup-guard";
 
 /**
  * POST /api/waitlist
@@ -24,8 +24,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!email || !email.includes("@")) {
       return data({ error: "Email inválido" }, { status: 400 });
     }
-    if (checkSignupEmail(email).blocked) {
-      return data({ success: true }); // anti-bot: finge éxito, no crea
+    // Guard anti-spam compartido (desechables, lista negra, IP); bot → finge éxito
+    const guard = await checkSignupRequest(request, formData, { email, label: "waitlist" });
+    if (!guard.ok) {
+      return guard.fake ? data({ success: true }) : data({ error: guard.error }, { status: 400 });
     }
 
     if (!courseSlug) {
@@ -43,7 +45,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       subscriber = await db.subscriber.create({
         data: {
           email,
-          confirmed: true, // Auto-confirmar para waitlists
+          // NO se auto-confirma: nadie probó que el buzón es suyo, y los envíos futuros sólo
+          // van a confirmados (antes cualquier correo escrito aquí quedaba listo para recibir)
+          confirmed: false,
           tags: [tag],
         },
       });

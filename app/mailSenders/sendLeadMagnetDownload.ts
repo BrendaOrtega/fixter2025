@@ -1,5 +1,6 @@
 import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
 import { generateLeadMagnetToken } from "~/utils/tokens";
+import { escapeHtml } from "~/utils/escapeHtml";
 
 type SendLeadMagnetDownloadProps = {
   to: string;
@@ -47,7 +48,7 @@ const leadMagnetDownloadTemplate = ({
     <img style="max-width: 180px; margin-bottom: 24px;" src="https://i.imgur.com/mpzZhT9.png" alt="FixterGeek" />
 
     <h1 style="font-size: 28px; margin: 0 0 16px 0; color: #1a1a1a;">
-      ${userName ? `Hola ${userName}` : "Hola"}
+      ${userName ? `Hola ${escapeHtml(userName)}` : "Hola"}
     </h1>
 
     ${
@@ -177,7 +178,7 @@ export const sendLeadMagnetConfirmation = async ({
     <img style="max-width: 180px; margin-bottom: 24px;" src="https://i.imgur.com/mpzZhT9.png" alt="FixterGeek" />
 
     <h1 style="font-size: 28px; margin: 0 0 16px 0; color: #1a1a1a;">
-      ${userName ? `Hola ${userName}` : "Hola"}
+      ${userName ? `Hola ${escapeHtml(userName)}` : "Hola"}
     </h1>
 
     ${
@@ -284,7 +285,7 @@ export const sendWaitlistConfirmation = async ({
     <img style="max-width: 180px; margin-bottom: 24px;" src="https://i.imgur.com/mpzZhT9.png" alt="FixterGeek" />
 
     <h1 style="font-size: 28px; margin: 0 0 16px 0; color: #1a1a1a;">
-      ${userName ? `¡Hola ${userName}!` : "¡Hola!"}
+      ${userName ? `¡Hola ${escapeHtml(userName)}!` : "¡Hola!"}
     </h1>
 
     ${
@@ -424,7 +425,7 @@ export const sendWaitlistMagicLink = async ({
     <img style="max-width: 180px; margin-bottom: 24px;" src="https://i.imgur.com/mpzZhT9.png" alt="FixterGeek" />
 
     <h1 style="font-size: 28px; margin: 0 0 16px 0; color: #1a1a1a;">
-      ${userName ? `Hola ${userName}` : "Hola"}
+      ${userName ? `Hola ${escapeHtml(userName)}` : "Hola"}
     </h1>
 
     ${

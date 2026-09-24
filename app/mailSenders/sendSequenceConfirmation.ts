@@ -1,6 +1,7 @@
 import { wrapEmailHtml, emailButton } from "~/utils/emailShell";
 import { sendSesEmailDirect } from "~/utils/sesTransport";
 import { generateSequenceSubscribeToken } from "~/utils/tokens";
+import { escapeHtml } from "~/utils/escapeHtml";
 
 const SEQUENCE_FROM = "FixterGeek <secuencias@fixtergeek.com>";
 
@@ -30,7 +31,7 @@ export async function sendSequenceConfirmation({
 
   const inner = `
     <h1 style="margin:0 0 12px 0;font-size:22px;color:#19262A;">
-      ${name ? `Hola ${name},` : "¡Casi listo!"}
+      ${name ? `Hola ${escapeHtml(name)},` : "¡Casi listo!"}
     </h1>
     <p style="margin:0 0 16px 0;">
       Estás a un clic de suscribirte a <strong>${sequenceName}</strong>.

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useFetcher, Link } from "react-router";
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
-import { checkSignupEmail } from "~/.server/anti-bot";
+import { checkSignupRequest, claimEmailSend, clientIp, registerCodeFailure, requestOwnsEmail } from "~/.server/signup-guard";
 import getMetaTags from "~/utils/getMetaTags";
 import {
   BiPlay,
@@ -132,8 +132,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!email || !email.includes("@")) {
       return data({ success: false, error: "Email inválido" });
     }
-    if (checkSignupEmail(email).blocked) {
-      return data({ success: true, codeSent: true }); // anti-bot: finge éxito
+    // Guard anti-spam compartido; bot → finge éxito
+    const guard = await checkSignupRequest(request, formData, { email, name, label: "pong" });
+    if (!guard.ok) {
+      return guard.fake ? data({ success: true, codeSent: true }) : data({ success: false, error: guard.error });
     }
 
     try {
@@ -142,7 +144,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         where: { email },
       });
 
-      if (existingSubscriber?.confirmed && existingSubscriber.tags.includes(PONG_TAG)) {
+      // Entra directo sólo si la petición YA es de ese correo; si no, escribir el correo de
+      // otro bastaba para quedarse con su cookie. Sin prueba, sigue el camino del código.
+      if (
+        existingSubscriber?.confirmed &&
+        existingSubscriber.tags.includes(PONG_TAG) &&
+        (await requestOwnsEmail(request, email))
+      ) {
         // Ya tiene acceso - setear cookie y retornar
         const headers = new Headers();
         headers.append(
@@ -169,13 +177,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
 
+      // Tope de códigos por dirección (1/min, 10/día); sin cupo sigue valiendo el anterior
+      if (!(await claimEmailSend(email, "otp:pong", guard.ip, "otp"))) {
+        return data({ success: true, codeSent: true });
+      }
+
       // Generar código de 6 dígitos
       const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-      // Guardar código en DB
+      // Guardar código en DB (caduca a los 10 min; antes no caducaba nunca)
       await db.subscriber.update({
         where: { email },
-        data: { verificationCode: code },
+        data: { verificationCode: code, codeExpiresAt: new Date(Date.now() + 10 * 60 * 1000) },
       });
 
       // Enviar email con código
@@ -202,8 +215,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         where: { email },
       });
 
-      if (!subscriber || subscriber.verificationCode !== code) {
-        return data({ success: false, error: "Código inválido" });
+      if (
+        !subscriber ||
+        subscriber.verificationCode !== code ||
+        (subscriber.codeExpiresAt && subscriber.codeExpiresAt < new Date())
+      ) {
+        // 5 fallos en 10 min → el código muere (fuerza bruta)
+        if (subscriber && (await registerCodeFailure(email, "pong", clientIp(request)))) {
+          await db.subscriber.update({ where: { email }, data: { verificationCode: null, codeExpiresAt: null } });
+          return data({ success: false, error: "Demasiados intentos. Pide un código nuevo." });
+        }
+        return data({ success: false, error: "Código inválido o expirado" });
       }
 
       // Confirmar suscripción y agregar tag

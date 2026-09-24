@@ -14,6 +14,7 @@ import { BiBrain, BiCheckCircle, BiLayer, BiPlay, BiRocket } from "react-icons/b
 import { RiFlowChart } from "react-icons/ri";
 import LiquidEther from "~/components/backgrounds/LiquidEther";
 import { FaWhatsapp } from "react-icons/fa";
+import { checkSignupRequest, claimEmailSend } from "~/.server/signup-guard";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -140,11 +141,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "webinar_registration") {
-    const name = String(formData.get("name"));
-    const email = String(formData.get("email"));
+    const name = String(formData.get("name") ?? "");
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const phone = String(formData.get("phone"));
     const experienceLevel = String(formData.get("experienceLevel"));
     const contextObjective = String(formData.get("contextObjective"));
+
+    // Guard anti-spam compartido; bot → éxito fingido sin crear nada
+    const guard = await checkSignupRequest(request, formData, { email, name, label: "webinar-claude" });
+    if (!guard.ok) {
+      return guard.fake ? data({ success: true }) : data({ success: false, error: guard.error }, { status: 400 });
+    }
 
     try {
       await db.user.upsert({
@@ -174,9 +181,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           confirmed: false,
           role: "GUEST",
         },
+        // A un usuario existente NO se le pisan nombre ni teléfono: el form es público y
+        // cualquiera podía cambiarle el nombre a otro escribiendo su correo.
         update: {
-          displayName: name,
-          phoneNumber: phone || undefined,
           tags: { push: ["webinar_agosto", "claude_septiembre"] },
           webinar: {
             experienceLevel,
@@ -188,8 +195,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
 
-      // Send confirmation email
-      await sendWebinarCongrats({
+      // Send confirmation email (una sola vez por dirección)
+      if (await claimEmailSend(email, "once:webinar-claude", guard.ip, "once")) await sendWebinarCongrats({
         to: email,
         webinarTitle: "De Junior a Senior con Claude Code",
         webinarDate: "Viernes 15 de Agosto, 7:00 PM (CDMX)",

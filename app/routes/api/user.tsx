@@ -10,6 +10,7 @@ import { getUserOrNull } from "~/.server/dbGetters";
 import { sendConfirmation } from "~/mailSenders/sendConfirmation";
 import { db } from "~/.server/db";
 import { destroySession, getSession } from "~/sessions";
+import { checkSignupRequest, claimEmailSend } from "~/.server/signup-guard";
 
 const emailSchema = z.string().email();
 
@@ -34,7 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const tags = ["newsletter", "blog"];
     const extraTags = formData.getAll("tags").map(String).filter(Boolean);
     if (extraTags.length) tags.push(...extraTags);
-    const email = String(formData.get("email"));
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const name = String(formData.get("name") || "");
     const { success, error } = emailSchema.safeParse(email);
     if (!success) {
@@ -45,13 +46,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }, {}),
       });
     }
-    // @todo detached
+    // Guard anti-spam: antes cada envío del form reenviaba la confirmación a cualquier
+    // dirección sin confirmar. Bot → éxito falso; error real → se le dice.
+    const guard = await checkSignupRequest(request, formData, { email, name, label: "newsletter" });
+    if (!guard.ok) {
+      if (guard.fake) throw redirect("/subscribe?success=1");
+      return data({ errors: { email: { code: "blocked", message: guard.error } } });
+    }
+    const existing = await db.subscriber.findUnique({ where: { email }, select: { tags: true } });
+    const newTags = tags.filter((t) => !existing?.tags.includes(t));
     const suscriber = await db.subscriber.upsert({
       where: { email },
-      create: { email, name, tags }, // @todo default tags?
-      update: { name, tags: { push: tags } },
+      create: { email, name, tags },
+      // sin duplicar tags ni pisar el nombre con uno vacío
+      update: { ...(name ? { name } : {}), ...(newTags.length ? { tags: { push: newTags } } : {}) },
     });
-    if (!suscriber.confirmed) {
+    if (!suscriber.confirmed && (await claimEmailSend(email, "confirm:newsletter", guard.ip, "confirm"))) {
       await sendConfirmation(email, tags);
     }
     throw redirect("/subscribe?success=1"); // throw to force the fetcher
@@ -64,11 +74,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // Google login redirect is now handled client-side for better performance
 
   if (intent === "magic_link") {
-    const email = String(await formData.get("email"));
-    // validation
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
     emailSchema.parse(email);
-    // @todo: agenda (detached)
-    await sendMagicLink({ email });
+    // Guard anti-spam: sin él, cualquiera mandaba magic links sin límite a cualquier dirección.
+    // Bloqueado o sin cupo → la misma pantalla de éxito, para no dar pistas.
+    const guard = await checkSignupRequest(request, formData, { email, label: "magic-link" });
+    if (guard.ok && (await claimEmailSend(email, "otp:magic-link", guard.ip, "otp"))) {
+      await sendMagicLink({ email });
+    }
     return redirect("/login?success=1");
   }
 

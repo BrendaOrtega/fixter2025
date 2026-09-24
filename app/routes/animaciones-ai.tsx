@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { data, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
-import { checkSignupEmail } from "~/.server/anti-bot";
+import { checkSignupRequest } from "~/.server/signup-guard";
 import { recordOrigin } from "~/.server/origen";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
 import { HeroDeck } from "~/components/common/HeroDeck";
@@ -101,47 +101,17 @@ export const meta = () => {
   return [...baseMeta, { "script:ld+json": schemaOrg }];
 };
 
-// Límite por IP en memoria: 5 altas por hora por dirección. Suficiente contra
-// ráfagas de bots; se reinicia con cada deploy y no necesita tabla.
-const hits = new Map<string, number[]>();
-const rateLimited = (ip: string) => {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 60 * 60 * 1000);
-  recent.push(now);
-  hits.set(ip, recent);
-  return recent.length > 5;
-};
-
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
 
-  // Tres señales de bot, todas con respuesta "ok" para no darles pistas:
-  // el honeypot lleno, el form enviado en menos de 2 s, o más de 5 altas por hora desde la misma IP.
-  const honeypot = String(formData.get("website") ?? "");
-  const startedAt = Number(formData.get("t") ?? 0);
-  const ip = request.headers.get("fly-client-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "?";
-  if (honeypot || (startedAt && Date.now() - startedAt < 2000) || rateLimited(ip)) {
-    return data({ ok: true });
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-    return data({ ok: false, error: "Escribe un correo válido." }, { status: 400 });
-  }
-
-  // Bots y desechables: fingir éxito y no guardar nada.
-  if (checkSignupEmail(email).blocked) {
-    return data({ ok: true });
-  }
-
-  const blocked = await db.emailBlacklist.findUnique({ where: { email } });
-  if (blocked) {
-    return data(
-      { ok: false, error: "Este correo no puede suscribirse en este momento." },
-      { status: 400 },
-    );
+  // Defensas compartidas (honeypot, tiempo, IP en Mongo, desechables, lista negra):
+  // `~/.server/signup-guard`. El Map en memoria de antes se reiniciaba con cada deploy.
+  const guard = await checkSignupRequest(request, formData, { email, label: "animaciones-ai" });
+  if (!guard.ok) {
+    return guard.fake ? data({ ok: true }) : data({ ok: false, error: guard.error }, { status: 400 });
   }
 
   const existing = await db.subscriber.findUnique({

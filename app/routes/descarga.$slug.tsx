@@ -8,7 +8,7 @@ import {
 import type { Route } from "./+types/descarga.$slug";
 import { useFetcher } from "react-router";
 import { db } from "~/.server/db";
-import { checkSignupEmail } from "~/.server/anti-bot";
+import { checkSignupRequest, claimEmailSend } from "~/.server/signup-guard";
 import { getLeadMagnetDownloadUrl } from "~/.server/services/s3-leadmagnet";
 import {
   sendLeadMagnetDownload,
@@ -81,14 +81,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       return data({ error: "Email inválido" }, { status: 400 });
     }
 
-    // Anti-bot: dominio desechable o gmail con truco de puntos → finge "revisa
-    // tu correo" sin crear nada (no le damos pistas al bot).
-    if (checkSignupEmail(email).blocked) {
-      return data({
-        success: true,
-        needsConfirmation: true,
-        message: "Revisa tu email para confirmar.",
-      });
+    // Guard anti-spam (honeypot/tiempo si el form los trae, desechables, lista negra, IP).
+    // A un bot se le finge "revisa tu correo" sin crear nada.
+    const guard = await checkSignupRequest(request, formData, { email, name, label: `leadmagnet:${slug}` });
+    if (!guard.ok) {
+      if (guard.fake) {
+        return data({ success: true, needsConfirmation: true, message: "Revisa tu email para confirmar." });
+      }
+      return data({ error: guard.error }, { status: 400 });
     }
 
     const isWaitlist = leadMagnet.type === "waitlist";
@@ -171,9 +171,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           }
         }
 
+        // correo de respaldo: como mucho uno al día por dirección (antes, cada envío del
+        // form le mandaba otro a cualquier suscriptor confirmado cuyo correo escribieran)
+        const canEmail = await claimEmailSend(email, `leadmagnet:${slug}`, guard.ip, "confirm");
         if (isWaitlist) {
           // Send waitlist confirmation email
-          await sendWaitlistConfirmation({
+          if (canEmail) await sendWaitlistConfirmation({
             to: email,
             slug,
             eventName: leadMagnet.eventName || leadMagnet.title,
@@ -204,7 +207,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           );
 
           // Send backup email with download link
-          await sendLeadMagnetDownload({
+          if (canEmail) await sendLeadMagnetDownload({
             to: email,
             slug,
             title: leadMagnet.title,
@@ -220,8 +223,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           );
         }
       } else {
-        // Not confirmed - send magic link email
-        if (isWaitlist) {
+        // Not confirmed - send magic link email (1 cada 24 h y 3 en total por dirección)
+        const canEmail = await claimEmailSend(email, `confirm:leadmagnet:${slug}`, guard.ip, "confirm");
+        if (!canEmail) {
+          // sin correo nuevo: la misma respuesta de "revisa tu correo"
+        } else if (isWaitlist) {
           await sendWaitlistMagicLink({
             to: email,
             slug,

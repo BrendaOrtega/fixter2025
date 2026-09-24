@@ -31,6 +31,7 @@ import { HiSparkles } from "react-icons/hi";
 import { RiRobot2Line } from "react-icons/ri";
 import "~/styles/agentes-ia.css";
 import { productMetadata } from "~/.server/stripe";
+import { checkSignupRequest, claimEmailSend } from "~/.server/signup-guard";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -156,11 +157,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "early_access_registration") {
-    const name = String(formData.get("name"));
-    const email = String(formData.get("email"));
+    const name = String(formData.get("name") ?? "");
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const phone = String(formData.get("phone"));
     const experience = String(formData.get("experience"));
     const interest = String(formData.get("interest"));
+
+    // Guard anti-spam compartido; bot → éxito fingido sin crear nada
+    const guard = await checkSignupRequest(request, formData, { email, name, label: "agentes-early" });
+    if (!guard.ok) {
+      return guard.fake
+        ? data({ success: true, type: "early_access", message: "Registro exitoso para acceso anticipado" })
+        : data({ success: false, error: guard.error });
+    }
 
     try {
       await db.user.upsert({
@@ -188,9 +197,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           confirmed: false,
           role: "GUEST",
         },
+        // a un usuario existente no se le pisan nombre ni teléfono desde un form público
         update: {
-          displayName: name,
-          phoneNumber: phone || undefined,
           tags: { push: ["ia_visual_early_access"] },
           webinar: {
             experienceLevel: experience,
@@ -201,19 +209,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         },
       });
 
-      // Verificar si el usuario está confirmado
-      const user = await db.user.findUnique({
-        where: { email },
-        select: { confirmed: true }
-      });
-
-      await sendWebinarRegistration({
-        to: email,
-        webinarTitle: "Agentes de IA Visual - Acceso Anticipado",
-        webinarDate: "Próximamente",
-        userName: name,
-        isConfirmed: user?.confirmed || false
-      });
+      // Una sola vez por dirección. `isConfirmed: true` siempre: la otra rama del correo
+      // apunta a /verify-email/…, una ruta que no existe (link muerto).
+      if (await claimEmailSend(email, "once:agentes-early", guard.ip, "once")) {
+        await sendWebinarRegistration({
+          to: email,
+          webinarTitle: "Agentes de IA Visual - Acceso Anticipado",
+          webinarDate: "Próximamente",
+          userName: name,
+          isConfirmed: true,
+        });
+      }
 
       return data({
         success: true,

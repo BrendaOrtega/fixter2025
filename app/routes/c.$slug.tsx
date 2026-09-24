@@ -20,7 +20,8 @@ import {
 } from "~/.server/community";
 import { getMemberEmail, setMemberCookie } from "~/.server/memberCookie";
 import { enrollSubscriberInSequence } from "~/.server/sequences";
-import { checkSignupEmail } from "~/.server/anti-bot";
+import { checkSignupRequest, claimEmailSend, requestOwnsEmail } from "~/.server/signup-guard";
+import { sendAccessLink } from "~/mailSenders/sendAccessLink";
 import { recordOrigin } from "~/.server/origen";
 import { sendCommunityConfirmation } from "~/mailSenders/sendCommunityConfirmation";
 import getMetaTags from "~/utils/getMetaTags";
@@ -156,11 +157,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ error: "Acción no reconocida" }, { status: 400 });
   }
 
-  // Honeypot: si un bot llenó el campo oculto, fingimos éxito y no hacemos nada.
-  if (formData.get("website")) {
-    return data({ success: true, needsConfirmation: true });
-  }
-
   const email = String(formData.get("email") || "")
     .toLowerCase()
     .trim();
@@ -170,17 +166,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ error: "Email inválido" }, { status: 400 });
   }
 
-  // Dominio desechable o truco de puntos en gmail → fingir éxito y no crear.
-  if (checkSignupEmail(email, name).blocked) {
-    return data({ success: true, needsConfirmation: true });
-  }
-
-  const blocked = await db.emailBlacklist.findUnique({ where: { email } });
-  if (blocked) {
-    return data(
-      { error: "Este correo no puede suscribirse en este momento." },
-      { status: 400 },
-    );
+  // Guard anti-spam compartido (honeypot, tiempo, desechables, lista negra, IP).
+  const guard = await checkSignupRequest(request, formData, { email, name, label: `community:${params.slug}` });
+  if (!guard.ok) {
+    return guard.fake
+      ? data({ success: true, needsConfirmation: true })
+      : data({ error: guard.error }, { status: 400 });
   }
 
   // El gate que de verdad cuenta: ocultar el formulario en el loader no impide
@@ -196,13 +187,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   if (subscriber?.confirmed) {
     await joinCommunity({ communityId: community.id, email, name });
     await recordOrigin(email, request);
-    // Queda reconocido como miembro y la misma página se convierte en su panel.
-    return data(
-      { success: true, joined: true },
-      { headers: { "Set-Cookie": await setMemberCookie(email) } },
-    );
+    // La cookie de miembro sólo se entrega si la petición YA es de ese correo. Antes bastaba
+    // escribir el correo de un confirmado para quedarse con su panel; ahora le llega un link
+    // de acceso y entra quien abre el buzón.
+    if (await requestOwnsEmail(request, email)) {
+      return data(
+        { success: true, joined: true },
+        { headers: { "Set-Cookie": await setMemberCookie(email) } },
+      );
+    }
+    if (await claimEmailSend(email, `access:c:${params.slug}`, guard.ip, "otp")) {
+      await sendAccessLink(email, `/c/${params.slug}`);
+    }
+    return data({ success: true, needsConfirmation: true });
   }
 
+  // doble opt-in: 1 cada 24 h y 3 en total por dirección
+  if (!(await claimEmailSend(email, `confirm:community:${community.id}`, guard.ip, "confirm"))) {
+    return data({ success: true, needsConfirmation: true });
+  }
   const welcome = await getWelcomeSequence(community.welcomeSequenceId);
   await sendCommunityConfirmation({
     email,

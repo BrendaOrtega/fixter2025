@@ -23,6 +23,7 @@ import getMetaTags from "~/utils/getMetaTags";
 import { parseVideoTime } from "~/utils/videoTime";
 import { checkSignupEmail } from "~/.server/anti-bot";
 import { recordOrigin, recordSelfReported } from "~/.server/origen";
+import { checkSignupRequest, claimEmailSend, clientIp, registerCodeFailure, requestOwnsEmail } from "~/.server/signup-guard";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data) {
@@ -191,6 +192,16 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       // sin escribir nunca el código. Se otorga al VERIFICAR, que es cuando la
       // persona demuestra que el buzón es suyo.
 
+      // Guard anti-spam: sin tope, cualquiera mandaba códigos sin límite a cualquier
+      // dirección. Sin cupo → se contesta igual y sigue valiendo el código anterior.
+      const guard = await checkSignupRequest(request, formData, { email, label: `course:${courseSlug}` });
+      if (!guard.ok) {
+        return guard.fake ? data({ codeSent: true, email }) : data({ error: guard.error }, { status: 400 });
+      }
+      if (!(await claimEmailSend(email, `otp:course`, guard.ip, "otp"))) {
+        return data({ codeSent: true, email });
+      }
+
       // CASO: No confirmado o no existe → enviar código
       const code = Math.random().toString().slice(2, 8); // 6 dígitos
       const codeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
@@ -279,6 +290,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         }
       }
 
+      const guard = await checkSignupRequest(request, formData, { email, label: `seq:${sequence.id}` });
+      if (!guard.ok) {
+        return guard.fake ? data({ sequenceNeedsConfirmation: true }) : data({ error: guard.error }, { status: 400 });
+      }
+
       // Ya confirmó su email antes: no se le vuelve a pedir la prueba, se le
       // inscribe y el primer email sale en el siguiente ciclo del riel.
       if (existing?.confirmed) {
@@ -286,6 +302,16 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         await enrollSubscriberInSequence(sequence.id, existing.id, {
           immediate: true,
         });
+        // La cookie de identidad sólo si la petición YA es de ese correo: escribir el correo
+        // de un confirmado bastaba para ver el curso como esa persona. Si no, link de acceso.
+        if (!(await requestOwnsEmail(request, email))) {
+          if (await claimEmailSend(email, `access:course`, guard.ip, "otp")) {
+            const { sendAccessLink } = await import("~/mailSenders/sendAccessLink");
+            const url = new URL(request.url);
+            await sendAccessLink(email, `${url.pathname}?subscribed=sequence`);
+          }
+          return data({ sequenceNeedsConfirmation: true });
+        }
         const { setMemberCookie } = await import("~/.server/memberCookie");
 
         // Redirige en vez de devolver datos: el loader tiene que correr otra
@@ -300,11 +326,13 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         });
       }
 
-      await sendSequenceConfirmation({
-        email: email,
-        sequenceId: sequence.id,
-        sequenceName: sequence.name,
-      });
+      if (await claimEmailSend(email, `confirm:seq:${sequence.id}`, guard.ip, "confirm")) {
+        await sendSequenceConfirmation({
+          email: email,
+          sequenceId: sequence.id,
+          sequenceName: sequence.name,
+        });
+      }
       return data({ sequenceNeedsConfirmation: true });
     } catch (error) {
       console.error("📧 Alta a la serie falló:", error);
@@ -328,6 +356,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         !subscriber.codeExpiresAt ||
         subscriber.codeExpiresAt < new Date()
       ) {
+        // 5 fallos en 10 min → el código muere y hay que pedir otro (fuerza bruta)
+        if (subscriber && (await registerCodeFailure(email, "course", clientIp(request)))) {
+          await db.subscriber.update({ where: { email }, data: { verificationCode: null, codeExpiresAt: null } });
+          return data({ error: "Demasiados intentos. Pide un código nuevo." }, { status: 429 });
+        }
         return data({ error: "Código inválido o expirado" }, { status: 400 });
       }
 
