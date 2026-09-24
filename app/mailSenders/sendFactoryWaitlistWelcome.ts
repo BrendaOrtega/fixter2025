@@ -34,6 +34,7 @@ export async function sendFactoryWaitlistWelcome(email: string, tag: string) {
 
   const htmlBody = wrapEmailHtml(inner, {
     preheader: "Confirma tu correo y te avisamos primero cuando abra el taller.",
+    promoFooter: false,
   }).replace(/\{\{unsubscribe\}\}/g, `${baseUrl}/secuencias`);
 
   return sendSesEmailDirect({

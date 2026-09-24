@@ -31,7 +31,7 @@ export async function sendAccessLink(email: string, to: string) {
       ¿No fuiste tú? Ignora este correo: sin este link nadie entra con tu dirección.
     </p>`;
 
-  const htmlBody = wrapEmailHtml(inner, { preheader: "Tu link para entrar a FixterGeek." }).replace(
+  const htmlBody = wrapEmailHtml(inner, { preheader: "Tu link para entrar a FixterGeek.", promoFooter: false }).replace(
     /\{\{unsubscribe\}\}/g,
     `${baseUrl}/secuencias`,
   );
