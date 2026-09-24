@@ -1,6 +1,6 @@
 # Taller Software Factory: sondeo y bases para el temario
 
-Estado al **2026-09-23**. Mañana se arma el temario con esto.
+Estado al **2026-09-24**. El 24-sep se investigó el mercado y se reorientó la landing; falta el temario.
 
 ## Qué es y de dónde salió
 - Un prospecto preguntó por un taller de "software factory". Esa persona usa **Antigravity + ChatGPT combinados**: planea en ChatGPT y ejecuta con los agentes del IDE de Google. Despliega en **Vercel** y usa **Supabase** como base de datos.
@@ -9,8 +9,13 @@ Estado al **2026-09-23**. Mañana se arma el temario con esto.
 
 ## Lo que ya está en producción
 - **Landing** `/software-factory` (`app/routes/software-factory.tsx`):
-  - Una pantalla sin scroll, con un tablero animado donde hasta 3 agentes trabajan en paralelo y Ghosty se asoma.
-  - El título alterna entre inglés y español.
+  - **Hero de una pantalla**, con un tablero animado donde hasta 3 agentes trabajan en paralelo y Ghosty se asoma. Desde PR, cada tarjeta muestra lo que costó el ticket (`$0.38`).
+  - **Título** que alterna entre «Software Factory» y **«Fábrica agéntica»** (24-sep). Cada renglón es una ventana con `overflow-hidden`: crece 0.15em arriba y abajo con margen negativo para no recortar acentos ni la cola de la g, y el `h1` es `flex` para que esos márgenes no se colapsen.
+  - **Copy (24-sep):** «Monta tu fábrica de software sobre tu propio repo… Tú apruebas.» + «No es outsourcing, y los agentes no programan solos: aprendes el sistema que hace confiable lo que generan.» Chips: Sobre tu propio repo · Agentes en paralelo con revisión · Mides costo y calidad por ticket · Descuento para grupos. En móvil el descuento va en la línea bajo el botón.
+  - **Bajo el hero** (`app/components/software-factory/FactorySections.tsx`), con bajada suave desde «↓ esto ya pasa»:
+    - **Esto ya pasa:** 4 tarjetas con objeto SVG animado, número que cuenta y fuente: Stripe (~1,300 PRs/semana), Mastra (277 de 1,627 PRs), Globant ($52.8M ARR en AI Pods), Factory.ai ($4 mil M de valuación, dato de Forge). Cierra con «En México todavía no hay un caso público. Tu caso puede ser de los primeros.»
+    - **Lo que te llevas:** árbol de `tu-repo/` que se escribe solo y resalta la pieza activa, junto a 6 tarjetas (`AGENTS.md`, specs con «terminado», puertas de CI, 3 agentes en paralelo, revisor distinto al que escribió, tablero con costo por ticket). ⚠️ El árbol (`planner.md`, `builder.md`, `reviewer.md`) es ilustrativo: tiene que coincidir con el repo plantilla cuando exista.
+    - ⚠️ Una animación con `whileInView` dentro de un `<svg>` recortado nunca dispara (el IntersectionObserver no la ve): el disparo va en el `<svg>` y los hijos heredan con `variants`.
   - Imagen OG propia (`public/courses/software-factory-og-v2.png`, centrada para la miniatura cuadrada de WhatsApp) y schema JSON-LD de tipo Course, sin precio ni fechas.
 - **Links:** en el navbar, como botón principal del hero de la home, en la banda de la home (`SoftwareFactoryBand`) y en el promo flotante (`FloatingPromo`).
 - **Registro:**
@@ -53,6 +58,53 @@ Lecturas que se parecen a lo que queremos enseñar:
 - Video de referencia de Actual AI: `~/Downloads/actual-ai-software-factory.mp4` (sólo referencia; no se reusa).
 
 **El hueco:** en español nadie da el formato "fábrica" **en vivo, con cohorte chica y deploy real**. Lo que hay son cursos grabados por herramienta y artículos largos que casi nadie termina.
+
+## Mercado y orientación (investigado el 24-sep)
+
+### Quién vende "software factory" y qué compra el cliente
+| Quién | Qué vende | Montaje | Ejecución |
+|---|---|---|---|
+| [Factory.ai](https://factory.com/pricing) | Droids, de $20 a $200 USD/mes; Teams $60 + $40 por asiento; Business y Enterprise cotizados | Incluido en Enterprise: Forward Deployed Engineers y un «programa de agent-readiness» | **Se cobra**: asientos + tokens |
+| [Mastra Factory](https://mastra.ai/factory) (27-jul, beta 8-sep) | Kanban Intake→Triage→Plan→Build→Review→Done sobre GitHub/Linear/Slack, open source | Gratis: lo montas tú | **Se cobra** el hosting: Teams $250 USD/mes |
+| [Globant Glob.AI](https://www.globant.com/ai-pods) (6-ago) | AI Pods supervisados | Lo hacen ellos | Por entregable, no por hora. [ARR $52.8M a junio](https://finance.yahoo.com/technology/ai/articles/globant-sa-glob-q2-2026-050324527.html) |
+
+**Conclusión:** el cliente paga por la ejecución y el montaje se regala para que haya consumo. El taller es el montaje; el negocio recurrente es la fábrica corriendo (Ghosty Teams).
+
+### México
+- **No hay player fuerte en producto.** En servicios enterprise: Globant, [Softtek FRIDA](https://www.softtek.com/frida-framework-for-intelligent-digital-automation) (mexicana) y [Wizeline Agentic Pods](https://www.wizeline.ai/agentic-pods/) (nació en Guadalajara y San Francisco; sede en SF).
+- [Apiux AI Factory](https://api-ux.com/ai-factory/) (Chile): 7 agentes por rol, enterprise, sin precio publicado. No opera en México.
+- Mastra no tiene presencia en México ni contenido en español; sus talleres son gratis y en inglés.
+- [Claude Community México](https://www.claudecommunity.mx/en): 5,000+ registros a eventos, todo gratis. Es público sin producto: el canal más barato para sondear.
+- ⚠️ En México «fábrica de software» significa outsourcing. De ahí el título «Fábrica agéntica» y la línea «No es outsourcing».
+- Grok Build (xAI) es un agente de código para la terminal, como Claude Code; no es una fábrica.
+
+### Social proof y quejas
+- **A favor:** Stripe, Mastra y Globant (arriba). En México no hay ningún caso público verificable.
+- **En contra:**
+  - Factory.ai: tokens impredecibles y código que hay que limpiar ([eesel](https://www.eesel.ai/blog/factory-ai), citando Reddit).
+  - Mastra: issues abiertos, p. ej. su veredicto de review no cuenta como aprobación en GitHub ([#24482](https://github.com/mastra-ai/mastra/issues/24482)).
+  - METR: 19% más lento aunque se sintiera más rápido. GitClear: 8× más código duplicado.
+- **Confusión:** «software factory» vende tres cosas a la vez: plataforma, consultoría y forma de trabajo ([Web Reactiva](https://www.webreactiva.com/blog/software-factory)).
+
+### Decisiones del 24-sep
+- **Sin diagnóstico de repo** previo.
+- **Público:** el developer curioso y actualizado. Los grupos no son el eje, pero se menciona el descuento.
+- **El temario y la landing se ordenan por las 4 piezas de Primo:** contrato de «terminado», puertas deterministas, validación separada y autoridad limitada. Además, medir costo por ticket, que es la queja #1 y nadie lo enseña.
+- **Copy:** sin muletillas de contraste ni estampas («el lunes siguiente»). Se dice el hecho concreto.
+
+### Huecos abiertos
+1. Costo real en tokens por fábrica: nadie lo publica.
+2. Quién en México lo intentó y lo dejó (preguntar en la Claude Community MX).
+3. El primer caso mexicano con números: publicar el de los egresados.
+
+### Copys del video de Actual AI (testimonios del Intensive)
+Transcrito el 24-sep. Los que sirven, en español:
+- «Un caballo un poco más rápido, o un tren bala a tu disposición.» Es fórmula de contraste: usarlo como cita de ellos o sólo como imagen.
+- «En una fábrica, cada quien sube un nivel: el diseñador cuida el sistema de diseño, el senior la arquitectura y DevOps el plan de pruebas y deploy.»
+- «La complejidad que te deja dormir tranquilo.»
+- «Te vas del taller con tu fábrica montada.»
+- «El futuro ya llegó, sólo que no a todos por igual. Apréndelo ahora.»
+- ⚠️ «Completely autonomously» y «dark factories» chocan con nuestra línea («los agentes no programan solos»): no usarlos.
 
 ## Formato y precio propuestos (para decidir mañana)
 - **2 sesiones de 2.5 h**, cupo de 10 a 12 personas y **una semana de soporte asíncrono** después.
