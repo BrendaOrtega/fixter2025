@@ -1,0 +1,8 @@
+An animation SPRITE SHEET on a fully TRANSPARENT background: a strict grid of 6 columns by 4 rows, every cell exactly the same size. Each ROW is one short looping animation read left to right (6 frames). Inside a row the object stays in EXACTLY the same position, scale and base point in every cell; only the moving part changes a little from frame to frame, like classic hand-drawn cel animation. Nothing crosses cell borders. No text, no letters, no numbers, no grid lines drawn, no ground shadows.
+
+Art style (identical everywhere): cozy storybook meets technical sketch; bold dark-brown ink outline (#2b2622) with a slightly wobbly hand-drawn line; soft colored-pencil shading from the top-left; fine pencil hatching texture inside fills; small white highlight; warm muted palette.
+
+Row 1: a closed orange flower bud (#ef8b3d) with green sepals on a short stem, slowly OPENING into a pink five-petal flower (#f4a7ae) with a yellow center: frame 1 fully closed, frame 6 fully open.
+Row 2: a three-leaf green sprout (#95c774) swaying gently in the wind: leaves lean left, center, right, center, left, center.
+Row 3: a boxy slate-blue steam engine (#90a0ad) with two short chimneys and a blank front plate, no face: a cream puff of steam grows out of the taller chimney and floats up, the body squashes slightly on each puff.
+Row 4: a round terracotta hanging basket planter (#9b6a44), side view, empty: it swings gently like a pendulum, tilting a few degrees left and right.

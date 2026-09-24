@@ -1,0 +1,4 @@
+__pycache__/
+.DS_Store
+*-vista.png
+anim/demo/render.log

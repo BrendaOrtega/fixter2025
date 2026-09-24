@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+        <style>
+      * { margin: 0; padding: 0; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #0c1433; }
+      canvas { position: absolute; left: 0; top: 0; }
+    </style>
+  </head>
+  <body>
+    <!-- blueprint-tree: árbol que se arma nodo por nodo mientras una cinta corre por un "tokenizer"; Ghosty
+         (formmy.app/logo.png, sin repintar) vuela a colocar cada nodo en el tiempo de su nota. Canvas 2D; draw(t)
+         desde un tween-proxy de GSAP → determinista. Réplica de "how browsers work" (cute.mp4), 24 sep 2026. -->
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="7.5">
+      <canvas id="cv" width="1280" height="720"></canvas>
+    </div>
+    <script>
+      // Parámetros: todo lo que cambia entre usos. Tiempos en dieciseisavos a PARAMS.bpm (120 → 0.125 s).
+      // OJO: nunca escribir "<" literal en estos textos (el compilador de HyperFrames rompe el script): usar \u003c.
+      const PARAMS = {
+        bpm: 120,
+        duration: 7.5,
+        title: "parse html into the dom",
+        stage: "2 · parse",
+        tapeLabel: "tokenizer",
+        tape: "le>\u003clink rel=stylesheet href=style.css>\u003c/head>\u003cbody>\u003ch1>hello, web\u003c/h1>\u003cp>welcome\u003c/p>\u003cimg src=a.png>\u003c/body>\u003c/html>\u003c!doctype html>\u003chtml>\u003chead>\u003ctitle>hi\u003c/title>",
+        character: "assets/ghosty.png",
+        // k = id, label = texto, (x, y) = centro, parent = id del padre, s16 = cuándo aparece
+        nodes: [
+          { k: "html", label: "\u003chtml>", x: 640, y: 200, s16: 4 },
+          { k: "head", label: "\u003chead>", x: 440, y: 300, parent: "html", s16: 8 },
+          { k: "title", label: "\u003ctitle>", x: 373, y: 400, parent: "head", s16: 11 },
+          { k: "link", label: "\u003clink>", x: 506, y: 400, parent: "head", s16: 13 },
+          { k: "body", label: "\u003cbody>", x: 905, y: 300, parent: "html", s16: 18 },
+          { k: "h1", label: "\u003ch1>", x: 667, y: 400, parent: "body", s16: 21 },
+          { k: "p", label: "\u003cp>", x: 786, y: 400, parent: "body", s16: 23 },
+          { k: "img", label: "\u003cimg>", x: 906, y: 400, parent: "body", s16: 25 },
+          { k: "text1", label: "#text", x: 667, y: 500, parent: "h1", s16: 28 },
+          { k: "text2", label: "#text", x: 786, y: 500, parent: "p", s16: 30 },
+        ],
+        // líneas punteadas que salen de un nodo y terminan en una etiqueta
+        requests: [
+          { label: "css request", path: [[506, 414], [345, 352], [222, 173], [66, 173]], lx: 75, ly: 160, s16: 34, dur: 0.7 },
+          { label: "image", path: [[936, 400], [1005, 466], [1240, 466]], lx: 1100, ly: 452, s16: 38, dur: 0.6 },
+        ],
+        active: { nodes: ["head", "body"], s16: 42 }, // aristas desde la raíz que se pintan de rosa
+        rest: { x: 1060, y: 330, s16: 46 },           // a dónde se va el personaje al terminar
+      };
+      const S16 = 60 / PARAMS.bpm / 4, at = (k) => +(k * S16).toFixed(4);
+      const SC = { duration: PARAMS.duration, nodes: PARAMS.nodes.map((n) => ({ k: n.k, t: at(n.s16) })) };
+      const T = { active: at(PARAMS.active.s16), done: at(PARAMS.rest.s16) };
+      const cv = document.getElementById("cv");
+      const ctx = cv.getContext("2d");
+      const ghost = new Image();
+      ghost.src = PARAMS.character;
+
+      const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+      const lerp = (a, b, p) => a + (b - a) * p;
+      const prog = (t, t0, d) => clamp((t - t0) / d);
+      const inOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+      const outCubic = (p) => 1 - Math.pow(1 - p, 3);
+      const sine = (p) => -(Math.cos(Math.PI * p) - 1) / 2;
+      const backOut = (p, s = 1.7) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+
+      const LINE = "rgba(190, 205, 245, ", INK = "#e8edff", PINK = "#e8467f", CYAN = "#9fd8f0";
+      const TAPE = PARAMS.tape;
+      const N = Object.fromEntries(PARAMS.nodes.map((n) => [n.k, { x: n.x, y: n.y, s: n.label, p: n.parent }]));
+      const ORDER = SC.nodes; // [{k, t}]
+
+      function pill(x, y, text, a, active) {
+        ctx.font = "500 16px 'JetBrains Mono'";
+        const w = ctx.measureText(text).width + 26, h = 28;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = "rgba(18, 28, 68, .92)"; ctx.strokeStyle = active ? PINK : LINE + ".85)"; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, 14); ctx.fill(); ctx.stroke();
+        if (active) { ctx.lineWidth = 1; ctx.strokeStyle = "rgba(232,70,127,.55)"; ctx.beginPath(); ctx.roundRect(x - w / 2 - 4, y - h / 2 - 4, w + 8, h + 8, 18); ctx.stroke(); }
+        ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, x, y + 1);
+        ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.globalAlpha = 1;
+      }
+      // destello de 4 puntas con brillo (el sello del blueprint de la referencia)
+      function flare(x, y, r, a) {
+        ctx.save(); ctx.globalAlpha = a; ctx.shadowColor = "rgba(200,225,255,.9)"; ctx.shadowBlur = 12; ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * 0.18, y - r * 0.18); ctx.lineTo(x + r, y); ctx.lineTo(x + r * 0.18, y + r * 0.18);
+        ctx.lineTo(x, y + r); ctx.lineTo(x - r * 0.18, y + r * 0.18); ctx.lineTo(x - r, y); ctx.lineTo(x - r * 0.18, y - r * 0.18); ctx.closePath(); ctx.fill(); ctx.restore();
+      }
+
+      function background(t) {
+        const g = ctx.createRadialGradient(640, 380, 40, 640, 380, 820);
+        g.addColorStop(0, "#1b2b66"); g.addColorStop(0.55, "#121d4a"); g.addColorStop(1, "#0a1130");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 1280, 720);
+        // retícula
+        ctx.strokeStyle = LINE + ".05)"; ctx.lineWidth = 1;
+        for (let x = 0; x <= 1280; x += 40) { ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, 720); ctx.stroke(); }
+        for (let y = 0; y <= 720; y += 40) { ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(1280, y + 0.5); ctx.stroke(); }
+        // círculos concéntricos, uno punteado y un arco con marcas que gira despacio
+        ctx.strokeStyle = LINE + ".09)";
+        [150, 250, 330].forEach((r) => { ctx.beginPath(); ctx.arc(640, 370, r, 0, 7); ctx.stroke(); });
+        ctx.setLineDash([2, 6]); ctx.beginPath(); ctx.arc(640, 370, 400, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = LINE + ".16)";
+        for (let k = 0; k < 60; k++) { const a = -Math.PI * 0.85 + k * 0.03 + t * 0.02; const r1 = 345, r2 = k % 5 ? 352 : 360; ctx.beginPath(); ctx.moveTo(640 + Math.cos(a) * r1, 370 + Math.sin(a) * r1); ctx.lineTo(640 + Math.cos(a) * r2, 370 + Math.sin(a) * r2); ctx.stroke(); }
+        // reglas laterales
+        [292, 988].forEach((x) => {
+          ctx.strokeStyle = LINE + ".22)"; ctx.beginPath(); ctx.moveTo(x, 190); ctx.lineTo(x, 510); ctx.stroke();
+          for (let y = 190; y <= 510; y += 10) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (y % 50 ? 5 : 10) * (x < 640 ? 1 : -1), y); ctx.stroke(); }
+        });
+        // cota inferior y malla hexagonal
+        ctx.strokeStyle = LINE + ".25)"; ctx.beginPath(); ctx.moveTo(373, 552); ctx.lineTo(907, 552); ctx.moveTo(373, 546); ctx.lineTo(373, 558); ctx.moveTo(907, 546); ctx.lineTo(907, 558); ctx.stroke();
+        ctx.strokeStyle = LINE + ".08)";
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 26; c++) {
+          const hx = 405 + c * 18.5 + (r % 2) * 9.25, hy = 598 + r * 16; if (Math.hypot(hx - 640, hy - 370) > 330) continue;
+          ctx.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; ctx.lineTo(hx + Math.cos(a) * 9, hy + Math.sin(a) * 9); } ctx.closePath(); ctx.stroke();
+        }
+        // esquinas
+        ctx.strokeStyle = LINE + ".3)";
+        [[24, 24, 1, 1], [1256, 24, -1, 1], [24, 696, 1, -1], [1256, 696, -1, -1]].forEach(([x, y, sx, sy]) => { ctx.beginPath(); ctx.moveTo(x + 14 * sx, y); ctx.lineTo(x, y); ctx.lineTo(x, y + 14 * sy); ctx.stroke(); });
+      }
+
+      function tape(t) {
+        // cinta de HTML que corre por el tokenizer
+        ctx.fillStyle = "rgba(14, 22, 58, .9)"; ctx.fillRect(0, 114, 1280, 30);
+        ctx.strokeStyle = LINE + ".5)"; ctx.lineWidth = 1;
+        [114, 117, 141, 144].forEach((y) => { ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(1280, y + 0.5); ctx.stroke(); });
+        ctx.font = "400 12px 'JetBrains Mono'"; ctx.textBaseline = "middle";
+        const cw = ctx.measureText("x").width, full = TAPE.length * cw, off = (t * 70) % full;
+        ctx.save(); ctx.beginPath(); ctx.rect(0, 117, 1280, 24); ctx.clip();
+        for (let k = -1; k < 3; k++) {
+          const x0 = k * full - off;
+          // lo ya leído (izquierda) tenue; lo que entra (derecha) brillante
+          ctx.fillStyle = "rgba(200,212,245,.35)"; ctx.fillText(TAPE, x0, 129.5);
+        }
+        ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.rect(640, 117, 640, 24); ctx.clip();
+        ctx.fillStyle = "rgba(232,237,255,.85)"; for (let k = -1; k < 3; k++) ctx.fillText(TAPE, k * full - off, 129.5);
+        ctx.restore(); ctx.textBaseline = "alphabetic";
+        // ventana del tokenizer
+        ctx.strokeStyle = LINE + ".9)"; ctx.lineWidth = 1.4; ctx.strokeRect(612, 98, 56, 62); ctx.strokeRect(618, 104, 44, 50);
+        ctx.strokeStyle = LINE + ".5)";
+        [[606, 92], [674, 92], [606, 166], [674, 166]].forEach(([x, y], i) => { const sx = i % 2 ? -1 : 1, sy = i < 2 ? 1 : -1; ctx.beginPath(); ctx.moveTo(x, y + 8 * sy); ctx.lineTo(x, y); ctx.lineTo(x + 8 * sx, y); ctx.stroke(); });
+        flare(640, 92, 7, 0.9); flare(640, 166, 7, 0.9);
+        ctx.fillStyle = "rgba(210,220,250,.85)"; ctx.font = "500 15px Inter"; ctx.textAlign = "center"; ctx.fillText(PARAMS.tapeLabel, 640, 78); ctx.textAlign = "left";
+      }
+
+      function hud(t) {
+        ctx.fillStyle = "#f2f5ff"; ctx.font = "600 21px Inter"; ctx.fillText(PARAMS.title, 73, 76);
+        ctx.fillStyle = "rgba(242,245,255,.8)"; ctx.fillRect(73, 87, 128, 2.5); // subrayado corto, como en la referencia
+        ctx.strokeStyle = LINE + ".35)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(1173, 77, 26, 0, 7); ctx.stroke();
+        ctx.strokeStyle = "#f2f5ff"; ctx.beginPath(); ctx.arc(1173, 77, 26, -Math.PI / 2, -Math.PI / 2 + (t / SC.duration) * Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "#f08a6a"; ctx.fillRect(1167, 71, 12, 12);
+        ctx.fillStyle = "rgba(14,22,58,.95)"; ctx.strokeStyle = LINE + ".4)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(1130, 114, 86, 26, 6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = INK; ctx.font = "500 15px Inter"; ctx.textAlign = "center"; ctx.fillText(PARAMS.stage, 1173, 132); ctx.textAlign = "left";
+      }
+
+      // camino punteado que se traza con un punto que viaja; etiqueta que se escribe al final
+      function request(path, p, label, lx, ly) {
+        if (p <= 0) return;
+        const segs = []; let L = 0;
+        for (let i = 1; i < path.length; i++) { const d = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]); segs.push(d); L += d; }
+        let rem = L * outCubic(p), end = path[0];
+        ctx.strokeStyle = "rgba(170, 215, 240, .85)"; ctx.lineWidth = 1.5; ctx.setLineDash([7, 5]);
+        ctx.beginPath(); ctx.moveTo(...path[0]);
+        for (let i = 1; i < path.length && rem > 0; i++) { const f = Math.min(1, rem / segs[i - 1]); end = [lerp(path[i - 1][0], path[i][0], f), lerp(path[i - 1][1], path[i][1], f)]; ctx.lineTo(...end); rem -= segs[i - 1]; }
+        ctx.stroke(); ctx.setLineDash([]);
+        flare(end[0], end[1], 8, 1);
+        const lp = prog(p, 0.55, 0.45);
+        ctx.fillStyle = CYAN; ctx.font = "500 17px Inter"; ctx.fillText(label.slice(0, Math.ceil(label.length * lp)), lx, ly);
+      }
+
+      function drawGhosty(t) {
+        if (!ghost.complete || !ghost.naturalWidth) return;
+        // ruta: flota junto al tokenizer y vuela a cada nodo, llegando en el tiempo de su nota
+        const root = PARAMS.nodes[0];
+        const stops = [{ t: 0, x: root.x - 80, y: root.y + 40 }, ...ORDER.map((o) => ({ t: o.t, x: N[o.k].x + 46, y: N[o.k].y - 46 })), { t: T.done, x: PARAMS.rest.x, y: PARAMS.rest.y }];
+        let x = stops[0].x, y = stops[0].y, vx = 0;
+        for (let i = 1; i < stops.length; i++) {
+          const a = stops[i - 1], b = stops[i];
+          const t0 = a.t + Math.min(0.08, (b.t - a.t) * 0.2); // pausa mínima al colocar; vuela todo el resto del intervalo
+          if (t < t0) { x = a.x; y = a.y; break; }
+          if (t <= b.t) { const p = sine((t - t0) / (b.t - t0)); x = lerp(a.x, b.x, p); y = lerp(a.y, b.y, p) - Math.sin(p * Math.PI) * 26; vx = b.x - a.x; break; }
+          x = b.x; y = b.y;
+        }
+        const bob = Math.sin(t * 5.5) * 4, tilt = clamp(vx / 900, -0.25, 0.25) * (Math.abs(vx) > 0 ? 1 : 0);
+        // estela de chispas detrás
+        const w = 58, h = w * 592 / 512;
+        ctx.save(); ctx.translate(x, y + bob); ctx.rotate(tilt);
+        ctx.shadowColor = "rgba(154,153,234,.55)"; ctx.shadowBlur = 18;
+        ctx.drawImage(ghost, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
+
+      function drawFrame(t) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        background(t);
+        tape(t);
+        const active = t >= T.active;
+        // aristas: crecen del padre al hijo cuando el hijo aparece
+        ORDER.forEach(({ k, t: tk }) => {
+          const n = N[k]; if (!n.p) return;
+          const p = outCubic(prog(t, tk, 0.18)); if (p <= 0) return;
+          const par = N[n.p];
+          const hot = active && PARAMS.active.nodes.includes(k);
+          const hp = hot ? outCubic(prog(t, T.active + PARAMS.active.nodes.indexOf(k) * 0.25, 0.25)) : 0;
+          ctx.strokeStyle = LINE + ".55)"; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(par.x, par.y + 14); ctx.lineTo(lerp(par.x, n.x, p), lerp(par.y + 14, n.y - 14, p)); ctx.stroke();
+          if (hp > 0) { ctx.strokeStyle = PINK; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(par.x, par.y + 14); ctx.lineTo(lerp(par.x, n.x, hp), lerp(par.y + 14, n.y - 14, hp)); ctx.stroke(); }
+        });
+        // peticiones
+        PARAMS.requests.forEach((r) => request(r.path, prog(t, at(r.s16), r.dur), r.label, r.lx, r.ly));
+        // nodos con aro que se expande y destello al aparecer
+        ORDER.forEach(({ k, t: tk }) => {
+          if (t < tk) return;
+          const n = N[k], p = prog(t, tk, 0.5);
+          const s = backOut(prog(t, tk, 0.22), 2.2);
+          if (p < 1) {
+            ctx.save(); ctx.globalAlpha = 1 - p; ctx.strokeStyle = LINE + ".8)"; ctx.lineWidth = 1.5;
+            ctx.shadowColor = "rgba(180,210,255,.8)"; ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.ellipse(n.x, n.y, 40 + 40 * p, 16 + 18 * p, 0, 0, 7); ctx.stroke(); ctx.restore();
+            flare(n.x + 30, n.y - 16, 9 * (1 - p), 1 - p);
+          }
+          ctx.save(); ctx.translate(n.x, n.y); ctx.scale(s, s);
+          pill(0, 0, n.s, clamp(s), active && PARAMS.active.nodes.includes(k));
+          ctx.restore();
+        });
+        drawGhosty(t);
+        hud(t);
+      }
+
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const proxy = { time: 0 };
+      tl.to(proxy, { time: SC.duration, duration: SC.duration, ease: "none", onUpdate: () => drawFrame(proxy.time) }, 0);
+      drawFrame(0);
+      ghost.onload = () => drawFrame(proxy.time);
+      document.fonts.ready.then(() => drawFrame(proxy.time));
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

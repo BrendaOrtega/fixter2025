@@ -6,6 +6,12 @@ copias de esas escenas: se midieron posiciones, tamaños, eases y tiempos sobre 
 reescribió **la mecánica**, parametrizada, determinista y en las paletas de la casa. Galería con
 previews en video: <https://blissito.github.io/ghosty-reel/motion-lab/>.
 
+**Tres más desde el 24 sep 2026, en canvas 2D:** `blueprint-tree`, `blueprint-route` y `sketch-layers`
+salieron de replicar el explainer «how browsers work» hecho con Claude Opus 5.5. Se dibujan cuadro por
+cuadro con una función `draw(t)` llamada desde un tween-proxy de GSAP, con rough.js con semilla, y el
+personaje es Ghosty oficial. Rompen a propósito la regla de caricatura plana: llevan glow, degradado y
+grano de papel.
+
 Cada carpeta trae `SKILL.md` (cuándo usarla, parámetros, SFX sugerido, trampas), `recipe.html`
 (la composición con un bloque `PARAMS` al inicio), `preview.html` + `preview.mp4` + `preview.png`.
 El contrato de una receta está en `MOLDE.md`. Hoja de contactos: `GALERIA.png`.
@@ -27,6 +33,9 @@ El contrato de una receta está en `MOLDE.md`. Hoja de contactos: `GALERIA.png`.
 | `word-karaoke-panel` | párrafo que se enciende por palabra en un panel con etiqueta | disclaimer |
 | `stacked-boxes` | cajas con `back.out` apiladas sobre guías | "Prod / Not God" |
 | `dither-corners` | textura half-tone en esquinas, modos `dots` y `noise` | fondo rosa de las tarjetas |
+| `blueprint-tree` | árbol que se arma nodo por nodo con cinta de tokenizer; Ghosty coloca cada nodo (canvas 2D) | "parse html into the dom" de cute.mp4 |
+| `blueprint-route` | ida y vuelta con parada fallida y respuesta tecleada; Ghosty carga el dato (canvas 2D) | "dns lookup" de cute.mp4 |
+| `sketch-layers` | página que se inclina y se separa en hojas, piel de boceto técnico con rough.js | "layers" de cute.mp4 |
 
 Las captions cinéticas, scrambles y cortinillas de texto ya están en `../motion-anything/`.
 

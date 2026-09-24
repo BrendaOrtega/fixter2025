@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /><meta name="viewport" content="width=1024, height=320" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>*{margin:0}html,body{width:1024px;height:320px;overflow:hidden;background:#f1e8d4}canvas{position:absolute;left:0;top:0}</style></head>
+<body>
+<!-- Demo de suavidad: la flor usa cuadros (cambio de forma); canasta, brote y vapor, un solo sprite animado por código. -->
+<div id="root" data-composition-id="main" data-start="0" data-width="1024" data-height="320" data-duration="4.5">
+<canvas id="cv" width="1024" height="320"></canvas></div>
+<script>
+const ctx = document.getElementById("cv").getContext("2d");
+const FR = {"leafA": {"x": 60, "y": 28, "w": 232, "h": 240}, "leafB": {"x": 372, "y": 28, "w": 224, "h": 232}, "leafSmall": {"x": 724, "y": 52, "w": 152, "h": 208}, "sprout": {"x": 956, "y": 28, "w": 272, "h": 248}, "tendril": {"x": 1308, "y": 52, "w": 192, "h": 224}, "flower": {"x": 36, "y": 284, "w": 232, "h": 224}, "bud": {"x": 412, "y": 292, "w": 144, "h": 208}, "budOpen": {"x": 700, "y": 284, "w": 160, "h": 216}, "knot": {"x": 988, "y": 300, "w": 224, "h": 184}, "vineSeg": {"x": 1284, "y": 348, "w": 216, "h": 80}, "basket": {"x": 28, "y": 564, "w": 264, "h": 176}, "engine": {"x": 356, "y": 508, "w": 264, "h": 248}, "wheel": {"x": 684, "y": 532, "w": 224, "h": 224}, "puff": {"x": 980, "y": 524, "w": 240, "h": 224}, "pause": {"x": 1300, "y": 532, "w": 200, "h": 200}, "pageImage": {"x": 44, "y": 788, "w": 232, "h": 184}, "pillButton": {"x": 356, "y": 828, "w": 248, "h": 120}, "server": {"x": 676, "y": 780, "w": 216, "h": 200}, "cacheBall": {"x": 1004, "y": 780, "w": 200, "h": 200}, "sparkle": {"x": 1324, "y": 780, "w": 168, "h": 192}};
+const load = (s) => { const i = new Image(); i.src = s; i.onload = () => draw(proxy.time); return i; };
+const ATLAS = load("assets/atlas.png");
+const BLOOM = [0,1,2,3,4,5].map((k) => load(`assets/bloom_${k}.png`));
+const ENGINE = load("assets/engine_0.png");
+const BASKET = load("assets/swing_1.png");
+const ok = (i) => i.complete && i.naturalWidth;
+function spr(name, x, y, w, rot = 0, ax = 0.5, ay = 0.5, alpha = 1) {
+  if (!ok(ATLAS)) return; const f = FR[name], h = w * f.h / f.w;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(rot); ctx.drawImage(ATLAS, f.x, f.y, f.w, f.h, -w * ax, -h * ay, w, h); ctx.restore();
+}
+// imagen completa con pivote (px, py) en fracción del cuadro
+function img(i, x, y, w, rot = 0, px = 0.5, py = 0.5, sx = 1, sy = 1, alpha = 1) {
+  if (!ok(i)) return; const h = w * i.naturalHeight / i.naturalWidth;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(i, -w * px, -h * py, w, h); ctx.restore();
+}
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+function draw(t) {
+  ctx.fillStyle = "#f1e8d4"; ctx.fillRect(0, 0, 1024, 320);
+  ctx.fillStyle = "#2b2622"; ctx.font = "600 15px Inter, sans-serif"; ctx.textAlign = "center";
+  ["cuadros (forma)", "código (rígido)", "código (vapor)", "código (péndulo)"].forEach((s, i) => ctx.fillText(s, 128 + i * 256, 300));
+  // 1) flor: 6 cuadros, se abre en 1.5 s, se queda abierta, vuelve a cerrar al final (bucle finito)
+  const p = t < 3 ? clamp((t - 0.3) / 1.5) : clamp(1 - (t - 3) / 1.2);
+  img(BLOOM[Math.min(5, Math.floor(p * 6))], 128, 250, 180, 0, 0.5, 0.92);
+  // 2) brote: sprite del atlas mecido alrededor de su base (seno, 30 fps)
+  spr("sprout", 384, 250, 170, Math.sin(t * Math.PI * 1.1) * 0.12, 0.5, 0.97);
+  // 3) locomotora fija con un respiro de escala; nubes de vapor del atlas que suben y se desvanecen
+  const breathe = 1 + Math.sin(t * Math.PI * 4) * 0.015;
+  for (let k = 0; k < 5; k++) { const q = ((t + k * 0.45) % 2.2) / 2.2; spr("puff", 675 + q * 30, 120 - q * 110, 40 + q * 50, 0, 0.5, 0.5, (1 - q) * clamp(q * 6)); }
+  img(ENGINE, 640, 250, 190, 0, 0.5, 0.95, breathe, 2 - breathe);
+  // 4) canasta: péndulo alrededor de la argolla (arriba al centro)
+  img(BASKET, 896, 40, 170, Math.sin(t * Math.PI * 0.9) * 0.14, 0.5, 0.03);
+}
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true }); const proxy = { time: 0 };
+tl.to(proxy, { time: 4.5, duration: 4.5, ease: "none", onUpdate: () => draw(proxy.time) }, 0);
+draw(0); window.__timelines["main"] = tl;
+</script></body></html>

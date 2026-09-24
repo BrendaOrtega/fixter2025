@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+        <style>
+      * { margin: 0; padding: 0; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #f1e8d4; }
+      canvas { position: absolute; left: 0; top: 0; }
+    </style>
+  </head>
+  <body>
+    <!-- sketch-layers: una página plana se inclina a vista axonométrica (una matriz afín) y se separa en hojas con
+         grosor, guías punteadas, etiquetas con línea guía y un anillo a mano. Piel de boceto técnico: papel con grano,
+         sombras rayadas (rough.js hachure con semilla). Ghosty (formmy.app/logo.png, sin repintar) cae de un salto.
+         Canvas 2D; draw(t) desde un tween-proxy de GSAP → determinista. Réplica de cute.mp4 ("layers"), 24 sep 2026. -->
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="7">
+      <canvas id="cv" width="1280" height="720"></canvas>
+    </div>
+    <script>
+      // Parámetros: textos y tiempos en dieciseisavos a PARAMS.bpm (120 → 0.125 s).
+      const PARAMS = {
+        bpm: 120,
+        duration: 7,
+        title: "layers",
+        stage: "6 · composite",
+        character: "assets/ghosty.png",
+        labels: ["page", "image", "fixed header", "animated button"], // de abajo hacia arriba
+        ringLabel: "moves without repaint",
+        s16: { tilt: 4, sep: 14, sepStep: 2, guides: 22, label: 24, labelStep: 2, bracket: 32, hop: 35, land: 38, wave: 40, ring: 44, slideOut: 46, slideBack: 50 },
+      };
+      const S16 = 60 / PARAMS.bpm / 4, at = (k) => +(k * S16).toFixed(4);
+      const P16 = PARAMS.s16;
+      const T = { tilt: at(P16.tilt), guides: at(P16.guides), bracket: at(P16.bracket), hop: at(P16.hop), land: at(P16.land), wave: at(P16.wave), ring: at(P16.ring), slideOut: at(P16.slideOut), slideBack: at(P16.slideBack) };
+      ["page", "image", "header", "button"].forEach((k, i) => { T[`sep:${k}`] = at(P16.sep + i * P16.sepStep); T[`label:${k}`] = at(P16.label + i * P16.labelStep); });
+      const SC = { duration: PARAMS.duration };
+      const ghost = new Image();
+      ghost.src = PARAMS.character;
+      const cv = document.getElementById("cv");
+      const ctx = cv.getContext("2d");
+      const rc = rough.canvas(cv);
+
+      // ---------- utilidades ----------
+      const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+      const lerp = (a, b, p) => a + (b - a) * p;
+      const prog = (t, t0, d) => clamp((t - t0) / d);
+      const inOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+      const outCubic = (p) => 1 - Math.pow(1 - p, 3);
+      const backOut = (p, s = 1.7) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+      function hash(x, y) { let n = (x * 374761393 + y * 668265263) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; }
+
+      const INK = "#2b2622", CREAM = "#f1e8d4", STRIPE = "rgba(236, 210, 125, .42)";
+      const SHEET = "rgba(205, 224, 234, .55)", PAGE = "#f8f4ea", BLUE = "#3f6587", RED = "#e2573f", PINK = "#e0527a", GOLD = "#dfb13a", GUIDE = "#6f8fce";
+
+      // grano de papel: textura fija calculada una vez (semilla fija)
+      const grain = document.createElement("canvas");
+      grain.width = 1280; grain.height = 720;
+      {
+        const g = grain.getContext("2d"), img = g.createImageData(1280, 720);
+        for (let y = 0; y < 720; y++) for (let x = 0; x < 1280; x++) {
+          const n = hash(x, y), fiber = hash(x >> 2, y * 7) * 0.5;
+          const v = 255 - Math.floor((n * 0.75 + fiber * 0.25) * 18);
+          const i = (y * 1280 + x) * 4;
+          img.data[i] = v; img.data[i + 1] = v - 2; img.data[i + 2] = v - 6; img.data[i + 3] = 255;
+        }
+        g.putImageData(img, 0, 0);
+      }
+
+      // ---------- la hoja: página local W×H → pantalla con una matriz afín que va de frontal a axonométrica ----------
+      const W = 460, H = 300;
+      let M = { a: 1, c: 0, d: 1, x: 640, y: 380 };
+      const P = (u, v, m = M) => [m.x + m.a * u + m.c * v, m.y + m.d * v];
+      const setM = (m) => ctx.setTransform(m.a, 0, m.c, m.d, m.x, m.y);
+
+      function sketchPoly(pts, o = {}) { rc.polygon(pts, { roughness: 0.7, bowing: 0.6, stroke: INK, strokeWidth: 2, seed: 3, ...o }); }
+
+      // ---------- fondo ----------
+      function drawBackground(t) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = CREAM; ctx.fillRect(0, 0, 1280, 720);
+        // rayas diagonales que avanzan despacio (un solo recorrido: bucle finito)
+        ctx.save(); ctx.translate(640, 360); ctx.rotate(-Math.PI / 5); ctx.fillStyle = STRIPE;
+        const off = (t * 10) % 190;
+        for (let k = -12; k < 12; k++) ctx.fillRect(-1400, k * 190 + off, 2800, 88);
+        ctx.restore();
+        // guías de construcción
+        ctx.strokeStyle = "rgba(43, 38, 34, .09)"; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(640, 390, 300, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([3, 7]); ctx.beginPath(); ctx.arc(640, 390, 340, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(640, 40); ctx.lineTo(640, 700); ctx.moveTo(260, 390); ctx.lineTo(1020, 390); ctx.stroke();
+      }
+
+      function drawHud(t) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = INK; ctx.font = "600 21px Inter"; ctx.textBaseline = "alphabetic";
+        ctx.fillText(PARAMS.title, 72, 78);
+        ctx.fillStyle = GOLD; ctx.fillRect(72, 88, 66, 3);
+        // anillo de etapa
+        ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(1173, 77, 26, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = PINK; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(1173, 77, 26, -Math.PI / 2, -Math.PI / 2 + (t / SC.duration) * Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = RED; ctx.fillRect(1167, 71, 12, 12);
+        ctx.fillStyle = INK; ctx.font = "500 15px Inter"; ctx.textAlign = "center"; ctx.fillText(PARAMS.stage, 1173, 130); ctx.textAlign = "left";
+      }
+
+      // ---------- contenido de cada hoja (coordenadas locales, centradas) ----------
+      function contentPage(chromeAlpha) {
+        ctx.fillStyle = PAGE; ctx.fillRect(-W / 2, -H / 2, W, H);
+        // renglones de texto
+        ctx.fillStyle = "#6c645b";
+        for (let i = 0; i < 6; i++) ctx.fillRect(-W / 2 + 26, -30 + i * 20, i === 5 ? 110 : 190 - (i % 3) * 18, 5);
+        // zona rayada (como en la referencia)
+        if (chromeAlpha < 1) {
+          ctx.save(); ctx.globalAlpha = 1 - chromeAlpha;
+          rc.rectangle(40, 20, 170, 105, { fill: "rgba(80,70,60,.5)", fillStyle: "hachure", hachureGap: 4, hachureAngle: -40, fillWeight: 0.8, stroke: "none", seed: 11, roughness: 1.2 });
+          ctx.restore();
+        }
+        if (chromeAlpha > 0) {
+          ctx.save(); ctx.globalAlpha = chromeAlpha;
+          ctx.fillStyle = "#e8dcc6"; ctx.fillRect(-W / 2, -H / 2, W, 30);
+          [["#e26a55", 0], ["#e8b54a", 1], ["#7fae5a", 2]].forEach(([c, i]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(-W / 2 + 14 + i * 13, -H / 2 + 15, 4, 0, 7); ctx.fill(); });
+          ctx.fillStyle = "#fff"; ctx.fillRect(-W / 2 + 60, -H / 2 + 8, 300, 14);
+          ctx.fillStyle = "#9b9185"; ctx.font = "500 9px 'JetBrains Mono'"; ctx.fillText("example.com", -W / 2 + 68, -H / 2 + 18);
+          ctx.restore();
+        }
+      }
+      function contentImage() {
+        ctx.fillStyle = "#cfe1e9"; ctx.fillRect(28, -40, 178, 118);
+        ctx.fillStyle = "#e9c24a"; ctx.beginPath(); ctx.arc(176, -14, 12, 0, 7); ctx.fill();
+        ctx.fillStyle = "#9cc27c"; ctx.beginPath(); ctx.moveTo(28, 50); ctx.quadraticCurveTo(80, 0, 130, 40); ctx.quadraticCurveTo(170, 20, 206, 36); ctx.lineTo(206, 78); ctx.lineTo(28, 78); ctx.fill();
+        ctx.fillStyle = "#6f9f58"; ctx.beginPath(); ctx.moveTo(28, 70); ctx.quadraticCurveTo(110, 40, 206, 62); ctx.lineTo(206, 78); ctx.lineTo(28, 78); ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(28, -40, 178, 118);
+      }
+      function contentHeader() {
+        ctx.fillStyle = BLUE; ctx.fillRect(-W / 2 + 22, -H / 2 + 44, W - 44, 34);
+        ctx.fillStyle = "#fff"; ctx.font = "700 17px Inter"; ctx.fillText("hello, web", -W / 2 + 34, -H / 2 + 67);
+      }
+      function contentButton(dx) {
+        ctx.fillStyle = RED; ctx.beginPath(); ctx.roundRect(-W / 2 + 190 + dx, -H / 2 + 50, 84, 22, 11); ctx.fill();
+        ctx.fillStyle = "#fbe3dc"; ctx.font = "600 9px Inter"; ctx.fillText("click", -W / 2 + 220 + dx, -H / 2 + 64);
+      }
+
+      // ---------- personaje: Ghosty oficial, sólo se escala (aplaste) y se inclina (saludo) ----------
+      function drawBuddy(x, y, t, sx, sy, blink, wave) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.save(); ctx.translate(x, y);
+        rc.ellipse(4, 2, 58, 12, { fill: "rgba(60,50,40,.55)", fillStyle: "hachure", hachureGap: 3.5, hachureAngle: -50, stroke: "none", seed: 21, roughness: 1 });
+        if (ghost.complete && ghost.naturalWidth) {
+          const w = 60, h = w * ghost.naturalHeight / ghost.naturalWidth;
+          ctx.rotate(wave * Math.sin(t * 14) * 0.18);
+          ctx.scale(sx, sy);
+          ctx.drawImage(ghost, -w / 2, -h - 2, w, h);
+        }
+        ctx.restore();
+      }
+
+      // ---------- escena ----------
+      const LAYERS = [
+        { key: "page", label: PARAMS.labels[0], draw: (s) => contentPage(s.chrome), sheet: PAGE },
+        { key: "image", label: PARAMS.labels[1], draw: () => contentImage(), sheet: SHEET },
+        { key: "header", label: PARAMS.labels[2], draw: () => contentHeader(), sheet: SHEET },
+        { key: "button", label: PARAMS.labels[3], draw: (s) => contentButton(s.dx), sheet: SHEET },
+      ];
+
+      function drawFrame(t) {
+        drawBackground(t);
+        // inclinación: frontal (escala 1.3) → axonométrica
+        const tilt = inOut(prog(t, T.tilt, 0.75));
+        const base = { a: lerp(1.3, 1, tilt), c: lerp(0, 0.62, tilt), d: lerp(1.3, 0.42, tilt), x: 640, y: lerp(360, 395, tilt) };
+        const chrome = 1 - prog(t, T.tilt, 0.35);
+        const dx = 90 * backOut(prog(t, T.slideOut, 0.3), 1.4) * (1 - backOut(prog(t, T.slideBack, 0.3), 1.4));
+        const mats = [];
+        // antes de separar, todas las hojas comparten posición (la página compuesta)
+        LAYERS.forEach((L, i) => {
+          const sepP = i === 0 ? 1 : backOut(prog(t, T[`sep:${L.key}`], 0.35), 1.5);
+          const m = { ...base, y: lerp(base.y, base.y + 105 - i * 70, i === 0 ? prog(t, T["sep:page"], 0.3) : sepP) };
+          if (i === 0) m.y = lerp(base.y, base.y + 105, backOut(prog(t, T["sep:page"], 0.35), 1.3));
+          mats[i] = m;
+        });
+        // sombra rayada bajo la pila
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        const m0 = mats[0];
+        const sh = [P(-W / 2, -H / 2, m0), P(W / 2, -H / 2, m0), P(W / 2, H / 2, m0), P(-W / 2, H / 2, m0)].map(([x, y]) => [x + 10 * tilt, y + 16 * tilt]);
+        if (tilt > 0.05) rc.polygon(sh, { fill: `rgba(70,60,50,${0.5 * tilt})`, fillStyle: "hachure", hachureGap: 5, hachureAngle: -48, fillWeight: 1, stroke: "none", seed: 5, roughness: 1.4 });
+
+        LAYERS.forEach((L, i) => {
+          const m = mats[i];
+          const isolated = i > 0 && t >= T[`sep:${L.key}`];
+          const C = [P(-W / 2, -H / 2, m), P(W / 2, -H / 2, m), P(W / 2, H / 2, m), P(-W / 2, H / 2, m)];
+          // grosor de la hoja (sólo en axonométrica)
+          const th = 7 * tilt;
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          if (th > 0.5 && (i === 0 || isolated)) {
+            ctx.fillStyle = "#b9bfc3"; ctx.beginPath(); ctx.moveTo(...C[3]); ctx.lineTo(...C[2]); ctx.lineTo(C[2][0], C[2][1] + th); ctx.lineTo(C[3][0], C[3][1] + th); ctx.fill();
+            ctx.fillStyle = "#9aa3a9"; ctx.beginPath(); ctx.moveTo(...C[1]); ctx.lineTo(...C[2]); ctx.lineTo(C[2][0], C[2][1] + th); ctx.lineTo(C[1][0], C[1][1] + th); ctx.fill();
+          }
+          // hoja translúcida (las de arriba sólo existen como hoja al separarse)
+          if (i === 0 || isolated) { ctx.fillStyle = L.sheet; ctx.beginPath(); C.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill(); }
+          setM(m);
+          L.draw({ chrome, dx });
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          if (i === 0 || isolated) sketchPoly(C, { seed: 30 + i, strokeWidth: i === 0 ? 2.4 : 2 });
+        });
+
+        // guías punteadas verticales entre esquinas
+        const gp = outCubic(prog(t, T.guides, 0.4));
+        if (gp > 0) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.strokeStyle = GUIDE; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
+          [[-W / 2, -H / 2], [W / 2, H / 2], [W / 2, -H / 2], [-W / 2, H / 2]].forEach(([u, v]) => {
+            const a = P(u, v, mats[3]), b = P(u, v, mats[0]);
+            ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(a[0], lerp(a[1], b[1], gp)); ctx.stroke();
+          });
+          ctx.setLineDash([]);
+        }
+
+        // etiquetas con línea guía (se escriben letra por letra)
+        LAYERS.forEach((L, i) => {
+          const p = prog(t, T[`label:${L.key}`], 0.3);
+          if (p <= 0) return;
+          const [cx, cy] = P(-W / 2, -H / 2, mats[i]);
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(lerp(cx, cx - 44, outCubic(p)), cy); ctx.stroke();
+          ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 7); ctx.fill();
+          ctx.font = "500 17px Inter"; ctx.textAlign = "right";
+          ctx.fillText(L.label.slice(0, Math.ceil(L.label.length * clamp(p * 1.6))), cx - 52, cy + 6);
+          ctx.textAlign = "left";
+        });
+        // llave dorada que agrupa
+        const bp = outCubic(prog(t, T.bracket, 0.35));
+        if (bp > 0) {
+          const top = P(-W / 2, -H / 2, mats[3])[1], bot = P(-W / 2, -H / 2, mats[0])[1] + 110;
+          ctx.strokeStyle = GOLD; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.moveTo(132, top); ctx.lineTo(120, top); ctx.lineTo(120, lerp(top, bot, bp)); if (bp > 0.98) ctx.lineTo(132, bot); ctx.stroke();
+        }
+
+        // anillo rosa a mano alrededor del botón + «moves without repaint»
+        const rp = prog(t, T.ring, 0.45);
+        if (rp > 0) {
+          const m = mats[3];
+          const [bx, by] = P(-W / 2 + 232, -H / 2 + 61, m);
+          ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.strokeStyle = PINK; ctx.lineWidth = 2;
+          ctx.beginPath();
+          const N = 60, end = Math.floor(N * 1.1 * outCubic(rp));
+          for (let k = 0; k <= end; k++) {
+            const a = -2.2 + (k / N) * Math.PI * 2, w = 1 + (hash(k, 9) - 0.5) * 0.05;
+            const x = bx + Math.cos(a) * 92 * w + 4, y = by + Math.sin(a) * 30 * w;
+            k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          }
+          ctx.stroke();
+          const lp = prog(t, T.ring + 0.15, 0.3);
+          ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(bx - 40, by - 4); ctx.lineTo(lerp(bx - 40, bx - 110, lp), lerp(by - 4, by - 88, lp)); ctx.stroke();
+          const txt = PARAMS.ringLabel;
+          ctx.fillStyle = INK; ctx.font = "500 17px Inter"; ctx.fillText(txt.slice(0, Math.ceil(txt.length * lp)), bx - 200, by - 96);
+        }
+
+        // personaje: salto en parábola con estela punteada, aplaste al caer, saludo y parpadeo
+        if (t >= T.hop) {
+          const land = P(175, -70, mats[3]);
+          const from = [1130, 250];
+          const hp = clamp((t - T.hop) / (T.land - T.hop));
+          const x = lerp(from[0], land[0], hp), y = lerp(from[1], land[1], hp) - Math.sin(hp * Math.PI) * 150;
+          // estela
+          ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.strokeStyle = "rgba(111,143,206,.8)"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 6]);
+          ctx.beginPath();
+          const trailFade = 1 - prog(t, T.land + 0.6, 0.5);
+          ctx.globalAlpha = trailFade;
+          for (let k = 0; k <= 40; k++) { const q = (k / 40) * hp; const tx = lerp(from[0], land[0], q), ty = lerp(from[1], land[1], q) - Math.sin(q * Math.PI) * 150; k ? ctx.lineTo(tx, ty) : ctx.moveTo(tx, ty); }
+          ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+          // aplaste y estiramiento
+          let sx = 1, sy = 1;
+          if (hp < 1) { sy = 1 + 0.18 * Math.sin(hp * Math.PI); sx = 1 / sy; }
+          else { const k = t - T.land; const s = Math.exp(-k * 9) * Math.cos(k * 28) * 0.22; sy = 1 - s; sx = 1 + s; }
+          const bob = hp >= 1 ? Math.sin((t - T.land) * 6) * 2 : 0;
+          const blink = (t > T.blink && t < T.blink + 0.12) || (t > T.land + 1.9 && t < T.land + 2.02);
+          const wave = t >= T.wave ? Math.sin(clamp((t - T.wave) / 1.0) * Math.PI) : 0;
+          drawBuddy(x, y + bob, t, sx, sy, blink, wave);
+        }
+
+        drawHud(t);
+        // grano encima de todo (también sobre el personaje)
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalCompositeOperation = "multiply"; ctx.drawImage(grain, 0, 0); ctx.globalCompositeOperation = "source-over";
+      }
+
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const proxy = { time: 0 };
+      tl.to(proxy, { time: SC.duration, duration: SC.duration, ease: "none", onUpdate: () => drawFrame(proxy.time) }, 0);
+      drawFrame(0);
+      document.fonts.ready.then(() => drawFrame(proxy.time));
+      ghost.onload = () => drawFrame(proxy.time);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

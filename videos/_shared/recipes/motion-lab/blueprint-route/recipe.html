@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+        <style>
+      * { margin: 0; padding: 0; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #0c1433; }
+      canvas { position: absolute; left: 0; top: 0; }
+    </style>
+  </head>
+  <body>
+    <!-- blueprint-route: una pieza de un texto (el host de una URL) viaja en brazos de Ghosty por una ruta con dos
+         paradas —una falla (X rosa), la otra contesta— y regresa con la respuesta a un hueco que se llena tecleando.
+         Canvas 2D; draw(t) desde un tween-proxy de GSAP → determinista. Réplica de cute.mp4 ("dns lookup"), 24 sep 2026. -->
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="8">
+      <canvas id="cv" width="1280" height="720"></canvas>
+    </div>
+    <script>
+      // Parámetros: textos y tiempos (en dieciseisavos a PARAMS.bpm). No escribir "<" literal en textos: usar \u003c.
+      const PARAMS = {
+        bpm: 120,
+        duration: 8,
+        title: "dns lookup",
+        stage: "1 · fetch",
+        character: "assets/ghosty.png",
+        url: "https://example.com/",
+        parts: [["scheme", 0, 8], ["host", 8, 19], ["path", 19, 20]], // [etiqueta, desde, hasta] en caracteres
+        carry: "example.com",        // lo que Ghosty se lleva (la parte de enmedio)
+        missLabel: "cache miss",     // la parada que no lo tiene
+        answer: "203.0.113.7",       // lo que regresa
+        answerLabel: "ip address",
+        s16: { scheme: 4, host: 6, path: 8, pick: 9, go1: 12, miss: 20, go2: 24, hit: 28, go3: 32, land: 42, pulse: 52 },
+      };
+      const S16 = 60 / PARAMS.bpm / 4;
+      const T = Object.fromEntries(Object.entries(PARAMS.s16).map(([k, v]) => [k, +(v * S16).toFixed(4)]));
+      [0, 1, 2].forEach((i) => (T[`row:${i}`] = T.hit + (i + 1) * S16));
+      const SC = { duration: PARAMS.duration };
+      const cv = document.getElementById("cv");
+      const ctx = cv.getContext("2d");
+      const ghost = new Image();
+      ghost.src = PARAMS.character;
+
+      const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+      const lerp = (a, b, p) => a + (b - a) * p;
+      const prog = (t, t0, d) => clamp((t - t0) / d);
+      const inOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+      const outCubic = (p) => 1 - Math.pow(1 - p, 3);
+      const sine = (p) => -(Math.cos(Math.PI * p) - 1) / 2;
+      const backOut = (p, s = 1.7) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+      const LINE = "rgba(190, 205, 245, ", INK = "#e8edff", PINK = "#e8467f", CYAN = "#9fd8f0";
+
+      // ---------- piezas del blueprint (las mismas del experimento del DOM) ----------
+      function flare(x, y, r, a) {
+        ctx.save(); ctx.globalAlpha = a; ctx.shadowColor = "rgba(200,225,255,.9)"; ctx.shadowBlur = 12; ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * 0.18, y - r * 0.18); ctx.lineTo(x + r, y); ctx.lineTo(x + r * 0.18, y + r * 0.18);
+        ctx.lineTo(x, y + r); ctx.lineTo(x - r * 0.18, y + r * 0.18); ctx.lineTo(x - r, y); ctx.lineTo(x - r * 0.18, y - r * 0.18); ctx.closePath(); ctx.fill(); ctx.restore();
+      }
+      function pill(x, y, text, size, opts = {}) {
+        ctx.font = `500 ${size}px 'JetBrains Mono'`;
+        const w = opts.w || ctx.measureText(text).width + size * 1.2, h = size * 1.75;
+        ctx.fillStyle = "rgba(18, 28, 68, .95)"; ctx.strokeStyle = opts.stroke || LINE + ".85)"; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2); ctx.fill(); ctx.stroke();
+        if (opts.double) { ctx.lineWidth = 1; ctx.strokeStyle = LINE + ".4)"; ctx.beginPath(); ctx.roundRect(x - w / 2 - 5, y - h / 2 - 5, w + 10, h + 10, h / 2 + 5); ctx.stroke(); }
+        ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text, x, y + 1);
+        ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+        return w;
+      }
+      function background(t) {
+        const g = ctx.createRadialGradient(760, 400, 40, 760, 400, 850);
+        g.addColorStop(0, "#1b2b66"); g.addColorStop(0.55, "#121d4a"); g.addColorStop(1, "#0a1130");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 1280, 720);
+        ctx.strokeStyle = LINE + ".05)"; ctx.lineWidth = 1;
+        for (let x = 0; x <= 1280; x += 40) { ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, 720); ctx.stroke(); }
+        for (let y = 0; y <= 720; y += 40) { ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(1280, y + 0.5); ctx.stroke(); }
+        ctx.strokeStyle = LINE + ".08)";
+        [120, 220, 320, 440].forEach((r) => { ctx.beginPath(); ctx.arc(808, 400, r, 0, 7); ctx.stroke(); });
+        ctx.setLineDash([2, 6]); ctx.beginPath(); ctx.arc(808, 400, 380, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+        // regla izquierda y cota inferior
+        ctx.strokeStyle = LINE + ".2)";
+        ctx.beginPath(); ctx.moveTo(34, 40); ctx.lineTo(34, 680); ctx.stroke();
+        for (let y = 40; y <= 680; y += 16) { ctx.beginPath(); ctx.moveTo(34, y); ctx.lineTo(y % 80 ? 40 : 46, y); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(120, 690); ctx.lineTo(1160, 690); ctx.stroke();
+        ctx.strokeStyle = LINE + ".3)";
+        [[24, 24, 1, 1], [1256, 24, -1, 1], [24, 696, 1, -1], [1256, 696, -1, -1]].forEach(([x, y, sx, sy]) => { ctx.beginPath(); ctx.moveTo(x + 14 * sx, y); ctx.lineTo(x, y); ctx.lineTo(x, y + 14 * sy); ctx.stroke(); });
+      }
+      function hud(t) {
+        ctx.fillStyle = "#f2f5ff"; ctx.font = "600 21px Inter"; ctx.fillText(PARAMS.title, 73, 76);
+        ctx.fillStyle = "rgba(242,245,255,.8)"; ctx.fillRect(73, 87, 92, 2.5);
+        ctx.strokeStyle = LINE + ".35)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(1173, 77, 26, 0, 7); ctx.stroke();
+        ctx.strokeStyle = "#f2f5ff"; ctx.beginPath(); ctx.arc(1173, 77, 26, -Math.PI / 2, -Math.PI / 2 + (t / SC.duration) * Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "#f08a6a"; ctx.fillRect(1167, 71, 12, 12);
+        ctx.fillStyle = "rgba(210,220,250,.85)"; ctx.font = "500 15px Inter"; ctx.textAlign = "center"; ctx.fillText(PARAMS.stage, 1173, 130); ctx.textAlign = "left";
+      }
+
+      // ---------- rutas (cúbicas) ----------
+      const bez = (s, p) => { const u = 1 - p; return [0, 1].map((k) => u * u * u * s[0][k] + 3 * u * u * p * s[1][k] + 3 * u * p * p * s[2][k] + p * p * p * s[3][k]); };
+      const R = { x: 808, y: 372 }, S = { x: 1040, y: 478 }, SLOT = { x: 505, y: 572 };
+      const A = [[567, 200], [600, 104], [770, 104], [800, 334]];
+      const B = [[840, 362], [905, 360], [960, 420], [1004, 452]];
+      const C = [[1026, 524], [985, 612], [740, 604], [600, 574]];
+      function arcU(seg, p) {
+        if (!seg._L) { seg._L = [0]; let prev = bez(seg, 0); for (let k = 1; k <= 200; k++) { const q = bez(seg, k / 200); seg._L.push(seg._L[k - 1] + Math.hypot(q[0] - prev[0], q[1] - prev[1])); prev = q; } }
+        const L = seg._L, target = clamp(p) * L[200]; let k = 0; while (k < 200 && L[k + 1] < target) k++;
+        return (k + (L[k + 1] > L[k] ? (target - L[k]) / (L[k + 1] - L[k]) : 0)) / 200;
+      }
+      function route(seg, p0, p1, style) {
+        ctx.beginPath();
+        for (let k = 0; k <= 60; k++) { const [x, y] = bez(seg, lerp(p0, p1, k / 60)); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+        ctx.stroke();
+      }
+
+      function nodeRing(x, y, r, t, spin) {
+        ctx.strokeStyle = LINE + ".55)"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.stroke();
+        ctx.strokeStyle = LINE + ".3)";
+        for (let k = 0; k < 48; k++) { const a = k * Math.PI / 24 + t * spin; const r2 = r + (k % 4 ? 5 : 9); ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (r + 2), y + Math.sin(a) * (r + 2)); ctx.lineTo(x + Math.cos(a) * r2, y + Math.sin(a) * r2); ctx.stroke(); }
+      }
+
+      function drawGhosty(x, y, t, tilt = 0, scale = 1) {
+        if (!ghost.complete || !ghost.naturalWidth) return;
+        const w = 50 * scale, h = w * 592 / 512;
+        ctx.save(); ctx.translate(x, y + Math.sin(t * 5.5) * 3); ctx.rotate(tilt);
+        ctx.shadowColor = "rgba(154,153,234,.55)"; ctx.shadowBlur = 16;
+        ctx.drawImage(ghost, -w / 2, -h / 2, w, h); ctx.restore();
+      }
+
+      function drawFrame(t) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        background(t);
+
+        // URL y su anatomía
+        ctx.font = "500 30px 'JetBrains Mono'";
+        const url = PARAMS.url, cw = ctx.measureText("x").width;
+        const uw = pill(507, 220, url, 30, { double: true });
+        const x0 = 507 - uw / 2 + 18;
+        const parts = PARAMS.parts;
+        parts.forEach(([name, a, b], i) => {
+          const p = outCubic(prog(t, T[name] ?? 0.5 + i * 0.25, 0.25)); if (p <= 0) return;
+          const xa = x0 + a * cw, xb = x0 + b * cw;
+          ctx.strokeStyle = LINE + ".75)"; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(xa, 252); ctx.lineTo(xa, 262); ctx.moveTo(xa, 257); ctx.lineTo(lerp(xa, xb, p), 257); if (p > 0.98) { ctx.moveTo(xb, 252); ctx.lineTo(xb, 262); } ctx.stroke();
+          ctx.fillStyle = i === 1 ? "#fff" : "rgba(210,220,250,.85)"; ctx.font = "500 16px Inter"; ctx.textAlign = "center";
+          ctx.globalAlpha = p; ctx.fillText(name, (xa + xb) / 2, 283); ctx.globalAlpha = 1; ctx.textAlign = "left";
+          // el host se enciende mientras Ghosty lo toma
+          if (i === 1 && t < T.pick + 0.2) { ctx.fillStyle = `rgba(232,70,127,${0.18 * p})`; ctx.fillRect(xa, 202, xb - xa, 36); }
+        });
+        // cota vertical izquierda que baja de la URL al hueco de la IP
+        ctx.strokeStyle = LINE + ".3)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(240, 220); ctx.lineTo(240, 572); ctx.moveTo(232, 220); ctx.lineTo(300, 220); ctx.moveTo(232, 572); ctx.lineTo(410, 572); ctx.stroke();
+
+        // rutas: punteadas tenues desde el principio; sólidas detrás de Ghosty
+        const pA = sine(prog(t, T.go1, T.miss - T.go1)), pB = sine(prog(t, T.go2, T.hit - T.go2)), pC = sine(prog(t, T.go3, T.land - T.go3));
+        ctx.strokeStyle = LINE + ".3)"; ctx.lineWidth = 1.3; ctx.setLineDash([4, 6]);
+        route(A, 0, 1); route(B, 0, 1); route(C, 0, 1); ctx.setLineDash([]);
+        ctx.strokeStyle = "rgba(225,232,255,.9)"; ctx.lineWidth = 2;
+        if (pA > 0) route(A, 0, arcU(A, pA)); if (pB > 0) route(B, 0, arcU(B, pB)); if (pC > 0) route(C, 0, arcU(C, pC));
+
+        // resolver (caché): hexágonos dentro; en el miss se pone rosa con una X
+        nodeRing(R.x, R.y, 36, t, 0.15);
+        ctx.save(); ctx.beginPath(); ctx.arc(R.x, R.y, 34, 0, 7); ctx.clip();
+        ctx.fillStyle = "rgba(18,28,68,.95)"; ctx.fillRect(R.x - 40, R.y - 40, 80, 80);
+        ctx.strokeStyle = LINE + ".4)"; ctx.lineWidth = 1;
+        for (let r = -3; r <= 3; r++) for (let c = -3; c <= 3; c++) { const hx = R.x + c * 13 + (r % 2 ? 6.5 : 0), hy = R.y + r * 11.3; ctx.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; ctx.lineTo(hx + Math.cos(a) * 6.5, hy + Math.sin(a) * 6.5); } ctx.closePath(); ctx.stroke(); }
+        const mp = prog(t, T.miss, 0.2), mf = 1 - prog(t, T.miss + 1.2, 0.4);
+        if (mp > 0 && mf > 0) {
+          ctx.fillStyle = `rgba(232,70,127,${0.45 * mp * mf})`; ctx.fillRect(R.x - 40, R.y - 40, 80, 80);
+          ctx.strokeStyle = `rgba(255,140,180,${mp * mf})`; ctx.lineWidth = 4; const k = 13 * backOut(mp, 2);
+          ctx.beginPath(); ctx.moveTo(R.x - k, R.y - k); ctx.lineTo(R.x + k, R.y + k); ctx.moveTo(R.x + k, R.y - k); ctx.lineTo(R.x - k, R.y + k); ctx.stroke();
+        }
+        ctx.restore();
+        if (mp > 0) {
+          const lp = prog(t, T.miss + 0.1, 0.35);
+          ctx.strokeStyle = LINE + ".6)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(R.x - 26, R.y + 26); ctx.lineTo(lerp(R.x - 26, 755, lp), lerp(R.y + 26, 430, lp)); ctx.stroke();
+          const s = PARAMS.missLabel; ctx.fillStyle = "rgba(225,232,255,.9)"; ctx.font = "500 17px Inter"; ctx.textAlign = "center"; ctx.fillText(s.slice(0, Math.ceil(s.length * lp)), 695, 450); ctx.textAlign = "left";
+        }
+
+        // servidor DNS: tres renglones que se encienden al contestar
+        nodeRing(S.x, S.y, 44, t, -0.1);
+        ctx.fillStyle = "rgba(18,28,68,.95)"; ctx.beginPath(); ctx.arc(S.x, S.y, 42, 0, 7); ctx.fill();
+        ctx.strokeStyle = LINE + ".8)"; ctx.lineWidth = 1.4; ctx.strokeRect(S.x - 16, S.y - 22, 32, 44);
+        [0, 1, 2].forEach((i) => {
+          const on = t >= T[`row:${i}`];
+          ctx.fillStyle = on ? CYAN : LINE + ".35)"; ctx.fillRect(S.x - 11, S.y - 16 + i * 13, 22, 6);
+        });
+        const hp = prog(t, T.hit, 0.6);
+        if (hp > 0 && hp < 1) {
+          ctx.save(); ctx.globalAlpha = 1 - hp; ctx.strokeStyle = LINE + ".9)"; ctx.shadowColor = "rgba(180,210,255,.9)"; ctx.shadowBlur = 12;
+          ctx.beginPath(); ctx.arc(S.x, S.y, 46 + 50 * hp, 0, 7); ctx.stroke(); ctx.restore();
+          flare(S.x - 32, S.y - 32, 16 * (1 - hp) + 4, 1 - hp * 0.6);
+        }
+
+        // hueco de la IP (punteado con «+») que se llena con la IP tecleada
+        const typed = t < T.land ? 0 : Math.min(PARAMS.answer.length, 1 + Math.floor((t - T.land - S16) / (S16 * 2 / 3)));
+        if (t < T.land) {
+          ctx.strokeStyle = LINE + ".45)"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.3;
+          ctx.beginPath(); ctx.roundRect(SLOT.x - 85, SLOT.y - 17, 170, 34, 17); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = LINE + ".6)"; ctx.font = "500 18px Inter"; ctx.textAlign = "center"; ctx.fillText("+", SLOT.x, SLOT.y + 6); ctx.textAlign = "left";
+        } else {
+          const w = 170, s = backOut(prog(t, T.land, 0.25), 2);
+          ctx.save(); ctx.translate(SLOT.x, SLOT.y); ctx.scale(s, s);
+          ctx.fillStyle = "rgba(18,28,68,.95)"; ctx.strokeStyle = LINE + ".9)"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.roundRect(-w / 2, -17, w, 34, 17); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = CYAN; ctx.fillRect(-w / 2 + 12, -9, 3, 18);
+          ctx.fillStyle = INK; ctx.font = "500 18px 'JetBrains Mono'"; ctx.fillText(PARAMS.answer.slice(0, typed), -w / 2 + 22, 6);
+          ctx.restore();
+        }
+        const pp = prog(t, T.pulse, 1.2);
+        if (pp > 0) {
+          if (pp < 1) { ctx.save(); ctx.globalAlpha = 1 - pp; ctx.strokeStyle = PINK; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(SLOT.x, SLOT.y, 30 + 110 * outCubic(pp), 0, 7); ctx.stroke(); ctx.restore(); }
+          const s = PARAMS.answerLabel, lp = prog(t, T.pulse, 0.35);
+          ctx.fillStyle = "rgba(225,232,255,.9)"; ctx.font = "500 16px Inter"; ctx.textAlign = "right"; ctx.fillText(s.slice(0, Math.ceil(s.length * lp)), SLOT.x - 100, SLOT.y + 6); ctx.textAlign = "left";
+          flare(SLOT.x + 85, SLOT.y, 9 * (1 - pp) + 3, 1);
+        }
+
+        // Ghosty: recorrido continuo. Espera sobre la URL, brinca al host, recorre A; en cada parada rodea el nodo
+        // en arco desde donde terminó hasta donde empieza la siguiente curva (nunca brinca de lugar); termina en C.
+        const DY = -34;
+        // por longitud de arco: la fracción p del recorrido es la misma fracción de la distancia (velocidad pareja)
+        const arc = arcU;
+        const along = (seg, p) => { const u = arc(seg, clamp(p)), [x, y] = bez(seg, u), [x2] = bez(seg, clamp(u + 0.02)); return [x, y + DY, clamp((x2 - x) / 60, -0.3, 0.3)]; };
+        const orbit = (c, from, to, p) => {
+          const a0 = Math.atan2(from[1] - c.y, from[0] - c.x), r0 = Math.hypot(from[0] - c.x, from[1] - c.y);
+          let a1 = Math.atan2(to[1] - c.y, to[0] - c.x); const r1 = Math.hypot(to[0] - c.x, to[1] - c.y);
+          if (a1 - a0 > Math.PI) a1 -= 2 * Math.PI; if (a0 - a1 > Math.PI) a1 += 2 * Math.PI;
+          const a = lerp(a0, a1, p), r = lerp(r0, r1, p) + Math.sin(p * Math.PI) * 10;
+          return [c.x + Math.cos(a) * r, c.y + Math.sin(a) * r, 0];
+        };
+        const start = [330, 160];
+        const endA = along(A, 1), startB = along(B, 0), endB = along(B, 1), startC = along(C, 0);
+        let gx, gy, tilt = 0, carry = null;
+        if (t < T.pick) { [gx, gy] = start; }
+        else if (t < T.go1) { const p = sine(prog(t, T.pick, T.go1 - T.pick)); const a0 = along(A, 0); gx = lerp(start[0], a0[0], p); gy = lerp(start[1], a0[1], p) - Math.sin(p * Math.PI) * 30; carry = PARAMS.carry; }
+        else if (t < T.miss) { [gx, gy, tilt] = along(A, pA); carry = PARAMS.carry; }
+        else if (t < T.go2) { const p = sine(prog(t, T.miss + 0.2, Math.max(0.05, T.go2 - T.miss - 0.2))); [gx, gy] = orbit(R, endA, startB, p); carry = PARAMS.carry; }
+        else if (t < T.hit) { [gx, gy, tilt] = along(B, pB); carry = PARAMS.carry; }
+        else if (t < T.go3) { const p = sine(prog(t, T.hit + 0.25, Math.max(0.05, T.go3 - T.hit - 0.25))); [gx, gy] = orbit(S, endB, startC, p); carry = PARAMS.answer; }
+        else { [gx, gy, tilt] = along(C, pC); carry = t < T.land ? PARAMS.answer : null; if (t >= T.land) tilt = 0; }
+        if (carry) pill(gx + 70, gy - 16, carry, 13, { stroke: carry === PARAMS.answer ? CYAN : PINK });
+        let sq = 1;
+        if (t >= T.land) { const k = t - T.land; sq = 1 - Math.exp(-k * 9) * Math.cos(k * 28) * 0.15; }
+        drawGhosty(gx, gy, t, tilt, sq);
+
+        hud(t);
+      }
+
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const proxy = { time: 0 };
+      tl.to(proxy, { time: SC.duration, duration: SC.duration, ease: "none", onUpdate: () => drawFrame(proxy.time) }, 0);
+      drawFrame(0);
+      ghost.onload = () => drawFrame(proxy.time);
+      document.fonts.ready.then(() => drawFrame(proxy.time));
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
