@@ -385,16 +385,17 @@ const OscillatingTitle = () => {
   }, []);
 
   return (
-    <h1 className="mt-3 whitespace-nowrap text-[clamp(2.6rem,6.1vw,6.5rem)] font-black leading-[0.95] tracking-tight sm:mt-5">
+    <h1 className="mt-3 flex flex-col whitespace-nowrap text-[clamp(2.6rem,6.1vw,6.5rem)] font-black leading-[0.95] tracking-tight sm:mt-5">
       <span className="sr-only">Software Factory · Fábrica agéntica</span>
+      {/* la ventana crece 0.15em arriba y abajo (acentos y la cola de la g) y el margen negativo lo devuelve: el renglón ocupa lo mismo. El h1 es flex para que esos márgenes no se colapsen */}
       {TITLES[lang].map((word, line) => (
-        <span key={line} aria-hidden className="relative block h-[1.02em] overflow-hidden">
+        <span key={line} aria-hidden className="relative -my-[0.15em] block h-[1.32em] overflow-hidden py-[0.15em]">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={`${lang}-${line}`}
-              initial={{ y: "105%", rotate: 4 }}
+              initial={{ y: "130%", rotate: 4 }}
               animate={{ y: 0, rotate: 0 }}
-              exit={{ y: "-105%", rotate: -4 }}
+              exit={{ y: "-130%", rotate: -4 }}
               transition={{ type: "spring", stiffness: 300, damping: 26, delay: line * 0.08 }}
               className="block origin-left"
               style={{ color: line ? MINT : INK }}
