@@ -294,7 +294,7 @@ const DELIVERABLES: Deliverable[] = [
   },
   {
     file: "reviewer.md",
-    title: "Quien valida no es quien escribió",
+    title: "Revisa un agente distinto al que escribió",
     body: "El revisor compara cada PR contra su spec, corre la preview y te explica en español qué cambió y por qué. Tú das el merge.",
     why: "Evita que el equipo acabe aprobando código que ya nadie entiende.",
   },
@@ -345,7 +345,7 @@ export const DeliverablesSection = () => {
     <section className="relative px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
       <div ref={ref} className="mx-auto max-w-7xl">
         <SectionTitle kicker="Lo que te llevas" title="Tu repo, convertido en fábrica">
-          Trabajamos sobre tu propio código. Al terminar, estas seis piezas viven en tu repositorio y siguen funcionando el lunes siguiente, con el agente que ya pagas.
+          Trabajamos sobre tu propio código. Al terminar, estas seis piezas quedan en tu repositorio: te las quedas y las puedes replicar en otros proyectos con ayuda de tu agente de código.
         </SectionTitle>
 
         <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
