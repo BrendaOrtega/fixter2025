@@ -615,6 +615,12 @@ export const HomeHero = () => {
               variant="ghost"
               children="Taller: Sistemas agénticos"
             />
+            <PrimaryButton
+              as="Link"
+              to="/software-factory"
+              variant="ghost"
+              children="Próximamente: Software Factory 🏭"
+            />
           </div>
           {/* Tres puertas gratis, una por renglón y sin explicación: el hero
               es para elegir, no para leer. Los libros viven en su sección. */}
