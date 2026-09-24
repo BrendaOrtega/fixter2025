@@ -599,6 +599,12 @@ export default function Route() {
       <motion.a
         href="#esto-ya-pasa"
         aria-label="Ver más"
+        // bajada suave sólo en esta página (no se toca el scroll global del sitio); respeta reduce-motion
+        onClick={(e) => {
+          e.preventDefault();
+          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          document.getElementById("esto-ya-pasa")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+        }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1, y: [0, 6, 0] }}
         transition={{ opacity: { delay: 1.2 }, y: { delay: 1.2, duration: 1.4, repeat: 4 } }}
