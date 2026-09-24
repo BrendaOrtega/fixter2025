@@ -45,7 +45,7 @@ export const meta = () => {
         "@type": "Course",
         "@id": `${PAGE_URL}#course`,
         name: "Software Factory",
-        alternateName: "Fábrica de Software",
+        alternateName: "Fábrica de software agéntica",
         description:
           "Taller en vivo para montar una fábrica de software: de una spec a producción con agentes de código trabajando en paralelo, verificación en cada PR y deploy, con el editor y el stack que ya usas.",
         url: PAGE_URL,
@@ -373,7 +373,8 @@ const FactoryBoard = () => {
 // con overflow oculto: la palabra nueva sube y la vieja sale, sin mover el layout.
 const TITLES = [
   ["Software", "Factory"],
-  ["Fábrica de", "Software"],
+  // "agéntica" la separa del outsourcing, que es lo que "fábrica de software" significa en México
+  ["Fábrica", "agéntica"],
 ];
 
 const OscillatingTitle = () => {
@@ -385,7 +386,7 @@ const OscillatingTitle = () => {
 
   return (
     <h1 className="mt-3 whitespace-nowrap text-[clamp(2.6rem,6.1vw,6.5rem)] font-black leading-[0.95] tracking-tight sm:mt-5">
-      <span className="sr-only">Software Factory · Fábrica de Software</span>
+      <span className="sr-only">Software Factory · Fábrica agéntica</span>
       {TITLES[lang].map((word, line) => (
         <span key={line} aria-hidden className="relative block h-[1.02em] overflow-hidden">
           <AnimatePresence mode="popLayout" initial={false}>
