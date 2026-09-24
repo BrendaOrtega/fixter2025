@@ -257,7 +257,7 @@ export const ProofSection = () => (
         className="mx-auto mt-14 max-w-2xl rounded-2xl border-2 border-dashed px-6 py-5 text-center text-lg sm:text-xl"
         style={{ borderColor: `${GREEN}88`, color: INK }}
       >
-        En México todavía no hay un caso público. <strong style={{ color: GREEN }}>Los primeros van a salir de esta cohorte.</strong>
+        En México todavía no hay un caso público. <strong style={{ color: GREEN }}>Tu caso puede ser de los primeros.</strong>
       </motion.p>
     </div>
   </section>
