@@ -1,7 +1,19 @@
 import { db } from "~/.server/db";
+import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { getSesTransport, getSesRemitent } from "~/utils/sendGridTransport";
 
 export const action = async ({ request }: { request: Request }) => {
+  // Sólo admins: sin esto, cualquiera mandaba HTML arbitrario a cualquier lista desde nuestro SES.
+  // 401 y no redirect, porque quien llama es un fetch (`/admin/send`) y seguiría el 302 en silencio.
+  try {
+    await getAdminOrRedirect(request);
+  } catch {
+    return new Response(JSON.stringify({ error: "No autorizado" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const formData = await request.formData();
   const subject = formData.get("subject") as string;
   const htmlContent = formData.get("htmlContent") as string;
