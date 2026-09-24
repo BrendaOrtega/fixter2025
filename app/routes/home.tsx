@@ -10,7 +10,6 @@ import {
   Why,
 } from "./home/components";
 import { WebinarBar } from "~/components/common/WebinarBar";
-import { AnimacionesAiBand } from "~/components/common/AnimacionesAiBand";
 import { SoftwareFactoryBand } from "~/components/common/SoftwareFactoryBand";
 import { getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/home";
@@ -147,7 +146,6 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       <WebinarBar />
       <HomeHero />
       <SoftwareFactoryBand />
-      <AnimacionesAiBand />
       <CoachHighlight />
       <CommunityBand />
       <BooksSection />
