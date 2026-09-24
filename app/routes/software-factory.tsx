@@ -17,20 +17,77 @@ import getMetaTags from "~/utils/getMetaTags";
 const WAITLIST_TAG = "software-factory-waitlist";
 
 const PAGE_URL = "https://www.fixtergeek.com/software-factory";
+const OG_IMAGE = "https://www.fixtergeek.com/courses/software-factory-og-v2.png";
 
 const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG = "#0E1317", PANEL = "#19262A", SHADOW = "#37AB93";
 
-export const meta = () =>
-  getMetaTags({
+export const meta = () => {
+  const baseMeta = getMetaTags({
     title: "Software Factory: taller de agentes en paralelo | FixterGeek",
     description:
       "Próximamente: taller en vivo para pasar de una spec a producción con agentes de código trabajando en paralelo, con tu editor y tu stack. Apúntate a la lista de espera.",
     url: PAGE_URL,
     // imagen propia con sus medidas reales (WhatsApp descarta la vista previa si no cuadran)
-    image: "https://www.fixtergeek.com/courses/software-factory-og-v2.png",
+    image: OG_IMAGE,
     imageWidth: 1200,
     imageHeight: 630,
+    keywords:
+      "software factory, fábrica de software, agentes de código, claude code, codex, antigravity, cursor, agentes en paralelo, spec driven development, taller en vivo",
   });
+
+  // Sin `offers` ni fechas: el taller aún no tiene precio ni calendario, y un dato falso es peor que nada.
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Course",
+        "@id": `${PAGE_URL}#course`,
+        name: "Software Factory",
+        alternateName: "Fábrica de Software",
+        description:
+          "Taller en vivo para montar una fábrica de software: de una spec a producción con agentes de código trabajando en paralelo, verificación en cada PR y deploy, con el editor y el stack que ya usas.",
+        url: PAGE_URL,
+        image: OG_IMAGE,
+        inLanguage: "es",
+        provider: {
+          "@type": "Organization",
+          name: "FixterGeek",
+          url: "https://www.fixtergeek.com",
+          logo: "https://www.fixtergeek.com/logo.png",
+        },
+        instructor: { "@type": "Person", name: "Héctor Bliss", url: "https://www.hectorbliss.com" },
+        hasCourseInstance: { "@type": "CourseInstance", courseMode: "Online" },
+        educationalLevel: "Intermediate",
+        teaches: [
+          "Escribir specs que un agente de código puede ejecutar",
+          "Partir una spec en tickets y repartirlos entre agentes en paralelo",
+          "Verificar el trabajo de los agentes con PRs, checks y revisión",
+          "Desplegar a producción desde el tablero",
+        ],
+      },
+      {
+        "@type": "WebPage",
+        "@id": `${PAGE_URL}#webpage`,
+        url: PAGE_URL,
+        name: "Software Factory: taller de agentes en paralelo | FixterGeek",
+        description: "Lista de espera del taller Software Factory de FixterGeek.",
+        isPartOf: { "@id": "https://www.fixtergeek.com/#website" },
+        about: { "@id": `${PAGE_URL}#course` },
+        inLanguage: "es",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${PAGE_URL}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Inicio", item: "https://www.fixtergeek.com" },
+          { "@type": "ListItem", position: 2, name: "Software Factory", item: PAGE_URL },
+        ],
+      },
+    ],
+  };
+
+  return [...baseMeta, { "script:ld+json": schemaOrg }];
+};
 
 // Límite por IP en memoria: 5 altas por hora. Se reinicia con cada deploy.
 const hits = new Map<string, number[]>();
