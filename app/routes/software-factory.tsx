@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { data, useFetcher, type ActionFunctionArgs } from "react-router";
+import { data, useFetcher, useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { db } from "~/.server/db";
-import { checkSignupEmail } from "~/.server/anti-bot";
+import { checkSignupRequest, claimEmailSend } from "~/.server/signup-guard";
+import { sendFactoryWaitlistWelcome } from "~/mailSenders/sendFactoryWaitlistWelcome";
+import { validateWaitlistConfirmToken } from "~/utils/tokens";
 import { recordOrigin } from "~/.server/origen";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
 import getMetaTags from "~/utils/getMetaTags";
@@ -89,47 +91,48 @@ export const meta = () => {
   return [...baseMeta, { "script:ld+json": schemaOrg }];
 };
 
-// Límite por IP en memoria: 5 altas por hora. Se reinicia con cada deploy.
-const hits = new Map<string, number[]>();
-const rateLimited = (ip: string) => {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 60 * 60 * 1000);
-  recent.push(now);
-  hits.set(ip, recent);
-  return recent.length > 5;
-};
-
+// Las defensas (honeypot, tiempo, IP, desechables, lista negra, una bienvenida por correo y tope
+// diario) viven en `~/.server/signup-guard`, compartidas con las demás landings.
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
 
-  // Honeypot, envío en menos de 2 s o ráfaga por IP: se contesta "ok" sin guardar.
-  const honeypot = String(formData.get("website") ?? "");
-  const startedAt = Number(formData.get("t") ?? 0);
-  const ip = request.headers.get("fly-client-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "?";
-  if (honeypot || (startedAt && Date.now() - startedAt < 2000) || rateLimited(ip)) {
-    return data({ ok: true });
+  const guard = await checkSignupRequest(request, formData, { email, label: "software-factory" });
+  if (!guard.ok) {
+    return guard.fake ? data({ ok: true }) : data({ ok: false, error: guard.error }, { status: 400 });
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-    return data({ ok: false, error: "Escribe un correo válido." }, { status: 400 });
-  }
-  if (checkSignupEmail(email).blocked) return data({ ok: true });
-
-  const blocked = await db.emailBlacklist.findUnique({ where: { email } });
-  if (blocked) {
-    return data({ ok: false, error: "Este correo no puede suscribirse en este momento." }, { status: 400 });
-  }
-
-  const existing = await db.subscriber.findUnique({ where: { email }, select: { id: true, tags: true } });
+  const existing = await db.subscriber.findUnique({ where: { email }, select: { id: true, tags: true, confirmed: true } });
+  const isNew = !existing?.tags.includes(WAITLIST_TAG);
   if (!existing) {
     await db.subscriber.create({ data: { email, tags: [WAITLIST_TAG], confirmed: false } });
-  } else if (!existing.tags.includes(WAITLIST_TAG)) {
+  } else if (isNew) {
     await db.subscriber.update({ where: { id: existing.id }, data: { tags: { push: WAITLIST_TAG } } });
   }
 
   await recordOrigin(email, request);
+
+  // bienvenida con doble opt-in: sólo la primera vez que el correo entra a ESTA lista
+  if (isNew && (await claimEmailSend(email, `welcome:${WAITLIST_TAG}`, guard.ip, "once"))) {
+    await sendFactoryWaitlistWelcome(email, WAITLIST_TAG).catch((e) =>
+      console.error("[software-factory] no salió la bienvenida", e),
+    );
+  }
+
   return data({ ok: true });
+};
+
+// El link del correo trae `?confirmar=<token>`: confirma al subscriber y la página lo celebra.
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const token = new URL(request.url).searchParams.get("confirmar");
+  if (!token) return { confirmed: false };
+  const decoded = validateWaitlistConfirmToken(token);
+  if (!decoded) return { confirmed: false };
+  await db.subscriber.updateMany({
+    where: { email: decoded.email },
+    data: { confirmed: true, confirmedAt: new Date() },
+  });
+  return { confirmed: true };
 };
 
 // ——— El tablero de la fábrica: tickets que avanzan solos de spec a producción ———
@@ -457,7 +460,8 @@ export default function Route() {
   const fetcher = useFetcher<typeof action>();
   const inputRef = useRef<HTMLInputElement>(null);
   const isLoading = fetcher.state !== "idle";
-  const done = fetcher.data?.ok === true;
+  const { confirmed } = useLoaderData<typeof loader>();
+  const done = fetcher.data?.ok === true || confirmed;
   const [startedAt, setStartedAt] = useState(0);
   useEffect(() => setStartedAt(Date.now()), []);
   const error = fetcher.data && "error" in fetcher.data && typeof fetcher.data.error === "string" ? fetcher.data.error : null;

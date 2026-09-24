@@ -1,6 +1,18 @@
 import jwt from "jsonwebtoken";
 import { createHmac, timingSafeEqual } from "crypto";
 
+/**
+ * Llave de firma de tokens y cookies. Antes caía a "fixtergeek" si faltaba la env:
+ * con eso cualquiera podía falsificar links de acceso y cookies de miembro. En
+ * producción ahora truena en vez de firmar con una llave pública.
+ */
+export const tokenSecret = (): string => {
+  const secret = process.env.SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") throw new Error("Falta SECRET en el entorno");
+  return "fixtergeek-dev";
+};
+
 type TokenData = {
   email: string;
   tags?: string[];
@@ -13,14 +25,14 @@ type TokenData = {
 };
 
 export const generateUserToken = (data: TokenData) => {
-  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+  return jwt.sign(data, tokenSecret(), {
     expiresIn: "1h",
   });
 };
 
 export const validateUserToken = (token: string) => {
   try {
-    const decoded = jwt.verify(token, process.env.SECRET || "fixtergeek") as {
+    const decoded = jwt.verify(token, tokenSecret()) as {
       email: string;
       tags?: string[];
       action?: "confirm-subscriber" | "magic-link";
@@ -64,7 +76,7 @@ export const generateBookDownloadToken = (
     bookSlug,
     action: "book-download",
   };
-  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+  return jwt.sign(data, tokenSecret(), {
     expiresIn: "30d",
   });
 };
@@ -83,7 +95,7 @@ export const validateBookDownloadToken = (
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET || "fixtergeek"
+      tokenSecret()
     ) as BookDownloadTokenData;
 
     // Verificar que sea un token de descarga de libro
@@ -139,7 +151,7 @@ export const generateSequenceSubscribeToken = (
     name,
     action: "sequence-subscribe",
   };
-  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+  return jwt.sign(data, tokenSecret(), {
     expiresIn: "7d",
   });
 };
@@ -157,7 +169,7 @@ export const validateSequenceSubscribeToken = (
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET || "fixtergeek"
+      tokenSecret()
     ) as SequenceSubscribeTokenData;
 
     if (decoded.action !== "sequence-subscribe") {
@@ -203,7 +215,7 @@ export const generateCommunitySubscribeToken = (
     name,
     action: "community-subscribe",
   };
-  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+  return jwt.sign(data, tokenSecret(), {
     expiresIn: "7d",
   });
 };
@@ -218,7 +230,7 @@ export const validateCommunitySubscribeToken = (
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET || "fixtergeek"
+      tokenSecret()
     ) as CommunitySubscribeTokenData;
 
     if (decoded.action !== "community-subscribe") {
@@ -262,7 +274,7 @@ export const generateSequenceVideoToken = (
     ...fallback,
     action: "sequence-video",
   };
-  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+  return jwt.sign(data, tokenSecret(), {
     expiresIn: "90d",
   });
 };
@@ -277,7 +289,7 @@ export const validateSequenceVideoToken = (
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET || "fixtergeek"
+      tokenSecret()
     ) as SequenceVideoTokenData;
     if (decoded.action !== "sequence-video") {
       return { isValid: false, error: "Token inválido" };
@@ -305,7 +317,7 @@ export type AccessTokenData = { email: string; action: "email-access" };
 
 export const generateAccessToken = (email: string): string =>
   jwt.sign({ email, action: "email-access" } as AccessTokenData,
-    process.env.SECRET || "fixtergeek",
+    tokenSecret(),
     { expiresIn: "180d" }
   );
 
@@ -315,7 +327,7 @@ export const validateAccessToken = (
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET || "fixtergeek"
+      tokenSecret()
     ) as AccessTokenData;
     if (decoded.action !== "email-access") {
       return { isValid: false, error: "Token inválido" };
@@ -360,7 +372,7 @@ export const generateSequenceUnsubscribeToken = (
     ...fallback,
     action: "sequence-unsubscribe",
   };
-  return jwt.sign(data, process.env.SECRET || "fixtergeek");
+  return jwt.sign(data, tokenSecret());
 };
 
 export const validateSequenceUnsubscribeToken = (
@@ -373,7 +385,7 @@ export const validateSequenceUnsubscribeToken = (
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET || "fixtergeek"
+      tokenSecret()
     ) as SequenceUnsubscribeTokenData;
     if (decoded.action !== "sequence-unsubscribe") {
       return { isValid: false, error: "Token inválido" };
@@ -407,7 +419,7 @@ export const generateLeadMagnetToken = (
     slug,
     action: "leadmagnet-download",
   };
-  return jwt.sign(data, process.env.SECRET || "fixtergeek", {
+  return jwt.sign(data, tokenSecret(), {
     expiresIn: "7d",
   });
 };
@@ -426,7 +438,7 @@ export const validateLeadMagnetToken = (
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET || "fixtergeek"
+      tokenSecret()
     ) as LeadMagnetTokenData;
 
     // Verificar que sea un token de lead magnet
@@ -471,7 +483,7 @@ const HLS_TOKEN_TTL = 6 * 60 * 60; // 6 h — cubre de sobra una sesión larga d
 const HLS_TOKEN_SLOT = 30 * 60; // la expiración se redondea a esto: URLs estables
 
 const signHlsPrefix = (prefix: string, exp: number) =>
-  createHmac("sha256", process.env.SECRET || "fixtergeek")
+  createHmac("sha256", tokenSecret())
     .update(`${prefix}|${exp}`)
     .digest("base64url")
     .slice(0, 27); // 27 chars ≈ 160 bits, de sobra para esto
@@ -521,4 +533,25 @@ export const validateHlsToken = (
     return { isValid: false, error: "Token inválido" };
   }
   return { isValid: true };
+};
+
+// ==========================================
+// Confirmación de una lista de espera (doble opt-in de la bienvenida)
+// ==========================================
+
+export type WaitlistConfirmTokenData = { email: string; tag: string; action: "waitlist-confirm" };
+
+/** Link del correo de bienvenida: confirmar marca al subscriber como `confirmed`. 30 días. */
+export const generateWaitlistConfirmToken = (email: string, tag: string): string =>
+  jwt.sign({ email, tag, action: "waitlist-confirm" } as WaitlistConfirmTokenData, tokenSecret(), {
+    expiresIn: "30d",
+  });
+
+export const validateWaitlistConfirmToken = (token: string): WaitlistConfirmTokenData | null => {
+  try {
+    const decoded = jwt.verify(token, tokenSecret()) as WaitlistConfirmTokenData;
+    return decoded.action === "waitlist-confirm" && decoded.email ? decoded : null;
+  } catch {
+    return null;
+  }
 };

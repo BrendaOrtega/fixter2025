@@ -1,4 +1,5 @@
 import { createCookie } from "react-router";
+import { tokenSecret } from "~/utils/tokens";
 
 /**
  * Identidad ligera del miembro de una comunidad. Quien se une NO es un User
@@ -13,7 +14,7 @@ export const memberCookie = createCookie("fxg_member", {
   httpOnly: true,
   sameSite: "lax",
   secure: process.env.NODE_ENV !== "development",
-  secrets: [process.env.SECRET || "fixtergeek"],
+  secrets: [tokenSecret()],
   maxAge: 60 * 60 * 24 * 365,
 });
 

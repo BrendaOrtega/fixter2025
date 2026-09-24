@@ -1250,3 +1250,20 @@ model Transcript {
   @@index([courseId])
   @@map("transcripts")
 }
+
+// Bitácora de correos que dispara un formulario PÚBLICO (confirmaciones, bienvenidas,
+// códigos, links de acceso). La usa `app/.server/signup-guard.ts` para que el mismo
+// correo no se mande de más, limitar por IP y poner un tope global diario: sin esto,
+// cualquiera podía usar nuestros formularios para spamear a terceros.
+model EmailSendLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String // normalizado (gmail sin puntos ni +alias)
+  purpose   String // p. ej. "welcome:software-factory", "otp:pong", "confirm:seq:<id>"
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+  @@index([ip, createdAt])
+  @@index([createdAt])
+  @@map("email_send_log")
+}

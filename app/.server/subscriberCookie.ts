@@ -1,4 +1,5 @@
 import { createCookie } from "react-router";
+import { tokenSecret } from "~/utils/tokens";
 
 /**
  * La identidad de quien desbloqueó contenido con su correo, sin crear cuenta.
@@ -35,7 +36,7 @@ export const subscriberCookie = createCookie(SUBSCRIBER_COOKIE, {
   httpOnly: false,
   sameSite: "lax",
   secure: process.env.NODE_ENV !== "development",
-  secrets: [process.env.SECRET || "fixtergeek"],
+  secrets: [tokenSecret()],
   maxAge: 60 * 60 * 24 * 365,
 });
 

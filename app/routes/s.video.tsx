@@ -14,6 +14,7 @@ import { validateSequenceVideoToken } from "~/utils/tokens";
 import { StoriesFeed, type Slide } from "~/components/stories/StoriesFeed";
 import { formatUnlock } from "~/utils/formatUnlock";
 import getMetaTags from "~/utils/getMetaTags";
+import { tokenSecret } from "~/utils/tokens";
 
 export const meta = () =>
   getMetaTags({ title: "Tu video | FixterGeek" });
@@ -39,7 +40,7 @@ const accessCookie = createCookie("secuencia_acceso", {
   sameSite: "lax",
   path: "/secuencias",
   maxAge: 60 * 60 * 24 * 90,
-  secrets: [process.env.SECRET || "fixtergeek"],
+  secrets: [tokenSecret()],
   secure: process.env.NODE_ENV === "production",
 });
 
