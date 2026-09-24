@@ -8,6 +8,7 @@ import { validateWaitlistConfirmToken } from "~/utils/tokens";
 import { recordOrigin } from "~/.server/origen";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
 import getMetaTags from "~/utils/getMetaTags";
+import { DeliverablesSection, ProofSection } from "~/components/software-factory/FactorySections";
 
 // ===========================================
 // Lista de espera: Taller Software Factory
@@ -481,8 +482,10 @@ export default function Route() {
 
   return (
     // una sola pantalla: alto del viewport y sin desborde; la navbar es fixed y se compensa con pt
-    <main className="relative flex h-[100dvh] flex-col overflow-hidden px-4 pb-4 pt-16 sm:px-8 sm:pt-20" style={{ background: BG, color: INK }}>
+    <main style={{ background: BG, color: INK }}>
       {done && <CanvasConfetti />}
+      {/* el hero sigue siendo una sola pantalla; las secciones viven debajo */}
+      <div className="relative flex h-[100dvh] flex-col overflow-hidden px-4 pb-4 pt-16 sm:px-8 sm:pt-20">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -593,7 +596,25 @@ export default function Route() {
         </motion.div>
       </section>
 
-      <footer className="relative z-10 hidden text-center sm:block text-[11px] sm:text-xs" style={{ color: `${INK}70` }}>
+      <motion.a
+        href="#esto-ya-pasa"
+        aria-label="Ver más"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, y: [0, 6, 0] }}
+        transition={{ opacity: { delay: 1.2 }, y: { delay: 1.2, duration: 1.4, repeat: 4 } }}
+        className="relative z-10 mx-auto hidden font-mono text-xs sm:block"
+        style={{ color: MUTE }}
+      >
+        ↓ esto ya pasa
+      </motion.a>
+      </div>
+
+      <div id="esto-ya-pasa">
+        <ProofSection />
+      </div>
+      <DeliverablesSection />
+
+      <footer className="px-4 py-10 text-center text-xs" style={{ color: `${INK}70` }}>
         Por <a href="https://www.hectorbliss.com" target="_blank" rel="noopener" className="underline underline-offset-4">Héctorbliss</a> · FixterGeek
       </footer>
     </main>
