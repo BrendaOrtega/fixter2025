@@ -481,5 +481,55 @@
     "autor": "TheDICE",
     "licencia": "CC BY 3.0 (pide crédito)",
     "video": "videos/fb-primer-post"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1634722",
+    "titulo": "Santorini",
+    "autor": "zero-project",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/ghosty-madrugada"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/135797",
+    "titulo": "Koko (taste of anxiety)",
+    "autor": "The Whisky project",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/ghosty-madrugada (v2)",
+    "vetada": true,
+    "motivo": "bliss 2026-09-25: pésima para La madrugada (tensa); no volver a usar"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/959595",
+    "titulo": "Little Tomcat",
+    "autor": "Josh Woodward",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "ninguno — vetada",
+    "vetada": true,
+    "motivo": "vetada por bliss; no volver a usar"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1000095",
+    "titulo": "Little Tomcat (Instrumental Version)",
+    "autor": "Josh Woodward (Instrumental Versions)",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "ninguno — vetada",
+    "vetada": true,
+    "motivo": "vetada por bliss; no volver a usar"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/725532",
+    "titulo": "Small rocks knocks",
+    "autor": "Data Collaborate",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "ninguno — vetada",
+    "vetada": true,
+    "motivo": "a Brenda no le gustó (La madrugada v2.3, 2026-09-25); no volver a usar"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/911917",
+    "titulo": "Funky WahWah",
+    "autor": "NMK (Nicola Munck)",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/ghosty-madrugada (v2.5, final)"
   }
 ]
