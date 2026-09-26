@@ -13,6 +13,9 @@ type AnalyticsEvent = {
     | "read_time";
   postId?: string;
   pathname: string;
+  sessionId?: string;
+  userAgent?: string;
+  deviceType?: string;
   metadata?: Record<string, unknown>;
 };
 
@@ -50,7 +53,9 @@ class AnalyticsService {
         const analyticsData: any = {
           event: event.type,
           postId: event.postId || '000000000000000000000000', // Default ObjectId
-          sessionId: 'session-' + Date.now(),
+          sessionId: event.sessionId || 'session-' + Date.now(),
+          userAgent: event.userAgent,
+          deviceType: event.deviceType,
           timestamp: new Date(),
         };
 
@@ -192,6 +197,9 @@ export const useAnalytics = () => {
 export async function trackAnalyticsEvent(event: {
   type: string;
   postId: string;
+  sessionId?: string;
+  userAgent?: string;
+  deviceType?: string;
   metadata?: Record<string, unknown>;
 }) {
   try {
@@ -200,6 +208,9 @@ export async function trackAnalyticsEvent(event: {
         type: event.type as any,
         postId: event.postId,
         pathname: '/', // Default since we don't have pathname in server context
+        sessionId: event.sessionId,
+        userAgent: event.userAgent,
+        deviceType: event.deviceType,
         metadata: event.metadata,
       })
     );

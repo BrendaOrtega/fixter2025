@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -269,6 +270,7 @@ export default function LeadMagnetLanding({ loaderData }: Route.ComponentProps) 
   const { leadMagnet } = loaderData;
   const fetcher = useFetcher();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { trap, fields } = useBotTrap();
   const [showSuccess, setShowSuccess] = useState(false);
 
   const isLoading = fetcher.state !== "idle";
@@ -281,6 +283,7 @@ export default function LeadMagnetLanding({ loaderData }: Route.ComponentProps) 
     const formData = new FormData();
     formData.append("intent", "download_request");
     formData.append("email", inputRef.current.value);
+    for (const [k, v] of Object.entries(fields())) formData.append(k, v);
 
     fetcher.submit(formData, { method: "POST" });
   };
@@ -408,6 +411,7 @@ export default function LeadMagnetLanding({ loaderData }: Route.ComponentProps) 
             ) : (
               <fetcher.Form onSubmit={handleSubmit} className="space-y-4">
                 <input type="hidden" name="intent" value="download_request" />
+                {trap}
 
                 <div>
                   <label htmlFor="email" className="sr-only">

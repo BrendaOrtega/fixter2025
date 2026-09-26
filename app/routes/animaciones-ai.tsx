@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { useFetcher } from "react-router";
 import { data, type ActionFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
@@ -143,9 +144,7 @@ export default function Route() {
   const done = fetcher.data?.ok === true;
   // el correo que se mandó, para enseñarlo en la celebración (el input ya no existe cuando llega el ok)
   const [submittedEmail, setSubmittedEmail] = useState("");
-  // cuándo se pintó el form: un envío a menos de 2 s es un bot
-  const [startedAt, setStartedAt] = useState(0);
-  useEffect(() => setStartedAt(Date.now()), []);
+  const { trap } = useBotTrap();
   const error =
     fetcher.data && "error" in fetcher.data && typeof fetcher.data.error === "string"
       ? fetcher.data.error
@@ -218,9 +217,7 @@ export default function Route() {
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[#8DCF6E]">Lista de espera</p>
               <p className="mt-1 text-sm text-[#F2F5F4]/75 sm:text-base">Apúntate y te avisamos cuando abra, con el precio de lanzamiento antes que nadie.</p>
             </div>
-            {/* honeypot: un humano no lo ve ni lo llena; un bot sí */}
-            <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
-            <input type="hidden" name="t" value={startedAt} />
+            {trap}
             <label htmlFor="email" className="sr-only">
               Correo
             </label>

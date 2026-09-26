@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -296,7 +297,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
   }>();
   const emailRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
-  const honeyRef = useRef<HTMLInputElement>(null);
+  const { trap, fields } = useBotTrap();
   const phoneRef = useRef<HTMLInputElement>(null);
   const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
 
@@ -305,7 +306,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
     fd.append("intent", "public_subscribe");
     fd.append("email", emailRef.current?.value || "");
     fd.append("name", nameRef.current?.value || "");
-    fd.append("website", honeyRef.current?.value || "");
+    for (const [k, v] of Object.entries(fields())) fd.append(k, v);
     if (wantsWhatsapp) {
       fd.append("wantsWhatsapp", "on");
       fd.append("phone", phoneRef.current?.value || "");
@@ -550,16 +551,7 @@ export default function PublicSubscribe({ loaderData }: Route.ComponentProps) {
                 )}
               </p>
 
-              {/* Honeypot anti-bot (oculto para humanos) */}
-              <input
-                ref={honeyRef}
-                type="text"
-                name="website"
-                tabIndex={-1}
-                autoComplete="off"
-                className="hidden"
-                aria-hidden="true"
-              />
+              {trap}
 
               {/* Con sesión no se piden ni nombre ni correo: la cuenta ya los
                   tiene y ya probó que el buzón es suyo. Pedirlos otra vez es

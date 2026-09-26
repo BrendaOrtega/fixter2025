@@ -27,13 +27,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return "t(*_*t) by fixter.org team";
 };
 
+const SUBSCRIPTION_EXTRA_TAGS = new Set(["integraciones", "analisis_estrategicos"]);
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (intent === "suscription") {
     const tags = ["newsletter", "blog"];
-    const extraTags = formData.getAll("tags").map(String).filter(Boolean);
+    // sólo tags de formularios conocidos: el body lo controla quien hace el POST
+    const extraTags = formData.getAll("tags").map(String).filter((t) => SUBSCRIPTION_EXTRA_TAGS.has(t));
     if (extraTags.length) tags.push(...extraTags);
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const name = String(formData.get("name") || "");

@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Footer } from "~/components/Footer";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import type { Route } from "./+types/courseDetail";
 import { data, Form, useFetcher, type LoaderFunctionArgs } from "react-router";
@@ -221,6 +222,7 @@ export default function Route({
 const WaitlistSection = ({ courseSlug }: { courseSlug: string }) => {
   const fetcher = useFetcher<{ success?: boolean; error?: string }>();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { trap } = useBotTrap();
 
   const isLoading = fetcher.state !== "idle";
   const success = fetcher.data?.success;
@@ -247,6 +249,7 @@ const WaitlistSection = ({ courseSlug }: { courseSlug: string }) => {
           </div>
         ) : (
           <fetcher.Form method="POST" action="/api/waitlist">
+            {trap}
             <input type="hidden" name="courseSlug" value={courseSlug} />
             <div className="flex gap-3 max-w-md mx-auto flex-col sm:flex-row">
               <input

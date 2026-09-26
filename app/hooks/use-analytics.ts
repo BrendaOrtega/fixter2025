@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router'
+import { getVisitorId } from '~/utils/visitorId'
 
 // Tamaño de la ventana para normalizar las coordenadas
 const getWindowSize = () => ({
@@ -179,7 +180,7 @@ if (typeof window !== 'undefined' && !window.trackEvent) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(event),
+        body: JSON.stringify({ ...event, sessionId: getVisitorId() }),
       })
     } catch (error) {
       console.error('Failed to track event:', error)

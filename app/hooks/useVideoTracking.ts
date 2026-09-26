@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from "react";
+import { getVisitorId } from "~/utils/visitorId";
 
 /// Tamaño del tramo del mapa de calor, en segundos. 15 da 300 casillas para un
 /// webinar de 75 minutos (~3 KB) y alcanza para señalar el momento exacto de un
@@ -12,24 +13,6 @@ interface VideoTrackingOptions {
   userId?: string;
   email?: string;
   duration?: number;
-}
-
-// ID persistente por navegador para deduplicar viewers anónimos entre sesiones
-function getVisitorId(): string {
-  try {
-    const KEY = "fx_visitor_id";
-    let id = localStorage.getItem(KEY);
-    if (!id) {
-      id =
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      localStorage.setItem(KEY, id);
-    }
-    return id;
-  } catch {
-    return "";
-  }
 }
 
 /**

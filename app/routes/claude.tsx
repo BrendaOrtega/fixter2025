@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { motion, AnimatePresence } from "motion/react";
 import { NavBar } from "~/components/common/NavBar";
 import SimpleFooter from "~/components/common/SimpleFooter";
@@ -297,6 +298,7 @@ export default function ClaudeLanding() {
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showPaymentCancel, setShowPaymentCancel] = useState(false);
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
 
   // Check for payment result in URL params
   useEffect(() => {
@@ -477,6 +479,7 @@ export default function ClaudeLanding() {
           ) : (
             <fetcher.Form method="post" action="/claude" className="space-y-3">
               <input type="hidden" name="intent" value="webinar_registration" />
+              {trap}
 
               <div>
                 <label className="block text-white mb-1 text-left">

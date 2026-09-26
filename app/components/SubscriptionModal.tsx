@@ -10,11 +10,13 @@ import { useFetcher, useNavigate } from "react-router";
 import { useRemember } from "~/hooks/useRemember";
 import { IoClose } from "react-icons/io5";
 import Spinner from "./common/Spinner";
+import { useBotTrap } from "~/hooks/useBotTrap";
 
 export const SubscriptionModal = () => {
   const { scrollYProgress } = useScroll();
   const [isOpen, setIsOpen] = useState(false);
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
 
   const { avoidForDays, shouldAvoid } = useRemember();
 
@@ -52,6 +54,8 @@ export const SubscriptionModal = () => {
   const handleSubmit = (ev: FormEvent<HTMLFormElement>) => {
     avoidForDays(180);
     const formData = new FormData(ev.currentTarget);
+    // FormData(form) no incluye el botón que hizo submit: sin esto el action no reconoce el intent
+    formData.set("intent", "suscription");
     fetcher.submit(formData, { method: "post", action: "/api/user" });
     navigate("/subscribe?success=1");
   };
@@ -93,6 +97,7 @@ export const SubscriptionModal = () => {
               className="flex flex-col gap-4 py-2 mt-4 "
               onSubmit={handleSubmit}
             >
+              {trap}
               <input
                 required
                 name="name"

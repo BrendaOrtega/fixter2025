@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFetcher, useNavigate } from "react-router";
+import { useBotTrap } from "~/hooks/useBotTrap";
 
 export const WebinarBanner = () => {
   const [showStickyBanner, setShowStickyBanner] = useState(true);
   const [showWebinarForm, setShowWebinarForm] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
   const navigate = useNavigate();
 
   // Mostrar banner sticky después de hacer scroll
@@ -97,6 +99,7 @@ export const WebinarBanner = () => {
           ) : (
             <fetcher.Form method="post" action="/claude" className="space-y-3">
               <input type="hidden" name="intent" value="webinar_registration" />
+              {trap}
               
               <div>
                 <label className="block text-white mb-1 text-left">Nombre</label>

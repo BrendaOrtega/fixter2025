@@ -148,18 +148,6 @@ export default function Page({
       });
     };
 
-    // Trackear cuando el componente se monta
-    if (typeof window !== "undefined") {
-      window.trackEvent?.({
-        type: "page_view",
-        postId: post.id,
-        metadata: {
-          title: post.title,
-          referrer: document.referrer,
-        },
-      });
-    }
-
     scrollToTop();
 
     return () => {

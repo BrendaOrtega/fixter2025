@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { Link, data, useFetcher } from "react-router";
 import type { Route } from "./+types/ai_sdk";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
@@ -809,6 +810,7 @@ function SubscriptionForm() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
   const isLoading = fetcher.state !== "idle";
 
   useEffect(() => {
@@ -843,6 +845,7 @@ function SubscriptionForm() {
             </p>
             <fetcher.Form method="POST" className="space-y-4">
               <input type="hidden" name="intent" value="subscribe" />
+              {trap}
               <input
                 type="email"
                 name="email"
@@ -913,6 +916,7 @@ function ResendDownloadLink() {
   const [verifyCode, setVerifyCode] = useState("");
   const [showVerify, setShowVerify] = useState(false);
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
   const isLoading = fetcher.state !== "idle";
 
   const result = fetcher.data as {
@@ -953,6 +957,7 @@ function ResendDownloadLink() {
         {!showVerify ? (
           <fetcher.Form method="POST" className="space-y-4">
             <input type="hidden" name="intent" value="resend-link" />
+            {trap}
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"

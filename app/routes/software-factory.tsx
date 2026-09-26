@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { data, useFetcher, useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { db } from "~/.server/db";
@@ -472,8 +473,7 @@ export default function Route() {
   const isLoading = fetcher.state !== "idle";
   const { confirmed } = useLoaderData<typeof loader>();
   const done = fetcher.data?.ok === true || confirmed;
-  const [startedAt, setStartedAt] = useState(0);
-  useEffect(() => setStartedAt(Date.now()), []);
+  const { trap } = useBotTrap();
   const error = fetcher.data && "error" in fetcher.data && typeof fetcher.data.error === "string" ? fetcher.data.error : null;
 
   useEffect(() => {
@@ -547,9 +547,7 @@ export default function Route() {
               </motion.div>
             ) : (
               <fetcher.Form method="post" className="flex w-full flex-col gap-2.5 sm:flex-row">
-                {/* honeypot: un humano no lo ve ni lo llena */}
-                <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
-                <input type="hidden" name="t" value={startedAt} />
+                {trap}
                 <label htmlFor="email" className="sr-only">Correo</label>
                 <input
                   ref={inputRef}

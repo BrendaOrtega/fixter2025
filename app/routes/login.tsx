@@ -1,4 +1,4 @@
-import { Form, Link, redirect, useFetchers, useLoaderData } from "react-router";
+import { Form, Link, redirect, useActionData, useFetchers, useLoaderData, useNavigation } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { GoogleLoginLink } from "~/components/GoogleLoginLink";
@@ -7,6 +7,7 @@ import Spinner from "~/components/common/Spinner";
 import { BsMailboxFlag } from "react-icons/bs";
 import type { Route } from "./+types/login";
 import getMetaTags from "~/utils/getMetaTags";
+import { useBotTrap } from "~/hooks/useBotTrap";
 
 /**
  * Metadatos propios.
@@ -78,7 +79,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     return googleResponse; // Retornar el redirect si Google lo maneja
   }
 
-  // @todo remove?
+  // El link del correo sólo muestra el botón: los escáneres de correo corporativo abren
+  // cada link (GET) y antes eso confirmaba y creaba la cuenta sin que nadie diera clic.
   if (url.searchParams.has("token")) {
     const token = url.searchParams.get("token") as string;
     const { isValid, decoded } = await validateUserToken(token);
@@ -90,61 +92,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         message: "El token no es valido ⛓️‍💥",
       };
     }
-    console.log("Decoded: ,", decoded);
-
-    // Acción: confirmar subscriber (genérico para cualquier evento)
-    if (decoded.action === "confirm-subscriber") {
-      // Actualizar subscriber a confirmado
-      const subscriber = await db.subscriber.upsert({
-        where: { email: decoded.email },
-        create: {
-          email: decoded.email,
-          tags: decoded.tags || [],
-          confirmed: true,
-          confirmedAt: new Date(),
-        },
-        update: {
-          confirmed: true,
-          confirmedAt: new Date(),
-          tags: decoded.tags ? { push: decoded.tags } : undefined,
-        },
-      });
-
-      // Enviar email de bienvenida si se especificó tipo
-      if (decoded.welcomeType) {
-        await sendWelcomeEmail({
-          type: decoded.welcomeType,
-          to: decoded.email,
-          userName: subscriber.name || undefined,
-        });
-      }
-
-      // Devolver datos para mostrar UI de confirmación (sin redirect)
-      return {
-        confirmed: true,
-        confirmationType: decoded.welcomeType || "default",
-        subscriberName: subscriber.name,
-        status: 200,
-      };
-    }
-
-    // user => //@todo maybe this is not necessary?
-    await getOrCreateUser(decoded.email, {
-      confirmed: true, // because of token
-      tags: decoded.tags || [],
-    }); // update confirm
-    // @TODO remove this using sendgrid api
-    if (decoded.tags) {
-      await updateOrCreateSuscription(decoded.email, {
-        confirmed: true,
-        tags: decoded.tags,
-      });
-    }
-    const session = await placeSession(request, decoded.email);
-    // @todo where is best?
-    throw redirect("/mis-cursos", {
-      headers: { "Set-Cookie": await commitSession(session) },
-    });
+    return {
+      pendingToken: token,
+      pendingEmail: decoded.email as string,
+      isSubscriberConfirmation: decoded.action === "confirm-subscriber",
+      status: 200,
+    };
   }
   return {
     success: url.searchParams.has("success"),
@@ -154,16 +107,93 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   };
 };
 
+export const action = async ({ request }: Route.ActionArgs) => {
+  const formData = await request.formData();
+  const token = String(formData.get("token") ?? "");
+  const { isValid, decoded } = await validateUserToken(token);
+  if (!isValid || !decoded?.email) {
+    return { success: false, status: 403, message: "El token no es valido ⛓️‍💥" };
+  }
+
+  // Acción: confirmar subscriber (genérico para cualquier evento)
+  if (decoded.action === "confirm-subscriber") {
+    // Actualizar subscriber a confirmado
+    const subscriber = await db.subscriber.upsert({
+      where: { email: decoded.email },
+      create: {
+        email: decoded.email,
+        tags: decoded.tags || [],
+        confirmed: true,
+        confirmedAt: new Date(),
+      },
+      update: {
+        confirmed: true,
+        confirmedAt: new Date(),
+        tags: decoded.tags ? { push: decoded.tags } : undefined,
+      },
+    });
+
+    // Enviar email de bienvenida si se especificó tipo
+    if (decoded.welcomeType) {
+      await sendWelcomeEmail({
+        type: decoded.welcomeType,
+        to: decoded.email,
+        userName: subscriber.name || undefined,
+      });
+    }
+
+    // Devolver datos para mostrar UI de confirmación (sin redirect)
+    return {
+      confirmed: true,
+      confirmationType: decoded.welcomeType || "default",
+      subscriberName: subscriber.name,
+      status: 200,
+    };
+  }
+
+  // user => //@todo maybe this is not necessary?
+  await getOrCreateUser(decoded.email, {
+    confirmed: true, // because of token
+    tags: decoded.tags || [],
+  }); // update confirm
+  // @TODO remove this using sendgrid api
+  if (decoded.tags) {
+    await updateOrCreateSuscription(decoded.email, {
+      confirmed: true,
+      tags: decoded.tags,
+    });
+  }
+  const session = await placeSession(request, decoded.email);
+  // @todo where is best?
+  throw redirect("/mis-cursos", {
+    headers: { "Set-Cookie": await commitSession(session) },
+  });
+};
+
 export default function Page() {
   const data = useLoaderData();
+  const actionData = useActionData<typeof action>();
   const fetchers = useFetchers(); // hack for Form (not working very well 😡)
+  const { trap } = useBotTrap();
 
   // Si es confirmación de subscriber, mostrar UI especial
-  if (data.confirmed) {
+  if (actionData && "confirmed" in actionData) {
     return (
       <ConfirmedSubscriber
-        type={data.confirmationType}
-        name={data.subscriberName}
+        type={actionData.confirmationType ?? "default"}
+        name={actionData.subscriberName}
+      />
+    );
+  }
+  if (actionData && "message" in actionData) {
+    return <BadToken message={actionData.message} />;
+  }
+  if (data.pendingToken) {
+    return (
+      <ConfirmToken
+        token={data.pendingToken}
+        email={data.pendingEmail ?? ""}
+        isSubscriberConfirmation={!!data.isSubscriberConfirmation}
       />
     );
   }
@@ -230,6 +260,7 @@ export default function Page() {
         </div>
       ) : (
         <Form method="POST" action="/api/user" className="grid gap-2">
+          {trap}
           <input
             required
             type="email"
@@ -253,6 +284,38 @@ export default function Page() {
           </button>
         </Form>
       )}
+    </section>
+  );
+}
+
+function ConfirmToken({
+  token,
+  email,
+  isSubscriberConfirmation,
+}: {
+  token: string;
+  email: string;
+  isSubscriberConfirmation: boolean;
+}) {
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state !== "idle";
+  return (
+    <section className="flex flex-col items-center justify-center min-h-screen px-4">
+      <Form method="POST" className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-8 max-w-md w-full text-center grid gap-4">
+        <span className="text-6xl block">{isSubscriberConfirmation ? "📬" : "🔑"}</span>
+        <h1 className="text-2xl font-bold text-white">
+          {isSubscriberConfirmation ? "Confirma tu correo" : "Entra a FixterGeek"}
+        </h1>
+        <p className="text-zinc-400 break-all">{email}</p>
+        <input type="hidden" name="token" value={token} />
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="py-3 px-4 rounded-full text-brand-900 font-semibold bg-brand-500 active:bg-brand-800 disabled:opacity-75"
+        >
+          {isSubmitting ? "Un momento..." : isSubscriberConfirmation ? "Confirmar mi correo" : "Entrar"}
+        </button>
+      </Form>
     </section>
   );
 }

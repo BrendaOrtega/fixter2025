@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { Drawer } from "./SimpleDrawer";
+import { useBotTrap } from "~/hooks/useBotTrap";
 
 /// Las fuentes que un UTM no ve. El orden se baraja en cada montaje: dejar una
 /// fija arriba se la lleva casi la mitad de las respuestas por inercia.
@@ -52,6 +53,7 @@ export const SubscriptionDrawer = ({
   const [otroOrigen, setOtroOrigen] = useState(false);
   const [step, setStep] = useState<"email" | "code">("email");
   const fetcher = useFetcher();
+  const { trap, fields } = useBotTrap();
   const isLoading = fetcher.state !== "idle";
   const codeInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,7 +69,7 @@ export const SubscriptionDrawer = ({
   const handleResendCode = () => {
     setCode("");
     fetcher.submit(
-      { intent: "send-code", email, courseSlug },
+      { intent: "send-code", email, courseSlug, ...fields() },
       { method: "POST" }
     );
   };
@@ -134,6 +136,7 @@ export const SubscriptionDrawer = ({
                 value={userEmail ? "unlock-session" : "send-code"}
               />
               <input type="hidden" name="courseSlug" value={courseSlug} />
+              {trap}
               {userEmail ? (
                 <p className="mt-6 text-sm text-colorParagraph">
                   Se abren con{" "}

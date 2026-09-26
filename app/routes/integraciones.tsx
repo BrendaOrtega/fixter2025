@@ -4,6 +4,7 @@ import { SubscriptionModal } from "~/components/SubscriptionModal";
 import useRecaptcha from "~/lib/useRecaptcha";
 import { useRef } from "react";
 import Spinner from "~/components/common/Spinner";
+import { useBotTrap } from "~/hooks/useBotTrap";
 
 export const meta = () =>
   getMetaTags({
@@ -20,6 +21,7 @@ export default function Integraciones() {
   const isLoading = fetcher.state !== "idle";
 
   const nameRef = useRef<HTMLInputElement>(null);
+  const { trap, fields } = useBotTrap();
 
   const onSubmit = () => {
     if (!inputRef.current?.value) return;
@@ -29,6 +31,7 @@ export default function Integraciones() {
     fd.append("intent", "suscription");
     fd.append("tags", "integraciones");
     fd.append("tags", "analisis_estrategicos");
+    for (const [k, v] of Object.entries(fields())) fd.append(k, v);
     fetcher.submit(fd, { method: "POST", action: "/api/user" });
   };
 
@@ -49,6 +52,7 @@ export default function Integraciones() {
             Recibe análisis estratégicos sobre IA, MCP, observabilidad, desarrollo web y más.
           </p>
           <Form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
+            {trap}
             <input
               ref={nameRef}
               required

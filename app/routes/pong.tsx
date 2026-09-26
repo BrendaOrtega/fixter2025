@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useFetcher, Link } from "react-router";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { checkSignupRequest, claimEmailSend, clientIp, registerCodeFailure, requestOwnsEmail } from "~/.server/signup-guard";
@@ -332,6 +333,7 @@ export default function PongLanding({ loaderData }: Route.ComponentProps) {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code" | "success">(hasAccess ? "success" : "email");
   const fetcher = useFetcher();
+  const { trap, fields } = useBotTrap();
   const codeInputRef = useRef<HTMLInputElement>(null);
 
   const error = fetcher.data?.error;
@@ -351,7 +353,7 @@ export default function PongLanding({ loaderData }: Route.ComponentProps) {
   const handleResendCode = () => {
     setCode("");
     fetcher.submit(
-      { intent: "send-code", email, name },
+      { intent: "send-code", email, name, ...fields() },
       { method: "POST" }
     );
   };
@@ -477,6 +479,7 @@ export default function PongLanding({ loaderData }: Route.ComponentProps) {
                 >
                   <fetcher.Form method="post" className="space-y-4">
                     <input type="hidden" name="intent" value="send-code" />
+                    {trap}
 
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input
@@ -856,6 +859,7 @@ export default function PongLanding({ loaderData }: Route.ComponentProps) {
           ) : step === "email" ? (
             <fetcher.Form method="post" className="max-w-md mx-auto space-y-4">
               <input type="hidden" name="intent" value="send-code" />
+              {trap}
               <input
                 type="text"
                 name="name"

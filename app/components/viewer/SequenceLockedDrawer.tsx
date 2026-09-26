@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { Drawer } from "./SimpleDrawer";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { formatUnlock } from "~/utils/formatUnlock";
@@ -50,6 +51,7 @@ export function SequenceLockedDrawer({
     email?: string;
     error?: string;
   }>();
+  const { trap } = useBotTrap();
   const emailRef = useRef<HTMLInputElement>(null);
   const [wantsWhatsapp, setWantsWhatsapp] = useState(false);
   const [correo, setCorreo] = useState(userEmail || "");
@@ -157,6 +159,7 @@ export function SequenceLockedDrawer({
              cobrarle dos veces la misma prueba. */
           <fetcher.Form method="post" className="mt-4">
             <input type="hidden" name="intent" value="subscribe-sequence" />
+            {trap}
             <input type="hidden" name="sequenceId" value={sequenceId || ""} />
             <input type="hidden" name="email" value={userEmail || ""} />
             <input type="hidden" name="courseSlug" value={courseSlug} />
@@ -211,6 +214,7 @@ export function SequenceLockedDrawer({
                 es suyo sin sacarlo de aquí, y esa prueba es la que permite
                 inscribirlo de una vez en vez de mandarle un link. */}
             <input type="hidden" name="intent" value="send-code" />
+            {trap}
             <input type="hidden" name="courseSlug" value={courseSlug} />
             <input type="hidden" name="sequenceId" value={sequenceId || ""} />
             <label className="text-sm text-colorParagraph">Tu email</label>

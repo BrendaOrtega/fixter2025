@@ -3,12 +3,14 @@ import { Banner } from "./common/Banner";
 import { PrimaryButton } from "./common/PrimaryButton";
 import useRecaptcha from "~/lib/useRecaptcha";
 import { useRef } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 
 // Beautiful declarative form 🫦
 
 export const SuscriptionBanner = () => {
   const fetcher = useFetcher();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { trap, fields } = useBotTrap();
 
   const onSubmit = () => {
     if (!inputRef.current?.value) return; // guard
@@ -17,6 +19,7 @@ export const SuscriptionBanner = () => {
       {
         email: inputRef.current.value,
         intent: "suscription",
+        ...fields(),
       },
       {
         method: "POST",
@@ -32,6 +35,7 @@ export const SuscriptionBanner = () => {
   return (
     <Banner>
       <Form onSubmit={handleSubmit} className="w-full md:w-[60%]">
+        {trap}
         <h3 className="text-[28px] md:text-3xl lg:text-4xl text-white font-bold mb-10 !leading-snug">
           Suscríbete a nuestro Newsletter y mantente al tanto de lo nuevo
         </h3>

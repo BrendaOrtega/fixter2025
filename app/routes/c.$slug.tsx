@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
@@ -227,14 +228,14 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
   }>();
   const emailRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
-  const honeyRef = useRef<HTMLInputElement>(null);
+  const { trap, fields } = useBotTrap();
 
   const onSubmit = () => {
     const fd = new FormData();
     fd.append("intent", "join_community");
     fd.append("email", emailRef.current?.value || "");
     fd.append("name", nameRef.current?.value || "");
-    fd.append("website", honeyRef.current?.value || "");
+    for (const [k, v] of Object.entries(fields())) fd.append(k, v);
     fetcher.submit(fd, { method: "POST" });
   };
 
@@ -505,16 +506,7 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
                     />
                   </div>
 
-                  {/* honeypot */}
-                  <input
-                    ref={honeyRef}
-                    type="text"
-                    name="website"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    className="hidden"
-                    aria-hidden
-                  />
+                  {trap}
 
                   <button
                     type="submit"

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { useFetcher } from "react-router";
 import getMetaTags from "~/utils/getMetaTags";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 
 export const meta = () =>
@@ -89,6 +90,7 @@ function TypedCode({ tokens }: { tokens: { t: string; c: string }[] }) {
 
 export default function CodeModeLanding() {
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
   const isLoading = fetcher.state !== "idle";
   const isSuccess = fetcher.data?.success;
   const [email, setEmail] = useState("");
@@ -167,6 +169,7 @@ export default function CodeModeLanding() {
                 action="/api/waitlist"
                 className="flex w-full flex-col gap-3 sm:flex-row"
               >
+                {trap}
                 <input type="hidden" name="courseSlug" value="code-mode" />
                 <input
                   name="email"

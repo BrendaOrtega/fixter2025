@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { motion, AnimatePresence } from "motion/react";
 import { FaFacebook, FaYoutube } from "react-icons/fa";
 import { FaSquareXTwitter } from "react-icons/fa6";
@@ -307,6 +308,7 @@ export default function IAVisualLanding() {
     topicIndex: 0,
   });
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
 
   // PERFORMANCE: Refs for timeout cleanup to prevent memory leaks
   const paymentSuccessTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -526,6 +528,7 @@ export default function IAVisualLanding() {
                   name="intent"
                   value="early_access_registration"
                 />
+                {trap}
 
                 <div>
                   <label

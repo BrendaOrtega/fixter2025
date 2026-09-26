@@ -49,11 +49,10 @@ export async function checkSignupRequest(
   // honeypot: un humano no ve el campo ni lo llena
   if (String(formData.get("website") ?? "")) return { ok: false, fake: true };
 
-  // tiempo mínimo: si el form trae `t`, es obligatorio (antes un `t` vacío saltaba la regla)
-  if (formData.has("t")) {
-    const startedAt = Number(formData.get("t"));
-    if (!startedAt || Date.now() - startedAt < MIN_FILL_MS) return { ok: false, fake: true };
-  }
+  // tiempo mínimo, obligatorio: el cliente fija `t` al montar (useBotTrap), así que un POST
+  // directo sin él, o armado con el HTML del servidor (t=0), es bot
+  const startedAt = Number(formData.get("t"));
+  if (!startedAt || Date.now() - startedAt < MIN_FILL_MS) return { ok: false, fake: true };
 
   const e = (email || "").trim().toLowerCase();
   if (!EMAIL_RE.test(e)) return { ok: false, fake: false, error: "Escribe un correo válido." };

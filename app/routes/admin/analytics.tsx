@@ -6,6 +6,9 @@ import { HeatmapVisualization } from "~/components/HeatmapVisualization";
 import { getAdminOrRedirect } from "~/.server/dbGetters";
 import { Prisma } from "@prisma/client";
 
+// Antes de esta fecha cada evento traía un sessionId único; no sirve para contar lectores
+const VISITOR_ID_SINCE = new Date("2026-09-25");
+
 export const action = async ({ request }: Route.ActionArgs) => {
   await getAdminOrRedirect(request);
   const formData = await request.formData();
@@ -46,7 +49,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const [totalSessions, totalPageViews, totalClicks] = await Promise.all([
     db.blogAnalytics
       .findMany({
-        where: { timestamp: { gte: startDate, lte: endDate } },
+        where: {
+          event: "page_view",
+          timestamp: {
+            gte: startDate > VISITOR_ID_SINCE ? startDate : VISITOR_ID_SINCE,
+            lte: endDate,
+          },
+        },
         select: { sessionId: true },
         distinct: ["sessionId"],
       })

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import { motion } from "motion/react";
 import { IoMdClose } from "react-icons/io";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
@@ -24,6 +25,7 @@ export function BookSubscriptionDrawer({
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const fetcher = useFetcher();
+  const { trap } = useBotTrap();
   const isLoading = fetcher.state !== "idle";
   const codeInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,6 +80,7 @@ export function BookSubscriptionDrawer({
 
             <fetcher.Form method="POST" className="mt-6 space-y-4">
               <input type="hidden" name="intent" value="subscribe" />
+              {trap}
               <input
                 type="email"
                 name="email"

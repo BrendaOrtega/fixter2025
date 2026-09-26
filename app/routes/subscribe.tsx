@@ -3,6 +3,7 @@ import { useFetcher, useSearchParams } from "react-router";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import useRecaptcha from "~/lib/useRecaptcha";
+import { useBotTrap } from "~/hooks/useBotTrap";
 import getMetaTags from "~/utils/getMetaTags";
 
 export const meta = () =>
@@ -16,6 +17,7 @@ export default function Route() {
   const [searchParams] = useSearchParams();
   const success = searchParams.has("success");
   const fetcher = useFetcher();
+  const { trap, fields } = useBotTrap();
 
   const onSubmit = (_: SubmitEvent) => {
     if (!inputRef.current) return;
@@ -24,6 +26,7 @@ export default function Route() {
       {
         intent: "suscription",
         email: inputRef.current.value,
+        ...fields(),
       },
       { method: "POST", action: "/api/user" }
     );
@@ -84,6 +87,7 @@ export default function Route() {
             onSubmit={handleSubmit}
             className="flex justify-center mt-12 ring-4 ring-brand-700 rounded-full mx-auto w-max overflow-hidden"
           >
+            {trap}
             <input
               ref={inputRef}
               type="email"
