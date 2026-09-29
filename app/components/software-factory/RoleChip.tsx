@@ -21,7 +21,7 @@ export const RoleChip = ({ role, size = "md" }: { role: Role; size?: "sm" | "md"
       }`}
       style={{ background: `${color}1f`, borderColor: `${color}55`, color }}
     >
-      <img src={`/software-factory/factory-${role}.svg`} alt="" aria-hidden className={small ? "h-3.5 w-3.5" : "h-[1.35em] w-[1.35em]"} />
+      <img src={`/factory-roles/factory-${role}.svg`} alt="" aria-hidden className={small ? "h-3.5 w-3.5" : "h-[1.35em] w-[1.35em]"} />
       @{role}
     </span>
   );
