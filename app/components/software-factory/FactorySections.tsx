@@ -336,25 +336,46 @@ const ReviewAndCost = () => (
   </motion.svg>
 );
 
-type Session = { art: ReactNode; title: string; body: string; result: string };
+type Session = { art: ReactNode; title: string; body: string; topics: string[]; result: string };
 
 const SESSIONS: Session[] = [
   {
     art: <LaptopShip />,
     title: "Tu agente publica su primer cambio",
     body: "Le explicas tu proyecto al agente, le das una tarea y él escribe el código. Si pasa las pruebas, se publica en tu hosting.",
+    topics: [
+      "Qué es una fábrica agéntica y qué no es",
+      "AGENTS.md: reglas de tu repo para el agente",
+      "Specs con criterio de «terminado»",
+      "Puertas: tipos, linter y pruebas en CI",
+      "Preview por PR y deploy a tu hosting",
+    ],
     result: "El agente ya publicó un cambio en tu app.",
   },
   {
     art: <TicketIntoBox />,
     title: "Tu repo se desarrolla solo",
     body: "Escribes tareas en GitHub y el agente las toma solo: trabaja en su propio sandbox de EasyBits y abre el PR.",
+    topics: [
+      "De la spec a issues de GitHub",
+      "Disparar al agente desde un issue",
+      "Sandboxes de EasyBits: el agente trabaja aislado",
+      "Llaves y permisos mínimos (nunca las de producción)",
+      "El agente abre el PR solo",
+    ],
     result: "Escribes una tarea y te llega un PR.",
   },
   {
     art: <ReviewAndCost />,
     title: "La fábrica completa",
     body: "Un segundo agente revisa lo que hizo el primero, dos tareas avanzan al mismo tiempo y ves cuánto costó cada una.",
+    topics: [
+      "Agente revisor distinto al que escribió",
+      "Dos tareas en paralelo sin pisarse",
+      "Tablero en GitHub Projects",
+      "Costo por ticket: cómo medirlo",
+      "La fábrica aprende: lo rechazado vuelve a AGENTS.md",
+    ],
     result: "Tú sólo escribes tareas y apruebas.",
   },
 ];
@@ -384,9 +405,20 @@ export const SyllabusSection = () => (
               Sesión {i + 1} · 2.5 h
             </p>
             <h3 className="mt-1 text-2xl font-black leading-tight sm:text-3xl">{s.title}</h3>
-            <p className="mt-3 flex-1 text-base leading-relaxed" style={{ color: `${INK}cc` }}>
+            <p className="mt-3 text-base leading-relaxed" style={{ color: `${INK}cc` }}>
               {s.body}
             </p>
+            {/* numeración corrida entre sesiones: el temario completo va del 1 al 15 */}
+            <ol className="mt-4 flex-1 space-y-2 border-t-2 border-dashed pt-4" style={{ borderColor: `${MINT}33` }}>
+              {s.topics.map((topic, j) => (
+                <li key={topic} className="flex items-start gap-3 text-sm sm:text-base">
+                  <span className="mt-0.5 w-6 shrink-0 text-right font-mono text-sm font-bold tabular-nums" style={{ color: MINT }}>
+                    {SESSIONS.slice(0, i).reduce((n, prev) => n + prev.topics.length, 0) + j + 1}
+                  </span>
+                  <span>{topic}</span>
+                </li>
+              ))}
+            </ol>
             <p className="mt-4 rounded-xl border-2 px-4 py-3 text-sm font-bold" style={{ background: GREEN, borderColor: BG, color: BG }}>
               Al final: <span className="font-normal">{s.result}</span>
             </p>
