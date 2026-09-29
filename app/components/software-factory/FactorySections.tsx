@@ -341,9 +341,9 @@ const SESSIONS: Session[] = [
   {
     art: <LaptopShip />,
     title: "Preparar y planear",
-    body: "Preparas tu repo con el patrón de Ghosty Factory: el conocimiento para agentes, los candados de CI y @plan, que propone y espera tu firma.",
+    body: "Preparas tu repo para trabajar con agentes: el conocimiento que leen, los candados de CI y @plan, que propone y espera tu firma.",
     topics: [
-      "El patrón de Ghosty Factory y sus números reales",
+      "Los 4 roles: un patrón que ya corre en producción",
       "AGENTS.md y docs/agents/: el conocimiento vive en el repo",
       "Candados: CI, main protegido y gitleaks",
       "Preview por PR en tu hosting",
@@ -356,7 +356,7 @@ const SESSIONS: Session[] = [
     title: "Construir y revisar",
     body: "@build programa el plan en su sandbox y @check lo revisa con otro modelo: te dice el riesgo y qué líneas leer primero.",
     topics: [
-      "@build trabaja en su sandbox de EasyBits",
+      "@build trabaja en un sandbox (EasyBits, Fly o Vercel)",
       "Llaves con permisos mínimos",
       "@check con otro modelo: por qué no el mismo",
       "Tarjeta de riesgo y «Lee primero»",
@@ -383,7 +383,7 @@ export const SyllabusSection = () => (
   <section className="relative px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
     <div className="mx-auto max-w-7xl">
       <SectionTitle kicker="Temario" title="Tres sesiones en vivo">
-        Cada sesión dura 2.5&nbsp;h y arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, los sandboxes de EasyBits (o Fly Sprites, si ya lo usas) y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
+        Cada sesión dura 2.5&nbsp;h y arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, un sandbox para los agentes (EasyBits, Fly o Vercel) y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
       </SectionTitle>
 
       <ol className="mt-12 grid gap-6 md:grid-cols-3">
@@ -510,7 +510,7 @@ export const DeliverablesSection = () => {
     <section className="relative px-4 py-20 sm:px-8 sm:py-28">
       <div ref={ref} className="mx-auto max-w-7xl">
         <SectionTitle kicker="Lo que te llevas" title="Tu repo, convertido en fábrica">
-          Trabajamos sobre tu propio código con el patrón que ya corre en Ghosty Factory. Al terminar, estas seis piezas quedan en tu repositorio y las puedes replicar en otros proyectos.
+          Trabajamos sobre tu propio código. Al terminar, estas seis piezas quedan en tu repositorio y las puedes replicar en otros proyectos.
         </SectionTitle>
 
         <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">

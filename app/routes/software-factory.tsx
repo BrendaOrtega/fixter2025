@@ -41,7 +41,7 @@ export const meta = () => {
   const baseMeta = getMetaTags({
     title: "Software Factory: PRs que revisas en dos minutos | FixterGeek",
     description:
-      "Taller en vivo: monta en tu repo el patrón de Ghosty Factory (@plan, @build, @check y @eval) y recibe PRs que revisas en dos minutos, con tu agente y tu stack.",
+      "Taller en vivo: monta en tu repo una fábrica de cuatro agentes (@plan, @build, @check y @eval) que te entrega PRs que revisas en dos minutos, con tu agente y tu stack.",
     url: PAGE_URL,
     // imagen propia con sus medidas reales (WhatsApp descarta la vista previa si no cuadran)
     image: OG_IMAGE,
@@ -191,8 +191,8 @@ type Ticket = { id: number; label: string; agent: string; col: number; age: numb
 // lo que costó el ticket en tokens: se enseña desde PR, porque medirlo es parte del taller
 const rollCost = () => `$${(0.12 + Math.random() * 0.8).toFixed(2)}`;
 
-// quién toma cada ticket; Ghosty aparece seguido a propósito
-const AGENTS = ["👾 Ghosty", "🤖 Claude Code", "🤖 Codex", "👾 Ghosty", "🤖 Cursor", "🤖 Antigravity", "👾 Ghosty"];
+// quién toma cada ticket: el patrón funciona con cualquier agente
+const AGENTS = ["🤖 Claude Code", "🤖 Codex", "🤖 Cursor", "🤖 Antigravity", "👾 Ghosty"];
 
 const BADGES = [["📝", "por firmar"], ["⚙", "programando"], ["🔍", "revisando"], ["✅", "listo"]];
 
@@ -537,7 +537,7 @@ export default function Route() {
           <OscillatingTitle />
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-3 max-w-xl text-base sm:mt-5 sm:text-xl lg:text-2xl" style={{ color: `${INK}cc` }}>
-            Monta en tu repo el patrón de Ghosty Factory, que ya corre en producción: cuatro agentes con rol fijo te entregan PRs que revisas en dos minutos.
+            Monta en tu repo una fábrica de cuatro agentes con rol fijo, con un patrón que ya corre en producción: te entregan PRs que revisas en dos minutos.
           </motion.p>
           {/* "software factory" hoy se usa para vender outsourcing y para prometer agentes que programan solos */}
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-2 hidden max-w-xl text-sm sm:block lg:text-base" style={{ color: MUTE }}>
