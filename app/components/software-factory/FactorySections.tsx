@@ -339,42 +339,42 @@ type Session = { art: ReactNode; title: string; body: string; topics: string[]; 
 const SESSIONS: Session[] = [
   {
     art: <LaptopShip />,
-    title: "Tu agente publica su primer cambio",
-    body: "Le explicas tu proyecto al agente, le das una tarea y él escribe el código. Si pasa las pruebas, se publica en tu hosting.",
+    title: "El terreno",
+    body: "Preparas tu repo con el patrón de Ghosty Factory: el conocimiento para agentes, los candados de CI y @plan, que propone y espera tu firma.",
     topics: [
-      "Qué es una fábrica agéntica y qué no es",
-      "AGENTS.md: reglas de tu repo para el agente",
-      "Specs con criterio de «terminado»",
-      "Puertas: tipos, linter y pruebas en CI",
-      "Preview por PR y deploy a tu hosting",
+      "El patrón de Ghosty Factory y sus números reales",
+      "AGENTS.md y docs/agents/: el conocimiento vive en el repo",
+      "Candados: CI, main protegido y gitleaks",
+      "Preview por PR en tu hosting",
+      "@plan: propone y tú firmas",
     ],
-    result: "El agente ya publicó un cambio en tu app.",
+    result: "Tu repo tiene reglas, candados y un plan firmado.",
   },
   {
     art: <TicketIntoBox />,
-    title: "Tu repo se desarrolla solo",
-    body: "Escribes tareas en GitHub y el agente las toma solo: trabaja en su propio sandbox de EasyBits y abre el PR.",
+    title: "Build y check",
+    body: "@build programa el plan en su sandbox y @check lo revisa con otro modelo: te dice el riesgo y qué líneas leer primero.",
     topics: [
-      "De la spec a issues de GitHub",
-      "Disparar al agente desde un issue",
-      "Sandboxes de EasyBits: el agente trabaja aislado",
-      "Llaves y permisos mínimos (nunca las de producción)",
-      "El agente abre el PR solo",
+      "@build trabaja en su sandbox de EasyBits",
+      "Llaves con permisos mínimos",
+      "@check con otro modelo: por qué no el mismo",
+      "Tarjeta de riesgo y «Lee primero»",
+      "Rúbrica de mantenibilidad (PRs de menos de 400 líneas)",
     ],
-    result: "Escribes una tarea y te llega un PR.",
+    result: "Te llega un PR que revisas en dos minutos.",
   },
   {
     art: <ReviewAndCost />,
-    title: "La fábrica completa",
-    body: "Un segundo agente revisa lo que hizo el primero, dos tareas avanzan al mismo tiempo y ves cuánto costó cada una.",
+    title: "Medir",
+    body: "@eval, un juez fijo, califica a cada rol y guarda lo que costó. Con eso eliges modelo por rol y ves si la fábrica mejora.",
     topics: [
-      "Agente revisor distinto al que escribió",
-      "Dos tareas en paralelo sin pisarse",
-      "Tablero en GitHub Projects",
-      "Costo por ticket: cómo medirlo",
-      "La fábrica aprende: lo rechazado vuelve a AGENTS.md",
+      "@eval: un juez fijo califica a cada rol",
+      "Costo real por tarea y por eval",
+      "Métrica norte: % de PRs que pasan la primera revisión",
+      "Elegir modelo por rol con datos",
+      "Lo que la fábrica aprende vuelve a docs/agents/",
     ],
-    result: "Tú sólo escribes tareas y apruebas.",
+    result: "Sabes cuánto cuesta y qué tan bien sale cada PR.",
   },
 ];
 
@@ -433,40 +433,40 @@ type Deliverable = { file: string; title: string; body: string; why: string };
 
 const DELIVERABLES: Deliverable[] = [
   {
-    file: "AGENTS.md",
-    title: "Las reglas de tu repo, escritas para agentes",
-    body: "Cómo se instala, cómo se corren las pruebas, qué convenciones sigue tu código y qué carpetas no se tocan. Lo leen Claude Code, Codex, Cursor y Antigravity antes de escribir una línea.",
-    why: "La mayoría de los errores de un agente vienen de que le falta contexto.",
+    file: "AGENTS.md + docs/agents/",
+    title: "El conocimiento de tu repo, escrito para agentes",
+    body: "Cómo se instala, cómo se prueba, qué convenciones sigues y qué no se toca. Cada rol lo lee antes de trabajar y lo actualiza en el mismo PR cuando aprende algo.",
+    why: "La fábrica aprende en tu repo, versionada y revisada por PR.",
   },
   {
-    file: "specs/",
-    title: "Specs con «terminado» definido de antemano",
-    body: "Una plantilla donde el criterio de aceptación se escribe antes que el código. El agente planeador la parte en issues de GitHub, uno por cambio chico y revisable.",
+    file: "plans/",
+    title: "@plan propone, tú firmas",
+    body: "Antes de escribir código, @plan dice qué va a cambiar y cómo se verifica. Nada se construye sin tu firma.",
     why: "Si nadie dijo cómo se verifica, el agente decide solo cuándo acabó.",
   },
   {
-    file: ".github/workflows/ci.yml",
-    title: "Puertas que ningún agente se salta",
-    body: "Tipos, linter y pruebas en cada commit (pre-commit) y en cada PR (GitHub Actions). Si un check falla, el PR no entra, lo haya escrito una persona o un agente.",
+    file: ".github/",
+    title: "Candados que ningún agente se salta",
+    body: "CI con tipos, linter, pruebas y gitleaks; main protegido con CODEOWNERS y sin force-push. Si un check falla, el PR no entra.",
     why: "Es lo que te deja delegar sin revisar cada línea a mano.",
   },
   {
-    file: ".claude/agents/",
-    title: "Tres agentes con rol fijo, en paralelo",
-    body: "Planeador, implementador y revisor, cada uno con sus instrucciones. Trabajan tickets distintos al mismo tiempo en worktrees separados, así que no se pisan los cambios.",
-    why: "Tres tickets avanzando mientras tú revisas el cuarto.",
+    file: ".agents/",
+    title: "Cuatro roles con instrucciones fijas",
+    body: "@plan, @build, @check y @eval, cada uno con el modelo que elijas. Funcionan con Claude Code, Codex, Cursor o Antigravity.",
+    why: "Cada rol hace una cosa y se puede medir por separado.",
   },
   {
-    file: "reviewer.md",
-    title: "Revisa un agente distinto al que escribió",
-    body: "El revisor compara cada PR contra su spec, corre la preview y te explica en español qué cambió y por qué. Tú das el merge.",
-    why: "Evita que el equipo acabe aprobando código que ya nadie entiende.",
+    file: "check.md",
+    title: "Un PR que revisas en dos minutos",
+    body: "@check usa otro modelo que @build, marca el riesgo (auth, datos, migraciones, CI) y te dice qué líneas leer primero. Tú das el merge.",
+    why: "Un revisor del mismo modelo comparte los puntos ciegos del que escribió.",
   },
   {
-    file: "github.com/…/projects",
-    title: "El tablero, con lo que cuesta cada ticket",
-    body: "GitHub Projects con cada ticket, su agente, su PR, su preview y los tokens que gastó. Al hacer merge pasa solo a producción.",
-    why: "Sabes cuánto te cuesta la fábrica antes de que llegue la factura.",
+    file: "evals/",
+    title: "Evals y costo por rol",
+    body: "@eval, un juez fijo, califica cada rol del 1 al 5 y guarda cuánto costó la tarea. Con eso eliges modelo por rol.",
+    why: "Mides lo que importa: cuántos PRs pasan tu primera revisión.",
   },
 ];
 
@@ -474,15 +474,15 @@ const DELIVERABLES: Deliverable[] = [
 const TREE: { text: string; item: number | null }[] = [
   { text: "tu-repo/", item: null },
   { text: "├─ AGENTS.md", item: 0 },
-  { text: "├─ specs/", item: 1 },
-  { text: "│  └─ 012-login-passkeys.md", item: 1 },
+  { text: "├─ docs/agents/", item: 0 },
+  { text: "├─ plans/012-login-passkeys.md", item: 1 },
   { text: "├─ .github/workflows/ci.yml", item: 2 },
-  { text: "├─ .husky/pre-commit", item: 2 },
-  { text: "├─ .claude/agents/", item: 3 },
-  { text: "│  ├─ planner.md", item: 3 },
-  { text: "│  ├─ builder.md", item: 3 },
-  { text: "│  └─ reviewer.md", item: 4 },
-  { text: "└─ ↗ tablero en GitHub Projects", item: 5 },
+  { text: "├─ .github/CODEOWNERS", item: 2 },
+  { text: "├─ .agents/", item: 3 },
+  { text: "│  ├─ plan.md · build.md", item: 3 },
+  { text: "│  ├─ check.md", item: 4 },
+  { text: "│  └─ eval.md", item: 5 },
+  { text: "└─ evals/resultados.md", item: 5 },
 ];
 
 const CYCLE_MS = 4200;
@@ -509,7 +509,7 @@ export const DeliverablesSection = () => {
     <section className="relative px-4 py-20 sm:px-8 sm:py-28">
       <div ref={ref} className="mx-auto max-w-7xl">
         <SectionTitle kicker="Lo que te llevas" title="Tu repo, convertido en fábrica">
-          Trabajamos sobre tu propio código. Al terminar, estas seis piezas quedan en tu repositorio: te las quedas y las puedes replicar en otros proyectos con ayuda de tu agente de código.
+          Trabajamos sobre tu propio código con el patrón que ya corre en Ghosty Factory. Al terminar, estas seis piezas quedan en tu repositorio y las puedes replicar en otros proyectos.
         </SectionTitle>
 
         <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">

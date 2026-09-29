@@ -38,9 +38,9 @@ const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG
 
 export const meta = () => {
   const baseMeta = getMetaTags({
-    title: "Software Factory: taller de agentes en paralelo | FixterGeek",
+    title: "Software Factory: PRs que revisas en dos minutos | FixterGeek",
     description:
-      "Próximamente: taller en vivo para pasar de una spec a producción con agentes de código trabajando en paralelo, con tu editor y tu stack. Apúntate a la lista de espera.",
+      "Taller en vivo: monta en tu repo el patrón de Ghosty Factory (@plan, @build, @check y @eval) y recibe PRs que revisas en dos minutos, con tu agente y tu stack.",
     url: PAGE_URL,
     // imagen propia con sus medidas reales (WhatsApp descarta la vista previa si no cuadran)
     image: OG_IMAGE,
@@ -60,7 +60,7 @@ export const meta = () => {
         name: "Software Factory",
         alternateName: "Fábrica de software agéntica",
         description:
-          "Taller en vivo para montar una fábrica de software: de una spec a producción con agentes de código trabajando en paralelo, verificación en cada PR y deploy, con el editor y el stack que ya usas.",
+          "Taller en vivo para montar en tu propio repo el patrón de una fábrica de software que ya corre en producción: cuatro roles (@plan, @build, @check y @eval), candados de CI, revisión por riesgo y evals con costo real.",
         url: PAGE_URL,
         image: OG_IMAGE,
         inLanguage: "es",
@@ -82,20 +82,19 @@ export const meta = () => {
         },
         educationalLevel: "Intermediate",
         teaches: [
-          "Escribir specs que un agente de código puede ejecutar",
-          "Partir una spec en tickets y repartirlos entre agentes en paralelo",
-          "Verificar el trabajo de los agentes con PRs, checks y revisión",
-          "Desplegar a producción desde el tablero",
-          "Poner puertas deterministas (tests, tipos, CI) que el agente no se puede saltar",
-          "Separar al agente que genera del que valida",
-          "Medir el costo en tokens y la calidad de cada ticket",
+          "Guardar el conocimiento del repo para agentes en AGENTS.md y docs/agents/",
+          "Poner candados de CI que ningún agente se salta",
+          "Firmar el plan de @plan antes de que se escriba código",
+          "Revisar con @check en otro modelo, con tarjeta de riesgo",
+          "Calificar cada rol con @eval y medir el costo real por tarea",
+          "Medir el porcentaje de PRs que pasan la primera revisión",
         ],
       },
       {
         "@type": "WebPage",
         "@id": `${PAGE_URL}#webpage`,
         url: PAGE_URL,
-        name: "Software Factory: taller de agentes en paralelo | FixterGeek",
+        name: "Software Factory: PRs que revisas en dos minutos | FixterGeek",
         description: "Lista de espera del taller Software Factory de FixterGeek.",
         isPartOf: { "@id": "https://www.fixtergeek.com/#website" },
         about: { "@id": `${PAGE_URL}#course` },
@@ -168,10 +167,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 // ——— El tablero de la fábrica: tickets que avanzan solos de spec a producción ———
 
 const COLUMNS = [
-  { title: "Spec", color: INK },
-  { title: "Agentes", color: MINT },
-  { title: "PR", color: MUTE },
-  { title: "Producción", color: GREEN },
+  { title: "@plan", color: INK },
+  { title: "@build", color: MINT },
+  { title: "@check", color: MUTE },
+  { title: "Para ti", color: GREEN },
 ];
 
 // Backlog del que salen los tickets; al desplegarse uno, entra el siguiente.
@@ -194,7 +193,7 @@ const rollCost = () => `$${(0.12 + Math.random() * 0.8).toFixed(2)}`;
 // quién toma cada ticket; Ghosty aparece seguido a propósito
 const AGENTS = ["👾 Ghosty", "🤖 Claude Code", "🤖 Codex", "👾 Ghosty", "🤖 Cursor", "🤖 Antigravity", "👾 Ghosty"];
 
-const BADGES = [["📝", "por hacer"], ["⚙", "trabajando"], ["🔍", "revisando"], ["🚀", "en vivo"]];
+const BADGES = [["📝", "por firmar"], ["⚙", "programando"], ["🔍", "revisando"], ["✅", "listo"]];
 
 const TICK_MS = 1500;
 const LIVE = COLUMNS.length - 1;
@@ -316,17 +315,17 @@ const FactoryBoard = () => {
           <span key={c} className="h-2.5 w-2.5 rounded-full lg:h-3 lg:w-3" style={{ background: c, opacity: 0.8 }} />
         ))}
         <span className="ml-2 truncate font-mono text-xs sm:text-sm lg:text-base" style={{ color: MUTE }}>
-          tablero · 3 agentes
+          tablero · tu repo
         </span>
         {/* contador de despliegues: salta cada vez que un ticket llega a producción */}
         <span className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold tabular-nums sm:text-sm" style={{ background: `${GREEN}1f`, color: GREEN }}>
-          🚀
+          ✅
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span key={deploys} className="inline-block" initial={{ y: -14, opacity: 0, scale: 1.6 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 14, opacity: 0 }} transition={{ type: "spring", stiffness: 500, damping: 22 }}>
               {deploys}
             </motion.span>
           </AnimatePresence>
-          <span className="hidden sm:inline">deploys</span>
+          <span className="hidden sm:inline">PRs listos</span>
         </span>
       </div>
 
@@ -486,7 +485,7 @@ const GhostyPeek = () => {
   );
 };
 
-const POINTS = ["Sobre tu propio repo", "Agentes en paralelo con revisión", "Mides costo y calidad por ticket", "3 sesiones en vivo de 2.5 h"];
+const POINTS = ["Sobre tu propio repo", "4 roles: @plan, @build, @check y @eval", "Costo y calidad medidos por rol", "3 sesiones en vivo de 2.5 h"];
 
 // Precio por persona; el de lanzamiento es para quien está en la lista de espera
 const PRICE_REGULAR = 5000;
@@ -537,11 +536,11 @@ export default function Route() {
           <OscillatingTitle />
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-3 max-w-xl text-base sm:mt-5 sm:text-xl lg:text-2xl" style={{ color: `${INK}cc` }}>
-            Monta tu fábrica de software sobre tu propio repo: agentes de código que toman tickets, abren PRs y despliegan. Tú apruebas.
+            Monta en tu repo el patrón de Ghosty Factory, que ya corre en producción: cuatro agentes con rol fijo te entregan PRs que revisas en dos minutos.
           </motion.p>
           {/* "software factory" hoy se usa para vender outsourcing y para prometer agentes que programan solos */}
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-2 hidden max-w-xl text-sm sm:block lg:text-base" style={{ color: MUTE }}>
-            No es outsourcing, y los agentes no programan solos: aprendes el sistema que hace confiable lo que generan.
+            No es outsourcing, y los agentes no programan solos: tú firmas el plan y tú das el merge.
           </motion.p>
 
           <ul className="mt-5 hidden flex-wrap gap-2 sm:flex">
