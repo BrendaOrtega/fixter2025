@@ -362,8 +362,8 @@ const SESSIONS: Session[] = [
 export const SyllabusSection = () => (
   <section className="relative px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
     <div className="mx-auto max-w-7xl">
-      <SectionTitle kicker="Temario" title="Tres sesiones en vivo de 2.5 h">
-        Cada sesión arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, Fly Sprites y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
+      <SectionTitle kicker="Temario" title="Tres sesiones en vivo">
+        Cada sesión dura 2.5&nbsp;h y arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, Fly Sprites y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
       </SectionTitle>
 
       <ol className="mt-12 grid gap-6 md:grid-cols-3">
