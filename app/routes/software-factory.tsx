@@ -39,7 +39,7 @@ export const meta = () => {
       "software factory, fábrica de software, agentes de código, claude code, codex, antigravity, cursor, agentes en paralelo, spec driven development, taller en vivo",
   });
 
-  // Sin `offers` ni fechas: el taller aún no tiene precio ni calendario, y un dato falso es peor que nada.
+  // Precio sí, fechas todavía no: sin calendario, un dato falso es peor que nada.
   const schemaOrg = {
     "@context": "https://schema.org",
     "@graph": [
@@ -60,7 +60,15 @@ export const meta = () => {
           logo: "https://www.fixtergeek.com/logo.png",
         },
         instructor: { "@type": "Person", name: "Héctor Bliss", url: "https://www.hectorbliss.com" },
-        hasCourseInstance: { "@type": "CourseInstance", courseMode: "Online" },
+        hasCourseInstance: { "@type": "CourseInstance", courseMode: "Online", courseWorkload: "PT7H30M" },
+        offers: {
+          "@type": "Offer",
+          category: "Paid",
+          price: PRICE_LAUNCH,
+          priceCurrency: "MXN",
+          availability: "https://schema.org/PreOrder",
+          url: PAGE_URL,
+        },
         educationalLevel: "Intermediate",
         teaches: [
           "Escribir specs que un agente de código puede ejecutar",
@@ -471,7 +479,12 @@ const GhostyPeek = () => {
 // Pulso de atención compartido por «Próximamente» y el botón: mismos tiempos = mismo instante.
 const ATTENTION = { duration: 1.1, times: [0, 0.2, 0.4, 0.6, 0.8, 1], repeat: Infinity, repeatDelay: 21 };
 
-const POINTS = ["Sobre tu propio repo", "Agentes en paralelo con revisión", "Mides costo y calidad por ticket", "Descuento para grupos"];
+const POINTS = ["Sobre tu propio repo", "Agentes en paralelo con revisión", "Mides costo y calidad por ticket", "3 sesiones en vivo de 2.5 h"];
+
+// Precio por persona; el de lanzamiento es para quien está en la lista de espera
+const PRICE_REGULAR = 5000;
+const PRICE_LAUNCH = 2500;
+const mxn = (n: number) => `$${n.toLocaleString("es-MX")}`;
 
 export default function Route() {
   const fetcher = useFetcher<typeof action>();
@@ -538,7 +551,15 @@ export default function Route() {
             ))}
           </ul>
 
-          <div className="mt-6 w-full max-w-xl lg:mt-8">
+          <p className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 lg:mt-6">
+            <span className="text-lg line-through lg:text-xl" style={{ color: MUTE }}>{mxn(PRICE_REGULAR)}</span>
+            <span className="text-3xl font-black lg:text-4xl" style={{ color: GREEN }}>{mxn(PRICE_LAUNCH)} MXN</span>
+            <span className="font-mono text-xs font-bold uppercase tracking-widest sm:text-sm" style={{ color: MINT }}>
+              50% de lanzamiento para la lista
+            </span>
+          </p>
+
+          <div className="mt-4 w-full max-w-xl lg:mt-5">
             {done ? (
               <motion.div
                 role="status"
@@ -583,7 +604,7 @@ export default function Route() {
               </fetcher.Form>
             )}
             {error && <p role="alert" className="mt-2 text-sm" style={{ color: GREEN }}>{error}</p>}
-            {!done && <p className="mt-3 text-sm" style={{ color: MUTE }}>Sin spam. Sólo te avisamos cuando abra · hay descuento para grupos.</p>}
+            {!done && <p className="mt-3 text-sm" style={{ color: MUTE }}>Sin spam. Sólo te avisamos cuando abra · el precio de lanzamiento es para la lista.</p>}
           </div>
         </div>
 
