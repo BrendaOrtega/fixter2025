@@ -289,7 +289,7 @@ const LaptopShip = () => (
   </motion.svg>
 );
 
-// una tarjeta de tarea entra sola a la máquina del agente y sale como PR
+// una tarjeta de tarea entra sola al sandbox del agente y sale como PR
 const TicketIntoBox = () => (
   <motion.svg viewBox="0 0 160 110" className="h-full w-full" aria-hidden initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}>
     <rect x="10" y="96" width="140" height="8" rx="4" fill={MUTE} {...STROKE} />
@@ -348,7 +348,7 @@ const SESSIONS: Session[] = [
   {
     art: <TicketIntoBox />,
     title: "Tu repo se desarrolla solo",
-    body: "Escribes tareas en GitHub y el agente las toma solo: trabaja en su propia máquina en Fly Sprites y abre el PR.",
+    body: "Escribes tareas en GitHub y el agente las toma solo: trabaja en su propio sandbox de EasyBits y abre el PR.",
     result: "Escribes una tarea y te llega un PR.",
   },
   {
@@ -363,7 +363,7 @@ export const SyllabusSection = () => (
   <section className="relative px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
     <div className="mx-auto max-w-7xl">
       <SectionTitle kicker="Temario" title="Tres sesiones en vivo">
-        Cada sesión dura 2.5&nbsp;h y arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, Fly Sprites y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
+        Cada sesión dura 2.5&nbsp;h y arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, los sandboxes de EasyBits (o Fly Sprites, si ya lo usas) y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
       </SectionTitle>
 
       <ol className="mt-12 grid gap-6 md:grid-cols-3">
