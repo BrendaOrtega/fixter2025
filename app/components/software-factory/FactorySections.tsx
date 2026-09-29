@@ -263,6 +263,140 @@ export const ProofSection = () => (
   </section>
 );
 
+// ——— Sección: temario, sesión por sesión ———
+
+// laptop donde se escribe una línea de código y aparece la palomita de «publicado»
+const LaptopShip = () => (
+  <motion.svg viewBox="0 0 160 110" className="h-full w-full" aria-hidden initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}>
+    <rect x="30" y="16" width="100" height="64" rx="6" fill={PANEL} {...STROKE} />
+    <rect x="18" y="80" width="124" height="12" rx="5" fill={MUTE} {...STROKE} />
+    {[0, 1, 2].map((i) => (
+      <motion.rect
+        key={i}
+        x="42"
+        y={30 + i * 13}
+        height="6"
+        rx="3"
+        fill={i === 2 ? GREEN : MINT}
+        variants={{ hidden: { width: 0 }, show: { width: [58, 44, 66][i] } }}
+        transition={{ duration: 0.5, delay: 0.3 + i * 0.45, ease: "easeOut" }}
+      />
+    ))}
+    <motion.g variants={{ hidden: { scale: 0, opacity: 0 }, show: { scale: 1, opacity: 1 } }} transition={{ ...SPRING, delay: 1.8 }} style={{ transformOrigin: "128px 22px" }}>
+      <circle cx="128" cy="22" r="14" fill={GREEN} {...STROKE} />
+      <path d="M121 22 L126 27 L135 17" fill="none" stroke={BG} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    </motion.g>
+  </motion.svg>
+);
+
+// una tarjeta de tarea entra sola a la máquina del agente y sale como PR
+const TicketIntoBox = () => (
+  <motion.svg viewBox="0 0 160 110" className="h-full w-full" aria-hidden initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}>
+    <rect x="10" y="96" width="140" height="8" rx="4" fill={MUTE} {...STROKE} />
+    <rect x="58" y="42" width="48" height="54" rx="6" fill={MINT} {...STROKE} />
+    <motion.circle
+      cx="82" cy="66" r="10" fill={GREEN} {...STROKE} strokeDasharray="6 4"
+      variants={{ hidden: { rotate: 0 }, show: { rotate: 360 } }}
+      transition={{ duration: 1.6, delay: 0.9, ease: "easeInOut" }}
+      style={{ transformOrigin: "82px 66px" }}
+    />
+    <motion.g variants={{ hidden: { x: -50, opacity: 0 }, show: { x: [-50, 0, 30], opacity: [0, 1, 0] } }} transition={{ duration: 1.2, delay: 0.2, times: [0, 0.5, 1] }}>
+      <rect x="14" y="54" width="34" height="22" rx="4" fill={INK} {...STROKE} />
+      <rect x="20" y="62" width="20" height="5" rx="2.5" fill={MUTE} />
+    </motion.g>
+    <motion.g variants={{ hidden: { x: -20, opacity: 0 }, show: { x: 0, opacity: 1 } }} transition={{ ...SPRING, delay: 2.4 }}>
+      <rect x="114" y="54" width="36" height="22" rx="4" fill={GREEN} {...STROKE} />
+      <circle cx="124" cy="65" r="3" fill={BG} />
+      <circle cx="138" cy="65" r="3" fill={BG} />
+      <line x1="127" y1="65" x2="135" y2="65" stroke={BG} strokeWidth="2.5" />
+    </motion.g>
+  </motion.svg>
+);
+
+// dos tarjetas en paralelo; la lupa del revisor pasa encima y cada una recibe su precio
+const ReviewAndCost = () => (
+  <motion.svg viewBox="0 0 160 110" className="h-full w-full" aria-hidden initial="hidden" whileInView="show" viewport={{ once: true, margin: "-40px" }}>
+    {[0, 1].map((i) => (
+      <motion.g key={i} variants={{ hidden: { y: 30, opacity: 0 }, show: { y: 0, opacity: 1 } }} transition={{ ...SPRING, delay: 0.2 + i * 0.2 }}>
+        <rect x={16 + i * 70} y="30" width="58" height="58" rx="6" fill={i ? MINT : INK} {...STROKE} />
+        <rect x={24 + i * 70} y="42" width="40" height="5" rx="2.5" fill={MUTE} />
+        <rect x={24 + i * 70} y="52" width="30" height="5" rx="2.5" fill={MUTE} />
+        <motion.text
+          x={45 + i * 70} y="80" textAnchor="middle" fontSize="13" fontWeight="900" fill={BG} fontFamily="ui-monospace, monospace"
+          variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} transition={{ delay: 1.6 + i * 0.5 }}
+        >
+          {["$0.38", "$0.61"][i]}
+        </motion.text>
+      </motion.g>
+    ))}
+    <motion.g variants={{ hidden: { x: 0, y: 0 }, show: { x: [0, 70, 70], y: [0, 0, -6] } }} transition={{ duration: 1.8, delay: 0.7, times: [0, 0.7, 1] }}>
+      <circle cx="46" cy="44" r="13" fill={`${GREEN}55`} stroke={BG} strokeWidth="4" />
+      <line x1="56" y1="54" x2="66" y2="64" stroke={BG} strokeWidth="6" strokeLinecap="round" />
+    </motion.g>
+  </motion.svg>
+);
+
+type Session = { art: ReactNode; title: string; body: string; result: string };
+
+const SESSIONS: Session[] = [
+  {
+    art: <LaptopShip />,
+    title: "Tu agente publica su primer cambio",
+    body: "Le explicas tu proyecto al agente, le das una tarea y él escribe el código. Si pasa las pruebas, se publica en tu hosting.",
+    result: "El agente ya publicó un cambio en tu app.",
+  },
+  {
+    art: <TicketIntoBox />,
+    title: "Tu repo se desarrolla solo",
+    body: "Escribes tareas en GitHub y el agente las toma solo: trabaja en su propia máquina en Fly Sprites y abre el PR.",
+    result: "Escribes una tarea y te llega un PR.",
+  },
+  {
+    art: <ReviewAndCost />,
+    title: "La fábrica completa",
+    body: "Un segundo agente revisa lo que hizo el primero, dos tareas avanzan al mismo tiempo y ves cuánto costó cada una.",
+    result: "Tú sólo escribes tareas y apruebas.",
+  },
+];
+
+export const SyllabusSection = () => (
+  <section className="relative px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
+    <div className="mx-auto max-w-7xl">
+      <SectionTitle kicker="Temario" title="Tres sesiones en vivo de 2.5 h">
+        Cada sesión arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, Fly Sprites y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
+      </SectionTitle>
+
+      <ol className="mt-12 grid gap-6 md:grid-cols-3">
+        {SESSIONS.map((s, i) => (
+          <motion.li
+            key={s.title}
+            initial={{ opacity: 0, y: 40, rotate: i % 2 ? 1.5 : -1.5 }}
+            whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ ...SPRING, delay: i * 0.12 }}
+            className="flex flex-col rounded-3xl border-[3px] p-5"
+            style={{ background: PANEL, borderColor: MINT, boxShadow: `8px 8px 0 ${SHADOW}` }}
+          >
+            <div className="h-32 rounded-2xl border-2 p-2" style={{ background: `${BG}aa`, borderColor: `${MINT}33` }}>
+              {s.art}
+            </div>
+            <p className="mt-5 font-mono text-sm font-bold uppercase tracking-widest" style={{ color: MUTE }}>
+              Sesión {i + 1} · 2.5 h
+            </p>
+            <h3 className="mt-1 text-2xl font-black leading-tight sm:text-3xl">{s.title}</h3>
+            <p className="mt-3 flex-1 text-base leading-relaxed" style={{ color: `${INK}cc` }}>
+              {s.body}
+            </p>
+            <p className="mt-4 rounded-xl border-2 px-4 py-3 text-sm font-bold" style={{ background: GREEN, borderColor: BG, color: BG }}>
+              Al final: <span className="font-normal">{s.result}</span>
+            </p>
+          </motion.li>
+        ))}
+      </ol>
+    </div>
+  </section>
+);
+
 // ——— Sección: lo que te llevas ———
 
 type Deliverable = { file: string; title: string; body: string; why: string };
@@ -342,7 +476,7 @@ export const DeliverablesSection = () => {
   };
 
   return (
-    <section className="relative px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
+    <section className="relative px-4 py-20 sm:px-8 sm:py-28">
       <div ref={ref} className="mx-auto max-w-7xl">
         <SectionTitle kicker="Lo que te llevas" title="Tu repo, convertido en fábrica">
           Trabajamos sobre tu propio código. Al terminar, estas seis piezas quedan en tu repositorio: te las quedas y las puedes replicar en otros proyectos con ayuda de tu agente de código.

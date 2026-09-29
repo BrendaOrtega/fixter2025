@@ -9,7 +9,7 @@ import { validateWaitlistConfirmToken } from "~/utils/tokens";
 import { recordOrigin } from "~/.server/origen";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
 import getMetaTags from "~/utils/getMetaTags";
-import { DeliverablesSection, ProofSection } from "~/components/software-factory/FactorySections";
+import { DeliverablesSection, ProofSection, SyllabusSection } from "~/components/software-factory/FactorySections";
 
 // ===========================================
 // Lista de espera: Taller Software Factory
@@ -643,6 +643,7 @@ export default function Route() {
       <div id="esto-ya-pasa">
         <ProofSection />
       </div>
+      <SyllabusSection />
       <DeliverablesSection />
 
       <footer className="px-4 py-10 text-center text-xs" style={{ color: `${INK}70` }}>
