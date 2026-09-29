@@ -379,8 +379,9 @@ const SESSIONS: Session[] = [
   },
 ];
 
+// id="temario": el link directo para compartir es /software-factory#temario (scroll-mt salva la navbar fija)
 export const SyllabusSection = () => (
-  <section className="relative px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
+  <section id="temario" className="relative scroll-mt-16 px-4 py-20 sm:px-8 sm:py-28" style={{ background: `${PANEL}66` }}>
     <div className="mx-auto max-w-7xl">
       <SectionTitle kicker="Temario" title="Tres sesiones en vivo">
         Cada sesión dura 2.5&nbsp;h y arma una parte de la fábrica sobre tu propio repo. Usamos GitHub, un sandbox para los agentes (EasyBits, Fly o Vercel) y el hosting que elijas: Vercel, Netlify, Fly o EasyBits.
