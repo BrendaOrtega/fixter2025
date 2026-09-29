@@ -339,7 +339,7 @@ type Session = { art: ReactNode; title: string; body: string; topics: string[]; 
 const SESSIONS: Session[] = [
   {
     art: <LaptopShip />,
-    title: "El terreno",
+    title: "Preparar y planear",
     body: "Preparas tu repo con el patrón de Ghosty Factory: el conocimiento para agentes, los candados de CI y @plan, que propone y espera tu firma.",
     topics: [
       "El patrón de Ghosty Factory y sus números reales",
@@ -352,7 +352,7 @@ const SESSIONS: Session[] = [
   },
   {
     art: <TicketIntoBox />,
-    title: "Build y check",
+    title: "Construir y revisar",
     body: "@build programa el plan en su sandbox y @check lo revisa con otro modelo: te dice el riesgo y qué líneas leer primero.",
     topics: [
       "@build trabaja en su sandbox de EasyBits",
@@ -365,7 +365,7 @@ const SESSIONS: Session[] = [
   },
   {
     art: <ReviewAndCost />,
-    title: "Medir",
+    title: "Medir, calificar y evaluar",
     body: "@eval, un juez fijo, califica a cada rol y guarda lo que costó. Con eso eliges modelo por rol y ves si la fábrica mejora.",
     topics: [
       "@eval: un juez fijo califica a cada rol",
