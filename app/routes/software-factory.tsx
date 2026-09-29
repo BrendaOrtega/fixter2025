@@ -9,6 +9,13 @@ import { validateWaitlistConfirmToken } from "~/utils/tokens";
 import { recordOrigin } from "~/.server/origen";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
 import getMetaTags from "~/utils/getMetaTags";
+
+// Títulos en Bricolage Grotesque: grotesca con carácter de taller, sin el peso bruto de antes
+export const links = () => [
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+  { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" },
+];
 import { DeliverablesSection, ProofSection, SyllabusSection } from "~/components/software-factory/FactorySections";
 
 // ===========================================
@@ -23,7 +30,11 @@ const WAITLIST_TAG = "software-factory-waitlist";
 const PAGE_URL = "https://www.fixtergeek.com/software-factory";
 const OG_IMAGE = "https://www.fixtergeek.com/courses/software-factory-og-v2.png";
 
-const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG = "#0E1317", PANEL = "#19262A", SHADOW = "#37AB93";
+// sombra suave en lugar de la dura: el panel flota, no está pegado con cinta
+const SOFT_SHADOW = "0 40px 80px -40px rgba(0,0,0,0.75)";
+const DISPLAY = { fontFamily: '"Bricolage Grotesque", Inter, sans-serif' };
+
+const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG = "#0E1317", PANEL = "#19262A";
 
 export const meta = () => {
   const baseMeta = getMetaTags({
@@ -297,21 +308,21 @@ const FactoryBoard = () => {
 
   return (
     <div
-      className="w-full rounded-3xl border-[3px] p-3 sm:p-5 lg:p-6"
-      style={{ background: PANEL, borderColor: MINT, boxShadow: `10px 10px 0 ${SHADOW}` }}
+      className="w-full rounded-3xl border p-3 sm:p-5 lg:p-6"
+      style={{ background: PANEL, borderColor: `${MINT}2e`, boxShadow: SOFT_SHADOW }}
     >
       <div className="mb-3 flex items-center gap-2 sm:mb-4">
         {[MINT, GREEN, MUTE].map((c) => (
-          <span key={c} className="h-3 w-3 rounded-full border-2 lg:h-3.5 lg:w-3.5" style={{ borderColor: BG, background: c }} />
+          <span key={c} className="h-2.5 w-2.5 rounded-full lg:h-3 lg:w-3" style={{ background: c, opacity: 0.8 }} />
         ))}
         <span className="ml-2 truncate font-mono text-xs sm:text-sm lg:text-base" style={{ color: MUTE }}>
           tablero · 3 agentes
         </span>
         {/* contador de despliegues: salta cada vez que un ticket llega a producción */}
-        <span className="ml-auto flex items-center gap-1.5 rounded-full border-2 px-2.5 py-0.5 font-mono text-xs font-bold sm:text-sm" style={{ borderColor: GREEN, color: GREEN }}>
+        <span className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold tabular-nums sm:text-sm" style={{ background: `${GREEN}1f`, color: GREEN }}>
           🚀
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span key={deploys} initial={{ y: -14, opacity: 0, scale: 1.6 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 14, opacity: 0 }} transition={{ type: "spring", stiffness: 500, damping: 22 }}>
+            <motion.span key={deploys} className="inline-block" initial={{ y: -14, opacity: 0, scale: 1.6 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 14, opacity: 0 }} transition={{ type: "spring", stiffness: 500, damping: 22 }}>
               {deploys}
             </motion.span>
           </AnimatePresence>
@@ -325,7 +336,7 @@ const FactoryBoard = () => {
           {COLUMNS.map((column) => (
             <div key={column.title} className="rounded-xl" style={{ background: `${BG}aa` }}>
               <p
-                className="truncate font-mono font-bold uppercase tracking-wider"
+                className="truncate font-semibold"
                 style={{ color: column.color, fontSize: L.compact ? 10 : 14, padding: L.compact ? "5px 5px 0" : "10px 10px 0" }}
               >
                 {column.title}
@@ -347,11 +358,10 @@ const FactoryBoard = () => {
                   x: t.col * (L.colW + L.gap) + L.pad,
                   y: L.header + row * (L.cardH + L.gap),
                   scale: moving ? [1, 1.08, 1] : 1,
-                  rotate: moving ? [0, -3, 0] : 0,
                   opacity: 1,
                 }}
                 transition={{ x: { type: "spring", stiffness: 170, damping: 22 }, y: { type: "spring", stiffness: 170, damping: 22 }, default: { duration: 0.6, ease: "backOut" } }}
-                className="absolute left-0 top-0 overflow-hidden rounded-lg border-2 text-left"
+                className="absolute left-0 top-0 overflow-hidden rounded-lg text-left"
                 style={{
                   width: L.colW - 2 * L.pad,
                   height: L.cardH,
@@ -359,7 +369,7 @@ const FactoryBoard = () => {
                   background: COLUMNS[t.col].color,
                   borderColor: BG,
                   color: BG,
-                  boxShadow: `${moving ? 6 : 3}px ${moving ? 6 : 3}px 0 ${BG}`,
+                  boxShadow: moving ? "0 14px 28px -10px rgba(0,0,0,0.7)" : "0 4px 10px -4px rgba(0,0,0,0.5)",
                   zIndex: moving ? 20 : 10,
                   transition: "background-color 0.45s",
                 }}
@@ -401,7 +411,7 @@ const OscillatingTitle = () => {
   }, []);
 
   return (
-    <h1 className="mt-3 flex flex-col whitespace-nowrap text-[clamp(2.6rem,6.1vw,6.5rem)] font-black leading-[0.95] tracking-tight sm:mt-5">
+    <h1 className="mt-3 flex flex-col whitespace-nowrap text-[clamp(2.6rem,6.1vw,6.5rem)] font-bold leading-[0.95] tracking-[-0.035em] sm:mt-5" style={DISPLAY}>
       <span className="sr-only">Software Factory · Fábrica agéntica</span>
       {/* la ventana crece 0.15em arriba y abajo (acentos y la cola de la g) y el margen negativo lo devuelve: el renglón ocupa lo mismo. El h1 es flex para que esos márgenes no se colapsen */}
       {TITLES[lang].map((word, line) => (
@@ -409,9 +419,9 @@ const OscillatingTitle = () => {
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={`${lang}-${line}`}
-              initial={{ y: "130%", rotate: 4 }}
-              animate={{ y: 0, rotate: 0 }}
-              exit={{ y: "-130%", rotate: -4 }}
+              initial={{ y: "110%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "-110%" }}
               transition={{ type: "spring", stiffness: 300, damping: 26, delay: line * 0.08 }}
               className="block origin-left"
               style={{ color: line ? MINT : INK }}
@@ -476,9 +486,6 @@ const GhostyPeek = () => {
   );
 };
 
-// Pulso de atención compartido por «Próximamente» y el botón: mismos tiempos = mismo instante.
-const ATTENTION = { duration: 1.1, times: [0, 0.2, 0.4, 0.6, 0.8, 1], repeat: Infinity, repeatDelay: 21 };
-
 const POINTS = ["Sobre tu propio repo", "Agentes en paralelo con revisión", "Mides costo y calidad por ticket", "3 sesiones en vivo de 2.5 h"];
 
 // Precio por persona; el de lanzamiento es para quien está en la lista de espera
@@ -514,14 +521,17 @@ export default function Route() {
       <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center gap-5 md:flex-row md:items-center md:gap-10 lg:gap-12">
         <div className="flex flex-col items-start md:w-[42%]">
           <motion.span
-            initial={{ opacity: 0, y: -10, rotate: -4 }}
-            // entra y luego, cada ~22 s, brinca y se sacude (a la par del botón)
-            animate={{ opacity: 1, y: [0, 0, -10, 0, -4, 0], rotate: [-2, -2, -8, 5, -5, -2], scale: [1, 1, 1.15, 1, 1.05, 1] }}
-            transition={{ opacity: { duration: 0.4 }, default: ATTENTION }}
-            className="rounded-full border-2 px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-[0.25em] sm:text-sm lg:px-4 lg:py-1.5 lg:text-base"
-            style={{ background: GREEN, borderColor: BG, color: BG, boxShadow: `3px 3px 0 ${SHADOW}` }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium lg:text-base"
+            style={{ borderColor: `${GREEN}40`, color: GREEN }}
           >
-            Próximamente · Taller en vivo
+            {/* punto que late: la lista está abierta */}
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden" style={{ background: GREEN }} />
+              <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: GREEN }} />
+            </span>
+            Próximamente: taller en vivo
           </motion.span>
 
           <OscillatingTitle />
@@ -534,18 +544,18 @@ export default function Route() {
             No es outsourcing, y los agentes no programan solos: aprendes el sistema que hace confiable lo que generan.
           </motion.p>
 
-          <ul className="mt-5 hidden flex-wrap gap-2.5 sm:flex">
+          <ul className="mt-5 hidden flex-wrap gap-2 sm:flex">
             {/* el chip que más importa: no hay que cambiar de herramienta */}
             <li
               // emoji y texto en columnas: si el texto baja de renglón, arranca alineado (sangría francesa)
-              className="flex items-start gap-2 rounded-2xl border-2 px-4 py-1.5 text-sm font-bold lg:text-base"
-              style={{ background: MINT, borderColor: BG, color: BG, boxShadow: `3px 3px 0 ${SHADOW}` }}
+              className="flex items-start gap-2 rounded-2xl border px-4 py-2 text-sm font-medium"
+              style={{ background: `${MINT}14`, borderColor: `${MINT}40`, color: INK }}
             >
               <span aria-hidden>🤖</span>
               <span>Con el agente que ya usas:<br />Claude Code · Codex · Antigravity · Cursor · Ghosty</span>
             </li>
             {POINTS.map((p) => (
-              <li key={p} className="rounded-full border-2 px-4 py-1.5 text-sm lg:text-base" style={{ borderColor: `${MINT}55`, color: MINT }}>
+              <li key={p} className="rounded-full border px-3 py-1 text-sm" style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>
                 {p}
               </li>
             ))}
@@ -553,8 +563,8 @@ export default function Route() {
 
           <p className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 lg:mt-6">
             <span className="text-lg line-through lg:text-xl" style={{ color: MUTE }}>{mxn(PRICE_REGULAR)}</span>
-            <span className="text-3xl font-black lg:text-4xl" style={{ color: GREEN }}>{mxn(PRICE_LAUNCH)} MXN</span>
-            <span className="font-mono text-xs font-bold uppercase tracking-widest sm:text-sm" style={{ color: MINT }}>
+            <span className="text-3xl font-bold tracking-tight lg:text-4xl" style={{ ...DISPLAY, color: GREEN }}>{mxn(PRICE_LAUNCH)} MXN</span>
+            <span className="text-sm font-medium" style={{ color: MINT }}>
               50% de lanzamiento para la lista
             </span>
           </p>
@@ -566,10 +576,10 @@ export default function Route() {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 18 }}
-                className="rounded-2xl border-2 px-5 py-4"
-                style={{ background: MINT, borderColor: BG, color: BG, boxShadow: `6px 6px 0 ${SHADOW}` }}
+                className="rounded-2xl border px-5 py-4"
+                style={{ background: `${MINT}14`, borderColor: `${MINT}55`, color: INK }}
               >
-                <p className="text-2xl font-black lg:text-3xl">¡Listo, estás dentro! 🏭</p>
+                <p className="text-2xl font-bold lg:text-3xl" style={DISPLAY}>¡Listo, estás dentro! 🏭</p>
                 <p className="mt-1 text-base lg:text-lg">Serás de los primeros en saber fechas y precio de lanzamiento del taller.</p>
               </motion.div>
             ) : (
@@ -585,19 +595,16 @@ export default function Route() {
                   autoComplete="email"
                   placeholder="tu@correo.com"
                   aria-invalid={!!error}
-                  className="h-14 w-full flex-1 rounded-xl border-2 bg-transparent px-5 text-lg lg:h-16 lg:text-xl placeholder:text-[#F2F5F4]/35 focus:outline-none"
-                  style={{ borderColor: `${INK}33`, color: INK }}
+                  className="h-14 w-full flex-1 rounded-xl border px-5 text-lg transition-colors lg:h-16 lg:text-xl placeholder:text-[#F2F5F4]/35 focus:border-[#85DDCB] focus:outline-none"
+                  style={{ background: `${PANEL}aa`, borderColor: `${INK}26`, color: INK }}
                 />
                 <motion.button
                   type="submit"
                   disabled={isLoading}
-                  // mismo pulso que «Próximamente», en el mismo instante
-                  animate={{ scale: [1, 1, 1.12, 0.96, 1.04, 1], rotate: [0, 0, -3, 3, -1, 0] }}
-                  transition={ATTENTION}
-                  whileHover={{ x: -2, y: -2 }}
-                  whileTap={{ x: 3, y: 3 }}
-                  className="h-14 shrink-0 rounded-xl border-2 px-6 text-lg font-extrabold lg:h-16 lg:px-8 lg:text-xl disabled:opacity-60"
-                  style={{ background: GREEN, borderColor: BG, color: BG, boxShadow: `4px 4px 0 ${SHADOW}` }}
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="h-14 shrink-0 rounded-xl px-6 text-lg font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] lg:h-16 lg:px-8 lg:text-xl disabled:opacity-60"
+                  style={{ background: GREEN, color: BG }}
                 >
                   {isLoading ? "Enviando…" : "Quiero enterarme"}
                 </motion.button>
@@ -609,8 +616,8 @@ export default function Route() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 24, rotate: 1.5 }}
-          animate={{ opacity: 1, y: 0, rotate: 0 }}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 20 }}
           className="relative w-full md:w-[58%]"
         >

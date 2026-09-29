@@ -4,7 +4,9 @@ import { animate, motion, useInView } from "motion/react";
 // Secciones bajo el hero de /software-factory: primero la prueba de que esto ya pasa
 // (números públicos) y luego lo que el alumno se lleva en su propio repo.
 
-const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG = "#0E1317", PANEL = "#19262A", SHADOW = "#37AB93";
+const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG = "#0E1317", PANEL = "#19262A";
+
+const DISPLAY = { fontFamily: '"Bricolage Grotesque", Inter, sans-serif' };
 
 const SPRING = { type: "spring", stiffness: 260, damping: 18 } as const;
 
@@ -31,7 +33,7 @@ const CountUp = ({ to, decimals = 0, prefix = "", suffix = "" }: { to: number; d
 
 // ——— Objetos animados de cada tarjeta (caricatura plana: contorno grueso, rellenos sólidos) ———
 
-const STROKE = { stroke: BG, strokeWidth: 3, strokeLinejoin: "round" as const };
+const STROKE = { stroke: BG, strokeWidth: 2, strokeLinejoin: "round" as const };
 
 // PRs que caen uno sobre otro hasta formar una pila
 const PullRequestStack = () => (
@@ -191,13 +193,10 @@ const SectionTitle = ({ kicker, title, children }: { kicker: string; title: stri
     transition={{ duration: 0.5 }}
     className="max-w-3xl"
   >
-    <span
-      className="inline-block -rotate-2 rounded-full border-2 px-3 py-1 font-mono text-xs font-bold uppercase tracking-[0.25em] sm:text-sm"
-      style={{ background: MINT, borderColor: BG, color: BG, boxShadow: `3px 3px 0 ${SHADOW}` }}
-    >
+    <span className="text-base font-medium" style={{ color: MINT }}>
       {kicker}
     </span>
-    <h2 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">{title}</h2>
+    <h2 className="mt-2 text-4xl font-bold leading-[1.02] tracking-[-0.03em] sm:text-5xl lg:text-6xl" style={DISPLAY}>{title}</h2>
     <p className="mt-4 text-lg sm:text-xl" style={{ color: `${INK}cc` }}>
       {children}
     </p>
@@ -215,21 +214,20 @@ export const ProofSection = () => (
         {PROOFS.map((p, i) => (
           <motion.article
             key={p.who}
-            initial={{ opacity: 0, y: 40, rotate: i % 2 ? 1.5 : -1.5 }}
-            whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ ...SPRING, delay: i * 0.12 }}
-            whileHover={{ y: -6, rotate: i % 2 ? 1 : -1 }}
-            className="flex flex-col rounded-3xl border-[3px] p-5"
-            style={{ background: PANEL, borderColor: MINT, boxShadow: `8px 8px 0 ${SHADOW}` }}
+            transition={{ duration: 0.5, delay: i * 0.08 }}
+            className="flex flex-col rounded-3xl border p-5"
+            style={{ background: PANEL, borderColor: `${MINT}1f` }}
           >
-            <div className="h-28 rounded-2xl border-2 p-2" style={{ background: `${BG}aa`, borderColor: `${MINT}33` }}>
+            <div className="h-28 rounded-2xl p-2" style={{ background: `${BG}99` }}>
               {p.art}
             </div>
-            <p className="mt-5 font-mono text-sm font-bold uppercase tracking-widest" style={{ color: MUTE }}>
+            <p className="mt-5 text-sm font-medium" style={{ color: MUTE }}>
               {p.who}
             </p>
-            <p className="mt-1 text-4xl font-black leading-none sm:text-5xl" style={{ color: GREEN }}>
+            <p className="mt-1 text-4xl font-bold leading-none tracking-tight sm:text-5xl" style={{ ...DISPLAY, color: GREEN }}>
               {p.number}
             </p>
             <p className="mt-2 text-base font-bold leading-snug">{p.unit}</p>
@@ -240,7 +238,7 @@ export const ProofSection = () => (
               href={p.source.href}
               target="_blank"
               rel="noopener"
-              className="mt-4 self-start font-mono text-xs underline underline-offset-4"
+              className="mt-4 self-start text-xs underline decoration-1 underline-offset-4"
               style={{ color: MINT }}
             >
               Fuente: {p.source.label} ↗
@@ -254,8 +252,8 @@ export const ProofSection = () => (
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ delay: 0.3 }}
-        className="mx-auto mt-14 max-w-2xl rounded-2xl border-2 border-dashed px-6 py-5 text-center text-lg sm:text-xl"
-        style={{ borderColor: `${GREEN}88`, color: INK }}
+        className="mx-auto mt-14 max-w-2xl rounded-2xl border border-dashed px-6 py-5 text-center text-lg sm:text-xl"
+        style={{ borderColor: `${GREEN}66`, color: INK }}
       >
         En México todavía no hay un caso público. <strong style={{ color: GREEN }}>Tu caso puede ser de los primeros.</strong>
       </motion.p>
@@ -391,36 +389,36 @@ export const SyllabusSection = () => (
         {SESSIONS.map((s, i) => (
           <motion.li
             key={s.title}
-            initial={{ opacity: 0, y: 40, rotate: i % 2 ? 1.5 : -1.5 }}
-            whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ ...SPRING, delay: i * 0.12 }}
-            className="flex flex-col rounded-3xl border-[3px] p-5"
-            style={{ background: PANEL, borderColor: MINT, boxShadow: `8px 8px 0 ${SHADOW}` }}
+            transition={{ duration: 0.5, delay: i * 0.08 }}
+            className="flex flex-col rounded-3xl border p-6"
+            style={{ background: PANEL, borderColor: `${MINT}1f` }}
           >
-            <div className="h-32 rounded-2xl border-2 p-2" style={{ background: `${BG}aa`, borderColor: `${MINT}33` }}>
+            <div className="h-32 rounded-2xl p-2" style={{ background: `${BG}99` }}>
               {s.art}
             </div>
-            <p className="mt-5 font-mono text-sm font-bold uppercase tracking-widest" style={{ color: MUTE }}>
-              Sesión {i + 1} · 2.5 h
+            <p className="mt-5 text-sm font-medium" style={{ color: MUTE }}>
+              Sesión {i + 1}, 2.5&nbsp;h
             </p>
-            <h3 className="mt-1 text-2xl font-black leading-tight sm:text-3xl">{s.title}</h3>
+            <h3 className="mt-1 text-2xl font-bold leading-tight tracking-[-0.02em] sm:text-3xl" style={DISPLAY}>{s.title}</h3>
             <p className="mt-3 text-base leading-relaxed" style={{ color: `${INK}cc` }}>
               {s.body}
             </p>
             {/* numeración corrida entre sesiones: el temario completo va del 1 al 15 */}
-            <ol className="mt-4 flex-1 space-y-2 border-t-2 border-dashed pt-4" style={{ borderColor: `${MINT}33` }}>
+            <ol className="mt-5 flex-1 space-y-2.5 border-t pt-5" style={{ borderColor: `${MINT}1f` }}>
               {s.topics.map((topic, j) => (
                 <li key={topic} className="flex items-start gap-3 text-sm sm:text-base">
-                  <span className="mt-0.5 w-6 shrink-0 text-right font-mono text-sm font-bold tabular-nums" style={{ color: MINT }}>
+                  <span className="mt-px w-6 shrink-0 text-right text-sm font-semibold tabular-nums" style={{ color: MINT }}>
                     {SESSIONS.slice(0, i).reduce((n, prev) => n + prev.topics.length, 0) + j + 1}
                   </span>
                   <span>{topic}</span>
                 </li>
               ))}
             </ol>
-            <p className="mt-4 rounded-xl border-2 px-4 py-3 text-sm font-bold" style={{ background: GREEN, borderColor: BG, color: BG }}>
-              Al final: <span className="font-normal">{s.result}</span>
+            <p className="mt-5 rounded-xl px-4 py-3 text-sm" style={{ background: `${GREEN}1a`, color: INK }}>
+              <span className="font-semibold" style={{ color: GREEN }}>Al final:</span> {s.result}
             </p>
           </motion.li>
         ))}
@@ -517,10 +515,10 @@ export const DeliverablesSection = () => {
         <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
           {/* el repo terminado: se escribe renglón por renglón y marca la pieza activa */}
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <div className="rounded-3xl border-[3px] p-4 sm:p-5" style={{ background: BG, borderColor: MINT, boxShadow: `10px 10px 0 ${SHADOW}` }}>
+            <div className="rounded-3xl border p-4 sm:p-5" style={{ background: BG, borderColor: `${MINT}2e`, boxShadow: "0 40px 80px -40px rgba(0,0,0,0.75)" }}>
               <div className="mb-4 flex items-center gap-2">
                 {[MINT, GREEN, MUTE].map((c) => (
-                  <span key={c} className="h-3 w-3 rounded-full border-2" style={{ borderColor: PANEL, background: c }} />
+                  <span key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c, opacity: 0.8 }} />
                 ))}
                 <span className="ml-2 font-mono text-xs sm:text-sm" style={{ color: MUTE }}>
                   ~/tu-repo · después del taller
@@ -567,36 +565,34 @@ export const DeliverablesSection = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
                   transition={{ ...SPRING, delay: (i % 2) * 0.1 }}
-                  animate={{ scale: on ? 1.02 : 1 }}
                 >
                   <button
                     type="button"
                     onClick={() => pick(i)}
-                    className="flex h-full w-full flex-col rounded-2xl border-[3px] p-5 text-left"
+                    className="flex h-full w-full flex-col rounded-2xl border p-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#85DDCB]"
                     style={{
-                      background: on ? MINT : PANEL,
-                      borderColor: on ? BG : `${MINT}55`,
-                      color: on ? BG : INK,
-                      boxShadow: on ? `8px 8px 0 ${SHADOW}` : `4px 4px 0 ${BG}`,
-                      transition: "background-color 0.35s, color 0.35s, box-shadow 0.35s",
+                      background: on ? `${MINT}14` : PANEL,
+                      borderColor: on ? `${MINT}99` : `${MINT}1a`,
+                      color: INK,
+                      transition: "background-color 0.35s, border-color 0.35s",
                     }}
                   >
                     <span className="flex items-center gap-3">
                       <span
-                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 text-lg font-black"
-                        style={{ background: on ? BG : GREEN, color: on ? MINT : BG, borderColor: BG }}
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-semibold tabular-nums"
+                        style={{ background: on ? MINT : `${MINT}1f`, color: on ? BG : MINT, transition: "background-color 0.35s, color 0.35s" }}
                       >
                         {i + 1}
                       </span>
-                      <code className="truncate font-mono text-xs font-bold sm:text-sm" style={{ color: on ? BG : MINT }}>
+                      <code className="truncate font-mono text-xs font-bold sm:text-sm" style={{ color: MINT }}>
                         {d.file}
                       </code>
                     </span>
-                    <span className="mt-3 text-lg font-black leading-tight sm:text-xl">{d.title}</span>
+                    <span className="mt-3 text-lg font-bold leading-tight tracking-[-0.01em] sm:text-xl" style={DISPLAY}>{d.title}</span>
                     <span className="mt-2 text-sm leading-relaxed" style={{ opacity: 0.85 }}>
                       {d.body}
                     </span>
-                    <span className="mt-3 border-t-2 border-dashed pt-3 text-sm font-bold" style={{ borderColor: on ? `${BG}44` : `${MINT}33` }}>
+                    <span className="mt-3 border-t pt-3 text-sm font-semibold" style={{ borderColor: `${MINT}1f` }}>
                       Por qué importa: <span className="font-normal">{d.why}</span>
                     </span>
                   </button>
