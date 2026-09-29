@@ -1,34 +1,62 @@
 # Taller Software Factory: sondeo y bases para el temario
 
-Estado al **2026-09-24**. El 24-sep se investigó el mercado y se reorientó la landing; falta el temario.
+Estado al **2026-09-29**. Precio, formato y temario ya están en la landing. Falta el repo plantilla, las fechas y abrir la venta.
 
 ## Qué es y de dónde salió
 - Un prospecto preguntó por un taller de "software factory". Esa persona usa **Antigravity + ChatGPT combinados**: planea en ChatGPT y ejecuta con los agentes del IDE de Google. Despliega en **Vercel** y usa **Supabase** como base de datos.
 - **La promesa:** montar tu propia fábrica de software, donde agentes de código toman tickets, abren PRs y despliegan mientras tú revisas, con el agente y el stack que ya usas.
 - **Método agnóstico de herramienta:** spec → tickets → agentes en paralelo → verificación → deploy. Se hace igual con Claude Code, Codex, Antigravity, Cursor o Ghosty.
 
-## Lo que ya está en producción
-- **Landing** `/software-factory` (`app/routes/software-factory.tsx`):
-  - **Hero de una pantalla**, con un tablero animado donde hasta 3 agentes trabajan en paralelo y Ghosty se asoma. Desde PR, cada tarjeta muestra lo que costó el ticket (`$0.38`).
-  - **Título** que alterna entre «Software Factory» y **«Fábrica agéntica»** (24-sep). Cada renglón es una ventana con `overflow-hidden`: crece 0.15em arriba y abajo con margen negativo para no recortar acentos ni la cola de la g, y el `h1` es `flex` para que esos márgenes no se colapsen.
-  - **Copy (24-sep):** «Monta tu fábrica de software sobre tu propio repo… Tú apruebas.» + «No es outsourcing, y los agentes no programan solos: aprendes el sistema que hace confiable lo que generan.» Chips: Sobre tu propio repo · Agentes en paralelo con revisión · Mides costo y calidad por ticket · Descuento para grupos. En móvil el descuento va en la línea bajo el botón.
-  - **Bajo el hero** (`app/components/software-factory/FactorySections.tsx`), con bajada suave desde «↓ esto ya pasa»:
-    - **Esto ya pasa:** 4 tarjetas con objeto SVG animado, número que cuenta y fuente: Stripe (~1,300 PRs/semana), Mastra (277 de 1,627 PRs), Globant ($52.8M ARR en AI Pods), Factory.ai ($4 mil M de valuación, dato de Forge). Cierra con «En México todavía no hay un caso público. Tu caso puede ser de los primeros.»
-    - **Lo que te llevas:** árbol de `tu-repo/` que se escribe solo y resalta la pieza activa, junto a 6 tarjetas (`AGENTS.md`, specs con «terminado», puertas de CI, 3 agentes en paralelo, revisor distinto al que escribió, tablero con costo por ticket). ⚠️ El árbol (`planner.md`, `builder.md`, `reviewer.md`) es ilustrativo: tiene que coincidir con el repo plantilla cuando exista.
-    - ⚠️ Una animación con `whileInView` dentro de un `<svg>` recortado nunca dispara (el IntersectionObserver no la ve): el disparo va en el `<svg>` y los hijos heredan con `variants`.
-  - Imagen OG propia (`public/courses/software-factory-og-v2.png`, centrada para la miniatura cuadrada de WhatsApp) y schema JSON-LD de tipo Course, sin precio ni fechas.
-- **Links:** en el navbar, como botón principal del hero de la home, en la banda de la home (`SoftwareFactoryBand`) y en el promo flotante (`FloatingPromo`).
+## Lo que ya está en producción (29-sep)
+- **Landing** `/software-factory` (`app/routes/software-factory.tsx`). Link directo al temario: **`/software-factory#temario`**.
+- **Promesa:** «Monta en tu repo una fábrica de cuatro agentes con rol fijo, con un patrón que ya corre en producción: te entregan PRs que revisas en dos minutos.» + «No es outsourcing, y los agentes no programan solos: tú firmas el plan y tú das el merge.»
+  - ⚠️ **No vender Ghosty.** El patrón (4 roles) sale de Ghosty Factory (`~/ghosty-studio/docs/claude/software-factory-producto.md`), pero el copy no usa el producto como gancho.
+  - El sandbox siempre va como opciones: **EasyBits, Fly o Vercel** (Vercel Sandbox existe). Hostings: Vercel, Netlify, Fly o EasyBits.
+- **Hero:**
+  - Título que alterna «Software Factory» / «Fábrica agéntica».
+  - Chips: los 4 roles, «Sobre tu propio repo», «Costo y calidad medidos por rol» y «3 sesiones en vivo de 2.5 h».
+  - Precio: ~~$5,000~~ **$2,500 MXN**, «50% de lanzamiento para la lista».
+  - Tablero animado con columnas `@plan` → `@build` → `@check` → «Para ti», costo por tarjeta y contador de PRs listos. Los agentes de las tarjetas rotan entre Claude Code, Codex, Cursor, Antigravity y Ghosty (uno de cinco).
+- **Roles como chips** (`app/components/software-factory/RoleChip.tsx`): cada `@plan`, `@build`, `@check` o `@eval` del texto se pinta con su carita (`public/factory-roles/`, copiadas de `ghosty-studio/public/avatars`) y su color: amarillo, verde, durazno y lila. `withRoles(texto)` los reemplaza solo.
+  - ⚠️ Los assets **no** pueden ir en `public/software-factory/`: una carpeta con el nombre de la ruta hace que `/software-factory` redirija a `/software-factory/`. Pasó el 29-sep por ~20 min.
+- **Secciones** (`app/components/software-factory/FactorySections.tsx`):
+  1. **Esto ya pasa:** Stripe, Mastra, Globant y Factory.ai con fuente, y «En México todavía no hay un caso público».
+  2. **Temario** (`id="temario"`): 3 sesiones de 2.5 h con 5 temas cada una, numerados del 1 al 15 (ver abajo).
+  3. **Lo que te llevas:** 6 piezas y el árbol de `tu-repo/` (`AGENTS.md`, `docs/agents/`, `plans/`, `.github/`, `.agents/{plan,build,check,eval}.md`, `evals/`). ⚠️ Es ilustrativo: tiene que coincidir con el repo plantilla.
+  - ⚠️ Una animación con `whileInView` dentro de un `<svg>` recortado nunca dispara: el disparo va en el `<svg>` y los hijos heredan con `variants`.
+- **Estilo (29-sep):** se dejó el brutalista (bordes gruesos, sombras duras, giros). Ahora son líneas finas en menta, sombras suaves y títulos en **Bricolage Grotesque** (se carga en el `links` de la ruta). Las etiquetas van en minúsculas. La paleta sigue siendo la de FixterGeek.
+- **SEO:** OG propia (`public/courses/software-factory-og-v2.png`) y JSON-LD `Course` con `offers` ($2,500 MXN, `PreOrder`), `courseWorkload: PT7H30M` y `teaches` de los 4 roles. Sin fechas todavía.
+- **Links:** navbar, botón principal del hero de la home, `SoftwareFactoryBand` y `FloatingPromo`.
 - **Registro:**
-  - Tag `software-factory-waitlist` en `Subscriber`.
-  - Bienvenida con doble opt-in (`app/mailSenders/sendFactoryWaitlistWelcome.ts`), que se manda **una sola vez por dirección**. El link lleva a `/software-factory?confirmar=<token>`.
-  - Protegido por `app/.server/signup-guard.ts`, el guard anti-spam común de todos los formularios.
+  - Tag `software-factory-waitlist` en `Subscriber`. Desde el 29-sep, **`Subscriber.tagDates`** guarda cuándo entró a cada tag (`{ "software-factory-waitlist": ISO }`); `createdAt` sólo dice cuándo nació la cuenta.
+  - Las fechas anteriores al 29-sep se rellenaron con la bienvenida de `EmailSendLog`.
+  - Bienvenida con doble opt-in (`app/mailSenders/sendFactoryWaitlistWelcome.ts`), **una sola vez por dirección**. El link lleva a `/software-factory?confirmar=<token>`.
+  - Protegido por `app/.server/signup-guard.ts`.
 - **Contar interesados:**
   ```js
-  db.subscriber.findMany({ where: { tags: { has: "software-factory-waitlist" } } })
+  db.subscriber.findMany({ where: { tags: { has: "software-factory-waitlist" } }, select: { email: true, confirmed: true, tagDates: true } })
   ```
-  Bienvenidas enviadas: `db.emailSendLog.count({ where: { purpose: "welcome:software-factory-waitlist" } })`.
-- **Inscritos al 23-sep: 2.** Uno es bliss (prueba). La otra es **Mefit Hernández** (`mefitdev@gmail.com`): llegó por Instagram a `/sistemas-agenticos` el 2-sep.
-  - **Rosalba Flores** (`rfc.rossy@gmail.com`, llegó por Facebook a `/sistemas-agenticos`) se apuntó a Animaciones con AI, que se retiró por no pegar. Es candidata para avisarle cuando abra.
+- **Inscritos al 29-sep: 8 reales, 4 confirmados** (más `fixtergeek@gmail.com`, que es prueba).
+  - Confirmados: David Durán, Mefit Hernández, braulio@cashabroad.one, acunag3h.
+  - Sin confirmar: ozober, harland@lohora.com, hansfelix50 y una dirección oculta de iCloud.
+  - Mefit y David entraron el 23-sep, el primer día; cuatro llegaron el 28 y 29-sep.
+  - **Rosalba Flores** (`rfc.rossy@gmail.com`) se apuntó a Animaciones con AI, que se retiró. Es candidata para avisarle cuando abra.
+
+## Temario (29-sep, en la landing)
+Tres sesiones en vivo de 2.5 h sobre el repo del alumno. El patrón es el de los 4 roles de Ghosty Factory, enseñado agnóstico.
+
+| Sesión | Temas | Al final |
+|---|---|---|
+| **1. Preparar y planear** | 1. Los 4 roles: un patrón que ya corre en producción · 2. `AGENTS.md` y `docs/agents/`: el conocimiento vive en el repo · 3. Candados: CI, `main` protegido y gitleaks · 4. Preview por PR en tu hosting · 5. `@plan`: propone y tú firmas | Tu repo tiene reglas, candados y un plan firmado. |
+| **2. Construir y revisar** | 6. `@build` trabaja en un sandbox (EasyBits, Fly o Vercel) · 7. Llaves con permisos mínimos · 8. `@check` con otro modelo: por qué no el mismo · 9. Tarjeta de riesgo y «Lee primero» · 10. Rúbrica de mantenibilidad (PRs de menos de 400 líneas) | Te llega un PR que revisas en dos minutos. |
+| **3. Medir, calificar y evaluar** | 11. `@eval`: un juez fijo califica a cada rol · 12. Costo real por tarea y por eval · 13. Métrica norte: % de PRs que pasan la primera revisión · 14. Elegir modelo por rol con datos · 15. Lo que la fábrica aprende vuelve a `docs/agents/` | Sabes cuánto cuesta y qué tan bien sale cada PR. |
+
+**Por qué este enfoque:** nadie más enseña un patrón que ya corre en producción, con evals y costo medido. Tinkerers, egghead y freeCodeCamp enseñan agentes, pero ninguno cómo calificarlos (`@eval`). Además, la comunidad ya desconfía del volumen: 67% de los PRs de IA fallan la primera revisión. Por eso la promesa es «PRs que revisas en dos minutos» y no «tu repo se desarrolla solo».
+
+## Formato y precio (decidido el 29-sep)
+- **3 sesiones de 2.5 h** (7.5 h en vivo), cupo de 10 a 12 personas y una semana de soporte asíncrono.
+- **Precio por persona, sin descuento de grupo:** regular **$5,000 MXN**; lanzamiento **$2,500** (50%) para la lista de espera. Falta fijar el límite (primeros 10 o fecha de corte).
+- Frente a Tinkerers (USD $750 ≈ $13,500 MXN por ~14 h), el regular queda casi 3× abajo.
 
 ## Competencia y precios (investigado el 23-sep)
 | Quién | Formato | Precio |
@@ -106,7 +134,7 @@ Transcrito el 24-sep. Los que sirven, en español:
 - «El futuro ya llegó, sólo que no a todos por igual. Apréndelo ahora.»
 - ⚠️ «Completely autonomously» y «dark factories» chocan con nuestra línea («los agentes no programan solos»): no usarlos.
 
-## Formato y precio propuestos (para decidir mañana)
+## Formato y precio propuestos el 24-sep (superado por lo del 29-sep)
 - **2 sesiones de 2.5 h**, cupo de 10 a 12 personas y **una semana de soporte asíncrono** después.
 - **Precio:** se sondeó en $2,500 MXN, y se sostiene hasta **$3,500–4,500**.
   - Early bird: **$2,900** (primeras 10 de la lista).
@@ -119,7 +147,7 @@ Transcrito el 24-sep. Los que sirven, en español:
   3. **Una herramienta en vivo** (Claude Code o Codex) y una guía corta para las demás. No dar soporte en vivo a 5 herramientas a la vez.
   4. **3 agentes, no 7:** planeador, implementador y revisor.
 
-## Borrador de estructura (base para el temario)
+## Borrador de estructura del 24-sep (superado por el temario del 29-sep)
 - **Sesión 1:**
   - Spec con plantilla.
   - El agente parte la spec en issues.
@@ -143,11 +171,13 @@ Transcrito el 24-sep. Los que sirven, en español:
 - RAM de la caja de Teams: pasar a 3 GB y poner alerta antes de meter a una cohorte.
 - La Supabase del alumno: dentro de la caja del agente sólo va un proyecto de desarrollo o una rama, nunca la `service_role` de producción. Las migraciones se aplican en el merge.
 
-## Pendiente para mañana
-- [ ] Temario sesión por sesión, con qué lleva cada bloque y cuánto dura.
-- [ ] Repo plantilla: stack, CI y spec de ejemplo.
-- [ ] Decidir la herramienta en vivo (Claude Code vs Codex) y el precio final.
-- [ ] Fechas, y abrir la venta con early bird a quienes confirmaron en la lista.
+## Pendiente (29-sep)
+- [ ] **Números reales del patrón:** el tema 1 promete «un patrón que ya corre en producción». O se publican cifras (evals de $0.49 y $1.28; calificaciones de 3.3 a 5 sobre 5) o se suaviza la frase.
+- [ ] **Repo plantilla** que coincida con el árbol de la landing (`.agents/`, `plans/`, `evals/`), con los disparadores del sandbox ya listos. Si se arma en vivo, se come la sesión 2.
+- [ ] **Cómo se mide el costo por ticket** con suscripción (Max/Plus no cobra por token) antes de prometerlo.
+- [ ] Una herramienta y un hosting en vivo; los demás como guía escrita.
+- [ ] Límite del precio de lanzamiento, fechas y abrir la venta a los 4 confirmados.
+- [ ] Revisar el hero en 1440×900 (la nota bajo el botón queda cortada) y la versión móvil del temario.
 
 ## Producto (Ghosty como fábrica, al estilo de Factory.ai)
 Mercado, stack y precios de Factory, comparación con Ghosty y escenarios de ingreso en MXN:
