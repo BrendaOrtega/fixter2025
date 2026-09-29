@@ -16,6 +16,7 @@ export const links = () => [
   { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
   { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" },
 ];
+import { RoleChip, type Role } from "~/components/software-factory/RoleChip";
 import { DeliverablesSection, ProofSection, SyllabusSection } from "~/components/software-factory/FactorySections";
 
 // ===========================================
@@ -338,7 +339,7 @@ const FactoryBoard = () => {
                 className="truncate font-semibold"
                 style={{ color: column.color, fontSize: L.compact ? 10 : 14, padding: L.compact ? "5px 5px 0" : "10px 10px 0" }}
               >
-                {column.title}
+                {column.title.startsWith("@") ? <RoleChip role={column.title.slice(1) as Role} size={L.compact ? "sm" : "md"} /> : column.title}
               </p>
             </div>
           ))}
@@ -485,7 +486,7 @@ const GhostyPeek = () => {
   );
 };
 
-const POINTS = ["Sobre tu propio repo", "4 roles: @plan, @build, @check y @eval", "Costo y calidad medidos por rol", "3 sesiones en vivo de 2.5 h"];
+const POINTS = ["Sobre tu propio repo", "Costo y calidad medidos por rol", "3 sesiones en vivo de 2.5 h"];
 
 // Precio por persona; el de lanzamiento es para quien está en la lista de espera
 const PRICE_REGULAR = 5000;
@@ -552,6 +553,12 @@ export default function Route() {
             >
               <span aria-hidden>🤖</span>
               <span>Con el agente que ya usas:<br />Claude Code · Codex · Antigravity · Cursor · Ghosty</span>
+            </li>
+            {/* los 4 roles, cada uno con su carita */}
+            <li className="flex w-full flex-wrap items-center gap-1.5 text-sm" style={{ color: `${INK}cc` }}>
+              {(["plan", "build", "check", "eval"] as Role[]).map((r) => (
+                <RoleChip key={r} role={r} />
+              ))}
             </li>
             {POINTS.map((p) => (
               <li key={p} className="rounded-full border px-3 py-1 text-sm" style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>

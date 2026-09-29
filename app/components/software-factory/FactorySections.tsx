@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { animate, motion, useInView } from "motion/react";
+import { withRoles } from "./RoleChip";
 
 // Secciones bajo el hero de /software-factory: primero la prueba de que esto ya pasa
 // (números públicos) y luego lo que el alumno se lleva en su propio repo.
@@ -404,7 +405,7 @@ export const SyllabusSection = () => (
             </p>
             <h3 className="mt-1 text-2xl font-bold leading-tight tracking-[-0.02em] sm:text-3xl" style={DISPLAY}>{s.title}</h3>
             <p className="mt-3 text-base leading-relaxed" style={{ color: `${INK}cc` }}>
-              {s.body}
+              {withRoles(s.body)}
             </p>
             {/* numeración corrida entre sesiones: el temario completo va del 1 al 15 */}
             <ol className="mt-5 flex-1 space-y-2.5 border-t pt-5" style={{ borderColor: `${MINT}1f` }}>
@@ -413,12 +414,12 @@ export const SyllabusSection = () => (
                   <span className="mt-px w-6 shrink-0 text-right text-sm font-semibold tabular-nums" style={{ color: MINT }}>
                     {SESSIONS.slice(0, i).reduce((n, prev) => n + prev.topics.length, 0) + j + 1}
                   </span>
-                  <span>{topic}</span>
+                  <span>{withRoles(topic)}</span>
                 </li>
               ))}
             </ol>
             <p className="mt-5 rounded-xl px-4 py-3 text-sm" style={{ background: `${GREEN}1a`, color: INK }}>
-              <span className="font-semibold" style={{ color: GREEN }}>Al final:</span> {s.result}
+              <span className="font-semibold" style={{ color: GREEN }}>Al final:</span> {withRoles(s.result)}
             </p>
           </motion.li>
         ))}
@@ -588,12 +589,12 @@ export const DeliverablesSection = () => {
                         {d.file}
                       </code>
                     </span>
-                    <span className="mt-3 text-lg font-bold leading-tight tracking-[-0.01em] sm:text-xl" style={DISPLAY}>{d.title}</span>
+                    <span className="mt-3 text-lg font-bold leading-tight tracking-[-0.01em] sm:text-xl" style={DISPLAY}>{withRoles(d.title)}</span>
                     <span className="mt-2 text-sm leading-relaxed" style={{ opacity: 0.85 }}>
-                      {d.body}
+                      {withRoles(d.body)}
                     </span>
                     <span className="mt-3 border-t pt-3 text-sm font-semibold" style={{ borderColor: `${MINT}1f` }}>
-                      Por qué importa: <span className="font-normal">{d.why}</span>
+                      Por qué importa: <span className="font-normal">{withRoles(d.why)}</span>
                     </span>
                   </button>
                 </motion.li>
