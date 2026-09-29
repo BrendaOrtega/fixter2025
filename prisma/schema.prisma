@@ -357,6 +357,9 @@ model Subscriber {
 
   // Segmentación simple
   tags String[]
+  /// Cuándo entró a cada tag: `{ "software-factory-waitlist": "2026-09-24T00:50:33Z" }`.
+  /// `createdAt` sólo dice cuándo nació la cuenta, no cuándo se apuntó a cada lista.
+  tagDates Json?
 
   /// De dónde llegó esta persona.
   ///

@@ -107,12 +107,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return guard.fake ? data({ ok: true }) : data({ ok: false, error: guard.error }, { status: 400 });
   }
 
-  const existing = await db.subscriber.findUnique({ where: { email }, select: { id: true, tags: true, confirmed: true } });
+  const existing = await db.subscriber.findUnique({
+    where: { email },
+    select: { id: true, tags: true, confirmed: true, tagDates: true },
+  });
   const isNew = !existing?.tags.includes(WAITLIST_TAG);
+  // la fecha de entrada a ESTA lista; la del subscriber puede ser de otra landing
+  const joinedAt = { [WAITLIST_TAG]: new Date().toISOString() };
   if (!existing) {
-    await db.subscriber.create({ data: { email, tags: [WAITLIST_TAG], confirmed: false } });
+    await db.subscriber.create({ data: { email, tags: [WAITLIST_TAG], tagDates: joinedAt, confirmed: false } });
   } else if (isNew) {
-    await db.subscriber.update({ where: { id: existing.id }, data: { tags: { push: WAITLIST_TAG } } });
+    const tagDates = { ...((existing.tagDates as Record<string, string> | null) ?? {}), ...joinedAt };
+    await db.subscriber.update({ where: { id: existing.id }, data: { tags: { push: WAITLIST_TAG }, tagDates } });
   }
 
   await recordOrigin(email, request);
