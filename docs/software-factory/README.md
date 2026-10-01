@@ -36,9 +36,10 @@ Estado al **2026-09-29**. Precio, formato y temario ya están en la landing. Fal
   ```js
   db.subscriber.findMany({ where: { tags: { has: "software-factory-waitlist" } }, select: { email: true, confirmed: true, tagDates: true } })
   ```
-- **Inscritos al 29-sep: 8 reales, 4 confirmados** (más `fixtergeek@gmail.com`, que es prueba).
-  - Confirmados: David Durán, Mefit Hernández, braulio@cashabroad.one, acunag3h.
-  - Sin confirmar: ozober, harland@lohora.com, hansfelix50 y una dirección oculta de iCloud.
+- **Inscritos al 30-sep: 8 reales, 5 confirmados** (más `fixtergeek@gmail.com`, que es prueba). Es lista de espera: nadie ha pagado.
+  - Confirmados: David Durán, Mefit Hernández, ozober, braulio@cashabroad.one, acunag3h.
+  - Sin confirmar: harland@lohora.com, hansfelix50 y una dirección oculta de iCloud.
+  - Del 29 al 30-sep no entró nadie nuevo; ozober confirmó.
   - Mefit y David entraron el 23-sep, el primer día; cuatro llegaron el 28 y 29-sep.
   - **Rosalba Flores** (`rfc.rossy@gmail.com`) se apuntó a Animaciones con AI, que se retiró. Es candidata para avisarle cuando abra.
 
