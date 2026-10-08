@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { Effect } from "effect";
 import { db } from "~/.server/db";
 import { videoAccessFor } from "~/.server/videoAccess";
-import { buildHlsProxyUrl } from "~/.server/hls";
+import { buildHlsProxyUrl, hlsKeyFromUrl } from "~/.server/hls";
 import { s3VideoService } from "~/.server/services/s3-video";
 
 /**
@@ -38,7 +38,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const base = video.m3u8.replace(/\/hls\/[^/]*$/, "/");
   const vttUrl = base + STORYBOARD;
 
-  const key = new URL(vttUrl).pathname.replace(/^\/[^/]+\//, ""); // sin bucket
+  // El m3u8 puede venir como URL completa o como llave suelta; `new URL` revienta con la llave.
+  const key = hlsKeyFromUrl(vttUrl);
+  if (!key) return new Response("Este video no tiene storyboard", { status: 404 });
   let contenido: string;
   try {
     const firmada = await Effect.runPromise(s3VideoService.getHLSPresignedUrl(key, 300));
