@@ -14,7 +14,7 @@ import { MainLayout } from "./routes/Layout";
 
 import type { Route } from "./+types/root";
 import getMetaTags from "./utils/getMetaTags";
-import { data } from "react-router";
+import { data, redirect } from "react-router";
 import { captureOriginHeaders } from "./.server/origen";
 
 /**
@@ -25,6 +25,14 @@ import { captureOriginHeaders } from "./.server/origen";
  * así que una visita directa de alguien conocido no cuesta nada.
  */
 export const loader = ({ request }: Route.LoaderArgs) => {
+  // apex → www: el DNS ya no vive en Squarespace, así que el reenvío lo hacemos aquí
+  const url = new URL(request.url);
+  if (url.hostname === "fixtergeek.com") {
+    url.hostname = "www.fixtergeek.com";
+    url.protocol = "https:";
+    url.port = "";
+    throw redirect(url.toString(), 301);
+  }
   const cookie = captureOriginHeaders(request);
   return data(null, cookie ? { headers: { "Set-Cookie": cookie } } : undefined);
 };
