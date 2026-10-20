@@ -49,8 +49,9 @@ Nada de esquinas redondeadas ni gradientes en los bloques.
 ## El fondo
 
 Nunca negro plano. Retícula de 60px que recorre **una celda exacta** en diagonal
-(así el bucle cierra sin salto), dos manchas de color con `blur(120px)`
-respirando desfasadas, y una viñeta radial que aprieta la lectura al centro.
+(así el bucle cierra sin salto) y dos formas planas de color sólido, de borde
+duro, respirando desfasadas. Sin `blur`, sin viñeta ni gradientes (regla de la
+casa: caricatura plana).
 
 ## La transición
 
