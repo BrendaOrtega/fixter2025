@@ -58,7 +58,7 @@ punch alto— con RMS moderado (~0.12) para que quepa debajo de la voz. Luego se
 y se mete con `sidechaincompress` para que se agache al hablar. Precedente de documentación en
 `videos/hooks-deterministas/assets/BGM.md`.
 
-Herramientas: HyperFrames para las tarjetas (SVG animado a mano, nunca imágenes generadas), ffmpeg
+Herramientas: HyperFrames para las tarjetas (SVG animado o imágenes generadas con IA, permitidas desde el 20-oct-2026; Ghosty y los logos oficiales nunca se repintan), ffmpeg
 para el montaje. Ver `docs/webinar-sistemas-agenticos/SHORTS.md`.
 
 **Biblioteca de animaciones (desde el 14 sep 2026): revisarla ANTES de escribir un efecto a mano.**
@@ -75,6 +75,10 @@ no es determinista frame a frame — sólo en grabaciones de pantalla en tiempo 
 `seek(t)`. Y siguen mandando las reglas de la casa: paleta por marca, caricatura plana sin
 gradientes ni glow en FixterGeek, bucles finitos, SFX en cada animación (catálogo CC0 en
 `docs/shorts-taller/sfx/`, montado con ffmpeg fuera del render).
+
+**Traspaso de un video a otro agente (desde el 7 oct 2026)**: formato `handoff/v1` en
+`videos/_shared/handoff/` (README + plantilla). Un `HANDOFF.yaml` en la carpeta del video + `AGENTS.md`/`CLAUDE.md`
+que mandan leerlo; se entrega en zip. Ejemplo: `videos/ghosty-identidad/HANDOFF.yaml`.
 
 **motion-lab (desde el 17 sep 2026)**: `videos/_shared/recipes/motion-lab/` — 15 mecánicas medidas
 cuadro a cuadro al replicar un video real (ventana retro con typewriter, lista inclinada,
@@ -198,3 +202,27 @@ TaskState en SCREAMING_SNAKE, eventos de stream sin `final`, ruta `/.well-known/
 - Implementación de referencia: `~/sandbox-host/templates/claude-worker/src/a2a/`
 - Fuente normativa: `github.com/a2aproject/A2A`, tag `v1.0.1`, `specification/a2a.proto`
 - Recordatorio de estilo del proyecto: leer el prólogo primero, ejemplos en español.
+
+## ⏰ Explorar el martes 6-oct-2026: OpenEdit de VEED
+
+Es un agente de edición de video que se instala como skill en Claude Code, Codex o Gemini CLI: se le
+describe la edición en palabras y él transcribe, arma cada capa en HTML/CSS y renderiza el MP4. El
+proyecto se abre en VEED para mover cada capa a mano. Es el mismo enfoque que nuestro pipeline de
+HyperFrames.
+
+- **Licencia:** el pipeline es Apache-2.0. El render son binarios cerrados (PolyForm Shield 1.0.0);
+  son gratis y lo que hagas se puede vender, pero no se pueden ver ni modificar.
+- **Qué mirar:**
+  1. Cómo estructura el proyecto editable, porque podríamos entregar los shorts con un proyecto que
+     se pueda corregir y no sólo el MP4.
+  2. Su transcripción y subtítulos contra `npx hyperframes transcribe`.
+  3. Si el render cerrado ata el resultado a VEED.
+  4. Qué recetas suyas (títulos con colores de marca, cortar pausas) le faltan a `_shared/recipes/`.
+- **Fuentes:** https://github.com/veedstudio/open-edit · https://www.veed.io/newsroom/openedit-by-veed
+- **Formato editable (decidido el 5-oct): no construir un editor de video.**
+  1. Junto al MP4 entregar un `.otio` (OpenTimelineIO, Apache-2.0) para que quien quiera lo edite en
+     DaVinci, Premiere o Final Cut.
+  2. Si hace falta, una pantalla chica de correcciones (texto de un subtítulo o título, color de
+     marca → volver a renderizar) sobre el HTML de HyperFrames, no sobre OTIO.
+  - Visores web: Raven (OTIO) sólo muestra la línea de tiempo y no edita. Omniclip y Twick usan su
+    propio JSON. Verificar ambos con fuentes antes de decidir algo con ellos.

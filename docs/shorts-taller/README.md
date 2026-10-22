@@ -65,6 +65,52 @@ shorts (fotograma 0 completo, subtítulos literales, nunca negro, CTA con verbo 
 - `textContent` y `fontSize` no se animan con GSAP (reflow): cambiar el texto con `duration: .01`
   y fijar el tamaño en CSS.
 
+### Lo que dejó «Una pequeña célula de robots» (Ghosty Factory, 15 oct 2026)
+
+Proyecto: `videos/factory-dos/` (BRIEF, partitura, `art.js` con todo el SVG, `mix.sh`).
+
+**Historia y copy**
+- Una idea prestada (las células de Supercell) se presenta rápido y por encima, con 3 roles que se
+  reconocen por su objeto (diseñador con lápiz, programador con laptop, marketer con megáfono), y se
+  pasa enseguida al producto. Cinco sillas vacías con tazas no comunicaron nada.
+- Cada frase se entiende sola y dice el caso concreto. «El riesgo lo marca la plataforma» no tuvo
+  sentido; «si el cambio toca el login o la base de datos, llega marcado como riesgo alto» sí.
+- Las decisiones del producto se verifican en sus docs antes de ponerlas en la voz (nada al tanteo),
+  y el tono va sin superlativos.
+- Si se menciona dinero, va con **MXN**.
+- Si se nombra a una empresa, aparece su logo oficial sin alterar, de una fuente con licencia
+  verificada (Wikimedia Commons).
+
+**Imagen**
+- Los agentes de Ghosty se dibujan como las **flamitas oficiales** (trazos de `AgentAvatar`), en el color
+  de su rol y con un accesorio de oficio (Arqui terracota con corbata, Worker azul DeepSeek con casco),
+  no como robots genéricos. La etiqueta del modelo va de chapita y no tapa el accesorio.
+- A las personas les hace falta pelo con volumen y peinados distintos: el casquete mínimo se ve calvo.
+- Un gesto metafórico raro (un brazo como palo) confunde. Mejor un globo de diálogo y un objeto
+  (candado).
+- Haz style frames de **todas** las escenas. Las que no tuvieron cuadro de estilo fueron las que se
+  rehicieron.
+
+**Cortinilla**
+- El glifo tiene que significar algo (`/factory` antes de la liga, `#12` antes de la caja del
+  pedido). Una «G» suelta se leyó como sin sentido. Los glifos largos se achican para que quepan.
+- La última rebanada no puede ser oscura sin glifo encima: deja un cuadro casi negro. El glifo
+  aparece en cuanto la rebanada cubre.
+
+**Subtítulos**
+- Nunca dos líneas a la vez: la siguiente entra exactamente cuando se apaga la anterior (con 50 ms
+  de adelanto se enciman).
+- Partir en frases (puntuación, pausas) y cada frase en trozos parejos con la partición que minimiza
+  la línea más larga. El corte voraz deja huérfanas («chicas,», «pedido.»).
+
+**Audio**
+- La cama a −26 LUFS con sidechain 6:1 no se oyó. Además la pista arrancaba con 12 s casi mudos.
+  Antes de montar, mide la envolvente RMS de la pista y elige un tema que suene desde el inicio y
+  crezca hasta su subida en el cierre. Quedó a −21 LUFS con sidechain 3:1.
+- `mix.sh` falla si el render no mide lo de la partitura. Lo atrapó cuando la voz nueva alargó el
+  video y `data-duration` seguía fijo en el HTML.
+- En zsh, `set -- $x` no parte palabras: usa `${a%%:*}` / `${a##*:}`.
+
 ## Sesión 2 (3 sep 2026) — los diez
 
 | # | Archivo | Corte | Total | Música (CC BY) |

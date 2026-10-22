@@ -14,6 +14,7 @@ de `mix.sh` sean predecibles.
 | `whoosh-short.wav` | morph entre paneles, vuelo corto | 0.49 s | Swosh swoosh whoosh air — qubodup, [freesound 60026](https://freesound.org/people/qubodup/sounds/60026) | CC0 |
 | `land.wav` | acento de aterrizaje, cuando la pieza se asienta | 0.26 s | Arrow Impact — omerbhatti34, [freesound 521552](https://freesound.org/people/omerbhatti34/sounds/521552) | CC0 |
 | `tick.wav` | tick seco del karaoke, una por palabra | 0.035 s | ffmpeg (seno 2.2 kHz, cola de 4 ms) | sin licencia |
+| `splat.wav` | pastelazo / algo viscoso que se embarra | 0.48 s | Toon Splat — cribbler, [freesound 380390](https://freesound.org/people/cribbler/sounds/380390) | CC0 |
 
 El tick va sintetizado a propósito: lo más corto de Freesound eran 242 ms de tick metálico, y esa
 cola se encima con la palabra siguiente. A esta duración cabe entre sílabas.
