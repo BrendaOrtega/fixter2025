@@ -36,6 +36,7 @@ El contrato de una receta está en `MOLDE.md`. Hoja de contactos: `GALERIA.png`.
 | `blueprint-tree` | árbol que se arma nodo por nodo con cinta de tokenizer; Ghosty coloca cada nodo (canvas 2D) | "parse html into the dom" de cute.mp4 |
 | `blueprint-route` | ida y vuelta con parada fallida y respuesta tecleada; Ghosty carga el dato (canvas 2D) | "dns lookup" de cute.mp4 |
 | `sketch-layers` | página que se inclina y se separa en hojas, piel de boceto técnico con rough.js | "layers" de cute.mp4 |
+| `glass-pill` | pastilla de vidrio tipo Apple Liquid Glass (refracción en el filo, blur saturado) con ícono que se dibuja; 1080×1920 | aviso «steps in the caption» de un short, 22 oct |
 
 Las captions cinéticas, scrambles y cortinillas de texto ya están en `../motion-anything/`.
 

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>glass-pill</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      body { margin: 0; background: var(--bg, #0E1317); }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      .clip { position: absolute; inset: 0; }
+      #bg { width: 1080px; height: 1920px; transform-origin: 50% 55%; }
+
+      /* ---- la pastilla de cristal ---- */
+      #pill {
+        position: absolute; box-sizing: border-box; display: flex; align-items: center; gap: 34px;
+        padding: 0 56px 0 40px; border-radius: 52px; transform-origin: 50% 50%;
+        /* Liquid Glass: refracción en el borde (filtro SVG) + desenfoque + saturación.
+           El filtro url() en backdrop-filter sólo existe en Chromium: es justo el motor del render. */
+        backdrop-filter: url(#liquid);
+        -webkit-backdrop-filter: url(#liquid);
+        background: var(--veil);
+        /* borde especular: luz arriba, rebote abajo, filo fino alrededor y sombra de contacto */
+        box-shadow:
+          inset 0 1.5px 0 rgba(255, 255, 255, 0.75),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.22),
+          inset 0 0 0 1.5px rgba(255, 255, 255, 0.28),
+          inset 0 -18px 30px -18px rgba(255, 255, 255, 0.18),
+          0 18px 44px rgba(0, 0, 0, 0.28);
+        overflow: hidden;
+      }
+      /* brillo que cruza una vez (no en bucle) */
+      #sheen {
+        position: absolute; top: -40%; left: 0; width: 34%; height: 180%;
+        background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0) 100%);
+        transform: translateX(-160%) rotate(12deg); pointer-events: none; mix-blend-mode: screen;
+      }
+      #icon { flex: none; width: 118px; height: 118px; }
+      #label {
+        font-family: "Inter", sans-serif; font-weight: 600; color: #fff; font-size: 66px; line-height: 1.06;
+        letter-spacing: -0.01em; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      }
+      #label .w { display: inline-block; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="4">
+      <!-- Filtro de refracción. El mapa de desplazamiento se genera en JS con el tamaño real de la pastilla. -->
+      <svg width="0" height="0" style="position:absolute">
+        <filter id="liquid" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB" primitiveUnits="userSpaceOnUse">
+          <feImage id="liquid-map" x="0" y="0" result="map" preserveAspectRatio="none" />
+          <feDisplacementMap id="liquid-disp" in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="bent" />
+          <feGaussianBlur id="liquid-blur" in="bent" result="soft" />
+          <feColorMatrix id="liquid-sat" in="soft" type="saturate" />
+        </filter>
+      </svg>
+
+      <!-- Fondo de ejemplo (caricatura plana). En un short real va el plano de cámara en su lugar. -->
+      <svg id="bg" class="clip" viewBox="0 0 1080 1920" data-start="0" data-duration="4" data-track-index="0">
+        <rect width="1080" height="1920" fill="#3a3f45" />
+        <rect x="0" y="0" width="300" height="1920" fill="#5b5148" />
+        <g fill="#4a423a"><rect x="40" y="0" width="22" height="1920" /><rect x="130" y="0" width="22" height="1920" /><rect x="220" y="0" width="22" height="1920" /></g>
+        <rect x="700" y="0" width="380" height="520" fill="#6b7680" />
+        <rect x="80" y="1040" width="1000" height="880" rx="60" fill="#b9b6b0" />
+        <rect x="180" y="1080" width="300" height="360" rx="40" fill="#e9c613" transform="rotate(-14 330 1260)" />
+        <rect x="380" y="1300" width="560" height="340" rx="24" fill="#1c1d20" />
+        <rect x="420" y="1330" width="480" height="40" rx="10" fill="#2c2e33" />
+        <circle cx="560" cy="760" r="190" fill="#8c6a52" />
+        <rect x="360" y="900" width="400" height="760" rx="140" fill="#17181b" />
+      </svg>
+
+      <div id="pill" data-start="0" data-duration="4" data-track-index="1">
+        <div id="sheen"></div>
+        <svg id="icon" viewBox="0 0 118 118">
+          <!-- portapapeles con palomita: objeto concreto, se dibuja la palomita -->
+          <rect x="14" y="20" width="90" height="94" rx="20" fill="#fff" />
+          <rect x="38" y="6" width="42" height="26" rx="10" fill="#fff" />
+          <rect x="46" y="12" width="26" height="12" rx="6" fill="rgba(0,0,0,0.18)" />
+          <path id="check" d="M36 68 L52 84 L84 50" fill="none" stroke="#2d3136" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div id="label"></div>
+      </div>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí.
+      const PARAMS = {
+        lines: ["Los pasos van", "en la descripción"],
+        position: { x: 210, y: 1090 },     // esquina superior izquierda de la pastilla (lienzo 1080×1920)
+        height: 230,                       // alto de la pastilla; el ancho sale del texto
+        radius: 52,
+        tone: "dark",                      // "dark" = velo oscuro (texto blanco legible sobre fondo claro) | "light"
+        veil: 0.22,                        // opacidad del velo (0 = sólo refracción)
+        blur: 9,                           // desenfoque del fondo en px
+        saturate: 1.7,                     // saturación del fondo (el "vivo" del vidrio de Apple)
+        refraction: 80,                    // px que se dobla el fondo en el filo
+        bezel: 44,                         // ancho del filo que refracta, en px
+        tIn: 0.15,                         // entrada
+        tSheen: 1.25,                      // el brillo cruza
+        tOut: 3.35,                        // salida
+      };
+
+      const root = document.getElementById("root");
+      const pill = document.getElementById("pill");
+      const label = document.getElementById("label");
+      root.style.setProperty("--bg", "#0E1317");
+      pill.style.setProperty("--veil", PARAMS.tone === "dark" ? `rgba(18, 20, 24, ${PARAMS.veil})` : `rgba(255, 255, 255, ${PARAMS.veil})`);
+      pill.style.borderRadius = PARAMS.radius + "px";
+      pill.style.height = PARAMS.height + "px";
+      pill.style.left = PARAMS.position.x + "px";
+      pill.style.top = PARAMS.position.y + "px";
+      label.innerHTML = PARAMS.lines
+        .map((l) => l.split(" ").map((w) => `<span class="w">${w}</span>`).join(" "))
+        .join("<br>");
+
+      // Mapa de desplazamiento del filo: R/G = dirección hacia adentro, fuerza cuadrática en el bisel.
+      // Determinista (sólo geometría). Es lo que hace que el fondo se "doble" en el borde como lente.
+      function buildMap(w, h, r, bezel) {
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const ctx = c.getContext("2d");
+        const img = ctx.createImageData(w, h);
+        const hx = w / 2, hy = h / 2;
+        const sd = (x, y) => {
+          const qx = Math.abs(x - hx) - (hx - r), qy = Math.abs(y - hy) - (hy - r);
+          const ox = Math.max(qx, 0), oy = Math.max(qy, 0);
+          return Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - r; // <0 adentro
+        };
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const d = -sd(x + 0.5, y + 0.5);
+            let dx = 0, dy = 0;
+            if (d > 0 && d < bezel) {
+              const gx = sd(x + 1.5, y + 0.5) - sd(x - 0.5, y + 0.5);
+              const gy = sd(x + 0.5, y + 1.5) - sd(x + 0.5, y - 0.5);
+              const len = Math.hypot(gx, gy) || 1;
+              const t = 1 - d / bezel;
+              const m = t * t;
+              dx = (-gx / len) * m; dy = (-gy / len) * m; // muestrea hacia adentro
+            }
+            const i = (y * w + x) * 4;
+            img.data[i] = 128 + dx * 127;
+            img.data[i + 1] = 128 + dy * 127;
+            img.data[i + 2] = 128;
+            img.data[i + 3] = 255;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        return c.toDataURL();
+      }
+
+      function fitFilter() {
+        const w = Math.round(pill.offsetWidth), h = Math.round(pill.offsetHeight);
+        const map = document.getElementById("liquid-map");
+        map.setAttribute("href", buildMap(w, h, PARAMS.radius, PARAMS.bezel));
+        map.setAttribute("width", w);
+        map.setAttribute("height", h);
+        document.getElementById("liquid-disp").setAttribute("scale", PARAMS.refraction);
+        document.getElementById("liquid-blur").setAttribute("stdDeviation", PARAMS.blur);
+        document.getElementById("liquid-sat").setAttribute("values", PARAMS.saturate);
+      }
+      fitFilter();
+      // El ancho depende de la fuente: se recalcula cuando cargue.
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitFilter);
+
+      const check = document.getElementById("check");
+      const len = check.getTotalLength();
+      gsap.set(check, { strokeDasharray: len, strokeDashoffset: len });
+      gsap.set(pill, { opacity: 0, scale: 0.86, y: 40 });
+      gsap.set("#icon", { scale: 0.6, opacity: 0, svgOrigin: "59 59" });
+      gsap.set("#label .w", { opacity: 0, y: 18 });
+
+      const tl = gsap.timeline({ paused: true });
+      tl.to(pill, { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: "back.out(1.6)" }, PARAMS.tIn)
+        .to("#icon", { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(2.2)" }, PARAMS.tIn + 0.2)
+        .to(check, { strokeDashoffset: 0, duration: 0.32, ease: "power2.out" }, PARAMS.tIn + 0.45)
+        .to("#label .w", { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.07 }, PARAMS.tIn + 0.3)
+        .to("#sheen", { x: "460%", duration: 0.9, ease: "power2.inOut" }, PARAMS.tSheen)
+        .to(pill, { opacity: 0, scale: 0.94, y: -20, duration: 0.4, ease: "power2.in" }, PARAMS.tOut)
+        .to("#bg", { scale: 1.02, duration: 4, ease: "none" }, 0);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
