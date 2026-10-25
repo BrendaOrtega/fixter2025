@@ -128,3 +128,12 @@ Proyecto: `videos/factory-dos/` (BRIEF, partitura, `art.js` con todo el SVG, `mi
 
 Los proyectos HyperFrames de cada uno vivieron en el scratchpad de la sesión de Claude Code del
 4 sep; lo reutilizable está en `template/` (es el del F, el más limpio).
+
+## Por probar: voz Ollama Phonon (anotado 25-oct-2026)
+
+Ollama 0.40.11 trae TTS local en Mac: `ollama run phonon:es --voice <voz> "texto"` (también
+`/v1/audio/speech`, compatible con OpenAI; 24 kHz mono). Docenas de voces, MLX en Apple Silicon.
+Probarlo contra em_santa (Kokoro) en el próximo short: acento, naturalidad y velocidad.
+⚠️ El modelo en español (`phonon:40m-es`) es **CC BY-NC 4.0** (no comercial): antes de usarlo en un
+short que promueve una marca, confirmar con bliss. Sólo la 31M en inglés es Apache 2.0.
+Info: https://ollama.com/blog/speech-models · https://ollama.com/library/phonon
