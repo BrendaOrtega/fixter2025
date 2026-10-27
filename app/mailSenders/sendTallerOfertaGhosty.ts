@@ -20,6 +20,12 @@ const POWER_URL = `${SITE}/c/uso?elegir=power&promo=${PROMO}&${UTM}`;
 const SPACE_URL = `${SITE}/app?promo=${PROMO}&${UTM}#nuevo-espacio`;
 const DEADLINE = "7 de noviembre a las 11:59 pm (hora de CDMX)";
 
+// Referencia en dólares para alumnos fuera de México (España, Bolivia…); el cobro sigue en MXN.
+// Mismo tipo de cambio y redondeo que `usdFromMxn` de /planes en gs (app/components/planes/pricing.ts).
+const MXN_PER_USD = 17.32;
+const usd = (mxn: number) => `≈ US$${Math.round(mxn / MXN_PER_USD)}`;
+const mxn = (n: number) => `$${n.toLocaleString("es-MX", { minimumFractionDigits: n % 1 ? 2 : 0 })} MXN`;
+
 type Props = { to: string; userName?: string | null };
 
 const FONT = "-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif";
@@ -88,9 +94,9 @@ ${option({
   eyebrow: "Para ti",
   title: "Tu agente personal",
   body: "Ghosty en la web (ghosty.studio/c) y en la app de tu celular: investiga, te arma documentos y PDFs, publica páginas y trabaja con tus archivos. Plan Pro.",
-  was: "$299",
-  now: "$149.50",
-  per: "el primer mes",
+  was: mxn(299),
+  now: mxn(149.5),
+  per: `(${usd(149.5)}) el primer mes; después ${mxn(299)} (${usd(299)})`,
   cta: button("Quiero mi agente personal", PRO_URL, "#9A99EA", "#191A20"),
 })}
 ${option({
@@ -98,13 +104,13 @@ ${option({
   eyebrow: "Para tu equipo",
   title: "Un Space de Ghosty Teams",
   body: "Rooms donde tu equipo y tus agentes trabajan juntos: cada persona menciona al agente con @, el agente edita documentos compartidos y abre pull requests en tus repos. Tu Space nace con 30 días de prueba; si lo pagas antes del 7 de noviembre, el primer mes sale a mitad de precio.",
-  was: "$690",
-  now: "$345",
-  per: "el primer mes, IVA incluido",
+  was: mxn(690),
+  now: mxn(345),
+  per: `(${usd(345)}) el primer mes, IVA incluido; después ${mxn(690)} (${usd(690)})`,
   cta: button("Quiero un Space para mi equipo", SPACE_URL, "#9A99EA", "#191A20"),
 })}
         <tr><td style="padding:4px 32px 0;font-family:${FONT};color:#191A20;">
-          <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">¿Necesitas más uso en tu agente personal? El plan Power también entra: <span style="text-decoration:line-through;color:#7C7E8A;">$1,499</span> <b>$749.50</b> el primer mes. <a target="_blank" rel="noopener" href="${esc(POWER_URL)}" style="color:#8483E0;font-weight:700;">Quiero el plan Power</a></p>
+          <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">¿Necesitas más uso en tu agente personal? El plan Power también entra: <span style="text-decoration:line-through;color:#7C7E8A;">${mxn(1499)}</span> <b>${mxn(749.5)}</b> (${usd(749.5)}) el primer mes. <a target="_blank" rel="noopener" href="${esc(POWER_URL)}" style="color:#8483E0;font-weight:700;">Quiero el plan Power</a></p>
           <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">El código <b>${PROMO}</b> ya va dentro de cada botón. Si la pantalla de pago te pide un código, escribe <b>${PROMO}</b>.</p>
           <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">La oferta vale hasta el <b>${DEADLINE}</b>. Desde el segundo mes pagas el precio normal y cancelas cuando quieras.</p>
         </td></tr>
@@ -131,14 +137,14 @@ Gracias por tomar el taller. En el taller armaste agentes que corren en su propi
 
 Para quienes tomaron el taller, el primer mes cuesta la mitad:
 
-1. Tu agente personal (plan Pro): $299 → $149.50 el primer mes
+1. Tu agente personal (plan Pro): ${mxn(299)} → ${mxn(149.5)} (${usd(149.5)}) el primer mes
    ${PRO_URL}
 
-2. Un Space de Ghosty Teams para tu equipo: $690 → $345 el primer mes, IVA incluido
+2. Un Space de Ghosty Teams para tu equipo: ${mxn(690)} → ${mxn(345)} (${usd(345)}) el primer mes, IVA incluido
    (nace con 30 días de prueba; págalo antes del 7 de noviembre para el precio de oferta)
    ${SPACE_URL}
 
-Plan Power del agente personal: $1,499 → $749.50 el primer mes
+Plan Power del agente personal: ${mxn(1499)} → ${mxn(749.5)} (${usd(749.5)}) el primer mes
    ${POWER_URL}
 
 El código ${PROMO} ya va dentro de cada liga. Si la pantalla de pago te pide un código, escribe ${PROMO}.
