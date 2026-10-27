@@ -97,7 +97,7 @@ ${option({
   bg: "#FFFFFF",
   eyebrow: "Para tu equipo",
   title: "Un Space de Ghosty Teams",
-  body: "Rooms donde tu equipo y tus agentes trabajan juntos: cada persona menciona al agente con @, el agente edita documentos compartidos y abre pull requests en tus repos.",
+  body: "Rooms donde tu equipo y tus agentes trabajan juntos: cada persona menciona al agente con @, el agente edita documentos compartidos y abre pull requests en tus repos. Tu Space nace con 30 días de prueba; si lo pagas antes del 7 de noviembre, el primer mes sale a mitad de precio.",
   was: "$690",
   now: "$345",
   per: "el primer mes, IVA incluido",
@@ -135,6 +135,7 @@ Para quienes tomaron el taller, el primer mes cuesta la mitad:
    ${PRO_URL}
 
 2. Un Space de Ghosty Teams para tu equipo: $690 → $345 el primer mes, IVA incluido
+   (nace con 30 días de prueba; págalo antes del 7 de noviembre para el precio de oferta)
    ${SPACE_URL}
 
 Plan Power del agente personal: $1,499 → $749.50 el primer mes
