@@ -15,9 +15,9 @@ const UTM = "utm_source=fixtergeek&utm_medium=email&utm_campaign=taller-sistemas
 // Plan personal: /c/uso abre el checkout con el código aplicado (pide login si hace falta).
 const PRO_URL = `${SITE}/c/uso?elegir=pro&promo=${PROMO}&${UTM}`;
 const POWER_URL = `${SITE}/c/uso?elegir=power&promo=${PROMO}&${UTM}`;
-// Space: la liga deja el código en la cookie gs_promo y lleva a crear el Space.
-// TODO(space-gs): confirmar la ruta final del checkout del Space con el código aplicado.
-const SPACE_URL = `${SITE}/app?promo=${PROMO}&${UTM}`;
+// Space: la liga deja el código en la cookie gs_promo y aterriza en el formulario de crear Space
+// (/app#nuevo-espacio); en la pasarela del Space el código se teclea (allow_promotion_codes).
+const SPACE_URL = `${SITE}/app?promo=${PROMO}&${UTM}#nuevo-espacio`;
 const DEADLINE = "7 de noviembre a las 11:59 pm (hora de CDMX)";
 
 type Props = { to: string; userName?: string | null };
@@ -110,8 +110,8 @@ ${option({
         </td></tr>
         <tr><td style="padding:20px 32px 32px;font-family:${FONT};color:#191A20;">
           <p style="margin:0 0 12px;font-size:16px;line-height:1.6;">¿Dudas? Contesta este correo y te respondo yo.</p>
-          <p style="margin:0;font-size:16px;line-height:1.4;font-weight:800;"><a href="https://github.com/blissito" style="color:#191A20;text-decoration:none;">@blissito</a></p>
-          <p style="margin:0;font-size:14px;line-height:1.4;color:#5B5D6B;">creador de Ghosty</p>
+          <p style="margin:0;font-size:16px;line-height:1.4;font-weight:800;">@brendi &amp; <a href="https://github.com/blissito" style="color:#191A20;text-decoration:none;">@blissito</a></p>
+          <p style="margin:0;font-size:14px;line-height:1.4;color:#5B5D6B;">creadores de Ghosty</p>
         </td></tr>
       </table>
     </td></tr>
@@ -145,7 +145,7 @@ La oferta vale hasta el ${DEADLINE}. Desde el segundo mes pagas el precio normal
 
 ¿Dudas? Contesta este correo.
 
-@blissito, creador de Ghosty
+@brendi & @blissito, creadores de Ghosty
 ${SITE}`;
 
   return { subject, html, text };
