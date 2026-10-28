@@ -93,7 +93,7 @@ nada: hay que traducirlo a lo que le importa a quien mira — el porcentaje, el
 "30× menos", el precio. El número grande debe entenderse **sin leer la letra
 chica**.
 
-Frases cortas, una por corte. Voz `em_santa` a velocidad 1.0, anglicismos en
+Frases cortas, una por corte. Voz `em_santa` en `es-419` a velocidad 1.0 con el léxico de kokoro-svc (`lexicon.es.json`); lo que falte ahí, anglicismos en
 fonética (`ei-ai ese-de-ka`, `dipsíc`, `versél`).
 
 ---
@@ -123,7 +123,7 @@ BPM alto. Dos pistas fueron rechazadas por lentas antes de dar con la buena.
 ```bash
 cd videos/<proyecto>
 export HYPERFRAMES_PYTHON=~/.venv-tts/bin/python   # kokoro vive ahí
-npx hyperframes tts --text-file /tmp/a.txt -v em_santa -l es -o assets/voice/a.wav --json
+~/.venv-tts/bin/python voice/synth.py                # em_santa, es-419, léxico de la casa (ver abajo)
 npx hyperframes check                               # lint + contraste AA
 npx hyperframes render -o renders/x.mp4 -q high -f 30
 ./mezclar.sh
@@ -131,6 +131,13 @@ npx hyperframes render -o renders/x.mp4 -q high -f 30
 
 El `--json` del TTS devuelve la duración exacta: **de ahí salen los `data-start`**
 de la línea de tiempo, no de la estimación.
+
+**Voz (28-oct-2026):** `npx hyperframes tts -l` sólo acepta `es` (castellano: «graθias»), no `es-419`.
+La voz de la casa se sintetiza con Kokoro directo: copiar
+`videos/ghosty-factura-guia/voice/synth.py` + `lines.src.json` (una frase por beat, texto literal de pantalla).
+El script aplica `~/sandbox-host/templates/kokoro-svc/lexicon.es.json` igual que `apply_lexicon()` de su
+`server.py` y llama a `kokoro.create(..., voice="em_santa", speed=1.0, lang="es-419")`. Una sigla que se lea
+mal (RFC, CFDI, PDF…) se agrega al léxico y se commitea en sandbox-host; nunca se parcha en el guion.
 
 ## Verificación en el archivo entregado
 
@@ -159,13 +166,16 @@ cuando la voz nombra la cosa.** No es un efecto, es el método.
 **Los tiempos se miden, nunca se estiman.**
 
 ```sh
-npx hyperframes transcribe assets/voice/a.wav -m large-v3 -l es --json
+npx hyperframes transcribe assets/voice/a.wav --engine parakeet --json
 ```
 
-⚠️ **El modelo por defecto es `small.en`** — inglés. En español devuelve marcas
-inservibles y el resultado es una voz que va por delante de la imagen. Van
-siempre `-m large-v3 -l es`. El transcript queda en `assets/voice/transcript.json`
-(se sobrescribe en cada corrida: copiarlo a `.tts/align/<voz>.json`).
+⚠️ **Parakeet desde el 28-oct-2026** (`parakeet-tdt-0.6b-v3`, ya instalado: `npx hyperframes models list`).
+Detecta el español solo y es más preciso y rápido que whisper. **Sin `-l` ni `-m`**: cualquiera de los dos
+lo regresa en silencio a whisper (revisar `"engine"` en el JSON de salida). Whisper `-m large-v3 -l es` queda
+de respaldo; su default `small.en` es inglés y desfasa. Parakeet oye «Costi» cuando la ventana empieza justo
+en «Ghosty»: es el corte, no la voz (en la transcripción de corrido sale «Gosti»).
+El transcript queda en `transcript.json` **del directorio actual** (se sobrescribe en cada corrida: transcribir
+cada clip dentro de su propia carpeta `voice/tr-<id>/`).
 
 De ahí sale una lista `palabra@segundo`, y **cada `tl.to(...)` lleva ese número
 como comentario**, para que la siguiente corrección no vuelva a adivinar:
