@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "historyId": null,
+  "currentRevision": null,
+  "pendingChanges": true,
+  "files": {},
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "885d5c88-6622-4cd6-be1c-5a6598a108c0",
+      "completedAt": 1792506430903,
+      "output": "/private/tmp/claude-501/-Users-bliss-ghosty-studio/9471ce6c-87c0-48d9-a499-1a3a880dea9c/scratchpad/recetas/smear-dash.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

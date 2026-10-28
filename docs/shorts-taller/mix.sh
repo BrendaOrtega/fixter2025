@@ -33,7 +33,7 @@ ffmpeg -y -loglevel error -i "$TMP/voice.wav" -i "$TMP/bgm.wav" -i "$TURN" -filt
 # ganancia fija a −14.5 LUFS + limitador, y mux sin recodificar el video
 L=$(ffmpeg -i "$TMP/premix.wav" -af ebur128=peak=true -f null - 2>&1 | grep -E "^\s+I:" | tail -1 | awk '{print $2}')
 G=$(python3 -c "print(round(-14.5-($L),2))")
-ffmpeg -y -loglevel error -i "$TMP/premix.wav" -af "volume=${G}dB,alimiter=limit=0.84" "$TMP/mix.wav"
+ffmpeg -y -loglevel error -i "$TMP/premix.wav" -af "volume=${G}dB,alimiter=limit=0.84:level=disabled" "$TMP/mix.wav"
 ffmpeg -y -loglevel error -i "$RENDER" -i "$TMP/mix.wav" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -t "$T" "$OUT"
 
 # verificación sobre el archivo entregado, no sobre el render

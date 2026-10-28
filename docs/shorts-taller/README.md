@@ -26,7 +26,7 @@ shorts (fotograma 0 completo, subtítulos literales, nunca negro, CTA con verbo 
    (10 s cada uno, índice = ⌊t/10⌋) del bucket Tigris:
    `fixtergeek/videos/<courseId>/<videoId>/hls/1080p/seg_NNN.ts`, con `aws s3 cp --endpoint-url $AWS_ENDPOINT_URL_S3`.
    Concatenar con `cat`, pasar a mp4 con `-c copy`.
-2. **Transcribir la ventana** (`npx hyperframes@0.8.27 transcribe window.wav -m large-v3 -l es --json`)
+2. **Transcribir la ventana** (`npx hyperframes@0.8.212 transcribe window.wav -m large-v3 -l es --json`)
    y elegir el corte leyendo, no de oído. Si hay un hueco largo de silencio (el I tenía 7 s),
    pegar dos tramos con `concat` y tapar el salto con una persiana interna (`wipe(BO + corte − .55)`
    y un golpe más en `mix.sh`).
@@ -40,10 +40,10 @@ shorts (fotograma 0 completo, subtítulos literales, nunca negro, CTA con verbo 
 5. **`build.mjs`**: copiar el de la plantilla y reescribir tres bloques: CSS de escenas, HTML de
    `#stage`, timeline entre `// ---- escenario` y `// ---- karaoke`; más portada, cita del cierre
    y los tiempos de `punch`. Los tiempos de escena son *tiempo del clip + 0.3*, sumados a `BO`.
-6. `node build.mjs && npx hyperframes@0.8.27 check .` — se ignoran los `content_overlap` entre
+6. `node build.mjs && npx hyperframes@0.8.212 check .` — se ignoran los `content_overlap` entre
    portada/cierre y cuerpo (tapan opaco). Los `gsap_css_transform_conflict` sí se arreglan:
    nada de `transform` en CSS si GSAP lo anima; se pone con `tl.set(..., 0)`.
-7. `npx hyperframes@0.8.27 render .` → `renders/*.mp4` (sin audio).
+7. `npx hyperframes@0.8.212 render .` → `renders/*.mp4` (sin audio).
 8. **Música nueva** de Openverse/Jamendo (`scripts/bgm/`), medida con `medir-bgm.mjs`; el crédito
    CC BY va en `<letra>-<tema>.txt` junto al mp4. Nunca repetir pista. A bliss le gustó
    zero-project ("High hopes"): BPM bajo con levantada, clímax bajo el cierre.

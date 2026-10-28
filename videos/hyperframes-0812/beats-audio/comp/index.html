@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="es" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <!-- datos medidos: `hyperframes beats` + `hyperframes audio` (scripts/make-scenes-data.mjs) -->
+    <script src="assets/scenes-data.js"></script>
+    <style>
+      /* Paleta FixterGeek */
+      :root {
+        --bg: #0e1317;
+        --mint: #85ddcb;
+        --green: #8dcf6e;
+        --ink: #f2f5f4;
+        --gray: #7c8a8e;
+        --font-display: "Poppins", sans-serif;
+        --font-mono: "Space Mono", monospace;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; background: var(--bg); }
+      #stage { position: absolute; inset: 0; }
+      svg.bg { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+      .scene { position: absolute; inset: 0; opacity: 0; }
+      #s1 { opacity: 1; }
+      .scene svg.art { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+      /* encabezado de cada escena: qué comando, qué mide, cuánto dio */
+      .pill {
+        position: absolute; left: 50%; top: 262px; transform: translateX(-50%);
+        font: 700 32px/1 var(--font-mono); color: var(--bg); background: var(--mint);
+        border: 6px solid var(--ink); border-radius: 999px; padding: 14px 28px;
+        box-shadow: 8px 8px 0 var(--gray); white-space: nowrap;
+      }
+      .head {
+        position: absolute; left: 60px; right: 60px; top: 342px; text-align: center;
+        font: 700 72px/1.02 var(--font-display); color: var(--ink); letter-spacing: -0.02em;
+      }
+      .value {
+        position: absolute; left: 0; right: 0; top: 440px; text-align: center;
+        font: 700 60px/1 var(--font-display); color: var(--green);
+      }
+      .value span { display: inline-block; }
+      .note {
+        position: absolute; left: 60px; right: 150px; top: 1250px; text-align: left;
+        font: 700 30px/1.3 var(--font-mono); color: var(--gray);
+      }
+      .note b { color: var(--ink); }
+      .wipe { position: absolute; inset: 0; overflow: hidden; }
+      .slice { position: absolute; left: -260px; width: 1600px; height: 470px; border: 10px solid var(--bg); }
+      .glyph {
+        position: absolute; left: 0; right: 0; top: 560px; text-align: center;
+        font: 700 520px/1 var(--font-display); color: var(--bg); opacity: 0;
+      }
+      /* split-flap de la escena de secciones */
+      #flap { position: absolute; left: 340px; top: 560px; width: 400px; height: 420px; }
+      .flap-half {
+        position: absolute; left: 0; width: 400px; height: 210px; overflow: hidden;
+        background: var(--ink); border: 10px solid var(--bg);
+        font: 700 380px/420px var(--font-display); color: var(--bg); text-align: center;
+      }
+      .flap-top { top: 0; border-radius: 30px 30px 0 0; }
+      .flap-bottom { top: 210px; border-radius: 0 0 30px 30px; }
+      .flap-bottom span { display: block; margin-top: -210px; }
+      #flap-shadow { position: absolute; left: 352px; top: 572px; width: 400px; height: 420px; border-radius: 30px; background: var(--gray); }
+      #end-card {
+        position: absolute; left: 80px; top: 470px; width: 920px; padding: 46px 40px 40px;
+        background: var(--ink); border: 10px solid var(--bg); border-radius: 28px;
+        box-shadow: 14px 14px 0 var(--mint); text-align: center; opacity: 0;
+      }
+      #end-card h2 { font: 700 70px/1.05 var(--font-display); color: var(--bg); }
+      .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 30px; }
+      .chip {
+        font: 700 30px/1 var(--font-mono); color: var(--bg); background: var(--mint);
+        border: 5px solid var(--bg); border-radius: 999px; padding: 12px 20px;
+      }
+      .chip:nth-child(even) { background: var(--green); }
+      #end-card code {
+        display: inline-block; margin-top: 30px; padding: 16px 24px; border-radius: 16px;
+        background: var(--bg); color: var(--mint); font: 700 34px/1.2 var(--font-mono);
+      }
+      #flam { position: absolute; left: 730px; top: 300px; width: 210px; height: 240px; overflow: visible; filter: drop-shadow(8px 8px 0 #7C8A8E); }
+      #end-card .cta { margin-top: 30px; font: 700 34px/1 var(--font-display); color: var(--bg); }
+      #end-card .cta + code { margin-top: 14px; }
+      #end-card p { margin-top: 26px; font: 700 26px/1.35 var(--font-mono); color: var(--bg); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="33" data-width="1080" data-height="1920">
+      <div id="stage" class="clip" data-start="0" data-duration="33" data-track-index="0" data-track-kind="graphics">
+        <svg class="bg" viewBox="0 0 1080 1920">
+          <defs>
+            <pattern id="dots" width="54" height="54" patternUnits="userSpaceOnUse">
+              <circle cx="27" cy="27" r="4" fill="#7C8A8E" opacity="0.35" />
+            </pattern>
+          </defs>
+          <rect width="1080" height="1920" fill="url(#dots)" />
+        </svg>
+
+        <!-- 1 · beats: un metrónomo que llega al extremo en cada beat -->
+        <div class="scene" id="s1">
+          <svg class="art" viewBox="0 0 1080 1920">
+            <g id="metro">
+              <path d="M424 1150 L476 640 L604 640 L656 1150 Z" fill="#7C8A8E" transform="translate(14 14)" />
+              <path d="M424 1150 L476 640 L604 640 L656 1150 Z" fill="#85DDCB" stroke="#0E1317" stroke-width="12" stroke-linejoin="round" />
+              <path d="M490 1060 L510 700 L570 700 L590 1060 Z" fill="#0E1317" />
+              <g stroke="#7C8A8E" stroke-width="6">
+                <line x1="512" y1="760" x2="568" y2="760" /><line x1="508" y1="820" x2="572" y2="820" />
+                <line x1="504" y1="880" x2="576" y2="880" /><line x1="500" y1="940" x2="580" y2="940" />
+              </g>
+              <rect x="400" y="1110" width="280" height="56" rx="14" fill="#8DCF6E" stroke="#0E1317" stroke-width="12" />
+              <g id="pendulum">
+                <line x1="540" y1="1060" x2="540" y2="640" stroke="#F2F5F4" stroke-width="16" stroke-linecap="round" />
+                <path d="M500 760 L580 760 L566 820 L514 820 Z" fill="#8DCF6E" stroke="#0E1317" stroke-width="9" stroke-linejoin="round" />
+              </g>
+              <circle cx="540" cy="1060" r="20" fill="#F2F5F4" stroke="#0E1317" stroke-width="8" />
+            </g>
+            <!-- chispa del tic: una a cada lado -->
+            <g id="tick-l" stroke="#F2F5F4" stroke-width="10" stroke-linecap="round" opacity="0">
+              <path d="M300 640 L262 610 M290 690 L244 690 M300 740 L262 770" />
+            </g>
+            <g id="tick-r" stroke="#F2F5F4" stroke-width="10" stroke-linecap="round" opacity="0">
+              <path d="M780 640 L818 610 M790 690 L836 690 M780 740 L818 770" />
+            </g>
+            <!-- regla: una marca por beat detectado -->
+            <line x1="60" y1="1196" x2="900" y2="1196" stroke="#7C8A8E" stroke-width="6" />
+            <polygon points="540,1226 526,1252 554,1252" fill="#F2F5F4" stroke="#0E1317" stroke-width="5" />
+            <defs><clipPath id="ruler-clip"><rect x="60" y="1100" width="840" height="120" /></clipPath></defs>
+            <g clip-path="url(#ruler-clip)"><g id="ruler"></g></g>
+          </svg>
+          <div class="pill">npx hyperframes beats</div>
+          <div class="head">Dónde cae cada beat</div>
+          <div class="value"><span id="bpm-v">117</span> BPM · beat <span id="beat-n">1</span></div>
+          <div class="note" style="top:1280px">Cada marca es un tiempo de <b>beats[]</b>.<br />El péndulo llega al extremo justo ahí.</div>
+        </div>
+
+        <!-- 2 · audio --band: la batería, cada pieza en su rango de frecuencia -->
+        <div class="scene" id="s2">
+          <svg class="art" viewBox="0 0 1080 1920">
+            <line x1="60" y1="1150" x2="1020" y2="1150" stroke="#7C8A8E" stroke-width="8" stroke-linecap="round" />
+            <!-- hi-hat (derecha) -->
+            <g id="hat">
+              <line x1="840" y1="790" x2="840" y2="1100" stroke="#F2F5F4" stroke-width="12" stroke-linecap="round" />
+              <path d="M840 1100 L790 1150 M840 1100 L890 1150" stroke="#F2F5F4" stroke-width="12" stroke-linecap="round" />
+              <ellipse cx="848" cy="808" rx="118" ry="22" fill="#7C8A8E" />
+              <ellipse cx="840" cy="800" rx="118" ry="22" fill="#8DCF6E" stroke="#0E1317" stroke-width="9" />
+              <g id="hat-top">
+                <ellipse cx="840" cy="770" rx="118" ry="22" fill="#8DCF6E" stroke="#0E1317" stroke-width="9" />
+                <ellipse cx="840" cy="766" rx="24" ry="8" fill="#F2F5F4" stroke="#0E1317" stroke-width="5" />
+              </g>
+            </g>
+            <!-- bombo de frente -->
+            <g id="kick">
+              <line x1="440" y1="1100" x2="392" y2="1150" stroke="#F2F5F4" stroke-width="14" stroke-linecap="round" />
+              <line x1="640" y1="1100" x2="688" y2="1150" stroke="#F2F5F4" stroke-width="14" stroke-linecap="round" />
+              <g id="kick-body">
+                <circle cx="554" cy="944" r="196" fill="#7C8A8E" />
+                <circle cx="540" cy="930" r="196" fill="#8DCF6E" stroke="#0E1317" stroke-width="12" />
+                <g id="lugs" fill="#F2F5F4" stroke="#0E1317" stroke-width="6"></g>
+                <circle cx="540" cy="930" r="150" fill="#F2F5F4" stroke="#0E1317" stroke-width="10" />
+                <circle cx="540" cy="930" r="104" fill="none" stroke="#7C8A8E" stroke-width="8" stroke-dasharray="22 18" />
+                <circle id="patch" cx="540" cy="930" r="52" fill="#85DDCB" stroke="#0E1317" stroke-width="8" />
+              </g>
+            </g>
+            <circle id="ring-a" cx="540" cy="930" r="196" fill="none" stroke="#85DDCB" stroke-width="12" opacity="0" />
+            <circle id="ring-b" cx="540" cy="930" r="196" fill="none" stroke="#8DCF6E" stroke-width="12" opacity="0" />
+            <g id="dust" stroke="#F2F5F4" stroke-width="9" stroke-linecap="round" opacity="0">
+              <path d="M372 1138 L330 1122 M362 1150 L312 1150" />
+              <path d="M708 1138 L750 1122 M718 1150 L768 1150" />
+            </g>
+            <!-- tarola (adelante, izquierda), más grande que antes -->
+            <g id="snare">
+              <line x1="250" y1="1050" x2="250" y2="1100" stroke="#F2F5F4" stroke-width="12" />
+              <path d="M250 1100 L195 1150 M250 1100 L305 1150" stroke="#F2F5F4" stroke-width="12" stroke-linecap="round" />
+              <g id="snare-shell">
+                <rect x="98" y="932" width="320" height="112" rx="16" fill="#7C8A8E" />
+                <rect x="86" y="920" width="320" height="112" rx="16" fill="#85DDCB" stroke="#0E1317" stroke-width="10" />
+                <g stroke="#0E1317" stroke-width="7" stroke-linecap="round">
+                  <line x1="130" y1="938" x2="130" y2="1014" /><line x1="190" y1="938" x2="190" y2="1014" />
+                  <line x1="302" y1="938" x2="302" y2="1014" /><line x1="362" y1="938" x2="362" y2="1014" />
+                </g>
+                <rect x="226" y="950" width="40" height="52" rx="8" fill="#F2F5F4" stroke="#0E1317" stroke-width="6" />
+                <path id="wires" d="M106 1044 l16 12 l16 -12 l16 12 l16 -12 l16 12 l16 -12 l16 12 l16 -12 l16 12 l16 -12 l16 12 l16 -12 l16 12 l16 -12 l16 12 l16 -12 l16 12" fill="none" stroke="#F2F5F4" stroke-width="5" stroke-linejoin="round" />
+                <ellipse id="snare-head" cx="246" cy="920" rx="160" ry="38" fill="#F2F5F4" stroke="#0E1317" stroke-width="10" />
+              </g>
+            </g>
+            <g id="snare-burst" stroke="#F2F5F4" stroke-width="11" stroke-linecap="round" opacity="0">
+              <path d="M232 860 L232 812 M176 878 L146 850 M288 878 L318 850 M150 916 L108 916 M314 916 L356 916" />
+            </g>
+            <!-- baquetas: rotación 0 = la punta toca -->
+            <g id="snare-stick">
+              <line x1="30" y1="660" x2="230" y2="904" stroke="#F2F5F4" stroke-width="18" stroke-linecap="round" />
+              <circle cx="230" cy="904" r="15" fill="#8DCF6E" stroke="#0E1317" stroke-width="5" />
+            </g>
+            <g id="hat-stick">
+              <line x1="1000" y1="590" x2="862" y2="758" stroke="#F2F5F4" stroke-width="16" stroke-linecap="round" />
+              <circle cx="862" cy="758" r="12" fill="#85DDCB" stroke="#0E1317" stroke-width="5" />
+            </g>
+            <!-- etiquetas de banda: se encienden cuando su pieza suena -->
+            <g font-family="Space Mono, monospace" font-weight="700" font-size="30" text-anchor="middle">
+              <g id="tag-snare"><rect x="96" y="1170" width="300" height="56" rx="14" fill="#0E1317" stroke="#85DDCB" stroke-width="6" /><text x="246" y="1208" fill="#F2F5F4">1.5–5 kHz</text></g>
+              <g id="tag-kick"><rect x="406" y="1170" width="268" height="56" rx="14" fill="#0E1317" stroke="#8DCF6E" stroke-width="6" /><text x="540" y="1208" fill="#F2F5F4">30–120 Hz</text></g>
+              <g id="tag-hat"><rect x="694" y="1170" width="230" height="56" rx="14" fill="#0E1317" stroke="#F2F5F4" stroke-width="6" /><text x="809" y="1208" fill="#F2F5F4">8–16 kHz</text></g>
+            </g>
+          </svg>
+          <div class="pill">audio --only onsets --band</div>
+          <div class="head">Graves, medios, agudos</div>
+          <div class="value">bombo · <span style="color:#85DDCB">tarola</span> · <span style="color:#F2F5F4">hi-hat</span></div>
+          <div class="note" style="top:1262px">Graves → <b>bombo</b>. Medios → <b>tarola</b>.<br />Agudos → <b>hi-hat</b>.</div>
+        </div>
+
+        <!-- 3 · sections: el letrero cambia de letra cuando cambia la parte de la canción -->
+        <div class="scene" id="s3">
+          <div id="flap-shadow"></div>
+          <div id="flap">
+            <div class="flap-half flap-top"><span id="flap-top">A</span></div>
+            <div class="flap-half flap-bottom"><span id="flap-bottom">A</span></div>
+            <div class="flap-half flap-top" id="flap-leaf" style="z-index:2"><span id="flap-leaf-l">A</span></div>
+          </div>
+          <svg class="art" viewBox="0 0 1080 1920">
+            <line x1="330" y1="770" x2="750" y2="770" stroke="#0E1317" stroke-width="10" />
+            <!-- cinta: la canción completa partida en secciones; el cabezal marca dónde vamos -->
+            <g id="tape"></g>
+            <g id="tape-head">
+              <polygon points="0,-30 -18,-60 18,-60" fill="#F2F5F4" stroke="#0E1317" stroke-width="5" />
+              <line x1="0" y1="-30" x2="0" y2="96" stroke="#F2F5F4" stroke-width="6" />
+            </g>
+          </svg>
+          <div class="pill">audio --only sections</div>
+          <div class="head">La canción por partes</div>
+          <div class="value">sección <span id="sec-v">A</span> · <span id="sec-t" style="color:#F2F5F4">0:00</span></div>
+          <div class="note" style="top:1250px">La cinta es la canción entera:<br /><b id="sec-count">10</b> partes en <b id="song-len">3:10</b>.</div>
+        </div>
+
+        <!-- 4 · downbeats: el sello marca el 1 de cada compás -->
+        <div class="scene" id="s4">
+          <svg class="art" viewBox="0 0 1080 1920"><g transform="translate(0 110)">
+            <defs><clipPath id="paper-clip"><rect x="60" y="830" width="840" height="190" rx="18" /></clipPath></defs>
+            <rect x="72" y="842" width="840" height="190" rx="18" fill="#7C8A8E" />
+            <rect x="60" y="830" width="840" height="190" rx="18" fill="#F2F5F4" stroke="#0E1317" stroke-width="10" />
+            <g clip-path="url(#paper-clip)"><g id="paper"></g></g>
+            <!-- sello de goma -->
+            <g id="stamp">
+              <ellipse cx="300" cy="566" rx="70" ry="64" fill="#8DCF6E" stroke="#0E1317" stroke-width="12" />
+              <rect x="276" y="610" width="48" height="110" rx="10" fill="#8DCF6E" stroke="#0E1317" stroke-width="12" />
+              <rect x="194" y="712" width="212" height="58" rx="12" fill="#85DDCB" stroke="#0E1317" stroke-width="12" />
+              <rect x="210" y="768" width="180" height="30" rx="6" fill="#0E1317" />
+            </g>
+            <g id="stamp-burst" stroke="#0E1317" stroke-width="10" stroke-linecap="round" opacity="0">
+              <path d="M180 860 L146 846 M420 860 L454 846 M190 990 L150 1004 M410 990 L450 1004" />
+            </g>
+          </g></svg>
+          <div class="pill">audio --only downbeats</div>
+          <div class="head">El 1 de cada compás</div>
+          <div class="value">compás <span id="bar-v">1</span> de <span id="bar-t">16</span></div>
+          <div class="note" style="top:1220px">El sello cae en cada <b>downbeat</b>;<br />los beats 2, 3 y 4 sólo se apuntan.</div>
+        </div>
+
+        <!-- 5 · loudness + envelope: el vúmetro sigue la envolvente cuadro por cuadro -->
+        <div class="scene" id="s5">
+          <svg class="art" viewBox="0 0 1080 1920">
+            <rect x="134" y="574" width="840" height="540" rx="40" fill="#7C8A8E" />
+            <rect x="120" y="560" width="840" height="540" rx="40" fill="#85DDCB" stroke="#0E1317" stroke-width="12" />
+            <rect x="170" y="610" width="740" height="380" rx="24" fill="#F2F5F4" stroke="#0E1317" stroke-width="10" />
+            <g id="dial"></g>
+            <g id="needle">
+              <line x1="540" y1="960" x2="540" y2="660" stroke="#0E1317" stroke-width="10" stroke-linecap="round" />
+            </g>
+            <circle cx="540" cy="960" r="30" fill="#8DCF6E" stroke="#0E1317" stroke-width="9" />
+            <text x="540" y="1060" text-anchor="middle" font-family="Space Mono, monospace" font-weight="700" font-size="40" fill="#0E1317">VU · dB</text>
+            <!-- envolvente de la escena dibujándose debajo -->
+            <defs><clipPath id="env-clip"><rect id="env-reveal" x="60" y="1150" width="0" height="230" /></clipPath></defs>
+            <line x1="60" y1="1370" x2="900" y2="1370" stroke="#7C8A8E" stroke-width="6" />
+            <g clip-path="url(#env-clip)"><path id="env-path" fill="#8DCF6E" stroke="#0E1317" stroke-width="5" /></g>
+          </svg>
+          <div class="pill">audio --only loudness,envelope</div>
+          <div class="head">Qué tan fuerte suena</div>
+          <div class="value"><span id="lufs-v">−11.1</span> LUFS · <span id="db-v" style="color:#F2F5F4">−12</span> dB</div>
+        </div>
+      </div>
+
+      <!-- cortinillas entre escenas: cada golpe cae en un downbeat (6.165, 12.315, 18.475, 24.625, 30.775) -->
+      <div id="wipe1" class="clip wipe" data-start="5.7" data-duration="0.95" data-track-index="2" data-track-kind="graphics" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="slice w1" style="top:-40px;background:#85DDCB"></div><div class="slice w1" style="top:380px;background:#8DCF6E"></div>
+        <div class="slice w1" style="top:800px;background:#F2F5F4"></div><div class="slice w1" style="top:1220px;background:#85DDCB"></div>
+        <div class="slice w1" style="top:1600px;background:#8DCF6E"></div><div class="glyph" id="g1">2</div>
+      </div>
+      <div id="wipe2" class="clip wipe" data-start="11.85" data-duration="0.95" data-track-index="3" data-track-kind="graphics" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="slice w2" style="top:-40px;background:#8DCF6E"></div><div class="slice w2" style="top:380px;background:#F2F5F4"></div>
+        <div class="slice w2" style="top:800px;background:#85DDCB"></div><div class="slice w2" style="top:1220px;background:#8DCF6E"></div>
+        <div class="slice w2" style="top:1600px;background:#F2F5F4"></div><div class="glyph" id="g2">3</div>
+      </div>
+      <div id="wipe3" class="clip wipe" data-start="18.0" data-duration="0.95" data-track-index="4" data-track-kind="graphics" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="slice w3" style="top:-40px;background:#F2F5F4"></div><div class="slice w3" style="top:380px;background:#85DDCB"></div>
+        <div class="slice w3" style="top:800px;background:#8DCF6E"></div><div class="slice w3" style="top:1220px;background:#F2F5F4"></div>
+        <div class="slice w3" style="top:1600px;background:#85DDCB"></div><div class="glyph" id="g3">4</div>
+      </div>
+      <div id="wipe4" class="clip wipe" data-start="24.15" data-duration="0.95" data-track-index="5" data-track-kind="graphics" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="slice w4" style="top:-40px;background:#85DDCB"></div><div class="slice w4" style="top:380px;background:#8DCF6E"></div>
+        <div class="slice w4" style="top:800px;background:#F2F5F4"></div><div class="slice w4" style="top:1220px;background:#85DDCB"></div>
+        <div class="slice w4" style="top:1600px;background:#8DCF6E"></div><div class="glyph" id="g4">5</div>
+      </div>
+      <div id="wipe5" class="clip wipe" data-start="30.3" data-duration="0.95" data-track-index="6" data-track-kind="graphics" data-layout-allow-overflow data-layout-allow-overlap>
+        <div class="slice w5" style="top:-40px;background:#8DCF6E"></div><div class="slice w5" style="top:380px;background:#F2F5F4"></div>
+        <div class="slice w5" style="top:800px;background:#85DDCB"></div><div class="slice w5" style="top:1220px;background:#8DCF6E"></div>
+        <div class="slice w5" style="top:1600px;background:#F2F5F4"></div><div class="glyph" id="g5">HF</div>
+      </div>
+
+      <!-- cierre -->
+      <div id="end" class="clip" data-start="30.7" data-duration="2.3" data-track-index="7" data-track-kind="graphics">
+        <div id="end-card">
+          <h2>Cinco medidas<br />de una canción</h2>
+          <div class="chips"><span class="chip">beats</span><span class="chip">--band</span><span class="chip">sections</span><span class="chip">downbeats</span><span class="chip">loudness</span></div>
+          <div class="cta">Copia las recetas en</div>
+          <code>github.com/blissito/ghosty-reel</code>
+          <p>Música: «Electro Cabello», Kevin MacLeod<br />incompetech.com · CC BY 4.0</p>
+        </div>
+      <!-- «Ghosty flamita» (ghost-svg.ts de gs, la misma del hackatón): cae sobre la tarjeta y baila con los beats -->
+      <svg id="flam" viewBox="-1 -1 15 17"><g id="flam-sway"><g id="flam-breath"><g id="flam-squash"><path d="M7.94629 0C8.26622 0 8.52188 0.0803064 8.71387 0.240234C8.90587 0.400235 9.01037 0.608258 9.02637 0.864258C9.04231 1.08812 9.00218 1.28796 8.90625 1.46387C8.81031 1.63976 8.66644 1.82375 8.47461 2.01562C9.86649 2.55961 10.93 3.36011 11.666 4.41602C12.402 5.45601 12.7705 6.56796 12.7705 7.75195C12.7705 8.61595 12.6026 9.4322 12.2666 10.2002C11.9466 10.9522 11.4979 11.6238 10.9219 12.2158C10.346 12.7917 9.68248 13.248 8.93066 13.584C8.19466 13.92 7.41013 14.0879 6.57812 14.0879C5.4903 14.0879 4.53856 13.8798 3.72266 13.4639C2.90666 13.0479 2.27417 12.4956 1.82617 11.8076C1.37831 11.1037 1.1543 10.3115 1.1543 9.43164C1.15434 8.53574 1.33066 7.5999 1.68262 6.62402C2.03462 5.64805 2.54677 4.68812 3.21875 3.74414C3.89067 2.80027 4.69031 1.93626 5.61816 1.15234C6.03416 0.784344 6.43436 0.503524 6.81836 0.311523C7.20227 0.103613 7.57837 1.43712e-06 7.94629 0Z" fill="#8ad7c9" stroke="#0E1317" stroke-width=".7" stroke-linejoin="round" paint-order="stroke"/><g id="flam-eyes"><path d="M4 8.20602C4 8.9895 4.50544 9.63497 5.15033 9.70399C5.64706 9.48884 6 8.89207 6 8.18572C6 7.51997 5.67756 6.94757 5.22439 6.70399C4.54467 6.72834 4 7.39411 4 8.20602Z" fill="#191A20"/><path d="M7 7.68776C7 8.80017 7.81666 9.69937 8.82778 9.70399C9.51666 9.40272 10 8.64258 10 7.75731C10 6.73295 9.35556 5.88476 8.50001 5.70399C7.64444 5.88011 7 6.70051 7 7.68776Z" fill="#191A20"/></g><path d="M12.8604 7.87609L12.4367 7.99568C12.4429 8.06456 12.4481 8.1337 12.4481 8.20405C12.4481 9.58249 11.2365 10.704 9.7472 10.704C8.25792 10.704 7.0463 9.58249 7.0463 8.20405C7.0463 7.86931 7.11894 7.55027 7.24845 7.25823C7.0263 7.12826 6.76926 7.0576 6.50002 7.0576C6.23087 7.0576 5.97379 7.12825 5.7516 7.25823C5.88112 7.55025 5.95376 7.86931 5.95376 8.20405C5.95376 9.58249 4.74214 10.704 3.25286 10.704C1.7636 10.704 0.551915 9.58249 0.551915 8.20405C0.551915 8.1337 0.557108 8.06455 0.563426 7.99566L0.139593 7.87609C0.0355651 7.8467 -0.0231166 7.74486 0.00861115 7.64854C0.0403389 7.55212 0.150684 7.49773 0.254431 7.5273L0.626038 7.63215C0.906534 6.52877 1.97643 5.70399 3.25286 5.70399C4.24003 5.70399 5.10268 6.19832 5.57387 6.93205C5.85092 6.77736 6.16809 6.69296 6.50002 6.69296C6.83194 6.69296 7.14912 6.77733 7.42619 6.93204C7.89736 6.19831 8.76004 5.70399 9.7472 5.70399C11.0236 5.70399 12.0935 6.52875 12.374 7.63215L12.7456 7.5273C12.8499 7.49765 12.9597 7.55212 12.9914 7.64854C13.0231 7.74486 12.9645 7.8467 12.8604 7.87609ZM5.42131 7.48236C5.40331 7.48721 5.3852 7.49221 5.3666 7.49221C5.31621 7.49221 5.2658 7.47441 5.22735 7.4388C5.1504 7.36758 5.1504 7.2522 5.22735 7.18098C5.2376 7.17149 5.24887 7.16336 5.25933 7.15411C4.86251 6.50701 4.1125 6.06863 3.25286 6.06863C1.98079 6.06863 0.945843 7.02662 0.945843 8.20405C0.945843 9.38148 1.98079 10.3394 3.25286 10.3394C4.52487 10.3394 5.55982 9.38148 5.55982 8.20405C5.55982 7.95049 5.50933 7.70819 5.42131 7.48236ZM9.7472 6.06863C8.88755 6.06863 8.13754 6.50701 7.74072 7.15411C7.75118 7.16336 7.76245 7.17149 7.7727 7.18098C7.84965 7.2522 7.84965 7.36767 7.7727 7.4388C7.72004 7.48755 7.64552 7.50036 7.57875 7.48236C7.49073 7.70819 7.44023 7.95049 7.44023 8.20405C7.44023 9.38148 8.47517 10.3394 9.7472 10.3394C11.0192 10.3394 12.0541 9.38148 12.0541 8.20405C12.0541 7.02662 11.0192 6.06863 9.7472 6.06863Z" fill="#D4D4D7" stroke="#0E1317" stroke-width=".25" paint-order="stroke"/></g></g></g></svg>
+      </div>
+
+      <audio id="music" data-timeline-role="music" class="clip" data-start="0" data-duration="33" data-track-index="8" src="assets/track.mp3"></audio>
+    </div>
+
+    <script>
+      // Todo lo que se mueve sale de SCENES_DATA (`beats` + `audio`); sólo las ventanas de los clips van fijas.
+      const D = window.SCENES_DATA;
+      const F = 1 / 30;
+      const BEAT = 60 / D.bpm;
+      const BAR = BEAT * 4;
+      const beats = D.beats;
+      const SVGNS = "http://www.w3.org/2000/svg";
+      const el = (tag, attrs, parent) => { const n = document.createElementNS(SVGNS, tag); Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v)); parent && parent.appendChild(n); return n; };
+      const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+      // escenas cada tres compases, cortadas en downbeats medidos
+      const barStarts = [D.downbeats[0] - BAR, ...D.downbeats];
+      const CUT = [0, barStarts[3], barStarts[6], barStarts[9], barStarts[12], barStarts[15], D.duration];
+      const inScene = (t, k) => t >= CUT[k] - 0.02 && t < CUT[k + 1] - 0.02;
+      const SCENES = ["#s1", "#s2", "#s3", "#s4", "#s5"];
+
+      const tl = gsap.timeline({ paused: true });
+      // la visibilidad inicial vive en CSS (#s1 visible, las demás ocultas): un set doble en 0 se revierte al hacer seek
+      tl.set("#stage", { x: 0, y: 0 }, 0);
+      tl.set("#end-card", { opacity: 0, scale: 0.6, rotation: -8 }, 0);
+
+      // ---------- cortinillas: el golpe (cierre) cae en el downbeat; debajo cambia la escena ----------
+      for (let k = 1; k <= 5; k++) {
+        const sel = `.w${k}`, glyph = `#g${k}`, hit = CUT[k], dir = k % 2 ? 1 : -1;
+        const dur = 0.3, start = hit - dur;
+        tl.set(sel, { x: (i) => (i % 2 ? -1700 : 1700) * dir, skewY: -8 * dir }, 0);
+        tl.set(glyph, { scale: 0, opacity: 1 }, 0);
+        tl.to(sel, { x: 0, duration: dur, ease: "power3.in", stagger: 0 }, start);
+        tl.set(glyph, { scale: 1.25 }, hit);
+        tl.to(glyph, { scale: 1, duration: 0.2, ease: "back.out(3)" }, hit + F);
+        tl.set(SCENES[k - 1], { opacity: 0 }, hit);
+        if (k < 5) tl.set(SCENES[k], { opacity: 1 }, hit);
+        tl.to(sel, { x: (i) => (i % 2 ? 1700 : -1700) * dir, duration: 0.3, ease: "power3.out" }, hit + 0.2);
+        tl.to(glyph, { scale: 0, duration: 0.2, ease: "power2.in" }, hit + 0.2);
+        [[14, -9], [-10, 7], [6, -3], [0, 0]].forEach(([x, y], j) => tl.set("#stage", { x, y }, hit + 0.5 + j * F));
+      }
+      tl.to("#end-card", { opacity: 1, scale: 1, rotation: -2, duration: 0.35, ease: "back.out(2.2)" }, CUT[5] + 0.12);
+
+      // flamita con el rig del hackatón (sway › breath › squash › eyes; pivotes en unidades del viewBox)
+      // Los tiempos de caída y brincos los repite scripts/sfx-cues.mjs para montar los SFX: si cambian aquí, cambian allá.
+      const FB = "6.5 14.1", FE = "6.5 8.2";
+      const FLAM = { land: CUT[5] + 0.62, fall: 0.32, up: 0.15, down: 0.15, crouch: 0.07 };
+      const land = FLAM.land, tEnd = D.duration;
+      tl.set("#flam", { y: -900 }, 0);
+      tl.set("#flam-squash", { scaleX: 1, scaleY: 1, svgOrigin: FB }, 0);
+      tl.set("#flam-breath", { scaleY: 1, svgOrigin: FB }, 0);
+      tl.set("#flam-sway", { rotation: 0, svgOrigin: FB }, 0);
+      tl.set("#flam-eyes", { x: 0, y: 0, scaleY: 1, svgOrigin: FE }, 0);
+      // caída: se estira mientras baja y se aplasta al tocar la tarjeta
+      tl.to("#flam", { y: 0, duration: FLAM.fall, ease: "power2.in" }, land - FLAM.fall);
+      tl.to("#flam-squash", { scaleY: 1.14, scaleX: 0.9, duration: FLAM.fall, ease: "power1.in", svgOrigin: FB }, land - FLAM.fall);
+      tl.set("#flam-squash", { scaleY: 0.76, scaleX: 1.18, svgOrigin: FB }, land);
+      tl.to("#flam-squash", { scaleY: 1, scaleX: 1, duration: 0.32, ease: "back.out(2.4)", svgOrigin: FB }, land + F);
+      // vida continua, igual que en el hackatón: respira cada 0.9 s y se mece cada 1.1 s
+      const alive = land + 0.45;
+      tl.fromTo("#flam-breath", { scaleY: 1 }, { scaleY: 1.04, duration: 0.9, yoyo: true, repeat: Math.max(0, Math.floor((tEnd - alive) / 0.9) - 1), ease: "sine.inOut", svgOrigin: FB, immediateRender: false }, alive);
+      tl.fromTo("#flam-sway", { rotation: 0 }, { rotation: 5, duration: 1.1, yoyo: true, repeat: Math.max(0, Math.floor((tEnd - alive) / 1.1) - 1), ease: "sine.inOut", svgOrigin: FB, immediateRender: false }, alive);
+      // mira la URL y regresa; parpadea dos veces
+      tl.to("#flam-eyes", { x: -0.7, y: 0.6, duration: 0.2, ease: "power2.out", svgOrigin: FE }, land + 0.3);
+      tl.to("#flam-eyes", { x: 0, y: 0, duration: 0.2, ease: "power2.inOut", svgOrigin: FE }, land + 0.95);
+      [land + 0.7, tEnd - 0.75].forEach((t) => tl.to("#flam-eyes", { scaleY: 0.12, duration: 0.07, yoyo: true, repeat: 1, ease: "power1.inOut", svgOrigin: FE }, t));
+      // brincos: se agacha, despega estirada, cae y aterriza justo en el beat con squash
+      const hops = beats.filter((t) => t > land + 0.6 && t < tEnd + 0.01);
+      hops.forEach((b) => {
+        const off = b - FLAM.down - FLAM.up;
+        tl.to("#flam-squash", { scaleY: 0.86, scaleX: 1.1, duration: FLAM.crouch, ease: "power1.out", svgOrigin: FB }, off - FLAM.crouch);
+        tl.to("#flam-squash", { scaleY: 1.1, scaleX: 0.93, duration: FLAM.up, ease: "power2.out", svgOrigin: FB }, off);
+        tl.to("#flam", { y: -54, duration: FLAM.up, ease: "power2.out" }, off);
+        tl.to("#flam", { y: 0, duration: FLAM.down, ease: "power2.in" }, off + FLAM.up);
+        tl.to("#flam-squash", { scaleY: 1, scaleX: 1, duration: FLAM.down, ease: "sine.inOut", svgOrigin: FB }, off + FLAM.up);
+        tl.set("#flam-squash", { scaleY: 0.82, scaleX: 1.12, svgOrigin: FB }, b);
+        tl.to("#flam-squash", { scaleY: 1, scaleX: 1, duration: Math.min(0.24, tEnd - b - F), ease: "back.out(2)", svgOrigin: FB }, b + F);
+      });
+
+      // ---------- 1 · beats: péndulo de extremo a extremo entre beats ----------
+      document.getElementById("bpm-v").textContent = D.bpm;
+      const ruler = document.getElementById("ruler");
+      const s1Beats = beats.filter((t) => t < CUT[1] + 0.02);
+      s1Beats.forEach((t, i) => {
+        const x = 540 + i * 90;
+        el("line", { x1: x, y1: 1196, x2: x, y2: i % 4 === 3 ? 1130 : 1160, stroke: i % 4 === 3 ? "#8DCF6E" : "#F2F5F4", "stroke-width": 10, "stroke-linecap": "round", class: "mark", id: `mark-${i}` }, ruler);
+      });
+      tl.set("#ruler", { x: 0 }, 0);
+      tl.set(".mark", { opacity: 0.25 }, 0);
+      // antes del primer beat el péndulo viaja a su primer extremo
+      tl.set("#pendulum", { rotation: 26, svgOrigin: "540 1060" }, 0);
+      tl.to("#pendulum", { rotation: -26, duration: s1Beats[0], ease: "sine.inOut", svgOrigin: "540 1060" }, 0);
+      s1Beats.forEach((t, i) => {
+        const side = i % 2 ? 1 : -1;            // extremo al que llega en este beat
+        const next = s1Beats[i + 1];
+        tl.set(`#mark-${i}`, { opacity: 1 }, t);
+        tl.to("#ruler", { x: -i * 90, duration: 0.18, ease: "power3.out" }, t);
+        tl.set("#beat-n", { textContent: i + 1 }, t);
+        tl.fromTo(side < 0 ? "#tick-l" : "#tick-r", { opacity: 1, scale: 0.6, svgOrigin: side < 0 ? "300 690" : "780 690" },
+          { opacity: 0, scale: 1.2, duration: 0.25, ease: "power2.out", immediateRender: false }, t);
+        if (next) tl.to("#pendulum", { rotation: 26 * -side, duration: next - t, ease: "sine.inOut", svgOrigin: "540 1060" }, t);
+      });
+
+      // ---------- 2 · batería: bombo y tarola en la rejilla, confirmados por su banda; hi-hat libre ----------
+      const lugs = document.getElementById("lugs");
+      for (let k = 0; k < 10; k++) {
+        const a = (k / 10) * Math.PI * 2, x = 540 + Math.cos(a) * 174, y = 930 + Math.sin(a) * 174;
+        el("rect", { x: x - 12, y: y - 12, width: 24, height: 24, rx: 6, transform: `rotate(${(a * 180) / Math.PI + 45} ${x} ${y})` }, lugs);
+      }
+      tl.set("#kick-body", { scaleX: 1, scaleY: 1, svgOrigin: "540 1126" }, 0);
+      tl.set(["#ring-a", "#ring-b"], { opacity: 0, scale: 1, svgOrigin: "540 930" }, 0);
+      tl.set("#dust", { opacity: 0, scale: 0.4, svgOrigin: "540 1150" }, 0);
+      tl.set("#snare-stick", { rotation: -16, svgOrigin: "30 660" }, 0);
+      tl.set("#hat-stick", { rotation: 8, svgOrigin: "1000 590" }, 0);
+      tl.set("#snare-shell", { y: 0 }, 0);
+      tl.set("#snare-head", { attr: { ry: 38 } }, 0);
+      tl.set("#wires", { x: 0 }, 0);
+      tl.set("#snare-burst", { opacity: 0, scale: 0.4, svgOrigin: "232 905" }, 0);
+      tl.set("#hat-top", { y: 0 }, 0);
+      tl.set(["#tag-kick rect", "#tag-snare rect", "#tag-hat rect"], { attr: { fill: "#0E1317" } }, 0);
+      tl.set(["#tag-kick text", "#tag-snare text", "#tag-hat text"], { attr: { fill: "#F2F5F4" } }, 0);
+      const flash = (tag, color, t, g) => {
+        const off = t + Math.min(0.16, g - F);
+        tl.set(`${tag} rect`, { attr: { fill: color } }, t);
+        tl.set(`${tag} text`, { attr: { fill: "#0E1317" } }, t);
+        tl.set(`${tag} rect`, { attr: { fill: "#0E1317" } }, off);
+        tl.set(`${tag} text`, { attr: { fill: "#F2F5F4" } }, off);
+      };
+      const gapAfter = (list, i) => (list[i + 1] ? list[i + 1].t - list[i].t : 0.6);
+      const kicks = D.kick.filter((h) => inScene(h.t, 1));
+      const snares = D.snare.filter((h) => inScene(h.t, 1));
+      const hats = D.hat.filter((h) => inScene(h.t, 1));
+
+      kicks.forEach((h, i) => {
+        const t = h.t, g = gapAfter(kicks, i), d = Math.min(0.3, g - F);
+        tl.set("#kick-body", { scaleY: 1 - 0.14 * h.s, scaleX: 1 + 0.07 * h.s, svgOrigin: "540 1126" }, t);
+        tl.to("#kick-body", { scaleY: 1, scaleX: 1, duration: d, ease: "back.out(3)", svgOrigin: "540 1126" }, t + F);
+        tl.fromTo(i % 2 ? "#ring-b" : "#ring-a", { opacity: 1, scale: 1, svgOrigin: "540 930" },
+          { opacity: 0, scale: 1.3 + 0.2 * h.s, duration: 0.4, ease: "power2.out", immediateRender: false }, t);
+        tl.fromTo("#dust", { opacity: 1, scale: 0.4, svgOrigin: "540 1150" },
+          { opacity: 0, scale: 1.15, duration: Math.min(0.3, g), ease: "power2.out", immediateRender: false }, t);
+        tl.set("#patch", { attr: { fill: i % 2 ? "#8DCF6E" : "#85DDCB" } }, t);
+        flash("#tag-kick", "#8DCF6E", t, g);
+      });
+      snares.forEach((h, i) => {
+        const t = h.t, g = gapAfter(snares, i), prev = i ? t - snares[i - 1].t : 1;
+        // anticipación: el palo sube y baja; el contacto es exactamente el cuadro del golpe
+        const lift = Math.min(0.2, prev - 0.1);
+        if (lift > 0.08) tl.to("#snare-stick", { rotation: -34, duration: lift - 0.07, ease: "power2.out", svgOrigin: "30 660" }, t - lift);
+        tl.to("#snare-stick", { rotation: 0, duration: 0.07, ease: "power3.in", svgOrigin: "30 660" }, t - 0.07);
+        tl.to("#snare-stick", { rotation: -16, duration: Math.max(F, Math.min(0.24, g - 0.22)), ease: "power2.out", svgOrigin: "30 660" }, t + F);
+        tl.set("#snare-head", { attr: { ry: 24 } }, t);
+        tl.to("#snare-head", { attr: { ry: 38 }, duration: 0.3, ease: "elastic.out(1, 0.4)" }, t + F);
+        tl.set("#snare-shell", { y: 10 }, t);
+        tl.to("#snare-shell", { y: 0, duration: 0.2, ease: "power2.out" }, t + F);
+        [6, -6, 5, -4, 3, -2, 0].forEach((x, k) => tl.set("#wires", { x }, t + k * F));
+        tl.fromTo("#snare-burst", { opacity: 1, scale: 0.5, svgOrigin: "232 905" },
+          { opacity: 0, scale: 1.35, duration: Math.min(0.3, g), ease: "power2.out", immediateRender: false }, t);
+        flash("#tag-snare", "#85DDCB", t, g);
+      });
+      hats.forEach((h, i) => {
+        const t = h.t, g = gapAfter(hats, i), up = Math.min(0.12, g * 0.45);
+        tl.set("#hat-stick", { rotation: 0, svgOrigin: "1000 590" }, t);
+        tl.to("#hat-stick", { rotation: 10 + 8 * h.s, duration: up, ease: "power2.out", svgOrigin: "1000 590" }, t + 0.001);
+        if (g < 0.7) tl.to("#hat-stick", { rotation: 2, duration: g - up - F, ease: "power2.in", svgOrigin: "1000 590" }, t + up);
+        tl.set("#hat-top", { y: 7 }, t);
+        tl.to("#hat-top", { y: 0, duration: Math.min(0.14, g - F), ease: "power2.out" }, t + F);
+        flash("#tag-hat", "#F2F5F4", t, g);
+      });
+
+      // ---------- 3 · secciones: split-flap + cinta de la canción entera ----------
+      const song = D.song;
+      document.getElementById("sec-count").textContent = song.sections.length;
+      document.getElementById("song-len").textContent = mmss(song.duration);
+      const TX = 60, TW = 840, TY = 1100, TH = 96;
+      const tape = document.getElementById("tape");
+      el("rect", { x: TX + 10, y: TY + 10, width: TW, height: TH, rx: 16, fill: "#7C8A8E" }, tape);
+      song.sections.forEach((s, i) => {
+        const x = TX + (s.start / song.duration) * TW, w = ((s.end - s.start) / song.duration) * TW;
+        el("rect", { x, y: TY, width: w, height: TH, fill: i % 2 ? "#8DCF6E" : "#85DDCB", stroke: "#0E1317", "stroke-width": 6, class: "seg", id: `seg-${i}` }, tape);
+        if (w > 34) { const tx = el("text", { x: x + w / 2, y: TY + 64, "text-anchor": "middle", "font-family": "Poppins, sans-serif", "font-weight": 700, "font-size": 40, fill: "#0E1317" }, tape); tx.textContent = s.label; }
+      });
+      el("rect", { x: TX, y: TY, width: TW, height: TH, rx: 16, fill: "none", stroke: "#0E1317", "stroke-width": 10 }, tape);
+      // el cabezal recorre la cinta con el tiempo real de la canción
+      const headX = (t) => TX + ((song.start + t) / song.duration) * TW;
+      tl.set("#tape-head", { x: headX(CUT[2]), y: TY }, 0);
+      tl.to("#tape-head", { x: headX(CUT[3]), duration: CUT[3] - CUT[2], ease: "none" }, CUT[2]);
+      for (let f = Math.ceil(CUT[2] * 30); f < CUT[3] * 30; f += 15) tl.set("#sec-t", { textContent: mmss(song.start + f / 30) }, f / 30);
+      // la letra del letrero: la sección al arrancar la escena y luego cada cambio que mide `audio`
+      const secAt = (t) => song.sections.filter((s) => song.start + t >= s.start - 0.02).pop();
+      const first = secAt(CUT[2]);
+      ["#flap-top", "#flap-bottom", "#flap-leaf-l", "#sec-v"].forEach((s) => tl.set(s, { textContent: first.label }, 0));
+      tl.set("#flap-leaf", { rotationX: 0, transformOrigin: "50% 100%", transformPerspective: 900 }, 0);
+      tl.set("#flap", { scale: 1 }, 0);
+      tl.set("#flap-shadow", { x: 0, y: 0 }, 0);
+      tl.set(".seg", { opacity: 0.45 }, 0);
+      tl.set(`#seg-${song.sections.indexOf(first)}`, { opacity: 1 }, 0);
+      song.sections.forEach((s, i) => {
+        const t = s.start - song.start;
+        if (t <= CUT[2] || t >= CUT[3]) return;
+        // la hoja de arriba cae y descubre la letra nueva; el golpe es el cuadro exacto del cambio
+        tl.set("#flap-top", { textContent: s.label }, t - 0.12);
+        tl.to("#flap-leaf", { rotationX: -90, duration: 0.12, ease: "power2.in", transformOrigin: "50% 100%" }, t - 0.12);
+        tl.set("#flap-leaf-l", { textContent: s.label }, t);
+        tl.set("#flap-bottom", { textContent: s.label }, t);
+        tl.set("#sec-v", { textContent: s.label }, t);
+        tl.set("#flap-leaf", { rotationX: 0 }, t);
+        tl.set("#flap", { scale: 1.1 }, t);
+        tl.to("#flap", { scale: 1, duration: 0.35, ease: "back.out(3)" }, t + F);
+        tl.set(".seg", { opacity: 0.45 }, t);
+        tl.set(`#seg-${i}`, { opacity: 1 }, t);
+      });
+      // la sombra del letrero late con los downbeats, para que se note que la música sigue
+      barStarts.filter((b) => inScene(b, 2)).forEach((b) => { tl.set("#flap-shadow", { x: 8, y: 8 }, b); tl.to("#flap-shadow", { x: 0, y: 0, duration: 0.2 }, b + F); });
+
+      // ---------- 4 · downbeats: el sello baja en el 1; los beats 2–4 se apuntan solos ----------
+      document.getElementById("bar-t").textContent = D.downbeats.length;
+      const paper = document.getElementById("paper");
+      const SLOT = 110, BARW = SLOT * 4, X0 = 300;
+      const s4Bars = barStarts.map((b, k) => ({ b, k })).filter(({ b }) => inScene(b, 3));
+      s4Bars.forEach(({ k }, j) => {
+        const g = el("g", { id: `bar-${j}` }, paper);
+        const x = X0 + j * BARW;
+        el("line", { x1: x - 70, y1: 846, x2: x - 70, y2: 1004, stroke: "#7C8A8E", "stroke-width": 5, "stroke-dasharray": "12 10" }, g);
+        const one = el("text", { x, y: 995, "text-anchor": "middle", "font-family": "Poppins, sans-serif", "font-weight": 700, "font-size": 150, fill: "#8DCF6E", stroke: "#0E1317", "stroke-width": 6, class: "ink1", id: `one-${j}` }, g);
+        one.textContent = "1";
+        for (let n = 2; n <= 4; n++) {
+          const tx = el("text", { x: x + (n - 1) * SLOT, y: 960, "text-anchor": "middle", "font-family": "Space Mono, monospace", "font-weight": 700, "font-size": 60, fill: "#7C8A8E", class: "ink2", id: `n-${j}-${n}` }, g);
+          tx.textContent = n;
+        }
+        const lbl = el("text", { x: x - 60, y: 866, "font-family": "Space Mono, monospace", "font-weight": 700, "font-size": 22, fill: "#7C8A8E" }, g);
+        lbl.textContent = `compás ${k}`;
+      });
+      tl.set(".ink1, .ink2", { opacity: 0 }, 0);
+      tl.set("#paper", { x: 0 }, 0);
+      tl.set("#stamp", { y: -60 }, 0);
+      tl.set("#stamp-burst", { opacity: 0, scale: 0.6, svgOrigin: "300 925" }, 0);
+      s4Bars.forEach(({ b, k }, j) => {
+        // el papel corre para dejar el compás nuevo bajo el sello justo antes del downbeat
+        if (j > 0) tl.to("#paper", { x: -j * BARW, duration: 0.22, ease: "power3.inOut" }, b - 0.3);
+        tl.to("#stamp", { y: -110, duration: 0.14, ease: "power2.out" }, b - 0.22);   // anticipación
+        tl.to("#stamp", { y: 40, duration: 0.08, ease: "power3.in" }, b - 0.08);       // golpe en el downbeat
+        tl.set(`#one-${j}`, { opacity: 1 }, b);
+        tl.fromTo("#stamp-burst", { opacity: 1, scale: 0.6, svgOrigin: "300 925" }, { opacity: 0, scale: 1.3, duration: 0.25, ease: "power2.out", immediateRender: false }, b);
+        tl.to("#stamp", { y: -60, duration: 0.25, ease: "back.out(2)" }, b + 0.06);
+        tl.set("#bar-v", { textContent: k }, b);
+        beats.filter((t) => t > b + BEAT / 2 && t < b + BAR - BEAT / 2).slice(0, 3).forEach((t, n) => {
+          const cx = X0 + j * BARW + (n + 1) * SLOT;
+          tl.set(`#n-${j}-${n + 2}`, { opacity: 1, scale: 1.4, svgOrigin: `${cx} 940` }, t);
+          tl.to(`#n-${j}-${n + 2}`, { scale: 1, duration: 0.18, ease: "back.out(3)", svgOrigin: `${cx} 940` }, t + F);
+        });
+      });
+
+      // ---------- 5 · loudness: aguja por cuadro con la envolvente; la curva se dibuja debajo ----------
+      document.getElementById("lufs-v").textContent = D.lufs.toFixed(1).replace("-", "−");
+      const DB_MIN = -30, DB_MAX = 0, ANG = 50;
+      const angOf = (db) => -ANG + ((Math.max(DB_MIN, Math.min(DB_MAX, db)) - DB_MIN) / (DB_MAX - DB_MIN)) * ANG * 2;
+      const dial = document.getElementById("dial");
+      [-30, -20, -10, -5, 0].forEach((db) => {
+        const a = (angOf(db) * Math.PI) / 180, r1 = 290, r2 = 320;
+        el("line", { x1: 540 + Math.sin(a) * r1, y1: 960 - Math.cos(a) * r1, x2: 540 + Math.sin(a) * r2, y2: 960 - Math.cos(a) * r2, stroke: db > -10 ? "#0E1317" : "#7C8A8E", "stroke-width": 8, "stroke-linecap": "round" }, dial);
+        const tx = el("text", { x: 540 + Math.sin(a) * 250, y: 972 - Math.cos(a) * 250, "text-anchor": "middle", "font-family": "Space Mono, monospace", "font-weight": 700, "font-size": 30, fill: "#0E1317" }, dial);
+        tx.textContent = db;
+      });
+      const f0 = Math.round(CUT[4] * 30), f1 = Math.min(D.env.length - 1, Math.round(CUT[5] * 30));
+      tl.set("#needle", { rotation: angOf(D.env[f0]), svgOrigin: "540 960" }, 0);
+      for (let f = f0; f < f1; f += 2) {
+        // balística de vúmetro: tween lineal entre muestras de 2 cuadros
+        tl.to("#needle", { rotation: angOf(D.env[f + 2] ?? D.env[f]), duration: 2 / 30, ease: "none", svgOrigin: "540 960" }, f / 30);
+        if (f % 6 === 0) tl.set("#db-v", { textContent: String(Math.round(D.env[f])).replace("-", "−") }, f / 30);
+      }
+      const EX = 60, EW = 840, EY = 1370, EH = 200;
+      const pts = [];
+      for (let f = f0; f <= f1; f++) {
+        const x = EX + ((f - f0) / (f1 - f0)) * EW;
+        const h = ((Math.max(-48, D.env[f]) + 48) / 48) * EH;
+        pts.push(`${x.toFixed(1)},${(EY - h).toFixed(1)}`);
+      }
+      document.getElementById("env-path").setAttribute("d", `M${EX},${EY} L${pts.join(" L")} L${EX + EW},${EY} Z`);
+      tl.set("#env-reveal", { attr: { width: 0 } }, 0);
+      tl.to("#env-reveal", { attr: { width: EW }, duration: CUT[5] - CUT[4], ease: "none" }, CUT[4]);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

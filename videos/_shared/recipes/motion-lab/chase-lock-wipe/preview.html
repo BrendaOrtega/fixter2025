@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;900&family=Geist+Mono:wght@700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      .glyph { font-family: Inter, system-ui, sans-serif; font-weight: 900; }
+      .mono { font-family: "Geist Mono", ui-monospace, monospace; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="4.5" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="4.5">
+        <svg id="stage" width="1280" height="720" viewBox="0 0 1280 720">
+          <defs>
+            <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+              <circle cx="20" cy="20" r="2" fill="var(--muted)" opacity="0.35" />
+            </pattern>
+            <clipPath id="topHalf"><rect x="-200" y="-200" width="1680" height="0" id="topRect" /></clipPath>
+            <clipPath id="bottomHalf"><rect x="-200" y="0" width="1680" height="1200" id="bottomRect" /></clipPath>
+          </defs>
+          <rect width="1280" height="720" fill="url(#dots)" />
+          <!-- escenas: B debajo, A encima; A se apaga cuando la cortinilla ya tapa todo -->
+          <g id="sceneB"></g>
+          <g id="sceneA"></g>
+          <!-- cortinilla: losas sesgadas + título partido + llave -->
+          <g id="wipe">
+            <g id="slabs"></g>
+            <g id="title">
+              <g id="titleTop" clip-path="url(#topHalf)"></g>
+              <g id="titleBottom" clip-path="url(#bottomHalf)"></g>
+              <!-- copia entera: sustituye a las mitades al trabarse (dos recortes en la misma línea dejan costura) -->
+              <g id="titleWhole"></g>
+              <g id="lockPlate"></g>
+              <g id="keyPos"><g id="key"></g></g>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",         // "fixtergeek" | "easybits"
+        sceneA: { label: "ANTES", title: "Clip del webinar", fill: "ink" },
+        sceneB: { label: "DESPUÉS", title: "Short con receta", fill: "accent2" },
+        word: "MOTION",                // título que se arma y sella el corte
+        lockIndex: 4,                  // letra con cerradura (una O funciona mejor: el ojo cae en su hueco)
+        fontSize: 190,
+        // ancho de cada mayúscula en em (Inter 900); no se mide la fuente porque cambia al cargar
+        widths: { M: 0.95, O: 0.84, T: 0.7, I: 0.34, N: 0.82, A: 0.82, S: 0.72, E: 0.66, L: 0.62, G: 0.84, H: 0.82, Y: 0.78 },
+        tracking: 0.03,                // aire extra entre letras (em)
+        titleY: 430,                   // línea base del título
+        split: 44,                     // separación horizontal de las dos mitades antes de trabarse (px)
+        slabColors: ["accent", "accent2", "muted", "accent", "accent2", "muted", "accent"],
+        slant: 30,                     // inclinación de las losas respecto a la vertical (grados)
+        slabStart: 0.3, slabGap: 0.06, slabIn: 0.45, slabEase: 1.4,
+        bpm: 120,                      // las letras caen en semicorcheas: 60/bpm/2
+        letterStart: 0.95, letterIn: 0.35, letterEase: 1.7,
+        keySlide: 0.3, keyTurn: 0.12, lock: 0.08,
+        exitAt: 2.95, exitGap: 0.05, exitDur: 0.45,
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const k of ["bg", "ink", "accent", "accent2", "muted"]) root.style.setProperty("--" + k, P[k]);
+      const DUR = parseFloat(root.dataset.duration);
+      const NS = "http://www.w3.org/2000/svg";
+      const el = (tag, attrs, parent) => {
+        const n = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+        if (parent) parent.appendChild(n);
+        return n;
+      };
+
+      // escenas de ejemplo: tarjeta con sombra dura, etiqueta y título
+      const scene = (id, s) => {
+        const g = document.getElementById(id);
+        el("rect", { x: 72, y: 62, width: 1160, height: 600, rx: 28, fill: "var(--accent)" }, g);
+        el("rect", { x: 60, y: 50, width: 1160, height: 600, rx: 28, fill: `var(--${s.fill})`, stroke: "var(--bg)", "stroke-width": 6 }, g);
+        el("rect", { x: 120, y: 120, width: 220, height: 52, rx: 26, fill: "var(--bg)" }, g);
+        el("text", { x: 230, y: 155, "text-anchor": "middle", class: "mono", "font-size": 24, fill: "var(--ink)" }, g).textContent = s.label;
+        el("text", { x: 120, y: 420, class: "glyph", "font-size": 92, fill: "var(--bg)" }, g).textContent = s.title;
+      };
+      scene("sceneA", PARAMS.sceneA);
+      scene("sceneB", PARAMS.sceneB);
+
+      // losas paralelogramo: inclinadas `slant` grados; juntas cubren las cuatro esquinas
+      const dx = Math.tan((PARAMS.slant * Math.PI) / 180) * 720;
+      const W = 300, STEP = 260, x0 = -Math.ceil(dx) - 40;
+      const slabs = [];
+      for (let i = 0, x = x0; x < 1280 + 40; i++, x += STEP) {
+        const c = PARAMS.slabColors[i % PARAMS.slabColors.length];
+        const g = el("g", {}, document.getElementById("slabs"));
+        el("polygon", { points: `${x},720 ${x + W},720 ${x + W + dx},0 ${x + dx},0`, fill: `var(--${c})`, stroke: "var(--bg)", "stroke-width": 8, "stroke-linejoin": "round" }, g);
+        slabs.push(g);
+      }
+      // dirección de vuelo: a lo largo de la inclinación (entra por abajo-izquierda, sale por arriba-derecha)
+      const fly = { x: dx * 1.4, y: -720 * 1.4 };
+
+      // título: cada letra en las dos mitades (arriba y abajo de la línea media), con sombra dura
+      const n = PARAMS.word.length;
+      const em = PARAMS.fontSize, wOf = (ch) => (PARAMS.widths[ch] ?? 0.75) * em;
+      const total = [...PARAMS.word].reduce((a, ch) => a + wOf(ch), 0) + (n - 1) * PARAMS.tracking * em;
+      // centro de cada letra, de izquierda a derecha
+      const centers = [];
+      [...PARAMS.word].reduce((x, ch) => (centers.push(x + wOf(ch) / 2), x + wOf(ch) + PARAMS.tracking * em), 640 - total / 2);
+      const midY = PARAMS.titleY - PARAMS.fontSize * 0.36;
+      document.getElementById("topRect").setAttribute("height", midY + 200);
+      document.getElementById("bottomRect").setAttribute("y", midY);
+      const letters = [];
+      [...PARAMS.word].forEach((ch, i) => {
+        const pair = [];
+        for (const half of ["titleTop", "titleBottom"]) {
+          const pos = el("g", { transform: `translate(${centers[i]} ${PARAMS.titleY})` }, document.getElementById(half));
+          const g = el("g", {}, pos);
+          el("text", { x: 9, y: 9, "text-anchor": "middle", class: "glyph", "font-size": PARAMS.fontSize, fill: "var(--bg)" }, g).textContent = ch;
+          el("text", { "text-anchor": "middle", class: "glyph", "font-size": PARAMS.fontSize, fill: "var(--ink)", stroke: "var(--bg)", "stroke-width": 7, "paint-order": "stroke" }, g).textContent = ch;
+          pair.push(g);
+        }
+        letters.push(pair);
+        const whole = el("g", { transform: `translate(${centers[i]} ${PARAMS.titleY})` }, document.getElementById("titleWhole"));
+        el("text", { x: 9, y: 9, "text-anchor": "middle", class: "glyph", "font-size": PARAMS.fontSize, fill: "var(--bg)" }, whole).textContent = ch;
+        el("text", { "text-anchor": "middle", class: "glyph", "font-size": PARAMS.fontSize, fill: "var(--ink)", stroke: "var(--bg)", "stroke-width": 7, "paint-order": "stroke" }, whole).textContent = ch;
+      });
+
+      // cerradura sobre la letra elegida y llave encima
+      const lx = centers[PARAMS.lockIndex], ly = midY;
+      const plate = document.getElementById("lockPlate");
+      plate.setAttribute("transform", `translate(${lx} ${ly})`);
+      el("circle", { cx: 5, cy: 5, r: 34, fill: "var(--bg)" }, plate);
+      el("circle", { r: 34, fill: "var(--accent2)", stroke: "var(--bg)", "stroke-width": 7 }, plate);
+      el("circle", { cy: -6, r: 10, fill: "var(--bg)" }, plate);
+      el("path", { d: "M-7 -2 L7 -2 L11 22 L-11 22 Z", fill: "var(--bg)" }, plate);
+      document.getElementById("keyPos").setAttribute("transform", `translate(${lx} ${ly})`);
+      document.getElementById("key").innerHTML = `
+        <g transform="translate(5 5)" fill="var(--bg)"><circle cy="-150" r="30"/><rect x="-8" y="-124" width="16" height="130"/></g>
+        <circle cy="-150" r="30" fill="var(--accent)" stroke="var(--bg)" stroke-width="7"/>
+        <circle cy="-150" r="10" fill="var(--bg)"/>
+        <rect x="-8" y="-124" width="16" height="130" rx="4" fill="var(--accent)" stroke="var(--bg)" stroke-width="6"/>
+        <rect x="8" y="-30" width="18" height="12" fill="var(--accent)" stroke="var(--bg)" stroke-width="5"/>
+        <rect x="8" y="-8" width="12" height="12" fill="var(--accent)" stroke="var(--bg)" stroke-width="5"/>`;
+
+      const tl = gsap.timeline({ paused: true });
+      const cues = [];
+      // estado inicial DENTRO de la timeline: escena A completa en el cuadro 0, cortinilla fuera
+      slabs.forEach((g) => tl.set(g, { x: -fly.x, y: -fly.y }, 0));
+      letters.forEach((pair) => tl.set(pair, { svgOrigin: "0 0", x: -560 * Math.cos(Math.PI / 6), y: 560 * Math.sin(Math.PI / 6), rotation: -24, opacity: 0 }, 0));
+      tl.set("#titleTop", { x: -PARAMS.split / 2 }, 0)
+        .set("#titleBottom", { x: PARAMS.split / 2 }, 0)
+        .set("#lockPlate", { svgOrigin: `${lx} ${ly}`, scale: 0 }, 0)
+        .set("#key", { svgOrigin: "0 0", y: -260, opacity: 0, scaleX: 1 }, 0)
+        .set("#title", { svgOrigin: `640 ${midY}`, scale: 1, x: 0, y: 0 }, 0)
+        .set("#sceneA", { opacity: 1 }, 0)
+        .set("#titleWhole", { opacity: 0 }, 0);
+
+      // 1) persecución: las losas entran en diagonal, una tras otra
+      slabs.forEach((g, i) => tl.to(g, { x: 0, y: 0, duration: PARAMS.slabIn, ease: `back.out(${PARAMS.slabEase})` }, PARAMS.slabStart + i * PARAMS.slabGap));
+      cues.push({ t: PARAMS.slabStart, sfx: "whoosh-long" });
+      const covered = PARAMS.slabStart + (slabs.length - 1) * PARAMS.slabGap + PARAMS.slabIn;
+      tl.set("#sceneA", { opacity: 0 }, covered); // ya tapada: debajo queda la escena B
+
+      // 2) letras: cada una cae en una semicorchea
+      const sixteenth = 60 / PARAMS.bpm / 4;
+      letters.forEach((pair, i) => {
+        const t = PARAMS.letterStart + i * sixteenth;
+        tl.set(pair, { opacity: 1 }, t)
+          .to(pair, { x: 0, y: 0, rotation: 0, duration: PARAMS.letterIn, ease: `back.out(${PARAMS.letterEase})` }, t);
+        cues.push({ t: +(t + PARAMS.letterIn / (PARAMS.letterEase + 1)).toFixed(3), sfx: "tick" });
+      });
+      const tKey = PARAMS.letterStart + (n - 1) * sixteenth + PARAMS.letterIn + 0.05;
+
+      // 3) cerradura aparece, la llave baja, gira y las mitades se traban
+      tl.to("#lockPlate", { scale: 1, duration: 0.2, ease: "back.out(2.5)" }, tKey - 0.15)
+        .set("#key", { opacity: 1 }, tKey)
+        .to("#key", { y: 0, duration: PARAMS.keySlide, ease: "power2.in" }, tKey);
+      const tTurn = tKey + PARAMS.keySlide;
+      tl.to("#key", { scaleX: -1, duration: PARAMS.keyTurn, ease: "power1.inOut" }, tTurn);
+      const tLock = tTurn + PARAMS.keyTurn;
+      tl.to(["#titleTop", "#titleBottom"], { x: 0, duration: PARAMS.lock, ease: "power4.in" }, tLock)
+        .set("#titleWhole", { opacity: 1 }, tLock + PARAMS.lock)
+        .set(["#titleTop", "#titleBottom"], { opacity: 0 }, tLock + PARAMS.lock)
+        .to("#title", { scale: 1.06, duration: 0.08, ease: "power2.out" }, tLock + PARAMS.lock)
+        .to("#title", { scale: 1, duration: 0.3, ease: "back.out(3)" }, tLock + PARAMS.lock + 0.08);
+      cues.push({ t: +tKey.toFixed(3), sfx: "slide" });
+      cues.push({ t: +tTurn.toFixed(3), sfx: "key-turn" });
+      cues.push({ t: +(tLock + PARAMS.lock).toFixed(3), sfx: "clack-seal" });
+
+      // 4) salida: losas y título siguen la diagonal y destapan la escena B
+      slabs.forEach((g, i) => tl.to(g, { x: fly.x, y: fly.y, duration: PARAMS.exitDur, ease: "power3.in" }, PARAMS.exitAt + i * PARAMS.exitGap));
+      tl.to("#title", { x: fly.x, y: fly.y, duration: PARAMS.exitDur, ease: "power3.in" }, PARAMS.exitAt + Math.floor(slabs.length / 2) * PARAMS.exitGap);
+      cues.push({ t: PARAMS.exitAt, sfx: "whoosh" });
+
+      window.__sfxCues = cues;
+      tl.to({}, { duration: 0.001 }, DUR - 0.001);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

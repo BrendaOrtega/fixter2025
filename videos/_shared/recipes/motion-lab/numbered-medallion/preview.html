@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      .title { font-family: Inter, system-ui, sans-serif; font-weight: 800; }
+      .sub { font-family: "Geist Mono", ui-monospace, monospace; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="6">
+        <svg id="stage" width="1280" height="720" viewBox="0 0 1280 720">
+          <defs>
+            <clipPath id="cardClip"><rect x="60" y="50" width="1160" height="600" rx="28" /></clipPath>
+            <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+              <circle cx="20" cy="20" r="2" fill="var(--muted)" opacity="0.35" />
+            </pattern>
+          </defs>
+          <rect width="1280" height="720" fill="url(#dots)" />
+          <!-- sombra dura de la tarjeta -->
+          <rect x="72" y="62" width="1160" height="600" rx="28" fill="var(--accent)" />
+          <g clip-path="url(#cardClip)">
+            <g id="scenes"></g>
+            <!-- borde del iris: aro de tinta que sigue al círculo que crece -->
+            <circle id="irisRing" cx="0" cy="0" r="0" fill="none" stroke="var(--bg)" stroke-width="10" />
+            <g id="medals"></g>
+          </g>
+          <rect x="60" y="50" width="1160" height="600" rx="28" fill="none" stroke="var(--bg)" stroke-width="6" />
+        </svg>
+      </div>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",          // "fixtergeek" | "easybits"
+        badge: { x: 250, y: 330 },      // centro del medallón; de ahí abre el iris
+        steps: [                        // un paso por escena; fill = color de la tarjeta (clave de la paleta)
+          { title: "Instala la skill", sub: "npx skills add ghosty-reel", icon: "terminal", fill: "ink" },
+          { title: "Pide el video", sub: "«hazme un motion graphic»", icon: "clapper", fill: "accent" },
+          { title: "Renderiza", sub: "mp4 idéntico en cada render", icon: "film", fill: "accent2" },
+        ],
+        start: 0.25,                    // pulso del primer medallón (s)
+        hold: 0.75,                     // tiempo de lectura antes de cambiar de paso
+        swapOut: 0.18,                  // el medallón viejo se encoge
+        drop: 0.5,                      // el medallón nuevo cae girando
+        dropEase: 2.2,                  // s de back.out(s) de la caída
+        iris: 0.7,                      // duración del iris
+        rest: 1.1,                      // lectura después del iris
+        star: { points: 16, outer: 72, inner: 60 }, // estrella del medallón
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const k of ["bg", "ink", "accent", "accent2", "muted"]) root.style.setProperty("--" + k, P[k]);
+      const DUR = parseFloat(root.dataset.duration);
+      const NS = "http://www.w3.org/2000/svg";
+      const { x: bx, y: by } = PARAMS.badge;
+
+      const el = (tag, attrs, parent) => {
+        const n = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+        if (parent) parent.appendChild(n);
+        return n;
+      };
+
+      // objetos concretos por paso (contorno grueso, rellenos sólidos, sombra dura)
+      const ICONS = {
+        terminal: `
+          <rect x="-150" y="-100" width="300" height="200" rx="18" fill="var(--bg)" transform="translate(10 10)"/>
+          <rect x="-150" y="-100" width="300" height="200" rx="18" fill="var(--bg)" stroke="var(--bg)" stroke-width="8"/>
+          <rect x="-150" y="-100" width="300" height="46" rx="18" fill="var(--muted)"/>
+          <rect x="-150" y="-70" width="300" height="16" fill="var(--muted)"/>
+          <circle cx="-118" cy="-77" r="9" fill="var(--accent2)"/><circle cx="-90" cy="-77" r="9" fill="var(--accent)"/>
+          <path d="M-118 -10 L-86 14 L-118 38" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="-66" y="28" width="70" height="14" rx="7" fill="var(--ink)"/>`,
+        clapper: `
+          <rect x="-130" y="-40" width="260" height="160" rx="14" fill="var(--bg)" transform="translate(10 10)"/>
+          <rect x="-130" y="-40" width="260" height="160" rx="14" fill="var(--ink)" stroke="var(--bg)" stroke-width="8"/>
+          <rect x="-104" y="10" width="208" height="16" rx="8" fill="var(--bg)"/>
+          <rect x="-104" y="44" width="140" height="16" rx="8" fill="var(--bg)"/>
+          <g transform="rotate(-14 -130 -40)">
+            <rect x="-130" y="-92" width="260" height="52" rx="10" fill="var(--ink)" stroke="var(--bg)" stroke-width="8"/>
+            <path d="M-96 -88 L-120 -44 M-36 -88 L-60 -44 M24 -88 L0 -44 M84 -88 L60 -44" stroke="var(--bg)" stroke-width="18"/>
+          </g>`,
+        film: `
+          <rect x="-150" y="-80" width="300" height="160" rx="10" fill="var(--bg)" transform="translate(10 10)"/>
+          <rect x="-150" y="-80" width="300" height="160" rx="10" fill="var(--bg)" stroke="var(--bg)" stroke-width="8"/>
+          ${[-120, -72, -24, 24, 72, 120].map((x) => `<rect x="${x - 12}" y="-68" width="24" height="16" rx="4" fill="var(--ink)"/><rect x="${x - 12}" y="52" width="24" height="16" rx="4" fill="var(--ink)"/>`).join("")}
+          ${[-96, 0, 96].map((x) => `<rect x="${x - 40}" y="-38" width="80" height="76" rx="8" fill="var(--accent)" stroke="var(--ink)" stroke-width="5"/>`).join("")}`,
+      };
+
+      // estrella de N picos alrededor de (0,0)
+      const starPath = (n, ro, ri) => {
+        let d = "";
+        for (let i = 0; i < n * 2; i++) {
+          const r = i % 2 ? ri : ro, a = (Math.PI * i) / n - Math.PI / 2;
+          d += (i ? "L" : "M") + (r * Math.cos(a)).toFixed(2) + " " + (r * Math.sin(a)).toFixed(2);
+        }
+        return d + "Z";
+      };
+      const STAR = starPath(PARAMS.star.points, PARAMS.star.outer, PARAMS.star.inner);
+
+      // radio que cubre la tarjeta entera desde el medallón
+      const corners = [[60, 50], [1220, 50], [60, 650], [1220, 650]];
+      const R = Math.ceil(Math.max(...corners.map(([x, y]) => Math.hypot(x - bx, y - by)))) + 20;
+
+      const scenes = document.getElementById("scenes");
+      const medals = document.getElementById("medals");
+      const sceneEls = [], medalEls = [], irisEls = [];
+      PARAMS.steps.forEach((step, i) => {
+        // escena: tarjeta de color + título + objeto; desde la 2.ª, recortada por su iris
+        let clipAttr = {};
+        if (i > 0) {
+          const cp = el("clipPath", { id: "iris" + i }, document.querySelector("defs"));
+          irisEls.push(el("circle", { cx: bx, cy: by, r: 0 }, cp));
+          clipAttr = { "clip-path": `url(#iris${i})` };
+        }
+        const g = el("g", clipAttr, scenes);
+        el("rect", { x: 40, y: 30, width: 1200, height: 640, fill: `var(--${step.fill})` }, g);
+        const ink = step.fill === "ink" || step.fill === "accent" || step.fill === "accent2" ? "var(--bg)" : "var(--ink)";
+        const t = el("text", { x: bx + 120, y: by + 6, class: "title", "font-size": 64, fill: ink }, g);
+        t.textContent = step.title;
+        const s = el("text", { x: bx + 122, y: by + 60, class: "sub", "font-size": 30, fill: ink }, g);
+        s.textContent = step.sub;
+        const ic = el("g", { transform: "translate(1060 330) scale(0.9)" }, g);
+        ic.innerHTML = ICONS[step.icon] || "";
+        sceneEls.push(g);
+
+        // medallón: posición fija afuera, animación adentro (svgOrigin 0 0 sin pisar el translate)
+        const pos = el("g", { transform: `translate(${bx} ${by})` }, medals);
+        const m = el("g", {}, pos);
+        // la estrella contrasta con la escena donde cae y con la que abre
+        const prev = i ? PARAMS.steps[i - 1].fill : null;
+        const starFill = ["accent2", "accent", "muted"].find((c) => c !== step.fill && c !== prev);
+        el("path", { d: STAR, fill: "var(--bg)", transform: "translate(7 7)" }, m);
+        el("path", { d: STAR, fill: `var(--${starFill})`, stroke: "var(--bg)", "stroke-width": 7, "stroke-linejoin": "round" }, m);
+        el("circle", { r: 48, fill: "var(--ink)", stroke: "var(--bg)", "stroke-width": 7 }, m);
+        const num = el("text", { y: 22, "text-anchor": "middle", class: "title", "font-size": 64, fill: "var(--bg)" }, m);
+        num.textContent = i + 1;
+        medalEls.push(m);
+      });
+
+      const tl = gsap.timeline({ paused: true });
+      const cues = [];
+      // estado inicial DENTRO de la timeline: paso 1 completo en el cuadro 0, los demás medallones fuera
+      medalEls.forEach((m, i) => tl.set(m, { svgOrigin: "0 0", scale: i ? 0 : 1, rotation: i ? -120 : 0 }, 0));
+      irisEls.forEach((c) => tl.set(c, { attr: { r: 0 } }, 0));
+      tl.set("#irisRing", { attr: { cx: bx, cy: by, r: 0 }, opacity: 0 }, 0);
+
+      // pulso del primer medallón: movimiento sobre lo que ya está
+      tl.to(medalEls[0], { scale: 1.14, duration: 0.16, ease: "power2.out" }, PARAMS.start)
+        .to(medalEls[0], { scale: 1, duration: 0.4, ease: "back.out(3)" }, PARAMS.start + 0.16);
+      cues.push({ t: PARAMS.start, sfx: "pop" });
+
+      let t0 = PARAMS.start + 0.56 + PARAMS.hold;
+      const s = PARAMS.dropEase;
+      for (let i = 1; i < PARAMS.steps.length; i++) {
+        // 1) el número viejo se encoge
+        tl.to(medalEls[i - 1], { scale: 0, rotation: 60, duration: PARAMS.swapOut, ease: "back.in(2)" }, t0);
+        // 2) el nuevo cae girando con rebote
+        const tDrop = t0 + PARAMS.swapOut;
+        tl.to(medalEls[i], { scale: 1, rotation: 0, duration: PARAMS.drop, ease: `back.out(${s})` }, tDrop);
+        cues.push({ t: +t0.toFixed(3), sfx: "swish" });
+        cues.push({ t: +(tDrop + PARAMS.drop / (s + 1)).toFixed(3), sfx: "clack" });
+        // 3) iris: la escena nueva abre en círculo desde el medallón, con aro de tinta en el borde
+        const tIris = tDrop + PARAMS.drop * 0.7;
+        tl.to(irisEls[i - 1], { attr: { r: R }, duration: PARAMS.iris, ease: "power2.in" }, tIris)
+          .set("#irisRing", { attr: { r: 0 }, opacity: 1 }, tIris)
+          .to("#irisRing", { attr: { r: R }, duration: PARAMS.iris, ease: "power2.in" }, tIris)
+          .set("#irisRing", { opacity: 0 }, tIris + PARAMS.iris);
+        cues.push({ t: +tIris.toFixed(3), sfx: "whoosh" });
+        t0 = tIris + PARAMS.iris + PARAMS.rest;
+      }
+      window.__sfxCues = cues;
+      tl.to({}, { duration: 0.001 }, DUR - 0.001);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

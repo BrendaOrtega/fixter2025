@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Geist+Mono:wght@500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      svg text { font-family: "Geist Mono", ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="4" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="4">
+        <svg id="stage" width="1280" height="720" viewBox="0 0 1280 720">
+          <defs>
+            <clipPath id="cardClip"><rect x="60" y="50" width="1160" height="600" rx="28" /></clipPath>
+            <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+              <circle cx="20" cy="20" r="2" fill="var(--muted)" opacity="0.35" />
+            </pattern>
+          <g id="silShape">
+              <rect x="-78" y="-112" width="156" height="112" rx="14" vector-effect="non-scaling-stroke" />
+              <rect x="-88" y="-146" width="176" height="42" rx="12" vector-effect="non-scaling-stroke" />
+            </g>
+            <clipPath id="silClip">
+              <rect x="-78" y="-112" width="156" height="112" rx="14" />
+              <rect x="-88" y="-146" width="176" height="42" rx="12" />
+            </clipPath>
+          </defs>
+          <rect width="1280" height="720" fill="url(#dots)" />
+          <rect x="72" y="62" width="1160" height="600" rx="28" fill="var(--accent)" />
+          <rect x="60" y="50" width="1160" height="600" rx="28" fill="var(--ink)" />
+          <g clip-path="url(#cardClip)">
+            <!-- piso -->
+            <rect id="floor" x="40" y="540" width="1200" height="140" fill="var(--accent2)" stroke="var(--bg)" stroke-width="5" />
+            <g id="marks"></g>
+            <g id="actor">
+              <!-- sombra en el piso: elipse sólida, sin blur; se encoge al subir -->
+              <g id="floorSh"><ellipse cx="0" cy="2" rx="96" ry="13" fill="var(--muted)" /></g>
+              <!-- objeto: posición (y = altura) -->
+              <g id="hopPos">
+                <!-- sombra dura del objeto: clon con --sh; su desfase dice la altura (8 → 18 en el aire → 3 al aplastarse) -->
+                <use id="boxSh" href="#body" style="--sh: var(--muted)" />
+                <!-- cuerpo: squash & stretch con pivote en la base (svgOrigin 0 0) -->
+                <!-- Construcción de línea (guía 5-estilo-de-linea.md):
+                     1) silueta UNIDA: tapa + caja trazadas juntas DETRÁS del relleno → un solo contorno exterior, sin líneas encimadas;
+                     2) contorno exterior 9 px visibles (stroke 18 detrás), más pesado abajo-derecha (copia corrida 2,3);
+                     3) interiores de pincel 4–5 px (perfect-freehand horneado), recortados a la silueta: se funden con el contorno;
+                     4) vector-effect non-scaling-stroke: el squash no engorda los verticales ni adelgaza los horizontales. -->
+                <g id="body">
+                  <g style="fill:var(--sh,var(--bg));stroke:var(--sh,var(--bg));stroke-width:18;stroke-linejoin:round">
+                    <use href="#silShape" />
+                    <use href="#silShape" transform="translate(2 3)" />
+                  </g>
+                  <g clip-path="url(#silClip)">
+                    <rect x="-78" y="-112" width="156" height="112" rx="14" style="fill:var(--sh,var(--accent))" />
+                    <rect x="-88" y="-146" width="176" height="42" rx="12" style="fill:var(--sh,var(--accent2))" />
+                    <rect x="-15" y="-150" width="30" height="154" style="fill:var(--sh,var(--ink))" />
+                    <g style="fill:var(--sh,var(--bg))">
+                      <path d="M-12.67,-152 Q-12.59,-146.04 -12.57,-144.55 T-12.53,-141.57 -12.48,-138.58 -12.44,-135.6 -12.4,-132.62 -12.37,-129.64 -12.33,-126.66 -12.29,-123.68 -12.26,-120.7 -12.22,-117.72 -12.19,-114.74 -12.16,-111.75 -12.13,-108.77 -12.11,-105.79 -12.08,-102.81 -12.06,-99.83 -12.04,-96.85 -12.02,-93.87 -12.01,-90.89 -11.99,-87.91 -11.98,-84.92 -11.97,-81.94 -11.97,-78.96 -11.96,-75.98 -11.96,-73 -11.96,-70.02 -11.97,-67.04 -11.97,-64.06 -11.98,-61.08 -11.99,-58.09 -12.01,-55.11 -12.02,-52.13 -12.04,-49.15 -12.06,-46.17 -12.08,-43.19 -12.11,-40.21 -12.13,-37.23 -12.16,-34.25 -12.19,-31.26 -12.22,-28.28 -12.26,-25.3 -12.29,-22.32 -12.33,-19.34 -12.37,-16.36 -12.4,-13.38 -12.44,-10.4 -12.48,-7.42 -12.53,-4.43 -12.57,-1.45 -12.63,3.02 -12.73,6.37 -12.97,7.08 -13.42,7.67 -14.04,8.09 -14.75,8.28 -15.49,8.24 -16.18,7.97 -16.75,7.49 -17.13,6.85 -17.29,6.12 -17.21,5.38 -16.9,4.71 -16.39,4.17 -15.73,3.82 -15,3.7 -14.27,3.82 -13.61,4.17 -13.1,4.71 -12.79,5.39 -12.71,6.12 -12.87,6.85 -13.25,7.49 -13.82,7.97 -14.51,8.24 -15.25,8.28 -15.97,8.09 -16.58,7.67 -17.03,7.08 -17.27,6.37 -17.33,6 -17.37,3.02 -17.43,-1.45 -17.47,-4.43 -17.52,-7.42 -17.56,-10.4 -17.6,-13.38 -17.63,-16.36 -17.67,-19.34 -17.71,-22.32 -17.74,-25.3 -17.78,-28.28 -17.81,-31.26 -17.84,-34.25 -17.87,-37.23 -17.89,-40.21 -17.92,-43.19 -17.94,-46.17 -17.96,-49.15 -17.98,-52.13 -17.99,-55.11 -18.01,-58.09 -18.02,-61.08 -18.03,-64.06 -18.03,-67.04 -18.04,-70.02 -18.04,-73 -18.04,-75.98 -18.03,-78.96 -18.03,-81.94 -18.02,-84.92 -18.01,-87.91 -17.99,-90.89 -17.98,-93.87 -17.96,-96.85 -17.94,-99.83 -17.92,-102.81 -17.89,-105.79 -17.87,-108.77 -17.84,-111.75 -17.81,-114.74 -17.78,-117.72 -17.74,-120.7 -17.71,-123.68 -17.67,-126.66 -17.63,-129.64 -17.6,-132.62 -17.56,-135.6 -17.52,-138.58 -17.47,-141.57 -17.43,-144.55 -17.37,-149.02 -17.29,-152.28 -17.16,-152.82 -16.9,-153.31 -16.53,-153.73 -16.07,-154.05 -15.55,-154.24 -15,-154.31 -14.45,-154.24 -13.93,-154.05 -13.47,-153.73 -13.1,-153.31 -12.84,-152.82 -12.71,-152.28 Z M17.33,-152 Q17.41,-146.04 17.43,-144.55 T17.47,-141.57 17.52,-138.58 17.56,-135.6 17.6,-132.62 17.63,-129.64 17.67,-126.66 17.71,-123.68 17.74,-120.7 17.78,-117.72 17.81,-114.74 17.84,-111.75 17.87,-108.77 17.89,-105.79 17.92,-102.81 17.94,-99.83 17.96,-96.85 17.98,-93.87 17.99,-90.89 18.01,-87.91 18.02,-84.92 18.03,-81.94 18.03,-78.96 18.04,-75.98 18.04,-73 18.04,-70.02 18.03,-67.04 18.03,-64.06 18.02,-61.08 18.01,-58.09 17.99,-55.11 17.98,-52.13 17.96,-49.15 17.94,-46.17 17.92,-43.19 17.89,-40.21 17.87,-37.23 17.84,-34.25 17.81,-31.26 17.78,-28.28 17.74,-25.3 17.71,-22.32 17.67,-19.34 17.63,-16.36 17.6,-13.38 17.56,-10.4 17.52,-7.42 17.47,-4.43 17.43,-1.45 17.37,3.02 17.27,6.37 17.03,7.08 16.58,7.67 15.96,8.09 15.25,8.28 14.51,8.24 13.82,7.97 13.25,7.49 12.87,6.85 12.71,6.12 12.79,5.38 13.1,4.71 13.61,4.17 14.27,3.82 15,3.7 15.73,3.82 16.39,4.17 16.9,4.71 17.21,5.39 17.29,6.12 17.13,6.85 16.75,7.49 16.18,7.97 15.49,8.24 14.75,8.28 14.03,8.09 13.42,7.67 12.97,7.08 12.73,6.37 12.67,6 12.63,3.02 12.57,-1.45 12.53,-4.43 12.48,-7.42 12.44,-10.4 12.4,-13.38 12.37,-16.36 12.33,-19.34 12.29,-22.32 12.26,-25.3 12.22,-28.28 12.19,-31.26 12.16,-34.25 12.13,-37.23 12.11,-40.21 12.08,-43.19 12.06,-46.17 12.04,-49.15 12.02,-52.13 12.01,-55.11 11.99,-58.09 11.98,-61.08 11.97,-64.06 11.97,-67.04 11.96,-70.02 11.96,-73 11.96,-75.98 11.97,-78.96 11.97,-81.94 11.98,-84.92 11.99,-87.91 12.01,-90.89 12.02,-93.87 12.04,-96.85 12.06,-99.83 12.08,-102.81 12.11,-105.79 12.13,-108.77 12.16,-111.75 12.19,-114.74 12.22,-117.72 12.26,-120.7 12.29,-123.68 12.33,-126.66 12.37,-129.64 12.4,-132.62 12.44,-135.6 12.48,-138.58 12.53,-141.57 12.57,-144.55 12.63,-149.02 12.71,-152.28 12.84,-152.82 13.1,-153.31 13.47,-153.73 13.93,-154.05 14.45,-154.24 15,-154.31 15.55,-154.24 16.07,-154.05 16.53,-153.73 16.9,-153.31 17.16,-152.82 17.29,-152.28 Z" />
+                      <path d="M-84,-106.33 Q-78,-106.41 -76.5,-106.43 T-73.5,-106.47 -70.5,-106.51 -67.5,-106.54 -64.5,-106.58 -61.5,-106.62 -58.5,-106.65 -55.5,-106.69 -52.5,-106.72 -49.5,-106.75 -46.5,-106.79 -43.5,-106.82 -40.5,-106.84 -37.5,-106.87 -34.5,-106.89 -31.5,-106.92 -28.5,-106.94 -25.5,-106.96 -22.5,-106.98 -19.5,-106.99 -16.5,-107 -13.5,-107.01 -10.5,-107.02 -7.5,-107.03 -4.5,-107.03 -1.5,-107.04 1.5,-107.04 4.5,-107.03 7.5,-107.03 10.5,-107.02 13.5,-107.01 16.5,-107 19.5,-106.99 22.5,-106.98 25.5,-106.96 28.5,-106.94 31.5,-106.92 34.5,-106.89 37.5,-106.87 40.5,-106.84 43.5,-106.82 46.5,-106.79 49.5,-106.75 52.5,-106.72 55.5,-106.69 58.5,-106.65 61.5,-106.62 64.5,-106.58 67.5,-106.54 70.5,-106.51 73.5,-106.47 76.5,-106.43 79.5,-106.39 82.5,-106.35 84.37,-106.27 85.08,-106.03 85.67,-105.58 86.09,-104.96 86.28,-104.25 86.24,-103.51 85.97,-102.82 85.49,-102.25 84.85,-101.87 84.12,-101.71 83.38,-101.79 82.71,-102.1 82.17,-102.61 81.82,-103.27 81.7,-104 81.82,-104.73 82.17,-105.39 82.71,-105.9 83.39,-106.21 84.12,-106.29 84.85,-106.13 85.49,-105.75 85.97,-105.18 86.24,-104.49 86.28,-103.75 86.09,-103.03 85.67,-102.42 85.08,-101.97 84.37,-101.73 84,-101.67 82.5,-101.65 79.5,-101.61 76.5,-101.57 73.5,-101.53 70.5,-101.49 67.5,-101.46 64.5,-101.42 61.5,-101.38 58.5,-101.35 55.5,-101.31 52.5,-101.28 49.5,-101.25 46.5,-101.21 43.5,-101.18 40.5,-101.16 37.5,-101.13 34.5,-101.11 31.5,-101.08 28.5,-101.06 25.5,-101.04 22.5,-101.02 19.5,-101.01 16.5,-101 13.5,-100.99 10.5,-100.98 7.5,-100.97 4.5,-100.97 1.5,-100.96 -1.5,-100.96 -4.5,-100.97 -7.5,-100.97 -10.5,-100.98 -13.5,-100.99 -16.5,-101 -19.5,-101.01 -22.5,-101.02 -25.5,-101.04 -28.5,-101.06 -31.5,-101.08 -34.5,-101.11 -37.5,-101.13 -40.5,-101.16 -43.5,-101.18 -46.5,-101.21 -49.5,-101.25 -52.5,-101.28 -55.5,-101.31 -58.5,-101.35 -61.5,-101.38 -64.5,-101.42 -67.5,-101.46 -70.5,-101.49 -73.5,-101.53 -76.5,-101.57 -81,-101.63 -84.28,-101.71 -84.82,-101.84 -85.31,-102.1 -85.73,-102.47 -86.05,-102.93 -86.24,-103.45 -86.31,-104 -86.24,-104.55 -86.05,-105.07 -85.73,-105.53 -85.31,-105.9 -84.82,-106.16 -84.28,-106.29 Z" />
+                    </g>
+                  </g>
+                  <rect x="-64" y="-80" width="34" height="46" rx="6" style="fill:var(--sh,var(--ink));stroke:var(--sh,var(--bg));stroke-width:4.5;stroke-linejoin:round" vector-effect="non-scaling-stroke" />
+                  <g style="fill:var(--sh,var(--bg))">
+                    <path d="M-57,-68.85 Q-50.67,-69.27 -49.08,-69.31 T-45.92,-69.31 -42.75,-69.19 -39.58,-68.98 -37.7,-68.81 -37.14,-68.62 -36.67,-68.26 -36.34,-67.77 -36.18,-67.2 -36.21,-66.61 -36.43,-66.06 -36.82,-65.61 -37.32,-65.3 -37.9,-65.17 -38.49,-65.24 -39.03,-65.49 -39.46,-65.89 -39.73,-66.42 -39.83,-67 -39.73,-67.58 -39.46,-68.11 -39.03,-68.51 -38.49,-68.76 -37.9,-68.83 -37.32,-68.7 -36.82,-68.39 -36.43,-67.94 -36.21,-67.39 -36.18,-66.8 -36.34,-66.23 -36.67,-65.74 -37.14,-65.38 -37.7,-65.19 -38,-65.15 -39.58,-65.02 -42.75,-64.81 -45.92,-64.69 -49.08,-64.69 -53.83,-64.94 -57.22,-65.17 -57.65,-65.28 -58.05,-65.49 -58.38,-65.78 -58.63,-66.14 -58.79,-66.56 -58.84,-67 -58.79,-67.44 -58.63,-67.86 -58.38,-68.22 -58.05,-68.51 -57.65,-68.72 -57.22,-68.83 Z M-57,-58.85 Q-50.67,-59.27 -49.08,-59.31 T-45.92,-59.31 -42.75,-59.19 -39.58,-58.98 -37.7,-58.81 -37.14,-58.62 -36.67,-58.26 -36.34,-57.77 -36.18,-57.2 -36.21,-56.61 -36.43,-56.06 -36.82,-55.61 -37.32,-55.3 -37.9,-55.17 -38.49,-55.24 -39.03,-55.49 -39.46,-55.89 -39.73,-56.42 -39.83,-57 -39.73,-57.58 -39.46,-58.11 -39.03,-58.51 -38.49,-58.76 -37.9,-58.83 -37.32,-58.7 -36.82,-58.39 -36.43,-57.94 -36.21,-57.39 -36.18,-56.8 -36.34,-56.23 -36.67,-55.74 -37.14,-55.38 -37.7,-55.19 -38,-55.15 -39.58,-55.02 -42.75,-54.81 -45.92,-54.69 -49.08,-54.69 -53.83,-54.94 -57.22,-55.17 -57.65,-55.28 -58.05,-55.49 -58.38,-55.78 -58.63,-56.14 -58.79,-56.56 -58.84,-57 -58.79,-57.44 -58.63,-57.86 -58.38,-58.22 -58.05,-58.51 -57.65,-58.72 -57.22,-58.83 Z M-57,-48.85 Q-51.5,-49.34 -48.75,-49.1 T-45.7,-48.81 -45.14,-48.62 -44.67,-48.26 -44.34,-47.77 -44.18,-47.2 -44.21,-46.61 -44.43,-46.06 -44.82,-45.61 -45.32,-45.3 -45.9,-45.17 -46.49,-45.24 -47.03,-45.49 -47.46,-45.89 -47.73,-46.42 -47.83,-47 -47.73,-47.58 -47.46,-48.11 -47.03,-48.51 -46.49,-48.76 -45.9,-48.83 -45.32,-48.7 -44.82,-48.39 -44.43,-47.94 -44.21,-47.39 -44.18,-46.8 -44.34,-46.23 -44.67,-45.74 -45.14,-45.38 -45.7,-45.19 -46,-45.15 -48.75,-44.9 -54.25,-44.9 -57.22,-45.17 -57.65,-45.28 -58.05,-45.49 -58.38,-45.78 -58.63,-46.14 -58.79,-46.56 -58.84,-47 -58.79,-47.44 -58.63,-47.86 -58.38,-48.22 -58.05,-48.51 -57.65,-48.72 -57.22,-48.83 Z" />
+                    <path d="M31.85,-62.84 Q35.36,-67.93 37.36,-70.26 T41.61,-74.72 44.2,-77.14 44.98,-77.6 45.86,-77.79 46.76,-77.69 47.58,-77.31 48.23,-76.68 48.65,-75.88 48.8,-74.99 48.64,-74.1 48.22,-73.3 47.56,-72.68 46.74,-72.3 45.84,-72.21 44.95,-72.41 44.18,-72.88 43.6,-73.57 43.27,-74.41 43.22,-75.32 43.47,-76.19 43.98,-76.93 44.7,-77.48 45.56,-77.76 46.47,-77.76 47.32,-77.46 48.04,-76.91 48.54,-76.16 48.78,-75.29 48.73,-74.39 48.39,-73.55 48.15,-73.16 46.39,-70.61 42.64,-65.74 38.39,-61.28 35.9,-58.93 35.35,-58.53 34.72,-58.28 34.05,-58.19 33.37,-58.26 32.73,-58.49 32.17,-58.87 31.71,-59.37 31.39,-59.96 31.21,-60.62 31.2,-61.29 31.36,-61.95 31.66,-62.56 Z M55.85,-59.16 Q51.36,-63.4 49.36,-65.74 T45.61,-70.61 43.61,-73.55 43.27,-74.39 43.22,-75.29 43.46,-76.16 43.96,-76.91 44.68,-77.46 45.54,-77.76 46.44,-77.76 47.3,-77.48 48.02,-76.93 48.53,-76.18 48.78,-75.31 48.73,-74.41 48.4,-73.57 47.82,-72.88 47.05,-72.41 46.16,-72.21 45.26,-72.3 44.44,-72.68 43.78,-73.3 43.35,-74.1 43.2,-74.99 43.35,-75.88 43.77,-76.68 44.42,-77.31 45.24,-77.69 46.14,-77.79 47.02,-77.6 47.8,-77.14 48.15,-76.84 50.39,-74.72 54.64,-70.26 58.39,-65.39 60.34,-62.56 60.65,-61.95 60.8,-61.29 60.79,-60.62 60.61,-59.96 60.29,-59.36 59.83,-58.86 59.27,-58.49 58.63,-58.26 57.95,-58.19 57.28,-58.28 56.65,-58.53 56.1,-58.93 Z M48.83,-74 Q49.23,-67.82 49.37,-64.73 T49.54,-58.55 49.48,-52.36 49.22,-46.18 48.94,-41.55 48.76,-39.55 48.47,-38.69 47.92,-37.97 47.17,-37.46 46.3,-37.22 45.4,-37.27 44.56,-37.61 43.87,-38.19 43.4,-38.97 43.21,-39.85 43.31,-40.75 43.69,-41.57 44.31,-42.23 45.11,-42.65 46,-42.8 46.89,-42.65 47.69,-42.22 48.31,-41.57 48.69,-40.75 48.79,-39.85 48.6,-38.96 48.13,-38.19 47.44,-37.6 46.6,-37.27 45.7,-37.22 44.83,-37.46 44.08,-37.97 43.53,-38.69 43.24,-39.55 43.17,-40 43.06,-41.55 42.78,-46.18 42.52,-52.36 42.46,-58.55 42.63,-64.73 42.97,-70.91 43.21,-74.34 43.37,-75 43.69,-75.6 44.14,-76.1 44.69,-76.49 45.33,-76.73 46,-76.81 46.67,-76.73 47.31,-76.49 47.86,-76.1 48.31,-75.6 48.63,-75 48.79,-74.34 Z" />
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+          <rect x="60" y="50" width="1160" height="600" rx="28" fill="none" stroke="var(--bg)" stroke-width="6" />
+          <g id="pill" transform="translate(96 84)">
+            <rect x="6" y="6" width="520" height="44" rx="22" fill="var(--bg)" />
+            <rect width="520" height="44" rx="22" fill="var(--ink)" stroke="var(--bg)" stroke-width="5" />
+            <text id="pillText" x="260" y="29" text-anchor="middle" font-size="18" fill="var(--bg)"></text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",         // "fixtergeek" | "easybits"
+        groundY: 540,                  // y del piso
+        stops: [300, 527, 753, 980],   // x de cada aterrizaje (n stops = n−1 saltos; bucle finito)
+        height: 230,                   // altura del salto (px)
+        start: 0.35,                   // primer salto (s)
+        gap: 0.08,                     // pausa entre saltos (s)
+        anticip: 0.14,                 // agacharse antes de saltar
+        rise: 0.32,                    // subida (sine.out)
+        fall: 0.24,                    // caída (power3.in)
+        settle: 0.4,                   // asentarse tras el golpe
+        settleEase: 2.5,               // s de back.out(s) del asentarse
+        squash: { land: [1.28, 0.76], anticip: [1.22, 0.8], launch: [0.84, 1.2], fall: [0.88, 1.14] }, // [scaleX, scaleY], ~volumen constante
+        floorShMin: 0.45,              // escala de la sombra del piso en el punto más alto
+        shOffset: { rest: 8, air: 18, squash: 3 }, // desfase de la sombra dura del objeto
+        label: true,                   // pastilla con la regla del golpe
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const k of ["bg", "ink", "accent", "accent2", "muted"]) root.style.setProperty("--" + k, P[k]);
+      const DUR = parseFloat(root.dataset.duration);
+      const NS = "http://www.w3.org/2000/svg";
+      const G = PARAMS.groundY;
+      document.getElementById("floor").setAttribute("y", G - 44); // el piso se ve un poco desde arriba: la sombra cae sobre él
+      document.getElementById("actor").setAttribute("transform", `translate(0 ${G})`);
+      // marcas de aterrizaje en el piso (dónde cae cada salto)
+      const marks = document.getElementById("marks");
+      PARAMS.stops.forEach((x) => {
+        const m = document.createElementNS(NS, "rect");
+        Object.entries({ x: x - 34, y: G + 46, width: 68, height: 12, rx: 6, fill: P.bg }).forEach(([k, v]) => m.setAttribute(k, v));
+        marks.appendChild(m);
+      });
+      const s = PARAMS.settleEase;
+      document.getElementById("pillText").textContent = `back.out(${s}) · rebote en 1/(s+1) = ${(1 / (s + 1)).toFixed(3)}`;
+      document.getElementById("pill").style.display = PARAMS.label ? "" : "none";
+
+      const tl = gsap.timeline({ paused: true });
+      const x0 = PARAMS.stops[0], so = PARAMS.shOffset, sq = PARAMS.squash;
+      // estado inicial DENTRO de la timeline (sobrevive al seek del render)
+      tl.set("#hopPos", { x: x0, y: 0 }, 0)
+        .set("#floorSh", { x: x0, scale: 1, svgOrigin: "0 0" }, 0)
+        .set("#body", { scaleX: 1, scaleY: 1, svgOrigin: "0 0" }, 0)
+        .set("#boxSh", { x: so.rest, y: so.rest }, 0);
+
+      const cues = []; // instantes para montar SFX con ffmpeg (también en window.__sfxCues)
+      let t0 = PARAMS.start;
+      for (let i = 0; i < PARAMS.stops.length - 1; i++) {
+        const xa = PARAMS.stops[i], xb = PARAMS.stops[i + 1];
+        const tUp = t0 + PARAMS.anticip, tDown = tUp + PARAMS.rise, tLand = tDown + PARAMS.fall;
+        const air = PARAMS.rise + PARAMS.fall;
+        // 1) anticipación: se agacha (squash ancho)
+        tl.to("#body", { scaleX: sq.anticip[0], scaleY: sq.anticip[1], duration: PARAMS.anticip, ease: "power2.in" }, t0)
+          .to("#boxSh", { x: so.squash + 2, y: so.squash + 2, duration: PARAMS.anticip, ease: "power2.in" }, t0);
+        // 2) despegue: se estira y sube; la x avanza lineal durante todo el vuelo (arco)
+        tl.to("#body", { scaleX: sq.launch[0], scaleY: sq.launch[1], duration: 0.1, ease: "power2.out" }, tUp)
+          .to("#body", { scaleX: 1, scaleY: 1, duration: PARAMS.rise - 0.1, ease: "sine.inOut" }, tUp + 0.1)
+          .to("#hopPos", { y: -PARAMS.height, duration: PARAMS.rise, ease: "sine.out" }, tUp)
+          .to(["#hopPos", "#floorSh"], { x: xb, duration: air, ease: "none" }, tUp)
+          .to("#floorSh", { scale: PARAMS.floorShMin, duration: PARAMS.rise, ease: "sine.out" }, tUp)
+          .to("#boxSh", { x: so.air, y: so.air, duration: PARAMS.rise, ease: "sine.out" }, tUp);
+        // 3) caída: acelera (power3.in) y se vuelve a estirar
+        tl.to("#hopPos", { y: 0, duration: PARAMS.fall, ease: "power3.in" }, tDown)
+          .to("#body", { scaleX: sq.fall[0], scaleY: sq.fall[1], duration: PARAMS.fall, ease: "power2.in" }, tDown)
+          .to("#floorSh", { scale: 1, duration: PARAMS.fall, ease: "power3.in" }, tDown)
+          .to("#boxSh", { x: so.squash, y: so.squash, duration: PARAMS.fall, ease: "power3.in" }, tDown);
+        // 4) golpe: un cuadro de squash fuerte y se asienta con overshoot
+        tl.set("#body", { scaleX: sq.land[0], scaleY: sq.land[1] }, tLand)
+          .set("#floorSh", { scaleX: 1.18, scaleY: 1 }, tLand)
+          .to("#body", { scaleX: 1, scaleY: 1, duration: PARAMS.settle, ease: `back.out(${s})` }, tLand)
+          .to("#floorSh", { scaleX: 1, duration: PARAMS.settle, ease: `back.out(${s})` }, tLand)
+          .to("#boxSh", { x: so.rest, y: so.rest, duration: PARAMS.settle, ease: `back.out(${s})` }, tLand);
+        cues.push({ t: +tUp.toFixed(3), sfx: "whoosh" });                                   // despegue
+        cues.push({ t: +tLand.toFixed(3), sfx: "thud" });                                    // contacto con el piso
+        cues.push({ t: +(tLand + PARAMS.settle / (s + 1)).toFixed(3), sfx: "boing" });       // el back.out cruza 1 y rebota
+        t0 = tLand + PARAMS.settle + PARAMS.gap;
+      }
+      window.__sfxCues = cues;
+      tl.to({}, { duration: 0.001 }, DUR - 0.001);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

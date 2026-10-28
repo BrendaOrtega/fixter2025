@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Geist+Mono:wght@500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      svg text { font-family: "Geist Mono", ui-monospace, monospace; }
+      /* Contorno de pincel: cada pieza se pinta DOS veces. Pasada de contorno (un <use> con .ol) = la forma
+         rellena de --bg con un trazo grueso; pasada de relleno = la forma sin trazo encima. Así las piezas
+         que se tocan funden su silueta (una sola línea exterior, sin dobles líneas) */
+      .pc { fill: var(--sh, var(--fc, var(--c))); stroke: var(--sh, var(--oc, none)); stroke-width: var(--ow, 0px); stroke-linejoin: round; stroke-linecap: round; }
+      .ar { fill: none; stroke: var(--sh, var(--lc, var(--c))); stroke-width: calc(var(--aw, 26px) + var(--ow, 0px)); stroke-linejoin: round; stroke-linecap: round; }
+      .lg { fill: none; stroke: var(--sh, var(--lc, var(--c))); stroke-width: var(--lw, 16px); stroke-linejoin: round; stroke-linecap: round; }
+      .ol { --fc: var(--bg); --oc: var(--bg); --ow: 18px; --lc: var(--bg); --lw: 34px; }
+      /* detalles interiores: trazo delgado, nunca entran a la silueta */
+      .dt { fill: var(--sh, var(--c)); stroke: var(--sh, var(--bg)); stroke-width: 4px; stroke-linejoin: round; stroke-linecap: round; }
+      .dl { fill: none; stroke: var(--sh, var(--c)); stroke-width: 4px; stroke-linejoin: round; stroke-linecap: round; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="4" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="4">
+        <svg id="stage" width="1280" height="720" viewBox="0 0 1280 720">
+          <defs>
+            <clipPath id="cardClip"><rect x="60" y="50" width="1160" height="600" rx="28" /></clipPath>
+            <!-- retícula de puntos del fondo oscuro (para que el cuadro 0 no sea plano) -->
+            <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+              <circle cx="20" cy="20" r="2" fill="var(--muted)" opacity="0.35" />
+            </pattern>
+          </defs>
+          <rect width="1280" height="720" fill="url(#dots)" />
+          <!-- tarjeta: sombra dura de acento + cuerpo claro con contorno grueso -->
+          <rect x="72" y="62" width="1160" height="600" rx="28" fill="var(--accent)" />
+          <rect x="60" y="50" width="1160" height="600" rx="28" fill="var(--ink)" />
+          <g clip-path="url(#cardClip)">
+            <!-- cámara: TODO lo de dentro se mueve fluido (ease continuo, cuadro a cuadro) -->
+            <g id="cam">
+              <g id="clouds"></g>
+              <g id="hills"></g>
+              <g id="ground"></g>
+              <g id="posts"></g>
+              <!-- personaje DE PERFIL mirando a la derecha (el mundo se va a la izquierda = avanza a la derecha).
+                   y = 0 es la línea del piso. Sombra dura = clon con --sh en --muted (nunca tinta: se fundiría con el contorno); poses muestreadas a PARAMS.charFps -->
+              <g transform="translate(600 560)">
+                <use href="#robot" x="13" y="12" style="--sh: var(--muted)" />
+                <g id="robot">
+                  <!-- pierna lejana (detrás de todo) -->
+                  <use href="#legFar" class="ol" x="2.5" y="3" />
+                    <use href="#legFar" class="ol" />
+                  <g id="legFar" style="--c: var(--muted)">
+                    <path id="legFarP" class="lg" d="M0 -98 L0 -14" />
+                    <g id="bootFar"><path class="pc" d="M-16 -20 h32 a20 20 0 0 1 20 20 h-52 z" /></g>
+                  </g>
+                  <!-- tronco: brazo lejano + mochila + torso + cuello + cabeza = UNA silueta -->
+                  <g id="upperBack">
+                    <use href="#ubShapes" class="ol" x="2.5" y="3" />
+                    <use href="#ubShapes" class="ol" />
+                    <g id="ubShapes">
+                      <!-- brazo lejano (detrás del torso y de la cabeza; es el que saluda): su silueta se funde con el tronco -->
+                      <g id="armFar" style="--c: var(--muted)">
+                        <path id="armFarU" class="ar" d="M0 -214 L0 -144" />
+                        <path id="armFarF" class="ar" style="--aw: 24px" d="M0 -144 L0 -74" />
+                        <g id="handFar">
+                        <ellipse class="pc" cx="13" cy="2" rx="8" ry="10" />
+                        <rect class="pc" x="-15" y="-22" width="30" height="36" rx="14" />
+                        <path class="dl" style="--c: var(--bg)" d="M-5 -16 v10 M5 -16 v10" />
+                        </g>
+                      </g>
+                      <!-- mochila: dice «la espalda está a la izquierda» -->
+                      <rect class="pc" style="--c: var(--muted)" x="-72" y="-208" width="32" height="74" rx="10" />
+                      <rect class="pc" style="--c: var(--muted)" x="-8" y="-250" width="20" height="30" />
+                      <rect class="pc" style="--c: var(--accent)" x="-48" y="-228" width="96" height="138" rx="22" />
+                      <g id="head">
+                        <!-- antena limpia: varilla + punta, sin adornos -->
+                        <g id="antenna">
+                          <line class="lg" style="--c: var(--muted); --lw: 7px" x1="-6" y1="-334" x2="-6" y2="-362" />
+                          <circle class="pc" style="--c: var(--accent)" cx="-6" cy="-368" r="9" />
+                        </g>
+                        <!-- casco de color sólido (mismo color que el torso: producto, no disfraz) -->
+                        <rect class="pc" style="--c: var(--accent)" x="-46" y="-336" width="116" height="92" rx="32" />
+                        <!-- pantalla-visor oscura al frente; dentro, ojos LED -->
+                        <g id="visor">
+                        <rect class="dt" style="--c: var(--bg)" x="6" y="-318" width="58" height="52" rx="18" />
+                        <g id="eyesOpen" style="--c: var(--accent)">
+                          <rect class="dt" style="stroke: none" x="22" y="-305" width="8" height="22" rx="4" />
+                          <rect class="dt" style="stroke: none" x="42" y="-306" width="11" height="24" rx="5.5" />
+                        </g>
+                        <!-- al saludar los LED se curvan en «^» -->
+                        <g id="eyesHappy" style="--c: var(--accent); opacity: 0">
+                          <path class="dl" style="stroke-width: 5px" d="M20 -288 l6 -9 l6 9" />
+                          <path class="dl" style="stroke-width: 6px" d="M40 -288 l7.5 -11 l7.5 11" />
+                        </g>
+                        </g>
+                        <!-- costura del casco (interior fino) -->
+                        <path id="seam" class="dl" style="--c: var(--bg); stroke-width: 4px" d="M-14 -334 q-8 44 0 88" />
+                      </g>
+                      <rect class="dt" style="--c: var(--bg)" x="17" y="-192" width="27" height="30" rx="8" />
+                      <path class="dl" style="--c: var(--accent2)" d="M20 -177 h3 l4 -7 l4 14 l4 -7 h3" />
+                    </g>
+                  </g>
+                  <!-- pierna cercana (delante del torso) -->
+                  <use href="#legNear" class="ol" x="2.5" y="3" />
+                    <use href="#legNear" class="ol" />
+                  <g id="legNear" style="--c: var(--ink)">
+                    <path id="legNearP" class="lg" d="M0 -98 L0 -14" />
+                    <g id="bootNear"><path class="pc" d="M-16 -20 h32 a20 20 0 0 1 20 20 h-52 z" /></g>
+                  </g>
+                  <!-- brazo cercano (lado de la cámara, delante de todo): sólo camina, en contrafase a las piernas -->
+                  <g id="upperFront">
+                    <use href="#armNear" class="ol" x="2.5" y="3" />
+                    <use href="#armNear" class="ol" />
+                    <g id="armNear" style="--c: var(--accent2)">
+                      <path id="armNearU" class="ar" d="M-24 -200 L-24 -130" />
+                      <path id="armNearF" class="ar" style="--aw: 24px" d="M-24 -130 L-24 -60" />
+                      <g id="handNear">
+                        <!-- manopla: palma redondeada + pulgar; apunta hacia -y en su marco -->
+                        <ellipse class="pc" cx="13" cy="2" rx="8" ry="10" />
+                        <rect class="pc" x="-15" y="-22" width="30" height="36" rx="14" />
+                        <path class="dl" style="--c: var(--bg)" d="M-5 -16 v10 M5 -16 v10" />
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+          <!-- contorno de la tarjeta encima del recorte -->
+          <rect x="60" y="50" width="1160" height="600" rx="28" fill="none" stroke="var(--bg)" stroke-width="6" />
+          <!-- pastilla de cadencias -->
+          <g id="pill" transform="translate(96 84)">
+            <rect x="6" y="6" width="400" height="44" rx="22" fill="var(--bg)" />
+            <rect width="400" height="44" rx="22" fill="var(--ink)" stroke="var(--bg)" stroke-width="5" />
+            <text id="pillText" x="200" y="29" text-anchor="middle" font-size="18" fill="var(--bg)"></text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",       // "fixtergeek" | "easybits"
+        charFps: 12,                 // cadencia del personaje: 12 = «a dos» de cine (a 30 fps sostiene 3-2-3-2 cuadros); 15 = dos exactos a 30
+        camFps: 30,                  // sólo para la pastilla: la cámara se muestrea a la fps del render (30 o 60 con -f 60)
+        label: true,                 // pastilla «personaje 12 fps · cámara 30 fps»
+        pan: { far: 160, mid: 320, near: 900 }, // px que viaja cada capa en toda la duración (parallax); near = piso
+        stride: 124,                 // px que recorre el pie apoyado bajo la cadera (objetivo; se ajusta a la rejilla de charFps)
+        duty: 0.55,                  // fracción del ciclo con el pie en el piso (>0.5 = doble apoyo, caminata y no carrera)
+        bob: 4,                      // px extra de bajada tras el contacto (el sube-y-baja grande sale solo del compás de la pierna)
+        kneeFlex: 50,                // grados que se dobla la rodilla en el aire (el pie sube solo, la espinilla nunca horizontal)
+        armSwing: 16,                // grados de vaivén de brazos (en contrafase a las piernas)
+        groundOnTwos: true,          // piso y postes a charFps junto al personaje: el pie no patina entre poses
+        camZoom: 1.06,               // escala final de la cámara (dolly suave)
+        wave: { at: 2.4, times: 3, upper: -142, fore: -162, swing: 20, turn: -8 }, // saluda con el brazo cercano N veces (bucle finito) sin dejar de caminar: con el brazo LEJANO, que sube por detrás del hombro y deja la manopla sobre la cabeza (upper/fore = ángulos desde la vertical hacia abajo, negativo = hacia atrás; ±180 = arriba), meneándose ±swing° alrededor del codo; turn = visor a 3/4
+        blinkAt: 1.5,                // parpadeo (s)
+      };
+      const ARM = { upper: 64, fore: 64 }; // largo FIJO de brazo y antebrazo (iguales al caminar y al saludar)
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const k of ["bg", "ink", "accent", "accent2", "muted"]) root.style.setProperty("--" + k, P[k]);
+      const DUR = parseFloat(root.dataset.duration);
+      const NS = "http://www.w3.org/2000/svg";
+      const add = (parent, tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+
+      // escenografía: capas repetidas a lo ancho (determinista, sin azar)
+      const clouds = document.getElementById("clouds");
+      [[180, 230], [520, 205], [860, 250], [1220, 215], [1560, 240]].forEach(([x, y]) => {
+        add(clouds, "path", { d: `M${x} ${y} a28 28 0 0 1 50 -18 a34 34 0 0 1 62 8 a24 24 0 0 1 8 46 h-112 a24 24 0 0 1 -8 -36 z`,
+          fill: P.accent, stroke: P.bg, "stroke-width": 6, "stroke-linejoin": "round" });
+      });
+      const hills = document.getElementById("hills");
+      let d = "M0 560 ";
+      for (let x = 0; x < 2000; x += 260) d += `Q${x + 130} ${x % 520 ? 380 : 420} ${x + 260} 560 `;
+      add(hills, "path", { d: d + "Z", fill: P.muted, stroke: P.bg, "stroke-width": 6, "stroke-linejoin": "round" });
+      const ground = document.getElementById("ground");
+      add(ground, "rect", { x: 0, y: 560, width: 2400, height: 120, fill: P.accent2, stroke: P.bg, "stroke-width": 6 });
+      for (let x = 20; x < 2400; x += 110) add(ground, "rect", { x, y: 600, width: 52, height: 12, rx: 6, fill: P.bg });
+      const posts = document.getElementById("posts");
+      for (let x = 120; x < 2400; x += 300) {
+        add(posts, "rect", { x: x + 8, y: 478, width: 22, height: 90, rx: 6, fill: P.bg });
+        add(posts, "rect", { x, y: 470, width: 22, height: 90, rx: 6, fill: P.ink, stroke: P.bg, "stroke-width": 6, "stroke-linejoin": "round" });
+      }
+      document.getElementById("pillText").textContent = `personaje ${PARAMS.charFps} fps · cámara ${PARAMS.camFps} fps`;
+      document.getElementById("pill").style.display = PARAMS.label ? "" : "none";
+
+      // --- ciclo de caminata calculado DESDE la velocidad del piso ---
+      // el pie apoyado retrocede a v px/s (lo mismo que el piso) → no patina.
+      const v = PARAMS.pan.near / DUR;
+      const fpsC = PARAMS.charFps;
+      // periodo del ciclo (izq + der) redondeado a cuadros enteros del personaje: las poses se repiten idénticas
+      const stepPeriod = Math.max(4, Math.round(PARAMS.stride / (v * PARAMS.duty) * fpsC)) / fpsC;
+      const S = v * PARAMS.duty * stepPeriod; // recorrido real del pie apoyado
+      const ANKLE = 14, L1 = 64, L2 = 64, REACH = 0.995 * (L1 + L2), HMAX = ANKLE + 0.975 * (L1 + L2), HIP0 = 98; // HIP0 = cadera del dibujo del tronco
+      const D2R = Math.PI / 180;
+      const smooth = (a, b, u) => a + (b - a) * (0.5 - 0.5 * Math.cos(Math.PI * u));
+      // bajada extra por medio ciclo: contacto 0 → bajada → paso → subida → contacto
+      const BOB_KEYS = [[0, 0], [0.2, 1], [0.55, -0.4], [0.8, -1], [1, 0]];
+      const bobAt = (p) => {
+        const q = (((p * 2) % 1) + 1) % 1;
+        for (let i = 1; i < BOB_KEYS.length; i++) {
+          const [q0, y0] = BOB_KEYS[i - 1], [q1, y1] = BOB_KEYS[i];
+          if (q <= q1) return smooth(y0, y1, (q - q0) / (q1 - q0));
+        }
+        return 0;
+      };
+      const wrap = (p) => ((p % 1) + 1) % 1;
+      // x del pie apoyado (lineal = velocidad del piso); null si va en el aire
+      const stanceX = (p) => { p = wrap(p); return p < PARAMS.duty ? S / 2 - S * (p / PARAMS.duty) : null; };
+      // altura de cadera: compás de la pierna apoyada (nunca más lejos que REACH) + bajada de animación
+      const hipAt = (p) => {
+        let h = HMAX - PARAMS.bob * Math.max(0, bobAt(p));
+        for (const x of [stanceX(p), stanceX(p + 0.5)]) if (x !== null) h = Math.min(h, Math.sqrt(REACH * REACH - x * x) + ANKLE);
+        return h;
+      };
+      // IK de dos huesos iguales, rodilla hacia adelante → ángulos desde la vertical (positivo = adelante)
+      const ik = (hipH, x) => {
+        const dy = hipH - ANKLE, dist = Math.min(Math.hypot(x, dy), L1 + L2 - 0.01);
+        const leg = Math.atan2(x, dy), alpha = Math.acos(dist / (2 * L1));
+        return { th: leg + alpha, sh: leg - alpha };
+      };
+      // pierna completa en la fase p: apoyada = IK; en el aire = interpola ángulos de despegue → contacto y dobla la rodilla
+      const legAt = (p) => {
+        p = wrap(p);
+        const hipH = hipAt(p);
+        let th, sh;
+        if (p < PARAMS.duty) ({ th, sh } = ik(hipH, stanceX(p)));
+        else {
+          const u = (p - PARAMS.duty) / (1 - PARAMS.duty);
+          const a0 = ik(hipAt(PARAMS.duty), -S / 2), a1 = ik(hipAt(0), S / 2);
+          th = smooth(a0.th, a1.th, u);
+          sh = smooth(a0.sh, a1.sh, u) - PARAMS.kneeFlex * D2R * Math.sin(Math.PI * u);
+        }
+        const hy = -hipH, kx = L1 * Math.sin(th), ky = hy + L1 * Math.cos(th);
+        const ax = kx + L2 * Math.sin(sh), ay = Math.min(ky + L2 * Math.cos(sh), -ANKLE);
+        return { hy, d: `M0 ${hy.toFixed(2)} L${kx.toFixed(2)} ${ky.toFixed(2)} L${ax.toFixed(2)} ${ay.toFixed(2)}`, ax, ay, th, sh };
+      };
+      const legNearP = document.getElementById("legNearP"), legFarP = document.getElementById("legFarP");
+      const armFarU = document.getElementById("armFarU"), armFarF = document.getElementById("armFarF"), handFar = document.getElementById("handFar");
+      const armNearU = document.getElementById("armNearU"), armNearF = document.getElementById("armNearF"), handNear = document.getElementById("handNear");
+      gsap.set("#antenna", { rotation: 0, svgOrigin: "-12 -330" });
+      gsap.set("#head", { rotation: 0, svgOrigin: "2 -246" });
+
+      // --- timeline del PERSONAJE (eases normales) para lo que no es el ciclo: saludo, parpadeo, sonrisa ---
+      const ch = gsap.timeline({ paused: true });
+      const W = { amt: 0, wig: 0 }; // mezcla caminar→saludo y meneo de la mano
+      const wAt = PARAMS.wave.at, wReps = PARAMS.wave.times * 2 - 1;
+      ch.set(W, { amt: 0, wig: 0 }, 0)
+        .set("#eyesOpen", { scaleY: 1, opacity: 1, svgOrigin: "37 -294" }, 0)
+        .set("#eyesHappy", { opacity: 0 }, 0)
+        .set(["#visor", "#seam"], { x: 0 }, 0);
+      ch.to(W, { amt: 1, duration: 0.25, ease: "back.out(2)" }, wAt)
+        .fromTo(W, { wig: -PARAMS.wave.swing }, { wig: PARAMS.wave.swing, duration: 0.18, ease: "sine.inOut", yoyo: true, repeat: wReps }, wAt + 0.25)
+        .to("#head", { rotation: -4, duration: 0.25, ease: "power2.out" }, wAt)
+                .to("#visor", { x: PARAMS.wave.turn, duration: 0.25, ease: "power2.out" }, wAt) // visor a 3/4: mira a cámara
+        .to("#seam", { x: PARAMS.wave.turn * 0.6, duration: 0.25, ease: "power2.out" }, wAt)
+        .set("#eyesOpen", { opacity: 0 }, wAt + 0.08).set("#eyesHappy", { opacity: 1 }, wAt + 0.08);
+      ch.to("#eyesOpen", { scaleY: 0.12, duration: 0.08, ease: "power1.in", yoyo: true, repeat: 1 }, PARAMS.blinkAt);
+
+      // pinta la pose del instante t (ya cuantizado); todo cambia en el MISMO cuadro
+      const drawPose = (t) => {
+        const p = t / stepPeriod;
+        const N = legAt(p), F = legAt(p + 0.5);
+        legNearP.setAttribute("d", N.d);
+        legFarP.setAttribute("d", F.d);
+        gsap.set("#bootNear", { x: N.ax, y: N.ay + ANKLE });
+        gsap.set("#bootFar", { x: F.ax, y: F.ay + ANKLE });
+        gsap.set(["#upperBack", "#upperFront"], { y: N.hy + HIP0 });
+        // brazos en contrafase: el cercano va con la pierna lejana (negativo = hacia adelante)
+        // brazos en contrafase: el cercano va con la pierna lejana (ángulos desde la vertical, positivo = adelante)
+        const swingNear = PARAMS.armSwing * Math.sin(F.th) / Math.sin(35 * D2R), swingFar = PARAMS.armSwing * Math.sin(N.th) / Math.sin(35 * D2R);
+        const k = W.amt, wv = PARAMS.wave;
+        // brazo de dos segmentos de largo fijo: hombro (sx, sy), ángulos desde la vertical hacia abajo (positivo = adelante)
+        const drawArm = (U, Fp, hand, sx, sy, thU, thF) => {
+          const ex = sx + ARM.upper * Math.sin(thU), ey = sy + ARM.upper * Math.cos(thU);
+          const hx = ex + ARM.fore * Math.sin(thF), hy = ey + ARM.fore * Math.cos(thF);
+          U.setAttribute("d", `M${sx.toFixed(2)} ${sy} L${ex.toFixed(2)} ${ey.toFixed(2)}`);
+          Fp.setAttribute("d", `M${ex.toFixed(2)} ${ey.toFixed(2)} L${hx.toFixed(2)} ${hy.toFixed(2)}`);
+          hand.setAttribute("transform", `translate(${hx.toFixed(2)} ${hy.toFixed(2)}) rotate(${(180 - thF / D2R).toFixed(2)})`);
+        };
+        // cercano: siempre caminando, colgado del hombro de atrás (x −24: no cruza la pantalla del pecho)
+        drawArm(armNearU, armNearF, handNear, -24, -200, swingNear * D2R, (swingNear + 6) * D2R);
+        // lejano: contrafase al caminar; al saludar sube hacia ATRÁS (por detrás del hombro) hasta dejar la mano sobre la cabeza
+        const mix = (a, b) => a + (b - a) * k;
+        drawArm(armFarU, armFarF, handFar, -12, -224, mix(swingFar, wv.upper) * D2R, mix(swingFar + 12, wv.fore + W.wig) * D2R);
+        // follow-through: la antena va un poco detrás del bob
+        gsap.set("#antenna", { rotation: 12 * bobAt(p - 0.08) });
+      };
+
+      // --- timeline principal: cámara fluida + reloj del personaje cuantizado ---
+      const tl = gsap.timeline({ paused: true });
+      tl.set("#clouds", { x: 0 }, 0).set("#hills", { x: 0 }, 0)
+        .set("#cam", { scale: 1, svgOrigin: "640 400" }, 0);
+      tl.to("#clouds", { x: -PARAMS.pan.far, duration: DUR, ease: "none" }, 0)
+        .to("#hills", { x: -PARAMS.pan.mid, duration: DUR, ease: "none" }, 0)
+        .to("#cam", { scale: PARAMS.camZoom, duration: DUR, ease: "sine.inOut" }, 0);
+      // el truco: el tiempo del personaje se redondea hacia abajo a la rejilla de 1/charFps
+      const snap = (t) => Math.floor(t * fpsC + 1e-6) / fpsC;
+      const update = (t) => {
+        const s = snap(t);
+        ch.seek(s);
+        drawPose(s);
+        // el piso viaja a v px/s; con groundOnTwos se muestrea en la misma rejilla que el pie
+        gsap.set(["#ground", "#posts"], { x: -v * (PARAMS.groundOnTwos ? s : t) });
+      };
+      const clock = { t: 0 };
+      tl.to(clock, { t: DUR, duration: DUR, ease: "none", onUpdate: () => update(clock.t) }, 0);
+      ch.seek(0.001).seek(0); // fuerza el render del estado inicial (un seek a 0 sobre una timeline en 0 no pinta)
+      update(0);
+      tl.to({}, { duration: 0.001 }, DUR - 0.001);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

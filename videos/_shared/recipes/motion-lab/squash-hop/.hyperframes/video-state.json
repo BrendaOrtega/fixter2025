@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "historyId": null,
+  "currentRevision": null,
+  "pendingChanges": true,
+  "files": {},
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "76d73b78-8795-4962-99b8-a5aadb4a2682",
+      "completedAt": 1792506437380,
+      "output": "/private/tmp/claude-501/-Users-bliss-ghosty-studio/9471ce6c-87c0-48d9-a499-1a3a880dea9c/scratchpad/recetas/squash-hop.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

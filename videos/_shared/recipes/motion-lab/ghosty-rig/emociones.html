@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Poppins:wght@600;700&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="rig.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #f4f5fb; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      .card { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 6px 0 var(--soft); }
+      #codeCard { left: 56px; top: 236px; width: 420px; height: 212px; padding: 26px 28px; }
+      #codeCard .kick { font-family: Poppins, Inter, sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+      .code { position: absolute; left: 28px; top: 70px; visibility: hidden; }
+      .code b { display: block; font-family: "Geist Mono", ui-monospace, monospace; font-weight: 600; font-size: 23px; color: var(--ink); white-space: nowrap; }
+      .code i { display: block; font-style: normal; font-size: 19px; font-weight: 500; color: var(--muted); margin-top: 14px; width: 364px; line-height: 1.35; }
+      #listCard { left: 880px; top: 64px; width: 336px; height: 592px; padding: 14px 14px; }
+      .row { height: 31.3px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 10px; font-family: "Geist Mono", monospace; font-size: 17px; color: var(--muted); }
+      .row .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line2); flex: none; }
+      .row[data-s="on"] { background: var(--accent); color: #ffffff; }
+      .row[data-s="on"] .dot { border-color: #ffffff; background: #ffffff; }
+      .row[data-s="done"] { color: var(--ink); }
+      .row[data-s="done"] .dot { border-color: var(--accent); background: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30.2" data-width="1280" data-height="720">
+      <div class="clip" data-start="0" data-duration="30.2">
+        <svg id="stage" width="1280" height="720" viewBox="0 0 1280 720" style="position:absolute;inset:0;overflow:visible">
+          <defs>
+            <pattern id="dots" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="16" cy="16" r="1.6" fill="var(--line2)" /></pattern>
+          </defs>
+          <rect width="1280" height="720" fill="url(#dots)" />
+          <!-- sombra del piso (plana, sin blur): la escala el rig según la altura -->
+          <!-- objetivo que siguen las pupilas en follow (escena, no Ghosty) -->
+          <circle id="target" cx="0" cy="0" r="13" fill="var(--accent)" stroke="var(--card)" stroke-width="4" visibility="hidden" />
+          <g id="gShadow"><ellipse cx="0" cy="0" rx="86" ry="11" fill="var(--floor)" /></g>
+          <!-- Ghosty: pegado de ghosty.svg (sólo el <g id="gHop">) -->
+          <g id="ghosty">
+            <g id="gHop"><g id="gSq"><g id="gRig">
+              <path id="gBody" d="M192.594 184.867C191.726 194.04 179.455 197.963 172.509 191.329C168.225 187.233 161.222 186.886 156.533 190.579L143.741 200.559C138.589 204.597 130.775 203.732 126.781 198.655L120.125 190.232C115.957 184.983 107.738 184.29 102.644 188.79L84.2368 205.001C82.0374 206.905 79.1433 208.001 76.1334 208.001H75.5544C69.6504 208.001 64.7303 203.963 63.9779 198.597C59.5209 166.233 58.479 125.504 60.2154 88.813C60.7364 78.4289 63.9779 68.7371 69.361 60.3142C69.8241 59.5643 70.345 58.8143 70.866 58.0644C77.349 48.8338 86.4945 41.2764 97.2029 36.3727C100.676 34.0082 106.464 32.8554 106.464 32.8554C106.464 32.8554 112.542 28.2397 133.09 28.2388C148.14 28.2388 147.851 30.2568 160.006 36.3727C179.976 49.0078 178.818 52.6413 180.728 53.6222C186.227 60.0833 190.395 67.5831 192.71 75.7751C192.999 76.7559 193.231 77.7943 193.52 78.7749C194.273 82.1787 194.794 85.6401 194.968 89.217C196.183 118.812 195.604 153.253 192.594 184.867Z" fill="#9A99EA"/>
+              <g id="gEyes"><g id="gPup">
+                <g id="eyeL"><path id="lidL" d="M124.408 76.408C124.408 90.7727 115.841 102.368 105.307 102.368C102.875 102.368 100.56 101.734 98.4185 100.638C108.953 100.58 117.462 89.3881 117.462 75.5425C117.462 63.2545 110.747 53.0433 101.834 50.8512C102.933 50.5628 104.091 50.4473 105.307 50.4473C115.841 50.4473 124.408 62.1008 124.408 76.408Z" fill="#9A99EA"/><path id="pupL" d="M117.462 75.5403C117.462 89.386 108.953 100.578 98.4182 100.636C91.2407 96.8858 86.2048 87.4245 86.2048 76.4058C86.2048 63.6561 92.9193 53.099 101.833 50.8491C110.747 53.0412 117.462 63.2524 117.462 75.5403Z" fill="#191A20"/></g>
+                <g id="eyeR"><path id="lidR" d="M173.551 74.9685C173.551 87.5448 166.027 97.756 156.765 97.756C154.855 97.756 153.003 97.2945 151.324 96.5445C159.891 95.5637 166.605 86.4487 166.605 75.2569C166.605 63.6611 159.37 54.2577 150.34 53.9115C152.308 52.7575 154.508 52.1807 156.765 52.1807C166.027 52.1807 173.551 62.3918 173.551 74.9685Z" fill="#9A99EA"/><path id="pupR" d="M166.603 75.2551C166.603 86.3891 159.889 95.5619 151.322 96.5427C144.723 93.4851 140.035 85.0045 140.035 74.9664C140.035 65.5054 144.318 57.371 150.338 53.9097C159.368 54.2556 166.603 63.7169 166.603 75.2551Z" fill="#191A20"/></g>
+                <g id="gHappyL" visibility="hidden"><path d="M94 84 Q108 64 122 84" fill="none" stroke="#191A20" stroke-width="7" stroke-linecap="round"/></g>
+                <g id="gHappyR" visibility="hidden"><path d="M143 83 Q157 63 171 83" fill="none" stroke="#191A20" stroke-width="7" stroke-linecap="round"/></g>
+              </g></g>
+              <path id="gBlushL" d="M89.5762 100.305C90.6642 97.3095 86.9164 93.2102 81.2054 91.1497C75.4941 89.0891 69.9822 89.8471 68.894 92.843C67.8058 95.8389 71.5534 99.9379 77.2647 101.999C82.9758 104.059 88.4879 103.301 89.5762 100.305Z" fill="#8C8BE2"/><path id="gBlushR" d="M179.048 103.206C184.759 101.146 188.507 97.0468 187.419 94.0509C186.331 91.055 180.819 90.2965 175.108 92.3568C169.396 94.4172 165.648 98.516 166.736 101.512C167.824 104.508 173.336 105.266 179.048 103.206Z" fill="#8C8BE2"/>
+              <g id="gGl"><path d="M52.02 75.5147L57.0817 77.053C57.0078 77.9391 56.9453 78.8284 56.9453 79.7332C56.9453 97.4634 71.4192 111.889 89.2098 111.889C107 111.889 121.474 97.4634 121.474 79.7332C121.474 75.4276 120.607 71.324 119.06 67.5675C121.713 65.8959 124.784 64.9869 128 64.9869C131.215 64.9869 134.286 65.8957 136.941 67.5675C135.393 71.3238 134.526 75.4276 134.526 79.7332C134.526 97.4634 148.999 111.889 166.79 111.889C184.581 111.889 199.055 97.4634 199.055 79.7332C199.055 78.8284 198.993 77.9389 198.919 77.0528L203.98 75.5147C205.223 75.1369 205.924 73.8269 205.545 72.5879C205.166 71.3478 203.848 70.6482 202.608 71.0284L198.17 72.3772C194.819 58.1849 182.038 47.5762 166.79 47.5762C154.998 47.5762 144.692 53.9345 139.064 63.3722C135.754 61.3823 131.965 60.2968 128 60.2968C124.035 60.2968 120.246 61.3821 116.936 63.3719C111.308 53.9343 101.002 47.5762 89.2098 47.5762C73.962 47.5762 61.1812 58.1846 57.8304 72.3772L53.3918 71.0284C52.1453 70.6471 50.8332 71.3478 50.4552 72.5879C50.0761 73.8269 50.7769 75.1369 52.02 75.5147ZM140.886 70.4504C141.101 70.5128 141.318 70.5773 141.54 70.5773C142.142 70.5773 142.744 70.3482 143.203 69.8902C144.122 68.9741 144.122 67.4901 143.203 66.574C143.081 66.4519 142.946 66.3472 142.821 66.2285C147.562 57.905 156.521 52.2663 166.79 52.2663C181.986 52.2663 194.349 64.5885 194.349 79.7332C194.349 94.8779 181.986 107.199 166.79 107.199C151.595 107.199 139.232 94.8779 139.232 79.7332C139.232 76.4718 139.835 73.3552 140.886 70.4504ZM89.2098 52.2663C99.479 52.2663 108.439 57.905 113.179 66.2285C113.054 66.3472 112.919 66.4519 112.797 66.574C111.878 67.4901 111.878 68.9752 112.797 69.8902C113.426 70.5172 114.316 70.682 115.114 70.4504C116.165 73.3552 116.769 76.4718 116.769 79.7332C116.769 94.8779 104.405 107.199 89.2098 107.199C74.0144 107.199 61.6512 94.8779 61.6512 79.7332C61.6512 64.5885 74.0144 52.2663 89.2098 52.2663Z" fill="#D4D4D7"/></g>
+              <g id="gAcc">
+                <g id="gBadge" visibility="hidden" data-origin="128 147">
+                  <rect x="121" y="104" width="14" height="20" rx="3" fill="#6d6bd0"/>
+                  <rect x="74" y="120" width="108" height="54" rx="10" fill="#aeadef" stroke="#ffffff" stroke-width="2.5"/>
+                  <circle cx="91" cy="147" r="10" fill="#8483e0"/><path d="M86 147 L90 151 L97 143" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <text id="gBadgeT1" x="106" y="145" font-family="Poppins, Inter, sans-serif" font-weight="700" font-size="12.5" fill="#2b2a55">Verificado</text>
+                  <text id="gBadgeT2" x="106" y="160" font-family="Poppins, Inter, sans-serif" font-weight="600" font-size="10" fill="#4a4890">por Google</text>
+                </g>
+                <g id="gHat" visibility="hidden" data-origin="128 30">
+                  <g fill="#bdbcd8"><rect x="92" y="10" width="72" height="28" rx="9"/><circle cx="104" cy="6" r="18.5"/><circle cx="152" cy="6" r="18.5"/><circle cx="128" cy="-4" r="22.5"/></g>
+                  <rect x="96" y="14" width="64" height="20" rx="6" fill="#ffffff"/>
+                  <circle cx="104" cy="6" r="15" fill="#ffffff"/><circle cx="152" cy="6" r="15" fill="#ffffff"/><circle cx="128" cy="-4" r="19" fill="#ffffff"/>
+                  <rect x="96" y="2" width="64" height="16" fill="#ffffff"/>
+                  <path d="M112 22 v8 M128 22 v8 M144 22 v8" stroke="#d9d8ec" stroke-width="3" stroke-linecap="round"/>
+                </g>
+              </g>
+            </g></g></g>
+          </g>
+        </svg>
+        <div class="card" id="codeCard"><div class="kick">ghosty-rig</div><div id="codes"></div></div>
+        <div class="card" id="listCard"><div id="rows"></div></div>
+      </div>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "ghosty",
+        duration: 30.2,
+        home: { x: 640, y: 600, s: 1.5 },
+        idle: { amp: 7, period: 1.6 },
+        badge: ["Agente", "ghosty.studio"],
+        followPath: [[470, 250], [800, 230], [820, 470], [470, 480], [640, 250]],
+        // [t, gesto, {a: argumentos después de t, o: opciones}, código que se muestra, qué se ve]
+        steps: [
+          [0.5, "surprise", {}, "rig.surprise(t)", "se agacha, respinga hacia atrás y abre los ojos"],
+          [1.9, "confused", {}, "rig.confused(t)", "se ladea, entrecierra un ojo y las pupilas buscan"],
+          [3.8, "think", {}, "rig.think(t)", "mira arriba de lado, flota lento y parpadea lento"],
+          [6.0, "sad", {}, "rig.sad(t)", "se encoge, párpados caídos y olanes sin vida"],
+          [8.0, "scared", {}, "rig.scared(t)", "ojos chicos y temblor corto a 12 fps"],
+          [9.45, "laugh", {}, "rig.laugh(t)", "ojitos felices y sacudidas al ritmo"],
+          [10.8, "doubleTake", { a: ["right"] }, "rig.doubleTake(t, \"right\")", "mira, regresa y vuelve a mirar de golpe"],
+          [12.55, "hopAnticipated", {}, "rig.hopAnticipated(t)", "mira arriba, se agacha hondo y brinca"],
+          [14.0, "nod", {}, "rig.nod(t)", "sí: baja y sube; las pupilas llegan tarde"],
+          [15.0, "shake", {}, "rig.shake(t)", "no: vaivén con contra-giro de pupilas"],
+          [16.1, "lean", { a: ["right"] }, "rig.lean(t, \"right\")", "se inclina hacia algo para señalarlo"],
+          [17.6, "celebrate", {}, "rig.celebrate(t)", "vuelta, dos brincos y aterrizaje con squash"],
+          [19.65, "moveTo", { a: [640, 600], o: { arc: 170, dur: 0.6 } }, null, null],
+          [19.65, "land", { t: 20.25 }, "rig.moveTo(…).land(t)", "aterrizaje: squash, olanes y lentes tarde"],
+          [21.1, "sleep", { a: [23.3] }, "rig.sleep(t0, t1)", "cierra los ojos, respira y flota lento"],
+          [23.5, "wait", { a: [25.5] }, "rig.wait(t0, t1)", "espera: mira a los lados, parpadeo lento"],
+          [25.7, "work", {}, "rig.work(t)", "lee renglones de izquierda a derecha"],
+          [27.8, "follow", { a: [29.6, "PATH"] }, "rig.follow(t0, t1, path)", "las pupilas siguen un punto"],
+        ],
+        idleSpans: [[0, 21.1], [25.5, 30.2]],
+      };
+      const PALETTES = {
+        ghosty:     { bg: "#f4f5fb", ink: "#191a20", accent: "#8483e0", accent2: "#aeadef", muted: "#6c6f79", card: "#ffffff", line: "#e1e3e7", line2: "#d6d7e6", soft: "#e4e4fa", floor: "#e4e4fa" },
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E", card: "#161d22", line: "#26313a", line2: "#2c3840", soft: "#0a0e11", floor: "#1d262d" },
+      };
+      const root = document.getElementById("root");
+      for (const [k, v] of Object.entries(PALETTES[PARAMS.palette])) root.style.setProperty("--" + k, v);
+
+      document.getElementById("gBadgeT1").textContent = PARAMS.badge[0];
+      document.getElementById("gBadgeT2").textContent = PARAMS.badge[1];
+
+      const tl = gsap.timeline({ paused: true });
+      const rig = GhostyRig.create(tl, { root: "#stage", shadow: "#gShadow", floorY: PARAMS.home.y });
+      rig.place(PARAMS.home.x, PARAMS.home.y, PARAMS.home.s);
+      for (const [a0, a1] of PARAMS.idleSpans) rig.idle(a0, a1, PARAMS.idle);
+      for (const [t, g, args] of PARAMS.steps) {
+        const a = (args.a || []).map((v) => (v === "PATH" ? PARAMS.followPath : v));
+        rig[g](args.t ?? t, ...a, args.o || {});
+      }
+      // el punto que siguen las pupilas: mismo camino que follow (GhostyRig.pathAt)
+      const fs = PARAMS.steps.find((s) => s[1] === "follow"), target = document.getElementById("target");
+      const ft0 = fs[0], ft1 = fs[2].a[0], dot = { u: 0 };
+      const placeDot = () => { const [x, y] = GhostyRig.pathAt(PARAMS.followPath, dot.u); target.setAttribute("cx", x.toFixed(2)); target.setAttribute("cy", y.toFixed(2)); };
+      placeDot();
+      tl.set(target, { visibility: "visible" }, ft0 - 0.3); tl.set(target, { visibility: "hidden" }, ft1 + 0.3);
+      tl.fromTo(dot, { u: 0 }, { u: 1, duration: ft1 - ft0, ease: "none", immediateRender: false, onUpdate: placeDot }, ft0);
+
+      // tarjetas de la demo: código del gesto + lista que se va palomeando
+      const codes = document.getElementById("codes"), rowsEl = document.getElementById("rows");
+      const names = [...new Set(PARAMS.steps.filter((s) => s[3]).map((s) => s[1]))], rows = {};
+      for (const n of names) { const r = document.createElement("div"); r.className = "row"; r.innerHTML = `<span class="dot"></span>${n}`; rowsEl.appendChild(r); rows[n] = r; r.setAttribute("data-s", n === PARAMS.steps[0][1] ? "on" : ""); }
+      const S = PARAMS.steps, END = PARAMS.duration + 1;
+      S.forEach(([t, g, , code, what], i) => {
+        // la fila queda encendida hasta que entra OTRO gesto; el código, hasta el siguiente renglón de código
+        const rowOff = (S.find((s, j) => j > i && s[0] > t && s[1] !== g) || [END])[0];
+        const codeOff = (S.find((s, j) => j > i && s[0] > t && s[3]) || [END])[0];
+        if (code) {
+          const c = document.createElement("div"); c.className = "code"; c.innerHTML = `<b>${code}</b><i>${what}</i>`; codes.appendChild(c);
+          tl.set(c, { visibility: i === 0 ? "visible" : "hidden" }, 0);
+          tl.set(c, { visibility: "visible" }, t); tl.set(c, { visibility: "hidden" }, codeOff);
+        }
+        if (!rows[g]) return;
+        if (t > 0) tl.set(rows[g], { attr: { "data-s": "on" } }, t); // el estado del cuadro 0 va en el DOM
+        if (rowOff <= PARAMS.duration && !S.some((s) => s[1] === g && s[0] > t && s[0] <= rowOff)) tl.set(rows[g], { attr: { "data-s": "done" } }, rowOff);
+      });
+
+      rig.finalize(PARAMS.duration);
+      window.__sfxCues = rig.cues;
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

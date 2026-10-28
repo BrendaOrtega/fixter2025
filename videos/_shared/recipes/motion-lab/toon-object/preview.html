@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>motion-lab — toon-object</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=block" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <!-- build UMD (window.THREE): el adaptador `three` de HyperFrames lo busca ahí para esperar cargas -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- opcional: pega los golpes al beat. Si no carga (receta copiada sin _lib), los tiempos quedan como están -->
+    <script src="../_lib/beat-snap.js"></script>
+    <style>
+      body { margin: 0; background: #0E1317; }
+      #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); font-family: Inter, system-ui, sans-serif; }
+      .mono { font-family: "Geist Mono", monospace; }
+      #gl { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; display: block; }
+      #kicker { position: absolute; left: 70px; top: 112px; font-size: 18px; letter-spacing: 0.14em; color: var(--muted); }
+      #title { position: absolute; left: 70px; top: 148px; width: 560px; font-size: 64px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.06; color: var(--ink); }
+      #title .w { display: inline-block; margin-right: 0.24em; will-change: transform; }
+      #title .ch { display: inline-block; }
+      #title .accent { position: relative; }
+      #mark { position: absolute; left: 0; right: 0.04em; bottom: -2px; height: 10px; background: var(--accent); border: 3px solid var(--outline); border-radius: 3px; transform: scaleX(0); transform-origin: 0% 50%; z-index: -1; }
+      #pill { position: absolute; left: 70px; top: 436px; padding: 14px 22px; border: 3px solid var(--outline); border-radius: 999px; background: var(--accent2); color: var(--outline); font-size: 22px; font-weight: 600; white-space: nowrap; box-shadow: 6px 6px 0 var(--outline); }
+      #pill .ch { display: none; }
+      #pill .caret { display: inline-block; width: 3px; height: 1em; margin-left: 2px; vertical-align: -0.15em; background: var(--outline); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1280" data-height="720" data-duration="6.5">
+      <canvas id="gl" width="1280" height="720"></canvas>
+      <div id="kicker" class="mono"></div>
+      <div id="title"></div>
+      <div id="pill"><span id="pill-text"></span><span class="caret"></span></div>
+    </div>
+
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",       // "fixtergeek" | "easybits"
+        kicker: "TALLER · SISTEMAS AGÉNTICOS",
+        // renglones del titular; el renglón 0 ya está en el cuadro 0 (miniatura), los demás entran palabra por palabra.
+        // La palabra entre *asteriscos* entra letra por letra y reacciona cuando sale el robot.
+        title: ["Tu agente,", "listo para", "*trabajar*"],
+        label: "Arma el tuyo en fixtergeek.com",   // pastilla CTA con typewriter ("" = ninguna)
+        // caja de regalo HUECA: paredes con grosor, interior de otro tono y tapa aparte
+        gift: { w: 1.6, h: 0.95, wall: 0.1, lidH: 0.3, lidOver: 0.08, ribbon: 0.24, radius: 0.16, bevel: 0.03 },
+        table: { top: 1.0, w: 6.4, d: 2.8, x: 0.7 },  // mesa: altura, medidas y centro en x (la caja vive en x=0)
+        lidRest: { x: 2.12, z: -0.66, yaw: 0.45 },       // dónde cae la tapa sobre la mesa (relativo a la caja, en su giro)
+        lidApex: 0.18,               // cuánto sube la tapa por encima de la altura mínima para girar sin rozar
+        giftYaw: -0.45,              // giro de la caja en Y (rad)
+        botRise: 0.2,                // cuánto asoma el robot sobre su posición de pie (los pies quedan dentro)
+        bands: [0.42, 0.72, 1.0],    // 2–3 tonos del toon (luz en cada banda, 0–1)
+        // px a 1280×720 (guía de línea 20-oct): silueta exterior del protagonista ≈ 6 % de su alto, entorno 0.6×,
+        // peso extra del lado de la sombra (abajo-derecha) e interiores 0.5×
+        line: { outer: 9, env: 5.5, extra: 2.5, inner: 4.5 },
+        light: { x: -3, y: 7, z: 3 },// de dónde viene la luz (decide bandas y sombra dura)
+        // cámara: pose A (entrada) → pose B (más alta, para ver dentro de la caja); dolly = acercamiento continuo
+        cam: {
+          a: { pos: [-1.2, 3.1, 10.6], look: [-1.75, 1.55, 0] },
+          b: { pos: [1.3, 6.4, 9.8], look: [-0.8, 1.35, 0] },
+          dolly: 0.86,               // fracción de la distancia al terminar (1 = sin dolly)
+          follow: 0.4,               // la mirada sube con la tapa mientras vuela (aire arriba para la voltereta)
+        },
+        beat: { bpm: 120, offset: 0, subdiv: 2 },   // rejilla para BeatSnap (null = no pegar)
+        timings: {
+          words: 0.15,               // entran las palabras del titular (stagger 0.12)
+          rumble: 0.85,              // la caja tiembla: algo hay adentro
+          lidPop: 1.5,               // la tapa sale volando (y la cámara cambia de ángulo)
+          lidLand: 2.2,              // la tapa cae en la mesa con rebote
+          robotPop: 2.25,            // el robot sale con estiramiento y overshoot
+          robotSettle: 2.75,         // aterriza con squash
+          accent: 2.75,              // la palabra acento reacciona
+          wave: 3.25,                // saluda con el brazo
+          waveEnd: 4.55,
+          label: 3.5,                // pastilla CTA que se escribe
+          blink: 5.1,
+          total: 6.5,
+        },
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E",
+          wall: "#16222A", floor: "#22333B", base: "#2C4049", inside: "#3E8C7E", screen: "#14202A", shadow: "#7C8A8E", floorShadow: "#16232A", table: "#C4CDCE", outline: "#030506" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99",
+          wall: "#15131f", floor: "#1e1b2b", base: "#2a2640", inside: "#4b23a0", screen: "#120f1c", shadow: "#8a8a99", floorShadow: "#141220", table: "#d6d4e0", outline: "#020203" },
+      };
+      const root = document.getElementById("root");
+      const PAL = PALETTES[PARAMS.palette];
+      for (const k in PAL) root.style.setProperty("--" + k, PAL[k]);
+      document.body.style.background = PAL.bg;
+      const T = { ...PARAMS.timings };
+
+      // ---- ritmo: los golpes se pegan a la corchea más cercana (≤ 0.12 s) si BeatSnap está cargado ----
+      if (window.BeatSnap && PARAMS.beat) {
+        const beats = BeatSnap.grid({ ...PARAMS.beat, duration: T.total });
+        for (const k of ["lidPop", "robotPop", "accent", "wave", "label"]) T[k] = BeatSnap.snap(T[k], { beats });
+      }
+
+      // ---- textos del DOM ----
+      document.getElementById("kicker").textContent = PARAMS.kicker;
+      const titleEl = document.getElementById("title");
+      const lineWords = [];   // por renglón: [{el, accent}]
+      PARAMS.title.forEach((line) => {
+        const row = document.createElement("div");
+        const ws = [];
+        line.split(" ").forEach((raw) => {
+          const accent = /^\*.*\*[,.]?$/.test(raw);
+          const txt = raw.replace(/\*/g, "");
+          const w = document.createElement("span");
+          w.className = "w" + (accent ? " accent" : "");
+          if (accent) {
+            w.innerHTML = [...txt].map((c) => `<span class="ch">${c}</span>`).join("") + `<span id="mark"></span>`;
+          } else w.textContent = txt;
+          row.appendChild(w);
+          ws.push({ el: w, accent });
+        });
+        titleEl.appendChild(row);
+        lineWords.push(ws);
+      });
+      const pillText = document.getElementById("pill-text");
+      const pillChars = [...PARAMS.label].map((c) => { const s = document.createElement("span"); s.className = "ch"; s.innerHTML = c === " " ? "&nbsp;" : c; pillText.appendChild(s); return s; });
+
+      // ---- three: escena fija, todo se dibuja desde el tiempo ----
+      const canvas = document.getElementById("gl");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setPixelRatio(1);
+      renderer.setSize(1280, 720, false);
+      renderer.setClearColor(new THREE.Color(PAL.wall), 1); // nunca negro: lo que no tape la pared es pared
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(30, 1280 / 720, 0.1, 100);
+
+      // toon de bandas duras: DataTexture de N px con NearestFilter = cero degradado
+      const bandData = new Uint8Array(PARAMS.bands.map((b) => Math.round(b * 255)));
+      const gradientMap = new THREE.DataTexture(bandData, bandData.length, 1, THREE.RedFormat);
+      gradientMap.minFilter = gradientMap.magFilter = THREE.NearestFilter;
+      gradientMap.generateMipmaps = false;
+      gradientMap.needsUpdate = true;
+      const toon = (hex) => new THREE.MeshToonMaterial({ color: new THREE.Color(hex), gradientMap });
+      const flat = (hex) => new THREE.MeshBasicMaterial({ color: new THREE.Color(hex) });
+
+      // la banda más alta debe dar el color exacto de la paleta: luz directa = π (luces físicas de r155+)
+      const sun = new THREE.DirectionalLight(0xffffff, Math.PI);
+      sun.position.set(PARAMS.light.x, PARAMS.light.y, PARAMS.light.z);
+      scene.add(sun);
+
+      // ---- línea de tinta en espacio de pantalla: UNA silueta por OBJETO, no por pieza ----
+      // Cada malla escribe en un pase aparte {obj, sub, profundidad}. Un pixel se pinta de tinta si a ≤ line.outer px hay
+      // otro OBJETO delante (o tocándolo y de rango mayor): silueta exterior gruesa, de esquinas redondas (disco) y sin
+      // encimarse. Dentro del mismo objeto sólo hay línea fina (≤ line.inner px) entre piezas distintas o en un salto
+      // de profundidad. Todo a 2× y luego promediado 2×2: borde limpio, sin blur.
+      const SS = 2, W = 1280, H = 720;
+      const rtOpts = { type: THREE.HalfFloatType, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter };
+      const rtColor = new THREE.WebGLRenderTarget(W * SS, H * SS, rtOpts);
+      const rtId = new THREE.WebGLRenderTarget(W * SS, H * SS, { ...rtOpts, type: THREE.FloatType });
+      const rtComp = new THREE.WebGLRenderTarget(W * SS, H * SS, { ...rtOpts, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+      const idMats = new Map();
+      function idMat(obj, sub, side) {
+        const k = obj + ":" + sub + ":" + side;
+        if (!idMats.has(k)) idMats.set(k, new THREE.ShaderMaterial({
+          side,
+          uniforms: { obj: { value: obj }, sub: { value: sub } },
+          vertexShader: `varying float vz; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vz = -mv.z; gl_Position = projectionMatrix * mv; }`,
+          fragmentShader: `uniform float obj; uniform float sub; varying float vz; void main() { gl_FragColor = vec4(obj, sub, vz, 1.0); }`,
+        }));
+        return idMats.get(k);
+      }
+      const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const fsVert = `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
+      const compMat = new THREE.ShaderMaterial({
+        uniforms: {
+          tColor: { value: rtColor.texture }, tId: { value: rtId.texture },
+          texel: { value: new THREE.Vector2(1 / (W * SS), 1 / (H * SS)) },
+          wHero: { value: PARAMS.line.outer * SS }, wEnv: { value: PARAMS.line.env * SS },
+          wExtra: { value: PARAMS.line.extra * SS }, rIn: { value: PARAMS.line.inner * SS },
+          ink: { value: new THREE.Color(PAL.outline) },
+        },
+        vertexShader: fsVert,
+        fragmentShader: `
+          uniform sampler2D tColor; uniform sampler2D tId; uniform vec2 texel;
+          uniform float wHero; uniform float wEnv; uniform float wExtra; uniform float rIn; uniform vec3 ink;
+          varying vec2 vUv;
+          const vec2 SHADOW_SIDE = vec2(0.7071, -0.7071);  // abajo-derecha en pantalla (luz arriba-izquierda)
+          void main() {
+            vec4 c = texture2D(tColor, vUv);
+            vec3 P = texture2D(tId, vUv).rgb;   // obj, pieza, profundidad
+            float line = 0.0;
+            float rMax = wHero + wExtra;
+            for (int y = -24; y <= 24; y++) {
+              for (int x = -24; x <= 24; x++) {
+                vec2 o = vec2(float(x), float(y));
+                float d = length(o);
+                if (d > rMax || line > 0.5) continue;
+                vec3 Q = texture2D(tId, vUv + o * texel).rgb;
+                if (Q.r < 0.5) continue;                      // el fondo no proyecta línea
+                float dz = P.z - Q.z;                         // > 0: Q está delante
+                if (abs(Q.r - P.r) > 0.5) {
+                  // otro objeto: silueta exterior. Grosor según quién la proyecta (entorno 0.6 del protagonista) y
+                  // peso extra del lado de la sombra: el disco crece hacia abajo-derecha (P queda abajo-derecha de Q)
+                  float w = Q.r < 1.5 ? wEnv : wHero;
+                  float side = d > 0.0 ? max(0.0, dot(-o / d, SHADOW_SIDE)) : 0.0;
+                  if (d > w + wExtra * side * (w / wHero)) continue;
+                  // delante, o tocándose y Q de rango mayor (contacto: una sola línea, del lado del de abajo)
+                  if (dz > 0.001 * P.z || (abs(dz) < 0.03 * P.z && Q.r > P.r)) line = 1.0;
+                } else if (d <= rIn) {
+                  // mismo objeto: línea interior (0.5 del contorno) entre piezas, de un solo lado (la pieza de mayor
+                  // número pinta sobre la otra, o la que está claramente delante), o en un salto de profundidad grande
+                  bool otherPiece = abs(Q.g - P.g) > 0.5;
+                  if ((otherPiece && (dz > 0.004 * P.z || (Q.g > P.g && abs(dz) < 0.05 * P.z))) || dz > 0.04 * P.z) line = 1.0;
+                }
+              }
+            }
+            gl_FragColor = vec4(mix(c.rgb, ink, line), 1.0);
+          }`,
+      });
+      const outMat = new THREE.ShaderMaterial({
+        uniforms: { t: { value: rtComp.texture } },
+        vertexShader: fsVert,
+        // un fetch bilineal en la esquina de 4 texeles = promedio 2×2 (antialias, no blur)
+        fragmentShader: `uniform sampler2D t; varying vec2 vUv; void main() { gl_FragColor = vec4(texture2D(t, vUv).rgb, 1.0);
+#include <colorspace_fragment>
+}`,
+      });
+      const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), compMat);
+      const quadScene = new THREE.Scene();
+      quadScene.add(quad);
+      // dibuja: color a 2×, ids a 2×, compone la línea y baja a 1× en el canvas
+      function draw() {
+        renderer.setRenderTarget(rtColor);
+        renderer.render(scene, camera);
+        const saved = [];
+        scene.traverse((o) => {
+          if (!o.isMesh) return;
+          if (o.userData.shadow) { if (o.visible) { saved.push([o, null]); o.visible = false; } return; } // sombras fuera
+          saved.push([o, o.material]);
+          o.material = idMat(o.userData.obj ?? 0, o.userData.sub ?? 0, o.material.side);   // sin obj = escenario (fondo)
+        });
+        renderer.setClearColor(0x000000, 0);
+        renderer.setRenderTarget(rtId);
+        renderer.clear();
+        renderer.render(scene, camera);
+        for (const [o, m] of saved) { if (m) o.material = m; else o.visible = true; }
+        renderer.setClearColor(new THREE.Color(PAL.wall), 1);
+        quad.material = compMat;
+        renderer.setRenderTarget(rtComp);
+        renderer.render(quadScene, quadCam);
+        quad.material = outMat;
+        renderer.setRenderTarget(null);
+        renderer.render(quadScene, quadCam);
+      }
+
+      // sombra dura plana: proyección de cada pieza sobre un plano horizontal y=h según la luz, color sólido
+      const L = new THREE.Vector3(-PARAMS.light.x, -PARAMS.light.y, -PARAMS.light.z).normalize();
+      const planeProj = (h) => new THREE.Matrix4().set(
+        1, -L.x / L.y, 0, (L.x / L.y) * h,
+        0, 0, 0, h + 0.004,
+        0, -L.z / L.y, 1, (L.z / L.y) * h,
+        0, 0, 0, 1,
+      );
+      const TB = PARAMS.table;
+      const onTable = planeProj(TB.top), onFloor = planeProj(0);
+      // la sombra dura NO es tinta (se fundiría con el contorno): gris de la paleta sobre la mesa clara; en el piso oscuro, un tono
+      // apenas más hondo que el piso
+      const shadowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(PAL.shadow), depthWrite: false });
+      const floorShadowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(PAL.floorShadow), depthWrite: false });
+      const parts = [];   // { mesh, shadow, proj }
+      let curObj = 0, subSeq = 0;   // objeto actual (rango: mayor = va encima en contacto) y pieza
+      const tag = (m, obj, sub) => { m.userData.obj = obj; m.userData.sub = sub; return m; };
+      // opts: { sub } para que varias piezas cuenten como una (sin línea entre ellas), { shadow: false }, { proj }
+      function part(geo, mat, parent, opts = {}) {
+        const mesh = tag(new THREE.Mesh(geo, mat), curObj, opts.sub ?? ++subSeq);
+        parent.add(mesh);
+        if (opts.shadow !== false) {
+          const shadow = new THREE.Mesh(geo, opts.proj === onFloor ? floorShadowMat : shadowMat);
+          shadow.matrixAutoUpdate = false; shadow.renderOrder = 1; shadow.userData.shadow = true;
+          scene.add(shadow);
+          parts.push({ mesh, shadow, proj: opts.proj || onTable });
+        }
+        return mesh;
+      }
+
+      // ---- escenario: pared, zoclo, piso, cuadro en la pared y mesa (formas planas de color sólido) ----
+      const WALL_Z = -3.2;
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), flat(PAL.wall));
+      wall.position.set(0, 10, WALL_Z);
+      const baseboard = new THREE.Mesh(new THREE.PlaneGeometry(60, 0.35), flat(PAL.base));
+      baseboard.position.set(0, 0.175, WALL_Z + 0.01);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), flat(PAL.floor));
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.set(0, 0, WALL_Z + 20);
+      scene.add(wall, baseboard, floor);
+      // cuadro colgado: marco de tinta, lienzo menta y un monte verde (objeto concreto, nada abstracto)
+      const frame = new THREE.Group();
+      frame.position.set(2.6, 3.55, WALL_Z + 0.02);
+      const fr = (w, h, hex, x, y, z) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), flat(hex)); m.position.set(x, y, z); frame.add(m); return m; };
+      fr(1.9, 1.35, PAL.outline, 0, 0, 0);
+      fr(1.72, 1.17, PAL.accent, 0, 0, 0.005);
+      const hill = new THREE.Mesh(new THREE.CircleGeometry(0.62, 32, 0, Math.PI), flat(PAL.accent2));
+      hill.position.set(-0.22, -0.585, 0.01); frame.add(hill);
+      fr(0.26, 0.26, PAL.ink, 0.5, 0.28, 0.01);
+      scene.add(frame);
+      // mesa: tablero y cuatro patas en toon gris; su sombra cae en el piso
+      curObj = 1;                              // rango 1: la mesa
+      const table = new THREE.Group();
+      table.position.set(TB.x, 0, 0);
+      scene.add(table);
+      const topT = 0.16;
+      const tTop = part(new THREE.BoxGeometry(TB.w, topT, TB.d), toon(PAL.table), table, { proj: onFloor });
+      tTop.position.y = TB.top - topT / 2;
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        const leg = part(new THREE.BoxGeometry(0.16, TB.top - topT, 0.16), toon(PAL.base), table, { proj: onFloor });
+        leg.position.set(sx * (TB.w / 2 - 0.3), (TB.top - topT) / 2, sz * (TB.d / 2 - 0.25));
+      }
+
+      // ---- piezas de planta redonda: ExtrudeGeometry de un rectángulo de esquinas redondas, con bisel en los cantos ----
+      // (BoxGeometry tiene esquinas rectas: la silueta sale redonda por el disco de la tinta, pero el relleno no)
+      function roundedRect(w, d, r) {
+        const x = w / 2, y = d / 2, s = new THREE.Shape();
+        r = Math.max(0.001, Math.min(r, x - 0.001, y - 0.001));
+        s.moveTo(-x + r, -y); s.lineTo(x - r, -y); s.absarc(x - r, -y + r, r, -Math.PI / 2, 0);
+        s.lineTo(x, y - r); s.absarc(x - r, y - r, r, 0, Math.PI / 2);
+        s.lineTo(-x + r, y); s.absarc(-x + r, y - r, r, Math.PI / 2, Math.PI);
+        s.lineTo(-x, -y + r); s.absarc(-x + r, -y + r, r, Math.PI, Math.PI * 1.5);
+        return s;
+      }
+      // pieza vertical de planta w×d y alto h con base en y=0; `inset` > 0 la vuelve anillo (paredes de ese grosor).
+      // El bisel crece hacia afuera del contorno y hacia adentro del hueco: se compensa para que las medidas sean exactas.
+      function roundedSlab(w, d, h, r, bevel = 0, inset = 0) {
+        const b = Math.min(bevel, h / 2 - 0.001);
+        const shape = roundedRect(w - 2 * b, d - 2 * b, r - b);
+        if (inset) shape.holes.push(roundedRect(w - 2 * inset + 2 * b, d - 2 * inset + 2 * b, r - inset + b));
+        const geo = new THREE.ExtrudeGeometry(shape, { depth: h - 2 * b, bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 10 });
+        geo.rotateX(-Math.PI / 2);             // la extrusión (z) pasa a ser la altura (y)
+        geo.translate(0, b, 0);
+        return geo;
+      }
+
+      // ---- el objeto: caja de regalo HUECA ----
+      const G = PARAMS.gift;
+      curObj = 2;                              // rango 2: la caja
+      const gift = new THREE.Group();          // raíz: posición y giro (pie en la mesa)
+      gift.position.set(0, TB.top, 0);
+      gift.rotation.y = PARAMS.giftYaw;
+      scene.add(gift);
+      const shake = new THREE.Group();         // el temblor inclina caja Y tapa juntas: la tapa viaja apoyada, no la atraviesa
+      gift.add(shake);
+      const boxG = new THREE.Group();          // lo que se aplasta (sin la tapa, que vuela sola)
+      shake.add(boxG);
+      const inner = G.w - 2 * G.wall;
+      const wallMat = toon(PAL.accent), insideMat = toon(PAL.inside), ribbonMat = toon(PAL.ink);
+      const SUB_SHELL = ++subSeq, SUB_IN = ++subSeq;   // fondo+paredes = una pieza; el forro, otra (línea fina en el borde)
+      part(roundedSlab(G.w, G.w, G.wall, G.radius, G.bevel), wallMat, boxG, { sub: SUB_SHELL });                  // fondo
+      part(roundedSlab(G.w, G.w, G.h, G.radius, G.bevel, G.wall), wallMat, boxG, { sub: SUB_SHELL });             // paredes con grosor
+      // forro interior de otro tono: sigue la curva de las paredes por dentro y termina antes del bisel del borde
+      const lin = 0.012, rIn = G.radius - G.wall;
+      part(roundedSlab(inner, inner, G.h - G.wall - G.bevel, rIn, 0, lin), insideMat, boxG, { sub: SUB_IN, shadow: false }).position.y = G.wall;
+      part(roundedSlab(inner, inner, lin, rIn), insideMat, boxG, { sub: SUB_IN, shadow: false }).position.y = G.wall;
+      // listón por fuera de cada pared (en la parte plana, lejos de las esquinas)
+      for (const [x, z, w, d] of [[0, G.w / 2 + 0.01, G.ribbon, 0.02], [0, -G.w / 2 - 0.01, G.ribbon, 0.02],
+        [G.w / 2 + 0.01, 0, 0.02, G.ribbon], [-G.w / 2 - 0.01, 0, 0.02, G.ribbon]]) {
+        part(new THREE.BoxGeometry(w, G.h - 2 * G.bevel, d), ribbonMat, boxG, { shadow: false }).position.set(x, G.h / 2, z);
+      }
+      // tapa: lid (pivote en la base: posición, giro en Y y squash al caer) → lidSpin (pivote en su centro: la voltereta)
+      // → lidBody (la geometría, base en y=0)
+      curObj = 3;                              // rango 3: la tapa (va encima de la caja y la mesa)
+      const lid = new THREE.Group();
+      shake.add(lid);
+      const lidSpin = new THREE.Group(), lidBody = new THREE.Group();
+      lid.add(lidSpin); lidSpin.add(lidBody);
+      const lidW = G.w + G.lidOver * 2, lidR = G.radius + G.lidOver;
+      part(roundedSlab(lidW, lidW, G.lidH, lidR, G.bevel * 1.5), toon(PAL.accent2), lidBody);
+      // la cinta cruza por ARRIBA y baja por los lados; no por debajo (por debajo se ve el cartón cuando la tapa voltea).
+      // Las dos bandas son UNA pieza (mismo sub): sin línea ni parpadeo de profundidad donde se cruzan.
+      const SUB_RIB = ++subSeq;
+      for (const yaw of [0, Math.PI / 2]) {
+        const band = part(roundedSlab(G.ribbon, lidW + 0.02, G.lidH + 0.008 - 0.006, 0.01, G.bevel * 1.5), ribbonMat, lidBody, { sub: SUB_RIB, shadow: false });
+        band.position.y = 0.006;               // su cara de abajo queda dentro de la tapa
+        band.rotation.y = yaw;
+      }
+      const bow = new THREE.Group();
+      bow.position.y = G.lidH + 0.16;   // los lazos no deben asomar por debajo de la tapa
+      lidBody.add(bow);
+      for (const side of [-1, 1]) {
+        const loop = part(new THREE.TorusGeometry(0.22, 0.08, 12, 32), ribbonMat, bow);
+        loop.position.x = side * 0.23;
+        loop.rotation.set(0, 0, side * 0.35);
+      }
+      part(new THREE.SphereGeometry(0.11, 16, 12), toon(PAL.accent2), bow);
+      // medidas reales de la tapa (con moño) en su propio marco: el centro de la voltereta y su radio en el plano YZ
+      lidBody.updateMatrixWorld(true);
+      const lidLocal = new THREE.Box3().setFromObject(lidBody, true);
+      const LID = {
+        cy: (lidLocal.min.y + lidLocal.max.y) / 2,
+        rSpin: Math.hypot((lidLocal.max.y - lidLocal.min.y) / 2, (lidLocal.max.z - lidLocal.min.z) / 2),
+        rPlan: (lidW / 2 - lidR) * Math.SQRT2 + lidR + 0.01,   // radio en planta de la esquina redonda (+ cinta)
+      };
+      lidSpin.position.y = LID.cy;
+      lidBody.position.y = -LID.cy;
+
+      // ---- el agente: robot de primitivas toon (pies en el fondo de la caja) ----
+      curObj = 4;                              // rango 4: el robot
+      const bot = new THREE.Group();           // raíz: sube desde adentro, squash/stretch
+      bot.position.y = G.wall;
+      gift.add(bot);
+      const botInner = new THREE.Group();      // giro hacia cámara y ladeo de cabeza
+      botInner.rotation.y = -PARAMS.giftYaw + 0.12;
+      bot.add(botInner);
+      const bodyMat = toon(PAL.ink);
+      for (const sx of [-1, 1]) part(new THREE.CylinderGeometry(0.09, 0.09, 0.45, 16), toon(PAL.muted), botInner).position.set(sx * 0.17, 0.225, 0);
+      part(new THREE.BoxGeometry(0.72, 0.6, 0.5), bodyMat, botInner).position.y = 0.75;
+      part(new THREE.BoxGeometry(0.2, 0.2, 0.04), flat(PAL.accent2), botInner, { shadow: false }).position.set(0, 0.8, 0.26);
+      const head = new THREE.Group();
+      head.position.y = 1.08;
+      botInner.add(head);
+      part(new THREE.CylinderGeometry(0.08, 0.08, 0.08, 12), toon(PAL.muted), head).position.y = 0.02;
+      const skull = part(new THREE.BoxGeometry(0.86, 0.62, 0.62), bodyMat, head);
+      skull.position.y = 0.36;
+      // pantalla-cara: placa oscura con ojos y sonrisa en menta (color plano, sin glow; una sola pieza = sin líneas encima)
+      const SUB_FACE = ++subSeq;
+      part(new THREE.BoxGeometry(0.66, 0.42, 0.03), flat(PAL.screen), skull, { sub: SUB_FACE, shadow: false }).position.z = 0.31;
+      const eyes = [];
+      for (const sx of [-1, 1]) {
+        const eye = part(new THREE.BoxGeometry(0.11, 0.16, 0.02), flat(PAL.accent), skull, { sub: SUB_FACE, shadow: false });
+        eye.position.set(sx * 0.15, 0.05, 0.335);
+        eyes.push(eye);
+      }
+      const smile = part(new THREE.TorusGeometry(0.1, 0.022, 6, 20, Math.PI), flat(PAL.accent), skull, { sub: SUB_FACE, shadow: false });
+      smile.position.set(0, -0.08, 0.335);
+      smile.rotation.z = Math.PI;
+      // antena con resorte
+      const antenna = new THREE.Group();
+      antenna.position.y = 0.67;
+      head.add(antenna);
+      part(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 8), toon(PAL.muted), antenna).position.y = 0.15;
+      part(new THREE.SphereGeometry(0.085, 16, 12), toon(PAL.accent2), antenna).position.y = 0.33;
+      // brazos: pivote en el hombro
+      const arms = [];
+      for (const sx of [-1, 1]) {
+        const arm = new THREE.Group();
+        arm.position.set(sx * 0.43, 0.98, 0);
+        botInner.add(arm);
+        part(new THREE.CapsuleGeometry(0.075, 0.34, 6, 12), bodyMat, arm).position.y = -0.24;
+        part(new THREE.SphereGeometry(0.11, 16, 12), toon(PAL.muted), arm).position.y = -0.5;
+        arm.rotation.z = sx * 0.18;
+        arms.push(arm);
+      }
+      const waveArm = arms[1];                 // el de su izquierda = lado derecho de la pantalla
+      // sombras del robot: se apagan mientras está escondido
+      const botShadow = new Set(parts.filter(({ mesh }) => { for (let o = mesh; o; o = o.parent) if (o === bot) return true; return false; }).map((p) => p.shadow));
+
+      // ---- pose por tiempo (pura: el mismo t da el mismo cuadro) ----
+      const clamp01 = (x) => Math.max(0, Math.min(1, x));
+      const lerp = (a, b, p) => a + (b - a) * p;
+      const seg = (t, a, b, ease) => ease(clamp01((t - a) / (b - a)));
+      const E = {
+        lin: (p) => p,
+        p2o: gsap.parseEase("power2.out"),
+        p2io: gsap.parseEase("power2.inOut"),
+        p1io: gsap.parseEase("power1.inOut"),
+        back: gsap.parseEase("back.out(1.8)"),
+        backPop: gsap.parseEase("back.out(1.6)"),
+        backArm: gsap.parseEase("back.out(2.5)"),
+        bounce: gsap.parseEase("bounce.out"),
+      };
+      const squash = (obj, k, s = 1) => obj.scale.set(s * (1 + k / 2), s * (1 - k), s * (1 + k / 2)); // k>0 aplasta, k<0 estira
+      const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+      const rumbleOf = (t) => seg(t, T.rumble, T.rumble + 0.2, E.lin) * (1 - seg(t, T.lidPop - 0.1, T.lidPop, E.lin));
+      function poseBox(t) {
+        // caja: tiembla (algo adentro), se aplasta al soltar la tapa y otra vez cuando sale el robot. El temblor inclina
+        // caja y tapa juntas (la tapa sigue apoyada); antes del pop la tapa además brinca, nunca baja del borde
+        const rumbleEnv = rumbleOf(t);
+        shake.rotation.z = Math.sin((t - T.rumble) * 38) * 0.035 * rumbleEnv;
+        let k = 0;
+        k += 0.16 * Math.sin(Math.PI * seg(t, T.lidPop - 0.12, T.lidPop, E.lin));                // se encoge y suelta
+        k -= 0.08 * Math.sin(Math.PI * seg(t, T.lidPop, T.lidPop + 0.3, E.lin));
+        k += 0.12 * Math.sin(Math.PI * seg(t, T.robotPop, T.robotPop + 0.3, E.lin));            // retroceso del robot
+        squash(boxG, k);
+      }
+      function poseBot(t) {
+        // robot: escondido hasta robotPop; sube estirado con overshoot, aterriza aplastado, saluda
+        bot.visible = t >= T.robotPop;
+        const rise = seg(t, T.robotPop, T.robotSettle, E.backPop);
+        bot.position.y = G.wall + lerp(-1.35, PARAMS.botRise, rise);
+        let bk = -0.24 * Math.sin(Math.PI * seg(t, T.robotPop, T.robotSettle - 0.1, E.lin));   // estira al subir
+        bk += 0.14 * Math.sin(Math.PI * seg(t, T.robotSettle - 0.06, T.robotSettle + 0.12, E.lin)); // squash al asentarse
+        if (t > T.robotSettle + 0.12) bk += 0.06 * Math.sin(Math.PI * seg(t, T.robotSettle + 0.12, T.robotSettle + 0.36, E.lin)) * -1;
+        squash(bot, bk, lerp(0.7, 1, seg(t, T.robotPop, T.robotSettle, E.back)));
+        // antena: resorte amortiguado tras salir
+        const ta = t - T.robotSettle;
+        antenna.rotation.z = ta > 0 ? 0.55 * Math.exp(-4.5 * ta) * Math.sin(17 * ta) : 0;
+        // saludo: sube el brazo con overshoot, lo agita y lo baja
+        const up = seg(t, T.wave, T.wave + 0.35, E.backArm) * (1 - seg(t, T.waveEnd - 0.3, T.waveEnd, E.p2io));
+        const wag = Math.sin((t - T.wave - 0.35) * Math.PI * 2 * 2.4) * 0.38 * seg(t, T.wave + 0.3, T.wave + 0.45, E.lin) * (1 - seg(t, T.waveEnd - 0.4, T.waveEnd - 0.25, E.lin));
+        waveArm.rotation.z = lerp(0.18, 2.55, up) + wag;
+        arms[0].rotation.z = -0.18 - 0.12 * up;
+        head.rotation.z = -0.12 * up + 0.03 * wag;
+        // parpadeo
+        const bl = 1 - 0.9 * Math.sin(Math.PI * seg(t, T.blink, T.blink + 0.14, E.lin));
+        for (const e of eyes) e.scale.y = bl;
+      }
+      function poseCam(t) {
+        // cámara: dolly continuo + cambio de ángulo A→B cuando se abre la caja
+        const C = PARAMS.cam;
+        const ang = seg(t, T.lidPop - 0.1, T.lidPop + 0.85, E.p2io);
+        camPos.fromArray(C.a.pos).lerp(new THREE.Vector3().fromArray(C.b.pos), ang);
+        camLook.fromArray(C.a.look).lerp(new THREE.Vector3().fromArray(C.b.look), ang);
+        camLook.y += C.follow * Math.sin(Math.PI * seg(t, T.lidPop - 0.05, T.lidLand + 0.25, E.p1io));
+        const dolly = lerp(1, C.dolly, seg(t, 0, T.total, E.p1io));
+        camera.position.copy(camLook).addScaledVector(camPos.sub(camLook), dolly);
+        camera.lookAt(camLook);
+        camera.updateMatrixWorld(true);
+      }
+
+      // ---- vuelo de la tapa con criterio físico, calculado con las medidas reales (marco de `shake`, base de la caja = 0) ----
+      // 1) sube en vertical (parábola balística: sale rápida y frena) hasta que su voltereta libra el borde de la caja y la
+      //    cabeza del robot, contando el contorno; 2) sólo entonces gira (2π en X, sobre su centro) y avanza hacia la mesa;
+      //    3) la voltereta termina arriba de esa misma altura; 4) baja únicamente cuando su planta ya no pisa la de la caja;
+      // 5) aterriza en su cara con squash y un rebote corto, la base nunca debajo de la mesa.
+      const box3 = new THREE.Box3(), _v = new THREE.Vector3(), _inv = new THREE.Matrix4();
+      // Box3 de `obj` medido en el marco de `frame` (vértice por vértice: ajustado, no la caja de la caja)
+      function boxIn(obj, frame, out = new THREE.Box3()) {
+        out.makeEmpty();
+        _inv.copy(frame.matrixWorld).invert();
+        obj.traverse((o) => {
+          if (!o.isMesh || o.userData.shadow) return;
+          const pos = o.geometry.attributes.position;
+          for (let i = 0; i < pos.count; i++) out.expandByPoint(_v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).applyMatrix4(_inv));
+        });
+        return out;
+      }
+      const LP = (() => {
+        const R = PARAMS.lidRest, t0 = T.lidPop, t3 = T.lidLand;
+        // lo más alto que llegan el borde de la caja (estirada) y la cabeza del robot (escondido adentro) mientras vuela la tapa
+        let top = 0, nearest = Infinity;
+        for (let t = t0 - 0.15; t <= t3; t += 1 / 120) {
+          poseBox(t); poseBot(t); poseCam(t);
+          scene.updateMatrixWorld(true);
+          top = Math.max(top, boxIn(boxG, shake, box3).max.y, boxIn(bot, shake, box3).max.y);
+          nearest = Math.min(nearest, camera.position.distanceTo(gift.getWorldPosition(_v)));
+        }
+        // el contorno (silueta + peso del lado de la sombra) convertido a unidades de mundo a la distancia más corta
+        const pxWorld = (2 * nearest * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / H;
+        const margin = (PARAMS.line.outer + PARAMS.line.extra) * pxWorld;
+        const rim = top + margin;                               // la base de la tapa arriba de esto = ya salió
+        const spinBase = rim + LID.rSpin - LID.cy;              // la base arriba de esto = puede girar sin rozar nada
+        const yA = spinBase + PARAMS.lidApex;                   // ápice de la parábola
+        const y0 = G.h, D = t3 - t0;
+        const a = ((Math.sqrt(yA - y0) + Math.sqrt(yA)) / D) ** 2;   // «gravedad» que cierra el vuelo en D segundos
+        const tA = t0 + Math.sqrt((yA - y0) / a);
+        const half = Math.sqrt((yA - spinBase) / a);
+        const tS0 = tA - half, tS1 = tA + half;                 // ventana de la voltereta (arriba de spinBase)
+        const tDown = tA + Math.sqrt((yA - rim) / a);           // de aquí en adelante la base ya está debajo del borde
+        // en planta: la tapa (radio de su esquina redonda) debe quedar fuera del cuadrado de la caja (con cinta) + contorno
+        const half2 = G.w / 2 + 0.02, P = new THREE.Vector2(R.x, R.z);
+        const clearAt = (u) => { const px = Math.max(0, Math.abs(u * P.x) - half2), pz = Math.max(0, Math.abs(u * P.y) - half2); return Math.hypot(px, pz) >= LID.rPlan + margin; };
+        let uClear = 1; for (let u = 0; u <= 1; u += 0.001) if (clearAt(u)) { uClear = u; break; }
+        const hu = (t) => E.p2o(clamp01((t - tS0) / (t3 - tS0)));  // avance en planta: arranca con la voltereta, frena al caer
+        if (!clearAt(1) || hu(tDown) < uClear) console.warn("toon-object: lidRest/timings no dejan bajar la tapa lejos de la caja", { uClear, at: hu(tDown) });
+        return { t0, t3, tA, a, yA, tS0, tS1, rim, spinBase, margin, uClear, hu, R };
+      })();
+      function poseLid(t) {
+        const { t0, t3, tA, a, yA, tS0, tS1, hu, R } = LP;
+        let y, u = 0, spin = 0;
+        if (t < t0) {
+          // apoyada en el borde (sigue el squash de la caja) y brinca con el temblor: nunca por debajo del borde
+          y = G.h * boxG.scale.y + 0.05 * Math.abs(Math.sin((t - T.rumble) * 19)) * rumbleOf(t);
+        } else if (t < t3) {
+          y = Math.max(0, yA - a * (t - tA) ** 2);
+          u = hu(t);
+          spin = Math.PI * 2 * E.p1io(clamp01((t - tS0) / (tS1 - tS0)));
+        } else {
+          // rebote corto: squash al tocar, saltito de 0.06 y squash chico al volver a tocar
+          u = 1; spin = Math.PI * 2;
+          y = 0.06 * Math.sin(Math.PI * seg(t, t3 + 0.1, t3 + 0.24, E.lin)) * (t < t3 + 0.24 ? 1 : 0);
+        }
+        lid.position.set(u * R.x, y, u * R.z);
+        lid.rotation.y = lerp(0, R.yaw, u);
+        lidSpin.rotation.x = spin;
+        const lk = t >= t3 ? 0.2 * Math.sin(Math.PI * seg(t, t3, t3 + 0.1, E.lin)) + 0.07 * Math.sin(Math.PI * seg(t, t3 + 0.24, t3 + 0.3, E.lin)) : 0;
+        squash(lid, lk);                        // pivote en la base: el squash no la hunde en la mesa
+      }
+      function poseAt(t) { poseBox(t); poseBot(t); poseLid(t); poseCam(t); scene.updateMatrixWorld(true); }
+
+      function renderAt(t) {
+        poseAt(t);
+        // sombras: cada pieza proyectada desde su matriz de mundo sobre su plano (mesa o piso)
+        for (const { mesh, shadow, proj } of parts) {
+          shadow.visible = !botShadow.has(shadow) || bot.visible;
+          shadow.matrix.multiplyMatrices(proj, mesh.matrixWorld);
+        }
+        draw();
+      }
+      // para el chequeo de colisiones (check-lid.mjs): pose pura por tiempo y los objetos a medir
+      window.__toon = { poseAt, boxIn, lid, boxG, table, bot, camera, LP, LID, fps: 30, total: T.total };
+
+      // ---- DOM con GSAP; la misma timeline dibuja el canvas en cada seek ----
+      const tl = gsap.timeline({ paused: true });
+      // renglón 0 ya está en el cuadro 0 (miniatura); los demás entran palabra por palabra con overshoot
+      let wi = 0;
+      lineWords.forEach((ws, li) => ws.forEach(({ el, accent }) => {
+        if (li === 0) return;
+        const at = T.words + wi++ * 0.12;
+        if (accent) {
+          const chars = el.querySelectorAll(".ch");
+          tl.fromTo(chars, { yPercent: 70, scale: 0.3, autoAlpha: 0 },
+            { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.4, ease: "back.out(3)", stagger: 0.04 }, at);
+        } else {
+          tl.fromTo(el, { yPercent: 90, rotation: 8, autoAlpha: 0 },
+            { yPercent: 0, rotation: 0, autoAlpha: 1, duration: 0.45, ease: "back.out(2.2)" }, at);
+        }
+      }));
+      // acento: cuando el robot aterriza, la palabra se pinta de menta, brinca en ola y le sale el subrayado
+      const accentChars = titleEl.querySelectorAll(".accent .ch");
+      if (accentChars.length) {
+        tl.to(accentChars, { color: PAL.accent, duration: 0.08, stagger: 0.035 }, T.accent);
+        tl.to(accentChars, { y: -18, duration: 0.14, ease: "power2.out", stagger: 0.035 }, T.accent);
+        tl.to(accentChars, { y: 0, duration: 0.4, ease: "back.out(3)", stagger: 0.035 }, T.accent + 0.14);
+        tl.fromTo("#mark", { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: "back.out(1.6)" }, T.accent + 0.1);
+      }
+      // pastilla CTA: entra con overshoot y se escribe; el cursor parpadea al final
+      tl.set("#pill", { autoAlpha: 0, scale: 0.6, transformOrigin: "0% 50%" }, 0);
+      if (PARAMS.label) {
+        tl.set("#pill", { autoAlpha: 1 }, T.label);
+        tl.to("#pill", { scale: 1, duration: 0.35, ease: "back.out(2.5)" }, T.label);
+        pillChars.forEach((c, i) => tl.set(c, { display: "inline" }, T.label + 0.15 + i * 0.035));
+        const done = T.label + 0.15 + pillChars.length * 0.035;
+        for (let b = done + 0.3, on = false; b < T.total; b += 0.35, on = !on) tl.set("#pill .caret", { autoAlpha: on ? 1 : 0 }, b);
+      }
+      const clock = { t: 0 };
+      tl.to(clock, { t: T.total, duration: T.total, ease: "none", onUpdate: () => renderAt(clock.t) }, 0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+
+      // adaptador `three` de HyperFrames: publica __hfThreeTime y dispara hf-seek en cada cuadro
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      renderAt(window.__hfThreeTime || 0);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800&family=Geist+Mono:wght@500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; }
+      #root { position: absolute; inset: 0; background: var(--bg); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+      #stage { position: absolute; inset: 0; overflow: hidden; }
+      .layer { position: absolute; transform-origin: 50% 50%; }
+      .layer svg { display: block; overflow: visible; }
+      .layer svg svg { overflow: hidden; } /* la pantalla del teléfono recorta (el overflow de arriba la pisaba) */
+      svg text { font-family: Inter, system-ui, sans-serif; font-weight: 800; }
+      #hud { position: absolute; inset: 0; pointer-events: none; }
+      #hud text { font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="8" data-width="1080" data-height="1920">
+      <div id="stage" data-start="0" data-duration="8"></div>
+      <svg id="hud" width="1080" height="1920" viewBox="0 0 1080 1920">
+        <g id="speed"></g>
+        <g id="pill" transform="translate(540 300)">
+          <rect x="-262" y="-30" width="540" height="72" rx="36" fill="var(--bg)" />
+          <rect x="-270" y="-38" width="540" height="72" rx="36" fill="var(--ink)" stroke="var(--bg)" stroke-width="8" />
+          <text id="pillText" x="0" y="9" text-anchor="middle" font-size="30" fill="var(--bg)"></text>
+        </g>
+      </svg>
+    </div>
+    <script>
+      // Parámetros: TODO lo que cambia entre usos vive aquí
+      const PARAMS = {
+        palette: "fixtergeek",     // "fixtergeek" | "easybits"
+        fps: 30,
+        streetX: 2600,             // dónde vive la escena B (calle) en el mundo: el whip-pan viaja hasta aquí
+        phone: { cx: 0, cy: 40, w: 216, h: 384 }, // pantalla del teléfono en la capa escritorio (9:16 exacto)
+        punch: { x: 225, y: -110, zoom: 2.7 },    // objeto del zoom-punch en la capa tienda (letrero ABIERTO)
+        outline: 24,               // contorno exterior (la mitad queda fuera de la silueta)
+        detail: 6,                 // líneas interiores
+        shadow: 8,                 // sombra dura (px a escala 1)
+        smear: { minV: 45, stretch: 700, maxStretch: 0.45, ghosts: [0.5, 0.25] },
+        labels: true,
+        seed: 7,
+      };
+      const PALETTES = {
+        fixtergeek: { bg: "#0E1317", ink: "#F2F5F4", accent: "#85DDCB", accent2: "#8DCF6E", muted: "#7C8A8E" },
+        easybits:   { bg: "#0b0b0f", ink: "#ffffff", accent: "#7c3aed", accent2: "#fbbf24", muted: "#8a8a99" },
+      };
+      const P = PALETTES[PARAMS.palette];
+      const root = document.getElementById("root");
+      for (const k of ["bg", "ink", "accent", "accent2", "muted"]) root.style.setProperty("--" + k, P[k]);
+      const DUR = parseFloat(root.dataset.duration);
+      const W = 1080, H = 1920, FPS = PARAMS.fps;
+      const mulberry32 = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      const rnd = mulberry32(PARAMS.seed);
+
+      // ───────────────────────── trazo de caricatura ─────────────────────────
+      // UNA silueta por objeto: pasada 1 = todas las piezas en --bg con trazo grueso redondo (queda detrás),
+      // pasada 2 = rellenos sin trazo, pasada 3 = detalles interiores delgados. Nada se encima.
+      const B = P.bg, I = P.ink, A = P.accent, G = P.accent2, M = P.muted;
+      const r = (x, y, w, h, f, rx = 0) => ({ t: "rect", a: { x, y, width: w, height: h, rx }, f });
+      const c = (cx, cy, rr, f) => ({ t: "circle", a: { cx, cy, r: rr }, f });
+      const p = (d, f) => ({ t: "path", a: { d, "fill-rule": "evenodd" }, f });
+      const ln = (d, f, w) => ({ t: "path", a: { d }, f, line: w }); // pieza que es un trazo (brazo de lámpara, asa)
+      const attrs = (a) => Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ");
+      const OL = PARAMS.outline;
+      const obj = (pieces, details = "", shadow = true) => {
+        const pass1 = pieces.map((q) => q.line
+          ? `<${q.t} ${attrs(q.a)} style="fill:none;stroke-width:${q.line + OL}" />`
+          : `<${q.t} ${attrs(q.a)} />`).join("");
+        const pass2 = pieces.map((q) => q.line
+          ? `<${q.t} ${attrs(q.a)} style="fill:none;stroke:${q.f};stroke-width:${q.line};stroke-linecap:round;stroke-linejoin:round" />`
+          : `<${q.t} ${attrs(q.a)} fill="${q.f}" />`).join("");
+        return `<g ${shadow ? 'filter="url(#hardShadow)"' : ""}>` +
+          `<g style="fill:${B};stroke:${B};stroke-width:${OL};stroke-linejoin:round;stroke-linecap:round">${pass1}</g>` +
+          `<g>${pass2}</g>` +
+          `<g style="fill:none;stroke:${B};stroke-width:${PARAMS.detail};stroke-linecap:round;stroke-linejoin:round">${details}</g></g>`;
+      };
+      const txt = (x, y, s, f, size, extra = "") => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="800" font-family="Inter, system-ui, sans-serif" style="fill:${f};stroke:none" ${extra}>${s}</text>`;
+
+      // ───────────────────────── escena A: escritorio de noche ─────────────────────────
+      const stars = (n, x0, x1, y0, y1) => Array.from({ length: n }, () =>
+        `<circle cx="${(x0 + rnd() * (x1 - x0)).toFixed(0)}" cy="${(y0 + rnd() * (y1 - y0)).toFixed(0)}" r="${(3 + rnd() * 4).toFixed(1)}" fill="${I}" />`).join("");
+      const moon = (cx, cy, rr) => obj([c(cx, cy, rr, I)],
+        `<circle cx="${cx - rr * 0.35}" cy="${cy - rr * 0.2}" r="${rr * 0.18}" style="fill:${M};stroke:none" /><circle cx="${cx + rr * 0.3}" cy="${cy + rr * 0.3}" r="${rr * 0.12}" style="fill:${M};stroke:none" />`, false);
+
+      const skyA = `<rect x="-1500" y="-1500" width="3000" height="3000" fill="${B}" />${stars(70, -1500, 1500, -1500, -380)}${moon(250, -620, 80)}` +
+        // ciudad lejana que se ve por la ventana (silueta plana, sin contorno)
+        Array.from({ length: 14 }, (_, i) => `<rect x="${-700 + i * 120}" y="${-470 + Math.round(rnd() * 90)}" width="110" height="900" fill="${M}" />`).join("");
+
+      const wallA =
+        `<path fill-rule="evenodd" fill="${A}" d="M-1800 -1800 H1800 V1800 H-1800 Z M40 -820 H440 V-300 H40 Z" />` +
+        obj([p("M20 -840 H460 V-280 H20 Z M40 -820 H440 V-300 H40 Z", I), r(232, -820, 16, 520, I), r(40, -568, 400, 16, I), r(0, -290, 480, 30, I, 8)]) +
+        obj([r(-470, -770, 250, 330, G, 14)], txt(-345, -560, "{ }", B, 120)) +
+        obj([r(-180, -720, 150, 150, I, 12), c(-105, -645, 42, A)], `<path d="M-105 -670 V-645 L-88 -632" />`);
+
+      const books = [[-90, 60, 210, G], [-28, 52, 170, M], [26, 70, 230, I], [98, 48, 190, B], [148, 64, 150, G], [214, 56, 205, M]];
+      const shelfA =
+        obj([r(-140, -250, 1040, 36, I, 8), r(0, -224, 24, 70, M, 6), r(780, -224, 24, 70, M, 6)]) +
+        obj(books.map(([x, w, h, f]) => r(x, -250 - h, w, h, f, 6)), books.map(([x, w, h]) => `<path d="M${x + 12} ${-250 - h + 30} H${x + w - 12} M${x + 12} ${-250 - 40} H${x + w - 12}" />`).join("")) +
+        obj([p("M480 -250 L470 -340 H600 L590 -250 Z", I), r(500, -480, 70, 150, G, 35), r(456, -430, 44, 24, G, 12), r(456, -456, 22, 50, G, 11)],
+          `<path d="M535 -460 V-350 M515 -450 V-360 M555 -450 V-360" />`) +
+        obj([r(690, -280, 120, 30, M, 6), r(735, -330, 30, 50, M), p("M680 -440 H820 Q820 -330 750 -330 Q680 -330 680 -440 Z", G)], `<path d="M690 -420 Q640 -420 650 -380 M810 -420 Q860 -420 850 -380" />`);
+
+      const ph = PARAMS.phone;
+      const phoneScreen = `<svg x="${ph.cx - ph.w / 2}" y="${ph.cy - ph.h / 2}" width="${ph.w}" height="${ph.h}" viewBox="${-W / 2} ${-H / 2} ${W} ${H}" overflow="hidden">` +
+        ["B0", "B1", "B2", "B3"].map((id) => `<use href="#${id}-art" />`).join("") + `</svg>`;
+      const deskA =
+        obj([r(-1400, 250, 2800, 150, I), r(-1400, 400, 2800, 1200, M)],
+          `<path d="M-1400 400 H1400" /><rect x="-420" y="470" width="340" height="190" rx="10" /><rect x="80" y="470" width="340" height="190" rx="10" /><circle cx="-250" cy="565" r="10" style="fill:${B}" /><circle cx="250" cy="565" r="10" style="fill:${B}" />`, false) +
+        obj([p("M-80 270 L-30 160 H30 L80 270 Z", M), r(-ph.w / 2 - 16, ph.cy - ph.h / 2 - 16, ph.w + 32, ph.h + 32, B, 30)]) +
+        phoneScreen +
+        obj([r(-420, 140, 150, 170, G, 22), ln("M-270 180 C-200 180 -200 270 -270 270", G, 28)], txt(-345, 245, "FG", B, 52)) +
+        `<path d="M-370 110 q-20 -30 0 -60 t0 -60 M-320 110 q-20 -30 0 -60 t0 -60" style="fill:none;stroke:${I};stroke-width:10;stroke-linecap:round" />` +
+        obj([p("M-250 300 H-30 L-50 380 H-272 Z", A)], `<path d="M-230 320 H-70 M-238 345 H-78" />`) +
+        obj([r(350, 228, 160, 36, G, 18), ln("M430 232 L470 40 L360 -80", G, 26), p("M250 -120 L390 -200 L440 -70 Z", A)]) +
+        obj([r(620, 40, 160, 220, B, 22)], `<circle cx="700" cy="110" r="40" style="stroke:${M}" /><circle cx="700" cy="110" r="14" style="fill:${M};stroke:none" /><circle cx="700" cy="215" r="22" style="stroke:${M}" />`);
+
+      const nearA =
+        obj([p("M-610 260 L-560 230 L-470 520 L-520 540 Z", A), p("M-470 210 L-420 200 L-430 520 L-480 520 Z", I), p("M-370 250 L-320 270 L-380 540 L-430 530 Z", M), r(-640, 500, 300, 380, G, 30)],
+          `<path d="M-600 570 H-380 M-600 610 H-380" />`) +
+        obj([p("M470 360 C380 200 330 120 380 60 C450 140 500 250 500 360 Z", G), p("M520 360 C520 200 580 100 660 80 C650 200 600 290 560 370 Z", G),
+             p("M450 400 C330 360 260 300 260 250 C360 250 430 300 480 380 Z", G), r(380, 380, 300, 340, I, 26)],
+          `<path d="M410 330 C400 260 390 200 380 120 M560 340 C580 250 610 170 640 110" />`);
+
+      // ───────────────────────── escena B: la calle (vive en x = streetX) ─────────────────────────
+      const skyB = `<rect x="-1500" y="-1700" width="3000" height="3400" fill="${B}" />${stars(80, -1500, 1500, -1700, -200)}${moon(280, -660, 110)}`;
+      let x = -1750; const bld = [], wins = [];
+      while (x < 1750) { const w = 180 + Math.round(rnd() * 120), top = -720 + Math.round(rnd() * 420); bld.push(r(x, top, w, 1400, M));
+        for (let wy = top + 50; wy < 380; wy += 90) for (let wx = x + 30; wx < x + w - 50; wx += 70) if (rnd() > 0.45) wins.push(`<rect x="${wx}" y="${wy}" width="34" height="46" style="fill:${rnd() > 0.5 ? G : I};stroke:none" />`);
+        x += w + 10; }
+      const farB = obj(bld, wins.join(""), false);
+      const awning = Array.from({ length: 8 }, (_, i) => r(-430 + i * 107.5, -440, 107.5, 100, i % 2 ? I : G));
+      const shopB =
+        obj([r(-1800, 420, 3600, 90, I), r(-1800, 510, 3600, 1300, M)], Array.from({ length: 12 }, (_, i) => `<rect x="${-1700 + i * 300}" y="800" width="150" height="22" style="fill:${I};stroke:none" />`).join("") + `<path d="M-1800 510 H1800" />`, false) +
+        obj([r(-1150, -900, 690, 1330, I)], Array.from({ length: 10 }, (_, i) => `<rect x="${-1080 + (i % 3) * 200}" y="${-800 + Math.floor(i / 3) * 280}" width="120" height="170" rx="8" style="fill:${B};stroke:none" />`).join("")) +
+        obj([r(460, -820, 700, 1250, G)], Array.from({ length: 9 }, (_, i) => `<rect x="${530 + (i % 3) * 200}" y="${-740 + Math.floor(i / 3) * 280}" width="120" height="170" rx="8" style="fill:${B};stroke:none" />`).join("")) +
+        obj([r(-430, -700, 860, 1130, A), r(-380, -660, 760, 160, B, 18), ...awning, r(-370, -260, 420, 400, B, 12), r(110, -260, 220, 690, G, 10)],
+          txt(0, -545, "TALLER", A, 110) + `<path d="M-370 -60 H50 M-300 -170 v100 M-200 -130 v60" style="stroke:${M}" /><circle cx="290" cy="90" r="12" style="fill:${B}" />`);
+      const pu = PARAMS.punch;
+      const signB = `<path d="M${pu.x - 50} -330 L${pu.x} ${pu.y - 80} L${pu.x + 50} -330" style="fill:none;stroke:${I};stroke-width:8;stroke-linecap:round" />` +
+        obj([c(pu.x, pu.y, 84, I)], txt(pu.x, pu.y + 12, "ABIERTO", B, 32));
+      const nearB =
+        obj([r(-462, -760, 44, 1500, I, 10), p("M-540 -820 H-340 L-380 -720 H-500 Z", G), r(-490, -720, 100, 60, A, 8)]) +
+        obj([r(320, 470, 130, 200, A, 18), p("M310 470 Q385 380 460 470 Z", A), r(290, 530, 30, 50, A, 8), r(450, 530, 30, 50, A, 8)], `<path d="M340 520 H430" />`);
+
+      // ───────────────────────── capas (z = 1 es el plano de foco) ─────────────────────────
+      const LAYERS = [
+        { id: "A0", scene: "A", z: 10, w: 3000, h: 3000, art: skyA },
+        { id: "A1", scene: "A", z: 4, w: 3600, h: 3600, art: wallA },
+        { id: "A2", scene: "A", z: 2, w: 3000, h: 2400, art: shelfA },
+        { id: "A3", scene: "A", z: 1, w: 2800, h: 3200, art: deskA },
+        { id: "A4", scene: "A", z: 0.6, w: 2600, h: 2600, art: nearA },
+        { id: "B0", scene: "B", z: 10, w: 3000, h: 3400, art: skyB, ax: PARAMS.streetX },
+        { id: "B1", scene: "B", z: 4, w: 3600, h: 2800, art: farB, ax: PARAMS.streetX },
+        { id: "B2", scene: "B", z: 1, w: 3600, h: 3600, art: shopB + signB, ax: PARAMS.streetX },
+        { id: "B3", scene: "B", z: 0.6, w: 2800, h: 3000, art: nearB, ax: PARAMS.streetX },
+      ];
+
+      // ───────────────────────── cámara virtual ─────────────────────────
+      // Proyección de cámara de agujero: una capa a profundidad z se ve a escala s = z/(z − camZ) y se corre
+      // (anchor − cam)/(z − camZ). zoom es el del plano de foco (z = 1): camZ = 1 − 1/zoom. Las capas lejanas se
+      // mueven menos que las cercanas (parallax real) y en un dolly fuerte las cercanas pasan detrás de la cámara.
+      function createCamera({ stage, layers, fps, defs }) {
+        const KEYS = ["x", "y", "zoom", "rot", "yaw"];
+        const init = { x: 0, y: 0, zoom: 1, rot: 0, yaw: 0 };
+        const segs = [], cuts = [], scenes = [], cues = [];
+        let cursor = 0;
+        const mk = (L, ghost) => {
+          const d = document.createElement("div"); d.className = "layer";
+          Object.assign(d.style, { width: L.w + "px", height: L.h + "px", left: (W - L.w) / 2 + "px", top: (H - L.h) / 2 + "px" });
+          d.innerHTML = `<svg width="${L.w}" height="${L.h}" viewBox="${-L.w / 2} ${-L.h / 2} ${L.w} ${L.h}">` +
+            (ghost ? `<use href="#${L.id}-art" />` : `<g id="${L.id}-art">${L.art}</g>`) + `</svg>`;
+          stage.appendChild(d); return d;
+        };
+        stage.insertAdjacentHTML("beforeend", defs);
+        // múltiplos debajo de su capa: el más viejo (más tenue) hasta abajo
+        const els = layers.map((L) => { const ghosts = PARAMS.smear.ghosts.map(() => mk(L, true)); return { L, ghosts, el: mk(L, false) }; });
+
+        const cam = {
+          // movimiento suave: cada clave interpola desde donde quedó; `at` por omisión = al terminar el anterior
+          to(target, dur, ease = "power2.inOut", at = cursor, opts = {}) {
+            segs.push({ target, dur, ease, at, smear: !!opts.smear, sfx: opts.sfx, fn: gsap.parseEase(ease) });
+            cursor = at + dur; return cam;
+          },
+          // corte invisible / salto: fija el estado en un instante
+          set(target, at = cursor) { cuts.push({ target, at }); return cam; },
+          // a partir de `at` se ve la escena `name` (las capas de otras escenas se esconden)
+          scene(name, at) { scenes.push({ name, at }); return cam; },
+          at(t) {
+            const st = { ...init };
+            for (const k of KEYS) {
+              const ev = [
+                ...cuts.filter((q) => k in q.target).map((q) => ({ at: q.at, cut: q })),
+                ...segs.filter((q) => k in q.target).map((q) => ({ at: q.at, seg: q })),
+              ].sort((a, b) => a.at - b.at);
+              let v = init[k];
+              for (const e of ev) {
+                if (t < e.at) break;
+                if (e.cut) { v = e.cut.target[k]; continue; }
+                const s = e.seg, pr = Math.min(1, (t - s.at) / s.dur);
+                v = v + (s.target[k] - v) * s.fn(pr);
+              }
+              st[k] = v;
+            }
+            st.camZ = 1 - 1 / st.zoom;
+            return st;
+          },
+          sceneAt(t) { let n = "A"; for (const s of [...scenes].sort((a, b) => a.at - b.at)) if (t >= s.at) n = s.name; return n; },
+          smearAt(t) { return segs.some((s) => s.smear && t >= s.at && t <= s.at + s.dur + 2 / fps); },
+          cutBetween(t0, t1) { return cuts.some((q) => q.at > t0 && q.at <= t1); },
+          transform(L, st, kx = 1) {
+            const d = L.z - st.camZ;
+            if (d < 0.06) return null; // la capa ya quedó detrás de la cámara
+            const s = L.z / d, tx = ((L.ax || 0) - st.x) / d, ty = ((L.ay || 0) - st.y) / d;
+            return `perspective(1800px) rotateY(${st.yaw}deg) scale(${kx}, 1) rotate(${st.rot}deg) translate(${tx}px, ${ty}px) scale(${s})`;
+          },
+          // velocidad de la cámara en px/cuadro sobre el plano de foco
+          speed(t) {
+            const a = cam.at(t), b = cam.at(Math.max(0, t - 1 / fps));
+            if (cam.cutBetween(t - 1 / fps, t)) return 0;
+            return Math.hypot(a.x - b.x, a.y - b.y) * a.zoom;
+          },
+          render(t) {
+            const st = cam.at(t), sc = cam.sceneAt(t), sm = PARAMS.smear;
+            const v = cam.smearAt(t) ? cam.speed(t) : 0;
+            const kx = v > sm.minV ? 1 + Math.min(v / sm.stretch, sm.maxStretch) : 1;
+            for (const { L, el, ghosts } of els) {
+              const tr = L.scene === sc ? cam.transform(L, st, kx) : null;
+              el.style.visibility = tr ? "visible" : "hidden";
+              if (tr) el.style.transform = tr;
+              // múltiplos: la misma capa donde estaba 1 y 2 cuadros antes (con la escena de ESE cuadro)
+              ghosts.forEach((g, i) => {
+                const tg = t - (i + 1) / fps, sg = cam.at(tg);
+                const trg = v > sm.minV && L.scene === cam.sceneAt(tg) && !cam.cutBetween(tg, t) ? cam.transform(L, sg) : null;
+                g.style.visibility = trg ? "visible" : "hidden"; g.style.opacity = sm.ghosts[i];
+                if (trg) g.style.transform = trg;
+              });
+            }
+            cam.onRender && cam.onRender(t, st, v);
+          },
+          // pega los inicios al beat/palabra con _lib/beat-snap.js (back.out(s) alinea su golpe, no su inicio)
+          snap(opts) {
+            for (const s of segs) {
+              const m = String(s.ease).match(/back\.out\(([\d.]+)\)/);
+              const impact = s.impact ?? (m ? 1 / (+m[1] + 1) : /\.in$|\.in\(/.test(s.ease) ? 1 : 0);
+              s.at = BeatSnap.snap(s.at, { ...opts, impact, duration: s.dur });
+            }
+            return cam;
+          },
+          cues() {
+            return segs.filter((s) => s.sfx).map((s) => {
+              const m = String(s.ease).match(/back\.out\(([\d.]+)\)/);
+              const k = m ? 1 / (+m[1] + 1) : /\.in$/.test(s.ease) ? 1 : 0;
+              return { t: +(s.at + k * s.dur).toFixed(3), sfx: s.sfx };
+            }).sort((a, b) => a.t - b.t);
+          },
+          // engancha la cámara a la timeline: un reloj que la evalúa en cada seek (seek-safe)
+          attach(tl, dur) {
+            const clock = { t: 0 };
+            tl.to(clock, { t: dur, duration: dur, ease: "none", onUpdate: () => cam.render(clock.t) }, 0);
+            cam.render(0); return cam;
+          },
+        };
+        return cam;
+      }
+
+      const defs = `<svg width="0" height="0" style="position:absolute"><defs><filter id="hardShadow" x="-0.5" y="-0.5" width="2" height="2">` +
+        `<feDropShadow dx="${PARAMS.shadow}" dy="${PARAMS.shadow}" stdDeviation="0" flood-color="${B}" flood-opacity="1" /></filter></defs></svg>`;
+      const camera = createCamera({ stage: document.getElementById("stage"), layers: LAYERS, fps: FPS, defs });
+
+      // ───────────────────────── la coreografía (8 s) ─────────────────────────
+      const SX = PARAMS.streetX, Z = W / ph.w; // zoom en el que la pantalla del teléfono llena el cuadro
+      camera
+        .to({ x: 0, y: 30, zoom: 1.32 }, 1.3, "power2.inOut", 0.15, { sfx: "riser" })          // 1 push-in
+        .to({ x: 400, y: -70, zoom: 1.24 }, 1.5, "power2.inOut", 1.5, { sfx: "swish" })        // 2 paneo con parallax
+        .to({ x: 340 }, 0.15, "power2.out", 3.0)                                                // anticipación del whip
+        .to({ x: SX + 110, y: 0, zoom: 1 }, 0.33, "expo.inOut", 3.15, { smear: true, sfx: "whoosh" }) // 3 whip-pan
+        .scene("B", 3.32)                                                                        //   …transmuta a la calle
+        .to({ x: SX }, 0.45, "back.out(3)", 3.48, { sfx: "thud" })                              //   frenón con overshoot
+        .to({ x: SX - 110, zoom: 1.08, yaw: -12, rot: -2 }, 1.1, "sine.inOut", 3.95)            //   giro de cámara (perspectiva)
+        .to({ x: SX + PARAMS.punch.x, y: PARAMS.punch.y, zoom: PARAMS.punch.zoom, yaw: 0, rot: 0 }, 0.3, "power4.in", 5.05, { sfx: "punch" }) // 4 zoom-punch
+        .to({ zoom: PARAMS.punch.zoom * 0.92 }, 0.3, "back.out(4)", 5.35)
+        .to({ x: SX, y: 0, zoom: 1 }, 0.4, "power3.inOut", 5.85)                                 //   regresa al encuadre de la pantalla
+        .scene("A", 6.3)
+        .set({ x: ph.cx, y: ph.cy, zoom: Z }, 6.3)                                               //   corte invisible: la calle ERA el teléfono
+        .to({ x: 0, y: 0, zoom: 0.96 }, 1.4, "power3.inOut", 6.3, { sfx: "whoosh-rev" })          // 5 dolly-out que cierra
+        .to({ x: -12 }, 0.3, "sine.out", 7.7);
+
+      const MOVES = [[0, "1 · push-in"], [1.5, "2 · paneo + parallax"], [3.0, "3 · whip-pan · smear"], [5.0, "4 · zoom-punch"], [6.3, "5 · dolly-out"]];
+      const pillText = document.getElementById("pillText");
+      document.getElementById("pill").style.display = PARAMS.labels ? "" : "none";
+      // líneas de velocidad (HUD fijo): sólo en los cuadros rápidos del whip
+      const speed = document.getElementById("speed");
+      speed.innerHTML = Array.from({ length: 11 }, () => { const y = 380 + rnd() * 1200, x0 = rnd() * 700, l = 220 + rnd() * 380;
+        return `<line x1="${x0.toFixed(0)}" y1="${y.toFixed(0)}" x2="${(x0 + l).toFixed(0)}" y2="${y.toFixed(0)}" stroke="${I}" stroke-width="12" stroke-linecap="round" />`; }).join("");
+      camera.onRender = (t, st, v) => {
+        let label = MOVES[0][1]; for (const [mt, s] of MOVES) if (t >= mt) label = s;
+        pillText.textContent = label;
+        speed.style.visibility = v > PARAMS.smear.minV * 2 ? "visible" : "hidden";
+      };
+
+      const tl = gsap.timeline({ paused: true });
+      camera.attach(tl, DUR);
+      window.__sfxCues = camera.cues();
+      window.__camera = camera;
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

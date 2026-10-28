@@ -706,5 +706,15 @@
     "autor": "Windpearl",
     "licencia": "CC BY 3.0 (pide crédito)",
     "video": "mailmask/videos/short-promo-muertos"
+  },
+  {
+    "fuente": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Funkorama.mp3",
+    "titulo": "Funkorama — Kevin MacLeod (CC BY 4.0)",
+    "video": "videos/hyperframes-0812/beats-audio (demo-funkorama, 4.2–24.2 s)"
+  },
+  {
+    "fuente": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Electro%20Cabello.mp3",
+    "titulo": "Electro Cabello — Kevin MacLeod (CC BY 4.0)",
+    "video": "videos/hyperframes-0812/beats-audio (demo-beats-audio, 0–33 s)"
   }
 ]

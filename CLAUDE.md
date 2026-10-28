@@ -80,7 +80,7 @@ gradientes ni glow en FixterGeek, bucles finitos, SFX en cada animación (catál
 `videos/_shared/handoff/` (README + plantilla). Un `HANDOFF.yaml` en la carpeta del video + `AGENTS.md`/`CLAUDE.md`
 que mandan leerlo; se entrega en zip. Ejemplo: `videos/ghosty-identidad/HANDOFF.yaml`.
 
-**motion-lab (desde el 17 sep 2026)**: `videos/_shared/recipes/motion-lab/` — 15 mecánicas medidas
+**motion-lab (desde el 17 sep 2026; 30 recetas desde el 28 oct; fuente de verdad: `~/ghosty-reel/skills/motion-lab/`)**: `videos/_shared/recipes/motion-lab/` — mecánicas medidas
 cuadro a cuadro al replicar un video real (ventana retro con typewriter, lista inclinada,
 cortinilla que muestrea la escena, partículas que colapsan a una letra, malla de barril, cubos
 isométricos, barras/tabla/scatter, árbol de nodos, reloj de arena, rayos con contador, karaoke por
@@ -89,6 +89,14 @@ palabra, cajas apiladas, dither). Cada una es una composición HyperFrames + GSA
 (`data-duration` estático, `tl.set` en vez de `gsap.set`, typewriter por `display`). Galería con
 previews: <https://blissito.github.io/ghosty-reel/motion-lab/>. El laboratorio de origen está en
 `videos/replica-typesafe/README.md`.
+
+**HyperFrames 0.8.212 (28-oct-2026)**: demos y veredictos de lo nuevo en `videos/hyperframes-0812/README.md`
+(`beats`/`audio --band` para medir música, echo-smear, filmed-screen, ProRes 4444, `check --range`). Con ffmpeg 9 el
+`alimiter` va siempre con `:level=disabled` o sube la ganancia solo.
+
+### Shorts 3D de Ghosty (cuartito low-poly, aprobados 27-oct-2026)
+Receta, look aprobado (sin contorno ni toon, ojos planos) y pipeline Blender → three.js → render → mezcla:
+`videos/_shared/ghosty-3d/RECETA-SHORTS-3D.md`. Para uno nuevo, copiar `videos/ghosty-3d-inicia-sesion/`.
 
 ## Blog — Sistema de posts
 
