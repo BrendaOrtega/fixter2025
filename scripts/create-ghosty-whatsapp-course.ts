@@ -42,8 +42,10 @@ async function main() {
       index: i,
       moduleName: l.section,
       kind: "leccion",
-      // La primera abierta; el resto gratis a cambio del correo.
-      isPublic: l.n === 1,
+      // Todas gratis: la primera abierta, el resto a cambio del correo (eso lo decide
+      // `accessLevel`). `isPublic` en true las mete a llms.txt y al sitemap de video:
+      // ahí sólo entra lo que se puede ver sin comprar.
+      isPublic: true,
       accessLevel: l.n === 1 ? "public" : "subscriber",
       // El video va en HLS (`m3u8`, lo pone upload-hls-local.ts); storageLink vacío, como el resto del sitio.
       storageLink: "",

@@ -79,7 +79,10 @@ export const loader = async () => {
     lineas.push("");
     lineas.push(`- **URL**: ${SITE}/cursos/${c.slug}/detalle`);
     if (c.description) {
-      lineas.push(`- **De qué trata**: ${c.description.replace(/\s+/g, " ").trim()}`);
+      // La descripción es markdown: al aplanarla a una línea, los «## Título» quedaban
+      // pegados a mitad de la frase.
+      const plano = c.description.replace(/^#+\s*(.+)$/gm, "$1.").replace(/\s+/g, " ").trim();
+      lineas.push(`- **De qué trata**: ${plano}`);
     }
     lineas.push(
       `- **Precio**: ${c.isFree ? "gratis" : `$${c.basePrice?.toLocaleString("es-MX")} MXN`}`
