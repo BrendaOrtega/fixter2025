@@ -532,8 +532,9 @@ const CourseHeader = ({
             <p className="text-colorParagraph text-sm md:text-lg  font-light">
               {useVideosLength(id)} lecciones
             </p>
+            {/* Sin duración queda un solo separador, no «|  |». */}
             <p className="text-colorParagraph text-sm md:text-lg font-light">
-              | {formatDuration(duration)} |
+              {formatDuration(duration) ? `| ${formatDuration(duration)} |` : "|"}
             </p>
             <div className="flex items-center gap-2 ">
               <p className=" text-brand-500 uppercase text-sm md:text-lg">

@@ -57,10 +57,13 @@ export const CourseCard = ({
   course,
   to,
   courseSlug,
+  isNew = false,
 }: {
   to?: string;
   course: Partial<Course>;
   courseSlug?: string;
+  /** Curso recién publicado: lleva el distintivo «NUEVO» (lo decide /cursos). */
+  isNew?: boolean;
 }) => {
   const isProximamente = course.tipo === "proximamente";
   const videosLength = useVideosLength(course.id, isProximamente);
@@ -115,6 +118,11 @@ export const CourseCard = ({
       {isProximamente && (
         <div className="absolute -top-2 -right-2 z-20 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
           PRÓXIMAMENTE
+        </div>
+      )}
+      {isNew && !isProximamente && (
+        <div className="absolute -top-2 -right-2 z-20 bg-brand-500 text-background text-xs font-bold px-3 py-1 rounded-full border-2 border-background shadow-[3px_3px_0_0_#0E1317]">
+          NUEVO
         </div>
       )}
       <motion.div

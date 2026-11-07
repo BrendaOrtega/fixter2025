@@ -79,8 +79,11 @@ export default function Route({
 const proximamenteCourses: Partial<Course>[] = [];
 
 export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
-  // Estos van al frente, en este orden; el resto queda como venga del loader.
-  const FEATURED_SLUGS = ["pong-vanilla-js", "sistemas-agenticos", "ai-sdk"];
+  // Los nuevos van primero y con distintivo «NUEVO»; luego los destacados, en este
+  // orden; el resto queda como venga del loader. Para quitarle lo nuevo a un curso,
+  // basta con sacarlo de NEW_SLUGS.
+  const NEW_SLUGS = ["agente-de-ia-que-vende-por-whatsapp"];
+  const FEATURED_SLUGS = [...NEW_SLUGS, "pong-vanilla-js", "sistemas-agenticos", "ai-sdk"];
 
   const featuredCourses = FEATURED_SLUGS.map((slug) =>
     courses.find((c) => c.slug === slug)
@@ -105,6 +108,7 @@ export const CousesList = ({ courses }: { courses: Partial<Course>[] }) => {
           courseSlug={course.slug}
           key={course.id}
           course={course}
+          isNew={NEW_SLUGS.includes(course.slug as string)}
           to={course.landingUrl || undefined}
         />
       ))}
