@@ -6,7 +6,27 @@ import { useBotTrap } from "~/hooks/useBotTrap";
 // Muro del club (10-nov-2026). Caricatura plana de la casa: contorno grueso,
 // rellenos sólidos y sombra dura; nada de gradientes ni blur.
 
-export type WallAuthor = { id: string; name: string; photoURL: string | null };
+export type WallBadge = { key: string; icon: string; label: string; hint: string };
+export type WallAuthor = { id: string; name: string; photoURL: string | null; badges?: WallBadge[] };
+
+/** Insignias junto al nombre: icono siempre, texto en pantallas anchas. */
+export function BadgeList({ badges, compact = false }: { badges?: WallBadge[]; compact?: boolean }) {
+  if (!badges?.length) return null;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1 align-middle">
+      {badges.map((b) => (
+        <span
+          key={b.key}
+          title={`${b.label}: ${b.hint}`}
+          className="inline-flex items-center gap-1 rounded-full border-2 border-[#85DDCB]/60 bg-[#85DDCB]/10 px-1.5 py-px text-[11px] font-bold leading-tight text-[#85DDCB]"
+        >
+          <span aria-hidden>{b.icon}</span>
+          <span className={compact ? "sr-only" : "hidden sm:inline"}>{b.label}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
 export type WallComment = {
   id: string;
   body: string;
@@ -346,7 +366,9 @@ export function PostCard({
       <header className="flex items-start gap-3">
         <MemberAvatar author={post.author} />
         <div className="min-w-0 flex-1">
-          <p className="font-bold leading-tight">{post.author.name}</p>
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-bold leading-tight">
+            {post.author.name} <BadgeList badges={post.author.badges} />
+          </p>
           <p className="text-xs text-[#7C8A8E]" suppressHydrationWarning>
             {timeAgo(post.createdAt)}
           </p>
@@ -398,6 +420,7 @@ export function PostCard({
                 <div className="min-w-0 flex-1 rounded-xl bg-[#F2F5F4]/5 px-3 py-2">
                   <p className="text-sm">
                     <span className="font-bold">{c.author.name}</span>{" "}
+                    <BadgeList badges={c.author.badges} compact />{" "}
                     <span className="text-xs text-[#7C8A8E]" suppressHydrationWarning>
                       {timeAgo(c.createdAt)}
                     </span>{" "}

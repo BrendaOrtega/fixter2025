@@ -42,6 +42,7 @@ import {
   PostCard,
   useWallRefresh,
 } from "~/components/community/ClubWall";
+import { badgesForMembers } from "~/.server/services/badges.server";
 import { MicIllustration } from "~/components/community/MicIllustration";
 import { getCallLink } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
@@ -96,6 +97,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     db.course.count({ where: { isFree: false, published: true } }),
   ]);
 
+  // Insignias de quienes aparecen en el muro (autores de publicaciones y comentarios).
+  const authorIds = wall.posts.flatMap((p) => [p.author.id, ...p.comments.map((c) => c.author.id)]);
+  const badges = await badgesForMembers(community, authorIds);
+  const withBadges = <A extends { id: string }>(a: A) => ({ ...a, badges: badges[a.id] ?? [] });
+  const wallWithBadges = {
+    ...wall,
+    posts: wall.posts.map((p) => ({
+      ...p,
+      author: withBadges(p.author),
+      comments: p.comments.map((c) => ({ ...c, author: withBadges(c.author) })),
+    })),
+  };
+
   const { ownerId: _owner, ...publicCommunity } = community;
   return {
     community: publicCommunity,
@@ -114,7 +128,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       : null,
     membership,
     canClaimGift: !!user && !isInside && (await canClaimBuyerGift(user, community.id)),
-    wall,
+    wall: wallWithBadges,
     event: event
       ? {
           title: event.title,
