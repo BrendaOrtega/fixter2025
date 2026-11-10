@@ -16,14 +16,14 @@ const write = process.argv.includes("--write");
 
 // 10-nov-2026, 19:00–20:30 en CDMX (UTC−6).
 const CALL = {
-  title: "Primera llamada del Club de Agentes de IA",
+  title: "Ensayo en vivo del micro-hackatón de Ghosty Studio",
   startsAt: new Date("2026-11-11T01:00:00Z"),
-  endsAt: new Date("2026-11-11T02:30:00Z"),
+  endsAt: new Date("2026-11-11T02:00:00Z"),
 };
 
-const ANNOUNCEMENT = `## 🎙 Hoy a las 7 pm (CDMX): primera llamada del club
+const ANNOUNCEMENT = `## 🎙 Hoy a las 7 pm (CDMX): ensayo en vivo del micro-hackatón
 
-Abrimos el Club de Agentes de IA con una llamada en vivo. Trae el agente que estás construyendo o la duda que se te atoró: la llamada es para eso.
+Hoy probamos en vivo el formato del micro-hackatón de Ghosty Studio del jueves 12 de noviembre. Entra a ver cómo funciona o trae tu duda.
 
 - **Cuándo:** hoy, martes 10 de noviembre, 7:00 pm hora del centro de México.
 - **Dónde:** aquí mismo. El botón **«Entrar a la llamada»** de arriba se enciende 15 minutos antes.
