@@ -185,12 +185,13 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       {/* Arriba de todo: es el CTA al que apuntan los shorts, que solo dicen
           "regístrate en fixtergeek.com". Se quita sola cuando ya no hay webinar. */}
       <WebinarBar />
-      {/* Pivote a comunidades (10-nov-2026): las 4 primeras son del club; lo de antes, debajo. */}
+      {/* Pivote (10-nov-2026): las 4 primeras venden la plataforma de comunidades; el Club de
+          Agentes es la comunidad piloto. Lo de antes, debajo. */}
       {club && (
         <>
           <ClubHomeHero club={club} />
-          <ClubWallPreview posts={club.posts} />
-          <ClubIncludedSection courseCount={club.courseCount} />
+          <ClubIncludedSection />
+          <ClubWallPreview club={club} />
           <CreatorCommunitiesBand />
         </>
       )}
