@@ -82,13 +82,18 @@ export async function partnerPost<T = Record<string, unknown>>(
  * URL de la sala de la caja con ticket de un solo uso, o `null` si algo falla (queda en el log).
  * Se pide justo antes de redirigir: el ticket vence a los 120 s y no sirve dos veces.
  */
-export async function getCallLink(user: CallUser, opts: { host?: boolean } = {}): Promise<string | null> {
+export async function getCallLink(
+  user: CallUser,
+  opts: { host?: boolean; speaker?: boolean } = {}
+): Promise<string | null> {
   const name = (user.displayName || user.username || user.email.split("@")[0]).trim().slice(0, 40);
   const host = opts.host ?? isHostEmail(user.email);
+  // speaker publica mic, cámara y pantalla; viewer sólo ve, escribe en el chat y levanta la mano.
+  const role = host ? "host" : opts.speaker ? "speaker" : "viewer";
   const r = await partnerPost<{ url?: string }>("/api/v2/partner/event-box/ticket", {
     room: clubCallRoom(),
     name,
-    role: host ? "host" : "viewer",
+    role,
     mode: process.env.CLUB_CALL_MODE === "taller" ? "taller" : "webinar",
     title: TITLE,
   });

@@ -214,7 +214,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (!isCallOpen(event)) {
       return data({ error: "La llamada se abre 15 minutos antes." }, { status: 400 });
     }
-    const link = await getCallLink(user, { host: canMod });
+    // Los participantes del micro-hackatón (invitados con esa fuente) entran como speaker para
+    // compartir su pantalla; el resto de la audiencia entra como viewer.
+    const speakerInvite = await db.communityInvite.findFirst({
+      where: { communityId: community.id, email: user.email.toLowerCase(), source: { startsWith: "micro-hackaton" } },
+      select: { id: true },
+    });
+    const link = await getCallLink(user, { host: canMod, speaker: !!speakerInvite });
     // El anfitrión elige al entrar: «Grabar» (encendido por defecto) y «Transmitir a YouTube y
     // Facebook» (transmitir también graba). Si la caja no puede (ocupada con otra sala), se entra
     // igual y el botón de grabar lo dice en la página.
