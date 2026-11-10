@@ -49,6 +49,7 @@ import {
   startRecording,
   stopRecording,
 } from "~/.server/services/club-recording.server";
+import { applyInvite, isCallGuestToday } from "~/.server/services/club-invites.server";
 import { badgesForMembers } from "~/.server/services/badges.server";
 import { MicIllustration } from "~/components/community/MicIllustration";
 import { getCallLink } from "~/.server/services/club-call.server";
@@ -85,6 +86,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!community) throw data("Comunidad no encontrada", { status: 404 });
 
   const user = await getUserOrNull(request);
+  // Invitado: el regalo se aplica solo al entrar con su correo (antes de leer la membresía).
+  const invite = user ? await applyInvite(user, community.id) : null;
   const membership = user
     ? await db.membership.findUnique({
         where: { communityId_userId: { communityId: community.id, userId: user.id } },
@@ -141,6 +144,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     wall: wallWithBadges,
     recordings,
     rec,
+    isCallGuest: !isInside && isCallGuestToday(invite),
     event: event
       ? {
           title: event.title,
@@ -191,7 +195,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     select: { status: true, currentPeriodEnd: true },
   });
   const canMod = canModerate(user, community);
-  if (!canParticipate(user, membership, community)) {
+  const inside = canParticipate(user, membership, community);
+  // Invitado a la llamada de hoy: entra a la llamada (sólo eso) aunque no sea miembro.
+  const callGuest = !inside && intent === "call" && isCallGuestToday(await applyInvite(user, community.id));
+  if (!inside && !callGuest) {
     return data({ error: "Únete al club para participar." }, { status: 403 });
   }
 
@@ -562,7 +569,7 @@ function Recordings({
 export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   const {
     community, memberCount, courseCount, isLoggedIn, isInside, canMod, me,
-    membership, canClaimGift, wall, event, recordings, rec,
+    membership, canClaimGift, wall, event, recordings, rec, isCallGuest,
   } = loaderData;
   const [params] = useSearchParams();
   const actionData = useActionData<{ error?: string }>();
@@ -725,7 +732,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
             <h2 className="mt-1 text-2xl font-black">{event.title}</h2>
             <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
               <Countdown startsAt={event.startsAt} endsAt={event.endsAt} />
-              {isInside ? (
+              {isInside || isCallGuest ? (
                 <Form method="post">
                   <button
                     name="intent"

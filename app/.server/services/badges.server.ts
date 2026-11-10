@@ -12,6 +12,7 @@ export type MemberStats = {
   likesReceived: number;
   joinedAt: Date | null;
   isStudentGift: boolean;
+  isInvited?: boolean;
   isHost: boolean;
 };
 
@@ -27,6 +28,9 @@ export function badgesFor(s: MemberStats): Badge[] {
   }
   if (s.isStudentGift) {
     out.push({ key: "student", icon: "🎓", label: "Estudiante", hint: "Ya era estudiante de FixterGeek" });
+  }
+  if (s.isInvited) {
+    out.push({ key: "guest", icon: "🎟", label: "Invitado", hint: "Invitado especial del club" });
   }
   if (s.posts >= 1) {
     out.push({ key: "first-post", icon: "✍️", label: "Primera publicación", hint: "Ya publicó en el muro" });
@@ -57,7 +61,7 @@ export async function badgesForMembers(
     }),
     db.membership.findMany({
       where: { communityId: community.id, userId: { in: ids } },
-      select: { userId: true, provider: true, createdAt: true },
+      select: { userId: true, provider: true, grantSource: true, createdAt: true },
     }),
     db.user.findMany({ where: { id: { in: ids } }, select: { id: true, role: true } }),
     db.communityPost.findMany({ where: { communityId: community.id }, select: { id: true } }),
@@ -78,7 +82,8 @@ export async function badgesForMembers(
       likesReceived: p?._sum.likeCount ?? 0,
       comments: comments.find((x) => x.authorId === id)?._count._all ?? 0,
       joinedAt: m?.createdAt ?? null,
-      isStudentGift: m?.provider === "grant",
+      isStudentGift: m?.provider === "grant" && m.grantSource !== "invite",
+      isInvited: m?.provider === "grant" && m.grantSource === "invite",
       isHost: id === community.ownerId || u?.role === "ADMIN",
     });
   }

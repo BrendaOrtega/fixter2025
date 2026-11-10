@@ -261,6 +261,7 @@ model Community {
   posts          CommunityPost[]
   events         CommunityEvent[]
   recordings     CommunityRecording[]
+  invites        CommunityInvite[]
 
   /// Las secuencias que esta comunidad publica a sus miembros
   sequences Sequence[]
@@ -708,6 +709,8 @@ model Membership {
   /// active | past_due | canceled (lo que importa para dar acceso)
   status   String
   provider String  @default("stripe") // stripe | mercadopago | grant
+  /// De dónde salió el regalo: buyer (ya era estudiante) | invite (invitado de bliss)
+  grantSource String?
   interval String? // month | year
 
   /// Cliente y suscripción en el procesador (Stripe `cus_…`/`sub_…`, MP payer/preapproval).
@@ -1417,4 +1420,26 @@ model CommunityRecording {
 
   @@index([communityId, endedAt])
   @@map("community_recordings")
+}
+
+/// Invitado del club por correo (10-nov-2026): sin fricción. Al iniciar sesión con ese correo
+/// recibe `giftDays` de membresía sin tarjeta, y en cada día de `callDays` (YYYYMMDD de CDMX)
+/// entra a la llamada aunque ya no sea miembro.
+model CommunityInvite {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String    @db.ObjectId
+  community   Community @relation(fields: [communityId], references: [id])
+
+  /// En minúsculas.
+  email     String
+  /// p. ej. "micro-hackaton-nov-2026"
+  source    String
+  giftDays  Int       @default(0)
+  giftAt    DateTime?
+  callDays  String[]  @default([])
+
+  createdAt DateTime @default(now())
+
+  @@unique([communityId, email])
+  @@map("community_invites")
 }
