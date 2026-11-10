@@ -380,6 +380,12 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   const actionData = useActionData<{ error?: string }>();
   const justJoined = params.get("bienvenida") === "1";
   useWallRefresh(isInside);
+  // Sin membresía la página sigue siendo landing: 3 publicaciones y «Ver más»,
+  // para que lo de abajo (qué incluye, preguntas, cierre) quede a la vista.
+  const PREVIEW = 3;
+  const [showAll, setShowAll] = useState(false);
+  const shownPosts = isInside || showAll ? wall.posts : wall.posts.slice(0, PREVIEW);
+  const hiddenPublic = wall.posts.length - shownPosts.length;
 
   const joinBlock = canClaimGift ? (
     <div className="grid gap-4">
@@ -561,7 +567,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
           </p>
           <div className="mt-6 grid gap-5">
             {isInside && me && <Composer me={me} />}
-            {wall.posts.map((p) => (
+            {shownPosts.map((p) => (
               <PostCard
                 key={p.id}
                 post={p}
@@ -570,6 +576,15 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                 canComment={isInside}
               />
             ))}
+            {hiddenPublic > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="mx-auto rounded-xl border-2 border-[#F2F5F4] px-6 py-2.5 font-bold text-[#85DDCB] shadow-[4px_4px_0_#85DDCB] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              >
+                Ver {hiddenPublic} {hiddenPublic === 1 ? "publicación más" : "publicaciones más"}
+              </button>
+            )}
             {wall.posts.length === 0 && isInside && (
               <p className="rounded-2xl border-2 border-dashed border-[#7C8A8E] p-6 text-center text-[#7C8A8E]">
                 Todavía no hay publicaciones. Estrena el muro: cuéntanos qué agente quieres construir.
