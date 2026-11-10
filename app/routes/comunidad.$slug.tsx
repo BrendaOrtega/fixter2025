@@ -34,6 +34,7 @@ import {
   isCallOpen,
   isOwnImageKey,
   moderatePost,
+  toggleLike,
 } from "~/.server/services/wall.server";
 import {
   Composer,
@@ -90,7 +91,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     db.membership.count({
       where: { communityId: community.id, status: { in: ["active", "past_due"] } },
     }),
-    getWall({ communityId: community.id, isInside, canMod }),
+    getWall({ communityId: community.id, isInside, canMod, viewerId: user?.id ?? null }),
     getNextEvent(community.id),
   ]);
 
@@ -175,6 +176,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const link = await getCallLink(user, { host: canMod });
     if (link) throw redirect(link);
     return data({ error: "No pudimos abrir la sala. Intenta de nuevo en un momento." }, { status: 502 });
+  }
+
+  if (intent === "like") {
+    await toggleLike(community.id, String(form.get("postId") ?? ""), user.id);
+    return { ok: true };
   }
 
   if (intent === "post") {

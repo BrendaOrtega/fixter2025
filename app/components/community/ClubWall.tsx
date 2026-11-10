@@ -18,6 +18,9 @@ export type WallPostView = {
   id: string;
   body: string;
   imageUrl: string | null;
+  link: { url: string; title: string; description: string; image: string | null } | null;
+  likeCount: number;
+  likedByMe: boolean;
   isPublic: boolean;
   isPinned: boolean;
   hidden: boolean;
@@ -269,6 +272,62 @@ function HideCommentButton({ commentId }: { commentId: string }) {
   );
 }
 
+function LinkCard({ link }: { link: NonNullable<WallPostView["link"]> }) {
+  const host = (() => {
+    try {
+      return new URL(link.url).hostname.replace(/^www\./, "");
+    } catch {
+      return "";
+    }
+  })();
+  return (
+    <a
+      href={link.url}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-4 block overflow-hidden rounded-xl border-2 border-[#F2F5F4] transition hover:-translate-y-0.5 hover:shadow-[4px_4px_0_#85DDCB]"
+    >
+      {link.image && (
+        <img src={link.image} alt="" loading="lazy" className="aspect-[1200/630] w-full object-cover" />
+      )}
+      <div className="border-t-2 border-[#F2F5F4] p-4">
+        <p className="text-xs uppercase tracking-wider text-[#7C8A8E]">{host}</p>
+        <p className="mt-1 font-bold leading-snug">{link.title}</p>
+        {link.description && (
+          <p className="mt-1 line-clamp-2 text-sm text-[#F2F5F4]/75">{link.description}</p>
+        )}
+      </div>
+    </a>
+  );
+}
+
+function LikeButton({ post, canReact }: { post: WallPostView; canReact: boolean }) {
+  const fetcher = useFetcher();
+  // Optimista: el contador cambia al dar clic, sin esperar al servidor.
+  const pending = fetcher.state !== "idle";
+  const liked = pending ? !post.likedByMe : post.likedByMe;
+  const count = post.likeCount + (pending ? (post.likedByMe ? -1 : 1) : 0);
+  if (!canReact) {
+    return count > 0 ? <span className="text-sm text-[#7C8A8E]">👍 {count}</span> : null;
+  }
+  return (
+    <fetcher.Form method="post">
+      <input type="hidden" name="intent" value="like" />
+      <input type="hidden" name="postId" value={post.id} />
+      <button
+        aria-pressed={liked}
+        className={`rounded-full border-2 px-3 py-0.5 text-sm font-bold transition ${
+          liked
+            ? "border-[#85DDCB] bg-[#85DDCB] text-[#0E1317]"
+            : "border-[#7C8A8E] text-[#F2F5F4] hover:border-[#85DDCB]"
+        }`}
+      >
+        👍 {count > 0 ? count : ""}
+      </button>
+    </fetcher.Form>
+  );
+}
+
 export function PostCard({
   post,
   viewerId,
@@ -310,6 +369,7 @@ export function PostCard({
       <div className="prose prose-invert mt-4 max-w-none break-words prose-a:text-[#85DDCB] prose-pre:rounded-xl">
         <Streamdown>{post.body}</Streamdown>
       </div>
+      {post.link && !post.imageUrl && <LinkCard link={post.link} />}
       {post.imageUrl && (
         <img
           src={post.imageUrl}
@@ -320,6 +380,8 @@ export function PostCard({
       )}
 
       <footer className="mt-4 border-t-2 border-dashed border-[#7C8A8E]/40 pt-3">
+        <div className="flex items-center gap-4">
+        <LikeButton post={post} canReact={canComment} />
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -327,6 +389,7 @@ export function PostCard({
         >
           💬 {visibleComments.length === 0 ? "Comentar" : `${visibleComments.length} comentarios`}
         </button>
+        </div>
         {open && (
           <div className="mt-3 grid gap-3">
             {visibleComments.map((c) => (

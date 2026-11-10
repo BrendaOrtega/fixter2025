@@ -1328,11 +1328,14 @@ model CommunityPost {
 
   body     String // markdown
   imageUrl String?
+  /// Vista previa del primer enlace: {url, title, description, image}
+  link     Json?
   isPublic Boolean   @default(false)
   isPinned Boolean   @default(false)
   hiddenAt DateTime?
 
   commentCount Int                @default(0)
+  likeCount    Int                @default(0)
   comments     CommunityComment[]
 
   createdAt DateTime @default(now())
@@ -1375,4 +1378,16 @@ model CommunityEvent {
 
   @@index([communityId, startsAt])
   @@map("community_events")
+}
+
+/// 👍 de un miembro a una publicación del muro. Uno por persona.
+model CommunityReaction {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @db.ObjectId
+  userId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId])
+  @@map("community_reactions")
 }

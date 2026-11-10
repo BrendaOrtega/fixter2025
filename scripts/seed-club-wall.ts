@@ -9,6 +9,7 @@
  *   npx tsx --env-file=.env scripts/seed-club-wall.ts --write
  */
 import { db } from "../app/.server/db";
+import { buildLinkPreview } from "../app/.server/services/wall.server";
 
 const SLUG = "club-de-agentes";
 const write = process.argv.includes("--write");
@@ -49,7 +50,7 @@ async function main() {
     .filter((p): p is NonNullable<typeof p> => !!p)
     .map(
       (p) =>
-        `### ${p.title}\n\n${p.metaDescription ?? ""}\n\n👉 [Léelo en el blog](https://www.fixtergeek.com/blog/${p.slug})`
+        `📖 Lectura recomendada para el club: [${p.title}](https://www.fixtergeek.com/blog/${p.slug})`
     );
 
   console.log(`Llamada: ${CALL.title} · ${CALL.startsAt.toISOString()}`);
@@ -74,10 +75,27 @@ async function main() {
     });
     if (found) return false;
     await db.communityPost.create({
-      data: { communityId: community.id, authorId, body, isPublic: true, ...extra },
+      data: {
+        communityId: community.id,
+        authorId,
+        body,
+        isPublic: true,
+        link: (await buildLinkPreview(body)) ?? undefined,
+        ...extra,
+      },
     });
     return true;
   };
+
+  // Las del blog ya creadas reciben su tarjeta (portada, título, descripción).
+  const existing = await db.communityPost.findMany({
+    where: { communityId: community.id, link: { isSet: false } },
+    select: { id: true, body: true },
+  });
+  for (const p of existing) {
+    const link = await buildLinkPreview(p.body);
+    if (link) await db.communityPost.update({ where: { id: p.id }, data: { link } });
+  }
 
   // Se crean del más viejo al más nuevo para que el anuncio quede arriba.
   let created = 0;

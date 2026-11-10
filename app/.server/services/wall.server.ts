@@ -51,6 +51,41 @@ export function isOwnImageKey(key: string, userId: string) {
 
 export const imageUrlFor = (key: string) => `/api/wall-image?key=${encodeURIComponent(key)}`;
 
+export type LinkPreview = { url: string; title: string; description: string; image: string | null };
+
+/** Primer enlace del texto, sin la puntuación que lo cierra. */
+export function firstUrl(body: string) {
+  const m = body.match(/https?:\/\/[^\s)<>\]]+/);
+  return m ? m[0].replace(/[.,;:!?»"']+$/, "") : null;
+}
+
+/** Slug de un post de nuestro blog (fixtergeek.com/blog/<slug>), o null. */
+export function blogSlugFromUrl(url: string) {
+  const m = url.match(/^https?:\/\/(?:www\.)?fixtergeek\.com\/blog\/([\w-]+)\/?(?:[?#].*)?$/);
+  return m ? m[1] : null;
+}
+
+/**
+ * Vista previa del primer enlace. Por ahora sólo posts del blog (portada,
+ * título y descripción salen de la base); los sitios externos van después.
+ */
+export async function buildLinkPreview(body: string): Promise<LinkPreview | null> {
+  const url = firstUrl(body);
+  const slug = url && blogSlugFromUrl(url);
+  if (!url || !slug) return null;
+  const post = await db.post.findFirst({
+    where: { slug, published: true },
+    select: { title: true, metaDescription: true, coverImage: true, metaImage: true },
+  });
+  if (!post) return null;
+  return {
+    url,
+    title: post.title,
+    description: post.metaDescription ?? "",
+    image: post.coverImage || post.metaImage || null,
+  };
+}
+
 // ── Consultas ────────────────────────────────────────────────────────────────
 
 const authorSelect = {
@@ -69,11 +104,13 @@ export async function getWall({
   communityId,
   isInside,
   canMod,
+  viewerId = null,
   take = 30,
 }: {
   communityId: string;
   isInside: boolean;
   canMod: boolean;
+  viewerId?: string | null;
   take?: number;
 }) {
   const where = {
@@ -95,12 +132,25 @@ export async function getWall({
       },
     },
   });
+  const liked = viewerId
+    ? new Set(
+        (
+          await db.communityReaction.findMany({
+            where: { userId: viewerId, postId: { in: posts.map((p) => p.id) } },
+            select: { postId: true },
+          })
+        ).map((r) => r.postId)
+      )
+    : new Set<string>();
   const lockedCount = isInside
     ? 0
     : await db.communityPost.count({
         where: { communityId, hiddenAt: null, isPublic: false },
       });
-  return { posts: posts.map(publicShape), lockedCount };
+  return {
+    posts: posts.map((p) => ({ ...publicShape(p), likedByMe: liked.has(p.id) })),
+    lockedCount,
+  };
 }
 
 function displayName(a: { displayName: string | null; username: string; email: string }) {
@@ -116,6 +166,8 @@ function publicShape(p: Awaited<ReturnType<typeof db.communityPost.findMany>>[nu
     id: p.id,
     body: p.body,
     imageUrl: p.imageUrl,
+    link: (p.link as LinkPreview | null) ?? null,
+    likeCount: p.likeCount,
     isPublic: p.isPublic,
     isPinned: p.isPinned,
     hidden: !!p.hiddenAt,
@@ -151,6 +203,7 @@ export async function createPost(input: {
       authorId: input.authorId,
       body: input.body,
       imageUrl: input.imageUrl || null,
+      link: (await buildLinkPreview(input.body)) ?? undefined,
     },
   });
   return { post };
@@ -237,4 +290,24 @@ export async function getNextEvent(communityId: string, now = new Date()) {
 export function isCallOpen(event: { startsAt: Date; endsAt: Date } | null, now = new Date()) {
   if (!event) return false;
   return now.getTime() >= event.startsAt.getTime() - 15 * 60 * 1000 && now < event.endsAt;
+}
+
+/** 👍: si ya lo dio, se quita. Regresa si quedó dado. */
+export async function toggleLike(communityId: string, postId: string, userId: string) {
+  const post = await db.communityPost.findFirst({
+    where: { id: postId, communityId, hiddenAt: null },
+    select: { id: true },
+  });
+  if (!post) return null;
+  const existing = await db.communityReaction.findUnique({
+    where: { postId_userId: { postId, userId } },
+  });
+  if (existing) {
+    await db.communityReaction.delete({ where: { id: existing.id } });
+    await db.communityPost.update({ where: { id: postId }, data: { likeCount: { decrement: 1 } } });
+    return false;
+  }
+  await db.communityReaction.create({ data: { postId, userId } });
+  await db.communityPost.update({ where: { id: postId }, data: { likeCount: { increment: 1 } } });
+  return true;
 }

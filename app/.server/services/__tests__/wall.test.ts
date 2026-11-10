@@ -69,3 +69,19 @@ describe("isCallOpen", () => {
   it("cierra al terminar", () => expect(isCallOpen(ev, new Date("2026-11-11T02:30:00Z"))).toBe(false));
   it("sin evento, cerrada", () => expect(isCallOpen(null, now)).toBe(false));
 });
+
+describe("vista previa de enlaces", () => {
+  it("toma el primer enlace sin la puntuación final", async () => {
+    const { firstUrl } = await import("../wall.server");
+    expect(firstUrl("Mira https://www.fixtergeek.com/blog/x-y. Y esto")).toBe("https://www.fixtergeek.com/blog/x-y");
+    expect(firstUrl("[título](https://www.fixtergeek.com/blog/abc)")).toBe("https://www.fixtergeek.com/blog/abc");
+    expect(firstUrl("sin enlaces")).toBeNull();
+  });
+  it("reconoce sólo posts de nuestro blog", async () => {
+    const { blogSlugFromUrl } = await import("../wall.server");
+    expect(blogSlugFromUrl("https://www.fixtergeek.com/blog/agente-acp-en-una-caja")).toBe("agente-acp-en-una-caja");
+    expect(blogSlugFromUrl("https://fixtergeek.com/blog/abc/?utm=1")).toBe("abc");
+    expect(blogSlugFromUrl("https://evil.com/blog/abc")).toBeNull();
+    expect(blogSlugFromUrl("https://www.fixtergeek.com/cursos/abc")).toBeNull();
+  });
+});
