@@ -200,13 +200,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const canMod = canModerate(user, community);
   const inside = canParticipate(user, membership, community);
   // Invitado a la llamada de hoy: entra a la llamada (sólo eso) aunque no sea miembro.
-  const callGuest = !inside && intent === "call" && isCallGuestToday(await applyInvite(user, community.id));
+  const callGuest = !inside && (intent === "call" || intent === "call-live") && isCallGuestToday(await applyInvite(user, community.id));
   if (!inside && !callGuest) {
     return data({ error: "Únete al club para participar." }, { status: 403 });
   }
 
   // ── Llamada en vivo: ticket de un solo uso (120 s) que se pide al dar clic ──
-  if (intent === "call") {
+  if (intent === "call" || intent === "call-live") {
     const event = await getNextEvent(community.id);
     if (!isCallOpen(event)) {
       return data({ error: "La llamada se abre 15 minutos antes." }, { status: 400 });
@@ -214,7 +214,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const link = await getCallLink(user, { host: canMod });
     // El anfitrión entra y la llamada empieza a grabarse sola, para que no dependa de acordarse.
     // Si la caja no puede (ocupada con otra sala), se entra igual y el botón lo dice en la página.
-    if (link && canMod && event) await startRecording(community, event.title).catch(() => null);
+    if (link && canMod && event) {
+      const live = intent === "call-live";
+      await startRecording(community, event.title, undefined, { live }).catch(() => null);
+    }
     if (link) throw redirect(link);
     return data({ error: "No pudimos abrir la sala. Intenta de nuevo en un momento." }, { status: 502 });
   }
@@ -718,6 +721,15 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   >
                     {event.open ? "🎙 Entrar a la llamada" : "Se abre 15 min antes"}
                   </button>
+                  {canMod && event.open && (
+                    <button
+                      name="intent"
+                      value="call-live"
+                      className={`${pillBtn} ml-3 border-brand-500 text-brand-500`}
+                    >
+                      📡 Entrar y transmitir en vivo
+                    </button>
+                  )}
                   {actionData?.error && (
                     <p className="mt-2 max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>
                   )}

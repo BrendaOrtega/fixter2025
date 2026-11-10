@@ -52,8 +52,16 @@ export async function recordingState(room = clubCallRoom()): Promise<RecState | 
  * Arranca (o confirma) la grabación de la sala del día y deja su fila `recording` con el archivo
  * de la caja. Si ya se estaba grabando, gs devuelve el mismo archivo y no se duplica la fila.
  */
-export async function startRecording(community: { id: string }, title: string, room = clubCallRoom()) {
-  const r = await partnerPost<RecState>(PATH, { action: "start", room, title });
+export async function startRecording(
+  community: { id: string },
+  title: string,
+  room = clubCallRoom(),
+  opts: { live?: boolean } = {}
+) {
+  // `live`: además de grabar, sale a YouTube y Facebook (destinos que gs ya cargó en la caja con
+  // «Preparar transmisión»). Si la caja no tiene destinos, falla y se graba sin transmitir.
+  let r = await partnerPost<RecState>(PATH, { action: "start", room, title, live: !!opts.live });
+  if (!r.ok && opts.live) r = await partnerPost<RecState>(PATH, { action: "start", room, title });
   if (!r.ok || !r.data) return { ok: false as const, error: r.data?.error ?? "No se pudo grabar" };
   const file = r.data.file ?? null;
   const existing = await db.communityRecording.findFirst({
