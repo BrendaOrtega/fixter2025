@@ -88,6 +88,10 @@ export async function buildLinkPreview(body: string): Promise<LinkPreview | null
 
 // ── Consultas ────────────────────────────────────────────────────────────────
 
+// ⚠️ En Mongo, Prisma no escribe un opcional que no se manda: `hiddenAt` no
+// existe en lo nunca ocultado, y `hiddenAt: null` sólo empata el null explícito.
+const notHidden = { OR: [{ hiddenAt: null }, { hiddenAt: { isSet: false } }] };
+
 const authorSelect = {
   id: true,
   displayName: true,
@@ -115,7 +119,7 @@ export async function getWall({
 }) {
   const where = {
     communityId,
-    ...(canMod ? {} : { hiddenAt: null }),
+    ...(canMod ? {} : notHidden),
     ...(isInside ? {} : { isPublic: true }),
   };
   const posts = await db.communityPost.findMany({
@@ -125,7 +129,7 @@ export async function getWall({
     include: {
       author: { select: authorSelect },
       comments: {
-        where: canMod ? {} : { hiddenAt: null },
+        where: canMod ? {} : notHidden,
         orderBy: { createdAt: "asc" },
         take: 50,
         include: { author: { select: authorSelect } },
@@ -145,7 +149,7 @@ export async function getWall({
   const lockedCount = isInside
     ? 0
     : await db.communityPost.count({
-        where: { communityId, hiddenAt: null, isPublic: false },
+        where: { communityId, isPublic: false, ...notHidden },
       });
   return {
     posts: posts.map((p) => ({ ...publicShape(p), likedByMe: liked.has(p.id) })),
@@ -216,7 +220,7 @@ export async function createComment(input: {
   body: string;
 }) {
   const post = await db.communityPost.findFirst({
-    where: { id: input.postId, communityId: input.communityId, hiddenAt: null },
+    where: { id: input.postId, communityId: input.communityId, ...notHidden },
     select: { id: true },
   });
   if (!post) return { error: "La publicación ya no existe." };
@@ -295,7 +299,7 @@ export function isCallOpen(event: { startsAt: Date; endsAt: Date } | null, now =
 /** 👍: si ya lo dio, se quita. Regresa si quedó dado. */
 export async function toggleLike(communityId: string, postId: string, userId: string) {
   const post = await db.communityPost.findFirst({
-    where: { id: postId, communityId, hiddenAt: null },
+    where: { id: postId, communityId, ...notHidden },
     select: { id: true },
   });
   if (!post) return null;
