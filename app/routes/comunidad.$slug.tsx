@@ -60,8 +60,9 @@ import { Switch } from "~/components/common/Switch";
 import getMetaTags from "~/utils/getMetaTags";
 
 // Casa de una comunidad de pago (10-nov-2026): hero con la próxima llamada,
-// muro (todos los miembros publican; dueño/ADMIN modera; las públicas son la
-// vitrina), qué incluye y preguntas. La alta gratuita por correo sigue en /c/:slug.
+// grabaciones, qué incluye, preguntas, invitación a unirse y, al final, el muro
+// (todos los miembros publican; dueño/ADMIN modera; las públicas son la
+// vitrina). La alta gratuita por correo sigue en /c/:slug.
 //
 // ⚠️ Nada del hero arranca en `opacity: 0`: Motion escribe ese estado en el HTML
 // del servidor y, si la hidratación tarda, el título se queda transparente
@@ -745,6 +746,43 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
           <Recordings slug={community.slug} recordings={recordings} isInside={isInside} />
         )}
 
+        {/* ── Qué incluye ── */}
+        <section className="mt-16">
+          <h2 className="text-2xl font-bold sm:text-3xl">Qué incluye</h2>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {included(courseCount).map((c) => (
+              <div key={c.title} className="rounded-2xl border border-colorOutline p-5">
+                <p className="text-3xl">{c.icon}</p>
+                <h3 className="mt-3 font-bold">{c.title}</h3>
+                <p className="mt-1 text-sm text-white/80">{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Preguntas ── */}
+        <section className="mt-16">
+          <h2 className="text-2xl font-bold sm:text-3xl">Preguntas frecuentes</h2>
+          <div className="mt-6 grid gap-3">
+            {faqs.map((f) => (
+              <details key={f.q} className="group rounded-2xl border border-colorOutline/40 p-4 open:border-brand-500">
+                <summary className="flex cursor-pointer list-none items-center justify-between font-bold">
+                  {f.q}
+                  <span className="text-brand-500 transition group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-2 text-white/80">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {!isInside && (
+          <section className="mt-16 text-center">
+            <p className="text-2xl font-bold">¿Construimos tu primer agente esta semana?</p>
+            <div className="mt-5 flex justify-center">{joinBlock}</div>
+          </section>
+        )}
+
         {/* ── Muro ── */}
         <section className="mt-14">
           <h2 className="text-2xl font-bold sm:text-3xl">El muro</h2>
@@ -783,43 +821,6 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
             )}
           </div>
         </section>
-
-        {/* ── Qué incluye ── */}
-        <section className="mt-16">
-          <h2 className="text-2xl font-bold sm:text-3xl">Qué incluye</h2>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {included(courseCount).map((c) => (
-              <div key={c.title} className="rounded-2xl border border-colorOutline p-5">
-                <p className="text-3xl">{c.icon}</p>
-                <h3 className="mt-3 font-bold">{c.title}</h3>
-                <p className="mt-1 text-sm text-white/80">{c.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Preguntas ── */}
-        <section className="mt-16">
-          <h2 className="text-2xl font-bold sm:text-3xl">Preguntas frecuentes</h2>
-          <div className="mt-6 grid gap-3">
-            {faqs.map((f) => (
-              <details key={f.q} className="group rounded-2xl border border-colorOutline/40 p-4 open:border-brand-500">
-                <summary className="flex cursor-pointer list-none items-center justify-between font-bold">
-                  {f.q}
-                  <span className="text-brand-500 transition group-open:rotate-45">+</span>
-                </summary>
-                <p className="mt-2 text-white/80">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-
-        {!isInside && (
-          <section className="mt-16 text-center">
-            <p className="text-2xl font-bold">¿Construimos tu primer agente esta semana?</p>
-            <div className="mt-5 flex justify-center">{joinBlock}</div>
-          </section>
-        )}
       </div>
     </main>
   );
