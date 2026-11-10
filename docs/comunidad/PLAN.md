@@ -84,3 +84,9 @@ FixterGeek (la de bliss) es sólo la primera comunidad.
 - Precio de la comunidad FixterGeek y qué reciben quienes ya compraron curso.
 - Frecuencia y horario de la llamada semanal.
 - Validar después del ensayo de hoy que la caja aguante la llamada (iperf3, ~20 pestañas).
+
+## Pendiente: pasar de MongoDB a SQLite (decisión de bliss, 10-nov-2026)
+bliss: «con Mongo no podremos crecer». Antes de la fase 1 (comunidades multi-dueño) hay que planear la migración de
+fixtergeek a SQLite: inventario de modelos (60+, varios con `Json` heterogéneo como `User.bootcamps/payments`),
+cambio de ids `ObjectId` → texto, dónde vive el archivo (volumen en la caja app-host) y respaldo (Litestream o
+similar). La membresía nueva (`Membership`) ya está escrita sin nada exclusivo de Mongo.
