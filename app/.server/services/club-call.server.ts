@@ -49,7 +49,8 @@ function isHostEmail(email: string): boolean {
 /** POST firmado con la credencial de partner del espacio `business` de gs. */
 export async function partnerPost<T = Record<string, unknown>>(
   path: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  opts: { timeoutMs?: number } = {}
 ): Promise<{ ok: boolean; status: number; data: (T & { error?: string }) | null }> {
   const keyId = process.env.GHOSTY_PARTNER_KEY;
   const secret = process.env.GHOSTY_PARTNER_KEY_SECRET;
@@ -66,7 +67,7 @@ export async function partnerPost<T = Record<string, unknown>>(
       method: "POST",
       headers: { "content-type": "application/json", "x-ghosty-key": keyId, "x-ghosty-ts": ts, "x-ghosty-sig": sig },
       body: raw,
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 30_000),
     });
     const data = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
     if (!res.ok) console.error(`[club-call] gs ${path} contestó ${res.status}: ${data?.error ?? ""}`);

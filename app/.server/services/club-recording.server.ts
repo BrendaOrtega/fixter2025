@@ -1,15 +1,18 @@
 // Grabaciones de las llamadas del club (10-nov-2026).
 //
 // La caja de eventos graba la sala del día y, al parar, la convierte a HLS (1080/720/480, póster y
-// miniaturas) y la sube a nuestro bucket de video, en `fixtergeek/videos/club/<club>/<id>/hls/`, el
+// miniaturas) y la sube a nuestro bucket de video, en `fixtergeek/videos/club/<club>/<id>/`, el
 // mismo camino que los webinars de Teams. gs sólo hace de puente
 // (`/api/v2/partner/event-box/recording`, salas `fx-*`): el ADMIN_TOKEN de la caja nunca sale de gs.
 //
-// Flujo:
-//   1. El anfitrión entra a la llamada → `startRecording` (automático, para no olvidarlo).
-//   2. Termina → «Detener y guardar» → `stopRecording`: fila `uploading` + la caja convierte y sube.
-//   3. Cada carga del club revisa las `uploading` con un HEAD al `master.m3u8` → `ready`.
-//   4. Sólo a miembros se les entrega la URL del proxy HLS firmada (`~/.server/hls`).
+// Ciclo de una fila (`CommunityRecording.status`):
+//   recording  → el anfitrión entró (se graba solo) o pulsó «Grabar». Guarda el archivo de la caja.
+//   uploading  → «Detener y guardar»: la caja convierte y sube. Si el anfitrión se fue sin parar, la
+//                caja para sola a los 3 min sin nadie; la siguiente carga del club lo detecta y pide
+//                el HLS de ese archivo (`reconcile`).
+//   ready      → ya está `storyboard/storyboard.vtt`, que la caja sube DESPUÉS de todo el HLS.
+//   failed     → 12 h sin llegar; el anfitrión tiene «Reintentar».
+// Sólo a miembros se les entrega la URL del proxy HLS firmada (`~/.server/hls`).
 import { db } from "~/.server/db";
 import { fileExist } from "~/.server/tigrs";
 import { buildHlsProxyUrl } from "~/.server/hls";
@@ -18,15 +21,22 @@ import { clubCallRoom, partnerPost } from "~/.server/services/club-call.server";
 const PATH = "/api/v2/partner/event-box/recording";
 /** Si en 12 h no apareció el HLS, la conversión falló (4 h de llamada tardan en transcodificar). */
 export const UPLOAD_GIVE_UP_MS = 12 * 60 * 60_000;
+/** El stop en la caja tarda hasta ~90 s en cerrar el MP4; gs espera 120 s. */
+const STOP_TIMEOUT_MS = 150_000;
 
-export type RecState = { recording: boolean; busy: boolean; startedAt: string | null };
+export type RecState = { recording: boolean; busy: boolean; startedAt: string | null; file?: string | null };
 
 /** Carpeta HLS de una grabación (llave completa del bucket). */
 export function hlsPrefixFor(communityId: string, recordingId: string) {
   return `fixtergeek/videos/club/${communityId}/${recordingId}/hls`;
 }
 
-/** uploading → ready si el objeto ya está; → failed si se pasó del plazo. */
+/** El storyboard se sube al final de todo: si está, el HLS completo ya llegó. */
+export function readyMarkerKey(prefix: string) {
+  return `${prefix.replace(/\/hls$/, "")}/storyboard/storyboard.vtt`;
+}
+
+/** uploading → ready si ya está el marcador; → failed si se pasó del plazo. */
 export function nextStatus(r: { status: string; endedAt: Date }, exists: boolean, now = Date.now()) {
   if (r.status !== "uploading") return r.status;
   if (exists) return "ready";
@@ -38,63 +48,132 @@ export async function recordingState(room = clubCallRoom()): Promise<RecState | 
   return r.ok && r.data ? { recording: !!r.data.recording, busy: !!r.data.busy, startedAt: r.data.startedAt ?? null } : null;
 }
 
-export async function startRecording(title: string, room = clubCallRoom()) {
+/**
+ * Arranca (o confirma) la grabación de la sala del día y deja su fila `recording` con el archivo
+ * de la caja. Si ya se estaba grabando, gs devuelve el mismo archivo y no se duplica la fila.
+ */
+export async function startRecording(community: { id: string }, title: string, room = clubCallRoom()) {
   const r = await partnerPost<RecState>(PATH, { action: "start", room, title });
-  return r.ok ? { ok: true as const } : { ok: false as const, error: r.data?.error ?? "No se pudo grabar" };
+  if (!r.ok || !r.data) return { ok: false as const, error: r.data?.error ?? "No se pudo grabar" };
+  const file = r.data.file ?? null;
+  const existing = await db.communityRecording.findFirst({
+    where: { communityId: community.id, status: "recording", room },
+    orderBy: { createdAt: "desc" },
+  });
+  if (existing) {
+    if (file && existing.boxFile !== file) {
+      await db.communityRecording.update({ where: { id: existing.id }, data: { boxFile: file } });
+    }
+  } else {
+    const row = await db.communityRecording.create({
+      data: {
+        communityId: community.id,
+        room,
+        title,
+        status: "recording",
+        boxFile: file,
+        storageKey: "",
+        startedAt: r.data.startedAt ? new Date(r.data.startedAt) : new Date(),
+      },
+    });
+    const prefix = hlsPrefixFor(community.id, row.id);
+    await db.communityRecording.update({ where: { id: row.id }, data: { storageKey: `${prefix}/master.m3u8` } });
+  }
+  return { ok: true as const };
 }
 
-export async function stopRecording(community: { id: string }, title: string, room = clubCallRoom()) {
-  const state = await recordingState(room);
-  if (!state?.recording) return { ok: false as const, error: state?.busy ? "La caja graba otra sala" : "No se está grabando" };
-  // La fila va primero: su id nombra la carpeta del HLS.
-  const row = await db.communityRecording.create({
-    data: {
-      communityId: community.id,
-      room,
-      title,
-      storageKey: "",
-      startedAt: state.startedAt ? new Date(state.startedAt) : undefined,
-    },
-  });
-  const prefix = hlsPrefixFor(community.id, row.id);
-  const r = await partnerPost<{ file: string; bytes: number | null }>(PATH, { action: "stop", room, hlsPrefix: prefix });
-  if (!r.ok || !r.data?.file) {
-    await db.communityRecording.delete({ where: { id: row.id } });
-    return { ok: false as const, error: r.data?.error ?? "No se pudo detener" };
-  }
+/** Pide a la caja el HLS de una fila (parando la grabación si sigue). */
+async function finish(row: { id: string; communityId: string; room: string; boxFile: string | null }) {
+  const prefix = hlsPrefixFor(row.communityId, row.id);
+  const r = await partnerPost<{ file: string; bytes: number | null }>(
+    PATH,
+    { action: "stop", room: row.room, hlsPrefix: prefix, ...(row.boxFile ? { file: row.boxFile } : {}) },
+    { timeoutMs: STOP_TIMEOUT_MS }
+  );
+  // Sin respuesta (timeout) la caja pudo haber parado igual: se marca `uploading` y el HEAD dirá.
+  const answered = r.data !== null;
+  if (answered && (!r.ok || !r.data?.file)) return { ok: false as const, error: r.data?.error ?? "No se pudo detener" };
   await db.communityRecording.update({
     where: { id: row.id },
-    data: { storageKey: `${prefix}/master.m3u8`, bytes: r.data.bytes ?? undefined, endedAt: new Date() },
+    data: {
+      status: "uploading",
+      endedAt: new Date(),
+      ...(r.data?.file ? { boxFile: r.data.file } : {}),
+      ...(r.data?.bytes ? { bytes: r.data.bytes } : {}),
+    },
   });
   return { ok: true as const };
 }
 
-/** Grabaciones visibles del club; de paso confirma las que se estaban subiendo. */
+export async function stopRecording(community: { id: string }, title: string, room = clubCallRoom()) {
+  let row = await db.communityRecording.findFirst({
+    where: { communityId: community.id, status: "recording", room },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!row) {
+    // Grabación sin fila (p. ej. arrancó antes de este deploy): `start` la registra sin duplicar.
+    const s = await startRecording(community, title, room);
+    if (!s.ok) return s;
+    row = await db.communityRecording.findFirst({
+      where: { communityId: community.id, status: "recording", room },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!row) return { ok: false as const, error: "No se está grabando" };
+  }
+  return finish(row);
+}
+
+/** «Reintentar» del anfitrión: vuelve a pedir el HLS del archivo de la caja. */
+export async function retryRecording(communityId: string, id: string) {
+  const row = await db.communityRecording.findFirst({ where: { id, communityId } });
+  if (!row?.boxFile) return { ok: false as const, error: "Esta grabación no tiene archivo en la caja" };
+  return finish(row);
+}
+
+/**
+ * Filas `recording` cuya sala ya no se graba (el anfitrión se fue sin parar y la caja paró sola):
+ * se pide el HLS de su archivo. Se espera 1 min tras arrancar para no pisar el arranque.
+ */
+async function reconcile(communityId: string) {
+  const open = await db.communityRecording.findMany({ where: { communityId, status: "recording" } });
+  for (const row of open) {
+    if (Date.now() - row.createdAt.getTime() < 60_000) continue;
+    const state = await recordingState(row.room);
+    if (state && !state.recording) await finish(row).catch(() => null);
+  }
+}
+
+/** Grabaciones del club; de paso cierra las abandonadas y confirma las que se estaban subiendo. */
 export async function listRecordings(communityId: string, canMod: boolean) {
+  await reconcile(communityId).catch(() => null);
   const notHidden = { OR: [{ hiddenAt: null }, { hiddenAt: { isSet: false } }] };
   const rows = await db.communityRecording.findMany({
     where: { communityId, ...(canMod ? {} : notHidden) },
-    orderBy: { endedAt: "desc" },
+    orderBy: { createdAt: "desc" },
     take: 50,
   });
   for (const r of rows.filter((x) => x.status === "uploading")) {
-    const status = nextStatus(r, await fileExist(r.storageKey, 3600, false));
+    const marker = readyMarkerKey(r.storageKey.replace(/\/master\.m3u8$/, ""));
+    const status = nextStatus(r, await fileExist(marker, 3600, false));
     if (status !== r.status) {
       await db.communityRecording.update({ where: { id: r.id }, data: { status } });
       r.status = status;
     }
   }
   return rows
-    .filter((r) => canMod || r.status !== "failed")
+    .filter((r) => canMod || r.status === "ready" || r.status === "uploading")
     .map((r) => ({
       id: r.id,
       title: r.title,
       status: r.status,
-      endedAt: r.endedAt.toISOString(),
-      minutes: r.startedAt ? Math.max(1, Math.round((r.endedAt.getTime() - r.startedAt.getTime()) / 60_000)) : null,
+      endedAt: (r.status === "recording" ? r.createdAt : r.endedAt).toISOString(),
+      minutes:
+        r.startedAt && r.status !== "recording"
+          ? Math.max(1, Math.round((r.endedAt.getTime() - r.startedAt.getTime()) / 60_000))
+          : null,
       hidden: !!r.hiddenAt,
-      poster:
-        r.status === "ready" ? buildHlsProxyUrl(r.storageKey.replace(/master\.m3u8$/, "poster.jpg")) : null,
+      canRetry: canMod && r.status === "failed" && !!r.boxFile,
+      poster: r.status === "ready" ? buildHlsProxyUrl(r.storageKey.replace(/master\.m3u8$/, "poster.jpg")) : null,
     }));
 }
 

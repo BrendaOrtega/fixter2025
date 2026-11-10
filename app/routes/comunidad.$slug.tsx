@@ -46,6 +46,7 @@ import {
 import {
   listRecordings,
   recordingState,
+  retryRecording,
   startRecording,
   stopRecording,
 } from "~/.server/services/club-recording.server";
@@ -212,7 +213,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const link = await getCallLink(user, { host: canMod });
     // El anfitrión entra y la llamada empieza a grabarse sola, para que no dependa de acordarse.
     // Si la caja no puede (ocupada con otra sala), se entra igual y el botón lo dice en la página.
-    if (link && canMod && event) await startRecording(event.title).catch(() => null);
+    if (link && canMod && event) await startRecording(community, event.title).catch(() => null);
     if (link) throw redirect(link);
     return data({ error: "No pudimos abrir la sala. Intenta de nuevo en un momento." }, { status: 502 });
   }
@@ -222,7 +223,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (!canMod) return data({ error: "Sólo el anfitrión graba." }, { status: 403 });
     const event = await getNextEvent(community.id);
     const title = event?.title ?? "Llamada del club";
-    const r = intent === "rec-start" ? await startRecording(title) : await stopRecording(community, title);
+    const r = intent === "rec-start" ? await startRecording(community, title) : await stopRecording(community, title);
+    return r.ok ? { ok: true } : data({ error: r.error }, { status: 502 });
+  }
+  if (intent === "rec-retry") {
+    if (!canMod) return data({ error: "Sólo el anfitrión." }, { status: 403 });
+    const r = await retryRecording(community.id, String(form.get("id") ?? ""));
     return r.ok ? { ok: true } : data({ error: r.error }, { status: 502 });
   }
   if (intent === "rec-hide" || intent === "rec-unhide") {
@@ -489,6 +495,7 @@ type RecordingView = {
   endedAt: string;
   minutes: number | null;
   hidden: boolean;
+  canRetry: boolean;
   poster: string | null;
 };
 
@@ -522,7 +529,8 @@ function Recordings({
                 <p className="text-sm text-colorCaption" suppressHydrationWarning>
                   {upperFirst(longDate(r.endedAt))}
                   {r.minutes ? ` · ${r.minutes} min` : ""}
-                  {r.status === "uploading" ? " · subiéndose…" : ""}
+                  {r.status === "recording" ? " · 🔴 grabando" : ""}
+                  {r.status === "uploading" ? " · procesando (puede tardar un rato)" : ""}
                   {r.status === "failed" ? " · la subida falló" : ""}
                 </p>
               </div>
@@ -538,6 +546,14 @@ function Recordings({
                     {playing === r.id ? "Cerrar" : "▶ Ver"}
                   </button>
                 ) : null}
+                {r.canRetry && (
+                  <Form method="post">
+                    <input type="hidden" name="id" value={r.id} />
+                    <button name="intent" value="rec-retry" className="text-xs text-brand-500 underline">
+                      Reintentar
+                    </button>
+                  </Form>
+                )}
                 {canMod && (
                   <Form method="post">
                     <input type="hidden" name="id" value={r.id} />

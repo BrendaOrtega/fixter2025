@@ -1408,8 +1408,10 @@ model CommunityRecording {
   room       String
   title      String
   storageKey String
-  /// uploading | ready | failed
+  /// recording | uploading | ready | failed
   status     String    @default("uploading")
+  /// Archivo en la caja (`<id>.mp4`): con él se rehace el HLS si la caja paró sola o falló la subida.
+  boxFile    String?
   bytes      Float?
   startedAt  DateTime?
   endedAt    DateTime  @default(now())
