@@ -500,7 +500,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   );
   if (!result) throw redirect("/404");
   const { course, videos } = result;
-  const isPurchased = user ? user.courses.includes(course.id as string) : false;
+  // Comprado, o incluido en la membresía del Club de Agentes de IA.
+  const { ownsCourse } = await import("~/.server/services/membership.server");
+  const isPurchased = user ? await ownsCourse(user, course.id as string) : false;
   let video;
   // La URL canónica es `/cursos/:curso/:video`. Quien llega por la vieja
   // —`/viewer?videoSlug=`— se manda a la canónica con TODA su query intacta:

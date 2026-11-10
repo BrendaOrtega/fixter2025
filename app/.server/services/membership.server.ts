@@ -254,3 +254,32 @@ export async function claimBuyerGift(
   const until = new Date(Date.now() + BUYER_GIFT_DAYS * 24 * 60 * 60 * 1000);
   return grantMembership({ userId: user.id, communityId, until });
 }
+
+// ── Cursos incluidos (10-nov-2026) ───────────────────────────────────────────
+// Un miembro vigente de un club con `includesAllCourses` ve todos los cursos de
+// pago publicados mientras pague. Lo comprado sigue colgando de `user.courses`.
+
+/** Ids de los cursos que abre la membresía de este usuario (vacío si no aplica). */
+export async function clubCourseIds(userId: string): Promise<string[]> {
+  const memberships = await db.membership.findMany({
+    where: { userId, status: { in: ["active", "past_due"] }, community: { includesAllCourses: true } },
+    select: { status: true, currentPeriodEnd: true },
+  });
+  if (!memberships.some((m) => isMembershipActive(m))) return [];
+  const courses = await db.course.findMany({
+    where: { isFree: false, published: true },
+    select: { id: true },
+  });
+  return courses.map((c) => c.id);
+}
+
+/** ¿Puede ver este curso? Comprado o incluido en su membresía. */
+export async function ownsCourse(user: { id: string; courses: string[] }, courseId: string) {
+  if (user.courses.includes(courseId)) return true;
+  return (await clubCourseIds(user.id)).includes(courseId);
+}
+
+/** Lo comprado más lo que abre la membresía, sin repetir. */
+export async function effectiveCourseIds(user: { id: string; courses: string[] }) {
+  return [...new Set([...user.courses, ...(await clubCourseIds(user.id))])];
+}

@@ -1,3 +1,4 @@
+import { ownsCourse } from "~/.server/services/membership.server";
 import { db } from "~/.server/db";
 import slugify from "slugify";
 import { randomUUID } from "crypto";
@@ -611,7 +612,7 @@ export const courseServerActions = {
 
       // Check access permissions - ADMIN has full access for preview purposes
       const isAdmin = user?.role === "ADMIN";
-      const hasAccess = isAdmin || course.isFree || (user && user.courses.includes(courseId));
+      const hasAccess = isAdmin || course.isFree || (user && (await ownsCourse(user, courseId)));
       
       if (!hasAccess) {
         return { 
@@ -667,7 +668,7 @@ export const courseServerActions = {
 
       // Check access permissions - ADMIN has full access for preview purposes
       const isAdmin = user?.role === "ADMIN";
-      const hasAccess = isAdmin || course.isFree || (user && user.courses.includes(courseId));
+      const hasAccess = isAdmin || course.isFree || (user && (await ownsCourse(user, courseId)));
 
       if (!hasAccess) {
         return {

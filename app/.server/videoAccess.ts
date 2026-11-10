@@ -1,3 +1,4 @@
+import { effectiveCourseIds } from "~/.server/services/membership.server";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { checkSubscriptionByEmail } from "~/.server/dbGetters";
@@ -102,9 +103,9 @@ export const videoAccessFor = async (
   if (!video) return null;
 
   const user = await getUserOrNull(request);
-  const isPurchased = user
-    ? video.courseIds.some((id) => user.courses.includes(id))
-    : false;
+  // Comprado, o incluido en la membresía del club.
+  const owned = user ? await effectiveCourseIds(user) : [];
+  const isPurchased = video.courseIds.some((id) => owned.includes(id));
 
   if (video.accessLevel === "sequence" && !isPurchased) {
     const email = await viewerEmailFrom(request, user?.email);

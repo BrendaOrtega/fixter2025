@@ -255,6 +255,8 @@ model Community {
   /// la de alta gratuita por correo de siempre.
   priceMxn       Int? // mensual, en pesos
   priceAnnualMxn Int? // anual, en pesos (FixterGeek: $990 = dos meses gratis)
+  /// Membresía vigente abre todos los cursos de pago (decisión de bliss, 10-nov-2026)
+  includesAllCourses Boolean @default(false)
   memberships    Membership[]
   posts          CommunityPost[]
   events         CommunityEvent[]

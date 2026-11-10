@@ -87,18 +87,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const canMod = canModerate(user, community);
   const isInside = canParticipate(user, membership, community);
 
-  const [memberCount, wall, event] = await Promise.all([
+  const [memberCount, wall, event, courseCount] = await Promise.all([
     db.membership.count({
       where: { communityId: community.id, status: { in: ["active", "past_due"] } },
     }),
     getWall({ communityId: community.id, isInside, canMod, viewerId: user?.id ?? null }),
     getNextEvent(community.id),
+    db.course.count({ where: { isFree: false, published: true } }),
   ]);
 
   const { ownerId: _owner, ...publicCommunity } = community;
   return {
     community: publicCommunity,
     memberCount,
+    courseCount,
     isLoggedIn: !!user,
     isMember,
     isInside,
@@ -334,16 +336,36 @@ function JoinCta({
   );
 }
 
-const included = [
+const included = (courseCount: number) => [
+  {
+    icon: "📚",
+    title: `Todos los cursos (${courseCount})`,
+    body: "Los cursos de pago de FixterGeek abiertos mientras seas miembro: React, IA, Claude Code, agentes y más.",
+  },
   {
     icon: "🎙",
     title: "Llamada en vivo cada semana",
-    body: "Construimos un agente en vivo, respondemos tus dudas y te quedas con la grabación.",
+    body: "Construimos un agente en vivo y respondemos tus dudas en la llamada.",
+  },
+  {
+    icon: "📼",
+    title: "Grabaciones de cada llamada",
+    body: "¿No llegaste? Cada llamada queda grabada en el club para verla cuando quieras.",
+  },
+  {
+    icon: "🧩",
+    title: "Código y plantillas",
+    body: "El repositorio de cada agente que construimos en vivo, listo para clonarlo y adaptarlo.",
   },
   {
     icon: "🧱",
     title: "Un muro de gente que construye",
     body: "Publica lo que armaste o lo que se te atoró. Los demás miembros y bliss te contestan.",
+  },
+  {
+    icon: "🎟",
+    title: "Precio de miembro en talleres",
+    body: "Los talleres y eventos de pago tienen precio especial para miembros del club.",
   },
   {
     icon: "🎁",
@@ -363,7 +385,11 @@ const faqs = [
   },
   {
     q: "Ya compré un curso, ¿qué pasa con él?",
-    a: "Lo conservas igual en «Mis cursos». Además tienes 3 meses gratis en el club: inicia sesión y actívalos aquí.",
+    a: "Es tuyo para siempre, aunque dejes el club. Además tienes 3 meses gratis: inicia sesión y actívalos aquí.",
+  },
+  {
+    q: "¿Qué pasa con los cursos si cancelo?",
+    a: "Los cursos incluidos se abren mientras seas miembro. Los que compraste por separado siguen siendo tuyos.",
   },
   {
     q: "¿Necesito saber programar?",
@@ -373,7 +399,7 @@ const faqs = [
 
 export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   const {
-    community, memberCount, isLoggedIn, isInside, canMod, me,
+    community, memberCount, courseCount, isLoggedIn, isInside, canMod, me,
     membership, canClaimGift, wall, event,
   } = loaderData;
   const [params] = useSearchParams();
@@ -447,6 +473,9 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
               </span>
               <span className="rounded-full border-2 border-[#F2F5F4]/30 px-3 py-1">
                 Llamada en vivo cada semana
+              </span>
+              <span className="rounded-full border-2 border-[#F2F5F4]/30 px-3 py-1">
+                {courseCount} cursos incluidos
               </span>
               <span className="rounded-full border-2 border-[#F2F5F4]/30 px-3 py-1">
                 ${community.priceMxn} MXN al mes
@@ -599,8 +628,8 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
         {/* ── Qué incluye ── */}
         <section className="mt-16">
           <h2 className="text-2xl font-black sm:text-3xl">Qué incluye</h2>
-          <div className="mt-6 grid gap-5 sm:grid-cols-3">
-            {included.map((c) => (
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {included(courseCount).map((c) => (
               <div key={c.title} className="rounded-2xl border-2 border-[#F2F5F4] p-5 shadow-[6px_6px_0_#85DDCB]">
                 <p className="text-3xl">{c.icon}</p>
                 <h3 className="mt-3 font-bold">{c.title}</h3>

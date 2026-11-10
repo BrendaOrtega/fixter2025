@@ -19,10 +19,11 @@ import getMetaTags from "~/utils/getMetaTags";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const user = await getUserOrRedirect(request);
+  const { effectiveCourseIds } = await import("~/.server/services/membership.server");
   const enrolledCourses = await db.course.findMany({
     where: {
       id: {
-        in: user.courses,
+        in: await effectiveCourseIds(user),
       },
     },
   });
