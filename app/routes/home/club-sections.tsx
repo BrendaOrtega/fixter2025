@@ -318,6 +318,13 @@ const infra = [
     body: "Ghosty contesta las dudas de tus miembros con tus clases y grabaciones, y les da seguimiento por WhatsApp.",
     vs: "En camino. Circle AI también trae agentes; Ghosty ya atiende negocios por WhatsApp en ghosty.studio.",
   },
+  {
+    icon: "📱",
+    title: "Tu app en iPhone y Android",
+    body: "Tus miembros entran a la app de FixterGeek y la ven con tu logo y tus colores: muro, llamadas, grabaciones y avisos al celular. En el plan Escuela, tu comunidad tiene su propia app con tu nombre en App Store y Google Play.",
+    // Fuente: https://circle.so/_llms/pricing.md (Branded App sólo en Circle Plus, «Custom pricing»), 10-nov-2026
+    vs: "En camino. Circle da app con tu marca sólo en su plan Plus, con precio a cotizar.",
+  },
 ];
 
 /** 2 · La infraestructura que va con cada comunidad, contra lo que dan los demás. */
@@ -371,7 +378,7 @@ export const creatorPlans = [
     monthly: 1490,
     fee: 0,
     forWho: "Para clases grandes o varias llamadas a la semana",
-    pitch: "Lo mismo que Creador, más un servidor de llamadas sólo para tu comunidad.",
+    pitch: "Lo mismo que Creador, más un servidor de llamadas sólo para tu comunidad y (en camino) tu propia app en las tiendas.",
   },
 ];
 
