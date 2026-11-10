@@ -1,5 +1,5 @@
 /**
- * Crea la comunidad de pago FixterGeek (/comunidad/club-de-agentes) a $99 MXN al
+ * Crea la comunidad de pago Club de Agentes de IA (/comunidad/club-de-agentes) a $99 MXN al
  * mes o $990 al año, y regala 3 meses a quienes ya compraron un curso o libro
  * (decisión de bliss, 10-nov-2026; docs/comunidad/PLAN.md).
  *
@@ -46,8 +46,8 @@ async function main() {
     where: { slug: SLUG },
     create: {
       slug: SLUG,
-      name: "Club de Agentes",
-      tagline: "Construye agentes de IA que trabajan de verdad, con una llamada en vivo cada semana.",
+      name: "Club de Agentes de IA",
+      tagline: "Construye agentes que trabajan de verdad, con una llamada en vivo cada semana.",
       tag: "community:fixtergeek",
       ownerId: owner.id,
       isActive: true,
