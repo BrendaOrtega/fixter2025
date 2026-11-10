@@ -156,29 +156,63 @@ export function ClubHomeHero({ club }: { club: HomeClub }) {
   );
 }
 
-const features = [
-  { icon: "💳", title: "Membresía mensual o anual", body: "Tus miembros pagan con tarjeta en pesos; cancelan solos desde su cuenta y conservan el acceso hasta fin de mes." },
-  { icon: "🎙", title: "Llamadas con sala propia", body: "Tus miembros entran desde tu página con un clic, sin Zoom y sin ligas que se reenvían." },
-  { icon: "📡", title: "En vivo a YouTube y Facebook", body: "La misma llamada sale al mismo tiempo a tus canales para que la vean quienes todavía no son miembros." },
-  { icon: "🎞", title: "Grabación automática", body: "Al colgar, la llamada queda en video con subtítulos dentro de tu comunidad, sólo para miembros." },
-  { icon: "📅", title: "Calendario y recordatorios", body: "Eventos que se repiten cada semana, correo 24 h y 1 h antes y «agregar a mi calendario»." },
-  { icon: "🎟", title: "Muro, insignias e invitados", body: "Publicaciones, comentarios e insignias; invitas por correo con meses de regalo o pase a una llamada." },
+// Contraste verificado el 10-nov-2026 (docs de cada plataforma y comparativas de 2026; fuentes en
+// docs/comunidad/PLAN.md, «Precios para creadores»). Si cambian, se actualiza aquí y en el plan.
+const infra = [
+  {
+    icon: "🎙",
+    title: "Servidor de llamadas propio",
+    body: "Tus miembros entran desde tu página con un clic; sin Zoom, sin ligas que se reenvían y sin tope de horas al mes.",
+    vs: "Mighty Networks: 20 h de transmisión al mes en su plan base.",
+  },
+  {
+    icon: "📡",
+    title: "En vivo a YouTube y Facebook",
+    body: "La misma llamada sale al mismo tiempo a tus canales: quien todavía no es miembro te ve y llega a tu comunidad.",
+    vs: "Skool, Circle, Mighty y Kajabi no transmiten a tus canales; a lo más incrustan un YouTube Live.",
+  },
+  {
+    icon: "🎞",
+    title: "Grabación permanente con subtítulos",
+    body: "Al colgar, la llamada queda en video 1080/720/480 con subtítulos y miniaturas, dentro de tu comunidad.",
+    vs: "Skool Call: la grabación se descarga durante 14 días.",
+  },
+  {
+    icon: "🔒",
+    title: "Video sólo para miembros",
+    body: "Cada reproducción va firmada y caduca: la liga no sirve fuera de tu comunidad.",
+    vs: "Sin subir tus clases a YouTube como «ocultas».",
+  },
+  {
+    icon: "💳",
+    title: "Cobro en pesos",
+    body: "Membresía mensual o anual con tarjeta; el miembro cancela solo y conserva el acceso hasta el fin de su periodo.",
+    vs: "Las plataformas de fuera cobran su plan en dólares.",
+  },
+  {
+    icon: "📅",
+    title: "Recordatorios por correo y WhatsApp",
+    body: "Llamadas que se repiten cada semana, aviso 24 h y 1 h antes por correo y WhatsApp, «agregar a mi calendario» e invitados con pase a una llamada.",
+    vs: "WhatsApp, en camino: hoy el aviso sale por correo. Muro con insignias incluido.",
+  },
 ];
 
-/** 2 · Qué trae cada comunidad. */
+/** 2 · La infraestructura que va con cada comunidad, contra lo que dan los demás. */
 export function ClubIncludedSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 md:px-[5%] xl:px-0">
-      <h2 className="text-3xl font-bold text-white md:text-4xl">Todo lo que trae tu comunidad</h2>
+      <span className="text-xs font-semibold uppercase tracking-widest text-brand-500">Infraestructura incluida</span>
+      <h2 className="mt-2 text-3xl font-bold text-white md:text-4xl">Tu comunidad trae su propio estudio en vivo</h2>
       <p className="mt-2 max-w-2xl text-colorParagraph">
-        Lo mismo que ya funciona en el Club de Agentes, con tu nombre, tu precio y tu tema.
+        Lo mismo que ya corre en el Club de Agentes, con tu nombre, tu precio y tu tema.
       </p>
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((c) => (
-          <div key={c.title} className="rounded-3xl border border-colorOutline bg-backface p-6">
+        {infra.map((c) => (
+          <div key={c.title} className="flex flex-col rounded-3xl border border-colorOutline bg-backface p-6">
             <p className="text-3xl">{c.icon}</p>
             <h3 className="mt-4 text-lg font-semibold text-white">{c.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-colorParagraph">{c.body}</p>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-colorParagraph">{c.body}</p>
+            <p className="mt-4 border-t border-colorOutline pt-3 text-xs text-colorCaption">{c.vs}</p>
           </div>
         ))}
       </div>
@@ -186,7 +220,175 @@ export function ClubIncludedSection() {
   );
 }
 
-/** 3 · La comunidad piloto, con lo que se está publicando en su muro. */
+// ── El modelo ────────────────────────────────────────────────────────────────
+
+/** Stripe México: 3.6 % + $3 por cobro con tarjeta nacional, más IVA sobre la comisión. */
+const stripeFee = (price: number) => (price * 0.036 + 3) * 1.16;
+/** Tipo de cambio supuesto para comparar con los planes en dólares (se dice en pantalla). */
+const USD_MXN = 18;
+
+/** Propuesta de precios para creadores (beta, pendiente de aprobar por bliss). */
+export const creatorPlans = [
+  {
+    name: "Arranque",
+    monthly: 0,
+    fee: 0.08,
+    forWho: "Para empezar sin arriesgar nada",
+    pitch: "No pagas cuota: FixterGeek se queda con el 8 % de lo que te paguen tus miembros. Si no cobras, no pagas.",
+  },
+  {
+    name: "Creador",
+    monthly: 590,
+    fee: 0,
+    forWho: "Cuando ya cobras más de $7,400 al mes",
+    pitch: "Una cuota fija y FixterGeek no toma nada de lo que te pagan tus miembros.",
+  },
+  {
+    name: "Escuela",
+    monthly: 1490,
+    fee: 0,
+    forWho: "Para clases grandes o varias llamadas a la semana",
+    pitch: "Lo mismo que Creador, más un servidor de llamadas sólo para tu comunidad.",
+  },
+];
+
+// `ownProcessing`: Skool cobra con su propio procesador (2.9 % + US$0.30 ya incluye el cobro con
+// tarjeta); Circle y Mighty cobran su comisión ENCIMA de Stripe.
+const competitors = [
+  { name: "Skool Pro", monthlyUsd: 99, fee: 0.029, ownProcessing: true, label: "US$99/mes + 2.9 % + US$0.30 por cobro" },
+  { name: "Circle Professional", monthlyUsd: 89, fee: 0.02, ownProcessing: false, label: "US$89/mes + 2 % + Stripe" },
+  { name: "Mighty Networks Launch", monthlyUsd: 79, fee: 0.02, ownProcessing: false, label: "US$79/mes + 2 % + Stripe" },
+];
+
+function competitorNet(members: number, price: number, c: (typeof competitors)[number]) {
+  if (!c.ownProcessing) return netMonthly(members, price, { monthly: c.monthlyUsd * USD_MXN, fee: c.fee });
+  return members * price - members * (price * c.fee + 0.3 * USD_MXN) - c.monthlyUsd * USD_MXN;
+}
+
+const mxn = (n: number) => `${n < 0 ? "−" : ""}$${Math.abs(Math.round(n)).toLocaleString("es-MX")}`;
+const pct = (f: number) => String(Math.round(f * 1000) / 10);
+
+/** Lo que le queda al creador al mes con un plan (después de Stripe y de la plataforma). */
+export function netMonthly(members: number, price: number, plan: { monthly: number; fee: number }) {
+  const gross = members * price;
+  return gross - members * stripeFee(price) - gross * plan.fee - plan.monthly;
+}
+
+/** 3 · El modelo: cuánto deja una comunidad, para que te animes. */
+export function CommunityModelSection() {
+  const [members, setMembers] = useState(50);
+  const [price, setPrice] = useState(199);
+  const gross = members * price;
+  // El plan que más le conviene con esos números.
+  const best = creatorPlans.reduce((a, b) => (netMonthly(members, price, b) > netMonthly(members, price, a) ? b : a));
+  const ours = netMonthly(members, price, best);
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-20 md:px-[5%] xl:px-0">
+      <span className="text-xs font-semibold uppercase tracking-widest text-brand-500">El modelo</span>
+      <h2 className="mt-2 max-w-3xl text-3xl font-bold !leading-snug text-white md:text-4xl">
+        Una comunidad cobra cada mes; un curso se vende una vez
+      </h2>
+      <p className="mt-3 max-w-2xl text-colorParagraph">
+        Tus miembros pagan mientras les sirva lo que pasa adentro: la llamada de cada semana, las grabaciones
+        y la gente. Mueve los números con los de tu audiencia.
+      </p>
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+        <div className="rounded-3xl border border-colorOutline bg-backface p-6 md:p-8">
+          <label className="grid gap-2 text-sm text-colorParagraph">
+            <span className="flex justify-between">
+              Miembros <strong className="text-white">{members}</strong>
+            </span>
+            <input type="range" min={10} max={1000} step={10} value={members} onChange={(e) => setMembers(Number(e.target.value))} className="accent-brand-500" />
+          </label>
+          <label className="mt-6 grid gap-2 text-sm text-colorParagraph">
+            <span className="flex justify-between">
+              Precio al mes <strong className="text-white">{mxn(price)} MXN</strong>
+            </span>
+            <input type="range" min={49} max={999} step={10} value={price} onChange={(e) => setPrice(Number(e.target.value))} className="accent-brand-500" />
+          </label>
+          <div className="mt-8 grid gap-1 border-t border-colorOutline pt-6">
+            <p className="text-sm text-colorCaption">Cobras al mes</p>
+            <p className="text-2xl font-semibold text-white">{mxn(gross)} MXN</p>
+            <p className="mt-4 text-sm text-colorCaption">Te quedan, con el plan {best.name}</p>
+            <p className="text-4xl font-bold text-brand-500 md:text-5xl">{mxn(ours)} MXN</p>
+            <p className="mt-1 text-xs text-colorCaption">
+              Ya descontadas la comisión de Stripe (3.6 % + $3 por cobro, más IVA) y la de FixterGeek.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-colorOutline bg-backface p-6 md:p-8">
+          <p className="text-sm font-semibold text-white">Con esos mismos números en otra plataforma</p>
+          <ul className="mt-4 grid gap-3">
+            {competitors.map((c) => {
+              const net = competitorNet(members, price, c);
+              const diff = ours - net;
+              return (
+                <li key={c.name} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-colorParagraph">
+                    {c.name}
+                    <span className="block text-xs text-colorCaption">{c.label}</span>
+                  </span>
+                  <span className="text-right">
+                    <span className="block text-white">te quedarían {mxn(net)}</span>
+                    <span className={`block text-xs ${diff >= 0 ? "text-brand-500" : "text-colorCaption"}`}>
+                      {diff >= 0 ? `${mxn(diff)} más con FixterGeek` : `${mxn(-diff)} más ahí`}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-4 text-xs text-colorCaption">
+            A $18 por dólar. Sus planes base no transmiten a YouTube ni a Facebook.
+          </p>
+        </div>
+      </div>
+
+      <h3 className="mt-14 text-2xl font-bold text-white">Elige cómo le pagas a FixterGeek</h3>
+      <p className="mt-2 max-w-3xl text-colorParagraph">
+        Los tres planes traen todo lo de arriba. Sólo cambia cómo pagas: un porcentaje de lo que cobras o una
+        cuota fija. El cobro con tarjeta (3.6 % + $3 por pago, más IVA) lo descuenta el banco y es igual en los tres.
+      </p>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        {creatorPlans.map((p) => {
+          const cost = p.monthly + gross * p.fee;
+          const isBest = p.name === best.name;
+          return (
+            <div
+              key={p.name}
+              className={`flex flex-col rounded-3xl border p-6 ${isBest ? "border-brand-500 bg-brand-500/5" : "border-colorOutline bg-backface"}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-lg font-semibold text-white">{p.name}</p>
+                {isBest && (
+                  <span className="rounded-full bg-brand-500 px-3 py-1 text-xs font-semibold text-brand-900">
+                    Te conviene
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-colorCaption">{p.forWho}</p>
+              <p className="mt-4 text-3xl font-bold text-white">
+                {p.monthly ? `${mxn(p.monthly)}` : `${pct(p.fee)} %`}
+                <span className="text-sm font-normal text-colorCaption">
+                  {p.monthly ? " MXN al mes" : " de lo que cobras"}
+                </span>
+              </p>
+              <p className="mt-3 flex-1 text-sm text-colorParagraph">{p.pitch}</p>
+              <p className="mt-4 border-t border-colorOutline pt-3 text-sm text-colorParagraph">
+                Con {members} miembros a {mxn(price)}: pagas <strong className="text-white">{mxn(cost)}</strong> al mes
+              </p>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-sm text-colorCaption">Precios de fundador para las primeras comunidades de la beta.</p>
+    </section>
+  );
+}
+
+/** 4 · La comunidad piloto, con lo que se está publicando en su muro. */
 export function ClubWallPreview({ club }: { club: HomeClub }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 md:px-[5%] xl:px-0">
@@ -227,7 +429,7 @@ export function ClubWallPreview({ club }: { club: HomeClub }) {
   );
 }
 
-/** 4 · Cierre para creadores. */
+/** 5 · Cierre para creadores. */
 export function CreatorCommunitiesBand() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 md:px-[5%] xl:px-0">

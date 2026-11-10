@@ -169,3 +169,15 @@ nuestro plus, junto con la grabación automática en HLS.
 **Fase 2 (SaaS, gs + fixtergeek):** destinos de YouTube/Facebook por comunidad (`LiveDestination` por tenant,
 endpoints de partner `live/connect|ls|prepare|check`), caja propia opcional y «Conectar YouTube/Facebook» en el
 panel. **Fase 3:** niveles que desbloquean cosas sobre las insignias.
+
+## Precios para creadores (propuesta en la home, 10-nov-2026)
+Arranque $0 + 8 % de lo que cobra · Creador $590 MXN/mes sin comisión (le conviene arriba de ~$7,400 al mes) ·
+Escuela $1,490 MXN/mes con servidor de llamadas propio. Stripe MX (3.6 % + $3 + IVA) aparte e igual en los tres.
+Contra: Skool Pro US$99 + 2.9 % + 30¢ (su propio procesador; Hobby US$9 + 10 %), Circle US$89 + 2 % + Stripe,
+Mighty US$79 + 2 % + Stripe (20 h de transmisión al mes), Kajabi US$143–179. Con comunidades muy grandes Skool
+sale abajo porque Stripe MX cobra más que su 2.9 %; la calculadora lo muestra.
+Cobro por cuenta del creador: Mercado Pago marketplace (OAuth + `marketplace_fee`, como Denik con 1 %) sirve para
+pagos sueltos; las suscripciones de MP al parecer no aceptan `marketplace_fee` → Stripe Connect
+(`application_fee_percent`) o cobrar cada mes como pago suelto.
+Recordatorios por WhatsApp anunciados «en camino»: falta teléfono + opt-in del miembro, plantilla aprobada por Meta
+y envío por el canal de Ghosty.

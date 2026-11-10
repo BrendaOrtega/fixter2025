@@ -11,6 +11,7 @@ import {
 import {
   ClubHomeHero,
   ClubIncludedSection,
+  CommunityModelSection,
   ClubWallPreview,
   CreatorCommunitiesBand,
   type HomeClub,
@@ -191,6 +192,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
         <>
           <ClubHomeHero club={club} />
           <ClubIncludedSection />
+          <CommunityModelSection />
           <ClubWallPreview club={club} />
           <CreatorCommunitiesBand />
         </>
