@@ -8,7 +8,7 @@
     "login": "node scripts/dev-login.cjs",
     "start": "cross-env NODE_ENV=production react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "deploy": "fly deploy --remote-only --strategy immediate",
+    "deploy": "git push origin main",
     "prisma": "npx -y prisma generate",
     "test": "vitest",
     "newsletter:check": "npx tsx scripts/check-newsletter-migration.ts",

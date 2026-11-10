@@ -1,5 +1,5 @@
 # Imagen para sandbox-host (caja app-host): la caja jala ghcr.io/brendaortega/fixter2025:main cada 60 s.
-# Convive con fly-deploy.yml hasta que se apague Fly.
+# Es el único deploy: Fly ya se apagó; publicar = git push a main.
 name: GHCR Image
 on:
   push:
