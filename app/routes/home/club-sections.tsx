@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
 import { CommunityIllustration } from "~/components/community/CommunityIllustration";
+import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 
 const CLUB = "/comunidad/club-de-agentes";
 /** Lista de espera: `/api/waitlist` le pone el tag `espera-comunidades` al suscriptor. */
@@ -80,9 +81,13 @@ function WaitlistForm({ center = false }: { center?: boolean }) {
   useEffect(() => setT(String(Date.now())), []);
   if (fetcher.data?.success) {
     return (
-      <p className={`rounded-2xl border border-brand-500/40 bg-brand-500/10 px-5 py-4 text-brand-500 ${center ? "mx-auto max-w-lg" : "max-w-lg"}`}>
-        ¡Listo! Te escribimos en cuanto abramos los primeros lugares para creadores.
-      </p>
+      <>
+        {/* El mismo confeti de /agentes y /claude: se dispara una vez al montar */}
+        <EmojiConfetti small />
+        <p className={`rounded-2xl border border-brand-500/40 bg-brand-500/10 px-5 py-4 text-brand-500 ${center ? "mx-auto max-w-lg" : "max-w-lg"}`}>
+          ¡Listo! Te escribimos en cuanto abramos los primeros lugares para creadores.
+        </p>
+      </>
     );
   }
   return (
