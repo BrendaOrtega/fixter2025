@@ -4,6 +4,7 @@ import {
   data,
   redirect,
   useActionData,
+  useFetcher,
   useSearchParams,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
@@ -42,6 +43,12 @@ import {
   PostCard,
   useWallRefresh,
 } from "~/components/community/ClubWall";
+import {
+  listRecordings,
+  recordingState,
+  startRecording,
+  stopRecording,
+} from "~/.server/services/club-recording.server";
 import { badgesForMembers } from "~/.server/services/badges.server";
 import { MicIllustration } from "~/components/community/MicIllustration";
 import { getCallLink } from "~/.server/services/club-call.server";
@@ -88,13 +95,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const canMod = canModerate(user, community);
   const isInside = canParticipate(user, membership, community);
 
-  const [memberCount, wall, event, courseCount] = await Promise.all([
+  const [memberCount, wall, event, courseCount, recordings, rec] = await Promise.all([
     db.membership.count({
       where: { communityId: community.id, status: { in: ["active", "past_due"] } },
     }),
     getWall({ communityId: community.id, isInside, canMod, viewerId: user?.id ?? null }),
     getNextEvent(community.id),
     db.course.count({ where: { isFree: false, published: true } }),
+    listRecordings(community.id, canMod),
+    // Estado de la grabación sólo para el anfitrión, y sólo con la llamada abierta.
+    canMod ? getNextEvent(community.id).then((e) => (isCallOpen(e) ? recordingState() : null)) : null,
   ]);
 
   // Insignias de quienes aparecen en el muro (autores de publicaciones y comentarios).
@@ -129,6 +139,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     membership,
     canClaimGift: !!user && !isInside && (await canClaimBuyerGift(user, community.id)),
     wall: wallWithBadges,
+    recordings,
+    rec,
     event: event
       ? {
           title: event.title,
@@ -190,8 +202,28 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       return data({ error: "La llamada se abre 15 minutos antes." }, { status: 400 });
     }
     const link = await getCallLink(user, { host: canMod });
+    // El anfitrión entra y la llamada empieza a grabarse sola, para que no dependa de acordarse.
+    // Si la caja no puede (ocupada con otra sala), se entra igual y el botón lo dice en la página.
+    if (link && canMod && event) await startRecording(event.title).catch(() => null);
     if (link) throw redirect(link);
     return data({ error: "No pudimos abrir la sala. Intenta de nuevo en un momento." }, { status: 502 });
+  }
+
+  // ── Grabación (sólo anfitrión) ──
+  if (intent === "rec-start" || intent === "rec-stop") {
+    if (!canMod) return data({ error: "Sólo el anfitrión graba." }, { status: 403 });
+    const event = await getNextEvent(community.id);
+    const title = event?.title ?? "Llamada del club";
+    const r = intent === "rec-start" ? await startRecording(title) : await stopRecording(community, title);
+    return r.ok ? { ok: true } : data({ error: r.error }, { status: 502 });
+  }
+  if (intent === "rec-hide" || intent === "rec-unhide") {
+    if (!canMod) return data({ error: "Sólo el anfitrión." }, { status: 403 });
+    await db.communityRecording.updateMany({
+      where: { id: String(form.get("id") ?? ""), communityId: community.id },
+      data: { hiddenAt: intent === "rec-hide" ? new Date() : null },
+    });
+    return { ok: true };
   }
 
   if (intent === "like") {
@@ -411,10 +443,126 @@ const faqs = [
   },
 ];
 
+function RecControl({ rec }: { rec: { recording: boolean; busy: boolean; startedAt: string | null } | null }) {
+  const fetcher = useFetcher<{ error?: string }>();
+  const busy = fetcher.state !== "idle";
+  if (!rec) return <p className="text-sm text-[#7C8A8E]">Grabación: la caja no contestó.</p>;
+  return (
+    <fetcher.Form method="post" className="grid gap-1">
+      {rec.recording ? (
+        <button
+          name="intent"
+          value="rec-stop"
+          disabled={busy}
+          className={`${pillBtn} border-2 border-[#ef4444] text-[#F2F5F4]`}
+        >
+          <span className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-[#ef4444] align-middle" />
+          {busy ? "Guardando…" : "Grabando · Detener y guardar"}
+        </button>
+      ) : (
+        <button
+          name="intent"
+          value="rec-start"
+          disabled={busy || rec.busy}
+          className={`${pillBtn} border-2 border-[#F2F5F4] text-[#F2F5F4] disabled:opacity-50`}
+        >
+          {rec.busy ? "La caja graba otra sala" : busy ? "Arrancando…" : "⏺ Grabar"}
+        </button>
+      )}
+      {fetcher.data?.error && <p className="max-w-[16rem] text-sm text-[#fbbf24]">{fetcher.data.error}</p>}
+    </fetcher.Form>
+  );
+}
+
+type RecordingView = {
+  id: string;
+  title: string;
+  status: string;
+  endedAt: string;
+  minutes: number | null;
+  hidden: boolean;
+};
+
+function Recordings({
+  slug,
+  recordings,
+  isInside,
+  canMod,
+}: {
+  slug: string;
+  recordings: RecordingView[];
+  isInside: boolean;
+  canMod: boolean;
+}) {
+  const [playing, setPlaying] = useState<string | null>(null);
+  return (
+    <section className="mt-14">
+      <h2 className="text-2xl font-black sm:text-3xl">Grabaciones de las llamadas</h2>
+      <p className="mt-1 text-[#7C8A8E]">
+        {isInside ? "Si te perdiste una llamada, aquí está completa." : "Los miembros ven todas las llamadas grabadas."}
+      </p>
+      <ul className="mt-6 grid gap-4">
+        {recordings.map((r) => (
+          <li
+            key={r.id}
+            className={`rounded-2xl border-2 border-[#F2F5F4] bg-[#0E1317] p-5 shadow-[6px_6px_0_#85DDCB] ${r.hidden ? "opacity-50" : ""}`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-bold">🎞 {r.title}</p>
+                <p className="text-sm text-[#7C8A8E]" suppressHydrationWarning>
+                  {upperFirst(longDate(r.endedAt))}
+                  {r.minutes ? ` · ${r.minutes} min` : ""}
+                  {r.status === "uploading" ? " · subiéndose…" : ""}
+                  {r.status === "failed" ? " · la subida falló" : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {!isInside ? (
+                  <span className="text-sm text-[#7C8A8E]">🔒 Sólo miembros</span>
+                ) : r.status === "ready" ? (
+                  <button
+                    type="button"
+                    onClick={() => setPlaying(playing === r.id ? null : r.id)}
+                    className="rounded-full border-2 border-[#85DDCB] px-4 py-1 text-sm font-bold text-[#85DDCB] hover:bg-[#85DDCB] hover:text-[#0E1317]"
+                  >
+                    {playing === r.id ? "Cerrar" : "▶ Ver"}
+                  </button>
+                ) : null}
+                {canMod && (
+                  <Form method="post">
+                    <input type="hidden" name="id" value={r.id} />
+                    <button
+                      name="intent"
+                      value={r.hidden ? "rec-unhide" : "rec-hide"}
+                      className="text-xs text-[#7C8A8E] underline"
+                    >
+                      {r.hidden ? "Mostrar" : "Ocultar"}
+                    </button>
+                  </Form>
+                )}
+              </div>
+            </div>
+            {playing === r.id && (
+              <video
+                src={`/comunidad/${slug}/grabacion/${r.id}`}
+                controls
+                autoPlay
+                playsInline
+                className="mt-4 aspect-video w-full rounded-xl border-2 border-[#F2F5F4] bg-black"
+              />
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   const {
     community, memberCount, courseCount, isLoggedIn, isInside, canMod, me,
-    membership, canClaimGift, wall, event,
+    membership, canClaimGift, wall, event, recordings, rec,
   } = loaderData;
   const [params] = useSearchParams();
   const actionData = useActionData<{ error?: string }>();
@@ -596,8 +744,14 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   🔒 Sólo miembros
                 </span>
               )}
+              {isInside && canMod && event.open && <RecControl rec={rec} />}
             </div>
           </section>
+        )}
+
+        {/* ── Grabaciones ── */}
+        {recordings.length > 0 && (
+          <Recordings slug={community.slug} recordings={recordings} isInside={isInside} canMod={canMod} />
         )}
 
         {/* ── Muro ── */}

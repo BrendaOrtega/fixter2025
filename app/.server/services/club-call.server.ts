@@ -46,44 +46,50 @@ function isHostEmail(email: string): boolean {
   return list.includes(email.trim().toLowerCase());
 }
 
+/** POST firmado con la credencial de partner del espacio `business` de gs. */
+export async function partnerPost<T = Record<string, unknown>>(
+  path: string,
+  payload: Record<string, unknown>
+): Promise<{ ok: boolean; status: number; data: (T & { error?: string }) | null }> {
+  const keyId = process.env.GHOSTY_PARTNER_KEY;
+  const secret = process.env.GHOSTY_PARTNER_KEY_SECRET;
+  if (!keyId || !secret) {
+    console.error("[club-call] faltan GHOSTY_PARTNER_KEY / GHOSTY_PARTNER_KEY_SECRET");
+    return { ok: false, status: 503, data: null };
+  }
+  const base = (process.env.GHOSTY_API_URL || DEFAULT_API).replace(/\/$/, "");
+  const raw = JSON.stringify(payload);
+  const ts = String(Math.floor(Date.now() / 1000));
+  const sig = crypto.createHmac("sha256", secret).update(`${ts}.${keyId}.${raw}`).digest("hex");
+  try {
+    const res = await fetch(`${base}${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-ghosty-key": keyId, "x-ghosty-ts": ts, "x-ghosty-sig": sig },
+      body: raw,
+      signal: AbortSignal.timeout(30_000),
+    });
+    const data = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
+    if (!res.ok) console.error(`[club-call] gs ${path} contestó ${res.status}: ${data?.error ?? ""}`);
+    return { ok: res.ok, status: res.status, data };
+  } catch (e) {
+    console.error(`[club-call] no pude llamar a gs ${path}:`, e instanceof Error ? e.message : e);
+    return { ok: false, status: 502, data: null };
+  }
+}
+
 /**
  * URL de la sala de la caja con ticket de un solo uso, o `null` si algo falla (queda en el log).
  * Se pide justo antes de redirigir: el ticket vence a los 120 s y no sirve dos veces.
  */
 export async function getCallLink(user: CallUser, opts: { host?: boolean } = {}): Promise<string | null> {
-  const keyId = process.env.GHOSTY_PARTNER_KEY;
-  const secret = process.env.GHOSTY_PARTNER_KEY_SECRET;
-  if (!keyId || !secret) {
-    console.error("[club-call] faltan GHOSTY_PARTNER_KEY / GHOSTY_PARTNER_KEY_SECRET");
-    return null;
-  }
-  const base = (process.env.GHOSTY_API_URL || DEFAULT_API).replace(/\/$/, "");
   const name = (user.displayName || user.username || user.email.split("@")[0]).trim().slice(0, 40);
   const host = opts.host ?? isHostEmail(user.email);
-  const raw = JSON.stringify({
+  const r = await partnerPost<{ url?: string }>("/api/v2/partner/event-box/ticket", {
     room: clubCallRoom(),
     name,
     role: host ? "host" : "viewer",
     mode: process.env.CLUB_CALL_MODE === "taller" ? "taller" : "webinar",
     title: TITLE,
   });
-  const ts = String(Math.floor(Date.now() / 1000));
-  const sig = crypto.createHmac("sha256", secret).update(`${ts}.${keyId}.${raw}`).digest("hex");
-  try {
-    const res = await fetch(`${base}/api/v2/partner/event-box/ticket`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-ghosty-key": keyId, "x-ghosty-ts": ts, "x-ghosty-sig": sig },
-      body: raw,
-      signal: AbortSignal.timeout(15_000),
-    });
-    const data = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
-    if (!res.ok || !data?.url) {
-      console.error(`[club-call] gs contestó ${res.status}: ${data?.error ?? "sin url"}`);
-      return null;
-    }
-    return data.url;
-  } catch (e) {
-    console.error("[club-call] no pude pedir el ticket a gs:", e instanceof Error ? e.message : e);
-    return null;
-  }
+  return r.ok && r.data?.url ? r.data.url : null;
 }

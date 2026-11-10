@@ -30,6 +30,7 @@ export default [
   route("c/:slug", "routes/c.$slug.tsx"), // alta pública a una comunidad
   route("comunidad", "routes/comunidad.tsx"), // → el club, mientras haya una sola
   route("comunidad/:slug", "routes/comunidad.$slug.tsx"), // comunidad de pago (membresía)
+  route("comunidad/:slug/grabacion/:id", "routes/comunidad.$slug.grabacion.$id.ts"), // video de una llamada, sólo miembros
   route("newsletters", "routes/newsletters.tsx"), // redirect → /secuencias
   route("newsletter", "routes/newsletter.tsx"), // redirect → /secuencias
   route("guides", "routes/guides.tsx"),

@@ -260,6 +260,7 @@ model Community {
   memberships    Membership[]
   posts          CommunityPost[]
   events         CommunityEvent[]
+  recordings     CommunityRecording[]
 
   /// Las secuencias que esta comunidad publica a sus miembros
   sequences Sequence[]
@@ -1392,4 +1393,28 @@ model CommunityReaction {
   @@unique([postId, userId])
   @@index([userId])
   @@map("community_reactions")
+}
+
+/// Grabación de una llamada del club (10-nov-2026). La graba la caja de eventos y la sube
+/// directo a nuestro bucket (`fixtergeek/club/<communityId>/<room>-<ts>.mp4`). Sólo miembros.
+model CommunityRecording {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String    @db.ObjectId
+  community   Community @relation(fields: [communityId], references: [id])
+
+  room       String
+  title      String
+  storageKey String
+  /// uploading | ready | failed
+  status     String    @default("uploading")
+  bytes      Float?
+  startedAt  DateTime?
+  endedAt    DateTime  @default(now())
+  /// Oculta para todos (la decide el anfitrión).
+  hiddenAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([communityId, endedAt])
+  @@map("community_recordings")
 }
