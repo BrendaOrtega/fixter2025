@@ -274,6 +274,14 @@ export const startSequenceProcessor = async () => {
   }
 };
 
+// Recordatorios de las llamadas de los clubes (24 h y 1 h antes). Sólo en producción: en desarrollo
+// la base es la misma y saldrían correos reales desde la máquina de alguien.
+getAgenda().define("club_event_reminders", { lockLifetime: 15 * 60 * 1000 }, async () => {
+  const { sendDueReminders } = await import("./services/club-events.server");
+  const { sent } = await sendDueReminders();
+  if (sent) console.info(`Recordatorios del club: ${sent} correos`);
+});
+
 // Initialize Agenda with all job definitions
 export const initializeAgenda = async () => {
   const agenda = getAgenda();
@@ -290,6 +298,11 @@ export const initializeAgenda = async () => {
   await agenda.cancel({ name: "cleanup_stuck_videos" });
   await agenda.every("15 minutes", "cleanup_stuck_videos");
   console.info("🧹 Video cleanup job scheduled (every 15 min)");
+
+  if (process.env.NODE_ENV === "production") {
+    await agenda.every("10 minutes", "club_event_reminders");
+    console.info("📅 Recordatorios del club cada 10 min");
+  }
 
   // Start backup scheduler (Domingos 3:00 AM)
   await startBackupScheduler();

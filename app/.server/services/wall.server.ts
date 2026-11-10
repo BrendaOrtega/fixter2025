@@ -282,12 +282,10 @@ export async function hideComment(
 }
 
 /** La próxima llamada (o la que está en curso). */
+/** La siguiente sesión (o la que está en curso), contando las series semanales. */
 export async function getNextEvent(communityId: string, now = new Date()) {
-  return db.communityEvent.findFirst({
-    where: { communityId, endsAt: { gt: now } },
-    orderBy: { startsAt: "asc" },
-    select: { id: true, title: true, startsAt: true, endsAt: true },
-  });
+  const { getNextOccurrence } = await import("~/.server/services/club-events.server");
+  return getNextOccurrence(communityId, now);
 }
 
 /** Se puede entrar 15 minutos antes y hasta que termina. */

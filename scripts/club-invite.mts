@@ -1,5 +1,6 @@
 /**
- * Invita gente al Club de Agentes de IA por correo (10-nov-2026).
+ * Invita gente al Club de Agentes de IA por correo (10-nov-2026). Lo mismo se hace desde el panel
+ * del anfitrión: /comunidad/club-de-agentes/admin.
  *
  *   npx tsx --env-file=.env scripts/club-invite.mts --source micro-hackaton-nov-2026 --gift 90 a@x.com b@y.com
  *   npx tsx --env-file=.env scripts/club-invite.mts --source llamada --call 20261117 a@x.com   # pase a una llamada
@@ -9,6 +10,7 @@
  * --call DIA   YYYYMMDD (CDMX) en que entra a la llamada aunque no sea miembro; se puede repetir
  */
 import { db } from "../app/.server/db";
+import { upsertInvites } from "../app/.server/services/club-invites.server";
 
 const args = process.argv.slice(2);
 const write = args.includes("--write");
@@ -35,23 +37,6 @@ if (!write) {
   console.log("Modo vista. Corre con --write para escribir.");
   process.exit(0);
 }
-for (const email of emails) {
-  const prev = await db.communityInvite.findUnique({
-    where: { communityId_email: { communityId: community.id, email } },
-  });
-  if (prev) {
-    await db.communityInvite.update({
-      where: { id: prev.id },
-      data: {
-        giftDays: Math.max(prev.giftDays, gift),
-        callDays: [...new Set([...prev.callDays, ...callDays])],
-      },
-    });
-  } else {
-    await db.communityInvite.create({
-      data: { communityId: community.id, email, source, giftDays: gift, callDays },
-    });
-  }
-}
+await upsertInvites(community.id, emails, { source, giftDays: gift, callDays });
 console.log(`✓ ${emails.length} invitaciones listas`);
 await db.$disconnect();

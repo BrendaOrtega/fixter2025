@@ -1,7 +1,7 @@
 // Invitados del club (10-nov-2026). bliss invita por correo y el invitado no tiene que hacer nada:
 //   - `giftDays`: al entrar con ese correo recibe la membresía de regalo, sin tarjeta.
 //   - `callDays`: los días que bliss lo invite a la llamada, entra aunque no pague.
-// Se agregan con `scripts/club-invite.mts`.
+// Se agregan desde el panel del anfitrión (/comunidad/:slug/admin) o con `scripts/club-invite.mts`.
 import { db } from "~/.server/db";
 import { isMembershipActive } from "~/.server/services/membership.server";
 
@@ -57,4 +57,34 @@ export async function applyInvite(user: { id: string; email: string }, community
     await db.communityInvite.update({ where: { id: invite.id }, data: { giftAt: new Date() } });
   }
   return invite;
+}
+
+/** Correos válidos de un texto libre (comas, espacios o renglones), en minúsculas y sin repetir. */
+export function parseEmails(text: string) {
+  return [...new Set(text.split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)))];
+}
+
+/** Crea o amplía invitaciones: nunca baja los días de regalo ni quita pases a llamadas. */
+export async function upsertInvites(
+  communityId: string,
+  emails: string[],
+  opts: { source: string; giftDays: number; callDays: string[] }
+) {
+  for (const email of emails) {
+    const prev = await db.communityInvite.findUnique({ where: { communityId_email: { communityId, email } } });
+    if (prev) {
+      await db.communityInvite.update({
+        where: { id: prev.id },
+        data: {
+          giftDays: Math.max(prev.giftDays, opts.giftDays),
+          callDays: [...new Set([...prev.callDays, ...opts.callDays])],
+        },
+      });
+    } else {
+      await db.communityInvite.create({
+        data: { communityId, email, source: opts.source, giftDays: opts.giftDays, callDays: opts.callDays },
+      });
+    }
+  }
+  return emails.length;
 }

@@ -253,15 +253,15 @@ model Community {
 
   /// Membresía de pago (10-nov-2026). Sin precio la comunidad sigue siendo
   /// la de alta gratuita por correo de siempre.
-  priceMxn       Int? // mensual, en pesos
-  priceAnnualMxn Int? // anual, en pesos (FixterGeek: $990 = dos meses gratis)
+  priceMxn           Int? // mensual, en pesos
+  priceAnnualMxn     Int? // anual, en pesos (FixterGeek: $990 = dos meses gratis)
   /// Membresía vigente abre todos los cursos de pago (decisión de bliss, 10-nov-2026)
-  includesAllCourses Boolean @default(false)
-  memberships    Membership[]
-  posts          CommunityPost[]
-  events         CommunityEvent[]
-  recordings     CommunityRecording[]
-  invites        CommunityInvite[]
+  includesAllCourses Boolean              @default(false)
+  memberships        Membership[]
+  posts              CommunityPost[]
+  events             CommunityEvent[]
+  recordings         CommunityRecording[]
+  invites            CommunityInvite[]
 
   /// Las secuencias que esta comunidad publica a sus miembros
   sequences Sequence[]
@@ -707,11 +707,11 @@ model Membership {
   user        User      @relation(fields: [userId], references: [id])
 
   /// active | past_due | canceled (lo que importa para dar acceso)
-  status   String
-  provider String  @default("stripe") // stripe | mercadopago | grant
+  status      String
+  provider    String  @default("stripe") // stripe | mercadopago | grant
   /// De dónde salió el regalo: buyer (ya era estudiante) | invite (invitado de bliss)
   grantSource String?
-  interval String? // month | year
+  interval    String? // month | year
 
   /// Cliente y suscripción en el procesador (Stripe `cus_…`/`sub_…`, MP payer/preapproval).
   /// Sin @unique: en Mongo dos `grant` sin suscripción chocarían por el null.
@@ -1376,11 +1376,20 @@ model CommunityEvent {
   communityId String    @db.ObjectId
   community   Community @relation(fields: [communityId], references: [id])
 
-  title    String
-  startsAt DateTime
-  endsAt   DateTime
+  title       String
+  description String?
+  /// Primera sesión (o la única). En una serie, cada sesión dura lo mismo que ésta.
+  startsAt    DateTime
+  endsAt      DateTime
+  /// null = una sola vez | "weekly" = cada semana a la misma hora
+  recurrence  String?
+  /// Última fecha en que puede empezar una sesión de la serie (incluida).
+  until       DateTime?
+  /// Recordatorios ya enviados: `<ISO de la sesión>|24h` y `|1h`.
+  remindedFor String[]  @default([])
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
 
   @@index([communityId, startsAt])
   @@map("community_events")
@@ -1405,18 +1414,21 @@ model CommunityRecording {
   communityId String    @db.ObjectId
   community   Community @relation(fields: [communityId], references: [id])
 
-  room       String
-  title      String
-  storageKey String
+  room         String
+  title        String
+  storageKey   String
   /// recording | uploading | ready | failed
-  status     String    @default("uploading")
+  status       String    @default("uploading")
   /// Archivo en la caja (`<id>.mp4`): con él se rehace el HLS si la caja paró sola o falló la subida.
-  boxFile    String?
-  bytes      Float?
-  startedAt  DateTime?
-  endedAt    DateTime  @default(now())
+  boxFile      String?
+  bytes        Float?
+  startedAt    DateTime?
+  endedAt      DateTime  @default(now())
   /// Oculta para todos (la decide el anfitrión).
-  hiddenAt   DateTime?
+  hiddenAt     DateTime?
+  /// Evento (y sesión de la serie) del que salió la grabación.
+  eventId      String?   @db.ObjectId
+  occurrenceAt DateTime?
 
   createdAt DateTime @default(now())
 
@@ -1433,12 +1445,12 @@ model CommunityInvite {
   community   Community @relation(fields: [communityId], references: [id])
 
   /// En minúsculas.
-  email     String
+  email    String
   /// p. ej. "micro-hackaton-nov-2026"
-  source    String
-  giftDays  Int       @default(0)
-  giftAt    DateTime?
-  callDays  String[]  @default([])
+  source   String
+  giftDays Int       @default(0)
+  giftAt   DateTime?
+  callDays String[]  @default([])
 
   createdAt DateTime @default(now())
 

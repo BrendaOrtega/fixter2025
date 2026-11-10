@@ -46,7 +46,6 @@ import {
 import {
   listRecordings,
   recordingState,
-  retryRecording,
   startRecording,
   stopRecording,
 } from "~/.server/services/club-recording.server";
@@ -108,7 +107,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     getWall({ communityId: community.id, isInside, canMod, viewerId: user?.id ?? null }),
     getNextEvent(community.id),
     db.course.count({ where: { isFree: false, published: true } }),
-    listRecordings(community.id, canMod),
+    // La página muestra las grabaciones como las ve un miembro; ocultar/reintentar vive en el panel.
+    listRecordings(community.id, false),
     // Estado de la grabación sólo para el anfitrión, y sólo con la llamada abierta.
     canMod ? getNextEvent(community.id).then((e) => (isCallOpen(e) ? recordingState() : null)) : null,
   ]);
@@ -150,6 +150,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     isCallGuest: !isInside && isCallGuestToday(invite),
     event: event
       ? {
+          id: event.id,
           title: event.title,
           startsAt: event.startsAt.toISOString(),
           endsAt: event.endsAt.toISOString(),
@@ -200,23 +201,26 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const canMod = canModerate(user, community);
   const inside = canParticipate(user, membership, community);
   // Invitado a la llamada de hoy: entra a la llamada (sólo eso) aunque no sea miembro.
-  const callGuest = !inside && (intent === "call" || intent === "call-live") && isCallGuestToday(await applyInvite(user, community.id));
+  const callGuest = !inside && intent === "call" && isCallGuestToday(await applyInvite(user, community.id));
   if (!inside && !callGuest) {
     return data({ error: "Únete al club para participar." }, { status: 403 });
   }
 
   // ── Llamada en vivo: ticket de un solo uso (120 s) que se pide al dar clic ──
-  if (intent === "call" || intent === "call-live") {
+  if (intent === "call") {
     const event = await getNextEvent(community.id);
     if (!isCallOpen(event)) {
       return data({ error: "La llamada se abre 15 minutos antes." }, { status: 400 });
     }
     const link = await getCallLink(user, { host: canMod });
-    // El anfitrión entra y la llamada empieza a grabarse sola, para que no dependa de acordarse.
-    // Si la caja no puede (ocupada con otra sala), se entra igual y el botón lo dice en la página.
+    // El anfitrión elige al entrar: «Grabar» (encendido por defecto) y «Transmitir a YouTube y
+    // Facebook» (transmitir también graba). Si la caja no puede (ocupada con otra sala), se entra
+    // igual y el botón de grabar lo dice en la página.
     if (link && canMod && event) {
-      const live = intent === "call-live";
-      await startRecording(community, event.title, undefined, { live }).catch(() => null);
+      const live = form.get("live") === "on";
+      if (live || form.get("record") === "on") {
+        await startRecording(community, event.title, undefined, { live, event }).catch(() => null);
+      }
     }
     if (link) throw redirect(link);
     return data({ error: "No pudimos abrir la sala. Intenta de nuevo en un momento." }, { status: 502 });
@@ -227,23 +231,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (!canMod) return data({ error: "Sólo el anfitrión graba." }, { status: 403 });
     const event = await getNextEvent(community.id);
     const title = event?.title ?? "Llamada del club";
-    const r = intent === "rec-start" ? await startRecording(community, title) : await stopRecording(community, title);
+    const r =
+      intent === "rec-start"
+        ? await startRecording(community, title, undefined, { event })
+        : await stopRecording(community, title, undefined, event);
     return r.ok ? { ok: true } : data({ error: r.error }, { status: 502 });
   }
-  if (intent === "rec-retry") {
-    if (!canMod) return data({ error: "Sólo el anfitrión." }, { status: 403 });
-    const r = await retryRecording(community.id, String(form.get("id") ?? ""));
-    return r.ok ? { ok: true } : data({ error: r.error }, { status: 502 });
-  }
-  if (intent === "rec-hide" || intent === "rec-unhide") {
-    if (!canMod) return data({ error: "Sólo el anfitrión." }, { status: 403 });
-    await db.communityRecording.updateMany({
-      where: { id: String(form.get("id") ?? ""), communityId: community.id },
-      data: { hiddenAt: intent === "rec-hide" ? new Date() : null },
-    });
-    return { ok: true };
-  }
-
   if (intent === "like") {
     await toggleLike(community.id, String(form.get("postId") ?? ""), user.id);
     return { ok: true };
@@ -424,6 +417,38 @@ const faqs = [
   },
 ];
 
+/** Lo que el anfitrión decide al entrar. Transmitir también graba. */
+function HostToggles() {
+  const [record, setRecord] = useState(true);
+  const [live, setLive] = useState(false);
+  return (
+    <div className="grid gap-1.5 text-sm">
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="record"
+          checked={record || live}
+          disabled={live}
+          onChange={(e) => setRecord(e.target.checked)}
+          className="h-4 w-4 accent-brand-500"
+        />
+        Grabar para los miembros
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="live"
+          checked={live}
+          onChange={(e) => setLive(e.target.checked)}
+          className="h-4 w-4 accent-brand-500"
+        />
+        Transmitir a YouTube y Facebook
+      </label>
+      {live && <input type="hidden" name="record" value="on" />}
+    </div>
+  );
+}
+
 function RecControl({ rec }: { rec: { recording: boolean; busy: boolean; startedAt: string | null } | null }) {
   const fetcher = useFetcher<{ error?: string }>();
   const busy = fetcher.state !== "idle";
@@ -462,7 +487,6 @@ type RecordingView = {
   endedAt: string;
   minutes: number | null;
   hidden: boolean;
-  canRetry: boolean;
   poster: string | null;
 };
 
@@ -470,12 +494,10 @@ function Recordings({
   slug,
   recordings,
   isInside,
-  canMod,
 }: {
   slug: string;
   recordings: RecordingView[];
   isInside: boolean;
-  canMod: boolean;
 }) {
   const [playing, setPlaying] = useState<string | null>(null);
   return (
@@ -513,26 +535,6 @@ function Recordings({
                     {playing === r.id ? "Cerrar" : "▶ Ver"}
                   </button>
                 ) : null}
-                {r.canRetry && (
-                  <Form method="post">
-                    <input type="hidden" name="id" value={r.id} />
-                    <button name="intent" value="rec-retry" className="text-xs text-brand-500 underline">
-                      Reintentar
-                    </button>
-                  </Form>
-                )}
-                {canMod && (
-                  <Form method="post">
-                    <input type="hidden" name="id" value={r.id} />
-                    <button
-                      name="intent"
-                      value={r.hidden ? "rec-unhide" : "rec-hide"}
-                      className="text-xs text-colorCaption underline"
-                    >
-                      {r.hidden ? "Mostrar" : "Ocultar"}
-                    </button>
-                  </Form>
-                )}
               </div>
             </div>
             {playing === r.id && (
@@ -635,6 +637,17 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
           </div>
         </section>
 
+        {canMod && (
+          <div className="mt-8 flex justify-end">
+            <a
+              href={`/comunidad/${community.slug}/admin`}
+              className="rounded-full border border-colorOutline px-4 py-2 text-sm font-semibold text-white transition hover:border-brand-500 hover:text-brand-500"
+            >
+              ⚙️ Administrar club
+            </a>
+          </div>
+        )}
+
         {/* ── Estado de quien mira ── */}
         <section className="mt-10">
           {isInside ? (
@@ -709,10 +722,16 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
           <section className="mt-8 rounded-2xl border border-colorOutline bg-brand-500/10 p-6">
             <p className="text-sm font-bold uppercase tracking-wider text-brand-500">Próxima transmisión en vivo</p>
             <h2 className="mt-1 text-2xl font-bold">{event.title}</h2>
+            <a
+              href={`/comunidad/${community.slug}/evento/${event.id}.ics`}
+              className="mt-1 inline-block text-sm text-brand-500 hover:underline"
+            >
+              📅 Agregar a mi calendario
+            </a>
             <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
               <Countdown startsAt={event.startsAt} endsAt={event.endsAt} />
               {isInside || isCallGuest ? (
-                <Form method="post">
+                <Form method="post" className="grid gap-3">
                   <button
                     name="intent"
                     value="call"
@@ -721,17 +740,9 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   >
                     {event.open ? "🎙 Entrar a la llamada" : "Se abre 15 min antes"}
                   </button>
-                  {canMod && event.open && (
-                    <button
-                      name="intent"
-                      value="call-live"
-                      className={`${pillBtn} ml-3 border-brand-500 text-brand-500`}
-                    >
-                      📡 Entrar y transmitir en vivo
-                    </button>
-                  )}
+                  {canMod && <HostToggles />}
                   {actionData?.error && (
-                    <p className="mt-2 max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>
+                    <p className="max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>
                   )}
                 </Form>
               ) : (
@@ -746,7 +757,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
 
         {/* ── Grabaciones ── */}
         {recordings.length > 0 && (
-          <Recordings slug={community.slug} recordings={recordings} isInside={isInside} canMod={canMod} />
+          <Recordings slug={community.slug} recordings={recordings} isInside={isInside} />
         )}
 
         {/* ── Muro ── */}

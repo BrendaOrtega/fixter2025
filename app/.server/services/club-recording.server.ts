@@ -56,7 +56,7 @@ export async function startRecording(
   community: { id: string },
   title: string,
   room = clubCallRoom(),
-  opts: { live?: boolean } = {}
+  opts: { live?: boolean; event?: { id: string; startsAt: Date } | null } = {}
 ) {
   // `live`: además de grabar, sale a YouTube y Facebook (destinos que gs ya cargó en la caja con
   // «Preparar transmisión»). Si la caja no tiene destinos, falla y se graba sin transmitir.
@@ -82,6 +82,7 @@ export async function startRecording(
         boxFile: file,
         storageKey: "",
         startedAt: r.data.startedAt ? new Date(r.data.startedAt) : new Date(),
+        ...(opts.event ? { eventId: opts.event.id, occurrenceAt: opts.event.startsAt } : {}),
       },
     });
     const prefix = hlsPrefixFor(community.id, row.id);
@@ -113,14 +114,19 @@ async function finish(row: { id: string; communityId: string; room: string; boxF
   return { ok: true as const };
 }
 
-export async function stopRecording(community: { id: string }, title: string, room = clubCallRoom()) {
+export async function stopRecording(
+  community: { id: string },
+  title: string,
+  room = clubCallRoom(),
+  event?: { id: string; startsAt: Date } | null
+) {
   let row = await db.communityRecording.findFirst({
     where: { communityId: community.id, status: "recording", room },
     orderBy: { createdAt: "desc" },
   });
   if (!row) {
     // Grabación sin fila (p. ej. arrancó antes de este deploy): `start` la registra sin duplicar.
-    const s = await startRecording(community, title, room);
+    const s = await startRecording(community, title, room, { event });
     if (!s.ok) return s;
     row = await db.communityRecording.findFirst({
       where: { communityId: community.id, status: "recording", room },
@@ -180,6 +186,7 @@ export async function listRecordings(communityId: string, canMod: boolean) {
           ? Math.max(1, Math.round((r.endedAt.getTime() - r.startedAt.getTime()) / 60_000))
           : null,
       hidden: !!r.hiddenAt,
+      eventId: r.eventId ?? null,
       canRetry: canMod && r.status === "failed" && !!r.boxFile,
       poster: r.status === "ready" ? buildHlsProxyUrl(r.storageKey.replace(/master\.m3u8$/, "poster.jpg")) : null,
     }));
