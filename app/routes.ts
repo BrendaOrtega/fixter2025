@@ -28,6 +28,7 @@ export default [
   route("s/*", "routes/s.legacy.tsx"), // alias viejo → /secuencias/*
   route("c/confirmar", "routes/c.confirmar.tsx"), // doble opt-in de comunidad (antes que c/:slug)
   route("c/:slug", "routes/c.$slug.tsx"), // alta pública a una comunidad
+  route("comunidad", "routes/comunidad.tsx"), // → el club, mientras haya una sola
   route("comunidad/:slug", "routes/comunidad.$slug.tsx"), // comunidad de pago (membresía)
   route("newsletters", "routes/newsletters.tsx"), // redirect → /secuencias
   route("newsletter", "routes/newsletter.tsx"), // redirect → /secuencias

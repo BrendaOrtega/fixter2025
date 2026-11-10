@@ -83,7 +83,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Bloqueado o sin cupo → la misma pantalla de éxito, para no dar pistas.
     const guard = await checkSignupRequest(request, formData, { email, label: "magic-link" });
     if (guard.ok && (await claimEmailSend(email, "otp:magic-link", guard.ip, "otp"))) {
-      await sendMagicLink({ email });
+      const rawNext = String(formData.get("next") ?? "");
+      const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : undefined;
+      await sendMagicLink({ email, next });
     }
     return redirect("/login?success=1");
   }

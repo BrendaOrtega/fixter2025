@@ -10,6 +10,8 @@ import type { Route } from "./+types/comunidad.$slug";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import {
+  canClaimBuyerGift,
+  claimBuyerGift,
   createBillingPortal,
   createMembershipCheckout,
   isMembershipActive,
@@ -48,22 +50,31 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     where: { communityId: community.id, status: { in: ["active", "past_due"] } },
   });
 
+  const isMember = isMembershipActive(membership);
   return {
     community,
     memberCount,
     isLoggedIn: !!user,
-    isMember: isMembershipActive(membership),
+    isMember,
     membership,
+    // Se detecta al volver del login: quien compró un curso ve su regalo.
+    canClaimGift: !!user && !isMember && (await canClaimBuyerGift(user, community.id)),
   };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const slug = params.slug as string;
   const user = await getUserOrNull(request);
-  if (!user) throw redirect(`/login?redirect=/comunidad/${slug}`);
+  if (!user) throw redirect(`/login?next=/comunidad/${slug}`);
 
   const form = await request.formData();
   const intent = form.get("intent");
+  if (intent === "claim") {
+    const community = await db.community.findFirst({ where: { slug, isActive: true } });
+    if (community && (await claimBuyerGift(user, community.id))) {
+      throw redirect(`/comunidad/${slug}?bienvenida=1`);
+    }
+  }
   if (intent === "join") {
     const interval = form.get("interval") === "year" ? "year" : "month";
     const url = await createMembershipCheckout({ user, communitySlug: slug, interval });
@@ -77,7 +88,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export default function CommunityHome({ loaderData }: Route.ComponentProps) {
-  const { community, memberCount, isLoggedIn, isMember, membership } = loaderData;
+  const { community, memberCount, isLoggedIn, isMember, membership, canClaimGift } = loaderData;
   const [params] = useSearchParams();
   const justJoined = params.get("bienvenida") === "1";
 
@@ -109,6 +120,22 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                 </button>
               </Form>
             )}
+          </section>
+        ) : canClaimGift ? (
+          <section className="mt-12 rounded-2xl border-2 border-[#fbbf24] p-8">
+            <p className="text-2xl font-bold">Compraste un curso en FixterGeek 🎁</p>
+            <p className="mt-2 text-lg">
+              Por eso tienes 3 meses gratis en el club. Sin tarjeta: al terminar decides si te quedas.
+            </p>
+            <Form method="post" className="mt-6">
+              <button
+                name="intent"
+                value="claim"
+                className="rounded-xl bg-[#fbbf24] px-6 py-3 font-bold text-[#0E1317] shadow-[8px_8px_0_#F2F5F4]"
+              >
+                Activar mis 3 meses gratis
+              </button>
+            </Form>
           </section>
         ) : (
           <section className="mt-12 rounded-2xl border-2 border-[#F2F5F4] p-8">
@@ -148,6 +175,15 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
               </div>
             </Form>
             <p className="mt-3 text-sm text-[#7C8A8E]">Cancela cuando quieras.</p>
+            {!isLoggedIn && (
+              <p className="mt-6 rounded-xl bg-[#fbbf24]/15 p-4 text-[#fbbf24]">
+                🎁 ¿Ya compraste un curso en FixterGeek? Tienes <strong>3 meses gratis</strong>.{" "}
+                <a href={`/login?next=/comunidad/${community.slug}`} className="underline font-bold">
+                  Inicia sesión
+                </a>{" "}
+                y se activan solos.
+              </p>
+            )}
           </section>
         )}
       </div>

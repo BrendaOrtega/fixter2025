@@ -1,4 +1,4 @@
-import { Form, Link, redirect, useActionData, useFetchers, useLoaderData, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useFetchers, useLoaderData, useNavigation, useSearchParams } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import { GoogleLoginLink } from "~/components/GoogleLoginLink";
@@ -164,8 +164,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
     });
   }
   const session = await placeSession(request, decoded.email);
-  // @todo where is best?
-  throw redirect("/mis-cursos", {
+  // `next` viaja firmado dentro del token; sólo rutas internas (sin open redirect).
+  const next =
+    typeof decoded.next === "string" && decoded.next.startsWith("/") && !decoded.next.startsWith("//")
+      ? decoded.next
+      : "/mis-cursos";
+  throw redirect(next, {
     headers: { "Set-Cookie": await commitSession(session) },
   });
 };
@@ -175,6 +179,9 @@ export default function Page() {
   const actionData = useActionData<typeof action>();
   const fetchers = useFetchers(); // hack for Form (not working very well 😡)
   const { trap } = useBotTrap();
+  // A dónde volver tras el magic link (p. ej. /comunidad/club-de-agentes).
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get("next");
 
   // Si es confirmación de subscriber, mostrar UI especial
   if (actionData && "confirmed" in actionData) {
@@ -261,6 +268,7 @@ export default function Page() {
       ) : (
         <Form method="POST" action="/api/user" className="grid gap-2">
           {trap}
+          {next && <input type="hidden" name="next" value={next} />}
           <input
             required
             type="email"

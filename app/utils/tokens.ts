@@ -22,6 +22,8 @@ type TokenData = {
   welcomeType?: string;
   // Redirect después de la acción
   redirectTo?: string;
+  // Magic link: a dónde volver al iniciar sesión (ruta interna)
+  next?: string;
 };
 
 export const generateUserToken = (data: TokenData) => {
@@ -38,6 +40,7 @@ export const validateUserToken = (token: string) => {
       action?: "confirm-subscriber" | "magic-link";
       welcomeType?: string;
       redirectTo?: string;
+      next?: string;
     };
     return {
       isValid: true,

@@ -189,3 +189,43 @@ export async function createBillingPortal(userId: string, communitySlug: string)
   });
   return portal.url;
 }
+
+// ── Regalo a compradores (10-nov-2026) ───────────────────────────────────────
+// Quien ya compró un curso de pago o un libro en FixterGeek tiene 3 meses
+// gratis. Se reclama una sola vez: si ya tuvo un regalo, aunque haya vencido,
+// no se vuelve a dar.
+
+export const BUYER_GIFT_DAYS = 90;
+
+/** ¿Compró algo en FixterGeek? Curso que no es gratis, o algún libro. */
+export async function isCourseBuyer(user: { courses: string[]; books: string[] }) {
+  if (user.books.length > 0) return true;
+  if (user.courses.length === 0) return false;
+  const paid = await db.course.count({
+    where: { id: { in: user.courses }, isFree: false },
+  });
+  return paid > 0;
+}
+
+/** Puede reclamar si compró, no tiene acceso vigente y nunca tuvo regalo. */
+export async function canClaimBuyerGift(
+  user: { id: string; courses: string[]; books: string[] },
+  communityId: string
+) {
+  const current = await db.membership.findUnique({
+    where: { communityId_userId: { communityId, userId: user.id } },
+    select: { provider: true, status: true, currentPeriodEnd: true },
+  });
+  if (current?.provider === "grant") return false;
+  if (isMembershipActive(current)) return false;
+  return isCourseBuyer(user);
+}
+
+export async function claimBuyerGift(
+  user: { id: string; courses: string[]; books: string[] },
+  communityId: string
+) {
+  if (!(await canClaimBuyerGift(user, communityId))) return null;
+  const until = new Date(Date.now() + BUYER_GIFT_DAYS * 24 * 60 * 60 * 1000);
+  return grantMembership({ userId: user.id, communityId, until });
+}
