@@ -15,6 +15,11 @@ import { sendAisdkTaller1Welcome } from "~/mailSenders/sendAisdkTaller1Welcome";
 import { sendBookDownloadLink } from "~/mailSenders/sendBookDownloadLink";
 import type { BookSlug } from "~/.server/services/book-access.server";
 import { grantCredits, type PackageKey } from "~/.server/services/coach-credits.server";
+import {
+  MEMBERSHIP_TYPE,
+  syncFromCheckoutSession,
+  syncSubscription,
+} from "~/.server/services/membership.server";
 
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -40,6 +45,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return new Response("::Stripe construct failed::", { status: 500 });
   }
   switch (event.type) {
+    // Membresías: cada cambio de la suscripción (renovación, falla de cobro,
+    // cancelación) se copia tal cual a `Membership`.
+    case "customer.subscription.created":
+    case "customer.subscription.updated":
+    case "customer.subscription.deleted":
+      await syncSubscription(event.data.object);
+      return new Response(null);
     case "checkout.session.async_payment_failed":
       await successPurchase({
         userName: "Error en la compra (stripe error)",
@@ -52,6 +64,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       invariant(session.metadata);
       const email = session.customer_email || session.customer_details?.email;
       if (!email) return data("No email received", { status: 404 });
+
+      if (session.metadata.type === MEMBERSHIP_TYPE) {
+        await syncFromCheckoutSession(session);
+        console.info(`WEBHOOK: membresía ${session.metadata.communityId} de ${email}`);
+        return new Response(null);
+      }
 
       // ============================================================
       // CUMPLIMIENTO POR DATOS

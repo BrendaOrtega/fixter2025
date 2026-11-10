@@ -251,6 +251,12 @@ model Community {
 
   isActive Boolean @default(true)
 
+  /// Membresía de pago (10-nov-2026). Sin precio la comunidad sigue siendo
+  /// la de alta gratuita por correo de siempre.
+  priceMxn       Int? // mensual, en pesos
+  priceAnnualMxn Int? // anual, en pesos (FixterGeek: $990 = dos meses gratis)
+  memberships Membership[]
+
   /// Las secuencias que esta comunidad publica a sus miembros
   sequences Sequence[]
 
@@ -675,8 +681,43 @@ model User {
   // Secuences que el user creó (es dueño)
   sequences   Sequence[]
   communities Community[]
+  memberships Membership[]
 
   @@map("users")
+}
+
+/// Acceso de pago de un usuario a una comunidad (10-nov-2026).
+///
+/// Una fila por par usuario–comunidad. La escribe el webhook del procesador
+/// con cada cambio de la suscripción. `provider: "grant"` es acceso regalado
+/// (p. ej. 3 meses a quien ya había comprado un curso) y no tiene suscripción.
+model Membership {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String    @db.ObjectId
+  community   Community @relation(fields: [communityId], references: [id])
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id])
+
+  /// active | past_due | canceled (lo que importa para dar acceso)
+  status   String
+  provider String @default("stripe") // stripe | mercadopago | grant
+  interval String? // month | year
+
+  /// Cliente y suscripción en el procesador (Stripe `cus_…`/`sub_…`, MP payer/preapproval).
+  /// Sin @unique: en Mongo dos `grant` sin suscripción chocarían por el null.
+  customerId        String?
+  externalId        String?
+  /// Hasta cuándo está pagado. Un `grant` sin fecha no caduca.
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([communityId, userId])
+  @@index([userId])
+  @@index([externalId])
+  @@map("memberships")
 }
 
 // Control de acceso por capítulo de libro
