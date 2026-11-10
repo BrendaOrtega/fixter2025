@@ -312,6 +312,12 @@ const infra = [
     body: "Llamadas que se repiten cada semana, aviso 24 h y 1 h antes por correo y WhatsApp, «agregar a mi calendario» e invitados con pase a una llamada.",
     vs: "WhatsApp, en camino: hoy el aviso sale por correo. Muro con insignias incluido.",
   },
+  {
+    icon: "👻",
+    title: "Un agente de IA para tu comunidad",
+    body: "Ghosty contesta las dudas de tus miembros con tus clases y grabaciones, y les da seguimiento por WhatsApp.",
+    vs: "En camino. Circle AI también trae agentes; Ghosty ya atiende negocios por WhatsApp en ghosty.studio.",
+  },
 ];
 
 /** 2 · La infraestructura que va con cada comunidad, contra lo que dan los demás. */
