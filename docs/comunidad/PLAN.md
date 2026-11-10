@@ -90,3 +90,20 @@ bliss: «con Mongo no podremos crecer». Antes de la fase 1 (comunidades multi-d
 fixtergeek a SQLite: inventario de modelos (60+, varios con `Json` heterogéneo como `User.bootcamps/payments`),
 cambio de ids `ObjectId` → texto, dónde vive el archivo (volumen en la caja app-host) y respaldo (Litestream o
 similar). La membresía nueva (`Membership`) ya está escrita sin nada exclusivo de Mongo.
+
+## Llamada del club: cómo se entra (10-nov-2026)
+- La llamada vive en la **caja de eventos** (`https://evento.sandboxes.easybits.cloud`), no en Teams. Sala del día:
+  `fx-club-de-agentes-YYYYMMDD` (fecha de CDMX), modo webinar.
+- Al dar clic en «Entrar a la llamada», fixtergeek revisa la membresía y llama a
+  `getCallLink(user)` (`app/.server/services/club-call.server.ts`). Ese servicio firma la petición con la credencial
+  de partner del espacio `business` de gs y pide `POST https://www.ghosty.studio/api/v2/partner/event-box/ticket`
+  `{room, name, role, mode, title}`. gs firma el ticket de la caja con `EVENT_TICKET_SECRET` (que nunca sale de gs) y
+  devuelve `https://evento…/room?room=…&ticket=…`. Se redirige en el acto: el ticket es de **un solo uso y dura 120 s**.
+- Roles: `host` para `CLUB_CALL_HOST_EMAILS` (default `fixtergeek@gmail.com`) o `getCallLink(user, {host: true})`;
+  `viewer` para los demás (levantan la mano y el host les da la palabra).
+- gs sólo firma salas con el prefijo del partner (`fx-` para `business`, `EVENT_TICKET_PREFIXES` en
+  `ghosty-studio/app/lib/partner/partner-event-ticket.ts`); las de Teams son `ev_*` y quedan fuera.
+- Env de fixtergeek: `GHOSTY_PARTNER_KEY` (gpk_…), `GHOSTY_PARTNER_KEY_SECRET` (gps_…); opcionales `GHOSTY_API_URL`,
+  `CLUB_CALL_HOST_EMAILS`, `CLUB_CALL_MODE`. Viven en `/app/secrets.env` de la caja app-host de fixtergeek y entran al
+  contenedor en el siguiente reinicio (el próximo deploy de `:main`).
+- La caja no deja entrar sin ticket (`/token` responde 401), así que no hay liga «pelona» para compartir.

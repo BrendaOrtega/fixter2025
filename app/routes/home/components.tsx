@@ -11,7 +11,7 @@ import { InfiniteMovingCards } from "~/components/common/InfiniteMoving";
 import { Link } from "react-router";
 import { Footer } from "~/components/Footer";
 import { Banner } from "~/components/common/Banner";
-import { EnvelopeIllustration } from "~/components/community/EnvelopeIllustration";
+import { MicIllustration } from "~/components/community/MicIllustration";
 
 const companies = [
   {
@@ -792,18 +792,18 @@ export const CommunityBand = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="mb-4 inline-block text-xs font-semibold uppercase tracking-widest text-brand-500">
-              Gratis
+              Nuevo
             </span>
             <h2 className="text-3xl font-bold !leading-snug text-white md:text-4xl xl:text-5xl">
-              Comunidad Agéntica
+              Club de Agentes de IA
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-zinc-400">
-              Cómo se construyen los agentes que aguantan usuarios reales. Un
-              correo cuando hay algo que de verdad sirve, no cuando toca
-              mandarlo.
+              Construye agentes que trabajan de verdad, con una llamada en vivo
+              cada semana y un muro de gente que también los construye. Si ya
+              compraste un curso, tienes 3 meses gratis.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              {["Sin costo", "Baja en un clic", "Cero spam"].map((tag) => (
+              {["Llamada en vivo cada semana", "$99 MXN al mes", "Cancela cuando quieras"].map((tag) => (
                 <span
                   key={tag}
                   className="rounded-full border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-xs text-zinc-300"
@@ -815,20 +815,20 @@ export const CommunityBand = () => {
             <div className="mt-8">
               <PrimaryButton
                 as="Link"
-                to="/c/agentes"
-                title="Unirme a la comunidad"
+                to="/comunidad/club-de-agentes"
+                title="Conocer el club"
               />
             </div>
           </motion.div>
 
-          {/* el mismo sobre de la landing de comunidad */}
+          {/* el micrófono de la llamada del club */}
           <motion.div
             initial={{ opacity: 0, scale: 0.94 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.7, delay: 0.15 }}
             className="pointer-events-none flex justify-center lg:justify-end"
           >
-            <EnvelopeIllustration className="h-auto w-[240px] md:w-[320px]" />
+            <MicIllustration className="h-auto w-[220px] md:w-[300px]" />
           </motion.div>
         </div>
       </div>

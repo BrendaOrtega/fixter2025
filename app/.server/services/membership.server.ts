@@ -47,6 +47,21 @@ export async function hasActiveMembership(userId: string, communityId: string) {
   return isMembershipActive(m);
 }
 
+/**
+ * Fin del regalo para usarlo como prueba gratis de Stripe. Stripe pide que
+ * `trial_end` quede al menos 48 h en el futuro; con menos, cobra desde hoy.
+ */
+export function giftTrialEnd(
+  m: { provider: string; status: string; currentPeriodEnd: Date | null } | null,
+  now = new Date()
+) {
+  if (!m || m.provider !== "grant" || !isMembershipActive(m, now) || !m.currentPeriodEnd) {
+    return null;
+  }
+  const minimum = now.getTime() + 49 * 60 * 60 * 1000;
+  return m.currentPeriodEnd.getTime() > minimum ? m.currentPeriodEnd : null;
+}
+
 /** Sesión de Checkout para suscribirse. Devuelve la URL de Stripe. */
 export type BillingInterval = "month" | "year";
 
@@ -66,9 +81,16 @@ export async function createMembershipCheckout({
   const price = interval === "year" ? community.priceAnnualMxn : community.priceMxn;
   if (!price) throw new Error(`La comunidad no tiene precio ${interval}`);
 
-  if (await hasActiveMembership(user.id, community.id)) {
+  // Ya paga: nada que cobrar. Con regalo vigente SÍ puede pagar (p. ej. el
+  // anual) y el cobro arranca cuando se acaba el regalo, sin perder sus días.
+  const current = await db.membership.findUnique({
+    where: { communityId_userId: { communityId: community.id, userId: user.id } },
+    select: { provider: true, status: true, currentPeriodEnd: true },
+  });
+  if (current && current.provider !== "grant" && isMembershipActive(current)) {
     return `${baseUrl()}/comunidad/${community.slug}`;
   }
+  const trialEnd = giftTrialEnd(current);
 
   const metadata = {
     type: MEMBERSHIP_TYPE,
@@ -94,7 +116,10 @@ export async function createMembershipCheckout({
     ],
     metadata,
     // La suscripción carga los mismos datos: sus eventos llegan sin la sesión.
-    subscription_data: { metadata },
+    subscription_data: {
+      metadata,
+      ...(trialEnd ? { trial_end: Math.floor(trialEnd.getTime() / 1000) } : {}),
+    },
     success_url: `${baseUrl()}/comunidad/${community.slug}?bienvenida=1`,
     cancel_url: `${baseUrl()}/comunidad/${community.slug}`,
   });

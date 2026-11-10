@@ -320,7 +320,7 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
         <div className="flex flex-col-reverse gap-6 sm:flex-row sm:items-center sm:gap-10">
           <div className="min-w-0 flex-1">
             <motion.div
-              initial={{ opacity: 0, y: -16 }}
+              initial={{ y: -16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="inline-flex items-center gap-2.5 rounded-full border border-brand-500/30 bg-brand-500/10 px-5 py-2 text-sm font-medium text-brand-500"
@@ -330,7 +330,7 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
               className="mt-6 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
@@ -340,7 +340,7 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
 
             {community.tagline && (
               <motion.p
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="mt-5 text-lg font-light leading-relaxed text-brand-100 sm:text-xl"
@@ -352,7 +352,7 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
 
           {/* El buzón: dice de qué va esto sin explicarlo */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
+            initial={{ scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.35 }}
             className="pointer-events-none flex shrink-0 justify-center"
@@ -471,7 +471,7 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
           <>
             {/* Formulario, arriba: es lo que la persona vino a hacer */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
               className="mt-10 rounded-2xl border border-brand-100/10 bg-brand-900/60 p-6 backdrop-blur-sm sm:p-8"

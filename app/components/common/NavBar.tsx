@@ -21,7 +21,7 @@ const navigation = [
   { name: "Cursos", link: "/cursos" },
   { name: "Blog", link: "/blog" },
   { name: "Pong gratis", link: "/pong" },
-  { name: "Comunidad", link: "/c/agentes" },
+  { name: "Club de Agentes", link: "/comunidad/club-de-agentes" },
   {
     name: "Sistemas agénticos",
     link: "/sistemas-agenticos",
@@ -389,7 +389,7 @@ const MobileMenu = ({
         <NavItem
           onClick={toggleMenu}
           as="Link"
-          to="/c/agentes"
+          to="/comunidad/club-de-agentes"
           index={5}
           isOpen={isOpen}
           title="Comunidad"

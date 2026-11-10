@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMembershipActive, toMembershipStatus } from "../membership.server";
+import { giftTrialEnd, isMembershipActive, toMembershipStatus } from "../membership.server";
 
 describe("toMembershipStatus", () => {
   it("activa y en prueba dan acceso", () => {
@@ -31,4 +31,17 @@ describe("isMembershipActive", () => {
     expect(isMembershipActive({ status: "past_due", currentPeriodEnd: later }, now)).toBe(true));
   it("cancelada no da acceso", () =>
     expect(isMembershipActive({ status: "canceled", currentPeriodEnd: later }, now)).toBe(false));
+});
+
+describe("giftTrialEnd", () => {
+  const now = new Date("2026-11-10T12:00:00Z");
+  const gift = (end: string) => ({ provider: "grant", status: "active", currentPeriodEnd: new Date(end) });
+  it("el regalo vigente se vuelve prueba gratis hasta su fin", () =>
+    expect(giftTrialEnd(gift("2027-02-08T12:00:00Z"), now)?.toISOString()).toBe("2027-02-08T12:00:00.000Z"));
+  it("con menos de 48 h de regalo se cobra desde hoy", () =>
+    expect(giftTrialEnd(gift("2026-11-11T12:00:00Z"), now)).toBeNull());
+  it("sin regalo no hay prueba", () => {
+    expect(giftTrialEnd(null, now)).toBeNull();
+    expect(giftTrialEnd({ provider: "stripe", status: "active", currentPeriodEnd: new Date("2027-01-01") }, now)).toBeNull();
+  });
 });

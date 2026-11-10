@@ -177,6 +177,7 @@ export default [
     route("ai.text-command", "routes/api/ai.text-command.ts"),
     route("ai.email", "routes/api/ai.email.ts"),
     route("email-image", "routes/api/email-image.ts"),
+    route("wall-image", "routes/api/wall-image.ts"),
     route("extract-text", "routes/api/extract-text.ts"),
     route("sequence-video", "routes/api/sequence-video.ts"),
     route("leadmagnets", "routes/api/leadmagnets.ts"),

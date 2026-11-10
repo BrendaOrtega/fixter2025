@@ -255,7 +255,9 @@ model Community {
   /// la de alta gratuita por correo de siempre.
   priceMxn       Int? // mensual, en pesos
   priceAnnualMxn Int? // anual, en pesos (FixterGeek: $990 = dos meses gratis)
-  memberships Membership[]
+  memberships    Membership[]
+  posts          CommunityPost[]
+  events         CommunityEvent[]
 
   /// Las secuencias que esta comunidad publica a sus miembros
   sequences Sequence[]
@@ -362,7 +364,7 @@ model Subscriber {
   codeExpiresAt    DateTime?
 
   // Segmentación simple
-  tags String[]
+  tags     String[]
   /// Cuándo entró a cada tag: `{ "software-factory-waitlist": "2026-09-24T00:50:33Z" }`.
   /// `createdAt` sólo dice cuándo nació la cuenta, no cuándo se apuntó a cada lista.
   tagDates Json?
@@ -479,9 +481,9 @@ model Post {
   // Series (ladders): varios posts que se leen en orden y se enlazan entre sí.
   // `serie` es el slug de la serie; `orden` la posición, empezando en 1.
   // Sin `serie`, el post es una nota suelta y no entra a ninguna navegación.
-  serie String?
-  orden Int?
-  banner     Banner?
+  serie  String?
+  orden  Int?
+  banner Banner?
 
   // Relations
   audioCache AudioCache?
@@ -573,16 +575,16 @@ model Module {
 /// puede ser vertical (las piezas de secuencia son 9:16) y ahí sí conviene,
 /// pero un 9:16 dentro de un email de 600px ocupa la pantalla entera.
 model Video {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String  @unique
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug          String   @unique
   /// Slugs por los que ESTE vídeo respondió antes. Renombrar la pieza —fusionar una
   /// grabación con su placeholder, corregir un título— rompía en silencio los enlaces
   /// ya repartidos: la tarjeta del room de Teams guarda la URL desde que se crea el
   /// borrador, y nadie la reescribe. El viewer los mira antes de rendirse y manda un 301.
   previousSlugs String[]
-  title       String
-  isPublic    Boolean @default(false)
-  accessLevel String  @default("paid") // "public" | "subscriber" | "paid"
+  title         String
+  isPublic      Boolean  @default(false)
+  accessLevel   String   @default("paid") // "public" | "subscriber" | "paid"
 
   /// Qué es esta pieza dentro del programa. Un taller no publica solo
   /// "lecciones": publica webinars de promoción, sesiones en vivo y shorts, y
@@ -679,9 +681,11 @@ model User {
   books       String[] // Libros comprados: ["ai-sdk", "domina-claude-code", "llamaindex"]
 
   // Secuences que el user creó (es dueño)
-  sequences   Sequence[]
-  communities Community[]
-  memberships Membership[]
+  sequences         Sequence[]
+  communities       Community[]
+  memberships       Membership[]
+  communityPosts    CommunityPost[]
+  communityComments CommunityComment[]
 
   @@map("users")
 }
@@ -700,7 +704,7 @@ model Membership {
 
   /// active | past_due | canceled (lo que importa para dar acceso)
   status   String
-  provider String @default("stripe") // stripe | mercadopago | grant
+  provider String  @default("stripe") // stripe | mercadopago | grant
   interval String? // month | year
 
   /// Cliente y suscripción en el procesador (Stripe `cus_…`/`sub_…`, MP payer/preapproval).
@@ -1310,4 +1314,65 @@ model EmailSendLog {
   @@index([ip, createdAt])
   @@index([createdAt])
   @@map("email_send_log")
+}
+
+/// Publicación del muro de una comunidad de pago (10-nov-2026).
+/// La escribe cualquier miembro; el dueño o un ADMIN la fija, la vuelve
+/// pública (vitrina para quien no es miembro) o la oculta.
+model CommunityPost {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String    @db.ObjectId
+  community   Community @relation(fields: [communityId], references: [id])
+  authorId    String    @db.ObjectId
+  author      User      @relation(fields: [authorId], references: [id])
+
+  body     String // markdown
+  imageUrl String?
+  isPublic Boolean   @default(false)
+  isPinned Boolean   @default(false)
+  hiddenAt DateTime?
+
+  commentCount Int                @default(0)
+  comments     CommunityComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([communityId, isPinned, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_posts")
+}
+
+model CommunityComment {
+  id       String        @id @default(auto()) @map("_id") @db.ObjectId
+  postId   String        @db.ObjectId
+  post     CommunityPost @relation(fields: [postId], references: [id])
+  authorId String        @db.ObjectId
+  author   User          @relation(fields: [authorId], references: [id])
+
+  body     String
+  hiddenAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([postId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_comments")
+}
+
+/// Llamada en vivo de una comunidad: alimenta la cuenta regresiva y el botón
+/// «Entrar a la llamada».
+model CommunityEvent {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String    @db.ObjectId
+  community   Community @relation(fields: [communityId], references: [id])
+
+  title    String
+  startsAt DateTime
+  endsAt   DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([communityId, startsAt])
+  @@map("community_events")
 }
