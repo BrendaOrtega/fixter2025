@@ -27,7 +27,7 @@ Hoy probamos en vivo el formato del micro-hackatón de Ghosty Studio del jueves 
 
 - **Cuándo:** hoy, martes 10 de noviembre, 7:00 pm hora del centro de México.
 - **Dónde:** aquí mismo. El botón **«Entrar a la llamada»** de arriba se enciende 15 minutos antes.
-- **Quién entra:** los miembros del club. Si compraste un curso en FixterGeek, activa tus 3 meses gratis y entras.
+- **Quién entra:** los miembros del club. Si ya eres estudiante de FixterGeek, activa tus 3 meses gratis y entras.
 
 Nos vemos adentro.`;
 

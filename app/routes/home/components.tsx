@@ -800,7 +800,7 @@ export const CommunityBand = () => {
             <p className="mt-4 text-lg leading-relaxed text-zinc-400">
               Construye agentes que trabajan de verdad, con una llamada en vivo
               cada semana y un muro de gente que también los construye. Si ya
-              compraste un curso, tienes 3 meses gratis.
+              eres estudiante, tienes 3 meses gratis.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               {["Llamada en vivo cada semana", "$99 MXN al mes", "Cancela cuando quieras"].map((tag) => (

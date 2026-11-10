@@ -369,8 +369,8 @@ const included = (courseCount: number) => [
   },
   {
     icon: "🎁",
-    title: "3 meses gratis si ya compraste",
-    body: "Quien compró un curso o libro en FixterGeek entra sin tarjeta durante tres meses.",
+    title: "3 meses gratis si ya eres estudiante",
+    body: "Si ya tomaste un curso o libro de pago en FixterGeek, entras sin tarjeta durante tres meses.",
   },
 ];
 
@@ -524,7 +524,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
             <div className="rounded-2xl border-2 border-[#F2F5F4] p-6 shadow-[8px_8px_0_#85DDCB]">
               {canClaimGift ? (
                 <>
-                  <p className="text-2xl font-bold">Compraste un curso en FixterGeek 🎁</p>
+                  <p className="text-2xl font-bold">Ya eres estudiante de FixterGeek 🎁</p>
                   <p className="mt-1">Tienes 3 meses gratis en el club, sin tarjeta.</p>
                 </>
               ) : (
@@ -545,7 +545,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
               <div className="mt-5">{joinBlock}</div>
               {!isLoggedIn && (
                 <p className="mt-5 rounded-xl border-2 border-dashed border-[#fbbf24] p-3 text-sm text-[#fbbf24]">
-                  🎁 ¿Ya compraste un curso en FixterGeek? Tienes <strong>3 meses gratis</strong>.{" "}
+                  🎁 ¿Ya eres estudiante de FixterGeek? Tienes <strong>3 meses gratis</strong>.{" "}
                   <a href={`/login?next=/comunidad/${community.slug}`} className="font-bold underline">
                     Inicia sesión
                   </a>{" "}
