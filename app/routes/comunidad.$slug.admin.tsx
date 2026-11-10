@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Form, Link, data, redirect, useActionData, useNavigation, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import type { Route } from "./+types/comunidad.$slug.admin";
 import { db } from "~/.server/db";
+import { Switch } from "~/components/common/Switch";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { canModerate } from "~/.server/services/wall.server";
 import { occurrencesOf } from "~/.server/services/club-events.server";
@@ -229,10 +230,9 @@ function EventForm({ event, onDone }: { event?: EventView; onDone?: () => void }
         </label>
       </div>
       <div className="flex flex-wrap items-end gap-4">
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="weekly" checked={weekly} onChange={(e) => setWeekly(e.target.checked)} className="h-4 w-4 accent-brand-500" />
+        <Switch name="weekly" on={weekly} onChange={setWeekly}>
           Se repite cada semana
-        </label>
+        </Switch>
         {weekly && (
           <label className="grid gap-1 text-sm">
             Hasta (opcional)
@@ -398,9 +398,12 @@ function Invites({ invites, callDays }: Pick<Route.ComponentProps["loaderData"],
               <legend className="mb-1">Pase a las llamadas de:</legend>
               <div className="flex flex-wrap gap-3">
                 {callDays.map((d) => (
-                  <label key={d.day} className="flex items-center gap-2 rounded-full border border-colorOutline px-3 py-1.5" suppressHydrationWarning>
-                    <input type="checkbox" name="callDays" value={d.day} className="accent-brand-500" />
-                    {when(d.label)}
+                  <label key={d.day} className="cursor-pointer" suppressHydrationWarning>
+                    {/* Ficha que se enciende: el checkbox queda oculto, sólo lleva el valor. */}
+                    <input type="checkbox" name="callDays" value={d.day} className="peer sr-only" />
+                    <span className="inline-block rounded-full border border-colorOutline px-3 py-1.5 transition peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-checked:text-brand-900 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500">
+                      {when(d.label)}
+                    </span>
                   </label>
                 ))}
               </div>

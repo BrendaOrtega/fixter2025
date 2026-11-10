@@ -56,6 +56,7 @@ import { clubIncluded as included } from "~/components/community/clubIncluded";
 import { MicIllustration } from "~/components/community/MicIllustration";
 import { getCallLink } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
+import { Switch } from "~/components/common/Switch";
 import getMetaTags from "~/utils/getMetaTags";
 
 // Casa de una comunidad de pago (10-nov-2026): hero con la próxima llamada,
@@ -422,29 +423,13 @@ function HostToggles() {
   const [record, setRecord] = useState(true);
   const [live, setLive] = useState(false);
   return (
-    <div className="grid gap-1.5 text-sm">
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          name="record"
-          checked={record || live}
-          disabled={live}
-          onChange={(e) => setRecord(e.target.checked)}
-          className="h-4 w-4 accent-brand-500"
-        />
+    <div className="grid gap-2">
+      <Switch name="record" on={record || live} disabled={live} onChange={setRecord}>
         Grabar para los miembros
-      </label>
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          name="live"
-          checked={live}
-          onChange={(e) => setLive(e.target.checked)}
-          className="h-4 w-4 accent-brand-500"
-        />
+      </Switch>
+      <Switch name="live" on={live} onChange={setLive}>
         Transmitir a YouTube y Facebook
-      </label>
-      {live && <input type="hidden" name="record" value="on" />}
+      </Switch>
     </div>
   );
 }
