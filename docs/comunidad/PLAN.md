@@ -149,3 +149,23 @@ su propia caja**. Cómo encaja sin rehacer nada:
   regalo y entra a las llamadas de sus `callDays` aunque no pague.
 - `scripts/club-invite.mts --source … --gift 90 --call AAAAMMDD correos… --write`.
 - Ya invitados: los 5 confirmados del micro-hackatón (90 días, llamadas del 10 y 12-nov).
+
+## Panel del anfitrión, contrastado con la competencia (10-nov-2026, noche)
+Skool, Circle, Mighty Networks y Kajabi le dan al dueño, sin ayuda: calendario editable con series y
+recordatorios, «agregar a mi calendario», un clic para ir en vivo y grabaciones por evento. Ninguno
+transmite nativo a YouTube/Facebook (Mighty y Kajabi sólo incrustan un YouTube Live externo): ése es
+nuestro plus, junto con la grabación automática en HLS.
+
+**Hecho (Fase 1, sólo fixtergeek):** `/comunidad/:slug/admin` (dueño o ADMIN).
+- Calendario: crear, editar y borrar eventos; «cada semana» con «hasta» (`CommunityEvent.recurrence`/`until`;
+  las sesiones salen de `occurrencesOf` en `club-events.server.ts`).
+- `.ics` por evento (`/comunidad/:slug/evento/:id.ics`, con RRULE) y correos 24 h y 1 h antes a miembros
+  activos más invitados con pase ese día (job `club_event_reminders` de Agenda, cada 10 min, sólo en producción;
+  la marca `remindedFor` evita duplicados).
+- Al entrar, el anfitrión elige «Grabar» (encendido) y «Transmitir a YouTube y Facebook». La grabación queda
+  ligada a su evento (`CommunityRecording.eventId`).
+- Grabaciones (renombrar, ocultar, reintentar), invitados (correos, días de regalo, pase a llamadas) y miembros.
+
+**Fase 2 (SaaS, gs + fixtergeek):** destinos de YouTube/Facebook por comunidad (`LiveDestination` por tenant,
+endpoints de partner `live/connect|ls|prepare|check`), caja propia opcional y «Conectar YouTube/Facebook» en el
+panel. **Fase 3:** niveles que desbloquean cosas sobre las insignias.
