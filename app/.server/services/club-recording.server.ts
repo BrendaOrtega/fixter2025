@@ -1,27 +1,29 @@
 // Grabaciones de las llamadas del club (10-nov-2026).
 //
-// La caja de eventos graba la sala del día y, al parar, sube el MP4 DIRECTO a nuestro bucket con
-// un PUT prefirmado que le damos aquí. gs sólo hace de puente (`/api/v2/partner/event-box/recording`,
-// salas `fx-*`): el ADMIN_TOKEN de la caja nunca sale de gs y el video nunca pasa por gs.
+// La caja de eventos graba la sala del día y, al parar, la convierte a HLS (1080/720/480, póster y
+// miniaturas) y la sube a nuestro bucket de video, en `fixtergeek/videos/club/<club>/<id>/hls/`, el
+// mismo camino que los webinars de Teams. gs sólo hace de puente
+// (`/api/v2/partner/event-box/recording`, salas `fx-*`): el ADMIN_TOKEN de la caja nunca sale de gs.
 //
 // Flujo:
 //   1. El anfitrión entra a la llamada → `startRecording` (automático, para no olvidarlo).
-//   2. Termina → «Detener y guardar» → `stopRecording`: fila `uploading` + la caja sube.
-//   3. Cada carga del club revisa las `uploading` con un HEAD al bucket → `ready`.
-//   4. Un miembro da play → `/comunidad/:slug/grabacion/:id` revisa la membresía y redirige a
-//      una URL de lectura prefirmada (2 h).
+//   2. Termina → «Detener y guardar» → `stopRecording`: fila `uploading` + la caja convierte y sube.
+//   3. Cada carga del club revisa las `uploading` con un HEAD al `master.m3u8` → `ready`.
+//   4. Sólo a miembros se les entrega la URL del proxy HLS firmada (`~/.server/hls`).
 import { db } from "~/.server/db";
-import { fileExist, getPutFileUrl, getReadURL } from "~/.server/tigrs";
+import { fileExist } from "~/.server/tigrs";
+import { buildHlsProxyUrl } from "~/.server/hls";
 import { clubCallRoom, partnerPost } from "~/.server/services/club-call.server";
 
 const PATH = "/api/v2/partner/event-box/recording";
-/** Si en 6 h no apareció el MP4, la subida falló. */
-export const UPLOAD_GIVE_UP_MS = 6 * 60 * 60_000;
+/** Si en 12 h no apareció el HLS, la conversión falló (4 h de llamada tardan en transcodificar). */
+export const UPLOAD_GIVE_UP_MS = 12 * 60 * 60_000;
 
 export type RecState = { recording: boolean; busy: boolean; startedAt: string | null };
 
-export function recordingKey(communityId: string, room: string, now = Date.now()) {
-  return `club/${communityId}/${room}-${now}.mp4`;
+/** Carpeta HLS de una grabación (llave completa del bucket). */
+export function hlsPrefixFor(communityId: string, recordingId: string) {
+  return `fixtergeek/videos/club/${communityId}/${recordingId}/hls`;
 }
 
 /** uploading → ready si el objeto ya está; → failed si se pasó del plazo. */
@@ -43,19 +45,26 @@ export async function startRecording(title: string, room = clubCallRoom()) {
 
 export async function stopRecording(community: { id: string }, title: string, room = clubCallRoom()) {
   const state = await recordingState(room);
-  const key = recordingKey(community.id, room);
-  const putUrl = await getPutFileUrl(key);
-  const r = await partnerPost<{ file: string; bytes: number | null }>(PATH, { action: "stop", room, putUrl });
-  if (!r.ok || !r.data?.file) return { ok: false as const, error: r.data?.error ?? "No se pudo detener" };
-  await db.communityRecording.create({
+  if (!state?.recording) return { ok: false as const, error: state?.busy ? "La caja graba otra sala" : "No se está grabando" };
+  // La fila va primero: su id nombra la carpeta del HLS.
+  const row = await db.communityRecording.create({
     data: {
       communityId: community.id,
       room,
       title,
-      storageKey: key,
-      bytes: r.data.bytes ?? undefined,
-      startedAt: state?.startedAt ? new Date(state.startedAt) : undefined,
+      storageKey: "",
+      startedAt: state.startedAt ? new Date(state.startedAt) : undefined,
     },
+  });
+  const prefix = hlsPrefixFor(community.id, row.id);
+  const r = await partnerPost<{ file: string; bytes: number | null }>(PATH, { action: "stop", room, hlsPrefix: prefix });
+  if (!r.ok || !r.data?.file) {
+    await db.communityRecording.delete({ where: { id: row.id } });
+    return { ok: false as const, error: r.data?.error ?? "No se pudo detener" };
+  }
+  await db.communityRecording.update({
+    where: { id: row.id },
+    data: { storageKey: `${prefix}/master.m3u8`, bytes: r.data.bytes ?? undefined, endedAt: new Date() },
   });
   return { ok: true as const };
 }
@@ -69,7 +78,7 @@ export async function listRecordings(communityId: string, canMod: boolean) {
     take: 50,
   });
   for (const r of rows.filter((x) => x.status === "uploading")) {
-    const status = nextStatus(r, await fileExist(r.storageKey));
+    const status = nextStatus(r, await fileExist(r.storageKey, 3600, false));
     if (status !== r.status) {
       await db.communityRecording.update({ where: { id: r.id }, data: { status } });
       r.status = status;
@@ -84,12 +93,15 @@ export async function listRecordings(communityId: string, canMod: boolean) {
       endedAt: r.endedAt.toISOString(),
       minutes: r.startedAt ? Math.max(1, Math.round((r.endedAt.getTime() - r.startedAt.getTime()) / 60_000)) : null,
       hidden: !!r.hiddenAt,
+      poster:
+        r.status === "ready" ? buildHlsProxyUrl(r.storageKey.replace(/master\.m3u8$/, "poster.jpg")) : null,
     }));
 }
 
-export async function recordingReadUrl(communityId: string, id: string) {
+/** URL del proxy HLS firmada para una grabación lista, o null. Quien llama ya revisó la membresía. */
+export async function recordingPlayUrl(communityId: string, id: string) {
   if (!/^[a-f0-9]{24}$/.test(id)) return null;
   const r = await db.communityRecording.findFirst({ where: { id, communityId, status: "ready" } });
   if (!r || r.hiddenAt) return null;
-  return getReadURL(r.storageKey, 2 * 60 * 60);
+  return buildHlsProxyUrl(r.storageKey);
 }

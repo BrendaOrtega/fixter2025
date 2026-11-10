@@ -51,6 +51,7 @@ import {
 } from "~/.server/services/club-recording.server";
 import { applyInvite, isCallGuestToday } from "~/.server/services/club-invites.server";
 import { badgesForMembers } from "~/.server/services/badges.server";
+import { ClubVideo } from "~/components/community/ClubVideo";
 import { MicIllustration } from "~/components/community/MicIllustration";
 import { getCallLink } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
@@ -307,7 +308,7 @@ const longDate = (d: string | Date) =>
 const upperFirst = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 const pillBtn =
-  "inline-flex items-center justify-center rounded-xl border-2 border-[#F2F5F4] px-6 py-3 font-bold transition active:translate-x-[3px] active:translate-y-[3px] active:shadow-none";
+  "inline-flex h-12 items-center justify-center rounded-full border-2 border-brand-500 px-6 font-semibold transition-all hover:-translate-y-1";
 
 function Countdown({ startsAt, endsAt }: { startsAt: string; endsAt: string }) {
   const [now, setNow] = useState<number | null>(null);
@@ -327,7 +328,7 @@ function Countdown({ startsAt, endsAt }: { startsAt: string; endsAt: string }) {
     timeZone: "America/Mexico_City",
   }));
   if (now !== null && now >= start && now < end) {
-    return <p className="text-2xl font-bold text-[#ef4444]">● En vivo ahora</p>;
+    return <p className="text-2xl font-bold text-danger">● En vivo ahora</p>;
   }
   if (now === null || now >= end) {
     return <p className="text-lg">{when} (CDMX)</p>;
@@ -347,14 +348,14 @@ function Countdown({ startsAt, endsAt }: { startsAt: string; endsAt: string }) {
           .map(([v, u]) => (
             <span
               key={u}
-              className="min-w-[3.2rem] rounded-xl border-2 border-[#F2F5F4] bg-[#0E1317] px-2 py-1 text-center text-2xl font-bold"
+              className="min-w-[3.2rem] rounded-xl border border-colorOutline bg-backface px-2 py-1 text-center text-2xl font-bold"
             >
               {String(v).padStart(2, "0")}
-              <span className="ml-0.5 text-sm text-[#7C8A8E]">{u}</span>
+              <span className="ml-0.5 text-sm text-colorCaption">{u}</span>
             </span>
           ))}
       </div>
-      <p className="mt-2 text-sm text-[#7C8A8E]">{when} (CDMX)</p>
+      <p className="mt-2 text-sm text-colorCaption">{when} (CDMX)</p>
     </div>
   );
 }
@@ -375,12 +376,12 @@ function JoinCta({
         <button
           name="interval"
           value="month"
-          className={`${pillBtn} bg-[#85DDCB] text-[#0E1317] shadow-[6px_6px_0_#F2F5F4]`}
+          className={`${pillBtn} bg-brand-500 text-brand-900`}
         >
           {isLoggedIn ? `$${community.priceMxn}/mes` : "Inicia sesión para unirte"}
         </button>
         {isLoggedIn && community.priceAnnualMxn && !compact && (
-          <button name="interval" value="year" className={`${pillBtn} text-[#85DDCB]`}>
+          <button name="interval" value="year" className={`${pillBtn} text-brand-500`}>
             ${community.priceAnnualMxn}/año · 2 meses gratis
           </button>
         )}
@@ -453,7 +454,7 @@ const faqs = [
 function RecControl({ rec }: { rec: { recording: boolean; busy: boolean; startedAt: string | null } | null }) {
   const fetcher = useFetcher<{ error?: string }>();
   const busy = fetcher.state !== "idle";
-  if (!rec) return <p className="text-sm text-[#7C8A8E]">Grabación: la caja no contestó.</p>;
+  if (!rec) return <p className="text-sm text-colorCaption">Grabación: la caja no contestó.</p>;
   return (
     <fetcher.Form method="post" className="grid gap-1">
       {rec.recording ? (
@@ -461,9 +462,9 @@ function RecControl({ rec }: { rec: { recording: boolean; busy: boolean; started
           name="intent"
           value="rec-stop"
           disabled={busy}
-          className={`${pillBtn} border-2 border-[#ef4444] text-[#F2F5F4]`}
+          className={`${pillBtn} border border-danger text-white`}
         >
-          <span className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-[#ef4444] align-middle" />
+          <span className="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-danger align-middle" />
           {busy ? "Guardando…" : "Grabando · Detener y guardar"}
         </button>
       ) : (
@@ -471,12 +472,12 @@ function RecControl({ rec }: { rec: { recording: boolean; busy: boolean; started
           name="intent"
           value="rec-start"
           disabled={busy || rec.busy}
-          className={`${pillBtn} border-2 border-[#F2F5F4] text-[#F2F5F4] disabled:opacity-50`}
+          className={`${pillBtn} border border-colorOutline text-white disabled:opacity-50`}
         >
           {rec.busy ? "La caja graba otra sala" : busy ? "Arrancando…" : "⏺ Grabar"}
         </button>
       )}
-      {fetcher.data?.error && <p className="max-w-[16rem] text-sm text-[#fbbf24]">{fetcher.data.error}</p>}
+      {fetcher.data?.error && <p className="max-w-[16rem] text-sm text-brand-500">{fetcher.data.error}</p>}
     </fetcher.Form>
   );
 }
@@ -488,6 +489,7 @@ type RecordingView = {
   endedAt: string;
   minutes: number | null;
   hidden: boolean;
+  poster: string | null;
 };
 
 function Recordings({
@@ -504,20 +506,20 @@ function Recordings({
   const [playing, setPlaying] = useState<string | null>(null);
   return (
     <section className="mt-14">
-      <h2 className="text-2xl font-black sm:text-3xl">Grabaciones de las llamadas</h2>
-      <p className="mt-1 text-[#7C8A8E]">
+      <h2 className="text-2xl font-bold sm:text-3xl">Grabaciones de las llamadas</h2>
+      <p className="mt-1 text-colorCaption">
         {isInside ? "Si te perdiste una llamada, aquí está completa." : "Los miembros ven todas las llamadas grabadas."}
       </p>
       <ul className="mt-6 grid gap-4">
         {recordings.map((r) => (
           <li
             key={r.id}
-            className={`rounded-2xl border-2 border-[#F2F5F4] bg-[#0E1317] p-5 shadow-[6px_6px_0_#85DDCB] ${r.hidden ? "opacity-50" : ""}`}
+            className={`rounded-2xl border border-colorOutline bg-backface p-5 ${r.hidden ? "opacity-50" : ""}`}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-bold">🎞 {r.title}</p>
-                <p className="text-sm text-[#7C8A8E]" suppressHydrationWarning>
+                <p className="text-sm text-colorCaption" suppressHydrationWarning>
                   {upperFirst(longDate(r.endedAt))}
                   {r.minutes ? ` · ${r.minutes} min` : ""}
                   {r.status === "uploading" ? " · subiéndose…" : ""}
@@ -526,12 +528,12 @@ function Recordings({
               </div>
               <div className="flex items-center gap-2">
                 {!isInside ? (
-                  <span className="text-sm text-[#7C8A8E]">🔒 Sólo miembros</span>
+                  <span className="text-sm text-colorCaption">🔒 Sólo miembros</span>
                 ) : r.status === "ready" ? (
                   <button
                     type="button"
                     onClick={() => setPlaying(playing === r.id ? null : r.id)}
-                    className="rounded-full border-2 border-[#85DDCB] px-4 py-1 text-sm font-bold text-[#85DDCB] hover:bg-[#85DDCB] hover:text-[#0E1317]"
+                    className="rounded-full border border-brand-500 px-4 py-1 text-sm font-bold text-brand-500 hover:bg-brand-500 hover:text-brand-900"
                   >
                     {playing === r.id ? "Cerrar" : "▶ Ver"}
                   </button>
@@ -542,7 +544,7 @@ function Recordings({
                     <button
                       name="intent"
                       value={r.hidden ? "rec-unhide" : "rec-hide"}
-                      className="text-xs text-[#7C8A8E] underline"
+                      className="text-xs text-colorCaption underline"
                     >
                       {r.hidden ? "Mostrar" : "Ocultar"}
                     </button>
@@ -551,13 +553,7 @@ function Recordings({
               </div>
             </div>
             {playing === r.id && (
-              <video
-                src={`/comunidad/${slug}/grabacion/${r.id}`}
-                controls
-                autoPlay
-                playsInline
-                className="mt-4 aspect-video w-full rounded-xl border-2 border-[#F2F5F4] bg-black"
-              />
+              <ClubVideo srcUrl={`/comunidad/${slug}/grabacion/${r.id}`} poster={r.poster} />
             )}
           </li>
         ))}
@@ -588,12 +584,12 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
         <button
           name="intent"
           value="claim"
-          className={`${pillBtn} bg-[#fbbf24] text-[#0E1317] shadow-[6px_6px_0_#F2F5F4]`}
+          className={`${pillBtn} bg-brand-500 text-brand-900`}
         >
           🎁 Activar mis 3 meses gratis
         </button>
       </Form>
-      <p className="text-sm text-[#7C8A8E]">
+      <p className="text-sm text-colorCaption">
         ¿Prefieres asegurar tu lugar de una vez? Paga ahora y el cobro empieza cuando terminen tus 3
         meses gratis.
       </p>
@@ -604,7 +600,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   );
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#0E1317] pb-24 pt-28 text-[#F2F5F4]">
+    <main className="relative min-h-screen overflow-hidden bg-background pb-24 pt-28 text-white">
       {(justJoined && isInside) && <EmojiConfetti />}
       <style>{`
         @keyframes club-grid { to { background-position: 44px 44px } }
@@ -628,25 +624,25 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
         {/* ── Hero ── */}
         <section className="flex flex-col-reverse gap-6 sm:flex-row sm:items-center sm:gap-10">
           <div className="club-rise min-w-0 flex-1">
-            <span className="inline-flex items-center gap-2 rounded-full border-2 border-[#85DDCB] px-4 py-1.5 text-sm font-bold text-[#85DDCB]">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#85DDCB]" />
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500 px-4 py-1.5 text-sm font-bold text-brand-500">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />
               Club · FixterGeek
             </span>
-            <h1 className="mt-5 text-4xl font-black leading-[1.05] sm:text-6xl">{community.name}</h1>
+            <h1 className="mt-5 text-4xl font-bold leading-[1.05] sm:text-6xl">{community.name}</h1>
             {community.tagline && (
-              <p className="mt-4 text-lg text-[#85DDCB] sm:text-xl">{community.tagline}</p>
+              <p className="mt-4 text-lg text-brand-500 sm:text-xl">{community.tagline}</p>
             )}
             <div className="mt-6 flex flex-wrap gap-2 text-sm">
-              <span className="rounded-full border-2 border-[#F2F5F4]/30 px-3 py-1">
+              <span className="rounded-full border border-colorOutline/30 px-3 py-1">
                 {memberCount} miembros
               </span>
-              <span className="rounded-full border-2 border-[#F2F5F4]/30 px-3 py-1">
+              <span className="rounded-full border border-colorOutline/30 px-3 py-1">
                 Llamada en vivo cada semana
               </span>
-              <span className="rounded-full border-2 border-[#F2F5F4]/30 px-3 py-1">
+              <span className="rounded-full border border-colorOutline/30 px-3 py-1">
                 {courseCount} cursos incluidos
               </span>
-              <span className="rounded-full border-2 border-[#F2F5F4]/30 px-3 py-1">
+              <span className="rounded-full border border-colorOutline/30 px-3 py-1">
                 ${community.priceMxn} MXN al mes
               </span>
             </div>
@@ -659,18 +655,18 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
         {/* ── Estado de quien mira ── */}
         <section className="mt-10">
           {isInside ? (
-            <div className="rounded-2xl border-2 border-[#85DDCB] p-5">
+            <div className="rounded-2xl border border-brand-500 p-5">
               <p className="text-lg font-bold">
                 {justJoined ? "¡Ya eres parte del club! 🎉" : `Hola, ${me?.name} 👋`}
               </p>
               {membership?.cancelAtPeriodEnd && membership.currentPeriodEnd && (
-                <p className="mt-1 text-[#fbbf24]">
+                <p className="mt-1 text-brand-500">
                   Tu membresía termina el{" "}
                   {longDate(membership.currentPeriodEnd)}.
                 </p>
               )}
               {membership?.provider === "grant" && membership.currentPeriodEnd && (
-                <div className="mt-3 rounded-xl border-2 border-dashed border-[#fbbf24] p-4">
+                <div className="mt-3 rounded-xl border border-brand-500 p-4">
                   <p className="text-sm">
                     🎁 Tus meses gratis van hasta el{" "}
                     <strong>{longDate(membership.currentPeriodEnd)}</strong>.
@@ -683,14 +679,14 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
               )}
               {membership?.provider === "stripe" && (
                 <Form method="post" className="mt-2">
-                  <button name="intent" value="billing" className="text-sm text-[#85DDCB] underline">
+                  <button name="intent" value="billing" className="text-sm text-brand-500 underline">
                     Administrar mi membresía
                   </button>
                 </Form>
               )}
             </div>
           ) : (
-            <div className="rounded-2xl border-2 border-[#F2F5F4] p-6 shadow-[8px_8px_0_#85DDCB]">
+            <div className="rounded-2xl border border-colorOutline p-6">
               {canClaimGift ? (
                 <>
                   <p className="text-2xl font-bold">Ya eres estudiante de FixterGeek 🎁</p>
@@ -698,22 +694,22 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                 </>
               ) : (
                 <>
-                  <p className="text-3xl font-black">
+                  <p className="text-3xl font-bold">
                     ${community.priceMxn} MXN <span className="text-base font-normal">al mes</span>
                   </p>
                   {community.priceAnnualMxn && (
-                    <p className="text-[#85DDCB]">
+                    <p className="text-brand-500">
                       o ${community.priceAnnualMxn} al año (dos meses gratis) · cancela cuando quieras
                     </p>
                   )}
                 </>
               )}
               {justJoined && !canClaimGift && (
-                <p className="mt-3 text-[#fbbf24]">Estamos confirmando tu pago; recarga en unos segundos.</p>
+                <p className="mt-3 text-brand-500">Estamos confirmando tu pago; recarga en unos segundos.</p>
               )}
               <div className="mt-5">{joinBlock}</div>
               {!isLoggedIn && (
-                <p className="mt-5 rounded-xl border-2 border-dashed border-[#fbbf24] p-3 text-sm text-[#fbbf24]">
+                <p className="mt-5 rounded-xl border border-brand-500 p-3 text-sm text-brand-500">
                   🎁 ¿Ya eres estudiante de FixterGeek? Tienes <strong>3 meses gratis</strong>.{" "}
                   <a href={`/login?next=/comunidad/${community.slug}`} className="font-bold underline">
                     Inicia sesión
@@ -727,9 +723,9 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
 
         {/* ── Próxima llamada ── */}
         {event && (
-          <section className="mt-8 rounded-2xl border-2 border-[#F2F5F4] bg-[#85DDCB]/10 p-6 shadow-[8px_8px_0_#fbbf24]">
-            <p className="text-sm font-bold uppercase tracking-wider text-[#fbbf24]">Próxima llamada</p>
-            <h2 className="mt-1 text-2xl font-black">{event.title}</h2>
+          <section className="mt-8 rounded-2xl border border-colorOutline bg-brand-500/10 p-6">
+            <p className="text-sm font-bold uppercase tracking-wider text-brand-500">Próxima llamada</p>
+            <h2 className="mt-1 text-2xl font-bold">{event.title}</h2>
             <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
               <Countdown startsAt={event.startsAt} endsAt={event.endsAt} />
               {isInside || isCallGuest ? (
@@ -738,16 +734,16 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                     name="intent"
                     value="call"
                     disabled={!event.open}
-                    className={`${pillBtn} bg-[#ef4444] text-[#F2F5F4] shadow-[6px_6px_0_#F2F5F4] disabled:bg-[#7C8A8E] disabled:shadow-none`}
+                    className={`${pillBtn} bg-danger text-white disabled:bg-colorOutline disabled:shadow-none`}
                   >
                     {event.open ? "🎙 Entrar a la llamada" : "Se abre 15 min antes"}
                   </button>
                   {actionData?.error && (
-                    <p className="mt-2 max-w-[16rem] text-sm text-[#fbbf24]">{actionData.error}</p>
+                    <p className="mt-2 max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>
                   )}
                 </Form>
               ) : (
-                <span className="rounded-xl border-2 border-dashed border-[#7C8A8E] px-4 py-3 text-sm text-[#7C8A8E]">
+                <span className="rounded-xl border border-colorOutline px-4 py-3 text-sm text-colorCaption">
                   🔒 Sólo miembros
                 </span>
               )}
@@ -763,8 +759,8 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
 
         {/* ── Muro ── */}
         <section className="mt-14">
-          <h2 className="text-2xl font-black sm:text-3xl">El muro</h2>
-          <p className="mt-1 text-[#7C8A8E]">
+          <h2 className="text-2xl font-bold sm:text-3xl">El muro</h2>
+          <p className="mt-1 text-colorCaption">
             {isInside
               ? "Comparte lo que construyes, pregunta lo que se te atora."
               : "Esto es lo que se está platicando en el club."}
@@ -784,13 +780,13 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
               <button
                 type="button"
                 onClick={() => setShowAll(true)}
-                className="mx-auto rounded-xl border-2 border-[#F2F5F4] px-6 py-2.5 font-bold text-[#85DDCB] shadow-[4px_4px_0_#85DDCB] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                className="mx-auto rounded-xl border border-colorOutline px-6 py-2.5 font-bold text-brand-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
               >
                 Ver {hiddenPublic} {hiddenPublic === 1 ? "publicación más" : "publicaciones más"}
               </button>
             )}
             {wall.posts.length === 0 && isInside && (
-              <p className="rounded-2xl border-2 border-dashed border-[#7C8A8E] p-6 text-center text-[#7C8A8E]">
+              <p className="rounded-2xl border border-colorOutline p-6 text-center text-colorCaption">
                 Todavía no hay publicaciones. Estrena el muro: cuéntanos qué agente quieres construir.
               </p>
             )}
@@ -802,13 +798,13 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
 
         {/* ── Qué incluye ── */}
         <section className="mt-16">
-          <h2 className="text-2xl font-black sm:text-3xl">Qué incluye</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">Qué incluye</h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {included(courseCount).map((c) => (
-              <div key={c.title} className="rounded-2xl border-2 border-[#F2F5F4] p-5 shadow-[6px_6px_0_#85DDCB]">
+              <div key={c.title} className="rounded-2xl border border-colorOutline p-5">
                 <p className="text-3xl">{c.icon}</p>
                 <h3 className="mt-3 font-bold">{c.title}</h3>
-                <p className="mt-1 text-sm text-[#F2F5F4]/80">{c.body}</p>
+                <p className="mt-1 text-sm text-white/80">{c.body}</p>
               </div>
             ))}
           </div>
@@ -816,15 +812,15 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
 
         {/* ── Preguntas ── */}
         <section className="mt-16">
-          <h2 className="text-2xl font-black sm:text-3xl">Preguntas frecuentes</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">Preguntas frecuentes</h2>
           <div className="mt-6 grid gap-3">
             {faqs.map((f) => (
-              <details key={f.q} className="group rounded-2xl border-2 border-[#F2F5F4]/40 p-4 open:border-[#85DDCB]">
+              <details key={f.q} className="group rounded-2xl border border-colorOutline/40 p-4 open:border-brand-500">
                 <summary className="flex cursor-pointer list-none items-center justify-between font-bold">
                   {f.q}
-                  <span className="text-[#85DDCB] transition group-open:rotate-45">+</span>
+                  <span className="text-brand-500 transition group-open:rotate-45">+</span>
                 </summary>
-                <p className="mt-2 text-[#F2F5F4]/80">{f.a}</p>
+                <p className="mt-2 text-white/80">{f.a}</p>
               </details>
             ))}
           </div>
@@ -832,7 +828,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
 
         {!isInside && (
           <section className="mt-16 text-center">
-            <p className="text-2xl font-black">¿Construimos tu primer agente esta semana?</p>
+            <p className="text-2xl font-bold">¿Construimos tu primer agente esta semana?</p>
             <div className="mt-5 flex justify-center">{joinBlock}</div>
           </section>
         )}

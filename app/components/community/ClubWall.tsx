@@ -18,7 +18,7 @@ export function BadgeList({ badges, compact = false }: { badges?: WallBadge[]; c
         <span
           key={b.key}
           title={`${b.label}: ${b.hint}`}
-          className="inline-flex items-center gap-1 rounded-full border-2 border-[#85DDCB]/60 bg-[#85DDCB]/10 px-1.5 py-px text-[11px] font-bold leading-tight text-[#85DDCB]"
+          className="inline-flex items-center gap-1 rounded-full border border-brand-500/60 bg-brand-500/10 px-1.5 py-px text-[11px] font-bold leading-tight text-brand-500"
         >
           <span aria-hidden>{b.icon}</span>
           <span className={compact ? "sr-only" : "hidden sm:inline"}>{b.label}</span>
@@ -50,7 +50,7 @@ export type WallPostView = {
 };
 
 const card =
-  "rounded-2xl border-2 border-[#F2F5F4] bg-[#0E1317] shadow-[6px_6px_0_#85DDCB]";
+  "rounded-2xl border border-colorOutline bg-backface";
 
 export function MemberAvatar({ author, size = 40 }: { author: WallAuthor; size?: number }) {
   const [broken, setBroken] = useState(false);
@@ -63,7 +63,7 @@ export function MemberAvatar({ author, size = 40 }: { author: WallAuthor; size?:
         width={size}
         height={size}
         onError={() => setBroken(true)}
-        className="shrink-0 rounded-full border-2 border-[#F2F5F4] object-cover"
+        className="shrink-0 rounded-full border border-colorOutline object-cover"
         style={{ width: size, height: size }}
       />
     );
@@ -71,7 +71,7 @@ export function MemberAvatar({ author, size = 40 }: { author: WallAuthor; size?:
   return (
     <span
       aria-label={author.name}
-      className="flex shrink-0 items-center justify-center rounded-full border-2 border-[#F2F5F4] bg-[#85DDCB] font-bold text-[#0E1317]"
+      className="flex shrink-0 items-center justify-center rounded-full border border-colorOutline bg-brand-500 font-bold text-brand-900"
       style={{ width: size, height: size, fontSize: size * 0.42 }}
     >
       {initial}
@@ -159,19 +159,19 @@ export function Composer({ me }: { me: WallAuthor }) {
           maxLength={5000}
           rows={3}
           placeholder="¿Qué construiste, qué se te atoró o qué descubriste?"
-          className="min-h-[88px] w-full resize-y rounded-xl border-2 border-[#7C8A8E] bg-transparent p-3 text-[#F2F5F4] placeholder:text-[#7C8A8E] focus:border-[#85DDCB] focus:outline-none"
+          className="min-h-[88px] w-full resize-y rounded-xl border border-colorOutline bg-transparent p-3 text-white placeholder:text-colorCaption focus:border-brand-500 focus:outline-none"
         />
       </div>
       {preview && (
         <div className="relative mt-3 ml-[52px] inline-block">
-          <img src={preview} alt="" className="max-h-48 rounded-xl border-2 border-[#F2F5F4]" />
+          <img src={preview} alt="" className="max-h-48 rounded-xl border border-colorOutline" />
           <button
             type="button"
             onClick={() => {
               setImageKey(null);
               setPreview(null);
             }}
-            className="absolute -right-2 -top-2 h-7 w-7 rounded-full border-2 border-[#F2F5F4] bg-[#0E1317] text-sm"
+            className="absolute -right-2 -top-2 h-7 w-7 rounded-full border border-colorOutline bg-backface text-sm"
             aria-label="Quitar imagen"
           >
             ✕
@@ -179,7 +179,7 @@ export function Composer({ me }: { me: WallAuthor }) {
         </div>
       )}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 pl-[52px]">
-        <label className="cursor-pointer text-sm font-bold text-[#85DDCB] hover:underline">
+        <label className="cursor-pointer text-sm font-bold text-brand-500 hover:underline">
           {uploading ? "Subiendo…" : "🖼 Agregar imagen"}
           <input
             type="file"
@@ -188,16 +188,16 @@ export function Composer({ me }: { me: WallAuthor }) {
             onChange={(e) => onFile(e.target.files?.[0])}
           />
         </label>
-        <span className="text-xs text-[#7C8A8E]">Markdown y bloques de código funcionan.</span>
+        <span className="text-xs text-colorCaption">Markdown y bloques de código funcionan.</span>
         <button
           disabled={busy || uploading}
-          className="rounded-xl border-2 border-[#F2F5F4] bg-[#85DDCB] px-5 py-2 font-bold text-[#0E1317] shadow-[4px_4px_0_#F2F5F4] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60"
+          className="rounded-xl border border-colorOutline bg-brand-500 px-5 py-2 font-bold text-brand-900 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60"
         >
           {busy ? "Publicando…" : "Publicar"}
         </button>
       </div>
       {(fetcher.data?.error || uploadError) && (
-        <p className="mt-2 pl-[52px] text-sm text-[#fbbf24]">{fetcher.data?.error || uploadError}</p>
+        <p className="mt-2 pl-[52px] text-sm text-brand-500">{fetcher.data?.error || uploadError}</p>
       )}
     </fetcher.Form>
   );
@@ -212,7 +212,7 @@ function ModButton({ postId, change, children }: { postId: string; change: strin
       <button
         name="change"
         value={change}
-        className="w-full rounded-lg px-3 py-1.5 text-left text-sm hover:bg-[#85DDCB] hover:text-[#0E1317]"
+        className="w-full rounded-lg px-3 py-1.5 text-left text-sm hover:bg-brand-500 hover:text-brand-900"
       >
         {children}
       </button>
@@ -224,10 +224,10 @@ function PostMenu({ post, canMod, isAuthor }: { post: WallPostView; canMod: bool
   if (!canMod && !isAuthor) return null;
   return (
     <details className="relative">
-      <summary className="cursor-pointer list-none rounded-lg px-2 text-xl leading-none text-[#7C8A8E] hover:text-[#F2F5F4]">
+      <summary className="cursor-pointer list-none rounded-lg px-2 text-xl leading-none text-colorCaption hover:text-white">
         ⋯
       </summary>
-      <div className="absolute right-0 z-20 mt-1 w-52 rounded-xl border-2 border-[#F2F5F4] bg-[#0E1317] p-1 shadow-[4px_4px_0_#85DDCB]">
+      <div className="absolute right-0 z-20 mt-1 w-52 rounded-xl border border-colorOutline bg-backface p-1">
         {canMod && (
           <>
             <ModButton postId={post.id} change={post.isPinned ? "unpin" : "pin"}>
@@ -268,15 +268,15 @@ function CommentForm({ postId }: { postId: string }) {
         required
         maxLength={2000}
         placeholder="Escribe un comentario…"
-        className="w-full rounded-xl border-2 border-[#7C8A8E] bg-transparent px-3 py-2 text-sm text-[#F2F5F4] placeholder:text-[#7C8A8E] focus:border-[#85DDCB] focus:outline-none"
+        className="w-full rounded-xl border border-colorOutline bg-transparent px-3 py-2 text-sm text-white placeholder:text-colorCaption focus:border-brand-500 focus:outline-none"
       />
       <button
         disabled={fetcher.state !== "idle"}
-        className="rounded-xl border-2 border-[#F2F5F4] px-3 text-sm font-bold text-[#85DDCB] disabled:opacity-60"
+        className="rounded-xl border border-colorOutline px-3 text-sm font-bold text-brand-500 disabled:opacity-60"
       >
         Enviar
       </button>
-      {fetcher.data?.error && <span className="text-xs text-[#fbbf24]">{fetcher.data.error}</span>}
+      {fetcher.data?.error && <span className="text-xs text-brand-500">{fetcher.data.error}</span>}
     </fetcher.Form>
   );
 }
@@ -287,7 +287,7 @@ function HideCommentButton({ commentId }: { commentId: string }) {
     <fetcher.Form method="post" className="inline">
       <input type="hidden" name="intent" value="hide-comment" />
       <input type="hidden" name="commentId" value={commentId} />
-      <button className="text-xs text-[#7C8A8E] hover:text-[#fbbf24]">ocultar</button>
+      <button className="text-xs text-colorCaption hover:text-brand-500">ocultar</button>
     </fetcher.Form>
   );
 }
@@ -305,16 +305,16 @@ function LinkCard({ link }: { link: NonNullable<WallPostView["link"]> }) {
       href={link.url}
       target="_blank"
       rel="noreferrer"
-      className="mt-4 block overflow-hidden rounded-xl border-2 border-[#F2F5F4] transition hover:-translate-y-0.5 hover:shadow-[4px_4px_0_#85DDCB]"
+      className="mt-4 block overflow-hidden rounded-xl border border-colorOutline transition hover:-translate-y-0.5"
     >
       {link.image && (
         <img src={link.image} alt="" loading="lazy" className="aspect-[1200/630] w-full object-cover" />
       )}
-      <div className="border-t-2 border-[#F2F5F4] p-4">
-        <p className="text-xs uppercase tracking-wider text-[#7C8A8E]">{host}</p>
+      <div className="border-t-2 border-colorOutline p-4">
+        <p className="text-xs uppercase tracking-wider text-colorCaption">{host}</p>
         <p className="mt-1 font-bold leading-snug">{link.title}</p>
         {link.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-[#F2F5F4]/75">{link.description}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-white/75">{link.description}</p>
         )}
       </div>
     </a>
@@ -328,7 +328,7 @@ function LikeButton({ post, canReact }: { post: WallPostView; canReact: boolean 
   const liked = pending ? !post.likedByMe : post.likedByMe;
   const count = post.likeCount + (pending ? (post.likedByMe ? -1 : 1) : 0);
   if (!canReact) {
-    return count > 0 ? <span className="text-sm text-[#7C8A8E]">👍 {count}</span> : null;
+    return count > 0 ? <span className="text-sm text-colorCaption">👍 {count}</span> : null;
   }
   return (
     <fetcher.Form method="post">
@@ -336,10 +336,10 @@ function LikeButton({ post, canReact }: { post: WallPostView; canReact: boolean 
       <input type="hidden" name="postId" value={post.id} />
       <button
         aria-pressed={liked}
-        className={`rounded-full border-2 px-3 py-0.5 text-sm font-bold transition ${
+        className={`rounded-full border px-3 py-0.5 text-sm font-bold transition ${
           liked
-            ? "border-[#85DDCB] bg-[#85DDCB] text-[#0E1317]"
-            : "border-[#7C8A8E] text-[#F2F5F4] hover:border-[#85DDCB]"
+            ? "border-brand-500 bg-brand-500 text-brand-900"
+            : "border-colorOutline text-white hover:border-brand-500"
         }`}
       >
         👍 {count > 0 ? count : ""}
@@ -369,18 +369,18 @@ export function PostCard({
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-bold leading-tight">
             {post.author.name} <BadgeList badges={post.author.badges} />
           </p>
-          <p className="text-xs text-[#7C8A8E]" suppressHydrationWarning>
+          <p className="text-xs text-colorCaption" suppressHydrationWarning>
             {timeAgo(post.createdAt)}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {post.isPinned && (
-            <span className="rounded-full border-2 border-[#fbbf24] px-2 py-0.5 text-xs font-bold text-[#fbbf24]">
+            <span className="rounded-full border border-brand-500 px-2 py-0.5 text-xs font-bold text-brand-500">
               📌 Fijada
             </span>
           )}
           {canMod && post.isPublic && (
-            <span className="rounded-full border-2 border-[#85DDCB] px-2 py-0.5 text-xs font-bold text-[#85DDCB]">
+            <span className="rounded-full border border-brand-500 px-2 py-0.5 text-xs font-bold text-brand-500">
               Pública
             </span>
           )}
@@ -388,7 +388,7 @@ export function PostCard({
         </div>
       </header>
 
-      <div className="prose prose-invert mt-4 max-w-none break-words prose-a:text-[#85DDCB] prose-pre:rounded-xl">
+      <div className="prose prose-invert mt-4 max-w-none break-words prose-a:text-brand-500 prose-pre:rounded-xl">
         <Streamdown>{post.body}</Streamdown>
       </div>
       {post.link && !post.imageUrl && <LinkCard link={post.link} />}
@@ -397,17 +397,17 @@ export function PostCard({
           src={post.imageUrl}
           alt=""
           loading="lazy"
-          className="mt-4 max-h-[480px] w-full rounded-xl border-2 border-[#F2F5F4] object-contain"
+          className="mt-4 max-h-[480px] w-full rounded-xl border border-colorOutline object-contain"
         />
       )}
 
-      <footer className="mt-4 border-t-2 border-dashed border-[#7C8A8E]/40 pt-3">
+      <footer className="mt-4 border-t-2 border-colorOutline/40 pt-3">
         <div className="flex items-center gap-4">
         <LikeButton post={post} canReact={canComment} />
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="text-sm font-bold text-[#85DDCB] hover:underline"
+          className="text-sm font-bold text-brand-500 hover:underline"
         >
           💬 {visibleComments.length === 0 ? "Comentar" : `${visibleComments.length} comentarios`}
         </button>
@@ -417,11 +417,11 @@ export function PostCard({
             {visibleComments.map((c) => (
               <div key={c.id} className={`flex gap-2 ${c.hidden ? "opacity-50" : ""}`}>
                 <MemberAvatar author={c.author} size={28} />
-                <div className="min-w-0 flex-1 rounded-xl bg-[#F2F5F4]/5 px-3 py-2">
+                <div className="min-w-0 flex-1 rounded-xl bg-white/5 px-3 py-2">
                   <p className="text-sm">
                     <span className="font-bold">{c.author.name}</span>{" "}
                     <BadgeList badges={c.author.badges} compact />{" "}
-                    <span className="text-xs text-[#7C8A8E]" suppressHydrationWarning>
+                    <span className="text-xs text-colorCaption" suppressHydrationWarning>
                       {timeAgo(c.createdAt)}
                     </span>{" "}
                     {(canMod || viewerId === c.author.id) && !c.hidden && (
@@ -435,7 +435,7 @@ export function PostCard({
             {canComment ? (
               <CommentForm postId={post.id} />
             ) : (
-              <p className="text-sm text-[#7C8A8E]">Únete al club para comentar.</p>
+              <p className="text-sm text-colorCaption">Únete al club para comentar.</p>
             )}
           </div>
         )}
@@ -453,19 +453,19 @@ export function LockedPosts({ count, cta }: { count: number; cta: React.ReactNod
         {[0, 1, 2].slice(0, Math.min(3, count)).map((i) => (
           <div key={i} className={`${card} p-5`}>
             <div className="flex items-center gap-3">
-              <span className="h-10 w-10 rounded-full bg-[#85DDCB]" />
-              <span className="h-4 w-32 rounded bg-[#F2F5F4]/40" />
+              <span className="h-10 w-10 rounded-full bg-brand-500" />
+              <span className="h-4 w-32 rounded bg-white/40" />
             </div>
             <div className="mt-4 grid gap-2">
-              <span className="h-3 w-full rounded bg-[#F2F5F4]/25" />
-              <span className="h-3 w-5/6 rounded bg-[#F2F5F4]/25" />
-              <span className="h-3 w-2/3 rounded bg-[#F2F5F4]/25" />
+              <span className="h-3 w-full rounded bg-white/25" />
+              <span className="h-3 w-5/6 rounded bg-white/25" />
+              <span className="h-3 w-2/3 rounded bg-white/25" />
             </div>
           </div>
         ))}
       </div>
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="max-w-sm rounded-2xl border-2 border-[#F2F5F4] bg-[#0E1317] p-6 text-center shadow-[8px_8px_0_#fbbf24]">
+        <div className="max-w-sm rounded-2xl border border-colorOutline bg-backface p-6 text-center">
           <p className="text-4xl">🔒</p>
           <p className="mt-2 text-lg font-bold">
             {count} {count === 1 ? "publicación" : "publicaciones"} sólo para miembros
