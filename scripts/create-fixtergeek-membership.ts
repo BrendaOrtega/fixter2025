@@ -1,5 +1,5 @@
 /**
- * Crea la comunidad de pago FixterGeek (/comunidad/fixtergeek) a $99 MXN al
+ * Crea la comunidad de pago FixterGeek (/comunidad/club-de-agentes) a $99 MXN al
  * mes o $990 al año, y regala 3 meses a quienes ya compraron un curso o libro
  * (decisión de bliss, 10-nov-2026; docs/comunidad/PLAN.md).
  *
@@ -11,7 +11,7 @@ import { db } from "../app/.server/db";
 import { grantMembership } from "../app/.server/services/membership.server";
 
 const OWNER_EMAIL = "fixtergeek@gmail.com";
-const SLUG = "fixtergeek";
+const SLUG = "club-de-agentes";
 const PRICE_MONTH = 99;
 const PRICE_YEAR = 990; // dos meses gratis
 const GRANT_DAYS = 90;
@@ -46,8 +46,8 @@ async function main() {
     where: { slug: SLUG },
     create: {
       slug: SLUG,
-      name: "FixterGeek",
-      tagline: "La comunidad para construir con IA, con llamadas en vivo cada semana.",
+      name: "Club de Agentes",
+      tagline: "Construye agentes de IA que trabajan de verdad, con una llamada en vivo cada semana.",
       tag: "community:fixtergeek",
       ownerId: owner.id,
       isActive: true,
