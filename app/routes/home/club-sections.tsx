@@ -7,13 +7,26 @@
 import { useEffect, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import { PrimaryButton } from "~/components/common/PrimaryButton";
-import { MicIllustration } from "~/components/community/MicIllustration";
+import { CommunityIllustration } from "~/components/community/CommunityIllustration";
 
 const CLUB = "/comunidad/club-de-agentes";
 /** Lista de espera: `/api/waitlist` le pone el tag `espera-comunidades` al suscriptor. */
 const WAITLIST_SLUG = "comunidades";
 
+export type DirectoryEntry = {
+  slug: string;
+  name: string;
+  tagline: string;
+  href: string;
+  priceMxn: number | null;
+  members: number;
+  category: string;
+  /** Tiene llamadas en vivo (las de pago). */
+  live: boolean;
+};
+
 export type HomeClub = {
+  directory: DirectoryEntry[];
   memberCount: number;
   courseCount: number;
   priceMxn: number;
@@ -97,10 +110,21 @@ function WaitlistForm({ center = false }: { center?: boolean }) {
   );
 }
 
-/** 1 · Lo que vende FixterGeek ahora: tu propia comunidad de pago. */
-export function ClubHomeHero({ club }: { club: HomeClub }) {
+
+const FILTERS = ["Todas", "De pago", "Gratis"] as const;
+
+/** 1 · Buscador de comunidades, como el de Skool: lo primero que se ve es lo que ya hay adentro. */
+export function CommunityDirectory({ club }: { club: HomeClub }) {
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("Todas");
+  const norm = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const shown = club.directory.filter(
+    (c) =>
+      (filter === "Todas" || (filter === "De pago" ? c.priceMxn != null : c.priceMxn == null)) &&
+      norm(`${c.name} ${c.tagline} ${c.category}`).includes(norm(q.trim()))
+  );
   return (
-    <section className="relative w-full overflow-hidden bg-background px-4 pb-20 pt-32 md:px-10 md:pt-40">
+    <section className="relative w-full overflow-hidden bg-background px-4 pb-16 pt-32 md:px-10 md:pt-40">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.08]"
@@ -108,17 +132,110 @@ export function ClubHomeHero({ club }: { club: HomeClub }) {
           backgroundImage:
             "linear-gradient(#85DDCB 1px, transparent 1px), linear-gradient(90deg, #85DDCB 1px, transparent 1px)",
           backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse 80% 60% at 50% 30%, black 30%, transparent 75%)",
+          maskImage: "radial-gradient(ellipse 80% 60% at 50% 20%, black 30%, transparent 75%)",
         }}
       />
+      <div className="relative mx-auto max-w-7xl">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold !leading-tight text-white md:text-5xl xl:text-6xl">Descubre comunidades</h1>
+          <p className="mt-3 text-lg text-colorParagraph">
+            o{" "}
+            <a href="#crea" className="font-semibold text-brand-500 hover:underline">
+              crea la tuya
+            </a>
+          </p>
+          <div className="mx-auto mt-8 max-w-xl">
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Busca por tema: agentes, IA, programación…"
+              aria-label="Buscar comunidades"
+              className="h-14 w-full rounded-full border border-colorOutline bg-backface px-6 text-white placeholder:text-colorCaption focus:border-brand-500 focus:outline-none"
+            />
+          </div>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={`rounded-full border px-4 py-1.5 text-sm transition ${
+                  filter === f
+                    ? "border-brand-500 bg-brand-500 font-semibold text-brand-900"
+                    : "border-colorOutline text-colorParagraph hover:border-brand-500/60"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((c) => (
+            <Link
+              key={c.slug}
+              to={c.href}
+              className="flex flex-col overflow-hidden rounded-3xl border border-colorOutline bg-backface transition hover:-translate-y-1 hover:border-brand-500/50"
+            >
+              <div className="relative grid h-44 place-content-center bg-background/60">
+                {c.live ? (
+                  <CommunityIllustration className="h-40 w-auto" />
+                ) : (
+                  <span className="text-6xl" aria-hidden>
+                    ✉️
+                  </span>
+                )}
+                {c.live && club.nextCall && c.slug === "club-de-agentes" && (
+                  <span className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-xs font-semibold text-brand-500" suppressHydrationWarning>
+                    ● En vivo · {new Date(club.nextCall.startsAt).toLocaleString("es-MX", { weekday: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Mexico_City" })}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-1 flex-col p-6">
+                <p className="text-lg font-semibold text-white">{c.name}</p>
+                <p className="mt-2 line-clamp-2 flex-1 text-sm text-colorParagraph">{c.tagline}</p>
+                <div className="mt-4 flex items-center justify-between text-sm">
+                  <span className="text-colorCaption">
+                    👥 {c.members} · {c.category}
+                  </span>
+                  <span className="font-semibold text-white">{c.priceMxn != null ? `$${c.priceMxn}/mes` : "Gratis"}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+          <a
+            href="#crea"
+            className="flex min-h-[18rem] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-colorOutline p-6 text-center transition hover:border-brand-500"
+          >
+            <span className="grid h-14 w-14 place-content-center rounded-full bg-brand-500/10 text-3xl text-brand-500">+</span>
+            <p className="mt-4 text-lg font-semibold text-white">Tu comunidad aquí</p>
+            <p className="mt-2 max-w-xs text-sm text-colorParagraph">
+              Cobra una membresía mensual y da llamadas en vivo que se graban solas.
+            </p>
+          </a>
+        </div>
+        {shown.length === 0 && (
+          <p className="mt-6 text-center text-colorCaption">Ninguna comunidad coincide con «{q}» todavía.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** 2 · Para creadores: tu propia comunidad de pago (destino de «crea la tuya»). */
+export function ClubHomeHero({ club }: { club: HomeClub }) {
+  return (
+    <section id="crea" className="relative w-full scroll-mt-24 bg-background px-4 py-20 md:px-10">
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.3fr_1fr]">
         <div className="text-center lg:text-left">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-sm font-semibold text-brand-500">
             <span className="h-2 w-2 rounded-full bg-brand-500" /> Comunidades FixterGeek · beta
           </span>
-          <h1 className="mt-6 text-4xl font-bold !leading-tight text-white md:text-5xl xl:text-6xl">
+          <h2 className="mt-6 text-4xl font-bold !leading-tight text-white [text-wrap:balance] md:text-5xl">
             Abre tu comunidad de pago y <span className="text-brand-500">da clases en vivo</span>
-          </h1>
+          </h2>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-colorParagraph lg:mx-0">
             Cobra una membresía mensual a tu gente, junta a tus miembros en un muro y da llamadas en vivo
             desde tu propia página. Cada llamada se graba sola para tus miembros y sale al mismo tiempo a
@@ -135,8 +252,8 @@ export function ClubHomeHero({ club }: { club: HomeClub }) {
           </p>
         </div>
 
-        <div className="flex flex-col items-center gap-6">
-          <MicIllustration className="h-auto w-[200px] md:w-[240px]" />
+        <div className="flex flex-col items-center gap-6 md:flex-row md:justify-center md:gap-10 lg:flex-col lg:gap-6">
+          <CommunityIllustration className="h-auto w-[280px] md:w-[260px] lg:w-[400px]" />
           <Link
             to={CLUB}
             className="w-full max-w-sm rounded-3xl border border-brand-500/30 bg-backface p-6 transition hover:-translate-y-1 hover:border-brand-500/60"

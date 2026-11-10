@@ -10,6 +10,7 @@ import {
 } from "./home/components";
 import {
   ClubHomeHero,
+  CommunityDirectory,
   ClubIncludedSection,
   CommunityModelSection,
   ClubWallPreview,
@@ -131,7 +132,32 @@ async function loadHomeClub(): Promise<HomeClub | null> {
       getWall({ communityId: community.id, isInside: false, canMod: false }),
       getNextEvent(community.id),
     ]);
+    // Directorio: todas las comunidades activas (de pago y las gratuitas por correo).
+    const all = await db.community.findMany({
+      where: { isActive: true },
+      select: { id: true, slug: true, name: true, tagline: true, priceMxn: true, tag: true },
+    });
+    const directory = await Promise.all(
+      all.map(async (c) => {
+        const paid = c.priceMxn != null;
+        const members = paid
+          ? await db.membership.count({ where: { communityId: c.id, status: { in: ["active", "past_due"] } } })
+          : await db.subscriber.count({ where: { confirmed: true, tags: { has: c.tag } } });
+        return {
+          slug: c.slug,
+          name: c.name,
+          tagline: c.tagline ?? "",
+          href: paid ? `/comunidad/${c.slug}` : `/c/${c.slug}`,
+          priceMxn: c.priceMxn ?? null,
+          members,
+          category: "Agentes de IA",
+          live: paid,
+        };
+      })
+    );
+    directory.sort((a, b) => Number(b.live) - Number(a.live) || b.members - a.members);
     return {
+      directory,
       memberCount,
       courseCount,
       priceMxn: community.priceMxn ?? 99,
@@ -186,10 +212,11 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       {/* Arriba de todo: es el CTA al que apuntan los shorts, que solo dicen
           "regístrate en fixtergeek.com". Se quita sola cuando ya no hay webinar. */}
       <WebinarBar />
-      {/* Pivote (10-nov-2026): las 4 primeras venden la plataforma de comunidades; el Club de
-          Agentes es la comunidad piloto. Lo de antes, debajo. */}
+      {/* Pivote (10-nov-2026): arriba el buscador de comunidades (como Skool) y luego la venta de la
+          plataforma a creadores; el Club de Agentes es la comunidad piloto. Lo de antes, debajo. */}
       {club && (
         <>
+          <CommunityDirectory club={club} />
           <ClubHomeHero club={club} />
           <ClubIncludedSection />
           <CommunityModelSection />
