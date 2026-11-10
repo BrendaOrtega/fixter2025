@@ -707,7 +707,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
         {/* ── Próxima llamada ── */}
         {event && (
           <section className="mt-8 rounded-2xl border border-colorOutline bg-brand-500/10 p-6">
-            <p className="text-sm font-bold uppercase tracking-wider text-brand-500">Próxima llamada</p>
+            <p className="text-sm font-bold uppercase tracking-wider text-brand-500">Próxima transmisión en vivo</p>
             <h2 className="mt-1 text-2xl font-bold">{event.title}</h2>
             <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
               <Countdown startsAt={event.startsAt} endsAt={event.endsAt} />

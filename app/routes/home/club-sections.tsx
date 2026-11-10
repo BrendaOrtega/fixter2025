@@ -108,7 +108,7 @@ export function ClubHomeHero({ club }: { club: HomeClub }) {
               to={CLUB}
               className="w-full max-w-sm rounded-3xl border border-brand-500/30 bg-backface p-6 transition hover:-translate-y-1 hover:border-brand-500/60"
             >
-              <p className="text-xs font-semibold uppercase tracking-widest text-brand-500">Próxima llamada</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-brand-500">Próxima transmisión en vivo</p>
               <p className="mt-2 font-semibold text-white">{club.nextCall.title}</p>
               <p className="mt-1 text-sm text-colorCaption" suppressHydrationWarning>
                 {callDate(club.nextCall.startsAt)} (CDMX)
