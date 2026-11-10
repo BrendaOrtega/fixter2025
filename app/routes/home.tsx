@@ -4,11 +4,17 @@ import {
   Benefits,
   BooksSection,
   CoachHighlight,
-  CommunityBand,
   HomeHero,
   SocialPlanet,
   Why,
 } from "./home/components";
+import {
+  ClubHomeHero,
+  ClubIncludedSection,
+  ClubWallPreview,
+  CreatorCommunitiesBand,
+  type HomeClub,
+} from "./home/club-sections";
 import { WebinarBar } from "~/components/common/WebinarBar";
 import { SoftwareFactoryBand } from "~/components/common/SoftwareFactoryBand";
 import { getUserOrNull } from "~/.server/dbGetters";
@@ -108,16 +114,51 @@ export const meta = () => {
   ];
 };
 
+/** El club para las primeras secciones. Si algo falla, la home sale sin ellas. */
+async function loadHomeClub(): Promise<HomeClub | null> {
+  try {
+    const { db } = await import("~/.server/db");
+    const { getWall, getNextEvent } = await import("~/.server/services/wall.server");
+    const community = await db.community.findUnique({
+      where: { slug: "club-de-agentes" },
+      select: { id: true, priceMxn: true },
+    });
+    if (!community) return null;
+    const [memberCount, courseCount, wall, event] = await Promise.all([
+      db.membership.count({ where: { communityId: community.id, status: { in: ["active", "past_due"] } } }),
+      db.course.count({ where: { isFree: false, published: true } }),
+      getWall({ communityId: community.id, isInside: false, canMod: false }),
+      getNextEvent(community.id),
+    ]);
+    return {
+      memberCount,
+      courseCount,
+      priceMxn: community.priceMxn ?? 99,
+      nextCall: event ? { title: event.title, startsAt: event.startsAt.toISOString() } : null,
+      posts: wall.posts.slice(0, 3).map((p) => ({
+        id: p.id,
+        author: { name: p.author.name, photoURL: p.author.photoURL },
+        body: p.body,
+        createdAt: String(p.createdAt),
+        link: p.link ? { url: p.link.url, title: p.link.title, image: p.link.image } : null,
+      })),
+    };
+  } catch (e) {
+    console.error("[home] club:", e);
+    return null;
+  }
+}
+
 // esto es para prerender, si no: evitar.
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await getUserOrNull(request);
   const isAdmin = user?.role === "ADMIN";
 
-  return { isAdmin };
+  return { isAdmin, club: await loadHomeClub() };
 };
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const { isAdmin } = loaderData || {};
+  const { isAdmin, club } = loaderData || {};
 
   useEffect(() => {
     window.scrollTo({
@@ -144,10 +185,18 @@ export default function Page({ loaderData }: Route.ComponentProps) {
       {/* Arriba de todo: es el CTA al que apuntan los shorts, que solo dicen
           "regístrate en fixtergeek.com". Se quita sola cuando ya no hay webinar. */}
       <WebinarBar />
+      {/* Pivote a comunidades (10-nov-2026): las 4 primeras son del club; lo de antes, debajo. */}
+      {club && (
+        <>
+          <ClubHomeHero club={club} />
+          <ClubWallPreview posts={club.posts} />
+          <ClubIncludedSection courseCount={club.courseCount} />
+          <CreatorCommunitiesBand />
+        </>
+      )}
       <HomeHero />
       <SoftwareFactoryBand />
       <CoachHighlight />
-      <CommunityBand />
       <BooksSection />
       <Why />
       <Benefits />

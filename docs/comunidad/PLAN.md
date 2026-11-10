@@ -107,3 +107,45 @@ similar). La membresía nueva (`Membership`) ya está escrita sin nada exclusivo
   `CLUB_CALL_HOST_EMAILS`, `CLUB_CALL_MODE`. Viven en `/app/secrets.env` de la caja app-host de fixtergeek y entran al
   contenedor en el siguiente reinicio (el próximo deploy de `:main`).
 - La caja no deja entrar sin ticket (`/token` responde 401), así que no hay liga «pelona» para compartir.
+
+## Caja de llamadas por comunidad (10-nov-2026, decisión de bliss)
+Hoy el club usa la **caja de eventos de gs** (la de los webinars de bliss; Ghosty Teams tiene su
+propia caja de llamadas). La plataforma tiene que permitir que **un cliente con su comunidad pida
+su propia caja**. Cómo encaja sin rehacer nada:
+
+- **Lo que ya separa por partner** (gs, `app/lib/partner/`):
+  - `EVENT_TICKET_PREFIXES` dice qué salas puede abrir cada espacio (`business` → `fx-`).
+  - `HLS_PREFIXES` dice dónde puede dejar sus videos (`fixtergeek/videos/club/`).
+  - El puente `event-box/recording` sólo deja grabar y parar salas propias, y para rehacer el HLS
+    de un archivo revisa la bitácora (`AuditEvent.externalId`).
+- **Siguiente paso para una caja por cliente:**
+  1. En gs, guardar en el partner (o en el espacio) qué caja usa. Sin ese dato, usa la caja de
+     eventos compartida; con él, una caja `livekit-svc` propia, creada como `event-box.server.ts`
+     con su `ADMIN_TOKEN`, su `EVENT_TICKET_SECRET` y sus llaves `HLS_*` hacia el bucket del cliente.
+  2. `ticket` y `recording` resuelven `{base, secretos}` por partner en lugar de llamar a
+     `eventBoxUrl()`. Las acciones no cambian.
+  3. En fixtergeek, `Community` gana el prefijo de sus salas, que hoy está fijo en
+     `fx-club-de-agentes` (`clubCallRoom`), y quizá su propia credencial de partner. El HLS va a
+     `fixtergeek/videos/club/<communityId>/…`, así que cada comunidad ya tiene su carpeta.
+- **Por qué importa la caja propia:** la caja graba una sala a la vez. Dos comunidades llamando a la
+  misma hora en la caja compartida chocan, y la segunda no se puede grabar.
+
+## Grabaciones (10-nov-2026)
+- Al entrar el anfitrión se graba solo. La tarjeta de la llamada trae «Detener y guardar» y la caja
+  sube el HLS a `fixtergeek/videos/club/<club>/<id>/`.
+- Si el anfitrión sale sin parar, la caja se detiene sola a los 3 min y la siguiente carga del club
+  pide el HLS de ese archivo.
+- Una grabación cuenta como lista cuando llega `storyboard/storyboard.vtt`, que la caja sube al
+  final. Se reproduce por `/api/hls-proxy` con un token firmado y sólo la ven los miembros.
+- Prueba del 10-nov: una grabación de 40 s quedó en `fixtergeek/videos/club/_prueba/1794333027954/`
+  con 1080/720/480, miniaturas y subtítulos.
+- Pendiente en la caja (`sandbox-host/templates/livekit-svc`):
+  - Que `/busy` cuente la conversión HLS en curso. Mientras tanto, `transcribe:true` la mantiene
+    despierta.
+  - Subir `master.m3u8` al final.
+
+## Invitados (10-nov-2026)
+- `CommunityInvite` registra cada invitado por correo. Al iniciar sesión recibe sus `giftDays` de
+  regalo y entra a las llamadas de sus `callDays` aunque no pague.
+- `scripts/club-invite.mts --source … --gift 90 --call AAAAMMDD correos… --write`.
+- Ya invitados: los 5 confirmados del micro-hackatón (90 días, llamadas del 10 y 12-nov).
