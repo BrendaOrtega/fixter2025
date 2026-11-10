@@ -22,18 +22,6 @@ const navigation = [
   { name: "Blog", link: "/blog" },
   { name: "Pong gratis", link: "/pong" },
   { name: "Club de Agentes", link: "/comunidad/club-de-agentes" },
-  {
-    name: "Sistemas agénticos",
-    link: "/sistemas-agenticos",
-    highlight: true,
-    gradient: "from-[#85DDCB] to-[#37AB93]",
-  },
-  {
-    name: "Software Factory",
-    link: "/software-factory",
-    highlight: true,
-    gradient: "from-[#8DCF6E] to-[#85DDCB]",
-  },
 ];
 
 export const SquigglyUnderline = () => {
@@ -394,28 +382,12 @@ const MobileMenu = ({
           isOpen={isOpen}
           title="Comunidad"
         />
-        <NavItem
-          onClick={toggleMenu}
-          as="Link"
-          to="/sistemas-agenticos"
-          index={6}
-          isOpen={isOpen}
-          title="Sistemas agénticos"
-        />
-        <NavItem
-          onClick={toggleMenu}
-          as="Link"
-          to="/software-factory"
-          index={7}
-          isOpen={isOpen}
-          title="Software Factory"
-        />
         {user?.email ? (
           <>
             <NavItem
               as="Link"
               to="/mis-cursos"
-              index={8}
+              index={6}
               isOpen={isOpen}
               title="Mis cursos"
             />
@@ -424,7 +396,7 @@ const MobileMenu = ({
               to="/logout"
               reloadDocument
               as="Link"
-              index={9}
+              index={7}
               isOpen={isOpen}
               title="Cerrar sesión"
             />
@@ -434,7 +406,7 @@ const MobileMenu = ({
             onClick={toggleMenu}
             as="Link"
             to="/login"
-            index={8}
+            index={6}
             isOpen={isOpen}
             title="Iniciar sesión"
             className="text-3xl my-4 font-light "
