@@ -57,3 +57,12 @@ limpio y una sola laptop con la página de la comunidad.
 | 30–35.6 s | Escritorio limpio + la laptop; en pantalla «Abre tu comunidad» · «fixtergeek.com» · «Apúntate a la lista de espera», logo FixterGeek | «Apúntate a la lista de espera en fixtergeek punto com.» |
 
 **Sin fecha en el CTA:** el cierre es sólo la lista de espera (no hay tandas).
+
+---
+
+## Pendiente (11-nov-2026, bliss: «aún vamos a mejorar la música y detalles, más tarde»)
+- **club-hackatón**: la música y los detalles todavía se van a mejorar. La pista actual, «The Second Secret» de Voytek Pavlik,
+  es provisional. Las cortinillas ya no se ven vacías (commit 392ef1a).
+- **crea-club en Facebook**: el reel quedó a medio publicar en Meta Business Suite (página Fixtergeek.com, sólo Facebook,
+  con tags y miniatura del fotograma 0). Falta la descripción: Meta la borra cuando se escribe por código y el clic real
+  al campo necesita el permiso de bliss. Después, Share.
