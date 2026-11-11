@@ -99,7 +99,7 @@ export default function ClubCall() {
   }, [slug]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0E1317]">
+    <div className="fixed inset-0 z-[2147483647] bg-[#0E1317]">
       <iframe
         ref={frame}
         src={src}
