@@ -4,7 +4,7 @@
 import json, os, re, subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DUR = 37.0
+DUR = 35.6
 SFXDIR = os.path.abspath(os.path.join(HERE, "../../../docs/shorts-taller/sfx"))
 
 # ── Subtítulos: palabras del transcript con el texto literal del guion ─────────────
@@ -86,9 +86,9 @@ SFX = [
     (28.27, "hit-sub"),     # zoom-punch del sello
     (29.98, "whoosh-short"),  # empujón dentro de la pantalla
     (30.40, "land"),        # aterriza el escritorio limpio
-    (31.45, "ding"),        # la URL
-    (33.88, "8bit-coin"),   # la palomita
-    (34.55, "pop"),         # miembros en la laptop
+    (31.90, "ding"),        # la URL
+    (32.62, "8bit-coin"),   # la palomita
+    (33.22, "pop"),         # miembros en la laptop
 ]
 for a, b in zip(SFX, SFX[1:]):
     assert a[1] != b[1], f"repetido seguido: {a} {b}"

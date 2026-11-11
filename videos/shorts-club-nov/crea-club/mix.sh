@@ -4,10 +4,10 @@
 # apad=whole_dur en cada entrada, nunca -shortest, ganancia fija medida + alimiter (level=disabled); nada de loudnorm al final.
 set -euo pipefail
 cd "$(dirname "$0")"
-BGM=audio/bgm.mp3; OFF=${OFF:-56}; DUR=37; F=crea-club.mp4
+BGM=audio/bgm.mp3; OFF=${OFF:-56}; DUR=35.6; F=crea-club.mp4
 TMP=$(mktemp -d)
 ffmpeg -v error -y -i voice/voz.wav -af "aresample=48000,aformat=channel_layouts=stereo" $TMP/voz-raw.wav
-ffmpeg -v error -y -ss $OFF -t $DUR -i "$BGM" -af "aresample=48000,aformat=channel_layouts=stereo,afade=t=in:d=0.4,afade=t=out:st=35.8:d=1.2" $TMP/bed-cut.wav
+ffmpeg -v error -y -ss $OFF -t $DUR -i "$BGM" -af "aresample=48000,aformat=channel_layouts=stereo,afade=t=in:d=0.4,afade=t=out:st=34.4:d=1.2" $TMP/bed-cut.wav
 lufs() { ffmpeg -hide_banner -i "$1" -af ebur128 -f null - 2>&1 | awk '/^ +I:/{print $2}' | tail -1; }
 gain() { python3 -c "print(round($1 - ($2), 2))"; }
 GV=$(gain -15 "$(lufs $TMP/voz-raw.wav)"); GB=$(gain -26 "$(lufs $TMP/bed-cut.wav)")

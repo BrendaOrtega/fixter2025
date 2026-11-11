@@ -132,8 +132,8 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="37" data-width="1080" data-height="1920">
-      <div id="bgwrap" class="clip" data-start="0" data-duration="37" data-track-index="0">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="35.6" data-width="1080" data-height="1920">
+      <div id="bgwrap" class="clip" data-start="0" data-duration="35.6" data-track-index="0">
         <svg width="1080" height="2300" viewBox="0 0 1080 2300">
           <defs>
             <pattern id="dots" width="60" height="60" patternUnits="userSpaceOnUse">
@@ -145,7 +145,7 @@
         </svg>
       </div>
 
-      <div id="stage" class="clip full" data-start="0" data-duration="37" data-track-index="1">
+      <div id="stage" class="clip full" data-start="0" data-duration="35.6" data-track-index="1">
         <div id="desk"></div><div id="deskLeg1"></div><div id="deskLeg2"></div>
 
         <!-- ESCENA 2 · la laptop (va antes en el DOM: las cosas del escritorio vuelan ENCIMA y se encogen al entrar) -->
@@ -304,11 +304,11 @@
         </div>
 
         <!-- ESCENA 6 · escritorio limpio + CTA -->
-        <div id="s6" class="clip full" data-start="30.33" data-duration="6.67" data-track-index="7">
+        <div id="s6" class="clip full" data-start="30.33" data-duration="5.27" data-track-index="7">
           <img id="logo" class="abs" src="assets/logo.png" alt="FixterGeek" />
           <div id="ctaT" class="abs">Abre tu comunidad</div>
           <div id="url" class="abs chip">fixtergeek.com</div>
-          <div id="wait" class="abs">Lista de espera · abrimos por tandas</div>
+          <div id="wait" class="abs">Apúntate a la lista de espera</div>
           <div id="plant" class="abs">
             <svg width="150" height="180" viewBox="0 0 120 150">
               <path d="M60 80 q-40 -20 -46 -66 q40 6 46 66 z" fill="#8dcf6e" stroke="#0e1317" stroke-width="6" />
@@ -379,7 +379,7 @@
       const tl = gsap.timeline({ paused: true });
       const CX = 540, CY = 840;
 
-      tl.fromTo("#bgwrap", { y: 0 }, { y: -300, duration: 37, ease: "none" }, 0);
+      tl.fromTo("#bgwrap", { y: 0 }, { y: -290, duration: 35.6, ease: "none" }, 0);
 
       // empuje de cámara lento por escena (1 → 1.06)
       [["#cam1", 0, 7.2], ["#cam2", 6.2, 7.5], ["#cam3", 13.7, 4.72], ["#cam4", 18.42, 7.98], ["#cam5", 26.3, 3.65]].forEach(([s, t, d]) => {
@@ -534,18 +534,18 @@
       // ── ESCENA 6 ──
       tl.fromTo("#s6", { scale: 1.4 }, { scale: 1, duration: 0.4, ease: "back.out(1.3)", transformOrigin: "50% 45%", immediateRender: false }, 30.33);
       tl.set("#url", { scale: 0 }, 0);
-      tl.to("#url", { scale: 1, duration: 0.35, ease: "back.out(2)" }, 31.38);
-      tl.fromTo("#url", { rotation: 0 }, { rotation: -2, duration: 0.5, yoyo: true, repeat: 5, ease: "sine.inOut", immediateRender: false }, 31.9);
+      tl.to("#url", { scale: 1, duration: 0.35, ease: "back.out(2)" }, 31.86);
+      tl.fromTo("#url", { rotation: 0 }, { rotation: -2, duration: 0.5, yoyo: true, repeat: 5, ease: "sine.inOut", immediateRender: false }, 32.3);
       tl.set("#wait", { opacity: 0, y: 20 }, 0);
-      tl.to("#wait", { opacity: 1, y: 0, duration: 0.4 }, 32.4);
-      tl.to("#checkP", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 33.84);
+      tl.to("#wait", { opacity: 1, y: 0, duration: 0.4 }, 31.0);
+      tl.to("#checkP", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 32.6);
       ["#sa1", "#sa2", "#sa3"].forEach((s, i) => {
         tl.set(s, { scale: 0 }, 0);
-        tl.to(s, { scale: 1, duration: 0.35, ease: "back.out(2.4)" }, 34.5 + i * 0.25);
+        tl.to(s, { scale: 1, duration: 0.35, ease: "back.out(2.4)" }, 33.2 + i * 0.25);
       });
-      tl.fromTo("#plant", { rotation: 0 }, { rotation: 5, duration: 0.8, yoyo: true, repeat: 7, ease: "sine.inOut", transformOrigin: "50% 100%", immediateRender: false }, 30.6);
-      tl.fromTo("#mug", { y: 0 }, { y: -8, duration: 0.6, yoyo: true, repeat: 7, ease: "sine.inOut", immediateRender: false }, 31.2);
-      tl.fromTo("#logo", { y: 0 }, { y: -6, duration: 1, yoyo: true, repeat: 3, ease: "sine.inOut", immediateRender: false }, 32.5);
+      tl.fromTo("#plant", { rotation: 0 }, { rotation: 5, duration: 0.8, yoyo: true, repeat: 5, ease: "sine.inOut", transformOrigin: "50% 100%", immediateRender: false }, 30.6);
+      tl.fromTo("#mug", { y: 0 }, { y: -8, duration: 0.6, yoyo: true, repeat: 5, ease: "sine.inOut", immediateRender: false }, 31.2);
+      tl.fromTo("#logo", { y: 0 }, { y: -6, duration: 0.8, yoyo: true, repeat: 3, ease: "sine.inOut", immediateRender: false }, 32.0);
 
       /*CAPJS*/
 
