@@ -1,0 +1,110 @@
+[
+  {
+    "id": "w0",
+    "text": "Es",
+    "start": 0.08,
+    "end": 0.16
+  },
+  {
+    "id": "w1",
+    "text": "el",
+    "start": 0.24,
+    "end": 0.32
+  },
+  {
+    "id": "w2",
+    "text": "micro",
+    "start": 0.32,
+    "end": 0.56
+  },
+  {
+    "id": "w3",
+    "text": "jacatón",
+    "start": 0.56,
+    "end": 1.04
+  },
+  {
+    "id": "w4",
+    "text": "de",
+    "start": 1.04,
+    "end": 1.12
+  },
+  {
+    "id": "w5",
+    "text": "Ghost",
+    "start": 1.12,
+    "end": 1.44
+  },
+  {
+    "id": "w6",
+    "text": "Studio,",
+    "start": 1.68,
+    "end": 2.16
+  },
+  {
+    "id": "w7",
+    "text": "el",
+    "start": 2.24,
+    "end": 2.4
+  },
+  {
+    "id": "w8",
+    "text": "jueves",
+    "start": 2.4,
+    "end": 3.12
+  },
+  {
+    "id": "w9",
+    "text": "de",
+    "start": 3.12,
+    "end": 3.2
+  },
+  {
+    "id": "w10",
+    "text": "noviembre,",
+    "start": 3.2,
+    "end": 3.68
+  },
+  {
+    "id": "w11",
+    "text": "de",
+    "start": 3.76,
+    "end": 4
+  },
+  {
+    "id": "w12",
+    "text": "siete",
+    "start": 4,
+    "end": 4.32
+  },
+  {
+    "id": "w13",
+    "text": "a",
+    "start": 4.32,
+    "end": 4.48
+  },
+  {
+    "id": "w14",
+    "text": "diez",
+    "start": 4.48,
+    "end": 4.64
+  },
+  {
+    "id": "w15",
+    "text": "de",
+    "start": 4.72,
+    "end": 4.88
+  },
+  {
+    "id": "w16",
+    "text": "la",
+    "start": 4.88,
+    "end": 4.96
+  },
+  {
+    "id": "w17",
+    "text": "noche.",
+    "start": 4.96,
+    "end": 5.2
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "w0",
+    "text": "Adentro",
+    "start": 0,
+    "end": 0.56
+  },
+  {
+    "id": "w1",
+    "text": "tienes",
+    "start": 0.56,
+    "end": 0.88
+  },
+  {
+    "id": "w2",
+    "text": "el",
+    "start": 0.88,
+    "end": 1.04
+  },
+  {
+    "id": "w3",
+    "text": "muro,",
+    "start": 1.04,
+    "end": 1.52
+  },
+  {
+    "id": "w4",
+    "text": "los",
+    "start": 1.52,
+    "end": 1.76
+  },
+  {
+    "id": "w5",
+    "text": "cursos",
+    "start": 1.76,
+    "end": 2.24
+  },
+  {
+    "id": "w6",
+    "text": "incluidos",
+    "start": 2.24,
+    "end": 2.88
+  },
+  {
+    "id": "w7",
+    "text": "y",
+    "start": 2.88,
+    "end": 3.04
+  },
+  {
+    "id": "w8",
+    "text": "todas",
+    "start": 3.04,
+    "end": 3.28
+  },
+  {
+    "id": "w9",
+    "text": "las",
+    "start": 3.28,
+    "end": 3.44
+  },
+  {
+    "id": "w10",
+    "text": "llamadas",
+    "start": 3.44,
+    "end": 4
+  },
+  {
+    "id": "w11",
+    "text": "grabadas.",
+    "start": 4,
+    "end": 4.56
+  }
+]

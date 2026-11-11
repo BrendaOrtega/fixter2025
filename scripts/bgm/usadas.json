@@ -716,5 +716,333 @@
     "fuente": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Electro%20Cabello.mp3",
     "titulo": "Electro Cabello — Kevin MacLeod (CC BY 4.0)",
     "video": "videos/hyperframes-0812/beats-audio (demo-beats-audio, 0–33 s)"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1335509",
+    "titulo": "Path 1",
+    "autor": "Truckstopdave",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "ninguno — vetada (bliss, 28-oct-2026: «la música fue muy mala»)",
+    "vetada": true
+  },
+  {
+    "fuente": "https://ccmixter.org/files/airtone/60674",
+    "titulo": "reNovation",
+    "autor": "airtone",
+    "licencia": "Attribution (3.0)",
+    "video": "ghosty-reel/shorts/factura-whatsapp"
+  },
+  {
+    "fuente": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Groove%20Grove.mp3",
+    "titulo": "Groove Grove",
+    "autor": "Kevin MacLeod",
+    "licencia": "CC BY 4.0 (pide crédito)",
+    "video": "videos/ghosty-factura-guia"
+  },
+  {
+    "fuente": "sintetizada:videos/ghosty-salon-unas/short/synth.py",
+    "titulo": "Fa–Lam–Rem–Sib 92 BPM, piano eléctrico",
+    "video": "videos/ghosty-salon-unas"
+  },
+  {
+    "fuente": "https://ccmixter.org/files/AlexBeroza/43098",
+    "titulo": "Drive",
+    "autor": "Alex Beroza",
+    "licencia": "CC BY 3.0",
+    "video": "videos/ghosty-vision-canchas"
+  },
+  {
+    "fuente": "https://ccmixter.org/files/sparky/64447",
+    "titulo": "Admiral funk",
+    "autor": "sparky",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/ghosty-comentarios"
+  },
+  {
+    "fuente": "http://ccmixter.org/content/basematic/basematic_-_Zest.mp3",
+    "titulo": "Zest",
+    "autor": "basematic",
+    "licencia": "CC BY 3.0",
+    "video": "videos/ghosty-novedades-nov"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1687404",
+    "titulo": "Framed by the Pyrenean Haute Route",
+    "autor": "Ehma",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/ghosty-agente-en-tu-app"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1501647",
+    "titulo": "LESAT Theme",
+    "autor": "Daniel Bautista",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l01"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1982678",
+    "titulo": "Some Moments Of Fun",
+    "autor": "Daniel Bautista",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/ghosty-tres-canales"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1608343",
+    "titulo": "Factory XXII",
+    "autor": "e s c p",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-factory/promo"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/2253094",
+    "titulo": "Happy Holydays Dance (ID 2305)",
+    "autor": "Lobo Loco",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/promo"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/2327679",
+    "titulo": "Fresh Flowers in a Vase",
+    "autor": "Helen Langfort",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l06"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/2327677",
+    "titulo": "Morning Light in My Kitchen",
+    "autor": "Helen Langfort",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l07"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1842817",
+    "titulo": "New Hope",
+    "autor": "Milestep",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l08"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1419658",
+    "titulo": "Lost and Found (Instrumental)",
+    "autor": "VITNE",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l09"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1670597",
+    "titulo": "Uplifting Corporate",
+    "autor": "Soundrider/Dope",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l02"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1670594",
+    "titulo": "The Corporate Upbeat",
+    "autor": "Soundrider/Dope",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l03"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1348205",
+    "titulo": "Jaunt [Jazz]",
+    "autor": "Hardcore Scm",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l04"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1732250",
+    "titulo": "Be Happy",
+    "autor": "Tioben Neenot",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l05"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1213980",
+    "titulo": "Pop dawn",
+    "autor": "PequenasAlegrias",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l10"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1540859",
+    "titulo": "Lucky Acoustic",
+    "autor": "Jesse Keller",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l14"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/2327678",
+    "titulo": "Walking and Smiling",
+    "autor": "Helen Langfort",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l16"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/625683",
+    "titulo": "The Bottom (Instrumental)",
+    "autor": "Josh Woodward (Instrumental Versions)",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l15"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1671032",
+    "titulo": "Positive Backgroundl",
+    "autor": "Soundrider/Dope",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l12"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/497843",
+    "titulo": "Guitar variation 2(remastered)",
+    "autor": "Blik",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l11"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1670563",
+    "titulo": "Upbeat Lounge Background",
+    "autor": "Soundrider/Dope",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l13"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1366268",
+    "titulo": "Ballast",
+    "autor": "Blue Dot Sessions",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l21"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/994896",
+    "titulo": "BARCELONA (acoustic)",
+    "autor": "Bane Djakovic",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l22"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/625679",
+    "titulo": "Saturday (Instrumental)",
+    "autor": "Josh Woodward (Instrumental Versions)",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l17"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1210830",
+    "titulo": "Trip Around The World - FREE MUSIC",
+    "autor": "ANtarcticbreeze",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l18"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1670485",
+    "titulo": "Inspire Motivation",
+    "autor": "Soundrider/Dope",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l25"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/405774",
+    "titulo": "guitars mix 1 (master)",
+    "autor": "Stellar Art Wars Free License",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l26"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1163228",
+    "titulo": "Super Power Pop Rock",
+    "autor": "Kara Square",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l19"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/695463",
+    "titulo": "Universal folk",
+    "autor": "Kreaten",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l20"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/546754",
+    "titulo": "Acoustic-A",
+    "autor": "EVIDENCE",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l23"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1275148",
+    "titulo": "Piano Jams",
+    "autor": "Razvan Veina",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/udemy-ghosty-curso/l24"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1293644",
+    "titulo": "Life Above Water",
+    "autor": "DJ Frankie Holmes",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/cumple-yireh"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/628320",
+    "titulo": "Big Disco Ball (Instrumental Version)",
+    "autor": "Josh Woodward (Instrumental Versions)",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "mailmask/videos/short-promo-buenfin"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/257465",
+    "titulo": "Caja de Arena",
+    "autor": "Sikior",
+    "licencia": "CC BY 2.5 (pide crédito)",
+    "video": "videos/mailmask/short-explicado-cuento"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1565796",
+    "titulo": "B and S",
+    "autor": "Groove Epidemic",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "/Users/bliss/mailmask/videos/short-buenfin-50"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1057404",
+    "titulo": "Detaltactic - Dance with electricity",
+    "autor": "Detaltactic",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/club-primera-transmision"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/764950",
+    "titulo": "Motionless Land (Instrumental Version)",
+    "autor": "Josh Woodward (Instrumental Versions)",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/shorts-club-nov/crea-club"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/17791",
+    "titulo": "Sandwich",
+    "autor": "Dr.Arthur",
+    "licencia": "CC BY 2.5 (pide crédito)",
+    "video": "videos/shorts-club-nov/club-hackaton"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1678227",
+    "titulo": "Eixida",
+    "autor": "V.D.G",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/ghosty-pone-orden"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/2327681",
+    "titulo": "Plans for the Whole Day",
+    "autor": "Helen Langfort",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/shorts-club-nov/club-hackaton"
+  },
+  {
+    "fuente": "https://www.jamendo.com/track/1024470",
+    "titulo": "The Second Secret",
+    "autor": "Voytek Pavlik",
+    "licencia": "CC BY 3.0 (pide crédito)",
+    "video": "videos/shorts-club-nov/club-hackaton"
   }
 ]

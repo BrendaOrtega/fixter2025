@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="score.gen.js"></script>
+    <style>
+      /* Short «Club de Agentes + micro-hackatón» (vertical 1080×1920, v2 11-nov-2026).
+         Lo genial va grande y al centro: el objeto protagonista de cada beat vive entre y 380 y y 1270; el karaoke va
+         abajo del objeto (y 1288–1400). Zonas seguras TikTok: nada en y<240 ni y>1400; libre x>930 entre y 880 y 1400.
+         Estilo real de fixtergeek.com (tailwind.config.ts, club-sections.tsx): fondo #0E1317, tarjetas rounded-3xl con borde
+         fino colorOutline #2C3944 y relleno backface #182128, sombra suave y difusa, pastillas rounded-full con borde y fondo
+         menta translúcidos, títulos blancos, secundario colorCaption #8D9194. Nada de contorno grueso ni sombra dura.
+         Nada quieto: cada escena tiene movimiento secundario en bucles finitos y un empuje de cámara 1→1.06.
+         Imagen circular: abre con el reloj lleno y cinco laptops apagadas; cierra con el reloj vacío y las cinco encendidas. */
+      :root { --bg: #0e1317; --mint: #85ddcb; --green: #8dcf6e; --ink: #ffffff; --grey: #8d9194; --off: #1a2328; --face: #182128; --line: #2c3944; --para: #b7b9ba; --live: #e5484d; --soft: 0 24px 48px rgba(0,0,0,.45); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); font-family: "Inter", sans-serif; color: var(--ink); }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+      .abs { position: absolute; }
+      .scene { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; display: none; }
+      .stage { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 470px 830px; }
+      #bg { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+      svg.hard { filter: drop-shadow(0 24px 30px rgba(0,0,0,.45)); overflow: visible; }
+
+      /* pastilla del sitio: rounded-full, borde brand-500/30 y fondo brand-500/10 (ya mezclados sobre el fondo) */
+      .pill { position: absolute; font-family: "Poppins"; font-weight: 700; color: var(--mint); background: #1a2729; border: 3px solid #32504d; border-radius: 999px; box-shadow: var(--soft); white-space: nowrap; visibility: hidden; }
+      .card { position: absolute; background: var(--face); border: 3px solid var(--line); border-radius: 36px; box-shadow: var(--soft); color: var(--ink); visibility: hidden; }
+
+      /* s1 */
+      #hg1 { left: 250px; top: 360px; width: 580px; height: 718px; }
+      .lap { position: absolute; width: 260px; height: 200px; overflow: visible; filter: drop-shadow(0 16px 20px rgba(0,0,0,.4)); }
+      #live1 { left: 600px; top: 1090px; font-size: 44px; padding: 4px 30px 10px 70px; color: var(--ink); background: var(--face); border-color: var(--line); }
+      #live1 i { position: absolute; left: 26px; top: 50%; width: 24px; height: 24px; margin-top: -10px; border-radius: 50%; background: var(--live); }
+      /* el texto va en HTML; los objetos son sprites de assets/sprites/tilesheet-v2.png */
+      #banner { left: 70px; top: 600px; font-size: 92px; padding: 10px 56px 20px; color: #19262a; background: var(--mint); border-color: var(--mint); letter-spacing: -.02em; z-index: 5; }
+      #date { left: 60px; top: 860px; padding: 26px 44px 30px; z-index: 5; }
+      #date b { display: block; font-family: "Poppins"; font-weight: 700; font-size: 56px; letter-spacing: -.02em; }
+      #date small { display: block; margin-top: 6px; font-weight: 600; font-size: 42px; color: var(--mint); visibility: hidden; }
+
+      /* s2 */
+      #mic { left: 120px; top: 240px; width: 700px; height: 700px; }
+      #micImg { position: absolute; left: 294px; top: 360px; width: 352px; height: 680px; filter: drop-shadow(0 30px 36px rgba(0,0,0,.45)); }
+      #micDot { position: absolute; left: 458px; top: 686px; width: 24px; height: 24px; border-radius: 50%; background: var(--live); }
+      #vivo2 { left: 660px; top: 430px; font-size: 40px; padding: 4px 28px 10px 62px; color: var(--ink); background: var(--face); border-color: var(--line); visibility: visible; }
+      #vivo2 i { position: absolute; left: 24px; top: 50%; width: 22px; height: 22px; margin-top: -9px; border-radius: 50%; background: var(--live); }
+      #clubPill { left: 90px; top: 1020px; font-size: 54px; padding: 6px 34px 12px; z-index: 4; }
+      #cal { left: 700px; top: 390px; width: 300px; height: 300px; }
+      .tile { position: absolute; width: 200px; height: 140px; background: var(--off); border: 3px solid var(--line); border-radius: 24px; box-shadow: var(--soft); overflow: hidden; visibility: hidden; }
+      .tile svg { position: absolute; left: 0; top: 0; }
+      .tile .nm { position: absolute; left: 10px; bottom: 10px; background: rgba(14,19,23,.85); color: var(--ink); font-weight: 600; font-size: 19px; padding: 1px 12px 3px; border-radius: 999px; }
+      .rec { position: absolute; right: 8px; top: 8px; font-family: "Poppins"; font-weight: 700; font-size: 18px; color: var(--ink); padding: 0 10px 2px 30px; background: var(--bg); border-radius: 999px; visibility: hidden; }
+      .rec i { position: absolute; left: 9px; top: 50%; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: var(--live); }
+
+      /* s3: el muro es un tablero de corcho */
+      #board { left: 60px; top: 440px; width: 840px; height: 805px; filter: drop-shadow(0 30px 40px rgba(0,0,0,.45)); }
+      #boardHead { left: 210px; top: 380px; font-size: 46px; padding: 4px 36px 10px; visibility: visible; z-index: 2; }
+      .post { position: absolute; width: 400px; height: 330px; background: var(--face); color: var(--ink); border: 3px solid var(--line); border-radius: 32px; box-shadow: var(--soft); visibility: hidden; }
+      .post h3 { position: absolute; left: 28px; bottom: 24px; font-family: "Poppins"; font-weight: 700; font-size: 42px; letter-spacing: -.02em; line-height: 1; }
+      .post svg.ico { position: absolute; left: 22px; top: 40px; width: 350px; height: 190px; }
+      .post .pinp { position: absolute; left: 168px; top: -62px; width: 70px; height: 88px; }
+
+      /* s4 */
+      #tagWrap { left: 160px; top: 320px; width: 760px; height: 806px; visibility: hidden; filter: drop-shadow(0 30px 40px rgba(0,0,0,.45)); }
+      #tagWrap .face { position: absolute; left: 0; top: 0; width: 760px; height: 806px; }
+      #tagWrap .face img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+      #tagWrap .face .tx { position: absolute; left: 380px; width: 360px; text-align: center; font-family: "Poppins"; font-weight: 800; color: #19262a; letter-spacing: -.03em; line-height: 1; }
+      #cap2 { left: 600px; top: 520px; width: 310px; z-index: 3; filter: drop-shadow(0 20px 26px rgba(0,0,0,.45)); }
+      #studPill { left: 70px; top: 1166px; font-size: 44px; padding: 6px 34px 12px; }
+
+      /* s5 */
+      #logo { position: absolute; left: 180px; top: 380px; width: 720px; filter: drop-shadow(0 6px 18px rgba(0,0,0,.6)); }
+      #hg2 { left: 40px; top: 530px; width: 310px; height: 384px; }
+      #cta { left: 375px; top: 545px; width: 600px; height: 320px; padding: 34px 38px; }
+      #cta h2 { font-family: "Poppins"; font-weight: 700; font-size: 60px; line-height: 1.02; letter-spacing: -.02em; }
+      #cta .url { margin-top: 22px; font-weight: 700; font-size: 29px; color: var(--mint); }
+      #ctaDate { left: 60px; top: 912px; font-size: 46px; padding: 8px 40px 14px; color: var(--ink); z-index: 4; }
+      #ctaDate span { color: var(--mint); }
+
+      /* karaoke: una línea, 72 px, abajo del objeto y fuera de la columna derecha de TikTok */
+      #capbox { position: absolute; left: 30px; width: 880px; top: 1288px; height: 112px; z-index: 100; }
+      .cl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; visibility: hidden; }
+      .cl .cp { background: var(--face); border: 3px solid var(--line); border-radius: 999px; padding: 0 44px 8px; font-family: "Poppins"; font-weight: 700; font-size: 72px; letter-spacing: -.02em; line-height: 1.3; box-shadow: var(--soft); white-space: nowrap; }
+      .cl b { color: var(--grey); font-weight: 700; }
+
+      /* cortinilla: rebanadas redondeadas que barren (menta, verde, backface) + el objeto de la escena que entra, grande, que viaja a su lugar */
+      .slice { position: absolute; left: 0; top: -340px; width: 1800px; height: 2600px; z-index: 90; visibility: hidden; border-radius: 220px; }
+      .slice.dk { background-color: #182128; background-image: radial-gradient(circle, #2c3944 3px, transparent 3.6px); background-size: 44px 44px; }
+      .ring { position: absolute; left: 140px; top: 430px; width: 800px; height: 800px; border-radius: 50%; border: 14px solid #85ddcb; z-index: 94; visibility: hidden; }
+      .ring.b { border-color: #8dcf6e; border-width: 8px; }
+      .mp { position: absolute; width: 280px; height: 200px; background: var(--face); border: 3px solid var(--line); border-radius: 26px; box-shadow: var(--soft); }
+      .mp svg { position: absolute; left: 16px; top: 30px; width: 248px; height: 135px; }
+      .mp img { position: absolute; left: 112px; top: -46px; width: 52px; height: 66px; }
+      .sealg { position: absolute; left: 190px; top: 480px; width: 700px; height: 700px; z-index: 95; visibility: hidden; object-fit: contain; filter: drop-shadow(0 30px 40px rgba(0,0,0,.45)); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="39.539" data-width="1080" data-height="1920">
+      <svg id="bg" viewBox="0 0 1080 1920" width="1080" height="1920">
+        <defs>
+          <pattern id="pGrid" width="90" height="90" patternUnits="userSpaceOnUse">
+            <path d="M45 35 v20 M35 45 h20" stroke="#2c3944" stroke-width="4" stroke-linecap="round" />
+            <circle cx="0" cy="0" r="4" fill="#85ddcb" fill-opacity=".14" /><circle cx="90" cy="0" r="4" fill="#85ddcb" fill-opacity=".14" />
+            <circle cx="0" cy="90" r="4" fill="#85ddcb" fill-opacity=".14" /><circle cx="90" cy="90" r="4" fill="#85ddcb" fill-opacity=".14" />
+          </pattern>
+        </defs>
+        <g id="bgMove"><rect x="0" y="0" width="1300" height="2200" fill="url(#pGrid)" /></g>
+      </svg>
+
+      <!-- ═════ s1: reloj de arena lleno, cinco laptops apagadas alrededor ═════ -->
+      <div id="s1" class="scene"><div class="stage">
+        <svg id="hg1" class="abs hard" viewBox="0 0 420 520"></svg>
+        <div id="laps1"></div>
+        <div id="live1" class="pill"><i></i>EN VIVO</div>
+        <div id="banner" class="pill">MICRO-HACKATÓN</div>
+        <div id="date" class="card"><b>Jueves 12 de noviembre</b><small>de 7 a 10 pm · CDMX</small></div>
+      </div></div>
+
+      <!-- ═════ s2: micrófono de estudio con letrero VIVO, la sala del club abajo ═════ -->
+      <div id="s2" class="scene"><div class="stage">
+        <svg id="mic" class="abs hard" viewBox="0 0 240 240">
+          <g fill="none" stroke="#85DDCB" stroke-width="7" stroke-linecap="round">
+            <path class="w1" d="M58 58 Q40 88 58 118" /><path class="w2" d="M36 44 Q10 88 36 132" /><path class="w3" d="M14 30 Q-20 88 14 146" />
+            <path class="w1" d="M182 58 Q200 88 182 118" /><path class="w2" d="M204 44 Q230 88 204 132" /><path class="w3" d="M226 30 Q260 88 226 146" />
+          </g>
+        </svg>
+        <svg id="cal" class="abs hard" viewBox="0 0 250 250" style="visibility:hidden">
+          <rect x="14" y="30" width="222" height="206" rx="30" fill="#182128" stroke="#2C3944" stroke-width="4" />
+          <path d="M14 92 V60 a30 30 0 0 1 30 -30 H206 a30 30 0 0 1 30 30 V92z" fill="#8DCF6E" />
+          <path d="M70 14 v36 M180 14 v36" stroke="#8D9194" stroke-width="12" stroke-linecap="round" />
+          <g id="calWeeks">
+            <g class="wk"><rect x="38" y="112" width="52" height="52" rx="14" fill="#85DDCB" /><path d="M51 138 l9 9 l17 -19" fill="none" stroke="#19262A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" /></g>
+            <g class="wk"><rect x="99" y="112" width="52" height="52" rx="14" fill="#85DDCB" /><path d="M112 138 l9 9 l17 -19" fill="none" stroke="#19262A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" /></g>
+            <g class="wk"><rect x="160" y="112" width="52" height="52" rx="14" fill="#85DDCB" /><path d="M173 138 l9 9 l17 -19" fill="none" stroke="#19262A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" /></g>
+            <g class="wk"><rect x="38" y="172" width="52" height="52" rx="14" fill="#8DCF6E" /><path d="M51 198 l9 9 l17 -19" fill="none" stroke="#19262A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" /></g>
+          </g>
+        </svg>
+        <img id="micImg" src="assets/sprites/mic.png" alt="" />
+        <i id="micDot"></i>
+        <div id="vivo2" class="pill"><i></i>VIVO</div>
+        <div id="clubPill" class="pill">CLUB DE AGENTES DE IA</div>
+        <div id="tiles"></div>
+      </div></div>
+
+      <!-- ═════ s3: el muro, un tablero de corcho donde caen los posts ═════ -->
+      <div id="s3" class="scene"><div class="stage">
+        <img id="board" class="abs" src="assets/sprites/board.png" alt="" />
+        <div id="boardHead" class="pill">EL MURO DEL CLUB</div>
+        <div id="p1" class="post" style="left:80px;top:570px">
+          <img class="pinp" src="assets/sprites/pin.png" alt="" />
+          <svg class="ico" viewBox="0 0 350 190"><circle cx="60" cy="60" r="46" fill="#85DDCB"/><text x="60" y="80" text-anchor="middle" font-family="Poppins" font-weight="700" font-size="52" fill="#19262A">M</text>
+            <rect x="124" y="30" width="200" height="18" rx="9" fill="#2C3944"/><rect x="124" y="62" width="160" height="18" rx="9" fill="#2C3944"/><rect x="124" y="94" width="190" height="18" rx="9" fill="#2C3944"/>
+            <path id="heart" d="M300 178 l-28 -26 a16 16 0 0 1 28 -15 a16 16 0 0 1 28 15z" fill="#E5484D"/></svg>
+          <h3>El muro</h3>
+        </div>
+        <div id="p2" class="post" style="left:470px;top:610px">
+          <img class="pinp" src="assets/sprites/pin.png" alt="" />
+          <svg class="ico" viewBox="0 0 350 190"><rect x="6" y="6" width="338" height="150" rx="22" fill="#8DCF6E"/><circle cx="175" cy="81" r="44" fill="#19262A"/><path d="M162 60 l36 21 l-36 21z" fill="#8DCF6E"/>
+            <rect x="6" y="170" width="338" height="14" rx="7" fill="#2C3944"/><rect id="prog" x="6" y="170" width="338" height="14" rx="7" fill="#85DDCB"/></svg>
+          <h3>Cursos incluidos</h3>
+        </div>
+        <div id="p3" class="post" style="left:260px;top:900px">
+          <img class="pinp" src="assets/sprites/pin.png" alt="" />
+          <svg class="ico" viewBox="0 0 350 190"><rect x="6" y="6" width="338" height="170" rx="22" fill="#0E1317"/><circle cx="175" cy="94" r="44" fill="#85DDCB"/><path d="M162 73 l36 21 l-36 21z" fill="#19262A"/>
+            <rect x="20" y="20" width="96" height="34" rx="17" fill="#2C3944"/><circle id="recDot3" cx="40" cy="37" r="9" fill="#E5484D"/><text x="80" y="47" text-anchor="middle" font-family="Inter" font-weight="800" font-size="22" fill="#F2F5F4">REC</text></svg>
+          <h3>Llamadas grabadas</h3>
+        </div>
+      </div></div>
+
+      <!-- ═════ s4: etiqueta de precio colgada de su hilo ═════ -->
+      <div id="s4" class="scene"><div class="stage">
+        <div id="tagWrap" class="abs">
+          <div id="tagFront" class="face"><img src="assets/sprites/tag.png" alt="" /><div class="tx" style="top:452px;font-size:156px">$99</div><div class="tx" style="top:640px;font-size:60px;color:#186656">al mes</div></div>
+          <div id="tagBack" class="face" style="visibility:hidden"><img src="assets/sprites/tag.png" alt="" /><div class="tx" style="top:452px;font-size:70px">3 meses</div><div class="tx" style="top:548px;font-size:84px;color:#186656">GRATIS</div></div>
+        </div>
+        <img id="cap2" class="abs" src="assets/sprites/cap.png" alt="" style="visibility:hidden" />
+        <div id="studPill" class="pill">si eres estudiante de FixterGeek</div>
+      </div></div>
+
+      <!-- ═════ s5: cierre — reloj vacío, cinco laptops encendidas, CTA ═════ -->
+      <div id="s5" class="scene"><div class="stage">
+        <img id="logo" src="assets/logo.png" alt="FixterGeek" />
+        <svg id="hg2" class="abs hard" viewBox="0 0 420 520"></svg>
+        <div id="cta" class="card"><h2>Entra al Club de Agentes</h2><div class="url">fixtergeek.com/comunidad/<br />club-de-agentes</div></div>
+        <div id="ctaDate" class="pill">Jueves 12 de nov · <span>7 pm CDMX</span></div>
+        <div id="laps5"></div>
+      </div></div>
+
+      <div id="capbox"></div>
+
+      <div id="wipe" class="abs" style="left:0;top:0;width:1080px;height:1920px;z-index:90"></div>
+      <!-- glifos que sellan: el objeto de la escena que entra -->
+      <img id="sg-s2" class="sealg" src="assets/sprites/mic.png" alt="" />
+      <div id="sg-s3" class="sealg"><img src="assets/sprites/board.png" alt="" style="position:absolute;left:0;top:0;width:700px;height:671px" />
+        <div class="mp" style="left:70px;top:110px;transform:rotate(-5deg)"><img src="assets/sprites/pin.png" alt="" /><svg viewBox="0 0 350 190"><circle cx="60" cy="60" r="46" fill="#85DDCB"/><rect x="124" y="30" width="200" height="18" rx="9" fill="#2C3944"/><rect x="124" y="62" width="160" height="18" rx="9" fill="#2C3944"/><path d="M300 178 l-28 -26 a16 16 0 0 1 28 -15 a16 16 0 0 1 28 15z" fill="#E5484D"/></svg></div>
+        <div class="mp" style="left:350px;top:150px;transform:rotate(4deg)"><img src="assets/sprites/pin.png" alt="" /><svg viewBox="0 0 350 190"><rect x="6" y="6" width="338" height="150" rx="22" fill="#8DCF6E"/><circle cx="175" cy="81" r="44" fill="#19262A"/><path d="M162 60 l36 21 l-36 21z" fill="#8DCF6E"/></svg></div>
+        <div class="mp" style="left:200px;top:380px;transform:rotate(-2deg)"><img src="assets/sprites/pin.png" alt="" /><svg viewBox="0 0 350 190"><rect x="6" y="6" width="338" height="170" rx="22" fill="#0E1317"/><circle cx="175" cy="94" r="44" fill="#85DDCB"/><path d="M162 73 l36 21 l-36 21z" fill="#19262A"/><circle cx="40" cy="37" r="11" fill="#E5484D"/></svg></div></div>
+      <img id="sg-s4" class="sealg" src="assets/sprites/tag.png" alt="" />
+      <svg id="sg-s5" class="sealg" viewBox="0 0 300 300"><rect x="56" y="14" width="188" height="26" rx="13" fill="#8DCF6E"/><rect x="56" y="260" width="188" height="26" rx="13" fill="#8DCF6E"/><path d="M84 40 h132 q0 72 -66 110 q66 38 66 110 h-132 q0 -72 66 -110 q-66 -38 -66 -110z" fill="#182128" stroke="#2C3944" stroke-width="5" stroke-linejoin="round"/><path d="M104 254 q46 -54 92 0z" fill="#85DDCB"/></svg>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const SC = window.SCORE, T = SC.T, $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+      const S = Object.fromEntries(SC.scenes.map((s) => [s.id, s]));
+      const D = SC.duration;
+      const tl = gsap.timeline({ paused: true });
+      const vis = (el, at) => tl.set(el, { visibility: "visible" }, at);
+      const hide = (el, at) => tl.set(el, { visibility: "hidden" }, at);
+      const pop = (el, at, from = 0.4, dur = 0.36, s = 1.8) => { vis(el, at); tl.fromTo(el, { scale: from }, { scale: 1, duration: dur, ease: `back.out(${s})`, immediateRender: false }, at); };
+      // bucle finito que cubre [a, b): nunca repeat:-1
+      const loopN = (a, b, period) => Math.max(1, Math.floor((b - a) / period));
+      let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+      // ── reloj de arena con arena que cae de verdad: nivel que baja, montículo que sube y granos ──
+      const hgSVG = (id, top, pile) => `
+        <rect x="50" y="10" width="320" height="44" rx="22" fill="#8DCF6E"/><rect x="50" y="10" width="320" height="16" rx="8" fill="#a7dc8e"/>
+        <rect x="50" y="456" width="320" height="44" rx="22" fill="#8DCF6E"/><rect x="50" y="456" width="320" height="16" rx="8" fill="#a7dc8e"/>
+        <path d="M90 54 h240 q0 130 -102 196 q102 66 102 196 h-240 q0 -130 102 -196 q-102 -66 -102 -196z" fill="#182128" stroke="#2C3944" stroke-width="6" stroke-linejoin="round"/>
+        <clipPath id="clip-${id}"><path d="M95 59 h230 q0 126 -100 191 q100 65 100 191 h-230 q0 -126 100 -191 q-100 -65 -100 -191z"/></clipPath>
+        <g clip-path="url(#clip-${id})">
+          <rect class="sTop" x="80" y="${250 - top}" width="260" height="${top}" fill="#85DDCB"/>
+          <path class="sPile" d="M70 446 Q210 ${446 - pile * 2} 350 446 Z" fill="#85DDCB"/>
+          <rect class="sStream" x="205" y="244" width="10" height="200" fill="#85DDCB"/>
+          <g class="grains"></g>
+        </g>
+        <path d="M120 90 q10 60 60 110" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".12"/>`;
+      $("#hg1").innerHTML = hgSVG("a", 150, 40);
+      $("#hg2").innerHTML = hgSVG("b", 0, 110);
+      const NS = "http://www.w3.org/2000/svg";
+      const grains = (svg, n) => [...Array(n)].map(() => { const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", 202 + rnd() * 16); c.setAttribute("cy", 250); c.setAttribute("r", 4 + rnd() * 2); c.setAttribute("fill", "#37AB93"); c.setAttribute("opacity", ".9"); svg.querySelector(".grains").appendChild(c); return c; });
+
+      // ── laptops: apagadas → encendidas con un agente que escribe línea por línea ──
+      const ROBOT = [
+        { c: "#85DDCB", ant: '<circle cx="0" cy="-60" r="9"/>' },
+        { c: "#8DCF6E", ant: '<path d="M-9 -52 l9 -16 l9 16z"/>' },
+        { c: "#B7B9BA", ant: '<rect x="-8" y="-68" width="16" height="16" rx="3"/>' },
+        { c: "#85DDCB", ant: '<path d="M0 -70 l9 9 l-9 9 l-9 -9z"/>' },
+        { c: "#8DCF6E", ant: '<circle cx="-12" cy="-60" r="7"/><circle cx="12" cy="-60" r="7"/>' },
+      ];
+      const lapSVG = (i) => `<img src="assets/sprites/laptop.png" alt="" style="position:absolute;left:0;top:0;width:260px;height:200px" />
+        <svg viewBox="34 18 192 116" preserveAspectRatio="none" style="position:absolute;left:32px;top:11px;width:197px;height:115px;overflow:hidden">
+          <g class="off"><rect x="34" y="18" width="192" height="116" rx="6" fill="#0E1317"/><path d="M60 120 l60 -90 M90 120 l40 -60" stroke="#2C3944" stroke-width="6" stroke-linecap="round"/></g>
+          <g class="on" style="visibility:hidden">
+            <rect x="34" y="18" width="192" height="116" rx="6" fill="#182128"/>
+            <g transform="translate(76 90)"><g class="bot" fill="${ROBOT[i].c}">
+              <line x1="0" y1="-30" x2="0" y2="-58" stroke="${ROBOT[i].c}" stroke-width="4"/>${ROBOT[i].ant}
+              <rect x="-30" y="-32" width="60" height="52" rx="16" fill="${ROBOT[i].c}"/>
+              <circle class="eye" cx="-12" cy="-8" r="6" fill="#0E1317"/><circle class="eye" cx="12" cy="-8" r="6" fill="#0E1317"/>
+            </g></g>
+            <rect class="tb" x="122" y="34" width="88" height="11" rx="5" fill="#2C3944"/>
+            <rect class="tb" x="122" y="56" width="66" height="11" rx="5" fill="#2C3944"/>
+            <rect class="tb" x="122" y="78" width="80" height="11" rx="5" fill="#8DCF6E"/>
+            <rect class="tb" x="122" y="100" width="54" height="11" rx="5" fill="#85DDCB"/>
+          </g>
+        </svg>`;
+      // s1: alrededor del reloj (dos a cada lado y una al pie); s5: dos filas bajo el CTA
+      const LAP1 = [[24, 430, 0.85], [24, 700, 0.85], [806, 430, 0.85], [806, 700, 0.85], [430, 1090, 0.85]];
+      const LAP5 = [0, 1, 2, 3, 4].map((i) => [36 + i * 174, 1150, 0.62]);
+      const mkLaps = (host, pos) => pos.map(([x, y, s], i) => {
+        const d = document.createElement("div"); d.className = "lap";
+        d.style.left = x + "px"; d.style.top = y + "px"; d.style.scale = s; d.style.transformOrigin = "0 0"; d.innerHTML = lapSVG(i);
+        host.appendChild(d); return d;
+      });
+      const laps1 = mkLaps($("#laps1"), LAP1), laps5 = mkLaps($("#laps5"), LAP5);
+      laps5.forEach((d) => { d.querySelector(".off").style.visibility = "hidden"; d.querySelector(".on").style.visibility = "visible"; });
+      // escribe línea por línea, borra y vuelve a empezar, de `a` a `b`
+      const typeLoop = (d, a, b) => {
+        const bars = d.querySelectorAll(".tb"), cyc = 1.7, n = loopN(a, b, cyc);
+        const sub = gsap.timeline({ repeat: n - 1 });
+        sub.fromTo(bars, { scaleX: 0, transformOrigin: "0% 50%" }, { scaleX: 1, duration: 0.26, stagger: 0.3, ease: "steps(5)" }, 0);
+        sub.to(bars, { scaleX: 0, duration: 0.12, ease: "power2.in", transformOrigin: "0% 50%" }, 1.55);
+        tl.add(sub, a);
+        tl.fromTo(d.querySelector(".bot"), { y: 0 }, { y: -5, duration: 0.3, yoyo: true, repeat: loopN(a, b, 0.3) - 1, ease: "sine.inOut", immediateRender: false }, a);
+      };
+
+      // ── cámaras de la sala (s2) ──
+      const PEOPLE = [["Ana", "#85DDCB"], ["Luis", "#8DCF6E"], ["Sofía", "#B7B9BA"], ["Beto", "#37AB93"]];
+      const tiles = PEOPLE.map(([n, c], i) => {
+        const d = document.createElement("div"); d.className = "tile"; d.style.left = 40 + i * 218 + "px"; d.style.top = "1110px";
+        d.innerHTML = `<svg viewBox="0 0 200 140" width="200" height="140"><circle class="head" cx="100" cy="58" r="30" fill="${c}"/><path d="M42 150 q0 -58 58 -58 q58 0 58 58z" fill="${c}"/></svg><span class="nm">${n}</span><span class="rec"><i></i>VIVO</span>`;
+        $("#tiles").appendChild(d); return d;
+      });
+
+      // ── fondo y escenas ──
+      tl.fromTo("#bgMove", { x: 0, y: 0 }, { x: -180, y: -180, duration: D, ease: "none", immediateRender: true }, 0);
+      const on = (el, at) => tl.set(el, { display: "block" }, at), off = (el, at) => tl.set(el, { display: "none" }, at);
+      SC.scenes.forEach((s) => off("#" + s.id, 0));
+      on("#s1", 0);
+      SC.scenes.slice(1).forEach((s, i) => { off("#" + SC.scenes[i].id, s.t0); on("#" + s.id, s.t0); });
+      // empuje de cámara lento en cada escena (1 → 1.06) y, al final, el objeto se acerca a la cámara mientras entra la cortinilla
+      SC.scenes.forEach((s, i) => {
+        const st = `#${s.id} .stage`;
+        tl.fromTo(st, { scale: 1 }, { scale: 1.06, duration: s.t1 - s.t0 - 0.7, ease: "sine.inOut", immediateRender: i === 0 }, s.t0);
+        if (i < SC.scenes.length - 1) tl.to(st, { scale: 1.22, rotation: i % 2 ? 3 : -3, duration: 0.6, ease: "power2.in" }, s.t1 - 0.7);
+      });
+
+      // ═════ s1 ═════
+      const s1a = 0, s1b = S.s1.t1;
+      tl.fromTo("#hg1 .sTop", { scaleY: 1, transformOrigin: "50% 100%" }, { scaleY: 0.45, duration: s1b, ease: "none", immediateRender: true }, 0);
+      tl.fromTo("#hg1 .sPile", { scaleY: 1, transformOrigin: "50% 100%" }, { scaleY: 2.2, duration: s1b, ease: "none", immediateRender: true }, 0);
+      grains($("#hg1"), 14).forEach((g, k) => {
+        tl.fromTo(g, { attr: { cy: 250 } }, { attr: { cy: 440 }, duration: 0.5, ease: "power1.in", repeat: loopN(0, s1b, 0.5) - 1, immediateRender: k === 0 }, k * 0.036);
+      });
+      tl.fromTo("#hg1", { rotation: -2 }, { rotation: 2, duration: 1.1, yoyo: true, repeat: loopN(0, s1b, 1.1) - 1, ease: "sine.inOut", immediateRender: true }, 0);
+      // «cinco»: las cinco laptops brincan en fila; «tres horas»: el reloj se sacude
+      laps1.forEach((d, i) => tl.fromTo(d, { y: 0 }, { y: -34, duration: 0.17, yoyo: true, repeat: 1, ease: "power2.out", immediateRender: false }, T["b1.cinco"] + i * 0.08));
+      tl.fromTo("#hg1", { x: 0 }, { x: 14, duration: 0.07, yoyo: true, repeat: 5, ease: "sine.inOut", immediateRender: false }, T["b1.tres"]);
+      pop("#live1", T["b1.vivo"], 0.3, 0.32, 2);
+      tl.fromTo("#live1 i", { opacity: 1 }, { opacity: 0.2, duration: 0.3, yoyo: true, repeat: 3, ease: "steps(1)", immediateRender: false }, T["b1.vivo"] + 0.35);
+      hide("#live1", T["b2.hack"] - 0.1);
+      vis("#banner", T["b2.hack"] - 0.1);
+      tl.fromTo("#banner", { scale: 2.6, rotation: -20 }, { scale: 1, rotation: -6, duration: 0.36, ease: "back.out(1.8)", immediateRender: false }, T["b2.hack"] - 0.1);
+      tl.to("#banner", { rotation: -3, duration: 0.8, yoyo: true, repeat: loopN(T["b2.hack"] + 0.3, s1b, 0.8) - 1, ease: "sine.inOut" }, T["b2.hack"] + 0.3);
+      laps1.forEach((d, i) => {
+        const at = T.laptops[i];
+        tl.set(d.querySelector(".off"), { visibility: "hidden" }, at);
+        tl.set(d.querySelector(".on"), { visibility: "visible" }, at);
+        tl.fromTo(d, { scale: 1 }, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.out", immediateRender: false }, at);
+        typeLoop(d, at + 0.15, s1b);
+      });
+      vis("#date", T["b2.jueves"]);
+      tl.fromTo("#date", { x: -900, rotation: -12 }, { x: 0, rotation: 3, duration: 0.45, ease: "back.out(1.5)", immediateRender: false }, T["b2.jueves"]);
+      vis("#date small", T["b2.siete"]);
+      tl.fromTo("#date small", { scale: 0.6, transformOrigin: "0% 50%" }, { scale: 1, duration: 0.3, ease: "back.out(2)", immediateRender: false }, T["b2.siete"]);
+
+      // ═════ s2 ═════
+      const s2a = S.s2.t0, s2b = S.s2.t1;
+      ["w1", "w2", "w3"].forEach((w, k) => {
+        tl.fromTo(`#mic .${w}`, { opacity: 0.15, scale: 0.9 }, { opacity: 1, scale: 1.05, duration: 0.6, yoyo: true, repeat: loopN(s2a, s2b, 0.6) - 1, ease: "sine.inOut", svgOrigin: "120 88", immediateRender: true }, s2a + k * 0.2);
+      });
+      tl.fromTo("#micImg, #micDot", { rotation: -2 }, { rotation: 2, duration: 1.2, yoyo: true, repeat: loopN(s2a, s2b, 1.2) - 1, ease: "sine.inOut", transformOrigin: "50% 100%", immediateRender: true }, s2a);
+      tl.fromTo("#micDot", { opacity: 1 }, { opacity: 0.15, duration: 0.4, yoyo: true, repeat: loopN(s2a, s2b, 0.4) - 1, ease: "steps(1)", immediateRender: true }, s2a);
+      tiles.forEach((d, i) => { vis(d, T["b3.sala"] + i * 0.1); tl.fromTo(d, { y: 500, rotation: i % 2 ? 8 : -8 }, { y: 0, rotation: i % 2 ? 2 : -2, duration: 0.45, ease: "back.out(1.6)", immediateRender: false }, T["b3.sala"] + i * 0.1); });
+      tiles.forEach((d, i) => tl.fromTo(d.querySelector(".head"), { y: 0 }, { y: -6, duration: 0.45, yoyo: true, repeat: loopN(T["b3.sala"] + 0.6, s2b, 0.45) - 1, ease: "sine.inOut", immediateRender: false }, T["b3.sala"] + 0.6 + i * 0.15));
+      pop("#clubPill", T["b3.club"], 0.3, 0.36, 1.8);
+      vis("#cal", T["b3.semana"]);
+      tl.fromTo("#cal", { rotation: -40, scale: 0.2 }, { rotation: 8, scale: 1, duration: 0.4, ease: "back.out(1.8)", immediateRender: false }, T["b3.semana"]);
+      $$("#calWeeks .wk").forEach((g, i) => tl.fromTo(g, { scale: 0 }, { scale: 1, duration: 0.22, ease: "back.out(2.4)", svgOrigin: `${[64, 125, 186, 64][i]} ${i < 3 ? 138 : 198}`, immediateRender: true }, T["b3.semana"] + 0.3 + i * 0.22));
+      tiles.forEach((d, i) => { const r = d.querySelector(".rec"); vis(r, T["b3.vivo"] + i * 0.06); tl.fromTo(r, { scale: 0.3 }, { scale: 1, duration: 0.28, ease: "back.out(2)", immediateRender: false }, T["b3.vivo"] + i * 0.06); });
+
+      // ═════ s3 ═════
+      const s3a = S.s3.t0, s3b = S.s3.t1;
+      [["#p1", "b4.muro", -5], ["#p2", "b4.cursos", 4], ["#p3", "b4.llamadas", -2]].forEach(([p, k, r], i) => {
+        const at = T[k] - 0.05;
+        vis(p, at);
+        // cae, se aplasta un cuadro al pegar contra el corcho y se asienta con rebote
+        tl.fromTo(p, { y: -900, rotation: r * 3, scaleY: 1.12, scaleX: 0.92 }, { y: 0, rotation: r, scaleY: 1, scaleX: 1, duration: 0.42, ease: "power3.in", immediateRender: false }, at);
+        tl.fromTo(p, { scaleY: 0.86, scaleX: 1.08 }, { scaleY: 1, scaleX: 1, duration: 0.3, ease: "back.out(2.5)", immediateRender: false, transformOrigin: "50% 100%" }, at + 0.42);
+        tl.fromTo(`${p} .pinp`, { scale: 2.4 }, { scale: 1, duration: 0.2, ease: "back.out(2)", immediateRender: false }, at + 0.5);
+        tl.to(p, { rotation: r + (i % 2 ? -1.5 : 1.5), duration: 0.9, yoyo: true, repeat: loopN(at + 0.8, s3b, 0.9) - 1, ease: "sine.inOut", transformOrigin: "50% 0%" }, at + 0.8);
+      });
+      tl.fromTo("#heart", { scale: 1 }, { scale: 1.3, duration: 0.25, yoyo: true, repeat: loopN(T["b4.muro"] + 0.6, s3b, 0.25) - 1, ease: "sine.inOut", svgOrigin: "300 160", immediateRender: false }, T["b4.muro"] + 0.6);
+      tl.fromTo("#prog", { scaleX: 0.05 }, { scaleX: 0.8, duration: s3b - T["b4.cursos"] - 0.6, ease: "power1.inOut", svgOrigin: "6 178", immediateRender: true }, T["b4.cursos"] + 0.4);
+      tl.fromTo("#recDot3", { opacity: 1 }, { opacity: 0.15, duration: 0.35, yoyo: true, repeat: loopN(T["b4.llamadas"] + 0.5, s3b, 0.35) - 1, ease: "steps(1)", immediateRender: false }, T["b4.llamadas"] + 0.5);
+
+      // ═════ s4: la etiqueta cuelga del gancho y se balancea (péndulo amortiguado) ═════
+      const s4a = S.s4.t0, s4b = S.s4.t1, piv = "405px 0px";
+      vis("#tagWrap", T["b5.precio"] - 0.25);
+      tl.fromTo("#tagWrap", { y: -1100, rotation: 30 }, { y: 0, rotation: -14, duration: 0.45, ease: "back.out(1.4)", transformOrigin: piv, immediateRender: false }, T["b5.precio"] - 0.25);
+      { let a = -14, t = T["b5.precio"] + 0.2; const sw = 0.75;
+        while (t < s4b - 0.8) { a = -a * 0.78; if (Math.abs(a) < 2.5) a = Math.sign(a) * 2.5; tl.to("#tagWrap", { rotation: a, duration: sw, ease: "sine.inOut", transformOrigin: piv }, t); t += sw; } }
+      vis("#cap2", T["b5.estud"]);
+      tl.fromTo("#cap2", { y: -500, rotation: -30 }, { y: 0, rotation: 12, duration: 0.4, ease: "back.out(1.7)", immediateRender: false }, T["b5.estud"]);
+      tl.fromTo("#tassel", { rotation: -15 }, { rotation: 15, duration: 0.3, yoyo: true, repeat: loopN(T["b5.estud"] + 0.4, s4b, 0.3) - 1, ease: "sine.inOut", svgOrigin: "230 88", immediateRender: false }, T["b5.estud"] + 0.4);
+      pop("#studPill", T["b5.estud"] + 0.25, 0.4, 0.3, 1.8);
+      // el volteo: se aplana, cambia de cara y vuelve; la cara verde dice «3 meses gratis»
+      tl.to("#tagWrap", { scaleX: 0, duration: 0.18, ease: "power2.in" }, T["b5.gratis"] - 0.2);
+      hide("#tagFront", T["b5.gratis"] - 0.02); vis("#tagBack", T["b5.gratis"] - 0.02);
+      tl.to("#tagWrap", { scaleX: 1, duration: 0.32, ease: "back.out(1.8)" }, T["b5.gratis"] - 0.02);
+
+      // ═════ s5 ═════
+      const s5a = S.s5.t0;
+      tl.fromTo("#logo", { y: -30 }, { y: 0, duration: 0.5, ease: "back.out(1.6)", immediateRender: false }, s5a);
+      // los últimos granos caen y el reloj queda vacío
+      grains($("#hg2"), 8).forEach((g, k) => tl.fromTo(g, { attr: { cy: 250 } }, { attr: { cy: 380 }, duration: 0.5, ease: "power1.in", repeat: 2, immediateRender: true }, s5a + k * 0.06));
+      tl.fromTo("#hg2 .sStream", { scaleY: 1, transformOrigin: "50% 100%" }, { scaleY: 0, duration: 1.4, ease: "power2.in", immediateRender: true }, s5a);
+      tl.fromTo("#hg2", { rotation: -2 }, { rotation: 2, duration: 1.1, yoyo: true, repeat: loopN(s5a, D, 1.1) - 1, ease: "sine.inOut", immediateRender: true }, s5a);
+      laps5.forEach((d, i) => {
+        typeLoop(d, s5a + i * 0.12, T["b6.siete"] - 0.2);
+        // el cuadro final queda con cada agente escribiendo su pantalla completa
+        tl.fromTo(d.querySelectorAll(".tb"), { scaleX: 0, transformOrigin: "0% 50%" }, { scaleX: 1, duration: 0.24, stagger: 0.2, ease: "steps(5)", immediateRender: false }, T["b6.siete"] + i * 0.1);
+        tl.fromTo(d, { y: 0 }, { y: -26, duration: 0.17, yoyo: true, repeat: 1, ease: "power2.out", immediateRender: false }, T["b6.siete"] + 0.2 + i * 0.08);
+      });
+      vis("#cta", T["b6.club"]);
+      tl.fromTo("#cta", { x: 760, rotation: 10 }, { x: 0, rotation: 0, duration: 0.45, ease: "back.out(1.4)", immediateRender: false }, T["b6.club"]);
+      tl.to("#cta", { rotation: -1.2, duration: 1, yoyo: true, repeat: loopN(T["b6.club"] + 0.6, D, 1) - 1, ease: "sine.inOut" }, T["b6.club"] + 0.6);
+      tl.fromTo("#cta .url", { opacity: 0 }, { opacity: 1, duration: 0.2, immediateRender: true }, T["b6.url"]);
+      vis("#ctaDate", T["b6.jueves"]);
+      tl.fromTo("#ctaDate", { scale: 2.2, rotation: -14 }, { scale: 1, rotation: -2, duration: 0.36, ease: "back.out(1.8)", immediateRender: false }, T["b6.jueves"]);
+
+      // ── karaoke: una línea; dicha en blanco, la actual en menta, por decir en gris ──
+      const capbox = $("#capbox");
+      const all = T.words.flatMap((l) => l.words);
+      const chunks = []; let cur = [];
+      all.forEach((w) => {
+        const len = cur.reduce((n, x) => n + x.w.length + 1, 0) + w.w.length;
+        const gap = cur.length ? w.s - cur.at(-1).e : 0;
+        if (cur.length && (len > 19 || gap > 0.6 || /[.:,?]$/.test(cur.at(-1).w))) { chunks.push(cur); cur = []; }
+        cur.push(w);
+      });
+      chunks.push(cur);
+      chunks.forEach((ws, k) => {
+        const row = document.createElement("div"); row.className = "cl";
+        row.innerHTML = `<span class="cp">${ws.map((w) => `<b>${w.w}</b>`).join(" ")}</span>`;
+        capbox.appendChild(row);
+        const bs = [...row.querySelectorAll("b")];
+        const start = k === 0 ? 0 : ws[0].s - 0.08;
+        vis(row, start);
+        if (k > 0) tl.fromTo(row, { scale: 0.94 }, { scale: 1, duration: 0.14, ease: "back.out(2)", immediateRender: false }, start);
+        ws.forEach((w, i) => { tl.set(bs[i], { color: "#85ddcb" }, w.s); tl.set(bs[i], { color: "#f2f5f4" }, w.e + 0.02); });
+        const next = chunks[k + 1];
+        const hideAt = Math.min(next ? next[0].s - 0.1 : Infinity, ws.at(-1).e + 1.0);
+        if (hideAt < Infinity) hide(row, hideAt);
+      });
+
+      // ── cortinillas: rebanadas sesgadas; el objeto de la escena que entra sella enorme y viaja a su lugar ──
+      const COLORS = { s2: ["#85ddcb", "#8dcf6e", "#182128"], s3: ["#8dcf6e", "#85ddcb", "#182128"], s4: ["#85ddcb", "#8dcf6e", "#182128"], s5: ["#8dcf6e", "#85ddcb", "#182128"] };
+      // destino del sello (centro y escala respecto al glifo de 700 px centrado en 540,830)
+      const LAND = { s2: [-70, -130, 0.97], s3: [-60, 12, 1.2], s4: [0, -107, 1.15], s5: [-345, -108, 0.48] };
+      const wipe = $("#wipe");
+      Object.entries(COLORS).forEach(([id, cols], n) => {
+        const c = S[id].t0, dir = n % 2 ? -1 : 1;
+        // tapa corta (~0.5 s): entra a c-0.5, el glifo sella en cuanto cubre, sale a c+0.02
+        cols.forEach((col, k) => {
+          const p = document.createElement("div"); p.className = "slice" + (k === 2 ? " dk" : ""); if (k < 2) p.style.background = col; wipe.appendChild(p);
+          const inAt = c - 0.5 + k * 0.04;
+          tl.set(p, { visibility: "visible", x: 1500 * dir, skewX: -14 * dir }, inAt);
+          tl.to(p, { x: -360, duration: 0.26, ease: "back.out(1.3)" }, inAt);
+          tl.to(p, { x: dir > 0 ? -2400 : 1500, duration: 0.32, ease: "power3.in" }, c + 0.02 + (2 - k) * 0.05);
+          hide(p, c + 0.46);
+        });
+        // anillos que se expanden detrás del glifo: la tapa oscura nunca queda plana
+        ["", " b"].forEach((cls, k) => {
+          const r = document.createElement("div"); r.className = "ring" + cls; wipe.appendChild(r);
+          const at = T.seal[id] + k * 0.08;
+          tl.set(r, { visibility: "visible" }, at);
+          tl.fromTo(r, { scale: 0.3, opacity: 1 }, { scale: 1.3, opacity: 0, duration: 0.6, ease: "power1.in", immediateRender: false }, at);
+          hide(r, at + 0.62);
+        });
+        const g = "#sg-" + id, at = T.seal[id], [lx, ly, ls] = LAND[id];
+        vis(g, at);
+        tl.fromTo(g, { scale: 0.25, rotation: -20, x: 0, y: 0, opacity: 1 }, { scale: 1, rotation: 0, duration: 0.3, ease: "back.out(1.8)", immediateRender: false }, at);
+        tl.to(g, { x: lx, y: ly, scale: ls, duration: 0.34, ease: "power3.inOut" }, c);
+        tl.to(g, { opacity: 0, duration: 0.12 }, c + 0.3);
+        hide(g, c + 0.44);
+      });
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "w0",
+    "text": "Entra",
+    "start": 0,
+    "end": 0.4
+  },
+  {
+    "id": "w1",
+    "text": "al",
+    "start": 0.4,
+    "end": 0.48
+  },
+  {
+    "id": "w2",
+    "text": "club",
+    "start": 0.48,
+    "end": 0.72
+  },
+  {
+    "id": "w3",
+    "text": "de",
+    "start": 0.72,
+    "end": 0.88
+  },
+  {
+    "id": "w4",
+    "text": "agentes",
+    "start": 0.88,
+    "end": 1.2
+  },
+  {
+    "id": "w5",
+    "text": "en",
+    "start": 1.2,
+    "end": 1.36
+  },
+  {
+    "id": "w6",
+    "text": "fixstergeek.com",
+    "start": 1.36,
+    "end": 2.88
+  }
+]

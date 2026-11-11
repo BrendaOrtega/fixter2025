@@ -1,0 +1,116 @@
+[
+  {
+    "id": "w0",
+    "text": "Cuesta",
+    "start": 0.08,
+    "end": 0.48
+  },
+  {
+    "id": "w1",
+    "text": "noventa",
+    "start": 0.48,
+    "end": 0.8
+  },
+  {
+    "id": "w2",
+    "text": "y",
+    "start": 0.8,
+    "end": 0.88
+  },
+  {
+    "id": "w3",
+    "text": "nueve",
+    "start": 0.96,
+    "end": 1.28
+  },
+  {
+    "id": "w4",
+    "text": "pesos",
+    "start": 1.28,
+    "end": 1.76
+  },
+  {
+    "id": "w5",
+    "text": "al",
+    "start": 1.76,
+    "end": 1.92
+  },
+  {
+    "id": "w6",
+    "text": "mes,",
+    "start": 1.92,
+    "end": 2.32
+  },
+  {
+    "id": "w7",
+    "text": "y",
+    "start": 2.32,
+    "end": 2.56
+  },
+  {
+    "id": "w8",
+    "text": "si",
+    "start": 2.56,
+    "end": 2.72
+  },
+  {
+    "id": "w9",
+    "text": "ya",
+    "start": 2.72,
+    "end": 2.88
+  },
+  {
+    "id": "w10",
+    "text": "eres",
+    "start": 2.88,
+    "end": 3.2
+  },
+  {
+    "id": "w11",
+    "text": "estudiante",
+    "start": 3.2,
+    "end": 3.6
+  },
+  {
+    "id": "w12",
+    "text": "de",
+    "start": 3.6,
+    "end": 3.68
+  },
+  {
+    "id": "w13",
+    "text": "Fixter",
+    "start": 3.68,
+    "end": 4.24
+  },
+  {
+    "id": "w14",
+    "text": "Geek",
+    "start": 4.24,
+    "end": 4.48
+  },
+  {
+    "id": "w15",
+    "text": "tienes",
+    "start": 4.64,
+    "end": 4.96
+  },
+  {
+    "id": "w16",
+    "text": "tres",
+    "start": 4.96,
+    "end": 5.2
+  },
+  {
+    "id": "w17",
+    "text": "meses",
+    "start": 5.2,
+    "end": 5.52
+  },
+  {
+    "id": "w18",
+    "text": "gratis.",
+    "start": 5.52,
+    "end": 6
+  }
+]

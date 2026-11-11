@@ -1,0 +1,110 @@
+[
+  {
+    "id": "w0",
+    "text": "Se",
+    "start": 0.08,
+    "end": 0.24
+  },
+  {
+    "id": "w1",
+    "text": "transmite",
+    "start": 0.24,
+    "end": 0.8
+  },
+  {
+    "id": "w2",
+    "text": "desde",
+    "start": 0.8,
+    "end": 1.04
+  },
+  {
+    "id": "w3",
+    "text": "la",
+    "start": 1.04,
+    "end": 1.12
+  },
+  {
+    "id": "w4",
+    "text": "sala",
+    "start": 1.12,
+    "end": 1.44
+  },
+  {
+    "id": "w5",
+    "text": "del",
+    "start": 1.44,
+    "end": 1.6
+  },
+  {
+    "id": "w6",
+    "text": "club",
+    "start": 1.6,
+    "end": 1.84
+  },
+  {
+    "id": "w7",
+    "text": "de",
+    "start": 1.84,
+    "end": 2
+  },
+  {
+    "id": "w8",
+    "text": "agentes",
+    "start": 2,
+    "end": 2.48
+  },
+  {
+    "id": "w9",
+    "text": "de",
+    "start": 2.48,
+    "end": 2.64
+  },
+  {
+    "id": "w10",
+    "text": "IA,",
+    "start": 2.64,
+    "end": 3.44
+  },
+  {
+    "id": "w11",
+    "text": "donde",
+    "start": 3.44,
+    "end": 3.76
+  },
+  {
+    "id": "w12",
+    "text": "cada",
+    "start": 3.76,
+    "end": 4
+  },
+  {
+    "id": "w13",
+    "text": "semana",
+    "start": 4,
+    "end": 4.4
+  },
+  {
+    "id": "w14",
+    "text": "construimos",
+    "start": 4.4,
+    "end": 4.96
+  },
+  {
+    "id": "w15",
+    "text": "agentes",
+    "start": 5.12,
+    "end": 5.6
+  },
+  {
+    "id": "w16",
+    "text": "en",
+    "start": 5.6,
+    "end": 5.76
+  },
+  {
+    "id": "w17",
+    "text": "vivo.",
+    "start": 5.76,
+    "end": 6.08
+  }
+]

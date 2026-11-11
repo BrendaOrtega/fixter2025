@@ -1,0 +1,62 @@
+[
+  {
+    "id": "w0",
+    "text": "Míralo",
+    "start": 0,
+    "end": 0.32
+  },
+  {
+    "id": "w1",
+    "text": "este",
+    "start": 0.48,
+    "end": 0.64
+  },
+  {
+    "id": "w2",
+    "text": "jueves,",
+    "start": 0.64,
+    "end": 1.2
+  },
+  {
+    "id": "w3",
+    "text": "12",
+    "start": 1.2,
+    "end": 1.6
+  },
+  {
+    "id": "w4",
+    "text": "a",
+    "start": 1.6,
+    "end": 1.68
+  },
+  {
+    "id": "w5",
+    "text": "las",
+    "start": 1.68,
+    "end": 1.84
+  },
+  {
+    "id": "w6",
+    "text": "7",
+    "start": 1.84,
+    "end": 2.16
+  },
+  {
+    "id": "w7",
+    "text": "de",
+    "start": 2.16,
+    "end": 2.24
+  },
+  {
+    "id": "w8",
+    "text": "la",
+    "start": 2.24,
+    "end": 2.32
+  },
+  {
+    "id": "w9",
+    "text": "noche.",
+    "start": 2.32,
+    "end": 2.72
+  }
+]
