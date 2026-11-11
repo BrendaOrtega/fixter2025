@@ -7,6 +7,7 @@ import { Form, Link, data, redirect, useActionData, useNavigation, type ActionFu
 import type { Route } from "./+types/comunidad.$slug.admin";
 import { db } from "~/.server/db";
 import { Switch } from "~/components/common/Switch";
+import { ClubVideo } from "~/components/community/ClubVideo";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { canModerate } from "~/.server/services/wall.server";
 import { occurrencesOf } from "~/.server/services/club-events.server";
@@ -156,6 +157,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
     return { ok: intent === "rec-hide" ? "Grabación oculta." : "Grabación visible para los miembros." };
   }
+  // Borra la fila: deja de existir para todos, el anfitrión incluido. Los archivos HLS se quedan
+  // en el bucket (no hay limpieza todavía).
+  if (intent === "rec-delete") {
+    await db.communityRecording.deleteMany({ where: { id: str("id"), communityId: community.id } });
+    return { ok: "Grabación borrada." };
+  }
   if (intent === "rec-retry") {
     const r = await retryRecording(community.id, str("id"));
     return r.ok ? { ok: "Se volvió a pedir el video a la caja." } : data({ error: r.error }, { status: 502 });
@@ -273,7 +280,7 @@ function Calendar({ events, slug }: { events: EventView[]; slug: string }) {
             <button type="button" onClick={() => setEditing(e.id)} className="text-sm font-semibold text-brand-500 hover:underline">Editar</button>
             <Form method="post" onSubmit={(ev) => { if (!confirm(`¿Borrar «${e.title}»?`)) ev.preventDefault(); }}>
               <input type="hidden" name="id" value={e.id} />
-              <button name="intent" value="event-delete" className={ghost}>Borrar</button>
+              <button name="intent" value="event-delete" className={ghost}>Borrar evento</button>
             </Form>
           </div>
         </div>
@@ -312,16 +319,33 @@ const recStatus: Record<string, string> = {
   failed: "⚠️ la subida falló",
 };
 
-function Recordings({ recordings }: { recordings: RecView[] }) {
+function Recordings({ recordings, slug }: { recordings: RecView[]; slug: string }) {
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [playing, setPlaying] = useState<string | null>(null);
   if (recordings.length === 0) {
-    return <p className="text-colorCaption">Todavía no hay grabaciones. La llamada se graba sola cuando el anfitrión entra.</p>;
+    return <p className="text-colorCaption">Todavía no hay grabaciones. El anfitrión graba con «● Grabar» dentro de la llamada.</p>;
   }
   return (
     <ul className="grid gap-3">
       {recordings.map((r) => (
         <li key={r.id} className={`${card} ${r.hidden ? "opacity-60" : ""}`}>
           <div className="flex flex-wrap items-start justify-between gap-3">
+            {/* Vista previa: se sabe qué se borra antes de borrarlo. */}
+            {r.status === "ready" ? (
+              <button
+                type="button"
+                onClick={() => setPlaying(playing === r.id ? null : r.id)}
+                className="relative h-20 w-36 shrink-0 overflow-hidden rounded-lg border border-colorOutline bg-black"
+                aria-label={`Ver «${r.title}»`}
+              >
+                {r.poster && <img src={r.poster} alt="" className="h-full w-full object-cover" />}
+                <span className="absolute inset-0 grid place-items-center text-2xl text-white">{playing === r.id ? "✕" : "▶"}</span>
+              </button>
+            ) : (
+              <div className="grid h-20 w-36 shrink-0 place-items-center rounded-lg border border-colorOutline text-xs text-colorCaption">
+                {recStatus[r.status] ?? r.status}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               {renaming === r.id ? (
                 <Form method="post" className="flex gap-2" onSubmit={() => setRenaming(null)}>
@@ -355,8 +379,17 @@ function Recordings({ recordings }: { recordings: RecView[] }) {
                   {r.hidden ? "Mostrar" : "Ocultar"}
                 </button>
               </Form>
+              <Form method="post" onSubmit={(ev) => { if (!confirm(`¿Borrar la grabación «${r.title}»? No se puede deshacer.`)) ev.preventDefault(); }}>
+                <input type="hidden" name="id" value={r.id} />
+                <button name="intent" value="rec-delete" className="text-sm text-colorCaption underline hover:text-white">Borrar</button>
+              </Form>
             </div>
           </div>
+          {playing === r.id && (
+            <div className="mt-3 overflow-hidden rounded-xl">
+              <ClubVideo srcUrl={`/comunidad/${slug}/grabacion/${r.id}`} poster={r.poster} />
+            </div>
+          )}
         </li>
       ))}
     </ul>
@@ -503,7 +536,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
         {result?.error && <p className="mt-4 rounded-xl border border-danger/50 bg-danger/10 px-4 py-2 text-sm text-white">{result.error}</p>}
         <div className="mt-6">
           {tab === "calendario" && <Calendar events={events} slug={community.slug} />}
-          {tab === "grabaciones" && <Recordings recordings={recordings} />}
+          {tab === "grabaciones" && <Recordings recordings={recordings} slug={community.slug} />}
           {tab === "invitados" && <Invites invites={invites} callDays={callDays} />}
           {tab === "miembros" && <Members members={members} />}
         </div>

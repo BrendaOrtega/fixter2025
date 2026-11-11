@@ -18,10 +18,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     where: { communityId_userId: { communityId: community.id, userId: user.id } },
     select: { status: true, currentPeriodEnd: true },
   });
-  if (!canModerate(user, community) && !canParticipate(user, membership, community)) {
+  const canMod = canModerate(user, community);
+  if (!canMod && !canParticipate(user, membership, community)) {
     throw data("Sólo miembros", { status: 403 });
   }
-  const src = await recordingPlayUrl(community.id, params.id as string);
+  const src = await recordingPlayUrl(community.id, params.id as string, { includeHidden: canMod });
   if (!src) throw data("No encontrada", { status: 404 });
   return Response.json({ src }, { headers: { "Cache-Control": "no-store" } });
 };

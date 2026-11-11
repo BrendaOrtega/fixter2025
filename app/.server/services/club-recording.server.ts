@@ -193,9 +193,10 @@ export async function listRecordings(communityId: string, canMod: boolean) {
 }
 
 /** URL del proxy HLS firmada para una grabación lista, o null. Quien llama ya revisó la membresía. */
-export async function recordingPlayUrl(communityId: string, id: string) {
+export async function recordingPlayUrl(communityId: string, id: string, opts: { includeHidden?: boolean } = {}) {
   if (!/^[a-f0-9]{24}$/.test(id)) return null;
   const r = await db.communityRecording.findFirst({ where: { id, communityId, status: "ready" } });
-  if (!r || r.hiddenAt) return null;
+  // El anfitrión ve también las ocultas: es como decide si borrarlas.
+  if (!r || (r.hiddenAt && !opts.includeHidden)) return null;
   return buildHlsProxyUrl(r.storageKey);
 }
