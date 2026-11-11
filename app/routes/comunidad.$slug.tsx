@@ -56,7 +56,6 @@ import { clubIncluded as included } from "~/components/community/clubIncluded";
 import { MicIllustration } from "~/components/community/MicIllustration";
 import { getCallLink } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
-import { Switch } from "~/components/common/Switch";
 import getMetaTags from "~/utils/getMetaTags";
 
 // Casa de una comunidad de pago (10-nov-2026): hero con la próxima llamada,
@@ -221,16 +220,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       select: { id: true },
     });
     const link = await getCallLink(user, { host: canMod, speaker: !!speakerInvite });
-    // El anfitrión elige al entrar: «Grabar» (encendido por defecto) y «Transmitir a YouTube y
-    // Facebook» (transmitir también graba). Si la caja no puede (ocupada con otra sala), se entra
-    // igual y el botón de grabar lo dice en la página.
-    if (link && canMod && event) {
-      const live = form.get("live") === "on";
-      if (live || form.get("record") === "on") {
-        await startRecording(community, event.title, undefined, { live, event }).catch(() => null);
-      }
-    }
-    if (link) throw redirect(link);
+    // La sala va dentro de fixtergeek (iframe), como en Teams: así su botón Grabar/Detener
+    // funciona. La grabación ya no arranca sola; la inicia el anfitrión desde la sala.
+    if (link) throw redirect(`/comunidad/${slug}/llamada?u=${encodeURIComponent(link)}`);
     return data({ error: "No pudimos abrir la sala. Intenta de nuevo en un momento." }, { status: 502 });
   }
 
@@ -424,22 +416,6 @@ const faqs = [
     a: "Ayuda, pero no es requisito. En las llamadas armamos agentes paso a paso y cualquiera puede preguntar.",
   },
 ];
-
-/** Lo que el anfitrión decide al entrar. Transmitir también graba. */
-function HostToggles() {
-  const [record, setRecord] = useState(true);
-  const [live, setLive] = useState(false);
-  return (
-    <div className="grid gap-2">
-      <Switch name="record" on={record || live} disabled={live} onChange={setRecord}>
-        Grabar para los miembros
-      </Switch>
-      <Switch name="live" on={live} onChange={setLive}>
-        Transmitir a YouTube y Facebook
-      </Switch>
-    </div>
-  );
-}
 
 function RecControl({ rec }: { rec: { recording: boolean; busy: boolean; startedAt: string | null } | null }) {
   const fetcher = useFetcher<{ error?: string }>();
@@ -732,7 +708,6 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   >
                     {event.open ? "🎙 Entrar a la llamada" : "Se abre 15 min antes"}
                   </button>
-                  {canMod && <HostToggles />}
                   {actionData?.error && (
                     <p className="max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>
                   )}
