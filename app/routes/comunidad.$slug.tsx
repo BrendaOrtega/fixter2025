@@ -752,7 +752,8 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
           <Recordings slug={community.slug} recordings={recordings} isInside={isInside} />
         )}
 
-        {/* ── Qué incluye ── */}
+        {/* ── Qué incluye: es venta, el miembro ya está adentro ── */}
+        {!isInside && (
         <section className="mt-16">
           <h2 className="text-2xl font-bold sm:text-3xl">Qué incluye</h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -765,6 +766,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
             ))}
           </div>
         </section>
+        )}
 
         {/* ── Preguntas ── */}
         <section className="mt-16">
