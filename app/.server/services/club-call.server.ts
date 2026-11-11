@@ -38,7 +38,7 @@ export function clubCallRoom(d = new Date()): string {
   return `${ROOM_PREFIX}-${cdmxDay(d)}`;
 }
 
-function isHostEmail(email: string): boolean {
+export function isHostEmail(email: string): boolean {
   const list = (process.env.CLUB_CALL_HOST_EMAILS || DEFAULT_HOSTS)
     .split(",")
     .map((s) => s.trim().toLowerCase())

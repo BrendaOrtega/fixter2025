@@ -54,7 +54,7 @@ import { badgesForMembers } from "~/.server/services/badges.server";
 import { ClubVideo } from "~/components/community/ClubVideo";
 import { clubIncluded as included } from "~/components/community/clubIncluded";
 import { MicIllustration } from "~/components/community/MicIllustration";
-import { getCallLink } from "~/.server/services/club-call.server";
+import { getCallLink, isHostEmail } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 
@@ -219,7 +219,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       where: { communityId: community.id, email: user.email.toLowerCase(), source: { startsWith: "micro-hackaton" } },
       select: { id: true },
     });
-    const link = await getCallLink(user, { host: canMod, speaker: !!speakerInvite });
+    // Anfitrión (sacar gente, mutear, pantalla grande, grabar) SÓLO por correo
+    // (CLUB_CALL_HOST_EMAILS). Antes era cualquier ADMIN de fixtergeek y en el ensayo del
+    // 10-nov una participante con rol ADMIN sacó a bliss de la llamada. Los ADMIN entran como
+    // ponentes: comparten pantalla pero no moderan.
+    const link = await getCallLink(user, { host: isHostEmail(user.email), speaker: !!speakerInvite || canMod });
     // La sala va dentro de fixtergeek (iframe), como en Teams: así su botón Grabar/Detener
     // funciona. La grabación ya no arranca sola; la inicia el anfitrión desde la sala.
     if (link) throw redirect(`/comunidad/${slug}/llamada?u=${encodeURIComponent(link)}`);

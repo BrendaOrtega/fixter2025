@@ -10,7 +10,8 @@ import { useEffect, useRef } from "react";
 import { data, redirect, useFetcher, useLoaderData, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { canModerate, getNextEvent } from "~/.server/services/wall.server";
+import { getNextEvent } from "~/.server/services/wall.server";
+import { isHostEmail } from "~/.server/services/club-call.server";
 import { recordingState, startRecording, stopRecording } from "~/.server/services/club-recording.server";
 
 async function load(request: Request, slug: string) {
@@ -18,7 +19,7 @@ async function load(request: Request, slug: string) {
   if (!user) throw redirect(`/login?next=/comunidad/${slug}`);
   const community = await db.community.findFirst({ where: { slug }, select: { id: true, ownerId: true } });
   if (!community) throw data("Comunidad no encontrada", { status: 404 });
-  return { user, community, canMod: canModerate(user, community) };
+  return { user, community, canMod: isHostEmail(user.email) };
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
