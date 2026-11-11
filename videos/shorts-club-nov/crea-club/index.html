@@ -6,13 +6,13 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/MotionPathPlugin.min.js"></script>
     <style>
-      /* Short «crea tu club» v2 (11-nov-2026). Piel FixterGeek en caricatura plana: contorno grueso, rellenos
-         sólidos, sombra dura 8px 8px 0; sin gradientes, blur, glow ni grano.
-         v2 (feedback de bliss): protagonista GRANDE entre y 260 y 1220, karaoke debajo (y 1270), movimiento
-         secundario continuo (bucles finitos), objetos que vuelan en arco a la laptop, tablero de muro real,
-         sello con zoom-punch y polvo, empuje de cámara lento por escena (scale 1→1.06).
-         Circular: abre con el escritorio revuelto y cierra con el mismo escritorio limpio y una sola laptop. */
-      :root { --bg:#0e1317; --mint:#85ddcb; --green:#8dcf6e; --ink:#f2f5f4; --grey:#7c8a8e; --steel:#26313a; }
+      /* Short «crea tu club» v3 (11-nov-2026). Estilo real de fixtergeek.com (tailwind.config.ts, club-sections.tsx):
+         fondo #0E1317, tarjetas rounded-3xl con borde 1 px colorOutline y relleno backface, sombra SUAVE,
+         pastillas rounded-full con borde brand-500/30 y fondo brand-500/10, acentos menta y verde, títulos blancos,
+         secundarios colorParagraph/colorCaption. Nada de neo-brutalismo: sin contorno grueso ni sombra dura.
+         Protagonista grande entre y 260 y 1220, karaoke debajo (y 1272). Circular: escritorio revuelto → limpio. */
+      :root { --bg:#0e1317; --mint:#85ddcb; --green:#8dcf6e; --ink:#ffffff; --para:#b7b9ba; --cap:#8d9194;
+              --surface:#182128; --outline:#2c3944; --soft:0 24px 60px rgba(0,0,0,.45); }
       * { margin:0; padding:0; box-sizing:border-box; }
       html, body { width:1080px; height:1920px; overflow:hidden; background:var(--bg); font-family:"Inter",sans-serif; color:var(--ink); }
       #root { position:relative; width:1080px; height:1920px; overflow:hidden; background:var(--bg); }
@@ -21,126 +21,119 @@
       .mono { font-family:"Space Mono",monospace; }
       #bgwrap { position:absolute; left:0; top:0; width:1080px; height:2300px; }
 
-      #desk { position:absolute; left:-20px; top:1220px; width:1120px; height:44px; background:var(--steel); border-top:10px solid var(--mint); }
-      #deskLeg1, #deskLeg2 { position:absolute; top:1264px; width:36px; height:160px; background:var(--steel); }
-      #deskLeg1 { left:110px; } #deskLeg2 { left:870px; }
+      #desk { position:absolute; left:30px; top:1220px; width:1020px; height:30px; background:var(--surface); border:1px solid var(--outline); border-radius:999px; box-shadow:var(--soft); }
+      #deskLeg1, #deskLeg2 { display:none; }
 
-      .card { background:var(--ink); color:var(--bg); border:8px solid var(--bg); box-shadow:8px 8px 0 var(--mint); }
-      .chip { display:inline-block; background:var(--mint); color:var(--bg); font-weight:900; border:6px solid var(--bg); box-shadow:8px 8px 0 var(--green); }
+      .card { background:var(--surface); color:var(--ink); border:1px solid var(--outline); border-radius:32px; box-shadow:var(--soft); }
+      .chip { display:inline-block; color:var(--mint); font-weight:800; background:rgba(133,221,203,.1); border:2px solid rgba(133,221,203,.3); border-radius:999px; }
+      .spr { position:absolute; left:0; top:0; width:100%; height:auto; filter:drop-shadow(0 22px 34px rgba(0,0,0,.5)); }
 
-      /* ── escena 1: escritorio revuelto (grande) ── */
-      #chip1 { left:60px; top:270px; font-size:54px; padding:14px 28px; }
-      /* sprites de la hoja IA (assets/sprites/): sombra dura menta, sin desenfoque */
-      .spr { position:absolute; left:0; top:0; width:100%; height:auto; filter:drop-shadow(7px 7px 0 #85ddcb); }
-      #phone { left:70px; top:410px; width:380px; height:643px; color:var(--bg); }
-      #phone .scr { position:absolute; left:7.5%; top:15.5%; width:78.5%; height:76%; overflow:hidden; }
-      #phone .hdr { font-weight:900; font-size:36px; padding:10px 14px; color:var(--bg); border-bottom:5px solid var(--bg); }
-      .bub { position:absolute; left:12px; width:262px; padding:14px 18px; border-radius:22px; font-size:30px; font-weight:800; border:5px solid var(--bg); background:var(--ink); line-height:1.15; }
+      /* ── escena 1: escritorio revuelto ── */
+      #chip1 { left:60px; top:270px; font-size:50px; padding:14px 36px; }
+      #phone { left:70px; top:400px; width:380px; height:672px; color:var(--bg); }
+      #phone .scr { position:absolute; left:10%; top:11.7%; width:79.7%; height:75.9%; overflow:hidden; border-radius:14px; }
+      #phone .hdr { font-weight:800; font-size:34px; padding:12px 18px; color:var(--bg); background:var(--green); }
+      .bub { position:absolute; left:12px; width:270px; padding:14px 18px; border-radius:26px; font-size:30px; font-weight:700; background:#e4ebe8; color:var(--bg); line-height:1.15; }
       #bubA { top:80px; }
       #bubB { top:250px; left:20px; background:var(--green); font-size:28px; }
-      #bubC { top:350px; background:var(--ink); }
-      #receipt { left:610px; top:340px; width:410px; height:535px; padding:56px 74px 0 66px; color:var(--bg); }
+      #bubC { top:350px; }
+      #receipt { left:620px; top:330px; width:380px; height:562px; padding:52px 36px 0 40px; color:var(--bg); }
       #receipt > *:not(img) { position:relative; }
-      #receipt h4 { font-size:34px; font-weight:900; letter-spacing:.05em; }
-      #receipt p { font-size:30px; margin-top:18px; font-weight:700; }
-      #receipt .ok { margin-top:34px; display:inline-block; background:var(--green); padding:10px 18px; border:5px solid var(--bg); font-weight:900; font-size:34px; }
-      #postit { left:320px; top:870px; width:350px; height:345px; color:var(--bg); padding:36px 50px 0 32px; }
+      #receipt h4 { font-size:34px; font-weight:800; letter-spacing:.06em; color:#2c3944; }
+      #receipt p { font-size:30px; margin-top:18px; font-weight:600; }
+      #receipt .ok { margin-top:30px; display:inline-block; background:rgba(141,207,110,.25); color:#2f6b14; padding:10px 22px; border-radius:999px; font-weight:800; font-size:32px; }
+      #postit { left:320px; top:860px; width:350px; height:360px; color:var(--bg); padding:40px 46px 0 34px; }
       #postit > *:not(img) { position:relative; }
-      #postit b { font-size:42px; display:block; font-weight:900; line-height:1.05; }
-      #postit span { font-size:28px; display:block; margin-top:16px; font-weight:700; }
+      #postit b { font-size:42px; display:block; font-weight:800; line-height:1.05; }
+      #postit span { font-size:28px; display:block; margin-top:16px; font-weight:600; }
       #folder { left:680px; top:968px; width:245px; height:213px; }
-      #folder b, #folder span { position:absolute; left:0; width:90%; text-align:center; color:var(--bg); font-weight:900; }
-      #folder b { top:74px; font-size:40px; } #folder span { top:124px; font-size:29px; font-weight:800; }
+      #folder b, #folder span { position:absolute; left:0; width:100%; text-align:center; color:var(--bg); }
+      #folder b { top:84px; font-size:40px; font-weight:800; } #folder span { top:132px; font-size:29px; font-weight:600; }
       #vidfile { left:730px; top:820px; width:120px; height:140px; }
 
-      /* ── laptop grande (escenas 2 y 5) ── */
+      /* ── laptop = tarjeta real del club (escenas 2 y 5) ── */
       .lap { position:absolute; left:70px; top:560px; width:840px; height:660px; }
-      .lap .scr { position:absolute; left:0; top:0; width:840px; height:600px; background:var(--steel); border:9px solid var(--ink); border-radius:30px; padding:18px; box-shadow:8px 8px 0 var(--mint); }
-      .lap .in { width:100%; height:100%; background:var(--ink); color:var(--bg); border-radius:14px; overflow:hidden; position:relative; }
-      .lap .base { position:absolute; left:-36px; top:600px; width:912px; height:56px; background:var(--grey); border:9px solid var(--ink); border-radius:0 0 34px 34px; }
-      .lap .bar { height:96px; background:var(--bg); color:var(--ink); font-weight:900; font-size:48px; padding:20px 30px; position:relative; }
-      #uline { position:absolute; left:30px; top:78px; width:350px; height:10px; background:var(--mint); transform-origin:0 50%; }
-      .mcard { position:absolute; left:28px; top:126px; width:400px; height:390px; background:var(--ink); border:7px solid var(--bg); box-shadow:7px 7px 0 var(--green); padding:26px; }
-      .mcard b { font-size:42px; font-weight:900; display:block; line-height:1.1; }
-      .mcard em { font-style:normal; font-size:32px; font-weight:700; display:block; margin-top:14px; color:var(--grey); }
-      .mcard .pay { position:absolute; left:26px; bottom:26px; background:var(--bg); color:var(--ink); font-weight:900; font-size:32px; padding:16px 20px; border:5px solid var(--bg); }
+      .lap .scr { position:absolute; left:0; top:0; width:840px; height:600px; background:var(--outline); border-radius:36px; padding:14px; box-shadow:var(--soft); }
+      .lap .in { width:100%; height:100%; background:var(--bg); color:var(--ink); border-radius:26px; overflow:hidden; position:relative; }
+      .lap .base { position:absolute; left:-36px; top:604px; width:912px; height:30px; background:var(--outline); border-radius:0 0 30px 30px; }
+      .lap .bar { height:96px; color:var(--ink); font-weight:800; font-size:46px; padding:20px 30px; position:relative; border-bottom:1px solid var(--outline); }
+      #uline { position:absolute; left:30px; top:80px; width:330px; height:6px; border-radius:6px; background:var(--mint); transform-origin:0 50%; }
+      .mcard { position:absolute; left:28px; top:126px; width:400px; height:390px; background:var(--surface); border:1px solid var(--outline); border-radius:28px; padding:28px; }
+      .mcard b { font-size:42px; font-weight:800; display:block; line-height:1.1; }
+      .mcard em { font-style:normal; font-size:30px; font-weight:500; display:block; margin-top:14px; color:var(--para); }
+      .mcard .pay { position:absolute; left:28px; bottom:28px; background:var(--mint); color:var(--bg); font-weight:700; font-size:30px; padding:16px 26px; border-radius:999px; }
       #ccard { left:450px; top:150px; width:320px; height:218px; }
-      #paid { left:470px; top:380px; padding:14px 24px; background:var(--green); color:var(--bg); font-size:46px; font-weight:900; border:7px solid var(--bg); box-shadow:7px 7px 0 var(--bg); }
+      #paid { left:470px; top:390px; padding:14px 30px; background:rgba(141,207,110,.12); border:2px solid rgba(141,207,110,.4); color:var(--green); font-size:44px; font-weight:800; border-radius:999px; }
       #members { left:70px; top:270px; width:860px; height:250px; }
-      #members b { position:absolute; left:0; top:0; font-size:46px; font-weight:900; }
-      .av { position:absolute; top:84px; width:140px; height:140px; border-radius:50%; border:8px solid var(--ink); display:grid; place-items:center; font-weight:900; font-size:60px; color:var(--bg); box-shadow:6px 6px 0 var(--bg); }
+      #members b { position:absolute; left:0; top:0; font-size:44px; font-weight:800; }
+      .av { position:absolute; top:84px; width:140px; height:140px; border-radius:50%; border:6px solid var(--bg); display:grid; place-items:center; font-weight:800; font-size:58px; color:var(--bg); box-shadow:var(--soft); }
 
-      /* ── escena 3: el tablero del muro ── */
-      #board { left:50px; top:270px; width:880px; height:930px; background:var(--steel); border:12px solid var(--ink); box-shadow:10px 10px 0 var(--mint); }
-      #boardT { left:50px; top:270px; width:880px; height:110px; background:var(--ink); color:var(--bg); font-size:56px; font-weight:900; padding:20px 34px; }
-      #boardT span { float:right; font-size:34px; margin-top:12px; background:var(--green); padding:2px 14px; border:5px solid var(--bg); }
-      .post { position:absolute; left:100px; width:780px; height:200px; padding:26px 30px 26px 170px; }
-      .post .pa { position:absolute; left:30px; top:40px; width:112px; height:112px; border-radius:50%; border:7px solid var(--bg); display:grid; place-items:center; font-weight:900; font-size:52px; }
-      .post b { font-size:34px; font-weight:900; display:block; }
-      .post span { font-size:40px; font-weight:800; display:block; margin-top:8px; line-height:1.1; }
-      .post .pin { position:absolute; left:370px; top:-52px; width:52px; height:auto; transform:rotate(18deg); }
-      .likes { position:absolute; right:22px; bottom:14px; font-size:30px; font-weight:900; color:var(--bg); }
-      #reply { left:250px; top:1065px; width:600px; padding:18px 26px; font-size:38px; font-weight:900; background:var(--mint); color:var(--bg); border:7px solid var(--bg); box-shadow:7px 7px 0 var(--ink); }
+      /* ── escena 3: el muro (tarjeta del club) ── */
+      #board { left:50px; top:270px; width:880px; height:930px; background:var(--surface); border:1px solid var(--outline); border-radius:40px; box-shadow:var(--soft); }
+      #boardT { left:50px; top:270px; width:880px; height:110px; color:var(--ink); font-size:54px; font-weight:800; padding:24px 40px; }
+      #boardT span { float:right; font-size:30px; margin-top:8px; padding:6px 22px; color:var(--mint); background:rgba(133,221,203,.1); border:2px solid rgba(133,221,203,.3); border-radius:999px; }
+      .post { position:absolute; left:100px; width:780px; height:200px; padding:30px 30px 26px 170px; background:var(--bg); color:var(--ink); border:1px solid var(--outline); border-radius:28px; box-shadow:var(--soft); }
+      .post .pa { position:absolute; left:30px; top:42px; width:112px; height:112px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:50px; color:var(--bg); }
+      .post b { font-size:32px; font-weight:700; display:block; color:var(--para); }
+      .post span { font-size:40px; font-weight:700; display:block; margin-top:8px; line-height:1.1; }
+      .post .pin { position:absolute; left:366px; top:-50px; width:56px; height:auto; }
+      .likes { position:absolute; right:24px; bottom:14px; font-size:30px; font-weight:700; color:var(--mint); }
+      #reply { left:250px; top:1065px; width:600px; padding:18px 30px; font-size:36px; font-weight:700; color:var(--mint); background:rgba(133,221,203,.1); border:2px solid rgba(133,221,203,.3); border-radius:999px; }
 
       /* ── escena 4: en vivo ── */
-      #win { left:60px; top:270px; width:960px; height:540px; background:var(--ink); border:10px solid var(--ink); border-radius:24px; box-shadow:10px 10px 0 var(--mint); overflow:hidden; }
-      #win .wbar { height:84px; background:var(--bg); padding:18px 26px; font-size:40px; font-weight:900; color:var(--ink); position:relative; }
-      #win .wbar i { display:inline-block; width:22px; height:22px; border-radius:50%; background:var(--grey); margin-right:12px; vertical-align:2px; }
-      #vivo { left:40px; top:120px; padding:10px 20px; background:var(--bg); color:var(--ink); font-weight:900; font-size:44px; border:6px solid var(--bg); }
-      #vivo i { display:inline-block; width:28px; height:28px; border-radius:50%; background:#e5484d; margin-right:12px; vertical-align:-2px; }
-      #rec { left:700px; top:120px; padding:10px 20px; background:#e5484d; color:var(--ink); font-weight:900; font-size:44px; border:6px solid var(--bg); }
+      #win { left:60px; top:270px; width:960px; height:540px; background:var(--surface); border:1px solid var(--outline); border-radius:36px; box-shadow:var(--soft); overflow:hidden; }
+      #win .wbar { height:84px; padding:20px 28px; font-size:38px; font-weight:700; color:var(--para); position:relative; border-bottom:1px solid var(--outline); }
+      #win .wbar i { display:inline-block; width:20px; height:20px; border-radius:50%; background:var(--outline); margin-right:12px; vertical-align:2px; }
+      #vivo { left:40px; top:120px; padding:10px 26px; background:rgba(229,72,77,.15); border:2px solid rgba(229,72,77,.45); color:var(--ink); font-weight:800; font-size:40px; border-radius:999px; }
+      #vivo i { display:inline-block; width:24px; height:24px; border-radius:50%; background:#e5484d; margin-right:12px; vertical-align:-1px; }
+      #rec { left:720px; top:120px; padding:10px 26px; background:#e5484d; color:#fff; font-weight:800; font-size:40px; border-radius:999px; }
       #host { left:270px; top:150px; width:520px; height:380px; }
       #mfold { left:70px; top:880px; width:330px; height:287px; }
-      #mfoldL { left:92px; top:1010px; width:290px; font-size:32px; font-weight:900; color:var(--bg); line-height:1.05; }
+      #mfoldL { left:92px; top:1018px; width:290px; font-size:32px; font-weight:800; color:var(--bg); line-height:1.05; text-align:center; }
       #recvid { left:0; top:0; width:110px; height:130px; }
-      .plat { position:absolute; top:900px; height:230px; border:9px solid var(--ink); border-radius:22px; box-shadow:8px 8px 0 var(--bg); overflow:hidden; }
-      .plat .pbar { height:58px; font-size:34px; font-weight:900; padding:8px 18px; color:var(--ink); background:rgba(14,19,23,.35); }
+      .plat { position:absolute; top:900px; height:230px; border-radius:28px; box-shadow:var(--soft); overflow:hidden; }
+      .plat .pbar { height:58px; font-size:32px; font-weight:800; padding:10px 20px; color:#fff; background:rgba(0,0,0,.18); }
       #yt { left:440px; width:230px; background:#e5484d; }
       #fb { left:700px; width:220px; background:#3b6fd9; }
       #ytPlay { left:78px; top:92px; width:76px; height:76px; }
-      #fbLike { left:58px; top:86px; padding:6px 16px; background:var(--ink); color:#3b6fd9; font-size:38px; font-weight:900; border-radius:14px; }
+      #fbLike { left:50px; top:90px; padding:6px 18px; background:#fff; color:#3b6fd9; font-size:36px; font-weight:800; border-radius:999px; }
       #arrows { left:0; top:0; width:1080px; height:1920px; }
 
       /* ── escena 5 ── */
-      .feat { position:absolute; left:30px; width:740px; font-size:40px; font-weight:900; padding:16px 22px; border:6px solid var(--bg); background:var(--ink); box-shadow:6px 6px 0 var(--mint); }
-      #seal { left:230px; top:500px; width:520px; height:536px; }
-      #seal svg { position:absolute; left:-10px; top:12px; }
-      .dust { position:absolute; width:46px; height:46px; border-radius:50%; background:var(--ink); border:6px solid var(--bg); }
+      .feat { position:absolute; left:28px; width:744px; font-size:38px; font-weight:700; padding:18px 26px; background:var(--surface); border:1px solid var(--outline); border-radius:24px; }
+      #seal { left:230px; top:500px; width:520px; height:525px; }
+      #seal svg { position:absolute; left:0; top:8px; }
+      .dust { position:absolute; width:40px; height:40px; border-radius:50%; background:var(--mint); opacity:.9; }
 
       /* ── escena 6 ── */
       #logo { left:315px; top:262px; width:450px; height:auto; filter:drop-shadow(0 0 3px #0e1317) drop-shadow(0 0 3px #0e1317); }
-      #ctaT { left:0; top:358px; width:1080px; text-align:center; font-size:92px; font-weight:900; line-height:1.05; }
-      #url { left:210px; top:486px; width:660px; text-align:center; font-size:68px; font-weight:900; padding:10px 0; }
-      #wait { left:0; top:618px; width:1080px; text-align:center; font-size:40px; font-weight:800; }
-      /* miniatura de la página de una comunidad: se lee sola */
+      #ctaT { left:0; top:358px; width:1080px; text-align:center; font-size:92px; font-weight:800; line-height:1.05; }
+      #url { left:240px; top:486px; width:600px; text-align:center; font-size:64px; padding:12px 0; }
+      #wait { left:0; top:618px; width:1080px; text-align:center; font-size:40px; font-weight:600; color:var(--para); }
       .lap.cta { left:170px; top:700px; width:700px; height:520px; }
-      .lap.cta .scr { width:700px; height:462px; padding:14px; }
-      .lap.cta .base { top:462px; width:760px; left:-30px; height:48px; }
-      .lap.cta .bar { height:76px; font-size:36px; padding:16px 22px; display:flex; justify-content:space-between; }
+      .lap.cta .scr { width:700px; height:466px; padding:12px; }
+      .lap.cta .base { top:470px; width:760px; left:-30px; height:26px; }
+      .lap.cta .bar { height:76px; font-size:36px; padding:16px 24px; display:flex; justify-content:space-between; }
       .lap.cta .bar em { font-style:normal; color:var(--mint); }
-      #liveBtn { left:20px; top:92px; padding:10px 20px; background:#e5484d; color:var(--ink); font-size:30px; font-weight:900; border:5px solid var(--bg); box-shadow:5px 5px 0 var(--bg); }
-      #wallPost { left:20px; top:170px; width:628px; height:96px; background:var(--ink); border:5px solid var(--bg); box-shadow:5px 5px 0 var(--green); padding:12px 14px 12px 96px; font-size:28px; font-weight:800; line-height:1.15; }
-      #wallPost i { position:absolute; left:14px; top:12px; width:66px; height:66px; border-radius:50%; background:var(--mint); border:5px solid var(--bg); }
-      #wallPost b { font-weight:900; }
-      #memRow { left:20px; top:290px; width:628px; height:80px; }
-      .mav { position:absolute; top:6px; width:66px; height:66px; border-radius:50%; border:5px solid var(--bg); }
-      #memCount { left:250px; top:16px; font-size:32px; font-weight:900; color:var(--bg); }
+      #liveBtn { left:22px; top:94px; padding:10px 24px; background:#e5484d; color:#fff; font-size:30px; font-weight:700; border-radius:999px; }
+      #wallPost { left:22px; top:172px; width:630px; height:96px; background:var(--surface); border:1px solid var(--outline); border-radius:22px; padding:14px 16px 12px 96px; font-size:28px; font-weight:600; line-height:1.15; color:var(--para); }
+      #wallPost i { position:absolute; left:16px; top:14px; width:64px; height:64px; border-radius:50%; background:var(--mint); }
+      #wallPost b { font-weight:800; color:var(--ink); }
+      #memRow { left:22px; top:292px; width:630px; height:80px; }
+      .mav { position:absolute; top:6px; width:66px; height:66px; border-radius:50%; border:4px solid var(--bg); }
+      #memCount { left:250px; top:16px; font-size:32px; font-weight:800; color:var(--mint); }
       #mug { left:820px; top:1080px; width:130px; height:auto; }
       #plant { left:20px; top:1000px; width:170px; height:auto; }
 
-      /* ── cortinillas ── */
+      /* ── cortinillas: rebanadas redondeadas que barren (menta/verde), sin bordes; la palabra de la escena sella ── */
       .tr { position:absolute; left:0; top:0; width:1080px; height:1920px; overflow:hidden; }
-      .sl { position:absolute; left:-200px; width:1480px; height:330px; border-top:8px solid var(--bg); border-bottom:8px solid var(--bg); }
-      .vc { position:absolute; top:-200px; width:260px; height:2320px; border-left:8px solid var(--bg); border-right:8px solid var(--bg); }
-      #glyph2 { left:340px; top:640px; width:400px; height:520px; }
-      #glyph4 { left:0; top:780px; width:1080px; text-align:center; font-size:300px; font-weight:900; color:var(--bg); font-family:"Archivo Black",sans-serif; }
-      #recdisc { left:-1150px; top:-200px; width:3380px; height:3380px; border-radius:50%; background:var(--mint); border:30px solid var(--bg); }
-      #recglyph { left:0; top:820px; width:1080px; text-align:center; font-size:220px; font-weight:900; color:var(--bg); font-family:"Archivo Black",sans-serif; }
+      .rb { position:absolute; left:-260px; width:1600px; height:300px; border-radius:999px; }
+      .tglyph { position:absolute; left:0; top:860px; width:1080px; text-align:center; font-size:170px; font-weight:800; color:var(--bg); letter-spacing:-.02em; }
 
-      /* ── karaoke: una línea, 72 px, debajo del protagonista ── */
+      /* ── karaoke: una línea, 72 px, pastilla redondeada con borde fino ── */
       .cap { position:absolute; left:60px; top:1272px; width:860px; height:110px; display:flex; align-items:center; justify-content:center; z-index:50; }
-      .capin { background:var(--bg); border:6px solid var(--mint); padding:6px 22px; box-shadow:8px 8px 0 var(--green); white-space:nowrap; font-size:72px; font-weight:900; line-height:1.15; }
-      .w { color:var(--grey); }
+      .capin { background:rgba(24,33,40,.92); border:2px solid rgba(133,221,203,.3); border-radius:999px; padding:6px 36px; box-shadow:var(--soft); white-space:nowrap; font-size:72px; font-weight:800; line-height:1.15; }
+      .w { color:#5d676c; }
     </style>
   </head>
   <body>
@@ -149,8 +142,7 @@
         <svg width="1080" height="2300" viewBox="0 0 1080 2300">
           <defs>
             <pattern id="dots" width="60" height="60" patternUnits="userSpaceOnUse">
-              <circle cx="15" cy="15" r="4" fill="#7c8a8e" />
-              <path d="M45 39v12M39 45h12" stroke="#26313a" stroke-width="4" />
+              <circle cx="30" cy="30" r="3" fill="#2c3944" />
             </pattern>
           </defs>
           <rect width="1080" height="2300" fill="url(#dots)" />
@@ -213,7 +205,7 @@
             </div>
             <div id="vidfile" class="abs">
               <svg width="120" height="140" viewBox="0 0 110 130">
-                <path d="M8 8 h64 l30 30 v84 h-94 z" fill="#f2f5f4" stroke="#0e1317" stroke-width="7" stroke-linejoin="round" />
+                <path d="M8 8 h64 l30 30 v84 h-94 z" fill="#f2f5f4" /><path d="M72 8 v30 h30 z" fill="#85ddcb" />
                 <path d="M42 58 l28 18 l-28 18 z" fill="#0e1317" />
               </svg>
             </div>
@@ -246,27 +238,27 @@
               <svg id="host" class="abs" width="520" height="380" viewBox="0 0 520 380">
                 <path id="wave1" d="M420 120 q30 50 0 100" fill="none" stroke="#85ddcb" stroke-width="12" stroke-linecap="round" />
                 <path id="wave2" d="M455 95 q45 75 0 150" fill="none" stroke="#85ddcb" stroke-width="12" stroke-linecap="round" />
-                <circle cx="130" cy="120" r="70" fill="#85ddcb" stroke="#0e1317" stroke-width="10" />
-                <path d="M20 380 q0 -170 110 -170 q110 0 110 170 z" fill="#8dcf6e" stroke="#0e1317" stroke-width="10" stroke-linejoin="round" />
+                <circle cx="130" cy="120" r="70" fill="#85ddcb" />
+                <path d="M20 380 q0 -170 110 -170 q110 0 110 170 z" fill="#8dcf6e" />
               </svg>
               <img id="mic" class="abs" src="assets/sprites/mic.png" alt="" style="left:500px;top:215px;width:160px;height:auto" />
               <div id="vivo" class="abs"><i></i>VIVO</div>
               <div id="rec" class="abs">● REC</div>
             </div>
             <svg id="arrows" class="abs" width="1080" height="1920" viewBox="0 0 1080 1920">
-              <path id="ar1" d="M330 812 Q 260 850 235 900" fill="none" stroke="#f2f5f4" stroke-width="14" stroke-linecap="round" stroke-dasharray="140" stroke-dashoffset="140" />
-              <path id="ar2" d="M540 812 Q 555 860 555 900" fill="none" stroke="#f2f5f4" stroke-width="14" stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="100" />
-              <path id="ar3" d="M760 812 Q 800 850 810 900" fill="none" stroke="#f2f5f4" stroke-width="14" stroke-linecap="round" stroke-dasharray="110" stroke-dashoffset="110" />
+              <path id="ar1" d="M330 812 Q 260 850 235 900" fill="none" stroke="#85ddcb" stroke-width="10" stroke-linecap="round" stroke-dasharray="140" stroke-dashoffset="140" />
+              <path id="ar2" d="M540 812 Q 555 860 555 900" fill="none" stroke="#85ddcb" stroke-width="10" stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="100" />
+              <path id="ar3" d="M760 812 Q 800 850 810 900" fill="none" stroke="#85ddcb" stroke-width="10" stroke-linecap="round" stroke-dasharray="110" stroke-dashoffset="110" />
             </svg>
             <div id="mfold" class="abs"><img class="spr" src="assets/sprites/folder.png" alt="" style="filter:drop-shadow(7px 7px 0 #8dcf6e)" /></div>
             <div id="mfoldL" class="abs">Para tus miembros</div>
             <div id="yt" class="plat"><div class="pbar">YouTube</div>
-              <svg id="ytPlay" class="abs" width="76" height="76" viewBox="0 0 76 76"><path d="M14 6 l56 32 l-56 32 z" fill="#f2f5f4" stroke="#0e1317" stroke-width="6" stroke-linejoin="round" /></svg>
+              <svg id="ytPlay" class="abs" width="76" height="76" viewBox="0 0 76 76"><path d="M14 6 l56 32 l-56 32 z" fill="#ffffff" /></svg>
             </div>
             <div id="fb" class="plat"><div class="pbar">Facebook</div><div id="fbLike" class="abs">👍 Live</div></div>
             <div id="recvidWrap" class="abs" style="left:280px;top:700px;width:110px;height:130px">
               <svg id="recvid" width="110" height="130" viewBox="0 0 110 130">
-                <path d="M8 8 h64 l30 30 v84 h-94 z" fill="#f2f5f4" stroke="#0e1317" stroke-width="7" stroke-linejoin="round" />
+                <path d="M8 8 h64 l30 30 v84 h-94 z" fill="#f2f5f4" /><path d="M72 8 v30 h30 z" fill="#85ddcb" />
                 <path d="M42 58 l28 18 l-28 18 z" fill="#0e1317" />
               </svg>
             </div>
@@ -331,36 +323,39 @@
         </div>
       </div>
 
-      <!-- cortinilla 2: rebanadas sesgadas + chincheta gigante (sella el corte al tablero) -->
+      <!-- cortinillas: rebanadas redondeadas que barren y la palabra de la escena sella el corte -->
       <div id="t2" class="clip tr" data-start="13.2" data-duration="0.85" data-track-index="10" style="z-index:40">
-        <div class="sl" style="top:-120px;background:#85ddcb"></div>
-        <div class="sl" style="top:190px;background:#8dcf6e"></div>
-        <div class="sl" style="top:500px;background:#f2f5f4"></div>
-        <div class="sl" style="top:810px;background:#85ddcb"></div>
-        <div class="sl" style="top:1120px;background:#8dcf6e"></div>
-        <div class="sl" style="top:1430px;background:#f2f5f4"></div>
-        <div class="sl" style="top:1740px;background:#85ddcb"></div>
-        <svg id="glyph2" class="abs" width="400" height="520" viewBox="0 0 400 520">
-          <circle cx="200" cy="150" r="130" fill="#0e1317" stroke="#f2f5f4" stroke-width="14" />
-          <circle cx="160" cy="110" r="34" fill="#85ddcb" />
-          <path d="M200 280 L200 500" stroke="#0e1317" stroke-width="28" stroke-linecap="round" />
-        </svg>
+        <div class="rb" style="top:-160px;background:#85ddcb"></div>
+        <div class="rb" style="top:140px;background:#8dcf6e"></div>
+        <div class="rb" style="top:440px;background:#85ddcb"></div>
+        <div class="rb" style="top:740px;background:#8dcf6e"></div>
+        <div class="rb" style="top:1040px;background:#85ddcb"></div>
+        <div class="rb" style="top:1340px;background:#8dcf6e"></div>
+        <div class="rb" style="top:1640px;background:#85ddcb"></div>
+        <div class="rb" style="top:1940px;background:#8dcf6e"></div>
+        <div class="tglyph">Muro</div>
       </div>
-
       <div id="t3" class="clip tr" data-start="17.95" data-duration="0.85" data-track-index="11" style="z-index:40">
-        <div id="recdisc" class="abs"></div>
-        <div id="recglyph" class="abs">● REC</div>
+        <div class="rb" style="top:-160px;background:#8dcf6e"></div>
+        <div class="rb" style="top:140px;background:#85ddcb"></div>
+        <div class="rb" style="top:440px;background:#8dcf6e"></div>
+        <div class="rb" style="top:740px;background:#85ddcb"></div>
+        <div class="rb" style="top:1040px;background:#8dcf6e"></div>
+        <div class="rb" style="top:1340px;background:#85ddcb"></div>
+        <div class="rb" style="top:1640px;background:#8dcf6e"></div>
+        <div class="rb" style="top:1940px;background:#85ddcb"></div>
+        <div class="tglyph">En vivo</div>
       </div>
-
       <div id="t4" class="clip tr" data-start="26.0" data-duration="0.85" data-track-index="12" style="z-index:40">
-        <div class="vc" style="left:-360px;background:#85ddcb"></div>
-        <div class="vc" style="left:-120px;background:#8dcf6e"></div>
-        <div class="vc" style="left:120px;background:#f2f5f4"></div>
-        <div class="vc" style="left:360px;background:#85ddcb"></div>
-        <div class="vc" style="left:600px;background:#8dcf6e"></div>
-        <div class="vc" style="left:840px;background:#f2f5f4"></div>
-        <div class="vc" style="left:1080px;background:#85ddcb"></div>
-        <div id="glyph4" class="abs">&lt;/&gt;</div>
+        <div class="rb" style="top:-160px;background:#85ddcb"></div>
+        <div class="rb" style="top:140px;background:#f2f5f4"></div>
+        <div class="rb" style="top:440px;background:#85ddcb"></div>
+        <div class="rb" style="top:740px;background:#f2f5f4"></div>
+        <div class="rb" style="top:1040px;background:#85ddcb"></div>
+        <div class="rb" style="top:1340px;background:#f2f5f4"></div>
+        <div class="rb" style="top:1640px;background:#85ddcb"></div>
+        <div class="rb" style="top:1940px;background:#f2f5f4"></div>
+        <div class="tglyph">El Club</div>
       </div>
 
       <div id="cap0" class="clip cap" data-start="0.11" data-duration="1.12" data-track-index="9"><div class="capin"><span id="w0_0" class="w">¿Das</span> <span id="w0_1" class="w">clases</span> <span id="w0_2" class="w">y</span> <span id="w0_3" class="w">hoy</span></div></div>
@@ -470,16 +465,15 @@
       tl.to("#paid", { opacity: 1, duration: 0.04 }, 12.82);
       tl.to("#paid", { scale: 1, rotation: -6, duration: 0.35, ease: "back.out(1.8)" }, 12.82);
 
-      // ── cortinilla 2 ──
-      document.querySelectorAll("#t2 .sl").forEach((el, i) => {
-        tl.set(el, { x: -1600, skewY: -8 }, 0);
-        tl.to(el, { x: 0, duration: 0.32, ease: "back.out(1.3)" }, 13.2 + i * 0.025);
-        tl.to(el, { x: 1700, duration: 0.3, ease: "power3.in" }, 13.75 + i * 0.025);
+      // ── cortinilla t2: barrido de pastillas (entra de izquierda) ──
+      document.querySelectorAll("#t2 .rb").forEach((el, i) => {
+        tl.set(el, { x: -1700, rotation: -8 }, 0);
+        tl.to(el, { x: 0, duration: 0.34, ease: "back.out(1.2)" }, 13.2 + i * 0.02);
+        tl.to(el, { x: 1800, duration: 0.3, ease: "power3.in" }, 13.2 + 0.52 + i * 0.02);
       });
-      tl.set("#glyph2", { scale: 0, rotation: -30 }, 0);
-      tl.to("#glyph2", { scale: 1.2, rotation: 0, duration: 0.22, ease: "back.out(2.5)" }, 13.48);
-      tl.to("#glyph2", { scale: 0, duration: 0.18, ease: "power2.in" }, 13.76);
-
+      tl.set("#t2 .tglyph", { scale: 0 }, 0);
+      tl.to("#t2 .tglyph", { scale: 1, duration: 0.2, ease: "back.out(2.2)" }, 13.2 + 0.26);
+      tl.to("#t2 .tglyph", { scale: 0, duration: 0.16, ease: "power2.in" }, 13.2 + 0.52);
       // ── ESCENA 3: posts que llegan con rebote (golpe en 1/(s+1) del tween = palabra) ──
       [["#p1", 14.24, -3], ["#p2", 14.88, 2], ["#p3", 16.32, -2]].forEach(([s, t, r]) => {
         tl.set(s, { y: -1000, rotation: r * 6 }, 0);
@@ -490,14 +484,15 @@
       tl.set("#reply", { scale: 0, transformOrigin: "0% 50%" }, 0);
       tl.to("#reply", { scale: 1, duration: 0.4, ease: "back.out(2.2)" }, 17.42);
 
-      // ── cortinilla 3: disco REC ──
-      tl.set("#recdisc", { scale: 0 }, 0);
-      tl.to("#recdisc", { scale: 1, duration: 0.42, ease: "power3.in" }, 17.98);
-      tl.set("#recglyph", { scale: 0 }, 0);
-      tl.to("#recglyph", { scale: 1, duration: 0.15, ease: "back.out(2)" }, 18.36);
-      tl.to("#recglyph", { scale: 0, duration: 0.15 }, 18.52);
-      tl.to("#recdisc", { scale: 0, x: 320, y: -560, duration: 0.3, ease: "power3.out" }, 18.5);
-
+      // ── cortinilla t3: barrido de pastillas (entra de izquierda) ──
+      document.querySelectorAll("#t3 .rb").forEach((el, i) => {
+        tl.set(el, { x: -1700, rotation: -8 }, 0);
+        tl.to(el, { x: 0, duration: 0.34, ease: "back.out(1.2)" }, 17.95 + i * 0.02);
+        tl.to(el, { x: 1800, duration: 0.3, ease: "power3.in" }, 17.95 + 0.52 + i * 0.02);
+      });
+      tl.set("#t3 .tglyph", { scale: 0 }, 0);
+      tl.to("#t3 .tglyph", { scale: 1, duration: 0.2, ease: "back.out(2.2)" }, 17.95 + 0.26);
+      tl.to("#t3 .tglyph", { scale: 0, duration: 0.16, ease: "power2.in" }, 17.95 + 0.52);
       // ── ESCENA 4 ──
       tl.fromTo("#mic", { rotation: 0 }, { rotation: -6, duration: 0.5, yoyo: true, repeat: 11, ease: "sine.inOut", transformOrigin: "50% 100%", immediateRender: false }, 18.6);
       ["#wave1", "#wave2"].forEach((s, i) => {
@@ -528,16 +523,15 @@
       tl.to("#fbLike", { scale: 1, duration: 0.35, ease: "back.out(2.4)" }, 24.75);
       tl.to("#fbLike", { y: -10, duration: 0.3, yoyo: true, repeat: 3, ease: "sine.inOut" }, 25.1);
 
-      // ── cortinilla 4 ──
-      document.querySelectorAll("#t4 .vc").forEach((el, i) => {
-        tl.set(el, { y: -2400, skewX: -10 }, 0);
-        tl.to(el, { y: 0, duration: 0.33, ease: "back.out(1.2)" }, 26.0 + i * 0.03);
-        tl.to(el, { y: 2500, duration: 0.3, ease: "power3.in" }, 26.52 + i * 0.03);
+      // ── cortinilla t4: barrido de pastillas (entra de derecha) ──
+      document.querySelectorAll("#t4 .rb").forEach((el, i) => {
+        tl.set(el, { x: 1700, rotation: -8 }, 0);
+        tl.to(el, { x: 0, duration: 0.34, ease: "back.out(1.2)" }, 26.0 + i * 0.02);
+        tl.to(el, { x: -1800, duration: 0.3, ease: "power3.in" }, 26.0 + 0.52 + i * 0.02);
       });
-      tl.set("#glyph4", { scale: 0 }, 0);
-      tl.to("#glyph4", { scale: 1, duration: 0.2, ease: "back.out(2.5)" }, 26.3);
-      tl.to("#glyph4", { scale: 0, duration: 0.15 }, 26.55);
-
+      tl.set("#t4 .tglyph", { scale: 0 }, 0);
+      tl.to("#t4 .tglyph", { scale: 1, duration: 0.2, ease: "back.out(2.2)" }, 26.0 + 0.26);
+      tl.to("#t4 .tglyph", { scale: 0, duration: 0.16, ease: "power2.in" }, 26.0 + 0.52);
       // ── ESCENA 5: el sello golpea con zoom-punch y polvo ──
       document.querySelectorAll("#lap5 .feat").forEach((el, i) => {
         tl.set(el, { x: -860 }, 0);
