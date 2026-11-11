@@ -1,0 +1,10 @@
+*.mp3
+*.mp4
+*.wav
+*.mov
+renders/
+out/
+node_modules/
+renders.log
+.hyperframes/
+snaps/
