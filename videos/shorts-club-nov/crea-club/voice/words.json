@@ -2,8 +2,8 @@
   {
     "id": "w0",
     "text": "Das",
-    "start": 0.32,
-    "end": 0.56
+    "start": 0.16,
+    "end": 0.32
   },
   {
     "id": "w1",
@@ -127,7 +127,7 @@
   },
   {
     "id": "w21",
-    "text": "FixGig",
+    "text": "FixsterGig",
     "start": 7.12,
     "end": 8.08
   },
@@ -303,7 +303,7 @@
     "id": "w50",
     "text": "atora.",
     "start": 17.52,
-    "end": 18.16
+    "end": 18.4
   },
   {
     "id": "w51",
@@ -339,23 +339,23 @@
     "id": "w56",
     "text": "desde",
     "start": 19.92,
-    "end": 20.24
+    "end": 20.16
   },
   {
     "id": "w57",
     "text": "tu",
-    "start": 20.24,
+    "start": 20.16,
     "end": 20.4
   },
   {
     "id": "w58",
-    "text": "página,",
+    "text": "página.",
     "start": 20.4,
     "end": 20.88
   },
   {
     "id": "w59",
-    "text": "cada",
+    "text": "Cada",
     "start": 21.12,
     "end": 21.44
   },
@@ -441,13 +441,13 @@
     "id": "w73",
     "text": "mismo",
     "start": 25.28,
-    "end": 25.68
+    "end": 25.6
   },
   {
     "id": "w74",
     "text": "tiempo.",
-    "start": 25.68,
-    "end": 26.08
+    "start": 25.6,
+    "end": 26.4
   },
   {
     "id": "w75",
@@ -531,84 +531,78 @@
     "id": "w88",
     "text": "Apúntate",
     "start": 30.24,
-    "end": 30.88
+    "end": 30.96
   },
   {
     "id": "w89",
     "text": "a",
-    "start": 30.88,
-    "end": 30.96
-  },
-  {
-    "id": "w90",
-    "text": "la",
     "start": 30.96,
     "end": 31.04
   },
   {
+    "id": "w90",
+    "text": "la",
+    "start": 31.04,
+    "end": 31.12
+  },
+  {
     "id": "w91",
     "text": "lista",
-    "start": 31.04,
-    "end": 31.28
+    "start": 31.12,
+    "end": 31.36
   },
   {
     "id": "w92",
     "text": "en",
-    "start": 31.28,
+    "start": 31.36,
     "end": 31.44
   },
   {
     "id": "w93",
-    "text": "fixtergeek.com",
+    "text": "FixterGig.com.",
     "start": 31.44,
     "end": 33.04
   },
   {
     "id": "w94",
-    "text": "y",
-    "start": 33.04,
-    "end": 33.2
+    "text": "Abre",
+    "start": 33.2,
+    "end": 33.52
   },
   {
     "id": "w95",
-    "text": "abre",
-    "start": 33.2,
-    "end": 33.6
+    "text": "tu",
+    "start": 33.68,
+    "end": 33.84
   },
   {
     "id": "w96",
-    "text": "tu",
-    "start": 33.6,
-    "end": 33.76
+    "text": "comunidad",
+    "start": 33.84,
+    "end": 34.48
   },
   {
     "id": "w97",
-    "text": "comunidad",
-    "start": 33.76,
-    "end": 34.24
+    "text": "en",
+    "start": 34.48,
+    "end": 34.64
   },
   {
     "id": "w98",
-    "text": "en",
-    "start": 34.24,
-    "end": 34.4
+    "text": "la",
+    "start": 34.64,
+    "end": 34.8
   },
   {
     "id": "w99",
-    "text": "la",
-    "start": 34.4,
-    "end": 34.56
+    "text": "próxima",
+    "start": 34.8,
+    "end": 35.36
   },
   {
     "id": "w100",
-    "text": "próxima",
-    "start": 34.56,
-    "end": 35.04
-  },
-  {
-    "id": "w101",
     "text": "tanda.",
-    "start": 35.04,
-    "end": 36.24
+    "start": 35.36,
+    "end": 36.56
   }
 ]

@@ -11,7 +11,7 @@ SFXDIR = os.path.abspath(os.path.join(HERE, "../../../docs/shorts-taller/sfx"))
 words = json.load(open(os.path.join(HERE, "voice/words.json")))
 words = words["words"] if isinstance(words, dict) else words
 FIX = {"Das": "¿Das", "Drive.": "Drive?", "FixGig": "FixterGeek", "FixsterGig": "FixterGeek",
-       "club": "Club", "agentes": "Agentes", "pago.": "pago:", "Tus": "tus", "página,": "página;"}
+       "club": "Club", "agentes": "Agentes", "pago.": "pago:", "Tus": "tus", "página,": "página;", "FixterGig.com.": "fixtergeek.com."}
 for i, w in enumerate(words):
     t = w["text"]
     if i == 0 and t == "Das":
@@ -51,35 +51,44 @@ print(f"{len(lines)} líneas de subtítulos")
 # ── Efectos: (segundo, archivo). Nunca el mismo dos veces seguidas. ────────────────
 SFX = [
     (1.28, "paper"),        # el recibo de transferencia se sacude
-    (3.40, "card"),         # el post-it con el link se levanta
-    (4.42, "pop"),          # el teléfono vibra y entra la burbuja de WhatsApp
-    (6.30, "land"),         # el video cae en la carpeta de Drive
-    (6.62, "whoosh-fly"),   # la laptop sube y las cosas vuelan adentro
-    (7.20, "hit-low"),      # zoom-punch: todo quedó en la laptop
-    (8.96, "ding"),         # «comunidad de pago» se marca
-    (10.84, "coin"),        # +1 miembro
-    (11.40, "pin"),         # +1 miembro
-    (12.10, "coin"),        # +1 miembro (tarjeta)
-    (13.30, "whoosh-short"),  # rebanadas sesgadas entran
-    (13.62, "block"),       # glifo del muro sella el corte
-    (14.30, "land"),        # post 1 cae
-    (14.92, "card"),        # post 2
-    (16.36, "pop"),         # post 3 (la pregunta)
-    (17.56, "tick"),        # respuesta
-    (18.02, "whoosh-fly"),  # máscara «VIVO» crece
-    (18.42, "hit-sub"),     # impacto
-    (19.56, "8bit-blip"),   # el micrófono enciende su placa VIVO
-    (22.04, "pin"),         # REC
-    (22.84, "paper"),       # la grabación entra a la carpeta de miembros
-    (23.96, "whoosh-short"),  # flecha a YouTube
-    (24.52, "bean"),        # flecha a Facebook
-    (26.08, "whoosh-fly"),  # rebanadas verticales
-    (26.42, "hit-low"),     # glifo
-    (28.30, "stamp"),       # sello Club de Agentes de IA
-    (30.00, "whoosh-short"),  # zoom-punch al escritorio limpio
-    (30.42, "hit-sub"),     # aterriza
-    (31.50, "ding"),        # la URL
-    (33.80, "8bit-coin"),   # la palomita de «comunidad»
+    (3.40, "card"),         # el post-it se despega
+    (3.75, "tick"),         # y se vuelve a pegar
+    (4.42, "pop"),          # el teléfono vibra y entra el mensaje con el link
+    (5.44, "8bit-blip"),    # «¿Y la grabación?»
+    (6.25, "land"),         # el video cae en la carpeta de Drive
+    (6.45, "whoosh-fly"),   # todo vuela en arco a la laptop
+    (7.15, "hit-low"),      # zoom-punch: todo quedó dentro
+    (8.96, "ding"),         # «comunidad» se subraya
+    (9.42, "whoosh-short"), # entra la tarjeta de membresía
+    (10.50, "pop"),         # avatares de miembros (1)
+    (10.94, "pin"),         # avatares (3)
+    (11.30, "card"),        # la tarjeta de crédito entra
+    (12.74, "coin"),        # la tarjeta paga
+    (12.90, "stamp"),       # «Pagado ✓»
+    (13.22, "whoosh-short"),  # rebanadas sesgadas entran
+    (13.55, "block"),       # la chincheta gigante sella el corte
+    (14.24, "land"),        # post 1 cae
+    (14.88, "card"),        # post 2
+    (15.62, "tick"),        # likes
+    (16.32, "pop"),         # post 3 (la pregunta)
+    (17.44, "8bit-pickup"), # respuesta
+    (18.02, "whoosh-fly"),  # disco REC crece
+    (18.40, "hit-sub"),     # impacto
+    (19.50, "8bit-blip"),   # placa VIVO
+    (21.98, "pin"),         # REC
+    (22.88, "paper"),       # la grabación entra a la carpeta de miembros
+    (23.80, "whoosh-short"),  # ventana de YouTube
+    (24.30, "bean"),        # ventana de Facebook
+    (24.80, "pop"),         # 👍 Live
+    (26.05, "whoosh-fly"),  # columnas verticales
+    (26.35, "hit-low"),     # glifo
+    (28.24, "stamp"),       # sello Club de Agentes de IA + polvo
+    (28.27, "hit-sub"),     # zoom-punch del sello
+    (29.98, "whoosh-short"),  # empujón dentro de la pantalla
+    (30.40, "land"),        # aterriza el escritorio limpio
+    (31.45, "ding"),        # la URL
+    (33.88, "8bit-coin"),   # la palomita
+    (34.55, "pop"),         # miembros en la laptop
 ]
 for a, b in zip(SFX, SFX[1:]):
     assert a[1] != b[1], f"repetido seguido: {a} {b}"
