@@ -53,7 +53,7 @@ import { applyInvite, isCallGuestToday } from "~/.server/services/club-invites.s
 import { badgesForMembers } from "~/.server/services/badges.server";
 import { ClubVideo } from "~/components/community/ClubVideo";
 import { clubIncluded as included } from "~/components/community/clubIncluded";
-import { MicIllustration } from "~/components/community/MicIllustration";
+import { CommunityIllustration } from "~/components/community/CommunityIllustration";
 import { getCallLink, isHostEmail } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
@@ -605,7 +605,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
             </div>
           </div>
           <div className="club-rise shrink-0 self-center">
-            <MicIllustration className="h-auto w-[200px] sm:w-[260px]" />
+            <CommunityIllustration className="h-auto w-[260px] sm:w-[340px]" />
           </div>
         </section>
 
