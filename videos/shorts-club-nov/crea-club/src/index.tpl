@@ -30,21 +30,27 @@
 
       /* ── escena 1: escritorio revuelto (grande) ── */
       #chip1 { left:60px; top:270px; font-size:54px; padding:14px 28px; }
-      #phone { left:70px; top:400px; width:380px; height:720px; border-radius:56px; padding:22px 18px; }
-      #phone .scr { width:100%; height:100%; background:#e6ece9; border-radius:30px; overflow:hidden; position:relative; }
-      #phone .hdr { background:var(--green); height:96px; font-weight:900; font-size:38px; padding:24px 22px; color:var(--bg); }
-      .bub { position:absolute; left:18px; width:290px; padding:14px 18px; border-radius:22px; font-size:30px; font-weight:800; border:5px solid var(--bg); background:var(--ink); line-height:1.15; }
-      #bubA { top:130px; }
-      #bubB { top:300px; left:30px; background:var(--green); font-size:28px; }
-      #bubC { top:430px; background:var(--ink); }
-      #receipt { left:610px; top:350px; width:410px; height:520px; padding:36px 34px; clip-path:polygon(0 0,100% 0,100% 94%,90% 100%,80% 94%,70% 100%,60% 94%,50% 100%,40% 94%,30% 100%,20% 94%,10% 100%,0 94%); }
-      #receipt h4 { font-size:40px; font-weight:900; letter-spacing:.05em; }
-      #receipt p { font-size:32px; margin-top:20px; font-weight:700; }
+      /* sprites de la hoja IA (assets/sprites/): sombra dura menta, sin desenfoque */
+      .spr { position:absolute; left:0; top:0; width:100%; height:auto; filter:drop-shadow(7px 7px 0 #85ddcb); }
+      #phone { left:70px; top:410px; width:380px; height:643px; color:var(--bg); }
+      #phone .scr { position:absolute; left:7.5%; top:15.5%; width:78.5%; height:76%; overflow:hidden; }
+      #phone .hdr { font-weight:900; font-size:36px; padding:10px 14px; color:var(--bg); border-bottom:5px solid var(--bg); }
+      .bub { position:absolute; left:12px; width:262px; padding:14px 18px; border-radius:22px; font-size:30px; font-weight:800; border:5px solid var(--bg); background:var(--ink); line-height:1.15; }
+      #bubA { top:80px; }
+      #bubB { top:250px; left:20px; background:var(--green); font-size:28px; }
+      #bubC { top:350px; background:var(--ink); }
+      #receipt { left:610px; top:340px; width:410px; height:535px; padding:56px 74px 0 66px; color:var(--bg); }
+      #receipt > *:not(img) { position:relative; }
+      #receipt h4 { font-size:34px; font-weight:900; letter-spacing:.05em; }
+      #receipt p { font-size:30px; margin-top:18px; font-weight:700; }
       #receipt .ok { margin-top:34px; display:inline-block; background:var(--green); padding:10px 18px; border:5px solid var(--bg); font-weight:900; font-size:34px; }
-      #postit { left:330px; top:880px; width:320px; height:300px; background:var(--green); color:var(--bg); padding:30px 26px; border:7px solid var(--bg); box-shadow:8px 8px 0 var(--ink); }
-      #postit b { font-size:44px; display:block; font-weight:900; line-height:1.05; }
-      #postit span { font-size:30px; display:block; margin-top:16px; font-weight:700; }
-      #folder { left:650px; top:950px; width:270px; height:230px; }
+      #postit { left:320px; top:870px; width:350px; height:345px; color:var(--bg); padding:36px 50px 0 32px; }
+      #postit > *:not(img) { position:relative; }
+      #postit b { font-size:42px; display:block; font-weight:900; line-height:1.05; }
+      #postit span { font-size:28px; display:block; margin-top:16px; font-weight:700; }
+      #folder { left:680px; top:968px; width:245px; height:213px; }
+      #folder b, #folder span { position:absolute; left:0; width:90%; text-align:center; color:var(--bg); font-weight:900; }
+      #folder b { top:74px; font-size:40px; } #folder span { top:124px; font-size:29px; font-weight:800; }
       #vidfile { left:730px; top:820px; width:120px; height:140px; }
 
       /* ── laptop grande (escenas 2 y 5) ── */
@@ -58,9 +64,7 @@
       .mcard b { font-size:42px; font-weight:900; display:block; line-height:1.1; }
       .mcard em { font-style:normal; font-size:32px; font-weight:700; display:block; margin-top:14px; color:var(--grey); }
       .mcard .pay { position:absolute; left:26px; bottom:26px; background:var(--bg); color:var(--ink); font-weight:900; font-size:32px; padding:16px 20px; border:5px solid var(--bg); }
-      #ccard { left:460px; top:150px; width:300px; height:190px; background:var(--mint); border:7px solid var(--bg); border-radius:22px; box-shadow:7px 7px 0 var(--bg); }
-      #ccard i { position:absolute; left:28px; top:40px; width:66px; height:50px; background:var(--green); border:5px solid var(--bg); border-radius:8px; }
-      #ccard u { position:absolute; left:28px; bottom:30px; width:200px; height:14px; background:var(--bg); }
+      #ccard { left:450px; top:150px; width:320px; height:218px; }
       #paid { left:470px; top:380px; padding:14px 24px; background:var(--green); color:var(--bg); font-size:46px; font-weight:900; border:7px solid var(--bg); box-shadow:7px 7px 0 var(--bg); }
       #members { left:70px; top:270px; width:860px; height:250px; }
       #members b { position:absolute; left:0; top:0; font-size:46px; font-weight:900; }
@@ -74,7 +78,7 @@
       .post .pa { position:absolute; left:30px; top:40px; width:112px; height:112px; border-radius:50%; border:7px solid var(--bg); display:grid; place-items:center; font-weight:900; font-size:52px; }
       .post b { font-size:34px; font-weight:900; display:block; }
       .post span { font-size:40px; font-weight:800; display:block; margin-top:8px; line-height:1.1; }
-      .post .pin { position:absolute; left:376px; top:-22px; width:40px; height:40px; border-radius:50%; background:var(--green); border:6px solid var(--bg); }
+      .post .pin { position:absolute; left:370px; top:-52px; width:52px; height:auto; transform:rotate(18deg); }
       .likes { position:absolute; right:22px; bottom:14px; font-size:30px; font-weight:900; color:var(--bg); }
       #reply { left:250px; top:1065px; width:600px; padding:18px 26px; font-size:38px; font-weight:900; background:var(--mint); color:var(--bg); border:7px solid var(--bg); box-shadow:7px 7px 0 var(--ink); }
 
@@ -85,9 +89,9 @@
       #vivo { left:40px; top:120px; padding:10px 20px; background:var(--bg); color:var(--ink); font-weight:900; font-size:44px; border:6px solid var(--bg); }
       #vivo i { display:inline-block; width:28px; height:28px; border-radius:50%; background:#e5484d; margin-right:12px; vertical-align:-2px; }
       #rec { left:700px; top:120px; padding:10px 20px; background:#e5484d; color:var(--ink); font-weight:900; font-size:44px; border:6px solid var(--bg); }
-      #host { left:330px; top:150px; width:420px; height:380px; }
-      #mfold { left:70px; top:900px; width:330px; height:250px; }
-      #mfoldL { left:92px; top:1060px; width:290px; font-size:32px; font-weight:900; color:var(--bg); line-height:1.05; }
+      #host { left:270px; top:150px; width:520px; height:380px; }
+      #mfold { left:70px; top:880px; width:330px; height:287px; }
+      #mfoldL { left:92px; top:1010px; width:290px; font-size:32px; font-weight:900; color:var(--bg); line-height:1.05; }
       #recvid { left:0; top:0; width:110px; height:130px; }
       .plat { position:absolute; top:900px; height:230px; border:9px solid var(--ink); border-radius:22px; box-shadow:8px 8px 0 var(--bg); overflow:hidden; }
       .plat .pbar { height:58px; font-size:34px; font-weight:900; padding:8px 18px; color:var(--ink); background:rgba(14,19,23,.35); }
@@ -99,22 +103,30 @@
 
       /* ── escena 5 ── */
       .feat { position:absolute; left:30px; width:740px; font-size:40px; font-weight:900; padding:16px 22px; border:6px solid var(--bg); background:var(--ink); box-shadow:6px 6px 0 var(--mint); }
-      #seal { left:230px; top:520px; width:520px; height:520px; }
+      #seal { left:230px; top:500px; width:520px; height:536px; }
+      #seal svg { position:absolute; left:-10px; top:12px; }
       .dust { position:absolute; width:46px; height:46px; border-radius:50%; background:var(--ink); border:6px solid var(--bg); }
 
       /* ── escena 6 ── */
-      #logo { left:290px; top:270px; width:500px; height:auto; filter:drop-shadow(0 0 3px #0e1317) drop-shadow(0 0 3px #0e1317); }
-      #ctaT { left:0; top:390px; width:1080px; text-align:center; font-size:96px; font-weight:900; line-height:1.05; }
-      #url { left:190px; top:530px; width:700px; text-align:center; font-size:72px; font-weight:900; padding:14px 0; }
-      #wait { left:0; top:680px; width:1080px; text-align:center; font-size:40px; font-weight:700; }
-      .lap.small { left:250px; top:770px; width:580px; height:450px; }
-      .lap.small .scr { width:580px; height:400px; }
-      .lap.small .base { top:400px; width:640px; left:-30px; height:46px; }
-      .lap.small .bar { font-size:40px; height:84px; padding:16px 24px; }
-      #check { left:40px; top:110px; width:150px; height:150px; }
-      .sav { position:absolute; top:140px; width:84px; height:84px; border-radius:50%; border:6px solid var(--bg); display:grid; place-items:center; font-weight:900; font-size:38px; }
-      #mug { left:800px; top:1090px; width:120px; height:130px; }
-      #plant { left:80px; top:1040px; width:150px; height:180px; }
+      #logo { left:315px; top:262px; width:450px; height:auto; filter:drop-shadow(0 0 3px #0e1317) drop-shadow(0 0 3px #0e1317); }
+      #ctaT { left:0; top:358px; width:1080px; text-align:center; font-size:92px; font-weight:900; line-height:1.05; }
+      #url { left:210px; top:486px; width:660px; text-align:center; font-size:68px; font-weight:900; padding:10px 0; }
+      #wait { left:0; top:618px; width:1080px; text-align:center; font-size:40px; font-weight:800; }
+      /* miniatura de la página de una comunidad: se lee sola */
+      .lap.cta { left:170px; top:700px; width:700px; height:520px; }
+      .lap.cta .scr { width:700px; height:462px; padding:14px; }
+      .lap.cta .base { top:462px; width:760px; left:-30px; height:48px; }
+      .lap.cta .bar { height:76px; font-size:36px; padding:16px 22px; display:flex; justify-content:space-between; }
+      .lap.cta .bar em { font-style:normal; color:var(--mint); }
+      #liveBtn { left:20px; top:92px; padding:10px 20px; background:#e5484d; color:var(--ink); font-size:30px; font-weight:900; border:5px solid var(--bg); box-shadow:5px 5px 0 var(--bg); }
+      #wallPost { left:20px; top:170px; width:628px; height:96px; background:var(--ink); border:5px solid var(--bg); box-shadow:5px 5px 0 var(--green); padding:12px 14px 12px 96px; font-size:28px; font-weight:800; line-height:1.15; }
+      #wallPost i { position:absolute; left:14px; top:12px; width:66px; height:66px; border-radius:50%; background:var(--mint); border:5px solid var(--bg); }
+      #wallPost b { font-weight:900; }
+      #memRow { left:20px; top:290px; width:628px; height:80px; }
+      .mav { position:absolute; top:6px; width:66px; height:66px; border-radius:50%; border:5px solid var(--bg); }
+      #memCount { left:250px; top:16px; font-size:32px; font-weight:900; color:var(--bg); }
+      #mug { left:820px; top:1080px; width:130px; height:auto; }
+      #plant { left:20px; top:1000px; width:170px; height:auto; }
 
       /* ── cortinillas ── */
       .tr { position:absolute; left:0; top:0; width:1080px; height:1920px; overflow:hidden; }
@@ -167,7 +179,7 @@
                   <em>Llamadas, muro y grabaciones</em>
                   <div id="payBtn" class="pay">Pagar con tarjeta</div>
                 </div>
-                <div id="ccard" class="abs"><i></i><u></u></div>
+                <div id="ccard" class="abs"><img class="spr" src="assets/sprites/ccard.png" alt="" style="filter:drop-shadow(6px 6px 0 #0e1317)" /></div>
                 <div id="paid" class="abs">Pagado ✓</div>
               </div></div>
               <div class="base"></div>
@@ -179,13 +191,15 @@
         <div id="s1" class="clip full" data-start="0" data-duration="7.2" data-track-index="2">
           <div id="cam1" class="full">
             <div id="chip1" class="abs chip">Así das clases hoy</div>
-            <div id="receipt" class="abs card">
+            <div id="receipt" class="abs">
+              <img class="spr" src="assets/sprites/receipt.png" alt="" />
               <h4 class="mono">COMPROBANTE</h4>
               <p>Transferencia SPEI</p>
               <p>Concepto: clase del jueves</p>
               <span class="ok">Recibido ✓</span>
             </div>
-            <div id="phone" class="abs card">
+            <div id="phone" class="abs">
+              <img class="spr" src="assets/sprites/phone.png" alt="" />
               <div class="scr">
                 <div class="hdr">WhatsApp</div>
                 <div id="bubA" class="bub">¿Me pasas el link de la clase?</div>
@@ -194,12 +208,8 @@
               </div>
             </div>
             <div id="folder" class="abs">
-              <svg width="270" height="230" viewBox="0 0 310 230">
-                <path d="M8 40 h110 l24 -26 h160 v208 h-294 z" fill="#85ddcb" stroke="#0e1317" stroke-width="8" stroke-linejoin="round" />
-                <rect x="8" y="60" width="294" height="162" fill="#85ddcb" stroke="#0e1317" stroke-width="8" />
-                <text x="155" y="150" text-anchor="middle" font-family="Inter" font-weight="900" font-size="44" fill="#0e1317">Drive</text>
-                <text x="155" y="196" text-anchor="middle" font-family="Inter" font-weight="800" font-size="34" fill="#0e1317">Grabaciones</text>
-              </svg>
+              <img class="spr" src="assets/sprites/folder.png" alt="" />
+              <b>Drive</b><span>Grabaciones</span>
             </div>
             <div id="vidfile" class="abs">
               <svg width="120" height="140" viewBox="0 0 110 130">
@@ -208,6 +218,7 @@
               </svg>
             </div>
             <div id="postit" class="abs">
+              <img class="spr" src="assets/sprites/postit.png" alt="" style="filter:drop-shadow(7px 7px 0 #f2f5f4)" />
               <b>¡link de zoom!</b>
               <span class="mono">zoom.us/j/88412</span>
               <span>pásalo al grupo</span>
@@ -220,9 +231,9 @@
           <div id="cam3" class="full">
             <div id="board" class="abs"></div>
             <div id="boardT" class="abs">Muro <span>Tu comunidad</span></div>
-            <div id="p1" class="post card" style="top:420px" data-layout-allow-overlap><div class="pin"></div><div class="pa" style="background:#85ddcb">A</div><b>Ana</b><span>Armé mi primer agente</span><div class="likes">♥ <span id="lk" style="display:inline;font-size:30px;margin:0">12</span></div></div>
-            <div id="p2" class="post card" style="top:640px" data-layout-allow-overlap><div class="pin"></div><div class="pa" style="background:#8dcf6e">L</div><b>Luis</b><span>Así quedó mi bot de citas</span></div>
-            <div id="p3" class="post card" style="top:860px" data-layout-allow-overlap><div class="pin"></div><div class="pa" style="background:#7c8a8e;color:#f2f5f4">M</div><b>Mar</b><span>¿Cómo lo conecto a WhatsApp?</span></div>
+            <div id="p1" class="post card" style="top:420px" data-layout-allow-overlap><img class="pin" src="assets/sprites/pin.png" alt="" /><div class="pa" style="background:#85ddcb">A</div><b>Ana</b><span>Armé mi primer agente</span><div class="likes">♥ <span id="lk" style="display:inline;font-size:30px;margin:0">12</span></div></div>
+            <div id="p2" class="post card" style="top:640px" data-layout-allow-overlap><img class="pin" src="assets/sprites/pin.png" alt="" /><div class="pa" style="background:#8dcf6e">L</div><b>Luis</b><span>Así quedó mi bot de citas</span></div>
+            <div id="p3" class="post card" style="top:860px" data-layout-allow-overlap><img class="pin" src="assets/sprites/pin.png" alt="" /><div class="pa" style="background:#7c8a8e;color:#f2f5f4">M</div><b>Mar</b><span>¿Cómo lo conecto a WhatsApp?</span></div>
             <div id="reply" class="abs">↳ Lo vemos en la llamada</div>
           </div>
         </div>
@@ -232,17 +243,13 @@
           <div id="cam4" class="full">
             <div id="win" class="abs">
               <div class="wbar"><i></i><i></i><i></i> Tu página · clase en vivo</div>
-              <svg id="host" class="abs" width="420" height="380" viewBox="0 0 420 380">
-                <path id="wave1" d="M330 120 q30 50 0 100" fill="none" stroke="#85ddcb" stroke-width="12" stroke-linecap="round" />
-                <path id="wave2" d="M365 95 q45 75 0 150" fill="none" stroke="#85ddcb" stroke-width="12" stroke-linecap="round" />
+              <svg id="host" class="abs" width="520" height="380" viewBox="0 0 520 380">
+                <path id="wave1" d="M420 120 q30 50 0 100" fill="none" stroke="#85ddcb" stroke-width="12" stroke-linecap="round" />
+                <path id="wave2" d="M455 95 q45 75 0 150" fill="none" stroke="#85ddcb" stroke-width="12" stroke-linecap="round" />
                 <circle cx="130" cy="120" r="70" fill="#85ddcb" stroke="#0e1317" stroke-width="10" />
                 <path d="M20 380 q0 -170 110 -170 q110 0 110 170 z" fill="#8dcf6e" stroke="#0e1317" stroke-width="10" stroke-linejoin="round" />
-                <g id="mic">
-                  <rect x="262" y="250" width="16" height="130" fill="#7c8a8e" stroke="#0e1317" stroke-width="5" />
-                  <rect x="230" y="110" width="80" height="150" rx="40" fill="#f2f5f4" stroke="#0e1317" stroke-width="10" />
-                  <path d="M250 150 h40 M250 180 h40 M250 210 h40" stroke="#0e1317" stroke-width="9" stroke-linecap="round" />
-                </g>
               </svg>
+              <img id="mic" class="abs" src="assets/sprites/mic.png" alt="" style="left:500px;top:215px;width:160px;height:auto" />
               <div id="vivo" class="abs"><i></i>VIVO</div>
               <div id="rec" class="abs">● REC</div>
             </div>
@@ -251,12 +258,7 @@
               <path id="ar2" d="M540 812 Q 555 860 555 900" fill="none" stroke="#f2f5f4" stroke-width="14" stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="100" />
               <path id="ar3" d="M760 812 Q 800 850 810 900" fill="none" stroke="#f2f5f4" stroke-width="14" stroke-linecap="round" stroke-dasharray="110" stroke-dashoffset="110" />
             </svg>
-            <div id="mfold" class="abs">
-              <svg width="330" height="250" viewBox="0 0 330 250">
-                <path d="M8 40 h110 l24 -26 h180 v228 h-314 z" fill="#8dcf6e" stroke="#0e1317" stroke-width="9" stroke-linejoin="round" />
-                <rect x="8" y="62" width="314" height="180" fill="#8dcf6e" stroke="#0e1317" stroke-width="9" />
-              </svg>
-            </div>
+            <div id="mfold" class="abs"><img class="spr" src="assets/sprites/folder.png" alt="" style="filter:drop-shadow(7px 7px 0 #8dcf6e)" /></div>
             <div id="mfoldL" class="abs">Para tus miembros</div>
             <div id="yt" class="plat"><div class="pbar">YouTube</div>
               <svg id="ytPlay" class="abs" width="76" height="76" viewBox="0 0 76 76"><path d="M14 6 l56 32 l-56 32 z" fill="#f2f5f4" stroke="#0e1317" stroke-width="6" stroke-linejoin="round" /></svg>
@@ -291,11 +293,11 @@
               <div class="dust" style="left:470px;top:760px"></div><div class="dust" style="left:470px;top:760px;background:#85ddcb"></div>
             </div>
             <div id="seal" class="abs" data-layout-allow-overlap>
+              <img class="spr" src="assets/sprites/stamp.png" alt="" style="filter:none" />
               <svg width="520" height="520" viewBox="0 0 400 400">
-                <defs><path id="ring" d="M200 200 m-150 0 a150 150 0 1 1 300 0 a150 150 0 1 1 -300 0" /></defs>
-                <circle cx="200" cy="200" r="190" fill="#8dcf6e" stroke="#0e1317" stroke-width="12" />
-                <circle cx="200" cy="200" r="118" fill="none" stroke="#0e1317" stroke-width="8" />
-                <text font-family="Inter" font-weight="900" font-size="30" fill="#0e1317" letter-spacing="3"><textPath href="#ring">CLUB DE AGENTES DE IA · CLUB DE AGENTES DE IA ·</textPath></text>
+                <defs><path id="ring" d="M200 200 m-146 0 a146 146 0 1 1 292 0 a146 146 0 1 1 -292 0" /></defs>
+
+                <text font-family="Inter" font-weight="900" font-size="27" fill="#0e1317" letter-spacing="3"><textPath href="#ring">CLUB DE AGENTES DE IA · CLUB DE AGENTES DE IA ·</textPath></text>
                 <text x="200" y="190" text-anchor="middle" font-family="Inter" font-weight="900" font-size="46" fill="#0e1317">YA</text>
                 <text x="200" y="240" text-anchor="middle" font-family="Inter" font-weight="900" font-size="46" fill="#0e1317">FUNCIONA</text>
               </svg>
@@ -309,32 +311,23 @@
           <div id="ctaT" class="abs">Abre tu comunidad</div>
           <div id="url" class="abs chip">fixtergeek.com</div>
           <div id="wait" class="abs">Apúntate a la lista de espera</div>
-          <div id="plant" class="abs">
-            <svg width="150" height="180" viewBox="0 0 120 150">
-              <path d="M60 80 q-40 -20 -46 -66 q40 6 46 66 z" fill="#8dcf6e" stroke="#0e1317" stroke-width="6" />
-              <path d="M60 80 q36 -26 50 -64 q-44 10 -50 64 z" fill="#85ddcb" stroke="#0e1317" stroke-width="6" />
-              <path d="M24 84 h72 l-10 62 h-52 z" fill="#7c8a8e" stroke="#f2f5f4" stroke-width="6" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <div id="lap6" class="lap small">
+          <img id="plant" class="abs" src="assets/sprites/plant.png" alt="" />
+          <div id="lap6" class="lap cta">
             <div class="scr"><div class="in">
-              <div class="bar">Tu comunidad</div>
-              <svg id="check" class="abs" width="150" height="150" viewBox="0 0 140 140">
-                <circle cx="70" cy="70" r="62" fill="#8dcf6e" stroke="#0e1317" stroke-width="8" />
-                <path id="checkP" d="M38 72 l22 22 l44 -46" fill="none" stroke="#0e1317" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="110" stroke-dashoffset="110" />
-              </svg>
-              <div id="sa1" class="sav" style="left:220px;background:#85ddcb">A</div>
-              <div id="sa2" class="sav" style="left:310px;background:#8dcf6e">L</div>
-              <div id="sa3" class="sav" style="left:400px;background:#7c8a8e;color:#f2f5f4">M</div>
+              <div class="bar">Tu comunidad <em>$149 / mes</em></div>
+              <div id="liveBtn" class="abs">● Entrar a la llamada en vivo</div>
+              <div id="wallPost" class="abs"><i></i><b>Ana:</b> Ya armé mi primer agente 🎉</div>
+              <div id="memRow" class="abs">
+                <div class="mav" style="left:0;background:#85ddcb"></div>
+                <div class="mav" style="left:50px;background:#8dcf6e"></div>
+                <div class="mav" style="left:100px;background:#7c8a8e"></div>
+                <div class="mav" style="left:150px;background:#f2f5f4"></div>
+                <div id="memCount" class="abs">+32 miembros</div>
+              </div>
             </div></div>
             <div class="base"></div>
           </div>
-          <div id="mug" class="abs">
-            <svg width="120" height="130" viewBox="0 0 100 110">
-              <path d="M70 40 q26 0 26 22 q0 22 -26 22" fill="none" stroke="#f2f5f4" stroke-width="10" />
-              <rect x="8" y="24" width="66" height="80" rx="10" fill="#85ddcb" stroke="#f2f5f4" stroke-width="8" />
-            </svg>
-          </div>
+          <img id="mug" class="abs" src="assets/sprites/mug.png" alt="" />
         </div>
       </div>
 
@@ -413,7 +406,7 @@
       tl.to("#vidfile", { y: 130, rotation: 0, duration: 0.4, ease: "power2.in" }, 5.85);
       tl.to("#folder", { scaleY: 0.86, scaleX: 1.06, duration: 0.08, yoyo: true, repeat: 1, transformOrigin: "50% 100%" }, 6.25);
       // todo vuela EN ARCO a la pantalla de la laptop y se encoge al entrar
-      [["#chip1", 330, 310], ["#receipt", 815, 610], ["#phone", 260, 760], ["#postit", 490, 1030], ["#folder", 785, 1065], ["#vidfile", 790, 1020]].forEach(([s, ox, oy], i) => {
+      [["#chip1", 330, 310], ["#receipt", 815, 610], ["#phone", 260, 760], ["#postit", 490, 1030], ["#folder", 800, 1075], ["#vidfile", 790, 1020]].forEach(([s, ox, oy], i) => {
         const dx = 490 - ox, dy = 860 - oy;
         tl.to(s, {
           motionPath: { path: [{ x: dx * 0.45, y: Math.min(0, dy) - 280 }, { x: dx, y: dy }], curviness: 1.3 },
@@ -474,7 +467,7 @@
       tl.to("#recdisc", { scale: 0, x: 320, y: -560, duration: 0.3, ease: "power3.out" }, 18.5);
 
       // ── ESCENA 4 ──
-      tl.fromTo("#mic", { rotation: 0 }, { rotation: -6, duration: 0.5, yoyo: true, repeat: 11, ease: "sine.inOut", svgOrigin: "270 380", immediateRender: false }, 18.6);
+      tl.fromTo("#mic", { rotation: 0 }, { rotation: -6, duration: 0.5, yoyo: true, repeat: 11, ease: "sine.inOut", transformOrigin: "50% 100%", immediateRender: false }, 18.6);
       ["#wave1", "#wave2"].forEach((s, i) => {
         tl.fromTo(s, { opacity: 0.2 }, { opacity: 1, duration: 0.3, yoyo: true, repeat: 17, ease: "none", immediateRender: false }, 19.4 + i * 0.15);
       });
@@ -538,10 +531,14 @@
       tl.fromTo("#url", { rotation: 0 }, { rotation: -2, duration: 0.5, yoyo: true, repeat: 5, ease: "sine.inOut", immediateRender: false }, 32.3);
       tl.set("#wait", { opacity: 0, y: 20 }, 0);
       tl.to("#wait", { opacity: 1, y: 0, duration: 0.4 }, 31.0);
-      tl.to("#checkP", { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, 32.6);
-      ["#sa1", "#sa2", "#sa3"].forEach((s, i) => {
-        tl.set(s, { scale: 0 }, 0);
-        tl.to(s, { scale: 1, duration: 0.35, ease: "back.out(2.4)" }, 33.2 + i * 0.25);
+      // la miniatura de la comunidad se arma en stagger y el botón EN VIVO late
+      [["#lap6 .bar", 30.75], ["#liveBtn", 31.0], ["#wallPost", 31.25], ["#memRow", 31.5]].forEach(([sel, t]) => {
+        tl.set(sel, { x: -60, opacity: 0 }, 0);
+        tl.to(sel, { x: 0, opacity: 1, duration: 0.35, ease: "back.out(1.8)" }, t);
+      });
+      tl.fromTo("#liveBtn", { scale: 1 }, { scale: 1.08, duration: 0.3, yoyo: true, repeat: 7, ease: "sine.inOut", transformOrigin: "50% 50%", immediateRender: false }, 31.5);
+      document.querySelectorAll("#memRow .mav").forEach((el, i) => {
+        tl.fromTo(el, { y: 0 }, { y: -10, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.out", immediateRender: false }, 32.6 + i * 0.12);
       });
       tl.fromTo("#plant", { rotation: 0 }, { rotation: 5, duration: 0.8, yoyo: true, repeat: 5, ease: "sine.inOut", transformOrigin: "50% 100%", immediateRender: false }, 30.6);
       tl.fromTo("#mug", { y: 0 }, { y: -8, duration: 0.6, yoyo: true, repeat: 5, ease: "sine.inOut", immediateRender: false }, 31.2);

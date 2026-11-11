@@ -84,11 +84,12 @@ SFX = [
     (26.35, "hit-low"),     # glifo
     (28.24, "stamp"),       # sello Club de Agentes de IA + polvo
     (28.27, "hit-sub"),     # zoom-punch del sello
-    (29.98, "whoosh-short"),  # empujón dentro de la pantalla
-    (30.40, "land"),        # aterriza el escritorio limpio
+    (29.90, "whoosh-short"),  # empujón dentro de la pantalla
+    (31.02, "tick"),        # botón «Entrar a la llamada en vivo»
+    (31.27, "card"),        # post del muro en la miniatura
+    (31.52, "pop"),         # fila de miembros
     (31.90, "ding"),        # la URL
-    (32.62, "8bit-coin"),   # la palomita
-    (33.22, "pop"),         # miembros en la laptop
+    (32.62, "8bit-coin"),   # los avatares brincan
 ]
 for a, b in zip(SFX, SFX[1:]):
     assert a[1] != b[1], f"repetido seguido: {a} {b}"
