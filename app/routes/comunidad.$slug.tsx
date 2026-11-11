@@ -633,17 +633,25 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   {longDate(membership.currentPeriodEnd)}.
                 </p>
               )}
-              {membership?.provider === "grant" && membership.currentPeriodEnd && (
-                <div className="mt-3 rounded-xl border border-brand-500 p-4">
-                  <p className="text-sm">
-                    🎁 Tus meses gratis van hasta el{" "}
-                    <strong>{longDate(membership.currentPeriodEnd)}</strong>.
-                    Asegura tu lugar desde ahora: no se cobra nada hasta esa fecha.
+              {/* Meses gratis: con meses por delante basta la fecha; los precios salen hasta los
+                  últimos 14 días. Al dueño y a los ADMIN, nada (11-nov-2026). */}
+              {membership?.provider === "grant" && membership.currentPeriodEnd && !canMod && (
+                new Date(membership.currentPeriodEnd).getTime() - Date.now() > 14 * 86400e3 ? (
+                  <p className="mt-1 text-sm text-colorCaption">
+                    🎁 Tus meses gratis van hasta el {longDate(membership.currentPeriodEnd)}.
                   </p>
-                  <div className="mt-3">
-                    <JoinCta community={community} isLoggedIn />
+                ) : (
+                  <div className="mt-3 rounded-xl border border-brand-500 p-4">
+                    <p className="text-sm">
+                      🎁 Tus meses gratis terminan el{" "}
+                      <strong>{longDate(membership.currentPeriodEnd)}</strong>.
+                      Asegura tu lugar: no se cobra nada hasta esa fecha.
+                    </p>
+                    <div className="mt-3">
+                      <JoinCta community={community} isLoggedIn />
+                    </div>
                   </div>
-                </div>
+                )
               )}
               {membership?.provider === "stripe" && (
                 <Form method="post" className="mt-2">
