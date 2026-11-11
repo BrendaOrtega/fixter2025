@@ -8,6 +8,7 @@ import type { Route } from "./+types/comunidad.$slug.admin";
 import { db } from "~/.server/db";
 import { Switch } from "~/components/common/Switch";
 import { ClubVideo } from "~/components/community/ClubVideo";
+import { CalendarPlus, Eye, EyeOff, Pencil, RotateCw, Trash2, UserMinus } from "lucide-react";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { canModerate } from "~/.server/services/wall.server";
 import { occurrencesOf } from "~/.server/services/club-events.server";
@@ -201,6 +202,9 @@ const card = "rounded-2xl border border-colorOutline bg-backface p-5";
 const input = "w-full rounded-xl border border-colorOutline bg-background px-3 py-2 text-white placeholder:text-colorCaption focus:border-brand-500 focus:outline-none";
 const primary = "inline-flex h-11 items-center justify-center rounded-full bg-brand-500 px-6 font-semibold text-brand-900 transition hover:-translate-y-0.5 disabled:opacity-50";
 const ghost = "text-sm text-colorCaption underline hover:text-white";
+// Acciones con ícono: el texto va en `title` (tooltip) y `aria-label`; borrar se pinta rojo al pasar.
+const iconBtn = "grid h-9 w-9 place-items-center rounded-lg border border-colorOutline text-colorCaption transition hover:border-brand-500 hover:text-white";
+const iconDanger = "grid h-9 w-9 place-items-center rounded-lg border border-colorOutline text-colorCaption transition hover:border-danger hover:text-danger";
 
 type Tab = "calendario" | "grabaciones" | "invitados" | "miembros";
 
@@ -276,11 +280,11 @@ function Calendar({ events, slug }: { events: EventView[]; slug: string }) {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <a href={`/comunidad/${slug}/evento/${e.id}.ics`} className={ghost}>.ics</a>
-            <button type="button" onClick={() => setEditing(e.id)} className="text-sm font-semibold text-brand-500 hover:underline">Editar</button>
+            <a href={`/comunidad/${slug}/evento/${e.id}.ics`} className={iconBtn} title="Agregar al calendario (.ics)" aria-label="Agregar al calendario"><CalendarPlus size={16} /></a>
+            <button type="button" onClick={() => setEditing(e.id)} className={iconBtn} title="Editar evento" aria-label="Editar evento"><Pencil size={16} /></button>
             <Form method="post" onSubmit={(ev) => { if (!confirm(`¿Borrar «${e.title}»?`)) ev.preventDefault(); }}>
               <input type="hidden" name="id" value={e.id} />
-              <button name="intent" value="event-delete" className={ghost}>Borrar evento</button>
+              <button name="intent" value="event-delete" className={iconDanger} title="Borrar evento" aria-label="Borrar evento"><Trash2 size={16} /></button>
             </Form>
           </div>
         </div>
@@ -365,23 +369,29 @@ function Recordings({ recordings, slug }: { recordings: RecView[]; slug: string 
             </div>
             <div className="flex items-center gap-3">
               {renaming !== r.id && (
-                <button type="button" onClick={() => setRenaming(r.id)} className="text-sm font-semibold text-brand-500 hover:underline">Renombrar</button>
+                <button type="button" onClick={() => setRenaming(r.id)} className={iconBtn} title="Renombrar" aria-label="Renombrar"><Pencil size={16} /></button>
               )}
               {r.canRetry && (
                 <Form method="post">
                   <input type="hidden" name="id" value={r.id} />
-                  <button name="intent" value="rec-retry" className="text-sm font-semibold text-brand-500 hover:underline">Reintentar</button>
+                  <button name="intent" value="rec-retry" className={iconBtn} title="Reintentar la subida" aria-label="Reintentar la subida"><RotateCw size={16} /></button>
                 </Form>
               )}
               <Form method="post">
                 <input type="hidden" name="id" value={r.id} />
-                <button name="intent" value={r.hidden ? "rec-unhide" : "rec-hide"} className={ghost}>
-                  {r.hidden ? "Mostrar" : "Ocultar"}
+                <button
+                  name="intent"
+                  value={r.hidden ? "rec-unhide" : "rec-hide"}
+                  className={iconBtn}
+                  title={r.hidden ? "Mostrar a los miembros" : "Ocultar a los miembros"}
+                  aria-label={r.hidden ? "Mostrar a los miembros" : "Ocultar a los miembros"}
+                >
+                  {r.hidden ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
               </Form>
               <Form method="post" onSubmit={(ev) => { if (!confirm(`¿Borrar la grabación «${r.title}»? No se puede deshacer.`)) ev.preventDefault(); }}>
                 <input type="hidden" name="id" value={r.id} />
-                <button name="intent" value="rec-delete" className="text-sm text-colorCaption underline hover:text-white">Borrar</button>
+                <button name="intent" value="rec-delete" className={iconDanger} title="Borrar grabación" aria-label="Borrar grabación"><Trash2 size={16} /></button>
               </Form>
             </div>
           </div>
@@ -462,7 +472,7 @@ function Invites({ invites, callDays }: Pick<Route.ComponentProps["loaderData"],
               </div>
               <Form method="post">
                 <input type="hidden" name="id" value={i.id} />
-                <button name="intent" value="invite-delete" className={ghost}>Quitar</button>
+                <button name="intent" value="invite-delete" className={iconDanger} title="Quitar invitación" aria-label="Quitar invitación"><UserMinus size={16} /></button>
               </Form>
             </li>
           ))}
