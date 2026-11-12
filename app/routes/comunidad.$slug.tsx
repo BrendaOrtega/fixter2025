@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import {
+  Await,
   Form,
   data,
   redirect,
   useActionData,
   useFetcher,
+  useNavigation,
   useSearchParams,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
@@ -13,10 +15,10 @@ import type { Route } from "./+types/comunidad.$slug";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import {
-  canClaimBuyerGift,
   claimBuyerGift,
   createBillingPortal,
   createMembershipCheckout,
+  isCourseBuyer,
   isMembershipActive,
 } from "~/.server/services/membership.server";
 import {
@@ -41,6 +43,7 @@ import {
   Composer,
   LockedPosts,
   PostCard,
+  WallSkeleton,
   useWallRefresh,
 } from "~/components/community/ClubWall";
 import {
@@ -54,9 +57,10 @@ import { badgesForMembers } from "~/.server/services/badges.server";
 import { ClubVideo } from "~/components/community/ClubVideo";
 import { clubIncluded as included } from "~/components/community/clubIncluded";
 import { CommunityIllustration } from "~/components/community/CommunityIllustration";
-import { getCallLink, isHostEmail } from "~/.server/services/club-call.server";
+import { getCallLink, isHostEmail, type CallSkin } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
+import { ClubV2 } from "~/components/community/v2/ClubV2";
 
 // Casa de una comunidad de pago (10-nov-2026): hero con la próxima llamada,
 // grabaciones, qué incluye, preguntas, invitación a unirse y, al final, el muro
@@ -79,53 +83,93 @@ async function loadCommunity(slug: string) {
     where: { slug, isActive: true, priceMxn: { not: null } },
     select: {
       id: true, slug: true, name: true, tagline: true, description: true,
-      priceMxn: true, priceAnnualMxn: true, ownerId: true,
+      priceMxn: true, priceAnnualMxn: true, ownerId: true, callSkin: true,
     },
   });
 }
 
+// Lo diferido nunca tumba la página: si tarda más que el corte del stream (5 s en
+// entry.server) o falla, se resuelve con su valor de respaldo.
+const DEFER_TIMEOUT_MS = 4000;
+function settle<T, F>(work: Promise<T>, fallback: F): Promise<T | F> {
+  return Promise.race([
+    work.catch((e) => {
+      console.error("[club] dato diferido falló:", e instanceof Error ? e.message : e);
+      return fallback;
+    }),
+    new Promise<F>((resolve) => setTimeout(() => resolve(fallback), DEFER_TIMEOUT_MS)),
+  ]);
+}
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const community = await loadCommunity(params.slug as string);
+  // La comunidad y la sesión no dependen una de la otra.
+  const [community, user] = await Promise.all([
+    loadCommunity(params.slug as string),
+    getUserOrNull(request),
+  ]);
   if (!community) throw data("Comunidad no encontrada", { status: 404 });
 
-  const user = await getUserOrNull(request);
-  // Invitado: el regalo se aplica solo al entrar con su correo (antes de leer la membresía).
-  const invite = user ? await applyInvite(user, community.id) : null;
-  const membership = user
-    ? await db.membership.findUnique({
-        where: { communityId_userId: { communityId: community.id, userId: user.id } },
-        select: { status: true, provider: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
-      })
-    : null;
-  const isMember = isMembershipActive(membership);
+  // Camino crítico (lo que pinta el hero, el estado de quien mira y la próxima llamada), todo en
+  // paralelo. La identidad es la única cadena en serie: invitación → membresía → regalo.
+  const identity = (async () => {
+    // Invitado: el regalo se aplica solo al entrar con su correo (antes de leer la membresía).
+    const invite = user ? await applyInvite(user, community.id) : null;
+    const membership = user
+      ? await db.membership.findUnique({
+          where: { communityId_userId: { communityId: community.id, userId: user.id } },
+          select: { status: true, provider: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
+        })
+      : null;
+    const isMember = isMembershipActive(membership);
+    const isInside = canParticipate(user, membership, community);
+    // Mismo criterio que `canClaimBuyerGift`, sin volver a leer la membresía.
+    const canClaimGift =
+      !!user && !isInside && membership?.provider !== "grant" && !isMember && (await isCourseBuyer(user));
+    return { invite, membership, isMember, isInside, canClaimGift };
+  })();
+  const [{ invite, membership, isMember, isInside, canClaimGift }, memberCount, event, courseCount, recordingCount] =
+    await Promise.all([
+      identity,
+      db.membership.count({
+        where: { communityId: community.id, status: { in: ["active", "past_due"] } },
+      }),
+      getNextEvent(community.id),
+      db.course.count({ where: { isFree: false, published: true } }),
+      // Sólo para que el esqueleto de grabaciones mida lo mismo que la lista que llega después.
+      db.communityRecording.count({
+        where: {
+          communityId: community.id,
+          status: { in: ["ready", "uploading"] },
+          OR: [{ hiddenAt: null }, { hiddenAt: { isSet: false } }],
+        },
+      }),
+    ]);
   const canMod = canModerate(user, community);
-  const isInside = canParticipate(user, membership, community);
 
-  const [memberCount, wall, event, courseCount, recordings, rec] = await Promise.all([
-    db.membership.count({
-      where: { communityId: community.id, status: { in: ["active", "past_due"] } },
+  // Diferido (se regresa la promesa sin `await` y la página la pinta con <Await>): el muro con
+  // sus insignias, las grabaciones (su `reconcile` llama a la caja de Ghosty Studio y a S3) y el
+  // estado del grabador. Antes todo esto bloqueaba el primer byte.
+  const wall = settle(
+    getWall({ communityId: community.id, isInside, canMod, viewerId: user?.id ?? null }).then(async (wall) => {
+      // Insignias de quienes aparecen en el muro (autores de publicaciones y comentarios).
+      const authorIds = wall.posts.flatMap((p) => [p.author.id, ...p.comments.map((c) => c.author.id)]);
+      const badges = await badgesForMembers(community, authorIds);
+      const withBadges = <A extends { id: string }>(a: A) => ({ ...a, badges: badges[a.id] ?? [] });
+      return {
+        ...wall,
+        posts: wall.posts.map((p) => ({
+          ...p,
+          author: withBadges(p.author),
+          comments: p.comments.map((c) => ({ ...c, author: withBadges(c.author) })),
+        })),
+      };
     }),
-    getWall({ communityId: community.id, isInside, canMod, viewerId: user?.id ?? null }),
-    getNextEvent(community.id),
-    db.course.count({ where: { isFree: false, published: true } }),
-    // La página muestra las grabaciones como las ve un miembro; ocultar/reintentar vive en el panel.
-    listRecordings(community.id, false),
-    // Estado de la grabación sólo para el anfitrión, y sólo con la llamada abierta.
-    canMod ? getNextEvent(community.id).then((e) => (isCallOpen(e) ? recordingState() : null)) : null,
-  ]);
-
-  // Insignias de quienes aparecen en el muro (autores de publicaciones y comentarios).
-  const authorIds = wall.posts.flatMap((p) => [p.author.id, ...p.comments.map((c) => c.author.id)]);
-  const badges = await badgesForMembers(community, authorIds);
-  const withBadges = <A extends { id: string }>(a: A) => ({ ...a, badges: badges[a.id] ?? [] });
-  const wallWithBadges = {
-    ...wall,
-    posts: wall.posts.map((p) => ({
-      ...p,
-      author: withBadges(p.author),
-      comments: p.comments.map((c) => ({ ...c, author: withBadges(c.author) })),
-    })),
-  };
+    null
+  );
+  // La página muestra las grabaciones como las ve un miembro; ocultar/reintentar vive en el panel.
+  const recordings = settle(listRecordings(community.id, false), []);
+  // Estado de la grabación sólo para el anfitrión, y sólo con la llamada abierta.
+  const rec = canMod && isCallOpen(event) ? settle(recordingState(), null) : null;
 
   const { ownerId: _owner, ...publicCommunity } = community;
   return {
@@ -144,9 +188,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         }
       : null,
     membership,
-    canClaimGift: !!user && !isInside && (await canClaimBuyerGift(user, community.id)),
-    wall: wallWithBadges,
+    canClaimGift,
+    wall,
     recordings,
+    recordingCount,
     rec,
     isCallGuest: !isInside && isCallGuestToday(invite),
     event: event
@@ -223,7 +268,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     // (CLUB_CALL_HOST_EMAILS). Antes era cualquier ADMIN de fixtergeek y en el ensayo del
     // 10-nov una participante con rol ADMIN sacó a bliss de la llamada. Los ADMIN entran como
     // ponentes: comparten pantalla pero no moderan.
-    const link = await getCallLink(user, { host: isHostEmail(user.email), speaker: !!speakerInvite || canMod });
+    const link = await getCallLink(user, {
+      host: isHostEmail(user.email),
+      speaker: !!speakerInvite || canMod,
+      // Skin de la comunidad; vacío = el de la casa. Sólo viaja cuando fixter firma el ticket.
+      skin: (community.callSkin as CallSkin | null) ?? null,
+    });
     // La sala va dentro de fixtergeek (iframe), como en Teams: así su botón Grabar/Detener
     // funciona. La grabación ya no arranca sola; la inicia el anfitrión desde la sala.
     if (link) throw redirect(`/comunidad/${slug}/llamada?u=${encodeURIComponent(link)}`);
@@ -367,6 +417,12 @@ function Countdown({ startsAt, endsAt }: { startsAt: string; endsAt: string }) {
   );
 }
 
+/** Datos del <Form> de página que va en camino con este `intent` (null si no hay). */
+function usePendingIntent(intent: string) {
+  const { formData } = useNavigation();
+  return formData?.get("intent") === intent ? formData : null;
+}
+
 function JoinCta({
   community,
   isLoggedIn,
@@ -376,6 +432,8 @@ function JoinCta({
   isLoggedIn: boolean;
   compact?: boolean;
 }) {
+  // El checkout de Stripe tarda en crearse: el botón responde al clic, sin esperar al servidor.
+  const pendingInterval = usePendingIntent("join")?.get("interval") ?? null;
   return (
     <Form method="post" className="grid gap-3">
       <input type="hidden" name="intent" value="join" />
@@ -383,13 +441,21 @@ function JoinCta({
         <button
           name="interval"
           value="month"
-          className={`${pillBtn} bg-brand-500 text-brand-900`}
+          aria-busy={pendingInterval === "month"}
+          className={`${pillBtn} bg-brand-500 text-brand-900 ${pendingInterval ? "pointer-events-none opacity-60" : ""}`}
         >
-          {isLoggedIn ? `$${community.priceMxn}/mes` : "Inicia sesión para unirte"}
+          {pendingInterval === "month"
+            ? "Abriendo…"
+            : isLoggedIn ? `$${community.priceMxn}/mes` : "Inicia sesión para unirte"}
         </button>
         {isLoggedIn && community.priceAnnualMxn && !compact && (
-          <button name="interval" value="year" className={`${pillBtn} text-brand-500`}>
-            ${community.priceAnnualMxn}/año · 2 meses gratis
+          <button
+            name="interval"
+            value="year"
+            aria-busy={pendingInterval === "year"}
+            className={`${pillBtn} text-brand-500 ${pendingInterval ? "pointer-events-none opacity-60" : ""}`}
+          >
+            {pendingInterval === "year" ? "Abriendo…" : `$${community.priceAnnualMxn}/año · 2 meses gratis`}
           </button>
         )}
       </div>
@@ -462,6 +528,34 @@ type RecordingView = {
   poster: string | null;
 };
 
+/** Mismo alto que la lista real (título + renglón de fecha por fila): no hay salto al llegar. */
+function RecordingsSkeleton({ count, isInside }: { count: number; isInside: boolean }) {
+  return (
+    <section className="mt-14" aria-busy>
+      <h2 className="text-2xl font-bold sm:text-3xl">Grabaciones de las llamadas</h2>
+      <p className="mt-1 text-colorCaption">
+        {isInside ? "Si te perdiste una llamada, aquí está completa." : "Los miembros ven todas las llamadas grabadas."}
+      </p>
+      <ul className="mt-6 grid gap-4">
+        {Array.from({ length: count }, (_, i) => (
+          <li key={i} className="rounded-2xl border border-colorOutline bg-backface p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-bold">
+                  <span className="inline-block h-4 w-48 max-w-full animate-pulse rounded bg-white/20 align-middle" />
+                </p>
+                <p className="text-sm">
+                  <span className="inline-block h-3 w-32 animate-pulse rounded bg-white/10 align-middle" />
+                </p>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Recordings({
   slug,
   recordings,
@@ -519,11 +613,21 @@ function Recordings({
   );
 }
 
+function WallUnavailable() {
+  return (
+    <p className="rounded-2xl border border-colorOutline p-6 text-center text-colorCaption">
+      No pudimos cargar el muro. Recarga la página en un momento.
+    </p>
+  );
+}
+
 export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   const {
     community, memberCount, courseCount, isLoggedIn, isInside, canMod, me,
-    membership, canClaimGift, wall, event, recordings, rec, isCallGuest,
+    membership, canClaimGift, wall, event, recordings, recordingCount, rec, isCallGuest,
   } = loaderData;
+  const enteringCall = !!usePendingIntent("call");
+  const claiming = !!usePendingIntent("claim");
   const [params] = useSearchParams();
   const actionData = useActionData<{ error?: string }>();
   const justJoined = params.get("bienvenida") === "1";
@@ -532,8 +636,8 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   // para que lo de abajo (qué incluye, preguntas, cierre) quede a la vista.
   const PREVIEW = 3;
   const [showAll, setShowAll] = useState(false);
-  const shownPosts = isInside || showAll ? wall.posts : wall.posts.slice(0, PREVIEW);
-  const hiddenPublic = wall.posts.length - shownPosts.length;
+  // Vista previa del rediseño: sólo para quien está adentro y con `?v=2`.
+  if (isInside && params.get("v") === "2") return <ClubV2 {...loaderData} />;
 
   const joinBlock = canClaimGift ? (
     <div className="grid gap-4">
@@ -541,9 +645,10 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
         <button
           name="intent"
           value="claim"
-          className={`${pillBtn} bg-brand-500 text-brand-900`}
+          aria-busy={claiming}
+          className={`${pillBtn} bg-brand-500 text-brand-900 ${claiming ? "pointer-events-none opacity-60" : ""}`}
         >
-          🎁 Activar mis 3 meses gratis
+          {claiming ? "Activando…" : "🎁 Activar mis 3 meses gratis"}
         </button>
       </Form>
       <p className="text-sm text-colorCaption">
@@ -716,11 +821,12 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                     name="intent"
                     value="call"
                     disabled={!event.open}
-                    className={`${pillBtn} bg-danger text-white disabled:bg-colorOutline disabled:shadow-none`}
+                    aria-busy={enteringCall}
+                    className={`${pillBtn} bg-danger text-white disabled:bg-colorOutline disabled:shadow-none ${enteringCall ? "pointer-events-none opacity-70" : ""}`}
                   >
-                    {event.open ? "🎙 Entrar a la llamada" : "Se abre 15 min antes"}
+                    {enteringCall ? "Abriendo la sala…" : event.open ? "🎙 Entrar a la llamada" : "Se abre 15 min antes"}
                   </button>
-                  {actionData?.error && (
+                  {actionData?.error && !enteringCall && (
                     <p className="max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>
                   )}
                 </Form>
@@ -729,15 +835,29 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   🔒 Sólo miembros
                 </span>
               )}
-              {isInside && canMod && event.open && <RecControl rec={rec} />}
+              {isInside && canMod && event.open && (
+                <Suspense
+                  fallback={<span aria-busy className="inline-block h-12 w-36 animate-pulse rounded-full border border-colorOutline" />}
+                >
+                  <Await resolve={rec} errorElement={<RecControl rec={null} />}>
+                    {(state) => <RecControl rec={state} />}
+                  </Await>
+                </Suspense>
+              )}
             </div>
           </section>
         )}
 
         {/* ── Grabaciones ── */}
-        {recordings.length > 0 && (
-          <Recordings slug={community.slug} recordings={recordings} isInside={isInside} />
-        )}
+        <Suspense
+          fallback={recordingCount > 0 ? <RecordingsSkeleton count={recordingCount} isInside={isInside} /> : null}
+        >
+          <Await resolve={recordings} errorElement={null}>
+            {(list) =>
+              list.length > 0 ? <Recordings slug={community.slug} recordings={list} isInside={isInside} /> : null
+            }
+          </Await>
+        </Suspense>
 
         {/* ── Qué incluye: es venta, el miembro ya está adentro ── */}
         {!isInside && (
@@ -790,32 +910,46 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
           </p>
           <div className="mt-6 grid gap-5">
             {isInside && me && <Composer me={me} />}
-            {shownPosts.map((p) => (
-              <PostCard
-                key={p.id}
-                post={p}
-                viewerId={me?.id ?? null}
-                canMod={canMod}
-                canComment={isInside}
-              />
-            ))}
-            {hiddenPublic > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                className="mx-auto rounded-xl border border-colorOutline px-6 py-2.5 font-bold text-brand-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-              >
-                Ver {hiddenPublic} {hiddenPublic === 1 ? "publicación más" : "publicaciones más"}
-              </button>
-            )}
-            {wall.posts.length === 0 && isInside && (
-              <p className="rounded-2xl border border-colorOutline p-6 text-center text-colorCaption">
-                Todavía no hay publicaciones. Estrena el muro: cuéntanos qué agente quieres construir.
-              </p>
-            )}
-            {!isInside && (
-              <LockedPosts count={wall.lockedCount} cta={<JoinCta community={community} isLoggedIn={isLoggedIn} compact />} />
-            )}
+            <Suspense fallback={<WallSkeleton />}>
+              <Await resolve={wall} errorElement={<WallUnavailable />}>
+                {(loaded) => {
+                  if (!loaded) return <WallUnavailable />;
+                  const shownPosts = isInside || showAll ? loaded.posts : loaded.posts.slice(0, PREVIEW);
+                  const hiddenPublic = loaded.posts.length - shownPosts.length;
+                  return (
+                    <>
+                      {shownPosts.map((p) => (
+                        <PostCard
+                          key={p.id}
+                          post={p}
+                          viewerId={me?.id ?? null}
+                          viewer={me}
+                          canMod={canMod}
+                          canComment={isInside}
+                        />
+                      ))}
+                      {hiddenPublic > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAll(true)}
+                          className="mx-auto rounded-xl border border-colorOutline px-6 py-2.5 font-bold text-brand-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                        >
+                          Ver {hiddenPublic} {hiddenPublic === 1 ? "publicación más" : "publicaciones más"}
+                        </button>
+                      )}
+                      {loaded.posts.length === 0 && isInside && (
+                        <p className="rounded-2xl border border-colorOutline p-6 text-center text-colorCaption">
+                          Todavía no hay publicaciones. Estrena el muro: cuéntanos qué agente quieres construir.
+                        </p>
+                      )}
+                      {!isInside && (
+                        <LockedPosts count={loaded.lockedCount} cta={<JoinCta community={community} isLoggedIn={isLoggedIn} compact />} />
+                      )}
+                    </>
+                  );
+                }}
+              </Await>
+            </Suspense>
           </div>
         </section>
       </div>

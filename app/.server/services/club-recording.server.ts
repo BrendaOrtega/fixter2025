@@ -5,10 +5,19 @@
 // mismo camino que los webinars de Teams. gs sólo hace de puente
 // (`/api/v2/partner/event-box/recording`, salas `fx-*`): el ADMIN_TOKEN de la caja nunca sale de gs.
 //
+// Caja propia de fixter (12-nov-2026): con `CLUB_CALL_BOX_URL` y `CLUB_CALL_BOX_ADMIN_TOKEN` las
+// tres acciones (state, start, stop) van directo a la caja, sin gs (`club-call-box.server.ts`, que
+// documenta el mapa acción → endpoint). Sin esas dos variables todo sigue por gs con
+// `GHOSTY_PARTNER_KEY` / `GHOSTY_PARTNER_KEY_SECRET`, como antes. La subida no cambia de dueño:
+// la hace la caja con las llaves `HLS_*` de su propio env.
+//   CLUB_CALL_BOX_URL          https://… de la caja de llamadas de fixter
+//   CLUB_CALL_BOX_ADMIN_TOKEN  el ADMIN_TOKEN de ESA caja (nunca sale del servidor)
+//
 // Ciclo de una fila (`CommunityRecording.status`):
 //   recording  → el anfitrión entró (se graba solo) o pulsó «Grabar». Guarda el archivo de la caja.
 //   uploading  → «Detener y guardar»: la caja convierte y sube. Si el anfitrión se fue sin parar, la
-//                caja para sola a los 3 min sin nadie; la siguiente carga del club lo detecta y pide
+//                caja para sola a los 3 min sin nadie, y también al llegar al tope de minutos de su
+//                plan (`lastStop` en su `/rec/state`); la siguiente carga del club lo detecta y pide
 //                el HLS de ese archivo (`reconcile`).
 //   ready      → ya está `storyboard/storyboard.vtt`, que la caja sube DESPUÉS de todo el HLS.
 //   failed     → 12 h sin llegar; el anfitrión tiene «Reintentar».
@@ -16,9 +25,9 @@
 import { db } from "~/.server/db";
 import { fileExist } from "~/.server/tigrs";
 import { buildHlsProxyUrl } from "~/.server/hls";
-import { clubCallRoom, partnerPost } from "~/.server/services/club-call.server";
+import { clubCallRoom } from "~/.server/services/club-call.server";
+import { recordingCall } from "~/.server/services/club-call-box.server";
 
-const PATH = "/api/v2/partner/event-box/recording";
 /** Si en 12 h no apareció el HLS, la conversión falló (4 h de llamada tardan en transcodificar). */
 export const UPLOAD_GIVE_UP_MS = 12 * 60 * 60_000;
 /** El stop en la caja tarda hasta ~90 s en cerrar el MP4; gs espera 120 s. */
@@ -44,7 +53,7 @@ export function nextStatus(r: { status: string; endedAt: Date }, exists: boolean
 }
 
 export async function recordingState(room = clubCallRoom()): Promise<RecState | null> {
-  const r = await partnerPost<RecState>(PATH, { action: "state", room });
+  const r = await recordingCall<RecState>({ action: "state", room });
   return r.ok && r.data ? { recording: !!r.data.recording, busy: !!r.data.busy, startedAt: r.data.startedAt ?? null } : null;
 }
 
@@ -60,8 +69,8 @@ export async function startRecording(
 ) {
   // `live`: además de grabar, sale a YouTube y Facebook (destinos que gs ya cargó en la caja con
   // «Preparar transmisión»). Si la caja no tiene destinos, falla y se graba sin transmitir.
-  let r = await partnerPost<RecState>(PATH, { action: "start", room, title, live: !!opts.live });
-  if (!r.ok && opts.live) r = await partnerPost<RecState>(PATH, { action: "start", room, title });
+  let r = await recordingCall<RecState>({ action: "start", room, title, live: !!opts.live });
+  if (!r.ok && opts.live) r = await recordingCall<RecState>({ action: "start", room, title });
   if (!r.ok || !r.data) return { ok: false as const, error: r.data?.error ?? "No se pudo grabar" };
   const file = r.data.file ?? null;
   const existing = await db.communityRecording.findFirst({
@@ -94,8 +103,7 @@ export async function startRecording(
 /** Pide a la caja el HLS de una fila (parando la grabación si sigue). */
 async function finish(row: { id: string; communityId: string; room: string; boxFile: string | null }) {
   const prefix = hlsPrefixFor(row.communityId, row.id);
-  const r = await partnerPost<{ file: string; bytes: number | null }>(
-    PATH,
+  const r = await recordingCall<{ file: string; bytes: number | null }>(
     { action: "stop", room: row.room, hlsPrefix: prefix, ...(row.boxFile ? { file: row.boxFile } : {}) },
     { timeoutMs: STOP_TIMEOUT_MS }
   );

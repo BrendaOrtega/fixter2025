@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useFetcher, useRevalidator } from "react-router";
+import { useFetcher, useFetchers, useRevalidator } from "react-router";
 import { Streamdown } from "streamdown";
 import { useBotTrap } from "~/hooks/useBotTrap";
 
@@ -110,14 +110,30 @@ export function Composer({ me }: { me: WallAuthor }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const busy = fetcher.state !== "idle";
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  // Optimista: lo enviado se pinta de inmediato como tarjeta «Enviando…» y la caja queda libre.
+  // Si el servidor lo rechaza, el texto y la imagen regresan a la caja junto con el mensaje.
+  const sent = useRef<{ body: string; imageKey: string | null; preview: string | null } | null>(null);
+  const pendingBody = fetcher.formData ? String(fetcher.formData.get("body") ?? "") : null;
+  const pendingPreview = sent.current ? sent.current.preview : preview;
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok) {
-      formRef.current?.reset();
+    if (fetcher.state === "submitting" && fetcher.formData && !sent.current) {
+      sent.current = { body: String(fetcher.formData.get("body") ?? ""), imageKey, preview };
+      if (bodyRef.current) bodyRef.current.value = "";
       setImageKey(null);
       setPreview(null);
+    } else if (fetcher.state === "idle" && sent.current) {
+      if (fetcher.data?.error) {
+        if (bodyRef.current && !bodyRef.current.value) bodyRef.current.value = sent.current.body;
+        setImageKey(sent.current.imageKey);
+        setPreview(sent.current.preview);
+      }
+      sent.current = null;
     }
-  }, [fetcher.state, fetcher.data]);
+    // Sólo reacciona al cambio de estado del envío.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher.state]);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -147,6 +163,7 @@ export function Composer({ me }: { me: WallAuthor }) {
   }
 
   return (
+    <>
     <fetcher.Form method="post" ref={formRef} className={`${card} relative p-5`}>
       {trap}
       <input type="hidden" name="intent" value="post" />
@@ -154,6 +171,7 @@ export function Composer({ me }: { me: WallAuthor }) {
       <div className="flex gap-3">
         <MemberAvatar author={me} />
         <textarea
+          ref={bodyRef}
           name="body"
           required
           maxLength={5000}
@@ -193,20 +211,69 @@ export function Composer({ me }: { me: WallAuthor }) {
           disabled={busy || uploading}
           className="rounded-xl border border-colorOutline bg-brand-500 px-5 py-2 font-bold text-brand-900 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60"
         >
-          {busy ? "Publicando…" : "Publicar"}
+          Publicar
         </button>
       </div>
-      {(fetcher.data?.error || uploadError) && (
-        <p className="mt-2 pl-[52px] text-sm text-brand-500">{fetcher.data?.error || uploadError}</p>
+      {((!busy && fetcher.data?.error) || uploadError) && (
+        <p role="alert" className="mt-2 pl-[52px] text-sm text-brand-500">
+          {(!busy && fetcher.data?.error) || uploadError}
+        </p>
       )}
     </fetcher.Form>
+    {pendingBody !== null && (
+      <article aria-busy className={`${card} p-5 opacity-70`}>
+        <header className="flex items-start gap-3">
+          <MemberAvatar author={me} />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold leading-tight">{me.name}</p>
+            <p className="text-xs text-colorCaption">Enviando…</p>
+          </div>
+        </header>
+        <div className="prose prose-invert mt-4 max-w-none break-words prose-a:text-brand-500 prose-pre:rounded-xl">
+          <Streamdown>{pendingBody}</Streamdown>
+        </div>
+        {pendingPreview && (
+          <img
+            src={pendingPreview}
+            alt=""
+            className="mt-4 max-h-[480px] w-full rounded-xl border border-colorOutline object-contain"
+          />
+        )}
+      </article>
+    )}
+    </>
+  );
+}
+
+/** Lo que se ve mientras llega el muro: tarjetas del mismo esqueleto que una publicación. */
+export function WallSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <>
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} aria-busy className={`${card} p-5`}>
+          <div className="flex items-center gap-3">
+            <span className="h-10 w-10 animate-pulse rounded-full bg-white/20" />
+            <span className="h-4 w-32 animate-pulse rounded bg-white/20" />
+          </div>
+          <div className="mt-4 grid gap-2">
+            <span className="h-3 w-full animate-pulse rounded bg-white/10" />
+            <span className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
+            <span className="h-3 w-2/3 animate-pulse rounded bg-white/10" />
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 
 function ModButton({ postId, change, children }: { postId: string; change: string; children: string }) {
   const fetcher = useFetcher();
   return (
-    <fetcher.Form method="post">
+    <fetcher.Form
+      method="post"
+      // El menú se cierra al dar clic; el cambio ya se ve en la tarjeta (optimista).
+      onSubmit={(e) => e.currentTarget.closest("details")?.removeAttribute("open")}
+    >
       <input type="hidden" name="intent" value="mod" />
       <input type="hidden" name="postId" value={postId} />
       <button
@@ -251,19 +318,47 @@ function PostMenu({ post, canMod, isAuthor }: { post: WallPostView; canMod: bool
   );
 }
 
-function CommentForm({ postId }: { postId: string }) {
+function CommentForm({ postId, viewer }: { postId: string; viewer?: WallAuthor | null }) {
   const fetcher = useFetcher<{ ok?: boolean; error?: string }>();
   const { trap } = useBotTrap();
   const ref = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const busy = fetcher.state !== "idle";
+  // Optimista: el comentario aparece al instante como «enviando…»; si falla, el texto regresa.
+  const sent = useRef<string | null>(null);
+  const pendingBody = fetcher.formData ? String(fetcher.formData.get("body") ?? "") : null;
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.ok) ref.current?.reset();
-  }, [fetcher.state, fetcher.data]);
+    if (fetcher.state === "submitting" && fetcher.formData && sent.current === null) {
+      sent.current = String(fetcher.formData.get("body") ?? "");
+      if (inputRef.current) inputRef.current.value = "";
+    } else if (fetcher.state === "idle" && sent.current !== null) {
+      if (fetcher.data?.error && inputRef.current && !inputRef.current.value) {
+        inputRef.current.value = sent.current;
+      }
+      sent.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher.state]);
   return (
+    <>
+    {pendingBody !== null && (
+      <div aria-busy className="flex gap-2 opacity-70">
+        {viewer && <MemberAvatar author={viewer} size={28} />}
+        <div className="min-w-0 flex-1 rounded-xl bg-white/5 px-3 py-2">
+          <p className="text-sm">
+            <span className="font-bold">{viewer?.name ?? "Tú"}</span>{" "}
+            <span className="text-xs text-colorCaption">enviando…</span>
+          </p>
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-sm">{pendingBody}</p>
+        </div>
+      </div>
+    )}
     <fetcher.Form method="post" ref={ref} className="mt-3 flex gap-2">
       {trap}
       <input type="hidden" name="intent" value="comment" />
       <input type="hidden" name="postId" value={postId} />
       <input
+        ref={inputRef}
         name="body"
         required
         maxLength={2000}
@@ -276,8 +371,11 @@ function CommentForm({ postId }: { postId: string }) {
       >
         Enviar
       </button>
-      {fetcher.data?.error && <span className="text-xs text-brand-500">{fetcher.data.error}</span>}
+      {!busy && fetcher.data?.error && (
+        <span role="alert" className="text-xs text-brand-500">{fetcher.data.error}</span>
+      )}
     </fetcher.Form>
+    </>
   );
 }
 
@@ -348,19 +446,49 @@ function LikeButton({ post, canReact }: { post: WallPostView; canReact: boolean 
   );
 }
 
+/** Cómo queda la publicación con un cambio de moderación que todavía va en camino. */
+const MOD_PATCH: Record<string, Partial<Pick<WallPostView, "isPinned" | "isPublic" | "hidden">>> = {
+  pin: { isPinned: true },
+  unpin: { isPinned: false },
+  public: { isPublic: true },
+  private: { isPublic: false },
+  hide: { hidden: true },
+  unhide: { hidden: false },
+};
+
 export function PostCard({
-  post,
+  post: saved,
   viewerId,
+  viewer = null,
   canMod,
   canComment,
 }: {
   post: WallPostView;
   viewerId: string | null;
+  /** Quien mira, para pintar su comentario mientras se envía. */
+  viewer?: WallAuthor | null;
   canMod: boolean;
   canComment: boolean;
 }) {
-  const [open, setOpen] = useState(post.comments.length > 0 && post.comments.length <= 3);
-  const visibleComments = post.comments.filter((c) => canMod || !c.hidden);
+  const [open, setOpen] = useState(saved.comments.length > 0 && saved.comments.length <= 3);
+  // Optimista: fijar, publicar, ocultar y borrar se ven al dar clic, leyendo los envíos en curso.
+  const inFlight = useFetchers();
+  let pendingMod: string | null = null;
+  const hidingComments = new Set<string>();
+  for (const f of inFlight) {
+    const intent = f.formData?.get("intent");
+    if (intent === "mod" && f.formData?.get("postId") === saved.id) {
+      pendingMod = String(f.formData.get("change") ?? "");
+    } else if (intent === "hide-comment") {
+      hidingComments.add(String(f.formData?.get("commentId") ?? ""));
+    }
+  }
+  const post = pendingMod && MOD_PATCH[pendingMod] ? { ...saved, ...MOD_PATCH[pendingMod] } : saved;
+  const visibleComments = post.comments
+    .map((c) => (hidingComments.has(c.id) ? { ...c, hidden: true } : c))
+    .filter((c) => canMod || !c.hidden);
+  // El autor borró su publicación: desaparece de inmediato.
+  if (pendingMod === "hide-own") return null;
   return (
     <article className={`${card} p-5 ${post.hidden ? "opacity-50" : ""}`}>
       <header className="flex items-start gap-3">
@@ -433,7 +561,7 @@ export function PostCard({
               </div>
             ))}
             {canComment ? (
-              <CommentForm postId={post.id} />
+              <CommentForm postId={post.id} viewer={viewer} />
             ) : (
               <p className="text-sm text-colorCaption">Únete al club para comentar.</p>
             )}

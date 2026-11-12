@@ -245,6 +245,10 @@ model Community {
   ownerId String @db.ObjectId
   owner   User   @relation(fields: [ownerId], references: [id])
 
+  /// Aspecto de la sala de llamadas de esta comunidad (skin): JSON de tokens `CallSkin`
+  /// (`club-call.server.ts`). Vacío = el skin de la casa.
+  callSkin Json?
+
   /// Secuencia que se activa al confirmar el correo. String plano a propósito:
   /// sin @relation no hay que tocar el modelo Sequence.
   welcomeSequenceId String? @db.ObjectId

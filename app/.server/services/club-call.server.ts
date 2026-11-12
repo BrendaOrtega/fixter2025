@@ -15,12 +15,48 @@
 //   GHOSTY_API_URL             opcional, default https://www.ghosty.studio
 //   CLUB_CALL_HOST_EMAILS      opcional, correos separados por coma (default fixtergeek@gmail.com)
 //   CLUB_CALL_MODE             opcional, webinar | taller (default webinar)
+//
+// Caja propia de fixter (12-nov-2026, fork `fixter-call-svc` de sandbox-host): con estas dos
+// variables el ticket se firma AQUÍ y gs ya no participa. Sin ellas, todo sigue por gs como antes.
+//   CLUB_CALL_BOX_URL          https://… de la caja de llamadas de fixter
+//   CLUB_CALL_TICKET_SECRET    el EVENT_TICKET_SECRET de ESA caja (nunca sale del servidor)
 import crypto from "node:crypto";
 
 const DEFAULT_API = "https://www.ghosty.studio";
 const DEFAULT_HOSTS = "fixtergeek@gmail.com";
 const ROOM_PREFIX = "fx-club-de-agentes";
 const TITLE = "Club de Agentes de IA · Llamada en vivo";
+
+/**
+ * Aspecto de la sala: un JSON chico de tokens, nunca CSS. La caja lo valida con lista blanca
+ * (hex de 6 dígitos, tipografía de una lista, logo sólo de dominios de casa) y descarta lo demás.
+ */
+export type CallSkin = {
+  preset?: "default" | "fixter";
+  colors?: Partial<Record<"bg" | "surface" | "surface2" | "line" | "ink" | "muted" | "accent" | "accentInk" | "danger" | "panel" | "panelInk" | "panelLine", string>>;
+  radius?: number;
+  font?: "system" | "serif" | "mono" | "rounded";
+  logoUrl?: string;
+};
+export const FIXTER_SKIN: CallSkin = { preset: "fixter" };
+const TICKET_TTL_S = 120;
+
+const b64url = (buf: Buffer | string) => Buffer.from(buf).toString("base64url");
+
+/**
+ * Ticket de UN SOLO USO para `POST /join` de la caja, y la URL de la sala. Mismo formato que
+ * verifica `server.mjs`: base64url(json) "." base64url(HMAC-SHA256(secreto, base64url(json))).
+ */
+export function signCallTicket(
+  c: { room: string; name: string; role: "viewer" | "speaker" | "host"; mode: "webinar" | "taller"; title?: string; skin?: CallSkin | null },
+  o: { secret: string; baseUrl: string; nowMs?: number }
+): string {
+  const exp = Math.floor((o.nowMs ?? Date.now()) / 1000) + TICKET_TTL_S;
+  const { skin, title, ...rest } = c;
+  const json = b64url(JSON.stringify({ ...rest, ...(title ? { title } : {}), ...(skin ? { skin } : {}), exp, jti: crypto.randomUUID() }));
+  const ticket = `${json}.${b64url(crypto.createHmac("sha256", o.secret).update(json).digest())}`;
+  return `${o.baseUrl.replace(/\/$/, "")}/room?room=${encodeURIComponent(c.room)}&ticket=${encodeURIComponent(ticket)}`;
+}
 
 type CallUser = { email: string; displayName?: string | null; username: string };
 
@@ -84,17 +120,23 @@ export async function partnerPost<T = Record<string, unknown>>(
  */
 export async function getCallLink(
   user: CallUser,
-  opts: { host?: boolean; speaker?: boolean } = {}
+  opts: { host?: boolean; speaker?: boolean; skin?: CallSkin | null } = {}
 ): Promise<string | null> {
   const name = (user.displayName || user.username || user.email.split("@")[0]).trim().slice(0, 40);
   const host = opts.host ?? isHostEmail(user.email);
   // speaker publica mic, cámara y pantalla; viewer sólo ve, escribe en el chat y levanta la mano.
   const role = host ? "host" : opts.speaker ? "speaker" : "viewer";
+  const mode = process.env.CLUB_CALL_MODE === "taller" ? "taller" : "webinar";
+  // Caja propia: fixter firma el ticket y manda el skin (el de la comunidad o el de la casa).
+  const boxUrl = process.env.CLUB_CALL_BOX_URL, secret = process.env.CLUB_CALL_TICKET_SECRET;
+  if (boxUrl && secret) {
+    return signCallTicket({ room: clubCallRoom(), name, role, mode, title: TITLE, skin: opts.skin ?? FIXTER_SKIN }, { secret, baseUrl: boxUrl });
+  }
   const r = await partnerPost<{ url?: string }>("/api/v2/partner/event-box/ticket", {
     room: clubCallRoom(),
     name,
     role,
-    mode: process.env.CLUB_CALL_MODE === "taller" ? "taller" : "webinar",
+    mode,
     title: TITLE,
   });
   return r.ok && r.data?.url ? r.data.url : null;
