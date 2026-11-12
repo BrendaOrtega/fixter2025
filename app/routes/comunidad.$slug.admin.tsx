@@ -8,6 +8,7 @@ import type { Route } from "./+types/comunidad.$slug.admin";
 import { db } from "~/.server/db";
 import { Switch } from "~/components/common/Switch";
 import { ClubVideo } from "~/components/community/ClubVideo";
+import { CalendarIllustration } from "~/components/community/v2/CalendarIllustration";
 import { ClubShell } from "~/components/community/v2/ClubShell";
 import { SectionHead, Wrap, btn, card as panel, textLink } from "~/components/community/v2/ui";
 import type { View } from "~/components/community/v2/types";
@@ -323,10 +324,15 @@ function Calendar({ events, slug }: { events: EventView[]; slug: string }) {
   return (
     <div className="grid gap-6">
       <section className={card}>
-        <h2 className={h2}>Nuevo evento</h2>
-        <p className="mb-4 mt-1 text-sm text-[#7C8A8E]">
-          Los miembros lo ven con cuenta regresiva, reciben correo 24 h y 1 h antes y pueden agregarlo a su calendario.
-        </p>
+        <div className="mb-4 flex items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <h2 className={h2}>Nuevo evento</h2>
+            <p className="mt-1 text-sm text-[#7C8A8E]">
+              Los miembros lo ven con cuenta regresiva, reciben correo 24 h y 1 h antes y pueden agregarlo a su calendario.
+            </p>
+          </div>
+          <CalendarIllustration className="h-20 w-24 shrink-0 sm:h-28 sm:w-36" />
+        </div>
         <EventForm key={events.length} />
       </section>
       <section>
