@@ -25,7 +25,6 @@ const FLY_MS = 900;
 const INTENT_MS = 350;
 const LOOK_KEY = "club-world-ship";
 const QUIET_KEY = "club-world-quiet";
-const SOUND_KEY = "club-world-sound";
 const DEFAULT_LOOK: Look = { model: "rocket", color: "mint", pilot: "ghosty" };
 
 type Snapshot = { count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; me: string; waveId?: string | null };
@@ -90,7 +89,6 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [expanded, setExpanded] = useState(false);
   const [mini, setMini] = useState(false);
   const [quiet, setQuiet] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
   const [look, setLook] = useState<Look>(DEFAULT_LOOK);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [joyOn, setJoyOn] = useState(false);
@@ -119,13 +117,11 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     const firstLook = saved ?? DEFAULT_LOOK;
     const savedQuiet = readFlag(QUIET_KEY, window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const isCoarse = window.matchMedia("(pointer: coarse)").matches;
-    // Sonido: en celular arranca apagado (puede haber una llamada abierta); en escritorio, encendido
-    // desde el primer gesto. Lo que la persona elija se guarda y manda.
-    const savedSound = readFlag(SOUND_KEY, !isCoarse);
+    // Sonido: siempre encendido desde el primer gesto; «Tranquilo» es lo único que lo apaga.
     lookRef.current = firstLook;
-    setLook(firstLook); setQuiet(savedQuiet); setJoyOn(isCoarse); setSoundOn(savedSound);
+    setLook(firstLook); setQuiet(savedQuiet); setJoyOn(isCoarse);
 
-    const sound = createSound(savedSound);
+    const sound = createSound(!savedQuiet);
     soundRef.current = sound;
     const unlock = () => sound.unlock();
     window.addEventListener("pointerdown", unlock, true);
@@ -257,11 +253,10 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     return () => { cancelAnimationFrame(id); document.body.style.overflow = ""; };
   }, [expanded]);
 
-  const changeQuiet = (on: boolean) => { setQuiet(on); apiRef.current?.setQuiet(on); saveFlag(QUIET_KEY, on); };
-  const changeSound = (on: boolean) => {
-    setSoundOn(on); saveFlag(SOUND_KEY, on);
-    soundRef.current?.setEnabled(on);
-    if (on) { soundRef.current?.unlock(); window.setTimeout(() => soundRef.current?.play("pick"), 60); } // se oye que quedó encendido
+  const changeQuiet = (on: boolean) => {
+    setQuiet(on); apiRef.current?.setQuiet(on); saveFlag(QUIET_KEY, on);
+    soundRef.current?.setEnabled(!on); // «Tranquilo» también apaga el sonido
+    if (!on) soundRef.current?.unlock();
   };
   const changeLook = (patch: Partial<Look>) => {
     const next = { ...look, ...patch };
@@ -356,16 +351,6 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               <span aria-hidden className={switchTrack} />
               Tranquilo
             </label>
-            <button
-              type="button"
-              aria-pressed={soundOn}
-              aria-label={soundOn ? "Apagar el sonido" : "Encender el sonido"}
-              title={soundOn ? "Sonido encendido" : "Sonido apagado"}
-              onClick={() => changeSound(!soundOn)}
-              className={`${chip} px-2.5 hover:bg-[#1C252B] ${soundOn ? "text-brand-500" : "text-[#7C8A8E]"}`}
-            >
-              <Icon name={soundOn ? "sound" : "mute"} className="h-4 w-4" />
-            </button>
             <button
               type="button"
               onClick={toggleExpanded}
@@ -491,7 +476,6 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               look={look} face={faceRef.current} onChange={changeLook} onClose={() => setSheetOpen(false)}
               toggles={[
                 { label: "Modo tranquilo", on: quiet, set: changeQuiet },
-                { label: "Sonido", on: soundOn, set: changeSound },
                 { label: "Joystick en pantalla", on: joyOn, set: setJoyOn },
               ]}
             />
