@@ -119,12 +119,13 @@ export const structure: WorldStructure = {
     look: { model: "manta", color: "pink", pilot: "alien" },
     every: 150,
     warn: 3,
-    stay: 55,
+    stay: 70,
     at: (cycle, t) => {
       const a = (cycle * 2.399963) % (Math.PI * 2), b = (cycle * 1.618034) % (Math.PI * 2);
       return { x: 800 + Math.cos(t * 0.21 + a) * 560, y: 520 + Math.sin(t * 0.34 + b) * 330 };
     },
-    hp: 8,
+    // 16 golpes desde el 12-nov: el daño de todos ya se suma (cooperan), así que aguanta el doble.
+    hp: 16,
     // Peligrosos de verdad (12-nov, a pedido de bliss): tiros más rápidos que tu nave (310), con anticipación,
     // alcance de más de media pantalla y cadencia alta. Quieto y a tiro duras unos 7 s; moverte y cubrirte importa.
     shot: { speed: 420, life: 2, every: 1.6, range: 620, lead: 0.7 },
@@ -144,7 +145,7 @@ export const structure: WorldStructure = {
           const a = (cycle * 2.399963) % (Math.PI * 2), b = (cycle * 1.618034) % (Math.PI * 2);
           return { x: 800 + Math.cos(t * 0.21 + a) * 520 + Math.sin(t * 2.3) * 46, y: 520 + Math.sin(t * 0.34 + b) * 300 + Math.cos(t * 2.9) * 46 };
         },
-        shot: { every: 2.2, burst: 3, gap: 0.22 },
+        shot: { every: 1.8, burst: 4, gap: 0.2 },
       },
       {
         name: "Astronauta",
@@ -154,7 +155,7 @@ export const structure: WorldStructure = {
           const tilt = ((cycle * 0.754877) % 1) * Math.PI, u = 1 - Math.abs(((t / 20) % 2) - 1), k = u * 2 - 1;
           return { x: 800 + Math.cos(tilt) * 600 * k, y: 520 + Math.sin(tilt) * 360 * k };
         },
-        shot: { speed: 560, life: 1.4, every: 1.4, range: 640, lead: 0.9 },
+        shot: { speed: 580, life: 1.4, every: 1.1, range: 660, lead: 0.95 },
       },
     ],
     player: { hp: 10, heal: 10, back: 6, shield: 2 },
