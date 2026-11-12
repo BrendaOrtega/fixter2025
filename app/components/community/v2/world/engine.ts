@@ -1,46 +1,14 @@
-// Motor del «Mundo» del club: un canvas 2D con las naves, los lugares y la cámara. Sólo corre en
-// el navegador (se crea dentro de un `useEffect`); React pone encima los controles y las tarjetas.
-// Portado del mockup aprobado: docs/club-rediseno/mockup-micromundo.html.
-//
-// Estilo de la casa: ilustración plana, rellenos sólidos, borde fino. Sin gradientes ni brillos.
+// Motor del «Mundo» del club: guarda el estado (tú, las demás personas, robots, proyectiles) y aplica
+// las reglas (movimiento, cámara lógica, cercanía, disparos). No tiene contenido propio: el mundo lo
+// pone un cartucho (`cartridge.ts`) y lo pinta su skin. Sólo corre en el navegador (se crea dentro de
+// un `useEffect`); React pone encima los controles y las tarjetas.
+// Manual: docs/club-rediseno/MUNDO-CARTUCHOS.md.
 
-import type { SoundName } from "./sound";
+import { SHAKE, type Bubble, type Cartridge, type Entity, type Face, type GameMode, type Look, type ModeContext, type ModeHud, type Pickup, type Place, type PlaceTarget, type Point, type SharedState, type SharedValue, type Shot, type View, type WorldEvent, type WorldFrame, type WorldSkin } from "./cartridge";
 
-/** Nombre de este mundo. Los mundos son intercambiables, como cartuchos: éste es el de FixterGeek. */
-export const WORLD_NAME = "GeekSector";
-export const WORLD_W = 1600;
-export const WORLD_H = 1000;
-
-export const SHIP_COLORS = [
-  { id: "mint", name: "Menta", fill: "#85DDCB", dark: "#357265" },
-  { id: "green", name: "Verde", fill: "#8DCF6E", dark: "#4C7A39" },
-  { id: "amber", name: "Ámbar", fill: "#F2C98A", dark: "#8A6A34" },
-  { id: "lilac", name: "Lila", fill: "#BDB5F7", dark: "#5E57A0" },
-  { id: "blue", name: "Azul", fill: "#9CC8F2", dark: "#4A719A" },
-  { id: "pink", name: "Rosa", fill: "#F4AFAF", dark: "#9A5656" },
-] as const;
-export const SHIP_MODELS = [
-  { id: "rocket", name: "Cohete" },
-  { id: "saucer", name: "Platillo" },
-  { id: "pod", name: "Cápsula" },
-  { id: "dart", name: "Flecha" },
-] as const;
-export const SHIP_PILOTS = [
-  { id: "avatar", name: "Mi avatar" },
-  { id: "ghosty", name: "Ghosty" },
-  { id: "astro", name: "Astronauta" },
-  { id: "alien", name: "Alien" },
-] as const;
-
-export type ShipModel = (typeof SHIP_MODELS)[number]["id"];
-export type ShipColor = (typeof SHIP_COLORS)[number]["id"];
-export type ShipPilot = (typeof SHIP_PILOTS)[number]["id"] | "robot";
-export type Look = { model: ShipModel; color: ShipColor; pilot: ShipPilot };
-
-/** Cara de un miembro para el piloto «avatar»: su foto, o sus iniciales sobre su tono si no carga. */
-export type Face = { img: HTMLImageElement | null; initials: string; bg: string; fg: string };
 // Mismos seis tonos y mismo reparto que `Avatar` (v2/ui.tsx).
 const FACE_TONES = [["#17302C", "#85DDCB"], ["#33291A", "#F2C98A"], ["#26233F", "#BDB5F7"], ["#3A2020", "#F4AFAF"], ["#1A2B3D", "#9CC8F2"], ["#22331A", "#8DCF6E"]];
+/** Cara de un miembro para quien la pinte: su foto, o sus iniciales sobre su tono si no carga. */
 export function faceFor(id: string, name: string, photoURL: string | null): Face {
   const [bg, fg] = FACE_TONES[[...id].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % FACE_TONES.length];
   const initials = name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?";
@@ -53,35 +21,21 @@ export function faceFor(id: string, name: string, photoURL: string | null): Face
   return face;
 }
 
-/** Las mesas del hackatón: a qué se sienta uno ahí. Sentarse es estado compartido, sin audio. */
-export const TABLES = [
-  { x: 200, y: 810, topic: "Busco equipo" },
-  { x: 400, y: 690, topic: "Estoy atorado" },
-  { x: 600, y: 810, topic: "Muestra y cuenta" },
-] as const;
-const ZONE = { x: 86, y: 578, w: 628, h: 372 };
-
-export type PlaceKind = "station" | "planet" | "satellite" | "base" | "table";
-type Place = { id: string; kind: PlaceKind; x: number; y: number; r: number; name: string; short: string; labelDy: number; table: number | null };
-export const PLACES: Place[] = [
-  { id: "live", kind: "station", x: 800, y: 390, r: 205, name: "Sala en vivo", short: "Sala en vivo", labelDy: 104, table: null },
-  { id: "wall", kind: "planet", x: 290, y: 250, r: 165, name: "Planeta Muro", short: "Muro", labelDy: 104, table: null },
-  { id: "recs", kind: "satellite", x: 1310, y: 230, r: 150, name: "Satélite Grabaciones", short: "Grabaciones", labelDy: 78, table: null },
-  { id: "courses", kind: "base", x: 1290, y: 760, r: 165, name: "Base Cursos", short: "Cursos", labelDy: 84, table: null },
-  ...TABLES.map((t, i) => ({ id: `t${i}`, kind: "table" as const, x: t.x, y: t.y, r: 122, name: `Mesa «${t.topic}»`, short: t.topic, labelDy: 100, table: i })),
-];
-
 /** Nave de otra persona, tal como la entrega el servidor. */
 export type RemoteShip = {
   id: string; name: string; photoURL: string; x: number; y: number; tx: number; ty: number;
   ship: string; color: string; pilot: string; table: number | null; seat: number | null;
+  /** La amenaza destruyó su nave: no está en el mapa hasta que reaparezca. */
+  down?: boolean;
 };
-export type PlaceInfo = { id: string; kind: PlaceKind; name: string; table: number | null };
+export type PlaceInfo = { id: string; target: PlaceTarget; kind: string; name: string; table: number | null };
 export type ShipInfo = { id: string; name: string; photoURL: string | null; isBot: boolean; where: string; note: string | null };
-export type Counts = { humans: number; live: number; wall: number; recs: number; courses: number; tables: number; flying: number; perTable: number[] };
-export type MyState = { x: number; y: number; tx: number; ty: number; table: number | null; flying: boolean };
+/** Cuánta gente hay y dónde: `byPlace` por id de lugar (sin las mesas, que van juntas en `tables` y por mesa en `perTable`). */
+export type Counts = { humans: number; flying: number; tables: number; perTable: number[]; byPlace: Record<string, number> };
+export type MyState = { x: number; y: number; tx: number; ty: number; table: number | null; flying: boolean; down: boolean };
+export type WeaponInfo = { kind: string; name: string; left: number };
 
-type Callbacks = {
+export type Callbacks = {
   onPlace: (place: PlaceInfo | null) => void;
   onShip: (ship: ShipInfo | null) => void;
   onCounts: (counts: Counts) => void;
@@ -90,13 +44,23 @@ type Callbacks = {
   onFirstMove: () => void;
   /** Algo que merece sonido: arrancar, llegar a un lugar, sentarse, levantarse. */
   /** `other`: lo hizo otra nave (o un robot), suena más bajito. */
-  onSound: (name: SoundName, other?: boolean) => void;
+  onSound: (name: string, other?: boolean) => void;
   /** Tu disparo tocó la nave de un miembro: hay que avisarle para que también la vea temblar. */
   onNudge: (shipId: string) => void;
   /** Tumbaste la nave de un robot de la casa: se avisa para que todos la vean estallar y volver a la vez. */
   onBoom: (botId: string) => void;
   /** Cambió el aparato que llevas (o sus tiros restantes). `null`: disparo básico. Es local, no viaja al servidor. */
   onWeapon: (weapon: WeaponInfo | null) => void;
+  /** La amenaza del cartucho: viene en camino (`warn`), ya está (`here`) o no hay (`null`). */
+  onThreat?: (phase: "warn" | "here" | null, name: string) => void;
+  /** Tu nave fue destruida: segundos (enteros) para reaparecer; `null` cuando vuelves. */
+  onDown?: (seconds: number | null) => void;
+  /** El modo de juego del cartucho cambió su letrero. */
+  onHud?: (hud: ModeHud) => void;
+  /** El modo de juego propone un valor del estado compartido: hay que mandarlo al servidor. */
+  onShare?: (key: string, value: SharedValue | null) => void;
+  /** La skin pidió saludar a alguien (persona o robot) desde su propio menú. */
+  onGreet?: (entityId: string) => void;
   /** Enter con un lugar cerca. */
   onEnter: () => void;
   /** Escape. */
@@ -109,8 +73,9 @@ export type WorldApi = {
   resize: (mini: boolean) => void;
   setQuiet: (quiet: boolean) => void;
   setLook: (look: Look) => void;
-  setStation: (station: { open: boolean; sub: string }) => void;
-  /** Lugares que hoy no llevan a nada (p. ej. `recs` sin grabaciones): no se dibujan. */
+  /** Estado vivo de un lugar (p. ej. la sala abierta y su subtítulo): la skin decide cómo se nota. */
+  setPlaceStatus: (placeId: string, status: { on: boolean; sub: string }) => void;
+  /** Lugares que hoy no llevan a nada (p. ej. grabaciones sin grabaciones): no se dibujan. */
   setHidden: (placeIds: string[]) => void;
   setRemote: (ships: RemoteShip[], meId: string) => void;
   /** Saludo entre dos naves (llegó del servidor o lo acabas de mandar). */
@@ -124,10 +89,12 @@ export type WorldApi = {
   flyToPlace: (placeId: string) => void;
   /** Robots tumbados según el servidor (`back`: ms para que vuelvan). `silent`: ya estaban así al llegar, sin explosión. */
   setBotsDown: (down: Array<{ bot: string; back: number }>, silent?: boolean) => void;
+  /** Estado compartido del modo de juego, tal como llegó del servidor. */
+  setShared: (shared: SharedState) => void;
   /** Dispara hacia donde apunta la nave con el aparato que lleves. A las personas sólo las hace temblar; a los robots los tumba. */
   shoot: () => void;
   /** El aparato flotante más cercano a tu nave (para pruebas y para pistas en pantalla). */
-  nearestPickup: (kind?: WeaponKind) => { x: number; y: number; kind: WeaponKind } | null;
+  nearestPickup: (kind?: string) => { x: number; y: number; kind: string } | null;
   setJoy: (x: number, y: number) => void;
   sit: (table: number) => void;
   stand: () => void;
@@ -140,333 +107,57 @@ export type WorldApi = {
   destroy: () => void;
 };
 
-type Entity = {
-  id: string; kind: "me" | "human" | "bot"; name: string; first: string; photoURL: string | null; note: string | null;
-  x: number; y: number; vx: number; vy: number; ang: number; thrust: number;
-  model: ShipModel; color: ShipColor; pilot: ShipPilot;
-  tx: number | null; ty: number | null; table: number | null; seat: number | null;
-  bob: number; waveT: number; face: Face | null;
-  /** Segundos de temblor que le quedan (cosquilla de un disparo). */
-  shakeT: number;
-  /** Sólo robots: golpes que aguanta, segundos para recuperarlos, segundos fuera del mapa y segundos de llegada en hipervelocidad. */
-  hp: number; healT: number; downT: number; warpT: number;
-};
-type Fx =
-  | { kind: "bubble"; ship: Entity; text: string; t: number; dur: number; say?: boolean }
-  | { kind: "flash"; x: number; y: number; t: number; dur: number }
-  | { kind: "ring"; x: number; y: number; t: number; dur: number; r: number; color: string }
-  | { kind: "debris"; x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string; rot: number; spin: number; size: number }
-  | { kind: "spark"; x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string };
-
-const C = {
-  bg: "#0E1317", panel: "#141B20", line: "#232D33", soft: "#1C252B", mint: "#85DDCB", green: "#8DCF6E",
-  ink: "#F2F5F4", text: "#D9E0DE", gray: "#7C8A8E", mintDeep: "#357265", mintMid: "#65B0A1", suit: "#D1DEDB", suitLine: "#9AA9A6",
-  rock: "#3A474E", rockDark: "#2B363C", rockLine: "#4B5A62",
-};
-const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const TAU = Math.PI * 2;
-const MAX_SPEED = 310;
-// Juego: aparatos espaciales que cambian tu disparo por unos tiros. A las personas sólo les hace cosquillas
-// (su nave tiembla); a los robots de la casa sí los tumba: aguantan `BOT_HP` golpes, estallan y vuelven al
-// rato en hipervelocidad. Al servidor sólo viajan el temblor (`nudge`) y el robot tumbado (`boom`).
-export const WEAPONS = {
-  triple: { name: "Triple", uses: 6, sound: "shootTriple" },
-  ray: { name: "Rayo", uses: 5, sound: "shootRay" },
-  wave: { name: "Onda", uses: 3, sound: "shootWave" },
-  seeker: { name: "Buscador", uses: 5, sound: "shootSeeker" },
-  bounce: { name: "Rebote", uses: 6, sound: "shootBounce" },
-  bomb: { name: "Bomba", uses: 3, sound: "shootBomb" },
-} as const;
-export type WeaponKind = keyof typeof WEAPONS;
-export type WeaponInfo = { kind: WeaponKind; name: string; left: number };
-const WEAPON_KINDS = Object.keys(WEAPONS) as WeaponKind[];
-/** Pocos aparatos a la vez en todo el mapa. Los seis se turnan despacio: el que nadie recoge cambia por el siguiente cada `PICKUP_SWAP` s. */
-const PICKUP_COUNT = 3, PICKUP_REACH = 34, PICKUP_BACK = 20, PICKUP_BACK_EXTRA = 10, PICKUP_SWAP = 40;
-const SHOT_EVERY = 0.28, WAVE_R = 175, WAVE_DUR = 0.4, WAVE_DMG = 2, BOMB_R = 120, SEEK_R = 460, SEEK_TURN = 4.2;
-/** Cada disparo: velocidad, cuánto vive y cuántos golpes le quita a un robot. */
-const SHOTS = {
-  basic: { speed: 640, life: 0.8, dmg: 1 },
-  ray: { speed: 1300, life: 0.8, dmg: 3 },
-  seeker: { speed: 430, life: 1.7, dmg: 2 },
-  bounce: { speed: 600, life: 2.4, dmg: 2 },
-  bomb: { speed: 300, life: 0.9, dmg: 3 },
-} as const;
-type ShotKind = keyof typeof SHOTS;
-type Pickup = { kind: WeaponKind; x: number; y: number; ph: number; alive: boolean; back: number; age: number };
-type Shot = { kind: ShotKind; x: number; y: number; vx: number; vy: number; t: number; life: number; dmg: number; bounces: number };
-/** Robots: golpes que aguantan, segundos sin golpes para recuperarse, segundos fuera y lo que dura su llegada. */
-const BOT_HP = 3, BOT_HEAL = 8, BOT_BACK = 20, WARP = 0.55, WARP_FROM = 1100;
-const SHOT_COLORS = { seeker: "#BDB5F7", bounce: "#9CC8F2", bomb: "#F2C98A" } as const;
-/** Cosquilla: cuánto tiembla una nave tocada y qué tan cerca debe pasar el disparo. */
-const SHAKE = 0.25, SHAKE_PX = 2.6, SHIP_HIT = 26;
-/** Asset oficial de Ghosty (public/ghosty-oficial.png): nunca se repinta, sólo se escala. */
-const GHOSTY_SRC = "/ghosty-oficial.png";
-
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-const colorOf = (id: string) => SHIP_COLORS.find((c) => c.id === id) ?? SHIP_COLORS[0];
 const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
-function seeded(seed: number) {
-  // mulberry32: el cielo se dibuja igual en cada carga
-  return () => {
-    seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 function lerpAngle(a: number, b: number, k: number) {
   const d = ((((b - a + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
   return a + d * k;
 }
-export function seatPos(table: { x: number; y: number }, k: number) {
-  const a = -Math.PI * 0.75 + (k * Math.PI) / 2;
-  return { x: table.x + Math.cos(a) * 66, y: table.y + Math.sin(a) * 66 };
-}
-type Ctx = CanvasRenderingContext2D;
-function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
-  r = Math.min(r, w / 2, h / 2);
-  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-}
-function sparkle(ctx: Ctx, x: number, y: number, r: number) {
-  ctx.beginPath(); ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
-  ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.closePath();
-}
 
-// ───────── Pilotos y naves ─────────
-let ghostyImg: HTMLImageElement | null = null;
-function ghosty() {
-  if (!ghostyImg) { ghostyImg = new Image(); ghostyImg.src = GHOSTY_SRC; }
-  return ghostyImg;
-}
-
-/** El piloto siempre va derecho (cabeza arriba), aunque la nave gire. */
-export function drawPilot(ctx: Ctx, pilot: ShipPilot, x: number, y: number, r: number, face?: Face | null, ring?: string) {
-  const g = ghosty();
-  ctx.save();
-  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = C.bg; ctx.fill(); ctx.clip();
-  if (pilot === "avatar" && face) {
-    // La foto del miembro, recortada en círculo; mientras carga (o si falla), sus iniciales.
-    const img = face.img;
-    if (img && img.complete && img.naturalWidth) {
-      const side = Math.min(img.naturalWidth, img.naturalHeight);
-      ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, x - r, y - r, r * 2, r * 2);
-    } else {
-      ctx.fillStyle = face.bg; ctx.fillRect(x - r, y - r, r * 2, r * 2);
-      ctx.fillStyle = face.fg; ctx.font = `700 ${Math.max(6, r * 0.82)}px ${FONT}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(face.initials, x, y + r * 0.06);
-    }
-  } else if (pilot === "ghosty" && g.complete && g.naturalWidth) {
-    const h = r * 1.72, w = (h * g.naturalWidth) / g.naturalHeight;
-    ctx.drawImage(g, x - w / 2, y - h / 2 + r * 0.1, w, h);
-  } else if (pilot === "alien") {
-    ctx.strokeStyle = C.green; ctx.lineWidth = r * 0.12; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(x - r * 0.3, y - r * 0.5); ctx.lineTo(x - r * 0.5, y - r * 0.86);
-    ctx.moveTo(x + r * 0.3, y - r * 0.5); ctx.lineTo(x + r * 0.5, y - r * 0.86); ctx.stroke();
-    ctx.fillStyle = C.green; ctx.beginPath(); ctx.ellipse(x, y + r * 0.12, r * 0.66, r * 0.7, 0, 0, TAU); ctx.fill();
-    // Ojos almendrados: la punta de afuera hacia arriba y la de adentro hacia la nariz ( \ / ).
-    ctx.fillStyle = C.bg;
-    ctx.beginPath(); ctx.ellipse(x - r * 0.27, y + r * 0.08, r * 0.19, r * 0.31, -0.5, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(x + r * 0.27, y + r * 0.08, r * 0.19, r * 0.31, 0.5, 0, TAU); ctx.fill();
-  } else if (pilot === "robot") {
-    // Robot de la casa: cabeza clara con visor menta, como el robot del sitio.
-    ctx.strokeStyle = C.suitLine; ctx.lineWidth = r * 0.12; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(x, y - r * 0.5); ctx.lineTo(x, y - r * 0.82); ctx.stroke();
-    ctx.fillStyle = C.suit; roundRect(ctx, x - r * 0.68, y - r * 0.5, r * 1.36, r * 1.16, r * 0.3); ctx.fill();
-    ctx.fillStyle = C.mint; roundRect(ctx, x - r * 0.48, y - r * 0.26, r * 0.96, r * 0.58, r * 0.2); ctx.fill();
-    ctx.fillStyle = C.bg;
-    ctx.beginPath(); ctx.arc(x - r * 0.2, y + r * 0.02, r * 0.1, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + r * 0.2, y + r * 0.02, r * 0.1, 0, TAU); ctx.fill();
-  } else {
-    // Astronauta: casco claro con visor oscuro.
-    ctx.fillStyle = C.suit; ctx.beginPath(); ctx.arc(x, y + r * 0.06, r * 0.82, 0, TAU); ctx.fill();
-    ctx.fillStyle = C.bg; roundRect(ctx, x - r * 0.56, y - r * 0.34, r * 1.12, r * 0.78, r * 0.34); ctx.fill();
-    ctx.fillStyle = C.mint; ctx.beginPath(); ctx.arc(x + r * 0.24, y - r * 0.1, r * 0.12, 0, TAU); ctx.fill();
-  }
-  ctx.restore();
-  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.strokeStyle = ring ?? C.suit; ctx.lineWidth = Math.max(1, r * 0.14); ctx.stroke();
-}
-
-function flame(ctx: Ctx, x: number, y: number, len: number, half: number, t: number) {
-  const l = len * (0.82 + 0.18 * Math.sin(t * 22));
-  ctx.fillStyle = C.mint; ctx.beginPath(); ctx.moveTo(x, y - half); ctx.quadraticCurveTo(x - l * 0.5, y - half * 0.5, x - l, y);
-  ctx.quadraticCurveTo(x - l * 0.5, y + half * 0.5, x, y + half); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.moveTo(x, y - half * 0.45); ctx.quadraticCurveTo(x - l * 0.3, y, x - l * 0.5, y);
-  ctx.quadraticCurveTo(x - l * 0.3, y, x, y + half * 0.45); ctx.closePath(); ctx.fill();
-}
-
-type Drawable = { model: ShipModel; color: ShipColor; pilot: ShipPilot; ang: number; thrust: number; face?: Face | null };
-/** Nave de ~56 unidades apuntando a +x. */
-export function drawShip(ctx: Ctx, s: Drawable, x: number, y: number, size: number, t: number) {
-  const col = colorOf(s.color);
-  const k = size / 56, th = s.thrust || 0;
-  let cockpitX = 0, cockpitR = 9;
-  ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
-  ctx.lineJoin = "round"; ctx.lineWidth = 1.4;
-  if (s.model === "saucer") {
-    cockpitR = 11;
-    ctx.fillStyle = col.fill; ctx.strokeStyle = col.dark; ctx.beginPath(); ctx.arc(0, 0, 25, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = col.dark; ctx.beginPath(); ctx.arc(0, 0, 16.5, 0, TAU); ctx.fill();
-    ctx.fillStyle = C.ink;
-    for (let i = 0; i < 6; i++) { const a = t * 0.9 + (i * TAU) / 6; ctx.beginPath(); ctx.arc(Math.cos(a) * 20.8, Math.sin(a) * 20.8, 2, 0, TAU); ctx.fill(); }
-  } else {
-    ctx.rotate(s.ang);
-    if (s.model === "rocket") {
-      if (th > 0.06) flame(ctx, -24, 0, 22 * th, 5.5, t);
-      ctx.fillStyle = col.fill; ctx.strokeStyle = col.dark;
-      for (const sg of [-1, 1]) { ctx.beginPath(); ctx.moveTo(-10, sg * 9); ctx.lineTo(-27, sg * 21); ctx.quadraticCurveTo(-25, sg * 12, -22, sg * 8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
-      ctx.fillStyle = C.ink; ctx.strokeStyle = C.suitLine;
-      ctx.beginPath(); ctx.moveTo(-22, -10.5); ctx.lineTo(8, -10.5); ctx.quadraticCurveTo(27, -9, 31, 0); ctx.quadraticCurveTo(27, 9, 8, 10.5);
-      ctx.lineTo(-22, 10.5); ctx.quadraticCurveTo(-25, 0, -22, -10.5); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = col.fill; ctx.beginPath(); ctx.moveTo(14, -9.6); ctx.quadraticCurveTo(27, -8, 30.3, 0); ctx.quadraticCurveTo(27, 8, 14, 9.6); ctx.closePath(); ctx.fill();
-      ctx.fillRect(-19, -9.8, 4, 19.6);
-      cockpitX = -1;
-    } else if (s.model === "pod") {
-      if (th > 0.06) { flame(ctx, -24, -14, 16 * th, 3.5, t); flame(ctx, -24, 14, 16 * th, 3.5, t + 1); }
-      ctx.fillStyle = col.fill; ctx.strokeStyle = col.dark;
-      for (const sg of [-1, 1]) { roundRect(ctx, -25, sg * 14 - 5, 20, 10, 4); ctx.fill(); ctx.stroke(); }
-      ctx.fillStyle = C.ink; ctx.strokeStyle = C.suitLine; roundRect(ctx, -18, -16, 40, 32, 14); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = col.fill; roundRect(ctx, 14, -9, 6, 18, 3); ctx.fill();
-      cockpitX = -1; cockpitR = 10;
-    } else {
-      if (th > 0.06) flame(ctx, -13, 0, 22 * th, 5, t);
-      ctx.fillStyle = col.fill; ctx.strokeStyle = col.dark;
-      ctx.beginPath(); ctx.moveTo(31, 0); ctx.lineTo(-23, -21); ctx.quadraticCurveTo(-14, -8, -13, 0); ctx.quadraticCurveTo(-14, 8, -23, 21); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.moveTo(27, 0); ctx.lineTo(-11, -8.5); ctx.lineTo(-11, 8.5); ctx.closePath(); ctx.fill();
-      cockpitX = -1; cockpitR = 8;
-    }
-  }
-  ctx.restore();
-  // La cabina se dibuja fuera de la rotación: el piloto nunca queda de cabeza.
-  const a = s.model === "saucer" ? 0 : s.ang;
-  const avatar = s.pilot === "avatar" && !!s.face;
-  drawPilot(ctx, s.pilot, x + Math.cos(a) * cockpitX * k, y + Math.sin(a) * cockpitX * k, (avatar ? cockpitR + 1.5 : cockpitR) * k, s.face, avatar ? col.fill : undefined);
-}
-
-// ───────── Lugares ─────────
-function solarPanel(ctx: Ctx, x: number, y: number, w: number, h: number) {
-  ctx.fillStyle = C.mintDeep; ctx.strokeStyle = C.mintMid; ctx.lineWidth = 1.4;
-  roundRect(ctx, x, y, w, h, 3); ctx.fill(); ctx.stroke();
-  ctx.beginPath();
-  for (let i = 1; i < 4; i++) { ctx.moveTo(x + (w * i) / 4, y); ctx.lineTo(x + (w * i) / 4, y + h); }
-  ctx.moveTo(x, y + h / 2); ctx.lineTo(x + w, y + h / 2); ctx.stroke();
-}
-function drawStation(ctx: Ctx, open: boolean, t: number) {
-  ctx.strokeStyle = C.rockLine; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-84, 0); ctx.lineTo(84, 0); ctx.stroke();
-  solarPanel(ctx, -132, -17, 50, 34); solarPanel(ctx, 82, -17, 50, 34);
-  if (open) {
-    // Señal: tres arcos finos que salen de la antena.
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 3; i++) {
-      const f = (t * 0.45 + i / 3) % 1;
-      ctx.globalAlpha = (1 - f) * 0.8; ctx.strokeStyle = C.mint; ctx.beginPath(); ctx.arc(0, -66, 10 + f * 30, -Math.PI * 0.82, -Math.PI * 0.18); ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-  }
-  ctx.save(); ctx.rotate(t * 0.07);
-  ctx.strokeStyle = C.rock; ctx.lineWidth = 6;
-  for (let i = 0; i < 4; i++) { const a = (i * Math.PI) / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 22, Math.sin(a) * 22); ctx.lineTo(Math.cos(a) * 50, Math.sin(a) * 50); ctx.stroke(); }
-  ctx.strokeStyle = C.rock; ctx.lineWidth = 19; ctx.beginPath(); ctx.arc(0, 0, 58, 0, TAU); ctx.stroke();
-  ctx.strokeStyle = C.rockLine; ctx.lineWidth = 1.4;
-  ctx.beginPath(); ctx.arc(0, 0, 67.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 48.5, 0, TAU); ctx.stroke();
-  for (let i = 0; i < 12; i++) {
-    // Ventanas: apagadas, o en menta cuando la sala está abierta.
-    const a = (i * TAU) / 12;
-    ctx.save(); ctx.translate(Math.cos(a) * 58, Math.sin(a) * 58); ctx.rotate(a);
-    ctx.fillStyle = open ? C.mint : C.rockDark; roundRect(ctx, -4, -5.5, 8, 11, 3); ctx.fill(); ctx.restore();
-  }
-  ctx.restore();
-  ctx.fillStyle = open ? C.mint : C.suit; ctx.strokeStyle = open ? C.mintDeep : C.suitLine; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.arc(0, 0, 25, 0, TAU); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = C.bg; roundRect(ctx, -12, -8, 16, 16, 4); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(6, -1.5); ctx.lineTo(13, -6.5); ctx.lineTo(13, 6.5); ctx.lineTo(6, 1.5); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = C.rockLine; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, -67); ctx.lineTo(0, -80); ctx.stroke();
-  ctx.fillStyle = open ? C.mint : C.gray; ctx.beginPath(); ctx.arc(0, -82, 4, 0, TAU); ctx.fill();
-}
-function drawPlanet(ctx: Ctx) {
-  const R = 76, tilt = -0.32;
-  ctx.save(); ctx.rotate(tilt); ctx.strokeStyle = C.suit; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(0, 0, 122, 30, 0, Math.PI, TAU); ctx.stroke(); ctx.restore();
-  ctx.fillStyle = C.mintMid; ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.fill();
-  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.clip();
-  ctx.fillStyle = C.mint; ctx.beginPath(); ctx.ellipse(-8, -44, 92, 15, -0.12, 0, TAU); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(20, 40, 80, 9, -0.12, 0, TAU); ctx.fill();
-  ctx.fillStyle = "#4E9486";
-  for (const [cx, cy, cr] of [[-34, 2, 13], [30, -8, 8], [8, 14, 5], [-12, 58, 9], [48, 22, 6]]) { ctx.beginPath(); ctx.arc(cx, cy, cr, 0, TAU); ctx.fill(); }
-  ctx.restore();
-  ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.stroke();
-  ctx.save(); ctx.rotate(tilt); ctx.strokeStyle = C.suit; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(0, 0, 122, 30, 0, 0, Math.PI); ctx.stroke();
-  ctx.strokeStyle = C.suitLine; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(0, 0, 125, 33, 0, 0, Math.PI); ctx.stroke(); ctx.restore();
-}
-function drawSatellite(ctx: Ctx, t: number) {
-  ctx.rotate(-0.28 + Math.sin(t * 0.5) * 0.05);
-  ctx.strokeStyle = C.rockLine; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-40, 0); ctx.lineTo(40, 0); ctx.stroke();
-  solarPanel(ctx, -92, -18, 52, 36); solarPanel(ctx, 40, -18, 52, 36);
-  ctx.strokeStyle = C.suitLine; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, -22); ctx.lineTo(0, -38); ctx.stroke();
-  ctx.fillStyle = C.ink; ctx.strokeStyle = C.suitLine; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(0, -50, 15, 0.12 * Math.PI, 0.88 * Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = C.suit; roundRect(ctx, -30, -23, 60, 46, 11); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = C.bg; ctx.beginPath(); ctx.arc(0, 0, 14, 0, TAU); ctx.fill();
-  ctx.fillStyle = C.mint; ctx.beginPath(); ctx.moveTo(-4.5, -7); ctx.lineTo(8, 0); ctx.lineTo(-4.5, 7); ctx.closePath(); ctx.fill();
-}
-function drawBase(ctx: Ctx) {
-  ctx.fillStyle = C.rock; ctx.strokeStyle = C.rockLine; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(-96, 14); ctx.quadraticCurveTo(-100, -8, -70, -10); ctx.lineTo(70, -10); ctx.quadraticCurveTo(102, -6, 96, 18);
-  ctx.quadraticCurveTo(84, 50, 34, 54); ctx.quadraticCurveTo(-2, 66, -40, 52); ctx.quadraticCurveTo(-88, 46, -96, 14); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = C.rockDark;
-  for (const [cx, cy, rx, ry] of [[-56, 18, 14, 7], [44, 28, 18, 8], [-8, 40, 9, 4], [74, 6, 7, 3]]) { ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU); ctx.fill(); }
-  ctx.fillStyle = C.mint; ctx.strokeStyle = C.mintDeep; ctx.beginPath(); ctx.arc(-6, -10, 44, Math.PI, TAU); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.strokeStyle = C.mintMid; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(-6, -10, 30, Math.PI, TAU); ctx.moveTo(-6, -54); ctx.lineTo(-6, -10); ctx.stroke();
-  ctx.fillStyle = C.bg; roundRect(ctx, -17, -32, 22, 22, 6); ctx.fill();
-  ctx.strokeStyle = C.mint; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-6, -25); ctx.lineTo(-6, -15); ctx.moveTo(-6, -25); ctx.quadraticCurveTo(-10, -28, -13, -26);
-  ctx.lineTo(-13, -16); ctx.quadraticCurveTo(-10, -18, -6, -15); ctx.quadraticCurveTo(-2, -18, 1, -16); ctx.lineTo(1, -26); ctx.quadraticCurveTo(-2, -28, -6, -25); ctx.stroke();
-  ctx.fillStyle = C.suit; ctx.strokeStyle = C.suitLine; ctx.lineWidth = 1.4; roundRect(ctx, 52, -44, 16, 34, 4); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = C.bg; roundRect(ctx, 56, -38, 8, 7, 2); ctx.fill();
-  ctx.strokeStyle = C.suitLine; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(60, -44); ctx.lineTo(60, -70); ctx.stroke();
-  ctx.fillStyle = C.green; ctx.beginPath(); ctx.moveTo(61, -70); ctx.lineTo(80, -64); ctx.lineTo(61, -58); ctx.closePath(); ctx.fill();
-}
-function drawTable(ctx: Ctx, occupied: boolean, simple: boolean) {
-  ctx.fillStyle = C.soft; ctx.strokeStyle = occupied ? C.mint : C.rockLine; ctx.lineWidth = occupied ? 2 : 1.4;
-  ctx.beginPath(); ctx.arc(0, 0, 44, 0, TAU); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = C.panel; ctx.strokeStyle = C.line; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(0, 0, 30, 0, TAU); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = C.mint; ctx.font = "700 17px ui-monospace, SFMono-Regular, Menlo, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("</>", 0, 1);
-  if (simple) return;
-  ctx.strokeStyle = C.rockLine; ctx.lineWidth = 1.4; ctx.setLineDash([3, 4]);
-  for (let k = 0; k < 4; k++) { const s = seatPos({ x: 0, y: 0 }, k); ctx.beginPath(); ctx.arc(s.x, s.y, 9, 0, TAU); ctx.stroke(); }
-  ctx.setLineDash([]);
-}
-
-// ───────── Robots de la casa ─────────
-// No son miembros y no cuentan en «N en el club». Su ruta depende sólo del reloj, así todas las
-// personas los ven en el mismo lugar sin pasar por el servidor.
-const BOTS: Array<{ id: string; name: string; look: Look; note: string; at: (t: number) => { x: number; y: number } }> = [
-  { id: "bot:ghosty", name: "Ghosty", look: { model: "saucer", color: "mint", pilot: "ghosty" }, note: "Robot de la casa · cuida la Sala en vivo",
-    at: (t) => ({ x: 800 + Math.cos(t * 0.2) * 178, y: 390 + Math.sin(t * 0.2) * 178 }) },
-  { id: "bot:uno", name: "Robot Uno", look: { model: "pod", color: "blue", pilot: "robot" }, note: "Robot de la casa · le da vueltas al Planeta Muro",
-    at: (t) => ({ x: 290 + Math.cos(-t * 0.17 + 2) * 150, y: 250 + Math.sin(-t * 0.17 + 2) * 132 }) },
-  { id: "bot:dos", name: "Robot Dos", look: { model: "dart", color: "blue", pilot: "robot" }, note: "Robot de la casa · patrulla el lado este del mapa",
-    at: (t) => ({ x: 1160 + Math.sin(t * 0.21) * 120, y: 500 + Math.sin(t * 0.105 + 1) * 190 }) },
-];
-
-export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElement; meId: string; meName: string; mePhoto: string | null; look: Look; quiet: boolean; callbacks: Callbacks }): WorldApi {
-  const { canvas: cv, stage, callbacks: cb } = opts;
-  const ctx = cv.getContext("2d") as Ctx;
+export function createWorld(opts: {
+  canvas: HTMLCanvasElement; stage: HTMLElement; cartridge: Pick<Cartridge, "structure" | "copy" | "mode">; skin: WorldSkin;
+  meId: string; meName: string; mePhoto: string | null; look: Look; quiet: boolean; callbacks: Callbacks;
+}): WorldApi {
+  const { stage, callbacks: cb } = opts;
+  const S = opts.cartridge.structure, copy = opts.cartridge.copy;
+  const { w: WORLD_W, h: WORLD_H } = S.size;
+  const TABLES = S.tables, BOTS = S.bots, M = S.movement, G = S.combat;
+  const BOT_HP = G?.bot.hp ?? 0, WARP = G?.bot.warp ?? 0;
+  /** Amenaza del cartucho (sólo con juego). */
+  const T = G ? S.threat ?? null : null;
+  const renderer = opts.skin.createRenderer({
+    canvas: opts.canvas, stage, structure: S,
+    // Ganchos para skins con menús propios: caminar a un punto, saludar y sonar pasan por el motor.
+    motor: { walkTo: (p) => flyTo(p.x, p.y), greet: (id) => cb.onGreet?.(id), sound: (name) => cb.onSound(name) },
+  });
+  const emit = (ev: WorldEvent) => renderer.event?.(ev);
   const state = {
-    mini: false, quiet: opts.quiet, open: false, stationSub: "", animT: 0,
+    mini: false, quiet: opts.quiet, animT: 0,
     keys: new Set<string>(), joy: { x: 0, y: 0 }, moved: false, wasFlying: false,
-    nearPlace: null as Place | null, nearShip: null as Entity | null, fx: [] as Fx[], marker: null as { x: number; y: number; t: number } | null,
+    nearPlace: null as Place | null, nearShip: null as Entity | null, bubbles: [] as Bubble[], marker: null as { x: number; y: number; t: number } | null,
+    /** Puntos que faltan por recorrer después del destino actual (sólo con `movement.route`). */
+    path: [] as Point[],
+    placeStatus: {} as Record<string, { on: boolean; sub: string }>,
     hidden: new Set<string>(), dead: false,
-    pickups: [] as Pickup[], shots: [] as Shot[], weapon: null as { kind: WeaponKind; left: number } | null, shotT: 9, kindTurn: 0,
+    pickups: [] as Pickup[], shots: [] as Shot[], weapon: null as { kind: string; left: number } | null, shotT: 9, kindTurn: 0,
+    /** Amenaza: fase, ciclo en curso, ciclo en que ya fue derribada, reloj de su disparo, segundos que llevas avisado y sus disparos. */
+    threatPhase: "away" as "away" | "warn" | "here", threatCycle: -1, threatKilled: -1, threatShotT: 0, threatSeenT: 0, hostile: [] as Shot[],
+    downShown: null as number | null,
   };
   const entity = (id: string, kind: Entity["kind"], name: string, look: Look, x: number, y: number): Entity => ({
     id, kind, name, first: firstName(name), photoURL: null, note: null, x, y, vx: 0, vy: 0, ang: -Math.PI / 2, thrust: 0,
     model: look.model, color: look.color, pilot: look.pilot, tx: null, ty: null, table: null, seat: null,
-    bob: (id.length * 1.7) % TAU, waveT: 0, face: null, shakeT: 0, hp: BOT_HP, healT: 0, downT: 0, warpT: 0,
+    bob: (id.length * 1.7) % TAU, waveT: 0, face: null, shakeT: 0, hp: BOT_HP, healT: 0, downT: 0, warpT: 0, shieldT: 0, leaveT: 0,
   });
-  const player = entity("me", "me", opts.meName, opts.look, 800, 650);
+  const player = entity("me", "me", opts.meName, opts.look, S.spawn.x, S.spawn.y);
   player.face = faceFor(opts.meId, opts.meName, opts.mePhoto);
+  if (T) player.hp = T.player.hp;
+  const threat = T ? entity(T.id, "bot", T.name, T.look, 0, 0) : null;
   const humans = new Map<string, Entity>();
   const bots = BOTS.map((b) => { const p = b.at(Date.now() / 1000); const e = entity(b.id, "bot", b.name, b.look, p.x, p.y); e.note = b.note; return e; });
-  /** Las demás naves que hoy están en el mapa (un robot tumbado no está). */
-  const others = () => [...humans.values(), ...bots.filter((b) => b.downT <= 0)];
+  /** Las demás naves que hoy están en el mapa (un robot tumbado o una persona destruida no están). */
+  const others = () => [...humans.values(), ...bots].filter((e) => e.downT <= 0);
 
   // ── Movimiento ──
   // Llegada suave: acelera hacia el punto y frena al acercarse.
@@ -477,7 +168,10 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     return d;
   }
   function integrate(e: Entity, dt: number, max: number) {
-    e.x = clamp(e.x + e.vx * dt, 28, WORLD_W - 28); e.y = clamp(e.y + e.vy * dt, 28, WORLD_H - 28);
+    let x = clamp(e.x + e.vx * dt, M.margin, WORLD_W - M.margin), y = clamp(e.y + e.vy * dt, M.margin, WORLD_H - M.margin);
+    // Restricción del cartucho (caminos, isla…): la posición permitida más cercana.
+    if (M.constrain) { const p = M.constrain({ x, y }, { x: e.x, y: e.y }, state.hidden); x = p.x; y = p.y; }
+    e.x = x; e.y = y;
     const sp = Math.hypot(e.vx, e.vy);
     if (sp > 10) e.ang = lerpAngle(e.ang, Math.atan2(e.vy, e.vx), Math.min(1, 7 * dt));
     e.thrust += (Math.min(1, sp / max) - e.thrust) * Math.min(1, 6 * dt);
@@ -496,30 +190,62 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     const d = Math.hypot(x, y); return d > 1 ? { x: x / d, y: y / d } : { x, y };
   }
   function noteMoved() { if (!state.moved) { state.moved = true; cb.onFirstMove(); } }
+  /** Sin destino: ni punto al que ir, ni ruta pendiente, ni marca. */
+  function clearTarget() { player.tx = player.ty = null; state.marker = null; state.path.length = 0; }
+  // ── Gravedad sutil de los lugares: una curva y un empujoncito al pasar, nunca una trampa ──
+  // Cero dentro del lugar (ahí ya llegaste, y no te mete sola a zona segura), cero en la orilla de su
+  // alcance y cero si vas despacio: una nave quieta o que llega frenando no se mueve sola.
+  const GRAV = M.gravity ?? 0, GRAV_CAP = M.accel * 0.25, GRAV_SLOW = M.maxSpeed * 0.2, GRAV_FAST = M.maxSpeed * 0.6, GRAV_CLICK = 0.35;
+  const calm = typeof window.matchMedia === "function" && (window.matchMedia("(prefers-reduced-motion: reduce)").matches || window.matchMedia("(pointer: coarse)").matches);
+  function gravity(dt: number, k: number) {
+    if (GRAV <= 0 || calm || state.quiet || state.mini || view.vw < 640) return;
+    const sp = Math.hypot(player.vx, player.vy), gate = clamp((sp - GRAV_SLOW) / (GRAV_FAST - GRAV_SLOW), 0, 1);
+    if (gate <= 0) return;
+    for (const p of places) {
+      const g = p.gravity; if (!g || g.radius <= p.r) continue;
+      const dx = p.x - player.x, dy = p.y - player.y, d = Math.hypot(dx, dy);
+      if (d <= p.r || d >= g.radius) continue;
+      // Campana entre la orilla del lugar y su alcance: lo más fuerte queda a medio camino.
+      const a = Math.min(g.pull * GRAV, GRAV_CAP) * Math.sin(Math.PI * ((d - p.r) / (g.radius - p.r))) * gate * k * dt;
+      player.vx += (dx / d) * a; player.vy += (dy / d) * a;
+    }
+  }
   function updatePlayer(dt: number) {
+    if (player.downT > 0) {
+      // Destruida: sin controles hasta que venza la cuenta; luego reaparece en el punto de entrada, con escudo.
+      if ((player.downT -= dt) <= 0) revivePlayer(); else showDown(Math.ceil(player.downT));
+      return;
+    }
     const inp = inputVector(), flying = !!(inp.x || inp.y);
     if (flying !== state.wasFlying) { state.wasFlying = flying; cb.onIntent(); if (flying) cb.onSound("thrust"); }
     if (flying) {
-      player.tx = player.ty = null; state.marker = null; noteMoved();
+      clearTarget(); noteMoved();
       if (player.table !== null) { player.table = player.seat = null; refreshPlace(); }
-      player.vx += inp.x * 620 * dt; player.vy += inp.y * 620 * dt;
-      const k = Math.exp(-1.7 * dt); player.vx *= k; player.vy *= k;
-      const sp = Math.hypot(player.vx, player.vy); if (sp > MAX_SPEED) { player.vx *= MAX_SPEED / sp; player.vy *= MAX_SPEED / sp; }
+      player.vx += inp.x * M.accel * dt; player.vy += inp.y * M.accel * dt;
+      gravity(dt, 1);
+      const k = Math.exp(-M.drag * dt); player.vx *= k; player.vy *= k;
+      const sp = Math.hypot(player.vx, player.vy); if (sp > M.maxSpeed) { player.vx *= M.maxSpeed / sp; player.vy *= M.maxSpeed / sp; }
     } else if (player.table !== null && player.seat !== null) {
-      const s = seatPos(TABLES[player.table], player.seat);
-      if (steer(player, s.x, s.y, 220, dt) < 10) faceTable(player, dt);
+      const s = TABLES[player.table].seats[player.seat];
+      if (steer(player, s.x, s.y, M.seatSpeed, dt) < 10) faceTable(player, dt);
     } else if (player.tx !== null && player.ty !== null) {
-      if (steer(player, player.tx, player.ty, MAX_SPEED, dt, 150) < 8) { player.tx = player.ty = null; state.marker = null; }
-    } else { const k = Math.exp(-2.6 * dt); player.vx *= k; player.vy *= k; }
-    integrate(player, dt, MAX_SPEED);
+      if (steer(player, player.tx, player.ty, M.maxSpeed, dt, 150) < 8) {
+        // Llegó: sigue con el siguiente punto de la ruta, o se queda.
+        const next = state.path.shift();
+        if (next) { player.tx = next.x; player.ty = next.y; cb.onIntent(); } else clearTarget();
+      } else gravity(dt, GRAV_CLICK); // con destino por clic, apenas una curva: el clic llega a donde tocaste
+    } else { gravity(dt, 1); const k = Math.exp(-M.idleDrag * dt); player.vx *= k; player.vy *= k; }
+    integrate(player, dt, M.maxSpeed);
   }
   function updateHuman(e: Entity, dt: number) {
+    if (e.downT > 0) return; // destruida: no está en el mapa
+    if (e.warpT > 0 && (e.warpT -= dt) <= 0) { e.warpT = 0; emit({ type: "bot-back", entity: e }); }
     // Entre lectura y lectura la nave vuela sola hacia su último destino conocido.
-    if (e.table !== null && e.seat !== null) {
-      const s = seatPos(TABLES[e.table], e.seat);
-      if (steer(e, s.x, s.y, 220, dt) < 10) faceTable(e, dt);
-    } else if (e.tx !== null && e.ty !== null) steer(e, e.tx, e.ty, MAX_SPEED, dt, 150);
-    integrate(e, dt, MAX_SPEED);
+    if (e.table !== null && e.seat !== null && TABLES[e.table]?.seats[e.seat]) {
+      const s = TABLES[e.table].seats[e.seat];
+      if (steer(e, s.x, s.y, M.seatSpeed, dt) < 10) faceTable(e, dt);
+    } else if (e.tx !== null && e.ty !== null) steer(e, e.tx, e.ty, M.maxSpeed, dt, 150);
+    integrate(e, dt, M.maxSpeed);
     if (e.waveT > 0) e.waveT -= dt;
   }
   function updateBots(dt: number) {
@@ -534,11 +260,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         if ((e.downT -= dt) <= 0) { e.downT = 0; e.warpT = WARP; if (!state.mini && onScreen(e)) cb.onSound("warp", true); }
         return;
       }
-      if (e.warpT > 0 && (e.warpT -= dt) <= 0) {
-        e.warpT = 0;
-        state.fx.push({ kind: "ring", x: e.x, y: e.y, t: 0, dur: 0.3, r: 64, color: C.ink });
-        for (let k = 0; k < 6; k++) { const b = (k * TAU) / 6 + 0.4; state.fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * 80, vy: Math.sin(b) * 80, t: 0, dur: 0.35, color: C.mint }); }
-      }
+      if (e.warpT > 0 && (e.warpT -= dt) <= 0) { e.warpT = 0; emit({ type: "bot-back", entity: e }); }
       if (e.healT > 0 && (e.healT -= dt) <= 0) e.hp = BOT_HP;
       const face = e.waveT > 0 ? Math.atan2(player.y - e.y, player.x - e.x) : heading;
       e.ang = lerpAngle(e.ang, face, Math.min(1, 5 * dt));
@@ -546,17 +268,22 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     });
   }
   function flyTo(x: number, y: number) {
+    if (player.downT > 0) return;
     noteMoved();
     if (player.table !== null) { player.table = player.seat = null; refreshPlace(); }
-    x = clamp(x, 40, WORLD_W - 40); y = clamp(y, 40, WORLD_H - 40);
-    if (state.quiet) { player.x = x; player.y = y; player.vx = player.vy = 0; player.tx = player.ty = null; state.marker = null; } // sin vuelo: salta
-    else { player.tx = x; player.ty = y; state.marker = { x, y, t: 0 }; cb.onSound("thrust"); }
+    x = clamp(x, M.targetMargin, WORLD_W - M.targetMargin); y = clamp(y, M.targetMargin, WORLD_H - M.targetMargin);
+    // Con ruta del cartucho se va punto por punto; sin ella, en línea recta.
+    const path = M.route ? M.route({ x: player.x, y: player.y }, { x, y }, state.hidden) : [{ x, y }];
+    const end = path[path.length - 1];
+    if (!end) return;
+    if (state.quiet) { clearTarget(); player.x = end.x; player.y = end.y; player.vx = player.vy = 0; } // sin vuelo: salta
+    else { player.tx = path[0].x; player.ty = path[0].y; state.path = path.slice(1); state.marker = { x: end.x, y: end.y, t: 0 }; cb.onSound("thrust"); }
     cb.onIntent();
   }
 
   // ── Cercanía ──
   // Un lugar sólo existe si lleva a algo que funciona (sin grabaciones no hay satélite).
-  let places = PLACES;
+  let places = S.places;
   function placeOf(e: { x: number; y: number }) {
     let best: Place | null = null, bd = 0;
     for (const p of places) { const d = Math.hypot(e.x - p.x, e.y - p.y) - p.r; if (d < 0 && (!best || d < bd)) { best = p; bd = d; } }
@@ -565,11 +292,11 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
   const tableCount = (i: number) => [...humans.values(), player].filter((e) => e.table === i).length;
   function refreshPlace() {
     const p = state.nearPlace;
-    cb.onPlace(p ? { id: p.id, kind: p.kind, name: p.name, table: p.table } : null);
+    cb.onPlace(p ? { id: p.id, target: p.target, kind: p.kind, name: p.name, table: p.table } : null);
   }
   function shipInfo(e: Entity): ShipInfo {
     const p = placeOf(e);
-    const where = e.kind === "bot" ? "" : p ? (p.kind === "table" ? `en la mesa «${p.short}»` : `en ${p.name}`) : "volando por el club";
+    const where = e.kind === "bot" ? "" : p ? (p.table !== null ? `en la mesa «${p.short}»` : `en ${p.name}`) : copy.roaming;
     return { id: e.id, name: e.name, photoURL: e.photoURL, isBot: e.kind === "bot", where, note: e.note };
   }
   function updateProximity() {
@@ -577,7 +304,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     if (p !== state.nearPlace) { state.nearPlace = p; refreshPlace(); if (p) cb.onSound("arrive"); }
     // Una persona cerca siempre gana sobre un robot de la casa; entre iguales, la más cercana.
     let near: Entity | null = null, nd = Infinity;
-    for (const group of [[...humans.values()], bots.filter((b) => b.downT <= 0 && b.warpT <= 0)]) {
+    for (const group of [[...humans.values()].filter((e) => e.downT <= 0), bots.filter((b) => b.downT <= 0 && b.warpT <= 0)]) {
       for (const e of group) {
         const d = Math.hypot(e.x - player.x, e.y - player.y);
         if (d < (e === state.nearShip ? 150 : 112) && d < nd) { near = e; nd = d; } // histéresis: la tarjeta no parpadea
@@ -587,56 +314,20 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     if (near !== state.nearShip) { state.nearShip = near; cb.onShip(near ? shipInfo(near) : null); }
   }
   function counts(): Counts {
-    const n: Counts = { humans: humans.size + 1, live: 0, wall: 0, recs: 0, courses: 0, tables: 0, flying: 0, perTable: TABLES.map((_, i) => tableCount(i)) };
+    const n: Counts = { humans: humans.size + 1, flying: 0, tables: 0, perTable: TABLES.map((_, i) => tableCount(i)), byPlace: {} };
+    for (const p of S.places) if (p.table === null) n.byPlace[p.id] = 0;
     for (const e of [player, ...humans.values()]) {
       const p = placeOf(e);
-      if (!p) n.flying++; else if (p.kind === "table") n.tables++; else n[p.id as "live" | "wall" | "recs" | "courses"]++;
+      if (!p) n.flying++; else if (p.table !== null) n.tables++; else n.byPlace[p.id]++;
     }
     return n;
   }
 
-  // ── Fondo: estrellas con la paleta (nunca negro plano) ──
-  const starTile = document.createElement("canvas"); starTile.width = starTile.height = 512;
-  {
-    const g = starTile.getContext("2d") as Ctx, rnd = seeded(3);
-    for (let i = 0; i < 90; i++) {
-      const x = rnd() * 512, y = rnd() * 512, r = 0.5 + rnd() * 1.1, k = rnd();
-      g.globalAlpha = 0.35 + rnd() * 0.45; g.fillStyle = k < 0.55 ? C.gray : k < 0.85 ? C.ink : C.mint;
-      g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
-    }
-    for (let i = 0; i < 7; i++) { g.globalAlpha = 0.55; g.fillStyle = i % 3 ? C.ink : C.mint; sparkle(g, 30 + rnd() * 452, 30 + rnd() * 452, 3.5 + rnd() * 3.5); g.fill(); }
-  }
-  const twinkles = (() => { const rnd = seeded(11); return Array.from({ length: 14 }, () => ({ x: rnd() * WORLD_W, y: rnd() * WORLD_H, r: 4 + rnd() * 5, ph: rnd() * TAU, mint: rnd() < 0.4 })); })();
-  function drawDecor(t: number) {
-    ctx.fillStyle = C.panel; ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(1668, 505, 150, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = C.soft; for (const [x, y, r] of [[1590, 450, 22], [1610, 560, 12], [1560, 512, 7]]) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
-    ctx.save(); ctx.translate(985, 905); ctx.rotate(-0.25); ctx.lineCap = "round";
-    for (const [rx, ry, a0, a1, w, col] of [[92, 30, 0.1, 2.6, 7, C.line], [92, 30, 3.3, 5.7, 7, C.line], [56, 17, 0.5, 3.0, 6, C.soft], [56, 17, 3.7, 6.0, 6, C.soft]] as const) {
-      ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, a0, a1); ctx.stroke();
-    }
-    ctx.fillStyle = C.line; ctx.beginPath(); ctx.ellipse(0, 0, 16, 7, 0, 0, TAU); ctx.fill(); ctx.restore();
-    ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.setLineDash([3, 11]); ctx.beginPath(); ctx.arc(800, 390, 176, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-    for (const s of twinkles) { const k = 0.55 + 0.45 * Math.sin(t * 1.3 + s.ph); ctx.globalAlpha = 0.25 + 0.5 * k; ctx.fillStyle = s.mint ? C.mint : C.ink; sparkle(ctx, s.x, s.y, s.r * (0.6 + 0.4 * k)); ctx.fill(); }
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = "rgba(20, 27, 32, .55)"; ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.setLineDash([7, 7]);
-    roundRect(ctx, ZONE.x, ZONE.y, ZONE.w, ZONE.h, 34); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
-  }
-  function drawPlace(p: Place, t: number, boost: number, simple: boolean) {
-    ctx.save(); ctx.translate(p.x, p.y); ctx.scale(boost, boost);
-    if (p.kind === "station") drawStation(ctx, state.open, t);
-    else if (p.kind === "planet") drawPlanet(ctx);
-    else if (p.kind === "satellite") drawSatellite(ctx, t);
-    else if (p.kind === "base") drawBase(ctx);
-    else drawTable(ctx, tableCount(p.table as number) > 0, simple);
-    ctx.restore();
-  }
-
-  // ── Vista ──
-  const view = { vw: 1, vh: 1, dpr: 1, scale: 1, camx: 0, camy: 0, ox: 0, oy: 0 };
-  const toScreen = (x: number, y: number) => ({ x: (x - view.camx) * view.scale + view.ox, y: (y - view.camy) * view.scale + view.oy });
+  // ── Vista: cámara lógica 2D (la skin puede pintar con ella o traer su propia proyección) ──
+  const view: View = { vw: 1, vh: 1, scale: 1, camx: 0, camy: 0, ox: 0, oy: 0 };
+  const toScreen = (x: number, y: number) => renderer.toScreen?.(x, y) ?? { x: (x - view.camx) * view.scale + view.ox, y: (y - view.camy) * view.scale + view.oy };
   const onScreen = (p: { x: number; y: number }) => { const s = toScreen(p.x, p.y); return s.x > -40 && s.x < view.vw + 40 && s.y > -40 && s.y < view.vh + 40; };
-  const toWorld = (sx: number, sy: number) => ({ x: (sx - view.ox) / view.scale + view.camx, y: (sy - view.oy) / view.scale + view.camy });
-  let starPattern: CanvasPattern | null = null;
+  const toWorld = (sx: number, sy: number) => (renderer.toWorld ? renderer.toWorld(sx, sy) : { x: (sx - view.ox) / view.scale + view.camx, y: (sy - view.oy) / view.scale + view.camy });
   function updateCamera(k: number) {
     if (state.mini) return;
     const vwW = view.vw / view.scale, vhW = view.vh / view.scale;
@@ -645,265 +336,146 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
   }
   function measure() {
     const r = stage.getBoundingClientRect();
-    view.vw = Math.max(1, r.width); view.vh = Math.max(1, r.height); view.dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = Math.round(view.vw * view.dpr); cv.height = Math.round(view.vh * view.dpr);
-    starPattern = ctx.createPattern(starTile, "repeat");
+    view.vw = Math.max(1, r.width); view.vh = Math.max(1, r.height);
     if (state.mini) {
       // Mapa reducido: el mundo completo a la vista.
       view.scale = Math.min(view.vw / WORLD_W, view.vh / WORLD_H); view.camx = view.camy = 0;
       view.ox = (view.vw - WORLD_W * view.scale) / 2; view.oy = (view.vh - WORLD_H * view.scale) / 2;
     } else {
-      view.scale = clamp(Math.max(view.vw / WORLD_W, view.vh / WORLD_H), view.vw < 640 ? 0.66 : 0.75, 1.5); view.ox = view.oy = 0;
+      view.scale = clamp(Math.max(view.vw / WORLD_W, view.vh / WORLD_H), view.vw < 640 ? S.camera.minScaleNarrow : S.camera.minScale, S.camera.maxScale); view.ox = view.oy = 0;
       updateCamera(1);
     }
+    renderer.resize(view, state.mini);
+  }
+  // El cuadro que se le entrega a la skin: un solo objeto que se actualiza antes de pintar.
+  const frame: WorldFrame = {
+    t: 0, dt: 0, mini: false, quiet: state.quiet, view, player, others: [], places, placeStatus: state.placeStatus, tableCounts: [],
+    nearPlace: null, nearEntity: null, marker: null, bubbles: state.bubbles, pickups: state.pickups, shots: state.shots,
+    threat: null, hostile: state.hostile,
+  };
+  function render(dt: number) {
+    frame.t = state.animT; frame.dt = dt; frame.mini = state.mini; frame.quiet = state.quiet;
+    frame.others = others(); frame.places = places; frame.tableCounts = TABLES.map((_, i) => tableCount(i));
+    frame.nearPlace = state.nearPlace; frame.nearEntity = state.nearShip; frame.marker = state.marker;
+    frame.bubbles = state.bubbles; frame.shots = state.shots; frame.hostile = state.hostile;
+    frame.threat = !threat ? null : state.threatPhase === "away" ? (threat.leaveT > 0 ? { entity: threat, phase: "leaving" } : null) : { entity: threat, phase: state.threatPhase };
+    renderer.render(frame);
   }
 
-  type LabelOpts = { size?: number; weight?: number; bg?: string; stroke?: string; color?: string; free?: boolean; dot?: string; img?: HTMLImageElement | null };
-  /** Pastilla de texto en coordenadas de pantalla (nítida a cualquier escala). */
-  function label(x: number, y: number, text: string, o: LabelOpts = {}) {
-    const size = o.size ?? 11; ctx.font = `${o.weight ?? 600} ${size}px ${FONT}`;
-    const lead = o.dot ? size + 7 : 0, w = ctx.measureText(text).width + 14 + lead, h = size + 8;
-    // `free`: la etiqueta se va con el mundo; si no, se queda dentro del cuadro.
-    const bx = o.free ? x - w / 2 : clamp(x - w / 2, 4, Math.max(4, view.vw - w - 4));
-    ctx.fillStyle = o.bg ?? "rgba(20, 27, 32, .94)"; ctx.strokeStyle = o.stroke ?? C.line; ctx.lineWidth = 1;
-    roundRect(ctx, bx, y, w, h, h / 2); ctx.fill(); ctx.stroke();
-    if (o.dot) {
-      const cx = bx + h / 2, cy = y + h / 2, cr = h / 2 - 2.5;
-      ctx.fillStyle = o.dot; ctx.beginPath(); ctx.arc(cx, cy, cr, 0, TAU); ctx.fill();
-      if (o.img && o.img.complete && o.img.naturalWidth) {
-        // Foto real del miembro, recortada en círculo.
-        ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, cr, 0, TAU); ctx.clip();
-        const iw = o.img.naturalWidth, ih = o.img.naturalHeight, side = Math.min(iw, ih);
-        ctx.drawImage(o.img, (iw - side) / 2, (ih - side) / 2, side, side, cx - cr, cy - cr, cr * 2, cr * 2); ctx.restore();
-      }
-    }
-    ctx.fillStyle = o.color ?? C.ink; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(text, bx + 7 + lead, y + h / 2 + 0.5);
-    return h;
+  // ── Modo de juego del cartucho (opcional): sus reglas corren aquí, cada cuadro, sin DOM ni red ──
+  let mode: GameMode | null = opts.cartridge.mode?.() ?? null, shared: SharedState = {}, hudKey = "null";
+  const modeCtx: ModeContext = {
+    now: 0, meId: opts.meId, player, others: [], places, nearPlace: null, shared,
+    sound: (name) => cb.onSound(name),
+    bubble: (entity, text) => { state.bubbles = state.bubbles.filter((b) => b.entity !== entity || b.say); state.bubbles.push({ entity, text: text.slice(0, 60), t: 0, dur: 1.6 }); },
+    hud: (hud) => { const key = JSON.stringify(hud); if (key !== hudKey) { hudKey = key; cb.onHud?.(hud); } },
+    propose: (key, value) => { if (S.shared && key in S.shared) cb.onShare?.(key, value); },
+  };
+  function updateMode(dt: number) {
+    if (!mode || state.mini) return;
+    modeCtx.now = Date.now() / 1000; modeCtx.others = others(); modeCtx.places = places; modeCtx.nearPlace = state.nearPlace; modeCtx.shared = shared;
+    try { mode.update(modeCtx, dt); }
+    catch (err) { console.error("[mundo] el modo de juego falló y se apagó", err); mode = null; modeCtx.hud(null); }
   }
-  function drawEdgeHints() {
-    // Lugares fuera de cuadro: una flechita con su nombre en la orilla.
-    const { vw, vh } = view, top = 56, m = 12;
-    for (const p of places) {
-      if (p.kind === "table" && p.table !== 1) continue;
-      const s = toScreen(p.x, p.y); if (s.x > -20 && s.x < vw + 20 && s.y > top - 40 && s.y < vh + 20) continue;
-      const name = p.kind === "table" ? "Mesas" : p.short;
-      ctx.font = `600 10px ${FONT}`; const w = ctx.measureText(name).width + 28, h = 20;
-      const cx = clamp(s.x, m + w / 2, vw - m - w / 2), cy = clamp(s.y, top + h / 2, vh - m - h / 2 - 4);
-      ctx.fillStyle = "rgba(20, 27, 32, .94)"; ctx.strokeStyle = C.line; ctx.lineWidth = 1; roundRect(ctx, cx - w / 2, cy - h / 2, w, h, 10); ctx.fill(); ctx.stroke();
-      ctx.save(); ctx.translate(cx - w / 2 + 11, cy); ctx.rotate(Math.atan2(s.y - cy, s.x - cx)); ctx.fillStyle = C.mint;
-      ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(-3, -4); ctx.lineTo(-3, 4); ctx.closePath(); ctx.fill(); ctx.restore();
-      ctx.fillStyle = C.gray; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(name, cx - w / 2 + 20, cy + 0.5);
-    }
-  }
-  function render() {
-    const { vw, vh, dpr, scale } = view, t = state.animT, mini = state.mini;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, vw, vh);
-    const px = mini ? 0 : view.camx * scale * 0.4, py = mini ? 0 : view.camy * scale * 0.4;
-    if (starPattern) { ctx.save(); ctx.translate(-px, -py); ctx.fillStyle = starPattern; ctx.fillRect(px, py, vw, vh); ctx.restore(); }
 
-    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * (view.ox - view.camx * scale), dpr * (view.oy - view.camy * scale));
-    drawDecor(t);
-    for (const p of places) drawPlace(p, t, p.kind === "table" ? (mini ? 1.25 : 1) : mini ? 1.45 : 1, mini);
-    const all = others();
-    if (mini) {
-      for (const e of all) {
-        // En el mapa chico las demás naves son puntos de su color.
-        ctx.fillStyle = colorOf(e.color).fill; ctx.strokeStyle = C.bg; ctx.lineWidth = 1.5 / scale;
-        ctx.beginPath(); ctx.arc(e.x, e.y, (e.kind === "bot" ? 3.2 : 4.4) / scale, 0, TAU); ctx.fill(); ctx.stroke();
-      }
-      if (state.marker) {
-        ctx.strokeStyle = C.mint; ctx.lineWidth = 1.5 / scale; ctx.setLineDash([3 / scale, 3 / scale]);
-        ctx.beginPath(); ctx.moveTo(player.x, player.y); ctx.lineTo(state.marker.x, state.marker.y); ctx.stroke(); ctx.setLineDash([]);
-      }
-      drawShip(ctx, player, player.x, player.y, 30 / scale, t);
-    } else {
-      if (state.marker) {
-        // A dónde va tu nave.
-        const m = state.marker, f = (m.t * 1.4) % 1;
-        ctx.strokeStyle = C.mint; ctx.lineWidth = 1.6; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(m.x, m.y, 14, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-        ctx.globalAlpha = 1 - f; ctx.beginPath(); ctx.arc(m.x, m.y, 14 + f * 12, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
-        ctx.fillStyle = C.mint; ctx.beginPath(); ctx.arc(m.x, m.y, 3, 0, TAU); ctx.fill();
-      }
-      if (state.nearShip) {
-        // Marca mínima de selección: un anillo alrededor de la nave que tienes cerca.
-        const e = state.nearShip;
-        ctx.strokeStyle = C.mint; ctx.lineWidth = 1.6; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(e.x, e.y, 38, t * 0.6, t * 0.6 + TAU); ctx.stroke(); ctx.setLineDash([]);
-      }
-      if (!state.quiet) for (const p of state.pickups) if (p.alive) drawPickup(p, t);
-      for (const e of [...all, player].sort((a, b) => a.y - b.y)) {
-        const bob = e.kind === "me" || state.quiet ? 0 : Math.sin(t * 1.6 + e.bob) * 2.2;
-        // Temblor amortiguado: 2–3 px que se apagan en un cuarto de segundo.
-        const k = e.shakeT > 0 ? e.shakeT / SHAKE : 0, sx = k ? Math.sin((SHAKE - e.shakeT) * 80) * SHAKE_PX * k : 0, sy = k ? Math.cos((SHAKE - e.shakeT) * 63) * SHAKE_PX * 0.5 * k : 0;
-        if (e.warpT > 0) { drawWarp(e, t); continue; }
-        drawShip(ctx, e, e.x + sx, e.y + bob + sy, 56, t);
-        // Robot golpeado: tres rayitas arriba de la nave, las que le quedan en menta.
-        if (e.kind === "bot" && e.hp < BOT_HP) for (let i = 0; i < BOT_HP; i++) { ctx.fillStyle = i < e.hp ? C.mint : C.rockLine; roundRect(ctx, e.x - 13 + i * 9.5, e.y + bob - 44, 7, 4, 2); ctx.fill(); }
-      }
-      for (const s of state.shots) drawShot(s);
-      for (const f of state.fx) if (f.kind === "ring") {
-        // Un aro que crece lo que dura su sonido (onda, bomba, explosión, llegada).
-        const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.strokeStyle = f.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.14 + 0.86 * k), 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
-      }
-      for (const f of state.fx) if (f.kind === "debris") {
-        // Pedazos de la nave: salen girando, se frenan y se apagan.
-        const k = f.t / f.dur, d = f.t * (1 - 0.4 * k);
-        ctx.save(); ctx.translate(f.x + f.vx * d, f.y + f.vy * d); ctx.rotate(f.rot + f.spin * f.t); ctx.globalAlpha = 1 - k * k;
-        ctx.fillStyle = f.color; roundRect(ctx, -f.size / 2, -f.size / 3, f.size, f.size * 0.66, 2); ctx.fill(); ctx.restore();
-      }
-      for (const f of state.fx) if (f.kind === "flash") {
-        // Destello al atrapar: un aro que se abre y se apaga.
-        const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.strokeStyle = C.ink; ctx.lineWidth = 3 * (1 - k) + 1; ctx.beginPath(); ctx.arc(f.x, f.y, 8 + 26 * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
-      }
-      for (const f of state.fx) if (f.kind === "spark") {
-        const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.fillStyle = f.color; sparkle(ctx, f.x + f.vx * f.t, f.y + f.vy * f.t, 7 * (1 - k * 0.5)); ctx.fill(); ctx.globalAlpha = 1;
-      }
-    }
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (mini) {
-      for (const p of places) if (p.kind !== "table") { const s = toScreen(p.x, p.y + (p.kind === "station" ? 96 : p.labelDy) * 1.45); label(s.x, Math.min(s.y, vh - 22), p.short, { size: 10 }); }
-      const z = toScreen(ZONE.x + ZONE.w / 2, ZONE.y + ZONE.h); label(z.x, Math.min(z.y - 9, vh - 22), "Mesas del hackatón", { size: 10 });
-      const s = toScreen(player.x, player.y); label(s.x, s.y + 17, "Tú", { size: 10, stroke: C.mint, color: C.mint });
-      return;
-    }
-    const z = toScreen(ZONE.x + 30, ZONE.y);
-    ctx.font = `600 11px ${FONT}`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    const zt = "MESAS DEL HACKATÓN";
-    ctx.fillStyle = C.bg; ctx.fillRect(z.x - 8, z.y - 8, ctx.measureText(zt).width + 16, 16); ctx.fillStyle = C.gray; ctx.fillText(zt, z.x, z.y + 0.5);
-    for (const p of places) {
-      const s = toScreen(p.x, p.y + p.labelDy), near = p === state.nearPlace;
-      if (p.kind === "table") { label(s.x, s.y, `${p.short} · ${tableCount(p.table as number)} de 4`, { size: 11, weight: 500, free: true, color: near ? C.ink : C.gray, stroke: near ? C.mint : C.line }); continue; }
-      const h = label(s.x, s.y, p.name, { size: 12, free: true, stroke: near ? C.mint : C.line });
-      if (p.kind === "station" && state.stationSub) { ctx.font = `500 11px ${FONT}`; ctx.textAlign = "center"; ctx.fillStyle = state.open ? C.mint : C.gray; ctx.fillText(state.stationSub, s.x, s.y + h + 10); }
-    }
-    // Con mucha gente las etiquetas se enciman: sólo llevan nombre las naves cercanas a la tuya.
-    const crowded = all.length > 9;
-    for (const e of all) {
-      const s = toScreen(e.x, e.y); if (s.x < -80 || s.x > vw + 80 || s.y < -60 || s.y > vh + 60) continue;
-      const near = e === state.nearShip;
-      if (e.warpT > 0) continue; // todavía viene llegando
-      if (crowded && !near && Math.hypot(e.x - player.x, e.y - player.y) > 300) continue;
-      if (e.kind === "bot") label(s.x, s.y + 31 * scale + 2, `${e.name} · robot`, { size: 10, weight: 500, free: true, color: near ? C.ink : C.gray, stroke: near ? C.mint : C.line });
-      else label(s.x, s.y + 31 * scale + 2, e.first, { size: 11, weight: 500, free: true, dot: colorOf(e.color).fill, img: e.face?.img ?? null, color: near ? C.ink : C.text, stroke: near ? C.mint : C.line });
-    }
-    const ps = toScreen(player.x, player.y);
-    label(ps.x, ps.y + 31 * scale + 2, "Tú", { size: 11, free: true, stroke: C.mint, color: C.mint });
-    for (const f of state.fx) if (f.kind === "bubble") {
-      const s = toScreen(f.ship.x, f.ship.y), k = f.t / f.dur, rise = state.quiet ? 0 : Math.min(1, k * 4) * 8;
-      ctx.globalAlpha = k > 0.8 ? (1 - k) / 0.2 : 1; label(s.x, s.y - 36 * scale - 18 - rise, f.text, { size: 11, bg: C.ink, color: C.bg, stroke: C.ink }); ctx.globalAlpha = 1;
-    }
-    drawEdgeHints();
+  // ── Juego: aparatos que cambian tu disparo (sólo si el cartucho trae `combat`) ──
+  // Flotan pocos aparatos por el mapa; al pasar encima lo recoges y tu disparo cambia por unos tiros.
+  // Sin aparato queda el disparo básico. El disparo se apaga en la primera nave que toca. Las naves de
+  // personas sólo tiemblan; las de los robots pierden golpes hasta estallar. No hay puntos ni marcador.
+  // En «Tranquilo» no hay juego.
+  function pickupSpot(pk: NonNullable<typeof G>["pickups"]) {
+    for (let k = 0; k < 40; k++) { const g = { x: pk.margin + Math.random() * (WORLD_W - pk.margin * 2), y: pk.margin + Math.random() * (WORLD_H - pk.margin * 2) }; if (!placeOf(g) && Math.hypot(g.x - player.x, g.y - player.y) > pk.clear) return g; }
+    return { x: pk.fallback.x, y: pk.fallback.y };
   }
-  // ── Juego: aparatos que cambian tu disparo ──
-  // Flotan pocos aparatos por el mapa; al pasar tu nave encima lo recoges y tu disparo cambia por unos
-  // tiros: «Triple» (abanico de tres), «Rayo» (largo y rápido), «Onda» (aro que alcanza a las naves
-  // cercanas), «Buscador» (da la vuelta hacia la nave más cercana), «Rebote» (rebota en las orillas del
-  // mapa) y «Bomba» (lenta, revienta y alcanza a todo lo cercano). Sin aparato queda el disparo básico.
-  // El disparo se apaga en la primera nave que toca. Las naves de personas sólo tiemblan; las de los
-  // robots pierden golpes hasta estallar. No hay puntos ni marcador. En «Tranquilo» no hay juego.
-  function pickupSpot() {
-    for (let k = 0; k < 40; k++) { const g = { x: 80 + Math.random() * (WORLD_W - 160), y: 80 + Math.random() * (WORLD_H - 160) }; if (!placeOf(g) && Math.hypot(g.x - player.x, g.y - player.y) > 220) return g; }
-    return { x: 1000, y: 120 };
-  }
-  const weaponInfo = (): WeaponInfo | null => (state.weapon ? { kind: state.weapon.kind, name: WEAPONS[state.weapon.kind].name, left: state.weapon.left } : null);
-  /** El siguiente aparato de la rueda que no esté ya flotando: así los seis pasan por el mapa. */
-  function nextKind(): WeaponKind {
-    for (let k = 0; k < WEAPON_KINDS.length; k++) {
-      const kind = WEAPON_KINDS[state.kindTurn++ % WEAPON_KINDS.length];
+  const weaponDef = (kind: string) => G?.weapons.find((w) => w.id === kind);
+  const weaponInfo = (): WeaponInfo | null => (state.weapon ? { kind: state.weapon.kind, name: weaponDef(state.weapon.kind)?.name ?? "", left: state.weapon.left } : null);
+  /** El siguiente aparato de la rueda que no esté ya flotando: así todos pasan por el mapa. */
+  function nextKind(kinds: string[]): string {
+    for (let k = 0; k < kinds.length; k++) {
+      const kind = kinds[state.kindTurn++ % kinds.length];
       if (!state.pickups.some((p) => p.alive && p.kind === kind)) return kind;
     }
-    return WEAPON_KINDS[state.kindTurn++ % WEAPON_KINDS.length];
+    return kinds[state.kindTurn++ % kinds.length];
   }
-  const fire = (a: number, kind: ShotKind = "basic") => {
-    const sp = SHOTS[kind];
-    state.shots.push({ kind, x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * sp.speed, vy: Math.sin(a) * sp.speed, t: 0, life: sp.life, dmg: sp.dmg, bounces: kind === "bounce" ? 3 : 0 });
+  const WEAPON_KINDS = G?.weapons.map((w) => w.id) ?? [];
+  const fire = (a: number, kind: string) => {
+    const sp = G?.shots[kind]; if (!sp) return;
+    state.shots.push({ kind, x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * sp.speed, vy: Math.sin(a) * sp.speed, t: 0, life: sp.life, dmg: sp.dmg, bounces: sp.bounces ?? 0 });
   };
   /** Sin ángulo dispara hacia donde apunta la nave; el clic derecho manda el ángulo hacia el cursor. */
   function shoot(angle?: number) {
-    if (state.quiet || state.mini || state.shotT < SHOT_EVERY) return;
+    if (!G || state.quiet || state.mini || player.downT > 0 || state.shotT < G.shotEvery) return;
     state.shotT = 0;
-    const a = angle ?? player.ang, w = state.weapon;
-    if (!w) { fire(a); cb.onSound("shoot"); return; }
-    if (w.kind === "triple") for (const d of [-0.2, 0, 0.2]) fire(a + d);
-    else if (w.kind === "wave") {
-      // Onda: no viaja; alcanza de una vez a las naves que estén dentro del aro.
-      state.fx.push({ kind: "ring", x: player.x, y: player.y, t: 0, dur: WAVE_DUR, r: WAVE_R, color: C.mint });
-      for (const e of targets()) if (Math.hypot(e.x - player.x, e.y - player.y) < WAVE_R) touch(e, WAVE_DMG);
-    } else fire(a, w.kind);
-    cb.onSound(WEAPONS[w.kind].sound);
+    const a = angle ?? player.ang, w = state.weapon, def = w && weaponDef(w.kind);
+    if (!w || !def) { fire(a, G.basic.shot); cb.onSound(G.basic.sound); return; }
+    if ("pulse" in def) {
+      // Aro: no viaja; alcanza de una vez a las naves que estén dentro.
+      emit({ type: "pulse", x: player.x, y: player.y, r: def.pulse.radius, dur: def.pulse.dur });
+      for (const e of targets()) if (Math.hypot(e.x - player.x, e.y - player.y) < def.pulse.radius) touch(e, def.pulse.dmg);
+    } else for (const d of def.spread ?? [0]) fire(a + d, def.shot);
+    cb.onSound(def.sound);
     if (--w.left <= 0) state.weapon = null;
     cb.onWeapon(weaponInfo());
   }
   /** Tu disparo tocó esa nave: tiembla aquí y se avisa para que su dueño también la vea temblar. */
   function touch(e: Entity, dmg: number) {
     tickle(e); cb.onSound("nudge");
+    // Al enemigo, con `needsWeapon`, sólo lo dañan los aparatos (el básico vale 0); si no, cualquier disparo le quita al menos un golpe.
+    if (e === threat) { if (state.threatPhase === "here" && (e.hp -= T?.needsWeapon ? dmg : Math.max(1, dmg)) <= 0) destroyThreat(true); return; }
     if (e.kind === "human") cb.onNudge(e.id);
-    else if (e.kind === "bot") { e.healT = BOT_HEAL; if ((e.hp -= dmg) <= 0) destroyBot(e, true); }
+    else if (e.kind === "bot" && G) { e.healT = G.bot.heal; if ((e.hp -= dmg) <= 0) destroyBot(e, true); }
   }
   /** Naves a las que un disparo les puede pegar (un robot que viene llegando todavía no). */
-  const targets = () => others().filter((e) => e.warpT <= 0);
-  /** La nave del robot estalla en pedazos de su color y desaparece; vuelve sola en `BOT_BACK` s. */
+  const targets = () => {
+    const list = others().filter((e) => e.warpT <= 0);
+    if (threat && state.threatPhase === "here" && threat.warpT <= 0) list.push(threat);
+    return list;
+  };
+  /** La nave del robot estalla y desaparece; vuelve sola en `bot.back` s. */
   function destroyBot(e: Entity, mine: boolean, silent = false) {
-    e.downT = BOT_BACK; e.warpT = 0; e.hp = BOT_HP; e.healT = 0; e.shakeT = 0; e.waveT = 0;
-    state.fx = state.fx.filter((f) => !(f.kind === "bubble" && f.ship === e));
+    e.downT = G?.bot.back ?? 0; e.warpT = 0; e.hp = BOT_HP; e.healT = 0; e.shakeT = 0; e.waveT = 0;
+    state.bubbles = state.bubbles.filter((b) => b.entity !== e);
     if (mine) cb.onBoom(e.id);
     if (silent || state.mini) return;
-    const col = colorOf(e.color);
-    state.fx.push({ kind: "ring", x: e.x, y: e.y, t: 0, dur: 0.45, r: 78, color: C.ink });
-    for (let i = 0; i < 8; i++) { const b = (i * TAU) / 8 + 0.3; state.fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * 120, vy: Math.sin(b) * 120, t: 0, dur: 0.45, color: i % 2 ? C.ink : col.fill }); }
-    for (let i = 0; i < 9; i++) {
-      const b = (i * TAU) / 9 + Math.random() * 0.5, v = 70 + Math.random() * 110;
-      state.fx.push({ kind: "debris", x: e.x, y: e.y, vx: Math.cos(b) * v, vy: Math.sin(b) * v, t: 0, dur: 0.7 + Math.random() * 0.4, color: [col.fill, col.dark, C.ink][i % 3], rot: b, spin: (i % 2 ? 1 : -1) * (3 + Math.random() * 5), size: 7 + Math.random() * 7 });
-    }
+    emit({ type: "bot-down", entity: e });
     if (mine || onScreen(e)) cb.onSound("boom", !mine);
-  }
-  /** Llegada en hipervelocidad: la nave entra estirada desde atrás de su rumbo, con rayas de estela, y frena en seco. */
-  function drawWarp(e: Entity, t: number) {
-    const u = 1 - e.warpT / WARP, rest = Math.pow(1 - u, 3), a = e.ang;
-    ctx.save(); ctx.translate(e.x - Math.cos(a) * WARP_FROM * rest, e.y - Math.sin(a) * WARP_FROM * rest); ctx.rotate(a);
-    ctx.lineCap = "round"; ctx.lineWidth = 2; ctx.globalAlpha = Math.min(1, rest * 4);
-    [-15, -7, 0, 7, 15].forEach((off, i) => {
-      ctx.strokeStyle = i % 2 ? C.mint : C.ink;
-      ctx.beginPath(); ctx.moveTo(-22, off); ctx.lineTo(-22 - (40 + rest * 520) * (0.6 + 0.1 * ((i * 3) % 5)), off); ctx.stroke();
-    });
-    ctx.globalAlpha = 1; ctx.scale(1 + rest * 5, 1 - rest * 0.35); ctx.rotate(-a);
-    drawShip(ctx, e, 0, 0, 56, t);
-    ctx.restore();
   }
   function updateGame(dt: number) {
     state.shotT += dt;
+    if (!G) return;
     if (state.quiet) { state.shots.length = 0; return; }
+    const pk = G.pickups;
     for (const p of state.pickups) {
-      if (!p.alive) { if ((p.back -= dt) <= 0) Object.assign(p, pickupSpot(), { alive: true, kind: nextKind(), age: 0 }); continue; }
-      if ((p.age += dt) > PICKUP_SWAP) {
+      if (!p.alive) { if ((p.back -= dt) <= 0) Object.assign(p, pickupSpot(pk), { alive: true, kind: nextKind(WEAPON_KINDS), age: 0 }); continue; }
+      if ((p.age += dt) > pk.swap) {
         // Nadie lo recogió: le toca al siguiente de la rueda, en el mismo lugar.
-        p.kind = nextKind(); p.age = 0;
-        state.fx.push({ kind: "flash", x: p.x, y: p.y, t: 0, dur: 0.28 });
+        p.kind = nextKind(WEAPON_KINDS); p.age = 0;
+        emit({ type: "pickup", x: p.x, y: p.y, taken: false });
       }
-      if (state.mini || Math.hypot(p.x - player.x, p.y - player.y) > PICKUP_REACH) continue;
+      if (state.mini || Math.hypot(p.x - player.x, p.y - player.y) > pk.reach) continue;
       // Recogido: cambia tu disparo por unos tiros (si ya traías otro aparato, lo reemplaza).
-      p.alive = false; p.back = PICKUP_BACK + Math.random() * PICKUP_BACK_EXTRA;
-      state.weapon = { kind: p.kind, left: WEAPONS[p.kind].uses };
-      state.fx.push({ kind: "flash", x: p.x, y: p.y, t: 0, dur: 0.28 });
-      state.fx.push({ kind: "bubble", ship: player, text: `${WEAPONS[p.kind].name} · ${WEAPONS[p.kind].uses} tiros`, t: 0, dur: 1.4 });
+      const def = weaponDef(p.kind); if (!def) continue;
+      p.alive = false; p.back = SUPPLY && state.threatPhase !== "away" ? SUPPLY.back : pk.back + Math.random() * pk.backExtra;
+      state.weapon = { kind: p.kind, left: def.uses };
+      emit({ type: "pickup", x: p.x, y: p.y, taken: true });
+      state.bubbles.push({ entity: player, text: `${def.name} · ${copy.uses(def.uses)}`, t: 0, dur: 1.4 });
       cb.onSound("pickup"); cb.onWeapon(weaponInfo());
     }
     const live = targets();
     for (const s of state.shots) {
-      const x0 = s.x, y0 = s.y;
-      if (s.kind === "seeker") {
+      const x0 = s.x, y0 = s.y, def = G.shots[s.kind];
+      if (def.seek) {
         // Gira poco a poco hacia la nave más cercana que tenga a su alcance.
-        let goal: Entity | null = null, gd = SEEK_R;
+        let goal: Entity | null = null, gd = def.seek.radius;
         for (const e of live) { const d = Math.hypot(e.x - s.x, e.y - s.y); if (d < gd) { goal = e; gd = d; } }
         if (goal) {
           const cur = Math.atan2(s.vy, s.vx), a = lerpAngle(cur, Math.atan2(goal.y - s.y, goal.x - s.x), 1) - cur;
-          const next = cur + clamp(a, -SEEK_TURN * dt, SEEK_TURN * dt), v = SHOTS.seeker.speed;
+          const next = cur + clamp(a, -def.seek.turn * dt, def.seek.turn * dt), v = def.speed;
           s.vx = Math.cos(next) * v; s.vy = Math.sin(next) * v;
         }
       }
       s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt;
-      if (s.kind === "bounce" && s.bounces > 0) {
+      if (s.bounces > 0) {
         // Rebota en las orillas del mapa.
         if ((s.x < 8 && s.vx < 0) || (s.x > WORLD_W - 8 && s.vx > 0)) { s.vx = -s.vx; s.bounces--; }
         if ((s.y < 8 && s.vy < 0) || (s.y > WORLD_H - 8 && s.vy > 0)) { s.vy = -s.vy; s.bounces--; }
@@ -913,96 +485,165 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         const dx = s.x - x0, dy = s.y - y0, u = clamp(((q.x - x0) * dx + (q.y - y0) * dy) / (dx * dx + dy * dy || 1), 0, 1);
         return Math.hypot(q.x - (x0 + dx * u), q.y - (y0 + dy * u));
       };
-      const hit = live.find((e) => e.downT <= 0 && near(e) <= SHIP_HIT);
-      if (s.kind === "bomb") {
-        // La bomba revienta al tocar una nave o al acabarse su vuelo, y alcanza a todo lo cercano.
+      // Un disparo con `selfHit` (Rebote) ya rebotó al menos una vez: también le pega a quien lo disparó.
+      if (def.selfHit && T && !state.quiet && s.bounces < (def.bounces ?? 0) && exposed() && near(player) <= G.hitRadius) {
+        s.t = s.life; hitPlayer(); // puede vaciar `state.shots` si con esto estalla tu nave
+        continue;
+      }
+      const hit = live.find((e) => e.downT <= 0 && near(e) <= G.hitRadius);
+      if (def.blast) {
+        // Revienta al tocar una nave o al acabarse su vuelo, y alcanza a todo lo cercano.
         if (!hit && s.t < s.life) continue;
-        state.fx.push({ kind: "ring", x: s.x, y: s.y, t: 0, dur: 0.3, r: BOMB_R, color: SHOT_COLORS.bomb });
+        emit({ type: "blast", x: s.x, y: s.y, r: def.blast.radius, shot: s.kind });
         cb.onSound("blast");
-        for (const e of live) if (e.downT <= 0 && Math.hypot(e.x - s.x, e.y - s.y) < BOMB_R) touch(e, s.dmg);
-        s.t = s.life; continue;
+        for (const e of live) if (e.downT <= 0 && Math.hypot(e.x - s.x, e.y - s.y) < def.blast.radius) touch(e, s.dmg);
+        s.t = s.life;
+        // El estallido (no la bola en vuelo) también alcanza a quien la soltó, si se quedó dentro del radio.
+        if (def.blast.self && T && !state.quiet && exposed() && Math.hypot(player.x - s.x, player.y - s.y) < def.blast.radius) hitPlayer(def.blast.self);
+        continue;
       }
       if (!hit) continue;
       touch(hit, s.dmg); s.t = s.life; // el disparo se apaga en la nave que toca
     }
     state.shots = state.shots.filter((s) => s.t < s.life && s.x > -20 && s.x < WORLD_W + 20 && s.y > -20 && s.y < WORLD_H + 20);
   }
-  /** Temblor breve con un chispazo chico. Varias cosquillas seguidas son un solo temblor. */
+  // ── Amenaza: la nave enemiga del cartucho ──
+  // Su calendario sale del reloj (como las rutas de los robots): todos la ven llegar, moverse e irse
+  // a la vez sin pasar por el servidor. Cada quien simula los disparos contra SU nave. Al servidor
+  // sólo viajan «me destruyó» (`down` en el latido) y «la derribé» (`boom` con el id del ciclo).
+  const threatId = (cycle: number) => `${T?.id}:${cycle}`;
+  /** Nadie te apunta ni te daña sentado en una mesa, dentro de un lugar, destruido o con escudo. */
+  const exposed = () => player.downT <= 0 && player.shieldT <= 0 && player.warpT <= 0 && player.table === null && !placeOf(player);
+  function showDown(seconds: number | null) { if (seconds !== state.downShown) { state.downShown = seconds; cb.onDown?.(seconds); } }
+  /** Con `needsWeapon`: aparatos de sobra mientras dura la visita y uno cerca de quien no trae, para que nadie quede indefenso. */
+  const SUPPLY = G && T?.needsWeapon ? T.supply ?? null : null;
+  function supply(on: boolean) {
+    if (!G || !SUPPLY) return;
+    const base = G.pickups.count;
+    if (!on) { state.pickups.length = Math.min(state.pickups.length, base); return; } // se fue: quedan los de siempre
+    while (state.pickups.length < Math.max(base, SUPPLY.count)) state.pickups.push({ kind: nextKind(WEAPON_KINDS), ...pickupSpot(G.pickups), ph: state.pickups.length * 1.7, alive: true, back: 0, age: 0 });
+    for (const p of state.pickups) if (!p.alive) p.back = Math.min(p.back, SUPPLY.back);
+    if (state.weapon) return;
+    // Uno cerca de ti: se mueve hasta acá el que esté apagado o, si no hay, el más lejano.
+    const [min, max] = SUPPLY.near, m = G.pickups.margin;
+    let spot: Point | null = null;
+    for (let k = 0; k < 40 && !spot; k++) {
+      const a = Math.random() * TAU, d = min + Math.random() * (max - min), g = { x: player.x + Math.cos(a) * d, y: player.y + Math.sin(a) * d };
+      if (g.x > m && g.x < WORLD_W - m && g.y > m && g.y < WORLD_H - m && !placeOf(g)) spot = g;
+    }
+    if (!spot || state.pickups.some((p) => p.alive && Math.hypot(p.x - player.x, p.y - player.y) <= max)) return; // ya hay uno a la mano
+    const dist = (p: Pickup) => (p.alive ? Math.hypot(p.x - player.x, p.y - player.y) : Infinity);
+    const pick = state.pickups.reduce((a, b) => (dist(b) > dist(a) ? b : a));
+    Object.assign(pick, spot, { alive: true, age: 0, back: 0 }); if (!pick.kind) pick.kind = nextKind(WEAPON_KINDS);
+    emit({ type: "pickup", x: spot.x, y: spot.y, taken: false });
+  }
+  function setThreatPhase(phase: "away" | "warn" | "here") {
+    if (phase === state.threatPhase) return;
+    if (phase === "away") supply(false); else if (state.threatPhase === "away") supply(true);
+    state.threatPhase = phase;
+    cb.onThreat?.(phase === "away" ? null : phase, threat?.name ?? "");
+  }
+  /** Quién viene en este ciclo: los personajes de la amenaza se alternan, y cada uno trae su nave, su ruta y su disparo. */
+  let castCycle = -1, routeAt = T?.at ?? (() => ({ x: 0, y: 0 })), gun = T?.shot ?? { speed: 0, life: 0, every: 1, range: 0 }, burstLeft = 0, burstT = 0;
+  function cast(cycle: number) {
+    if (!T || !threat || cycle === castCycle) return;
+    castCycle = cycle;
+    const n = T.variants?.length ?? 0, v = n ? T.variants![((cycle % n) + n) % n] : null;
+    threat.name = v?.name ?? T.name; threat.first = firstName(threat.name);
+    const look = v?.look ?? T.look; threat.model = look.model; threat.color = look.color; threat.pilot = look.pilot;
+    routeAt = v?.at ?? T.at; gun = { ...T.shot, ...v?.shot }; burstLeft = 0;
+  }
+  function fireAt(p: Point) {
+    const a = Math.atan2(player.y - p.y, player.x - p.x);
+    state.hostile.push({ kind: T!.id, x: p.x + Math.cos(a) * 34, y: p.y + Math.sin(a) * 34, vx: Math.cos(a) * gun.speed, vy: Math.sin(a) * gun.speed, t: 0, life: gun.life, dmg: 1, bounces: 0 });
+    cb.onSound("enemyShot", true);
+  }
+  function updateThreat(dt: number) {
+    if (!T || !threat) return;
+    if (threat.leaveT > 0) threat.leaveT = Math.max(0, threat.leaveT - dt);
+    if (state.quiet || state.mini) { setThreatPhase("away"); threat.leaveT = 0; state.hostile.length = 0; return; }
+    const now = Date.now() / 1000, cycle = Math.floor(now / T.every), u = now - cycle * T.every;
+    state.threatCycle = cycle; cast(cycle);
+    const phase = state.threatKilled === cycle ? "away" : u < T.warn ? "warn" : u < T.warn + T.stay ? "here" : "away";
+    if (phase !== state.threatPhase) {
+      if (phase === "warn") { state.threatSeenT = 0; cb.onSound("alarm"); }
+      else if (phase === "here") {
+        // Llega en hipervelocidad a donde le toque en su ruta.
+        const p = routeAt(cycle, 0), q = routeAt(cycle, 0.2);
+        threat.x = p.x; threat.y = p.y; threat.ang = Math.atan2(q.y - p.y, q.x - p.x); threat.hp = T.hp; threat.warpT = WARP; threat.leaveT = 0; threat.shakeT = 0;
+        state.threatShotT = 0;
+        if (state.threatPhase === "away") state.threatSeenT = 0; // llegaste a media visita: primero el aviso
+        cb.onSound("warp", true);
+      } else if (state.threatPhase === "here") { threat.leaveT = WARP; cb.onSound("warp", true); } // se va como llegó
+      setThreatPhase(phase);
+    }
+    if (phase !== "away") state.threatSeenT += dt;
+    if (phase === "here") {
+      const tv = u - T.warn, p = routeAt(cycle, tv), q = routeAt(cycle, tv + 0.2);
+      threat.x = p.x; threat.y = p.y; threat.thrust = 0.6;
+      const d = Math.hypot(player.x - p.x, player.y - p.y), aim = exposed() && d < gun.range;
+      // Voltea hacia quien tiene a tiro; si no, sigue su rumbo.
+      threat.ang = lerpAngle(threat.ang, aim ? Math.atan2(player.y - p.y, player.x - p.x) : Math.atan2(q.y - p.y, q.x - p.x), Math.min(1, 4 * dt));
+      if (threat.warpT > 0) { if ((threat.warpT -= dt) <= 0) { threat.warpT = 0; emit({ type: "bot-back", entity: threat }); } }
+      // Nadie es destruido sin aviso: no dispara hasta que lleves `warn` segundos sabiendo que anda aquí.
+      else if (burstLeft > 0) {
+        // Resto de la ráfaga: si dejaste de estar a tiro, se corta.
+        if (!aim) burstLeft = 0;
+        else if ((burstT -= dt) <= 0) { burstLeft--; burstT = gun.gap ?? 0.3; fireAt(p); }
+      } else if ((state.threatShotT += dt) >= gun.every && aim && state.threatSeenT >= T.warn) {
+        state.threatShotT = 0; burstLeft = Math.max(0, (gun.burst ?? 1) - 1); burstT = gun.gap ?? 0.3;
+        fireAt(p);
+      }
+    }
+    for (const s of state.hostile) {
+      const x0 = s.x, y0 = s.y;
+      s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      const dx = s.x - x0, dy = s.y - y0, k = clamp(((player.x - x0) * dx + (player.y - y0) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+      if (!exposed() || Math.hypot(player.x - (x0 + dx * k), player.y - (y0 + dy * k)) > (G?.hitRadius ?? 0)) continue;
+      s.t = s.life; hitPlayer();
+    }
+    state.hostile = state.hostile.filter((s) => s.t < s.life);
+  }
+  /** Un disparo de la enemiga (o tu propio Rebote de regreso, o el estallido de tu Bomba) tocó tu nave: tiembla, pierde un golpe y, sin golpes, estalla. */
+  function hitPlayer(dmg = 1) {
+    if (!T) return;
+    tickle(player); cb.onSound("hit");
+    player.healT = T.player.heal;
+    if ((player.hp -= dmg) > 0) return;
+    player.downT = T.player.back; player.hp = T.player.hp; player.healT = 0; player.shakeT = 0; player.vx = player.vy = 0; player.thrust = 0;
+    clearTarget(); state.keys.clear(); state.wasFlying = false; state.shots.length = 0;
+    state.bubbles = state.bubbles.filter((b) => b.entity !== player);
+    emit({ type: "bot-down", entity: player }); cb.onSound("boom");
+    showDown(Math.ceil(player.downT)); cb.onIntent();
+  }
+  function revivePlayer() {
+    player.downT = 0; player.x = S.spawn.x; player.y = S.spawn.y; player.vx = player.vy = 0; player.ang = -Math.PI / 2;
+    player.warpT = WARP; player.shieldT = WARP + (T?.player.shield ?? 0);
+    showDown(null); cb.onSound("warp"); cb.onIntent();
+  }
+  /** La enemiga estalla y no vuelve hasta el siguiente ciclo. `mine`: la derribaste tú y se avisa a los demás. */
+  function destroyThreat(mine: boolean, silent = false) {
+    if (!threat) return;
+    state.threatKilled = state.threatCycle; state.hostile.length = 0; threat.leaveT = 0; threat.warpT = 0;
+    const was = state.threatPhase;
+    setThreatPhase("away");
+    if (mine) cb.onBoom(threatId(state.threatCycle));
+    if (silent || was !== "here" || state.mini) return;
+    emit({ type: "bot-down", entity: threat });
+    if (mine || onScreen(threat)) cb.onSound("boom", !mine);
+  }
+
+  /** Temblor breve. Varias cosquillas seguidas son un solo temblor. */
   function tickle(e: Entity) {
     if (state.quiet || e.shakeT > 0) return;
     e.shakeT = SHAKE;
-    for (let i = 0; i < 4; i++) { const b = (i * TAU) / 4 + 0.6; state.fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * 55, vy: Math.sin(b) * 55, t: 0, dur: 0.3, color: C.ink }); }
-  }
-  function drawPickup(p: Pickup, t: number) {
-    // Aparato espacial plano dentro de una burbuja: se ve que es para recoger, no un arma de verdad.
-    const x = p.x, y = p.y + Math.sin(t * 1.6 + p.ph) * 3.5;
-    ctx.fillStyle = C.panel; ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y, 19, 0, TAU); ctx.fill(); ctx.stroke();
-    // Aro punteado que gira despacio: dice «recógeme».
-    ctx.setLineDash([4, 7]); ctx.beginPath(); ctx.arc(x, y, 24, t * 0.35 + p.ph, t * 0.35 + p.ph + TAU); ctx.stroke(); ctx.setLineDash([]);
-    ctx.lineCap = "round"; ctx.lineJoin = "round";
-    if (p.kind === "triple") {
-      // Bláster redondeado con tres boquillas en abanico.
-      ctx.strokeStyle = C.mint; ctx.lineWidth = 4;
-      for (const d of [-0.5, 0, 0.5]) { ctx.beginPath(); ctx.moveTo(x - 3, y + 2); ctx.lineTo(x - 3 + Math.cos(d - 0.35) * 14, y + 2 + Math.sin(d - 0.35) * 14); ctx.stroke(); }
-      ctx.fillStyle = C.suit; ctx.beginPath(); ctx.arc(x - 4, y + 3, 6.5, 0, TAU); ctx.fill();
-      ctx.fillStyle = C.mintDeep; ctx.beginPath(); ctx.arc(x - 4, y + 3, 2.4, 0, TAU); ctx.fill();
-    } else if (p.kind === "ray") {
-      // Antena emisora: base redondeada, varilla larga y una chispa en la punta.
-      ctx.strokeStyle = C.green; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 6, y + 6); ctx.lineTo(x + 9, y - 9); ctx.stroke();
-      ctx.fillStyle = C.suit; roundRect(ctx, x - 12, y + 2, 12, 9, 4); ctx.fill();
-      ctx.fillStyle = C.ink; sparkle(ctx, x + 10, y - 10, 5); ctx.fill();
-    } else if (p.kind === "seeker") {
-      // Buscador: una flecha que da la vuelta hacia su punto.
-      ctx.strokeStyle = SHOT_COLORS.seeker; ctx.lineWidth = 2.8; ctx.beginPath(); ctx.arc(x - 1, y + 2, 9, Math.PI * 0.75, Math.PI * 1.85); ctx.stroke();
-      ctx.fillStyle = SHOT_COLORS.seeker; ctx.beginPath(); ctx.moveTo(x + 12, y + 2); ctx.lineTo(x + 3, y - 1); ctx.lineTo(x + 9, y - 9); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x - 1, y + 2, 2.6, 0, TAU); ctx.fill();
-    } else if (p.kind === "bounce") {
-      // Rebote: una pelota que pega en el piso y sale.
-      ctx.strokeStyle = C.rockLine; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x - 11, y + 10); ctx.lineTo(x + 11, y + 10); ctx.stroke();
-      ctx.strokeStyle = SHOT_COLORS.bounce; ctx.lineWidth = 2.4; ctx.setLineDash([2, 5]); ctx.beginPath(); ctx.moveTo(x - 11, y - 7); ctx.lineTo(x - 2, y + 8); ctx.lineTo(x + 5, y - 3); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = SHOT_COLORS.bounce; ctx.beginPath(); ctx.arc(x + 7, y - 6, 4.6, 0, TAU); ctx.fill();
-    } else if (p.kind === "bomb") {
-      // Bomba de caricatura: bola redonda, mecha corta y una chispa.
-      ctx.fillStyle = SHOT_COLORS.bomb; ctx.beginPath(); ctx.arc(x - 2, y + 3, 8.5, 0, TAU); ctx.fill();
-      ctx.strokeStyle = C.suit; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x + 3, y - 4); ctx.quadraticCurveTo(x + 7, y - 9, x + 9, y - 8); ctx.stroke();
-      ctx.fillStyle = C.ink; sparkle(ctx, x + 10, y - 9, 4.5); ctx.fill();
-    } else {
-      // Emisor de onda: un punto con dos arcos que se abren.
-      ctx.fillStyle = C.suit; ctx.beginPath(); ctx.arc(x - 7, y + 5, 4.5, 0, TAU); ctx.fill();
-      ctx.strokeStyle = C.mint; ctx.lineWidth = 2.6;
-      for (const r of [9, 15]) { ctx.beginPath(); ctx.arc(x - 7, y + 5, r, -Math.PI / 2 - 0.15, 0.15); ctx.stroke(); }
-    }
-  }
-  function drawShot(s: Shot) {
-    // Destello alargado con estela corta, del color de la casa. El rayo es más largo y verde.
-    const ray = s.kind === "ray";
-    const a = Math.atan2(s.vy, s.vx), fade = s.t > s.life - 0.15 ? (s.life - s.t) / 0.15 : 1, len = ray ? 46 : 16;
-    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(a); ctx.globalAlpha = Math.max(0, fade);
-    ctx.lineCap = "round"; ctx.lineJoin = "round";
-    if (s.kind === "seeker") {
-      // Dardo lila con estela corta.
-      ctx.strokeStyle = C.rockLine; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-22, 0); ctx.lineTo(-8, 0); ctx.stroke();
-      ctx.fillStyle = SHOT_COLORS.seeker; ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-8, -6); ctx.lineTo(-4, 0); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill();
-      ctx.restore(); return;
-    }
-    if (s.kind === "bounce" || s.kind === "bomb") {
-      // Pelota azul (rebote) o bola ámbar más grande con chispa (bomba).
-      const r = s.kind === "bomb" ? 8 : 5.5;
-      ctx.strokeStyle = C.rockLine; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-r - 12, 0); ctx.lineTo(-r - 2, 0); ctx.stroke();
-      ctx.fillStyle = SHOT_COLORS[s.kind]; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
-      ctx.fillStyle = C.ink; if (s.kind === "bomb") { sparkle(ctx, -r - 1, 0, 3 + 2 * Math.abs(Math.sin(s.t * 26))); ctx.fill(); } else { ctx.beginPath(); ctx.arc(1.5, -1.5, 1.6, 0, TAU); ctx.fill(); }
-      ctx.restore(); return;
-    }
-    ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-len - 16, 0); ctx.lineTo(-len + 6, 0); ctx.stroke();
-    ctx.strokeStyle = ray ? C.green : C.mint; ctx.lineWidth = ray ? 4 : 5; ctx.beginPath(); ctx.moveTo(-len + 6, 0); ctx.lineTo(6, 0); ctx.stroke();
-    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(6, 0, 2.6, 0, TAU); ctx.fill();
-    ctx.restore();
+    emit({ type: "tickle", entity: e });
   }
 
   // ── Saludos ──
   function burst(e: Entity) {
     if (state.quiet) return;
-    for (let i = 0; i < 8; i++) { const a = (i * TAU) / 8 + 0.3; state.fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70, t: 0, dur: 0.8, color: i % 2 ? C.mint : C.green }); }
+    emit({ type: "greet", entity: e });
   }
   const byId = (id: string, meId: string) => (id === meId ? player : humans.get(id) ?? null);
   let meId = "";
@@ -1023,7 +664,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     if (e.button !== 0) return; // el clic derecho dispara (ver `onContextMenu`), no mueve la nave
     if (cb.onStageTap()) return;
     const r = stage.getBoundingClientRect(), w = toWorld(e.clientX - r.left, e.clientY - r.top);
-    flyTo(w.x, w.y);
+    if (w) flyTo(w.x, w.y);
   };
   window.addEventListener("keydown", onKeyDown); window.addEventListener("keyup", onKeyUp); window.addEventListener("blur", onBlur);
   // Clic derecho: dispara hacia el cursor y, de paso, no abre el menú del navegador sobre el mapa.
@@ -1034,7 +675,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     e.preventDefault();
     if (lastPointerType !== "mouse") return;
     const r = stage.getBoundingClientRect(), w = toWorld(e.clientX - r.left, e.clientY - r.top);
-    shoot(Math.atan2(w.y - player.y, w.x - player.x));
+    if (w) shoot(Math.atan2(w.y - player.y, w.x - player.x));
   };
   stage.addEventListener("pointerdown", onPointerType, true);
   stage.addEventListener("contextmenu", onContextMenu);
@@ -1043,46 +684,59 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
 
   // ── Ciclo ──
   let last = performance.now(), countAcc = 1, raf = 0;
-  function frame(now: number) {
+  function tick(now: number) {
     if (state.dead) return;
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    // Nunca negativo: el primer cuadro puede traer una marca anterior a `last`.
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now;
     if (!state.quiet) { state.animT += dt; updateBots(dt); }
     for (const e of humans.values()) updateHuman(e, dt);
-    updatePlayer(dt); updateGame(dt);
+    updatePlayer(dt); updateGame(dt); updateThreat(dt);
     if (player.shakeT > 0) player.shakeT -= dt;
+    if (T) {
+      if (player.warpT > 0 && (player.warpT -= dt) <= 0) { player.warpT = 0; emit({ type: "bot-back", entity: player }); }
+      if (player.shieldT > 0) player.shieldT = Math.max(0, player.shieldT - dt);
+      if (player.healT > 0 && (player.healT -= dt) <= 0) player.hp = T.player.hp; // unos segundos sin golpes: se recupera
+      if (threat && threat.shakeT > 0) threat.shakeT -= dt;
+    }
     for (const e of others()) if (e.shakeT > 0) e.shakeT -= dt;
     if (state.marker) state.marker.t += dt;
-    for (const f of state.fx) f.t += dt;
-    state.fx = state.fx.filter((f) => f.t < f.dur);
-    updateProximity();
+    for (const b of state.bubbles) b.t += dt;
+    state.bubbles = state.bubbles.filter((b) => b.t < b.dur);
+    updateProximity(); updateMode(dt);
     countAcc += dt; if (countAcc > 0.5) { countAcc = 0; cb.onCounts(counts()); }
-    updateCamera(Math.min(1, 5 * dt)); render();
-    raf = requestAnimationFrame(frame);
+    updateCamera(Math.min(1, 5 * dt)); render(dt);
+    raf = requestAnimationFrame(tick);
   }
-  // Los relojes arrancan escalonados: los aparatos se turnan de uno en uno, no los tres a la vez.
-  for (let i = 0; i < PICKUP_COUNT; i++) state.pickups.push({ kind: nextKind(), ...pickupSpot(), ph: i * 1.7, alive: true, back: 0, age: (i * PICKUP_SWAP) / PICKUP_COUNT });
-  ghosty();
+  // Los relojes arrancan escalonados: los aparatos se turnan de uno en uno, no todos a la vez.
+  if (G) for (let i = 0; i < G.pickups.count; i++) state.pickups.push({ kind: nextKind(WEAPON_KINDS), ...pickupSpot(G.pickups), ph: i * 1.7, alive: true, back: 0, age: (i * G.pickups.swap) / G.pickups.count });
   measure();
-  raf = requestAnimationFrame(frame);
+  raf = requestAnimationFrame(tick);
 
   return {
     resize(mini) { state.mini = mini; measure(); },
-    setQuiet(quiet) { state.quiet = quiet; if (quiet) { player.tx = player.ty = null; state.marker = null; player.shakeT = 0; for (const e of others()) e.shakeT = 0; for (const b of bots) { b.downT = b.warpT = b.healT = 0; b.hp = BOT_HP; } if (state.weapon) { state.weapon = null; cb.onWeapon(null); } state.fx = state.fx.filter((f) => f.kind === "bubble"); state.shots.length = 0; } },
+    setQuiet(quiet) { state.quiet = quiet; if (quiet) { clearTarget(); player.shakeT = 0; for (const e of others()) e.shakeT = 0; for (const b of bots) { b.downT = b.warpT = b.healT = 0; b.hp = BOT_HP; } if (state.weapon) { state.weapon = null; cb.onWeapon(null); } emit({ type: "calm" }); state.shots.length = 0;
+        // Sin juego no hay enemiga ni naves destruidas: quien estaba fuera vuelve de una vez.
+        for (const e of humans.values()) e.downT = e.warpT = 0;
+        player.warpT = player.shieldT = player.healT = 0; if (T) player.hp = T.player.hp;
+        if (player.downT > 0) { player.downT = 0; player.x = S.spawn.x; player.y = S.spawn.y; showDown(null); cb.onIntent(); }
+      }
+    },
     setLook(look) { player.model = look.model; player.color = look.color; player.pilot = look.pilot; cb.onIntent(); },
-    setStation(s) { state.open = s.open; state.stationSub = s.sub; },
-    setHidden(ids) { state.hidden = new Set(ids); places = PLACES.filter((p) => !state.hidden.has(p.id)); },
+    setPlaceStatus(placeId, status) { state.placeStatus[placeId] = status; },
+    setHidden(ids) { state.hidden = new Set(ids); places = S.places.filter((p) => !state.hidden.has(p.id)); },
     setRemote(ships, me) {
       meId = me;
-      const seen = new Set<string>();
+      const seen = new Set<string>(), L = S.looks;
       for (const s of ships) {
         if (s.id === me) continue;
         seen.add(s.id);
         const look: Look = {
-          model: (SHIP_MODELS.find((m) => m.id === s.ship)?.id ?? "rocket") as ShipModel,
-          color: colorOf(s.color).id,
-          pilot: (SHIP_PILOTS.find((p) => p.id === s.pilot)?.id ?? "astro") as ShipPilot,
+          model: L.models.find((m) => m.id === s.ship)?.id ?? L.fallback.model,
+          color: L.colors.find((c) => c.id === s.color)?.id ?? L.fallback.color,
+          pilot: L.pilots.find((p) => p.id === s.pilot)?.id ?? L.fallback.pilot,
         };
         let e = humans.get(s.id);
+        const arrived = !e;
         if (!e) {
           e = entity(s.id, "human", s.name, look, s.x, s.y);
           e.photoURL = s.photoURL;
@@ -1093,15 +747,26 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         e.tx = s.tx; e.ty = s.ty; e.table = s.table; e.seat = s.seat;
         // Si la nave local quedó muy lejos de la real (o no hay animación), se coloca de golpe.
         if (state.quiet || Math.hypot(s.x - e.x, s.y - e.y) > 320) { e.x = s.x; e.y = s.y; e.vx = e.vy = 0; }
+        // La amenaza destruyó su nave: estalla aquí también, se oculta, y vuelve en hipervelocidad cuando reaparezca.
+        const down = !!s.down && !!T && !state.quiet;
+        if (down && e.downT <= 0) {
+          e.downT = 1; e.warpT = 0; e.shakeT = 0;
+          state.bubbles = state.bubbles.filter((b) => b.entity !== e);
+          if (state.nearShip === e) { state.nearShip = null; cb.onShip(null); }
+          if (!arrived && !state.mini) { emit({ type: "bot-down", entity: e }); if (onScreen(e)) cb.onSound("boom", true); }
+        } else if (!down && e.downT > 0) {
+          e.downT = 0; e.x = s.x; e.y = s.y; e.vx = e.vy = 0; e.ang = -Math.PI / 2; e.warpT = state.quiet ? 0 : WARP;
+          if (!state.quiet && !state.mini && onScreen(e)) cb.onSound("warp", true);
+        }
       }
       for (const id of humans.keys()) if (!seen.has(id)) { if (state.nearShip?.id === id) { state.nearShip = null; cb.onShip(null); } humans.delete(id); }
     },
     showSay(fromId, text) {
       const from = byId(fromId, meId); if (!from) return;
       // Una burbuja por nave: el mensaje nuevo reemplaza al anterior. Lo largo se lee completo en el historial.
-      state.fx = state.fx.filter((f) => !(f.kind === "bubble" && f.say && f.ship === from));
+      state.bubbles = state.bubbles.filter((b) => !(b.say && b.entity === from));
       const chars = [...text];
-      state.fx.push({ kind: "bubble", ship: from, text: chars.length > 46 ? `${chars.slice(0, 45).join("")}…` : text, t: 0, dur: 5, say: true });
+      state.bubbles.push({ entity: from, text: chars.length > 46 ? `${chars.slice(0, 45).join("")}…` : text, t: 0, dur: 5, say: true });
     },
     showNudge(toId) {
       const to = byId(toId, meId); if (!to || state.quiet) return false;
@@ -1110,7 +775,10 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     },
     setBotsDown(down, silent) {
       if (state.quiet) return;
+      if (T) state.threatCycle = Math.floor(Date.now() / 1000 / T.every);
       for (const d of down) {
+        // La enemiga de este ciclo ya fue derribada por alguien: cae aquí también.
+        if (T && d.bot === threatId(state.threatCycle)) { if (state.threatKilled !== state.threatCycle) destroyThreat(false, silent); continue; }
         const e = bots.find((b) => b.id === d.bot); if (!e) continue;
         // Ya tumbado aquí: sólo se empareja el regreso con el del servidor, para que todos lo vean llegar a la vez.
         if (e.downT > 0) e.downT = d.back / 1000;
@@ -1120,14 +788,14 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     },
     showWave(fromId, toId) {
       const from = byId(fromId, meId), to = byId(toId, meId); if (!from || !to) return;
-      state.fx.push({ kind: "bubble", ship: from, text: `¡Hola, ${to === player ? firstName(opts.meName) : to.first}!`, t: 0, dur: 1.5 });
+      state.bubbles.push({ entity: from, text: `¡Hola, ${to === player ? firstName(opts.meName) : to.first}!`, t: 0, dur: 1.5 });
       if (to === player) burst(player); else if (from === player) to.waveT = 3;
     },
     waveBot(botId) {
       const bot = bots.find((b) => b.id === botId); if (!bot || bot.downT > 0) return;
-      state.fx.push({ kind: "bubble", ship: player, text: `¡Hola, ${bot.first}!`, t: 0, dur: 1.5 });
+      state.bubbles.push({ entity: player, text: `¡Hola, ${bot.first}!`, t: 0, dur: 1.5 });
       bot.waveT = 3.5;
-      window.setTimeout(() => { if (state.dead || bot.downT > 0) return; state.fx.push({ kind: "bubble", ship: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
+      window.setTimeout(() => { if (state.dead || bot.downT > 0) return; state.bubbles.push({ entity: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
     },
     shoot: () => shoot(),
     nearestPickup(kind) {
@@ -1137,14 +805,15 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     },
     flyToPlace(placeId) {
       const p = places.find((q) => q.id === placeId); if (!p) return;
-      if (p.kind === "table") flyTo(400, 560); else flyTo(p.x - p.r * 0.5, p.y + p.r * 0.62);
+      if (p.table !== null && S.tableZone) flyTo(S.tableZone.entry.x, S.tableZone.entry.y); else flyTo(p.x - p.r * 0.5, p.y + p.r * 0.62);
     },
     setJoy(x, y) { state.joy.x = x; state.joy.y = y; },
     sit(table) {
+      const seats = TABLES[table]?.seats; if (!seats || player.downT > 0) return;
       const taken = new Set([...humans.values()].filter((e) => e.table === table && e.seat !== null).map((e) => e.seat));
-      const k = [0, 1, 2, 3].find((s) => !taken.has(s)); if (k === undefined) return;
-      player.tx = player.ty = null; state.marker = null; player.table = table; player.seat = k;
-      if (state.quiet) { const s = seatPos(TABLES[table], k); player.x = s.x; player.y = s.y; player.vx = player.vy = 0; }
+      const k = seats.findIndex((_, s) => !taken.has(s)); if (k < 0) return;
+      clearTarget(); player.table = table; player.seat = k;
+      if (state.quiet) { const s = seats[k]; player.x = s.x; player.y = s.y; player.vx = player.vy = 0; }
       refreshPlace(); cb.onIntent(); cb.onSound("sit");
     },
     stand() { if (player.table === null) return; player.table = player.seat = null; refreshPlace(); cb.onIntent(); cb.onSound("stand"); },
@@ -1154,13 +823,14 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       if (table === null) { player.table = player.seat = null; refreshPlace(); } else if (table === player.table) player.seat = seat;
     },
     myTable: () => player.table,
+    setShared(next) { shared = next; },
     myState() {
       const flying = state.wasFlying;
-      const seat = player.table !== null && player.seat !== null ? seatPos(TABLES[player.table], player.seat) : null;
+      const seat = player.table !== null && player.seat !== null ? TABLES[player.table].seats[player.seat] : null;
       // Volando con teclas no hay destino: se manda a dónde va a estar en un momento.
       const tx = seat ? seat.x : player.tx ?? player.x + (flying ? player.vx * 1.1 : 0);
       const ty = seat ? seat.y : player.ty ?? player.y + (flying ? player.vy * 1.1 : 0);
-      return { x: Math.round(player.x), y: Math.round(player.y), tx: Math.round(clamp(tx, 28, WORLD_W - 28)), ty: Math.round(clamp(ty, 28, WORLD_H - 28)), table: player.table, flying };
+      return { x: Math.round(player.x), y: Math.round(player.y), tx: Math.round(clamp(tx, M.margin, WORLD_W - M.margin)), ty: Math.round(clamp(ty, M.margin, WORLD_H - M.margin)), table: player.table, flying, down: player.downT > 0 };
     },
     screenOf: (x, y) => toScreen(x, y),
     destroy() {
@@ -1169,6 +839,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       stage.removeEventListener("pointerdown", onPointerDown);
       stage.removeEventListener("pointerdown", onPointerType, true);
       stage.removeEventListener("contextmenu", onContextMenu);
+      renderer.destroy();
     },
   };
 }

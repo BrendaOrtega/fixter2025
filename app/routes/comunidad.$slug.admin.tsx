@@ -23,6 +23,9 @@ import { listPastGames, listQuizzes, quizEnabled } from "~/.server/services/club
 import { QuizAdmin } from "~/components/community/QuizAdmin";
 import { LiveAdmin } from "~/components/community/LiveAdmin";
 import { disconnectYouTube, liveStatus, setYouTubePrivacy } from "~/.server/services/club-live.server";
+import { activeCartridge, changeCartridge, hydrateCartridge } from "~/.server/services/club-world.server";
+import { CARTRIDGES } from "~/components/community/v2/world/cartridges";
+import { VoiceSwitch } from "~/components/community/v2/world/VoiceStrip";
 
 export const meta = () => [{ title: "Administrar club | FixterGeek" }, { name: "robots", content: "noindex" }];
 
@@ -37,9 +40,10 @@ async function guard(request: Request, slug: string) {
   if (!user) throw redirect(`/login?next=/comunidad/${slug}/admin`);
   const community = await db.community.findFirst({
     where: { slug, isActive: true },
-    select: { id: true, slug: true, name: true, ownerId: true, quizHostEmails: true },
+    select: { id: true, slug: true, name: true, ownerId: true, quizHostEmails: true, worldCartridge: true },
   });
   if (!community) throw data("Comunidad no encontrada", { status: 404 });
+  hydrateCartridge(community.id, community.worldCartridge);
   if (!canModerate(user, community)) throw data("Sólo el anfitrión administra el club.", { status: 403 });
   return { user, community };
 }
@@ -100,6 +104,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       photoURL: avatarUrlFor(user),
     },
     recordingCount: recordings.filter((r) => !r.hidden && r.status === "ready").length,
+    // Mundo: los cartuchos del registro y cuál está activo en este club.
+    world: {
+      active: activeCartridge(community.id),
+      cartridges: CARTRIDGES.map((c) => ({ id: c.id, name: c.name, description: c.description })),
+    },
     // Transmisión: el canal de YouTube conectado (sin tokens: sólo nombre, privacidad y última liga).
     live: await liveStatus(community.id),
     quiz: {
@@ -230,6 +239,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { ok: "Invitación borrada." };
   }
 
+  if (intent === "world-cartridge") {
+    // `guard` ya dejó pasar sólo a quien administra; el servicio rechaza un id que no esté en el registro.
+    const res = await changeCartridge({
+      communityId: community.id,
+      canManage: true,
+      cartridgeId: str("cartridge"),
+      save: (worldCartridge) => db.community.update({ where: { id: community.id }, data: { worldCartridge } }),
+    });
+    if (!res.ok) return data({ error: res.error }, { status: res.status });
+    const name = CARTRIDGES.find((c) => c.id === res.cartridge)?.name ?? res.cartridge;
+    return { ok: `El Mundo del club ahora es ${name}. Quien lo tenga abierto cambia en unos segundos, sin recargar.` };
+  }
+
   if (intent === "live-privacy") {
     const ok = await setYouTubePrivacy(community.id, str("privacy"));
     return ok ? { ok: "Listo: así saldrá la próxima transmisión." } : data({ error: "No se pudo cambiar." }, { status: 400 });
@@ -266,7 +288,7 @@ const iconDanger = "grid h-8 w-8 place-items-center rounded-md text-[#7C8A8E] tr
 const h2 = "text-[15px] font-semibold text-[#F2F5F4]";
 const label = "grid gap-1 text-[13px] font-medium text-[#D9E0DE]";
 
-type Tab = "transmision" | "calendario" | "grabaciones" | "invitados" | "miembros" | "quizzes";
+type Tab = "transmision" | "calendario" | "grabaciones" | "invitados" | "miembros" | "mundo" | "quizzes";
 
 type EventView = Route.ComponentProps["loaderData"]["events"][number];
 
@@ -611,6 +633,46 @@ function Invites({ invites, callDays }: Pick<Route.ComponentProps["loaderData"],
   );
 }
 
+/** El mundo del club es un cartucho: aquí se elige cuál. Un clic lo cambia para todos, en vivo. */
+function WorldPicker({ world }: Pick<Route.ComponentProps["loaderData"], "world">) {
+  const nav = useNavigation();
+  const pending = nav.state !== "idle" && nav.formData?.get("intent") === "world-cartridge" ? String(nav.formData.get("cartridge")) : null;
+  return (
+    <section className="grid gap-3">
+      <div>
+        <h2 className={h2}>Mundo del club</h2>
+        <p className="mt-1 text-[13px] text-[#7C8A8E]">
+          Elige el mundo que ven tus miembros. El cambio llega en unos segundos a quien lo tenga abierto, sin recargar; el chat y quién está presente se conservan.
+        </p>
+      </div>
+      <Form method="post" className="grid gap-2 sm:grid-cols-2">
+        <input type="hidden" name="intent" value="world-cartridge" />
+        {world.cartridges.map((c) => {
+          const active = c.id === world.active;
+          return (
+            <button
+              key={c.id}
+              name="cartridge"
+              value={c.id}
+              disabled={active || pending !== null}
+              aria-pressed={active}
+              className={`grid gap-1 rounded-[10px] border p-4 text-left transition-colors disabled:cursor-default ${active ? "border-brand-500 bg-[#17302C]" : "border-[#232D33] bg-[#141B20] hover:bg-[#1C252B]"}`}
+            >
+              <span className="flex items-center justify-between gap-3">
+                <b className="text-[15px] font-semibold text-[#F2F5F4]">{c.name}</b>
+                <span className={`shrink-0 text-xs font-medium ${active ? "text-brand-500" : "text-[#7C8A8E]"}`}>
+                  {active ? "Activo" : pending === c.id ? "Cambiando…" : "Usar este mundo"}
+                </span>
+              </span>
+              <span className="text-[13px] leading-snug text-[#7C8A8E]">{c.description}</span>
+            </button>
+          );
+        })}
+      </Form>
+    </section>
+  );
+}
+
 function Members({ members }: Pick<Route.ComponentProps["loaderData"], "members">) {
   const active = members.filter((m) => m.active);
   const bySource = active.reduce<Record<string, number>>((acc, m) => ({ ...acc, [m.source]: (acc[m.source] ?? 0) + 1 }), {});
@@ -645,10 +707,10 @@ function Members({ members }: Pick<Route.ComponentProps["loaderData"], "members"
 }
 
 const CLUB_TABS: Record<View, string> = { world: "", wall: "?tab=wall", events: "?tab=events", recs: "?tab=recs", courses: "?tab=courses", me: "?tab=me" };
-const TABS: Tab[] = ["transmision", "calendario", "grabaciones", "invitados", "miembros", "quizzes"];
+const TABS: Tab[] = ["transmision", "calendario", "grabaciones", "invitados", "miembros", "mundo", "quizzes"];
 
 export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
-  const { community, me, live, recordingCount, events, recordings, invites, callDays, members, quiz } = loaderData;
+  const { community, me, live, recordingCount, events, recordings, invites, callDays, members, quiz, world } = loaderData;
   const result = useActionData<{ ok?: string; error?: string }>();
   // La pestaña vive en `?tab=`: se puede ligar directo («Editar» de la próxima llamada → calendario).
   const [params, setParams] = useSearchParams();
@@ -660,6 +722,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
     ["transmision", "Transmisión"],
     ["invitados", `Invitados (${invites.length})`],
     ["miembros", `Miembros (${members.filter((m) => m.active).length})`],
+    ["mundo", "Mundo"],
     ...(quiz.enabled ? ([["quizzes", "Quizzes"]] as Array<[Tab, string]>) : []),
   ];
   return (
@@ -693,6 +756,13 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
         {tab === "transmision" && <LiveAdmin slug={community.slug} live={live} result={params.get("live")} detail={params.get("detail")} />}
         {tab === "invitados" && <Invites invites={invites} callDays={callDays} />}
         {tab === "miembros" && <Members members={members} />}
+        {tab === "mundo" && (
+          <div className="grid gap-4">
+            <WorldPicker world={world} />
+            {/* Voz por mesa: interruptor de la comunidad (apagado por defecto). */}
+            <VoiceSwitch slug={community.slug} />
+          </div>
+        )}
         {tab === "quizzes" && <QuizAdmin slug={community.slug} quizzes={quiz.quizzes} games={quiz.games} hosts={quiz.hosts} />}
       </Wrap>
     </ClubShell>

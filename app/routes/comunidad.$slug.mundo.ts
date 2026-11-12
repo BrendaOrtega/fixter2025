@@ -1,13 +1,13 @@
 // «Mundo» del club: presencia de las naves (recurso, sin UI). Todo en memoria; no escribe en la base.
-//   GET  /comunidad/:slug/mundo  → { count, ships, waves, me }
+//   GET  /comunidad/:slug/mundo  → { cartridge, count, ships, waves, me } (`cartridge`: id del mundo activo)
 //   POST /comunidad/:slug/mundo  → cuerpo JSON `{x, y, tx, ty, ship, color, pilot, table?}` (latido y
-//                                   posición), `{wave: userId}` (saludo), `{boom: botId}` (robot tumbado) o `{leave: true}`. Responde
+//                                   posición), `{wave: userId}` (saludo), `{boom: botId}` (robot tumbado), `{share: {key, value}}` (estado compartido del modo de juego) o `{leave: true}`. Responde
 //                                   lo mismo que el GET, así el cliente sondea con un solo viaje.
 // Sólo quien está adentro del club: mismos guardias que la acción de /comunidad/:slug.
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { MAX_BODY, removeShip, sendBoom, sendNudge, sendSay, sendWave, snapshot, upsertShip } from "~/.server/services/club-world.server";
+import { MAX_BODY, hydrateCartridge, removeShip, sendBoom, sendNudge, sendSay, sendWave, setShared, snapshot, upsertShip } from "~/.server/services/club-world.server";
 import { avatarUrlFor, canParticipate } from "~/.server/services/wall.server";
 import { getSession } from "~/sessions";
 
@@ -30,8 +30,10 @@ async function resolveAccess(request: Request, slug: string): Promise<Access> {
   let access: Access = null;
   const [user, community] = await Promise.all([
     getUserOrNull(request),
-    db.community.findFirst({ where: { slug, isActive: true }, select: { id: true, ownerId: true } }),
+    db.community.findFirst({ where: { slug, isActive: true }, select: { id: true, ownerId: true, worldCartridge: true } }),
   ]);
+  // El mundo activo se lee de la base la primera vez; después lo lleva la memoria del servicio.
+  if (community) hydrateCartridge(community.id, community.worldCartridge);
   if (user && community) {
     const membership = await db.membership.findUnique({
       where: { communityId_userId: { communityId: community.id, userId: user.id } },
@@ -84,6 +86,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   else if ("say" in body) sayId = sendSay(communityId, who.id, body.say);
   else if ("nudge" in body) nudgeId = sendNudge(communityId, who.id, body.nudge);
   else if ("boom" in body) sendBoom(communityId, who.id, body.boom);
+  else if ("share" in body) setShared(communityId, who.id, body.share);
   else if (!upsertShip(communityId, who, body)) return json({ error: "El Mundo está lleno. Intenta en un momento." }, 429);
   return json({ ...snapshot(communityId), me: who.id, waveId, sayId, nudgeId });
 };

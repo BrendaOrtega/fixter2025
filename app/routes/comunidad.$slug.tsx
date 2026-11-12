@@ -98,7 +98,7 @@ async function loadCommunity(slug: string) {
     where: { slug, isActive: true, priceMxn: { not: null } },
     select: {
       id: true, slug: true, name: true, tagline: true, description: true,
-      priceMxn: true, priceAnnualMxn: true, ownerId: true, callSkin: true,
+      priceMxn: true, priceAnnualMxn: true, ownerId: true, callSkin: true, worldCartridge: true,
     },
   });
 }

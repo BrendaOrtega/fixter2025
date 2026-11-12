@@ -250,6 +250,8 @@ model Community {
   callSkin       Json?
   /// Coanfitriones del quiz en vivo: correos (en minúsculas) que, además del dueño, pueden lanzar quizzes.
   quizHostEmails String[]
+  /// Cartucho activo del «Mundo» (id del registro en `world/cartridges`). Vacío = GeekSector.
+  worldCartridge String?
 
   /// Secuencia que se activa al confirmar el correo. String plano a propósito:
   /// sin @relation no hay que tocar el modelo Sequence.

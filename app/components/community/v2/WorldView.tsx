@@ -3,16 +3,20 @@ import { EnterCallButton, describeCall, useNow } from "./call";
 import { Icon, type IconName } from "./icons";
 import { Avatar, SectionHead, btn } from "./ui";
 import type { ClubData, Go } from "./types";
-import {
-  SHIP_COLORS, SHIP_MODELS, SHIP_PILOTS, WORLD_NAME, createWorld, drawPilot, drawShip, faceFor,
-  type Counts, type Face, type Look, type PlaceInfo, type RemoteShip, type ShipInfo, type WeaponInfo, type WorldApi,
-} from "./world/engine";
+import { VoiceStrip } from "./world/VoiceStrip";
+import type { Cartridge, Face, Look, ModeHud, PlaceTarget, WorldSkin, WorldStructure } from "./world/cartridge";
+import { getCartridge, hasCartridge } from "./world/cartridges";
+import { createWorld, faceFor, type Counts, type PlaceInfo, type RemoteShip, type ShipInfo, type WeaponInfo, type WorldApi } from "./world/engine";
 import { createSound, type Sound } from "./world/sound";
 
-// «Mundo»: el club como un pedazo de espacio. Cada miembro con la sección abierta es una nave; los
-// lugares llevan a las secciones de verdad. La presencia es real y vive en memoria del servidor
+// «Mundo»: el club como un lugar que se recorre. Cada miembro con la sección abierta está en el mapa;
+// los lugares llevan a las secciones de verdad. La presencia es real y vive en memoria del servidor
 // (`/comunidad/:slug/mundo`); se sondea sólo mientras esta sección está montada y la pestaña a la
 // vista. Diseño: docs/club-rediseno/mockup-micromundo.html.
+//
+// El mundo es un cartucho (docs/club-rediseno/MUNDO-CARTUCHOS.md): aquí no hay naves ni planetas,
+// sólo el motor, la presencia y los controles. Quien administra el club lo cambia desde el panel y
+// el sondeo trae el id activo: si cambia, se desmonta un mundo y se monta el otro sin recargar.
 //
 // Reglas de producto:
 // - Un lugar sólo existe si lleva a algo que funciona (sin grabaciones no hay satélite). Sin datos de ejemplo.
@@ -23,31 +27,30 @@ const POLL_MS = 2500;
 /** Volando con teclas el destino cambia todo el tiempo: se avisa más seguido. */
 const FLY_MS = 900;
 const INTENT_MS = 350;
-const LOOK_KEY = "club-world-ship";
+/** El aspecto elegido se guarda por cartucho (GeekSector conserva la llave de siempre). */
+const lookKey = (cartridgeId: string) => (cartridgeId === "geeksector" ? "club-world-ship" : `club-world-look:${cartridgeId}`);
 const QUIET_KEY = "club-world-quiet";
-const DEFAULT_LOOK: Look = { model: "rocket", color: "mint", pilot: "ghosty" };
 
 type ChatMessage = { id: string; from: string; name: string; text: string; at: number };
 type Snapshot = {
+  /** Id del mundo activo (los servidores de antes no lo mandan). */
+  cartridge?: string;
   count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string }>; down?: Array<{ bot: string; back: number }>;
+  /** Estado compartido del modo de juego (sólo si el cartucho activo declara llaves). */
+  shared?: Record<string, number | string>;
   me: string; waveId?: string | null; sayId?: string | null; nudgeId?: string | null;
 };
 /** Mismo tope que el servidor (`SAY_MAX_CHARS`). */
 const SAY_MAX_CHARS = 140;
 
-// Cielo del primer pintado (antes de que arranque el canvas): puntos sólidos con la paleta.
-const SKY = `url("data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><g fill="#7C8A8E"><circle cx="22" cy="34" r="1"/><circle cx="130" cy="18" r="1.2"/><circle cx="198" cy="92" r="1"/><circle cx="64" cy="150" r="1.2"/><circle cx="172" cy="204" r="1"/><circle cx="96" cy="88" r=".8"/></g><g fill="#85DDCB"><circle cx="210" cy="30" r="1.2"/><circle cx="38" cy="214" r="1.2"/><circle cx="140" cy="140" r="1"/></g><g fill="#F2F5F4"><circle cx="84" cy="48" r="1"/><circle cx="226" cy="168" r="1"/><circle cx="14" cy="118" r=".9"/></g></svg>',
-)}")`;
-
-function readLook(): Look | null {
+function readLook(cartridgeId: string, looks: WorldStructure["looks"]): Look | null {
   try {
-    const raw = JSON.parse(localStorage.getItem(LOOK_KEY) || "null");
+    const raw = JSON.parse(localStorage.getItem(lookKey(cartridgeId)) || "null");
     if (!raw) return null;
     return {
-      model: SHIP_MODELS.find((m) => m.id === raw.model)?.id ?? DEFAULT_LOOK.model,
-      color: SHIP_COLORS.find((c) => c.id === raw.color)?.id ?? DEFAULT_LOOK.color,
-      pilot: SHIP_PILOTS.find((p) => p.id === raw.pilot)?.id ?? DEFAULT_LOOK.pilot,
+      model: looks.models.find((m) => m.id === raw.model)?.id ?? looks.initial.model,
+      color: looks.colors.find((c) => c.id === raw.color)?.id ?? looks.initial.color,
+      pilot: looks.pilots.find((p) => p.id === raw.pilot)?.id ?? looks.initial.pilot,
     };
   } catch {
     return null;
@@ -62,21 +65,29 @@ const chip =
   "inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-full border border-[#232D33] bg-[#141B20] px-3 text-xs text-[#D9E0DE] shadow-[0_2px_8px_rgba(0,0,0,0.35)]";
 const switchTrack =
   "relative h-5 w-[34px] shrink-0 rounded-full bg-[#232D33] after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-[#F2F5F4] after:transition-transform peer-checked:bg-brand-500 peer-checked:after:translate-x-3.5 peer-checked:after:bg-background peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-500 motion-reduce:after:transition-none";
-const MINI_ROWS: Array<{ id: string; label: string; icon: IconName; key: "live" | "wall" | "recs" | "courses" | "tables" }> = [
-  { id: "live", label: "Sala en vivo", icon: "calendar", key: "live" },
-  { id: "wall", label: "Muro", icon: "wall", key: "wall" },
-  { id: "recs", label: "Grabaciones", icon: "recording", key: "recs" },
-  { id: "courses", label: "Cursos", icon: "book", key: "courses" },
-  { id: "t1", label: "Mesas del hackatón", icon: "person", key: "tables" },
-];
+/** Ícono de cada lugar en la lista del teléfono, según a qué lleva. */
+const TARGET_ICON: Record<PlaceTarget, IconName> = { call: "calendar", wall: "wall", recs: "recording", courses: "book", table: "person" };
+/** La lista del teléfono sale de la estructura: un renglón por lugar y uno solo para todas las mesas. */
+function miniRows(structure: WorldStructure) {
+  const rows = structure.places.filter((p) => p.table === null).map((p) => ({ id: p.id, label: p.short, icon: TARGET_ICON[p.target], tables: false }));
+  const table = structure.places.find((p) => p.table !== null);
+  if (table && structure.tableZone) rows.push({ id: table.id, label: structure.tableZone.name, icon: TARGET_ICON.table, tables: true });
+  return rows;
+}
 
 export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const { community, me, event, recordingCount, courseCount } = data;
   const now = useNow();
   const call = event ? describeCall(event, now) : null;
+  // El mundo activo: el que trae el loader y, después, el que diga el sondeo (cambia en vivo desde el panel).
+  const [cartridgeId, setCartridgeId] = useState(() => getCartridge(community.worldCartridge).id);
+  const cartridge: Cartridge = getCartridge(cartridgeId);
+  const { structure, copy } = cartridge;
+  /** El efecto se está desmontando para montar otro mundo: la presencia se queda (no se manda `leave`). */
+  const switchingRef = useRef(false);
   // Lugares que hoy no llevan a nada: no se dibujan ni se listan.
-  const hiddenKey = [recordingCount > 0 ? "" : "recs", courseCount > 0 ? "" : "courses"].filter(Boolean).join(",");
-  const hidden = hiddenKey ? hiddenKey.split(",") : [];
+  const hidden = structure.places.filter((p) => (p.target === "recs" && recordingCount === 0) || (p.target === "courses" && courseCount === 0)).map((p) => p.id);
+  const hiddenKey = hidden.join(",");
 
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -84,7 +95,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const apiRef = useRef<WorldApi | null>(null);
   const soundRef = useRef<Sound | null>(null);
   const faceRef = useRef<Face | null>(null);
-  const lookRef = useRef<Look>(DEFAULT_LOOK);
+  const lookRef = useRef<Look>(structure.looks.initial);
   const sheetOpenRef = useRef(false);
   const expandedRef = useRef(false);
   /** Pide una sincronía pronto (cambió el destino, la mesa o la nave). */
@@ -98,7 +109,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [expanded, setExpanded] = useState(false);
   const [mini, setMini] = useState(false);
   const [quiet, setQuiet] = useState(false);
-  const [look, setLook] = useState<Look>(DEFAULT_LOOK);
+  const [look, setLook] = useState<Look>(structure.looks.initial);
+  // La skin del cartucho (renderizador, sonidos, dibujos del selector): se carga aparte.
+  const [skin, setSkin] = useState<WorldSkin | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [joyOn, setJoyOn] = useState(false);
   const [place, setPlace] = useState<PlaceInfo | null>(null);
@@ -108,6 +121,12 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [myTable, setMyTable] = useState<number | null>(null);
   // Aparato que llevas (cambia tu disparo por unos tiros). `null`: disparo básico.
   const [weapon, setWeapon] = useState<WeaponInfo | null>(null);
+  // Amenaza del cartucho (si trae): viene en camino, anda cerca, o nada. Y la cuenta para reaparecer si te destruyó.
+  const [threat, setThreat] = useState<"warn" | "here" | null>(null);
+  const [threatName, setThreatName] = useState("");
+  /** Letrero del modo de juego del cartucho (si trae uno). */
+  const [hud, setHud] = useState<ModeHud>(null);
+  const [downIn, setDownIn] = useState<number | null>(null);
   // Chat efímero: los mensajes viven ~10 min en memoria del servidor y llegan con el mismo sondeo.
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
@@ -130,24 +149,36 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
   // ── Motor y sonido: sólo en el navegador ──
   useEffect(() => {
+    if (!me) return;
+    switchingRef.current = false;
+    let cancelled = false, stop: (() => void) | null = null;
+    // La skin llega con `import()`: un renderizador pesado (three.js) no le cuesta a los demás mundos.
+    cartridge.loadSkin().then(
+      (loaded) => { if (!cancelled) stop = start(loaded); },
+      () => { if (!cancelled) setOffline("No se pudo cargar el Mundo. Recarga la página."); },
+    );
+    return () => { cancelled = true; stop?.(); };
+
+    function start(skin: WorldSkin) {
     const canvas = canvasRef.current, stage = stageRef.current;
-    if (!canvas || !stage || !me) return;
-    const saved = readLook();
-    const firstLook = saved ?? DEFAULT_LOOK;
+    if (!canvas || !stage || !me) return null;
+    setSkin(skin);
+    const saved = readLook(cartridge.id, structure.looks);
+    const firstLook = saved ?? structure.looks.initial;
     const savedQuiet = readFlag(QUIET_KEY, window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const isCoarse = window.matchMedia("(pointer: coarse)").matches;
     // Sonido: siempre encendido desde el primer gesto; «Tranquilo» es lo único que lo apaga.
     lookRef.current = firstLook;
     setLook(firstLook); setQuiet(savedQuiet); setJoyOn(isCoarse);
 
-    const sound = createSound(!savedQuiet);
+    const sound = createSound(!savedQuiet, skin.sounds);
     soundRef.current = sound;
     const unlock = () => sound.unlock();
     window.addEventListener("pointerdown", unlock, true);
     window.addEventListener("keydown", unlock, true);
 
     const api = createWorld({
-      canvas, stage, meId: me.id, meName: me.name, mePhoto: me.photoURL, look: firstLook, quiet: savedQuiet,
+      canvas, stage, cartridge, skin, meId: me.id, meName: me.name, mePhoto: me.photoURL, look: firstLook, quiet: savedQuiet,
       callbacks: {
         onPlace: (p) => { setPlace(p); setMyTable(api.myTable()); },
         onShip: (s) => { setShip(s); setWaved(null); },
@@ -158,6 +189,14 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         // El robot ya estalló en tu pantalla; el servidor lo deja fuera para todos y regresa cuánto falta para que vuelva.
         onBoom: (id) => { post({ boom: id }).then(apply).catch(() => {}); },
         onWeapon: setWeapon,
+        onHud: setHud,
+        // Saludo pedido desde un menú de la skin: mismo camino que el botón «Saludar».
+        onGreet: (id) => { if (structure.bots.some((b) => b.id === id)) apiRef.current?.waveBot(id); else waveRef.current(id); },
+        // El modo de juego propone un valor compartido: el servidor decide y lo aceptado vuelve en el snapshot.
+        onShare: (key, value) => { post({ share: { key, value } }).then(apply).catch(() => {}); },
+        onThreat: (phase, name) => { setThreat(phase); if (phase) setThreatName(name); },
+        // Destruida o de vuelta: los demás lo saben con el siguiente latido (`down`).
+        onDown: (seconds) => { setDownIn(seconds); dirtyRef.current = true; },
         onNudge: (id) => {
           // La nave ya tembló en tu pantalla; se avisa para que su dueño también la vea (el servidor acepta una por segundo).
           if (Date.now() - lastNudgeSent < 1000) return;
@@ -178,13 +217,13 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     narrow.addEventListener("change", applyMini);
 
     // «Mi avatar» es el piloto por defecto de quien sí tiene foto: se reconoce a la gente de un
-    // vistazo. Sin foto (el bucket da 404) arranca con Ghosty. Lo que la persona elija manda.
+    // vistazo. Sin foto (el bucket da 404) arranca con el del cartucho. Lo que la persona elija manda.
     const face = faceFor(me.id, me.name, me.photoURL);
     faceRef.current = face;
-    if (!saved && face.img) {
+    if (!saved && face.img && structure.looks.pilots.some((p) => p.id === "avatar")) {
       face.img.addEventListener("load", () => {
         if (lookRef.current !== firstLook || !face.img?.naturalWidth) return; // ya eligió otra cosa
-        const next = { ...firstLook, pilot: "avatar" as const };
+        const next = { ...firstLook, pilot: "avatar" };
         lookRef.current = next; setLook(next); api.setLook(next);
       });
     }
@@ -201,6 +240,12 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       return (await res.json()) as Snapshot;
     };
     const apply = (snap: Snapshot) => {
+      // Quien administra cambió de mundo: se desmonta éste y se monta el otro. La presencia y el chat se quedan.
+      if (snap.cartridge && snap.cartridge !== cartridge.id && hasCartridge(snap.cartridge)) {
+        switchingRef.current = true;
+        setCartridgeId(snap.cartridge);
+        return;
+      }
       setOffline(null);
       setPresent(snap.count);
       api.setRemote(snap.ships, snap.me);
@@ -223,6 +268,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       }
       for (const to of shaken) if (api.showNudge(to)) sound.play("nudge");
       api.setBotsDown(snap.down ?? [], firstRead);
+      api.setShared(snap.shared ?? {});
       const says = snap.says ?? [];
       let fresh = 0;
       for (const m of says) {
@@ -284,19 +330,24 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       window.removeEventListener("pagehide", leave);
       window.removeEventListener("pointerdown", unlock, true);
       window.removeEventListener("keydown", unlock, true);
-      leave();
+      if (!switchingRef.current) leave();
       sound.destroy();
       soundRef.current = null;
       api.destroy();
       apiRef.current = null;
+      // Lo que era de este mundo no pasa al siguiente.
+      setReady(false); setSkin(null); setPlace(null); setShip(null); setCounts(null); setWeapon(null); setMyTable(null); setSheetOpen(false); setThreat(null); setDownIn(null); setHud(null);
     };
-    // El motor se crea una vez por visita a la sección.
+    }
+    // El motor se crea una vez por visita a la sección y por cartucho.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [community.slug, me?.id]);
+  }, [community.slug, me?.id, cartridge.id]);
 
   // La sala se enciende con el estado real de la próxima llamada; sin evento queda apagada.
   useEffect(() => {
-    apiRef.current?.setStation({ open: !!event?.open, sub: call ? (call.isLive ? "En vivo" : event?.open ? "Abierta" : call.pill.toLowerCase()) : "Sin llamada programada" });
+    const status = { on: !!event?.open, sub: call ? (call.isLive ? "En vivo" : event?.open ? "Abierta" : call.pill.toLowerCase()) : "Sin llamada programada" };
+    for (const p of structure.places) if (p.target === "call") apiRef.current?.setPlaceStatus(p.id, status);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, event?.open, call?.isLive, call?.pill]);
 
   useEffect(() => { apiRef.current?.setHidden(hiddenKey ? hiddenKey.split(",") : []); }, [ready, hiddenKey]);
@@ -344,7 +395,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     const next = { ...look, ...patch };
     setLook(next); lookRef.current = next; apiRef.current?.setLook(next);
     soundRef.current?.play("pick");
-    try { localStorage.setItem(LOOK_KEY, JSON.stringify(next)); } catch {}
+    try { localStorage.setItem(lookKey(cartridge.id), JSON.stringify(next)); } catch {}
   };
   const toggleExpanded = () => { soundRef.current?.unlock(); soundRef.current?.play(expanded ? "collapse" : "expand"); setExpanded((v) => !v); };
   const wave = () => {
@@ -367,35 +418,39 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const joyEnd = () => { if (knobRef.current) knobRef.current.style.transform = ""; apiRef.current?.setJoy(0, 0); };
 
   const people = present ?? counts?.humans ?? 1;
-  const weaponLabel = weapon ? `${weapon.name} · ${weapon.left === 1 ? "1 tiro" : `${weapon.left} tiros`}` : "Disparo básico";
+  // Con enemigo cerca y sin aparato (si el cartucho pide aparato para defenderse): se dice qué hacer.
+  const needsArm = !!threat && !weapon && !!structure.threat?.needsWeapon;
+  const unarmed = needsArm && !!copy.threat?.unarmed;
+  const weaponLabel = weapon ? `${weapon.name} · ${copy.uses(weapon.left)}` : copy.basicWeapon;
+  const canShoot = !!structure.combat;
   const full = !mini; // mundo completo (incrustado en pantalla ancha, o expandido)
 
   // ── Lo que tienes cerca: se atiende en la franja, no encima del mapa ──
   let near: { sub: string; action: ReactNode } | null = null;
   if (place) {
-    if (place.kind === "station") {
+    if (place.target === "call") {
       near = event && call
         ? { sub: `${event.title} · ${call.status}`, action: <EnterCallButton event={event} /> }
         : { sub: "No hay llamada programada", action: null };
-    } else if (place.kind === "planet") {
+    } else if (place.target === "wall") {
       near = { sub: "Lo que el club publicó y comentó", action: <button type="button" className={btn} onClick={() => go("wall")}>Entrar al Muro</button> };
-    } else if (place.kind === "satellite") {
+    } else if (place.target === "recs") {
       near = { sub: recordingCount === 1 ? "1 grabación de las llamadas" : `${recordingCount} grabaciones de las llamadas`, action: <button type="button" className={btn} onClick={() => go("recs")}>Ver grabaciones</button> };
-    } else if (place.kind === "base") {
+    } else if (place.target === "courses") {
       near = { sub: courseCount === 1 ? "1 curso incluido en tu membresía" : `${courseCount} cursos incluidos en tu membresía`, action: <button type="button" className={btn} onClick={() => go("courses")}>Entrar a Cursos</button> };
     } else if (place.table !== null) {
-      const i = place.table, n = counts?.perTable[i] ?? 0;
+      const i = place.table, n = counts?.perTable[i] ?? 0, seats = structure.tables[i]?.seats.length ?? 0;
       near = myTable === i
-        ? { sub: `Estás en la mesa · ${Math.max(1, n)} de 4 · sin audio`, action: <button type="button" className={btn} onClick={() => apiRef.current?.stand()}>Levantarte</button> }
-        : n >= 4
-          ? { sub: "Mesa llena · 4 de 4", action: <button type="button" className={btn} disabled>Mesa llena</button> }
-          : { sub: n === 0 ? "Nadie todavía · sin audio" : `${n} de 4 lugares · sin audio`, action: <button type="button" className={btn} onClick={() => apiRef.current?.sit(i)}>Sentarte</button> };
+        ? { sub: `Estás en la mesa · ${Math.max(1, n)} de ${seats} · sin audio`, action: <button type="button" className={btn} onClick={() => apiRef.current?.stand()}>Levantarte</button> }
+        : n >= seats
+          ? { sub: `Mesa llena · ${seats} de ${seats}`, action: <button type="button" className={btn} disabled>Mesa llena</button> }
+          : { sub: n === 0 ? "Nadie todavía · sin audio" : `${n} de ${seats} lugares · sin audio`, action: <button type="button" className={btn} onClick={() => apiRef.current?.sit(i)}>Sentarte</button> };
     }
   }
 
   return (
     <>
-      <SectionHead title={`Mundo · ${WORLD_NAME}`} />
+      <SectionHead title={`Mundo · ${cartridge.name}`} />
       <div className="p-3 sm:p-4">
         <div
           ref={boxRef}
@@ -423,12 +478,12 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               type="button"
               aria-haspopup="dialog"
               aria-expanded={sheetOpen}
-              aria-label="Elegir mi nave y ajustes"
+              aria-label={copy.lookLabel}
               onClick={() => setSheetOpen((v) => !v)}
               className={`${chip} font-medium text-[#F2F5F4] hover:bg-[#1C252B]`}
             >
               <Icon name="ship" className="h-4 w-4" />
-              <span className={expanded ? "max-sm:hidden" : ""}>Mi nave</span>
+              <span className={expanded ? "max-sm:hidden" : ""}>{copy.lookButton}</span>
             </button>
             <label className={`${chip} cursor-pointer ${expanded ? "max-sm:hidden" : ""}`}>
               <input type="checkbox" role="switch" checked={quiet} onChange={(e) => changeQuiet(e.target.checked)} className="peer sr-only" />
@@ -441,9 +496,21 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               className={`${btn} shadow-[0_2px_8px_rgba(0,0,0,0.35)] ${expanded ? "" : "max-sm:min-h-10 max-sm:basis-full"}`}
             >
               <Icon name={expanded ? "collapse" : "expand"} className="h-[15px] w-[15px]" />
-              {expanded ? "Contraer" : <span>Expandir<span className="sm:hidden"> el mundo y pilotear</span></span>}
+              {expanded ? "Contraer" : <span>Expandir<span className="sm:hidden">{copy.expandMini}</span></span>}
             </button>
           </div>
+
+          {/* ── Voz por mesa: pieza autocontenida; con la voz apagada no pinta nada para un miembro ── */}
+          {me && (
+            <VoiceStrip
+              slug={community.slug}
+              zone={myTable === null ? null : String(myTable)}
+              zoneLabel={myTable === null ? undefined : structure.tables[myTable]?.topic}
+              blocked={false}
+              name={me.name}
+              photoURL={me.photoURL}
+            />
+          )}
 
           {/* ── El mapa ── */}
           <div
@@ -453,24 +520,60 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
                 : "relative max-sm:m-2.5 max-sm:aspect-[16/10] max-sm:overflow-hidden max-sm:rounded-[10px] max-sm:border max-sm:border-[#232D33] sm:min-h-0 sm:flex-1"
             }
           >
-            <div ref={stageRef} style={{ backgroundImage: SKY, touchAction: "none" }} className="absolute inset-0 cursor-crosshair bg-background">
-              {!ready && <p className="absolute inset-0 grid place-items-center text-sm text-[#7C8A8E]">Preparando tu nave…</p>}
+            <div ref={stageRef} style={{ ...cartridge.poster, touchAction: "none" }} className="absolute inset-0 cursor-crosshair bg-background">
+              {!ready && <p className="absolute inset-0 grid place-items-center text-sm text-[#7C8A8E]">{copy.loading}</p>}
+              {/* Un lienzo por cartucho: cada uno pide su propio contexto (2D o WebGL). */}
               <canvas
+                key={cartridge.id}
                 ref={canvasRef}
                 role="img"
-                aria-label="Mapa del club con las naves de quienes están conectados. Los lugares y las personas cercanas aparecen en la franja de abajo."
+                aria-label={copy.mapLabel}
                 className="absolute inset-0 block h-full w-full"
               />
             </div>
 
             {/* Disparo: cosquillas a las naves de personas (tiemblan) y golpes a las de los robots (estallan y vuelven). Con mouse es clic derecho (o la
                 barra espaciadora) y sólo se muestra el aparato que llevas; el botón grande queda para táctil. */}
-            {full && ready && !quiet && (
+            {full && ready && !quiet && canShoot && (
               <p className="pointer-events-none absolute bottom-3.5 right-3.5 z-[3] hidden rounded-full border border-[#232D33] bg-[#141B20] px-3 py-1.5 text-xs text-[#7C8A8E] [@media(pointer:fine)]:block">
-                <b className="font-semibold text-brand-500">{weaponLabel}</b> · clic derecho para disparar
+                {unarmed ? <b className="font-semibold text-[#F4AFAF]">{copy.threat?.unarmed}</b> : <><b className="font-semibold text-brand-500">{weaponLabel}</b> · {copy.shootHint}</>}
               </p>
             )}
-            {full && ready && !quiet && (
+            {/* Letrero del modo de juego: fijo arriba a la izquierda, bajo el encabezado; no recibe toques ni tapa la franja de abajo. */}
+            {full && ready && hud && (
+              <div
+                role="status"
+                aria-live="polite"
+                data-hud
+                className="pointer-events-none absolute left-3.5 top-[96px] z-[3] max-w-[min(220px,calc(100%-28px))] rounded-xl border border-[#232D33] bg-[#141B20] px-3 py-2 text-xs text-[#D9E0DE] shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
+              >
+                <b className="block font-semibold text-brand-500">{hud.title}</b>
+                {hud.lines.slice(0, 4).map((line, i) => (
+                  <span key={i} className="mt-0.5 block truncate tabular-nums">{line}</span>
+                ))}
+              </div>
+            )}
+            {/* Amenaza: aviso antes de que llegue y pista mientras anda cerca. Nadie es destruido sin haber sido avisado. */}
+            {full && ready && threat && downIn === null && copy.threat && (
+              <p
+                role="status"
+                aria-live="assertive"
+                data-threat={threat}
+                className="pointer-events-none absolute left-1/2 top-[58px] z-[4] w-max max-w-[calc(100%-24px)] -translate-x-1/2 rounded-full border border-[#9A5656] bg-[#141B20] px-3.5 py-1.5 text-center text-xs text-[#D9E0DE] shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
+              >
+                <b className="font-semibold text-[#F4AFAF]">{threat === "warn" ? copy.threat.warning(threatName) : copy.threat.near(threatName)}</b> · {needsArm && copy.threat.arm ? copy.threat.arm : copy.threat.advice}
+              </p>
+            )}
+            {/* Tu nave fue destruida: qué pasó y cuánto falta para volver. El chat y lo demás siguen funcionando. */}
+            {ready && downIn !== null && copy.threat && (
+              <div className="pointer-events-none absolute inset-0 z-[4] grid place-items-center p-4">
+                <div role="status" aria-live="polite" aria-atomic="true" data-down className="rounded-[14px] border border-[#232D33] bg-[#141B20] px-6 py-5 text-center shadow-[0_10px_28px_rgba(0,0,0,0.35)]">
+                  <b className="block text-base font-semibold text-[#F2F5F4]">{copy.threat.destroyed}</b>
+                  <span className="mt-1 block text-sm tabular-nums text-brand-500">{copy.threat.back(downIn)}</span>
+                </div>
+              </div>
+            )}
+            {full && ready && !quiet && canShoot && downIn === null && (
               <button
                 type="button"
                 data-shoot
@@ -537,8 +640,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
             <div aria-live="polite" className="flex min-h-[40px] flex-wrap items-center gap-x-5 gap-y-2">
             {!ship && !(place && near) && (
               <p className="text-[13px] text-[#7C8A8E]">
-                Acércate a un lugar o a alguien.
-                <span className="hidden lg:inline"> Flechas o WASD para volar · clic para ir a un punto · Enter para entrar · Espacio dispara · pasa sobre un aparato para cambiar tu disparo.</span>
+                {copy.hint}
+                <span className="hidden lg:inline">{copy.hintKeys}</span>
               </p>
             )}
             {ship && (
@@ -601,11 +704,11 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
           {/* ── Vista reducida (teléfono, sin expandir): lista tocable ── */}
           {!expanded && (
             <div className="px-2.5 pb-2.5 sm:hidden">
-              <p className="mx-0.5 mb-2 text-xs text-[#7C8A8E]">Toca el mapa o un lugar y tu nave vuela para allá.</p>
+              <p className="mx-0.5 mb-2 text-xs text-[#7C8A8E]">{copy.hintMini}</p>
               <div className="grid grid-cols-2 gap-1.5">
-                {MINI_ROWS.filter((row) => !hidden.includes(row.id)).map((row, i, rows) => {
-                  const n = counts?.[row.key] ?? 0;
-                  const here = !!place && (place.id === row.id || (row.key === "tables" && place.kind === "table"));
+                {miniRows(structure).filter((row) => !hidden.includes(row.id)).map((row, i, rows) => {
+                  const n = (row.tables ? counts?.tables : counts?.byPlace[row.id]) ?? 0;
+                  const here = !!place && (place.id === row.id || (row.tables && place.table !== null));
                   return (
                     <button
                       key={row.id}
@@ -616,7 +719,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
                       <Icon name={row.icon} className="h-[18px] w-[18px] text-brand-500" />
                       <span className="min-w-0">
                         <b className="block text-[13px] font-semibold leading-tight text-[#F2F5F4]">{row.label}</b>
-                        <small className="text-[11px] text-[#7C8A8E]">{n === 1 ? "1 nave" : `${n} naves`}</small>
+                        <small className="text-[11px] text-[#7C8A8E]">{copy.count(n)}</small>
                       </span>
                     </button>
                   );
@@ -627,7 +730,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
           {sheetOpen && (
             <ShipSheet
-              look={look} face={faceRef.current} onChange={changeLook} onClose={() => setSheetOpen(false)}
+              look={look} face={faceRef.current} looks={structure.looks} skin={skin} copy={copy} onChange={changeLook} onClose={() => setSheetOpen(false)}
               toggles={[
                 { label: "Modo tranquilo", on: quiet, set: changeQuiet },
                 { label: "Joystick en pantalla", on: joyOn, set: setJoyOn },
@@ -640,14 +743,15 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   );
 }
 
-/** Selector de nave (modelo, color y piloto) y ajustes. Se guarda en este navegador. */
-function ShipSheet({ look, face, onChange, onClose, toggles }: {
-  look: Look; face: Face | null; onChange: (patch: Partial<Look>) => void; onClose: () => void;
+/** Selector de aspecto (modelo, color y piloto del cartucho) y ajustes. Se guarda en este navegador. */
+function ShipSheet({ look, face, looks, skin, copy, onChange, onClose, toggles }: {
+  look: Look; face: Face | null; looks: WorldStructure["looks"]; skin: WorldSkin | null; copy: Cartridge["copy"];
+  onChange: (patch: Partial<Look>) => void; onClose: () => void;
   toggles: Array<{ label: string; on: boolean; set: (on: boolean) => void }>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [tick, setTick] = useState(0);
-  // Los dibujos salen del mismo motor que el mapa. Ghosty y la foto son imágenes: se repinta cuando cargan.
+  // Los dibujos salen de la misma skin que pinta el mapa. Ghosty y la foto son imágenes: se repinta cuando cargan.
   useEffect(() => {
     const id = window.setTimeout(() => setTick((t) => t + 1), 400);
     return () => window.clearTimeout(id);
@@ -657,44 +761,47 @@ function ShipSheet({ look, face, onChange, onClose, toggles }: {
       const g = c.getContext("2d");
       if (!g) return;
       g.setTransform(2, 0, 0, 2, 0, 0); g.clearRect(0, 0, 56, 40);
-      if (c.dataset.model) drawShip(g, { model: c.dataset.model as Look["model"], color: look.color, pilot: look.pilot, ang: -0.35, thrust: 0.7, face }, 30, 21, 36, 0.4);
-      else drawPilot(g, c.dataset.pilot as Look["pilot"], 28, 20, 16, face, c.dataset.pilot === "avatar" ? SHIP_COLORS.find((x) => x.id === look.color)?.fill : undefined);
+      if (c.dataset.model) skin?.drawOption?.(g, "model", c.dataset.model, look, face);
+      else if (c.dataset.pilot) skin?.drawOption?.(g, "pilot", c.dataset.pilot, look, face);
     });
-  }, [look, tick, face]);
+  }, [look, tick, face, skin]);
+  // Una lista con una sola opción no se ofrece: no hay nada que elegir.
+  const pick = (options: Array<{ id: string; name: string }>) => (options.length > 1 ? options : []);
+  const models = pick(looks.models), colors = pick(looks.colors), pilots = pick(looks.pilots);
   const option = (selected: boolean) =>
     `grid justify-items-center gap-0.5 rounded-[10px] border px-0.5 pb-1 pt-1.5 text-[11px] leading-tight ${selected ? "border-brand-500 bg-[#17302C] text-[#F2F5F4]" : "border-[#232D33] bg-background text-[#7C8A8E]"}`;
   return (
-    <div ref={ref} role="dialog" aria-label="Elegir mi nave y ajustes" className="absolute inset-x-2.5 top-[calc(54px+env(safe-area-inset-top))] z-[5] ml-auto max-h-[calc(100%-64px)] max-w-[330px] overflow-y-auto rounded-[14px] border border-[#232D33] bg-[#141B20] p-3.5 shadow-[0_10px_28px_rgba(0,0,0,0.35)]">
+    <div ref={ref} role="dialog" aria-label={copy.lookLabel} className="absolute inset-x-2.5 top-[calc(54px+env(safe-area-inset-top))] z-[5] ml-auto max-h-[calc(100%-64px)] max-w-[330px] overflow-y-auto rounded-[14px] border border-[#232D33] bg-[#141B20] p-3.5 shadow-[0_10px_28px_rgba(0,0,0,0.35)]">
       <div className="mb-2.5 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-[#F2F5F4]">Tu nave</h2>
+        <h2 className="text-sm font-semibold text-[#F2F5F4]">{copy.lookTitle}</h2>
         <button type="button" onClick={onClose} className="text-xs font-medium text-[#7C8A8E] underline underline-offset-2 hover:text-[#F2F5F4]">Listo</button>
       </div>
-      <p className="mb-1.5 text-xs font-medium text-[#7C8A8E]">Modelo</p>
+      {models.length > 0 && <p className="mb-1.5 text-xs font-medium text-[#7C8A8E]">{copy.modelLabel}</p>}
       <div className="grid grid-cols-4 gap-1.5">
-        {SHIP_MODELS.map((m) => (
+        {models.map((m) => (
           <button key={m.id} type="button" aria-pressed={look.model === m.id} onClick={() => onChange({ model: m.id })} className={option(look.model === m.id)}>
             <canvas data-model={m.id} width={112} height={80} className="block h-10 w-14" />
             {m.name}
           </button>
         ))}
       </div>
-      <p className="mb-1.5 mt-3 text-xs font-medium text-[#7C8A8E]">Color</p>
+      {colors.length > 0 && <p className="mb-1.5 mt-3 text-xs font-medium text-[#7C8A8E]">{copy.colorLabel}</p>}
       <div className="flex gap-2">
-        {SHIP_COLORS.map((c) => (
+        {colors.map((c) => (
           <button
             key={c.id}
             type="button"
             aria-label={`Color ${c.name}`}
             aria-pressed={look.color === c.id}
             onClick={() => onChange({ color: c.id })}
-            style={{ background: c.fill }}
+            style={{ background: skin?.swatch?.(c.id) ?? "#7C8A8E" }}
             className={`h-[30px] w-[30px] rounded-full border-2 border-[#141B20] ${look.color === c.id ? "ring-2 ring-[#F2F5F4]" : "ring-1 ring-[#232D33]"}`}
           />
         ))}
       </div>
-      <p className="mb-1.5 mt-3 text-xs font-medium text-[#7C8A8E]">Piloto</p>
+      {pilots.length > 0 && <p className="mb-1.5 mt-3 text-xs font-medium text-[#7C8A8E]">{copy.pilotLabel}</p>}
       <div className="grid grid-cols-4 gap-1.5">
-        {SHIP_PILOTS.map((p) => (
+        {pilots.map((p) => (
           <button key={p.id} type="button" aria-pressed={look.pilot === p.id} onClick={() => onChange({ pilot: p.id })} className={option(look.pilot === p.id)}>
             <canvas data-pilot={p.id} width={112} height={80} className="block h-10 w-14" />
             {p.name}

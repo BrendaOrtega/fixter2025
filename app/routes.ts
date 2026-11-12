@@ -35,6 +35,7 @@ export default [
   route("comunidad/:slug/admin", "routes/comunidad.$slug.admin.tsx"), // panel del anfitrión
   route("comunidad/:slug/transmision", "routes/comunidad.$slug.transmision.ts"), // conectar YouTube para transmitir (redirige a Google)
   route("comunidad/:slug/mundo", "routes/comunidad.$slug.mundo.ts"), // «Mundo»: presencia de las naves en memoria (recurso, sin UI)
+  route("comunidad/:slug/voz", "routes/comunidad.$slug.voz.ts"), // voz en las mesas del Mundo: interruptor y token de LiveKit (recurso, sin UI)
   route("comunidad/:slug/quiz", "routes/comunidad.$slug.quiz.ts"), // quiz en vivo: estado y controles (recurso, sin UI)
   route("comunidad/:slug/quiz/lanzar", "routes/comunidad.$slug.quiz-lanzar.tsx"), // lanzar un quiz fuera de una llamada
   route("comunidad/:slug/evento/:file", "routes/comunidad.$slug.evento.$file.ts"), // .ics de un evento
