@@ -39,15 +39,30 @@ export const getSesTransportForWebinar = () => {
 };
 
 // Función alternativa para enviar emails directamente con SES sin nodemailer
+/**
+ * Configuration set con aperturas y clics hacia el SNS «envios» (lo procesa `api/sns`). Sólo se usa
+ * cuando el envío lo pide (`track`): los correos transaccionales (ligas de acceso, recibos) no
+ * llevan píxel ni ligas reescritas.
+ */
+export const TRACKING_CONFIGURATION_SET = process.env.SES_CONFIGURATION_SET || "envios";
+
 export const sendSesEmailDirect = async (params: {
   to: string;
   subject: string;
   htmlBody: string;
   from?: string;
+  /** Rastrear aperturas y clics. `newsletterId` amarra los eventos a su fila `Newsletter`. */
+  track?: { newsletterId?: string };
 }) => {
   const client = getSesClient();
 
   const command = new SendEmailCommand({
+    ...(params.track
+      ? {
+          ConfigurationSetName: TRACKING_CONFIGURATION_SET,
+          ...(params.track.newsletterId ? { Tags: [{ Name: "newsletter_id", Value: params.track.newsletterId }] } : {}),
+        }
+      : {}),
     Source: params.from || getSesRemitent(),
     Destination: {
       ToAddresses: [params.to],

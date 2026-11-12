@@ -14,7 +14,7 @@ import { writeFileSync } from "fs";
 import { db } from "../app/.server/db";
 import { isMembershipActive } from "../app/.server/services/membership.server";
 import { checkSignupEmail } from "../app/.server/anti-bot";
-import { sendSesEmailDirect } from "../app/utils/sesTransport";
+import { campaignStats, sendCampaignEmail, startCampaign, withUtm } from "../app/.server/email-campaign.server";
 import { emailButton, wrapEmailHtml } from "../app/utils/emailShell";
 import { escapeHtml } from "../app/utils/escapeHtml";
 
@@ -142,10 +142,16 @@ if (!send) {
   process.exit(0);
 }
 
+// Medido: fila Newsletter + configuration set de rastreo + UTM (ver `email-campaign.server.ts`).
+const CAMPAIGN = "club-presentacion-hackaton-2026-11-12";
+const sample = presentationEmail(null, false);
+const newsletterId = await startCampaign({ title: CAMPAIGN, subject: sample.subject });
+console.log(`Campaña ${newsletterId}`);
 let ok = 0;
 for (const r of list) {
   try {
-    await sendSesEmailDirect({ to: r.email, from: FROM, ...presentationEmail(r.name, r.member) });
+    const m = presentationEmail(r.name, r.member);
+    await sendCampaignEmail(newsletterId, { to: r.email, from: FROM, subject: m.subject, htmlBody: withUtm(m.htmlBody, CAMPAIGN) });
     ok++;
   } catch (err) {
     console.error("Falló", r.email, err);
@@ -153,4 +159,5 @@ for (const r of list) {
   await new Promise((res) => setTimeout(res, 120));
 }
 console.log(`\nEnviados: ${ok}/${list.length}`);
+console.log(await campaignStats(newsletterId));
 await db.$disconnect();
