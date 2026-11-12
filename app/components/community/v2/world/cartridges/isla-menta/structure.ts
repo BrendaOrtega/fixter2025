@@ -86,7 +86,8 @@ export const PLACES: Place[] = [
   ...TABLES.map((t, i): Place => ({ id: `t${i}`, target: "table", kind: "camp-table", x: t.x, y: t.y, r: 92, name: `Mesa «${t.topic}»`, short: t.topic, table: i })),
 ];
 export const BUILDINGS: Record<string, Building> = {
-  live: { landmark: "El Foro", bx: 800, by: 400, solid: 84 },
+  // El Foro es un auditorio al aire libre: aquí va el escenario; las gradas son una cosa (`STANDS`).
+  live: { landmark: "El Foro", bx: 800, by: 330, solid: 46 },
   wall: { landmark: "El Mural", bx: 310, by: 258, solid: 62 },
   recs: { landmark: "El Cine", bx: 1290, by: 240, solid: 62 },
   courses: { landmark: "La Escuelita", bx: 1270, by: 680, solid: 62 },

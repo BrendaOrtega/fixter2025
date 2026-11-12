@@ -43,19 +43,21 @@ type Env = Record<string, string | undefined>;
 type Deps = { fetch?: typeof fetch; now?: number; env?: Env };
 
 // ── Interruptor por comunidad (en memoria) ──
-const enabled = new Set<string>();
+// Encendido de entrada (decisión de bliss, 12-nov-2026): aquí se guardan las comunidades que lo
+// apagaron. Un reinicio del servidor lo deja encendido otra vez.
+const disabled = new Set<string>();
 
 export function voiceEnabled(communityId: string) {
-  return enabled.has(communityId);
+  return !disabled.has(communityId);
 }
 
 /** Enciende o apaga la voz en mesas. Sólo quien administra la comunidad. */
 export function setVoiceEnabled(opts: { communityId: string; canManage: boolean; on: unknown }) {
   if (!opts.canManage) return { ok: false as const, status: 403, error: "Sólo quien administra la comunidad cambia la voz en mesas." };
   if (typeof opts.on !== "boolean") return { ok: false as const, status: 400, error: "Falta `on` (true o false)." };
-  if (opts.on) enabled.add(opts.communityId);
+  if (opts.on) disabled.delete(opts.communityId);
   else {
-    enabled.delete(opts.communityId);
+    disabled.add(opts.communityId);
     for (const key of grants.keys()) if (key.startsWith(`${opts.communityId}:`)) grants.delete(key);
   }
   return { ok: true as const, enabled: opts.on };
@@ -215,7 +217,7 @@ export async function issueVoiceToken(
 
 /** Sólo para pruebas. */
 export function resetVoice() {
-  enabled.clear();
+  disabled.clear();
   grants.clear();
   recent.clear();
   wsCache = null;

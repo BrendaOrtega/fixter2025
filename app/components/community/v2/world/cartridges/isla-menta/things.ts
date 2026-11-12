@@ -13,7 +13,8 @@ export type PoseId = "sit" | "perch" | "warm" | "look" | "peek" | "cheer" | "dan
 /** Globito de ánimo (ícono plano, sin texto) de quien lleva rato en una actividad. */
 export type Mood = "note" | "cup" | "star" | "flame" | "zzz" | "wave";
 
-export type Spot = { x: number; y: number; face: number };
+/** `lift`: qué tan arriba del suelo queda quien lo ocupa (unidades de three); p. ej. una grada alta. */
+export type Spot = { x: number; y: number; face: number; lift?: number };
 export type Action = {
   id: string;
   /** Lo que dice el menú: un verbo. */
@@ -24,6 +25,8 @@ export type Action = {
   mood: Mood;
   /** Nombre del sonido en el banco de la skin. */
   sound: string;
+  /** La pose se hace sentado (p. ej. tomar café en un banquito). */
+  seated?: boolean;
   /** Cupo = cuántos puntos hay. Dos personas no comparten punto. */
   spots: Spot[];
 };
@@ -71,6 +74,19 @@ export const BOAT_SEATS = 4;
 /** Canasta de almohadas del campamento: de ahí se toman para los almohadazos. */
 export const PILLOWS = { x: 610, y: 648 };
 export const PILLOW_COUNT = 3;
+/** Escenario del Foro (al norte de la placita) y sus gradas: tres filas en abanico que miran a la pantalla. */
+export const STAGE = { x: 800, y: 330 };
+export const STANDS: Spot[] = [[70, 5, 0], [100, 7, 0.26], [130, 9, 0.52]].flatMap(([r, n, lift]) =>
+  Array.from({ length: n }, (_, k): Spot => {
+    const a = (-68 + (136 * k) / (n - 1)) * (Math.PI / 180), x = Math.round(STAGE.x + Math.sin(a) * r), y = Math.round(STAGE.y + 10 + Math.cos(a) * r);
+    return { x, y, face: Math.atan2(STAGE.x - x, STAGE.y - y), lift };
+  }));
+/** Mesitas del café, a los lados del puesto: cada una con tres banquitos. */
+export const CAFE_TABLES = [{ x: 1158, y: 338 }, { x: 1012, y: 348 }];
+export const CAFE_STOOLS: Spot[] = CAFE_TABLES.flatMap((t) => [90, 210, 330].map((deg): Spot => {
+  const a = (deg * Math.PI) / 180, x = Math.round(t.x + Math.cos(a) * 27), y = Math.round(t.y + Math.sin(a) * 27);
+  return { x, y, face: Math.atan2(t.x - x, t.y - y) };
+}));
 export const MEGAPHONE = { x: 694, y: 582 };
 /** Paradas de los robots: caen exactamente sobre su ruta. */
 export const BOT_STOPS = { uno: { x: 800, y: 553 }, dos: { x: 1080, y: 400 } };
@@ -99,6 +115,10 @@ export const THINGS: Thing[] = [
     id: `tent${i}`, name: "Casita de campaña", x: t.x, y: t.y, h: 1.9, hit: 36, solid: 28, clear: 46,
     actions: [{ id: "rest", label: "Descansar", done: "Estás descansando en la casita.", pose: "rest", mood: "zzz", sound: "act-sit", spots: [tentDoor(t)] }],
   })),
+  {
+    id: "stands", name: "Gradas del Foro", x: STAGE.x, y: STAGE.y + 110, h: 1.4, hit: 70, solid: 0, clear: 0,
+    actions: [{ id: "seat", label: "Sentarse en las gradas", done: "Te sentaste en las gradas del Foro.", pose: "sit", mood: "star", sound: "act-sit", spots: STANDS }],
+  },
   {
     id: "pillows", name: "Canasta de almohadas", x: PILLOWS.x, y: PILLOWS.y, h: 1.2, hit: 30, solid: 13, clear: 44,
     actions: [{ id: "take", label: "Tomar almohadas", done: "Tomaste tres almohadas. Toca a alguien que tengas cerca para darle un almohadazo.", pose: "cheer", mood: "star", sound: "act-cheer",
@@ -131,6 +151,10 @@ export const THINGS: Thing[] = [
     actions: [{ id: "drink", label: "Tomar café", done: "Te estás tomando un café.", pose: "drink", mood: "cup", sound: "act-drink",
       spots: [BOT_STOPS.dos, { x: 1042, y: 398 }, { x: 1118, y: 394 }].map((p) => ({ ...p, face: toward(p.x, p.y, CAFE.x, CAFE.y - 30) })) }],
   },
+  ...CAFE_TABLES.map((t, i): Thing => ({
+    id: `cafe-table${i}`, name: "Mesita del café", x: t.x, y: t.y, h: 1.3, hit: 40, solid: 11, clear: 52,
+    actions: [{ id: "sip", label: "Sentarse a tomar café", done: "Te sentaste a tomar un café.", pose: "drink", seated: true, mood: "cup", sound: "act-drink", spots: CAFE_STOOLS.slice(i * 3, i * 3 + 3) }],
+  })),
   {
     id: "hammock", name: "Hamaca", x: HAMMOCK.x, y: HAMMOCK.y, h: 1.9, hit: 46, solid: 0, clear: 70,
     actions: [{ id: "lie", label: "Echarse", done: "Te echaste en la hamaca.", pose: "lie", mood: "zzz", sound: "act-lie", spots: [{ x: HAMMOCK.x, y: HAMMOCK.y, face: EAST }] }],

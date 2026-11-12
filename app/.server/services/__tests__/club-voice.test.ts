@@ -41,20 +41,21 @@ describe("voz en las mesas del Mundo", () => {
     }
   });
 
-  it("el interruptor arranca apagado y sólo lo cambia quien administra", () => {
-    expect(voiceEnabled(C)).toBe(false);
-    expect(setVoiceEnabled({ communityId: C, canManage: false, on: true })).toMatchObject({ ok: false, status: 403 });
-    expect(voiceEnabled(C)).toBe(false);
-    expect(setVoiceEnabled({ communityId: C, canManage: true, on: "sí" })).toMatchObject({ ok: false, status: 400 });
-    expect(setVoiceEnabled({ communityId: C, canManage: true, on: true })).toEqual({ ok: true, enabled: true });
+  it("el interruptor arranca encendido y sólo lo cambia quien administra", () => {
     expect(voiceEnabled(C)).toBe(true);
-    expect(voiceEnabled("otra")).toBe(false);
+    expect(setVoiceEnabled({ communityId: C, canManage: false, on: false })).toMatchObject({ ok: false, status: 403 });
+    expect(voiceEnabled(C)).toBe(true);
+    expect(setVoiceEnabled({ communityId: C, canManage: true, on: "no" })).toMatchObject({ ok: false, status: 400 });
     expect(setVoiceEnabled({ communityId: C, canManage: true, on: false })).toEqual({ ok: true, enabled: false });
     expect(voiceEnabled(C)).toBe(false);
+    expect(voiceEnabled("otra")).toBe(true);
+    expect(setVoiceEnabled({ communityId: C, canManage: true, on: true })).toEqual({ ok: true, enabled: true });
+    expect(voiceEnabled(C)).toBe(true);
   });
 
   it("apagado no da token ni toca la caja, aunque la persona esté sentada", async () => {
     sit("a", 0);
+    setVoiceEnabled({ communityId: C, canManage: true, on: false });
     const box = fakeBox();
     expect(await ask("a", "0", box)).toMatchObject({ ok: false, status: 403, code: "voice_off" });
     expect(box.fetchFn).not.toHaveBeenCalled();

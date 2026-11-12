@@ -11,7 +11,7 @@ import {
   BUILDINGS, CAMPFIRE, DOCK, PLACES, PROPS, TABLES, TABLE_TONES, TENTS, TONES, UNIT, WORLD_H, WORLD_W,
   heightAt, landField, pathDistance, seeded, toneOf,
 } from "./structure";
-import { BENCH, CAFE, DANCE, HAMMOCK, MEGAPHONE, PILLOWS, SCOPE } from "./things";
+import { BENCH, CAFE, DANCE, HAMMOCK, MEGAPHONE, CAFE_STOOLS, CAFE_TABLES, PILLOWS, SCOPE, STANDS } from "./things";
 
 export const SEA = "#12272E";
 const C = {
@@ -140,7 +140,7 @@ export function createIsland(scene: THREE.Scene) {
     batch(G.rock, petals, false);
   }
 
-  // ── El Foro (Sala en vivo): rotonda con techo de menta; se nota cuando está abierta ──
+  // ── El Foro (Sala en vivo): auditorio al aire libre; se nota cuando está abierta ──
   const liveMat = own(new THREE.MeshLambertMaterial({ color: C.slate, flatShading: true }));
   const dotMat = own(new THREE.MeshLambertMaterial({ color: C.gray, flatShading: true }));
   const pulseMat = own(new THREE.MeshBasicMaterial({ color: C.mint, transparent: true, opacity: 0, depthWrite: false }));
@@ -148,32 +148,32 @@ export function createIsland(scene: THREE.Scene) {
   let flag: THREE.Mesh, liveDot: THREE.Mesh;
   const pennants: THREE.Mesh[] = [];
   {
+    // Auditorio al aire libre: escenario con pantalla grande al norte y gradas en abanico (las gradas se
+    // dibujan abajo, una por asiento). La pantalla y los faroles se encienden cuando la sala está abierta.
     const b = BUILDINGS.live, g = groups.live = groupAt(b.bx, b.by, -0.05);
-    part(g, G.cyl, C.stone, [0, 0.12, 0], [2.3, 0.25, 2.3]);
-    part(g, G.cyl, "#EEF2EF", [0, 1.05, 0], [1.75, 1.6, 1.75]);
-    part(g, G.cyl, C.mintDark, [0, 1.9, 0], [1.84, 0.14, 1.84]);
-    part(g, G.cone, C.mint, [0, 2.62, 0], [2.12, 1.3, 2.12]);
-    part(g, G.cyl, C.mintDark, [0, 3.3, 0], [0.34, 0.16, 0.34]);
-    part(g, G.ball, C.amber, [0, 3.52, 0], 0.2);
-    // Ventanas: se encienden (ámbar plano) cuando la sala está abierta.
-    for (const a of [-2.0, -1.2, 1.2, 2.0]) part(g, G.box, liveMat, [Math.sin(a) * 1.73, 1.1, Math.cos(a) * 1.73], [0.42, 0.6, 0.1], [0, a, 0]);
-    // Pórtico de entrada, con su techito, la puerta y el letrero con el foco de «en vivo».
-    part(g, G.box, C.stone, [0, 0.08, 2.2], [1.9, 0.16, 1.5]);
-    part(g, G.box, "#EEF2EF", [0, 0.95, 2.0], [1.5, 1.6, 1.1]);
-    part(g, G.roof, C.mintDark, [0, 1.75, 2.02], [1.3, 0.55, 1.8], [0, Math.PI / 2, 0]);
-    part(g, G.box, "#17302C", [0, 0.72, 2.56], [0.8, 1.0, 0.06]);
-    part(g, G.box, liveMat, [0, 0.69, 2.59], [0.6, 0.88, 0.04]);
-    part(g, G.box, C.night, [0, 1.47, 2.58], [1.2, 0.34, 0.08]);
-    liveDot = part(g, G.ball, dotMat, [-0.4, 1.47, 2.64], 0.1);
-    for (let k = 0; k < 3; k++) part(g, G.box, C.ink, [-0.1 + k * 0.25, 1.47, 2.63], [0.17, 0.08, 0.03]);
+    part(g, G.box, C.stone, [0, 0.16, 0], [4.4, 0.32, 1.7]);
+    part(g, G.box, C.mintDark, [0, 0.34, 0.86], [4.4, 0.08, 0.1]);
+    for (const s of [-1, 1]) part(g, G.box, "#EEF2EF", [1.95 * s, 1.5, -0.55], [0.22, 2.5, 0.22]);
+    part(g, G.box, C.night, [0, 1.75, -0.55], [3.7, 1.9, 0.14]);
+    part(g, G.box, liveMat, [0, 1.75, -0.47], [3.4, 1.6, 0.04]);
+    part(g, G.roof, C.mint, [0, 2.75, -0.45], [4.5, 0.5, 1.1]);
+    part(g, G.box, C.night, [-1.55, 0.62, 0.45], [0.5, 0.56, 0.4]);
+    liveDot = part(g, G.ball, dotMat, [-1.55, 1.02, 0.45], 0.1);
     // Asta con bandera: sólo ondea cuando la sala está abierta.
-    part(g, G.cyl8, C.stone, [0, 4.2, 0], [0.03, 1.3, 0.03]);
-    flag = part(g, G.box, C.pink, [0.3, 4.6, 0], [0.56, 0.32, 0.03]); flag.castShadow = false;
-    // Faroles de la placita.
+    part(g, G.cyl8, C.stone, [2.05, 3.5, -0.55], [0.03, 1.6, 0.03]);
+    flag = part(g, G.box, C.pink, [2.35, 4.1, -0.55], [0.56, 0.32, 0.03]); flag.castShadow = false;
+    // Faroles a los lados del escenario.
     for (const s of [-1, 1]) {
-      part(g, G.cyl8, C.slate, [2.1 * s, 0.6, 3.1], [0.05, 1.2, 0.05]);
-      part(g, G.ball, liveMat, [2.1 * s, 1.3, 3.1], 0.17);
-      const pn = part(g, G.box, s < 0 ? C.mint : C.amber, [2.1 * s + 0.22 * s, 0.95, 3.1], [0.36, 0.22, 0.03]); pn.castShadow = false; pennants.push(pn);
+      part(g, G.cyl8, C.slate, [2.6 * s, 0.6, 0.9], [0.05, 1.2, 0.05]);
+      part(g, G.ball, liveMat, [2.6 * s, 1.3, 0.9], 0.17);
+      const pn = part(g, G.box, s < 0 ? C.mint : C.amber, [2.6 * s + 0.22 * s, 0.95, 0.9], [0.36, 0.22, 0.03]); pn.castShadow = false; pennants.push(pn);
+    }
+    // Gradas: cada asiento es un escalón de piedra con su tabla; las filas de atrás quedan más altas.
+    for (const seat of STANDS) {
+      const sg = groupAt(seat.x, seat.y, -0.05), lift = seat.lift ?? 0; sg.rotation.y = seat.face; g.attach(sg);
+      if (lift > 0) part(sg, G.box, C.stone, [0, lift / 2 + 0.02, -0.06], [0.84, lift + 0.04, 0.78]);
+      part(sg, G.box, C.stone, [0, lift + 0.16, -0.12], [0.8, 0.26, 0.4]);
+      part(sg, G.box, C.woodLight, [0, lift + 0.31, -0.12], [0.8, 0.06, 0.44]);
     }
   }
   const livePlace = PLACES.find((p) => p.id === "live")!;
@@ -270,6 +270,18 @@ export function createIsland(scene: THREE.Scene) {
     part(g, G.box, C.woodLight, [0, 0.3, 0], [1.7, 0.1, 0.44]);
     part(g, G.box, C.woodLight, [0, 0.58, -0.22], [1.7, 0.3, 0.08]);
     for (const s of [-1, 1]) { part(g, G.box, C.wood, [0.7 * s, 0.14, 0], [0.1, 0.28, 0.38]); part(g, G.box, C.wood, [0.7 * s, 0.4, -0.22], [0.08, 0.6, 0.08]); }
+  }
+  // Mesitas del café con sus banquitos y una taza servida.
+  for (const t of CAFE_TABLES) {
+    const g = groupAt(t.x, t.y);
+    part(g, G.cyl8, C.slate, [0, 0.28, 0], [0.07, 0.56, 0.07]);
+    part(g, G.cyl, C.pink, [0, 0.58, 0], [0.42, 0.06, 0.42]);
+    part(g, G.cyl8, "#EEF2EF", [0.1, 0.66, 0.05], [0.07, 0.1, 0.07]);
+  }
+  for (const s of CAFE_STOOLS) {
+    const g = groupAt(s.x, s.y);
+    part(g, G.cyl8, C.wood, [0, 0.14, 0], [0.1, 0.28, 0.1]);
+    part(g, G.cyl, C.woodLight, [0, 0.3, 0], [0.2, 0.06, 0.2]);
   }
   // Canasta de almohadas del campamento: de ahí salen los almohadazos.
   {

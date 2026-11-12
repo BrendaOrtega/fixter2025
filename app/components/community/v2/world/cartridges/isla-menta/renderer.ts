@@ -263,7 +263,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     a.yaw = jumped ? want : lerpAngle(a.yaw, want, 1 - Math.exp(-dt * 11));
     const root = a.puppet.root;
     if (aboard) root.position.set(aboard.x, 0.2 + Math.sin(frame.t * 1.3) * (frame.quiet ? 0 : 0.04), aboard.z);
-    else root.position.set(wx(px), standHeight(px, py), wz(py));
+    else root.position.set(wx(px), standHeight(px, py) + (a.spot?.lift ?? 0) * a.snap, wz(py));
     root.rotation.y = a.yaw;
     // Cosquillas: se retuerce de risa y da brinquitos un momento (el temblor del motor dura muy poco para un muñequito).
     // Almohadazo: la almohada cae sobre la cabeza, el muñequito se aplasta y queda tambaleándose.
@@ -299,7 +299,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     const speed = dt > 0 ? moved / dt : 0;
     a.puppet.pose({
       t: frame.t + e.bob, dt, walked: aboard || jumped || frame.quiet ? 0 : (moved * UNIT) / PUPPET_SCALE,
-      pace: Math.min(1, speed / structure.movement.maxSpeed), sitting: seated || !!aboard, waving: e.waveT > 0, act: spot?.action.pose ?? null,
+      pace: Math.min(1, speed / structure.movement.maxSpeed), sitting: seated || !!aboard || !!spot?.action.seated, waving: e.waveT > 0, act: spot?.action.pose ?? null,
     });
     // Etiqueta con el nombre; la tuya va en menta. En el mapa reducido sólo se marca dónde estás.
     const text = frame.mini ? (me ? "Tú" : "") : e.first || e.name;
