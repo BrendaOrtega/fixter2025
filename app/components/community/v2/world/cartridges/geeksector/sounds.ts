@@ -66,6 +66,19 @@ export const sounds: SoundBank = {
     k.tone({ type: "sine", from: 190, to: 40, dur: 0.45, gain: 0.9 });
     k.tone({ type: "square", from: 420, to: 70, dur: 0.16, gain: 0.18 });
   },
+  // la enemiga estalla: más largo y más grave que un robot, con dos crujidos
+  boomBig: (k) => {
+    k.whoosh(0.9, 0.9, 2600, 90);
+    k.tone({ type: "sine", from: 210, to: 30, dur: 0.9, gain: 1 });
+    k.tone({ type: "square", from: 520, to: 60, dur: 0.22, gain: 0.22 });
+    k.tone({ type: "sawtooth", from: 300, to: 40, at: 0.2, dur: 0.4, gain: 0.2 });
+  },
+  // recogiste una vida: tres notas que suben
+  life: (k) => {
+    k.tone({ type: "sine", from: 523, dur: 0.09, gain: 0.5 });
+    k.tone({ type: "sine", from: 659, at: 0.08, dur: 0.09, gain: 0.5 });
+    k.tone({ type: "sine", from: 988, at: 0.16, dur: 0.2, gain: 0.5 });
+  },
   // llegada en hipervelocidad: barrido que cae mientras frena y golpe seco al detenerse
   warp: (k) => {
     k.whoosh(0.5, 0.5, 3200, 240);

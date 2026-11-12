@@ -99,9 +99,9 @@ export function VoiceSwitch({ slug, onChange, className = "" }: { slug: string; 
         <span className={`relative h-4 w-7 shrink-0 rounded-full ${state.enabled ? "bg-brand-500" : "bg-[#232D33]"}`}>
           <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-[#F2F5F4] transition-[left] ${state.enabled ? "left-3.5" : "left-0.5"}`} />
         </span>
-        Voz en mesas: {state.enabled ? "encendida" : "apagada"}
+        Cámaras en las mesas: {state.enabled ? "encendidas" : "apagadas"}
       </button>
-      <span>Sólo tú ves este interruptor. Sin grabación.</span>
+      <span>Quien se sienta en una mesa habla y se ve con los de esa mesa, sin grabación. Sólo tú ves este interruptor.</span>
       {error && <span role="alert" className="text-[#E58B8B]">{error}</span>}
     </div>
   );

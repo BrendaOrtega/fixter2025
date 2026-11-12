@@ -131,6 +131,8 @@ export const structure: WorldStructure = {
     // Defenderse pide un aparato: el disparo básico (daño 0) sólo les hace cosquillas. `false` regresa a
     // «cualquier disparo les quita un golpe». Con `true`, `supply` evita la mala suerte: en el aviso aparece
     // un aparato cerca de quien no trae y durante la visita flotan 5 y reaparecen en 8 s.
+    // Al caer deja una vida 25 s donde estalló.
+    life: { stay: 25, text: "Vida completa" },
     needsWeapon: true,
     supply: { count: 5, back: 8, near: [150, 250] },
     variants: [

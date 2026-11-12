@@ -140,7 +140,7 @@ export function createWorld(opts: {
     path: [] as Point[],
     placeStatus: {} as Record<string, { on: boolean; sub: string }>,
     hidden: new Set<string>(), dead: false,
-    pickups: [] as Pickup[], shots: [] as Shot[], weapon: null as { kind: string; left: number } | null, shotT: 9, kindTurn: 0,
+    pickups: [] as Pickup[], lives: [] as Pickup[], chain: [] as Array<{ x: number; y: number; at: number }>, shots: [] as Shot[], weapon: null as { kind: string; left: number } | null, shotT: 9, kindTurn: 0,
     /** Amenaza: fase, ciclo en curso, ciclo en que ya fue derribada, reloj de su disparo, segundos que llevas avisado y sus disparos. */
     threatPhase: "away" as "away" | "warn" | "here", threatCycle: -1, threatKilled: -1, threatShotT: 0, threatSeenT: 0, hostile: [] as Shot[],
     downShown: null as number | null,
@@ -350,7 +350,7 @@ export function createWorld(opts: {
   // El cuadro que se le entrega a la skin: un solo objeto que se actualiza antes de pintar.
   const frame: WorldFrame = {
     t: 0, dt: 0, mini: false, quiet: state.quiet, view, player, others: [], places, placeStatus: state.placeStatus, tableCounts: [],
-    nearPlace: null, nearEntity: null, marker: null, bubbles: state.bubbles, pickups: state.pickups, shots: state.shots,
+    nearPlace: null, nearEntity: null, marker: null, bubbles: state.bubbles, pickups: state.pickups, lives: state.lives, shots: state.shots,
     threat: null, hostile: state.hostile,
   };
   function render(dt: number) {
@@ -597,6 +597,21 @@ export function createWorld(opts: {
         fireAt(p);
       }
     }
+    // Reventones en cadena de una enemiga destruida.
+    for (const c of state.chain) if ((c.at -= dt) <= 0) { emit({ type: "blast", x: c.x, y: c.y, r: 74, shot: "bomb" }); cb.onSound("blast", true); }
+    state.chain = state.chain.filter((c) => c.at > 0);
+    // Vidas que dejó: se recogen pasando encima y se van solas a los `stay` segundos.
+    if (T.life) {
+      for (const l of state.lives) {
+        if ((l.age += dt) > T.life.stay) { l.alive = false; continue; }
+        if (state.mini || player.downT > 0 || Math.hypot(l.x - player.x, l.y - player.y) > (G?.pickups.reach ?? 34)) continue;
+        l.alive = false; player.hp = T.player.hp; player.healT = 0;
+        emit({ type: "pickup", x: l.x, y: l.y, taken: true });
+        state.bubbles.push({ entity: player, text: T.life.text, t: 0, dur: 1.6 });
+        cb.onSound("life");
+      }
+      state.lives = state.lives.filter((l) => l.alive);
+    }
     for (const s of state.hostile) {
       const x0 = s.x, y0 = s.y;
       s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt;
@@ -631,8 +646,12 @@ export function createWorld(opts: {
     setThreatPhase("away");
     if (mine) cb.onBoom(threatId(state.threatCycle));
     if (silent || was !== "here" || state.mini) return;
-    emit({ type: "bot-down", entity: threat });
-    if (mine || onScreen(threat)) cb.onSound("boom", !mine);
+    // Estalla en cadena: el estallido grande y tres reventones alrededor en el medio segundo que sigue.
+    emit({ type: "bot-down", entity: threat, big: true });
+    for (let i = 0; i < 3; i++) { const b = Math.random() * TAU, r = 26 + Math.random() * 34; state.chain.push({ x: threat.x + Math.cos(b) * r, y: threat.y + Math.sin(b) * r, at: 0.16 * (i + 1) }); }
+    cb.onSound("boomBig", !mine && !onScreen(threat));
+    // Y deja una vida donde cayó.
+    if (T?.life) state.lives.push({ kind: "life", x: clamp(threat.x, 60, WORLD_W - 60), y: clamp(threat.y, 60, WORLD_H - 60), ph: 0, alive: true, back: 0, age: 0 });
   }
 
   /** Temblor breve. Varias cosquillas seguidas son un solo temblor. */

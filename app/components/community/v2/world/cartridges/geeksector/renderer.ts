@@ -140,6 +140,15 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
     ctx.fillStyle = C.bg; ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(0, -2.4); ctx.lineTo(-4, 0); ctx.lineTo(0, 2.4); ctx.closePath(); ctx.fill();
     ctx.restore();
   }
+  function drawLife(l: Pickup, t: number) {
+    // Vida: cruz verde en una burbuja clara que late. En sus últimos 5 s parpadea para avisar que se va.
+    const stay = 25, left = stay - l.age;
+    if (left < 5 && Math.sin(l.age * 14) < 0) return;
+    const x = l.x, y = l.y + Math.sin(t * 1.6) * 3.5, k = 1 + 0.08 * Math.sin(t * 5);
+    ctx.fillStyle = C.ink; ctx.strokeStyle = C.green; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 18 * k, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.setLineDash([4, 7]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y, 25, -t * 0.35, -t * 0.35 + TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = C.green; roundRect(ctx, x - 3.5 * k, y - 10 * k, 7 * k, 20 * k, 2); ctx.fill(); roundRect(ctx, x - 10 * k, y - 3.5 * k, 20 * k, 7 * k, 2); ctx.fill();
+  }
   function drawPickup(p: Pickup, t: number) {
     // Aparato espacial plano dentro de una burbuja: se ve que es para recoger, no un arma de verdad.
     const x = p.x, y = p.y + Math.sin(t * 1.6 + p.ph) * 3.5;
@@ -245,6 +254,7 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
         ctx.strokeStyle = C.mint; ctx.lineWidth = 1.6; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(e.x, e.y, 38, t * 0.6, t * 0.6 + TAU); ctx.stroke(); ctx.setLineDash([]);
       }
       if (!f.quiet) for (const p of f.pickups) if (p.alive) drawPickup(p, t);
+      if (!f.quiet) for (const l of f.lives ?? []) if (l.alive) drawLife(l, t);
       for (const e of [...all, player].sort((a, b) => a.y - b.y)) {
         const bob = e.kind === "me" || f.quiet ? 0 : Math.sin(t * 1.6 + e.bob) * 2.2;
         // Temblor amortiguado: 2–3 px que se apagan en un cuarto de segundo.
@@ -364,6 +374,15 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
     } else if (ev.type === "bot-down") {
       // La nave estalla en pedazos de su color.
       const e = ev.entity, col = colorOf(e.color);
+      if (ev.big) {
+        // La enemiga cae con estrépito: tres ondas que se abren a distinto paso y el doble de pedazos, más lejos.
+        fx.push({ kind: "ring", x: e.x, y: e.y, t: 0, dur: 0.7, r: 150, color: col.fill }, { kind: "ring", x: e.x, y: e.y, t: 0, dur: 1, r: 240, color: C.ink });
+        for (let i = 0; i < 14; i++) { const b = (i * TAU) / 14, v = 170 + (i % 3) * 50; fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * v, vy: Math.sin(b) * v, t: 0, dur: 0.7, color: i % 2 ? C.ink : col.fill }); }
+        for (let i = 0; i < 18; i++) {
+          const b = Math.random() * TAU, v = 120 + Math.random() * 220;
+          fx.push({ kind: "debris", x: e.x, y: e.y, vx: Math.cos(b) * v, vy: Math.sin(b) * v, t: 0, dur: 1 + Math.random() * 0.7, color: [col.fill, col.dark, C.ink][i % 3], rot: b, spin: (i % 2 ? 1 : -1) * (4 + Math.random() * 7), size: 9 + Math.random() * 10 });
+        }
+      }
       fx.push({ kind: "ring", x: e.x, y: e.y, t: 0, dur: 0.45, r: 78, color: C.ink });
       for (let i = 0; i < 8; i++) { const b = (i * TAU) / 8 + 0.3; fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * 120, vy: Math.sin(b) * 120, t: 0, dur: 0.45, color: i % 2 ? C.ink : col.fill }); }
       for (let i = 0; i < 9; i++) {

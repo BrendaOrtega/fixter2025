@@ -158,6 +158,8 @@ export type Threat = {
   hp: number;
   /** Su disparo: lento y esquivable. `every`: segundos entre disparos; `range`: hasta dónde te alcanza a ver. */
   shot: ThreatShot;
+  /** Al ser destruida suelta una vida: dura `stay` s y, al recogerla, tu nave recupera todos sus golpes (`text` es lo que dice la burbuja). */
+  life?: { stay: number; text: string };
   /**
    * Defenderse pide un aparato: un disparo con `dmg: 0` (el básico) sólo lo hace temblar. En `false` (o sin
    * el campo), cualquier disparo le quita al menos un golpe.
@@ -319,6 +321,8 @@ export type WorldFrame = {
   marker: { x: number; y: number; t: number } | null;
   bubbles: Bubble[];
   pickups: Pickup[];
+  /** Vidas que soltó la amenaza al ser destruida (mismo tipo que un aparato, `kind: "life"`). */
+  lives?: Pickup[];
   shots: Shot[];
   /** La amenaza, si anda cerca: `warn` (viene en camino, todavía no está), `here` o `leaving`. Y sus disparos. */
   threat: { entity: Entity; phase: "warn" | "here" | "leaving" } | null;
@@ -332,7 +336,7 @@ export type WorldEvent =
   /** Un proyectil con `blast` reventó. */
   | { type: "blast"; x: number; y: number; r: number; shot: string }
   /** Una nave fue tumbada / acaba de volver: un robot y, con amenaza, también una persona, tú o la enemiga. */
-  | { type: "bot-down"; entity: Entity }
+  | { type: "bot-down"; entity: Entity; big?: boolean }
   | { type: "bot-back"; entity: Entity }
   /** Cosquilla: un disparo tocó a alguien. */
   | { type: "tickle"; entity: Entity }
