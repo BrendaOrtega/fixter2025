@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes, ReactNode } from "react";
+import { useEffect, useRef, useState, type AnchorHTMLAttributes, type ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
 import { Avatar } from "./ui";
 import type { View } from "./types";
@@ -31,9 +31,8 @@ const TAB_BAR: NavEntry[] = [
   { view: "me", label: "Yo", icon: "person" },
 ];
 
-// Altura medida del navbar del sitio (fijo): 44 px en móvil, 60 px desde md y 78 px desde lg.
-// La barra del club va justo debajo, sin encimarse.
-const SITE_NAV_OFFSET = "pt-[44px] md:pt-[60px] lg:pt-[78px]";
+// Dentro del club la barra del sitio no se muestra (ver NavBar): esta barra es la única, con el
+// logo de FixterGeek a la izquierda y el menú de la cuenta en el avatar.
 
 const sideLink =
   "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-sm text-[#7C8A8E] hover:bg-[#182026] aria-[current=page]:bg-[#1C252B] aria-[current=page]:font-medium aria-[current=page]:text-[#F2F5F4]";
@@ -64,7 +63,7 @@ export function ClubShell({
   const adminHref = `/comunidad/${community.slug}/admin`;
 
   return (
-    <div className={`club-v2 min-h-screen bg-background ${SITE_NAV_OFFSET} text-sm leading-normal text-[#D9E0DE] antialiased`}>
+    <div className={`club-v2 min-h-screen bg-background text-sm leading-normal text-[#D9E0DE] antialiased`}>
       {/* El promo flotante del sitio (FloatingPromo: `fixed bottom-6 left-6`, hijo directo de <body>)
           cae justo encima del menú inferior; en móvil se apaga mientras esta vista esté montada. */}
       <style>{`
@@ -73,12 +72,13 @@ export function ClubShell({
       `}</style>
 
       {/* ── Barra del club ── */}
-      <header className="z-30 flex h-[52px] items-center gap-3 border-y border-[#232D33] bg-[#141B20] px-4 lg:sticky lg:top-[78px]">
-        <a {...navProps("wall")} aria-current={undefined} className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[#F2F5F4]">
-          <span aria-hidden className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded-md bg-brand-500 font-mono text-[11px] font-bold text-background">
-            {"</>"}
-          </span>
-          <span className="truncate">{community.name}</span>
+      <header className="z-30 flex h-[52px] items-center gap-3 border-b border-[#232D33] bg-[#141B20] px-4 lg:sticky lg:top-0">
+        <a href="/" aria-label="FixterGeek, ir al inicio del sitio" className="shrink-0">
+          <img src="/logo.png" alt="FixterGeek" className="h-6" />
+        </a>
+        <span aria-hidden className="h-5 w-px shrink-0 bg-[#232D33]" />
+        <a {...navProps("wall")} aria-current={undefined} className="min-w-0 truncate text-[15px] font-semibold text-[#F2F5F4]">
+          {community.name}
         </a>
         <nav aria-label="Secciones del club" className="mx-auto hidden gap-0.5 lg:flex">
           {TOP_NAV.map((item) => (
@@ -91,16 +91,12 @@ export function ClubShell({
             </a>
           ))}
         </nav>
-        {me && (
-          <a {...navProps("me")} aria-current={undefined} aria-label={`Mi membresía (${me.name})`} className="ml-auto shrink-0 rounded-full lg:ml-0">
-            <Avatar person={me} />
-          </a>
-        )}
+        {me && <AccountMenu me={me} membershipProps={{ ...navProps("me"), "aria-current": undefined }} />}
       </header>
 
       <div className="flex">
         {/* ── Barra lateral (escritorio) ── */}
-        <aside className="hidden w-[228px] shrink-0 self-start border-r border-[#232D33] bg-[#141B20] px-2.5 py-3.5 lg:sticky lg:top-[130px] lg:block lg:h-[calc(100vh-130px)] lg:overflow-y-auto">
+        <aside className="hidden w-[228px] shrink-0 self-start border-r border-[#232D33] bg-[#141B20] px-2.5 py-3.5 lg:sticky lg:top-[52px] lg:block lg:h-[calc(100vh-52px)] lg:overflow-y-auto">
           <nav aria-label="Club">
             {SIDE_NAV.map((item) => (
               <div key={item.view}>
@@ -160,6 +156,73 @@ export function ClubShell({
           </a>
         )}
       </nav>
+    </div>
+  );
+}
+
+/** Avatar de la barra del club: abre el menú de la cuenta (membresía, perfil y cerrar sesión). */
+function AccountMenu({
+  me,
+  membershipProps,
+}: {
+  me: { id: string; name: string; photoURL: string | null };
+  membershipProps: LinkProps;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+  const item = "block w-full rounded-md px-2.5 py-2 text-left text-[13px] text-[#D9E0DE] hover:bg-[#1C252B]";
+  return (
+    <div ref={ref} className="relative ml-auto shrink-0 lg:ml-0">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Tu cuenta (${me.name})`}
+        onClick={() => setOpen((v) => !v)}
+        className="block rounded-full"
+      >
+        <Avatar person={me} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-40 mt-2 min-w-[200px] rounded-[10px] border border-[#232D33] bg-[#141B20] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+        >
+          <p className="truncate px-2.5 py-2 text-xs text-[#7C8A8E]">{me.name}</p>
+          <a
+            {...membershipProps}
+            role="menuitem"
+            className={item}
+            onClick={(e) => {
+              membershipProps.onClick?.(e);
+              setOpen(false);
+            }}
+          >
+            Mi membresía
+          </a>
+          <a href="/perfil" role="menuitem" className={item}>
+            Perfil
+          </a>
+          <a href="/logout" role="menuitem" className={`${item} text-[#F08A80]`}>
+            Cerrar sesión
+          </a>
+        </div>
+      )}
     </div>
   );
 }

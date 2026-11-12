@@ -125,11 +125,13 @@ export const NavBar = ({ user }: { user?: User }) => {
   return (
     <section
       ref={scope}
+      data-site-nav
       className=" w-full px-6 md:px-[5%] xl:px-0 fixed backdrop-blur z-[200]"
     >
-      {/* Dentro del club (`.club-v2`, ver ClubShell) esta barra se queda sólo con el logo: la
-          navegación ahí es la del club. Va por CSS para que aplique desde el HTML del servidor. */}
-      <style>{`body:has(.club-v2) [data-site-nav-extra] { display: none !important; }`}</style>
+      {/* Dentro del club (`.club-v2`, ver ClubShell) esta barra no se muestra: la barra del club
+          trae el logo, la navegación y el menú de la cuenta. Va por CSS para que aplique desde
+          el HTML del servidor. */}
+      <style>{`body:has(.club-v2) [data-site-nav] { display: none !important; }`}</style>
       <nav className="flex relative z-[210] max-w-7xl mx-auto py-2 md:py-4 items-center justify-between ">
         <Link to="/">
           <img className="h-7" src="/logo.png" alt="logo" />

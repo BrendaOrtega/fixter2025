@@ -382,7 +382,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
           className={
             expanded
               ? "fixed inset-0 z-[300] flex flex-col overflow-hidden bg-background"
-              : "relative flex flex-col rounded-xl border border-[#232D33] max-sm:bg-[#141B20] sm:h-[min(72dvh,660px)] sm:min-h-[440px] sm:overflow-hidden sm:bg-background lg:h-[calc(100dvh-250px)]"
+              : "relative flex flex-col rounded-xl border border-[#232D33] max-sm:bg-[#141B20] sm:h-[min(72dvh,660px)] sm:min-h-[440px] sm:overflow-hidden sm:bg-background lg:h-[calc(100dvh-172px)]"
           }
         >
           {/* ── Controles ── */}
