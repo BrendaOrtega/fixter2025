@@ -85,9 +85,14 @@ export function toStandings(players: NonNullable<RazziaResult["players"]>): Quiz
 }
 
 /** El token viaja en el hash: no llega a logs del servidor ni a cabeceras Referer. */
-export function managerUrl(base: string, token: string, target: { gameId: string } | { to: "quizz" }): string {
+export function managerUrl(base: string, token: string, target: { gameId: string; join?: string } | { to: "quizz" }): string {
   const h = new URLSearchParams({ token, ...target });
   return `${base}/embed/manager?lng=es#${h}`;
+}
+
+/** Liga que va en el QR del tablero: quien la abre con sesión del club cae directo en la partida. */
+export function joinUrl(slug: string): string {
+  return `https://www.fixtergeek.com/comunidad/${slug}/quiz?play=1`;
 }
 
 /** Reabrir el tablero en el mismo navegador: la sesión de manager ya vive ahí, no viaja de nuevo. */
@@ -223,7 +228,7 @@ export async function activeGame(communityId: string): Promise<LiveGame | null> 
 }
 
 export async function startGame(
-  community: { id: string },
+  community: { id: string; slug: string },
   quizId: string,
   hostUserId: string
 ): Promise<{ ok: true; game: LiveGame; managerUrl: string } | { ok: false; error: string }> {
@@ -248,7 +253,7 @@ export async function startGame(
     select: { id: true, gameId: true, inviteCode: true, subject: true, createdAt: true },
   });
   cache.delete(community.id);
-  return { ok: true, game: row, managerUrl: managerUrl(quizBase(), token, { gameId: row.gameId }) };
+  return { ok: true, game: row, managerUrl: managerUrl(quizBase(), token, { gameId: row.gameId, join: joinUrl(community.slug) }) };
 }
 
 export async function endGame(communityId: string) {

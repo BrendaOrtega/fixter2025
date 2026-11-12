@@ -6,6 +6,7 @@
 //   GET  /comunidad/:slug/quiz            → { enabled, canHost, active }   (sondeo, cada 5 s)
 //   GET  /comunidad/:slug/quiz?list=1     → { quizzes }                    (sólo anfitrión)
 //   GET  /comunidad/:slug/quiz?editor=1   → redirige al editor de quizzes  (anfitrión o moderador)
+//   GET  /comunidad/:slug/quiz?play=1     → el QR del tablero: manda al miembro a su partida
 //   POST intent=quiz-start | quiz-end                                      (sólo anfitrión)
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
@@ -62,10 +63,22 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug as string;
   if (!quizEnabled()) return json(OFF);
   const user = await getUserOrNull(request);
+  const url = new URL(request.url);
+
+  // QR del tablero: se abre en el celular. Con sesión y partida en curso cae directo a jugar con
+  // su identidad firmada; sin sesión pasa por el login y regresa; en cualquier otro caso, al club.
+  if (url.searchParams.has("play")) {
+    const home = `/comunidad/${slug}`;
+    if (!user) throw redirect(`/login?next=${encodeURIComponent(`${home}/quiz?play=1`)}`);
+    const access = await resolveAccess(user, slug);
+    if (!access?.canPlay || access.canHost) throw redirect(home);
+    const game = await activeGame(access.communityId);
+    throw redirect(game ? playerUrl(quizBase(), game.inviteCode, user) : home);
+  }
+
   if (!user) return json(OFF, { status: 401 });
   const access = await resolveAccess(user, slug);
   if (!access) return json(OFF, { status: 404 });
-  const url = new URL(request.url);
 
   if (url.searchParams.has("editor")) {
     if (!access.canEdit) return json({ error: "Sólo el anfitrión edita los quizzes." }, { status: 403 });
@@ -104,7 +117,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = String(form.get("intent") ?? "");
 
   if (intent === "quiz-start") {
-    const r = await startGame({ id: access.communityId }, String(form.get("quizId") ?? ""), user.id);
+    const r = await startGame({ id: access.communityId, slug }, String(form.get("quizId") ?? ""), user.id);
     if (!r.ok) return json({ error: r.error }, { status: 502 });
     return json({ ok: true, managerUrl: r.managerUrl, subject: r.game.subject });
   }
