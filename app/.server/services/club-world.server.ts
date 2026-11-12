@@ -56,7 +56,8 @@ type Wave = { id: string; from: string; to: string; at: number };
 /** `name` se copia de la nave al enviar: el historial sigue legible cuando esa persona ya se fue. */
 type Say = { id: string; from: string; name: string; text: string; at: number };
 /** Sin `from`: quien recibe la cosquilla no sabe de quién vino, para que no se preste a molestar. */
-type Nudge = { id: string; to: string; at: number };
+/** `kind: "bonk"`: no fue cosquilla sino golpe con un objeto del mundo (un almohadazo); la skin decide cómo se ve. */
+type Nudge = { id: string; to: string; at: number; kind?: "bonk" };
 /**
  * `down`: robot tumbado → momento en que vuelve. `cartridge`: el mundo activo de esta comunidad;
  * `hydrated`: ya se leyó de la base (o se cambió aquí) en este proceso. `shared`: estado compartido
@@ -217,14 +218,14 @@ export function sendWave(communityId: string, fromId: string, toId: unknown, now
 }
 
 /** Cosquilla efímera: sólo entre dos naves presentes y a lo más una por segundo por emisor. */
-export function sendNudge(communityId: string, fromId: string, toId: unknown, now = Date.now()) {
+export function sendNudge(communityId: string, fromId: string, toId: unknown, now = Date.now(), kind?: unknown) {
   const w = worldOf(communityId);
   prune(w, now);
   const from = w.ships.get(fromId);
   if (!from || typeof toId !== "string" || toId === fromId || !w.ships.has(toId)) return null;
   if (now - from.lastNudgeAt < NUDGE_EVERY_MS) return null;
   from.lastNudgeAt = now;
-  const nudge: Nudge = { id: `n${now.toString(36)}-${(w.seq++).toString(36)}`, to: toId, at: now };
+  const nudge: Nudge = { id: `n${now.toString(36)}-${(w.seq++).toString(36)}`, to: toId, at: now, ...(kind === "bonk" ? { kind } : {}) };
   w.nudges.push(nudge);
   return nudge.id;
 }
@@ -329,7 +330,7 @@ export function snapshot(communityId: string, now = Date.now()) {
     // `down` sólo viaja cuando es cierto: los clientes de antes no lo conocen y no les estorba.
     ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, lastSayAt: _m, lastNudgeAt: _n, down, ...ship }) => (down ? { ...ship, down } : ship)),
     waves: w.waves.map(({ id, from, to }) => ({ id, from, to })),
-    nudges: w.nudges.map(({ id, to }) => ({ id, to })),
+    nudges: w.nudges.map(({ id, to, kind }) => (kind ? { id, to, kind } : { id, to })),
     // En milisegundos que faltan y no en hora: los relojes de cada quien no tienen por qué coincidir.
     down: [...w.down].map(([bot, until]) => ({ bot, back: until - now })),
     says: w.says.map(({ id, from, name, text, at }) => ({ id, from, name, text, at })),

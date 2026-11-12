@@ -46,7 +46,7 @@ export type Callbacks = {
   /** `other`: lo hizo otra nave (o un robot), suena más bajito. */
   onSound: (name: string, other?: boolean) => void;
   /** Tu disparo tocó la nave de un miembro: hay que avisarle para que también la vea temblar. */
-  onNudge: (shipId: string) => void;
+  onNudge: (shipId: string, kind?: "bonk") => void;
   /** Tumbaste la nave de un robot de la casa: se avisa para que todos la vean estallar y volver a la vez. */
   onBoom: (botId: string) => void;
   /** Cambió el aparato que llevas (o sus tiros restantes). `null`: disparo básico. Es local, no viaja al servidor. */
@@ -81,7 +81,7 @@ export type WorldApi = {
   /** Saludo entre dos naves (llegó del servidor o lo acabas de mandar). */
   showWave: (fromId: string, toId: string) => void;
   /** Cosquilla que llegó del servidor: esa nave (quizá la tuya) tiembla un instante. Regresa si era para ti. */
-  showNudge: (toId: string) => boolean;
+  showNudge: (toId: string, kind?: "bonk") => boolean;
   /** Mensaje del chat: burbuja sobre la nave de quien habló (si sigue presente). */
   showSay: (fromId: string, text: string) => void;
   /** Saludo a un robot de la casa: contesta solo. */
@@ -129,7 +129,7 @@ export function createWorld(opts: {
   const renderer = opts.skin.createRenderer({
     canvas: opts.canvas, stage, structure: S,
     // Ganchos para skins con menús propios: caminar a un punto, saludar y sonar pasan por el motor.
-    motor: { walkTo: (p) => flyTo(p.x, p.y), greet: (id) => cb.onGreet?.(id), sound: (name) => cb.onSound(name) },
+    motor: { walkTo: (p) => flyTo(p.x, p.y), greet: (id) => cb.onGreet?.(id), sound: (name) => cb.onSound(name), nudge: (id, kind) => poke(id, kind) },
   });
   const emit = (ev: WorldEvent) => renderer.event?.(ev);
   const state = {
@@ -655,11 +655,18 @@ export function createWorld(opts: {
     if (T?.life) state.lives.push({ kind: "life", x: clamp(threat.x, 60, WORLD_W - 60), y: clamp(threat.y, 60, WORLD_H - 60), ph: 0, alive: true, back: 0, age: 0 });
   }
 
+  /** Cosquilla a mano (menú de una skin): tiembla aquí y, si es una persona, se avisa para que todos la vean. */
+  function poke(id: string, kind?: "bonk") {
+    const e = humans.get(id) ?? bots.find((b) => b.id === id);
+    if (!e || e.downT > 0 || state.quiet) return;
+    tickle(e, kind); cb.onSound(kind ?? "nudge");
+    if (e.kind === "human") cb.onNudge(e.id, kind);
+  }
   /** Temblor breve. Varias cosquillas seguidas son un solo temblor. */
-  function tickle(e: Entity) {
+  function tickle(e: Entity, kind?: "bonk") {
     if (state.quiet || e.shakeT > 0) return;
     e.shakeT = SHAKE;
-    emit({ type: "tickle", entity: e });
+    emit({ type: "tickle", entity: e, kind });
   }
 
   // ── Saludos ──
@@ -790,9 +797,9 @@ export function createWorld(opts: {
       const chars = [...text];
       state.bubbles.push({ entity: from, text: chars.length > 46 ? `${chars.slice(0, 45).join("")}…` : text, t: 0, dur: 5, say: true });
     },
-    showNudge(toId) {
+    showNudge(toId, kind) {
       const to = byId(toId, meId); if (!to || state.quiet) return false;
-      tickle(to);
+      tickle(to, kind);
       return to === player;
     },
     setBotsDown(down, silent) {

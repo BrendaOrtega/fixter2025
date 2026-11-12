@@ -35,7 +35,7 @@ type ChatMessage = { id: string; from: string; name: string; text: string; at: n
 type Snapshot = {
   /** Id del mundo activo (los servidores de antes no lo mandan). */
   cartridge?: string;
-  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string }>; down?: Array<{ bot: string; back: number }>;
+  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string; kind?: "bonk" }>; down?: Array<{ bot: string; back: number }>;
   /** Estado compartido del modo de juego (sólo si el cartucho activo declara llaves). */
   shared?: Record<string, number | string>;
   me: string; waveId?: string | null; sayId?: string | null; nudgeId?: string | null;
@@ -194,11 +194,11 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         onThreat: (phase, name) => { setThreat(phase); if (phase) setThreatName(name); },
         // Destruida o de vuelta: los demás lo saben con el siguiente latido (`down`).
         onDown: (seconds) => { setDownIn(seconds); dirtyRef.current = true; },
-        onNudge: (id) => {
+        onNudge: (id, kind) => {
           // La nave ya tembló en tu pantalla; se avisa para que su dueño también la vea (el servidor acepta una por segundo).
           if (Date.now() - lastNudgeSent < 1000) return;
           lastNudgeSent = Date.now();
-          post({ nudge: id }).then((snap) => { if (snap.nudgeId) seenNudges.add(snap.nudgeId); apply(snap); }).catch(() => {});
+          post(kind ? { nudge: id, kind } : { nudge: id }).then((snap) => { if (snap.nudgeId) seenNudges.add(snap.nudgeId); apply(snap); }).catch(() => {});
         },
         onEnter: () => barRef.current?.querySelector<HTMLButtonElement>("[data-place] button:not(:disabled)")?.click(),
         onEscape: () => { if (sheetOpenRef.current) setSheetOpen(false); else if (expandedRef.current) setExpanded(false); },
@@ -257,13 +257,13 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         if (w.to === snap.me) { sound.play("waveIn"); const who = snap.ships.find((s) => s.id === w.from); if (who) say(`${who.name} te saludó.`); }
       }
       // Cosquillas: varias a la misma nave en una lectura son un solo temblor. Sin texto ni autor.
-      const shaken = new Set<string>();
+      const shaken = new Map<string, "bonk" | undefined>();
       for (const n of snap.nudges ?? []) {
         if (seenNudges.has(n.id)) continue;
         seenNudges.add(n.id);
-        if (!firstRead) shaken.add(n.to);
+        if (!firstRead) shaken.set(n.to, n.kind ?? shaken.get(n.to));
       }
-      for (const to of shaken) if (api.showNudge(to)) sound.play("nudge");
+      for (const [to, kind] of shaken) if (api.showNudge(to, kind)) sound.play(kind ?? "nudge");
       api.setBotsDown(snap.down ?? [], firstRead);
       api.setShared(snap.shared ?? {});
       const says = snap.says ?? [];

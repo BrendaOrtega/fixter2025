@@ -14,6 +14,7 @@ import { SPOT_REACH, THINGS, type Action, type Mood, type PlacedSpot, type Thing
 export type MotorHooks = {
   walkTo?: (p: Point) => void;
   greet?: (entityId: string) => void;
+  nudge?: (entityId: string, kind?: "bonk") => void;
   sound?: (name: string) => void;
 };
 export type Person = { id: string; name: string; x: number; y: number; me: boolean; human: boolean };
@@ -41,6 +42,8 @@ const MOODS: Record<Mood, { color: string; svg: string }> = {
 export const moodHtml = (mood: Mood) => `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="display:block;color:${MOODS[mood].color}" aria-hidden="true">${MOODS[mood].svg}</svg>`;
 
 type Open = { kind: "thing"; thing: Thing } | { kind: "person"; id: string; name: string };
+/** Hasta dónde alcanza la mano para hacer cosquillas (px del mapa). */
+const TICKLE_REACH = 80;
 type Item = { label: string; disabled: boolean; run: (via: "pointer" | "key") => void };
 
 export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; after: HTMLElement; hooks: MotorHooks }) {
@@ -76,6 +79,8 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
   let reply: Point | null | undefined;
   let guide: PlacedSpot | null = null, guideT = 0;
   let last: ActionsFrame | null = null;
+  /** Almohadas que traes (de la canasta). Sólo las ves tú; el golpe sí lo ven todos. */
+  let pillows = 0;
   const me = () => last?.people.find((p) => p.me) ?? null;
   const taken = (s: PlacedSpot) => !!last?.people.some((p) => !p.me && Math.hypot(p.x - s.x, p.y - s.y) < SPOT_REACH * 1.6);
   /** El punto libre de esa acción más cercano a ti. */
@@ -125,6 +130,17 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
     }];
     // Saludar sólo se ofrece si el motor presta su saludo compartido; un saludo que sólo ves tú no sirve.
     if (hooks.greet) list.unshift({ label: "Saludar", disabled: false, run: () => { hooks.greet?.(target.id); announce(`Saludaste a ${target.name}.`); reply = null; } });
+    // Cosquillas: de cerca, como en persona. Viajan por el motor y todos ven a quien se ríe.
+    if (hooks.nudge) {
+      const who = last?.people.find((p) => p.id === target.id), from = me();
+      const close = !!who && !!from && Math.hypot(from.x - who.x, from.y - who.y) < TICKLE_REACH;
+      // Almohadazo: sólo con almohadas de la canasta del campamento; cada golpe gasta una.
+      if (pillows > 0) list.push({
+        label: close ? `Dar un almohadazo (${pillows})` : `Dar un almohadazo (${pillows}) · acércate`, disabled: !close,
+        run: () => { pillows--; hooks.nudge?.(target.id, "bonk"); announce(`Le diste un almohadazo a ${target.name}. Te quedan ${pillows}.`); reply = null; },
+      });
+      list.push({ label: close ? "Hacer cosquillas" : "Hacer cosquillas · acércate", disabled: !close, run: () => { hooks.nudge?.(target.id); announce(`Le hiciste cosquillas a ${target.name}.`); reply = null; } });
+    }
     return list;
   }
   function openMenu(target: Open, focus: boolean) {
@@ -253,6 +269,8 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
 
   return {
     frame, announce,
+    setPillows: (n: number) => { pillows = n; },
+    pillows: () => pillows,
     /** Para `toWorld`: lo que hay que contestarle al motor por el toque en curso. */
     reply: () => reply,
     /** El punto al que vas (para pintarle un aro en el piso). */

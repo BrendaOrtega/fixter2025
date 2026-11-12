@@ -84,7 +84,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   let nudgeId: string | null = null;
   if ("wave" in body) waveId = sendWave(communityId, who.id, body.wave);
   else if ("say" in body) sayId = sendSay(communityId, who.id, body.say);
-  else if ("nudge" in body) nudgeId = sendNudge(communityId, who.id, body.nudge);
+  else if ("nudge" in body) nudgeId = sendNudge(communityId, who.id, body.nudge, Date.now(), body.kind);
   else if ("boom" in body) sendBoom(communityId, who.id, body.boom);
   else if ("share" in body) setShared(communityId, who.id, body.share);
   else if (!upsertShip(communityId, who, body)) return json({ error: "El Mundo está lleno. Intenta en un momento." }, 429);

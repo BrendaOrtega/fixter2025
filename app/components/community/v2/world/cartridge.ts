@@ -342,7 +342,7 @@ export type WorldEvent =
   | { type: "bot-down"; entity: Entity; big?: boolean }
   | { type: "bot-back"; entity: Entity }
   /** Cosquilla: un disparo tocó a alguien. */
-  | { type: "tickle"; entity: Entity }
+  | { type: "tickle"; entity: Entity; kind?: "bonk" }
   /** Un aparato fue recogido (`taken`) o le tocó turno al siguiente. */
   | { type: "pickup"; x: number; y: number; taken: boolean }
   /** Alguien recibió un saludo. */
@@ -408,7 +408,8 @@ export type WorldSkin = {
  * `walkTo`: ir a un punto del mapa, como un toque (usa `movement.route`). `greet`: el saludo compartido a
  * una persona o robot. `sound`: una receta del banco de la skin, con el volumen y silencio del usuario.
  */
-export type MotorHooks = { walkTo(p: Point): void; greet(entityId: string): void; sound(name: string): void };
+/** `nudge`: la cosquilla compartida (la misma del disparo de GeekSector): esa persona tiembla en todas las pantallas. Con `kind: "bonk"` es un golpe con un objeto. */
+export type MotorHooks = { walkTo(p: Point): void; greet(entityId: string): void; sound(name: string): void; nudge(entityId: string, kind?: "bonk"): void };
 
 // ───────── Cartucho ─────────
 

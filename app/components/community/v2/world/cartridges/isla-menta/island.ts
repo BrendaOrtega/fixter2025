@@ -11,7 +11,7 @@ import {
   BUILDINGS, CAMPFIRE, DOCK, PLACES, PROPS, TABLES, TABLE_TONES, TENTS, TONES, UNIT, WORLD_H, WORLD_W,
   heightAt, landField, pathDistance, seeded, toneOf,
 } from "./structure";
-import { BENCH, CAFE, DANCE, HAMMOCK, MEGAPHONE, SCOPE } from "./things";
+import { BENCH, CAFE, DANCE, HAMMOCK, MEGAPHONE, PILLOWS, SCOPE } from "./things";
 
 export const SEA = "#12272E";
 const C = {
@@ -270,6 +270,13 @@ export function createIsland(scene: THREE.Scene) {
     part(g, G.box, C.woodLight, [0, 0.3, 0], [1.7, 0.1, 0.44]);
     part(g, G.box, C.woodLight, [0, 0.58, -0.22], [1.7, 0.3, 0.08]);
     for (const s of [-1, 1]) { part(g, G.box, C.wood, [0.7 * s, 0.14, 0], [0.1, 0.28, 0.38]); part(g, G.box, C.wood, [0.7 * s, 0.4, -0.22], [0.08, 0.6, 0.08]); }
+  }
+  // Canasta de almohadas del campamento: de ahí salen los almohadazos.
+  {
+    const g = groupAt(PILLOWS.x, PILLOWS.y);
+    part(g, G.cyl8, C.wood, [0, 0.16, 0], [0.42, 0.32, 0.42]);
+    part(g, G.cyl8, C.woodLight, [0, 0.33, 0], [0.46, 0.05, 0.46]);
+    [C.pink, C.lilac, C.mint].forEach((color, k) => part(g, G.box, color, [0.04 * (k - 1), 0.44 + k * 0.15, 0.03 * (1 - k)], [0.5, 0.15, 0.36], [0, 0.4 - k * 0.5, 0.08 * (k - 1)]));
   }
   // Megáfono a un lado de la placita del Foro: desde ahí se echan porras.
   {

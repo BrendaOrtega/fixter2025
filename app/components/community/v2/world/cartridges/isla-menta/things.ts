@@ -43,7 +43,7 @@ export type Thing = {
 export const SPOT_REACH = 13;
 
 const toward = (x: number, y: number, px: number, py: number) => Math.atan2(px - x, py - y);
-const SOUTH = 0, EAST = Math.PI / 2, NORTH = Math.PI;
+const SOUTH = 0, EAST = Math.PI / 2, NORTH = Math.PI, WEST = -Math.PI / 2;
 
 /** Fogata del Campamento y el aro por el que pasea Robot Tres (sus puntos caen sobre ese aro). */
 export const FIRE = { x: 470, y: 800 };
@@ -68,6 +68,9 @@ export const DOCK_END = { x: 800, y: 878 };
 /** Donde espera amarrado el barquito, atravesado en la punta del muelle; ahí se sube la gente. Caben cuatro. */
 export const MOOR = { x: 800, y: 916 };
 export const BOAT_SEATS = 4;
+/** Canasta de almohadas del campamento: de ahí se toman para los almohadazos. */
+export const PILLOWS = { x: 610, y: 648 };
+export const PILLOW_COUNT = 3;
 export const MEGAPHONE = { x: 694, y: 582 };
 /** Paradas de los robots: caen exactamente sobre su ruta. */
 export const BOT_STOPS = { uno: { x: 800, y: 553 }, dos: { x: 1080, y: 400 } };
@@ -96,6 +99,11 @@ export const THINGS: Thing[] = [
     id: `tent${i}`, name: "Casita de campaña", x: t.x, y: t.y, h: 1.9, hit: 36, solid: 28, clear: 46,
     actions: [{ id: "rest", label: "Descansar", done: "Estás descansando en la casita.", pose: "rest", mood: "zzz", sound: "act-sit", spots: [tentDoor(t)] }],
   })),
+  {
+    id: "pillows", name: "Canasta de almohadas", x: PILLOWS.x, y: PILLOWS.y, h: 1.2, hit: 30, solid: 13, clear: 44,
+    actions: [{ id: "take", label: "Tomar almohadas", done: "Tomaste tres almohadas. Toca a alguien que tengas cerca para darle un almohadazo.", pose: "cheer", mood: "star", sound: "act-cheer",
+      spots: [{ x: PILLOWS.x, y: PILLOWS.y + 32, face: NORTH }, { x: PILLOWS.x - 32, y: PILLOWS.y, face: EAST }, { x: PILLOWS.x + 32, y: PILLOWS.y, face: WEST }] }],
+  },
   {
     id: "boat", name: "Barquito", x: MOOR.x, y: MOOR.y, h: 1.6, hit: 34, solid: 0, clear: 0,
     actions: [{ id: "board", label: "Subirse al barquito", done: "Te subiste al barquito.", pose: "sit", mood: "wave", sound: "act-sit",

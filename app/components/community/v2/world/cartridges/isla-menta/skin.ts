@@ -6,6 +6,14 @@ import { shapeFor, toneOf } from "./structure";
 
 // Sonidos de caminata: pasitos, campanita al llegar, banquito al sentarse. Lo que no se usa aquí queda en silencio.
 const sounds: SoundBank = {
+  // Almohadazo: golpe sordo y un soplido de plumas.
+  bonk: (k) => { k.tone({ type: "sine", from: 190, to: 70, dur: 0.16, gain: 0.8 }); k.whoosh(0.22, 0.25, 900, 300); },
+  // Cosquillas: risita de tres notas que suben.
+  nudge: (k) => {
+    k.tone({ type: "sine", from: 620, to: 760, dur: 0.07, gain: 0.5 });
+    k.tone({ type: "sine", from: 700, to: 860, at: 0.09, dur: 0.07, gain: 0.5 });
+    k.tone({ type: "sine", from: 780, to: 980, at: 0.18, dur: 0.09, gain: 0.5 });
+  },
   thrust: (k) => {
     k.tone({ type: "triangle", from: 210, to: 150, dur: 0.06, gain: 0.45 });
     k.tone({ type: "triangle", from: 250, to: 170, at: 0.13, dur: 0.06, gain: 0.4 });

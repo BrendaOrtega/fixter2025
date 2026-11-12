@@ -327,6 +327,17 @@ export function isSea(x: number, y: number) {
   for (const s of SEA_SOLIDS) if ((s.x - x) * (s.x - x) + (s.y - y) * (s.y - y) < s.r * s.r) return false;
   return true;
 }
+/** Personas y robots de pie en este cuadro (lo escribe el renderizador): tu personaje no los atraviesa. */
+export const crowd: Vec[] = [];
+const BODY = 24;
+/** Quien estorba el paso de `from` a (x, y): alguien a menos de un cuerpo y al que te estarías acercando. */
+function inTheWay(from: Vec, x: number, y: number): Vec | null {
+  for (const o of crowd) {
+    const d = (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
+    if (d < BODY * BODY && d < (o.x - from.x) * (o.x - from.x) + (o.y - from.y) * (o.y - from.y)) return o;
+  }
+  return null;
+}
 /**
  * Lo que el renderizador sabe del barquito en este cuadro (lo escribe él, lo leen `constrain` y
  * `route`): tu papel, dónde va quien maneja y si todavía se puede subir alguien.
@@ -353,9 +364,20 @@ export function slide(from: Vec, to: Vec, self = false): Vec {
     // De pasajero vas con el barquito. Para bajarte, camina hacia una orilla que esté cerca.
     return hop(from, to, 110) ?? { x: sea.x, y: sea.y };
   }
-  const open = (x: number, y: number) =>
+  const ground = (x: number, y: number) =>
     canStand(x, y) || (isSea(x, y) && (afloat || (nearMoor(x, y) && (!self || sea.boardable))));
+  // Los cuerpos chocan: tu personaje no atraviesa a nadie. Si alguien estorba, lo rodea por el lado que más avanza.
+  const open = (x: number, y: number) => ground(x, y) && !(self && !afloat && inTheWay(from, x, y));
   if (open(to.x, to.y)) return to;
+  const body = self && !afloat && ground(to.x, to.y) ? inTheWay(from, to.x, to.y) : null;
+  if (body) {
+    const step = Math.hypot(to.x - from.x, to.y - from.y), ox = from.x - body.x, oy = from.y - body.y, d = Math.hypot(ox, oy) || 1;
+    for (const s of (to.x - from.x) * (-oy) + (to.y - from.y) * ox >= 0 ? [1, -1] : [-1, 1]) {
+      const x = from.x + ((-oy * s) / d) * step, y = from.y + ((ox * s) / d) * step;
+      if (open(x, y)) return { x, y };
+    }
+    return from;
+  }
   // Quien maneja y topa con la playa se baja de un brinco a la arena.
   if (afloat) { const land = hop(from, to, 80); if (land) return land; }
   // Quien llega parado donde no se puede (p. ej. venía de otro mundo) sale a la orilla más cercana.
