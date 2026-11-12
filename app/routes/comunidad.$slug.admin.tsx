@@ -631,17 +631,22 @@ function Quizzes({ quiz, slug }: { quiz: QuizView; slug: string }) {
         <h2 className={h2}>Quizzes en vivo</h2>
         <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-[#7C8A8E]">
           <li>Arma tus preguntas en el editor.</li>
-          <li>En la llamada, abre la pestaña «Quiz» y presiona «Lanzar quiz».</li>
-          <li>Comparte la ventana del tablero: cada miembro contesta en su panel, sin PIN.</li>
+          <li>Lánzalo desde la pestaña «Quiz» de la llamada, o desde aquí para un evento, una clase o una transmisión.</li>
+          <li>Comparte o proyecta el tablero. Tú eliges si juega cualquiera con el PIN o sólo los miembros.</li>
         </ol>
-        <a href={`/comunidad/${slug}/quiz?editor=1`} target="_blank" rel="noopener" className={`${primary} mt-4`}>
-          Abrir editor de quizzes
-        </a>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a href={`/comunidad/${slug}/quiz/lanzar`} target="_blank" rel="noopener" className={primary}>
+            Lanzar un quiz
+          </a>
+          <a href={`/comunidad/${slug}/quiz?editor=1`} target="_blank" rel="noopener" className={quiet}>
+            Abrir editor de quizzes
+          </a>
+        </div>
       </div>
       <div className={card}>
         <h2 className={h2}>Partidas</h2>
         {quiz.games.length === 0 ? (
-          <p className="mt-2 text-sm text-[#7C8A8E]">Aquí aparece cada quiz que lances en una llamada.</p>
+          <p className="mt-2 text-sm text-[#7C8A8E]">Aquí aparece cada quiz que lances.</p>
         ) : (
           <ul className="mt-3 divide-y divide-[#232D33]">
             {quiz.games.map((g) => (
