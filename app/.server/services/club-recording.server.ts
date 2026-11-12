@@ -27,6 +27,7 @@ import { fileExist } from "~/.server/tigrs";
 import { buildHlsProxyUrl } from "~/.server/hls";
 import { clubCallRoom } from "~/.server/services/club-call.server";
 import { recordingCall } from "~/.server/services/club-call-box.server";
+import { prepareBroadcasts, signLiveEnvelope } from "~/.server/services/club-live.server";
 
 /** Si en 12 h no apareció el HLS, la conversión falló (4 h de llamada tardan en transcodificar). */
 export const UPLOAD_GIVE_UP_MS = 12 * 60 * 60_000;
@@ -67,11 +68,25 @@ export async function startRecording(
   room = clubCallRoom(),
   opts: { live?: boolean; event?: { id: string; startsAt: Date } | null } = {}
 ) {
-  // `live`: además de grabar, sale a YouTube y Facebook (destinos que gs ya cargó en la caja con
-  // «Preparar transmisión»). Si la caja no tiene destinos, falla y se graba sin transmitir.
-  let r = await recordingCall<RecState>({ action: "start", room, title, live: !!opts.live });
-  if (!r.ok && opts.live) r = await recordingCall<RecState>({ action: "start", room, title });
-  if (!r.ok || !r.data) return { ok: false as const, error: r.data?.error ?? "No se pudo grabar" };
+  // `live`: además de grabar, sale a los destinos de la comunidad. Aquí se crea el evento en
+  // YouTube y su URL de ingesta viaja a la caja en un sobre firmado; la caja le suma los destinos
+  // de su env (claves manuales). Si se pidió transmitir y no se puede, NO se graba en silencio:
+  // se contesta el error, para que quien presenta no crea que está al aire.
+  let liveEnvelope: string | undefined;
+  let watchUrls: string[] = [];
+  let liveErrors: string[] = [];
+  const secret = process.env.CLUB_CALL_TICKET_SECRET;
+  if (opts.live && secret && !(await recordingState(room))?.recording) {
+    const p = await prepareBroadcasts(community.id, title);
+    if (p.targets.length) liveEnvelope = signLiveEnvelope({ room, urls: p.targets.map((t) => t.url) }, secret);
+    watchUrls = p.watchUrls;
+    liveErrors = p.errors;
+  }
+  const r = await recordingCall<RecState>({ action: "start", room, title, live: !!opts.live, ...(liveEnvelope ? { liveEnvelope } : {}) });
+  if (!r.ok || !r.data) {
+    const why = r.data?.error ?? "No se pudo grabar";
+    return { ok: false as const, error: opts.live ? [`No se pudo transmitir (${why})`, ...liveErrors, "Para sólo grabar, apaga «En vivo»."].join(". ") : why };
+  }
   const file = r.data.file ?? null;
   const existing = await db.communityRecording.findFirst({
     where: { communityId: community.id, status: "recording", room },
@@ -97,7 +112,7 @@ export async function startRecording(
     const prefix = hlsPrefixFor(community.id, row.id);
     await db.communityRecording.update({ where: { id: row.id }, data: { storageKey: `${prefix}/master.m3u8` } });
   }
-  return { ok: true as const };
+  return { ok: true as const, watchUrls, liveErrors };
 }
 
 /** Pide a la caja el HLS de una fila (parando la grabación si sigue). */

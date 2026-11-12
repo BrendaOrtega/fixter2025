@@ -3,6 +3,7 @@ import { db } from "./db";
 import { commitSession, getSession } from "~/sessions";
 import { redirect } from "react-router";
 import { createAndWelcomeUser } from "./dbGetters";
+import { finishYouTube, isLiveState } from "./services/club-live.server";
 
 type GoogleUserData = {
   id: string;
@@ -17,7 +18,19 @@ type GoogleUserData = {
 export const googleHandler = async (request: Request, nextURL: string) => {
   const url = new URL(request.url);
   const { searchParams } = url;
-  
+
+  // Conectar YouTube para transmitir (panel del club): mismo cliente y misma URI que el login,
+  // pero su `state` va firmado y empieza con `live.`. No abre sesión: sólo guarda el canal.
+  if (isLiveState(searchParams.get("state"))) {
+    const back = await finishYouTube({
+      code: searchParams.get("code"),
+      state: searchParams.get("state"),
+      error: searchParams.get("error"),
+      sessionEmail: (await getSession(request.headers.get("Cookie"))).get("email") ?? null,
+    });
+    return redirect(back ?? "/comunidad");
+  }
+
   // Handle Google OAuth callback
   if (
     searchParams.has("auth") &&

@@ -96,24 +96,14 @@ describe("grabación directa a la caja (CLUB_CALL_BOX_URL + CLUB_CALL_BOX_ADMIN_
     expect(r).toMatchObject({ ok: false, status: 409, data: { error: "la caja ya está grabando otra sala" } });
   });
 
-  it("startRecording con live: si la caja lo niega, reintenta sin transmitir", async () => {
-    let n = 0;
-    calls = [];
-    vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
-      const method = init.method ?? "GET";
-      const body = init.body ? JSON.parse(String(init.body)) : undefined;
-      calls.push({ url, method, headers: init.headers as Record<string, string>, body });
-      if (method === "GET") return Response.json(idle);
-      // Primer intento (live) → el plan no transmite; el segundo falla distinto para cortar antes de la base.
-      return Response.json(n++ === 0 ? { error: "Tu plan no incluye transmitir en vivo", code: "live_not_allowed" } : { error: "sin disco" }, { status: n === 1 ? 403 : 400 });
-    });
+  it("startRecording con live: si la caja lo niega, NO graba en silencio y dice por qué", async () => {
+    mockFetch({ "GET /rec/state": { json: idle }, "POST /admin/recording/start": { status: 403, json: { error: "Tu plan no incluye transmitir en vivo", code: "live_not_allowed" } } });
     const r = await startRecording({ id: "c1" }, "Llamada", ROOM, { live: true });
     const starts = calls.filter((c) => c.method === "POST");
-    expect(starts.map((c) => c.body)).toEqual([
-      { room: ROOM, live: true, title: "Llamada" },
-      { room: ROOM, live: false, title: "Llamada" },
-    ]);
-    expect(r).toEqual({ ok: false, error: "sin disco" });
+    expect(starts.map((c) => c.body)).toEqual([{ room: ROOM, live: true, title: "Llamada" }]);
+    expect(r.ok).toBe(false);
+    expect((r as { error: string }).error).toContain("Tu plan no incluye transmitir en vivo");
+    expect((r as { error: string }).error).toContain("apaga «En vivo»");
   });
 
   it("stop: POST /admin/recording/stop {transcribe, hls, hlsPrefix} y regresa archivo y bytes", async () => {

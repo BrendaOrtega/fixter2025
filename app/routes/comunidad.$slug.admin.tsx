@@ -21,6 +21,8 @@ import { cdmxDay, parseEmails, upsertInvites } from "~/.server/services/club-inv
 import { isMembershipActive } from "~/.server/services/membership.server";
 import { listPastGames, listQuizzes, quizEnabled } from "~/.server/services/club-quiz.server";
 import { QuizAdmin } from "~/components/community/QuizAdmin";
+import { LiveAdmin } from "~/components/community/LiveAdmin";
+import { disconnectYouTube, liveStatus, setYouTubePrivacy } from "~/.server/services/club-live.server";
 
 export const meta = () => [{ title: "Administrar club | FixterGeek" }, { name: "robots", content: "noindex" }];
 
@@ -98,6 +100,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       photoURL: avatarUrlFor(user),
     },
     recordingCount: recordings.filter((r) => !r.hidden && r.status === "ready").length,
+    // Transmisión: el canal de YouTube conectado (sin tokens: sólo nombre, privacidad y última liga).
+    live: await liveStatus(community.id),
     quiz: {
       enabled: quizOn,
       hosts: community.quizHostEmails,
@@ -226,6 +230,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { ok: "Invitación borrada." };
   }
 
+  if (intent === "live-privacy") {
+    const ok = await setYouTubePrivacy(community.id, str("privacy"));
+    return ok ? { ok: "Listo: así saldrá la próxima transmisión." } : data({ error: "No se pudo cambiar." }, { status: 400 });
+  }
+
+  if (intent === "live-disconnect") {
+    await disconnectYouTube(community.id);
+    return { ok: "Canal de YouTube desconectado." };
+  }
+
   return data({ error: "Acción desconocida." }, { status: 400 });
 };
 
@@ -252,7 +266,7 @@ const iconDanger = "grid h-8 w-8 place-items-center rounded-md text-[#7C8A8E] tr
 const h2 = "text-[15px] font-semibold text-[#F2F5F4]";
 const label = "grid gap-1 text-[13px] font-medium text-[#D9E0DE]";
 
-type Tab = "calendario" | "grabaciones" | "invitados" | "miembros" | "quizzes";
+type Tab = "transmision" | "calendario" | "grabaciones" | "invitados" | "miembros" | "quizzes";
 
 type EventView = Route.ComponentProps["loaderData"]["events"][number];
 
@@ -631,10 +645,10 @@ function Members({ members }: Pick<Route.ComponentProps["loaderData"], "members"
 }
 
 const CLUB_TABS: Record<View, string> = { world: "", wall: "?tab=wall", events: "?tab=events", recs: "?tab=recs", courses: "?tab=courses", me: "?tab=me" };
-const TABS: Tab[] = ["calendario", "grabaciones", "invitados", "miembros", "quizzes"];
+const TABS: Tab[] = ["transmision", "calendario", "grabaciones", "invitados", "miembros", "quizzes"];
 
 export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
-  const { community, me, recordingCount, events, recordings, invites, callDays, members, quiz } = loaderData;
+  const { community, me, live, recordingCount, events, recordings, invites, callDays, members, quiz } = loaderData;
   const result = useActionData<{ ok?: string; error?: string }>();
   // La pestaña vive en `?tab=`: se puede ligar directo («Editar» de la próxima llamada → calendario).
   const [params, setParams] = useSearchParams();
@@ -643,6 +657,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
   const tabs: Array<[Tab, string]> = [
     ["calendario", "Calendario"],
     ["grabaciones", `Grabaciones (${recordings.length})`],
+    ["transmision", "Transmisión"],
     ["invitados", `Invitados (${invites.length})`],
     ["miembros", `Miembros (${members.filter((m) => m.active).length})`],
     ...(quiz.enabled ? ([["quizzes", "Quizzes"]] as Array<[Tab, string]>) : []),
@@ -675,6 +690,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
         {result?.error && <p className="mb-4 rounded-lg border border-[#232D33] px-3.5 py-2 text-[13px] text-[#F08A80]">{result.error}</p>}
         {tab === "calendario" && <Calendar events={events} slug={community.slug} />}
         {tab === "grabaciones" && <Recordings recordings={recordings} slug={community.slug} />}
+        {tab === "transmision" && <LiveAdmin slug={community.slug} live={live} result={params.get("live")} detail={params.get("detail")} />}
         {tab === "invitados" && <Invites invites={invites} callDays={callDays} />}
         {tab === "miembros" && <Members members={members} />}
         {tab === "quizzes" && <QuizAdmin slug={community.slug} quizzes={quiz.quizzes} games={quiz.games} hosts={quiz.hosts} />}

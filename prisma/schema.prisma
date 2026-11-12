@@ -1419,6 +1419,32 @@ model CommunityReaction {
 
 /// Grabación de una llamada del club (10-nov-2026). La graba la caja de eventos y la sube
 /// directo a nuestro bucket (`fixtergeek/club/<communityId>/<room>-<ts>.mp4`). Sólo miembros.
+/// A dónde transmite en vivo una comunidad (12-nov-2026): el canal de YouTube que conectó su dueño
+/// por OAuth. `tokenEnc` es el refresh token cifrado (AES-256-GCM, `secret-vault.server.ts`).
+model StreamDestination {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String @db.ObjectId
+  /// youtube (facebook después)
+  provider    String
+  accountId   String
+  accountName String
+  tokenEnc    Bytes
+  /// Stream reutilizable de YouTube (la entrada RTMP); cada transmisión crea su propio evento.
+  streamId    String?
+  /// public | unlisted
+  privacy     String  @default("public")
+
+  lastWatchUrl   String?
+  lastPreparedAt DateTime?
+  connectedBy    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([communityId, provider])
+  @@map("stream_destinations")
+}
+
 model CommunityRecording {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   communityId String    @db.ObjectId

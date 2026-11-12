@@ -14,6 +14,7 @@ import { getUserOrNull } from "~/.server/dbGetters";
 import { getNextEvent } from "~/.server/services/wall.server";
 import { isHostEmail } from "~/.server/services/club-call.server";
 import { recordingState, startRecording, stopRecording } from "~/.server/services/club-recording.server";
+import { liveTargetNames } from "~/.server/services/club-live.server";
 
 async function load(request: Request, slug: string) {
   const user = await getUserOrNull(request);
@@ -45,14 +46,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = String(form.get("intent") ?? "");
   if (intent === "rec-state") {
     const s = await recordingState();
-    return { intent, recording: !!s?.recording };
+    // Al anfitrión se le dice a dónde puede transmitir (sólo nombres) para que la sala encienda «En vivo».
+    return { intent, recording: !!s?.recording, ...(canMod ? { liveTargets: await liveTargetNames(community.id) } : {}) };
   }
   if (!canMod) return data({ intent, error: "Sólo el anfitrión graba." }, { status: 403 });
   const event = await getNextEvent(community.id);
   const title = event?.title ?? "Llamada del club";
   if (intent === "rec-start") {
     const r = await startRecording(community, title, undefined, { live: form.get("live") === "1", event });
-    return r.ok ? { intent, recording: true } : data({ intent, error: r.error }, { status: 502 });
+    return r.ok ? { intent, recording: true, watchUrls: r.watchUrls, liveErrors: r.liveErrors } : data({ intent, error: r.error }, { status: 502 });
   }
   if (intent === "rec-stop") {
     const r = await stopRecording(community, title, undefined, event);
@@ -61,7 +63,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   return data({ intent, error: "Acción desconocida" }, { status: 400 });
 };
 
-type RecReply = { intent: string; recording?: boolean; error?: string };
+type RecReply = { intent: string; recording?: boolean; error?: string; liveTargets?: string[]; watchUrls?: string[]; liveErrors?: string[] };
 
 export default function ClubCall() {
   const { slug, src } = useLoaderData<typeof loader>();
@@ -80,7 +82,14 @@ export default function ClubCall() {
     const stopped = d.intent === "rec-stop";
     recording.current = !!d.recording;
     // Al detener, el enlace a las grabaciones del club: el HLS tarda unos minutos en aparecer ahí.
-    tell({ recording: recording.current, ...(stopped ? { url: `${window.location.origin}/comunidad/${slug}` } : {}) });
+    tell({
+      recording: recording.current,
+      ...(stopped ? { url: `${window.location.origin}/comunidad/${slug}` } : {}),
+      ...(d.liveTargets ? { liveTargets: d.liveTargets } : {}),
+      // Al arrancar al aire: la liga pública para compartir; si un destino falló, se dice.
+      ...(d.watchUrls?.length ? { watchUrl: d.watchUrls[0] } : {}),
+      ...(d.liveErrors?.length ? { notice: `Se está grabando, pero no salió a: ${d.liveErrors.join("; ")}` } : {}),
+    });
   }, [fetcher.data, fetcher.state]);
 
   // Lo que pide la sala. Se filtra por procedencia; quien decide si puede grabar es el action.

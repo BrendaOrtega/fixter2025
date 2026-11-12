@@ -31,7 +31,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 
 export type RecordingPayload =
   | { action: "state"; room: string }
-  | { action: "start"; room: string; title?: string; live?: boolean }
+  | { action: "start"; room: string; title?: string; live?: boolean; liveEnvelope?: string }
   | { action: "stop"; room: string; hlsPrefix?: string; file?: string };
 
 type Result<T> = { ok: boolean; status: number; data: (T & { error?: string }) | null };
@@ -133,7 +133,8 @@ export async function boxRecording<T = Record<string, unknown>>(
     const r = await box(
       cfg,
       "/admin/recording/start",
-      { room: req.room, live: !!req.live, ...(req.title ? { title: req.title.trim().slice(0, 120) } : {}) },
+      // `liveEnvelope`: destinos de la comunidad (YouTube por OAuth) en un sobre firmado de un solo uso.
+      { room: req.room, live: !!req.live, ...(req.liveEnvelope ? { liveEnvelope: req.liveEnvelope } : {}), ...(req.title ? { title: req.title.trim().slice(0, 120) } : {}) },
       timeoutMs
     );
     if (!r.json) return { ok: false, status: 502, data: null };
