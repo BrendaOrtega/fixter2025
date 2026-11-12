@@ -104,6 +104,25 @@ del fork.
   miembro real; `PLAY=1` juega hasta el podio y comprueba que el resultado quede ligado al usuario y
   que en Razzia no quede nada). `shots-admin.mjs` y `shots.mjs` sacan capturas en 375 px y escritorio.
 
+## Para retomar (estado al 12-nov-2026, mediodía)
+
+En producción y probado con una partida completa (lanzar → jugar → podio guardado):
+- FixterGeek `54fbe56` (quizzes por comunidad, editor, coanfitriones) y `4141935` (pastilla flotante).
+- Fork Razzia `0e42173` (motor multi-cliente), caja del quiz en el digest `e7846bb2`, con `APP_PIN=1`.
+
+A medias: **rediseño del tablero y del jugador** (fase 4 del plan).
+- Lo hace un agente en `~/razzia`, rama `fixtergeek`; al cierre de esta sesión tenía ~70 archivos
+  modificados SIN commit y 94 capturas en `docs/club-rediseno/quiz/capturas/real/` (oscuro y claro).
+- Al retomar: `git -C ~/razzia status` y `git log`. Si ya hay commit, comparar las capturas `real/`
+  contra `docs/club-rediseno/quiz/frames.html`, correr `pnpm test` y desplegar según el runbook
+  (sólo fuera de llamadas). Si no hay commit, revisar el árbol de trabajo antes de decidir.
+- El rediseño agrega variables de color (`card`, `border`, `primary-foreground`). `brandFor` ya las
+  manda; mientras el fork desplegado no las acepte, `startGame` reintenta sólo con el nombre.
+- En `Room.tsx` del fork hay un cambio sin commit de otra sesión (URL sin protocolo): no es del quiz.
+
+Sin probar: llamada real con grabación, más de dos jugadores a la vez, el QR en un teléfono real.
+Plan completo: `~/.claude/plans/tender-drifting-sonnet.md`.
+
 ## Pendiente
 
 - Prueba de carga (cuántos jugadores aguanta una partida y cuántas partidas a la vez) y su límite.
