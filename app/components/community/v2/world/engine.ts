@@ -724,10 +724,11 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     for (let k = 0; k < 40; k++) { const g = { x: 80 + Math.random() * (WORLD_W - 160), y: 80 + Math.random() * (WORLD_H - 160) }; if (!placeOf(g) && Math.hypot(g.x - player.x, g.y - player.y) > 140) return g; }
     return { x: 1000, y: 120 };
   }
-  function shoot() {
+  /** Sin ángulo dispara hacia donde apunta la nave; el clic derecho manda el ángulo hacia el cursor. */
+  function shoot(angle?: number) {
     if (state.quiet || state.mini || state.shotT < SHOT_EVERY) return;
     state.shotT = 0;
-    const a = player.ang;
+    const a = angle ?? player.ang;
     state.shots.push({ x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * SHOT_SPEED, vy: Math.sin(a) * SHOT_SPEED, t: 0 });
     cb.onSound("shoot");
   }
@@ -788,11 +789,24 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
   const onKeyUp = (e: KeyboardEvent) => state.keys.delete(e.code);
   const onBlur = () => state.keys.clear();
   const onPointerDown = (e: PointerEvent) => {
+    if (e.button !== 0) return; // el clic derecho dispara (ver `onContextMenu`), no mueve la nave
     if (cb.onStageTap()) return;
     const r = stage.getBoundingClientRect(), w = toWorld(e.clientX - r.left, e.clientY - r.top);
     flyTo(w.x, w.y);
   };
   window.addEventListener("keydown", onKeyDown); window.addEventListener("keyup", onKeyUp); window.addEventListener("blur", onBlur);
+  // Clic derecho: dispara hacia el cursor y, de paso, no abre el menú del navegador sobre el mapa.
+  // En táctil el toque largo también lanza `contextmenu`: ahí sólo se cancela el menú.
+  let lastPointerType = "mouse";
+  const onPointerType = (e: PointerEvent) => { lastPointerType = e.pointerType; };
+  const onContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+    if (lastPointerType !== "mouse") return;
+    const r = stage.getBoundingClientRect(), w = toWorld(e.clientX - r.left, e.clientY - r.top);
+    shoot(Math.atan2(w.y - player.y, w.x - player.x));
+  };
+  stage.addEventListener("pointerdown", onPointerType, true);
+  stage.addEventListener("contextmenu", onContextMenu);
   stage.addEventListener("pointerdown", onPointerDown);
   const observer = new ResizeObserver(() => measure()); observer.observe(stage);
 
@@ -866,7 +880,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       bot.waveT = 3.5;
       window.setTimeout(() => { if (state.dead) return; state.fx.push({ kind: "bubble", ship: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
     },
-    shoot,
+    shoot: () => shoot(),
     nearestCrystal() {
       let best: Gem | null = null, bd = Infinity;
       for (const g of state.gems) { const d = Math.hypot(g.x - player.x, g.y - player.y); if (g.alive && d < bd) { best = g; bd = d; } }
@@ -904,6 +918,8 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       state.dead = true; cancelAnimationFrame(raf); observer.disconnect();
       window.removeEventListener("keydown", onKeyDown); window.removeEventListener("keyup", onKeyUp); window.removeEventListener("blur", onBlur);
       stage.removeEventListener("pointerdown", onPointerDown);
+      stage.removeEventListener("pointerdown", onPointerType, true);
+      stage.removeEventListener("contextmenu", onContextMenu);
     },
   };
 }

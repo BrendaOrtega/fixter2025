@@ -443,7 +443,13 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               />
             </div>
 
-            {/* Disparo: junta cristales (juego local, de esta visita). En teclado es la barra espaciadora. */}
+            {/* Disparo: junta cristales (juego local, de esta visita). Con mouse es clic derecho (o la
+                barra espaciadora) y sólo se muestra la cuenta; el botón grande queda para táctil. */}
+            {full && ready && !quiet && (
+              <p className="pointer-events-none absolute bottom-3.5 right-3.5 z-[3] hidden rounded-full border border-[#232D33] bg-[#141B20] px-3 py-1.5 text-xs text-[#7C8A8E] [@media(pointer:fine)]:block">
+                <b className="font-semibold text-brand-500">{crystals === 1 ? "1 cristal" : `${crystals} cristales`}</b> · clic derecho para disparar
+              </p>
+            )}
             {full && ready && !quiet && (
               <button
                 type="button"
@@ -451,7 +457,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
                 aria-label={`Disparar a los cristales. Llevas ${crystals}.`}
                 onClick={() => apiRef.current?.shoot()}
                 style={{ touchAction: "manipulation" }}
-                className="absolute bottom-3.5 right-3.5 z-[3] grid h-[76px] w-[76px] place-content-center justify-items-center gap-px rounded-full border border-[#357265] bg-[#141B20] text-brand-500 shadow-[0_2px_8px_rgba(0,0,0,0.35)] active:bg-[#17302C] sm:h-[68px] sm:w-[68px]"
+                className="absolute bottom-3.5 right-3.5 z-[3] grid h-[76px] w-[76px] place-content-center justify-items-center gap-px rounded-full border border-[#357265] bg-[#141B20] text-brand-500 shadow-[0_2px_8px_rgba(0,0,0,0.35)] active:bg-[#17302C] sm:h-[68px] sm:w-[68px] [@media(pointer:fine)]:hidden"
               >
                 <b className="text-[13px] font-semibold">Disparar</b>
                 <small className="text-[10px] text-[#7C8A8E]">{crystals === 1 ? "1 cristal" : `${crystals} cristales`}</small>
