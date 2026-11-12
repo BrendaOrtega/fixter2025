@@ -49,6 +49,9 @@ export function isOwnImageKey(key: string, userId: string) {
   return /^wall\/[a-f0-9]{24}\/\d+-[\w.-]{1,80}$/.test(key) && key.startsWith(`wall/${userId}/`);
 }
 
+/** Foto de un miembro: la de su cuenta o el avatar que subió en /perfil (servido por id). */
+export const avatarUrlFor = (u: { id: string; photoURL?: string | null }) => u.photoURL || `/api/avatar/${u.id}`;
+
 export const imageUrlFor = (key: string) => `/api/wall-image?key=${encodeURIComponent(key)}`;
 
 export type LinkPreview = { url: string; title: string; description: string; image: string | null };
@@ -176,13 +179,13 @@ function publicShape(p: Awaited<ReturnType<typeof db.communityPost.findMany>>[nu
     isPinned: p.isPinned,
     hidden: !!p.hiddenAt,
     createdAt: p.createdAt.toISOString(),
-    author: { id: p.author.id, name: displayName(p.author), photoURL: p.author.photoURL },
+    author: { id: p.author.id, name: displayName(p.author), photoURL: avatarUrlFor(p.author) },
     comments: p.comments.map((c) => ({
       id: c.id,
       body: c.body,
       hidden: !!c.hiddenAt,
       createdAt: c.createdAt.toISOString(),
-      author: { id: c.author.id, name: displayName(c.author), photoURL: c.author.photoURL },
+      author: { id: c.author.id, name: displayName(c.author), photoURL: avatarUrlFor(c.author) },
     })),
   };
 }

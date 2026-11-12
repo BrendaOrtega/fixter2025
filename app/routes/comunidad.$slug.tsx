@@ -35,6 +35,7 @@ import {
   hideComment,
   hideOwnPost,
   imageUrlFor,
+  avatarUrlFor,
   isCallOpen,
   isOwnImageKey,
   moderatePost,
@@ -193,7 +194,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       ? {
           id: user.id,
           name: user.displayName || user.username || user.email.split("@")[0],
-          photoURL: user.photoURL ?? null,
+          photoURL: avatarUrlFor(user),
         }
       : null,
     membership,
@@ -217,7 +218,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
             people: goingPeople.map((p) => ({
               id: p.id,
               name: p.displayName || p.username || p.email.split("@")[0],
-              photoURL: p.photoURL ?? null,
+              photoURL: avatarUrlFor(p),
             })),
           },
         }

@@ -14,7 +14,7 @@ import { SectionHead, Wrap, btn, btnGhost, card as panel, textLink } from "~/com
 import type { View } from "~/components/community/v2/types";
 import { CalendarPlus, Eye, EyeOff, Pencil, RotateCw, Trash2, UserMinus } from "lucide-react";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { canModerate, imageUrlFor } from "~/.server/services/wall.server";
+import { avatarUrlFor, canModerate, imageUrlFor } from "~/.server/services/wall.server";
 import { occurrencesOf } from "~/.server/services/club-events.server";
 import { listRecordings, retryRecording } from "~/.server/services/club-recording.server";
 import { cdmxDay, parseEmails, upsertInvites } from "~/.server/services/club-invites.server";
@@ -92,7 +92,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     me: {
       id: user.id,
       name: user.displayName || user.username || user.email.split("@")[0],
-      photoURL: user.photoURL ?? null,
+      photoURL: avatarUrlFor(user),
     },
     recordingCount: recordings.filter((r) => !r.hidden && r.status === "ready").length,
     quiz: {

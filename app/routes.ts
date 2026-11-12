@@ -162,6 +162,7 @@ export default [
     route("course", "routes/api/course.tsx"),
     route("stripe", "routes/api/stripe.tsx"),
     route("file", "routes/api/file.tsx"),
+    route("avatar/:userId", "routes/api/avatar.ts"), // avatar de un miembro, sin exponer su correo
     route("sockets", "routes/api/sockets.tsx"),
     route("audio", "routes/api/audio.tsx"),
     route("analytics", "routes/api.analytics.tsx"),
