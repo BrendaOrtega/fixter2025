@@ -108,7 +108,7 @@ export function VoiceSwitch({ slug, onChange, className = "" }: { slug: string; 
 }
 
 export function VoiceStrip({
-  slug, zone, zoneLabel, enabled = true, blocked = false, name, photoURL, showSwitch = true,
+  slug, zone, zoneLabel, enabled = true, blocked = false, name, photoURL, showSwitch = true, onVoiceChange,
 }: {
   slug: string;
   /** Id de la mesa donde estás sentado según el servidor (su índice, como texto), o `null`. */
@@ -123,6 +123,8 @@ export function VoiceStrip({
   photoURL?: string | null;
   /** Pinta a quien administra la comunidad el estado de la voz (el interruptor está en Administración › Mundo). */
   showSwitch?: boolean;
+  /** Avisa si la voz en mesas está encendida en la comunidad (para que el texto de la mesa no diga «sin audio» de más). */
+  onVoiceChange?: (on: boolean) => void;
 }) {
   const [server, setServer] = useState<ServerState | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -152,6 +154,7 @@ export function VoiceStrip({
 
   const on = enabled && server?.enabled === true;
   const activeZone = on && !blocked ? zone : null;
+  useEffect(() => { onVoiceChange?.(on); }, [on, onVoiceChange]);
 
   // ── Conexión: una por mesa; al cambiar `activeZone` se desmonta todo ──
   useEffect(() => {
@@ -329,6 +332,14 @@ export function VoiceStrip({
     : phase === "full" ? (note ?? "Mesa llena o la caja de llamadas está llena")
     : `En la mesa «${label}» · ${people.length === 1 ? "1 persona" : `${people.length} personas`}`;
 
+  // Mic y cámara van sobre tu propia miniatura, como en cualquier videollamada: redondos, sólo ícono.
+  // Apagado = rojo y tachado; encendido = neutro.
+  const round = (active: boolean) =>
+    `grid h-8 w-8 place-items-center rounded-full border shadow-[0_2px_8px_rgba(0,0,0,0.35)] disabled:opacity-60 ${
+      active ? "border-[#232D33] bg-[rgba(14,19,23,0.88)] text-[#F2F5F4] hover:bg-[#1C252B]" : "border-[#F08A80] bg-[#F08A80] text-[#0E1317]"
+    }`;
+  const micLabel = micOn ? "Silenciar micrófono" : "Activar micrófono", camLabel = camOn ? "Apagar cámara" : "Activar cámara";
+
   const btn = (active: boolean) =>
     `inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium disabled:opacity-60 ${
       active ? "border-brand-500 bg-brand-500 text-[#0E1317]" : "border-[#232D33] bg-[#0E1317] text-[#F2F5F4]"
@@ -344,23 +355,13 @@ export function VoiceStrip({
         {(phase === "failed" || phase === "full") && (
           <button type="button" className={btn(false)} onClick={() => setRetryKey((k) => k + 1)}>Reintentar</button>
         )}
-        {room && phase === "connected" && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {needsAudio && (
-              <button type="button" className={btn(true)} onClick={() => room.startAudio().then(() => setNeedsAudio(false)).catch(() => {})}>Activar sonido</button>
-            )}
-            <button type="button" className={btn(micOn)} aria-pressed={micOn} disabled={busy === "mic"} onClick={() => toggle("mic")}>
-              <MicIcon off={!micOn} />{micOn ? "Silenciar micrófono" : "Activar micrófono"}
-            </button>
-            <button type="button" className={btn(camOn)} aria-pressed={camOn} disabled={busy === "cam"} onClick={() => toggle("cam")}>
-              <CamIcon off={!camOn} />{camOn ? "Apagar cámara" : "Activar cámara"}
-            </button>
-          </div>
+        {room && phase === "connected" && needsAudio && (
+          <button type="button" className={btn(true)} onClick={() => room.startAudio().then(() => setNeedsAudio(false)).catch(() => {})}>Activar sonido</button>
         )}
       </div>
 
       {shown.length > 0 && lk && (
-        <ul className="mt-2 flex gap-1.5 overflow-x-auto">
+        <ul className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
           {shown.map(({ p, local }) => {
             const pub = p.getTrackPublication(lk.Track.Source.Camera);
             const video = pub && !pub.isMuted && pub.videoTrack ? (pub.videoTrack as VideoTrack) : null;
@@ -370,24 +371,38 @@ export function VoiceStrip({
             return (
               <li
                 key={p.identity}
-                className={`relative h-[72px] w-24 shrink-0 overflow-hidden rounded-lg border bg-[#0E1317] sm:h-[84px] sm:w-28 ${p.isSpeaking ? "border-brand-500" : "border-[#232D33]"}`}
+                className={`relative h-[96px] w-32 shrink-0 overflow-hidden rounded-lg border bg-[#0E1317] shadow-[0_4px_14px_rgba(0,0,0,0.25)] ${p.isSpeaking ? "border-brand-500" : "border-[#232D33]"}`}
               >
                 {video ? (
                   <TileVideo track={video} mirror={local} />
                 ) : photo ? (
-                  <img src={photo} alt="" className="absolute left-1/2 top-[calc(50%-8px)] h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full object-cover" />
+                  <img src={photo} alt="" className="absolute left-1/2 top-[calc(50%-14px)] h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full object-cover" />
                 ) : (
-                  <span className="absolute left-1/2 top-[calc(50%-8px)] grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#232D33] text-xs font-semibold">{initials(who)}</span>
+                  <span className="absolute left-1/2 top-[calc(50%-14px)] grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#232D33] text-xs font-semibold">{initials(who)}</span>
                 )}
-                <span className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-[rgba(14,19,23,0.78)] px-1.5 py-0.5 text-[10px] leading-4">
-                  <span className={muted ? "text-[#E58B8B]" : p.isSpeaking ? "text-brand-500" : "text-[#7C8A8E]"}><MicIcon off={muted} /></span>
-                  <span className="min-w-0 flex-1 truncate">{local ? "Tú" : who}</span>
-                  <span className="sr-only">{muted ? "micrófono apagado" : p.isSpeaking ? "hablando" : "micrófono encendido"}</span>
-                </span>
+                {local ? (
+                  <>
+                    <span className="absolute left-1 top-1 rounded-full bg-[rgba(14,19,23,0.78)] px-1.5 text-[10px] leading-4">Tú</span>
+                    <span className="absolute inset-x-0 bottom-1.5 flex justify-center gap-2">
+                      <button type="button" className={round(micOn)} aria-pressed={micOn} aria-label={micLabel} title={micLabel} disabled={busy === "mic"} onClick={() => toggle("mic")}>
+                        <MicIcon off={!micOn} />
+                      </button>
+                      <button type="button" className={round(camOn)} aria-pressed={camOn} aria-label={camLabel} title={camLabel} disabled={busy === "cam"} onClick={() => toggle("cam")}>
+                        <CamIcon off={!camOn} />
+                      </button>
+                    </span>
+                  </>
+                ) : (
+                  <span className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-[rgba(14,19,23,0.78)] px-1.5 py-0.5 text-[10px] leading-4">
+                    <span className={muted ? "text-[#E58B8B]" : p.isSpeaking ? "text-brand-500" : "text-[#7C8A8E]"}><MicIcon off={muted} /></span>
+                    <span className="min-w-0 flex-1 truncate">{who}</span>
+                    <span className="sr-only">{muted ? "micrófono apagado" : p.isSpeaking ? "hablando" : "micrófono encendido"}</span>
+                  </span>
+                )}
               </li>
             );
           })}
-          {extra > 0 && <li className="grid h-[72px] w-12 shrink-0 place-items-center rounded-lg border border-[#232D33] text-xs text-[#7C8A8E] sm:h-[84px]">+{extra}</li>}
+          {extra > 0 && <li className="grid h-[96px] w-12 shrink-0 place-items-center rounded-lg border border-[#232D33] text-xs text-[#7C8A8E]">+{extra}</li>}
         </ul>
       )}
       {/* Aquí cuelgan los <audio> de los demás; no se ven. */}
