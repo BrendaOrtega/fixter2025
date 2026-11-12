@@ -554,7 +554,9 @@ export function createWorld(opts: {
     routeAt = v?.at ?? T.at; gun = { ...T.shot, ...v?.shot }; burstLeft = 0;
   }
   function fireAt(p: Point) {
-    const a = Math.atan2(player.y - p.y, player.x - p.x);
+    // Puntería con anticipación: apunta a donde vas a estar cuando llegue el tiro (`lead` 0 = a donde estás).
+    const eta = (Math.hypot(player.x - p.x, player.y - p.y) / gun.speed) * (gun.lead ?? 0);
+    const a = Math.atan2(player.y + player.vy * eta - p.y, player.x + player.vx * eta - p.x);
     state.hostile.push({ kind: T!.id, x: p.x + Math.cos(a) * 34, y: p.y + Math.sin(a) * 34, vx: Math.cos(a) * gun.speed, vy: Math.sin(a) * gun.speed, t: 0, life: gun.life, dmg: 1, bounces: 0 });
     cb.onSound("enemyShot", true);
   }

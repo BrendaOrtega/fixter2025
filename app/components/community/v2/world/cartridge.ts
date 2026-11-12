@@ -137,8 +137,11 @@ export type Combat = {
  * libre: sentado en una mesa o dentro de un lugar nadie te apunta ni te daña. En «Tranquilo» y en
  * el mapa reducido no existe. Requiere `combat`. Un cartucho sin amenaza omite el campo.
  */
-/** Disparo de la amenaza. `burst`/`gap`: tiros por ráfaga y segundos entre ellos (sin `burst`, de uno en uno). */
-export type ThreatShot = { speed: number; life: number; every: number; range: number; burst?: number; gap?: number };
+/**
+ * Disparo de la amenaza. `burst`/`gap`: tiros por ráfaga y segundos entre ellos (sin `burst`, de uno en uno).
+ * `lead` (0 a 1): cuánto anticipa tu movimiento al apuntar; 0 dispara a donde estás, 1 a donde vas a estar.
+ */
+export type ThreatShot = { speed: number; life: number; every: number; range: number; burst?: number; gap?: number; lead?: number };
 /** Un personaje de la amenaza: nombre, nave y, si quiere, su propia ruta y su manera de disparar. */
 export type ThreatVariant = { name: string; look: Look; at?: (cycle: number, t: number) => Point; shot?: Partial<ThreatShot> };
 export type Threat = {
