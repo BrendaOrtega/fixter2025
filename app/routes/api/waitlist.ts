@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs, data } from "react-router";
 import { db } from "~/.server/db";
 import { checkSignupRequest } from "~/.server/signup-guard";
+import { isCallBoxSlug, sendCallBoxLead } from "~/mailSenders/sendCallBoxLead";
 
 /**
  * POST /api/waitlist
@@ -39,6 +40,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     // Upsert subscriber + añadir tag
     let subscriber = await db.subscriber.findUnique({ where: { email } });
+    // Cajas de llamadas: el alta es a mano, así que se avisa al equipo la primera vez que
+    // este correo pide esa caja (no en cada reenvío del formulario). Si el aviso falla, el
+    // registro sigue: el tag queda guardado.
+    if (isCallBoxSlug(courseSlug) && !(subscriber?.tags || []).includes(tag)) {
+      sendCallBoxLead({ email, slug: courseSlug }).catch((e) => console.error("[Waitlist] aviso de caja:", e));
+    }
 
     if (!subscriber) {
       // Crear nuevo subscriber con el tag
