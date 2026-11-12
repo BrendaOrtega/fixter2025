@@ -12,19 +12,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug as string;
   const user = await getUserOrNull(request);
   if (!user) throw redirect(`/login?next=${encodeURIComponent(`/comunidad/${slug}/quiz/lanzar`)}`);
-  return { slug };
+  return { slug, quiz: new URL(request.url).searchParams.get("quiz") ?? undefined };
 };
 
 export default function QuizLaunch({ loaderData }: Route.ComponentProps) {
-  const { slug } = loaderData;
+  const { slug, quiz } = loaderData;
   return (
-    <main className="min-h-dvh bg-background px-4 pb-28 pt-24 text-white">
+    <main className="min-h-dvh bg-background px-4 pb-28 pt-24 text-[#F2F5F4]">
       <div className="mx-auto w-full max-w-md">
-        <Link to={`/comunidad/${slug}`} className="text-sm font-semibold text-colorCaption transition hover:text-brand-500">
+        <Link to={`/comunidad/${slug}`} className="text-xs font-medium text-[#7C8A8E] underline underline-offset-2 hover:text-[#F2F5F4]">
           Volver al club
         </Link>
         <div className="mt-4">
-          <QuizHost slug={slug} />
+          <QuizHost slug={slug} preselect={quiz} />
         </div>
       </div>
     </main>

@@ -10,8 +10,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { btn, btnGhost, card } from "./v2/ui";
 
 type Active = { gameId: string; subject: string; playerUrl?: string; inviteCode?: string; boardUrl?: string; membersOnly?: boolean; site?: string };
-type Status = { enabled: boolean; canHost: boolean; active: Active | null };
-type Quiz = { id: string; subject: string };
+type Status = { enabled: boolean; canHost: boolean; canEdit?: boolean; active: Active | null };
+type Quiz = { id: string; subject: string; questionCount: number };
 
 const POLL_MS = 5000;
 const OFF: Status = { enabled: false, canHost: false, active: null };
@@ -146,7 +146,7 @@ export function QuizPanel({ slug }: { slug: string }) {
         </header>
         <div className="min-h-0 flex-1">
           {status.canHost ? (
-            <HostControls endpoint={endpoint} active={status.active} onChange={refresh} />
+            <HostControls endpoint={endpoint} adminUrl={status.canEdit ? `/comunidad/${slug}/admin?tab=quizzes` : null} active={status.active} onChange={refresh} />
           ) : status.active?.playerUrl ? (
             <iframe
               key={status.active.gameId}
@@ -162,7 +162,7 @@ export function QuizPanel({ slug }: { slug: string }) {
   );
 }
 
-function HostControls({ endpoint, active, onChange }: { endpoint: string; active: Active | null; onChange: () => void }) {
+function HostControls({ endpoint, adminUrl, preselect, active, onChange }: { endpoint: string; adminUrl: string | null; preselect?: string; active: Active | null; onChange: () => void }) {
   const [quizzes, setQuizzes] = useState<Quiz[] | null>(null);
   const [quizId, setQuizId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -177,11 +177,11 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
       const body = (await res.json()) as { quizzes?: Quiz[] };
       const list = body.quizzes ?? [];
       setQuizzes(list);
-      setQuizId((current) => current || list[0]?.id || "");
+      setQuizId((current) => current || list.find((q) => q.id === preselect)?.id || list[0]?.id || "");
     } catch {
       setQuizzes([]);
     }
-  }, [endpoint]);
+  }, [endpoint, preselect]);
 
   useEffect(() => {
     if (!active) loadQuizzes();
@@ -275,7 +275,7 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
       {quizzes === null ? (
         <p className={`${card} p-4 text-sm text-[#7C8A8E]`}>Cargando quizzes…</p>
       ) : quizzes.length === 0 ? (
-        <p className={`${card} p-4 text-sm text-[#7C8A8E]`}>Todavía no hay quizzes. Crea el primero con «Editar quizzes».</p>
+        <p className={`${card} p-4 text-sm text-[#7C8A8E]`}>{adminUrl ? "Todavía no hay quizzes. Crea el primero en «Crear y editar quizzes»." : "Todavía no hay quizzes. Los crea quien administra el club."}</p>
       ) : (
         <fieldset className="grid gap-2">
           <legend className="mb-2 text-[13px] font-semibold text-[#7C8A8E]">Elige el quiz</legend>
@@ -288,7 +288,10 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
               <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${quizId === q.id ? "border-brand-500" : "border-[#232D33]"}`}>
                 {quizId === q.id && <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />}
               </span>
-              <span className="min-w-0 break-words">{q.subject}</span>
+              <span className="min-w-0">
+                <span className="block break-words">{q.subject}</span>
+                <span className="block text-[13px] font-normal text-[#7C8A8E]">{q.questionCount === 1 ? "1 pregunta" : `${q.questionCount} preguntas`}</span>
+              </span>
             </label>
           ))}
         </fieldset>
@@ -325,18 +328,18 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
       </div>
       {error && <p className="rounded-[10px] border border-[#232D33] p-3 text-sm text-[#F08A80]">{error}</p>}
       </div>
-      <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[#232D33] bg-background p-4 lg:grid-cols-1">
+      <div className={`grid shrink-0 gap-2 border-t border-[#232D33] bg-background p-4 lg:grid-cols-1 ${adminUrl ? "grid-cols-2" : ""}`}>
         <button type="button" onClick={launch} disabled={busy || !quizId} className={primary}>
-          {busy ? "Lanzando…" : "Lanzar quiz"}
+          {busy ? "Lanzando…" : "Lanzar y abrir el tablero"}
         </button>
-        <a href={`${endpoint}?editor=1`} target="_blank" rel="noopener" className={quiet}>Editar quizzes</a>
+        {adminUrl && <a href={adminUrl} target="_blank" rel="noopener" className={quiet}>Crear y editar quizzes</a>}
       </div>
     </div>
   );
 }
 
 /** Controles del anfitrión como página propia, para lanzar un quiz fuera de una llamada. */
-export function QuizHost({ slug }: { slug: string }) {
+export function QuizHost({ slug, preselect }: { slug: string; preselect?: string }) {
   const endpoint = `/comunidad/${slug}/quiz`;
   const [status, setStatus] = useState<Status | null>(null);
 
@@ -359,11 +362,11 @@ export function QuizHost({ slug }: { slug: string }) {
 
   if (!status) return <p className={`${card} p-5 text-sm text-[#7C8A8E]`}>Cargando…</p>;
   if (!status.enabled || !status.canHost) {
-    return <p className={`${card} p-5 text-sm text-[#7C8A8E]`}>Sólo el anfitrión del club lanza quizzes.</p>;
+    return <p className={`${card} p-5 text-sm text-[#7C8A8E]`}>Lanzan quizzes el dueño del club y sus coanfitriones.</p>;
   }
   return (
     <div className={`${card} overflow-hidden bg-background text-[#F2F5F4]`}>
-      <HostControls endpoint={endpoint} active={status.active} onChange={refresh} />
+      <HostControls endpoint={endpoint} adminUrl={status.canEdit ? `/comunidad/${slug}/admin?tab=quizzes` : null} preselect={preselect} active={status.active} onChange={refresh} />
     </div>
   );
 }

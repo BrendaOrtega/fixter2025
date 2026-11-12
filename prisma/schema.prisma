@@ -247,7 +247,9 @@ model Community {
 
   /// Aspecto de la sala de llamadas de esta comunidad (skin): JSON de tokens `CallSkin`
   /// (`club-call.server.ts`). Vacío = el skin de la casa.
-  callSkin Json?
+  callSkin       Json?
+  /// Coanfitriones del quiz en vivo: correos (en minúsculas) que, además del dueño, pueden lanzar quizzes.
+  quizHostEmails String[]
 
   /// Secuencia que se activa al confirmar el correo. String plano a propósito:
   /// sin @relation no hay que tocar el modelo Sequence.
@@ -1469,6 +1471,22 @@ model CommunityInvite {
 /// Partida de quiz en vivo de una comunidad (12-nov-2026). El quiz corre en Razzia, aparte;
 /// aquí sólo queda qué partida está viva y su PIN, para dárselo a cada miembro en su panel.
 /// Ids planos, sin @relation: no toca Community ni User.
+/// Quiz de una comunidad. Vive aquí, no en Razzia: se manda completo al lanzar una partida.
+model CommunityQuiz {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String    @db.ObjectId
+  subject     String
+  /// [{ question, answers[2..4], solution (índice), time (s), image? }]: validado en club-quiz.server.ts
+  questions   Json
+  createdById String    @db.ObjectId
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([communityId, archivedAt, updatedAt])
+  @@map("community_quizzes")
+}
+
 model CommunityQuizGame {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   communityId String    @db.ObjectId
@@ -1483,6 +1501,8 @@ model CommunityQuizGame {
   membersOnly Boolean?
   /// Resultados leídos de Razzia al terminar (fase 2).
   results     Json?
+  /// Copia del quiz tal como se lanzó: el historial no cambia si después se edita o se archiva.
+  quiz        Json?
   createdAt   DateTime  @default(now())
   endedAt     DateTime?
 

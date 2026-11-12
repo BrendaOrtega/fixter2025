@@ -1,0 +1,12 @@
+{
+  "id": "fx-agentes-calentamiento",
+  "gameMode": "quiz",
+  "subject": "Agentes de IA: calentamiento",
+  "questions": [
+    { "question": "¿Qué convierte a un modelo de lenguaje en un agente?", "answers": ["Tener más parámetros", "Un ciclo donde usa herramientas y decide el siguiente paso", "Responder en español", "Correr en la nube"], "solutions": [1], "cooldown": 5, "time": 20 },
+    { "question": "¿Qué es MCP (Model Context Protocol)?", "answers": ["Un modelo de Anthropic", "Una base de datos vectorial", "Un protocolo abierto para conectar herramientas y datos a un modelo", "Un framework de frontend"], "solutions": [2], "cooldown": 5, "time": 20 },
+    { "question": "¿Para qué sirve un sandbox en un sistema de agentes?", "answers": ["Para ejecutar código aislado del resto del sistema", "Para entrenar el modelo", "Para guardar los prompts", "Para traducir respuestas"], "solutions": [0], "cooldown": 5, "time": 20 },
+    { "question": "¿Qué pasa cuando se llena la ventana de contexto?", "answers": ["El modelo se reentrena", "Hay que resumir o descartar parte de la conversación", "Las herramientas dejan de existir", "Sube la temperatura"], "solutions": [1], "cooldown": 5, "time": 20 },
+    { "question": "¿Qué describe el protocolo A2A?", "answers": ["Cómo un agente habla con otro agente", "Cómo se cobra por token", "Cómo se comprime un modelo", "Cómo se diseña un prompt"], "solutions": [0], "cooldown": 5, "time": 20 }
+  ]
+}

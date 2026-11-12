@@ -19,7 +19,8 @@ import { occurrencesOf } from "~/.server/services/club-events.server";
 import { listRecordings, retryRecording } from "~/.server/services/club-recording.server";
 import { cdmxDay, parseEmails, upsertInvites } from "~/.server/services/club-invites.server";
 import { isMembershipActive } from "~/.server/services/membership.server";
-import { listPastGames, quizEnabled } from "~/.server/services/club-quiz.server";
+import { listPastGames, listQuizzes, quizEnabled } from "~/.server/services/club-quiz.server";
+import { QuizAdmin } from "~/components/community/QuizAdmin";
 
 export const meta = () => [{ title: "Administrar club | FixterGeek" }, { name: "robots", content: "noindex" }];
 
@@ -34,7 +35,7 @@ async function guard(request: Request, slug: string) {
   if (!user) throw redirect(`/login?next=/comunidad/${slug}/admin`);
   const community = await db.community.findFirst({
     where: { slug, isActive: true },
-    select: { id: true, slug: true, name: true, ownerId: true },
+    select: { id: true, slug: true, name: true, ownerId: true, quizHostEmails: true },
   });
   if (!community) throw data("Comunidad no encontrada", { status: 404 });
   if (!canModerate(user, community)) throw data("Sólo el anfitrión administra el club.", { status: 403 });
@@ -84,7 +85,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const titles = Object.fromEntries(events.map((e) => [e.id, e.title]));
   // Quiz en vivo: la pestaña sólo existe con el servicio encendido (QUIZ_API_URL).
   const quizOn = quizEnabled();
-  const quizGames = quizOn ? await listPastGames(community.id).catch(() => []) : [];
+  const [quizGames, quizzes] = quizOn
+    ? await Promise.all([listPastGames(community.id).catch(() => []), listQuizzes(community.id).catch(() => [])])
+    : [[], []];
 
   return {
     community: { slug: community.slug, name: community.name },
@@ -97,10 +100,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     recordingCount: recordings.filter((r) => !r.hidden && r.status === "ready").length,
     quiz: {
       enabled: quizOn,
+      hosts: community.quizHostEmails,
+      quizzes: quizzes.map((q) => ({ id: q.id, subject: q.subject, questionCount: q.questionCount })),
       games: quizGames.map((g) => ({
         id: g.id,
         subject: g.subject,
         live: g.status === "live",
+        membersOnly: !!g.membersOnly,
         at: g.createdAt.toISOString(),
         // Podio: sólo si la partida se jugó hasta el final.
         top: (Array.isArray(g.results) ? (g.results as Array<{ username: string; points: number; rank: number }>) : []).slice(0, 3),
@@ -624,61 +630,6 @@ function Members({ members }: Pick<Route.ComponentProps["loaderData"], "members"
   );
 }
 
-type QuizView = Route.ComponentProps["loaderData"]["quiz"];
-
-function Quizzes({ quiz, slug }: { quiz: QuizView; slug: string }) {
-  return (
-    <div className="grid gap-4">
-      <div className={card}>
-        <h2 className={h2}>Quizzes en vivo</h2>
-        <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-[#7C8A8E]">
-          <li>Arma tus preguntas en el editor.</li>
-          <li>Lánzalo desde la pestaña «Quiz» de la llamada, o desde aquí para un evento, una clase o una transmisión.</li>
-          <li>Comparte o proyecta el tablero. Tú eliges si juega cualquiera con el PIN o sólo los miembros.</li>
-        </ol>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <a href={`/comunidad/${slug}/quiz/lanzar`} target="_blank" rel="noopener" className={primary}>
-            Lanzar un quiz
-          </a>
-          <a href={`/comunidad/${slug}/quiz?editor=1`} target="_blank" rel="noopener" className={quiet}>
-            Abrir editor de quizzes
-          </a>
-        </div>
-      </div>
-      <div className={card}>
-        <h2 className={h2}>Partidas</h2>
-        {quiz.games.length === 0 ? (
-          <p className="mt-2 text-sm text-[#7C8A8E]">Aquí aparece cada quiz que lances.</p>
-        ) : (
-          <ul className="mt-3 divide-y divide-[#232D33]">
-            {quiz.games.map((g) => (
-              <li key={g.id} className="py-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="truncate font-semibold">{g.subject}</span>
-                  <span className="shrink-0 text-[#7C8A8E]">{g.live ? "En curso · " : ""}{when(g.at)}</span>
-                </div>
-                {g.top.length > 0 ? (
-                  <ol className="mt-2 grid gap-1 text-[#7C8A8E]">
-                    {g.top.map((p) => (
-                      <li key={p.rank} className="flex justify-between gap-3">
-                        <span className="truncate text-[#F2F5F4]">{p.rank}. {p.username}</span>
-                        <span className="shrink-0">{p.points} pts</span>
-                      </li>
-                    ))}
-                    {g.players > 3 && <li>{g.players} jugadores en total</li>}
-                  </ol>
-                ) : (
-                  !g.live && <p className="mt-1 text-[#7C8A8E]">Se terminó antes del podio.</p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
-}
-
 const CLUB_TABS: Record<View, string> = { wall: "", events: "?tab=events", recs: "?tab=recs", courses: "?tab=courses", me: "?tab=me" };
 const TABS: Tab[] = ["calendario", "grabaciones", "invitados", "miembros", "quizzes"];
 
@@ -726,7 +677,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
         {tab === "grabaciones" && <Recordings recordings={recordings} slug={community.slug} />}
         {tab === "invitados" && <Invites invites={invites} callDays={callDays} />}
         {tab === "miembros" && <Members members={members} />}
-        {tab === "quizzes" && <Quizzes quiz={quiz} slug={community.slug} />}
+        {tab === "quizzes" && <QuizAdmin slug={community.slug} quizzes={quiz.quizzes} games={quiz.games} hosts={quiz.hosts} />}
       </Wrap>
     </ClubShell>
   );
