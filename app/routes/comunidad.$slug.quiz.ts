@@ -86,7 +86,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     canHost: access.canHost,
     active: access.canHost
       ? // El anfitrión no juega su propia partida (Razzia lo rechaza): ve los controles.
-        { gameId: game.gameId, subject: game.subject, inviteCode: game.inviteCode, boardUrl: boardUrl(quizBase(), game.gameId) }
+        // Con identidad firmada sólo entran miembros: el PIN ya no le sirve a nadie de fuera y no se enseña.
+        { gameId: game.gameId, subject: game.subject, inviteCode: process.env.QUIZ_IDENTITY_SECRET ? undefined : game.inviteCode, boardUrl: boardUrl(quizBase(), game.gameId) }
       : { gameId: game.gameId, subject: game.subject, playerUrl: playerUrl(quizBase(), game.inviteCode, user) },
   });
 };

@@ -82,7 +82,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   return {
     community: { slug: community.slug, name: community.name },
-    quiz: { enabled: quizOn, games: quizGames.map((g) => ({ id: g.id, subject: g.subject, live: g.status === "live", at: g.createdAt.toISOString() })) },
+    quiz: {
+      enabled: quizOn,
+      games: quizGames.map((g) => ({
+        id: g.id,
+        subject: g.subject,
+        live: g.status === "live",
+        at: g.createdAt.toISOString(),
+        // Podio: sólo si la partida se jugó hasta el final.
+        top: (Array.isArray(g.results) ? (g.results as Array<{ username: string; points: number; rank: number }>) : []).slice(0, 3),
+        players: Array.isArray(g.results) ? g.results.length : 0,
+      })),
+    },
     events: view,
     callDays,
     recordings: recordings.map((r) => ({ ...r, eventTitle: r.eventId ? titles[r.eventId] ?? null : null })),
@@ -543,9 +554,24 @@ function Quizzes({ quiz, slug }: { quiz: QuizView; slug: string }) {
         ) : (
           <ul className="mt-3 divide-y divide-colorOutline">
             {quiz.games.map((g) => (
-              <li key={g.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span className="truncate">{g.subject}</span>
-                <span className="shrink-0 text-colorCaption">{g.live ? "En curso · " : ""}{when(g.at)}</span>
+              <li key={g.id} className="py-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate font-semibold">{g.subject}</span>
+                  <span className="shrink-0 text-colorCaption">{g.live ? "En curso · " : ""}{when(g.at)}</span>
+                </div>
+                {g.top.length > 0 ? (
+                  <ol className="mt-2 grid gap-1 text-colorCaption">
+                    {g.top.map((p) => (
+                      <li key={p.rank} className="flex justify-between gap-3">
+                        <span className="truncate text-white">{p.rank}. {p.username}</span>
+                        <span className="shrink-0">{p.points} pts</span>
+                      </li>
+                    ))}
+                    {g.players > 3 && <li>{g.players} jugadores en total</li>}
+                  </ol>
+                ) : (
+                  !g.live && <p className="mt-1 text-colorCaption">Se terminó antes del podio.</p>
+                )}
               </li>
             ))}
           </ul>

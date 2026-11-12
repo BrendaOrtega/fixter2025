@@ -156,10 +156,16 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
   if (active) {
     return (
       <div className="flex h-full flex-col gap-4 overflow-y-auto p-4 text-sm">
-        <p className="rounded-2xl border border-[#2C3944] bg-[#0E1317] p-4">
-          <span className="block text-xs text-[#7C8A8E]">PIN, para quien entre desde fuera del club</span>
-          <span className="font-mono text-3xl tracking-widest text-[#85DDCB]">{active.inviteCode}</span>
-        </p>
+        {active.inviteCode ? (
+          <p className="rounded-2xl border border-[#2C3944] bg-[#0E1317] p-4">
+            <span className="block text-xs text-[#7C8A8E]">PIN, para quien entre desde fuera del club</span>
+            <span className="font-mono text-3xl tracking-widest text-[#85DDCB]">{active.inviteCode}</span>
+          </p>
+        ) : (
+          <p className="rounded-2xl border border-[#2C3944] bg-[#0E1317] p-4 text-[#7C8A8E]">
+            Quiz en curso. Sólo entran miembros del club, cada uno desde su panel.
+          </p>
+        )}
         <ol className="list-decimal space-y-1 pl-5 text-[#F2F5F4]">
           <li>Comparte en la llamada la ventana del tablero.</li>
           <li>Espera a que aparezcan los jugadores y presiona «Iniciar» en el tablero.</li>

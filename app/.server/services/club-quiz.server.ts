@@ -15,6 +15,10 @@
 // Env:
 //   QUIZ_API_URL           https://quiz.fixtergeek.com (sin diagonal final)
 //   QUIZ_MANAGER_PASSWORD  la MANAGER_PASSWORD de la caja de Razzia; nunca sale del servidor
+//   QUIZ_IDENTITY_SECRET   opcional; el IDENTITY_SECRET de Razzia. Con él, cada miembro entra con
+//                          una identidad firmada: Razzia impone su nombre del club y guarda su id
+//                          de usuario en el resultado. Sin él, entra sólo con PIN y nombre.
+import crypto from "node:crypto";
 import { db } from "~/.server/db";
 
 const TIMEOUT_MS = 4000;
@@ -23,7 +27,10 @@ const VERIFY_MS = 15_000; // cada cuánto se le pregunta a Razzia si la partida 
 const MAX_GAME_MS = 3 * 3600_000; // una partida «viva» más vieja que esto se da por terminada
 export const QUIZ_NAME_MAX = 24; // tope de Razzia para el nombre del jugador
 
-type QuizUser = { email: string; displayName?: string | null; username: string };
+const IDENTITY_TTL_S = 6 * 3600;
+
+type QuizUser = { id?: string; email: string; displayName?: string | null; username: string };
+export type QuizStanding = { userId: string | null; username: string; points: number; rank: number };
 export type LiveGame = { id: string; gameId: string; inviteCode: string; subject: string; createdAt: Date };
 
 export function quizBase(env: NodeJS.ProcessEnv = process.env): string {
@@ -43,10 +50,38 @@ export function quizPlayerName(user: QuizUser): string {
   return (name ?? "Invitado").slice(0, QUIZ_NAME_MAX);
 }
 
+/**
+ * Identidad firmada que Razzia verifica con el mismo secreto: `base64url(JSON).hex(HMAC-SHA256)`.
+ * Va atada al PIN, así que no sirve en otra partida.
+ */
+export function signIdentity(secret: string, p: { userId: string; name: string; inviteCode: string }, now = new Date()): string {
+  const payload = { sub: p.userId, name: p.name, exp: Math.floor(now.getTime() / 1000) + IDENTITY_TTL_S, pin: p.inviteCode };
+  const part = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return `${part}.${crypto.createHmac("sha256", secret).update(part).digest("hex")}`;
+}
+
 /** URL del panel del jugador: entra solo, en español y sin sonido (el tablero ya suena en la llamada). */
-export function playerUrl(base: string, inviteCode: string, user: QuizUser): string {
-  const q = new URLSearchParams({ pin: inviteCode, name: quizPlayerName(user), lng: "es", mute: "1" });
+export function playerUrl(base: string, inviteCode: string, user: QuizUser, identitySecret = process.env.QUIZ_IDENTITY_SECRET): string {
+  const name = quizPlayerName(user);
+  const q = new URLSearchParams({ pin: inviteCode, name, lng: "es", mute: "1" });
+  if (identitySecret && user.id) q.set("id", signIdentity(identitySecret, { userId: user.id, name, inviteCode }));
   return `${base}/?${q}`;
+}
+
+type RazziaResult = { id: string; gameId?: string; players?: Array<{ username: string; points: number; rank: number; externalId?: string }> };
+
+/** Deja una fila por miembro (su mejor lugar si entró desde dos navegadores) y reordena los lugares. */
+export function toStandings(players: NonNullable<RazziaResult["players"]>): QuizStanding[] {
+  const seen = new Set<string>();
+  const out: QuizStanding[] = [];
+  for (const p of [...players].sort((a, b) => a.rank - b.rank)) {
+    if (p.externalId) {
+      if (seen.has(p.externalId)) continue;
+      seen.add(p.externalId);
+    }
+    out.push({ userId: p.externalId ?? null, username: p.username, points: p.points, rank: out.length + 1 });
+  }
+  return out;
 }
 
 /** El token viaja en el hash: no llega a logs del servidor ni a cabeceras Referer. */
@@ -118,11 +153,35 @@ export async function editorUrl(): Promise<string | null> {
 
 const cache = new Map<string, { at: number; verifiedAt: number; game: LiveGame | null }>();
 
+/**
+ * Resultado de una partida, leído de Razzia. Sólo existe si se jugó hasta el podio; null si se
+ * terminó antes o Razzia no contesta. Se lee (pull): Razzia nunca nos llama.
+ */
+async function fetchStandings(game: { gameId: string; createdAt: Date }): Promise<QuizStanding[] | null> {
+  const token = await managerToken();
+  if (!token) return null;
+  const list = await razzia<{ results: Array<{ id: string; date: string }> }>("/api/results", { token });
+  const recent = (list.data?.results ?? []).filter((r) => new Date(r.date) >= game.createdAt).slice(0, 5);
+  for (const meta of recent) {
+    const full = await razzia<RazziaResult>(`/api/results/${encodeURIComponent(meta.id)}`, { token });
+    if (full.data?.gameId === game.gameId && full.data.players) return toStandings(full.data.players);
+  }
+  return null;
+}
+
 async function closeGames(communityId: string) {
-  await db.communityQuizGame.updateMany({
+  const live = await db.communityQuizGame.findMany({
     where: { communityId, status: "live" },
-    data: { status: "ended", endedAt: new Date() },
+    select: { id: true, gameId: true, createdAt: true },
   });
+  for (const game of live) {
+    // Guardar el resultado es de mejor esfuerzo: cerrar la partida nunca depende de Razzia.
+    const standings = await fetchStandings(game).catch(() => null);
+    await db.communityQuizGame.update({
+      where: { id: game.id },
+      data: { status: "ended", endedAt: new Date(), ...(standings ? { results: standings } : {}) },
+    });
+  }
   cache.delete(communityId);
 }
 
@@ -201,6 +260,6 @@ export async function listPastGames(communityId: string, take = 30) {
     where: { communityId },
     orderBy: { createdAt: "desc" },
     take,
-    select: { id: true, subject: true, status: true, createdAt: true },
+    select: { id: true, subject: true, status: true, createdAt: true, results: true },
   });
 }
