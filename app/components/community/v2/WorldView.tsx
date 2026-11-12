@@ -5,7 +5,7 @@ import { Avatar, SectionHead, btn } from "./ui";
 import type { ClubData, Go } from "./types";
 import {
   SHIP_COLORS, SHIP_MODELS, SHIP_PILOTS, createWorld, drawPilot, drawShip, faceFor,
-  type Counts, type Face, type Look, type PlaceInfo, type RemoteShip, type ShipInfo, type WorldApi,
+  type Counts, type Face, type Look, type PlaceInfo, type RemoteShip, type ShipInfo, type WeaponInfo, type WorldApi,
 } from "./world/engine";
 import { createSound, type Sound } from "./world/sound";
 
@@ -106,7 +106,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [counts, setCounts] = useState<Counts | null>(null);
   const [present, setPresent] = useState<number | null>(null);
   const [myTable, setMyTable] = useState<number | null>(null);
-  const [crystals, setCrystals] = useState(0);
+  // Aparato que llevas (cambia tu disparo por unos tiros). `null`: disparo básico.
+  const [weapon, setWeapon] = useState<WeaponInfo | null>(null);
   // Chat efímero: los mensajes viven ~10 min en memoria del servidor y llegan con el mismo sondeo.
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
@@ -154,7 +155,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         onIntent: () => { dirtyRef.current = true; setMyTable(apiRef.current?.myTable() ?? null); },
         onFirstMove: () => {},
         onSound: (name) => sound.play(name),
-        onScore: setCrystals,
+        onWeapon: setWeapon,
         onNudge: (id) => {
           // La nave ya tembló en tu pantalla; se avisa para que su dueño también la vea (el servidor acepta una por segundo).
           if (Date.now() - lastNudgeSent < 1000) return;
@@ -363,6 +364,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const joyEnd = () => { if (knobRef.current) knobRef.current.style.transform = ""; apiRef.current?.setJoy(0, 0); };
 
   const people = present ?? counts?.humans ?? 1;
+  const weaponLabel = weapon ? `${weapon.name} · ${weapon.left === 1 ? "1 tiro" : `${weapon.left} tiros`}` : "Disparo básico";
   const full = !mini; // mundo completo (incrustado en pantalla ancha, o expandido)
 
   // ── Lo que tienes cerca: se atiende en la franja, no encima del mapa ──
@@ -458,24 +460,24 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               />
             </div>
 
-            {/* Disparo: junta cristales (juego local, de esta visita). Con mouse es clic derecho (o la
-                barra espaciadora) y sólo se muestra la cuenta; el botón grande queda para táctil. */}
+            {/* Disparo: cosquillas a las naves (tiemblan, sin daño ni marcador). Con mouse es clic derecho (o la
+                barra espaciadora) y sólo se muestra el aparato que llevas; el botón grande queda para táctil. */}
             {full && ready && !quiet && (
               <p className="pointer-events-none absolute bottom-3.5 right-3.5 z-[3] hidden rounded-full border border-[#232D33] bg-[#141B20] px-3 py-1.5 text-xs text-[#7C8A8E] [@media(pointer:fine)]:block">
-                <b className="font-semibold text-brand-500">{crystals === 1 ? "1 cristal" : `${crystals} cristales`}</b> · clic derecho para disparar
+                <b className="font-semibold text-brand-500">{weaponLabel}</b> · clic derecho para disparar
               </p>
             )}
             {full && ready && !quiet && (
               <button
                 type="button"
                 data-shoot
-                aria-label={`Disparar a los cristales. Llevas ${crystals}.`}
+                aria-label={`Disparar. Llevas: ${weaponLabel}.`}
                 onClick={() => apiRef.current?.shoot()}
                 style={{ touchAction: "manipulation" }}
                 className="absolute bottom-3.5 right-3.5 z-[3] grid h-[76px] w-[76px] place-content-center justify-items-center gap-px rounded-full border border-[#357265] bg-[#141B20] text-brand-500 shadow-[0_2px_8px_rgba(0,0,0,0.35)] active:bg-[#17302C] sm:h-[68px] sm:w-[68px] [@media(pointer:fine)]:hidden"
               >
                 <b className="text-[13px] font-semibold">Disparar</b>
-                <small className="text-[10px] text-[#7C8A8E]">{crystals === 1 ? "1 cristal" : `${crystals} cristales`}</small>
+                <small className="text-[10px] text-[#7C8A8E]">{weapon ? `${weapon.name} · ${weapon.left}` : "Básico"}</small>
               </button>
             )}
 
@@ -533,7 +535,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
             {!ship && !(place && near) && (
               <p className="text-[13px] text-[#7C8A8E]">
                 Acércate a un lugar o a alguien.
-                <span className="hidden lg:inline"> Flechas o WASD para volar · clic para ir a un punto · Enter para entrar · Espacio dispara a los cristales.</span>
+                <span className="hidden lg:inline"> Flechas o WASD para volar · clic para ir a un punto · Enter para entrar · Espacio dispara · pasa sobre un aparato para cambiar tu disparo.</span>
               </p>
             )}
             {ship && (

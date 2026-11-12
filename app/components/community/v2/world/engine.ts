@@ -85,11 +85,11 @@ type Callbacks = {
   onIntent: () => void;
   onFirstMove: () => void;
   /** Algo que merece sonido: arrancar, llegar a un lugar, sentarse, levantarse. */
-  onSound: (name: "thrust" | "arrive" | "sit" | "stand" | "waveIn" | "shoot" | "catch" | "nudge") => void;
+  onSound: (name: "thrust" | "arrive" | "sit" | "stand" | "waveIn" | "shoot" | "shootTriple" | "shootRay" | "shootWave" | "pickup" | "nudge") => void;
   /** Tu disparo tocó la nave de un miembro: hay que avisarle para que también la vea temblar. */
   onNudge: (shipId: string) => void;
-  /** Cristales juntados en esta visita (el juego es local: no viaja al servidor). */
-  onScore: (crystals: number) => void;
+  /** Cambió el aparato que llevas (o sus tiros restantes). `null`: disparo básico. Es local, no viaja al servidor. */
+  onWeapon: (weapon: WeaponInfo | null) => void;
   /** Enter con un lugar cerca. */
   onEnter: () => void;
   /** Escape. */
@@ -115,10 +115,10 @@ export type WorldApi = {
   /** Saludo a un robot de la casa: contesta solo. */
   waveBot: (botId: string) => void;
   flyToPlace: (placeId: string) => void;
-  /** Dispara un destello hacia donde apunta la nave; sólo atrapa cristales, nunca a otra nave. */
+  /** Dispara hacia donde apunta la nave con el aparato que lleves. Sólo hace temblar: sin daño ni marcador. */
   shoot: () => void;
-  /** El cristal más cercano a tu nave (para pruebas y para pistas en pantalla). */
-  nearestCrystal: () => { x: number; y: number } | null;
+  /** El aparato flotante más cercano a tu nave (para pruebas y para pistas en pantalla). */
+  nearestPickup: (kind?: WeaponKind) => { x: number; y: number; kind: WeaponKind } | null;
   setJoy: (x: number, y: number) => void;
   sit: (table: number) => void;
   stand: () => void;
@@ -143,6 +143,7 @@ type Entity = {
 type Fx =
   | { kind: "bubble"; ship: Entity; text: string; t: number; dur: number; say?: boolean }
   | { kind: "flash"; x: number; y: number; t: number; dur: number }
+  | { kind: "ring"; x: number; y: number; t: number; dur: number }
   | { kind: "spark"; x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string };
 
 const C = {
@@ -153,10 +154,21 @@ const C = {
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const TAU = Math.PI * 2;
 const MAX_SPEED = 310;
-// Juego de los cristales: local, de esta visita y sin blancos humanos.
-const GEM_COUNT = 9, GEM_HIT = 26, SHOT_SPEED = 640, SHOT_LIFE = 0.8, SHOT_EVERY = 0.28;
-type Gem = { x: number; y: number; ph: number; alive: boolean; back: number };
-type Shot = { x: number; y: number; vx: number; vy: number; t: number; touched: Set<string> };
+// Juego: aparatos espaciales que cambian tu disparo por unos tiros. Todo es cosquilla: las naves tocadas
+// sólo tiemblan. Local y de esta visita; lo único que viaja al servidor es el temblor (`nudge`).
+export const WEAPONS = {
+  triple: { name: "Triple", uses: 6, sound: "shootTriple" },
+  ray: { name: "Rayo", uses: 5, sound: "shootRay" },
+  wave: { name: "Onda", uses: 3, sound: "shootWave" },
+} as const;
+export type WeaponKind = keyof typeof WEAPONS;
+export type WeaponInfo = { kind: WeaponKind; name: string; left: number };
+const WEAPON_KINDS = Object.keys(WEAPONS) as WeaponKind[];
+/** Pocos aparatos a la vez en todo el mapa; cada uno reaparece despacio. */
+const PICKUP_COUNT = 3, PICKUP_REACH = 34, PICKUP_BACK = 20, PICKUP_BACK_EXTRA = 10;
+const SHOT_SPEED = 640, SHOT_LIFE = 0.8, SHOT_EVERY = 0.28, RAY_SPEED = 1300, WAVE_R = 175, WAVE_DUR = 0.4;
+type Pickup = { kind: WeaponKind; x: number; y: number; ph: number; alive: boolean; back: number };
+type Shot = { x: number; y: number; vx: number; vy: number; t: number; ray: boolean };
 /** Cosquilla: cuánto tiembla una nave tocada y qué tan cerca debe pasar el disparo. */
 const SHAKE = 0.25, SHAKE_PX = 2.6, SHIP_HIT = 26;
 /** Asset oficial de Ghosty (public/ghosty-oficial.png): nunca se repinta, sólo se escala. */
@@ -414,7 +426,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     keys: new Set<string>(), joy: { x: 0, y: 0 }, moved: false, wasFlying: false,
     nearPlace: null as Place | null, nearShip: null as Entity | null, fx: [] as Fx[], marker: null as { x: number; y: number; t: number } | null,
     hidden: new Set<string>(), dead: false,
-    gems: [] as Gem[], shots: [] as Shot[], crystals: 0, shotT: 9,
+    pickups: [] as Pickup[], shots: [] as Shot[], weapon: null as { kind: WeaponKind; left: number } | null, shotT: 9,
   };
   const entity = (id: string, kind: Entity["kind"], name: string, look: Look, x: number, y: number): Entity => ({
     id, kind, name, first: firstName(name), photoURL: null, note: null, x, y, vx: 0, vy: 0, ang: -Math.PI / 2, thrust: 0,
@@ -675,7 +687,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         const e = state.nearShip;
         ctx.strokeStyle = C.mint; ctx.lineWidth = 1.6; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(e.x, e.y, 38, t * 0.6, t * 0.6 + TAU); ctx.stroke(); ctx.setLineDash([]);
       }
-      if (!state.quiet) for (const g of state.gems) if (g.alive) drawGem(g, t);
+      if (!state.quiet) for (const p of state.pickups) if (p.alive) drawPickup(p, t);
       for (const e of [...all, player].sort((a, b) => a.y - b.y)) {
         const bob = e.kind === "me" || state.quiet ? 0 : Math.sin(t * 1.6 + e.bob) * 2.2;
         // Temblor amortiguado: 2–3 px que se apagan en un cuarto de segundo.
@@ -683,6 +695,10 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         drawShip(ctx, e, e.x + sx, e.y + bob + sy, 56, t);
       }
       for (const s of state.shots) drawShot(s);
+      for (const f of state.fx) if (f.kind === "ring") {
+        // La onda: un aro que crece lo que dura su sonido.
+        const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.strokeStyle = C.mint; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(f.x, f.y, 24 + (WAVE_R - 24) * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
+      }
       for (const f of state.fx) if (f.kind === "flash") {
         // Destello al atrapar: un aro que se abre y se apaga.
         const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.strokeStyle = C.ink; ctx.lineWidth = 3 * (1 - k) + 1; ctx.beginPath(); ctx.arc(f.x, f.y, 8 + 26 * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
@@ -726,26 +742,55 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     }
     drawEdgeHints();
   }
-  // ── Juego: juntar cristales con un disparo ──
-  // Cristales de energía flotan por el mapa; el disparo sale de la punta de tu nave y sólo los cristales
-  // lo detienen: atraviesa naves y lugares sin tocarlos, así nadie puede ser blanco de nadie. Todo es
-  // local (no viaja al servidor) y la cuenta es de esta visita. En «Tranquilo» no hay juego.
-  function gemSpot() {
-    for (let k = 0; k < 40; k++) { const g = { x: 80 + Math.random() * (WORLD_W - 160), y: 80 + Math.random() * (WORLD_H - 160) }; if (!placeOf(g) && Math.hypot(g.x - player.x, g.y - player.y) > 140) return g; }
+  // ── Juego: aparatos que cambian tu disparo ──
+  // Flotan pocos aparatos por el mapa; al pasar tu nave encima lo recoges y tu disparo cambia por unos
+  // tiros: «Triple» (abanico de tres), «Rayo» (largo y rápido) y «Onda» (aro que alcanza a las naves
+  // cercanas). Sin aparato queda el disparo básico. El disparo se apaga en la primera nave que toca y
+  // ésta sólo tiembla: no hay daño, puntos ni marcador. En «Tranquilo» no hay juego.
+  function pickupSpot() {
+    for (let k = 0; k < 40; k++) { const g = { x: 80 + Math.random() * (WORLD_W - 160), y: 80 + Math.random() * (WORLD_H - 160) }; if (!placeOf(g) && Math.hypot(g.x - player.x, g.y - player.y) > 220) return g; }
     return { x: 1000, y: 120 };
   }
+  const weaponInfo = (): WeaponInfo | null => (state.weapon ? { kind: state.weapon.kind, name: WEAPONS[state.weapon.kind].name, left: state.weapon.left } : null);
+  const fire = (a: number, ray = false) => {
+    const v = ray ? RAY_SPEED : SHOT_SPEED;
+    state.shots.push({ x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, ray });
+  };
   /** Sin ángulo dispara hacia donde apunta la nave; el clic derecho manda el ángulo hacia el cursor. */
   function shoot(angle?: number) {
     if (state.quiet || state.mini || state.shotT < SHOT_EVERY) return;
     state.shotT = 0;
-    const a = angle ?? player.ang;
-    state.shots.push({ x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * SHOT_SPEED, vy: Math.sin(a) * SHOT_SPEED, t: 0, touched: new Set() });
-    cb.onSound("shoot");
+    const a = angle ?? player.ang, w = state.weapon;
+    if (!w) { fire(a); cb.onSound("shoot"); return; }
+    if (w.kind === "triple") for (const d of [-0.2, 0, 0.2]) fire(a + d);
+    else if (w.kind === "ray") fire(a, true);
+    else {
+      // Onda: no viaja; alcanza de una vez a las naves que estén dentro del aro.
+      state.fx.push({ kind: "ring", x: player.x, y: player.y, t: 0, dur: WAVE_DUR });
+      for (const e of others()) if (Math.hypot(e.x - player.x, e.y - player.y) < WAVE_R) touch(e);
+    }
+    cb.onSound(WEAPONS[w.kind].sound);
+    if (--w.left <= 0) state.weapon = null;
+    cb.onWeapon(weaponInfo());
+  }
+  /** Tu disparo tocó esa nave: tiembla aquí y se avisa para que su dueño también la vea temblar. */
+  function touch(e: Entity) {
+    tickle(e); cb.onSound("nudge");
+    if (e.kind === "human") cb.onNudge(e.id);
   }
   function updateGame(dt: number) {
     state.shotT += dt;
     if (state.quiet) { state.shots.length = 0; return; }
-    for (const g of state.gems) if (!g.alive && (g.back -= dt) <= 0) Object.assign(g, gemSpot(), { alive: true });
+    for (const p of state.pickups) {
+      if (!p.alive) { if ((p.back -= dt) <= 0) Object.assign(p, pickupSpot(), { alive: true, kind: WEAPON_KINDS[Math.floor(Math.random() * WEAPON_KINDS.length)] }); continue; }
+      if (state.mini || Math.hypot(p.x - player.x, p.y - player.y) > PICKUP_REACH) continue;
+      // Recogido: cambia tu disparo por unos tiros (si ya traías otro aparato, lo reemplaza).
+      p.alive = false; p.back = PICKUP_BACK + Math.random() * PICKUP_BACK_EXTRA;
+      state.weapon = { kind: p.kind, left: WEAPONS[p.kind].uses };
+      state.fx.push({ kind: "flash", x: p.x, y: p.y, t: 0, dur: 0.28 });
+      state.fx.push({ kind: "bubble", ship: player, text: `${WEAPONS[p.kind].name} · ${WEAPONS[p.kind].uses} tiros`, t: 0, dur: 1.4 });
+      cb.onSound("pickup"); cb.onWeapon(weaponInfo());
+    }
     for (const s of state.shots) {
       const x0 = s.x, y0 = s.y;
       s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt;
@@ -754,19 +799,9 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         const dx = s.x - x0, dy = s.y - y0, u = clamp(((q.x - x0) * dx + (q.y - y0) * dy) / (dx * dx + dy * dy || 1), 0, 1);
         return Math.hypot(q.x - (x0 + dx * u), q.y - (y0 + dy * u));
       };
-      // Cosquilla: la nave que roza tiembla un instante. El disparo sigue de largo: no hay daño ni puntos.
-      for (const e of others()) {
-        if (s.touched.has(e.id) || near(e) > SHIP_HIT) continue;
-        s.touched.add(e.id); tickle(e); cb.onSound("nudge");
-        if (e.kind === "human") cb.onNudge(e.id);
-      }
-      const g = state.gems.find((q) => q.alive && near(q) < GEM_HIT);
-      if (!g) continue;
-      g.alive = false; g.back = 5 + Math.random() * 4; s.t = SHOT_LIFE; // el disparo se gasta en el cristal
-      for (let i = 0; i < 7; i++) { const b = (i * TAU) / 7; state.fx.push({ kind: "spark", x: g.x, y: g.y, vx: Math.cos(b) * 80, vy: Math.sin(b) * 80, t: 0, dur: 0.5, color: i % 2 ? C.mint : C.ink }); }
-      state.fx.push({ kind: "flash", x: g.x, y: g.y, t: 0, dur: 0.28 });
-      state.fx.push({ kind: "bubble", ship: player, text: "+1 cristal", t: 0, dur: 1 });
-      state.crystals++; cb.onSound("catch"); cb.onScore(state.crystals);
+      const hit = others().find((e) => near(e) <= SHIP_HIT);
+      if (!hit) continue;
+      touch(hit); s.t = SHOT_LIFE; // el disparo se apaga en la nave que toca
     }
     state.shots = state.shots.filter((s) => s.t < SHOT_LIFE && s.x > -20 && s.x < WORLD_W + 20 && s.y > -20 && s.y < WORLD_H + 20);
   }
@@ -776,22 +811,35 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     e.shakeT = SHAKE;
     for (let i = 0; i < 4; i++) { const b = (i * TAU) / 4 + 0.6; state.fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * 55, vy: Math.sin(b) * 55, t: 0, dur: 0.3, color: C.ink }); }
   }
-  function drawGem(g: Gem, t: number) {
-    // Cristal plano de tres facetas, flotando despacio.
-    const x = g.x, y = g.y + Math.sin(t * 1.8 + g.ph) * 3.5, w = 9, h = 15;
-    const outline = () => { ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x + w, y - 3); ctx.lineTo(x, y + h); ctx.lineTo(x - w, y - 3); ctx.closePath(); };
-    ctx.fillStyle = C.mint; outline(); ctx.fill();
-    ctx.fillStyle = "#BDEEE3"; ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x, y - 3); ctx.lineTo(x - w, y - 3); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#4FA896"; ctx.beginPath(); ctx.moveTo(x + w, y - 3); ctx.lineTo(x, y + h); ctx.lineTo(x, y - 3); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 1; outline(); ctx.stroke();
-    if (Math.sin(t * 1.8 + g.ph) > 0.92) { ctx.fillStyle = C.ink; sparkle(ctx, x + w + 3, y - h + 2, 4); ctx.fill(); }
+  function drawPickup(p: Pickup, t: number) {
+    // Aparato espacial plano dentro de una burbuja: se ve que es para recoger, no un arma de verdad.
+    const x = p.x, y = p.y + Math.sin(t * 1.6 + p.ph) * 3.5;
+    ctx.fillStyle = C.panel; ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y, 19, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    if (p.kind === "triple") {
+      // Bláster redondeado con tres boquillas en abanico.
+      ctx.strokeStyle = C.mint; ctx.lineWidth = 4;
+      for (const d of [-0.5, 0, 0.5]) { ctx.beginPath(); ctx.moveTo(x - 3, y + 2); ctx.lineTo(x - 3 + Math.cos(d - 0.35) * 14, y + 2 + Math.sin(d - 0.35) * 14); ctx.stroke(); }
+      ctx.fillStyle = C.suit; ctx.beginPath(); ctx.arc(x - 4, y + 3, 6.5, 0, TAU); ctx.fill();
+      ctx.fillStyle = C.mintDeep; ctx.beginPath(); ctx.arc(x - 4, y + 3, 2.4, 0, TAU); ctx.fill();
+    } else if (p.kind === "ray") {
+      // Antena emisora: base redondeada, varilla larga y una chispa en la punta.
+      ctx.strokeStyle = C.green; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 6, y + 6); ctx.lineTo(x + 9, y - 9); ctx.stroke();
+      ctx.fillStyle = C.suit; roundRect(ctx, x - 12, y + 2, 12, 9, 4); ctx.fill();
+      ctx.fillStyle = C.ink; sparkle(ctx, x + 10, y - 10, 5); ctx.fill();
+    } else {
+      // Emisor de onda: un punto con dos arcos que se abren.
+      ctx.fillStyle = C.suit; ctx.beginPath(); ctx.arc(x - 7, y + 5, 4.5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = C.mint; ctx.lineWidth = 2.6;
+      for (const r of [9, 15]) { ctx.beginPath(); ctx.arc(x - 7, y + 5, r, -Math.PI / 2 - 0.15, 0.15); ctx.stroke(); }
+    }
   }
   function drawShot(s: Shot) {
-    // Destello alargado con estela corta, del color de la casa.
-    const a = Math.atan2(s.vy, s.vx), fade = s.t > SHOT_LIFE - 0.15 ? (SHOT_LIFE - s.t) / 0.15 : 1;
+    // Destello alargado con estela corta, del color de la casa. El rayo es más largo y verde.
+    const a = Math.atan2(s.vy, s.vx), fade = s.t > SHOT_LIFE - 0.15 ? (SHOT_LIFE - s.t) / 0.15 : 1, len = s.ray ? 46 : 16;
     ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(a); ctx.globalAlpha = Math.max(0, fade);
-    ctx.lineCap = "round"; ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(-10, 0); ctx.stroke();
-    ctx.strokeStyle = C.mint; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(6, 0); ctx.stroke();
+    ctx.lineCap = "round"; ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-len - 16, 0); ctx.lineTo(-len + 6, 0); ctx.stroke();
+    ctx.strokeStyle = s.ray ? C.green : C.mint; ctx.lineWidth = s.ray ? 4 : 5; ctx.beginPath(); ctx.moveTo(-len + 6, 0); ctx.lineTo(6, 0); ctx.stroke();
     ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(6, 0, 2.6, 0, TAU); ctx.fill();
     ctx.restore();
   }
@@ -856,14 +904,14 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     updateCamera(Math.min(1, 5 * dt)); render();
     raf = requestAnimationFrame(frame);
   }
-  state.gems = Array.from({ length: GEM_COUNT }, (_, i) => ({ ...gemSpot(), ph: i * 1.7, alive: true, back: 0 }));
+  state.pickups = WEAPON_KINDS.slice(0, PICKUP_COUNT).map((kind, i) => ({ kind, ...pickupSpot(), ph: i * 1.7, alive: true, back: 0 }));
   ghosty();
   measure();
   raf = requestAnimationFrame(frame);
 
   return {
     resize(mini) { state.mini = mini; measure(); },
-    setQuiet(quiet) { state.quiet = quiet; if (quiet) { player.tx = player.ty = null; state.marker = null; player.shakeT = 0; for (const e of others()) e.shakeT = 0; state.fx = state.fx.filter((f) => f.kind === "bubble"); state.shots.length = 0; } },
+    setQuiet(quiet) { state.quiet = quiet; if (quiet) { player.tx = player.ty = null; state.marker = null; player.shakeT = 0; for (const e of others()) e.shakeT = 0; if (state.weapon) { state.weapon = null; cb.onWeapon(null); } state.fx = state.fx.filter((f) => f.kind === "bubble"); state.shots.length = 0; } },
     setLook(look) { player.model = look.model; player.color = look.color; player.pilot = look.pilot; cb.onIntent(); },
     setStation(s) { state.open = s.open; state.stationSub = s.sub; },
     setHidden(ids) { state.hidden = new Set(ids); places = PLACES.filter((p) => !state.hidden.has(p.id)); },
@@ -916,10 +964,10 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       window.setTimeout(() => { if (state.dead) return; state.fx.push({ kind: "bubble", ship: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
     },
     shoot: () => shoot(),
-    nearestCrystal() {
-      let best: Gem | null = null, bd = Infinity;
-      for (const g of state.gems) { const d = Math.hypot(g.x - player.x, g.y - player.y); if (g.alive && d < bd) { best = g; bd = d; } }
-      return best ? { x: best.x, y: best.y } : null;
+    nearestPickup(kind) {
+      let best: Pickup | null = null, bd = Infinity;
+      for (const p of state.pickups) { const d = Math.hypot(p.x - player.x, p.y - player.y); if (p.alive && (!kind || p.kind === kind) && d < bd) { best = p; bd = d; } }
+      return best ? { x: best.x, y: best.y, kind: best.kind } : null;
     },
     flyToPlace(placeId) {
       const p = places.find((q) => q.id === placeId); if (!p) return;
