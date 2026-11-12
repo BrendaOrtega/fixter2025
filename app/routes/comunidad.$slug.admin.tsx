@@ -2,7 +2,7 @@
 // al dueño sin pedirle nada a nadie: calendario (con series semanales), grabaciones, invitados y
 // miembros. Sólo dueño o ADMIN (`canModerate`). El plan y el contraste con la competencia están en
 // docs/comunidad/PLAN.md.
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Form, data, redirect, useActionData, useNavigation, useSearchParams, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import type { Route } from "./+types/comunidad.$slug.admin";
 import { db } from "~/.server/db";
@@ -10,11 +10,11 @@ import { Switch } from "~/components/common/Switch";
 import { ClubVideo } from "~/components/community/ClubVideo";
 import { CalendarIllustration } from "~/components/community/v2/CalendarIllustration";
 import { ClubShell } from "~/components/community/v2/ClubShell";
-import { SectionHead, Wrap, btn, card as panel, textLink } from "~/components/community/v2/ui";
+import { SectionHead, Wrap, btn, btnGhost, card as panel, textLink } from "~/components/community/v2/ui";
 import type { View } from "~/components/community/v2/types";
 import { CalendarPlus, Eye, EyeOff, Pencil, RotateCw, Trash2, UserMinus } from "lucide-react";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { canModerate } from "~/.server/services/wall.server";
+import { canModerate, imageUrlFor } from "~/.server/services/wall.server";
 import { occurrencesOf } from "~/.server/services/club-events.server";
 import { listRecordings, retryRecording } from "~/.server/services/club-recording.server";
 import { cdmxDay, parseEmails, upsertInvites } from "~/.server/services/club-invites.server";
@@ -71,6 +71,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       minutes: Math.round((e.endsAt.getTime() - e.startsAt.getTime()) / 60_000),
       weekly: e.recurrence === "weekly",
       untilInput: e.until ? toCdmxInput(e.until).slice(0, 10) : "",
+      imageKey: e.imageKey ?? "",
+      imageUrl: e.imageKey ? imageUrlFor(e.imageKey) : null,
       next: next?.startsAt.toISOString() ?? null,
     };
   });
@@ -149,8 +151,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const untilRaw = str("until");
     const until = weekly && /^\d{4}-\d{2}-\d{2}$/.test(untilRaw) ? fromCdmxInput(`${untilRaw}T23:59`) : null;
     if (until && until < startsAt) return data({ error: "«Hasta» no puede ser antes del inicio." }, { status: 400 });
+    // Flyer: sólo llaves del prefijo del muro (las entrega /api/wall-image); vacío lo quita.
+    const imageKey = str("imageKey");
+    if (imageKey && (!imageKey.startsWith("wall/") || imageKey.includes("..") || imageKey.length > 300)) {
+      return data({ error: "Esa imagen no es válida. Súbela de nuevo." }, { status: 400 });
+    }
     const fields = {
       title,
+      imageKey: imageKey || null,
       description: str("description").slice(0, 1000) || null,
       startsAt,
       endsAt: new Date(startsAt.getTime() + minutes * 60_000),
@@ -240,6 +248,73 @@ type Tab = "calendario" | "grabaciones" | "invitados" | "miembros" | "quizzes";
 
 type EventView = Route.ComponentProps["loaderData"]["events"][number];
 
+const MAX_FLYER_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Portada del evento: la ilustración del calendario, o la imagen/flyer que suba el anfitrión.
+ * Sube por /api/wall-image (igual que las fotos del muro) y manda la llave en `imageKey`.
+ */
+function EventCover({ event }: { event?: EventView }) {
+  const [imageKey, setImageKey] = useState(event?.imageKey ?? "");
+  const [preview, setPreview] = useState<string | null>(event?.imageUrl ?? null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setError(null);
+    if (file.size > MAX_FLYER_BYTES) return setError("La imagen pesa más de 8 MB.");
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("fileName", file.name);
+      fd.set("type", file.type);
+      const res = await fetch("/api/wall-image", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "No se pudo subir");
+      const put = await fetch(json.putURL, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      if (!put.ok) throw new Error("No se pudo subir");
+      setImageKey(json.key);
+      setPreview(URL.createObjectURL(file));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo subir");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <input type="hidden" name="imageKey" value={imageKey} />
+      <div className="grid h-24 w-32 shrink-0 place-items-center overflow-hidden rounded-lg border border-[#232D33] bg-background sm:h-28 sm:w-40">
+        {preview ? (
+          <img src={preview} alt="Imagen del evento" className="h-full w-full object-cover" />
+        ) : (
+          <CalendarIllustration className="h-full w-full p-1" />
+        )}
+      </div>
+      <div className="grid min-w-0 gap-1.5">
+        <p className="text-[13px] font-medium text-[#D9E0DE]">Imagen o flyer del evento</p>
+        <p className="text-xs text-[#7C8A8E]">Opcional. Sin imagen, los miembros ven esta ilustración.</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className={`${btnGhost} cursor-pointer ${uploading ? "pointer-events-none opacity-60" : ""}`}>
+            {uploading ? "Subiendo…" : preview ? "Cambiar imagen" : "Subir imagen"}
+            <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="sr-only" onChange={onFile} disabled={uploading} />
+          </label>
+          {preview && (
+            <button type="button" className={textLink} onClick={() => { setImageKey(""); setPreview(null); }}>
+              Quitar
+            </button>
+          )}
+        </div>
+        {error && <p className="text-xs text-[#F08A80]">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
 function EventForm({ event, onDone }: { event?: EventView; onDone?: () => void }) {
   const nav = useNavigation();
   const [weekly, setWeekly] = useState(event?.weekly ?? true);
@@ -248,6 +323,7 @@ function EventForm({ event, onDone }: { event?: EventView; onDone?: () => void }
     <Form method="post" className="grid gap-3" onSubmit={() => onDone?.()}>
       <input type="hidden" name="intent" value="event-save" />
       {event && <input type="hidden" name="id" value={event.id} />}
+      <EventCover event={event} />
       <label className={label}>
         Título
         <input name="title" required maxLength={140} defaultValue={event?.title} className={input} placeholder="Llamada del club: construimos un agente" />
@@ -301,7 +377,8 @@ function Calendar({ events, slug }: { events: EventView[]; slug: string }) {
         </>
       ) : (
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
+          {e.imageUrl && <img src={e.imageUrl} alt="" loading="lazy" className="h-14 w-20 shrink-0 rounded-md border border-[#232D33] object-cover" />}
+          <div className="min-w-0 flex-1">
             <p className="font-semibold text-[#F2F5F4]">{e.title}</p>
             <p className="mt-1 text-sm text-[#7C8A8E]" suppressHydrationWarning>
               {e.weekly ? "🔁 Cada semana · " : ""}
@@ -324,15 +401,10 @@ function Calendar({ events, slug }: { events: EventView[]; slug: string }) {
   return (
     <div className="grid gap-6">
       <section className={card}>
-        <div className="mb-4 flex items-center gap-4">
-          <div className="min-w-0 flex-1">
-            <h2 className={h2}>Nuevo evento</h2>
-            <p className="mt-1 text-sm text-[#7C8A8E]">
-              Los miembros lo ven con cuenta regresiva, reciben correo 24 h y 1 h antes y pueden agregarlo a su calendario.
-            </p>
-          </div>
-          <CalendarIllustration className="h-20 w-24 shrink-0 sm:h-28 sm:w-36" />
-        </div>
+        <h2 className={h2}>Nuevo evento</h2>
+        <p className="mb-4 mt-1 text-sm text-[#7C8A8E]">
+          Los miembros lo ven con cuenta regresiva, reciben correo 24 h y 1 h antes y pueden agregarlo a su calendario.
+        </p>
         <EventForm key={events.length} />
       </section>
       <section>

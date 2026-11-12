@@ -201,6 +201,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           startsAt: event.startsAt.toISOString(),
           endsAt: event.endsAt.toISOString(),
           open: isCallOpen(event),
+          imageUrl: event.imageKey ? imageUrlFor(event.imageKey) : null,
         }
       : null,
   };

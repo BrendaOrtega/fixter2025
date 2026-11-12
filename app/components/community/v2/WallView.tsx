@@ -173,7 +173,7 @@ function HostRail({ data, go }: { data: ClubData; go: Go }) {
   const call = event ? describeCall(event, now) : null;
   const adminHref = `/comunidad/${community.slug}/admin`;
   return (
-    <aside className="hidden gap-3.5 min-[1240px]:grid" aria-label="Resumen del club">
+    <aside className="order-first grid items-start gap-3.5 sm:grid-cols-2 min-[1240px]:order-none min-[1240px]:grid-cols-1" aria-label="Resumen del club">
       <RailCard title="Próxima llamada" action={<a href={adminHref} className={textLink}>Editar</a>}>
         {event && call ? (
           <>
@@ -291,7 +291,8 @@ export function WallView({ data, postId, go }: { data: ClubData; postId: string 
         ) : (
           <div className={canMod ? "grid items-start gap-5 min-[1240px]:grid-cols-[minmax(0,1fr)_300px]" : ""}>
             <div className="grid min-w-0 gap-3.5">
-              {event && <CallNotice data={data} event={event} className={canMod ? "min-[1240px]:hidden" : ""} />}
+              {/* Quien modera ya trae la llamada en la columna «Próxima llamada», a cualquier ancho. */}
+              {event && !canMod && <CallNotice data={data} event={event} />}
               {me && (canMod || composerOpen) && (
                 <Composer
                   me={me}

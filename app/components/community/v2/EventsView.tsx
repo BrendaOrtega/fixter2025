@@ -1,3 +1,4 @@
+import { CalendarIllustration } from "./CalendarIllustration";
 import { DateTile, EnterCallButton, HostRecControl, describeCall, useNow } from "./call";
 import { EmptyNote, SectionHead, Wrap, btn, btnGhost, card } from "./ui";
 import type { ClubData } from "./types";
@@ -23,7 +24,16 @@ export function EventsView({ data }: { data: ClubData }) {
       />
       <Wrap>
         {event && call ? (
-          <div className={`${card} flex flex-wrap items-center gap-x-3 gap-y-3 px-4 py-3.5`}>
+          <div className={`${card} overflow-hidden`}>
+            {/* Portada: el flyer del evento si el anfitrión subió uno; si no, la ilustración. */}
+            <div className="grid place-items-center border-b border-[#232D33] bg-background">
+              {event.imageUrl ? (
+                <img src={event.imageUrl} alt={`Imagen de «${event.title}»`} className="max-h-[420px] w-full object-contain" />
+              ) : (
+                <CalendarIllustration className="h-36 w-44 py-2" />
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-3 px-4 py-3.5">
             <DateTile month={call.month} day={call.dayOfMonth} />
             <div className="min-w-0 flex-1 basis-[12rem]">
               <p className="font-semibold leading-snug text-[#F2F5F4]">
@@ -47,6 +57,7 @@ export function EventsView({ data }: { data: ClubData }) {
               </a>
               <HostRecControl rec={data.rec} show={canMod && event.open} />
               <EnterCallButton event={event} />
+            </div>
             </div>
           </div>
         ) : (

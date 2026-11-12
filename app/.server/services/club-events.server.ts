@@ -23,10 +23,11 @@ export type ClubEvent = {
   endsAt: Date;
   recurrence?: string | null;
   until?: Date | null;
+  imageKey?: string | null;
 };
 
 /** Una sesión concreta de un evento (en una serie, la de esa semana). */
-export type Occurrence = { id: string; title: string; description: string | null; startsAt: Date; endsAt: Date };
+export type Occurrence = { id: string; title: string; description: string | null; startsAt: Date; endsAt: Date; imageKey?: string };
 
 /** Sesiones del evento que terminan después de `from`, hasta `limit`. */
 export function occurrencesOf(e: ClubEvent, from: Date, limit = 1): Occurrence[] {
@@ -37,6 +38,8 @@ export function occurrencesOf(e: ClubEvent, from: Date, limit = 1): Occurrence[]
     description: e.description ?? null,
     startsAt: new Date(start),
     endsAt: new Date(start + dur),
+    // Flyer del evento, sólo si tiene.
+    ...(e.imageKey ? { imageKey: e.imageKey } : {}),
   });
   if (e.recurrence !== "weekly") return e.endsAt > from ? [at(e.startsAt.getTime())] : [];
   // Primera semana cuya sesión todavía no termina.

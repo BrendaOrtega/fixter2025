@@ -1389,6 +1389,8 @@ model CommunityEvent {
   recurrence  String?
   /// Última fecha en que puede empezar una sesión de la serie (incluida).
   until       DateTime?
+  /// Imagen o flyer del evento (llave `wall/…` en el bucket). Sin ella se ve la ilustración.
+  imageKey    String?
   /// Recordatorios ya enviados: `<ISO de la sesión>|24h` y `|1h`.
   remindedFor String[]  @default([])
 
