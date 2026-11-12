@@ -76,7 +76,7 @@ import { ClubV2 } from "~/components/community/v2/ClubV2";
 // Miniatura para compartir (WhatsApp, X, LinkedIn): 1200×630 por comunidad, en `public/`.
 // Se genera con `docs/comunidad/og-club/build.py`. Sin entrada aquí, va la portada del sitio.
 const OG_IMAGES: Record<string, string> = {
-  "club-de-agentes": "https://www.fixtergeek.com/og-club-de-agentes.png",
+  "club-de-agentes": "https://www.fixtergeek.com/og-club-de-agentes-2.png",
 };
 
 // La canónica y `og:url` van sin parámetros (`tab`, `v`, `post`): todas las vistas son la misma página.
