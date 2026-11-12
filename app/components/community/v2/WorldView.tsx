@@ -29,8 +29,8 @@ const DEFAULT_LOOK: Look = { model: "rocket", color: "mint", pilot: "ghosty" };
 
 type ChatMessage = { id: string; from: string; name: string; text: string; at: number };
 type Snapshot = {
-  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[];
-  me: string; waveId?: string | null; sayId?: string | null;
+  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string }>;
+  me: string; waveId?: string | null; sayId?: string | null; nudgeId?: string | null;
 };
 /** Mismo tope que el servidor (`SAY_MAX_CHARS`). */
 const SAY_MAX_CHARS = 140;
@@ -155,6 +155,12 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         onFirstMove: () => {},
         onSound: (name) => sound.play(name),
         onScore: setCrystals,
+        onNudge: (id) => {
+          // La nave ya tembló en tu pantalla; se avisa para que su dueño también la vea (el servidor acepta una por segundo).
+          if (Date.now() - lastNudgeSent < 1000) return;
+          lastNudgeSent = Date.now();
+          post({ nudge: id }).then((snap) => { if (snap.nudgeId) seenNudges.add(snap.nudgeId); apply(snap); }).catch(() => {});
+        },
         onEnter: () => barRef.current?.querySelector<HTMLButtonElement>("[data-place] button:not(:disabled)")?.click(),
         onEscape: () => { if (sheetOpenRef.current) setSheetOpen(false); else if (expandedRef.current) setExpanded(false); },
         onStageTap: () => { if (!sheetOpenRef.current) return false; setSheetOpen(false); return true; },
@@ -183,7 +189,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
     // ── Presencia: un solo viaje manda mi nave y trae las demás ──
     const url = `/comunidad/${community.slug}/mundo`;
-    const seenWaves = new Set<string>(), seenSays = new Set<string>();
+    const seenWaves = new Set<string>(), seenSays = new Set<string>(), seenNudges = new Set<string>();
+    let lastNudgeSent = 0;
     let firstRead = true, busy = false, lastSent = 0, stopped = false;
     const post = async (body: Record<string, unknown>) => {
       const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -204,6 +211,14 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         // Sólo suena el saludo que es para ti; los ajenos se ven, no se oyen.
         if (w.to === snap.me) { sound.play("waveIn"); const who = snap.ships.find((s) => s.id === w.from); if (who) say(`${who.name} te saludó.`); }
       }
+      // Cosquillas: varias a la misma nave en una lectura son un solo temblor. Sin texto ni autor.
+      const shaken = new Set<string>();
+      for (const n of snap.nudges ?? []) {
+        if (seenNudges.has(n.id)) continue;
+        seenNudges.add(n.id);
+        if (!firstRead) shaken.add(n.to);
+      }
+      for (const to of shaken) if (api.showNudge(to)) sound.play("nudge");
       const says = snap.says ?? [];
       let fresh = 0;
       for (const m of says) {

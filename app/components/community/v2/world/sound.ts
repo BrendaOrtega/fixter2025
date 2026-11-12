@@ -5,7 +5,7 @@
 // - Volumen bajo y un compresor al final, para que varios saludos juntos no saturen.
 // - Nunca suena igual dos veces seguidas: tres afinaciones que se alternan.
 
-export type SoundName = "thrust" | "arrive" | "waveOut" | "waveIn" | "sit" | "stand" | "expand" | "collapse" | "pick" | "shoot" | "catch" | "msg";
+export type SoundName = "thrust" | "arrive" | "waveOut" | "waveIn" | "sit" | "stand" | "expand" | "collapse" | "pick" | "shoot" | "catch" | "msg" | "nudge";
 
 const MASTER = 0.25;
 /** Lo que hacen otras naves suena más bajito, para que quince personas no sean una feria. */
@@ -101,6 +101,7 @@ export function createSound(enabled: boolean): Sound {
           case "stand": tone(c, dest, { type: "sine", from: 150, to: 280, dur: 0.16, gain: 0.7, cents }); break;
           case "expand": tone(c, dest, { type: "triangle", from: 300, to: 640, dur: 0.22, gain: 0.5, cents }); break;
           case "collapse": tone(c, dest, { type: "triangle", from: 640, to: 300, dur: 0.22, gain: 0.5, cents }); break;
+          case "nudge": tone(c, dest, { type: "sine", from: 210, to: 150, dur: 0.11, gain: 0.4, cents }); break; // toquecito grave y corto
           case "msg": tone(c, dest, { type: "sine", from: 520, to: 700, dur: 0.12, gain: 0.32, cents }); break; // gotita suave: alguien escribió
           case "pick": tone(c, dest, { type: "square", from: 1040, dur: 0.05, gain: 0.22, cents }); break;
           case "shoot": // «piu» corto que cae, con un soplido encima

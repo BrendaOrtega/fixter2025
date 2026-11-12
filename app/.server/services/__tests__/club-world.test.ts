@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  MAX_SHIPS, SAY_EVERY_MS, SAY_MAX, SAY_MAX_CHARS, SAY_TTL_MS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, WORLD_H, WORLD_W, cleanSayText, cleanShipInput, removeShip, resetWorlds, sendSay, sendWave,
+  MAX_SHIPS, NUDGE_EVERY_MS, NUDGE_TTL_MS, SAY_EVERY_MS, SAY_MAX, SAY_MAX_CHARS, SAY_TTL_MS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, WORLD_H, WORLD_W, cleanSayText, cleanShipInput, removeShip, resetWorlds, sendNudge, sendSay, sendWave,
   snapshot, upsertShip,
 } from "../club-world.server";
 
@@ -120,5 +120,26 @@ describe("mundo del club (presencia en memoria)", () => {
     removeShip("c1", "a");
     expect(snapshot("c1", last + 1000).says).toHaveLength(SAY_MAX);
     expect(snapshot("c1", last + SAY_TTL_MS + 1).says).toEqual([]);
+  });
+
+  it("cosquilla: sólo entre naves presentes, una por segundo por emisor, sin autor y de vida corta", () => {
+    upsertShip("c1", who("a"), {}, T0);
+    upsertShip("c1", who("b"), {}, T0);
+    expect(sendNudge("c1", "a", "a", T0)).toBeNull(); // a sí misma, no
+    expect(sendNudge("c1", "a", "fantasma", T0)).toBeNull();
+    expect(sendNudge("c1", "fantasma", "b", T0)).toBeNull();
+    expect(sendNudge("c1", "a", { id: "b" }, T0)).toBeNull();
+    const id = sendNudge("c1", "a", "b", T0);
+    expect(id).toBeTruthy();
+    expect(sendNudge("c1", "a", "b", T0 + NUDGE_EVERY_MS - 1)).toBeNull(); // ráfaga del mismo emisor
+    expect(sendNudge("c1", "b", "a", T0 + 10)).toBeTruthy(); // el límite es por emisor
+    upsertShip("c1", who("a"), {}, T0 + NUDGE_EVERY_MS); // el latido no reinicia el límite
+    expect(sendNudge("c1", "a", "b", T0 + NUDGE_EVERY_MS)).toBeTruthy();
+    const { nudges, ships } = snapshot("c1", T0 + NUDGE_EVERY_MS);
+    expect(nudges[0]).toEqual({ id, to: "b" }); // no dice quién fue
+    expect(nudges).toHaveLength(3);
+    expect(ships[0]).not.toHaveProperty("lastNudgeAt");
+    upsertShip("c1", who("a"), {}, T0 + NUDGE_EVERY_MS + NUDGE_TTL_MS);
+    expect(snapshot("c1", T0 + NUDGE_EVERY_MS + NUDGE_TTL_MS + 1).nudges).toEqual([]);
   });
 });

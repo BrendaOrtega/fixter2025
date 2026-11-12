@@ -14,6 +14,9 @@ export const SHIP_TTL_MS = 15_000;
 export const WAVE_TTL_MS = 8_000;
 /** Entre un saludo y otro de la misma persona. */
 export const WAVE_EVERY_MS = 1_500;
+/** Cosquilla: el disparo de alguien tocó tu nave y tiembla un instante. Sin daño, sin puntos y sin autor. */
+export const NUDGE_TTL_MS = 6_000;
+export const NUDGE_EVERY_MS = 1_000;
 export const MAX_SHIPS = 80;
 /** Tope del cuerpo de un POST, en bytes. */
 export const MAX_BODY = 1_000;
@@ -42,23 +45,27 @@ type Ship = Who & {
   seenAt: number;
   lastWaveAt: number;
   lastSayAt: number;
+  lastNudgeAt: number;
 };
 type Wave = { id: string; from: string; to: string; at: number };
 /** `name` se copia de la nave al enviar: el historial sigue legible cuando esa persona ya se fue. */
 type Say = { id: string; from: string; name: string; text: string; at: number };
-type World = { ships: Map<string, Ship>; waves: Wave[]; says: Say[]; seq: number };
+/** Sin `from`: quien recibe la cosquilla no sabe de quién vino, para que no se preste a molestar. */
+type Nudge = { id: string; to: string; at: number };
+type World = { ships: Map<string, Ship>; waves: Wave[]; says: Say[]; nudges: Nudge[]; seq: number };
 
 const worlds = new Map<string, World>();
 
 function worldOf(communityId: string) {
   let w = worlds.get(communityId);
-  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], says: [], seq: 0 }));
+  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], says: [], nudges: [], seq: 0 }));
   return w;
 }
 
 function prune(w: World, now: number) {
   for (const [id, s] of w.ships) if (now - s.seenAt > SHIP_TTL_MS) w.ships.delete(id);
   if (w.waves.length) w.waves = w.waves.filter((v) => now - v.at <= WAVE_TTL_MS);
+  if (w.nudges.length) w.nudges = w.nudges.filter((n) => now - n.at <= NUDGE_TTL_MS);
   if (w.says.length) w.says = w.says.filter((m) => now - m.at <= SAY_TTL_MS);
 }
 
@@ -107,7 +114,7 @@ export function upsertShip(communityId: string, who: Who, input: unknown, now = 
       if (seat === null) table = null; // mesa llena: se queda de pie
     }
   }
-  w.ships.set(who.id, { ...who, ...clean, table, seat, seenAt: now, lastWaveAt: prev?.lastWaveAt ?? 0, lastSayAt: prev?.lastSayAt ?? 0 });
+  w.ships.set(who.id, { ...who, ...clean, table, seat, seenAt: now, lastWaveAt: prev?.lastWaveAt ?? 0, lastSayAt: prev?.lastSayAt ?? 0, lastNudgeAt: prev?.lastNudgeAt ?? 0 });
   return true;
 }
 
@@ -122,6 +129,19 @@ export function sendWave(communityId: string, fromId: string, toId: unknown, now
   const wave: Wave = { id: `${now.toString(36)}-${(w.seq++).toString(36)}`, from: fromId, to: toId, at: now };
   w.waves.push(wave);
   return wave.id;
+}
+
+/** Cosquilla efímera: sólo entre dos naves presentes y a lo más una por segundo por emisor. */
+export function sendNudge(communityId: string, fromId: string, toId: unknown, now = Date.now()) {
+  const w = worldOf(communityId);
+  prune(w, now);
+  const from = w.ships.get(fromId);
+  if (!from || typeof toId !== "string" || toId === fromId || !w.ships.has(toId)) return null;
+  if (now - from.lastNudgeAt < NUDGE_EVERY_MS) return null;
+  from.lastNudgeAt = now;
+  const nudge: Nudge = { id: `n${now.toString(36)}-${(w.seq++).toString(36)}`, to: toId, at: now };
+  w.nudges.push(nudge);
+  return nudge.id;
 }
 
 /** Texto de un mensaje: una sola línea, sin caracteres de control, recortado. Se pinta como texto, nunca como HTML. */
@@ -159,8 +179,9 @@ export function snapshot(communityId: string, now = Date.now()) {
   prune(w, now);
   return {
     count: w.ships.size,
-    ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, lastSayAt: _m, ...ship }) => ship),
+    ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, lastSayAt: _m, lastNudgeAt: _n, ...ship }) => ship),
     waves: w.waves.map(({ id, from, to }) => ({ id, from, to })),
+    nudges: w.nudges.map(({ id, to }) => ({ id, to })),
     says: w.says.map(({ id, from, name, text, at }) => ({ id, from, name, text, at })),
   };
 }
