@@ -152,6 +152,7 @@ export function createWorld(opts: {
   });
   const player = entity("me", "me", opts.meName, opts.look, S.spawn.x, S.spawn.y);
   player.face = faceFor(opts.meId, opts.meName, opts.mePhoto);
+  player.photoURL = opts.mePhoto;
   if (T) player.hp = T.player.hp;
   const threat = T ? entity(T.id, "bot", T.name, T.look, 0, 0) : null;
   const humans = new Map<string, Entity>();
@@ -350,7 +351,7 @@ export function createWorld(opts: {
   // El cuadro que se le entrega a la skin: un solo objeto que se actualiza antes de pintar.
   const frame: WorldFrame = {
     t: 0, dt: 0, mini: false, quiet: state.quiet, view, player, others: [], places, placeStatus: state.placeStatus, tableCounts: [],
-    nearPlace: null, nearEntity: null, marker: null, bubbles: state.bubbles, pickups: state.pickups, lives: state.lives, shots: state.shots,
+    nearPlace: null, nearEntity: null, marker: null, bubbles: state.bubbles, pickups: state.pickups, lives: state.lives, meId: opts.meId, shots: state.shots,
     threat: null, hostile: state.hostile,
   };
   function render(dt: number) {

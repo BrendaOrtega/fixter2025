@@ -12,7 +12,7 @@ import { spotAt, type PlacedSpot } from "./things";
 
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const PUPPET_SCALE = 1.15;
-const FOV = 30, ELEVATION = (50 * Math.PI) / 180, ELEVATION_MINI = (64 * Math.PI) / 180, DISTANCE = 25;
+const FOV = 30, ELEVATION = (50 * Math.PI) / 180, ELEVATION_MINI = (64 * Math.PI) / 180, DISTANCE = 25, ZOOM_MIN = 0.45;
 /** Altura (unidades) a la que flota la etiqueta de cada lugar, según su edificio. */
 const LABEL_LIFT: Record<string, number> = { forum: 5, mural: 3, cinema: 4.3, school: 4.1, "camp-table": 2.25 };
 
@@ -131,7 +131,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     const tone = toneOf(e.color), shape = e.kind === "bot" ? "robot" : shapeFor(e.model);
     return { shape, fill: tone.fill, dark: tone.dark, face: e.pilot === "avatar" && shape !== "robot" ? "avatar" : "eyes" };
   }
-  function makeFace(e: Entity) {
+  function makeFace(e: Entity, uid: string) {
     const cv = document.createElement("canvas"); cv.width = cv.height = 128;
     const ctx = cv.getContext("2d")!;
     const texture = new THREE.CanvasTexture(cv); texture.colorSpace = THREE.SRGBColorSpace;
@@ -141,15 +141,16 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     ctx.fillText(initials, 64, 68);
     let img: HTMLImageElement | null = null;
     if (e.photoURL) {
-      // Imagen propia con CORS: WebGL no acepta una foto de otro origen sin permiso. Si falla, quedan las iniciales.
-      img = new Image(); img.crossOrigin = "anonymous"; img.referrerPolicy = "no-referrer";
+      // WebGL no acepta una foto de otro origen sin permiso, así que se pide por el mismo origen
+      // (`/api/avatar/:id?raw=1` reenvía los bytes). Si falla, quedan las iniciales.
+      img = new Image();
       img.onload = () => {
         if (dead || !img || !img.naturalWidth) return;
         const s = Math.min(img.naturalWidth, img.naturalHeight);
         ctx.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, 128, 128);
         texture.needsUpdate = true;
       };
-      img.src = e.photoURL;
+      img.src = /^[a-f0-9]{24}$/.test(uid) ? `/api/avatar/${uid}?raw=1` : e.photoURL;
     }
     return { texture, img };
   }
@@ -159,7 +160,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     if (a.face) { a.face.texture.dispose(); if (a.face.img) { a.face.img.onload = null; a.face.img.src = ""; } }
     a.label.remove(); a.mood?.remove();
   }
-  function actorFor(e: Entity): Actor {
+  function actorFor(e: Entity, uid: string): Actor {
     const look = lookOf(e), key = `${look.shape}|${look.fill}|${look.face}|${look.face === "avatar" ? e.photoURL ?? e.name : ""}`;
     let a = actors.get(e.id);
     if (a && a.key === key) return a;
@@ -167,7 +168,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     if (prev) dropActor(prev);
     const puppet = kit.make(look);
     puppet.root.scale.setScalar(PUPPET_SCALE);
-    const face = look.face === "avatar" ? makeFace(e) : null;
+    const face = look.face === "avatar" ? makeFace(e, uid) : null;
     if (face) puppet.setFace(face.texture);
     scene.add(puppet.root);
     a = { puppet, key, x: e.x, y: e.y, yaw: prev?.yaw ?? Math.PI / 2 - e.ang, seen: tick, label: tag(NAME), labelKey: "", face,
@@ -176,7 +177,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     return a;
   }
   function drawActor(e: Entity, frame: WorldFrame, me: boolean) {
-    const a = actorFor(e);
+    const a = actorFor(e, me ? frame.meId ?? "" : e.id);
     a.seen = tick;
     const dx = e.x - a.x, dy = e.y - a.y, moved = Math.hypot(dx, dy);
     const jumped = moved > 90; // salto (modo tranquilo o corrección del servidor): no es caminar
@@ -238,16 +239,26 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
 
   // ── Cámara inclinada que sigue a tu personaje (o toda la isla en el mapa reducido) ──
   const focus = new THREE.Vector3(); let camDist = 0, camElev = ELEVATION, camReady = false;
+  // Rueda del ratón: acerca la cámara a tu personaje, con tope. En el tope la página se desplaza normal.
+  let zoom = 1, mini = false;
+  const onWheel = (ev: WheelEvent) => {
+    if (mini || ev.ctrlKey) return;
+    const next = Math.min(1, Math.max(ZOOM_MIN, zoom * Math.exp(ev.deltaY * 0.0015)));
+    if (next === zoom) return;
+    zoom = next; ev.preventDefault();
+  };
+  stage.addEventListener("wheel", onWheel, { passive: false });
   function aimCamera(frame: WorldFrame) {
     const aspect = vw / vh, half = Math.tan((FOV * Math.PI) / 360);
     let tx: number, tz: number, dist: number, elev: number;
+    mini = !!frame.mini;
     if (frame.mini) {
       tx = 0; tz = 0.6; elev = ELEVATION_MINI;
       dist = Math.max((WORLD_W * UNIT * 0.5 + 1) / (half * aspect), (WORLD_H * UNIT * 0.5 * Math.sin(elev) + 1.5) / half) * 1.04;
     } else {
       tx = wx(frame.player.x); tz = wz(frame.player.y); elev = ELEVATION;
       // En pantalla angosta la cámara se aleja para que quepa lo que hay a los lados.
-      dist = DISTANCE * Math.min(1.75, Math.max(1, 1.15 / aspect));
+      dist = DISTANCE * Math.min(1.75, Math.max(1, 1.15 / aspect)) * zoom;
     }
     const k = camReady ? 1 - Math.exp(-dt * (frame.quiet ? 30 : 4.5)) : 1;
     camReady = true;
@@ -255,7 +266,8 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     camDist += (dist - camDist) * k; camElev += (elev - camElev) * k;
     camera.position.set(focus.x, focus.y + Math.sin(camElev) * camDist, focus.z + Math.cos(camElev) * camDist);
     camera.lookAt(focus);
-    fog.near = camDist * 1.5; fog.far = camDist * 4.5;
+    const far = camDist / (mini ? 1 : zoom); // la niebla no se acerca con el zoom
+    fog.near = far * 1.5; fog.far = far * 4.5;
     camera.updateMatrixWorld();
   }
 
@@ -373,6 +385,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     actors.clear();
     island.dispose(); kit.dispose();
     markerGeo.dispose(); markerMat.dispose(); guideGeo.dispose(); guideMat.dispose();
+    stage.removeEventListener("wheel", onWheel);
     actions.destroy();
     sun.shadow.map?.dispose(); sun.dispose();
     scene.clear();

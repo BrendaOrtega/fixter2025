@@ -306,6 +306,8 @@ export type WorldFrame = {
   mini: boolean;
   quiet: boolean;
   view: View;
+  /** Tu id de miembro (el de `player` es "me"). */
+  meId?: string;
   player: Entity;
   /** Las demás personas y los robots presentes (un robot tumbado no está). */
   others: Entity[];

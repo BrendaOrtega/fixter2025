@@ -18,7 +18,7 @@ import { BOT_STOPS, FIRE, FIRE_ANGLES, SPOTS, TENT_SPOTS, THINGS, fireRing } fro
 
 type Vec = Point;
 
-/** Los seis tonos de la casa (mismos ids y valores que `SHIP_COLORS` de GeekSector). */
+/** Tonos de muñequito: los seis de la casa (mismos ids que `SHIP_COLORS` de GeekSector) y cuatro más de la isla. */
 export const TONES = [
   { id: "mint", name: "Menta", fill: "#85DDCB", dark: "#357265" },
   { id: "green", name: "Verde", fill: "#8DCF6E", dark: "#4C7A39" },
@@ -26,6 +26,10 @@ export const TONES = [
   { id: "lilac", name: "Lila", fill: "#BDB5F7", dark: "#5E57A0" },
   { id: "blue", name: "Azul", fill: "#9CC8F2", dark: "#4A719A" },
   { id: "pink", name: "Rosa", fill: "#F4AFAF", dark: "#9A5656" },
+  { id: "aqua", name: "Turquesa", fill: "#7FD3E0", dark: "#3A7C87" },
+  { id: "peach", name: "Durazno", fill: "#F6B58E", dark: "#9A6240" },
+  { id: "lemon", name: "Limón", fill: "#E6E07E", dark: "#807C36" },
+  { id: "cloud", name: "Nube", fill: "#D5DCDE", dark: "#66737A" },
 ] as const;
 export type ToneId = (typeof TONES)[number]["id"];
 export const toneOf = (id: string) => TONES.find((c) => c.id === id) ?? TONES[0];
