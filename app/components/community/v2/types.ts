@@ -9,7 +9,7 @@ export type ClubRecording = Awaited<ClubData["recordings"]>[number];
 export type ClubEvent = NonNullable<ClubData["event"]>;
 export type ClubMe = NonNullable<ClubData["me"]>;
 
-export const VIEWS = ["wall", "events", "recs", "courses", "me"] as const;
+export const VIEWS = ["wall", "world", "events", "recs", "courses", "me"] as const;
 export type View = (typeof VIEWS)[number];
 
 /** Cambia de vista; con `postId` abre esa publicación dentro del muro. */

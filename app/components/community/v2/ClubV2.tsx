@@ -5,6 +5,7 @@ import { EventsView } from "./EventsView";
 import { ClubShell } from "./ClubShell";
 import { RecordingsView } from "./RecordingsView";
 import { WallView } from "./WallView";
+import { WorldView } from "./WorldView";
 import { VIEWS, type ClubData, type Go, type View } from "./types";
 
 // Casa del club, versión 2 (rediseño aprobado: docs/club-rediseno/mockup-comunidad-v2.html).
@@ -85,6 +86,7 @@ export function ClubV2(data: ClubData) {
       navProps={navProps}
     >
       {view === "wall" && <WallView data={data} postId={postId} go={go} />}
+      {view === "world" && <WorldView data={data} go={go} />}
       {view === "events" && <EventsView data={data} />}
       {view === "recs" && <RecordingsView data={data} />}
       {view === "courses" && <CoursesView data={data} />}

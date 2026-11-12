@@ -14,6 +14,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!user) throw new Response("Not found", { status: 404 });
   // Si no hay archivo, el bucket responde 404 y el componente cae a las iniciales.
   return redirect(user.photoURL || (await getReadURL(user.email)), {
-    headers: { "Cache-Control": "private, max-age=600" },
+    headers: { "Cache-Control": "private, no-cache" },
   });
 };

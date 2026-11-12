@@ -50,6 +50,26 @@ const PATHS = {
   bubble: <path d="M5 5h14v11H10l-5 4z" />,
   back: <path d="m14 6-6 6 6 6" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
+  // «Mundo»: planeta con anillo
+  world: (
+    <>
+      <circle cx="12" cy="12" r="6" />
+      <path d="M5.2 14.6C3 16.2 2 17.7 2.6 18.6c1 1.5 6-.2 11.2-3.7S22.400 7.3 21.4 5.800c-.6-.9-2.4-.7-4.8.3" />
+    </>
+  ),
+  // nave (selector «Mi nave»)
+  ship: (
+    <>
+      <path d="M12 3c3 2.5 4.5 6 4.5 10v3h-9v-3C7.500 9 9 5.500 12 3z" />
+      <circle cx="12" cy="10" r="1.8" />
+      <path d="M7.5 13 5 16v3l2.5-1.500M16.500 13 19 16v3l-2.500-1.500M10.500 19v2M13.500 19v2" />
+    </>
+  ),
+  // sonido encendido / apagado
+  sound: <path d="M4 10v4h3l5 4V6l-5 4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" />,
+  mute: <path d="M4 10v4h3l5 4V6l-5 4zM16 9.5l5 5M21 9.5l-5 5" />,
+  expand: <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" />,
+  collapse: <path d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5" />,
 } as const;
 
 export type IconName = keyof typeof PATHS;

@@ -1,0 +1,82 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  MAX_SHIPS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, WORLD_H, WORLD_W, cleanShipInput, removeShip, resetWorlds, sendWave,
+  snapshot, upsertShip,
+} from "../club-world.server";
+
+const who = (id: string) => ({ id, name: `Miembro ${id}`, photoURL: `/api/avatar/${id}` });
+const T0 = 1_800_000_000_000;
+
+describe("mundo del club (presencia en memoria)", () => {
+  beforeEach(() => resetWorlds());
+
+  it("acota las coordenadas al mapa y descarta lo que no está en las listas", () => {
+    const c = cleanShipInput({ x: -50, y: 99999, tx: "x", ty: Number.NaN, ship: "tanque", color: "#000", pilot: "robot", table: 7 });
+    expect(c).toEqual({ x: 0, y: WORLD_H, tx: 0, ty: WORLD_H, ship: "rocket", color: "mint", pilot: "astro", table: null });
+    expect(cleanShipInput(null).x).toBe(WORLD_W / 2);
+    expect(cleanShipInput({ pilot: "avatar", photoURL: "http://malo" })).toMatchObject({ pilot: "avatar" });
+    expect(cleanShipInput({ pilot: "avatar", photoURL: "http://malo" })).not.toHaveProperty("photoURL");
+    expect(cleanShipInput({ x: 10.6, y: 20.2, table: 1.5 })).toMatchObject({ x: 11, y: 20, table: null });
+  });
+
+  it("nombre y foto son los del servidor, y la respuesta no trae marcas internas", () => {
+    upsertShip("c1", who("a"), { x: 100, y: 200, name: "Impostor", photoURL: "http://malo", email: "a@x.com" }, T0);
+    const [ship] = snapshot("c1", T0).ships;
+    expect(ship).toEqual({
+      id: "a", name: "Miembro a", photoURL: "/api/avatar/a", x: 100, y: 200, tx: 100, ty: 200,
+      ship: "rocket", color: "mint", pilot: "astro", table: null, seat: null,
+    });
+  });
+
+  it("una nave sin latido se vence; con latido sigue", () => {
+    upsertShip("c1", who("a"), {}, T0);
+    upsertShip("c1", who("b"), {}, T0);
+    upsertShip("c1", who("b"), {}, T0 + SHIP_TTL_MS - 1000);
+    const later = snapshot("c1", T0 + SHIP_TTL_MS + 1);
+    expect(later.count).toBe(1);
+    expect(later.ships[0].id).toBe("b");
+  });
+
+  it("cada comunidad tiene su mundo y salir es inmediato", () => {
+    upsertShip("c1", who("a"), {}, T0);
+    upsertShip("c2", who("b"), {}, T0);
+    expect(snapshot("c1", T0).ships.map((s) => s.id)).toEqual(["a"]);
+    removeShip("c1", "a");
+    expect(snapshot("c1", T0).count).toBe(0);
+    expect(snapshot("c2", T0).count).toBe(1);
+  });
+
+  it("tope de naves: la que sobra no entra, pero quien ya estaba sí se actualiza", () => {
+    for (let i = 0; i < MAX_SHIPS; i++) expect(upsertShip("c1", who(`u${i}`), {}, T0)).toBe(true);
+    expect(upsertShip("c1", who("extra"), {}, T0)).toBe(false);
+    expect(upsertShip("c1", who("u0"), { x: 5 }, T0)).toBe(true);
+    expect(snapshot("c1", T0).count).toBe(MAX_SHIPS);
+  });
+
+  it("mesas: asiento libre en orden, se conserva al refrescar y la quinta nave no cabe", () => {
+    for (const id of ["a", "b", "c", "d", "e"]) upsertShip("c1", who(id), { table: 1 }, T0);
+    const seats = Object.fromEntries(snapshot("c1", T0).ships.map((s) => [s.id, [s.table, s.seat]]));
+    expect(seats).toEqual({ a: [1, 0], b: [1, 1], c: [1, 2], d: [1, 3], e: [null, null] });
+    upsertShip("c1", who("b"), { table: null }, T0 + 1); // b se levanta
+    upsertShip("c1", who("e"), { table: 1 }, T0 + 2); // e toma su lugar
+    upsertShip("c1", who("c"), { table: 1 }, T0 + 3); // c refresca y no se mueve
+    const after = Object.fromEntries(snapshot("c1", T0 + 3).ships.map((s) => [s.id, s.seat]));
+    expect(after).toMatchObject({ b: null, e: 1, c: 2 });
+  });
+
+  it("saludo: sólo entre presentes, sin ráfagas, y se vence solo", () => {
+    upsertShip("c1", who("a"), {}, T0);
+    upsertShip("c1", who("b"), {}, T0);
+    expect(sendWave("c1", "a", "nadie", T0)).toBeNull();
+    expect(sendWave("c1", "a", "a", T0)).toBeNull();
+    expect(sendWave("c1", "fantasma", "a", T0)).toBeNull();
+    expect(sendWave("c1", "a", { $ne: "" }, T0)).toBeNull();
+    const id = sendWave("c1", "a", "b", T0);
+    expect(id).toBeTruthy();
+    expect(sendWave("c1", "a", "b", T0 + WAVE_EVERY_MS - 1)).toBeNull();
+    expect(sendWave("c1", "a", "b", T0 + WAVE_EVERY_MS)).toBeTruthy();
+    expect(snapshot("c1", T0 + 100).waves[0]).toEqual({ id, from: "a", to: "b" });
+    upsertShip("c1", who("a"), {}, T0 + WAVE_TTL_MS);
+    expect(snapshot("c1", T0 + WAVE_EVERY_MS + WAVE_TTL_MS + 1).waves).toEqual([]);
+  });
+});

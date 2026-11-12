@@ -10,6 +10,7 @@ import type { View } from "./types";
 type NavEntry = { view: View; label: string; icon: IconName; group?: string };
 const SIDE_NAV: NavEntry[] = [
   { view: "wall", label: "Muro", icon: "wall" },
+  { view: "world", label: "Mundo", icon: "world" },
   { view: "events", label: "Eventos", icon: "calendar", group: "En vivo" },
   { view: "recs", label: "Grabaciones", icon: "recording" },
   { view: "courses", label: "Cursos incluidos", icon: "book", group: "Aprender" },
@@ -17,12 +18,14 @@ const SIDE_NAV: NavEntry[] = [
 ];
 const TOP_NAV: Array<{ view: View; label: string }> = [
   { view: "wall", label: "Inicio" },
+  { view: "world", label: "Mundo" },
   { view: "events", label: "Eventos" },
   { view: "recs", label: "Grabaciones" },
   { view: "courses", label: "Cursos" },
 ];
 const TAB_BAR: NavEntry[] = [
   { view: "wall", label: "Muro", icon: "wall" },
+  { view: "world", label: "Mundo", icon: "world" },
   { view: "events", label: "Eventos", icon: "calendar" },
   { view: "recs", label: "Grabaciones", icon: "recording" },
   { view: "me", label: "Yo", icon: "person" },
@@ -134,7 +137,9 @@ export function ClubShell({
         aria-label="Secciones del club"
         className="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-[#232D33] bg-[#141B20] pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 lg:hidden"
       >
-        {TAB_BAR.map((item) => (
+        {/* Con «Mundo» el anfitrión tendría siete pestañas y a 375 px se enciman: «Yo» se le quita
+            del menú inferior (su avatar de la barra del club lleva al mismo lugar). */}
+        {TAB_BAR.filter((item) => !(canMod && item.view === "me")).map((item) => (
           <a
             key={item.view}
             {...navProps(item.view)}
