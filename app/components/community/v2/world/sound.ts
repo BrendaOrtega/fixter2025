@@ -5,7 +5,7 @@
 // - Volumen bajo y un compresor al final, para que varios saludos juntos no saturen.
 // - Nunca suena igual dos veces seguidas: tres afinaciones que se alternan.
 
-export type SoundName = "thrust" | "arrive" | "waveOut" | "waveIn" | "sit" | "stand" | "expand" | "collapse" | "pick" | "shoot" | "shootTriple" | "shootRay" | "shootWave" | "pickup" | "msg" | "nudge";
+export type SoundName = "thrust" | "arrive" | "waveOut" | "waveIn" | "sit" | "stand" | "expand" | "collapse" | "pick" | "shoot" | "shootTriple" | "shootRay" | "shootWave" | "shootSeeker" | "shootBounce" | "shootBomb" | "blast" | "boom" | "warp" | "pickup" | "msg" | "nudge";
 
 const MASTER = 0.25;
 /** Lo que hacen otras naves suena más bajito, para que quince personas no sean una feria. */
@@ -56,12 +56,12 @@ export function createSound(enabled: boolean): Sound {
     osc.start(t0); osc.stop(t0 + o.dur + 0.02);
   }
   /** Soplido: ruido filtrado que sube y se apaga (el impulso de la nave). */
-  function whoosh(c: AudioContext, dest: AudioNode, dur: number, gain: number, cents: number) {
+  function whoosh(c: AudioContext, dest: AudioNode, dur: number, gain: number, cents: number, from = 380, to = 1500) {
     const len = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, len, c.sampleRate), data = buf.getChannelData(0);
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
     const src = c.createBufferSource(); src.buffer = buf;
     const f = c.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.4; f.detune.value = cents;
-    f.frequency.setValueAtTime(380, c.currentTime); f.frequency.exponentialRampToValueAtTime(1500, c.currentTime + dur);
+    f.frequency.setValueAtTime(from, c.currentTime); f.frequency.exponentialRampToValueAtTime(to, c.currentTime + dur);
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(gain, c.currentTime + dur * 0.3);
     g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
@@ -116,6 +116,24 @@ export function createSound(enabled: boolean): Sound {
           case "shootWave": // soplido grave que se abre, lo que dura el aro
             whoosh(c, dest, 0.4, 0.4, cents);
             tone(c, dest, { type: "sine", from: 160, to: 420, dur: 0.4, gain: 0.45, cents }); break;
+          case "shootSeeker": // dos chirridos que suben: va buscando
+            tone(c, dest, { type: "triangle", from: 520, to: 1100, dur: 0.16, gain: 0.4, cents });
+            tone(c, dest, { type: "sine", from: 760, to: 1500, at: 0.06, dur: 0.14, gain: 0.3, cents }); break;
+          case "shootBounce": // «boing»: sube y cae
+            tone(c, dest, { type: "sine", from: 300, to: 900, dur: 0.08, gain: 0.5, cents });
+            tone(c, dest, { type: "sine", from: 900, to: 420, at: 0.08, dur: 0.14, gain: 0.45, cents }); break;
+          case "shootBomb": tone(c, dest, { type: "sine", from: 260, to: 110, dur: 0.2, gain: 0.6, cents }); break; // «tunk» grave al soltarla
+          case "blast": // la bomba revienta: soplido que cae con un golpe grave, lo que dura su aro
+            whoosh(c, dest, 0.3, 0.5, cents, 1400, 220);
+            tone(c, dest, { type: "sine", from: 150, to: 50, dur: 0.3, gain: 0.8, cents }); break;
+          case "boom": // la nave de un robot estalla: golpe grave, soplido largo que cae y un crujido
+            whoosh(c, dest, 0.45, 0.7, cents, 2200, 160);
+            tone(c, dest, { type: "sine", from: 190, to: 40, dur: 0.45, gain: 0.9, cents });
+            tone(c, dest, { type: "square", from: 420, to: 70, dur: 0.16, gain: 0.18, cents }); break;
+          case "warp": // llegada en hipervelocidad: barrido que cae mientras frena y golpe seco al detenerse
+            whoosh(c, dest, 0.5, 0.5, cents, 3200, 240);
+            tone(c, dest, { type: "sawtooth", from: 1800, to: 120, dur: 0.45, gain: 0.14, cents });
+            tone(c, dest, { type: "sine", from: 130, to: 48, at: 0.42, dur: 0.16, gain: 0.8, cents }); break;
           case "pickup": // recogiste un aparato: dos notas que suben
             tone(c, dest, { type: "triangle", from: 587, dur: 0.09, gain: 0.5, cents });
             tone(c, dest, { type: "triangle", from: 880, at: 0.08, dur: 0.16, gain: 0.5, cents }); break;

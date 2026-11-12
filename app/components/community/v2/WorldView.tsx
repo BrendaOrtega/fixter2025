@@ -4,7 +4,7 @@ import { Icon, type IconName } from "./icons";
 import { Avatar, SectionHead, btn } from "./ui";
 import type { ClubData, Go } from "./types";
 import {
-  SHIP_COLORS, SHIP_MODELS, SHIP_PILOTS, createWorld, drawPilot, drawShip, faceFor,
+  SHIP_COLORS, SHIP_MODELS, SHIP_PILOTS, WORLD_NAME, createWorld, drawPilot, drawShip, faceFor,
   type Counts, type Face, type Look, type PlaceInfo, type RemoteShip, type ShipInfo, type WeaponInfo, type WorldApi,
 } from "./world/engine";
 import { createSound, type Sound } from "./world/sound";
@@ -29,7 +29,7 @@ const DEFAULT_LOOK: Look = { model: "rocket", color: "mint", pilot: "ghosty" };
 
 type ChatMessage = { id: string; from: string; name: string; text: string; at: number };
 type Snapshot = {
-  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string }>;
+  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string }>; down?: Array<{ bot: string; back: number }>;
   me: string; waveId?: string | null; sayId?: string | null; nudgeId?: string | null;
 };
 /** Mismo tope que el servidor (`SAY_MAX_CHARS`). */
@@ -154,7 +154,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         onCounts: setCounts,
         onIntent: () => { dirtyRef.current = true; setMyTable(apiRef.current?.myTable() ?? null); },
         onFirstMove: () => {},
-        onSound: (name) => sound.play(name),
+        onSound: (name, other) => sound.play(name, { other }),
+        // El robot ya estalló en tu pantalla; el servidor lo deja fuera para todos y regresa cuánto falta para que vuelva.
+        onBoom: (id) => { post({ boom: id }).then(apply).catch(() => {}); },
         onWeapon: setWeapon,
         onNudge: (id) => {
           // La nave ya tembló en tu pantalla; se avisa para que su dueño también la vea (el servidor acepta una por segundo).
@@ -220,6 +222,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         if (!firstRead) shaken.add(n.to);
       }
       for (const to of shaken) if (api.showNudge(to)) sound.play("nudge");
+      api.setBotsDown(snap.down ?? [], firstRead);
       const says = snap.says ?? [];
       let fresh = 0;
       for (const m of says) {
@@ -392,7 +395,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
   return (
     <>
-      <SectionHead title="Mundo" />
+      <SectionHead title={`Mundo · ${WORLD_NAME}`} />
       <div className="p-3 sm:p-4">
         <div
           ref={boxRef}
@@ -460,7 +463,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               />
             </div>
 
-            {/* Disparo: cosquillas a las naves (tiemblan, sin daño ni marcador). Con mouse es clic derecho (o la
+            {/* Disparo: cosquillas a las naves de personas (tiemblan) y golpes a las de los robots (estallan y vuelven). Con mouse es clic derecho (o la
                 barra espaciadora) y sólo se muestra el aparato que llevas; el botón grande queda para táctil. */}
             {full && ready && !quiet && (
               <p className="pointer-events-none absolute bottom-3.5 right-3.5 z-[3] hidden rounded-full border border-[#232D33] bg-[#141B20] px-3 py-1.5 text-xs text-[#7C8A8E] [@media(pointer:fine)]:block">

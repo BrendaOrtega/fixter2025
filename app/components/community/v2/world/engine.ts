@@ -4,6 +4,10 @@
 //
 // Estilo de la casa: ilustración plana, rellenos sólidos, borde fino. Sin gradientes ni brillos.
 
+import type { SoundName } from "./sound";
+
+/** Nombre de este mundo. Los mundos son intercambiables, como cartuchos: éste es el de FixterGeek. */
+export const WORLD_NAME = "GeekSector";
 export const WORLD_W = 1600;
 export const WORLD_H = 1000;
 
@@ -85,9 +89,12 @@ type Callbacks = {
   onIntent: () => void;
   onFirstMove: () => void;
   /** Algo que merece sonido: arrancar, llegar a un lugar, sentarse, levantarse. */
-  onSound: (name: "thrust" | "arrive" | "sit" | "stand" | "waveIn" | "shoot" | "shootTriple" | "shootRay" | "shootWave" | "pickup" | "nudge") => void;
+  /** `other`: lo hizo otra nave (o un robot), suena más bajito. */
+  onSound: (name: SoundName, other?: boolean) => void;
   /** Tu disparo tocó la nave de un miembro: hay que avisarle para que también la vea temblar. */
   onNudge: (shipId: string) => void;
+  /** Tumbaste la nave de un robot de la casa: se avisa para que todos la vean estallar y volver a la vez. */
+  onBoom: (botId: string) => void;
   /** Cambió el aparato que llevas (o sus tiros restantes). `null`: disparo básico. Es local, no viaja al servidor. */
   onWeapon: (weapon: WeaponInfo | null) => void;
   /** Enter con un lugar cerca. */
@@ -115,7 +122,9 @@ export type WorldApi = {
   /** Saludo a un robot de la casa: contesta solo. */
   waveBot: (botId: string) => void;
   flyToPlace: (placeId: string) => void;
-  /** Dispara hacia donde apunta la nave con el aparato que lleves. Sólo hace temblar: sin daño ni marcador. */
+  /** Robots tumbados según el servidor (`back`: ms para que vuelvan). `silent`: ya estaban así al llegar, sin explosión. */
+  setBotsDown: (down: Array<{ bot: string; back: number }>, silent?: boolean) => void;
+  /** Dispara hacia donde apunta la nave con el aparato que lleves. A las personas sólo las hace temblar; a los robots los tumba. */
   shoot: () => void;
   /** El aparato flotante más cercano a tu nave (para pruebas y para pistas en pantalla). */
   nearestPickup: (kind?: WeaponKind) => { x: number; y: number; kind: WeaponKind } | null;
@@ -139,11 +148,14 @@ type Entity = {
   bob: number; waveT: number; face: Face | null;
   /** Segundos de temblor que le quedan (cosquilla de un disparo). */
   shakeT: number;
+  /** Sólo robots: golpes que aguanta, segundos para recuperarlos, segundos fuera del mapa y segundos de llegada en hipervelocidad. */
+  hp: number; healT: number; downT: number; warpT: number;
 };
 type Fx =
   | { kind: "bubble"; ship: Entity; text: string; t: number; dur: number; say?: boolean }
   | { kind: "flash"; x: number; y: number; t: number; dur: number }
-  | { kind: "ring"; x: number; y: number; t: number; dur: number }
+  | { kind: "ring"; x: number; y: number; t: number; dur: number; r: number; color: string }
+  | { kind: "debris"; x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string; rot: number; spin: number; size: number }
   | { kind: "spark"; x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string };
 
 const C = {
@@ -154,21 +166,37 @@ const C = {
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const TAU = Math.PI * 2;
 const MAX_SPEED = 310;
-// Juego: aparatos espaciales que cambian tu disparo por unos tiros. Todo es cosquilla: las naves tocadas
-// sólo tiemblan. Local y de esta visita; lo único que viaja al servidor es el temblor (`nudge`).
+// Juego: aparatos espaciales que cambian tu disparo por unos tiros. A las personas sólo les hace cosquillas
+// (su nave tiembla); a los robots de la casa sí los tumba: aguantan `BOT_HP` golpes, estallan y vuelven al
+// rato en hipervelocidad. Al servidor sólo viajan el temblor (`nudge`) y el robot tumbado (`boom`).
 export const WEAPONS = {
   triple: { name: "Triple", uses: 6, sound: "shootTriple" },
   ray: { name: "Rayo", uses: 5, sound: "shootRay" },
   wave: { name: "Onda", uses: 3, sound: "shootWave" },
+  seeker: { name: "Buscador", uses: 5, sound: "shootSeeker" },
+  bounce: { name: "Rebote", uses: 6, sound: "shootBounce" },
+  bomb: { name: "Bomba", uses: 3, sound: "shootBomb" },
 } as const;
 export type WeaponKind = keyof typeof WEAPONS;
 export type WeaponInfo = { kind: WeaponKind; name: string; left: number };
 const WEAPON_KINDS = Object.keys(WEAPONS) as WeaponKind[];
-/** Pocos aparatos a la vez en todo el mapa; cada uno reaparece despacio. */
-const PICKUP_COUNT = 3, PICKUP_REACH = 34, PICKUP_BACK = 20, PICKUP_BACK_EXTRA = 10;
-const SHOT_SPEED = 640, SHOT_LIFE = 0.8, SHOT_EVERY = 0.28, RAY_SPEED = 1300, WAVE_R = 175, WAVE_DUR = 0.4;
-type Pickup = { kind: WeaponKind; x: number; y: number; ph: number; alive: boolean; back: number };
-type Shot = { x: number; y: number; vx: number; vy: number; t: number; ray: boolean };
+/** Pocos aparatos a la vez en todo el mapa. Los seis se turnan despacio: el que nadie recoge cambia por el siguiente cada `PICKUP_SWAP` s. */
+const PICKUP_COUNT = 3, PICKUP_REACH = 34, PICKUP_BACK = 20, PICKUP_BACK_EXTRA = 10, PICKUP_SWAP = 40;
+const SHOT_EVERY = 0.28, WAVE_R = 175, WAVE_DUR = 0.4, WAVE_DMG = 2, BOMB_R = 120, SEEK_R = 460, SEEK_TURN = 4.2;
+/** Cada disparo: velocidad, cuánto vive y cuántos golpes le quita a un robot. */
+const SHOTS = {
+  basic: { speed: 640, life: 0.8, dmg: 1 },
+  ray: { speed: 1300, life: 0.8, dmg: 3 },
+  seeker: { speed: 430, life: 1.7, dmg: 2 },
+  bounce: { speed: 600, life: 2.4, dmg: 2 },
+  bomb: { speed: 300, life: 0.9, dmg: 3 },
+} as const;
+type ShotKind = keyof typeof SHOTS;
+type Pickup = { kind: WeaponKind; x: number; y: number; ph: number; alive: boolean; back: number; age: number };
+type Shot = { kind: ShotKind; x: number; y: number; vx: number; vy: number; t: number; life: number; dmg: number; bounces: number };
+/** Robots: golpes que aguantan, segundos sin golpes para recuperarse, segundos fuera y lo que dura su llegada. */
+const BOT_HP = 3, BOT_HEAL = 8, BOT_BACK = 20, WARP = 0.55, WARP_FROM = 1100;
+const SHOT_COLORS = { seeker: "#BDB5F7", bounce: "#9CC8F2", bomb: "#F2C98A" } as const;
 /** Cosquilla: cuánto tiembla una nave tocada y qué tan cerca debe pasar el disparo. */
 const SHAKE = 0.25, SHAKE_PX = 2.6, SHIP_HIT = 26;
 /** Asset oficial de Ghosty (public/ghosty-oficial.png): nunca se repinta, sólo se escala. */
@@ -426,18 +454,19 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     keys: new Set<string>(), joy: { x: 0, y: 0 }, moved: false, wasFlying: false,
     nearPlace: null as Place | null, nearShip: null as Entity | null, fx: [] as Fx[], marker: null as { x: number; y: number; t: number } | null,
     hidden: new Set<string>(), dead: false,
-    pickups: [] as Pickup[], shots: [] as Shot[], weapon: null as { kind: WeaponKind; left: number } | null, shotT: 9,
+    pickups: [] as Pickup[], shots: [] as Shot[], weapon: null as { kind: WeaponKind; left: number } | null, shotT: 9, kindTurn: 0,
   };
   const entity = (id: string, kind: Entity["kind"], name: string, look: Look, x: number, y: number): Entity => ({
     id, kind, name, first: firstName(name), photoURL: null, note: null, x, y, vx: 0, vy: 0, ang: -Math.PI / 2, thrust: 0,
     model: look.model, color: look.color, pilot: look.pilot, tx: null, ty: null, table: null, seat: null,
-    bob: (id.length * 1.7) % TAU, waveT: 0, face: null, shakeT: 0,
+    bob: (id.length * 1.7) % TAU, waveT: 0, face: null, shakeT: 0, hp: BOT_HP, healT: 0, downT: 0, warpT: 0,
   });
   const player = entity("me", "me", opts.meName, opts.look, 800, 650);
   player.face = faceFor(opts.meId, opts.meName, opts.mePhoto);
   const humans = new Map<string, Entity>();
   const bots = BOTS.map((b) => { const p = b.at(Date.now() / 1000); const e = entity(b.id, "bot", b.name, b.look, p.x, p.y); e.note = b.note; return e; });
-  const others = () => [...humans.values(), ...bots];
+  /** Las demás naves que hoy están en el mapa (un robot tumbado no está). */
+  const others = () => [...humans.values(), ...bots.filter((b) => b.downT <= 0)];
 
   // ── Movimiento ──
   // Llegada suave: acelera hacia el punto y frena al acercarse.
@@ -498,7 +527,20 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     bots.forEach((e, i) => {
       const p = BOTS[i].at(t), q = BOTS[i].at(t + 0.2);
       e.x = p.x; e.y = p.y; e.thrust = 0.5;
-      const face = e.waveT > 0 ? Math.atan2(player.y - e.y, player.x - e.x) : Math.atan2(q.y - p.y, q.x - p.x);
+      const heading = Math.atan2(q.y - p.y, q.x - p.x);
+      if (e.downT > 0) {
+        // Tumbado: su ruta sigue corriendo con el reloj; al vencer el plazo llega en hipervelocidad a donde le toque.
+        e.ang = heading;
+        if ((e.downT -= dt) <= 0) { e.downT = 0; e.warpT = WARP; if (!state.mini && onScreen(e)) cb.onSound("warp", true); }
+        return;
+      }
+      if (e.warpT > 0 && (e.warpT -= dt) <= 0) {
+        e.warpT = 0;
+        state.fx.push({ kind: "ring", x: e.x, y: e.y, t: 0, dur: 0.3, r: 64, color: C.ink });
+        for (let k = 0; k < 6; k++) { const b = (k * TAU) / 6 + 0.4; state.fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * 80, vy: Math.sin(b) * 80, t: 0, dur: 0.35, color: C.mint }); }
+      }
+      if (e.healT > 0 && (e.healT -= dt) <= 0) e.hp = BOT_HP;
+      const face = e.waveT > 0 ? Math.atan2(player.y - e.y, player.x - e.x) : heading;
       e.ang = lerpAngle(e.ang, face, Math.min(1, 5 * dt));
       if (e.waveT > 0) e.waveT -= dt;
     });
@@ -535,7 +577,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     if (p !== state.nearPlace) { state.nearPlace = p; refreshPlace(); if (p) cb.onSound("arrive"); }
     // Una persona cerca siempre gana sobre un robot de la casa; entre iguales, la más cercana.
     let near: Entity | null = null, nd = Infinity;
-    for (const group of [[...humans.values()], bots]) {
+    for (const group of [[...humans.values()], bots.filter((b) => b.downT <= 0 && b.warpT <= 0)]) {
       for (const e of group) {
         const d = Math.hypot(e.x - player.x, e.y - player.y);
         if (d < (e === state.nearShip ? 150 : 112) && d < nd) { near = e; nd = d; } // histéresis: la tarjeta no parpadea
@@ -592,6 +634,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
   // ── Vista ──
   const view = { vw: 1, vh: 1, dpr: 1, scale: 1, camx: 0, camy: 0, ox: 0, oy: 0 };
   const toScreen = (x: number, y: number) => ({ x: (x - view.camx) * view.scale + view.ox, y: (y - view.camy) * view.scale + view.oy });
+  const onScreen = (p: { x: number; y: number }) => { const s = toScreen(p.x, p.y); return s.x > -40 && s.x < view.vw + 40 && s.y > -40 && s.y < view.vh + 40; };
   const toWorld = (sx: number, sy: number) => ({ x: (sx - view.ox) / view.scale + view.camx, y: (sy - view.oy) / view.scale + view.camy });
   let starPattern: CanvasPattern | null = null;
   function updateCamera(k: number) {
@@ -692,12 +735,21 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         const bob = e.kind === "me" || state.quiet ? 0 : Math.sin(t * 1.6 + e.bob) * 2.2;
         // Temblor amortiguado: 2–3 px que se apagan en un cuarto de segundo.
         const k = e.shakeT > 0 ? e.shakeT / SHAKE : 0, sx = k ? Math.sin((SHAKE - e.shakeT) * 80) * SHAKE_PX * k : 0, sy = k ? Math.cos((SHAKE - e.shakeT) * 63) * SHAKE_PX * 0.5 * k : 0;
+        if (e.warpT > 0) { drawWarp(e, t); continue; }
         drawShip(ctx, e, e.x + sx, e.y + bob + sy, 56, t);
+        // Robot golpeado: tres rayitas arriba de la nave, las que le quedan en menta.
+        if (e.kind === "bot" && e.hp < BOT_HP) for (let i = 0; i < BOT_HP; i++) { ctx.fillStyle = i < e.hp ? C.mint : C.rockLine; roundRect(ctx, e.x - 13 + i * 9.5, e.y + bob - 44, 7, 4, 2); ctx.fill(); }
       }
       for (const s of state.shots) drawShot(s);
       for (const f of state.fx) if (f.kind === "ring") {
-        // La onda: un aro que crece lo que dura su sonido.
-        const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.strokeStyle = C.mint; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(f.x, f.y, 24 + (WAVE_R - 24) * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
+        // Un aro que crece lo que dura su sonido (onda, bomba, explosión, llegada).
+        const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.strokeStyle = f.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.14 + 0.86 * k), 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      for (const f of state.fx) if (f.kind === "debris") {
+        // Pedazos de la nave: salen girando, se frenan y se apagan.
+        const k = f.t / f.dur, d = f.t * (1 - 0.4 * k);
+        ctx.save(); ctx.translate(f.x + f.vx * d, f.y + f.vy * d); ctx.rotate(f.rot + f.spin * f.t); ctx.globalAlpha = 1 - k * k;
+        ctx.fillStyle = f.color; roundRect(ctx, -f.size / 2, -f.size / 3, f.size, f.size * 0.66, 2); ctx.fill(); ctx.restore();
       }
       for (const f of state.fx) if (f.kind === "flash") {
         // Destello al atrapar: un aro que se abre y se apaga.
@@ -730,6 +782,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     for (const e of all) {
       const s = toScreen(e.x, e.y); if (s.x < -80 || s.x > vw + 80 || s.y < -60 || s.y > vh + 60) continue;
       const near = e === state.nearShip;
+      if (e.warpT > 0) continue; // todavía viene llegando
       if (crowded && !near && Math.hypot(e.x - player.x, e.y - player.y) > 300) continue;
       if (e.kind === "bot") label(s.x, s.y + 31 * scale + 2, `${e.name} · robot`, { size: 10, weight: 500, free: true, color: near ? C.ink : C.gray, stroke: near ? C.mint : C.line });
       else label(s.x, s.y + 31 * scale + 2, e.first, { size: 11, weight: 500, free: true, dot: colorOf(e.color).fill, img: e.face?.img ?? null, color: near ? C.ink : C.text, stroke: near ? C.mint : C.line });
@@ -744,17 +797,27 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
   }
   // ── Juego: aparatos que cambian tu disparo ──
   // Flotan pocos aparatos por el mapa; al pasar tu nave encima lo recoges y tu disparo cambia por unos
-  // tiros: «Triple» (abanico de tres), «Rayo» (largo y rápido) y «Onda» (aro que alcanza a las naves
-  // cercanas). Sin aparato queda el disparo básico. El disparo se apaga en la primera nave que toca y
-  // ésta sólo tiembla: no hay daño, puntos ni marcador. En «Tranquilo» no hay juego.
+  // tiros: «Triple» (abanico de tres), «Rayo» (largo y rápido), «Onda» (aro que alcanza a las naves
+  // cercanas), «Buscador» (da la vuelta hacia la nave más cercana), «Rebote» (rebota en las orillas del
+  // mapa) y «Bomba» (lenta, revienta y alcanza a todo lo cercano). Sin aparato queda el disparo básico.
+  // El disparo se apaga en la primera nave que toca. Las naves de personas sólo tiemblan; las de los
+  // robots pierden golpes hasta estallar. No hay puntos ni marcador. En «Tranquilo» no hay juego.
   function pickupSpot() {
     for (let k = 0; k < 40; k++) { const g = { x: 80 + Math.random() * (WORLD_W - 160), y: 80 + Math.random() * (WORLD_H - 160) }; if (!placeOf(g) && Math.hypot(g.x - player.x, g.y - player.y) > 220) return g; }
     return { x: 1000, y: 120 };
   }
   const weaponInfo = (): WeaponInfo | null => (state.weapon ? { kind: state.weapon.kind, name: WEAPONS[state.weapon.kind].name, left: state.weapon.left } : null);
-  const fire = (a: number, ray = false) => {
-    const v = ray ? RAY_SPEED : SHOT_SPEED;
-    state.shots.push({ x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, ray });
+  /** El siguiente aparato de la rueda que no esté ya flotando: así los seis pasan por el mapa. */
+  function nextKind(): WeaponKind {
+    for (let k = 0; k < WEAPON_KINDS.length; k++) {
+      const kind = WEAPON_KINDS[state.kindTurn++ % WEAPON_KINDS.length];
+      if (!state.pickups.some((p) => p.alive && p.kind === kind)) return kind;
+    }
+    return WEAPON_KINDS[state.kindTurn++ % WEAPON_KINDS.length];
+  }
+  const fire = (a: number, kind: ShotKind = "basic") => {
+    const sp = SHOTS[kind];
+    state.shots.push({ kind, x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * sp.speed, vy: Math.sin(a) * sp.speed, t: 0, life: sp.life, dmg: sp.dmg, bounces: kind === "bounce" ? 3 : 0 });
   };
   /** Sin ángulo dispara hacia donde apunta la nave; el clic derecho manda el ángulo hacia el cursor. */
   function shoot(angle?: number) {
@@ -763,26 +826,61 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     const a = angle ?? player.ang, w = state.weapon;
     if (!w) { fire(a); cb.onSound("shoot"); return; }
     if (w.kind === "triple") for (const d of [-0.2, 0, 0.2]) fire(a + d);
-    else if (w.kind === "ray") fire(a, true);
-    else {
+    else if (w.kind === "wave") {
       // Onda: no viaja; alcanza de una vez a las naves que estén dentro del aro.
-      state.fx.push({ kind: "ring", x: player.x, y: player.y, t: 0, dur: WAVE_DUR });
-      for (const e of others()) if (Math.hypot(e.x - player.x, e.y - player.y) < WAVE_R) touch(e);
-    }
+      state.fx.push({ kind: "ring", x: player.x, y: player.y, t: 0, dur: WAVE_DUR, r: WAVE_R, color: C.mint });
+      for (const e of targets()) if (Math.hypot(e.x - player.x, e.y - player.y) < WAVE_R) touch(e, WAVE_DMG);
+    } else fire(a, w.kind);
     cb.onSound(WEAPONS[w.kind].sound);
     if (--w.left <= 0) state.weapon = null;
     cb.onWeapon(weaponInfo());
   }
   /** Tu disparo tocó esa nave: tiembla aquí y se avisa para que su dueño también la vea temblar. */
-  function touch(e: Entity) {
+  function touch(e: Entity, dmg: number) {
     tickle(e); cb.onSound("nudge");
     if (e.kind === "human") cb.onNudge(e.id);
+    else if (e.kind === "bot") { e.healT = BOT_HEAL; if ((e.hp -= dmg) <= 0) destroyBot(e, true); }
+  }
+  /** Naves a las que un disparo les puede pegar (un robot que viene llegando todavía no). */
+  const targets = () => others().filter((e) => e.warpT <= 0);
+  /** La nave del robot estalla en pedazos de su color y desaparece; vuelve sola en `BOT_BACK` s. */
+  function destroyBot(e: Entity, mine: boolean, silent = false) {
+    e.downT = BOT_BACK; e.warpT = 0; e.hp = BOT_HP; e.healT = 0; e.shakeT = 0; e.waveT = 0;
+    state.fx = state.fx.filter((f) => !(f.kind === "bubble" && f.ship === e));
+    if (mine) cb.onBoom(e.id);
+    if (silent || state.mini) return;
+    const col = colorOf(e.color);
+    state.fx.push({ kind: "ring", x: e.x, y: e.y, t: 0, dur: 0.45, r: 78, color: C.ink });
+    for (let i = 0; i < 8; i++) { const b = (i * TAU) / 8 + 0.3; state.fx.push({ kind: "spark", x: e.x, y: e.y, vx: Math.cos(b) * 120, vy: Math.sin(b) * 120, t: 0, dur: 0.45, color: i % 2 ? C.ink : col.fill }); }
+    for (let i = 0; i < 9; i++) {
+      const b = (i * TAU) / 9 + Math.random() * 0.5, v = 70 + Math.random() * 110;
+      state.fx.push({ kind: "debris", x: e.x, y: e.y, vx: Math.cos(b) * v, vy: Math.sin(b) * v, t: 0, dur: 0.7 + Math.random() * 0.4, color: [col.fill, col.dark, C.ink][i % 3], rot: b, spin: (i % 2 ? 1 : -1) * (3 + Math.random() * 5), size: 7 + Math.random() * 7 });
+    }
+    if (mine || onScreen(e)) cb.onSound("boom", !mine);
+  }
+  /** Llegada en hipervelocidad: la nave entra estirada desde atrás de su rumbo, con rayas de estela, y frena en seco. */
+  function drawWarp(e: Entity, t: number) {
+    const u = 1 - e.warpT / WARP, rest = Math.pow(1 - u, 3), a = e.ang;
+    ctx.save(); ctx.translate(e.x - Math.cos(a) * WARP_FROM * rest, e.y - Math.sin(a) * WARP_FROM * rest); ctx.rotate(a);
+    ctx.lineCap = "round"; ctx.lineWidth = 2; ctx.globalAlpha = Math.min(1, rest * 4);
+    [-15, -7, 0, 7, 15].forEach((off, i) => {
+      ctx.strokeStyle = i % 2 ? C.mint : C.ink;
+      ctx.beginPath(); ctx.moveTo(-22, off); ctx.lineTo(-22 - (40 + rest * 520) * (0.6 + 0.1 * ((i * 3) % 5)), off); ctx.stroke();
+    });
+    ctx.globalAlpha = 1; ctx.scale(1 + rest * 5, 1 - rest * 0.35); ctx.rotate(-a);
+    drawShip(ctx, e, 0, 0, 56, t);
+    ctx.restore();
   }
   function updateGame(dt: number) {
     state.shotT += dt;
     if (state.quiet) { state.shots.length = 0; return; }
     for (const p of state.pickups) {
-      if (!p.alive) { if ((p.back -= dt) <= 0) Object.assign(p, pickupSpot(), { alive: true, kind: WEAPON_KINDS[Math.floor(Math.random() * WEAPON_KINDS.length)] }); continue; }
+      if (!p.alive) { if ((p.back -= dt) <= 0) Object.assign(p, pickupSpot(), { alive: true, kind: nextKind(), age: 0 }); continue; }
+      if ((p.age += dt) > PICKUP_SWAP) {
+        // Nadie lo recogió: le toca al siguiente de la rueda, en el mismo lugar.
+        p.kind = nextKind(); p.age = 0;
+        state.fx.push({ kind: "flash", x: p.x, y: p.y, t: 0, dur: 0.28 });
+      }
       if (state.mini || Math.hypot(p.x - player.x, p.y - player.y) > PICKUP_REACH) continue;
       // Recogido: cambia tu disparo por unos tiros (si ya traías otro aparato, lo reemplaza).
       p.alive = false; p.back = PICKUP_BACK + Math.random() * PICKUP_BACK_EXTRA;
@@ -791,19 +889,43 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       state.fx.push({ kind: "bubble", ship: player, text: `${WEAPONS[p.kind].name} · ${WEAPONS[p.kind].uses} tiros`, t: 0, dur: 1.4 });
       cb.onSound("pickup"); cb.onWeapon(weaponInfo());
     }
+    const live = targets();
     for (const s of state.shots) {
       const x0 = s.x, y0 = s.y;
+      if (s.kind === "seeker") {
+        // Gira poco a poco hacia la nave más cercana que tenga a su alcance.
+        let goal: Entity | null = null, gd = SEEK_R;
+        for (const e of live) { const d = Math.hypot(e.x - s.x, e.y - s.y); if (d < gd) { goal = e; gd = d; } }
+        if (goal) {
+          const cur = Math.atan2(s.vy, s.vx), a = lerpAngle(cur, Math.atan2(goal.y - s.y, goal.x - s.x), 1) - cur;
+          const next = cur + clamp(a, -SEEK_TURN * dt, SEEK_TURN * dt), v = SHOTS.seeker.speed;
+          s.vx = Math.cos(next) * v; s.vy = Math.sin(next) * v;
+        }
+      }
       s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      if (s.kind === "bounce" && s.bounces > 0) {
+        // Rebota en las orillas del mapa.
+        if ((s.x < 8 && s.vx < 0) || (s.x > WORLD_W - 8 && s.vx > 0)) { s.vx = -s.vx; s.bounces--; }
+        if ((s.y < 8 && s.vy < 0) || (s.y > WORLD_H - 8 && s.vy > 0)) { s.vy = -s.vy; s.bounces--; }
+      }
       // Distancia al tramo recorrido en este cuadro: con pocos cuadros por segundo el disparo no se salta a nadie.
       const near = (q: { x: number; y: number }) => {
         const dx = s.x - x0, dy = s.y - y0, u = clamp(((q.x - x0) * dx + (q.y - y0) * dy) / (dx * dx + dy * dy || 1), 0, 1);
         return Math.hypot(q.x - (x0 + dx * u), q.y - (y0 + dy * u));
       };
-      const hit = others().find((e) => near(e) <= SHIP_HIT);
+      const hit = live.find((e) => e.downT <= 0 && near(e) <= SHIP_HIT);
+      if (s.kind === "bomb") {
+        // La bomba revienta al tocar una nave o al acabarse su vuelo, y alcanza a todo lo cercano.
+        if (!hit && s.t < s.life) continue;
+        state.fx.push({ kind: "ring", x: s.x, y: s.y, t: 0, dur: 0.3, r: BOMB_R, color: SHOT_COLORS.bomb });
+        cb.onSound("blast");
+        for (const e of live) if (e.downT <= 0 && Math.hypot(e.x - s.x, e.y - s.y) < BOMB_R) touch(e, s.dmg);
+        s.t = s.life; continue;
+      }
       if (!hit) continue;
-      touch(hit); s.t = SHOT_LIFE; // el disparo se apaga en la nave que toca
+      touch(hit, s.dmg); s.t = s.life; // el disparo se apaga en la nave que toca
     }
-    state.shots = state.shots.filter((s) => s.t < SHOT_LIFE && s.x > -20 && s.x < WORLD_W + 20 && s.y > -20 && s.y < WORLD_H + 20);
+    state.shots = state.shots.filter((s) => s.t < s.life && s.x > -20 && s.x < WORLD_W + 20 && s.y > -20 && s.y < WORLD_H + 20);
   }
   /** Temblor breve con un chispazo chico. Varias cosquillas seguidas son un solo temblor. */
   function tickle(e: Entity) {
@@ -815,6 +937,8 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     // Aparato espacial plano dentro de una burbuja: se ve que es para recoger, no un arma de verdad.
     const x = p.x, y = p.y + Math.sin(t * 1.6 + p.ph) * 3.5;
     ctx.fillStyle = C.panel; ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y, 19, 0, TAU); ctx.fill(); ctx.stroke();
+    // Aro punteado que gira despacio: dice «recógeme».
+    ctx.setLineDash([4, 7]); ctx.beginPath(); ctx.arc(x, y, 24, t * 0.35 + p.ph, t * 0.35 + p.ph + TAU); ctx.stroke(); ctx.setLineDash([]);
     ctx.lineCap = "round"; ctx.lineJoin = "round";
     if (p.kind === "triple") {
       // Bláster redondeado con tres boquillas en abanico.
@@ -827,6 +951,21 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       ctx.strokeStyle = C.green; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 6, y + 6); ctx.lineTo(x + 9, y - 9); ctx.stroke();
       ctx.fillStyle = C.suit; roundRect(ctx, x - 12, y + 2, 12, 9, 4); ctx.fill();
       ctx.fillStyle = C.ink; sparkle(ctx, x + 10, y - 10, 5); ctx.fill();
+    } else if (p.kind === "seeker") {
+      // Buscador: una flecha que da la vuelta hacia su punto.
+      ctx.strokeStyle = SHOT_COLORS.seeker; ctx.lineWidth = 2.8; ctx.beginPath(); ctx.arc(x - 1, y + 2, 9, Math.PI * 0.75, Math.PI * 1.85); ctx.stroke();
+      ctx.fillStyle = SHOT_COLORS.seeker; ctx.beginPath(); ctx.moveTo(x + 12, y + 2); ctx.lineTo(x + 3, y - 1); ctx.lineTo(x + 9, y - 9); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x - 1, y + 2, 2.6, 0, TAU); ctx.fill();
+    } else if (p.kind === "bounce") {
+      // Rebote: una pelota que pega en el piso y sale.
+      ctx.strokeStyle = C.rockLine; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x - 11, y + 10); ctx.lineTo(x + 11, y + 10); ctx.stroke();
+      ctx.strokeStyle = SHOT_COLORS.bounce; ctx.lineWidth = 2.4; ctx.setLineDash([2, 5]); ctx.beginPath(); ctx.moveTo(x - 11, y - 7); ctx.lineTo(x - 2, y + 8); ctx.lineTo(x + 5, y - 3); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = SHOT_COLORS.bounce; ctx.beginPath(); ctx.arc(x + 7, y - 6, 4.6, 0, TAU); ctx.fill();
+    } else if (p.kind === "bomb") {
+      // Bomba de caricatura: bola redonda, mecha corta y una chispa.
+      ctx.fillStyle = SHOT_COLORS.bomb; ctx.beginPath(); ctx.arc(x - 2, y + 3, 8.5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = C.suit; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x + 3, y - 4); ctx.quadraticCurveTo(x + 7, y - 9, x + 9, y - 8); ctx.stroke();
+      ctx.fillStyle = C.ink; sparkle(ctx, x + 10, y - 9, 4.5); ctx.fill();
     } else {
       // Emisor de onda: un punto con dos arcos que se abren.
       ctx.fillStyle = C.suit; ctx.beginPath(); ctx.arc(x - 7, y + 5, 4.5, 0, TAU); ctx.fill();
@@ -836,10 +975,26 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
   }
   function drawShot(s: Shot) {
     // Destello alargado con estela corta, del color de la casa. El rayo es más largo y verde.
-    const a = Math.atan2(s.vy, s.vx), fade = s.t > SHOT_LIFE - 0.15 ? (SHOT_LIFE - s.t) / 0.15 : 1, len = s.ray ? 46 : 16;
+    const ray = s.kind === "ray";
+    const a = Math.atan2(s.vy, s.vx), fade = s.t > s.life - 0.15 ? (s.life - s.t) / 0.15 : 1, len = ray ? 46 : 16;
     ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(a); ctx.globalAlpha = Math.max(0, fade);
-    ctx.lineCap = "round"; ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-len - 16, 0); ctx.lineTo(-len + 6, 0); ctx.stroke();
-    ctx.strokeStyle = s.ray ? C.green : C.mint; ctx.lineWidth = s.ray ? 4 : 5; ctx.beginPath(); ctx.moveTo(-len + 6, 0); ctx.lineTo(6, 0); ctx.stroke();
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    if (s.kind === "seeker") {
+      // Dardo lila con estela corta.
+      ctx.strokeStyle = C.rockLine; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-22, 0); ctx.lineTo(-8, 0); ctx.stroke();
+      ctx.fillStyle = SHOT_COLORS.seeker; ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-8, -6); ctx.lineTo(-4, 0); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill();
+      ctx.restore(); return;
+    }
+    if (s.kind === "bounce" || s.kind === "bomb") {
+      // Pelota azul (rebote) o bola ámbar más grande con chispa (bomba).
+      const r = s.kind === "bomb" ? 8 : 5.5;
+      ctx.strokeStyle = C.rockLine; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-r - 12, 0); ctx.lineTo(-r - 2, 0); ctx.stroke();
+      ctx.fillStyle = SHOT_COLORS[s.kind]; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+      ctx.fillStyle = C.ink; if (s.kind === "bomb") { sparkle(ctx, -r - 1, 0, 3 + 2 * Math.abs(Math.sin(s.t * 26))); ctx.fill(); } else { ctx.beginPath(); ctx.arc(1.5, -1.5, 1.6, 0, TAU); ctx.fill(); }
+      ctx.restore(); return;
+    }
+    ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-len - 16, 0); ctx.lineTo(-len + 6, 0); ctx.stroke();
+    ctx.strokeStyle = ray ? C.green : C.mint; ctx.lineWidth = ray ? 4 : 5; ctx.beginPath(); ctx.moveTo(-len + 6, 0); ctx.lineTo(6, 0); ctx.stroke();
     ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(6, 0, 2.6, 0, TAU); ctx.fill();
     ctx.restore();
   }
@@ -904,14 +1059,15 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     updateCamera(Math.min(1, 5 * dt)); render();
     raf = requestAnimationFrame(frame);
   }
-  state.pickups = WEAPON_KINDS.slice(0, PICKUP_COUNT).map((kind, i) => ({ kind, ...pickupSpot(), ph: i * 1.7, alive: true, back: 0 }));
+  // Los relojes arrancan escalonados: los aparatos se turnan de uno en uno, no los tres a la vez.
+  for (let i = 0; i < PICKUP_COUNT; i++) state.pickups.push({ kind: nextKind(), ...pickupSpot(), ph: i * 1.7, alive: true, back: 0, age: (i * PICKUP_SWAP) / PICKUP_COUNT });
   ghosty();
   measure();
   raf = requestAnimationFrame(frame);
 
   return {
     resize(mini) { state.mini = mini; measure(); },
-    setQuiet(quiet) { state.quiet = quiet; if (quiet) { player.tx = player.ty = null; state.marker = null; player.shakeT = 0; for (const e of others()) e.shakeT = 0; if (state.weapon) { state.weapon = null; cb.onWeapon(null); } state.fx = state.fx.filter((f) => f.kind === "bubble"); state.shots.length = 0; } },
+    setQuiet(quiet) { state.quiet = quiet; if (quiet) { player.tx = player.ty = null; state.marker = null; player.shakeT = 0; for (const e of others()) e.shakeT = 0; for (const b of bots) { b.downT = b.warpT = b.healT = 0; b.hp = BOT_HP; } if (state.weapon) { state.weapon = null; cb.onWeapon(null); } state.fx = state.fx.filter((f) => f.kind === "bubble"); state.shots.length = 0; } },
     setLook(look) { player.model = look.model; player.color = look.color; player.pilot = look.pilot; cb.onIntent(); },
     setStation(s) { state.open = s.open; state.stationSub = s.sub; },
     setHidden(ids) { state.hidden = new Set(ids); places = PLACES.filter((p) => !state.hidden.has(p.id)); },
@@ -952,16 +1108,26 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       tickle(to);
       return to === player;
     },
+    setBotsDown(down, silent) {
+      if (state.quiet) return;
+      for (const d of down) {
+        const e = bots.find((b) => b.id === d.bot); if (!e) continue;
+        // Ya tumbado aquí: sólo se empareja el regreso con el del servidor, para que todos lo vean llegar a la vez.
+        if (e.downT > 0) e.downT = d.back / 1000;
+        // Lo tumbó otra persona. Si le queda poco por volver (o ya viene llegando), es una lectura vieja: se ignora.
+        else if (e.warpT <= 0 && d.back > 3000) { destroyBot(e, false, silent); e.downT = d.back / 1000; }
+      }
+    },
     showWave(fromId, toId) {
       const from = byId(fromId, meId), to = byId(toId, meId); if (!from || !to) return;
       state.fx.push({ kind: "bubble", ship: from, text: `¡Hola, ${to === player ? firstName(opts.meName) : to.first}!`, t: 0, dur: 1.5 });
       if (to === player) burst(player); else if (from === player) to.waveT = 3;
     },
     waveBot(botId) {
-      const bot = bots.find((b) => b.id === botId); if (!bot) return;
+      const bot = bots.find((b) => b.id === botId); if (!bot || bot.downT > 0) return;
       state.fx.push({ kind: "bubble", ship: player, text: `¡Hola, ${bot.first}!`, t: 0, dur: 1.5 });
       bot.waveT = 3.5;
-      window.setTimeout(() => { if (state.dead) return; state.fx.push({ kind: "bubble", ship: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
+      window.setTimeout(() => { if (state.dead || bot.downT > 0) return; state.fx.push({ kind: "bubble", ship: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
     },
     shoot: () => shoot(),
     nearestPickup(kind) {

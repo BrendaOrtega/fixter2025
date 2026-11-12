@@ -1,13 +1,13 @@
 // «Mundo» del club: presencia de las naves (recurso, sin UI). Todo en memoria; no escribe en la base.
 //   GET  /comunidad/:slug/mundo  → { count, ships, waves, me }
 //   POST /comunidad/:slug/mundo  → cuerpo JSON `{x, y, tx, ty, ship, color, pilot, table?}` (latido y
-//                                   posición), `{wave: userId}` (saludo) o `{leave: true}`. Responde
+//                                   posición), `{wave: userId}` (saludo), `{boom: botId}` (robot tumbado) o `{leave: true}`. Responde
 //                                   lo mismo que el GET, así el cliente sondea con un solo viaje.
 // Sólo quien está adentro del club: mismos guardias que la acción de /comunidad/:slug.
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { MAX_BODY, removeShip, sendNudge, sendSay, sendWave, snapshot, upsertShip } from "~/.server/services/club-world.server";
+import { MAX_BODY, removeShip, sendBoom, sendNudge, sendSay, sendWave, snapshot, upsertShip } from "~/.server/services/club-world.server";
 import { avatarUrlFor, canParticipate } from "~/.server/services/wall.server";
 import { getSession } from "~/sessions";
 
@@ -83,6 +83,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   if ("wave" in body) waveId = sendWave(communityId, who.id, body.wave);
   else if ("say" in body) sayId = sendSay(communityId, who.id, body.say);
   else if ("nudge" in body) nudgeId = sendNudge(communityId, who.id, body.nudge);
+  else if ("boom" in body) sendBoom(communityId, who.id, body.boom);
   else if (!upsertShip(communityId, who, body)) return json({ error: "El Mundo está lleno. Intenta en un momento." }, 429);
   return json({ ...snapshot(communityId), me: who.id, waveId, sayId, nudgeId });
 };

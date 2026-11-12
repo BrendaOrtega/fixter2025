@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  MAX_SHIPS, NUDGE_EVERY_MS, NUDGE_TTL_MS, SAY_EVERY_MS, SAY_MAX, SAY_MAX_CHARS, SAY_TTL_MS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, WORLD_H, WORLD_W, cleanSayText, cleanShipInput, removeShip, resetWorlds, sendNudge, sendSay, sendWave,
+  BOT_BACK_MS, sendBoom, MAX_SHIPS, NUDGE_EVERY_MS, NUDGE_TTL_MS, SAY_EVERY_MS, SAY_MAX, SAY_MAX_CHARS, SAY_TTL_MS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, WORLD_H, WORLD_W, cleanSayText, cleanShipInput, removeShip, resetWorlds, sendNudge, sendSay, sendWave,
   snapshot, upsertShip,
 } from "../club-world.server";
 
@@ -141,5 +141,18 @@ describe("mundo del club (presencia en memoria)", () => {
     expect(ships[0]).not.toHaveProperty("lastNudgeAt");
     upsertShip("c1", who("a"), {}, T0 + NUDGE_EVERY_MS + NUDGE_TTL_MS);
     expect(snapshot("c1", T0 + NUDGE_EVERY_MS + NUDGE_TTL_MS + 1).nudges).toEqual([]);
+  });
+
+  it("robot tumbado: sólo robots de la casa, sólo de quien está presente, y vuelve solo", () => {
+    upsertShip("c1", who("a"), {}, T0);
+    expect(sendBoom("c1", "fantasma", "bot:uno", T0)).toBe(false);
+    expect(sendBoom("c1", "a", "b", T0)).toBe(false); // una persona no se tumba
+    expect(sendBoom("c1", "a", { id: "bot:uno" }, T0)).toBe(false);
+    expect(sendBoom("c1", "a", "bot:uno", T0)).toBe(true);
+    expect(sendBoom("c1", "a", "bot:uno", T0 + 5000)).toBe(false); // ya está tumbado: no se alarga
+    expect(snapshot("c1", T0 + 5000).down).toEqual([{ bot: "bot:uno", back: BOT_BACK_MS - 5000 }]);
+    expect(snapshot("c1", T0 + BOT_BACK_MS).down).toEqual([]);
+    upsertShip("c1", who("a"), {}, T0 + BOT_BACK_MS);
+    expect(sendBoom("c1", "a", "bot:uno", T0 + BOT_BACK_MS)).toBe(true);
   });
 });

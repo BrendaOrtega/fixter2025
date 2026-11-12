@@ -17,6 +17,9 @@ export const WAVE_EVERY_MS = 1_500;
 /** Cosquilla: el disparo de alguien tocó tu nave y tiembla un instante. Sin daño, sin puntos y sin autor. */
 export const NUDGE_TTL_MS = 6_000;
 export const NUDGE_EVERY_MS = 1_000;
+/** Robots de la casa (mismos ids que `BOTS` en el motor): un disparo los tumba y vuelven solos. */
+export const BOT_IDS = ["bot:ghosty", "bot:uno", "bot:dos"] as const;
+export const BOT_BACK_MS = 20_000;
 export const MAX_SHIPS = 80;
 /** Tope del cuerpo de un POST, en bytes. */
 export const MAX_BODY = 1_000;
@@ -52,13 +55,14 @@ type Wave = { id: string; from: string; to: string; at: number };
 type Say = { id: string; from: string; name: string; text: string; at: number };
 /** Sin `from`: quien recibe la cosquilla no sabe de quién vino, para que no se preste a molestar. */
 type Nudge = { id: string; to: string; at: number };
-type World = { ships: Map<string, Ship>; waves: Wave[]; says: Say[]; nudges: Nudge[]; seq: number };
+/** `down`: robot tumbado → momento en que vuelve. */
+type World = { ships: Map<string, Ship>; waves: Wave[]; says: Say[]; nudges: Nudge[]; down: Map<string, number>; seq: number };
 
 const worlds = new Map<string, World>();
 
 function worldOf(communityId: string) {
   let w = worlds.get(communityId);
-  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], says: [], nudges: [], seq: 0 }));
+  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], says: [], nudges: [], down: new Map(), seq: 0 }));
   return w;
 }
 
@@ -67,6 +71,7 @@ function prune(w: World, now: number) {
   if (w.waves.length) w.waves = w.waves.filter((v) => now - v.at <= WAVE_TTL_MS);
   if (w.nudges.length) w.nudges = w.nudges.filter((n) => now - n.at <= NUDGE_TTL_MS);
   if (w.says.length) w.says = w.says.filter((m) => now - m.at <= SAY_TTL_MS);
+  for (const [bot, until] of w.down) if (now >= until) w.down.delete(bot);
 }
 
 const num = (v: unknown, min: number, max: number, fallback: number) =>
@@ -144,6 +149,19 @@ export function sendNudge(communityId: string, fromId: string, toId: unknown, no
   return nudge.id;
 }
 
+/**
+ * Alguien tumbó la nave de un robot de la casa: queda fuera `BOT_BACK_MS` para todos. Sólo de quien
+ * tiene nave presente y sólo si el robot está en el mapa (por eso no hace falta más freno: a lo más
+ * tres en veinte segundos). El daño lo lleva cada cliente; aquí sólo se guarda quién está tumbado.
+ */
+export function sendBoom(communityId: string, fromId: string, botId: unknown, now = Date.now()) {
+  const w = worldOf(communityId);
+  prune(w, now);
+  if (!w.ships.has(fromId) || typeof botId !== "string" || !(BOT_IDS as readonly string[]).includes(botId) || w.down.has(botId)) return false;
+  w.down.set(botId, now + BOT_BACK_MS);
+  return true;
+}
+
 /** Texto de un mensaje: una sola línea, sin caracteres de control, recortado. Se pinta como texto, nunca como HTML. */
 export function cleanSayText(input: unknown) {
   if (typeof input !== "string") return "";
@@ -182,6 +200,8 @@ export function snapshot(communityId: string, now = Date.now()) {
     ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, lastSayAt: _m, lastNudgeAt: _n, ...ship }) => ship),
     waves: w.waves.map(({ id, from, to }) => ({ id, from, to })),
     nudges: w.nudges.map(({ id, to }) => ({ id, to })),
+    // En milisegundos que faltan y no en hora: los relojes de cada quien no tienen por qué coincidir.
+    down: [...w.down].map(([bot, until]) => ({ bot, back: until - now })),
     says: w.says.map(({ id, from, name, text, at }) => ({ id, from, name, text, at })),
   };
 }
