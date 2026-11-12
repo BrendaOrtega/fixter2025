@@ -113,6 +113,16 @@ export function MembershipView({ data }: { data: ClubData }) {
               {courseCount} cursos
             </a>
           </Row>
+          <Row label="Tu cuenta">
+            <span className="flex flex-wrap justify-end gap-2">
+              <a href="/perfil" className={btnGhost}>
+                Perfil
+              </a>
+              <a href="/logout" className={btnGhost}>
+                Cerrar sesión
+              </a>
+            </span>
+          </Row>
           {canMod && (
             <Row label="Panel del anfitrión">
               <a href={`/comunidad/${community.slug}/admin`} className={btnGhost}>

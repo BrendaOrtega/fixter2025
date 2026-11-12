@@ -127,11 +127,15 @@ export const NavBar = ({ user }: { user?: User }) => {
       ref={scope}
       className=" w-full px-6 md:px-[5%] xl:px-0 fixed backdrop-blur z-[200]"
     >
+      {/* Dentro del club (`.club-v2`, ver ClubShell) esta barra se queda sólo con el logo: la
+          navegación ahí es la del club. Va por CSS para que aplique desde el HTML del servidor. */}
+      <style>{`body:has(.club-v2) [data-site-nav-extra] { display: none !important; }`}</style>
       <nav className="flex relative z-[210] max-w-7xl mx-auto py-2 md:py-4 items-center justify-between ">
         <Link to="/">
           <img className="h-7" src="/logo.png" alt="logo" />
         </Link>
-        <div className="lg:flex items-center gap-8 hidden ">
+        {/* `data-site-nav-extra`: dentro del club (ClubShell) sólo queda el logo; el club trae su propia barra. */}
+        <div data-site-nav-extra className="lg:flex items-center gap-8 hidden ">
           <a
             href="https://www.youtube.com/@fixtergeek"
             rel="noreferrer"
@@ -152,7 +156,9 @@ export const NavBar = ({ user }: { user?: User }) => {
           )}
         </div>
 
-        <Burger onClick={toggleMenu} isOpen={isOpen} />
+        <span data-site-nav-extra className="contents">
+          <Burger onClick={toggleMenu} isOpen={isOpen} />
+        </span>
       </nav>
       <MobileMenu user={user} isOpen={isOpen} toggleMenu={toggleMenu} />
     </section>
