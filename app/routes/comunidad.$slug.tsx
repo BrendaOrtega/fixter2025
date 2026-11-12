@@ -13,6 +13,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/comunidad.$slug";
 import { db } from "~/.server/db";
+import { toggleGoing } from "~/.server/services/club-events.server";
 import { getUserOrNull } from "~/.server/dbGetters";
 import {
   claimBuyerGift,
@@ -145,6 +146,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       }),
     ]);
   const canMod = canModerate(user, community);
+  // Quién confirmó la próxima llamada: se enseñan hasta 8 caras, las más recientes.
+  const goingIds = event?.going ?? [];
+  const goingPeople = goingIds.length
+    ? await db.user.findMany({
+        where: { id: { in: goingIds.slice(-8) } },
+        select: { id: true, displayName: true, username: true, email: true, photoURL: true },
+      })
+    : [];
 
   // Diferido (se regresa la promesa sin `await` y la página la pinta con <Await>): el muro con
   // sus insignias, las grabaciones (su `reconcile` llama a la caja de Ghosty Studio y a S3) y el
@@ -202,6 +211,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           endsAt: event.endsAt.toISOString(),
           open: isCallOpen(event),
           imageUrl: event.imageKey ? imageUrlFor(event.imageKey) : null,
+          going: {
+            count: goingIds.length,
+            mine: !!user && goingIds.includes(user.id),
+            people: goingPeople.map((p) => ({
+              id: p.id,
+              name: p.displayName || p.username || p.email.split("@")[0],
+              photoURL: p.photoURL ?? null,
+            })),
+          },
         }
       : null,
   };
@@ -291,6 +309,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ? await startRecording(community, title, undefined, { event })
         : await stopRecording(community, title, undefined, event);
     return r.ok ? { ok: true } : data({ error: r.error }, { status: 502 });
+  }
+  // Confirmar asistencia a la próxima llamada (o retirarla). Sólo quien está adentro.
+  if (intent === "rsvp") {
+    if (!inside) return data({ error: "Únete al club para confirmar." }, { status: 403 });
+    const event = await getNextEvent(community.id);
+    if (!event || event.id !== String(form.get("eventId") ?? "")) {
+      return data({ error: "Ese evento ya no está en el calendario." }, { status: 404 });
+    }
+    await toggleGoing(community.id, event.id, event.startsAt, user.id);
+    return { ok: true };
   }
   if (intent === "like") {
     await toggleLike(community.id, String(form.get("postId") ?? ""), user.id);

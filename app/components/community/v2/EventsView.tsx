@@ -1,5 +1,5 @@
 import { CalendarIllustration } from "./CalendarIllustration";
-import { DateTile, EnterCallButton, HostRecControl, describeCall, useNow } from "./call";
+import { RsvpControl, DateTile, EnterCallButton, HostRecControl, describeCall, useNow } from "./call";
 import { EmptyNote, SectionHead, Wrap, btn, btnGhost, card } from "./ui";
 import type { ClubData } from "./types";
 
@@ -58,6 +58,9 @@ export function EventsView({ data }: { data: ClubData }) {
               <HostRecControl rec={data.rec} show={canMod && event.open} />
               <EnterCallButton event={event} />
             </div>
+            </div>
+            <div className="border-t border-[#232D33] px-4 py-3">
+              <RsvpControl event={event} me={data.me} block />
             </div>
           </div>
         ) : (

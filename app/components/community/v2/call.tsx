@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Await, Form, useActionData, useFetcher, useNavigation } from "react-router";
-import { btn, btnGhost } from "./ui";
+import { Avatar, btn, btnGhost } from "./ui";
 import type { ClubData, ClubEvent } from "./types";
 
 // La llamada en vivo en la casa v2: mismos `intent` que la página de hoy (call, rec-start,
@@ -108,6 +108,57 @@ export function EnterCallButton({
         </p>
       )}
     </Form>
+  );
+}
+
+/**
+ * Confirmar asistencia: caras de quien ya confirmó, la cuenta y el botón «Voy». Optimista: el
+ * botón y la cuenta cambian al clic y el servidor confirma después.
+ */
+export function RsvpControl({ event, me, block = false }: { event: ClubEvent; me: ClubData["me"]; block?: boolean }) {
+  const fetcher = useFetcher<{ error?: string }>();
+  const pending = fetcher.state !== "idle";
+  const { going } = event;
+  const mine = pending ? !going.mine : going.mine;
+  const count = Math.max(0, going.count + (pending ? (going.mine ? -1 : 1) : 0));
+  const others = going.people.filter((p) => p.id !== me?.id);
+  const faces = (mine && me ? [me, ...others] : others).slice(0, 6);
+  return (
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${block ? "justify-between" : ""}`}>
+      <div className="flex min-w-0 items-center gap-2">
+        {faces.length > 0 && (
+          <span className="flex -space-x-2">
+            {faces.map((p) => (
+              <span key={p.id} title={p.name} className="rounded-full ring-2 ring-[#141B20]">
+                <Avatar person={p} size={24} />
+              </span>
+            ))}
+          </span>
+        )}
+        <span className="text-xs text-[#7C8A8E]">
+          {count === 0 ? "Nadie ha confirmado todavía" : count === 1 ? "1 persona confirmó" : `${count} personas confirmaron`}
+        </span>
+      </div>
+      {me && (
+        <fetcher.Form method="post">
+          <input type="hidden" name="eventId" value={event.id} />
+          <button
+            name="intent"
+            value="rsvp"
+            aria-pressed={mine}
+            title={mine ? "Clic para cancelar tu asistencia" : undefined}
+            className={`${btnGhost} ${mine ? "border-brand-500/60 text-brand-500" : ""}`}
+          >
+            {mine ? "✓ Vas a ir" : "Confirmar asistencia"}
+          </button>
+        </fetcher.Form>
+      )}
+      {fetcher.data?.error && !pending && (
+        <p role="alert" className="basis-full text-xs text-[#F08A80]">
+          {fetcher.data.error}
+        </p>
+      )}
+    </div>
   );
 }
 

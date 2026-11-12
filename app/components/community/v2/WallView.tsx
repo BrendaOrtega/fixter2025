@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Await, useFetcher } from "react-router";
-import { DateTile, EnterCallButton, HostRecControl, describeCall, useNow } from "./call";
+import { RsvpControl, DateTile, EnterCallButton, HostRecControl, describeCall, useNow } from "./call";
 import { Composer, POST_FETCHER_KEY } from "./Composer";
 import { Icon, PlayIcon } from "./icons";
 import { LikeButton, PostMenu, usePatchedPosts } from "./postActions";
@@ -32,6 +32,9 @@ function CallNotice({ data, event, className = "" }: { data: ClubData; event: Cl
       <div className="ml-auto flex flex-wrap items-start justify-end gap-2">
         <HostRecControl rec={data.rec} show={data.canMod && event.open} />
         <EnterCallButton event={event} />
+      </div>
+      <div className="basis-full border-t border-[#232D33] pt-2.5">
+        <RsvpControl event={event} me={data.me} block />
       </div>
     </div>
   );
@@ -186,7 +189,8 @@ function HostRail({ data, go }: { data: ClubData; go: Go }) {
                 </p>
               </div>
             </div>
-            <div className="mt-3.5 grid gap-2">
+            <div className="mt-3.5 grid gap-2.5">
+              <RsvpControl event={event} me={data.me} block />
               <EnterCallButton event={event} block />
               <HostRecControl rec={data.rec} show={event.open} block />
             </div>

@@ -238,6 +238,8 @@ const card = `${panel} p-4 lg:p-5`;
 const input = "w-full rounded-lg border border-[#232D33] bg-background px-3 py-2 text-sm text-[#F2F5F4] placeholder:text-[#7C8A8E] focus:border-brand-500 focus:outline-none";
 const primary = btn;
 const ghost = textLink;
+// Botón secundario (lo usa la pestaña de quizzes).
+const quiet = btnGhost;
 // Acciones con ícono: el texto va en `title` (tooltip) y `aria-label`; borrar se pinta rojo al pasar.
 const iconBtn = "grid h-8 w-8 place-items-center rounded-md text-[#7C8A8E] transition-colors hover:bg-[#1C252B] hover:text-[#F2F5F4]";
 const iconDanger = "grid h-8 w-8 place-items-center rounded-md text-[#7C8A8E] transition-colors hover:bg-[#1C252B] hover:text-[#F08A80]";

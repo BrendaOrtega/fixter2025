@@ -24,14 +24,20 @@ export type ClubEvent = {
   recurrence?: string | null;
   until?: Date | null;
   imageKey?: string | null;
+  goingFor?: string[] | null;
 };
 
 /** Una sesión concreta de un evento (en una serie, la de esa semana). */
-export type Occurrence = { id: string; title: string; description: string | null; startsAt: Date; endsAt: Date; imageKey?: string };
+export type Occurrence = { id: string; title: string; description: string | null; startsAt: Date; endsAt: Date; imageKey?: string; going?: string[] };
 
 /** Sesiones del evento que terminan después de `from`, hasta `limit`. */
 export function occurrencesOf(e: ClubEvent, from: Date, limit = 1): Occurrence[] {
   const dur = e.endsAt.getTime() - e.startsAt.getTime();
+  // Quién confirmó esa sesión (ids de usuario), sólo si hay alguien.
+  const goingAt = (start: number) => {
+    const prefix = `${new Date(start).toISOString()}|`;
+    return (e.goingFor ?? []).filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
+  };
   const at = (start: number): Occurrence => ({
     id: e.id,
     title: e.title,
@@ -40,6 +46,7 @@ export function occurrencesOf(e: ClubEvent, from: Date, limit = 1): Occurrence[]
     endsAt: new Date(start + dur),
     // Flyer del evento, sólo si tiene.
     ...(e.imageKey ? { imageKey: e.imageKey } : {}),
+    ...(goingAt(start).length ? { going: goingAt(start) } : {}),
   });
   if (e.recurrence !== "weekly") return e.endsAt > from ? [at(e.startsAt.getTime())] : [];
   // Primera semana cuya sesión todavía no termina.
@@ -73,6 +80,24 @@ export async function activeEvents(communityId: string, now = new Date()) {
 
 export async function getNextOccurrence(communityId: string, now = new Date()) {
   return nextOccurrence(await activeEvents(communityId, now), now);
+}
+
+/**
+ * «Voy» / «ya no voy» a una sesión. Regresa si quedó confirmado, o `null` si el evento no existe.
+ * Se escribe el arreglo completo (leer y guardar): con decenas de miembros el choque de dos
+ * clics simultáneos es improbable y, si pasa, basta volver a dar clic.
+ */
+export async function toggleGoing(communityId: string, eventId: string, sessionStart: Date, userId: string) {
+  const e = await db.communityEvent.findFirst({ where: { id: eventId, communityId }, select: { goingFor: true } });
+  if (!e) return null;
+  const key = `${sessionStart.toISOString()}|${userId}`;
+  const current = e.goingFor ?? [];
+  const going = !current.includes(key);
+  // De paso se tiran las confirmaciones de sesiones que ya pasaron hace más de un día.
+  const cutoff = Date.now() - 24 * HOUR_MS;
+  const kept = current.filter((k) => k !== key && new Date(k.split("|")[0]).getTime() > cutoff);
+  await db.communityEvent.update({ where: { id: eventId }, data: { goingFor: { set: going ? [...kept, key] : kept } } });
+  return going;
 }
 
 // ── .ics ─────────────────────────────────────────────────────────────────────
