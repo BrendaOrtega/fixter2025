@@ -3,11 +3,14 @@
 // miembros. Sólo dueño o ADMIN (`canModerate`). El plan y el contraste con la competencia están en
 // docs/comunidad/PLAN.md.
 import { useState } from "react";
-import { Form, Link, data, redirect, useActionData, useNavigation, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { Form, data, redirect, useActionData, useNavigation, useSearchParams, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import type { Route } from "./+types/comunidad.$slug.admin";
 import { db } from "~/.server/db";
 import { Switch } from "~/components/common/Switch";
 import { ClubVideo } from "~/components/community/ClubVideo";
+import { ClubShell } from "~/components/community/v2/ClubShell";
+import { SectionHead, Wrap, btn, card as panel, textLink } from "~/components/community/v2/ui";
+import type { View } from "~/components/community/v2/types";
 import { CalendarPlus, Eye, EyeOff, Pencil, RotateCw, Trash2, UserMinus } from "lucide-react";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { canModerate } from "~/.server/services/wall.server";
@@ -38,7 +41,7 @@ async function guard(request: Request, slug: string) {
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { community } = await guard(request, params.slug as string);
+  const { community, user } = await guard(request, params.slug as string);
   const now = new Date();
   const [events, recordings, members, invites] = await Promise.all([
     db.communityEvent.findMany({ where: { communityId: community.id }, orderBy: { startsAt: "desc" }, take: 100 }),
@@ -82,6 +85,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   return {
     community: { slug: community.slug, name: community.name },
+    // Lo que pide el cascarón del club (avatar y contador de grabaciones visibles).
+    me: {
+      id: user.id,
+      name: user.displayName || user.username || user.email.split("@")[0],
+      photoURL: user.photoURL ?? null,
+    },
+    recordingCount: recordings.filter((r) => !r.hidden && r.status === "ready").length,
     quiz: {
       enabled: quizOn,
       games: quizGames.map((g) => ({
@@ -214,13 +224,16 @@ const when = (iso: string) =>
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Mexico_City" });
 
-const card = "rounded-2xl border border-colorOutline bg-backface p-5";
-const input = "w-full rounded-xl border border-colorOutline bg-background px-3 py-2 text-white placeholder:text-colorCaption focus:border-brand-500 focus:outline-none";
-const primary = "inline-flex h-11 items-center justify-center rounded-full bg-brand-500 px-6 font-semibold text-brand-900 transition hover:-translate-y-0.5 disabled:opacity-50";
-const ghost = "text-sm text-colorCaption underline hover:text-white";
+// Mismas piezas que la casa v2 del club (`components/community/v2/ui.tsx`).
+const card = `${panel} p-4 lg:p-5`;
+const input = "w-full rounded-lg border border-[#232D33] bg-background px-3 py-2 text-sm text-[#F2F5F4] placeholder:text-[#7C8A8E] focus:border-brand-500 focus:outline-none";
+const primary = btn;
+const ghost = textLink;
 // Acciones con ícono: el texto va en `title` (tooltip) y `aria-label`; borrar se pinta rojo al pasar.
-const iconBtn = "grid h-9 w-9 place-items-center rounded-lg border border-colorOutline text-colorCaption transition hover:border-brand-500 hover:text-white";
-const iconDanger = "grid h-9 w-9 place-items-center rounded-lg border border-colorOutline text-colorCaption transition hover:border-danger hover:text-danger";
+const iconBtn = "grid h-8 w-8 place-items-center rounded-md text-[#7C8A8E] transition-colors hover:bg-[#1C252B] hover:text-[#F2F5F4]";
+const iconDanger = "grid h-8 w-8 place-items-center rounded-md text-[#7C8A8E] transition-colors hover:bg-[#1C252B] hover:text-[#F08A80]";
+const h2 = "text-[15px] font-semibold text-[#F2F5F4]";
+const label = "grid gap-1 text-[13px] font-medium text-[#D9E0DE]";
 
 type Tab = "calendario" | "grabaciones" | "invitados" | "miembros" | "quizzes";
 
@@ -234,20 +247,20 @@ function EventForm({ event, onDone }: { event?: EventView; onDone?: () => void }
     <Form method="post" className="grid gap-3" onSubmit={() => onDone?.()}>
       <input type="hidden" name="intent" value="event-save" />
       {event && <input type="hidden" name="id" value={event.id} />}
-      <label className="grid gap-1 text-sm">
+      <label className={label}>
         Título
         <input name="title" required maxLength={140} defaultValue={event?.title} className={input} placeholder="Llamada del club: construimos un agente" />
       </label>
-      <label className="grid gap-1 text-sm">
+      <label className={label}>
         Descripción (sale en el correo y en el calendario)
         <textarea name="description" rows={2} maxLength={1000} defaultValue={event?.description} className={input} />
       </label>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="grid gap-1 text-sm">
+        <label className={label}>
           Inicio (hora de CDMX)
           <input type="datetime-local" name="startsAt" required defaultValue={event?.startInput} className={input} />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className={label}>
           Duración
           <select name="minutes" defaultValue={event?.minutes ?? 120} className={input}>
             {DURATIONS.map((m) => (
@@ -261,7 +274,7 @@ function EventForm({ event, onDone }: { event?: EventView; onDone?: () => void }
           Se repite cada semana
         </Switch>
         {weekly && (
-          <label className="grid gap-1 text-sm">
+          <label className={label}>
             Hasta (opcional)
             <input type="date" name="until" defaultValue={event?.untilInput} className={input} />
           </label>
@@ -288,14 +301,14 @@ function Calendar({ events, slug }: { events: EventView[]; slug: string }) {
       ) : (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-semibold text-white">{e.title}</p>
-            <p className="mt-1 text-sm text-colorCaption" suppressHydrationWarning>
+            <p className="font-semibold text-[#F2F5F4]">{e.title}</p>
+            <p className="mt-1 text-sm text-[#7C8A8E]" suppressHydrationWarning>
               {e.weekly ? "🔁 Cada semana · " : ""}
               {e.next ? `Próxima: ${when(e.next)}` : `Fue el ${when(e.startsAt)}`} · {e.minutes} min
               {e.weekly && e.untilInput ? ` · hasta ${e.untilInput}` : ""}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <a href={`/comunidad/${slug}/evento/${e.id}.ics`} className={iconBtn} title="Agregar al calendario (.ics)" aria-label="Agregar al calendario"><CalendarPlus size={16} /></a>
             <button type="button" onClick={() => setEditing(e.id)} className={iconBtn} title="Editar evento" aria-label="Editar evento"><Pencil size={16} /></button>
             <Form method="post" onSubmit={(ev) => { if (!confirm(`¿Borrar «${e.title}»?`)) ev.preventDefault(); }}>
@@ -308,21 +321,21 @@ function Calendar({ events, slug }: { events: EventView[]; slug: string }) {
     </li>
   );
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <section className={card}>
-        <h2 className="text-lg font-semibold text-white">Nuevo evento</h2>
-        <p className="mb-4 mt-1 text-sm text-colorCaption">
+        <h2 className={h2}>Nuevo evento</h2>
+        <p className="mb-4 mt-1 text-sm text-[#7C8A8E]">
           Los miembros lo ven con cuenta regresiva, reciben correo 24 h y 1 h antes y pueden agregarlo a su calendario.
         </p>
         <EventForm key={events.length} />
       </section>
       <section>
-        <h2 className="text-lg font-semibold text-white">Próximos</h2>
-        {upcoming.length === 0 ? <p className="mt-2 text-sm text-colorCaption">No hay eventos próximos.</p> : <ul className="mt-3 grid gap-3">{upcoming.map(row)}</ul>}
+        <h2 className={h2}>Próximos</h2>
+        {upcoming.length === 0 ? <p className="mt-2 text-sm text-[#7C8A8E]">No hay eventos próximos.</p> : <ul className="mt-3 grid gap-3">{upcoming.map(row)}</ul>}
       </section>
       {past.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-white">Pasados</h2>
+          <h2 className={h2}>Pasados</h2>
           <ul className="mt-3 grid gap-3 opacity-70">{past.map(row)}</ul>
         </section>
       )}
@@ -343,7 +356,7 @@ function Recordings({ recordings, slug }: { recordings: RecView[]; slug: string 
   const [renaming, setRenaming] = useState<string | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
   if (recordings.length === 0) {
-    return <p className="text-colorCaption">Todavía no hay grabaciones. El anfitrión graba con «● Grabar» dentro de la llamada.</p>;
+    return <p className="text-[#7C8A8E]">Todavía no hay grabaciones. El anfitrión graba con «● Grabar» dentro de la llamada.</p>;
   }
   return (
     <ul className="grid gap-3">
@@ -355,14 +368,14 @@ function Recordings({ recordings, slug }: { recordings: RecView[]; slug: string 
               <button
                 type="button"
                 onClick={() => setPlaying(playing === r.id ? null : r.id)}
-                className="relative h-20 w-36 shrink-0 overflow-hidden rounded-lg border border-colorOutline bg-black"
+                className="relative h-20 w-36 shrink-0 overflow-hidden rounded-lg border border-[#232D33] bg-black"
                 aria-label={`Ver «${r.title}»`}
               >
                 {r.poster && <img src={r.poster} alt="" className="h-full w-full object-cover" />}
-                <span className="absolute inset-0 grid place-items-center text-2xl text-white">{playing === r.id ? "✕" : "▶"}</span>
+                <span className="absolute inset-0 grid place-items-center text-2xl text-[#F2F5F4]">{playing === r.id ? "✕" : "▶"}</span>
               </button>
             ) : (
-              <div className="grid h-20 w-36 shrink-0 place-items-center rounded-lg border border-colorOutline text-xs text-colorCaption">
+              <div className="grid h-20 w-36 shrink-0 place-items-center rounded-lg border border-[#232D33] text-xs text-[#7C8A8E]">
                 {recStatus[r.status] ?? r.status}
               </div>
             )}
@@ -374,16 +387,16 @@ function Recordings({ recordings, slug }: { recordings: RecView[]; slug: string 
                   <button name="intent" value="rec-rename" className="text-sm font-semibold text-brand-500">Guardar</button>
                 </Form>
               ) : (
-                <p className="font-semibold text-white">{r.title}</p>
+                <p className="font-semibold text-[#F2F5F4]">{r.title}</p>
               )}
-              <p className="mt-1 text-sm text-colorCaption" suppressHydrationWarning>
+              <p className="mt-1 text-sm text-[#7C8A8E]" suppressHydrationWarning>
                 {shortDate(r.endedAt)}
                 {r.minutes ? ` · ${r.minutes} min` : ""} · {recStatus[r.status] ?? r.status}
                 {r.hidden ? " · oculta" : ""}
                 {r.eventTitle ? ` · evento «${r.eventTitle}»` : ""}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
               {renaming !== r.id && (
                 <button type="button" onClick={() => setRenaming(r.id)} className={iconBtn} title="Renombrar" aria-label="Renombrar"><Pencil size={16} /></button>
               )}
@@ -412,7 +425,7 @@ function Recordings({ recordings, slug }: { recordings: RecView[]; slug: string 
             </div>
           </div>
           {playing === r.id && (
-            <div className="mt-3 overflow-hidden rounded-xl">
+            <div className="mt-3 overflow-hidden rounded-lg">
               <ClubVideo srcUrl={`/comunidad/${slug}/grabacion/${r.id}`} poster={r.poster} />
             </div>
           )}
@@ -426,20 +439,20 @@ function Invites({ invites, callDays }: Pick<Route.ComponentProps["loaderData"],
   const nav = useNavigation();
   const saving = nav.state !== "idle" && nav.formData?.get("intent") === "invite";
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <section className={card}>
-        <h2 className="text-lg font-semibold text-white">Invitar por correo</h2>
-        <p className="mb-4 mt-1 text-sm text-colorCaption">
+        <h2 className={h2}>Invitar por correo</h2>
+        <p className="mb-4 mt-1 text-sm text-[#7C8A8E]">
           No tienen que hacer nada: al entrar con ese correo reciben el regalo, y los días marcados entran a la llamada aunque no paguen.
         </p>
         <Form method="post" className="grid gap-3">
           <input type="hidden" name="intent" value="invite" />
-          <label className="grid gap-1 text-sm">
+          <label className={label}>
             Correos (separados por coma o uno por renglón)
             <textarea name="emails" rows={3} required className={input} placeholder="ana@correo.com, beto@correo.com" />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
+            <label className={label}>
               Días de membresía de regalo
               <select name="giftDays" defaultValue="90" className={input}>
                 {[0, 7, 30, 90, 180, 365].map((d) => (
@@ -447,7 +460,7 @@ function Invites({ invites, callDays }: Pick<Route.ComponentProps["loaderData"],
                 ))}
               </select>
             </label>
-            <label className="grid gap-1 text-sm">
+            <label className={label}>
               Origen (para tus notas)
               <input name="source" className={input} placeholder="hackaton-nov-2026" />
             </label>
@@ -460,7 +473,7 @@ function Invites({ invites, callDays }: Pick<Route.ComponentProps["loaderData"],
                   <label key={d.day} className="cursor-pointer" suppressHydrationWarning>
                     {/* Ficha que se enciende: el checkbox queda oculto, sólo lleva el valor. */}
                     <input type="checkbox" name="callDays" value={d.day} className="peer sr-only" />
-                    <span className="inline-block rounded-full border border-colorOutline px-3 py-1.5 transition peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-checked:text-brand-900 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500">
+                    <span className="inline-block rounded-full border border-[#232D33] px-3 py-1.5 transition peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500">
                       {when(d.label)}
                     </span>
                   </label>
@@ -474,13 +487,13 @@ function Invites({ invites, callDays }: Pick<Route.ComponentProps["loaderData"],
         </Form>
       </section>
       <section>
-        <h2 className="text-lg font-semibold text-white">Invitaciones ({invites.length})</h2>
-        <ul className="mt-3 divide-y divide-colorOutline rounded-2xl border border-colorOutline bg-backface">
+        <h2 className={h2}>Invitaciones ({invites.length})</h2>
+        <ul className="mt-3 divide-y divide-[#232D33] rounded-[10px] border border-[#232D33] bg-[#141B20]">
           {invites.map((i) => (
-            <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+            <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
               <div className="min-w-0">
-                <p className="truncate text-white">{i.email}</p>
-                <p className="text-colorCaption">
+                <p className="truncate text-[#F2F5F4]">{i.email}</p>
+                <p className="text-[#7C8A8E]">
                   {i.source}
                   {i.giftDays ? ` · ${i.giftDays} días ${i.used ? "(ya entró)" : "(pendiente)"}` : ""}
                   {i.callDays.length ? ` · llamadas ${i.callDays.map((d) => `${d.slice(6)}/${d.slice(4, 6)}`).join(", ")}` : ""}
@@ -506,18 +519,18 @@ function Members({ members }: Pick<Route.ComponentProps["loaderData"], "members"
       <div className="flex flex-wrap gap-2 text-sm">
         <span className="rounded-full border border-brand-500/40 bg-brand-500/10 px-3 py-1 text-brand-500">{active.length} activos</span>
         {Object.entries(bySource).map(([s, n]) => (
-          <span key={s} className="rounded-full border border-colorOutline px-3 py-1 text-colorParagraph">{n} {s}</span>
+          <span key={s} className="rounded-full border border-[#232D33] px-3 py-1 text-[#D9E0DE]">{n} {s}</span>
         ))}
-        <span className="rounded-full border border-colorOutline px-3 py-1 text-colorCaption">{members.length - active.length} inactivos</span>
+        <span className="rounded-full border border-[#232D33] px-3 py-1 text-[#7C8A8E]">{members.length - active.length} inactivos</span>
       </div>
-      <ul className="divide-y divide-colorOutline rounded-2xl border border-colorOutline bg-backface">
+      <ul className="divide-y divide-[#232D33] rounded-[10px] border border-[#232D33] bg-[#141B20]">
         {members.map((m) => (
-          <li key={m.id} className={`flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm ${m.active ? "" : "opacity-50"}`}>
+          <li key={m.id} className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm ${m.active ? "" : "opacity-50"}`}>
             <div className="min-w-0">
-              <p className="truncate font-semibold text-white">{m.name}</p>
-              <p className="truncate text-colorCaption">{m.email}</p>
+              <p className="truncate font-semibold text-[#F2F5F4]">{m.name}</p>
+              <p className="truncate text-[#7C8A8E]">{m.email}</p>
             </div>
-            <p className="text-right text-colorCaption" suppressHydrationWarning>
+            <p className="text-right text-[#7C8A8E]" suppressHydrationWarning>
               {m.source}
               {m.interval ? ` · ${m.interval === "year" ? "anual" : "mensual"}` : ""}
               {m.until ? ` · ${m.cancels ? "termina" : "hasta"} ${shortDate(m.until)}` : ""}
@@ -537,8 +550,8 @@ function Quizzes({ quiz, slug }: { quiz: QuizView; slug: string }) {
   return (
     <div className="grid gap-4">
       <div className={card}>
-        <h2 className="text-lg font-bold">Quizzes en vivo</h2>
-        <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-colorCaption">
+        <h2 className={h2}>Quizzes en vivo</h2>
+        <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-[#7C8A8E]">
           <li>Arma tus preguntas en el editor.</li>
           <li>En la llamada, abre la pestaña «Quiz» y presiona «Lanzar quiz».</li>
           <li>Comparte la ventana del tablero: cada miembro contesta en su panel, sin PIN.</li>
@@ -548,29 +561,29 @@ function Quizzes({ quiz, slug }: { quiz: QuizView; slug: string }) {
         </a>
       </div>
       <div className={card}>
-        <h2 className="text-lg font-bold">Partidas</h2>
+        <h2 className={h2}>Partidas</h2>
         {quiz.games.length === 0 ? (
-          <p className="mt-2 text-sm text-colorCaption">Aquí aparece cada quiz que lances en una llamada.</p>
+          <p className="mt-2 text-sm text-[#7C8A8E]">Aquí aparece cada quiz que lances en una llamada.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-colorOutline">
+          <ul className="mt-3 divide-y divide-[#232D33]">
             {quiz.games.map((g) => (
               <li key={g.id} className="py-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
                   <span className="truncate font-semibold">{g.subject}</span>
-                  <span className="shrink-0 text-colorCaption">{g.live ? "En curso · " : ""}{when(g.at)}</span>
+                  <span className="shrink-0 text-[#7C8A8E]">{g.live ? "En curso · " : ""}{when(g.at)}</span>
                 </div>
                 {g.top.length > 0 ? (
-                  <ol className="mt-2 grid gap-1 text-colorCaption">
+                  <ol className="mt-2 grid gap-1 text-[#7C8A8E]">
                     {g.top.map((p) => (
                       <li key={p.rank} className="flex justify-between gap-3">
-                        <span className="truncate text-white">{p.rank}. {p.username}</span>
+                        <span className="truncate text-[#F2F5F4]">{p.rank}. {p.username}</span>
                         <span className="shrink-0">{p.points} pts</span>
                       </li>
                     ))}
                     {g.players > 3 && <li>{g.players} jugadores en total</li>}
                   </ol>
                 ) : (
-                  !g.live && <p className="mt-1 text-colorCaption">Se terminó antes del podio.</p>
+                  !g.live && <p className="mt-1 text-[#7C8A8E]">Se terminó antes del podio.</p>
                 )}
               </li>
             ))}
@@ -581,10 +594,16 @@ function Quizzes({ quiz, slug }: { quiz: QuizView; slug: string }) {
   );
 }
 
+const CLUB_TABS: Record<View, string> = { wall: "", events: "?tab=events", recs: "?tab=recs", courses: "?tab=courses", me: "?tab=me" };
+const TABS: Tab[] = ["calendario", "grabaciones", "invitados", "miembros", "quizzes"];
+
 export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
-  const { community, events, recordings, invites, callDays, members, quiz } = loaderData;
+  const { community, me, recordingCount, events, recordings, invites, callDays, members, quiz } = loaderData;
   const result = useActionData<{ ok?: string; error?: string }>();
-  const [tab, setTab] = useState<Tab>("calendario");
+  // La pestaña vive en `?tab=`: se puede ligar directo («Editar» de la próxima llamada → calendario).
+  const [params, setParams] = useSearchParams();
+  const asked = params.get("tab") as Tab;
+  const tab: Tab = TABS.includes(asked) && (asked !== "quizzes" || quiz.enabled) ? asked : "calendario";
   const tabs: Array<[Tab, string]> = [
     ["calendario", "Calendario"],
     ["grabaciones", `Grabaciones (${recordings.length})`],
@@ -593,32 +612,37 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
     ...(quiz.enabled ? ([["quizzes", "Quizzes"]] as Array<[Tab, string]>) : []),
   ];
   return (
-    <main className="min-h-screen bg-background pb-24 pt-28 text-white">
-      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
-        <Link to={`/comunidad/${community.slug}`} className="text-sm text-brand-500 hover:underline">← {community.name}</Link>
-        <h1 className="mt-3 text-3xl font-bold sm:text-4xl">Administrar club</h1>
-        <nav className="mt-6 flex flex-wrap gap-2 border-b border-colorOutline">
-          {tabs.map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={`-mb-px border-b-2 px-4 py-2 text-sm font-semibold transition ${tab === key ? "border-brand-500 text-brand-500" : "border-transparent text-colorCaption hover:text-white"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-        {result?.ok && <p className="mt-4 rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-2 text-sm text-brand-500">{result.ok}</p>}
-        {result?.error && <p className="mt-4 rounded-xl border border-danger/50 bg-danger/10 px-4 py-2 text-sm text-white">{result.error}</p>}
-        <div className="mt-6">
-          {tab === "calendario" && <Calendar events={events} slug={community.slug} />}
-          {tab === "grabaciones" && <Recordings recordings={recordings} slug={community.slug} />}
-          {tab === "invitados" && <Invites invites={invites} callDays={callDays} />}
-          {tab === "miembros" && <Members members={members} />}
-          {tab === "quizzes" && <Quizzes quiz={quiz} slug={community.slug} />}
-        </div>
-      </div>
-    </main>
+    <ClubShell
+      community={community}
+      me={me}
+      canMod
+      recordingCount={recordingCount}
+      current="admin"
+      navProps={(view) => ({ href: `/comunidad/${community.slug}${CLUB_TABS[view]}` })}
+    >
+      <SectionHead title="Administrar club" />
+      <nav aria-label="Secciones del panel" className="flex gap-1 overflow-x-auto border-b border-[#232D33] bg-[#141B20] px-3 lg:px-5">
+        {tabs.map(([key, text]) => (
+          <button
+            key={key}
+            type="button"
+            aria-current={tab === key ? "page" : undefined}
+            onClick={() => setParams(key === "calendario" ? {} : { tab: key }, { replace: true, preventScrollReset: true })}
+            className="-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent px-2.5 py-2.5 text-[13px] font-medium text-[#7C8A8E] hover:text-[#F2F5F4] aria-[current=page]:border-brand-500 aria-[current=page]:text-[#F2F5F4]"
+          >
+            {text}
+          </button>
+        ))}
+      </nav>
+      <Wrap>
+        {result?.ok && <p className="mb-4 rounded-lg bg-[#17302C] px-3.5 py-2 text-[13px] text-brand-500">{result.ok}</p>}
+        {result?.error && <p className="mb-4 rounded-lg border border-[#232D33] px-3.5 py-2 text-[13px] text-[#F08A80]">{result.error}</p>}
+        {tab === "calendario" && <Calendar events={events} slug={community.slug} />}
+        {tab === "grabaciones" && <Recordings recordings={recordings} slug={community.slug} />}
+        {tab === "invitados" && <Invites invites={invites} callDays={callDays} />}
+        {tab === "miembros" && <Members members={members} />}
+        {tab === "quizzes" && <Quizzes quiz={quiz} slug={community.slug} />}
+      </Wrap>
+    </ClubShell>
   );
 }
