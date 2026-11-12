@@ -74,6 +74,8 @@ export const BOAT_SEATS = 4;
 /** Canasta de almohadas del campamento: de ahí se toman para los almohadazos. */
 export const PILLOWS = { x: 610, y: 648 };
 export const PILLOW_COUNT = 3;
+/** Pulso del beat de la pista de baile (s por tiempo, 108 BPM). Cada compás son cuatro. */
+export const DANCE_BEAT = 60 / 108;
 /** Escenario del Foro (al norte de la placita) y sus gradas: tres filas en abanico que miran a la pantalla. */
 export const STAGE = { x: 800, y: 330 };
 export const STANDS: Spot[] = [[70, 5, 0], [100, 7, 0.26], [130, 9, 0.52]].flatMap(([r, n, lift]) =>

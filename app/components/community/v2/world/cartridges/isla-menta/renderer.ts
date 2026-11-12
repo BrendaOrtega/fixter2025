@@ -10,7 +10,7 @@ import { FLAG_AT, SEA, createIsland, wx, wz } from "./island";
 import { createPuppetKit, type Puppet, type PuppetLook } from "./puppet";
 import { createActions, moodHtml, type MotorHooks, type Person } from "./actions";
 import { BUILDINGS, GHOSTY_ID, UNIT, WORLD_H, WORLD_W, heightAt, isSea, crowd, nearMoor, nearestWalkable, sea, shapeFor, standHeight, toneOf } from "./structure";
-import { BOAT_SEATS, MOOR, PILLOWS, PILLOW_COUNT, spotAt, type PlacedSpot } from "./things";
+import { BOAT_SEATS, DANCE_BEAT, MOOR, PILLOWS, PILLOW_COUNT, spotAt, type PlacedSpot } from "./things";
 
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const PUPPET_SCALE = 1.15;
@@ -273,6 +273,8 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
   function event(ev: WorldEvent) { if (ev.type === "tickle" && ev.kind === "bonk") bonked.add(ev.entity.id); }
   // Almohadas en el aire: salen de tu cabeza y caen en la de quien tocaste; al llegar, el golpe.
   let meId = "me", throwT = 0;
+  /** Beat de la pista: suena sólo en tu pantalla mientras bailas, un compás a la vez. */
+  let danceT = 0, danceBar = 0;
   const flying: Array<{ id: string; t: number; mesh: THREE.Mesh; from: THREE.Vector3 }> = [];
   function toss(id: string) {
     const me = actors.get(meId), target = actors.get(id);
@@ -386,6 +388,10 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
         m.rotation.set(0, a.yaw + (i - 1) * 0.3, wob * 2);
       });
       if (throwT > 0) throwT -= dt;
+      if (!aboard && spot?.thing.id === "dance" && a.spotT > 0.2 && !frame.quiet && !frame.mini) {
+        if (danceT <= 0) { hooks.sound?.(`dance-${danceBar++ % 4}`); danceT += DANCE_BEAT * 4; }
+        danceT -= dt;
+      } else { danceT = 0; danceBar = 0; }
     }
     const speed = dt > 0 ? moved / dt : 0;
     a.puppet.pose({

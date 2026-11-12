@@ -1,13 +1,46 @@
 // Isla Menta: la skin (cómo se ve y suena). Sólo navegador; se carga con `import()` desde el
 // manifiesto, así three.js no le pesa a los demás mundos ni al servidor.
-import type { Face, SoundBank, WorldSkin } from "../../cartridge";
+import type { Face, SoundBank, SoundKit, WorldSkin } from "../../cartridge";
+import { DANCE_BEAT } from "./things";
 import { createRenderer } from "./renderer";
 import { shapeFor, toneOf } from "./structure";
+
+// Beat de la pista de baile: bombo, caja, hi-hat y un bajo suave (La m, Fa, Do, Sol), un compás por llamada.
+// Bajito a propósito: es ambiente, no tapa la voz de nadie. Va con el contexto directo para que no se desafine.
+const ROOTS = [110, 87.31, 130.81, 98];
+function danceBar(k: SoundKit, bar: number) {
+  const c = k.ctx, t0 = c.currentTime + 0.03, B = DANCE_BEAT;
+  const env = (at: number, dur: number, peak: number) => {
+    const g = c.createGain(), t = t0 + at;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.connect(k.dest); return { g, t };
+  };
+  const osc = (type: OscillatorType, from: number, to: number, at: number, dur: number, peak: number) => {
+    const { g, t } = env(at, dur, peak), o = c.createOscillator();
+    o.type = type; o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    o.connect(g); o.start(t); o.stop(t + dur + 0.02);
+  };
+  const noise = (at: number, dur: number, peak: number, type: BiquadFilterType, freq: number) => {
+    const { g, t } = env(at, dur, peak), len = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(), f = c.createBiquadFilter();
+    src.buffer = buf; f.type = type; f.frequency.value = freq;
+    src.connect(f); f.connect(g); src.start(t);
+  };
+  const root = ROOTS[bar % ROOTS.length];
+  for (let b = 0; b < 4; b++) {
+    osc("sine", 140, 48, b * B, 0.2, 0.32); // bombo en cada tiempo
+    noise(b * B + B / 2, 0.05, 0.05, "highpass", 7000); // hi-hat a contratiempo
+    if (b % 2) { noise(b * B, 0.13, 0.1, "bandpass", 1800); osc("triangle", 210, 160, b * B, 0.08, 0.06); } // caja en 2 y 4
+  }
+  for (const [at, mul] of [[0, 1], [1.5, 1], [2.5, 2], [3.5, 1.5]]) osc("triangle", root * mul, root * mul, at * B, B * 0.45, 0.1);
+}
 
 // Sonidos de caminata: pasitos, campanita al llegar, banquito al sentarse. Lo que no se usa aquí queda en silencio.
 const sounds: SoundBank = {
   // Almohadazo: golpe sordo y un soplido de plumas.
   bonk: (k) => { k.tone({ type: "sine", from: 190, to: 70, dur: 0.16, gain: 0.8 }); k.whoosh(0.22, 0.25, 900, 300); },
+  "dance-0": (k) => danceBar(k, 0), "dance-1": (k) => danceBar(k, 1), "dance-2": (k) => danceBar(k, 2), "dance-3": (k) => danceBar(k, 3),
   // La almohada sale volando.
   toss: (k) => k.whoosh(0.2, 0.3, 500, 1500),
   // Cosquillas: risita de tres notas que suben.
