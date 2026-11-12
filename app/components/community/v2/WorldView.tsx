@@ -129,15 +129,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [downIn, setDownIn] = useState<number | null>(null);
   // Chat efímero: los mensajes viven ~10 min en memoria del servidor y llegan con el mismo sondeo.
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [chatOpen, setChatOpen] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
-  const chatInputRef = useRef<HTMLInputElement>(null);
-  const chatBoxRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [unread, setUnread] = useState(0);
-  const chatOpenRef = useRef(false);
-  chatOpenRef.current = chatOpen;
   const [waved, setWaved] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
@@ -273,15 +267,13 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       api.setBotsDown(snap.down ?? [], firstRead);
       api.setShared(snap.shared ?? {});
       const says = snap.says ?? [];
-      let fresh = 0;
       for (const m of says) {
         if (seenSays.has(m.id)) continue;
         seenSays.add(m.id);
         if (firstRead) continue; // lo de antes de que llegaras se lee en el historial, sin burbujas
         api.showSay(m.from, m.text);
-        if (m.from !== snap.me) { fresh++; sound.play("msg"); }
+        if (m.from !== snap.me) sound.play("msg");
       }
-      if (fresh && !chatOpenRef.current) setUnread((n) => n + fresh);
       setMessages((prev) => (prev.length === says.length && prev.at(-1)?.id === says.at(-1)?.id ? prev : says));
       firstRead = false;
     };
@@ -377,22 +369,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     return () => { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); box.style.height = ""; box.style.top = ""; box.style.bottom = ""; };
   }, [expanded]);
 
-  // El historial abierto se queda en el último mensaje.
-  useEffect(() => { if (chatOpen && logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [chatOpen, messages]);
-
-  // Cajón del chat: al abrir, el cursor va al campo; Esc lo cierra antes que cualquier otra cosa.
-  // En teléfono es una hoja inferior: se sube lo que mida el teclado para que el campo no quede tapado.
-  useEffect(() => {
-    if (!chatOpen) return;
-    chatInputRef.current?.focus({ preventScroll: true });
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setChatOpen(false); } };
-    document.addEventListener("keydown", onKey, true);
-    const vv = window.visualViewport;
-    const fit = () => { if (vv && chatBoxRef.current) chatBoxRef.current.style.setProperty("--kb", `${Math.max(0, window.innerHeight - vv.height - vv.offsetTop)}px`); };
-    fit();
-    vv?.addEventListener("resize", fit); vv?.addEventListener("scroll", fit);
-    return () => { document.removeEventListener("keydown", onKey, true); vv?.removeEventListener("resize", fit); vv?.removeEventListener("scroll", fit); };
-  }, [chatOpen]);
+  // El historial se queda en el último mensaje.
+  useEffect(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [messages]);
 
   const sendChat = async () => {
     const text = draft.replace(/\s+/g, " ").trim();
@@ -473,10 +451,13 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
           ref={boxRef}
           className={
             expanded
-              ? "fixed inset-0 z-[300] flex flex-col overflow-hidden bg-background"
-              : "relative flex flex-col rounded-xl border border-[#232D33] max-sm:bg-[#141B20] sm:h-[min(72dvh,660px)] sm:min-h-[440px] sm:overflow-hidden sm:bg-background lg:h-[calc(100dvh-172px)]"
+              ? "fixed inset-0 z-[300] flex flex-col overflow-hidden bg-background lg:flex-row"
+              : "relative flex flex-col rounded-xl border border-[#232D33] max-sm:bg-[#141B20] sm:h-[calc(min(72dvh,660px)+240px)] sm:min-h-[680px] sm:overflow-hidden sm:bg-background lg:h-[calc(100dvh-172px)] lg:min-h-[440px] lg:flex-row"
           }
         >
+          {/* Columna del mapa. En pantalla ancha el chat va a su derecha, en flujo: el mapa se encoge, no se tapa.
+              Más angosto, esta columna «no existe» (contents) y el chat queda debajo, también en flujo. */}
+          <div className="max-lg:contents lg:relative lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
           {/* ── Controles ── */}
           <div
             className={
@@ -636,8 +617,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
                 : "max-sm:mx-2.5 max-sm:mb-2.5 max-sm:rounded-[10px] max-sm:border max-sm:border-[#232D33] max-sm:bg-background sm:border-t sm:border-[#232D33]"
             }`}
           >
-            <div className="flex items-center gap-2">
-            <div aria-live="polite" className="flex min-h-[40px] min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2">
+            <div aria-live="polite" className="flex min-h-[40px] flex-wrap items-center gap-x-5 gap-y-2">
             {!ship && !(place && near) && (
               <p className="text-[13px] text-[#7C8A8E]">
                 {copy.hint}
@@ -670,27 +650,11 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               </div>
             )}
             </div>
-            {/* Chat efímero: vive en un cajón aparte para que el mapa tenga el espacio; aquí sólo queda su botón. */}
-            <button
-              type="button"
-              aria-expanded={chatOpen}
-              aria-controls="world-chat"
-              aria-label={chatOpen ? "Cerrar el chat del Mundo" : `Abrir el chat del Mundo${unread ? ` (${unread} nuevos)` : ""}`}
-              title="Chat del Mundo"
-              onClick={() => { setChatOpen((v) => !v); setUnread(0); }}
-              className={`relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#232D33] hover:bg-[#1C252B] ${chatOpen ? "bg-[#17302C] text-brand-500" : "bg-background text-[#D9E0DE]"}`}
-            >
-              <Icon name="chat" className="h-[18px] w-[18px]" />
-              {unread > 0 && !chatOpen && (
-                <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand-500 px-1 text-[10px] font-semibold text-background">{unread > 9 ? "9+" : unread}</span>
-              )}
-            </button>
-            </div>
           </div>
 
           {/* ── Vista reducida (teléfono, sin expandir): lista tocable ── */}
           {!expanded && (
-            <div className="px-2.5 pb-2.5 sm:hidden">
+            <div className="order-last px-2.5 pb-2.5 sm:hidden">
               <p className="mx-0.5 mb-2 text-xs text-[#7C8A8E]">{copy.hintMini}</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {miniRows(structure).filter((row) => !hidden.includes(row.id)).map((row, i, rows) => {
@@ -715,56 +679,6 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
             </div>
           )}
 
-          {/* ── Chat en cajón: entra por la derecha en pantalla ancha; en teléfono es una hoja inferior ── */}
-          {chatOpen && (
-            <div
-              ref={chatBoxRef}
-              id="world-chat"
-              role="dialog"
-              aria-label="Chat del Mundo"
-              className="world-chat fixed inset-x-0 bottom-[var(--kb,0px)] z-[320] flex max-h-[min(70dvh,480px)] flex-col rounded-t-[14px] border border-[#232D33] bg-[#141B20] pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_28px_rgba(0,0,0,0.35)] sm:inset-x-auto sm:bottom-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-[340px] sm:rounded-none sm:border-y-0 sm:border-r-0 sm:shadow-[-10px_0_28px_rgba(0,0,0,0.35)]"
-            >
-              <style>{`@keyframes world-chat-up{from{transform:translateY(24px);opacity:0}}@keyframes world-chat-side{from{transform:translateX(24px);opacity:0}}@media (prefers-reduced-motion:no-preference){.world-chat{animation:world-chat-up .18s ease-out}@media (min-width:640px){.world-chat{animation-name:world-chat-side}}}`}</style>
-              <div className="flex items-center justify-between gap-3 border-b border-[#232D33] px-3.5 py-2.5">
-                <div className="min-w-0 leading-snug">
-                  <h2 className="text-sm font-semibold text-[#F2F5F4]">Chat del Mundo</h2>
-                  <p className="text-[11px] text-[#7C8A8E]">Los mensajes se borran solos a los 10 minutos.</p>
-                </div>
-                <button type="button" aria-label="Cerrar el chat" title="Cerrar (Esc)" onClick={() => setChatOpen(false)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#232D33] bg-background text-[#D9E0DE] hover:bg-[#1C252B]">
-                  <Icon name="close" className="h-4 w-4" />
-                </button>
-              </div>
-              <div ref={logRef} role="log" aria-label="Mensajes recientes del Mundo" className="min-h-[120px] flex-1 overflow-y-auto px-3.5 py-2.5 text-[13px] leading-snug">
-                {messages.length === 0 ? (
-                  <p className="text-[#7C8A8E]">Todavía nadie escribe.</p>
-                ) : (
-                  messages.map((m) => (
-                    <p key={m.id} className="break-words py-1 text-[#D9E0DE] [overflow-wrap:anywhere]">
-                      <b className="font-semibold text-[#F2F5F4]">{m.from === me?.id ? "Tú" : m.name}:</b> {m.text}
-                    </p>
-                  ))
-                )}
-              </div>
-              {/* Mientras escribes, las teclas no mueven la nave ni disparan (el motor ignora los campos). */}
-              <form className="flex items-center gap-2 border-t border-[#232D33] p-2.5" onSubmit={(e) => { e.preventDefault(); void sendChat(); }}>
-                <input
-                  ref={chatInputRef}
-                  type="text"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  maxLength={SAY_MAX_CHARS}
-                  enterKeyHint="send"
-                  autoComplete="off"
-                  aria-label="Escribe un mensaje al Mundo"
-                  placeholder="Escribe al Mundo…"
-                  disabled={!ready}
-                  className="h-10 min-w-0 flex-1 rounded-full border border-[#232D33] bg-background px-3.5 text-base text-[#F2F5F4] placeholder:text-[#7C8A8E] focus:border-brand-500 focus:outline-none sm:text-[13px]"
-                />
-                <button type="submit" className={btn} disabled={!ready || sending || !draft.trim()}>Enviar</button>
-              </form>
-            </div>
-          )}
-
           {sheetOpen && (
             <ShipSheet
               look={look} face={faceRef.current} looks={structure.looks} skin={skin} copy={copy} onChange={changeLook} onClose={() => setSheetOpen(false)}
@@ -774,6 +688,49 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               ]}
             />
           )}
+          </div>
+
+          {/* ── Chat: columna fija a la derecha del mapa (≥1024) o bloque debajo de él; siempre abierto, nunca encimado ── */}
+          <aside
+            aria-label="Chat del Mundo"
+            className={`flex min-h-0 shrink-0 flex-col bg-[#141B20] lg:h-auto lg:w-[320px] lg:border-l lg:border-[#232D33] ${
+              expanded
+                ? "h-[min(30dvh,240px)] border-t border-[#232D33] pb-[env(safe-area-inset-bottom)] lg:border-t-0"
+                : "h-[240px] max-sm:mx-2.5 max-sm:mb-2.5 max-sm:rounded-[10px] max-sm:border max-sm:border-[#232D33] max-sm:bg-background sm:border-t sm:border-[#232D33] lg:border-t-0"
+            }`}
+          >
+            <div className="flex items-baseline justify-between gap-3 border-b border-[#232D33] px-3 py-2">
+              <h2 className="text-[13px] font-semibold text-[#F2F5F4]">Chat del Mundo</h2>
+              <p className="text-[11px] text-[#7C8A8E]">Se borra a los 10 minutos</p>
+            </div>
+            <div ref={logRef} role="log" aria-label="Mensajes recientes del Mundo" className="min-h-0 flex-1 overflow-y-auto px-3 py-2 text-[13px] leading-snug">
+              {messages.length === 0 ? (
+                <p className="text-[#7C8A8E]">Todavía nadie escribe.</p>
+              ) : (
+                messages.map((m) => (
+                  <p key={m.id} className="break-words py-1 text-[#D9E0DE] [overflow-wrap:anywhere]">
+                    <b className="font-semibold text-[#F2F5F4]">{m.from === me?.id ? "Tú" : m.name}:</b> {m.text}
+                  </p>
+                ))
+              )}
+            </div>
+            {/* Mientras escribes, las teclas no mueven la nave ni disparan (el motor ignora los campos). */}
+            <form className="flex items-center gap-2 border-t border-[#232D33] p-2" onSubmit={(e) => { e.preventDefault(); void sendChat(); }}>
+              <input
+                type="text"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                maxLength={SAY_MAX_CHARS}
+                enterKeyHint="send"
+                autoComplete="off"
+                aria-label="Escribe un mensaje al Mundo"
+                placeholder="Escribe al Mundo…"
+                disabled={!ready}
+                className="h-10 min-w-0 flex-1 rounded-full border border-[#232D33] bg-background px-3.5 text-base text-[#F2F5F4] placeholder:text-[#7C8A8E] focus:border-brand-500 focus:outline-none sm:text-[13px]"
+              />
+              <button type="submit" className={btn} disabled={!ready || sending || !draft.trim()}>Enviar</button>
+            </form>
+          </aside>
         </div>
       </div>
     </>
