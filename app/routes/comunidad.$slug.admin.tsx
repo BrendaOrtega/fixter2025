@@ -630,7 +630,7 @@ function Members({ members }: Pick<Route.ComponentProps["loaderData"], "members"
   );
 }
 
-const CLUB_TABS: Record<View, string> = { wall: "", events: "?tab=events", recs: "?tab=recs", courses: "?tab=courses", me: "?tab=me" };
+const CLUB_TABS: Record<View, string> = { world: "", wall: "?tab=wall", events: "?tab=events", recs: "?tab=recs", courses: "?tab=courses", me: "?tab=me" };
 const TABS: Tab[] = ["calendario", "grabaciones", "invitados", "miembros", "quizzes"];
 
 export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {

@@ -9,23 +9,23 @@ import type { View } from "./types";
 
 type NavEntry = { view: View; label: string; icon: IconName; group?: string };
 const SIDE_NAV: NavEntry[] = [
-  { view: "wall", label: "Muro", icon: "wall" },
   { view: "world", label: "Mundo", icon: "world" },
+  { view: "wall", label: "Muro", icon: "wall" },
   { view: "events", label: "Eventos", icon: "calendar", group: "En vivo" },
   { view: "recs", label: "Grabaciones", icon: "recording" },
   { view: "courses", label: "Cursos incluidos", icon: "book", group: "Aprender" },
   { view: "me", label: "Mi membresía", icon: "person", group: "Tu cuenta" },
 ];
 const TOP_NAV: Array<{ view: View; label: string }> = [
-  { view: "wall", label: "Inicio" },
   { view: "world", label: "Mundo" },
+  { view: "wall", label: "Muro" },
   { view: "events", label: "Eventos" },
   { view: "recs", label: "Grabaciones" },
   { view: "courses", label: "Cursos" },
 ];
 const TAB_BAR: NavEntry[] = [
-  { view: "wall", label: "Muro", icon: "wall" },
   { view: "world", label: "Mundo", icon: "world" },
+  { view: "wall", label: "Muro", icon: "wall" },
   { view: "events", label: "Eventos", icon: "calendar" },
   { view: "recs", label: "Grabaciones", icon: "recording" },
   { view: "me", label: "Yo", icon: "person" },
@@ -77,7 +77,7 @@ export function ClubShell({
           <img src="/logo.png" alt="FixterGeek" className="h-6" />
         </a>
         <span aria-hidden className="h-5 w-px shrink-0 bg-[#232D33]" />
-        <a {...navProps("wall")} aria-current={undefined} className="min-w-0 truncate text-[15px] font-semibold text-[#F2F5F4]">
+        <a {...navProps("world")} aria-current={undefined} className="min-w-0 truncate text-[15px] font-semibold text-[#F2F5F4]">
           {community.name}
         </a>
         <nav aria-label="Secciones del club" className="mx-auto hidden gap-0.5 lg:flex">

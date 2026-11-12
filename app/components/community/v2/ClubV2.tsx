@@ -22,13 +22,14 @@ type State = { view: View; postId: string | null };
 
 function readState(params: URLSearchParams): State {
   const tab = params.get("tab");
-  const view = VIEWS.includes(tab as View) ? (tab as View) : "wall";
+  // Sin `?tab=` se entra al Mundo; una liga vieja a una publicación (`?post=` sin tab) abre el muro.
+  const view = VIEWS.includes(tab as View) ? (tab as View) : params.get("post") ? "wall" : "world";
   return { view, postId: view === "wall" ? params.get("post") : null };
 }
 
 function searchFor(base: URLSearchParams, { view, postId }: State) {
   const next = new URLSearchParams(base);
-  if (view === "wall") next.delete("tab");
+  if (view === "world") next.delete("tab");
   else next.set("tab", view);
   if (postId) next.set("post", postId);
   else next.delete("post");
