@@ -234,3 +234,14 @@ HyperFrames.
      marca → volver a renderizar) sobre el HTML de HyperFrames, no sobre OTIO.
   - Visores web: Raven (OTIO) sólo muestra la línea de tiempo y no edita. Omniclip y Twick usan su
     propio JSON. Verificar ambos con fuentes antes de decidir algo con ellos.
+
+## Quiz en vivo del club (en producción desde el 12-nov-2026)
+
+Quiz tipo Kahoot dentro de la llamada del club: panel junto a la sala, tablero en `quiz.fixtergeek.com` (Razzia, MIT,
+fork `blissito/Razzia` rama `fixtergeek`, copia en `~/razzia`). **Antes de tocarlo, leer `docs/comunidad/quiz-en-vivo.md`**
+(piezas, flujos, reglas que no se rompen, cómo probar). La operación de la caja está en
+`~/sandbox-host/docs/runbook-quiz-razzia.md` y los scripts de prueba en `~/sandbox-host/scripts/quiz-razzia/`.
+- Código: `app/.server/services/club-quiz.server.ts`, `app/routes/comunidad.$slug.quiz.ts`,
+  `app/components/community/QuizPanel.tsx`. Sin `QUIZ_API_URL` todo queda apagado.
+- El iframe de la sala nunca se remonta y el panel no usa el `useFetcher` de la llamada.
+- Desplegar el fork reinicia el quiz y tira las partidas en curso: sólo fuera de llamadas, y volver a poner `APP_PIN=1`.
