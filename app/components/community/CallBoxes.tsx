@@ -38,7 +38,7 @@ export const callBoxes = [
       "100 personas en la sala",
       "Público abierto por YouTube",
       "5 salas a la vez",
-      "Grabación de hasta 4 horas",
+      "Grabación de hasta 2 horas",
       "Tus colores y tu logo en la sala",
     ],
   },
