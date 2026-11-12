@@ -73,12 +73,24 @@ import { ClubV2 } from "~/components/community/v2/ClubV2";
 // del servidor y, si la hidratación tarda, el título se queda transparente
 // (lo que pasaba en /c/agentes). Aquí todo anima con CSS sobre lo que ya se ve.
 
-export const meta = ({ data: d }: Route.MetaArgs) =>
-  getMetaTags({
-    title: d?.community ? `${d.community.name} | FixterGeek` : "Comunidad | FixterGeek",
-    description: d?.community?.tagline || d?.community?.description || undefined,
-    url: d?.community ? `https://www.fixtergeek.com/comunidad/${d.community.slug}` : undefined,
+// Miniatura para compartir (WhatsApp, X, LinkedIn): 1200×630 por comunidad, en `public/`.
+// Se genera con `docs/comunidad/og-club/build.py`. Sin entrada aquí, va la portada del sitio.
+const OG_IMAGES: Record<string, string> = {
+  "club-de-agentes": "https://www.fixtergeek.com/og-club-de-agentes.png",
+};
+
+// La canónica y `og:url` van sin parámetros (`tab`, `v`, `post`): todas las vistas son la misma página.
+export const meta = ({ data: d }: Route.MetaArgs) => {
+  const community = d?.community;
+  if (!community) return getMetaTags({ title: "Comunidad | FixterGeek" });
+  const ogImage = OG_IMAGES[community.slug];
+  return getMetaTags({
+    title: `${community.name} | FixterGeek`,
+    description: community.tagline || community.description || undefined,
+    url: `https://www.fixtergeek.com/comunidad/${community.slug}`,
+    ...(ogImage ? { image: ogImage, imageWidth: 1200, imageHeight: 630 } : {}),
   });
+};
 
 async function loadCommunity(slug: string) {
   return db.community.findFirst({
