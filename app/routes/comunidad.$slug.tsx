@@ -63,6 +63,7 @@ import { getCallLink, isHostEmail, type CallSkin } from "~/.server/services/club
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 import { ClubV2 } from "~/components/community/v2/ClubV2";
+import { ClubLanding } from "~/components/community/v2/landing/ClubLanding";
 
 // Casa de una comunidad de pago (10-nov-2026): hero con la próxima llamada,
 // grabaciones, qué incluye, preguntas, invitación a unirse y, al final, el muro
@@ -680,7 +681,16 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   const [showAll, setShowAll] = useState(false);
   // Rediseño (12-nov-2026): todos los de adentro lo ven por defecto; `?v=1` regresa a la
   // página anterior.
-  if (isInside && params.get("v") !== "1") return <ClubV2 {...loaderData} />;
+  if (isInside && params.get("v") !== "1") {
+    return (
+      <>
+        {justJoined && <EmojiConfetti />}
+        <ClubV2 {...loaderData} />
+      </>
+    );
+  }
+  // Sin membresía: la landing del rediseño. Lo de abajo queda sólo para `?v=1` de los de adentro.
+  if (!isInside) return <ClubLanding {...loaderData} />;
 
   const joinBlock = canClaimGift ? (
     <div className="grid gap-4">
