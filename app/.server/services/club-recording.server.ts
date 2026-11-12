@@ -133,7 +133,12 @@ export async function stopRecording(
     orderBy: { createdAt: "desc" },
   });
   if (!row) {
-    // Grabación sin fila (p. ej. arrancó antes de este deploy): `start` la registra sin duplicar.
+    // Sin fila y la caja no graba esta sala: no hay nada que detener (un segundo «Detener», un
+    // doble clic o un reintento). Antes aquí se arrancaba una grabación para cerrarla enseguida:
+    // dejaba un MP4 de 3 s sin cerrar y el 12-nov tumbó el servidor de la caja 94 s.
+    const state = await recordingState(room);
+    if (!state?.recording) return { ok: true as const };
+    // La caja sí graba pero no hay fila (arrancó desde la sala suelta): `start` la registra sin duplicar.
     const s = await startRecording(community, title, room, { event });
     if (!s.ok) return s;
     row = await db.communityRecording.findFirst({
