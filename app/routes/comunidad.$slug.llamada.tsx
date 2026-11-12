@@ -101,7 +101,7 @@ export default function ClubCall() {
   }, [slug]);
 
   return (
-    <div className="fixed inset-0 z-[2147483647] flex flex-col bg-[#0E1317] md:flex-row">
+    <div className="fixed inset-0 z-[2147483647] flex flex-col bg-[#0E1317] lg:flex-row">
       {/* La sala va SIEMPRE primero y con el mismo `src`: su ticket es de un solo uso, remontarla la pierde. */}
       <div className="relative min-h-0 min-w-0 flex-1">
         <iframe

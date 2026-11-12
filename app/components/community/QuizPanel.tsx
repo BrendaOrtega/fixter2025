@@ -7,6 +7,7 @@
 // Miembro: cuando hay partida, aparece el panel con el jugador de Razzia ya dentro (sin PIN).
 // Anfitrión: lanza la partida; el tablero se abre en otra ventana, que comparte en la llamada.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { btn, btnGhost, card } from "./v2/ui";
 
 type Active = { gameId: string; subject: string; playerUrl?: string; inviteCode?: string; boardUrl?: string; membersOnly?: boolean; site?: string };
 type Status = { enabled: boolean; canHost: boolean; active: Active | null };
@@ -15,18 +16,16 @@ type Quiz = { id: string; subject: string };
 const POLL_MS = 5000;
 const OFF: Status = { enabled: false, canHost: false, active: null };
 
-// Mismo lenguaje que la página del club: tarjetas `backface` con borde `colorOutline` sobre el
-// fondo de la casa, botón lleno como «Publicar» y pastilla menta como «Club · FixterGeek».
-const button =
-  "inline-flex h-12 w-full items-center justify-center rounded-xl px-5 text-sm font-bold transition disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500";
-const primary = `${button} border border-colorOutline bg-brand-500 text-brand-900 hover:bg-brand-100 active:translate-y-px`;
-const quiet = `${button} border border-colorOutline text-white hover:border-brand-500 hover:text-brand-500`;
-const card = "rounded-2xl border border-colorOutline bg-backface";
+// Sistema v2 del club (`v2/ui.tsx`): misma tarjeta y mismos botones, sólo más altos y a lo ancho
+// porque aquí son la acción principal de un panel angosto.
+const primary = `${btn} !min-h-11 w-full`;
+const quiet = `${btnGhost} !min-h-11 w-full`;
+const focus = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500";
 
 /** Tablero del quiz: pregunta, cuatro respuestas y una ya marcada. Caricatura plana de la casa. */
 function QuizIllustration({ live }: { live: boolean }) {
   return (
-    <svg viewBox="0 0 320 150" role="img" aria-label="Tablero de un quiz con cuatro respuestas" className="hidden w-full md:block">
+    <svg viewBox="0 0 320 150" role="img" aria-label="Tablero de un quiz con cuatro respuestas" className="hidden w-full lg:block">
       <style>{`
         @keyframes quiz-pick { 0%,55% { opacity: 0; transform: scale(.4) } 70%,100% { opacity: 1; transform: scale(1) } }
         @keyframes quiz-bar { from { transform: scaleX(1) } to { transform: scaleX(.12) } }
@@ -35,11 +34,11 @@ function QuizIllustration({ live }: { live: boolean }) {
         @media (prefers-reduced-motion: reduce) { .quiz-pick,.quiz-bar { animation: none } }
       `}</style>
       <ellipse cx="160" cy="142" rx="104" ry="6" fill="#000" opacity=".3" />
-      <rect x="44" y="8" width="232" height="126" rx="16" fill="#182128" stroke="#2C3944" strokeWidth="2" />
+      <rect x="44" y="8" width="232" height="126" rx="16" fill="#141B20" stroke="#232D33" strokeWidth="2" />
       {/* pregunta y tiempo */}
       <rect x="62" y="24" width="128" height="10" rx="5" fill="#F2F5F4" />
       <rect x="62" y="40" width="84" height="8" rx="4" fill="#7C8A8E" />
-      <rect x="62" y="56" width="196" height="5" rx="2.5" fill="#2C3944" />
+      <rect x="62" y="56" width="196" height="5" rx="2.5" fill="#232D33" />
       <rect className={live ? "quiz-bar" : ""} x="62" y="56" width="196" height="5" rx="2.5" fill="#85DDCB" />
       {/* respuestas */}
       <rect x="62" y="72" width="94" height="22" rx="8" fill="#85DDCB" />
@@ -62,8 +61,8 @@ function Steps({ items }: { items: string[] }) {
   return (
     <ol className="grid gap-3">
       {items.map((text, i) => (
-        <li key={text} className="flex gap-3 text-sm leading-snug text-colorParagraph">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-xs font-bold text-brand-500">{i + 1}</span>
+        <li key={text} className="flex gap-3 text-sm leading-snug text-[#D9E0DE]">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#17302C] text-xs font-semibold text-brand-500">{i + 1}</span>
           <span>{text}</span>
         </li>
       ))}
@@ -106,33 +105,41 @@ export function QuizPanel({ slug }: { slug: string }) {
 
   return (
     <>
-      {/* Plegado: una pestaña delgada. Abajo en el teléfono, a la derecha en escritorio. */}
+      {/* Plegado: pastilla flotante en el borde derecho. No ocupa ancho ni alto: la sala conserva
+          todo su espacio y su barra de controles no se recorta. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Abrir el quiz"
-        className={`${open ? "hidden" : "flex"} h-12 w-full shrink-0 items-center justify-center gap-2 border-t border-colorOutline bg-backface text-sm font-bold transition hover:text-brand-500 md:h-full md:w-12 md:flex-col md:border-l md:border-t-0 ${status.active ? "text-brand-500" : "text-white"}`}
+        className={`${open ? "hidden" : "flex"} absolute right-0 top-1/2 z-10 -translate-y-1/2 flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-[#232D33] bg-[#141B20] px-2 py-3 text-[13px] font-semibold shadow-[0_6px_20px_rgba(0,0,0,.35)] transition-colors hover:bg-[#1C252B] ${focus} ${status.active ? "text-brand-500" : "text-[#F2F5F4]"}`}
       >
-        <span className={`h-2 w-2 rounded-full ${status.active ? "animate-pulse bg-brand-500" : "bg-colorCaption"}`} />
-        <span className="md:[writing-mode:vertical-rl]">{status.active ? "Quiz en vivo" : "Quiz"}</span>
+        <span className={`h-2 w-2 rounded-full ${status.active ? "animate-pulse bg-brand-500" : "bg-[#7C8A8E]"}`} />
+        <span className="[writing-mode:vertical-rl]">{status.active ? "Quiz en vivo" : "Quiz"}</span>
       </button>
 
-      {/* Desplegado. El jugador sigue montado aunque se pliegue, para conservar su lugar. */}
+      {/* Desplegado. El jugador sigue montado aunque se pliegue, para conservar su lugar.
+          Anfitrión: cajón ENCIMA de la sala (no juega; el tablero va en otra pestaña), así su barra
+          de controles, la más ancha, nunca pierde espacio. Jugador: columna junto a la sala sólo en
+          pantallas de 1024 px o más; abajo de eso, sala arriba y quiz abajo. */}
       <aside
-        className={`${open ? "flex" : "hidden"} h-[58%] w-full shrink-0 flex-col border-t border-colorOutline bg-background text-white md:h-full md:w-[400px] md:border-l md:border-t-0`}
+        className={`${open ? "flex" : "hidden"} flex-col border-[#232D33] bg-background text-[#F2F5F4] ${
+          status.canHost
+            ? "absolute inset-x-0 bottom-0 z-10 h-[72%] rounded-t-[10px] border-t shadow-[0_-8px_28px_rgba(0,0,0,.4)] lg:inset-y-0 lg:left-auto lg:right-0 lg:h-full lg:w-[400px] lg:rounded-none lg:border-l lg:border-t-0 lg:shadow-[-8px_0_28px_rgba(0,0,0,.4)]"
+            : "h-[58%] w-full shrink-0 border-t lg:h-full lg:w-[400px] lg:border-l lg:border-t-0"
+        }`}
       >
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-colorOutline px-4">
-          <p className="inline-flex min-w-0 items-center gap-2 rounded-full border border-brand-500 px-3 py-1 text-sm font-bold text-brand-500">
-            <span className={`h-2 w-2 shrink-0 rounded-full bg-brand-500 ${status.active ? "animate-pulse" : ""}`} />
+        <header className="flex min-h-[52px] shrink-0 items-center justify-between gap-3 border-b border-[#232D33] px-4">
+          <p className="inline-flex min-w-0 items-center gap-2 text-base font-semibold text-[#F2F5F4]">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${status.active ? "animate-pulse bg-brand-500" : "bg-[#7C8A8E]"}`} />
             <span className="truncate">{status.active ? "Quiz en vivo" : "Quiz del club"}</span>
           </p>
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Plegar el quiz"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-colorOutline text-colorCaption transition hover:border-brand-500 hover:text-brand-500"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#232D33] bg-[#141B20] text-[#7C8A8E] transition-colors hover:bg-[#1C252B] hover:text-[#F2F5F4] ${focus}`}
           >
-            <svg viewBox="0 0 16 16" className="h-4 w-4 rotate-90 md:rotate-0" aria-hidden="true">
+            <svg viewBox="0 0 16 16" className="h-4 w-4 rotate-90 lg:rotate-0" aria-hidden="true">
               <path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -217,8 +224,8 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5 [&>*]:shrink-0">
         <QuizIllustration live />
         <div>
-          <h2 className="text-xl font-bold leading-tight">{active.subject}</h2>
-          <p className="mt-1 text-sm text-colorCaption">
+          <h2 className="text-lg font-semibold leading-tight">{active.subject}</h2>
+          <p className="mt-1 text-sm text-[#7C8A8E]">
             {active.membersOnly
               ? "En curso, sólo miembros del club: entran desde su panel de la llamada o con el QR del tablero."
               : "En curso, abierto: entra cualquiera con el PIN. Los miembros entran solos desde la llamada."}
@@ -226,7 +233,7 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
         </div>
         {active.inviteCode && (
           <p className={`${card} p-4`}>
-            <span className="block text-xs text-colorCaption">Para jugar desde cualquier lugar: {active.site} con el PIN</span>
+            <span className="block text-xs text-[#7C8A8E]">Para jugar desde cualquier lugar: {active.site} con el PIN</span>
             <span className="text-3xl font-bold tracking-widest text-brand-500">{active.inviteCode}</span>
           </p>
         )}
@@ -239,12 +246,12 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
             ]}
           />
         </div>
-        {error && <p className="rounded-xl border border-danger p-3 text-sm text-white">{error}</p>}
+        {error && <p className="rounded-[10px] border border-[#232D33] p-3 text-sm text-[#F08A80]">{error}</p>}
         </div>
-      <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-colorOutline bg-background p-4 md:grid-cols-1">
+      <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[#232D33] bg-background p-4 lg:grid-cols-1">
         <a href={active.boardUrl} target="_blank" rel="noopener" className={primary}>Abrir tablero</a>
         {confirmEnd ? (
-          <div className="col-span-2 grid grid-cols-2 gap-2 md:col-span-1">
+          <div className="col-span-2 grid grid-cols-2 gap-2 lg:col-span-1">
             <button type="button" onClick={end} disabled={busy} className={primary}>Sí, terminar</button>
             <button type="button" onClick={() => setConfirmEnd(false)} className={quiet}>Seguir jugando</button>
           </div>
@@ -262,23 +269,23 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5 [&>*]:shrink-0">
       <QuizIllustration live={false} />
       <div>
-        <h2 className="text-xl font-bold leading-tight">Lanza un quiz en vivo</h2>
-        <p className="mt-1 text-sm text-colorCaption">Sirve en la llamada del club y fuera de ella: en un evento, una clase o una transmisión.</p>
+        <h2 className="text-lg font-semibold leading-tight">Lanza un quiz en vivo</h2>
+        <p className="mt-1 text-sm text-[#7C8A8E]">Sirve en la llamada del club y fuera de ella: en un evento, una clase o una transmisión.</p>
       </div>
       {quizzes === null ? (
-        <p className={`${card} p-4 text-sm text-colorCaption`}>Cargando quizzes…</p>
+        <p className={`${card} p-4 text-sm text-[#7C8A8E]`}>Cargando quizzes…</p>
       ) : quizzes.length === 0 ? (
-        <p className={`${card} p-4 text-sm text-colorCaption`}>Todavía no hay quizzes. Crea el primero con «Editar quizzes».</p>
+        <p className={`${card} p-4 text-sm text-[#7C8A8E]`}>Todavía no hay quizzes. Crea el primero con «Editar quizzes».</p>
       ) : (
         <fieldset className="grid gap-2">
-          <legend className="mb-2 text-sm font-bold">Elige el quiz</legend>
+          <legend className="mb-2 text-[13px] font-semibold text-[#7C8A8E]">Elige el quiz</legend>
           {quizzes.map((q) => (
             <label
               key={q.id}
-              className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-4 text-sm font-semibold transition ${quizId === q.id ? "border-brand-500 bg-brand-500/10 text-white" : "border-colorOutline bg-backface text-colorParagraph hover:border-brand-500"}`}
+              className={`flex cursor-pointer items-center gap-3 rounded-[10px] border p-4 text-sm font-semibold transition ${quizId === q.id ? "border-brand-500 bg-[#17302C] text-[#F2F5F4]" : "border-[#232D33] bg-[#141B20] text-[#D9E0DE] hover:bg-[#1C252B]"}`}
             >
               <input type="radio" name="quiz" value={q.id} checked={quizId === q.id} onChange={() => setQuizId(q.id)} className="sr-only" />
-              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${quizId === q.id ? "border-brand-500" : "border-colorOutline"}`}>
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${quizId === q.id ? "border-brand-500" : "border-[#232D33]"}`}>
                 {quizId === q.id && <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />}
               </span>
               <span className="min-w-0 break-words">{q.subject}</span>
@@ -287,22 +294,22 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
         </fieldset>
       )}
       <fieldset className="grid gap-2">
-        <legend className="mb-2 text-sm font-bold">Quién puede jugar</legend>
+        <legend className="mb-2 text-[13px] font-semibold text-[#7C8A8E]">Quién puede jugar</legend>
         {[
           { value: false, title: "Cualquiera con el PIN", note: "Para eventos, clases y transmisiones. Los miembros en la llamada entran solos." },
           { value: true, title: "Sólo miembros del club", note: "Entran desde su panel de la llamada o con el QR del tablero." },
         ].map((o) => (
           <label
             key={o.title}
-            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 text-sm transition ${membersOnly === o.value ? "border-brand-500 bg-brand-500/10" : "border-colorOutline bg-backface hover:border-brand-500"}`}
+            className={`flex cursor-pointer items-start gap-3 rounded-[10px] border p-4 text-sm transition ${membersOnly === o.value ? "border-brand-500 bg-[#17302C]" : "border-[#232D33] bg-[#141B20] hover:bg-[#1C252B]"}`}
           >
             <input type="radio" name="audience" checked={membersOnly === o.value} onChange={() => setMembersOnly(o.value)} className="sr-only" />
-            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${membersOnly === o.value ? "border-brand-500" : "border-colorOutline"}`}>
+            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${membersOnly === o.value ? "border-brand-500" : "border-[#232D33]"}`}>
               {membersOnly === o.value && <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />}
             </span>
             <span className="min-w-0">
-              <span className="block font-semibold text-white">{o.title}</span>
-              <span className="mt-0.5 block text-colorCaption">{o.note}</span>
+              <span className="block font-semibold text-[#F2F5F4]">{o.title}</span>
+              <span className="mt-0.5 block text-[#7C8A8E]">{o.note}</span>
             </span>
           </label>
         ))}
@@ -316,9 +323,9 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
           ]}
         />
       </div>
-      {error && <p className="rounded-xl border border-danger p-3 text-sm text-white">{error}</p>}
+      {error && <p className="rounded-[10px] border border-[#232D33] p-3 text-sm text-[#F08A80]">{error}</p>}
       </div>
-      <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-colorOutline bg-background p-4 md:grid-cols-1">
+      <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-[#232D33] bg-background p-4 lg:grid-cols-1">
         <button type="button" onClick={launch} disabled={busy || !quizId} className={primary}>
           {busy ? "Lanzando…" : "Lanzar quiz"}
         </button>
@@ -350,12 +357,12 @@ export function QuizHost({ slug }: { slug: string }) {
     return () => clearInterval(id);
   }, [refresh]);
 
-  if (!status) return <p className={`${card} p-5 text-sm text-colorCaption`}>Cargando…</p>;
+  if (!status) return <p className={`${card} p-5 text-sm text-[#7C8A8E]`}>Cargando…</p>;
   if (!status.enabled || !status.canHost) {
-    return <p className={`${card} p-5 text-sm text-colorCaption`}>Sólo el anfitrión del club lanza quizzes.</p>;
+    return <p className={`${card} p-5 text-sm text-[#7C8A8E]`}>Sólo el anfitrión del club lanza quizzes.</p>;
   }
   return (
-    <div className={`${card} overflow-hidden bg-background text-white`}>
+    <div className={`${card} overflow-hidden bg-background text-[#F2F5F4]`}>
       <HostControls endpoint={endpoint} active={status.active} onChange={refresh} />
     </div>
   );
