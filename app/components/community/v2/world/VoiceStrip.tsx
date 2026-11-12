@@ -108,7 +108,7 @@ export function VoiceSwitch({ slug, onChange, className = "" }: { slug: string; 
 }
 
 export function VoiceStrip({
-  slug, zone, zoneLabel, enabled = true, blocked = false, name, photoURL, showSwitch = true, onVoiceChange,
+  slug, zone, zoneLabel, enabled = true, blocked = false, name, photoURL, showSwitch = true, onVoiceChange, onLiveChange,
 }: {
   slug: string;
   /** Id de la mesa donde estás sentado según el servidor (su índice, como texto), o `null`. */
@@ -125,6 +125,8 @@ export function VoiceStrip({
   showSwitch?: boolean;
   /** Avisa si la voz en mesas está encendida en la comunidad (para que el texto de la mesa no diga «sin audio» de más). */
   onVoiceChange?: (on: boolean) => void;
+  /** Avisa si ya estás dentro de la llamada de la mesa con cámara o micrófono encendidos (para advertir antes de levantarte). */
+  onLiveChange?: (live: boolean) => void;
 }) {
   const [server, setServer] = useState<ServerState | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -155,6 +157,9 @@ export function VoiceStrip({
   const on = enabled && server?.enabled === true;
   const activeZone = on && !blocked ? zone : null;
   useEffect(() => { onVoiceChange?.(on); }, [on, onVoiceChange]);
+  const liveRoom = activeZone !== null && (phase === "connected" || phase === "reconnecting") ? roomRef.current : null;
+  const live = !!liveRoom && (liveRoom.localParticipant.isCameraEnabled || liveRoom.localParticipant.isMicrophoneEnabled);
+  useEffect(() => { onLiveChange?.(live); }, [live, onLiveChange]);
 
   // ── Conexión: una por mesa; al cambiar `activeZone` se desmonta todo ──
   useEffect(() => {

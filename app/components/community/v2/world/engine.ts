@@ -67,6 +67,8 @@ export type Callbacks = {
   onEscape: () => void;
   /** Toque en el mapa; si regresa `true`, el motor no mueve la nave (había un panel abierto). */
   onStageTap: () => boolean;
+  /** Vas a dejar tu mesa: si regresa `false` te quedas sentado (la interfaz advierte y pide repetir el intento). */
+  canLeaveTable?: () => boolean;
 };
 
 export type WorldApi = {
@@ -134,7 +136,7 @@ export function createWorld(opts: {
   const emit = (ev: WorldEvent) => renderer.event?.(ev);
   const state = {
     mini: false, quiet: opts.quiet, animT: 0,
-    keys: new Set<string>(), joy: { x: 0, y: 0 }, moved: false, wasFlying: false,
+    keys: new Set<string>(), joy: { x: 0, y: 0 }, moved: false, wasFlying: false, leaveHeld: false,
     nearPlace: null as Place | null, nearShip: null as Entity | null, bubbles: [] as Bubble[], marker: null as { x: number; y: number; t: number } | null,
     /** Puntos que faltan por recorrer después del destino actual (sólo con `movement.route`). */
     path: [] as Point[],
@@ -217,7 +219,11 @@ export function createWorld(opts: {
       if ((player.downT -= dt) <= 0) revivePlayer(); else showDown(Math.ceil(player.downT));
       return;
     }
-    const inp = inputVector(), flying = !!(inp.x || inp.y);
+    const inp = inputVector();
+    let flying = !!(inp.x || inp.y);
+    // Sentado en una mesa, la primera tecla sólo advierte; hay que soltarla y volver a moverse para salir.
+    if (!flying) state.leaveHeld = false;
+    else if (player.table !== null && (state.leaveHeld || !mayLeave())) { flying = false; state.leaveHeld = true; }
     if (flying !== state.wasFlying) { state.wasFlying = flying; cb.onIntent(); if (flying) cb.onSound("thrust"); }
     if (flying) {
       clearTarget(); noteMoved();
@@ -268,8 +274,11 @@ export function createWorld(opts: {
       if (e.waveT > 0) e.waveT -= dt;
     });
   }
+  /** ¿Se puede dejar la mesa? La interfaz decide (advierte si estás en la llamada de la mesa). */
+  function mayLeave() { return player.table === null || (cb.canLeaveTable?.() ?? true); }
   function flyTo(x: number, y: number) {
     if (player.downT > 0) return;
+    if (!mayLeave()) return;
     noteMoved();
     if (player.table !== null) { player.table = player.seat = null; refreshPlace(); }
     x = clamp(x, M.targetMargin, WORLD_W - M.targetMargin); y = clamp(y, M.targetMargin, WORLD_H - M.targetMargin);
@@ -845,7 +854,7 @@ export function createWorld(opts: {
       if (state.quiet) { const s = seats[k]; player.x = s.x; player.y = s.y; player.vx = player.vy = 0; }
       refreshPlace(); cb.onIntent(); cb.onSound("sit");
     },
-    stand() { if (player.table === null) return; player.table = player.seat = null; refreshPlace(); cb.onIntent(); cb.onSound("stand"); },
+    stand() { if (player.table === null || !mayLeave()) return; player.table = player.seat = null; refreshPlace(); cb.onIntent(); cb.onSound("stand"); },
     confirmSeat(table, seat) {
       // El servidor manda: si la mesa se llenó o tocó otro asiento, la nave se acomoda.
       if (player.table === null || (table === player.table && seat === player.seat)) return;

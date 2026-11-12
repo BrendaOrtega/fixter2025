@@ -3,17 +3,21 @@
 // a tu personaje y etiquetas HTML encima. Todo lo que se crea se suelta en `destroy`.
 
 import * as THREE from "three";
+import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
+import { makeGhosty3D } from "./ghosty3d.js";
 import type { Entity, Place, Point, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
 import { FLAG_AT, SEA, createIsland, wx, wz } from "./island";
 import { createPuppetKit, type Puppet, type PuppetLook } from "./puppet";
 import { createActions, moodHtml, type MotorHooks, type Person } from "./actions";
-import { BUILDINGS, UNIT, WORLD_H, WORLD_W, heightAt, isSea, crowd, nearMoor, nearestWalkable, sea, shapeFor, standHeight, toneOf } from "./structure";
-import { BOAT_SEATS, MOOR, PILLOW_COUNT, spotAt, type PlacedSpot } from "./things";
+import { BUILDINGS, GHOSTY_ID, UNIT, WORLD_H, WORLD_W, heightAt, isSea, crowd, nearMoor, nearestWalkable, sea, shapeFor, standHeight, toneOf } from "./structure";
+import { BOAT_SEATS, MOOR, PILLOWS, PILLOW_COUNT, spotAt, type PlacedSpot } from "./things";
 
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const PUPPET_SCALE = 1.15;
 /** Segundos que dura la risa de una cosquilla y el tambaleo de un almohadazo. */
 const GIGGLE = 1.1, BONK = 1.3;
+/** Al pasar a esta distancia (px del mapa) de la canasta se toman almohadas; segundos que vuela una almohada. */
+const PILLOW_GRAB = 62, TOSS = 0.3;
 const FOV = 30, ELEVATION = (50 * Math.PI) / 180, ELEVATION_MINI = (64 * Math.PI) / 180, DISTANCE = 25, ZOOM_MIN = 0.4, ELEVATION_CLOSE = (24 * Math.PI) / 180;
 /** Altura (unidades) a la que flota la etiqueta de cada lugar, según su edificio. */
 const LABEL_LIFT: Record<string, number> = { forum: 5, mural: 3, cinema: 4.3, school: 4.1, "camp-table": 2.25 };
@@ -22,8 +26,12 @@ const FLAG_OFFSET = { x: FLAG_AT.x, z: FLAG_AT.z }, NO_OFFSET = { x: 0, z: 0 };
 
 type Actor = {
   puppet: Puppet; key: string; x: number; y: number; yaw: number; seen: number; giggle: number; bonk: number; pillow: THREE.Mesh | null;
+  /** Hacia dónde lo empuja el almohadazo (three, unitario) y si la almohada ya le llegó volando (no cae del cielo). */
+  kx: number; kz: number; landed: boolean;
   label: HTMLDivElement; labelKey: string; face: { texture: THREE.CanvasTexture; img: HTMLImageElement | null } | null;
   /** Actividad: segundos quieto, el punto sobre el que está, cuánto lleva ahí, qué tan «pegado» al punto se dibuja y su globito. */
+  /** Sólo Ghosty: su modelo, que siempre mira a la cámara (es plano por detrás). */
+  ghosty: THREE.Group | null;
   stillT: number; spot: PlacedSpot | null; spotT: number; snap: number; sx: number; sy: number; mood: HTMLDivElement | null; moodKey: string;
 };
 
@@ -94,7 +102,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
   const placeTags = new Map<string, { el: HTMLDivElement; key: string }>();
   // Menú de acciones, marcas y anuncios (ver `actions.ts`). Los ganchos del motor son opcionales: hoy no existen.
   const hooks: MotorHooks = (opts as { motor?: MotorHooks }).motor ?? {};
-  const actions = createActions({ stage, canvases: ownCanvas ? [opts.canvas, ownCanvas] : [opts.canvas], after: layer, hooks });
+  const actions = createActions({ stage, canvases: ownCanvas ? [opts.canvas, ownCanvas] : [opts.canvas], after: layer, hooks, onThrow: (id) => toss(id) });
   const guideGeo = new THREE.RingGeometry(0.36, 0.46, 32);
   const guideMat = new THREE.MeshBasicMaterial({ color: "#85DDCB", transparent: true, opacity: 0.9, depthWrite: false });
   const guideRing = new THREE.Mesh(guideGeo, guideMat);
@@ -163,19 +171,50 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     a.label.remove(); a.mood?.remove();
     if (a.pillow) scene.remove(a.pillow);
   }
+  // ── Ghosty ── Pasea como un personaje más, con el modelo 3D oficial (sale del vector de la marca, sin
+  // repintar y sin boca). Flota: no camina ni toma poses. Mientras su vector carga no se ve nada.
+  function ghostyPuppet(): { puppet: Puppet; model: THREE.Group } {
+    const root = new THREE.Group(), model = makeGhosty3D({ THREE, SVGLoader, url: "/mundo/ghosty-oficial.svg" });
+    model.position.y = 0.28; model.visible = false; root.add(model);
+    let gone = false;
+    const free = () => model.traverse((o) => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      for (const mat of Array.isArray(m.material) ? m.material : m.material ? [m.material] : []) { (mat as THREE.MeshStandardMaterial).map?.dispose(); mat.dispose(); }
+    });
+    (model.userData.ready as Promise<unknown>).then(() => {
+      if (gone || dead) { free(); return; }
+      model.traverse((o) => { o.castShadow = false; });
+      model.visible = true;
+    }).catch(() => { root.remove(model); });
+    root.userData.dispose = () => { gone = true; if (model.visible) free(); };
+    let last = 0;
+    const puppet: Puppet = {
+      root, top: 1.25,
+      pose: (p) => {
+        if (!model.visible) return;
+        if (Math.floor(p.t / 3.4) !== Math.floor(last / 3.4)) (model.userData.blink as (t: number) => void)(p.t);
+        last = p.t;
+        (model.userData.update as (t: number, dt: number) => void)(p.t, p.dt);
+      },
+      setFace: () => {},
+    };
+    return { puppet, model };
+  }
   function actorFor(e: Entity, uid: string): Actor {
     const look = lookOf(e), key = `${look.shape}|${look.fill}|${look.face}|${look.face === "avatar" ? e.photoURL ?? e.name : ""}`;
     let a = actors.get(e.id);
     if (a && a.key === key) return a;
     const prev = a;
     if (prev) dropActor(prev);
-    const puppet = kit.make(look);
+    const g = e.id === GHOSTY_ID ? ghostyPuppet() : null;
+    const puppet = g ? g.puppet : kit.make(look);
     puppet.root.scale.setScalar(PUPPET_SCALE);
     const face = look.face === "avatar" ? makeFace(e, uid) : null;
     if (face) puppet.setFace(face.texture);
     scene.add(puppet.root);
     a = { puppet, key, x: e.x, y: e.y, yaw: prev?.yaw ?? Math.PI / 2 - e.ang, seen: tick, label: tag(NAME), labelKey: "", face,
-      giggle: 0, bonk: 0, pillow: null, stillT: 0, spot: null, spotT: 0, snap: 0, sx: e.x, sy: e.y, mood: null, moodKey: "" };
+      ghosty: g?.model ?? null, giggle: 0, bonk: 0, pillow: null, kx: 0, kz: 0, landed: false, stillT: 0, spot: null, spotT: 0, snap: 0, sx: e.x, sy: e.y, mood: null, moodKey: "" };
     actors.set(e.id, a);
     return a;
   }
@@ -229,8 +268,39 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
   // ── Almohadazos ── El motor avisa a quién le tocó; aquí se anima. Una sola geometría para todas las almohadas.
   const bonked = new Set<string>();
   const pillowGeo = new THREE.BoxGeometry(0.62, 0.2, 0.44), pillowMat = new THREE.MeshLambertMaterial({ color: "#F4AFAF" });
-  let held: THREE.Mesh | null = null;
+  /** La pila de almohadas que cargas sobre la cabeza (sólo en tu pantalla). */
+  const held: THREE.Mesh[] = [];
   function event(ev: WorldEvent) { if (ev.type === "tickle" && ev.kind === "bonk") bonked.add(ev.entity.id); }
+  // Almohadas en el aire: salen de tu cabeza y caen en la de quien tocaste; al llegar, el golpe.
+  let meId = "me", throwT = 0;
+  const flying: Array<{ id: string; t: number; mesh: THREE.Mesh; from: THREE.Vector3 }> = [];
+  function toss(id: string) {
+    const me = actors.get(meId), target = actors.get(id);
+    if (!me || !target) { hooks.nudge?.(id, "bonk"); return; }
+    const r = me.puppet.root, mesh = new THREE.Mesh(pillowGeo, pillowMat);
+    const from = new THREE.Vector3(r.position.x, r.position.y + me.puppet.top * PUPPET_SCALE + 0.2, r.position.z);
+    mesh.position.copy(from); scene.add(mesh);
+    flying.push({ id, t: 0, mesh, from });
+    me.yaw = Math.atan2(target.puppet.root.position.x - r.position.x, target.puppet.root.position.z - r.position.z);
+    throwT = 0.45; hooks.sound?.("toss");
+  }
+  function updateFlying() {
+    for (let i = flying.length - 1; i >= 0; i--) {
+      const f = flying[i], target = actors.get(f.id);
+      f.t += dt;
+      const k = Math.min(1, f.t / TOSS);
+      if (!target) { scene.remove(f.mesh); flying.splice(i, 1); continue; }
+      const r = target.puppet.root, top = r.position.y + target.puppet.top * PUPPET_SCALE + 0.12;
+      f.mesh.position.set(f.from.x + (r.position.x - f.from.x) * k, f.from.y + (top - f.from.y) * k + Math.sin(Math.PI * k) * 1.1, f.from.z + (r.position.z - f.from.z) * k);
+      f.mesh.rotation.set(0.2, k * 5, k * 3);
+      if (k >= 1) {
+        scene.remove(f.mesh); flying.splice(i, 1);
+        const len = Math.hypot(r.position.x - f.from.x, r.position.z - f.from.z) || 1;
+        target.kx = (r.position.x - f.from.x) / len; target.kz = (r.position.z - f.from.z) / len; target.landed = true;
+        hooks.nudge?.(f.id, "bonk");
+      }
+    }
+  }
 
   function drawActor(e: Entity, frame: WorldFrame, me: boolean) {
     const a = actorFor(e, me ? frame.meId ?? "" : e.id);
@@ -247,7 +317,7 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     const spot = !aboard && !seated && e.table === null && a.stillT > 0.15 ? spotAt(e.x, e.y) : null;
     if (spot !== a.spot && (spot?.x !== a.spot?.x || spot?.y !== a.spot?.y)) {
       a.spotT = 0;
-      if (me && spot) { actions.announce(spot.action.done); hooks.sound?.(spot.action.sound); if (spot.thing.id === "pillows") actions.setPillows(PILLOW_COUNT); }
+      if (me && spot && spot.thing.id !== "pillows") { actions.announce(spot.action.done); hooks.sound?.(spot.action.sound); }
     }
     a.spot = spot;
     if (spot) { a.spotT += dt; a.sx = spot.x; a.sy = spot.y; }
@@ -265,20 +335,32 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     if (aboard) root.position.set(aboard.x, 0.2 + Math.sin(frame.t * 1.3) * (frame.quiet ? 0 : 0.04), aboard.z);
     else root.position.set(wx(px), standHeight(px, py) + (a.spot?.lift ?? 0) * a.snap, wz(py));
     root.rotation.y = a.yaw;
+    if (a.ghosty) {
+      // De frente a la cámara siempre; con los ojos mira hacia donde va.
+      a.ghosty.rotation.y = camTurn - a.yaw;
+      if (a.ghosty.visible) (a.ghosty.userData.look as (x: number, y: number) => void)(Math.sin(a.yaw - camTurn) * 0.8, 0);
+    }
     // Cosquillas: se retuerce de risa y da brinquitos un momento (el temblor del motor dura muy poco para un muñequito).
     // Almohadazo: la almohada cae sobre la cabeza, el muñequito se aplasta y queda tambaleándose.
-    if (bonked.delete(e.id)) { a.bonk = BONK; a.giggle = 0; }
+    if (bonked.delete(e.id)) {
+      a.bonk = BONK; a.giggle = 0;
+      // Quien lo vio de lejos no sabe de dónde vino: sale empujado hacia atrás.
+      if (!a.landed) { a.kx = -Math.sin(a.yaw); a.kz = -Math.cos(a.yaw); }
+    }
     if (a.bonk > 0) {
       a.bonk -= dt;
-      const g = 1 - Math.max(0, a.bonk) / BONK, fall = Math.min(1, g / 0.18), squash = Math.sin(Math.PI * Math.min(1, Math.max(0, (g - 0.14) / 0.4)));
+      const g = 1 - Math.max(0, a.bonk) / BONK, fall = a.landed ? 1 : Math.min(1, g / 0.18), squash = Math.sin(Math.PI * Math.min(1, Math.max(0, (g - 0.14) / 0.4)));
       root.scale.set(PUPPET_SCALE * (1 + squash * 0.16), PUPPET_SCALE * (1 - squash * 0.3), PUPPET_SCALE * (1 + squash * 0.16));
       root.rotation.z = g > 0.3 ? Math.sin(frame.t * 13) * 0.14 * (1 - g) : 0;
+      // Retroceso: el golpe lo avienta medio paso y regresa solo.
+      const push = Math.sin(Math.PI * Math.min(1, g / 0.6)) * 0.55;
+      root.position.x += a.kx * push; root.position.z += a.kz * push;
       if (!a.pillow) { a.pillow = new THREE.Mesh(pillowGeo, pillowMat); scene.add(a.pillow); }
       const top = root.position.y + a.puppet.top * PUPPET_SCALE * (1 - squash * 0.3), away = Math.max(0, (g - 0.3) / 0.7);
       a.pillow.position.set(root.position.x + away * 0.9, top + 0.12 + (1 - fall) * 1.3 + Math.sin(Math.PI * away) * 0.7, root.position.z + away * 0.3);
       a.pillow.rotation.set(0.2, a.yaw, -0.5 + fall * 0.5 - away * 2.4);
       a.pillow.scale.setScalar(1 - away * away);
-      if (a.bonk <= 0) { scene.remove(a.pillow); a.pillow = null; root.scale.setScalar(PUPPET_SCALE); }
+      if (a.bonk <= 0) { scene.remove(a.pillow); a.pillow = null; a.landed = false; root.scale.setScalar(PUPPET_SCALE); }
     } else if (a.giggle > 0 || e.shakeT > 0) {
       if (a.giggle <= 0) a.giggle = GIGGLE;
       a.giggle -= dt;
@@ -286,20 +368,30 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
       root.rotation.z = Math.sin(frame.t * 38) * 0.16 * g;
       root.position.y += Math.abs(Math.sin(frame.t * 19)) * 0.22 * g;
     } else root.rotation.z = 0;
-    // Las almohadas que traes van contigo (sólo en tu pantalla).
+    // Almohadas: al pasar junto a la canasta se toman; las que traes van apiladas sobre tu cabeza.
     if (me) {
-      const n = aboard ? 0 : actions.pillows();
-      if (n > 0 && !held) { held = new THREE.Mesh(pillowGeo, pillowMat); held.scale.setScalar(0.7); scene.add(held); }
-      if (held) {
-        held.visible = n > 0;
-        held.position.set(root.position.x + Math.cos(a.yaw) * 0.42, root.position.y + 0.62, root.position.z - Math.sin(a.yaw) * 0.42);
-        held.rotation.set(0, a.yaw, 0.35);
+      if (!aboard && Math.hypot(e.x - PILLOWS.x, e.y - PILLOWS.y) < PILLOW_GRAB && actions.pillows() < PILLOW_COUNT) {
+        actions.setPillows(PILLOW_COUNT);
+        actions.announce("Tomaste tres almohadas. Toca a cualquier persona o robot y corres a darle un almohadazo.");
+        hooks.sound?.("act-cheer");
       }
+      const n = aboard ? 0 : actions.pillows();
+      while (held.length < PILLOW_COUNT) { const m = new THREE.Mesh(pillowGeo, pillowMat); m.scale.setScalar(0.8); m.visible = false; scene.add(m); held.push(m); }
+      const base = root.position.y + a.puppet.top * PUPPET_SCALE + 0.1, sway = moved > 0.15 ? 0.05 : 0.015;
+      held.forEach((m, i) => {
+        m.visible = i < n;
+        if (!m.visible) return;
+        const wob = Math.sin(frame.t * 7 + i * 1.3) * sway * (i + 1);
+        m.position.set(root.position.x + wob, base + i * 0.17, root.position.z);
+        m.rotation.set(0, a.yaw + (i - 1) * 0.3, wob * 2);
+      });
+      if (throwT > 0) throwT -= dt;
     }
     const speed = dt > 0 ? moved / dt : 0;
     a.puppet.pose({
       t: frame.t + e.bob, dt, walked: aboard || jumped || frame.quiet ? 0 : (moved * UNIT) / PUPPET_SCALE,
-      pace: Math.min(1, speed / structure.movement.maxSpeed), sitting: seated || !!aboard || !!spot?.action.seated, waving: e.waveT > 0, act: spot?.action.pose ?? null,
+      pace: Math.min(1, speed / structure.movement.maxSpeed), sitting: seated || !!aboard || !!spot?.action.seated, waving: e.waveT > 0,
+      act: me && throwT > 0 ? "cheer" : spot?.action.pose ?? null,
     });
     // Etiqueta con el nombre; la tuya va en menta. En el mapa reducido sólo se marca dónde estás.
     const text = frame.mini ? (me ? "Tú" : "") : e.first || e.name;
@@ -338,6 +430,28 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     zoom = next; ev.preventDefault();
   };
   stage.addEventListener("wheel", onWheel, { passive: false });
+  // Clic derecho y arrastrar: gira el mapa alrededor de tu personaje, hasta 35° por lado.
+  const TURN_MAX = (35 * Math.PI) / 180;
+  let turn = 0, camTurn = 0, turning: { id: number; x: number } | null = null;
+  const onTurnDown = (ev: PointerEvent) => {
+    if (ev.button !== 2 || ev.pointerType !== "mouse" || mini) return;
+    turning = { id: ev.pointerId, x: ev.clientX };
+    try { stage.setPointerCapture(ev.pointerId); } catch { /* sin captura también sirve */ }
+  };
+  const onTurnMove = (ev: PointerEvent) => {
+    if (!turning || ev.pointerId !== turning.id) return;
+    turn = Math.max(-TURN_MAX, Math.min(TURN_MAX, turn - (ev.clientX - turning.x) * 0.006));
+    turning.x = ev.clientX;
+  };
+  const onTurnUp = (ev: PointerEvent) => {
+    if (!turning || ev.pointerId !== turning.id) return;
+    turning = null;
+    try { stage.releasePointerCapture(ev.pointerId); } catch { /* ya se soltó */ }
+  };
+  stage.addEventListener("pointerdown", onTurnDown);
+  stage.addEventListener("pointermove", onTurnMove);
+  stage.addEventListener("pointerup", onTurnUp);
+  stage.addEventListener("pointercancel", onTurnUp);
   function aimCamera(frame: WorldFrame) {
     const aspect = vw / vh, half = Math.tan((FOV * Math.PI) / 360);
     let tx: number, tz: number, ty = 0.5, dist: number, elev: number;
@@ -357,7 +471,10 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     camReady = true;
     focus.x += (tx - focus.x) * k; focus.z += (tz - focus.z) * k; focus.y += (ty - focus.y) * k;
     camDist += (dist - camDist) * k; camElev += (elev - camElev) * k;
-    camera.position.set(focus.x, focus.y + Math.sin(camElev) * camDist, focus.z + Math.cos(camElev) * camDist);
+    // En el mapa reducido no se gira: se ve la isla completa de frente.
+    camTurn += ((frame.mini ? 0 : turn) - camTurn) * (camReady ? 1 - Math.exp(-dt * 10) : 1);
+    const flat = Math.cos(camElev) * camDist;
+    camera.position.set(focus.x + Math.sin(camTurn) * flat, focus.y + Math.sin(camElev) * camDist, focus.z + Math.cos(camTurn) * flat);
     camera.lookAt(focus);
     const far = camDist / (mini ? 1 : zoom); // la niebla no se acerca con el zoom
     fog.near = far * 1.5; fog.far = far * 4.5;
@@ -448,9 +565,11 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     });
     // La sombra está horneada: si el barquito se movió hay que hornearla otra vez.
     if (dirty || Math.hypot(boat.x - boat.bx, boat.y - boat.by) > 0.5) { gl.shadowMap.needsUpdate = true; boat.bx = boat.x; boat.by = boat.y; }
+    meId = frame.player.id;
     drawActor(frame.player, frame, true);
     for (const e of frame.others) drawActor(e, frame, false);
     for (const [id, a] of actors) if (a.seen !== tick) { dropActor(a); actors.delete(id); }
+    updateFlying();
     if (frame.marker && !frame.mini) {
       const m = frame.marker, k = (m.t * 1.6) % 1;
       marker.visible = true;
@@ -485,6 +604,10 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     island.dispose(); kit.dispose();
     markerGeo.dispose(); markerMat.dispose(); guideGeo.dispose(); guideMat.dispose();
     stage.removeEventListener("wheel", onWheel);
+    stage.removeEventListener("pointerdown", onTurnDown); stage.removeEventListener("pointermove", onTurnMove);
+    stage.removeEventListener("pointerup", onTurnUp); stage.removeEventListener("pointercancel", onTurnUp);
+    for (const f of flying) scene.remove(f.mesh);
+    for (const m of held) scene.remove(m);
     pillowGeo.dispose(); pillowMat.dispose();
     actions.destroy();
     sun.shadow.map?.dispose(); sun.dispose();

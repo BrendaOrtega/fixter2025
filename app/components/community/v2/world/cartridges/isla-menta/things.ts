@@ -48,7 +48,7 @@ export const SPOT_REACH = 13;
 const toward = (x: number, y: number, px: number, py: number) => Math.atan2(px - x, py - y);
 const SOUTH = 0, EAST = Math.PI / 2, NORTH = Math.PI, WEST = -Math.PI / 2;
 
-/** Fogata del Campamento y el aro por el que pasea Robot Tres (sus puntos caen sobre ese aro). */
+/** Fogata del Campamento y el aro de sus puntos para calentarse. */
 export const FIRE = { x: 470, y: 800 };
 export const FIRE_RING = { rx: 58, ry: 46 };
 export const fireRing = (a: number) => ({ x: FIRE.x + Math.cos(a) * FIRE_RING.rx, y: FIRE.y + Math.sin(a) * FIRE_RING.ry });
@@ -121,7 +121,7 @@ export const THINGS: Thing[] = [
   },
   {
     id: "pillows", name: "Canasta de almohadas", x: PILLOWS.x, y: PILLOWS.y, h: 1.2, hit: 30, solid: 13, clear: 44,
-    actions: [{ id: "take", label: "Tomar almohadas", done: "Tomaste tres almohadas. Toca a alguien que tengas cerca para darle un almohadazo.", pose: "cheer", mood: "star", sound: "act-cheer",
+    actions: [{ id: "take", label: "Tomar almohadas", done: "Tomaste tres almohadas. Toca a cualquier persona o robot y corres a darle un almohadazo.", pose: "cheer", mood: "star", sound: "act-cheer",
       spots: [{ x: PILLOWS.x, y: PILLOWS.y + 32, face: NORTH }, { x: PILLOWS.x - 32, y: PILLOWS.y, face: EAST }, { x: PILLOWS.x + 32, y: PILLOWS.y, face: WEST }] }],
   },
   {

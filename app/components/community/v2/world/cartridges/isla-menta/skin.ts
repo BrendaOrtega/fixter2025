@@ -8,6 +8,8 @@ import { shapeFor, toneOf } from "./structure";
 const sounds: SoundBank = {
   // Almohadazo: golpe sordo y un soplido de plumas.
   bonk: (k) => { k.tone({ type: "sine", from: 190, to: 70, dur: 0.16, gain: 0.8 }); k.whoosh(0.22, 0.25, 900, 300); },
+  // La almohada sale volando.
+  toss: (k) => k.whoosh(0.2, 0.3, 500, 1500),
   // Cosquillas: risita de tres notas que suben.
   nudge: (k) => {
     k.tone({ type: "sine", from: 620, to: 760, dur: 0.07, gain: 0.5 });

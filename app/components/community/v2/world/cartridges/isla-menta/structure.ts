@@ -189,9 +189,9 @@ export function heightAt(x: number, y: number) {
   return h;
 }
 
-// ───────── Robots de la casa ─────────
-// Pasean por rutas fijas que dependen sólo del reloj: todas las personas los ven en el mismo lugar
-// sin pasar por el servidor. No son miembros y no cuentan en «N en el club».
+// ───────── Rutas viejas de los robots ─────────
+// Ya no se usan para pasear (ver «Robots de la casa» abajo); sólo marcan por dónde no se siembran
+// árboles, para que la isla quede idéntica a la de antes.
 function along(points: Vec[], u: number): Vec {
   // u en 0..1 sobre la línea ya suavizada
   const f = Math.max(0, Math.min(0.9999, u)) * (points.length - 1), i = Math.floor(f), t = f - i;
@@ -204,20 +204,17 @@ const mod = (v: number, m: number) => ((v % m) + m) % m;
 // calienta): quieto sobre el punto, se dibuja con esa pose igual que cualquier persona.
 const UNO = { rate: 0.16, pause: 14 }, TRES = { rate: 0.3, pause: 12, laps: 2 }, DOS = { leg: 1 / 0.017, pause: 15 };
 const DOS_STOP = Math.max(0, EAST_WALK.findIndex((p) => Math.hypot(p.x - BOT_STOPS.dos.x, p.y - BOT_STOPS.dos.y) < 0.5)) / (EAST_WALK.length - 1);
-export const BOTS: BotDef[] = [
-  { id: "bot:uno", name: "Robot Uno", look: botLook("blue"), note: "Robot de la casa · le da la vuelta al Foro y le echa porras",
-    at: (t) => {
+const OLD_TRACKS: Array<{ at: (t: number) => Vec }> = [
+  { at: (t) => {
       const p = mod(t, (Math.PI * 2) / UNO.rate + UNO.pause), a = Math.PI / 2 + Math.max(0, p - UNO.pause) * UNO.rate;
       return { x: 800 + Math.cos(a) * 172, y: 425 + Math.sin(a) * 128 };
     } },
-  { id: "bot:dos", name: "Robot Dos", look: botLook("lilac"), note: "Robot de la casa · va y viene entre el Foro, el Cine y la Escuelita, y pasa por su café",
-    at: (t) => {
+  { at: (t) => {
       const p = mod(t, DOS.leg * 2 + DOS.pause), t0 = DOS_STOP * DOS.leg;
       const u = p < t0 ? p / DOS.leg : p < t0 + DOS.pause ? DOS_STOP : p < DOS.leg + DOS.pause ? (p - DOS.pause) / DOS.leg : 1 - (p - DOS.pause - DOS.leg) / DOS.leg;
       return along(EAST_WALK, u);
     } },
-  { id: "bot:tres", name: "Robot Tres", look: botLook("amber"), note: "Robot de la casa · cuida la fogata del Campamento",
-    at: (t) => {
+  { at: (t) => {
       const p = mod(t, ((Math.PI * 2) / TRES.rate) * TRES.laps + TRES.pause);
       return fireRing(FIRE_ANGLES[0] - Math.max(0, p - TRES.pause) * TRES.rate);
     } },
@@ -235,7 +232,7 @@ export function seeded(seed: number) {
 }
 export type Prop = { kind: "tree" | "pine" | "bush" | "rock" | "flower"; x: number; y: number; s: number; rot: number; tone: number };
 /** Por dónde pasan los robots: ahí no se siembra nada. */
-const BOT_TRACKS: Vec[] = BOTS.flatMap((b) => Array.from({ length: 400 }, (_, i) => b.at(i * 0.45)));
+const BOT_TRACKS: Vec[] = OLD_TRACKS.flatMap((b) => Array.from({ length: 400 }, (_, i) => b.at(i * 0.45)));
 function scatter(): Prop[] {
   const rnd = seeded(20261112);
   const props: Prop[] = [];
@@ -410,32 +407,43 @@ function plan(from: Vec, to: Vec): Vec[] {
   }
   return findPath(from, to);
 }
-function lineClear(a: Vec, b: Vec) {
+function lineClear(a: Vec, b: Vec, stand = canStand) {
   const n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 8);
   for (let i = 1; i < n; i++) {
     const t = i / n;
-    if (!canStand(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)) return false;
+    if (!stand(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)) return false;
   }
   return true;
 }
 
 // Rejilla para buscar ruta (celdas de 20 px). Se calcula una vez, la primera vez que hace falta.
 const CELL = 20, GW = Math.ceil(WORLD_W / CELL), GH = Math.ceil(WORLD_H / CELL);
-function getGrid() {
-  if (!grid) {
-    grid = new Uint8Array(GW * GH);
-    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) grid[j * GW + i] = canStand((i + 0.5) * CELL, (j + 0.5) * CELL) ? 1 : 0;
-  }
-  return grid;
+function buildGrid(stand: (x: number, y: number) => boolean) {
+  const g = new Uint8Array(GW * GH);
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) g[j * GW + i] = stand((i + 0.5) * CELL, (j + 0.5) * CELL) ? 1 : 0;
+  return g;
 }
+function getGrid() { return (grid ??= buildGrid(canStand)); }
+/** Dónde se camina y su rejilla. Tu personaje usa lo de hoy (sin los lugares ocultos); los robots, lo fijo. */
+type Surface = { stand: (x: number, y: number) => boolean; grid: () => Uint8Array };
+const LIVE: Surface = { stand: (x, y) => canStand(x, y), grid: getGrid };
+// Los robots siempre cuentan todos los sólidos: así su ruta sale igual en todas las pantallas.
+function standFixed(x: number, y: number) {
+  if (onDock(x, y)) return true;
+  if (x < 0 || y < 0 || x > WORLD_W || y > WORLD_H || landField(x, y) < WALK_LEVEL) return false;
+  for (const s of ALL_SOLIDS) { const dx = s.x - x, dy = s.y - y; if (dx * dx + dy * dy < s.r * s.r) return false; }
+  return true;
+}
+let fixedGrid: Uint8Array | null = null;
+const FIXED: Surface = { stand: standFixed, grid: () => (fixedGrid ??= buildGrid(standFixed)) };
 /** El punto pisable más cercano a (x, y), o `null` si no hay ninguno a menos de `reach` px. */
-export function nearestWalkable(x: number, y: number, reach = 160): Vec | null {
-  if (canStand(x, y)) return { x, y };
+export function nearestWalkable(x: number, y: number, reach = 160, stand = canStand): Vec | null {
+  if (stand(x, y)) return { x, y };
   for (let r = 8; r <= reach; r += 8) {
     const n = Math.max(8, Math.round(r / 4));
     for (let k = 0; k < n; k++) {
       const a = (k / n) * Math.PI * 2, px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
-      if (canStand(px, py)) return { x: px, y: py };
+      if (stand(px, py)) return { x: px, y: py };
     }
   }
   return null;
@@ -444,12 +452,13 @@ export function nearestWalkable(x: number, y: number, reach = 160): Vec | null {
  * Ruta caminable de `from` a `to` (lista de puntos, sin incluir `from`). Búsqueda en anchura sobre la
  * rejilla y luego se quitan los puntos que sobran. Si no hay ruta regresa `[]`.
  */
-export function findPath(from: Vec, to: Vec): Vec[] {
-  const goal = nearestWalkable(to.x, to.y);
+export function findPath(from: Vec, to: Vec, surf: Surface = LIVE): Vec[] {
+  const stand = surf.stand;
+  const goal = nearestWalkable(to.x, to.y, 160, stand);
   if (!goal) return [];
-  if (!canStand(from.x, from.y)) { const shore = nearestWalkable(from.x, from.y, 900); return shore ? [shore, ...findPath(shore, goal)] : []; }
-  if (lineClear(from, goal)) return [goal];
-  const g = getGrid();
+  if (!stand(from.x, from.y)) { const shore = nearestWalkable(from.x, from.y, 900, stand); return shore ? [shore, ...findPath(shore, goal, surf)] : []; }
+  if (lineClear(from, goal, stand)) return [goal];
+  const g = surf.grid();
   const cellOf = (p: Vec) => {
     const i = Math.max(0, Math.min(GW - 1, Math.floor(p.x / CELL))), j = Math.max(0, Math.min(GH - 1, Math.floor(p.y / CELL)));
     if (g[j * GW + i]) return j * GW + i;
@@ -488,11 +497,64 @@ export function findPath(from: Vec, to: Vec): Vec[] {
   let anchor = from, i = 0;
   while (i < cells.length) {
     let far = i;
-    for (let k = cells.length - 1; k > i; k--) if (lineClear(anchor, cells[k])) { far = k; break; }
+    for (let k = cells.length - 1; k > i; k--) if (lineClear(anchor, cells[k], stand)) { far = k; break; }
     out.push(cells[far]); anchor = cells[far]; i = far + 1;
   }
   return out;
 }
+
+// ───────── Robots de la casa (y Ghosty) ─────────
+// Hacen de todo, despacio y al azar: cada SLOT segundos cada uno elige una cosa de la isla (banca, fogata,
+// café, telescopio…), camina hasta su punto y se queda ahí con su pose. El «azar» sale del reloj, así
+// que todas las pantallas los ven en el mismo lugar sin pasar por el servidor. No son miembros y no
+// cuentan en «N en el club». Salen con LEAVE s de diferencia para no moverse todos a la vez.
+const SLOT = 75, LEAVE = 8, SPEED = 22, REST = 14;
+const BOT_THINGS = THINGS.filter((t) => t.id !== "boat" && t.id !== "pillows");
+const mix = (n: number) => {
+  let h = Math.imul((n | 0) ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+  return h >>> 0;
+};
+/** Qué punto le toca al robot `i` en el turno `n`. En un mismo turno cada robot va a una cosa distinta. */
+function botSpot(n: number, i: number): Vec {
+  const thing = BOT_THINGS[(mix(n) + i) % BOT_THINGS.length];
+  const action = thing.actions[mix(n * 31 + i) % thing.actions.length];
+  const s = action.spots[mix(n * 17 + i * 3) % action.spots.length];
+  return { x: s.x, y: s.y };
+}
+type Leg = { pts: Vec[]; cum: number[]; len: number };
+const legs = new Map<string, Leg>();
+function legBetween(a: Vec, b: Vec): Leg {
+  const key = `${a.x},${a.y}>${b.x},${b.y}`;
+  let leg = legs.get(key);
+  if (leg) return leg;
+  const pts = [a, ...findPath(a, b, FIXED)];
+  const end = pts[pts.length - 1];
+  if (end.x !== b.x || end.y !== b.y) pts.push(b); // termina exacto sobre el punto, para tomar la pose
+  const cum = [0];
+  for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y));
+  leg = { pts, cum, len: cum[cum.length - 1] };
+  if (legs.size > 400) legs.clear();
+  legs.set(key, leg);
+  return leg;
+}
+function botAt(i: number, t: number): Vec {
+  const n = Math.floor(t / SLOT), p = t - n * SLOT, start = i * LEAVE;
+  const leg = legBetween(botSpot(n - 1, i), botSpot(n, i));
+  // Despacio; sólo un viaje muy largo apura el paso para llegar con tiempo de quedarse un rato.
+  const speed = Math.max(SPEED, leg.len / (SLOT - REST - start));
+  const d = Math.min(leg.len, Math.max(0, p - start) * speed);
+  let k = 1;
+  while (k < leg.cum.length - 1 && leg.cum[k] < d) k++;
+  const a = leg.pts[k - 1], b = leg.pts[k] ?? a, seg = leg.cum[k] - leg.cum[k - 1] || 1, u = Math.min(1, (d - leg.cum[k - 1]) / seg);
+  return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
+}
+export const GHOSTY_ID = "bot:ghosty";
+export const BOTS: BotDef[] = [
+  { id: "bot:uno", name: "Robot Uno", look: botLook("blue"), note: "Robot de la casa · pasea por la isla y hace de todo", at: (t) => botAt(0, t) },
+  { id: "bot:dos", name: "Robot Dos", look: botLook("lilac"), note: "Robot de la casa · pasea por la isla y hace de todo", at: (t) => botAt(1, t) },
+  { id: "bot:tres", name: "Robot Tres", look: botLook("amber"), note: "Robot de la casa · pasea por la isla y hace de todo", at: (t) => botAt(2, t) },
+  { id: GHOSTY_ID, name: "Ghosty", look: botLook("mint"), note: "Ghosty · pasea por la isla con todos", at: (t) => botAt(3, t) },
+];
 
 // ───────── La estructura que lee el motor (y el servidor) ─────────
 export const structure: WorldStructure = {

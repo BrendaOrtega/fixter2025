@@ -155,9 +155,10 @@ export function createPuppetKit() {
       mesh(G.head, skin, head, [0, 0, 0]);
       if (look.face === "avatar") {
         // La cara es un disco con la foto (o las iniciales), enmarcado como una escotilla.
-        const rim = mesh(G.disc, look.dark, head, [0, -0.01, 0.245], [0.235, 0.1, 0.235]); rim.rotation.x = Math.PI / 2;
+        // La cabeza es una esfera de radio 0.3: aro y foto van por delante de su punta (z 0.3) o ésta se asoma al centro.
+        const rim = mesh(G.disc, look.dark, head, [0, -0.01, 0.258], [0.235, 0.1, 0.235]); rim.rotation.x = Math.PI / 2;
         faceMesh = new THREE.Mesh(G.face, new THREE.MeshBasicMaterial({ color: "#ffffff" }));
-        faceMesh.position.set(0, -0.01, 0.297); head.add(faceMesh);
+        faceMesh.position.set(0, -0.01, 0.312); head.add(faceMesh);
       } else {
         for (const s of [-1, 1]) {
           mesh(G.ball, NIGHT, head, [0.105 * s, 0.01, 0.279], [0.04, 0.06, 0.02]);

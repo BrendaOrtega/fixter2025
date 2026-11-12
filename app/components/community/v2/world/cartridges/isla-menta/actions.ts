@@ -44,9 +44,11 @@ export const moodHtml = (mood: Mood) => `<svg width="14" height="14" viewBox="0 
 type Open = { kind: "thing"; thing: Thing } | { kind: "person"; id: string; name: string };
 /** Hasta dónde alcanza la mano para hacer cosquillas (px del mapa). */
 const TICKLE_REACH = 80;
+/** Desde dónde se avienta la almohada (px del mapa) y cuánto se persigue a alguien antes de rendirse (s). */
+const BONK_REACH = 64, CHASE_MAX = 12;
 type Item = { label: string; disabled: boolean; run: (via: "pointer" | "key") => void };
 
-export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; after: HTMLElement; hooks: MotorHooks }) {
+export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; after: HTMLElement; hooks: MotorHooks; onThrow?: (id: string) => void }) {
   const { stage, hooks } = o;
   const ui = document.createElement("div");
   ui.style.cssText = `position:absolute;inset:0;overflow:hidden;pointer-events:none;font-family:${FONT}`;
@@ -81,6 +83,19 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
   let last: ActionsFrame | null = null;
   /** Almohadas que traes (de la canasta). Sólo las ves tú; el golpe sí lo ven todos. */
   let pillows = 0;
+  /** Con almohadas, tocar a alguien es ir tras él: `lx/ly` es donde estaba cuando se trazó la ruta. */
+  let chase: { id: string; name: string; t: number; lx: number; ly: number } | null = null;
+  /** Corre hacia esa persona o robot; si ya está al alcance, le avienta la almohada. */
+  function chaseTo(id: string, name: string, via: "pointer" | "key") {
+    const who = last?.people.find((p) => p.id === id), from = me();
+    if (!who || !from || !last) return;
+    if (!chase || chase.id !== id) { chase = { id, name, t: 0, lx: who.x, ly: who.y }; announce(`Vas por ${name} con una almohada.`); }
+    if (Math.hypot(from.x - who.x, from.y - who.y) < BONK_REACH) { reply = null; return; } // el próximo cuadro avienta
+    const d = Math.hypot(from.x - who.x, from.y - who.y) || 1;
+    const p = last.standNear(who.x + ((from.x - who.x) / d) * 40, who.y + ((from.y - who.y) / d) * 40);
+    chase.lx = who.x; chase.ly = who.y;
+    if (p) go(p, via, `Camina con las flechas hacia ${name}.`);
+  }
   const me = () => last?.people.find((p) => p.me) ?? null;
   const taken = (s: PlacedSpot) => !!last?.people.some((p) => !p.me && Math.hypot(p.x - s.x, p.y - s.y) < SPOT_REACH * 1.6);
   /** El punto libre de esa acción más cercano a ti. */
@@ -134,11 +149,6 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
     if (hooks.nudge) {
       const who = last?.people.find((p) => p.id === target.id), from = me();
       const close = !!who && !!from && Math.hypot(from.x - who.x, from.y - who.y) < TICKLE_REACH;
-      // Almohadazo: sólo con almohadas de la canasta del campamento; cada golpe gasta una.
-      if (pillows > 0) list.push({
-        label: close ? `Dar un almohadazo (${pillows})` : `Dar un almohadazo (${pillows}) · acércate`, disabled: !close,
-        run: () => { pillows--; hooks.nudge?.(target.id, "bonk"); announce(`Le diste un almohadazo a ${target.name}. Te quedan ${pillows}.`); reply = null; },
-      });
       list.push({ label: close ? "Hacer cosquillas" : "Hacer cosquillas · acércate", disabled: !close, run: () => { hooks.nudge?.(target.id); announce(`Le hiciste cosquillas a ${target.name}.`); reply = null; } });
     }
     return list;
@@ -187,7 +197,8 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
       if (d < bd) { best = { kind: "thing", thing: t }; bd = d; }
     }
     for (const p of last.people) {
-      if (p.me || !p.human) continue;
+      // Los robots sólo se tocan para un almohadazo.
+      if (p.me || (!p.human && pillows <= 0)) continue;
       const c = last.project(p.x, p.y, 0.75);
       if (!c.front) continue;
       const d = Math.hypot(c.x - sx, c.y - sy) / Math.max(16, 0.55 * last.unitPx(p.x, p.y));
@@ -210,7 +221,9 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
     }
     if (!o.canvases.includes(target as HTMLElement)) return; // un panel de la interfaz: no es nuestro
     const r = stage.getBoundingClientRect(), hit = pick(e.clientX - r.left, e.clientY - r.top);
-    if (hit) { openMenu(hit, false); reply = null; } else closeMenu();
+    if (hit?.kind === "person" && pillows > 0 && hooks.nudge) { closeMenu(); chaseTo(hit.id, hit.name, "pointer"); if (reply === undefined) reply = null; }
+    else if (hit) { chase = null; openMenu(hit, false); reply = null; }
+    else { chase = null; closeMenu(); }
   };
   // Teclado: Enter/Espacio en un botón llega como `click` sin puntero.
   const onClick = (e: MouseEvent) => {
@@ -259,6 +272,17 @@ export function createActions(o: { stage: HTMLElement; canvases: HTMLElement[]; 
       const far = !player || !at || Math.hypot(player.x - at.x, player.y - at.y) > 520;
       if (!c || !c.front || far || c.x < -40 || c.x > f.vw + 40 || c.y < -40 || c.y > f.vh + 80) closeMenu();
       else put(menu, Math.max(86, Math.min(f.vw - 86, c.x)), Math.max(menu.offsetHeight + 8, c.y + 8), "-50%,-100%");
+    }
+    if (chase) {
+      chase.t += f.dt;
+      const who = f.people.find((p) => p.id === chase!.id);
+      if (!who || !player || pillows <= 0 || chase.t > CHASE_MAX) chase = null;
+      else if (Math.hypot(player.x - who.x, player.y - who.y) < BONK_REACH) {
+        pillows--;
+        if (o.onThrow) o.onThrow(who.id); else hooks.nudge?.(who.id, "bonk");
+        announce(pillows ? `Le diste un almohadazo a ${chase.name}. Te quedan ${pillows}.` : `Le diste un almohadazo a ${chase.name}. Ya no traes almohadas: hay más en la canasta del campamento.`);
+        chase = null;
+      } else if (hooks.walkTo && Math.hypot(who.x - chase.lx, who.y - chase.ly) > 30) chaseTo(who.id, chase.name, "key"); // se movió: nueva ruta
     }
     if (guide) {
       guideT += f.dt;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { EnterCallButton, describeCall, useNow } from "./call";
 import { Icon, type IconName } from "./icons";
 import { Avatar, SectionHead, btn } from "./ui";
@@ -24,6 +24,8 @@ import { createSound, type Sound } from "./world/sound";
 // - ⚠️ El HTML del servidor llega con el cielo, la franja y la lista de lugares: el canvas se enciende al montar.
 
 const POLL_MS = 2500;
+/** Ventana para confirmar que te levantas de una mesa en la que ya estás en llamada. */
+const LEAVE_CONFIRM_MS = 6000;
 /** Volando con teclas el destino cambia todo el tiempo: se avisa más seguido. */
 const FLY_MS = 900;
 const INTENT_MS = 350;
@@ -119,6 +121,10 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [counts, setCounts] = useState<Counts | null>(null);
   const [present, setPresent] = useState<number | null>(null);
   const [myTable, setMyTable] = useState<number | null>(null);
+  // Ya en la llamada de tu mesa: el primer intento de irte sólo advierte; el segundo (en 6 s) te levanta.
+  const liveRef = useRef(false), leaveArmedRef = useRef(0);
+  const [leaveWarn, setLeaveWarn] = useState(false);
+  const onLiveChange = useCallback((live: boolean) => { liveRef.current = live; if (!live) setLeaveWarn(false); }, []);
   // Aparato que llevas (cambia tu disparo por unos tiros). `null`: disparo básico.
   const [weapon, setWeapon] = useState<WeaponInfo | null>(null);
   // Amenaza del cartucho (si trae): viene en camino, anda cerca, o nada. Y la cuenta para reaparecer si te destruyó.
@@ -202,6 +208,14 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         },
         onEnter: () => barRef.current?.querySelector<HTMLButtonElement>("[data-place] button:not(:disabled)")?.click(),
         onEscape: () => { if (sheetOpenRef.current) setSheetOpen(false); else if (expandedRef.current) setExpanded(false); },
+        canLeaveTable: () => {
+          if (!liveRef.current) return true;
+          const now = Date.now();
+          if (now - leaveArmedRef.current < LEAVE_CONFIRM_MS) { leaveArmedRef.current = 0; setLeaveWarn(false); return true; }
+          leaveArmedRef.current = now; setLeaveWarn(true);
+          window.setTimeout(() => { if (Date.now() - leaveArmedRef.current >= LEAVE_CONFIRM_MS) setLeaveWarn(false); }, LEAVE_CONFIRM_MS + 50);
+          return false;
+        },
         onStageTap: () => { if (!sheetOpenRef.current) return false; setSheetOpen(false); return true; },
       },
     });
@@ -436,7 +450,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     } else if (place.table !== null) {
       const i = place.table, n = counts?.perTable[i] ?? 0, seats = structure.tables[i]?.seats.length ?? 0;
       near = myTable === i
-        ? { sub: `Estás en la mesa · ${Math.max(1, n)} de ${seats}${voiceOn ? "" : " · sin audio"}`, action: <button type="button" className={btn} onClick={() => apiRef.current?.stand()}>Levantarte</button> }
+        ? leaveWarn
+          ? { sub: "¿Salir de la mesa? Se corta tu cámara y tu voz. Muévete otra vez para salir.", action: <button type="button" className={btn} onClick={() => apiRef.current?.stand()}>Sí, levantarme</button> }
+          : { sub: `Estás en la mesa · ${Math.max(1, n)} de ${seats}${voiceOn ? "" : " · sin audio"}`, action: <button type="button" className={btn} onClick={() => apiRef.current?.stand()}>Levantarte</button> }
         : n >= seats
           ? { sub: `Mesa llena · ${seats} de ${seats}`, action: <button type="button" className={btn} disabled>Mesa llena</button> }
           : { sub: `${n === 0 ? "Nadie todavía" : `${n} de ${seats} lugares`}${voiceOn ? " · con voz y cámara" : " · sin audio"}`, action: <button type="button" className={btn} onClick={() => apiRef.current?.sit(i)}>Sentarte</button> };
@@ -605,6 +621,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               name={me.name}
               photoURL={me.photoURL}
               onVoiceChange={setVoiceOn}
+              onLiveChange={onLiveChange}
             />
           )}
 
@@ -644,7 +661,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               <div data-place className="flex min-w-0 flex-1 basis-[250px] items-center gap-2.5">
                 <div className="min-w-0 flex-1 leading-snug">
                   <b className="block truncate text-[13px] font-semibold text-[#F2F5F4]">{place.name}</b>
-                  <small className="block truncate text-xs text-[#7C8A8E]" suppressHydrationWarning>{near.sub}</small>
+                  <small aria-live="polite" className={`block text-xs ${leaveWarn && myTable !== null ? "font-semibold text-[#F2C98A]" : "truncate text-[#7C8A8E]"}`} suppressHydrationWarning>{near.sub}</small>
                 </div>
                 {near.action}
               </div>
