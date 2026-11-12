@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  sendBoom, MAX_SHIPS, THREAT_SKEW_MS, NUDGE_EVERY_MS, NUDGE_TTL_MS, SAY_EVERY_MS, SAY_MAX, SAY_MAX_CHARS, SAY_TTL_MS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, activeCartridge, changeCartridge, cleanSayText, cleanShipInput, hydrateCartridge, removeShip, resetWorlds, sendNudge, sendSay, sendWave,
+  sendBoom, sendHurt, MAX_SHIPS, THREAT_SKEW_MS, NUDGE_EVERY_MS, NUDGE_TTL_MS, SAY_EVERY_MS, SAY_MAX, SAY_MAX_CHARS, SAY_TTL_MS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, activeCartridge, changeCartridge, cleanSayText, cleanShipInput, hydrateCartridge, removeShip, resetWorlds, sendNudge, sendSay, sendWave,
   setWorldCartridge, setShared, SHARE_EVERY_MS, snapshot, upsertShip,
 } from "../club-world.server";
 import { SHARED_MAX_TEXT, type Cartridge, type WorldStructure } from "~/components/community/v2/world/cartridge";
@@ -297,6 +297,33 @@ describe("mundo del club (presencia en memoria)", () => {
     // Los robots de la casa siguen por su cuenta.
     upsertShip("c1", who("a"), {}, now + 2000);
     expect(sendBoom("c1", "a", HOUSE.bots[0].id, now + 2000)).toBe(true);
+  });
+
+  it("daño a la nave enemiga: se suma por persona en la visita en curso y viaja en el snapshot", () => {
+    const threat = HOUSE.threat!;
+    const every = threat.every * 1000, cycle = Math.floor(T0 / every), now = cycle * every + threat.warn * 1000 + 5000;
+    const id = `${threat.id}:${cycle}`;
+    upsertShip("c1", who("a"), {}, now); upsertShip("c1", who("b"), {}, now);
+    expect(sendHurt("c1", "a", id, 2, now)).toBe(true);
+    expect(sendHurt("c1", "b", id, 1, now)).toBe(true);
+    expect(sendHurt("c1", "a", id, 1, now)).toBe(true);
+    expect(sendHurt("c1", "a", id, 50, now)).toBe(false); // golpes de más
+    expect(sendHurt("c1", "a", `${threat.id}:${cycle + 3}`, 1, now)).toBe(false); // otra visita
+    expect(sendHurt("c1", "fantasma", id, 1, now)).toBe(false);
+    expect(snapshot("c1", now).hurt).toEqual([{ bot: id, by: { a: 3, b: 1 } }]);
+    sendBoom("c1", "a", id, now);
+    expect(sendHurt("c1", "b", id, 1, now)).toBe(false); // ya derribada
+  });
+
+  it("tiro con arma a alguien debilitado: sólo si su nave dice `weak`; si no, es cosquilla", () => {
+    upsertShip("c1", who("a"), {}, T0);
+    upsertShip("c1", who("b"), { weak: false }, T0);
+    sendNudge("c1", "a", "b", T0, "zap");
+    expect(snapshot("c1", T0).nudges.at(-1)).not.toHaveProperty("kind");
+    upsertShip("c1", who("b"), { weak: true }, T0);
+    expect(snapshot("c1", T0).ships.find((s) => s.id === "b")).toHaveProperty("weak", true);
+    sendNudge("c1", "a", "b", T0 + NUDGE_EVERY_MS, "zap");
+    expect(snapshot("c1", T0 + NUDGE_EVERY_MS).nudges.at(-1)).toHaveProperty("kind", "zap");
   });
 
   describe("estado compartido del modo de juego", () => {

@@ -27,12 +27,16 @@ export type RemoteShip = {
   ship: string; color: string; pilot: string; table: number | null; seat: number | null;
   /** La amenaza destruyó su nave: no está en el mapa hasta que reaparezca. */
   down?: boolean;
+  /** La amenaza le bajó más de la mitad de la vida: un arma recogida ya le pega. */
+  weak?: boolean;
 };
 export type PlaceInfo = { id: string; target: PlaceTarget; kind: string; name: string; table: number | null };
 export type ShipInfo = { id: string; name: string; photoURL: string | null; isBot: boolean; where: string; note: string | null };
 /** Cuánta gente hay y dónde: `byPlace` por id de lugar (sin las mesas, que van juntas en `tables` y por mesa en `perTable`). */
 export type Counts = { humans: number; flying: number; tables: number; perTable: number[]; byPlace: Record<string, number> };
-export type MyState = { x: number; y: number; tx: number; ty: number; table: number | null; flying: boolean; down: boolean };
+export type MyState = { x: number; y: number; tx: number; ty: number; table: number | null; flying: boolean; down: boolean; weak: boolean };
+/** `bonk`: almohadazo. `zap`: tiro con arma recogida a alguien debilitado por la amenaza (le quita un golpe). */
+export type NudgeKind = "bonk" | "zap";
 export type WeaponInfo = { kind: string; name: string; left: number };
 
 export type Callbacks = {
@@ -46,9 +50,11 @@ export type Callbacks = {
   /** `other`: lo hizo otra nave (o un robot), suena más bajito. */
   onSound: (name: string, other?: boolean) => void;
   /** Tu disparo tocó la nave de un miembro: hay que avisarle para que también la vea temblar. */
-  onNudge: (shipId: string, kind?: "bonk") => void;
+  onNudge: (shipId: string, kind?: NudgeKind) => void;
   /** Tumbaste la nave de un robot de la casa: se avisa para que todos la vean estallar y volver a la vez. */
   onBoom: (botId: string) => void;
+  /** Le pegaste a la nave enemiga: se suma en el servidor al daño de los demás (cooperan para derribarla). */
+  onHurt?: (threatId: string, n: number) => void;
   /** Cambió el aparato que llevas (o sus tiros restantes). `null`: disparo básico. Es local, no viaja al servidor. */
   onWeapon: (weapon: WeaponInfo | null) => void;
   /** La amenaza del cartucho: viene en camino (`warn`), ya está (`here`) o no hay (`null`). */
@@ -83,7 +89,7 @@ export type WorldApi = {
   /** Saludo entre dos naves (llegó del servidor o lo acabas de mandar). */
   showWave: (fromId: string, toId: string) => void;
   /** Cosquilla que llegó del servidor: esa nave (quizá la tuya) tiembla un instante. Regresa si era para ti. */
-  showNudge: (toId: string, kind?: "bonk") => boolean;
+  showNudge: (toId: string, kind?: NudgeKind) => boolean;
   /** Mensaje del chat: burbuja sobre la nave de quien habló (si sigue presente). */
   showSay: (fromId: string, text: string) => void;
   /** Saludo a un robot de la casa: contesta solo. */
@@ -91,6 +97,8 @@ export type WorldApi = {
   flyToPlace: (placeId: string) => void;
   /** Robots tumbados según el servidor (`back`: ms para que vuelvan). `silent`: ya estaban así al llegar, sin explosión. */
   setBotsDown: (down: Array<{ bot: string; back: number }>, silent?: boolean) => void;
+  /** Golpes a la nave enemiga según el servidor, por persona. */
+  setThreatHurt: (hurt: Array<{ bot: string; by: Record<string, number> }>, meId: string) => void;
   /** Estado compartido del modo de juego, tal como llegó del servidor. */
   setShared: (shared: SharedState) => void;
   /** Dispara hacia donde apunta la nave con el aparato que lleves. A las personas sólo las hace temblar; a los robots los tumba. */
@@ -144,7 +152,7 @@ export function createWorld(opts: {
     hidden: new Set<string>(), dead: false,
     pickups: [] as Pickup[], lives: [] as Pickup[], chain: [] as Array<{ x: number; y: number; at: number }>, shots: [] as Shot[], weapon: null as { kind: string; left: number } | null, shotT: 9, kindTurn: 0,
     /** Amenaza: fase, ciclo en curso, ciclo en que ya fue derribada, reloj de su disparo, segundos que llevas avisado y sus disparos. */
-    threatPhase: "away" as "away" | "warn" | "here", threatCycle: -1, threatKilled: -1, threatShotT: 0, threatSeenT: 0, hostile: [] as Shot[],
+    threatPhase: "away" as "away" | "warn" | "here", threatCycle: -1, threatKilled: -1, threatShotT: 0, threatSeenT: 0, hostile: [] as Shot[], myHurt: 0, othersHurt: 0, hurtCycle: -1,
     downShown: null as number | null,
   };
   const entity = (id: string, kind: Entity["kind"], name: string, look: Look, x: number, y: number): Entity => ({
@@ -428,11 +436,20 @@ export function createWorld(opts: {
     cb.onWeapon(weaponInfo());
   }
   /** Tu disparo tocó esa nave: tiembla aquí y se avisa para que su dueño también la vea temblar. */
-  function touch(e: Entity, dmg: number) {
+  /** Personas debilitadas por la amenaza según el servidor. */
+  const weakIds = new Set<string>();
+  function touch(e: Entity, dmg: number, armed = true) {
     tickle(e); cb.onSound("nudge");
     // Al enemigo, con `needsWeapon`, sólo lo dañan los aparatos (el básico vale 0); si no, cualquier disparo le quita al menos un golpe.
-    if (e === threat) { if (state.threatPhase === "here" && (e.hp -= T?.needsWeapon ? dmg : Math.max(1, dmg)) <= 0) destroyThreat(true); return; }
-    if (e.kind === "human") cb.onNudge(e.id);
+    if (e === threat) {
+      const d = T?.needsWeapon ? dmg : Math.max(1, dmg);
+      if (state.threatPhase !== "here" || d <= 0) return;
+      state.myHurt += d; cb.onHurt?.(threatId(state.threatCycle), d);
+      if ((e.hp -= d) <= 0) destroyThreat(true);
+      return;
+    }
+    // A una persona sólo se le hace daño de verdad si la amenaza ya la debilitó y le pegas con un arma recogida.
+    if (e.kind === "human") cb.onNudge(e.id, T && armed && dmg > 0 && weakIds.has(e.id) ? "zap" : undefined);
     else if (e.kind === "bot" && G) { e.healT = G.bot.heal; if ((e.hp -= dmg) <= 0) destroyBot(e, true); }
   }
   /** Naves a las que un disparo les puede pegar (un robot que viene llegando todavía no). */
@@ -513,7 +530,7 @@ export function createWorld(opts: {
         continue;
       }
       if (!hit) continue;
-      touch(hit, s.dmg); s.t = s.life; // el disparo se apaga en la nave que toca
+      touch(hit, s.dmg, s.kind !== G.basic.shot); s.t = s.life; // el disparo se apaga en la nave que toca
     }
     state.shots = state.shots.filter((s) => s.t < s.life && s.x > -20 && s.x < WORLD_W + 20 && s.y > -20 && s.y < WORLD_H + 20);
   }
@@ -563,10 +580,25 @@ export function createWorld(opts: {
     const look = v?.look ?? T.look; threat.model = look.model; threat.color = look.color; threat.pilot = look.pilot;
     routeAt = v?.at ?? T.at; gun = { ...T.shot, ...v?.shot }; burstLeft = 0;
   }
-  function fireAt(p: Point) {
-    // Puntería con anticipación: apunta a donde vas a estar cuando llegue el tiro (`lead` 0 = a donde estás).
-    const eta = (Math.hypot(player.x - p.x, player.y - p.y) / gun.speed) * (gun.lead ?? 0);
-    const a = Math.atan2(player.y + player.vy * eta - p.y, player.x + player.vx * eta - p.x);
+  /**
+   * A quién le apunta: la persona expuesta (ni sentada, ni en un lugar, ni destruida) más cercana y a tiro,
+   * seas tú o alguien más. Todas las pantallas eligen casi igual, así que todos ven a quién persigue; sólo
+   * a quien le toca le pega de verdad (cada quien revisa sus propios golpes).
+   */
+  function threatTarget(p: Point): Entity | null {
+    let best: Entity | null = null, bd = gun.range;
+    if (exposed()) { const d = Math.hypot(player.x - p.x, player.y - p.y); if (d < bd) { best = player; bd = d; } }
+    for (const e of humans.values()) {
+      if (e.downT > 0 || e.table !== null || placeOf(e)) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d < bd) { best = e; bd = d; }
+    }
+    return best;
+  }
+  function fireAt(p: Point, to: Entity) {
+    // Puntería con anticipación: apunta a donde va a estar cuando llegue el tiro (`lead` 0 = a donde está).
+    const eta = (Math.hypot(to.x - p.x, to.y - p.y) / gun.speed) * (gun.lead ?? 0);
+    const a = Math.atan2(to.y + to.vy * eta - p.y, to.x + to.vx * eta - p.x);
     state.hostile.push({ kind: T!.id, x: p.x + Math.cos(a) * 34, y: p.y + Math.sin(a) * 34, vx: Math.cos(a) * gun.speed, vy: Math.sin(a) * gun.speed, t: 0, life: gun.life, dmg: 1, bounces: 0 });
     cb.onSound("enemyShot", true);
   }
@@ -576,13 +608,14 @@ export function createWorld(opts: {
     if (state.quiet || state.mini) { setThreatPhase("away"); threat.leaveT = 0; state.hostile.length = 0; return; }
     const now = Date.now() / 1000, cycle = Math.floor(now / T.every), u = now - cycle * T.every;
     state.threatCycle = cycle; cast(cycle);
+    if (state.hurtCycle !== cycle) { state.hurtCycle = cycle; state.myHurt = state.othersHurt = 0; }
     const phase = state.threatKilled === cycle ? "away" : u < T.warn ? "warn" : u < T.warn + T.stay ? "here" : "away";
     if (phase !== state.threatPhase) {
       if (phase === "warn") { state.threatSeenT = 0; cb.onSound("alarm"); }
       else if (phase === "here") {
         // Llega en hipervelocidad a donde le toque en su ruta.
         const p = routeAt(cycle, 0), q = routeAt(cycle, 0.2);
-        threat.x = p.x; threat.y = p.y; threat.ang = Math.atan2(q.y - p.y, q.x - p.x); threat.hp = T.hp; threat.warpT = WARP; threat.leaveT = 0; threat.shakeT = 0;
+        threat.x = p.x; threat.y = p.y; threat.ang = Math.atan2(q.y - p.y, q.x - p.x); threat.hp = T.hp - state.othersHurt - state.myHurt; threat.warpT = WARP; threat.leaveT = 0; threat.shakeT = 0;
         state.threatShotT = 0;
         if (state.threatPhase === "away") state.threatSeenT = 0; // llegaste a media visita: primero el aviso
         cb.onSound("warp", true);
@@ -593,18 +626,18 @@ export function createWorld(opts: {
     if (phase === "here") {
       const tv = u - T.warn, p = routeAt(cycle, tv), q = routeAt(cycle, tv + 0.2);
       threat.x = p.x; threat.y = p.y; threat.thrust = 0.6;
-      const d = Math.hypot(player.x - p.x, player.y - p.y), aim = exposed() && d < gun.range;
+      const to = threatTarget(p), aim = !!to;
       // Voltea hacia quien tiene a tiro; si no, sigue su rumbo.
-      threat.ang = lerpAngle(threat.ang, aim ? Math.atan2(player.y - p.y, player.x - p.x) : Math.atan2(q.y - p.y, q.x - p.x), Math.min(1, 4 * dt));
+      threat.ang = lerpAngle(threat.ang, to ? Math.atan2(to.y - p.y, to.x - p.x) : Math.atan2(q.y - p.y, q.x - p.x), Math.min(1, 4 * dt));
       if (threat.warpT > 0) { if ((threat.warpT -= dt) <= 0) { threat.warpT = 0; emit({ type: "bot-back", entity: threat }); } }
       // Nadie es destruido sin aviso: no dispara hasta que lleves `warn` segundos sabiendo que anda aquí.
       else if (burstLeft > 0) {
         // Resto de la ráfaga: si dejaste de estar a tiro, se corta.
         if (!aim) burstLeft = 0;
-        else if ((burstT -= dt) <= 0) { burstLeft--; burstT = gun.gap ?? 0.3; fireAt(p); }
+        else if ((burstT -= dt) <= 0) { burstLeft--; burstT = gun.gap ?? 0.3; fireAt(p, to!); }
       } else if ((state.threatShotT += dt) >= gun.every && aim && state.threatSeenT >= T.warn) {
         state.threatShotT = 0; burstLeft = Math.max(0, (gun.burst ?? 1) - 1); burstT = gun.gap ?? 0.3;
-        fireAt(p);
+        fireAt(p, to!);
       }
     }
     // Reventones en cadena de una enemiga destruida.
@@ -665,17 +698,17 @@ export function createWorld(opts: {
   }
 
   /** Cosquilla a mano (menú de una skin): tiembla aquí y, si es una persona, se avisa para que todos la vean. */
-  function poke(id: string, kind?: "bonk") {
+  function poke(id: string, kind?: NudgeKind) {
     const e = humans.get(id) ?? bots.find((b) => b.id === id);
     if (!e || e.downT > 0 || state.quiet) return;
     tickle(e, kind); cb.onSound(kind ?? "nudge");
     if (e.kind === "human") cb.onNudge(e.id, kind);
   }
   /** Temblor breve. Varias cosquillas seguidas son un solo temblor. */
-  function tickle(e: Entity, kind?: "bonk") {
+  function tickle(e: Entity, kind?: NudgeKind) {
     if (state.quiet || e.shakeT > 0) return;
     e.shakeT = SHAKE;
-    emit({ type: "tickle", entity: e, kind });
+    emit({ type: "tickle", entity: e, kind: kind === "bonk" ? kind : undefined });
   }
 
   // ── Saludos ──
@@ -786,6 +819,7 @@ export function createWorld(opts: {
         // Si la nave local quedó muy lejos de la real (o no hay animación), se coloca de golpe.
         if (state.quiet || Math.hypot(s.x - e.x, s.y - e.y) > 320) { e.x = s.x; e.y = s.y; e.vx = e.vy = 0; }
         // La amenaza destruyó su nave: estalla aquí también, se oculta, y vuelve en hipervelocidad cuando reaparezca.
+        if (s.weak) weakIds.add(s.id); else weakIds.delete(s.id);
         const down = !!s.down && !!T && !state.quiet;
         if (down && e.downT <= 0) {
           e.downT = 1; e.warpT = 0; e.shakeT = 0;
@@ -808,8 +842,23 @@ export function createWorld(opts: {
     },
     showNudge(toId, kind) {
       const to = byId(toId, meId); if (!to || state.quiet) return false;
+      // Te dieron con un arma estando debilitada: pierdes un golpe (si sigues expuesta).
+      if (kind === "zap") { if (to === player && exposed()) hitPlayer(); else tickle(to); return false; }
       tickle(to, kind);
       return to === player;
+    },
+    setThreatHurt(hurt, meId) {
+      if (!T || !threat || state.quiet) return;
+      const cycle = Math.floor(Date.now() / 1000 / T.every), id = threatId(cycle);
+      if (cycle !== state.hurtCycle) return; // aún no corre esta visita aquí
+      const h = hurt.find((x) => x.bot === id);
+      const others = h ? Object.entries(h.by).reduce((s, [who, n]) => (who === meId ? s : s + n), 0) : 0;
+      if (others === state.othersHurt) return;
+      state.othersHurt = others;
+      if (state.threatPhase !== "here" || state.threatKilled === cycle) return;
+      threat.hp = T.hp - others - state.myHurt;
+      // Entre todos ya la derribaron: si tú le pegaste también avisas (el servidor ignora el aviso repetido).
+      if (threat.hp <= 0) destroyThreat(state.myHurt > 0);
     },
     setBotsDown(down, silent) {
       if (state.quiet) return;
@@ -868,7 +917,8 @@ export function createWorld(opts: {
       // Volando con teclas no hay destino: se manda a dónde va a estar en un momento.
       const tx = seat ? seat.x : player.tx ?? player.x + (flying ? player.vx * 1.1 : 0);
       const ty = seat ? seat.y : player.ty ?? player.y + (flying ? player.vy * 1.1 : 0);
-      return { x: Math.round(player.x), y: Math.round(player.y), tx: Math.round(clamp(tx, M.margin, WORLD_W - M.margin)), ty: Math.round(clamp(ty, M.margin, WORLD_H - M.margin)), table: player.table, flying, down: player.downT > 0 };
+      return { x: Math.round(player.x), y: Math.round(player.y), tx: Math.round(clamp(tx, M.margin, WORLD_W - M.margin)), ty: Math.round(clamp(ty, M.margin, WORLD_H - M.margin)), table: player.table, flying, down: player.downT > 0,
+        weak: !!T && player.downT <= 0 && player.table === null && player.hp <= T.player.hp / 2 };
     },
     screenOf: (x, y) => toScreen(x, y),
     destroy() {

@@ -7,7 +7,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { MAX_BODY, hydrateCartridge, removeShip, sendBoom, sendNudge, sendSay, sendWave, setShared, snapshot, upsertShip } from "~/.server/services/club-world.server";
+import { MAX_BODY, hydrateCartridge, removeShip, sendBoom, sendHurt, sendNudge, sendSay, sendWave, setShared, snapshot, upsertShip } from "~/.server/services/club-world.server";
 import { avatarUrlFor, canParticipate } from "~/.server/services/wall.server";
 import { getSession } from "~/sessions";
 
@@ -86,6 +86,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   else if ("say" in body) sayId = sendSay(communityId, who.id, body.say);
   else if ("nudge" in body) nudgeId = sendNudge(communityId, who.id, body.nudge, Date.now(), body.kind);
   else if ("boom" in body) sendBoom(communityId, who.id, body.boom);
+  else if ("hurt" in body) sendHurt(communityId, who.id, body.hurt, body.n);
   else if ("share" in body) setShared(communityId, who.id, body.share);
   else if (!upsertShip(communityId, who, body)) return json({ error: "El Mundo está lleno. Intenta en un momento." }, 429);
   return json({ ...snapshot(communityId), me: who.id, waveId, sayId, nudgeId });

@@ -37,7 +37,7 @@ type ChatMessage = { id: string; from: string; name: string; text: string; at: n
 type Snapshot = {
   /** Id del mundo activo (los servidores de antes no lo mandan). */
   cartridge?: string;
-  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string; kind?: "bonk" }>; down?: Array<{ bot: string; back: number }>;
+  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[]; nudges?: Array<{ id: string; to: string; kind?: "bonk" | "zap" }>; down?: Array<{ bot: string; back: number }>; hurt?: Array<{ bot: string; by: Record<string, number> }>;
   /** Estado compartido del modo de juego (sólo si el cartucho activo declara llaves). */
   shared?: Record<string, number | string>;
   me: string; waveId?: string | null; sayId?: string | null; nudgeId?: string | null;
@@ -191,6 +191,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         onSound: (name, other) => sound.play(name, { other }),
         // El robot ya estalló en tu pantalla; el servidor lo deja fuera para todos y regresa cuánto falta para que vuelva.
         onBoom: (id) => { post({ boom: id }).then(apply).catch(() => {}); },
+        // Golpe a la nave enemiga: se suma en el servidor al de los demás, así cooperan para derribarla.
+        onHurt: (id, n) => { post({ hurt: id, n }).then(apply).catch(() => {}); },
         onWeapon: setWeapon,
         onHud: setHud,
         // Saludo pedido desde un menú de la skin: mismo camino que el botón «Saludar».
@@ -271,7 +273,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         if (w.to === snap.me) { sound.play("waveIn"); const who = snap.ships.find((s) => s.id === w.from); if (who) say(`${who.name} te saludó.`); }
       }
       // Cosquillas: varias a la misma nave en una lectura son un solo temblor. Sin texto ni autor.
-      const shaken = new Map<string, "bonk" | undefined>();
+      const shaken = new Map<string, "bonk" | "zap" | undefined>();
       for (const n of snap.nudges ?? []) {
         if (seenNudges.has(n.id)) continue;
         seenNudges.add(n.id);
@@ -279,6 +281,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       }
       for (const [to, kind] of shaken) if (api.showNudge(to, kind)) sound.play(kind ?? "nudge");
       api.setBotsDown(snap.down ?? [], firstRead);
+      api.setThreatHurt(snap.hurt ?? [], snap.me);
       api.setShared(snap.shared ?? {});
       const says = snap.says ?? [];
       for (const m of says) {

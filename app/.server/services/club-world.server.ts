@@ -47,6 +47,8 @@ type Ship = Who & {
   seat: number | null;
   /** La amenaza del cartucho destruyó su nave: los demás la ocultan hasta que reaparezca. */
   down: boolean;
+  /** La amenaza le bajó más de la mitad de la vida: con un arma recogida, los demás ya pueden pegarle. */
+  weak: boolean;
   seenAt: number;
   lastWaveAt: number;
   lastSayAt: number;
@@ -57,19 +59,22 @@ type Wave = { id: string; from: string; to: string; at: number };
 type Say = { id: string; from: string; name: string; text: string; at: number };
 /** Sin `from`: quien recibe la cosquilla no sabe de quién vino, para que no se preste a molestar. */
 /** `kind: "bonk"`: no fue cosquilla sino golpe con un objeto del mundo (un almohadazo); la skin decide cómo se ve. */
-type Nudge = { id: string; to: string; at: number; kind?: "bonk" };
+/** `kind: "zap"`: tiro con arma recogida a alguien debilitado (sólo se acepta si su nave dice `weak`); le quita un golpe. */
+type Nudge = { id: string; to: string; at: number; kind?: "bonk" | "zap" };
 /**
  * `down`: robot tumbado → momento en que vuelve. `cartridge`: el mundo activo de esta comunidad;
  * `hydrated`: ya se leyó de la base (o se cambió aquí) en este proceso. `shared`: estado compartido
  * del modo de juego del cartucho activo; `shareAt`: último cambio de cada persona (freno).
  */
-type World = { ships: Map<string, Ship>; waves: Wave[]; says: Say[]; nudges: Nudge[]; down: Map<string, number>; seq: number; cartridge: string; hydrated: boolean; shared: Map<string, SharedValue>; shareAt: Map<string, number> };
+/** Daño a la nave enemiga de una visita, por persona: así todos ven bajar la misma vida y cooperan para derribarla. */
+type Hurt = { until: number; by: Map<string, number> };
+type World = { ships: Map<string, Ship>; waves: Wave[]; says: Say[]; nudges: Nudge[]; down: Map<string, number>; hurt: Map<string, Hurt>; seq: number; cartridge: string; hydrated: boolean; shared: Map<string, SharedValue>; shareAt: Map<string, number> };
 
 const worlds = new Map<string, World>();
 
 function worldOf(communityId: string) {
   let w = worlds.get(communityId);
-  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], says: [], nudges: [], down: new Map(), seq: 0, cartridge: DEFAULT_CARTRIDGE_ID, hydrated: false, shared: new Map(), shareAt: new Map() }));
+  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], says: [], nudges: [], down: new Map(), hurt: new Map(), seq: 0, cartridge: DEFAULT_CARTRIDGE_ID, hydrated: false, shared: new Map(), shareAt: new Map() }));
   return w;
 }
 const structureOf = (w: World) => getCartridge(w.cartridge).structure;
@@ -136,6 +141,7 @@ function prune(w: World, now: number) {
   if (w.nudges.length) w.nudges = w.nudges.filter((n) => now - n.at <= NUDGE_TTL_MS);
   if (w.says.length) w.says = w.says.filter((m) => now - m.at <= SAY_TTL_MS);
   for (const [bot, until] of w.down) if (now >= until) w.down.delete(bot);
+  for (const [id, h] of w.hurt) if (now >= h.until) w.hurt.delete(id);
   for (const id of w.shareAt.keys()) if (!w.ships.has(id)) w.shareAt.delete(id);
   if (w.shared.size) {
     // Una llave `member` sólo vale mientras esa persona siga en el Mundo.
@@ -200,7 +206,8 @@ export function upsertShip(communityId: string, who: Who, input: unknown, now = 
   }
   // Destruida por la amenaza: sólo si el cartucho trae una, y nunca sentado (en una mesa nadie te daña).
   const down = !!structure.threat && table === null && !!input && typeof input === "object" && (input as { down?: unknown }).down === true;
-  w.ships.set(who.id, { ...who, ...clean, table, seat, down, seenAt: now, lastWaveAt: prev?.lastWaveAt ?? 0, lastSayAt: prev?.lastSayAt ?? 0, lastNudgeAt: prev?.lastNudgeAt ?? 0 });
+  const weak = !!structure.threat && table === null && !down && (input as { weak?: unknown }).weak === true;
+  w.ships.set(who.id, { ...who, ...clean, table, seat, down, weak, seenAt: now, lastWaveAt: prev?.lastWaveAt ?? 0, lastSayAt: prev?.lastSayAt ?? 0, lastNudgeAt: prev?.lastNudgeAt ?? 0 });
   return true;
 }
 
@@ -223,9 +230,10 @@ export function sendNudge(communityId: string, fromId: string, toId: unknown, no
   prune(w, now);
   const from = w.ships.get(fromId);
   if (!from || typeof toId !== "string" || toId === fromId || !w.ships.has(toId)) return null;
+  if (kind === "zap" && !w.ships.get(toId)!.weak) kind = undefined; // sano: sólo una cosquilla
   if (now - from.lastNudgeAt < NUDGE_EVERY_MS) return null;
   from.lastNudgeAt = now;
-  const nudge: Nudge = { id: `n${now.toString(36)}-${(w.seq++).toString(36)}`, to: toId, at: now, ...(kind === "bonk" ? { kind } : {}) };
+  const nudge: Nudge = { id: `n${now.toString(36)}-${(w.seq++).toString(36)}`, to: toId, at: now, ...(kind === "bonk" || kind === "zap" ? { kind } : {}) };
   w.nudges.push(nudge);
   return nudge.id;
 }
@@ -252,6 +260,30 @@ export function sendBoom(communityId: string, fromId: string, botId: unknown, no
   }
   if (!bots.some((b) => b.id === botId)) return false;
   w.down.set(botId, now + combat.bot.back * 1000);
+  return true;
+}
+
+/** Fin de la visita de la nave enemiga con ese id (`<amenaza>:<ciclo>`), o `null` si no es la visita en curso. */
+function threatVisitEnd(w: World, id: string, now: number) {
+  const { threat } = structureOf(w);
+  if (!threat || !id.startsWith(`${threat.id}:`)) return null;
+  const cycle = Number(id.slice(threat.id.length + 1));
+  const starts = cycle * threat.every * 1000, ends = starts + (threat.warn + threat.stay) * 1000;
+  if (!Number.isInteger(cycle) || now < starts - THREAT_SKEW_MS || now >= ends + THREAT_SKEW_MS) return null;
+  return ends + THREAT_SKEW_MS;
+}
+/** Le pegaste a la nave enemiga (`n` golpes, 1–5): se suma a lo que le han hecho los demás en esta visita. */
+export function sendHurt(communityId: string, fromId: string, threatId: unknown, n: unknown, now = Date.now()) {
+  const w = worldOf(communityId);
+  prune(w, now);
+  if (!w.ships.has(fromId) || typeof threatId !== "string" || w.down.has(threatId)) return false;
+  const hits = typeof n === "number" && Number.isFinite(n) ? Math.round(n) : 0;
+  if (hits < 1 || hits > 5) return false;
+  const until = threatVisitEnd(w, threatId, now);
+  if (until === null) return false;
+  let h = w.hurt.get(threatId);
+  if (!h) w.hurt.set(threatId, (h = { until, by: new Map() }));
+  h.by.set(fromId, (h.by.get(fromId) ?? 0) + hits);
   return true;
 }
 
@@ -328,11 +360,13 @@ export function snapshot(communityId: string, now = Date.now()) {
     cartridge: w.cartridge,
     count: w.ships.size,
     // `down` sólo viaja cuando es cierto: los clientes de antes no lo conocen y no les estorba.
-    ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, lastSayAt: _m, lastNudgeAt: _n, down, ...ship }) => (down ? { ...ship, down } : ship)),
+    ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, lastSayAt: _m, lastNudgeAt: _n, down, weak, ...ship }) => ({ ...ship, ...(down ? { down } : {}), ...(weak ? { weak } : {}) })),
     waves: w.waves.map(({ id, from, to }) => ({ id, from, to })),
     nudges: w.nudges.map(({ id, to, kind }) => (kind ? { id, to, kind } : { id, to })),
     // En milisegundos que faltan y no en hora: los relojes de cada quien no tienen por qué coincidir.
     down: [...w.down].map(([bot, until]) => ({ bot, back: until - now })),
+    // Golpes a la nave enemiga de la visita en curso, por persona (sólo si hay).
+    ...(w.hurt.size ? { hurt: [...w.hurt].map(([bot, h]) => ({ bot, by: Object.fromEntries(h.by) })) } : {}),
     says: w.says.map(({ id, from, name, text, at }) => ({ id, from, name, text, at })),
     // Estado compartido del modo de juego: sólo viaja si el cartucho activo declara llaves.
     ...(structureOf(w).shared ? { shared: Object.fromEntries(w.shared) as Record<string, SharedValue> } : {}),
