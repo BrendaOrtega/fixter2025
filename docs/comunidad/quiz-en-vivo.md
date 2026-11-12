@@ -104,27 +104,30 @@ del fork.
   miembro real; `PLAY=1` juega hasta el podio y comprueba que el resultado quede ligado al usuario y
   que en Razzia no quede nada). `shots-admin.mjs` y `shots.mjs` sacan capturas en 375 px y escritorio.
 
-## Para retomar (estado al 12-nov-2026, mediodía)
+## Estado (12-nov-2026)
 
-En producción y probado con una partida completa (lanzar → jugar → podio guardado):
-- FixterGeek `54fbe56` (quizzes por comunidad, editor, coanfitriones) y `4141935` (pastilla flotante).
-- Fork Razzia `0e42173` (motor multi-cliente), caja del quiz en el digest `e7846bb2`, con `APP_PIN=1`.
+Todo el plan está en producción y probado con una partida completa (lanzar → jugar → podio guardado):
+- FixterGeek: `4141935` (pastilla flotante), `54fbe56` (quizzes por comunidad, editor, coanfitriones).
+- Fork Razzia: `0e42173` (motor multi-cliente) y `ebf34f0` (tablero y jugador rediseñados con el
+  sistema v2 y la marca de cada comunidad). Caja del quiz en el digest `5d3642bd`, con `APP_PIN=1`.
+- Capturas del rediseño, en marca oscura y clara: `docs/club-rediseno/quiz/capturas/real/`.
+- El `theme.json` de la caja ya no trae colores ni logo: los colores salen de los defaults del fork
+  (paleta FixterGeek) o de la marca de la partida; sin logo, el tablero pinta las iniciales del club.
 
-A medias: **rediseño del tablero y del jugador** (fase 4 del plan).
-- Lo hace un agente en `~/razzia`, rama `fixtergeek`; al cierre de esta sesión tenía ~70 archivos
-  modificados SIN commit y 94 capturas en `docs/club-rediseno/quiz/capturas/real/` (oscuro y claro).
-- Al retomar: `git -C ~/razzia status` y `git log`. Si ya hay commit, comparar las capturas `real/`
-  contra `docs/club-rediseno/quiz/frames.html`, correr `pnpm test` y desplegar según el runbook
-  (sólo fuera de llamadas). Si no hay commit, revisar el árbol de trabajo antes de decidir.
-- El rediseño agrega variables de color (`card`, `border`, `primary-foreground`). `brandFor` ya las
-  manda; mientras el fork desplegado no las acepte, `startGame` reintenta sólo con el nombre.
-- En `Room.tsx` del fork hay un cambio sin commit de otra sesión (URL sin protocolo): no es del quiz.
-
-Sin probar: llamada real con grabación, más de dos jugadores a la vez, el QR en un teléfono real.
+Sin probar: llamada real con grabación, más de dos jugadores a la vez, el QR en un teléfono real,
+partidas «sólo miembros» con el diseño nuevo, preguntas con imagen.
 Plan completo: `~/.claude/plans/tender-drifting-sonnet.md`.
 
 ## Pendiente
 
+- **Cuando el club pase a la sala nueva (`fixter-call-svc`)**, tres ajustes en `QuizPanel.tsx` (medidos
+  por la sesión de la sala con una réplica, no con la app real):
+  1. La pastilla «Quiz» se encima al chat abierto de la sala. La sala nueva manda `postMessage`
+     `gs:panel {open, panel: "chat" | "people"}`: esconder la pastilla mientras esté abierto.
+  2. La barra nueva mide ~740 px: desde 1024 px el anfitrión puede ir en columna como el jugador,
+     en vez del cajón encima que tapa «Salir», el chat y «Gente».
+  3. Con partida viva, no abrir el cajón del anfitrión solo hasta que la sala esté adentro (a 375 px
+     tapa «Entrar a la llamada»).
 - Prueba de carga (cuántos jugadores aguanta una partida y cuántas partidas a la vez) y su límite.
 - Pantalla para que cada comunidad edite su marca (`callSkin`); dominio propio por cliente.
 - Podio del último quiz e insignia en la página pública del club.
