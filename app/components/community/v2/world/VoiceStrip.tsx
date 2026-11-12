@@ -67,7 +67,7 @@ function TileVideo({ track, mirror }: { track: VideoTrack; mirror: boolean }) {
 
 /**
  * Interruptor «voz en mesas» de la comunidad. Sólo se pinta para quien la administra (lo dice el
- * servidor, y el servidor vuelve a validar al cambiarlo). Sirve suelto en el panel de admin.
+ * servidor, y el servidor vuelve a validar al cambiarlo). Vive en Administración › Mundo.
  */
 export function VoiceSwitch({ slug, onChange, className = "" }: { slug: string; onChange?: (enabled: boolean) => void; className?: string }) {
   const [state, setState] = useState<ServerState | null>(null);
@@ -121,7 +121,7 @@ export function VoiceStrip({
   blocked?: boolean;
   name: string;
   photoURL?: string | null;
-  /** Pinta el interruptor a quien administra la comunidad. */
+  /** Pinta a quien administra la comunidad el estado de la voz (el interruptor está en Administración › Mundo). */
   showSwitch?: boolean;
 }) {
   const [server, setServer] = useState<ServerState | null>(null);
@@ -290,11 +290,18 @@ export function VoiceStrip({
     setTick((t) => t + 1);
   }, []);
 
-  const adminSwitch = showSwitch && server?.canManage
-    ? <VoiceSwitch slug={slug} onChange={(v) => setServer((s) => (s ? { ...s, enabled: v } : s))} />
-    : null;
+  // En el Mundo quien administra sólo ve el estado; el interruptor vive en Administración › Mundo.
+  const adminSwitch = showSwitch && server?.canManage ? (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#7C8A8E]">
+      <span className="inline-flex min-h-7 items-center gap-2 rounded-full border border-[#232D33] bg-[#141B20] px-2.5 py-1 text-[#F2F5F4]">
+        <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${server.enabled ? "bg-brand-500" : "bg-[#7C8A8E]"}`} />
+        Cámaras en las mesas: {server.enabled ? "encendidas" : "apagadas"}
+      </span>
+      <a href={`/comunidad/${slug}/admin?tab=mundo`} className="underline underline-offset-2 hover:text-[#F2F5F4]">Cambiar en Administración › Mundo</a>
+    </p>
+  ) : null;
 
-  // Apagado o de pie: nadie nota nada (quien administra sólo ve su interruptor).
+  // Apagado o de pie: nadie nota nada (quien administra sólo ve el estado).
   if (!on || zone === null) return adminSwitch ? <div className="shrink-0 px-2.5 py-2">{adminSwitch}</div> : null;
 
   const box = "shrink-0 border-y border-[#232D33] bg-[#141B20] px-2.5 py-2 text-[#F2F5F4]";
