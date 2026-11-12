@@ -34,6 +34,7 @@ export default [
   route("comunidad/:slug/llamada", "routes/comunidad.$slug.llamada.tsx"), // la sala en iframe, con Grabar/Detener como en Teams
   route("comunidad/:slug/admin", "routes/comunidad.$slug.admin.tsx"), // panel del anfitrión
   route("comunidad/:slug/quiz", "routes/comunidad.$slug.quiz.ts"), // quiz en vivo: estado y controles (recurso, sin UI)
+  route("comunidad/:slug/quiz/lanzar", "routes/comunidad.$slug.quiz-lanzar.tsx"), // lanzar un quiz fuera de una llamada
   route("comunidad/:slug/evento/:file", "routes/comunidad.$slug.evento.$file.ts"), // .ics de un evento
   route("newsletters", "routes/newsletters.tsx"), // redirect → /secuencias
   route("newsletter", "routes/newsletter.tsx"), // redirect → /secuencias

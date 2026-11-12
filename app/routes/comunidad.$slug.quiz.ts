@@ -99,8 +99,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     canHost: access.canHost,
     active: access.canHost
       ? // El anfitrión no juega su propia partida (Razzia lo rechaza): ve los controles.
-        // Con identidad firmada sólo entran miembros: el PIN ya no le sirve a nadie de fuera y no se enseña.
-        { gameId: game.gameId, subject: game.subject, inviteCode: process.env.QUIZ_IDENTITY_SECRET ? undefined : game.inviteCode, boardUrl: boardUrl(quizBase(), game.gameId) }
+        // Partida abierta: se enseña el PIN para quien juegue desde fuera. Sólo miembros: no sirve, no se enseña.
+        {
+          gameId: game.gameId,
+          subject: game.subject,
+          membersOnly: !!game.membersOnly,
+          inviteCode: game.membersOnly ? undefined : game.inviteCode,
+          site: new URL(quizBase()).host,
+          boardUrl: boardUrl(quizBase(), game.gameId),
+        }
       : { gameId: game.gameId, subject: game.subject, playerUrl: playerUrl(quizBase(), game.inviteCode, user) },
   });
 };
@@ -117,7 +124,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = String(form.get("intent") ?? "");
 
   if (intent === "quiz-start") {
-    const r = await startGame({ id: access.communityId, slug }, String(form.get("quizId") ?? ""), user.id);
+    const r = await startGame({ id: access.communityId, slug }, String(form.get("quizId") ?? ""), user.id, {
+      membersOnly: form.get("membersOnly") === "1",
+    });
     if (!r.ok) return json({ error: r.error }, { status: 502 });
     return json({ ok: true, managerUrl: r.managerUrl, subject: r.game.subject });
   }

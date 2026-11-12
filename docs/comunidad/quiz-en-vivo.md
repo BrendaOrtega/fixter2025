@@ -1,17 +1,23 @@
 # Quiz en vivo del club
 
-Quiz tipo Kahoot dentro de la llamada del club. En producción desde el 12-nov-2026.
+Quiz tipo Kahoot para el club: se usa dentro de la llamada y fuera de ella (evento presencial, clase,
+transmisión). En producción desde el 12-nov-2026.
 
 Este documento es la entrada para quien tenga que modificarlo. La operación de la caja (ids,
 comandos, secretos) está en el repo privado: `~/sandbox-host/docs/runbook-quiz-razzia.md`.
 
 ## Qué hace
 
-- El anfitrión abre el panel «Quiz» en la página de la llamada, elige un quiz y da «Lanzar quiz».
+- El anfitrión lo lanza desde el panel «Quiz» de la llamada o, fuera de una llamada, desde
+  `/comunidad/:slug/quiz/lanzar`. Elige el quiz y quién puede jugar:
+  - **Cualquiera con el PIN** (default): el tablero enseña la dirección, el PIN y un QR, como Kahoot.
+  - **Sólo miembros del club**: sin PIN; se entra con la identidad firmada del club.
 - El tablero se abre en otra pestaña (`quiz.fixtergeek.com`). El anfitrión la comparte en la llamada:
   ahí salen las preguntas, el ranking y el podio, y así queda en la grabación.
-- A cada miembro le aparece el panel solo (sondeo cada 5 s) y entra con su nombre del club, sin PIN.
-- El tablero muestra un QR: quien lo escanea juega desde su celular con su sesión del club.
+- A cada miembro que está en la llamada le aparece el panel solo (sondeo cada 5 s) y entra con su
+  nombre del club, sin PIN, sea cual sea el modo.
+- En modo «sólo miembros» el QR del tablero lleva a FixterGeek: quien lo escanea juega desde su
+  celular con su sesión del club.
 - «Terminar quiz» cierra el panel de todos y guarda el podio. Se ve en Admin → «Quizzes».
 
 ## Piezas
@@ -43,6 +49,7 @@ Son dos servicios separados:
 | `app/routes/comunidad.$slug.quiz.ts` | Ruta de recurso. `GET` estado (sondeo), `?list=1`, `?editor=1`, `?play=1` (QR); `POST` `quiz-start` / `quiz-end` |
 | `app/components/community/QuizPanel.tsx` | El panel: pestaña plegada, controles del anfitrión, iframe del jugador, ilustración |
 | `app/routes/comunidad.$slug.llamada.tsx` | Sólo monta `<QuizPanel slug>` junto a la sala |
+| `app/routes/comunidad.$slug.quiz-lanzar.tsx` | Página para lanzar fuera de una llamada; monta `<QuizHost slug>` (mismos controles) |
 | `app/routes/comunidad.$slug.admin.tsx` | Pestaña «Quizzes»: liga al editor e historial con podio |
 | `prisma/schema.prisma` | Modelo `CommunityQuizGame` (colección `community_quiz_games`, sin relaciones) |
 | `app/.server/services/__tests__/club-quiz.test.ts` | Pruebas de firma, URLs, nombres y podio |
@@ -70,11 +77,16 @@ el navegador la bloquea) y ahí la manda. Una sola partida viva por comunidad.
 
 **Entrar.** El sondeo del miembro recibe `playerUrl`, con `id=<payload>.<firma>`:
 `payload = base64url({sub: userId, name, exp, pin})`, `firma = hex(HMAC-SHA256(payload, secreto))`.
-Razzia verifica, impone el nombre firmado y guarda el `sub` junto al resultado. Con
-`REQUIRE_IDENTITY=1` (así está en producción) rechaza con 403 a quien llegue sin firma, aunque
-tenga el PIN.
+Razzia verifica, impone el nombre firmado y guarda el `sub` junto al resultado.
 
-**QR.** `managerUrl` lleva `join=https://www.fixtergeek.com/comunidad/:slug/quiz?play=1`. El tablero
+**Abierta o sólo miembros.** Se decide por partida: `startGame(..., { membersOnly })` manda
+`requireIdentity` en `POST /api/games` y lo guarda en `CommunityQuizGame.membersOnly`. En una partida
+cerrada Razzia rechaza con 403 a quien llegue sin firma, aunque tenga el PIN. En una abierta entra
+cualquiera con el PIN tecleando su nombre, y los miembros siguen entrando firmados (sus resultados
+quedan ligados a su usuario; los de invitados quedan con `userId` vacío). La variable
+`REQUIRE_IDENTITY=1` de la caja forzaría «sólo miembros» en todas: en producción va apagada.
+
+**QR.** En partidas cerradas `managerUrl` lleva `join=https://www.fixtergeek.com/comunidad/:slug/quiz?play=1`. El tablero
 lo pinta como QR. Esa ruta redirige: sin sesión → login y regresa; miembro con partida viva → su
 `playerUrl`; cualquier otro caso → página del club.
 
@@ -127,3 +139,5 @@ cierra sola.
 - El tablero y la pantalla del jugador conservan la interfaz de Razzia con colores y logo de la casa;
   llevarlos al estilo del sitio es trabajo en el fork.
 - Un quiz por comunidad: hoy todos los clubes verían la misma lista de quizzes.
+- Liga a `/comunidad/:slug/quiz/lanzar` desde el admin del club (hoy se entra por URL directa).
+- Sólo el anfitrión (`isHostEmail`) lanza; abrirlo a moderadores es cambiar `canHost` en la ruta.

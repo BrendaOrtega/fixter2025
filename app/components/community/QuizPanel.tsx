@@ -8,7 +8,7 @@
 // Anfitrión: lanza la partida; el tablero se abre en otra ventana, que comparte en la llamada.
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type Active = { gameId: string; subject: string; playerUrl?: string; inviteCode?: string; boardUrl?: string };
+type Active = { gameId: string; subject: string; playerUrl?: string; inviteCode?: string; boardUrl?: string; membersOnly?: boolean; site?: string };
 type Status = { enabled: boolean; canHost: boolean; active: Active | null };
 type Quiz = { id: string; subject: string };
 
@@ -161,6 +161,8 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  // Abierto por default: el quiz se usa dentro y fuera de las llamadas.
+  const [membersOnly, setMembersOnly] = useState(false);
 
   const loadQuizzes = useCallback(async () => {
     try {
@@ -189,7 +191,7 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
     setError(null);
     // La ventana se abre dentro del clic (si no, el navegador la bloquea) y se llena al contestar.
     const board = window.open("", "_blank");
-    const reply = await post({ intent: "quiz-start", quizId }).catch(() => ({ error: "Sin conexión. Intenta de nuevo." }) as { error: string; managerUrl?: string });
+    const reply = await post({ intent: "quiz-start", quizId, membersOnly: membersOnly ? "1" : "0" }).catch(() => ({ error: "Sin conexión. Intenta de nuevo." }) as { error: string; managerUrl?: string });
     if (reply.managerUrl && board) {
       board.location.href = reply.managerUrl;
     } else {
@@ -217,19 +219,21 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
         <div>
           <h2 className="text-xl font-bold leading-tight">{active.subject}</h2>
           <p className="mt-1 text-sm text-colorCaption">
-            {active.inviteCode ? "En curso." : "En curso. Cada miembro del club entra desde su panel de la llamada."}
+            {active.membersOnly
+              ? "En curso, sólo miembros del club: entran desde su panel de la llamada o con el QR del tablero."
+              : "En curso, abierto: entra cualquiera con el PIN. Los miembros entran solos desde la llamada."}
           </p>
         </div>
         {active.inviteCode && (
           <p className={`${card} p-4`}>
-            <span className="block text-xs text-colorCaption">PIN, para quien entre desde fuera del club</span>
+            <span className="block text-xs text-colorCaption">Para jugar desde cualquier lugar: {active.site} con el PIN</span>
             <span className="text-3xl font-bold tracking-widest text-brand-500">{active.inviteCode}</span>
           </p>
         )}
         <div className={`${card} p-4`}>
           <Steps
             items={[
-              "Comparte en la llamada la ventana del tablero.",
+              "Comparte la ventana del tablero, en la llamada o en la pantalla del salón.",
               "Cuando aparezcan los jugadores, presiona «Iniciar» en el tablero.",
               "Al final, termina el quiz aquí: se cierra el panel de todos.",
             ]}
@@ -258,8 +262,8 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5 [&>*]:shrink-0">
       <QuizIllustration live={false} />
       <div>
-        <h2 className="text-xl font-bold leading-tight">Lanza un quiz en la llamada</h2>
-        <p className="mt-1 text-sm text-colorCaption">Cada miembro contesta desde su panel, con su nombre del club.</p>
+        <h2 className="text-xl font-bold leading-tight">Lanza un quiz en vivo</h2>
+        <p className="mt-1 text-sm text-colorCaption">Sirve en la llamada del club y fuera de ella: en un evento, una clase o una transmisión.</p>
       </div>
       {quizzes === null ? (
         <p className={`${card} p-4 text-sm text-colorCaption`}>Cargando quizzes…</p>
@@ -282,11 +286,32 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
           ))}
         </fieldset>
       )}
+      <fieldset className="grid gap-2">
+        <legend className="mb-2 text-sm font-bold">Quién puede jugar</legend>
+        {[
+          { value: false, title: "Cualquiera con el PIN", note: "Para eventos, clases y transmisiones. Los miembros en la llamada entran solos." },
+          { value: true, title: "Sólo miembros del club", note: "Entran desde su panel de la llamada o con el QR del tablero." },
+        ].map((o) => (
+          <label
+            key={o.title}
+            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 text-sm transition ${membersOnly === o.value ? "border-brand-500 bg-brand-500/10" : "border-colorOutline bg-backface hover:border-brand-500"}`}
+          >
+            <input type="radio" name="audience" checked={membersOnly === o.value} onChange={() => setMembersOnly(o.value)} className="sr-only" />
+            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${membersOnly === o.value ? "border-brand-500" : "border-colorOutline"}`}>
+              {membersOnly === o.value && <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />}
+            </span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-white">{o.title}</span>
+              <span className="mt-0.5 block text-colorCaption">{o.note}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
       <div className={`${card} p-4`}>
         <Steps
           items={[
             "El tablero se abre en otra ventana.",
-            "Compártela en la llamada: ahí salen las preguntas, el ranking y el podio.",
+            "Compártela o proyéctala: ahí salen las preguntas, el ranking y el podio.",
             "Presiona «Iniciar» cuando ya estén los jugadores.",
           ]}
         />
@@ -299,6 +324,39 @@ function HostControls({ endpoint, active, onChange }: { endpoint: string; active
         </button>
         <a href={`${endpoint}?editor=1`} target="_blank" rel="noopener" className={quiet}>Editar quizzes</a>
       </div>
+    </div>
+  );
+}
+
+/** Controles del anfitrión como página propia, para lanzar un quiz fuera de una llamada. */
+export function QuizHost({ slug }: { slug: string }) {
+  const endpoint = `/comunidad/${slug}/quiz`;
+  const [status, setStatus] = useState<Status | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch(endpoint, { headers: { accept: "application/json" } });
+      setStatus(res.ok ? ((await res.json()) as Status) : OFF);
+    } catch {
+      // Sin red un momento: se reintenta en el siguiente tic.
+    }
+  }, [endpoint]);
+
+  useEffect(() => {
+    refresh();
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, POLL_MS);
+    return () => clearInterval(id);
+  }, [refresh]);
+
+  if (!status) return <p className={`${card} p-5 text-sm text-colorCaption`}>Cargando…</p>;
+  if (!status.enabled || !status.canHost) {
+    return <p className={`${card} p-5 text-sm text-colorCaption`}>Sólo el anfitrión del club lanza quizzes.</p>;
+  }
+  return (
+    <div className={`${card} overflow-hidden bg-background text-white`}>
+      <HostControls endpoint={endpoint} active={status.active} onChange={refresh} />
     </div>
   );
 }

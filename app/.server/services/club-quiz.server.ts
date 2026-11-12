@@ -31,7 +31,7 @@ const IDENTITY_TTL_S = 6 * 3600;
 
 type QuizUser = { id?: string; email: string; displayName?: string | null; username: string };
 export type QuizStanding = { userId: string | null; username: string; points: number; rank: number };
-export type LiveGame = { id: string; gameId: string; inviteCode: string; subject: string; createdAt: Date };
+export type LiveGame = { id: string; gameId: string; inviteCode: string; subject: string; createdAt: Date; membersOnly: boolean | null };
 
 export function quizBase(env: NodeJS.ProcessEnv = process.env): string {
   return (env.QUIZ_API_URL || "").trim().replace(/\/+$/, "");
@@ -203,7 +203,7 @@ export async function activeGame(communityId: string): Promise<LiveGame | null> 
     const game = await db.communityQuizGame.findFirst({
       where: { communityId, status: "live" },
       orderBy: { createdAt: "desc" },
-      select: { id: true, gameId: true, inviteCode: true, subject: true, createdAt: true },
+      select: { id: true, gameId: true, inviteCode: true, subject: true, createdAt: true, membersOnly: true },
     });
     let verifiedAt = hit?.verifiedAt ?? 0;
     if (game && isStale(game)) {
@@ -230,7 +230,10 @@ export async function activeGame(communityId: string): Promise<LiveGame | null> 
 export async function startGame(
   community: { id: string; slug: string },
   quizId: string,
-  hostUserId: string
+  hostUserId: string,
+  // Abierto (default): entra cualquiera con el PIN, dentro o fuera de una llamada, y los miembros
+  // siguen entrando con su identidad. Sólo miembros: Razzia rechaza a quien llegue sin firma.
+  opts: { membersOnly?: boolean } = {}
 ): Promise<{ ok: true; game: LiveGame; managerUrl: string } | { ok: false; error: string }> {
   if (!quizEnabled()) return { ok: false, error: "El quiz está apagado." };
   const token = await managerToken();
@@ -238,7 +241,8 @@ export async function startGame(
   const quizzes = await razzia<{ quizz: Array<{ id: string; subject: string }> }>("/api/quizz", { token });
   const quiz = quizzes.data?.quizz.find((q) => q.id === quizId);
   if (!quiz) return { ok: false, error: "Ese quiz ya no existe." };
-  const created = await razzia<{ gameId: string; inviteCode: string }>("/api/games", { token, body: { quizzId: quizId } });
+  const membersOnly = !!opts.membersOnly && !!process.env.QUIZ_IDENTITY_SECRET;
+  const created = await razzia<{ gameId: string; inviteCode: string }>("/api/games", { token, body: { quizzId: quizId, requireIdentity: membersOnly } });
   if (!created.ok || !created.data) return { ok: false, error: "No pude crear la partida. Intenta de nuevo." };
   await closeGames(community.id); // una sola partida viva por comunidad
   const row = await db.communityQuizGame.create({
@@ -249,11 +253,16 @@ export async function startGame(
       quizId,
       subject: quiz.subject,
       hostUserId,
+      membersOnly,
     },
-    select: { id: true, gameId: true, inviteCode: true, subject: true, createdAt: true },
+    select: { id: true, gameId: true, inviteCode: true, subject: true, createdAt: true, membersOnly: true },
   });
   cache.delete(community.id);
-  return { ok: true, game: row, managerUrl: managerUrl(quizBase(), token, { gameId: row.gameId, join: joinUrl(community.slug) }) };
+  return { ok: true, game: row, managerUrl: managerUrl(quizBase(), token, {
+      gameId: row.gameId,
+      // Cerrada: el tablero enseña el QR hacia el club. Abierta: su tarjeta normal de PIN y QR.
+      ...(membersOnly ? { join: joinUrl(community.slug) } : {}),
+    }) };
 }
 
 export async function endGame(communityId: string) {

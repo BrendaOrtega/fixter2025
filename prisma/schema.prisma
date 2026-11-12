@@ -1475,6 +1475,8 @@ model CommunityQuizGame {
   /// live | ended
   status      String    @default("live")
   hostUserId  String    @db.ObjectId
+  /// true = sólo miembros del club (identidad firmada); vacío o false = abierto a quien tenga el PIN.
+  membersOnly Boolean?
   /// Resultados leídos de Razzia al terminar (fase 2).
   results     Json?
   createdAt   DateTime  @default(now())
