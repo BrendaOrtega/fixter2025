@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="es" data-skin="fixter">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz en vivo · style frames</title>
+<style>
+  /* Mismos tokens que mockup-comunidad-v2.html y que v2/ui.tsx. Cada comunidad cambia variables
+     (su callSkin), nunca estructura. `?skin=cliente` en la URL abre la marca de ejemplo. */
+  :root, [data-skin="fixter"] {
+    --bg: #0E1317; --panel: #141B20; --line: #232D33; --ink: #F2F5F4; --text: #D9E0DE; --muted: #8C999D;
+    --soft: #1C252B; --accent: #85DDCB; --accent-ink: #0E1317; --accent-bg: #17302C; --danger: #F08A80;
+    --ok: #8DCF6E; --shade: rgba(0, 0, 0, .35);
+    --a1: #17302C; --a2: #33291A; --a3: #26233F; --a4: #3A2020;
+    --a1i: #85DDCB; --a2i: #F2C98A; --a3i: #BDB5F7; --a4i: #F4AFAF;
+    color-scheme: dark;
+  }
+  [data-skin="cliente"] {
+    --bg: #FBF7F2; --panel: #FFFFFF; --line: #EADFD2; --ink: #3A2412; --text: #4A3423; --muted: #7A6553;
+    --soft: #F4EADF; --accent: #E8743B; --accent-ink: #2A1708; --accent-bg: #FCE8DC; --danger: #B93A2B;
+    --ok: #3F8F4A; --shade: rgba(58, 36, 18, .12);
+    --a1: #D9F2EC; --a2: #FDE7C8; --a3: #E3E0FA; --a4: #FBDCDC;
+    --a1i: #0B5E4F; --a2i: #7A4A0C; --a3i: #3F3594; --a4i: #8E2B2B;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #06090B; color: #C9D1D0; font: 14px/1.45 Inter, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  svg { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* ── Página de frames (no es producto) ── */
+  .doc { max-width: 2040px; margin: 0 auto; padding: 24px 16px 80px; }
+  .doc > header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .doc > header h1 { font-size: 20px; color: #F2F5F4; font-weight: 650; }
+  .switch { margin-left: auto; display: flex; gap: 6px; }
+  .switch button { padding: 5px 12px; border-radius: 999px; border: 1px solid #232D33; background: #141B20; cursor: pointer; font-size: 12px; }
+  .switch button.sel { background: #F2F5F4; color: #0E1317; border-color: #F2F5F4; }
+  .group { margin-top: 36px; }
+  .group > h2 { font-size: 15px; color: #F2F5F4; font-weight: 650; }
+  .group > p { color: #8C999D; margin: 2px 0 14px; max-width: 70ch; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px 20px; align-items: flex-start; }
+  figure { margin: 0; flex: none; }
+  figcaption { font-size: 12px; color: #8C999D; margin-top: 8px; max-width: 46ch; }
+
+  /* ── Lienzos: teléfono 375 y pantalla 960 ── */
+  .screen { background: var(--bg); color: var(--text); border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #232D33; }
+  .phone { width: 375px; height: 700px; }
+  .wide { width: 960px; height: 580px; }
+  .col { display: flex; flex-direction: column; }
+  .grow { flex: 1; min-height: 0; }
+
+  /* ── Sistema v2 ── */
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; background: var(--accent); color: var(--accent-ink); border: 0; }
+  .btn.ghost { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+  .btn.big { min-height: 44px; width: 100%; }
+  .head { min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .head h3 { font-size: 16px; font-weight: 600; color: var(--ink); }
+  .head .end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .muted { color: var(--muted); }
+  .ink { color: var(--ink); }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+  .tag.live { background: var(--accent-bg); color: var(--accent); border-color: transparent; }
+  [data-skin="cliente"] .tag.live { color: #A2431A; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+  .mark { width: 24px; height: 24px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 700 11px/1 ui-monospace, monospace; flex: none; }
+  .mark.lg { width: 36px; height: 36px; border-radius: 9px; font-size: 15px; }
+  .label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+  .pad { padding: 16px; }
+  .stack { display: grid; gap: 12px; }
+  .opt { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .opt.sel { border-color: var(--accent); background: var(--accent-bg); }
+  .radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); flex: none; margin-top: 1px; display: grid; place-items: center; }
+  .sel .radio { border-color: var(--accent); }
+  .sel .radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .opt b { display: block; color: var(--ink); font-weight: 600; }
+  .opt small { color: var(--muted); font-size: 13px; }
+  .field { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; color: var(--ink); width: 100%; }
+  .av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 650; background: var(--a1); color: var(--a1i); flex: none; }
+  .av.c2 { background: var(--a2); color: var(--a2i); } .av.c3 { background: var(--a3); color: var(--a3i); } .av.c4 { background: var(--a4); color: var(--a4i); }
+
+  /* ── Sala de la llamada (esquema de lo que hay hoy; no se rediseña aquí) ── */
+  .room { position: absolute; inset: 0; background: #0B1013; display: flex; flex-direction: column; }
+  .tiles { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
+  .phone .tiles { grid-template-columns: repeat(2, 1fr); }
+  .tile { background: #161E24; border-radius: 10px; display: grid; place-items: center; position: relative; min-height: 0; }
+  .tile .av { width: 54px; height: 54px; font-size: 18px; }
+  .tile span.n { position: absolute; left: 8px; bottom: 6px; font-size: 11px; color: #C9D1D0; }
+  .bar { display: flex; gap: 6px; justify-content: center; padding: 10px; background: #10171B; border-top: 1px solid #1E272D; }
+  .bar i { font-style: normal; font-size: 12px; padding: 7px 11px; border-radius: 8px; background: #1C252B; color: #D9E0DE; white-space: nowrap; }
+  .bar i.out { background: #5A2623; color: #F7C9C4; }
+
+  /* ── Quiz junto a la sala ── */
+  .pill { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 8px; background: var(--panel); border: 1px solid var(--line); border-right: 0; border-radius: 10px 0 0 10px; box-shadow: 0 6px 20px var(--shade); color: var(--ink); font-size: 13px; font-weight: 600; }
+  .pill span { writing-mode: vertical-rl; }
+  .drawer { position: absolute; top: 0; bottom: 0; right: 0; width: 380px; background: var(--bg); border-left: 1px solid var(--line); box-shadow: -8px 0 28px var(--shade); display: flex; flex-direction: column; }
+  .foot { padding: 12px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; background: var(--bg); }
+  .foot.two { grid-template-columns: 1fr 1fr; }
+  .x { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; color: var(--muted); }
+
+  /* ── Admin ── */
+  .shell { display: grid; grid-template-columns: 200px 1fr; height: 100%; }
+  .side { border-right: 1px solid var(--line); background: var(--panel); padding: 12px 10px; font-size: 13px; }
+  .side p { color: var(--muted); font-size: 11px; font-weight: 600; margin: 14px 8px 4px; }
+  .side a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text); }
+  .side a.sel { background: var(--soft); color: var(--ink); font-weight: 600; }
+  .list > div { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .list > div:last-child { border-bottom: 0; }
+  .list b { color: var(--ink); font-weight: 600; display: block; }
+  .list small { color: var(--muted); font-size: 12px; }
+  .list .end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--ink); font-size: 12px; }
+  .qnav { width: 230px; border-right: 1px solid var(--line); padding: 10px; display: grid; gap: 6px; align-content: start; }
+  .qnav div { padding: 8px 10px; border-radius: 8px; font-size: 13px; color: var(--text); display: flex; gap: 8px; }
+  .qnav div.sel { background: var(--soft); color: var(--ink); font-weight: 600; }
+  .qnav div i { font-style: normal; color: var(--muted); width: 16px; }
+  .ans { display: flex; align-items: center; gap: 10px; }
+  .ans .field { flex: 1; }
+  .check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--line); flex: none; display: grid; place-items: center; }
+  .check.on { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+
+  /* ── Tablero y jugador: respuestas con letra y tono, se distinguen sin depender del color ── */
+  .tone1 { background: var(--a1); color: var(--a1i); } .tone2 { background: var(--a2); color: var(--a2i); }
+  .tone3 { background: var(--a3); color: var(--a3i); } .tone4 { background: var(--a4); color: var(--a4i); }
+  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .answer { border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; font-size: 20px; font-weight: 600; min-height: 76px; }
+  .answer i { font-style: normal; width: 34px; height: 34px; border-radius: 8px; background: currentColor; display: grid; place-items: center; flex: none; }
+  .answer i b { color: var(--bg); font-size: 16px; }
+  [data-skin="cliente"] .answer i b { color: #fff; }
+  .answer.dim { opacity: .35; }
+  .answer .hit { margin-left: auto; }
+  .board { padding: 28px 36px; display: flex; flex-direction: column; height: 100%; }
+  .board .topline { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+  .board .topline b { color: var(--ink); font-weight: 600; }
+  .board .topline .end { margin-left: auto; }
+  .q { font-size: 34px; line-height: 1.15; font-weight: 650; color: var(--ink); letter-spacing: -.01em; max-width: 22ch; }
+  .timer { height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+  .timer i { display: block; height: 100%; width: 62%; background: var(--accent); border-radius: 99px; }
+  .pin { font-size: 88px; line-height: 1; font-weight: 700; letter-spacing: .06em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .qr svg { stroke: none; }
+  .qr { width: 168px; height: 168px; background: #fff; border-radius: 10px; padding: 12px; flex: none; }
+  .rank { display: grid; gap: 8px; }
+  .rank > div { display: grid; grid-template-columns: 28px 30px 1fr auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); position: relative; overflow: hidden; }
+  .rank > div > * { position: relative; }
+  .rank > div::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--accent-bg); }
+  .rank .pos { color: var(--muted); font-weight: 600; text-align: center; }
+  .rank b { color: var(--ink); font-weight: 600; font-size: 17px; }
+  .rank .pts { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; font-size: 17px; }
+  .podium { display: flex; align-items: flex-end; justify-content: center; gap: 14px; flex: 1; }
+  .podium > div { width: 190px; text-align: center; }
+  .podium .av { width: 56px; height: 56px; font-size: 19px; margin: 0 auto 8px; }
+  .podium b { color: var(--ink); font-size: 18px; font-weight: 650; display: block; }
+  .podium small { color: var(--muted); font-size: 13px; }
+  .podium .step { margin-top: 10px; border-radius: 10px 10px 0 0; background: var(--panel); border: 1px solid var(--line); border-bottom: 0; display: grid; place-items: start center; padding-top: 14px; font-size: 40px; font-weight: 700; color: var(--muted); }
+  .podium .first .step { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .ptile { border-radius: 10px; display: grid; place-items: center; text-align: center; font-size: 40px; font-weight: 700; }
+  .ptile small { display: block; font-size: 14px; font-weight: 600; text-align: center; padding: 0 10px; }
+</style>
+</head>
+<body>
+<div class="doc">
+  <header>
+    <h1>Quiz en vivo: style frames</h1>
+    <span class="muted">Sistema v2 del club. Cada comunidad trae su marca (los colores y el logo de su sala).</span>
+    <div class="switch">
+      <button data-set="fixter" class="sel">Club de Agentes (FixterGeek)</button>
+      <button data-set="cliente">Cliente de ejemplo: Taller Barro</button>
+    </div>
+  </header>
+
+  <!-- ═════════ 1. LLAMADA ═════════ -->
+  <section class="group" id="llamada">
+    <h2>1. En la llamada</h2>
+    <p>El quiz nunca le quita espacio a la sala. Plegado es una pastilla; el anfitrión abre un cajón encima; quien juega lo tiene al lado (escritorio) o abajo (teléfono).</p>
+    <div class="row">
+      <figure>
+        <div class="screen wide">
+          <div class="room">
+            <div class="tiles">
+              <div class="tile"><span class="av">HB</span><span class="n">Héctor (anfitrión)</span></div>
+              <div class="tile"><span class="av c2">MR</span><span class="n">Mariana</span></div>
+              <div class="tile"><span class="av c3">JL</span><span class="n">Jorge</span></div>
+              <div class="tile"><span class="av c4">AP</span><span class="n">Ana Paula</span></div>
+              <div class="tile"><span class="av c2">DC</span><span class="n">Diego</span></div>
+              <div class="tile"><span class="av">SV</span><span class="n">Sofía</span></div>
+            </div>
+            <div class="bar"><i>Mic</i><i>Cámara</i><i>Compartir</i><i>Grabar</i><i>En vivo</i><i>Chat</i><i>Gente</i><i class="out">Salir</i></div>
+          </div>
+          <div class="pill"><i class="dot" style="background:var(--muted)"></i><span>Quiz</span></div>
+        </div>
+        <figcaption>Plegado. La sala mide lo mismo que sin quiz y su barra se ve completa.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen wide">
+          <div class="room">
+            <div class="tiles">
+              <div class="tile"><span class="av">HB</span></div><div class="tile"><span class="av c2">MR</span></div><div class="tile"><span class="av c3">JL</span></div>
+              <div class="tile"><span class="av c4">AP</span></div><div class="tile"><span class="av c2">DC</span></div><div class="tile"><span class="av">SV</span></div>
+            </div>
+            <div class="bar"><i>Mic</i><i>Cámara</i><i>Compartir</i><i>Grabar</i><i>En vivo</i><i>Chat</i><i>Gente</i><i class="out">Salir</i></div>
+          </div>
+          <div class="drawer">
+            <div class="head"><h3>Lanzar un quiz</h3><div class="end"><span class="x"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></span></div></div>
+            <div class="pad stack grow" style="overflow:hidden">
+              <div>
+                <p class="label">Quiz</p>
+                <div class="stack" style="gap:8px">
+                  <div class="opt sel"><i class="radio"></i><div><b>Agentes de IA: calentamiento</b><small>5 preguntas · unos 4 min</small></div></div>
+                  <div class="opt"><i class="radio"></i><div><b>Sandboxes y permisos</b><small>8 preguntas · unos 6 min</small></div></div>
+                </div>
+              </div>
+              <div>
+                <p class="label">Quién puede jugar</p>
+                <div class="stack" style="gap:8px">
+                  <div class="opt sel"><i class="radio"></i><div><b>Cualquiera con el PIN</b><small>Quien está en la llamada entra solo, con su nombre del club.</small></div></div>
+                  <div class="opt"><i class="radio"></i><div><b>Sólo miembros del club</b><small>Sin PIN. Entran desde la llamada o con el QR.</small></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="foot"><button class="btn big">Lanzar y abrir el tablero</button><span class="muted" style="font-size:12px;text-align:center">El tablero abre en otra pestaña: compártela en la llamada.</span></div>
+          </div>
+        </div>
+        <figcaption>Anfitrión. Cajón encima de la sala; al cerrarlo la sala vuelve a verse completa. El botón dice lo que pasa: lanza y abre el tablero.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen phone col">
+          <div style="position:relative;height:42%">
+            <div class="room">
+              <div class="tiles"><div class="tile"><span class="av">HB</span></div><div class="tile"><span class="av c2">MR</span></div></div>
+              <div class="bar"><i>Mic</i><i>Cámara</i><i>Chat</i><i class="out">Salir</i></div>
+            </div>
+          </div>
+          <div class="head" style="border-top:1px solid var(--line)"><i class="dot"></i><h3>Quiz en vivo</h3><div class="end"><span class="tag">2 de 5</span><span class="x"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg></span></div></div>
+          <div class="pad col grow" style="gap:10px">
+            <p class="ink" style="font-size:17px;font-weight:600;line-height:1.25">¿Qué le da un sandbox a un agente?</p>
+            <div class="timer"><i></i></div>
+            <div class="grow" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="ptile tone1">A</div><div class="ptile tone2">B</div><div class="ptile tone3">C</div><div class="ptile tone4">D</div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Miembro en el teléfono. La sala queda arriba con sus controles; el quiz, abajo. Se pliega con la flecha.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════ 2. ADMIN ═════════ -->
+  <section class="group" id="admin">
+    <h2>2. Admin del club → Quizzes</h2>
+    <p>Los quizzes son de la comunidad. El dueño los crea, los lanza y nombra coanfitriones. Vive dentro del mismo armazón del club.</p>
+    <div class="row">
+      <figure>
+        <div class="screen wide">
+          <div class="shell">
+            <div class="side">
+              <div style="display:flex;gap:8px;align-items:center;padding:4px 8px 8px"><span class="mark">&lt;/&gt;</span><b class="ink brandname">Club de Agentes</b></div>
+              <a>Muro</a><p>En vivo</p><a>Eventos</a><a>Grabaciones</a><p>Anfitrión</p><a>Administrar club</a><a class="sel">Quizzes</a>
+            </div>
+            <div class="col" style="min-width:0">
+              <div class="head"><h3>Quizzes</h3><div class="end"><button class="btn">Nuevo quiz</button></div></div>
+              <div class="pad stack" style="overflow:hidden">
+                <div class="card list">
+                  <div><div><b>Agentes de IA: calentamiento</b><small>5 preguntas · jugado 3 veces · último: 12 nov</small></div><div class="end"><button class="btn ghost">Editar</button><button class="btn">Lanzar</button></div></div>
+                  <div><div><b>Sandboxes y permisos</b><small>8 preguntas · sin jugar</small></div><div class="end"><button class="btn ghost">Editar</button><button class="btn">Lanzar</button></div></div>
+                  <div><div><b>MCP en una tarde</b><small>Borrador · 2 preguntas</small></div><div class="end"><button class="btn ghost">Editar</button></div></div>
+                </div>
+                <div>
+                  <p class="label">Partidas</p>
+                  <div class="card list">
+                    <div><div><b>Agentes de IA: calentamiento</b><small>12 nov, 19:42 · 23 jugadores · abierta con PIN</small></div><div class="end"><span class="chip">1º Mariana R. · 4,620</span><span class="chip">2º Jorge L.</span><span class="chip">3º Sofía V.</span></div></div>
+                    <div><div><b>Agentes de IA: calentamiento</b><small>5 nov, 19:38 · 17 jugadores · sólo miembros</small></div><div class="end"><span class="chip">1º Diego C. · 4,410</span><span class="chip">2º Ana Paula</span><span class="chip">3º Mariana R.</span></div></div>
+                  </div>
+                </div>
+                <div>
+                  <p class="label">Coanfitriones: también pueden lanzar quizzes</p>
+                  <div class="card pad" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                    <span class="chip">brenda@fixter.org ✕</span><span class="chip">david@fixter.org ✕</span>
+                    <input class="field" style="width:220px;padding:6px 12px;border-radius:999px" placeholder="correo@ejemplo.com"><button class="btn ghost">Agregar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Lista, historial con podio y coanfitriones. Un solo botón lleno por renglón.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen wide col">
+          <div class="head"><span class="muted">Quizzes /</span><h3>Agentes de IA: calentamiento</h3><div class="end"><span class="muted" style="font-size:12px">Guardado hace un momento</span><button class="btn ghost">Probar</button><button class="btn">Lanzar</button></div></div>
+          <div class="grow" style="display:flex;min-height:0">
+            <div class="qnav">
+              <div><i>1</i>¿Qué es un agente?</div>
+              <div class="sel"><i>2</i>¿Qué le da un sandbox a un agente?</div>
+              <div><i>3</i>¿Para qué sirve MCP?</div>
+              <div><i>4</i>Un hook determinista…</div>
+              <div><i>5</i>¿Qué mide un eval?</div>
+              <button class="btn ghost" style="margin-top:6px">Agregar pregunta</button>
+            </div>
+            <div class="pad stack grow" style="align-content:start;max-width:620px">
+              <div><p class="label">Pregunta 2</p><input class="field" style="font-size:16px;font-weight:600" value="¿Qué le da un sandbox a un agente?"></div>
+              <div>
+                <p class="label">Respuestas: marca la correcta</p>
+                <div class="stack" style="gap:8px">
+                  <div class="ans"><span class="check"></span><input class="field" value="Más tokens por respuesta"></div>
+                  <div class="ans"><span class="check on"><svg width="12" height="12" viewBox="0 0 16 16" stroke-width="2.6"><path d="M3 8l3.5 3.5L13 5"/></svg></span><input class="field" value="Una computadora aislada donde ejecutar código"></div>
+                  <div class="ans"><span class="check"></span><input class="field" value="Acceso a tu correo"></div>
+                  <div class="ans"><span class="check"></span><input class="field" value="Un modelo más grande"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <div><p class="label">Tiempo para contestar</p><div style="display:flex;gap:6px"><span class="chip">10 s</span><span class="chip" style="background:var(--accent);color:var(--accent-ink)">20 s</span><span class="chip">30 s</span><span class="chip">60 s</span></div></div>
+                <div><p class="label">Imagen (opcional)</p><button class="btn ghost">Pegar una liga</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Editor propio. Se guarda solo; la correcta se marca con palomita, no con color.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════ 3. TABLERO ═════════ -->
+  <section class="group" id="tablero">
+    <h2>3. Tablero (lo que se comparte o se proyecta)</h2>
+    <p>Lleva el logo y los colores de la comunidad que lanzó. Una sola dirección para todos; lo que cambia es el PIN.</p>
+    <div class="row">
+      <figure>
+        <div class="screen wide">
+          <div class="board">
+            <div class="topline"><span class="mark">&lt;/&gt;</span><b class="brandname">Club de Agentes</b><span>· Agentes de IA: calentamiento</span><span class="end tag live">23 jugadores</span></div>
+            <div style="display:flex;gap:36px;align-items:center;flex:1">
+              <div style="flex:1">
+                <p style="font-size:18px" class="muted">Entra a <b class="ink">quiz.fixtergeek.com</b> y escribe el PIN</p>
+                <p class="pin" style="margin:10px 0 18px">537 972</p>
+                <p class="muted">¿Estás en la llamada del club? Ya estás dentro: abre el panel «Quiz».</p>
+              </div>
+              <div class="qr"><svg id="qr1" viewBox="0 0 25 25" width="144" height="144" stroke="none"></svg></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="chip"><span class="av" style="width:18px;height:18px;font-size:8px">MR</span>Mariana R.</span><span class="chip">Jorge L.</span><span class="chip">Sofía V.</span><span class="chip">Diego C.</span><span class="chip">Ana Paula</span><span class="chip">+18</span>
+              <button class="btn" style="margin-left:auto;min-height:44px;padding:0 22px;font-size:15px">Iniciar</button>
+            </div>
+          </div>
+        </div>
+        <figcaption>Sala de espera. PIN grande y QR; los nombres van entrando abajo.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen wide">
+          <div class="board" style="gap:18px">
+            <div class="topline"><span class="mark">&lt;/&gt;</span><b class="brandname">Club de Agentes</b><span>· Pregunta 2 de 5</span><span class="end">17 de 23 ya contestaron</span></div>
+            <p class="q" style="max-width:none">¿Qué le da un sandbox a un agente?</p>
+            <div class="timer"><i></i></div>
+            <div class="answers" style="flex:1">
+              <div class="answer tone1"><i><b>A</b></i>Más tokens por respuesta</div>
+              <div class="answer tone2"><i><b>B</b></i>Una computadora aislada donde ejecutar código</div>
+              <div class="answer tone3"><i><b>C</b></i>Acceso a tu correo</div>
+              <div class="answer tone4"><i><b>D</b></i>Un modelo más grande</div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Pregunta. Cada respuesta tiene letra y tono: se distingue aunque no se vea el color.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen wide">
+          <div class="board" style="gap:16px">
+            <div class="topline"><span class="mark">&lt;/&gt;</span><b class="brandname">Club de Agentes</b><span>· Ranking tras la pregunta 2</span></div>
+            <div class="rank">
+              <div style="--w:92%"><span class="pos">1</span><span class="av c2">MR</span><b>Mariana R.</b><span class="pts">1,880</span></div>
+              <div style="--w:84%"><span class="pos">2</span><span class="av c3">JL</span><b>Jorge L.</b><span class="pts">1,720</span></div>
+              <div style="--w:71%"><span class="pos">3</span><span class="av">SV</span><b>Sofía V.</b><span class="pts">1,450</span></div>
+              <div style="--w:66%"><span class="pos">4</span><span class="av c2">DC</span><b>Diego C.</b><span class="pts">1,340</span></div>
+              <div style="--w:48%"><span class="pos">5</span><span class="av c4">AP</span><b>Ana Paula</b><span class="pts">980</span></div>
+            </div>
+            <div style="margin-top:auto;display:flex"><button class="btn" style="margin-left:auto;min-height:44px;padding:0 22px;font-size:15px">Siguiente pregunta</button></div>
+          </div>
+        </div>
+        <figcaption>Ranking. La barra de fondo es el puntaje.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen wide">
+          <div class="board">
+            <div class="topline"><span class="mark">&lt;/&gt;</span><b class="brandname">Club de Agentes</b><span>· Agentes de IA: calentamiento</span><span class="end">23 jugadores · 5 preguntas</span></div>
+            <div class="podium">
+              <div><span class="av c3">JL</span><b>Jorge L.</b><small>4,210 puntos</small><div class="step" style="height:150px">2</div></div>
+              <div class="first"><span class="av c2">MR</span><b>Mariana R.</b><small>4,620 puntos</small><div class="step" style="height:210px">1</div></div>
+              <div><span class="av">SV</span><b>Sofía V.</b><small>3,980 puntos</small><div class="step" style="height:110px">3</div></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Podio. El primer lugar toma el color de la comunidad.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═════════ 4. JUGADOR ═════════ -->
+  <section class="group" id="jugador">
+    <h2>4. Jugador (teléfono)</h2>
+    <p>Antes del PIN la pantalla es neutra; al entrar a una partida toma la marca de esa comunidad.</p>
+    <div class="row">
+      <figure>
+        <div class="screen phone col" data-skin="fixter" style="--accent:#F2F5F4;--accent-ink:#0E1317">
+          <div class="pad col grow" style="justify-content:center;gap:14px">
+            <h3 class="ink" style="font-size:26px;font-weight:650;line-height:1.15">Escribe el PIN que ves en la pantalla</h3>
+            <input class="field" style="font-size:30px;font-weight:700;letter-spacing:.12em;text-align:center;padding:16px" value="537 972">
+            <button class="btn big">Entrar</button>
+            <p class="muted" style="text-align:center;font-size:12px">Quiz en vivo de las comunidades de FixterGeek</p>
+          </div>
+        </div>
+        <figcaption>quiz.fixtergeek.com sin partida: neutra, igual para todos los clientes.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen phone col">
+          <div class="head"><span class="mark">&lt;/&gt;</span><h3 class="brandname">Club de Agentes</h3></div>
+          <div class="pad col grow" style="justify-content:center;gap:14px">
+            <h3 class="ink" style="font-size:24px;font-weight:650;line-height:1.15">¿Cómo te llamas?</h3>
+            <input class="field" style="font-size:18px;padding:14px" value="Mariana R.">
+            <button class="btn big">Entrar a jugar</button>
+            <p class="muted" style="font-size:13px">Agentes de IA: calentamiento · 5 preguntas</p>
+          </div>
+        </div>
+        <figcaption>Con el PIN ya se sabe de quién es la partida: aparece su marca. Los miembros se saltan este paso.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen phone col">
+          <div class="head"><span class="mark">&lt;/&gt;</span><h3 class="brandname">Club de Agentes</h3><div class="end"><span class="tag">2 de 5</span></div></div>
+          <div class="pad col grow" style="gap:12px">
+            <p class="ink" style="font-size:19px;font-weight:600;line-height:1.25">¿Qué le da un sandbox a un agente?</p>
+            <div class="timer"><i></i></div>
+            <div class="grow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="ptile tone1"><div>A<small>Más tokens por respuesta</small></div></div>
+              <div class="ptile tone2"><div>B<small>Una computadora aislada</small></div></div>
+              <div class="ptile tone3"><div>C<small>Acceso a tu correo</small></div></div>
+              <div class="ptile tone4"><div>D<small>Un modelo más grande</small></div></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Contestar. Cuatro botones grandes con la letra del tablero y el texto de la respuesta.</figcaption>
+      </figure>
+      <figure>
+        <div class="screen phone col">
+          <div class="head"><span class="mark">&lt;/&gt;</span><h3 class="brandname">Club de Agentes</h3><div class="end"><span class="tag">2 de 5</span></div></div>
+          <div class="pad col grow" style="justify-content:center;align-items:center;gap:10px;text-align:center">
+            <span style="width:72px;height:72px;border-radius:50%;background:var(--ok);color:var(--bg);display:grid;place-items:center"><svg width="34" height="34" viewBox="0 0 16 16" stroke-width="2.4"><path d="M3 8l3.5 3.5L13 5"/></svg></span>
+            <h3 class="ink" style="font-size:26px;font-weight:650">Correcto</h3>
+            <p class="ink" style="font-size:40px;font-weight:700;line-height:1">+940</p>
+            <p class="muted">Vas en 1er lugar con 1,880 puntos</p>
+            <div class="card pad" style="width:100%;margin-top:10px;text-align:left"><small class="muted">La respuesta</small><p class="ink" style="font-weight:600">B · Una computadora aislada donde ejecutar código</p></div>
+          </div>
+        </div>
+        <figcaption>Resultado de la pregunta: puntos ganados, lugar y la respuesta correcta.</figcaption>
+      </figure>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Marca por comunidad: nombre e iniciales del logo cambian con el skin.
+  const BRANDS = { fixter: { name: "Club de Agentes", mark: "</>" }, cliente: { name: "Taller Barro", mark: "TB" } };
+  const setSkin = (skin) => {
+    document.documentElement.dataset.skin = skin;
+    document.querySelectorAll(".switch button").forEach((b) => b.classList.toggle("sel", b.dataset.set === skin));
+    document.querySelectorAll(".brandname").forEach((el) => (el.textContent = BRANDS[skin].name));
+    document.querySelectorAll(".mark").forEach((el) => (el.textContent = BRANDS[skin].mark));
+  };
+  document.querySelectorAll(".switch button").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.set)));
+  setSkin(new URLSearchParams(location.search).get("skin") === "cliente" ? "cliente" : "fixter");
+
+  // QR de utilería: patrón fijo (no codifica nada), con sus tres esquinas.
+  const qr = document.getElementById("qr1");
+  let seed = 7, cells = "";
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const corner = (x, y) => x < 7 && y < 7 || x > 17 && y < 7 || x < 7 && y > 17;
+  for (let y = 0; y < 25; y++) for (let x = 0; x < 25; x++) if (!corner(x, y) && rnd() > 0.52) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+  for (const [x, y] of [[0, 0], [18, 0], [0, 18]]) cells += `<path fill-rule="evenodd" d="M${x} ${y}h7v7h-7zM${x + 1} ${y + 1}v5h5v-5z"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3"/>`;
+  qr.innerHTML = `<g fill="#0E1317">${cells}</g>`;
+</script>
+</body>
+</html>
