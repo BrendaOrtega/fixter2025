@@ -12,7 +12,7 @@ import { BOAT_SEATS, MOOR, spotAt, type PlacedSpot } from "./things";
 
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const PUPPET_SCALE = 1.15;
-const FOV = 30, ELEVATION = (50 * Math.PI) / 180, ELEVATION_MINI = (64 * Math.PI) / 180, DISTANCE = 25, ZOOM_MIN = 0.45;
+const FOV = 30, ELEVATION = (50 * Math.PI) / 180, ELEVATION_MINI = (64 * Math.PI) / 180, DISTANCE = 25, ZOOM_MIN = 0.4, ELEVATION_CLOSE = (24 * Math.PI) / 180;
 /** Altura (unidades) a la que flota la etiqueta de cada lugar, según su edificio. */
 const LABEL_LIFT: Record<string, number> = { forum: 5, mural: 3, cinema: 4.3, school: 4.1, "camp-table": 2.25 };
 
@@ -300,19 +300,22 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
   stage.addEventListener("wheel", onWheel, { passive: false });
   function aimCamera(frame: WorldFrame) {
     const aspect = vw / vh, half = Math.tan((FOV * Math.PI) / 360);
-    let tx: number, tz: number, dist: number, elev: number;
+    let tx: number, tz: number, ty = 0.5, dist: number, elev: number;
     mini = !!frame.mini;
     if (frame.mini) {
       tx = 0; tz = 0.6; elev = ELEVATION_MINI;
       dist = Math.max((WORLD_W * UNIT * 0.5 + 1) / (half * aspect), (WORLD_H * UNIT * 0.5 * Math.sin(elev) + 1.5) / half) * 1.04;
     } else {
-      tx = wx(frame.player.x); tz = wz(frame.player.y); elev = ELEVATION;
+      // Al acercarse, la cámara también baja: de vista de mapa a vista a la altura del personaje.
+      const near = (1 - zoom) / (1 - ZOOM_MIN), ease = near * near * (3 - 2 * near);
+      tx = wx(frame.player.x); tz = wz(frame.player.y); elev = ELEVATION + (ELEVATION_CLOSE - ELEVATION) * ease;
+      ty = 0.5 + ease * 0.7;
       // En pantalla angosta la cámara se aleja para que quepa lo que hay a los lados.
       dist = DISTANCE * Math.min(1.75, Math.max(1, 1.15 / aspect)) * zoom;
     }
     const k = camReady ? 1 - Math.exp(-dt * (frame.quiet ? 30 : 4.5)) : 1;
     camReady = true;
-    focus.x += (tx - focus.x) * k; focus.z += (tz - focus.z) * k; focus.y = 0.5;
+    focus.x += (tx - focus.x) * k; focus.z += (tz - focus.z) * k; focus.y += (ty - focus.y) * k;
     camDist += (dist - camDist) * k; camElev += (elev - camElev) * k;
     camera.position.set(focus.x, focus.y + Math.sin(camElev) * camDist, focus.z + Math.cos(camElev) * camDist);
     camera.lookAt(focus);
