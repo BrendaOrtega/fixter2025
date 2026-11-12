@@ -6,6 +6,8 @@ import { btnGhost, card as panel } from "~/components/community/v2/ui";
 
 type Live = {
   configured: boolean;
+  /** La caja tiene la llave de Facebook en su env (hoy se carga a mano; el OAuth llega después). */
+  facebook: boolean;
   youtube: { account: string; channelUrl: string; privacy: "public" | "unlisted"; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
 };
 
@@ -15,6 +17,15 @@ function YouTubeIcon({ className = "h-7 w-10" }: { className?: string }) {
     <svg viewBox="0 0 28 20" className={className} aria-hidden="true">
       <path fill="#FF0000" d="M27.4 3.1A3.5 3.5 0 0 0 24.9.6C22.7 0 14 0 14 0S5.3 0 3.1.6A3.5 3.5 0 0 0 .6 3.1C0 5.3 0 10 0 10s0 4.7.6 6.9a3.5 3.5 0 0 0 2.5 2.5C5.3 20 14 20 14 20s8.7 0 10.9-.6a3.5 3.5 0 0 0 2.5-2.5C28 14.7 28 10 28 10s0-4.7-.6-6.9Z" />
       <path fill="#FFFFFF" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z" />
+    </svg>
+  );
+}
+
+/** «f» de Facebook en blanco, sobre el cuadro azul de su marca. */
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
+      <path fill="#FFFFFF" d="M13.5 21v-7.5h2.6l.4-3h-3V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1Z" />
     </svg>
   );
 }
@@ -36,7 +47,7 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
       <div>
         <h2 className="text-[15px] font-semibold text-[#F2F5F4]">Transmisión en vivo</h2>
         <p className="mt-1 text-[13px] text-[#7C8A8E]">
-          Conecta tu canal y, al grabar una llamada con «En vivo» encendido, sale también a YouTube. El evento se crea solo al empezar y se cierra al detener.
+          Conecta tus destinos y, al grabar una llamada con «En vivo» encendido, sale también a YouTube y Facebook. El evento se crea solo al empezar y se cierra al detener.
         </p>
       </div>
       {result && NOTICE[result] && (
@@ -109,8 +120,27 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
           </>
         )}
       </div>
+      <div className={`${panel} flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-[#1877F2] p-4 lg:p-5`}>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#1877F2]">
+            <FacebookIcon />
+          </span>
+          <div className="min-w-0">
+            <b className="block text-[15px] font-semibold text-[#F2F5F4]">Facebook Live</b>
+            {live.facebook ? (
+              <span className="flex items-center gap-1.5 text-[13px] text-[#D9E0DE]">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[#1877F2]" aria-hidden="true" />
+                Conectado con la llave de transmisión de tu página
+              </span>
+            ) : (
+              <span className="block text-[13px] text-[#7C8A8E]">Conectar tu página con un botón llega muy pronto.</span>
+            )}
+          </div>
+        </div>
+      </div>
       <p className="text-[13px] text-[#7C8A8E]">
-        ✓ Tu canal debe tener habilitada la transmisión en vivo en YouTube Studio (la primera vez tarda hasta 24 h). Facebook llega muy pronto.
+        ✓ Tu canal debe tener habilitada la transmisión en vivo en YouTube Studio (la primera vez tarda hasta 24 h).
+        {live.facebook && " En Facebook, si el video se queda en vista previa, dale «Go live» en Live Producer."}
       </p>
     </section>
   );

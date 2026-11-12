@@ -14,6 +14,7 @@ import crypto from "node:crypto";
 import { db } from "~/.server/db";
 import { decryptSecret, encryptSecret, signingKey, vaultIsConfigured } from "~/.server/live/secret-vault.server";
 import { createBroadcast, ensureStream, myChannel, type Privacy } from "~/.server/live/youtube-live";
+import { boxConfig } from "~/.server/services/club-call-box.server";
 
 export const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube";
 const STATE_PREFIX = "live.";
@@ -153,10 +154,33 @@ async function googleAccessToken(destinationId: string, refreshToken: string): P
 // ── Estado, privacidad y desconectar (panel del anfitrión) ────────────────────
 const isPrivacy = (p: unknown): p is "public" | "unlisted" => p === "public" || p === "unlisted";
 
+/**
+ * Destinos con llave fija en el env de la caja (`RTMP_TARGETS`, p. ej. Facebook hoy). La caja sólo
+ * devuelve nombres, nunca URLs. Sin caja propia o si no contesta: lista vacía.
+ */
+async function boxTargetNames(): Promise<string[]> {
+  const cfg = boxConfig();
+  if (!cfg) return [];
+  try {
+    const r = await fetch(`${cfg.baseUrl}/admin/live/targets`, {
+      headers: { Authorization: `Bearer ${cfg.token}`, "Cache-Control": "no-store" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    const j = (await r.json().catch(() => ({}))) as { targets?: unknown };
+    return Array.isArray(j.targets) ? j.targets.filter((t): t is string => typeof t === "string" && /^[\w .-]{1,40}$/.test(t)) : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function liveStatus(communityId: string) {
-  const row = await db.streamDestination.findFirst({ where: { communityId, provider: "youtube" } }).catch(() => null);
+  const [row, boxTargets] = await Promise.all([
+    db.streamDestination.findFirst({ where: { communityId, provider: "youtube" } }).catch(() => null),
+    boxTargetNames(),
+  ]);
   return {
     configured: youtubeConfigured(),
+    facebook: boxTargets.includes("Facebook"),
     youtube: row
       ? {
           account: row.accountName,
