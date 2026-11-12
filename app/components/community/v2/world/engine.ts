@@ -171,7 +171,7 @@ export function createWorld(opts: {
   function integrate(e: Entity, dt: number, max: number) {
     let x = clamp(e.x + e.vx * dt, M.margin, WORLD_W - M.margin), y = clamp(e.y + e.vy * dt, M.margin, WORLD_H - M.margin);
     // Restricción del cartucho (caminos, isla…): la posición permitida más cercana.
-    if (M.constrain) { const p = M.constrain({ x, y }, { x: e.x, y: e.y }, state.hidden); x = p.x; y = p.y; }
+    if (M.constrain) { const p = M.constrain({ x, y }, { x: e.x, y: e.y }, state.hidden, e === player); x = p.x; y = p.y; }
     e.x = x; e.y = y;
     const sp = Math.hypot(e.vx, e.vy);
     if (sp > 10) e.ang = lerpAngle(e.ang, Math.atan2(e.vy, e.vx), Math.min(1, 7 * dt));

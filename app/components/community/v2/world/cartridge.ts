@@ -77,7 +77,8 @@ export type Movement = {
    * demás personas) en cada cuadro: debe ser barata y pura. `hidden`: ids de los lugares que hoy no
    * existen (los que no llevan a nada), por si su edificio estorbaba el paso.
    */
-  constrain?: (next: Point, prev: Point, hidden?: ReadonlySet<string>) => Point;
+  /** `self` es `true` cuando quien se mueve es tu personaje (las demás personas se mueven solas entre lecturas). */
+  constrain?: (next: Point, prev: Point, hidden?: ReadonlySet<string>, self?: boolean) => Point;
   /**
    * Ruta para ir de `from` a `to` con un toque: puntos intermedios en orden, terminando en el destino
    * (que puede corregirse al punto permitido más cercano). Sin esto se va en línea recta.

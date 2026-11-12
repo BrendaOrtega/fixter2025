@@ -14,7 +14,7 @@ export const WORLD_H = 1000;
 export const UNIT = 1 / 40;
 
 import type { BotDef, Place, Point, TableDef, WorldStructure } from "../../cartridge";
-import { BOT_STOPS, FIRE, FIRE_ANGLES, SPOTS, TENT_SPOTS, THINGS, fireRing } from "./things";
+import { BOT_STOPS, FIRE, FIRE_ANGLES, MOOR, SPOTS, TENT_SPOTS, THINGS, fireRing } from "./things";
 
 type Vec = Point;
 
@@ -307,14 +307,85 @@ export const canStand = (x: number, y: number) => walkable(x, y) || onDock(x, y)
 /** Altura a la que se para alguien en (x, y): el terreno, o las tablas del muelle. */
 export const standHeight = (x: number, y: number) => (onDock(x, y) ? Math.max(0.2, heightAt(x, y)) : heightAt(x, y));
 
-/** Avanza de `from` hacia `to` sin pisar agua ni atravesar cosas: si choca, resbala por un eje. */
-export function slide(from: Vec, to: Vec): Vec {
-  if (canStand(to.x, to.y)) return to;
-  // Quien llega parado donde no se puede (p. ej. venía de otro mundo y quedó en el agua) sale a la orilla más cercana.
-  if (!canStand(from.x, from.y)) return nearestWalkable(from.x, from.y, 900) ?? to;
-  if (canStand(to.x, from.y)) return { x: to.x, y: from.y };
-  if (canStand(from.x, to.y)) return { x: from.x, y: to.y };
+// ───────── El barquito ─────────
+// Un solo barquito, compartido. Quien está en el agua va a bordo: la regla sale de la posición, así
+// que todos los clientes lo ven igual sin campos nuevos en el protocolo. Se sube sólo desde el
+// muelle y mientras el barquito está amarrado; maneja uno y los demás van sentados con él.
+/** Piedras del farito: el barquito las rodea. */
+const SEA_SOLIDS = [{ x: 1010, y: 905, r: 34 }];
+const BOARD_REACH = 46;
+/** Punto del muelle desde el que se da el paso al barquito. */
+const BOARD_FROM: Vec = { x: MOOR.x, y: 880 };
+export const nearMoor = (x: number, y: number) => Math.hypot(x - MOOR.x, y - MOOR.y) < BOARD_REACH;
+/** Hasta aquí llega el casco: el agua bajita de la playa no se navega (el barquito no se sube a la arena). */
+const SEA_LEVEL = 0.42;
+/** Agua navegable: dentro del mapa, con fondo, fuera del muelle y de las piedras del faro. Junto al amarre siempre hay paso. */
+export function isSea(x: number, y: number) {
+  if (x < 0 || y < 0 || x > WORLD_W || y > WORLD_H || onDock(x, y)) return false;
+  const f = landField(x, y);
+  if (f >= WALK_LEVEL || (f >= SEA_LEVEL && !nearMoor(x, y))) return false;
+  for (const s of SEA_SOLIDS) if ((s.x - x) * (s.x - x) + (s.y - y) * (s.y - y) < s.r * s.r) return false;
+  return true;
+}
+/**
+ * Lo que el renderizador sabe del barquito en este cuadro (lo escribe él, lo leen `constrain` y
+ * `route`): tu papel, dónde va quien maneja y si todavía se puede subir alguien.
+ */
+export const sea = { role: "ashore" as "ashore" | "captain" | "passenger", x: MOOR.x, y: MOOR.y, boardable: true };
+
+/** Tierra firme cercana en la dirección en que se mueve quien va a bordo (para bajarse). */
+function hop(from: Vec, to: Vec, reach: number): Vec | null {
+  const dx = to.x - from.x, dy = to.y - from.y, d = Math.hypot(dx, dy);
+  if (d < 0.3) return null;
+  for (let r = 8; r <= reach; r += 8) {
+    const x = from.x + (dx / d) * r, y = from.y + (dy / d) * r;
+    if (canStand(x, y)) return { x, y };
+  }
+  return null;
+}
+/**
+ * Avanza de `from` hacia `to` sin atravesar cosas: si choca, resbala por un eje. En tierra no se
+ * pisa el agua; al agua se entra por el barquito amarrado y de ahí se navega libre hasta cualquier orilla.
+ */
+export function slide(from: Vec, to: Vec, self = false): Vec {
+  const afloat = isSea(from.x, from.y);
+  if (self && afloat && sea.role === "passenger") {
+    // De pasajero vas con el barquito. Para bajarte, camina hacia una orilla que esté cerca.
+    return hop(from, to, 110) ?? { x: sea.x, y: sea.y };
+  }
+  const open = (x: number, y: number) =>
+    canStand(x, y) || (isSea(x, y) && (afloat || (nearMoor(x, y) && (!self || sea.boardable))));
+  if (open(to.x, to.y)) return to;
+  // Quien maneja y topa con la playa se baja de un brinco a la arena.
+  if (afloat) { const land = hop(from, to, 80); if (land) return land; }
+  // Quien llega parado donde no se puede (p. ej. venía de otro mundo) sale a la orilla más cercana.
+  if (!afloat && !canStand(from.x, from.y)) return nearestWalkable(from.x, from.y, 900) ?? to;
+  if (open(to.x, from.y)) return { x: to.x, y: from.y };
+  if (open(from.x, to.y)) return { x: from.x, y: to.y };
   return from;
+}
+/** Ruta de tu personaje: caminando, navegando, o caminando al muelle para subirse al barquito. */
+function plan(from: Vec, to: Vec): Vec[] {
+  if (isSea(from.x, from.y)) {
+    if (sea.role === "passenger") { const off = nearestWalkable(to.x, to.y, 40); return off ? [off] : []; }
+    if (isSea(to.x, to.y)) return [to];
+    const goal = nearestWalkable(to.x, to.y);
+    if (!goal) return [];
+    // Navega derecho hasta la playa, brinca a la arena y de ahí camina.
+    const n = Math.ceil(Math.hypot(goal.x - from.x, goal.y - from.y) / 8);
+    for (let i = 1; i <= n; i++) {
+      const p = { x: from.x + ((goal.x - from.x) * i) / n, y: from.y + ((goal.y - from.y) * i) / n };
+      if (canStand(p.x, p.y)) return [p, ...findPath(p, goal).filter((w) => w.x !== p.x || w.y !== p.y)];
+      if (!isSea(p.x, p.y) && !canStand(p.x, p.y) && landField(p.x, p.y) >= WALK_LEVEL) break; // un árbol o una piedra en la orilla
+    }
+    return [goal];
+  }
+  const toBoat = nearMoor(to.x, to.y) && isSea(to.x, to.y);
+  if (sea.boardable && (toBoat || (isSea(to.x, to.y) && !nearestWalkable(to.x, to.y, 50)))) {
+    const walk = findPath(from, BOARD_FROM);
+    if (walk.length) return toBoat ? [...walk, to] : [...walk, MOOR, to];
+  }
+  return findPath(from, to);
 }
 function lineClear(a: Vec, b: Vec) {
   const n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 8);
@@ -418,8 +489,8 @@ export const structure: WorldStructure = {
   // Caminar: arranca y frena pronto (nada de inercia de nave), sólo sobre tierra y rodeando lo que estorba.
   movement: {
     maxSpeed: 200, accel: 1600, drag: 4, idleDrag: 12, seatSpeed: 160, margin: 20, targetMargin: 20,
-    constrain: (next, prev, hidden) => { useHidden(hidden); return slide(prev, next); },
-    route: (from, to, hidden) => { useHidden(hidden); return findPath(from, to); },
+    constrain: (next, prev, hidden, self) => { useHidden(hidden); return slide(prev, next, self); },
+    route: (from, to, hidden) => { useHidden(hidden); return plan(from, to); },
   },
   // El renderizador es 3D y trae su propia cámara; estos valores sólo sirven a la cámara lógica del motor.
   camera: { minScale: 0.5, minScaleNarrow: 0.4, maxScale: 1.1 },

@@ -5,6 +5,8 @@
 // sin brillos. El mar es azul verdoso oscuro (nunca negro plano).
 
 import * as THREE from "three";
+import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
+import { makeGhosty3D } from "./ghosty3d.js";
 import {
   BUILDINGS, CAMPFIRE, DOCK, PLACES, PROPS, TABLES, TABLE_TONES, TENTS, TONES, UNIT, WORLD_H, WORLD_W,
   heightAt, landField, pathDistance, seeded, toneOf,
@@ -28,7 +30,9 @@ export const wz = (y: number) => (y - WORLD_H / 2) * UNIT;
 /** Dónde va el banderín de cada mesa, respecto a su centro (unidades de la escena). */
 export const FLAG_AT = { x: -1.55, z: -0.95 };
 
-export type IslandState = { t: number; dt: number; quiet: boolean; liveOn: boolean; visible: Set<string>; nearId: string | null; tableCounts: number[] };
+export type IslandState = { t: number; dt: number; quiet: boolean; liveOn: boolean; visible: Set<string>; nearId: string | null; tableCounts: number[];
+  /** El barquito: dónde va (plano del mapa) y hacia dónde apunta la proa. */
+  boat: { x: number; y: number; yaw: number } };
 
 export function createIsland(scene: THREE.Scene) {
   const geos = new Set<THREE.BufferGeometry>(), mats = new Set<THREE.Material>();
@@ -333,12 +337,30 @@ export function createIsland(scene: THREE.Scene) {
     part(g, G.cyl8, C.slate, [0.56, 0.55, 0.2], [0.04, 0.8, 0.04]);
     part(g, G.ball, C.amber, [0.56, 0.98, 0.2], 0.11);
   }
-  const boat = new THREE.Group(); boat.position.set(wx(905), 0, wz(905)); boat.rotation.y = 0.5; scene.add(boat);
-  part(boat, G.box, C.ink, [0, 0.1, 0], [0.55, 0.24, 1.2]);
-  part(boat, G.cone4, C.ink, [0, 0.1, 0.78], [0.39, 0.5, 0.17], [Math.PI / 2, Math.PI / 4, 0]);
-  part(boat, G.box, C.pink, [0, 0.2, 0], [0.6, 0.06, 1.25]);
-  part(boat, G.cyl8, C.wood, [0, 0.85, 0.1], [0.03, 1.4, 0.03]);
-  part(boat, G.roof, C.mint, [0.02, 0.4, -0.22], [0.03, 1.05, 0.9]);
+  // Velero con cuatro lugares; la proa mira a +Z. Lo mueve el renderizador (quien maneja lo lleva).
+  const boat = new THREE.Group(); scene.add(boat);
+  part(boat, G.box, C.ink, [0, 0.1, 0], [1.1, 0.26, 2.5]);
+  part(boat, G.cone4, C.ink, [0, 0.1, 1.55], [0.78, 0.7, 0.18], [Math.PI / 2, Math.PI / 4, 0]);
+  part(boat, G.box, C.pink, [0, 0.21, 0], [1.16, 0.06, 2.55]);
+  part(boat, G.cyl8, C.wood, [0, 1.05, 0.85], [0.04, 1.8, 0.04]);
+  part(boat, G.roof, C.mint, [0.02, 0.5, 0.42], [0.03, 1.35, 0.8]);
+  // Ghosty va de vigía en la proa: el modelo 3D oficial (sale del vector de la marca, sin repintar).
+  // Si su vector no carga, el barquito navega igual sin él.
+  const ghosty = makeGhosty3D({ THREE, SVGLoader, url: "/mundo/ghosty-oficial.svg" });
+  ghosty.position.set(0, 0.26, 1.2); ghosty.scale.setScalar(0.8); ghosty.visible = false; boat.add(ghosty);
+  let ghostyOn = false, disposed = false;
+  (ghosty.userData.ready as Promise<unknown>).then(() => {
+    if (disposed) { freeGhosty(); return; }
+    ghosty.traverse((o) => { o.castShadow = false; });
+    ghosty.visible = ghostyOn = true;
+  }).catch(() => { boat.remove(ghosty); });
+  function freeGhosty() {
+    ghosty.traverse((o) => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      for (const mat of Array.isArray(m.material) ? m.material : m.material ? [m.material] : []) { (mat as THREE.MeshStandardMaterial).map?.dispose(); mat.dispose(); }
+    });
+  }
   {
     const g = new THREE.Group(); g.position.set(wx(1010), 0, wz(905)); scene.add(g);
     for (let k = 0; k < 5; k++) part(g, G.rock, ROCKS[k % 2], [Math.cos(k * 1.3) * 0.5, 0.05, Math.sin(k * 1.3) * 0.45], [0.5, 0.3, 0.45], [0, k * 1.1, 0]);
@@ -370,7 +392,14 @@ export function createIsland(scene: THREE.Scene) {
     }
     const t = s.quiet ? 0 : s.t;
     water.position.y = Math.sin(t * 0.8) * 0.018;
-    boat.position.y = Math.sin(t * 1.3) * 0.04; boat.rotation.z = Math.sin(t * 0.9) * 0.05;
+    boat.position.set(wx(s.boat.x), Math.sin(t * 1.3) * 0.04, wz(s.boat.y)); boat.rotation.set(0, s.boat.yaw, Math.sin(t * 0.9) * 0.04, "YXZ");
+    if (ghostyOn) {
+      // Siempre de frente a la cámara, parpadea cada tanto y mira hacia donde va el barquito.
+      ghosty.rotation.y = -s.boat.yaw;
+      if (Math.floor(t / 3.4) !== Math.floor((t - s.dt) / 3.4)) (ghosty.userData.blink as (t: number) => void)(t);
+      (ghosty.userData.look as (x: number, y: number) => void)(Math.sin(s.boat.yaw) * 0.8, 0);
+      (ghosty.userData.update as (t: number, dt: number) => void)(t, s.dt);
+    }
     for (const r of reels) r.rotation.z = -t * 0.8;
     speakers.forEach((sp, i) => { const beat = 1 + Math.max(0, Math.sin(t * 6.2 + i)) * 0.22; sp.scale.set(0.2 * beat, 0.04, 0.2 * beat); });
     flames.forEach((f, i) => { f.scale.y = (i ? 0.34 : 0.55) * (1 + Math.sin(t * (9 + i * 4) + i) * 0.16); f.rotation.y = t * 2; });
@@ -390,6 +419,8 @@ export function createIsland(scene: THREE.Scene) {
   }
 
   function dispose() {
+    disposed = true;
+    if (ghostyOn) freeGhosty();
     for (const b of batches) b.dispose();
     for (const g of geos) g.dispose();
     for (const m of mats) m.dispose();

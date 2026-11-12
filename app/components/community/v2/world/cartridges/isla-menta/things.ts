@@ -65,6 +65,9 @@ export const CAFE = { x: 1080, y: 348 };
 export const HAMMOCK = { x: 1000, y: 280 };
 export const SCOPE = { x: 1412, y: 500 };
 export const DOCK_END = { x: 800, y: 878 };
+/** Donde espera amarrado el barquito, atravesado en la punta del muelle; ahí se sube la gente. Caben cuatro. */
+export const MOOR = { x: 800, y: 916 };
+export const BOAT_SEATS = 4;
 export const MEGAPHONE = { x: 694, y: 582 };
 /** Paradas de los robots: caen exactamente sobre su ruta. */
 export const BOT_STOPS = { uno: { x: 800, y: 553 }, dos: { x: 1080, y: 400 } };
@@ -93,6 +96,11 @@ export const THINGS: Thing[] = [
     id: `tent${i}`, name: "Casita de campaña", x: t.x, y: t.y, h: 1.9, hit: 36, solid: 28, clear: 46,
     actions: [{ id: "rest", label: "Descansar", done: "Estás descansando en la casita.", pose: "rest", mood: "zzz", sound: "act-sit", spots: [tentDoor(t)] }],
   })),
+  {
+    id: "boat", name: "Barquito", x: MOOR.x, y: MOOR.y, h: 1.6, hit: 34, solid: 0, clear: 0,
+    actions: [{ id: "board", label: "Subirse al barquito", done: "Te subiste al barquito.", pose: "sit", mood: "wave", sound: "act-sit",
+      spots: [{ x: MOOR.x - 30, y: MOOR.y, face: SOUTH }, { x: MOOR.x - 10, y: MOOR.y, face: SOUTH }, { x: MOOR.x + 10, y: MOOR.y, face: SOUTH }, { x: MOOR.x + 30, y: MOOR.y, face: SOUTH }] }],
+  },
   {
     id: "dock", name: "Muelle", x: 800, y: 868, h: 1.3, hit: 30, solid: 0, clear: 0,
     actions: [{ id: "perch", label: "Sentarse a ver el mar", done: "Te sentaste en la orilla del muelle.", pose: "perch", mood: "wave", sound: "act-sit",

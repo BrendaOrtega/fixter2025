@@ -7,8 +7,8 @@ import type { Entity, Place, Point, View, WorldFrame, WorldRenderer, WorldStruct
 import { FLAG_AT, SEA, createIsland, wx, wz } from "./island";
 import { createPuppetKit, type Puppet, type PuppetLook } from "./puppet";
 import { createActions, moodHtml, type MotorHooks, type Person } from "./actions";
-import { BUILDINGS, UNIT, WORLD_H, WORLD_W, heightAt, nearestWalkable, shapeFor, standHeight, toneOf } from "./structure";
-import { spotAt, type PlacedSpot } from "./things";
+import { BUILDINGS, UNIT, WORLD_H, WORLD_W, heightAt, isSea, nearMoor, nearestWalkable, sea, shapeFor, standHeight, toneOf } from "./structure";
+import { BOAT_SEATS, MOOR, spotAt, type PlacedSpot } from "./things";
 
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const PUPPET_SCALE = 1.15;
@@ -176,6 +176,53 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     actors.set(e.id, a);
     return a;
   }
+  // ── Barquito ── Quien está en el agua va a bordo. Maneja quien se subió con el id más bajo y se
+  // queda con el timón al zarpar; los demás van sentados. Todo sale de las posiciones.
+  /** Lugares en el barquito (x, z locales; proa en +z): timón en la popa y tres bancas. */
+  const SEATS: Array<[number, number]> = [[0, -0.85], [-0.27, -0.25], [0.27, -0.25], [0, 0.25]];
+  const MOOR_YAW = Math.PI / 2; // amarrado, de costado a la punta del muelle
+  const boat = { x: MOOR.x, y: MOOR.y, bx: -1, by: -1, yaw: MOOR_YAW, captain: null as string | null, crew: [] as string[], said: "" };
+  const helm = tag(NAME); helm.style.borderColor = "#85DDCB";
+  function updateBoat(frame: WorldFrame) {
+    const meId = frame.meId ?? "me", at = new Map<string, Entity>();
+    const all = [frame.player, ...frame.others];
+    for (const e of all) if (e.kind !== "bot" && e.table === null && isSea(e.x, e.y)) at.set(e === frame.player ? meId : e.id, e);
+    const ids = [...at.keys()].sort();
+    const lead = boat.captain ? at.get(boat.captain) : undefined;
+    // Amarrado, el timón es del id más bajo; ya navegando no cambia de manos hasta que se baje.
+    if (!lead || nearMoor(lead.x, lead.y)) boat.captain = ids[0] ?? null;
+    const cap = boat.captain ? at.get(boat.captain)! : null;
+    const moored = !cap || nearMoor(cap.x, cap.y);
+    boat.crew = boat.captain ? [boat.captain, ...ids.filter((id) => id !== boat.captain)] : [];
+    // El barquito va con quien maneja; solo, regresa despacio a su amarre.
+    const tx = moored ? MOOR.x : cap!.x, ty = moored ? MOOR.y : cap!.y;
+    const k = frame.quiet ? 1 : 1 - Math.exp(-dt * (cap ? 9 : 0.9));
+    const dx = (tx - boat.x) * k, dy = (ty - boat.y) * k;
+    boat.x += dx; boat.y += dy;
+    const wantYaw = moored && Math.hypot(tx - boat.x, ty - boat.y) < 6 ? MOOR_YAW : Math.hypot(dx, dy) > 0.05 ? Math.atan2(dx, dy) : boat.yaw;
+    boat.yaw = lerpAngle(boat.yaw, wantYaw, frame.quiet ? 1 : 1 - Math.exp(-dt * 4));
+    // Lo que leen `constrain` y `route` de tu personaje.
+    const mine = boat.crew.indexOf(meId);
+    sea.role = mine < 0 ? "ashore" : mine === 0 ? "captain" : "passenger";
+    sea.x = cap ? cap.x : MOOR.x; sea.y = cap ? cap.y : MOOR.y;
+    sea.boardable = moored && ids.length < BOAT_SEATS;
+    // Aviso al cambiar de papel, y etiqueta de quién maneja cuando van varios.
+    const say = sea.role === "captain" ? (ids.length > 1 ? "Tú manejas el barquito. Los demás van contigo." : "Tú manejas el barquito: navega con las flechas o tocando el agua.")
+      : sea.role === "passenger" ? `Vas de pasajero; maneja ${cap?.first || cap?.name || "alguien"}. Para bajarte, camina hacia la orilla cuando esté cerca.` : "";
+    if (say !== boat.said) { boat.said = say; if (say) actions.announce(say); }
+    const text = boat.crew.length > 1 && !frame.mini ? (sea.role === "captain" ? "Tú manejas" : `Maneja ${cap?.first || cap?.name || ""}`) : "";
+    if (helm.textContent !== text) helm.textContent = text;
+    const p = project(wx(boat.x), 3.5, wz(boat.y));
+    place(helm, p.x, p.y, !!text && p.front);
+  }
+  /** Dónde va sentado alguien de la tripulación (coordenadas de three), o `null` si no va a bordo. */
+  function seatOf(id: string) {
+    const i = boat.crew.indexOf(id);
+    if (i < 0) return null;
+    const [sx, sz] = SEATS[i % SEATS.length], c = Math.cos(boat.yaw), s = Math.sin(boat.yaw);
+    return { x: wx(boat.x) + sx * c + sz * s, z: wz(boat.y) - sx * s + sz * c };
+  }
+
   function drawActor(e: Entity, frame: WorldFrame, me: boolean) {
     const a = actorFor(e, me ? frame.meId ?? "" : e.id);
     a.seen = tick;
@@ -187,7 +234,8 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     // Actividad: quien está quieto sobre un punto de una cosa toma su pose. Sale de la posición, así que
     // todos los clientes ven lo mismo sin que viaje nada nuevo.
     a.stillT = moved < 0.4 ? a.stillT + dt : 0;
-    const spot = !seated && e.table === null && a.stillT > 0.15 ? spotAt(e.x, e.y) : null;
+    const aboard = e.kind === "bot" ? null : seatOf(me ? frame.meId ?? "me" : e.id);
+    const spot = !aboard && !seated && e.table === null && a.stillT > 0.15 ? spotAt(e.x, e.y) : null;
     if (spot !== a.spot && (spot?.x !== a.spot?.x || spot?.y !== a.spot?.y)) {
       a.spotT = 0;
       if (me && spot) { actions.announce(spot.action.done); hooks.sound?.(spot.action.sound); }
@@ -198,18 +246,20 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     if (a.snap < 0.002) a.snap = 0;
     const px = e.x + (a.sx - e.x) * a.snap, py = e.y + (a.sy - e.y) * a.snap;
     let want = a.yaw;
-    if (spot) want = spot.face;
+    if (aboard) want = boat.yaw;
+    else if (spot) want = spot.face;
     else if (seated && table) want = Math.atan2(table.x - e.x, table.y - e.y);
     else if (moved > 0.15 && !jumped) want = Math.atan2(dx, dy);
     else if (e.waveT > 0) want = Math.PI / 2 - e.ang;
     a.yaw = jumped ? want : lerpAngle(a.yaw, want, 1 - Math.exp(-dt * 11));
     const root = a.puppet.root;
-    root.position.set(wx(px), standHeight(px, py), wz(py));
+    if (aboard) root.position.set(aboard.x, 0.2 + Math.sin(frame.t * 1.3) * (frame.quiet ? 0 : 0.04), aboard.z);
+    else root.position.set(wx(px), standHeight(px, py), wz(py));
     root.rotation.y = a.yaw;
     const speed = dt > 0 ? moved / dt : 0;
     a.puppet.pose({
-      t: frame.t + e.bob, dt, walked: jumped || frame.quiet ? 0 : (moved * UNIT) / PUPPET_SCALE,
-      pace: Math.min(1, speed / structure.movement.maxSpeed), sitting: seated, waving: e.waveT > 0, act: spot?.action.pose ?? null,
+      t: frame.t + e.bob, dt, walked: aboard || jumped || frame.quiet ? 0 : (moved * UNIT) / PUPPET_SCALE,
+      pace: Math.min(1, speed / structure.movement.maxSpeed), sitting: seated || !!aboard, waving: e.waveT > 0, act: spot?.action.pose ?? null,
     });
     // Etiqueta con el nombre; la tuya va en menta. En el mapa reducido sólo se marca dónde estás.
     const text = frame.mini ? (me ? "Tú" : "") : e.first || e.name;
@@ -344,11 +394,14 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     if (frame.view.vw !== vw || frame.view.vh !== vh) resize(frame.view);
     aimCamera(frame);
     const visible = drawPlaces(frame);
+    updateBoat(frame);
     const dirty = island.update({
+      boat,
       t: frame.t, dt, quiet: frame.quiet, liveOn: Object.entries(frame.placeStatus).some(([id, s]) => s.on && frame.places.find((p) => p.id === id)?.target === "call"),
       visible, nearId: frame.nearPlace?.id ?? null, tableCounts: frame.tableCounts,
     });
-    if (dirty) gl.shadowMap.needsUpdate = true;
+    // La sombra está horneada: si el barquito se movió hay que hornearla otra vez.
+    if (dirty || Math.hypot(boat.x - boat.bx, boat.y - boat.by) > 0.5) { gl.shadowMap.needsUpdate = true; boat.bx = boat.x; boat.by = boat.y; }
     drawActor(frame.player, frame, true);
     for (const e of frame.others) drawActor(e, frame, false);
     for (const [id, a] of actors) if (a.seen !== tick) { dropActor(a); actors.delete(id); }
