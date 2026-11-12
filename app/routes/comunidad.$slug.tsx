@@ -666,10 +666,9 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
   // para que lo de abajo (qué incluye, preguntas, cierre) quede a la vista.
   const PREVIEW = 3;
   const [showAll, setShowAll] = useState(false);
-  // Rediseño (12-nov-2026): quien modera ya lo ve por defecto (`?v=1` regresa a la página
-  // anterior); los miembros lo ven sólo con `?v=2` hasta que pase el hackatón de hoy.
-  const v = params.get("v");
-  if (isInside && (v === "2" || (canMod && v !== "1"))) return <ClubV2 {...loaderData} />;
+  // Rediseño (12-nov-2026): todos los de adentro lo ven por defecto; `?v=1` regresa a la
+  // página anterior.
+  if (isInside && params.get("v") !== "1") return <ClubV2 {...loaderData} />;
 
   const joinBlock = canClaimGift ? (
     <div className="grid gap-4">
