@@ -97,6 +97,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [counts, setCounts] = useState<Counts | null>(null);
   const [present, setPresent] = useState<number | null>(null);
   const [myTable, setMyTable] = useState<number | null>(null);
+  const [crystals, setCrystals] = useState(0);
   const [waved, setWaved] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
@@ -136,6 +137,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         onIntent: () => { dirtyRef.current = true; setMyTable(apiRef.current?.myTable() ?? null); },
         onFirstMove: () => {},
         onSound: (name) => sound.play(name),
+        onScore: setCrystals,
         onEnter: () => barRef.current?.querySelector<HTMLButtonElement>("[data-place] button:not(:disabled)")?.click(),
         onEscape: () => { if (sheetOpenRef.current) setSheetOpen(false); else if (expandedRef.current) setExpanded(false); },
         onStageTap: () => { if (!sheetOpenRef.current) return false; setSheetOpen(false); return true; },
@@ -379,6 +381,21 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               />
             </div>
 
+            {/* Disparo: junta cristales (juego local, de esta visita). En teclado es la barra espaciadora. */}
+            {full && ready && !quiet && (
+              <button
+                type="button"
+                data-shoot
+                aria-label={`Disparar a los cristales. Llevas ${crystals}.`}
+                onClick={() => apiRef.current?.shoot()}
+                style={{ touchAction: "manipulation" }}
+                className="absolute bottom-3.5 right-3.5 z-[3] grid h-[76px] w-[76px] place-content-center justify-items-center gap-px rounded-full border border-[#357265] bg-[#141B20] text-brand-500 shadow-[0_2px_8px_rgba(0,0,0,0.35)] active:bg-[#17302C] sm:h-[68px] sm:w-[68px]"
+              >
+                <b className="text-[13px] font-semibold">Disparar</b>
+                <small className="text-[10px] text-[#7C8A8E]">{crystals === 1 ? "1 cristal" : `${crystals} cristales`}</small>
+              </button>
+            )}
+
             {/* Joystick táctil (opcional) */}
             {full && joyOn && (
               <div
@@ -414,7 +431,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
             {!ship && !(place && near) && (
               <p className="text-[13px] text-[#7C8A8E]">
                 Acércate a un lugar o a alguien.
-                <span className="hidden lg:inline"> Flechas o WASD para volar · clic para ir a un punto · Enter para entrar.</span>
+                <span className="hidden lg:inline"> Flechas o WASD para volar · clic para ir a un punto · Enter para entrar · Espacio dispara a los cristales.</span>
               </p>
             )}
             {ship && (

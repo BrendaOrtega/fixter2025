@@ -85,7 +85,9 @@ type Callbacks = {
   onIntent: () => void;
   onFirstMove: () => void;
   /** Algo que merece sonido: arrancar, llegar a un lugar, sentarse, levantarse. */
-  onSound: (name: "thrust" | "arrive" | "sit" | "stand" | "waveIn") => void;
+  onSound: (name: "thrust" | "arrive" | "sit" | "stand" | "waveIn" | "shoot" | "catch") => void;
+  /** Cristales juntados en esta visita (el juego es local: no viaja al servidor). */
+  onScore: (crystals: number) => void;
   /** Enter con un lugar cerca. */
   onEnter: () => void;
   /** Escape. */
@@ -107,6 +109,10 @@ export type WorldApi = {
   /** Saludo a un robot de la casa: contesta solo. */
   waveBot: (botId: string) => void;
   flyToPlace: (placeId: string) => void;
+  /** Dispara un destello hacia donde apunta la nave; sólo atrapa cristales, nunca a otra nave. */
+  shoot: () => void;
+  /** El cristal más cercano a tu nave (para pruebas y para pistas en pantalla). */
+  nearestCrystal: () => { x: number; y: number } | null;
   setJoy: (x: number, y: number) => void;
   sit: (table: number) => void;
   stand: () => void;
@@ -128,6 +134,7 @@ type Entity = {
 };
 type Fx =
   | { kind: "bubble"; ship: Entity; text: string; t: number; dur: number }
+  | { kind: "flash"; x: number; y: number; t: number; dur: number }
   | { kind: "spark"; x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string };
 
 const C = {
@@ -138,6 +145,10 @@ const C = {
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const TAU = Math.PI * 2;
 const MAX_SPEED = 310;
+// Juego de los cristales: local, de esta visita y sin blancos humanos.
+const GEM_COUNT = 9, GEM_HIT = 26, SHOT_SPEED = 640, SHOT_LIFE = 0.8, SHOT_EVERY = 0.28;
+type Gem = { x: number; y: number; ph: number; alive: boolean; back: number };
+type Shot = { x: number; y: number; vx: number; vy: number; t: number };
 /** Asset oficial de Ghosty (public/ghosty-oficial.png): nunca se repinta, sólo se escala. */
 const GHOSTY_SRC = "/ghosty-oficial.png";
 
@@ -393,6 +404,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     keys: new Set<string>(), joy: { x: 0, y: 0 }, moved: false, wasFlying: false,
     nearPlace: null as Place | null, nearShip: null as Entity | null, fx: [] as Fx[], marker: null as { x: number; y: number; t: number } | null,
     hidden: new Set<string>(), dead: false,
+    gems: [] as Gem[], shots: [] as Shot[], crystals: 0, shotT: 9,
   };
   const entity = (id: string, kind: Entity["kind"], name: string, look: Look, x: number, y: number): Entity => ({
     id, kind, name, first: firstName(name), photoURL: null, note: null, x, y, vx: 0, vy: 0, ang: -Math.PI / 2, thrust: 0,
@@ -653,9 +665,15 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         const e = state.nearShip;
         ctx.strokeStyle = C.mint; ctx.lineWidth = 1.6; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(e.x, e.y, 38, t * 0.6, t * 0.6 + TAU); ctx.stroke(); ctx.setLineDash([]);
       }
+      if (!state.quiet) for (const g of state.gems) if (g.alive) drawGem(g, t);
       for (const e of [...all, player].sort((a, b) => a.y - b.y)) {
         const bob = e.kind === "me" || state.quiet ? 0 : Math.sin(t * 1.6 + e.bob) * 2.2;
         drawShip(ctx, e, e.x, e.y + bob, 56, t);
+      }
+      for (const s of state.shots) drawShot(s);
+      for (const f of state.fx) if (f.kind === "flash") {
+        // Destello al atrapar: un aro que se abre y se apaga.
+        const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.strokeStyle = C.ink; ctx.lineWidth = 3 * (1 - k) + 1; ctx.beginPath(); ctx.arc(f.x, f.y, 8 + 26 * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
       }
       for (const f of state.fx) if (f.kind === "spark") {
         const k = f.t / f.dur; ctx.globalAlpha = 1 - k; ctx.fillStyle = f.color; sparkle(ctx, f.x + f.vx * f.t, f.y + f.vy * f.t, 7 * (1 - k * 0.5)); ctx.fill(); ctx.globalAlpha = 1;
@@ -696,6 +714,57 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     }
     drawEdgeHints();
   }
+  // ── Juego: juntar cristales con un disparo ──
+  // Cristales de energía flotan por el mapa; el disparo sale de la punta de tu nave y sólo los cristales
+  // lo detienen: atraviesa naves y lugares sin tocarlos, así nadie puede ser blanco de nadie. Todo es
+  // local (no viaja al servidor) y la cuenta es de esta visita. En «Tranquilo» no hay juego.
+  function gemSpot() {
+    for (let k = 0; k < 40; k++) { const g = { x: 80 + Math.random() * (WORLD_W - 160), y: 80 + Math.random() * (WORLD_H - 160) }; if (!placeOf(g) && Math.hypot(g.x - player.x, g.y - player.y) > 140) return g; }
+    return { x: 1000, y: 120 };
+  }
+  function shoot() {
+    if (state.quiet || state.mini || state.shotT < SHOT_EVERY) return;
+    state.shotT = 0;
+    const a = player.ang;
+    state.shots.push({ x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * SHOT_SPEED, vy: Math.sin(a) * SHOT_SPEED, t: 0 });
+    cb.onSound("shoot");
+  }
+  function updateGame(dt: number) {
+    state.shotT += dt;
+    if (state.quiet) { state.shots.length = 0; return; }
+    for (const g of state.gems) if (!g.alive && (g.back -= dt) <= 0) Object.assign(g, gemSpot(), { alive: true });
+    for (const s of state.shots) {
+      s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      const g = state.gems.find((q) => q.alive && Math.hypot(q.x - s.x, q.y - s.y) < GEM_HIT);
+      if (!g) continue;
+      g.alive = false; g.back = 5 + Math.random() * 4; s.t = SHOT_LIFE; // el disparo se gasta en el cristal
+      for (let i = 0; i < 7; i++) { const b = (i * TAU) / 7; state.fx.push({ kind: "spark", x: g.x, y: g.y, vx: Math.cos(b) * 80, vy: Math.sin(b) * 80, t: 0, dur: 0.5, color: i % 2 ? C.mint : C.ink }); }
+      state.fx.push({ kind: "flash", x: g.x, y: g.y, t: 0, dur: 0.28 });
+      state.fx.push({ kind: "bubble", ship: player, text: "+1 cristal", t: 0, dur: 1 });
+      state.crystals++; cb.onSound("catch"); cb.onScore(state.crystals);
+    }
+    state.shots = state.shots.filter((s) => s.t < SHOT_LIFE && s.x > -20 && s.x < WORLD_W + 20 && s.y > -20 && s.y < WORLD_H + 20);
+  }
+  function drawGem(g: Gem, t: number) {
+    // Cristal plano de tres facetas, flotando despacio.
+    const x = g.x, y = g.y + Math.sin(t * 1.8 + g.ph) * 3.5, w = 9, h = 15;
+    const outline = () => { ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x + w, y - 3); ctx.lineTo(x, y + h); ctx.lineTo(x - w, y - 3); ctx.closePath(); };
+    ctx.fillStyle = C.mint; outline(); ctx.fill();
+    ctx.fillStyle = "#BDEEE3"; ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x, y - 3); ctx.lineTo(x - w, y - 3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#4FA896"; ctx.beginPath(); ctx.moveTo(x + w, y - 3); ctx.lineTo(x, y + h); ctx.lineTo(x, y - 3); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 1; outline(); ctx.stroke();
+    if (Math.sin(t * 1.8 + g.ph) > 0.92) { ctx.fillStyle = C.ink; sparkle(ctx, x + w + 3, y - h + 2, 4); ctx.fill(); }
+  }
+  function drawShot(s: Shot) {
+    // Destello alargado con estela corta, del color de la casa.
+    const a = Math.atan2(s.vy, s.vx), fade = s.t > SHOT_LIFE - 0.15 ? (SHOT_LIFE - s.t) / 0.15 : 1;
+    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(a); ctx.globalAlpha = Math.max(0, fade);
+    ctx.lineCap = "round"; ctx.strokeStyle = C.mintDeep; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(-10, 0); ctx.stroke();
+    ctx.strokeStyle = C.mint; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(6, 0); ctx.stroke();
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(6, 0, 2.6, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+
   // ── Saludos ──
   function burst(e: Entity) {
     if (state.quiet) return;
@@ -710,6 +779,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     const target = e.target as HTMLElement | null;
     if (e.metaKey || e.ctrlKey || e.altKey || (target && /INPUT|TEXTAREA|SELECT/.test(target.tagName))) return;
     if (MOVE_KEYS.includes(e.code)) { state.keys.add(e.code); e.preventDefault(); }
+    else if (e.code === "Space" && !target?.closest("button, a")) { shoot(); e.preventDefault(); }
     else if (e.code === "Enter" && !target?.closest("button, a")) cb.onEnter();
     else if (e.code === "Escape") cb.onEscape();
   };
@@ -731,7 +801,7 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (!state.quiet) { state.animT += dt; updateBots(dt); }
     for (const e of humans.values()) updateHuman(e, dt);
-    updatePlayer(dt);
+    updatePlayer(dt); updateGame(dt);
     if (state.marker) state.marker.t += dt;
     for (const f of state.fx) f.t += dt;
     state.fx = state.fx.filter((f) => f.t < f.dur);
@@ -740,13 +810,14 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
     updateCamera(Math.min(1, 5 * dt)); render();
     raf = requestAnimationFrame(frame);
   }
+  state.gems = Array.from({ length: GEM_COUNT }, (_, i) => ({ ...gemSpot(), ph: i * 1.7, alive: true, back: 0 }));
   ghosty();
   measure();
   raf = requestAnimationFrame(frame);
 
   return {
     resize(mini) { state.mini = mini; measure(); },
-    setQuiet(quiet) { state.quiet = quiet; if (quiet) { player.tx = player.ty = null; state.marker = null; state.fx = state.fx.filter((f) => f.kind !== "spark"); } },
+    setQuiet(quiet) { state.quiet = quiet; if (quiet) { player.tx = player.ty = null; state.marker = null; state.fx = state.fx.filter((f) => f.kind === "bubble"); state.shots.length = 0; } },
     setLook(look) { player.model = look.model; player.color = look.color; player.pilot = look.pilot; cb.onIntent(); },
     setStation(s) { state.open = s.open; state.stationSub = s.sub; },
     setHidden(ids) { state.hidden = new Set(ids); places = PLACES.filter((p) => !state.hidden.has(p.id)); },
@@ -785,6 +856,12 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
       state.fx.push({ kind: "bubble", ship: player, text: `¡Hola, ${bot.first}!`, t: 0, dur: 1.5 });
       bot.waveT = 3.5;
       window.setTimeout(() => { if (state.dead) return; state.fx.push({ kind: "bubble", ship: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
+    },
+    shoot,
+    nearestCrystal() {
+      let best: Gem | null = null, bd = Infinity;
+      for (const g of state.gems) { const d = Math.hypot(g.x - player.x, g.y - player.y); if (g.alive && d < bd) { best = g; bd = d; } }
+      return best ? { x: best.x, y: best.y } : null;
     },
     flyToPlace(placeId) {
       const p = places.find((q) => q.id === placeId); if (!p) return;

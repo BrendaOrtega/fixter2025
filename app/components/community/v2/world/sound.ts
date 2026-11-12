@@ -5,7 +5,7 @@
 // - Volumen bajo y un compresor al final, para que varios saludos juntos no saturen.
 // - Nunca suena igual dos veces seguidas: tres afinaciones que se alternan.
 
-export type SoundName = "thrust" | "arrive" | "waveOut" | "waveIn" | "sit" | "stand" | "expand" | "collapse" | "pick";
+export type SoundName = "thrust" | "arrive" | "waveOut" | "waveIn" | "sit" | "stand" | "expand" | "collapse" | "pick" | "shoot" | "catch";
 
 const MASTER = 0.25;
 /** Lo que hacen otras naves suena más bajito, para que quince personas no sean una feria. */
@@ -102,6 +102,13 @@ export function createSound(enabled: boolean): Sound {
           case "expand": tone(c, dest, { type: "triangle", from: 300, to: 640, dur: 0.22, gain: 0.5, cents }); break;
           case "collapse": tone(c, dest, { type: "triangle", from: 640, to: 300, dur: 0.22, gain: 0.5, cents }); break;
           case "pick": tone(c, dest, { type: "square", from: 1040, dur: 0.05, gain: 0.22, cents }); break;
+          case "shoot": // «piu» corto que cae, con un soplido encima
+            tone(c, dest, { type: "triangle", from: 1250, to: 360, dur: 0.14, gain: 0.5, cents });
+            whoosh(c, dest, 0.12, 0.18, cents); break;
+          case "catch": // campanita de cristal: dos notas agudas
+            tone(c, dest, { type: "sine", from: 1568, dur: 0.12, gain: 0.5, cents });
+            tone(c, dest, { type: "sine", from: 2093, at: 0.07, dur: 0.22, gain: 0.45, cents });
+            tone(c, dest, { type: "triangle", from: 3136, at: 0.07, dur: 0.1, gain: 0.12, cents }); break;
         }
       } catch {
         // Un nodo que no arranca no debe tirar el Mundo.
