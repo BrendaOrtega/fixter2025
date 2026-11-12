@@ -43,6 +43,20 @@ function statusLabel(membership: ClubData["membership"], canMod: boolean) {
   return membership.status;
 }
 
+const money = (n: number) => `$${n.toLocaleString("es-MX")} MXN`;
+
+/** Nombre del plan: lo que paga (o no paga) esta persona. */
+function planLabel(membership: ClubData["membership"], community: ClubData["community"], canMod: boolean) {
+  if (membership?.provider === "stripe") {
+    return membership.interval === "year"
+      ? `Anual${community.priceAnnualMxn ? ` · ${money(community.priceAnnualMxn)} al año` : ""}`
+      : `Mensual${community.priceMxn ? ` · ${money(community.priceMxn)} al mes` : ""}`;
+  }
+  if (canMod) return "Anfitrión · sin costo";
+  if (membership?.provider === "grant") return "Meses gratis de regalo";
+  return "Sin plan";
+}
+
 export function MembershipView({ data }: { data: ClubData }) {
   const { community, me, membership, canMod, courseCount } = data;
   const navigation = useNavigation();
@@ -51,13 +65,24 @@ export function MembershipView({ data }: { data: ClubData }) {
   // Meses gratis: al dueño y a los ADMIN no se les enseña (igual que en la página de hoy).
   const isGrant = membership?.provider === "grant" && !!periodEnd && !canMod;
   const grantEndsSoon = isGrant && new Date(periodEnd!).getTime() - Date.now() <= GRANT_WARNING_MS;
+  // Stripe sólo difiere el primer cobro si al regalo le quedan más de 48 h (ver `giftTrialEnd`).
+  const chargesLater = isGrant && new Date(periodEnd!).getTime() - Date.now() > 49 * 3_600_000;
+  const isStripe = membership?.provider === "stripe";
+  // Quien no paga todavía (regalo o sin membresía) puede elegir plan; a quien modera no se le ofrece.
+  const canPickPlan = !canMod && !isStripe;
   return (
     <>
       <SectionHead title="Mi membresía" />
       <Wrap>
         <div className={card}>
           {me && <Row label="Miembro">{me.name}</Row>}
+          <Row label="Plan">{planLabel(membership, community, canMod)}</Row>
           <Row label="Estado">{statusLabel(membership, canMod)}</Row>
+          {isStripe && !membership?.cancelAtPeriodEnd && periodEnd && (
+            <Row label="Próximo cobro">
+              <span suppressHydrationWarning>{longDate(periodEnd)}</span>
+            </Row>
+          )}
           {membership?.cancelAtPeriodEnd && periodEnd && (
             <Row label="Tu membresía termina el">
               <span suppressHydrationWarning>{longDate(periodEnd)}</span>
@@ -68,13 +93,19 @@ export function MembershipView({ data }: { data: ClubData }) {
               <span suppressHydrationWarning>{longDate(periodEnd!)}</span>
             </Row>
           )}
-          {membership?.provider === "stripe" && (
-            <Row label="Pagos y facturas">
+          {isStripe && (
+            <Row label="Cambiar plan, tarjeta o cancelar">
               <Form method="post">
                 <button name="intent" value="billing" disabled={openingBilling} aria-busy={openingBilling} className={btnGhost}>
-                  {openingBilling ? "Abriendo…" : "Administrar mi membresía"}
+                  {openingBilling ? "Abriendo…" : "Administrar mi plan"}
                 </button>
               </Form>
+            </Row>
+          )}
+          {canMod && community.priceMxn && (
+            <Row label="Precio para miembros">
+              {money(community.priceMxn)} al mes
+              {community.priceAnnualMxn ? ` · ${money(community.priceAnnualMxn)} al año` : ""}
             </Row>
           )}
           <Row label="Cursos incluidos">
@@ -90,15 +121,18 @@ export function MembershipView({ data }: { data: ClubData }) {
             </Row>
           )}
         </div>
-        {grantEndsSoon && (
+        {canPickPlan && (
           <div className={`${card} mt-3.5 grid gap-3 px-4 py-3.5`}>
-            <p>
-              Tus meses gratis terminan el{" "}
-              <strong className="text-[#F2F5F4]" suppressHydrationWarning>
-                {longDate(periodEnd!)}
-              </strong>
-              . Asegura tu lugar: no se cobra nada hasta esa fecha.
-            </p>
+            <p className="font-semibold text-[#F2F5F4]">{isGrant ? "Elige tu plan para seguir en el club" : "Elige tu plan"}</p>
+            {isGrant && (
+              <p>
+                Tus meses gratis {grantEndsSoon ? "terminan" : "van hasta"} el{" "}
+                <strong className="text-[#F2F5F4]" suppressHydrationWarning>
+                  {longDate(periodEnd!)}
+                </strong>
+                .{chargesLater ? " Si eliges plan hoy, no se cobra nada hasta esa fecha." : ""}
+              </p>
+            )}
             <JoinButtons community={community} />
           </div>
         )}

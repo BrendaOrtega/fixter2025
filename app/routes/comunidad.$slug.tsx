@@ -117,7 +117,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const membership = user
       ? await db.membership.findUnique({
           where: { communityId_userId: { communityId: community.id, userId: user.id } },
-          select: { status: true, provider: true, currentPeriodEnd: true, cancelAtPeriodEnd: true },
+          select: { status: true, provider: true, currentPeriodEnd: true, cancelAtPeriodEnd: true, interval: true },
         })
       : null;
     const isMember = isMembershipActive(membership);
