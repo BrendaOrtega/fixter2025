@@ -1,3 +1,4 @@
+import { CallBoxBand } from "~/components/community/CallBoxes";
 import { useRef } from "react";
 import { useBotTrap } from "~/hooks/useBotTrap";
 import {
@@ -640,6 +641,8 @@ export default function CommunityLanding({ loaderData }: Route.ComponentProps) {
             </details>
           ))}
         </div>
+        {/* Una sola línea, al pie: quien da clases puede rentar la sala de llamadas */}
+        {!member && <CallBoxBand />}
       </div>
     </main>
   );

@@ -18,6 +18,7 @@ import {
   type HomeClub,
 } from "./home/club-sections";
 import { WebinarBar } from "~/components/common/WebinarBar";
+import { CallBoxesSection } from "~/components/community/CallBoxes";
 import { SoftwareFactoryBand } from "~/components/common/SoftwareFactoryBand";
 import { getUserOrNull } from "~/.server/dbGetters";
 import type { Route } from "./+types/home";
@@ -220,6 +221,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
           <ClubHomeHero club={club} />
           <ClubIncludedSection />
           <CommunityModelSection />
+          <CallBoxesSection />
           <ClubWallPreview club={club} />
           <CreatorCommunitiesBand />
         </>
