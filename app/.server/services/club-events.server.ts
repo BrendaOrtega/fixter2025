@@ -138,17 +138,25 @@ export function buildIcs(e: ClubEvent, url: string, now = new Date()) {
 
 export type ReminderKind = "24h" | "1h";
 
+// Con menos de 2 h por delante el aviso anticipado quedaría pegado al de 1 h: ya no sale.
+const ADVANCE_MIN_LEFT_MS = 2 * HOUR_MS;
+
 /**
- * Qué recordatorio toca para una sesión. Si ya falta menos de 1 h (evento creado a última hora),
- * sólo sale el de 1 h. Nunca después de empezar.
+ * Qué recordatorio toca para una sesión. Hay dos avisos y cada uno sale una sola vez:
+ * - Anticipado (llave `|24h`): entre 24 h y 2 h antes. Normalmente sale un día antes; si el evento
+ *   se creó con menos de 24 h, sale en cuanto se crea y el correo dice «hoy» o «mañana» según el
+ *   día real en CDMX (ver `reminderEmail`).
+ * - De 1 h (llave `|1h`): en la última hora.
+ * Entre 2 h y 1 h antes no sale nada nuevo: un evento creado a 90 min sólo recibe el de 1 h.
+ * Nunca después de empezar.
  */
 export function dueReminder(startsAt: Date, sent: string[], now = new Date()): ReminderKind | null {
   const left = startsAt.getTime() - now.getTime();
   if (left <= 0) return null;
   const key = (k: ReminderKind) => `${startsAt.toISOString()}|${k}`;
   if (left <= HOUR_MS) return sent.includes(key("1h")) ? null : "1h";
-  if (left <= 24 * HOUR_MS) return sent.includes(key("24h")) ? null : "24h";
-  return null;
+  if (left <= ADVANCE_MIN_LEFT_MS || left > 24 * HOUR_MS) return null;
+  return sent.includes(key("24h")) ? null : "24h";
 }
 
 /** Miembros activos más los invitados con pase a la llamada de ese día. */
@@ -169,33 +177,72 @@ async function recipients(community: { id: string; ownerId: string }, day: strin
   return [...out.entries()];
 }
 
-const whenText = (d: Date) =>
-  d.toLocaleString("es-MX", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/Mexico_City",
-  });
+const CDMX = "America/Mexico_City";
 
-function reminderEmail(o: Occurrence, kind: ReminderKind, community: { name: string; slug: string }, name: string | null) {
+/**
+ * «7:00 p.m.» en CDMX, como en el sitio. Se arma a mano: `toLocaleString("es-MX")` da «19:00» o
+ * «7:00 p.m.» según la versión de ICU del servidor (en producción salió «19:00»).
+ */
+export function clockText(d: Date) {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: CDMX })
+      .formatToParts(d)
+      .map((x) => [x.type, x.value])
+  );
+  return `${p.hour}:${p.minute}\u00a0${p.dayPeriod === "AM" ? "a.m." : "p.m."}`;
+}
+
+/** «jueves, 12 de noviembre, 7:00 p.m.» */
+const whenText = (d: Date) =>
+  `${d.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: CDMX })}, ${clockText(d)}`;
+
+/**
+ * Encabezado y asunto según lo que de verdad falta al momento de enviar: «mañana» sólo si la sesión
+ * cae en el día siguiente de CDMX, «hoy» si es el mismo día, y los minutos reales en el de 1 h.
+ */
+export function reminderLead(startsAt: Date, kind: ReminderKind, now = new Date()) {
+  const time = clockText(startsAt);
+  if (kind === "1h") {
+    const minutes = Math.max(1, Math.round((startsAt.getTime() - now.getTime()) / 60_000));
+    // El trabajo corre cada 10 min: lo normal es que falten entre 50 y 60.
+    if (minutes >= 45) return { heading: "En una hora empezamos", subject: "En 1 hora" };
+    const span = minutes === 1 ? "1 minuto" : `${minutes} minutos`;
+    return { heading: `En ${span} empezamos`, subject: `En ${span}` };
+  }
+  if (cdmxDay(startsAt) === cdmxDay(now)) {
+    return { heading: `Hoy hay llamada a las ${time}`, subject: `Hoy a las ${time}` };
+  }
+  if (cdmxDay(startsAt) === cdmxDay(new Date(now.getTime() + 24 * HOUR_MS))) {
+    return { heading: "Mañana hay llamada", subject: "Mañana" };
+  }
+  // No debería pasar (el aviso sale a 24 h o menos); por si acaso, la fecha completa.
+  return { heading: "Se acerca la llamada", subject: "Próxima llamada" };
+}
+
+export function reminderEmail(
+  o: Pick<Occurrence, "id" | "title" | "description" | "startsAt">,
+  kind: ReminderKind,
+  community: { name: string; slug: string },
+  name: string | null,
+  now = new Date()
+) {
   const url = `${SITE}/comunidad/${community.slug}`;
   const ics = `${SITE}/comunidad/${community.slug}/evento/${o.id}.ics`;
-  const lead = kind === "1h" ? "En una hora empezamos" : "Mañana hay llamada";
+  const { heading, subject } = reminderLead(o.startsAt, kind, now);
   const inner = `
-    <h1 style="margin:0 0 12px 0;font-size:22px;">${name ? `${escapeHtml(name)}, ` : ""}${lead.charAt(0).toLowerCase() + lead.slice(1)}</h1>
+    <h1 style="margin:0 0 12px 0;font-size:22px;">${name ? `${escapeHtml(name)}, ` : ""}${name ? heading.charAt(0).toLowerCase() + heading.slice(1) : heading}</h1>
     <p style="margin:0 0 8px 0;"><strong>${escapeHtml(o.title)}</strong></p>
     <p style="margin:0 0 16px 0;">${escapeHtml(whenText(o.startsAt))} (hora de CDMX).</p>
     ${o.description ? `<p style="margin:0 0 16px 0;">${escapeHtml(o.description)}</p>` : ""}
     <div style="text-align:center;margin:24px 0;">${emailButton(kind === "1h" ? "Ir a la llamada" : "Ver en el club", url)}</div>
     <p style="margin:0;font-size:13px;">El botón para entrar se enciende 15 minutos antes. <a href="${ics}">Agregar a mi calendario</a>.</p>`;
   return {
-    subject: kind === "1h" ? `En 1 hora: ${o.title}` : `Mañana: ${o.title}`,
-    htmlBody: wrapEmailHtml(inner, { preheader: `${o.title} · ${whenText(o.startsAt)}`, promoFooter: false }).replace(
-      /\{\{unsubscribe\}\}/g,
-      url
-    ),
+    subject: `${subject}: ${o.title}`,
+    // El pie del cascarón dice «Cancelar suscripción», pero este aviso no tiene baja propia: la liga
+    // va al club, así que el texto dice eso.
+    htmlBody: wrapEmailHtml(inner, { preheader: `${o.title} · ${whenText(o.startsAt)}`, promoFooter: false })
+      .replace(/\{\{unsubscribe\}\}/g, url)
+      .replace("Cancelar suscripción", `Recibes este aviso por ser parte de ${escapeHtml(community.name)} · Abrir el club`),
   };
 }
 
@@ -223,7 +270,8 @@ export async function sendDueReminders(now = new Date()) {
       });
       if (claimed.count === 0) continue;
       for (const [email, name] of await recipients(c, cdmxDay(o.startsAt))) {
-        const msg = reminderEmail(o, kind, c, name);
+        // La hora real de cada envío, no la del arranque del trabajo.
+        const msg = reminderEmail(o, kind, c, name, new Date());
         await sendSesEmailDirect({ to: email, from: REMINDER_FROM, ...msg }).then(
           () => sent++,
           (err) => console.error("Recordatorio del club falló", email, err)
