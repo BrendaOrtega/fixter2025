@@ -1457,3 +1457,25 @@ model CommunityInvite {
   @@unique([communityId, email])
   @@map("community_invites")
 }
+
+/// Partida de quiz en vivo de una comunidad (12-nov-2026). El quiz corre en Razzia, aparte;
+/// aquí sólo queda qué partida está viva y su PIN, para dárselo a cada miembro en su panel.
+/// Ids planos, sin @relation: no toca Community ni User.
+model CommunityQuizGame {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String    @db.ObjectId
+  gameId      String
+  inviteCode  String
+  quizId      String
+  subject     String
+  /// live | ended
+  status      String    @default("live")
+  hostUserId  String    @db.ObjectId
+  /// Resultados leídos de Razzia al terminar (fase 2).
+  results     Json?
+  createdAt   DateTime  @default(now())
+  endedAt     DateTime?
+
+  @@index([communityId, status, createdAt])
+  @@map("community_quiz_games")
+}

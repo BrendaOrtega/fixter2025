@@ -15,6 +15,7 @@ import { occurrencesOf } from "~/.server/services/club-events.server";
 import { listRecordings, retryRecording } from "~/.server/services/club-recording.server";
 import { cdmxDay, parseEmails, upsertInvites } from "~/.server/services/club-invites.server";
 import { isMembershipActive } from "~/.server/services/membership.server";
+import { listPastGames, quizEnabled } from "~/.server/services/club-quiz.server";
 
 export const meta = () => [{ title: "Administrar club | FixterGeek" }, { name: "robots", content: "noindex" }];
 
@@ -75,9 +76,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     .slice(0, 8)
     .map((t) => ({ day: cdmxDay(new Date(t)), label: new Date(t).toISOString() }));
   const titles = Object.fromEntries(events.map((e) => [e.id, e.title]));
+  // Quiz en vivo: la pestaña sólo existe con el servicio encendido (QUIZ_API_URL).
+  const quizOn = quizEnabled();
+  const quizGames = quizOn ? await listPastGames(community.id).catch(() => []) : [];
 
   return {
     community: { slug: community.slug, name: community.name },
+    quiz: { enabled: quizOn, games: quizGames.map((g) => ({ id: g.id, subject: g.subject, live: g.status === "live", at: g.createdAt.toISOString() })) },
     events: view,
     callDays,
     recordings: recordings.map((r) => ({ ...r, eventTitle: r.eventId ? titles[r.eventId] ?? null : null })),
@@ -206,7 +211,7 @@ const ghost = "text-sm text-colorCaption underline hover:text-white";
 const iconBtn = "grid h-9 w-9 place-items-center rounded-lg border border-colorOutline text-colorCaption transition hover:border-brand-500 hover:text-white";
 const iconDanger = "grid h-9 w-9 place-items-center rounded-lg border border-colorOutline text-colorCaption transition hover:border-danger hover:text-danger";
 
-type Tab = "calendario" | "grabaciones" | "invitados" | "miembros";
+type Tab = "calendario" | "grabaciones" | "invitados" | "miembros" | "quizzes";
 
 type EventView = Route.ComponentProps["loaderData"]["events"][number];
 
@@ -515,8 +520,43 @@ function Members({ members }: Pick<Route.ComponentProps["loaderData"], "members"
   );
 }
 
+type QuizView = Route.ComponentProps["loaderData"]["quiz"];
+
+function Quizzes({ quiz, slug }: { quiz: QuizView; slug: string }) {
+  return (
+    <div className="grid gap-4">
+      <div className={card}>
+        <h2 className="text-lg font-bold">Quizzes en vivo</h2>
+        <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-colorCaption">
+          <li>Arma tus preguntas en el editor.</li>
+          <li>En la llamada, abre la pestaña «Quiz» y presiona «Lanzar quiz».</li>
+          <li>Comparte la ventana del tablero: cada miembro contesta en su panel, sin PIN.</li>
+        </ol>
+        <a href={`/comunidad/${slug}/quiz?editor=1`} target="_blank" rel="noopener" className={`${primary} mt-4`}>
+          Abrir editor de quizzes
+        </a>
+      </div>
+      <div className={card}>
+        <h2 className="text-lg font-bold">Partidas</h2>
+        {quiz.games.length === 0 ? (
+          <p className="mt-2 text-sm text-colorCaption">Aquí aparece cada quiz que lances en una llamada.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-colorOutline">
+            {quiz.games.map((g) => (
+              <li key={g.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <span className="truncate">{g.subject}</span>
+                <span className="shrink-0 text-colorCaption">{g.live ? "En curso · " : ""}{when(g.at)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
-  const { community, events, recordings, invites, callDays, members } = loaderData;
+  const { community, events, recordings, invites, callDays, members, quiz } = loaderData;
   const result = useActionData<{ ok?: string; error?: string }>();
   const [tab, setTab] = useState<Tab>("calendario");
   const tabs: Array<[Tab, string]> = [
@@ -524,6 +564,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
     ["grabaciones", `Grabaciones (${recordings.length})`],
     ["invitados", `Invitados (${invites.length})`],
     ["miembros", `Miembros (${members.filter((m) => m.active).length})`],
+    ...(quiz.enabled ? ([["quizzes", "Quizzes"]] as Array<[Tab, string]>) : []),
   ];
   return (
     <main className="min-h-screen bg-background pb-24 pt-28 text-white">
@@ -549,6 +590,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
           {tab === "grabaciones" && <Recordings recordings={recordings} slug={community.slug} />}
           {tab === "invitados" && <Invites invites={invites} callDays={callDays} />}
           {tab === "miembros" && <Members members={members} />}
+          {tab === "quizzes" && <Quizzes quiz={quiz} slug={community.slug} />}
         </div>
       </div>
     </main>

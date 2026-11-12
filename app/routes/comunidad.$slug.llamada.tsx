@@ -8,6 +8,7 @@
 // La grabación ya NO arranca sola al entrar: la inicia el anfitrión desde la sala.
 import { useEffect, useRef } from "react";
 import { data, redirect, useFetcher, useLoaderData, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { QuizPanel } from "~/components/community/QuizPanel";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { getNextEvent } from "~/.server/services/wall.server";
@@ -100,15 +101,20 @@ export default function ClubCall() {
   }, [slug]);
 
   return (
-    <div className="fixed inset-0 z-[2147483647] bg-[#0E1317]">
-      <iframe
-        ref={frame}
-        src={src}
-        title="Llamada del club"
-        className="h-full w-full border-0"
-        allow="camera; microphone; display-capture; autoplay; fullscreen; speaker-selection; clipboard-write"
-        allowFullScreen
-      />
+    <div className="fixed inset-0 z-[2147483647] flex flex-col bg-[#0E1317] md:flex-row">
+      {/* La sala va SIEMPRE primero y con el mismo `src`: su ticket es de un solo uso, remontarla la pierde. */}
+      <div className="relative min-h-0 min-w-0 flex-1">
+        <iframe
+          ref={frame}
+          src={src}
+          title="Llamada del club"
+          className="absolute inset-0 h-full w-full border-0"
+          allow="camera; microphone; display-capture; autoplay; fullscreen; speaker-selection; clipboard-write"
+          allowFullScreen
+        />
+      </div>
+      {/* Quiz en vivo: hermano de la sala, con su propia ruta y su propio fetch. Apagado, no pinta nada. */}
+      <QuizPanel slug={slug} />
     </div>
   );
 }
