@@ -94,12 +94,25 @@ export function QuizPanel({ slug }: { slug: string }) {
     return () => clearInterval(id);
   }, [refresh]);
 
-  // Partida nueva: el panel se abre solo, una vez. Si la persona lo pliega, se queda plegado.
+  // Partida nueva: al JUGADOR se le abre el panel solo, una vez. Al anfitrión no: él lo abrió para
+  // lanzar, y al recargar con partida viva el cajón encima taparía los controles de la sala.
   const gameId = status.active?.gameId ?? null;
   useEffect(() => {
-    if (gameId && seenGame.current !== gameId) setOpen(true);
+    if (gameId && seenGame.current !== gameId && !status.canHost) setOpen(true);
     seenGame.current = gameId;
-  }, [gameId]);
+  }, [gameId, status.canHost]);
+
+  // La sala avisa al padre cuando abre su chat o «Gente» (`gs:panel`); mientras tanto la pastilla
+  // se esconde para no encimarse en ese panel. Sólo se lee el aviso: nada se le manda a la sala.
+  const [roomPanelOpen, setRoomPanelOpen] = useState(false);
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      const d = e.data as { t?: string; open?: boolean } | null;
+      if (d?.t === "gs:panel" && e.source !== window) setRoomPanelOpen(!!d.open);
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
 
   if (!status.enabled || (!status.canHost && !status.active)) return null;
 
@@ -111,7 +124,7 @@ export function QuizPanel({ slug }: { slug: string }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Abrir el quiz"
-        className={`${open ? "hidden" : "flex"} absolute right-0 top-1/2 z-10 -translate-y-1/2 flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-[#232D33] bg-[#141B20] px-2 py-3 text-[13px] font-semibold shadow-[0_6px_20px_rgba(0,0,0,.35)] transition-colors hover:bg-[#1C252B] ${focus} ${status.active ? "text-brand-500" : "text-[#F2F5F4]"}`}
+        className={`${open || roomPanelOpen ? "hidden" : "flex"} absolute right-0 top-1/2 z-10 -translate-y-1/2 flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-[#232D33] bg-[#141B20] px-2 py-3 text-[13px] font-semibold shadow-[0_6px_20px_rgba(0,0,0,.35)] transition-colors hover:bg-[#1C252B] ${focus} ${status.active ? "text-brand-500" : "text-[#F2F5F4]"}`}
       >
         <span className={`h-2 w-2 rounded-full ${status.active ? "animate-pulse bg-brand-500" : "bg-[#7C8A8E]"}`} />
         <span className="[writing-mode:vertical-rl]">{status.active ? "Quiz en vivo" : "Quiz"}</span>
