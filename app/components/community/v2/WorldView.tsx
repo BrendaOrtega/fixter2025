@@ -500,18 +500,6 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
             </button>
           </div>
 
-          {/* ── Voz por mesa: pieza autocontenida; con la voz apagada no pinta nada para un miembro ── */}
-          {me && (
-            <VoiceStrip
-              slug={community.slug}
-              zone={myTable === null ? null : String(myTable)}
-              zoneLabel={myTable === null ? undefined : structure.tables[myTable]?.topic}
-              blocked={false}
-              name={me.name}
-              photoURL={me.photoURL}
-            />
-          )}
-
           {/* ── El mapa ── */}
           <div
             className={
@@ -608,6 +596,18 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               </p>
             )}
           </div>
+
+          {/* ── Voz por mesa: va debajo del mapa (arriba los controles flotan sobre él y se encimaban); con la voz apagada no pinta nada para un miembro ── */}
+          {me && (
+            <VoiceStrip
+              slug={community.slug}
+              zone={myTable === null ? null : String(myTable)}
+              zoneLabel={myTable === null ? undefined : structure.tables[myTable]?.topic}
+              blocked={false}
+              name={me.name}
+              photoURL={me.photoURL}
+            />
+          )}
 
           {/* ── Franja de contexto: fuera del lienzo, cambia según lo que tengas cerca ── */}
           <div
