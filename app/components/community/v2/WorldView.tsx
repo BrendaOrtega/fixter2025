@@ -27,7 +27,13 @@ const LOOK_KEY = "club-world-ship";
 const QUIET_KEY = "club-world-quiet";
 const DEFAULT_LOOK: Look = { model: "rocket", color: "mint", pilot: "ghosty" };
 
-type Snapshot = { count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; me: string; waveId?: string | null };
+type ChatMessage = { id: string; from: string; name: string; text: string; at: number };
+type Snapshot = {
+  count: number; ships: RemoteShip[]; waves: Array<{ id: string; from: string; to: string }>; says?: ChatMessage[];
+  me: string; waveId?: string | null; sayId?: string | null;
+};
+/** Mismo tope que el servidor (`SAY_MAX_CHARS`). */
+const SAY_MAX_CHARS = 140;
 
 // Cielo del primer pintado (antes de que arranque el canvas): puntos sólidos con la paleta.
 const SKY = `url("data:image/svg+xml,${encodeURIComponent(
@@ -84,6 +90,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   /** Pide una sincronía pronto (cambió el destino, la mesa o la nave). */
   const dirtyRef = useRef(true);
   const waveRef = useRef<(id: string) => void>(() => {});
+  const sayRef = useRef<(text: string) => Promise<boolean>>(async () => false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
 
   const [ready, setReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -98,6 +107,14 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [present, setPresent] = useState<number | null>(null);
   const [myTable, setMyTable] = useState<number | null>(null);
   const [crystals, setCrystals] = useState(0);
+  // Chat efímero: los mensajes viven ~10 min en memoria del servidor y llegan con el mismo sondeo.
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const chatOpenRef = useRef(false);
+  chatOpenRef.current = chatOpen;
   const [waved, setWaved] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
@@ -166,7 +183,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
     // ── Presencia: un solo viaje manda mi nave y trae las demás ──
     const url = `/comunidad/${community.slug}/mundo`;
-    const seenWaves = new Set<string>();
+    const seenWaves = new Set<string>(), seenSays = new Set<string>();
     let firstRead = true, busy = false, lastSent = 0, stopped = false;
     const post = async (body: Record<string, unknown>) => {
       const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -187,6 +204,17 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         // Sólo suena el saludo que es para ti; los ajenos se ven, no se oyen.
         if (w.to === snap.me) { sound.play("waveIn"); const who = snap.ships.find((s) => s.id === w.from); if (who) say(`${who.name} te saludó.`); }
       }
+      const says = snap.says ?? [];
+      let fresh = 0;
+      for (const m of says) {
+        if (seenSays.has(m.id)) continue;
+        seenSays.add(m.id);
+        if (firstRead) continue; // lo de antes de que llegaras se lee en el historial, sin burbujas
+        api.showSay(m.from, m.text);
+        if (m.from !== snap.me) { fresh++; sound.play("msg"); }
+      }
+      if (fresh && !chatOpenRef.current) setUnread((n) => n + fresh);
+      setMessages((prev) => (prev.length === says.length && prev.at(-1)?.id === says.at(-1)?.id ? prev : says));
       firstRead = false;
     };
     const sync = async () => {
@@ -204,6 +232,17 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       post({ wave: id })
         .then((snap) => { if (snap.waveId) { seenWaves.add(snap.waveId); api.showWave(snap.me, id); } apply(snap); })
         .catch(() => say("El saludo no salió. Intenta otra vez."));
+    };
+    sayRef.current = async (text: string) => {
+      try {
+        const snap = await post({ say: text });
+        apply(snap);
+        if (!snap.sayId) say("Espera un par de segundos entre mensajes.");
+        return !!snap.sayId;
+      } catch {
+        say("El mensaje no salió. Intenta otra vez.");
+        return false;
+      }
     };
     const tick = () => {
       if (document.visibilityState !== "visible") return; // pestaña oculta: ni latido ni lectura
@@ -254,6 +293,28 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     const id = requestAnimationFrame(() => api.resize(m));
     return () => { cancelAnimationFrame(id); document.body.style.overflow = ""; };
   }, [expanded]);
+
+  // Con el mapa expandido en el teléfono, el teclado tapa lo fijo al fondo: la caja se ajusta al área visible.
+  useEffect(() => {
+    const vv = window.visualViewport, box = boxRef.current;
+    if (!expanded || !vv || !box) return;
+    const fit = () => { box.style.height = `${vv.height}px`; box.style.top = `${vv.offsetTop}px`; box.style.bottom = "auto"; };
+    fit();
+    vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit);
+    return () => { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); box.style.height = ""; box.style.top = ""; box.style.bottom = ""; };
+  }, [expanded]);
+
+  // El historial abierto se queda en el último mensaje.
+  useEffect(() => { if (chatOpen && logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [chatOpen, messages]);
+
+  const sendChat = async () => {
+    const text = draft.replace(/\s+/g, " ").trim();
+    if (!text || sending) return;
+    setSending(true);
+    if (await sayRef.current(text)) setDraft("");
+    // El servidor acepta un mensaje cada 2 s por persona.
+    window.setTimeout(() => setSending(false), 2000);
+  };
 
   const changeQuiet = (on: boolean) => {
     setQuiet(on); apiRef.current?.setQuiet(on); saveFlag(QUIET_KEY, on);
@@ -317,6 +378,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       <SectionHead title="Mundo" />
       <div className="p-3 sm:p-4">
         <div
+          ref={boxRef}
           className={
             expanded
               ? "fixed inset-0 z-[300] flex flex-col overflow-hidden bg-background"
@@ -421,13 +483,32 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
           {/* ── Franja de contexto: fuera del lienzo, cambia según lo que tengas cerca ── */}
           <div
             ref={barRef}
-            aria-live="polite"
-            className={`flex min-h-[56px] flex-wrap items-center gap-x-5 gap-y-2 bg-[#141B20] px-3 py-2 ${
+            className={`grid grid-cols-[minmax(0,1fr)] gap-2 bg-[#141B20] px-3 py-2 ${
               expanded
                 ? "border-t border-[#232D33] pb-[calc(8px+env(safe-area-inset-bottom))]"
                 : "max-sm:mx-2.5 max-sm:mb-2.5 max-sm:rounded-[10px] max-sm:border max-sm:border-[#232D33] max-sm:bg-background sm:border-t sm:border-[#232D33]"
             }`}
           >
+            {chatOpen && (
+              <div
+                ref={logRef}
+                id="world-chat-log"
+                role="log"
+                aria-label="Mensajes recientes del Mundo"
+                className="max-h-[132px] overflow-y-auto rounded-[10px] border border-[#232D33] bg-background px-3 py-2 text-[13px] leading-snug"
+              >
+                {messages.length === 0 ? (
+                  <p className="text-[#7C8A8E]">Todavía nadie escribe. Los mensajes se borran solos a los 10 minutos.</p>
+                ) : (
+                  messages.map((m) => (
+                    <p key={m.id} className="break-words py-0.5 text-[#D9E0DE] [overflow-wrap:anywhere]">
+                      <b className="font-semibold text-[#F2F5F4]">{m.from === me?.id ? "Tú" : m.name}:</b> {m.text}
+                    </p>
+                  ))
+                )}
+              </div>
+            )}
+            <div aria-live="polite" className="flex min-h-[40px] flex-wrap items-center gap-x-5 gap-y-2">
             {!ship && !(place && near) && (
               <p className="text-[13px] text-[#7C8A8E]">
                 Acércate a un lugar o a alguien.
@@ -459,6 +540,36 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
                 {near.action}
               </div>
             )}
+            </div>
+            {/* Chat efímero: mientras escribes, las teclas no mueven la nave ni disparan (el motor ignora los campos). */}
+            <form className="flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); void sendChat(); }}>
+              <button
+                type="button"
+                aria-expanded={chatOpen}
+                aria-controls="world-chat-log"
+                aria-label={chatOpen ? "Ocultar los mensajes" : `Ver los mensajes${unread ? ` (${unread} nuevos)` : ""}`}
+                onClick={() => { setChatOpen((v) => !v); setUnread(0); }}
+                className={`relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#232D33] hover:bg-[#1C252B] ${chatOpen ? "bg-[#17302C] text-brand-500" : "bg-background text-[#D9E0DE]"}`}
+              >
+                <Icon name="chat" className="h-[18px] w-[18px]" />
+                {unread > 0 && !chatOpen && (
+                  <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand-500 px-1 text-[10px] font-semibold text-background">{unread > 9 ? "9+" : unread}</span>
+                )}
+              </button>
+              <input
+                type="text"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                maxLength={SAY_MAX_CHARS}
+                enterKeyHint="send"
+                autoComplete="off"
+                aria-label="Escribe un mensaje al Mundo"
+                placeholder="Escribe al Mundo…"
+                disabled={!ready}
+                className="h-10 min-w-0 flex-1 rounded-full border border-[#232D33] bg-background px-3.5 text-base text-[#F2F5F4] placeholder:text-[#7C8A8E] focus:border-brand-500 focus:outline-none sm:text-[13px]"
+              />
+              <button type="submit" className={btn} disabled={!ready || sending || !draft.trim()}>Enviar</button>
+            </form>
           </div>
 
           {/* ── Vista reducida (teléfono, sin expandir): lista tocable ── */}

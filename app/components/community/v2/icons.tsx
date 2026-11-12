@@ -65,6 +65,8 @@ const PATHS = {
       <path d="M7.5 13 5 16v3l2.5-1.500M16.500 13 19 16v3l-2.500-1.500M10.500 19v2M13.500 19v2" />
     </>
   ),
+  // chat del Mundo: globo de texto
+  chat: <path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-4 3.5V17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />,
   // sonido encendido / apagado
   sound: <path d="M4 10v4h3l5 4V6l-5 4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" />,
   mute: <path d="M4 10v4h3l5 4V6l-5 4zM16 9.5l5 5M21 9.5l-5 5" />,

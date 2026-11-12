@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  MAX_SHIPS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, WORLD_H, WORLD_W, cleanShipInput, removeShip, resetWorlds, sendWave,
+  MAX_SHIPS, SAY_EVERY_MS, SAY_MAX, SAY_MAX_CHARS, SAY_TTL_MS, SHIP_TTL_MS, WAVE_EVERY_MS, WAVE_TTL_MS, WORLD_H, WORLD_W, cleanSayText, cleanShipInput, removeShip, resetWorlds, sendSay, sendWave,
   snapshot, upsertShip,
 } from "../club-world.server";
 
@@ -78,5 +78,47 @@ describe("mundo del club (presencia en memoria)", () => {
     expect(snapshot("c1", T0 + 100).waves[0]).toEqual({ id, from: "a", to: "b" });
     upsertShip("c1", who("a"), {}, T0 + WAVE_TTL_MS);
     expect(snapshot("c1", T0 + WAVE_EVERY_MS + WAVE_TTL_MS + 1).waves).toEqual([]);
+  });
+
+  it("chat: limpia el texto, lo recorta a 140 y no acepta vacíos", () => {
+    expect(cleanSayText("  hola\n\tmundo \u0000 ")).toBe("hola mundo");
+    expect(cleanSayText("<b>hola</b>")).toBe("<b>hola</b>"); // se guarda tal cual: el cliente lo pinta como texto
+    expect([...cleanSayText("á".repeat(500))]).toHaveLength(SAY_MAX_CHARS);
+    expect([...cleanSayText("🚀".repeat(200))]).toHaveLength(SAY_MAX_CHARS); // cuenta caracteres, no mitades de emoji
+    expect(cleanSayText(42)).toBe("");
+    upsertShip("c1", who("a"), {}, T0);
+    expect(sendSay("c1", "a", "   ", T0)).toBeNull();
+    expect(sendSay("c1", "a", { html: "x" }, T0)).toBeNull();
+    expect(snapshot("c1", T0).says).toEqual([]);
+  });
+
+  it("chat: sólo escribe quien tiene nave, uno cada 2 s, y el nombre es el del servidor", () => {
+    expect(sendSay("c1", "fantasma", "hola", T0)).toBeNull();
+    upsertShip("c1", who("a"), { name: "Impostor" }, T0);
+    const id = sendSay("c1", "a", "hola a todos", T0);
+    expect(id).toBeTruthy();
+    expect(sendSay("c1", "a", "otra", T0 + SAY_EVERY_MS - 1)).toBeNull();
+    upsertShip("c1", who("a"), {}, T0 + SAY_EVERY_MS); // el latido no reinicia el límite
+    expect(sendSay("c1", "a", "otra", T0 + SAY_EVERY_MS)).toBeTruthy();
+    const { says } = snapshot("c1", T0 + SAY_EVERY_MS);
+    expect(says[0]).toEqual({ id, from: "a", name: "Miembro a", text: "hola a todos", at: T0 });
+    expect(JSON.stringify(says)).not.toMatch(/@|Impostor|lastSayAt/);
+    expect(snapshot("c2", T0).says).toEqual([]); // cada comunidad tiene su mundo
+  });
+
+  it("chat: guarda los últimos 30 y los borra a los 10 minutos, aunque quien escribió ya se haya ido", () => {
+    upsertShip("c1", who("a"), {}, T0);
+    for (let i = 0; i < SAY_MAX + 5; i++) {
+      upsertShip("c1", who("a"), {}, T0 + i * SAY_EVERY_MS);
+      sendSay("c1", "a", `mensaje ${i}`, T0 + i * SAY_EVERY_MS);
+    }
+    const last = T0 + (SAY_MAX + 4) * SAY_EVERY_MS;
+    const { says } = snapshot("c1", last);
+    expect(says).toHaveLength(SAY_MAX);
+    expect(says[0].text).toBe("mensaje 5");
+    expect(says.at(-1)?.text).toBe(`mensaje ${SAY_MAX + 4}`);
+    removeShip("c1", "a");
+    expect(snapshot("c1", last + 1000).says).toHaveLength(SAY_MAX);
+    expect(snapshot("c1", last + SAY_TTL_MS + 1).says).toEqual([]);
   });
 });

@@ -106,6 +106,8 @@ export type WorldApi = {
   setRemote: (ships: RemoteShip[], meId: string) => void;
   /** Saludo entre dos naves (llegó del servidor o lo acabas de mandar). */
   showWave: (fromId: string, toId: string) => void;
+  /** Mensaje del chat: burbuja sobre la nave de quien habló (si sigue presente). */
+  showSay: (fromId: string, text: string) => void;
   /** Saludo a un robot de la casa: contesta solo. */
   waveBot: (botId: string) => void;
   flyToPlace: (placeId: string) => void;
@@ -133,7 +135,7 @@ type Entity = {
   bob: number; waveT: number; face: Face | null;
 };
 type Fx =
-  | { kind: "bubble"; ship: Entity; text: string; t: number; dur: number }
+  | { kind: "bubble"; ship: Entity; text: string; t: number; dur: number; say?: boolean }
   | { kind: "flash"; x: number; y: number; t: number; dur: number }
   | { kind: "spark"; x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string };
 
@@ -845,6 +847,13 @@ export function createWorld(opts: { canvas: HTMLCanvasElement; stage: HTMLElemen
         if (state.quiet || Math.hypot(s.x - e.x, s.y - e.y) > 320) { e.x = s.x; e.y = s.y; e.vx = e.vy = 0; }
       }
       for (const id of humans.keys()) if (!seen.has(id)) { if (state.nearShip?.id === id) { state.nearShip = null; cb.onShip(null); } humans.delete(id); }
+    },
+    showSay(fromId, text) {
+      const from = byId(fromId, meId); if (!from) return;
+      // Una burbuja por nave: el mensaje nuevo reemplaza al anterior. Lo largo se lee completo en el historial.
+      state.fx = state.fx.filter((f) => !(f.kind === "bubble" && f.say && f.ship === from));
+      const chars = [...text];
+      state.fx.push({ kind: "bubble", ship: from, text: chars.length > 46 ? `${chars.slice(0, 45).join("")}…` : text, t: 0, dur: 5, say: true });
     },
     showWave(fromId, toId) {
       const from = byId(fromId, meId), to = byId(toId, meId); if (!from || !to) return;

@@ -16,7 +16,12 @@ export const WAVE_TTL_MS = 8_000;
 export const WAVE_EVERY_MS = 1_500;
 export const MAX_SHIPS = 80;
 /** Tope del cuerpo de un POST, en bytes. */
-export const MAX_BODY = 600;
+export const MAX_BODY = 1_000;
+/** Chat efímero del Mundo: últimos mensajes en memoria, nada en la base. */
+export const SAY_MAX = 30;
+export const SAY_TTL_MS = 10 * 60_000;
+export const SAY_EVERY_MS = 2_000;
+export const SAY_MAX_CHARS = 140;
 
 export const SHIP_MODELS = ["rocket", "saucer", "pod", "dart"] as const;
 export const SHIP_COLORS = ["mint", "green", "amber", "lilac", "blue", "pink"] as const;
@@ -36,21 +41,25 @@ type Ship = Who & {
   seat: number | null;
   seenAt: number;
   lastWaveAt: number;
+  lastSayAt: number;
 };
 type Wave = { id: string; from: string; to: string; at: number };
-type World = { ships: Map<string, Ship>; waves: Wave[]; seq: number };
+/** `name` se copia de la nave al enviar: el historial sigue legible cuando esa persona ya se fue. */
+type Say = { id: string; from: string; name: string; text: string; at: number };
+type World = { ships: Map<string, Ship>; waves: Wave[]; says: Say[]; seq: number };
 
 const worlds = new Map<string, World>();
 
 function worldOf(communityId: string) {
   let w = worlds.get(communityId);
-  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], seq: 0 }));
+  if (!w) worlds.set(communityId, (w = { ships: new Map(), waves: [], says: [], seq: 0 }));
   return w;
 }
 
 function prune(w: World, now: number) {
   for (const [id, s] of w.ships) if (now - s.seenAt > SHIP_TTL_MS) w.ships.delete(id);
   if (w.waves.length) w.waves = w.waves.filter((v) => now - v.at <= WAVE_TTL_MS);
+  if (w.says.length) w.says = w.says.filter((m) => now - m.at <= SAY_TTL_MS);
 }
 
 const num = (v: unknown, min: number, max: number, fallback: number) =>
@@ -98,7 +107,7 @@ export function upsertShip(communityId: string, who: Who, input: unknown, now = 
       if (seat === null) table = null; // mesa llena: se queda de pie
     }
   }
-  w.ships.set(who.id, { ...who, ...clean, table, seat, seenAt: now, lastWaveAt: prev?.lastWaveAt ?? 0 });
+  w.ships.set(who.id, { ...who, ...clean, table, seat, seenAt: now, lastWaveAt: prev?.lastWaveAt ?? 0, lastSayAt: prev?.lastSayAt ?? 0 });
   return true;
 }
 
@@ -115,19 +124,44 @@ export function sendWave(communityId: string, fromId: string, toId: unknown, now
   return wave.id;
 }
 
+/** Texto de un mensaje: una sola línea, sin caracteres de control, recortado. Se pinta como texto, nunca como HTML. */
+export function cleanSayText(input: unknown) {
+  if (typeof input !== "string") return "";
+  const flat = input.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069]/g, " ").replace(/\s+/g, " ").trim();
+  return [...flat].slice(0, SAY_MAX_CHARS).join("").trim();
+}
+
+/**
+ * Mensaje efímero al Mundo: sólo de quien tiene nave presente, uno cada `SAY_EVERY_MS`. El nombre
+ * sale de la nave (servidor). Devuelve el id, o `null` si no se aceptó.
+ */
+export function sendSay(communityId: string, fromId: string, text: unknown, now = Date.now()) {
+  const w = worldOf(communityId);
+  prune(w, now);
+  const from = w.ships.get(fromId);
+  const clean = cleanSayText(text);
+  if (!from || !clean || now - from.lastSayAt < SAY_EVERY_MS) return null;
+  from.lastSayAt = now;
+  const say: Say = { id: `m${now.toString(36)}-${(w.seq++).toString(36)}`, from: fromId, name: from.name, text: clean, at: now };
+  w.says.push(say);
+  if (w.says.length > SAY_MAX) w.says.splice(0, w.says.length - SAY_MAX);
+  return say.id;
+}
+
 /** Sale del mundo de inmediato (al cerrar la sección), sin esperar el vencimiento. */
 export function removeShip(communityId: string, userId: string) {
   worlds.get(communityId)?.ships.delete(userId);
 }
 
-/** Lo que ve el cliente: naves presentes (sin correos ni marcas internas) y saludos recientes. */
+/** Lo que ve el cliente: naves presentes (sin correos ni marcas internas), saludos recientes y los últimos mensajes. */
 export function snapshot(communityId: string, now = Date.now()) {
   const w = worldOf(communityId);
   prune(w, now);
   return {
     count: w.ships.size,
-    ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, ...ship }) => ship),
+    ships: [...w.ships.values()].map(({ seenAt: _s, lastWaveAt: _l, lastSayAt: _m, ...ship }) => ship),
     waves: w.waves.map(({ id, from, to }) => ({ id, from, to })),
+    says: w.says.map(({ id, from, name, text, at }) => ({ id, from, name, text, at })),
   };
 }
 
