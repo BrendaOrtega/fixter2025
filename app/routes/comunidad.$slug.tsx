@@ -647,7 +647,9 @@ function Recordings({
               </div>
             </div>
             {playing === r.id && (
-              <ClubVideo srcUrl={`/comunidad/${slug}/grabacion/${r.id}`} poster={r.poster} />
+              <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-800">
+                <ClubVideo srcUrl={`/comunidad/${slug}/grabacion/${r.id}`} poster={r.poster} />
+              </div>
             )}
           </li>
         ))}

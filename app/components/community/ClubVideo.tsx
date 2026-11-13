@@ -22,12 +22,12 @@ export function ClubVideo({ srcUrl, poster }: { srcUrl: string; poster?: string 
     };
   }, [srcUrl]);
 
-  if (error) return <p className="mt-4 text-sm text-brand-500">{error}</p>;
+  if (error) return <p className="px-4 py-6 text-sm text-[#F08A80]">{error}</p>;
   // Mientras llegan las URLs, el póster ocupa el lugar para que no brinque la página.
   if (!assets) {
     return (
       <div
-        className="mt-4 aspect-video w-full rounded-2xl border border-zinc-800 bg-black bg-cover bg-center"
+        className="aspect-video w-full bg-black bg-cover bg-center"
         style={poster ? { backgroundImage: `url(${poster})` } : undefined}
       />
     );
@@ -35,13 +35,14 @@ export function ClubVideo({ srcUrl, poster }: { srcUrl: string; poster?: string 
   // El slug sólo sirve para recordar dónde te quedaste (localStorage) en ESTA grabación.
   const slug = `grabacion-${srcUrl.split("/").pop()}`;
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-800">
+    <div className="bg-black">
       <VideoPlayer
         video={{ m3u8: assets.src, title: assets.title }}
         slug={slug}
         poster={poster ?? undefined}
         captionsUrl={assets.captions ?? undefined}
         storyboardUrl={assets.storyboard}
+        embedded
       />
     </div>
   );

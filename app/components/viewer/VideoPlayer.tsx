@@ -57,6 +57,8 @@ interface VideoPlayerProps {
   arranqueForzado?: boolean;
   /** VTT del storyboard ya firmado (grabaciones del club); sin él se pide por `slug`. */
   storyboardUrl?: string;
+  /** Dentro de una tarjeta (grabaciones del club): 16:9 en vez del alto de pantalla del visor. */
+  embedded?: boolean;
 }
 
 export const VideoPlayer = ({
@@ -80,10 +82,13 @@ export const VideoPlayer = ({
   onVideoRef,
   arranqueForzado,
   storyboardUrl,
+  embedded,
 }: VideoPlayerProps) => {
   const sectionClass = vertical
     ? "relative overflow-hidden mx-auto w-full max-w-[420px] aspect-[9/16] rounded-xl bg-black"
-    : "h-[calc(100vh-80px)] relative overflow-x-hidden";
+    : embedded
+      ? "relative aspect-video w-full overflow-hidden bg-black"
+      : "h-[calc(100vh-80px)] relative overflow-x-hidden";
   // Detectar si es video de YouTube
   const youtubeId = video?.youtubeUrl ? extractYouTubeId(video.youtubeUrl) : null;
 
