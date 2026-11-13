@@ -1,9 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { Effect } from "effect";
 import { db } from "~/.server/db";
 import { videoAccessFor } from "~/.server/videoAccess";
-import { buildHlsProxyUrl, hlsKeyFromUrl } from "~/.server/hls";
-import { s3VideoService } from "~/.server/services/s3-video";
+import { signedStoryboardVtt, storyboardResponse } from "~/.server/storyboard";
 
 /**
  * El storyboard de miniaturas: `/api/storyboard/:videoSlug`
@@ -16,8 +14,6 @@ import { s3VideoService } from "~/.server/services/s3-video";
  * mismo patrón que con las playlists—, porque el bucket es privado y el navegador no puede
  * pedirle nada directo.
  */
-
-const STORYBOARD = "storyboard/storyboard.vtt";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { videoSlug } = params;
@@ -36,35 +32,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // …/hls/master.m3u8 → …/storyboard/storyboard.vtt
   const base = video.m3u8.replace(/\/hls\/[^/]*$/, "/");
-  const vttUrl = base + STORYBOARD;
-
-  // El m3u8 puede venir como URL completa o como llave suelta; `new URL` revienta con la llave.
-  const key = hlsKeyFromUrl(vttUrl);
-  if (!key) return new Response("Este video no tiene storyboard", { status: 404 });
-  let contenido: string;
-  try {
-    const firmada = await Effect.runPromise(s3VideoService.getHLSPresignedUrl(key, 300));
-    const r = await fetch(firmada);
-    if (!r.ok) return new Response("Este video no tiene storyboard", { status: 404 });
-    contenido = await r.text();
-  } catch {
-    return new Response("Este video no tiene storyboard", { status: 404 });
-  }
-
-  // Cada línea que apunta a una imagen relativa (`storyboard.jpg#xywh=…`) pasa a ser una
-  // URL firmada. El fragmento `#xywh` se conserva tal cual: es lo que recorta el tile.
-  const reescrito = contenido.replace(
-    /^([^\s#][^\s]*\.(?:jpg|jpeg|png|webp))(#[^\s]*)?$/gim,
-    (_todo, archivo: string, fragmento = "") => {
-      const firmada = buildHlsProxyUrl(base + "storyboard/" + archivo);
-      return firmada ? `${firmada}${fragmento}` : `${archivo}${fragmento}`;
-    }
-  );
-
-  return new Response(reescrito, {
-    headers: {
-      "Content-Type": "text/vtt; charset=utf-8",
-      "Cache-Control": "private, max-age=1800",
-    },
-  });
+  const vtt = await signedStoryboardVtt(base);
+  return vtt ? storyboardResponse(vtt) : new Response("Este video no tiene storyboard", { status: 404 });
 };

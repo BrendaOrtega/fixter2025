@@ -1,10 +1,11 @@
-// URL de reproducción de una grabación del club: sólo miembros (o el anfitrión). Devuelve
-// `{ src }` con la URL del proxy HLS firmada; el reproductor la carga con hls.js.
+// Reproducción de una grabación del club: sólo miembros (o el anfitrión). Devuelve `{ src, captions,
+// storyboard }` firmados para el reproductor oficial; con `?storyboard=1` responde el VTT de miniaturas.
 import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
-import { recordingPlayUrl } from "~/.server/services/club-recording.server";
+import { recordingPlayAssets } from "~/.server/services/club-recording.server";
 import { canModerate, canParticipate } from "~/.server/services/wall.server";
+import { signedStoryboardVtt, storyboardResponse } from "~/.server/storyboard";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserOrNull(request);
@@ -22,7 +23,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!canMod && !canParticipate(user, membership, community)) {
     throw data("Sólo miembros", { status: 403 });
   }
-  const src = await recordingPlayUrl(community.id, params.id as string, { includeHidden: canMod });
-  if (!src) throw data("No encontrada", { status: 404 });
-  return Response.json({ src }, { headers: { "Cache-Control": "no-store" } });
+  const assets = await recordingPlayAssets(community.id, params.id as string, { includeHidden: canMod });
+  if (!assets) throw data("No encontrada", { status: 404 });
+  if (new URL(request.url).searchParams.has("storyboard")) {
+    const vtt = await signedStoryboardVtt(assets.storyboardBase);
+    return vtt ? storyboardResponse(vtt) : new Response("Sin storyboard", { status: 404 });
+  }
+  return Response.json(
+    {
+      src: assets.src,
+      title: assets.title,
+      captions: assets.captions,
+      storyboard: `/comunidad/${params.slug}/grabacion/${params.id}?storyboard=1`,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 };

@@ -55,6 +55,8 @@ interface VideoPlayerProps {
   onVideoRef?: (el: HTMLVideoElement | null) => void;
   /** El enlace traía `?t=`: entonces manda ese momento y no se ofrece retomar. */
   arranqueForzado?: boolean;
+  /** VTT del storyboard ya firmado (grabaciones del club); sin él se pide por `slug`. */
+  storyboardUrl?: string;
 }
 
 export const VideoPlayer = ({
@@ -77,6 +79,7 @@ export const VideoPlayer = ({
   onTimeChange,
   onVideoRef,
   arranqueForzado,
+  storyboardUrl,
 }: VideoPlayerProps) => {
   const sectionClass = vertical
     ? "relative overflow-hidden mx-auto w-full max-w-[420px] aspect-[9/16] rounded-xl bg-black"
@@ -379,6 +382,7 @@ export const VideoPlayer = ({
       <VideoControls
         videoRef={videoRef}
         videoSlug={slug}
+        storyboardUrl={storyboardUrl}
         onCargandoChange={setCargando}
         hlsRef={hlsRef}
         // `duration` se guarda en MINUTOS y como texto (ver el modelo Video).

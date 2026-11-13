@@ -54,13 +54,15 @@ export const tileEn = (tiles: Tile[], segundo: number): Tile | undefined => {
  * Se pide una sola vez por video. Si el video no tiene storyboard, el endpoint responde
  * 404 y aquí no pasa nada: el globo del hover funciona igual, sólo que sin imagen.
  */
-export const useStoryboard = (videoSlug?: string) => {
+export const useStoryboard = (videoSlug?: string, url?: string) => {
   const [tiles, setTiles] = useState<Tile[]>([]);
 
   useEffect(() => {
-    if (!videoSlug) return;
+    // `url` gana: las grabaciones del club no son un `Video` y sirven su VTT desde su propia ruta.
+    const fuente = url ?? (videoSlug ? `/api/storyboard/${videoSlug}` : null);
+    if (!fuente) return;
     let vivo = true;
-    fetch(`/api/storyboard/${videoSlug}`)
+    fetch(fuente)
       .then((r) => (r.ok ? r.text() : null))
       .then((t) => {
         if (!vivo || !t) return;

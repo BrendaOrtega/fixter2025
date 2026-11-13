@@ -36,6 +36,8 @@ type Props = {
   onCargandoChange?: (cargando: boolean) => void;
   /** Slug del video: con él se piden las miniaturas del hover. */
   videoSlug?: string;
+  /** VTT del storyboard ya firmado; si llega, gana sobre `/api/storyboard/<slug>`. */
+  storyboardUrl?: string;
 };
 
 const VELOCIDADES = [0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -134,6 +136,7 @@ export const VideoControls = ({
   onTimeChange,
   duracionConocida,
   videoSlug,
+  storyboardUrl,
   onCargandoChange,
 }: Props) => {
   const barraRef = useRef<HTMLDivElement>(null);
@@ -164,7 +167,7 @@ export const VideoControls = ({
   const [hayPip, setHayPip] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const tiles = useStoryboard(videoSlug);
+  const tiles = useStoryboard(videoSlug, storyboardUrl);
 
   // ── Estado del <video> ────────────────────────────────────────────────────
   useEffect(() => {

@@ -228,3 +228,20 @@ export async function recordingPlayUrl(communityId: string, id: string, opts: { 
   if (!r || (r.hiddenAt && !opts.includeHidden)) return null;
   return buildHlsProxyUrl(r.storageKey);
 }
+
+/** Lo que pide el reproductor oficial: video, subtítulos y la base del storyboard, firmados. */
+export async function recordingPlayAssets(communityId: string, id: string, opts: { includeHidden?: boolean } = {}) {
+  if (!/^[a-f0-9]{24}$/.test(id)) return null;
+  const r = await db.communityRecording.findFirst({ where: { id, communityId, status: "ready" } });
+  if (!r || (r.hiddenAt && !opts.includeHidden)) return null;
+  const src = buildHlsProxyUrl(r.storageKey);
+  if (!src) return null;
+  const hlsDir = r.storageKey.replace(/\/[^/]*$/, "/"); // …/hls/
+  return {
+    src,
+    title: r.title,
+    // whisper deja `subtitulos.vtt` junto al master; si aún no estaba, el botón de CC no sale.
+    captions: buildHlsProxyUrl(hlsDir + "subtitulos.vtt"),
+    storyboardBase: hlsDir.replace(/hls\/$/, ""), // …/<video>/
+  };
+}
