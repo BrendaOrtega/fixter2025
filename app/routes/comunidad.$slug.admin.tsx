@@ -17,6 +17,8 @@ import { getUserOrNull } from "~/.server/dbGetters";
 import { avatarUrlFor, canModerate, imageUrlFor } from "~/.server/services/wall.server";
 import { occurrencesOf } from "~/.server/services/club-events.server";
 import { listRecordings, retryRecording } from "~/.server/services/club-recording.server";
+import { generateRecordingMoments, parseMoments } from "~/.server/club-moments";
+import { MomentsEditor } from "~/components/community/MomentsEditor";
 import { cdmxDay, parseEmails, upsertInvites } from "~/.server/services/club-invites.server";
 import { isMembershipActive } from "~/.server/services/membership.server";
 import { listPastGames, listQuizzes, quizEnabled } from "~/.server/services/club-quiz.server";
@@ -217,6 +219,28 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   if (intent === "rec-delete") {
     await db.communityRecording.deleteMany({ where: { id: str("id"), communityId: community.id } });
     return { ok: "Grabación borrada." };
+  }
+  // Momentos: la IA propone un borrador, el anfitrión lo ajusta y lo aprueba.
+  if (intent === "rec-moments-generate") {
+    try {
+      const m = await generateRecordingMoments(community.id, str("id"));
+      return { ok: `La IA propuso ${m.length} momentos. Revísalos y apruébalos.` };
+    } catch (e) {
+      return data({ error: e instanceof Error ? e.message : "No se pudieron proponer momentos." }, { status: 502 });
+    }
+  }
+  if (intent === "rec-moments-save" || intent === "rec-moments-approve") {
+    const row = await db.communityRecording.findFirst({ where: { id: str("id"), communityId: community.id } });
+    if (!row) return data({ error: "Esa grabación no existe." }, { status: 404 });
+    const dur = row.startedAt ? (row.endedAt.getTime() - row.startedAt.getTime()) / 1000 : 0;
+    const moments = parseMoments(str("moments"), dur);
+    if (!moments) return data({ error: "Revisa los momentos: cada uno lleva título y un fin después del inicio." }, { status: 400 });
+    const approve = intent === "rec-moments-approve";
+    await db.communityRecording.update({
+      where: { id: row.id },
+      data: { moments, momentsApprovedAt: approve ? new Date() : null },
+    });
+    return { ok: approve ? "Momentos aprobados." : "Momentos guardados como borrador." };
   }
   if (intent === "rec-retry") {
     const r = await retryRecording(community.id, str("id"));
@@ -551,6 +575,7 @@ function Recordings({ recordings, slug }: { recordings: RecView[]; slug: string 
               <ClubVideo srcUrl={`/comunidad/${slug}/grabacion/${r.id}`} poster={r.poster} />
             </div>
           )}
+          {r.status === "ready" && <MomentsEditor id={r.id} moments={r.moments} approved={r.momentsApproved} />}
         </li>
       ))}
     </ul>

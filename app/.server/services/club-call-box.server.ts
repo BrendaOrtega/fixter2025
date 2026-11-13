@@ -96,6 +96,13 @@ async function box(
   }
 }
 
+/** GET de solo lectura a la caja (transcript, estado). `null` sin configuración o sin respuesta. */
+export async function boxGet(path: string, timeoutMs = 30_000) {
+  const cfg = boxConfig();
+  if (!cfg) return null;
+  return box(cfg, path, undefined, timeoutMs);
+}
+
 const fail = <T>(status: number, error: string, extra: Record<string, unknown> = {}): Result<T> => ({
   ok: false,
   status,

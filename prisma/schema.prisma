@@ -1467,6 +1467,12 @@ model CommunityRecording {
   /// Evento (y sesión de la serie) del que salió la grabación.
   eventId      String?   @db.ObjectId
   occurrenceAt DateTime?
+  /// Transcript de whisper `[{s,e,quien,texto}]`, copiado de la caja (la caja puede morir).
+  segments          Json?
+  /// Mejores momentos `[{s, e, title, summary}]` en segundos; los propone la IA y los edita el anfitrión.
+  moments           Json?
+  /// null = borrador; con fecha, los miembros los ven.
+  momentsApprovedAt DateTime?
 
   createdAt DateTime @default(now())
 

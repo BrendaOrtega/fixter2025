@@ -217,6 +217,9 @@ export async function listRecordings(communityId: string, canMod: boolean) {
       eventId: r.eventId ?? null,
       canRetry: canMod && r.status === "failed" && !!r.boxFile,
       poster: r.status === "ready" ? buildHlsProxyUrl(r.storageKey.replace(/master\.m3u8$/, "poster.jpg")) : null,
+      // Momentos (paso 1): sólo el anfitrión los ve mientras no haya pantalla de repetición.
+      moments: canMod ? ((r.moments as { s: number; e: number; title: string; summary: string }[] | null) ?? null) : null,
+      momentsApproved: canMod && !!r.momentsApprovedAt,
     }));
 }
 
