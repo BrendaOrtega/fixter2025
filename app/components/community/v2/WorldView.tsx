@@ -357,10 +357,11 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
   // La sala se enciende con el estado real de la próxima llamada; sin evento queda apagada.
   useEffect(() => {
-    const status = { on: !!event?.open, sub: call ? (call.isLive ? "En vivo" : event?.open ? "Abierta" : call.pill.toLowerCase()) : "Sin llamada programada" };
+    const secs = (iso?: string) => (iso ? Math.floor(new Date(iso).getTime() / 1000) : undefined);
+    const status = { startsAt: secs(event?.startsAt), endsAt: secs(event?.endsAt), on: !!event?.open, sub: call ? (call.isLive ? "En vivo" : event?.open ? "Abierta" : call.pill.toLowerCase()) : "Sin llamada programada" };
     for (const p of structure.places) if (p.target === "call") apiRef.current?.setPlaceStatus(p.id, status);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, event?.open, call?.isLive, call?.pill]);
+  }, [ready, event?.open, event?.startsAt, event?.endsAt, call?.isLive, call?.pill]);
 
   useEffect(() => { apiRef.current?.setHidden(hiddenKey ? hiddenKey.split(",") : []); }, [ready, hiddenKey]);
 

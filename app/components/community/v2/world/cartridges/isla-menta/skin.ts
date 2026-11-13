@@ -71,6 +71,13 @@ const sounds: SoundBank = {
   pick: (k) => k.tone({ type: "triangle", from: 523, dur: 0.07, gain: 0.45 }),
   expand: (k) => k.tone({ type: "triangle", from: 294, to: 587, dur: 0.2, gain: 0.45 }),
   collapse: (k) => k.tone({ type: "triangle", from: 587, to: 294, dur: 0.2, gain: 0.45 }),
+  // Campana del Foro: tres toques con su armónico, diez minutos antes de la llamada y al empezar.
+  bell: (k) => {
+    for (const at of [0, 0.7, 1.4]) {
+      k.tone({ type: "sine", from: 784, to: 776, at, dur: 0.9, gain: 0.5 });
+      k.tone({ type: "sine", from: 1568, at, dur: 0.35, gain: 0.18 });
+    }
+  },
   // Acciones sobre las cosas de la isla. Sólo suenan si el motor le presta a la skin un `motor.sound(nombre)`.
   "act-sit": (k) => k.tone({ type: "sine", from: 330, to: 196, dur: 0.16, gain: 0.6 }),
   "act-lie": (k) => k.tone({ type: "sine", from: 294, to: 147, dur: 0.3, gain: 0.5 }),

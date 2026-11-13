@@ -82,7 +82,7 @@ export type WorldApi = {
   setQuiet: (quiet: boolean) => void;
   setLook: (look: Look) => void;
   /** Estado vivo de un lugar (p. ej. la sala abierta y su subtítulo): la skin decide cómo se nota. */
-  setPlaceStatus: (placeId: string, status: { on: boolean; sub: string }) => void;
+  setPlaceStatus: (placeId: string, status: { on: boolean; sub: string; startsAt?: number; endsAt?: number }) => void;
   /** Lugares que hoy no llevan a nada (p. ej. grabaciones sin grabaciones): no se dibujan. */
   setHidden: (placeIds: string[]) => void;
   setRemote: (ships: RemoteShip[], meId: string) => void;
@@ -148,7 +148,7 @@ export function createWorld(opts: {
     nearPlace: null as Place | null, nearShip: null as Entity | null, bubbles: [] as Bubble[], marker: null as { x: number; y: number; t: number } | null,
     /** Puntos que faltan por recorrer después del destino actual (sólo con `movement.route`). */
     path: [] as Point[],
-    placeStatus: {} as Record<string, { on: boolean; sub: string }>,
+    placeStatus: {} as Record<string, { on: boolean; sub: string; startsAt?: number; endsAt?: number }>,
     hidden: new Set<string>(), dead: false,
     pickups: [] as Pickup[], lives: [] as Pickup[], chain: [] as Array<{ x: number; y: number; at: number }>, shots: [] as Shot[], weapon: null as { kind: string; left: number } | null, shotT: 9, kindTurn: 0,
     /** Amenaza: fase, ciclo en curso, ciclo en que ya fue derribada, reloj de su disparo, segundos que llevas avisado y sus disparos. */
@@ -263,11 +263,34 @@ export function createWorld(opts: {
     integrate(e, dt, M.maxSpeed);
     if (e.waveT > 0) e.waveT -= dt;
   }
+  /** Cuánto se apartó cada robot de su ruta para no encimarse (se suaviza: nadie brinca). */
+  const botAside = BOTS.map(() => ({ x: 0, y: 0 }));
   function updateBots(dt: number) {
     const t = Date.now() / 1000;
+    const route = BOTS.map((b) => ({ p: b.at(t), q: b.at(t + 0.2) }));
+    if (M.giveWay) {
+      // Tienen preferencia las personas de pie o en una actividad (no las sentadas a una mesa) y, entre
+      // robots, el que ya está acomodado en lo suyo sobre el que va caminando; a igualdad, el primero.
+      const bodies: Point[] = [player, ...humans.values()].filter((h) => h.downT <= 0 && h.table === null).map((h) => ({ x: h.x, y: h.y }));
+      // Sin nadie cerca vuelve solo a su ruta; el paso por cuadro va topado para que nadie brinque.
+      const back = Math.exp(-dt * 2.5), step = 160 * dt;
+      const moving = (i: number) => (Math.hypot(route[i].q.x - route[i].p.x, route[i].q.y - route[i].p.y) > 0.01 ? 1 : 0);
+      for (const i of BOTS.map((_, k) => k).sort((a, b) => moving(a) - moving(b) || a - b)) {
+        if (bots[i].downT > 0) { botAside[i].x = botAside[i].y = 0; continue; }
+        const raw = route[i].p, hx = route[i].q.x - raw.x, hy = route[i].q.y - raw.y, hl = Math.hypot(hx, hy);
+        const a = botAside[i];
+        a.x *= back; a.y *= back;
+        const cur = { x: raw.x + a.x, y: raw.y + a.y };
+        const want = M.giveWay(cur, bodies, hl > 0.01 ? { x: hx / hl, y: hy / hl } : null);
+        const mx = want.x - cur.x, my = want.y - cur.y, ml = Math.hypot(mx, my), k = ml > step ? step / ml : 1;
+        a.x += mx * k; a.y += my * k;
+        if (Math.abs(a.x) + Math.abs(a.y) < 0.05) a.x = a.y = 0;
+        bodies.push({ x: raw.x + a.x, y: raw.y + a.y });
+      }
+    }
     bots.forEach((e, i) => {
-      const p = BOTS[i].at(t), q = BOTS[i].at(t + 0.2);
-      e.x = p.x; e.y = p.y; e.thrust = 0.5;
+      const p = route[i].p, q = route[i].q;
+      e.x = p.x + botAside[i].x; e.y = p.y + botAside[i].y; e.thrust = 0.5;
       const heading = Math.atan2(q.y - p.y, q.x - p.x);
       if (e.downT > 0) {
         // Tumbado: su ruta sigue corriendo con el reloj; al vencer el plazo llega en hipervelocidad a donde le toque.

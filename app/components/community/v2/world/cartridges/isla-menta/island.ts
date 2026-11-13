@@ -30,7 +30,12 @@ export const FLAG_AT = { x: -1.55, z: -0.95 };
 
 export type IslandState = { t: number; dt: number; quiet: boolean; liveOn: boolean; visible: Set<string>; nearId: string | null; tableCounts: number[];
   /** El barquito: dónde va (plano del mapa) y hacia dónde apunta la proa. */
-  boat: { x: number; y: number; yaw: number } };
+  boat: { x: number; y: number; yaw: number };
+  /**
+   * Ritual de la llamada: `bell`, la campana del Foro se mece (10 min antes); `fire`, cuántas personas
+   * rodean la fogata de cierre (0 fuera de los 10 min después de la llamada).
+   */
+  ritual: { bell: boolean; fire: number } };
 
 export function createIsland(scene: THREE.Scene) {
   const geos = new Set<THREE.BufferGeometry>(), mats = new Set<THREE.Material>();
@@ -139,6 +144,8 @@ export function createIsland(scene: THREE.Scene) {
   }
 
   // ── El Foro (Sala en vivo): auditorio al aire libre; se nota cuando está abierta ──
+  const bell = new THREE.Group();
+  let fireGrow = 1;
   const liveMat = own(new THREE.MeshLambertMaterial({ color: C.slate, flatShading: true }));
   const dotMat = own(new THREE.MeshLambertMaterial({ color: C.gray, flatShading: true }));
   const pulseMat = own(new THREE.MeshBasicMaterial({ color: C.mint, transparent: true, opacity: 0, depthWrite: false }));
@@ -166,6 +173,12 @@ export function createIsland(scene: THREE.Scene) {
       part(g, G.ball, liveMat, [2.6 * s, 1.3, 0.9], 0.17);
       const pn = part(g, G.box, s < 0 ? C.mint : C.amber, [2.6 * s + 0.22 * s, 0.95, 0.9], [0.36, 0.22, 0.03]); pn.castShadow = false; pennants.push(pn);
     }
+    // Campana del Foro: llama a las gradas diez minutos antes de la llamada.
+    part(g, G.cyl8, C.stone, [-2.05, 3.5, -0.55], [0.03, 1.6, 0.03]);
+    part(g, G.box, C.wood, [-2.3, 4.24, -0.55], [0.56, 0.05, 0.05]);
+    bell.position.set(-2.5, 4.22, -0.55); g.add(bell);
+    part(bell, G.cone, C.amber, [0, -0.2, 0], [0.17, 0.34, 0.17]).castShadow = false;
+    part(bell, G.ball, C.wood, [0, -0.4, 0], 0.045).castShadow = false;
     // Gradas: cada asiento es un escalón de piedra con su tabla; las filas de atrás quedan más altas.
     for (const seat of STANDS) {
       const sg = groupAt(seat.x, seat.y, -0.05), lift = seat.lift ?? 0; sg.rotation.y = seat.face; g.attach(sg);
@@ -395,7 +408,14 @@ export function createIsland(scene: THREE.Scene) {
     boat.position.set(wx(s.boat.x), Math.sin(t * 1.3) * 0.04, wz(s.boat.y)); boat.rotation.set(0, s.boat.yaw, Math.sin(t * 0.9) * 0.04, "YXZ");
     for (const r of reels) r.rotation.z = -t * 0.8;
     speakers.forEach((sp, i) => { const beat = 1 + Math.max(0, Math.sin(t * 6.2 + i)) * 0.22; sp.scale.set(0.2 * beat, 0.04, 0.2 * beat); });
-    flames.forEach((f, i) => { f.scale.y = (i ? 0.34 : 0.55) * (1 + Math.sin(t * (9 + i * 4) + i) * 0.16); f.rotation.y = t * 2; });
+    // Fogata de cierre: crece con cada persona alrededor (hasta seis) y baja sola cuando se van.
+    fireGrow += (1 + Math.min(6, s.ritual.fire) * 0.24 - fireGrow) * Math.min(1, s.dt * 2);
+    flames.forEach((f, i) => {
+      const w = (i ? 0.11 : 0.2) * fireGrow, h = (i ? 0.34 : 0.55) * fireGrow * (1 + Math.sin(t * (9 + i * 4) + i) * 0.16);
+      f.scale.set(w, h, w); f.position.y = (i ? 0.17 : 0.145) + h / 2; f.rotation.y = t * 2;
+    });
+    bell.rotation.z = s.ritual.bell && !s.quiet ? Math.sin(t * 5.2) * 0.42 : 0;
+
     pennants.forEach((p, i) => { p.rotation.y = Math.sin(t * 2.4 + i) * 0.22; });
     flag.rotation.y = Math.sin(t * 2.8) * 0.28;
     liveDot.scale.setScalar(s.liveOn ? 0.1 + Math.abs(Math.sin(t * 2.4)) * 0.035 : 0.09);

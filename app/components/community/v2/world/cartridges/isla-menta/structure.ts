@@ -326,13 +326,15 @@ export function isSea(x: number, y: number) {
   return true;
 }
 /** Personas y robots de pie en este cuadro (lo escribe el renderizador): tu personaje no los atraviesa. */
-export const crowd: Vec[] = [];
+export const crowd: Array<Vec & { r?: number }> = [];
 const BODY = 24;
+/** Quien ya está en una actividad (banca, fogata…) ocupa menos: cabe alguien en el punto de junto, pero no encima. */
+export const SEATED_BODY = 13;
 /** Quien estorba el paso de `from` a (x, y): alguien a menos de un cuerpo y al que te estarías acercando. */
 function inTheWay(from: Vec, x: number, y: number): Vec | null {
   for (const o of crowd) {
-    const d = (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
-    if (d < BODY * BODY && d < (o.x - from.x) * (o.x - from.x) + (o.y - from.y) * (o.y - from.y)) return o;
+    const d = (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y), r = o.r ?? BODY;
+    if (d < r * r && d < (o.x - from.x) * (o.x - from.x) + (o.y - from.y) * (o.y - from.y)) return o;
   }
   return null;
 }
@@ -514,9 +516,13 @@ const mix = (n: number) => {
   let h = Math.imul((n | 0) ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
   return h >>> 0;
 };
+// Las cosas se reparten en dos mitades que se alternan por turno: así nadie camina hacia un punto
+// donde otro robot sigue acomodado del turno anterior.
+const BOT_HALVES = [0, 1].map((par) => BOT_THINGS.filter((_, k) => k % 2 === par));
 /** Qué punto le toca al robot `i` en el turno `n`. En un mismo turno cada robot va a una cosa distinta. */
 function botSpot(n: number, i: number): Vec {
-  const thing = BOT_THINGS[(mix(n) + i) % BOT_THINGS.length];
+  const half = BOT_HALVES[n & 1];
+  const thing = half[(mix(n) + i) % half.length];
   const action = thing.actions[mix(n * 31 + i) % thing.actions.length];
   const s = action.spots[mix(n * 17 + i * 3) % action.spots.length];
   return { x: s.x, y: s.y };
@@ -548,6 +554,38 @@ function botAt(i: number, t: number): Vec {
   const a = leg.pts[k - 1], b = leg.pts[k] ?? a, seg = leg.cum[k] - leg.cum[k - 1] || 1, u = Math.min(1, (d - leg.cum[k - 1]) / seg);
   return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
 }
+/**
+ * Los robots y Ghosty no se enciman ni atraviesan a nadie. Recibe dónde está el robot ahora y lo saca
+ * de cada cuerpo con preferencia (una persona, o un robot ya acomodado) hasta dejarlo a GAP, siempre
+ * sobre tierra firme. Caminando, el empujón lleva un poco de costado para rodear en arco en vez de
+ * frenarse de frente. El motor llama esto cada cuadro y limita el paso, así nadie brinca.
+ */
+const GAP = BODY + 4;
+function giveWay(at: Vec, bodies: Vec[], heading: Vec | null): Vec {
+  let p = at;
+  for (let pass = 0; pass < 6; pass++) {
+    for (const o of bodies) {
+      const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
+      if (d >= GAP) continue;
+      // Justo encima no hay hacia dónde «alejarse»: sale por el costado de su rumbo (o a un lado fijo).
+      let ux = d > 0.5 ? dx / d : heading ? -heading.y : 1, uy = d > 0.5 ? dy / d : heading ? heading.x : 0;
+      const rx = ux, ry = uy;
+      if (heading) {
+        const side = ux * -heading.y + uy * heading.x < -0.05 ? -1 : 1;
+        ux += -heading.y * side * 0.6; uy += heading.x * side * 0.6;
+        const l = Math.hypot(ux, uy) || 1; ux /= l; uy /= l;
+      }
+      const push = GAP - d;
+      const tries: Vec[] = [
+        { x: p.x + ux * push, y: p.y + uy * push }, { x: p.x + rx * push, y: p.y + ry * push },
+        { x: p.x - ry * push, y: p.y + rx * push }, { x: p.x + ry * push, y: p.y - rx * push },
+      ];
+      const free = tries.find((q) => canStand(q.x, q.y));
+      if (free) p = free;
+    }
+  }
+  return p;
+}
 export const GHOSTY_ID = "bot:ghosty";
 export const BOTS: BotDef[] = [
   { id: "bot:uno", name: "Robot Uno", look: botLook("blue"), note: "Robot de la casa · pasea por la isla y hace de todo", at: (t) => botAt(0, t) },
@@ -576,6 +614,7 @@ export const structure: WorldStructure = {
     maxSpeed: 200, accel: 1600, drag: 4, idleDrag: 12, seatSpeed: 160, margin: 20, targetMargin: 20,
     constrain: (next, prev, hidden, self) => { useHidden(hidden); return slide(prev, next, self); },
     route: (from, to, hidden) => { useHidden(hidden); return plan(from, to); },
+    giveWay,
   },
   // El renderizador es 3D y trae su propia cámara; estos valores sólo sirven a la cámara lógica del motor.
   camera: { minScale: 0.5, minScaleNarrow: 0.4, maxScale: 1.1 },

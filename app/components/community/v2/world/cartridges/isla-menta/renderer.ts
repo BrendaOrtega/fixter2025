@@ -9,8 +9,8 @@ import type { Entity, Place, Point, View, WorldEvent, WorldFrame, WorldRenderer,
 import { FLAG_AT, SEA, createIsland, wx, wz } from "./island";
 import { createPuppetKit, type Puppet, type PuppetLook } from "./puppet";
 import { createActions, moodHtml, type MotorHooks, type Person } from "./actions";
-import { BUILDINGS, GHOSTY_ID, UNIT, WORLD_H, WORLD_W, heightAt, isSea, crowd, nearMoor, nearestWalkable, sea, shapeFor, standHeight, toneOf } from "./structure";
-import { BOAT_SEATS, DANCE_BEAT, MOOR, PILLOWS, PILLOW_COUNT, spotAt, type PlacedSpot } from "./things";
+import { BUILDINGS, GHOSTY_ID, SEATED_BODY, UNIT, WORLD_H, WORLD_W, heightAt, isSea, crowd, nearMoor, nearestWalkable, sea, shapeFor, standHeight, toneOf } from "./structure";
+import { BOAT_SEATS, DANCE_BEAT, FIRE, MOOR, PILLOWS, PILLOW_COUNT, spotAt, type PlacedSpot } from "./things";
 
 const FONT = 'Inter, -apple-system, "Segoe UI", Roboto, sans-serif';
 const PUPPET_SCALE = 1.15;
@@ -553,6 +553,28 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
 
   /** `dt` acotado: un cuadro raro (pestaña dormida, reloj que retrocede) no debe romper los suavizados. */
   let dt = 0;
+  // ── Ritual de la llamada ── Diez minutos antes suena la campana del Foro; los diez minutos de
+  // después, la fogata crece con quienes se quedan alrededor. Todo sale del reloj y de dónde está cada quien.
+  const RITUAL = 600, ritual = { bell: false, fire: 0 };
+  let closing = 0, rang = 0, rangStart = 0;
+  function callRitual(frame: WorldFrame) {
+    const now = Date.now() / 1000;
+    const status = Object.entries(frame.placeStatus).find(([id]) => frame.places.find((p) => p.id === id)?.target === "call")?.[1];
+    const starts = status?.startsAt ?? 0, ends = status?.endsAt ?? 0;
+    // Al terminar, el club ya anuncia la llamada siguiente: la hora de cierre de la que acaba de pasar se recuerda aquí.
+    const afterCall = closing > 0 && now >= closing && now < closing + RITUAL;
+    if (!afterCall && ends > now) closing = ends;
+    ritual.bell = starts > 0 && now >= starts - RITUAL && now < starts;
+    ritual.fire = 0;
+    if (afterCall) for (const e of [frame.player, ...frame.others]) if (e.kind !== "bot" && e.table === null && Math.hypot(e.x - FIRE.x, e.y - FIRE.y) < 110) ritual.fire++;
+    // La campana suena una vez al empezar a llamar y otra al arrancar la llamada (también para quien llega a media espera).
+    if (!frame.mini && !frame.quiet) {
+      if (ritual.bell && rang !== starts) { rang = starts; hooks.sound?.("bell"); actions.announce("Suena la campana del Foro: la llamada empieza en unos minutos. Siéntate en las gradas."); }
+      if (starts > 0 && now >= starts && now < starts + 5 && rangStart !== starts) { rangStart = starts; hooks.sound?.("bell"); }
+    }
+    return ritual;
+  }
+
   function render(frame: WorldFrame) {
     if (dead) return;
     tick++;
@@ -563,9 +585,10 @@ export function createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLEle
     updateBoat(frame);
     // Cuerpos con los que choca tu personaje: quien está de pie (ni en mesa, ni en una actividad, ni a bordo).
     crowd.length = 0;
-    for (const e of frame.others) if (e.table === null && !isSea(e.x, e.y) && !spotAt(e.x, e.y)) crowd.push({ x: e.x, y: e.y });
+    // Quien ya está en una actividad también estorba, pero menos: no te puedes parar encima de él.
+    for (const e of frame.others) if (e.table === null && !isSea(e.x, e.y)) crowd.push(spotAt(e.x, e.y) ? { x: e.x, y: e.y, r: SEATED_BODY } : { x: e.x, y: e.y });
     const dirty = island.update({
-      boat,
+      boat, ritual: callRitual(frame),
       t: frame.t, dt, quiet: frame.quiet, liveOn: Object.entries(frame.placeStatus).some(([id, s]) => s.on && frame.places.find((p) => p.id === id)?.target === "call"),
       visible, nearId: frame.nearPlace?.id ?? null, tableCounts: frame.tableCounts,
     });

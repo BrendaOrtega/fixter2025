@@ -84,6 +84,14 @@ export type Movement = {
    * (que puede corregirse al punto permitido más cercano). Sin esto se va en línea recta.
    */
   route?: (from: Point, to: Point, hidden?: ReadonlySet<string>) => Point[];
+  /**
+   * Los robots de la casa siguen una ruta que sale del reloj. Si el cartucho quiere que no se
+   * encimen ni atraviesen a nadie, aquí dice a dónde se hace a un lado un robot que iría en `at`
+   * dados los cuerpos que tienen preferencia (`bodies`: personas y robots ya acomodados). Regresa
+   * `at` si nadie estorba. `heading`: hacia dónde camina (vector unitario), o `null` si está quieto.
+   * Sin esto los robots van exactos sobre su ruta (naves que se cruzan).
+   */
+  giveWay?: (at: Point, bodies: Point[], heading: Point | null) => Point;
 };
 
 /** Un proyectil. `seek`: gira hacia quien tenga cerca. `bounces`: rebotes en las orillas. `blast`: revienta y alcanza a todo lo cercano. */
@@ -314,8 +322,11 @@ export type WorldFrame = {
   others: Entity[];
   /** Los lugares que hoy existen (los que no llevan a nada se ocultan). */
   places: Place[];
-  /** Estado vivo de un lugar, por id: `on` (p. ej. la sala abierta) y un subtítulo. */
-  placeStatus: Record<string, { on: boolean; sub: string }>;
+  /**
+   * Estado vivo de un lugar, por id: `on` (p. ej. la sala abierta) y un subtítulo. Un lugar que lleva a
+   * la llamada trae además cuándo empieza y termina su evento (segundos Unix), para los rituales de la skin.
+   */
+  placeStatus: Record<string, { on: boolean; sub: string; startsAt?: number; endsAt?: number }>;
   /** Cuántas personas hay sentadas en cada mesa. */
   tableCounts: number[];
   nearPlace: Place | null;
