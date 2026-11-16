@@ -189,10 +189,15 @@ const TICK_MS = 1500;
 const LIVE = COLUMNS.length - 1;
 
 // Medidas del tablero según su ancho real: todas las posiciones salen de aquí.
-const boardLayout = (width: number) => {
+const boardLayout = (width: number, mini = false) => {
+  // miniatura del celular: 4 columnas, 2 tarjetas por columna y sólo el título de cada una
+  if (mini) {
+    return { compact: true, mini, height: 92, header: 16, cardH: 34, gap: 4, pad: 3, colW: (width - 3 * 4) / 4 };
+  }
   const compact = width < 420;
   return {
     compact,
+    mini,
     height: compact ? 150 : 348,
     header: compact ? 22 : 38,
     cardH: compact ? 44 : 92,
@@ -262,7 +267,7 @@ const stepFactory = (f: FactoryState): FactoryState => {
   return { tickets, shipped, deploys, nextId, movingId: t?.id ?? null };
 };
 
-const FactoryBoard = () => {
+const FactoryBoard = ({ mini = false }: { mini?: boolean }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   useEffect(() => {
@@ -288,7 +293,7 @@ const FactoryBoard = () => {
   }, []);
 
   const { tickets, shipped, movingId, deploys } = factory;
-  const L = boardLayout(width);
+  const L = boardLayout(width, mini);
   // posición de cada tarjeta: activas por orden de llegada en su columna; producción por lugar en la pila
   const placed = [
     ...tickets.map((t) => ({ t, row: tickets.filter((o) => o.col === t.col && o.id < t.id).length })),
@@ -297,9 +302,19 @@ const FactoryBoard = () => {
 
   return (
     <div
-      className="w-full rounded-3xl border p-2.5 sm:p-5 lg:p-6"
+      className={mini ? "w-full rounded-2xl border px-2 pb-2 pt-1.5" : "w-full rounded-3xl border p-2.5 sm:p-5 lg:p-6"}
       style={{ background: PANEL, borderColor: `${MINT}2e`, boxShadow: SOFT_SHADOW }}
     >
+      {mini ? (
+        // en la miniatura la barra es una sola línea chiquita
+        <div className="mb-1 flex items-center gap-1 font-mono text-[10px] leading-none" style={{ color: MUTE }}>
+          {[MINT, GREEN, MUTE].map((c) => (
+            <span key={c} className="h-1.5 w-1.5 rounded-full" style={{ background: c, opacity: 0.8 }} />
+          ))}
+          <span className="ml-1">tu repo</span>
+          <span className="ml-auto font-semibold tabular-nums" style={{ color: GREEN }}>✅ {deploys} listos</span>
+        </div>
+      ) : (
       <div className="mb-2 flex items-center gap-2 sm:mb-4">
         {[MINT, GREEN, MUTE].map((c) => (
           <span key={c} className="h-2.5 w-2.5 rounded-full lg:h-3 lg:w-3" style={{ background: c, opacity: 0.8 }} />
@@ -318,6 +333,7 @@ const FactoryBoard = () => {
           <span className="hidden sm:inline">listos para tu merge</span>
         </span>
       </div>
+      )}
 
       {/* Alto fijo y overflow oculto: lo que baja de más en Producción se sale por abajo y desaparece */}
       <div ref={boxRef} className="relative overflow-hidden rounded-xl" style={{ height: L.height }}>
@@ -326,7 +342,7 @@ const FactoryBoard = () => {
             <div key={column.title} className="rounded-xl" style={{ background: `${BG}aa` }}>
               <p
                 className="truncate font-semibold"
-                style={{ color: column.color, fontSize: L.compact ? 10 : 14, padding: L.compact ? "5px 5px 0" : "10px 10px 0" }}
+                style={{ color: column.color, fontSize: L.mini ? 9 : L.compact ? 10 : 14, padding: L.mini ? "3px 4px 0" : L.compact ? "5px 5px 0" : "10px 10px 0" }}
               >
                 {column.title}
               </p>
@@ -354,7 +370,7 @@ const FactoryBoard = () => {
                 style={{
                   width: L.colW - 2 * L.pad,
                   height: L.cardH,
-                  padding: L.compact ? "4px 5px" : "9px 11px",
+                  padding: L.mini ? "3px 4px" : L.compact ? "4px 5px" : "9px 11px",
                   background: COLUMNS[t.col].color,
                   borderColor: BG,
                   color: BG,
@@ -363,8 +379,9 @@ const FactoryBoard = () => {
                   transition: "background-color 0.45s",
                 }}
               >
-                <p className="line-clamp-2 font-extrabold leading-tight" style={{ fontSize: L.compact ? 10 : 15 }}>{t.label}</p>
+                <p className="line-clamp-2 font-extrabold leading-tight" style={{ fontSize: L.mini ? 9 : L.compact ? 10 : 15 }}>{t.label}</p>
                 {!L.compact && <p className="mt-1 truncate font-mono text-[11px]">{t.agent}</p>}
+                {!L.mini && (
                 <p className="mt-0.5 truncate font-mono" style={{ fontSize: L.compact ? 9 : 11 }}>
                   {t.col === 1 ? (
                     <motion.span className="inline-block" animate={{ rotate: 360 }} transition={{ duration: 2, ease: "linear", repeat: Infinity }}>
@@ -375,6 +392,7 @@ const FactoryBoard = () => {
                   )}
                   {L.colW > 150 && ` ${text}`}
                 </p>
+                )}
               </motion.div>
             );
           })}
@@ -398,7 +416,7 @@ const OscillatingTitle = () => {
   }, []);
 
   return (
-    <h1 className="mt-1 flex flex-col whitespace-nowrap text-[1.9rem] font-bold leading-[0.95] tracking-[-0.035em] sm:mt-3 sm:text-[clamp(2.3rem,5vw,5.25rem)]" style={DISPLAY}>
+    <h1 className="mt-1 flex flex-row gap-x-[0.25em] whitespace-nowrap text-[1.75rem] font-bold sm:flex-col leading-[0.95] tracking-[-0.035em] sm:mt-3 sm:text-[clamp(2.3rem,5vw,5.25rem)]" style={DISPLAY}>
       <span className="sr-only">Ghosty Anti-Factory</span>
       {/* la ventana crece 0.15em arriba y abajo (acentos y la cola de la g) y el margen negativo lo devuelve: el renglón ocupa lo mismo. El h1 es flex para que esos márgenes no se colapsen */}
       {TITLES[lang].map((word, line) => (
@@ -545,31 +563,47 @@ export default function Route() {
             Un agente escribe, otro agente revisa con contexto limpio y tú decides el merge. Funciona con Claude Code o Codex.
           </motion.p>
 
+          {/* En el celular el tablero va en miniatura, con la misma animación */}
+          <div className="relative mt-2 w-full sm:hidden">
+            <motion.img
+              src="https://formmy.app/logo.png"
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute -top-5 right-6 z-0 w-7"
+              animate={{ y: [14, 14, 0, 6, 0, 14, 14] }}
+              transition={{ duration: 3.4, times: [0, 0.1, 0.3, 0.45, 0.6, 0.75, 1], ease: "easeInOut", repeat: 3, repeatDelay: 5.6, delay: 1.5 }}
+            />
+            <div className="relative z-10">
+              <FactoryBoard mini />
+            </div>
+          </div>
+
           {/* Paso 1 → paso 2: primero el webinar gratis, luego el taller en vivo */}
-          <ol className="mt-2.5 w-full max-w-xl space-y-1.5 sm:mt-4 sm:space-y-2">
-            <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 rounded-2xl border px-3 py-2 sm:px-4 sm:py-2.5" style={{ background: `${MINT}14`, borderColor: `${MINT}40` }}>
+          <ol className="mt-2 w-full max-w-xl space-y-1.5 sm:mt-4 sm:space-y-2">
+            <li className="flex items-center justify-between gap-x-2 gap-y-1.5 rounded-2xl border px-3 py-1.5 sm:flex-wrap sm:gap-x-3 sm:px-4 sm:py-2.5" style={{ background: `${MINT}14`, borderColor: `${MINT}40` }}>
               <span className="text-[13px] sm:text-sm lg:text-base">
                 <span className="font-semibold" style={{ color: MINT }}>1 · Webinar gratis</span>{" "}
-                <span style={{ color: `${INK}cc` }}>mié 18 de nov · 7 pm (CDMX)</span>
+                <span className="whitespace-nowrap sm:whitespace-normal" style={{ color: `${INK}cc` }}>mié 18 de nov · 7 pm<span className="hidden sm:inline"> (CDMX)</span></span>
               </span>
               <span className="flex items-center gap-3 text-[13px] sm:text-sm">
                 <a
                   href={webinarIcsUrl ?? FACEBOOK_EVENT_URL}
                   {...(webinarIcsUrl ? {} : { target: "_blank", rel: "noopener" })}
-                  className="rounded-lg border px-2.5 py-1 font-semibold transition-colors hover:bg-[#85DDCB]/10 sm:px-3 sm:py-1.5"
+                  className="whitespace-nowrap rounded-lg border px-2 py-0.5 font-semibold transition-colors hover:bg-[#85DDCB]/10 sm:px-3 sm:py-1.5"
                   style={{ borderColor: `${MINT}66`, color: MINT }}
                 >
-                  Agéndalo gratis
+                  Agéndalo<span className="hidden sm:inline"> gratis</span>
                 </a>
                 <a href={FACEBOOK_EVENT_URL} target="_blank" rel="noopener" className="hidden underline underline-offset-4 sm:inline" style={{ color: MUTE }}>
                   Facebook
                 </a>
               </span>
             </li>
-            <li className="rounded-2xl border px-3 py-2 sm:px-4 sm:py-2.5" style={{ borderColor: `${MINT}2e` }}>
+            <li className="rounded-2xl border px-3 py-1.5 sm:px-4 sm:py-2.5" style={{ borderColor: `${MINT}2e` }}>
               <span className="text-[12px] sm:text-sm lg:text-base">
                 <span className="font-semibold" style={{ color: GREEN }}>2 · Taller en vivo</span>{" "}
-                <span style={{ color: `${INK}cc` }}>mar 1 y jue 3 de dic · 7 a 9 pm · en la llamada del Club de Agentes de IA</span>
+                <span className="sm:hidden" style={{ color: `${INK}cc` }}>1 y 3 de dic · 7 a 9 pm · llamada del club</span>
+                <span className="hidden sm:inline" style={{ color: `${INK}cc` }}>mar 1 y jue 3 de dic · 7 a 9 pm · en la llamada del Club de Agentes de IA</span>
               </span>
               <ul className="mt-1 flex flex-wrap gap-1 sm:mt-1.5 sm:gap-1.5">
                 {POINTS.map((p, i) => (
@@ -585,7 +619,7 @@ export default function Route() {
             </li>
           </ol>
 
-          <div className="mt-2.5 w-full max-w-xl lg:mt-4">
+          <div className="mt-2 w-full max-w-xl sm:mt-2.5 lg:mt-4">
             {success ? (
               <motion.div
                 role="status"
@@ -622,8 +656,9 @@ export default function Route() {
                   </motion.button>
                 </fetcher.Form>
                 </div>
-                <div className="mt-1.5 text-[12px] sm:mt-2 sm:text-sm" style={{ color: MUTE }}>
-                  <p className="font-medium sm:hidden" style={{ color: MINT }}>MXN · {priceNote}</p>
+                <div className="mt-1 text-[12px] sm:mt-2 sm:text-sm" style={{ color: MUTE }}>
+                  {/* en el celular cabe un solo renglón: la nota del precio sólo si ya te toca el del club */}
+                  {isMember && <p className="truncate font-medium sm:hidden" style={{ color: MINT }}>{priceNote}</p>}
                   {error ? (
                     <p role="alert" style={{ color: GREEN }}>{error}</p>
                   ) : canceled ? (
@@ -632,11 +667,13 @@ export default function Route() {
                   {!isMember &&
                     (isLoggedIn ? (
                       <Link to="/comunidad/club-de-agentes" className="underline-offset-4 hover:underline">
-                        ¿Quieres el precio de {mxn(clubPrice)}? Únete al Club de Agentes de IA.
+                        <span className="sm:hidden" style={{ color: MINT }}>Miembros del club: {mxn(clubPrice)} · Únete</span>
+                        <span className="hidden sm:inline">¿Quieres el precio de {mxn(clubPrice)}? Únete al Club de Agentes de IA.</span>
                       </Link>
                     ) : (
                       <Link to={`/login?next=${encodeURIComponent(ANTI_FACTORY_PATH)}`} className="underline-offset-4 hover:underline">
-                        ¿Eres del club o estás en la lista de espera? Inicia sesión para tu precio de {mxn(clubPrice)}.
+                        <span className="sm:hidden" style={{ color: MINT }}>Club o lista de espera: {mxn(clubPrice)} · Inicia sesión</span>
+                        <span className="hidden sm:inline">¿Eres del club o estás en la lista de espera? Inicia sesión para tu precio de {mxn(clubPrice)}.</span>
                       </Link>
                     ))}
                 </div>
