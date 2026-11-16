@@ -1,11 +1,10 @@
 import { getSesTransport } from "~/utils/sendGridTransport";
-import { wrapEmailHtml } from "~/utils/emailShell";
+import { emailButton, wrapEmailHtml } from "~/utils/emailShell";
 import { escapeHtml } from "~/utils/escapeHtml";
 import { buildIcs } from "~/.server/services/club-events.server";
 
 // Dominio verificado en SES: enviar como @gmail.com rompe DMARC y Gmail lo tira.
 const FROM = "Héctorbliss de FixterGeek <secuencias@fixtergeek.com>";
-const PAGE_URL = "https://www.fixtergeek.com/anti-factory";
 const TITLE = "Ghosty Anti-Factory";
 
 type Session = { id: string; label: string; startsAt: Date; endsAt: Date };
@@ -18,7 +17,17 @@ const INCLUDES = [
   "Acceso gratis a las cajas de CI de Ghosty Studio",
 ];
 
-const template = ({ userName, sessions }: { userName?: string | null; sessions: readonly Session[] }) => `
+const template = ({
+  userName,
+  sessions,
+  joinUrl,
+  email,
+}: {
+  userName?: string | null;
+  sessions: readonly Session[];
+  joinUrl: string;
+  email: string;
+}) => `
 <h1 style="font-size:26px;margin:0 0 8px 0;color:#19262A;">${userName ? `Listo, ${escapeHtml(userName)}` : "Listo"} ✅</h1>
 <p style="margin:0 0 20px 0;">
   Tu lugar en el taller en vivo <strong>${TITLE}</strong> del Club de Agentes de IA ya está pagado.
@@ -37,9 +46,15 @@ const template = ({ userName, sessions }: { userName?: string | null; sessions: 
   ${INCLUDES.map((i) => `<li>${i}</li>`).join("\n  ")}
 </ul>
 
-<p style="margin:0 0 24px 0;color:#475569;font-size:15px;">
-  Antes de la primera sesión te escribo a este correo con la liga para entrar.
+<h3 style="margin:0 0 10px 0;color:#19262A;font-size:18px;">Cómo entrar</h3>
+<p style="margin:0 0 12px 0;color:#475569;font-size:15px;">
+  El taller se da en la llamada del Club de Agentes de IA. Cada día del taller entra a la página del
+  club, inicia sesión con <strong>${escapeHtml(email)}</strong> y da clic en la llamada. La llamada se
+  abre 15 minutos antes. No necesitas ser miembro del club: tu compra ya te da pase esos dos días.
 </p>
+<div style="margin:0 0 24px 0;">
+  ${emailButton("Ir a la llamada del club", joinUrl)}
+</div>
 
 <p style="color:#64748B;font-size:14px;margin:24px 0 8px 0;">
   ¿Tienes dudas? Escríbeme directo por <a href="https://wa.me/527712412825" style="color:#37AB93;">WhatsApp</a>.
@@ -53,12 +68,15 @@ export const sendAntiFactoryConfirmation = async ({
   to,
   userName,
   sessions,
+  joinUrl,
 }: {
   to: string;
   userName?: string | null;
   sessions: readonly Session[];
+  /** Página del club desde la que se entra a la llamada; también va en el .ics. */
+  joinUrl: string;
 }) => {
-  const html = wrapEmailHtml(template({ userName, sessions }), {
+  const html = wrapEmailHtml(template({ userName, sessions, joinUrl, email: to }), {
     preheader: "Tu lugar en el taller está pagado. Guarda las dos fechas en tu calendario.",
   }).replace(/\{\{unsubscribe\}\}/g, "https://www.fixtergeek.com/perfil");
 
@@ -69,11 +87,11 @@ export const sendAntiFactoryConfirmation = async ({
       {
         id: s.id,
         title: `${TITLE} · sesión ${i + 1} de ${sessions.length}`,
-        description: "Taller en vivo del Club de Agentes de IA de FixterGeek.",
+        description: "Taller en vivo en la llamada del Club de Agentes de IA de FixterGeek. Inicia sesión con el correo de tu compra.",
         startsAt: s.startsAt,
         endsAt: s.endsAt,
       },
-      PAGE_URL,
+      joinUrl,
     ),
   }));
 

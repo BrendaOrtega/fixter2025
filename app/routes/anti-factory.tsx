@@ -193,7 +193,7 @@ export default function AntiFactoryLanding({ loaderData }: Route.ComponentProps)
           </p>
           <p className="mt-2 text-[13px] font-semibold leading-snug text-zinc-100 lg:mt-4 lg:text-base">
             Martes 1 y jueves 3 de diciembre de 2026 · de 7 a 9 pm (hora de la Ciudad de México) · dos
-            sesiones en vivo
+            sesiones en vivo en la llamada del Club de Agentes de IA
           </p>
 
           <ul className="mt-3 space-y-1 text-[13px] leading-snug lg:mt-6 lg:space-y-2 lg:text-base">
@@ -211,8 +211,8 @@ export default function AntiFactoryLanding({ loaderData }: Route.ComponentProps)
             <div className="mt-4 rounded-2xl border border-sistemas-line bg-sistemas-surface p-4 shadow-lg shadow-black/20 lg:mt-8 lg:p-6">
               <p className="text-lg font-bold text-sistemas-primary lg:text-2xl">Tu lugar ya está pagado.</p>
               <p className="mt-1 text-[13px] leading-snug text-sistemas-gray lg:text-base">
-                Te mandamos un correo con las dos fechas y sus archivos para tu calendario. Nos vemos el
-                martes 1 de diciembre a las 7 pm.
+                Te mandamos un correo con las dos fechas, sus archivos para tu calendario y cómo entrar a
+                la llamada del club. Nos vemos el martes 1 de diciembre a las 7 pm.
               </p>
             </div>
           ) : (

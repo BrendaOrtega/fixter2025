@@ -77,3 +77,12 @@ describe("isAntiFactoryType", () => {
     expect(isAntiFactoryType(undefined)).toBe(false);
   });
 });
+
+describe("pase a la llamada", () => {
+  it("los días del pase son los días CDMX de cada sesión", async () => {
+    const { cdmxDay } = await import("../club-invites.server");
+    const { ANTI_FACTORY_CALL_DAYS, ANTI_FACTORY_SESSIONS } = await import("../anti-factory.server");
+    expect(ANTI_FACTORY_SESSIONS.map((s) => cdmxDay(s.startsAt))).toEqual(ANTI_FACTORY_CALL_DAYS);
+    expect(ANTI_FACTORY_SESSIONS.map((s) => cdmxDay(new Date(s.endsAt.getTime() - 1)))).toEqual(ANTI_FACTORY_CALL_DAYS);
+  });
+});

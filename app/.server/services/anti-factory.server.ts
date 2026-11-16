@@ -3,6 +3,7 @@
 // el webhook de Stripe. La landing es `app/routes/anti-factory.tsx`.
 import { db } from "~/.server/db";
 import { hasActiveMembership } from "~/.server/services/membership.server";
+import { upsertInvites } from "~/.server/services/club-invites.server";
 import { recordPurchase, type FulfillmentStep } from "~/.server/services/fulfillment.server";
 import { successPurchase } from "~/mailSenders/successPurchase";
 import { sendAntiFactoryConfirmation } from "~/mailSenders/sendAntiFactoryConfirmation";
@@ -38,6 +39,12 @@ export const ANTI_FACTORY_SESSIONS = [
     endsAt: new Date("2026-12-04T03:00:00Z"),
   },
 ] as const;
+
+/// El taller se da en la llamada del club. Al comprador se le da pase a la llamada de esos dos días
+/// (YYYYMMDD en CDMX, `CommunityInvite.callDays`), el mismo mecanismo de los invitados del club.
+export const ANTI_FACTORY_CALL_DAYS = ["20261201", "20261203"];
+export const ANTI_FACTORY_INVITE_SOURCE = "anti-factory-taller-dic26";
+export const CLUB_URL = `https://www.fixtergeek.com/comunidad/${CLUB_SLUG}`;
 
 /** El precio sale de la membresía, nunca de un campo del formulario. */
 export function pickAntiFactoryTier(isClubMember: boolean): AntiFactoryTier {
@@ -106,7 +113,18 @@ export async function fulfillAntiFactory({
   };
 
   const isClubPrice = metadata.type === ANTI_FACTORY_TIERS.club.key;
-  await step("welcome", () => sendAntiFactoryConfirmation({ to: email, userName: name, sessions: ANTI_FACTORY_SESSIONS }));
+  // Pase a la llamada del club los dos días del taller, aunque no sea miembro. Se aplica cuando
+  // entra a la página del club con este mismo correo (`applyInvite` en comunidad.$slug.tsx).
+  await step("call-pass", async () => {
+    const community = await db.community.findFirst({ where: { slug: CLUB_SLUG }, select: { id: true } });
+    if (!community) throw new Error(`no existe la comunidad ${CLUB_SLUG}`);
+    await upsertInvites(community.id, [email.trim().toLowerCase()], {
+      source: ANTI_FACTORY_INVITE_SOURCE,
+      giftDays: 0,
+      callDays: ANTI_FACTORY_CALL_DAYS,
+    });
+  });
+  await step("welcome", () => sendAntiFactoryConfirmation({ to: email, userName: name, sessions: ANTI_FACTORY_SESSIONS, joinUrl: CLUB_URL }));
   await step("internal-notice", () =>
     successPurchase({
       userName: name || "Sin nombre",
