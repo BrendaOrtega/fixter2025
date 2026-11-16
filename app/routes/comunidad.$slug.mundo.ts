@@ -61,7 +61,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!access) return json({ error: "Únete al club para entrar al Mundo." }, 403);
   const snap = snapshot(access.communityId);
   if (new URL(request.url).searchParams.get("progress") === "1") {
-    const progress = await loadProgress(access.communityId, access.who.id, snap.cartridge).catch(() => null);
+    const progress = await loadProgress(access.communityId, access.who.id, snap.cartridge).catch((err) => { console.error("[mundo] no se leyó el progreso", err); return { stats: {}, quests: [] }; });
     return json({ ...snap, me: access.who.id, progress });
   }
   return json({ ...snap, me: access.who.id });

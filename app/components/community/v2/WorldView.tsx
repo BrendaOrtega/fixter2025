@@ -180,7 +180,13 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     window.addEventListener("pointerdown", unlock, true);
     window.addEventListener("keydown", unlock, true);
 
+    // Volver al mismo punto: al salir (a Grabaciones, a la llamada…) se guarda dónde estabas en esta pestaña.
+    const posKey = `mundo:pos:${community.slug}:${cartridge.id}`;
+    let start: { x: number; y: number } | null = null;
+    try { const v = JSON.parse(sessionStorage.getItem(posKey) || "null"); if (v && Date.now() - v.at < 3 * 60 * 60 * 1000 && Number.isFinite(v.x) && Number.isFinite(v.y)) start = { x: v.x, y: v.y }; } catch {}
+    const savePos = () => { try { const w = api.where(); sessionStorage.setItem(posKey, JSON.stringify({ ...w, at: Date.now() })); } catch {} };
     const api = createWorld({
+      start,
       canvas, stage, cartridge, skin, meId: me.id, meName: me.name, mePhoto: me.photoURL, look: firstLook, quiet: savedQuiet,
       callbacks: {
         onPlace: (p) => { setPlace(p); setMyTable(api.myTable()); },
@@ -254,7 +260,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       return (await res.json()) as Snapshot;
     };
     // Progreso guardado de este mundo: una sola lectura al montar.
-    fetch(`${url}?progress=1`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (!stopped && d?.progress && d.cartridge === cartridge.id) api.setProgress(d.progress); }).catch(() => {});
+    fetch(`${url}?progress=1`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (!stopped && d?.progress && d.cartridge === cartridge.id) api.setProgress(d.progress); else if (!d?.progress) console.warn("[mundo] no llegó el progreso guardado", d?.error ?? d?.cartridge); }).catch((err) => console.warn("[mundo] no llegó el progreso guardado", err));
     const apply = (snap: Snapshot) => {
       // Quien administra cambió de mundo: se desmonta éste y se monta el otro. La presencia y el chat se quedan.
       if (snap.cartridge && snap.cartridge !== cartridge.id && hasCartridge(snap.cartridge)) {
@@ -336,6 +342,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
     const leave = () => { try { navigator.sendBeacon(url, new Blob([JSON.stringify({ leave: true })], { type: "application/json" })); } catch {} };
     window.addEventListener("pagehide", leave);
     void sync();
+    const posTimer = window.setInterval(savePos, 3000);
+    window.addEventListener("pagehide", savePos);
 
     return () => {
       stopped = true;
@@ -346,6 +354,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       window.removeEventListener("pointerdown", unlock, true);
       window.removeEventListener("keydown", unlock, true);
       if (!switchingRef.current) leave();
+      savePos(); window.clearInterval(posTimer); window.removeEventListener("pagehide", savePos);
       sound.destroy();
       soundRef.current = null;
       api.destroy();

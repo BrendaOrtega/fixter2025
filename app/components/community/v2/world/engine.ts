@@ -119,6 +119,8 @@ export type WorldApi = {
   /** El servidor confirmó (o negó) el asiento. */
   confirmSeat: (table: number | null, seat: number | null) => void;
   myTable: () => number | null;
+  /** Dónde estás ahora (para volver al mismo punto al regresar al Mundo). */
+  where: () => Point;
   myState: () => MyState;
   /** Punto del mundo en pixeles del mapa (para pruebas y para anclar cosas encima). */
   screenOf: (x: number, y: number) => { x: number; y: number };
@@ -136,6 +138,8 @@ function lerpAngle(a: number, b: number, k: number) {
 export function createWorld(opts: {
   canvas: HTMLCanvasElement; stage: HTMLElement; cartridge: Pick<Cartridge, "structure" | "copy" | "mode" | "createState">; skin: WorldSkin;
   meId: string; meName: string; mePhoto: string | null; look: Look; quiet: boolean; callbacks: Callbacks;
+  /** Dónde aparecer (p. ej. donde estabas antes de entrar a un lugar). Fuera del mapa o sin esto: `spawn`. */
+  start?: Point | null;
 }): WorldApi {
   const { stage, callbacks: cb } = opts;
   const S = opts.cartridge.structure, copy = opts.cartridge.copy;
@@ -173,7 +177,8 @@ export function createWorld(opts: {
     model: look.model, color: look.color, pilot: look.pilot, tx: null, ty: null, table: null, seat: null,
     bob: (id.length * 1.7) % TAU, waveT: 0, face: null, shakeT: 0, hp: BOT_HP, healT: 0, downT: 0, warpT: 0, shieldT: 0, leaveT: 0,
   });
-  const player = entity("me", "me", opts.meName, opts.look, S.spawn.x, S.spawn.y);
+  const st0 = opts.start && opts.start.x >= 0 && opts.start.y >= 0 && opts.start.x <= WORLD_W && opts.start.y <= WORLD_H ? opts.start : S.spawn;
+  const player = entity("me", "me", opts.meName, opts.look, st0.x, st0.y);
   player.face = faceFor(opts.meId, opts.meName, opts.mePhoto);
   player.photoURL = opts.mePhoto;
   if (T) player.hp = T.player.hp;
@@ -482,11 +487,21 @@ export function createWorld(opts: {
     batch = { stats: {}, quests: new Set() };
   }
   const saveTimer = window.setInterval(flushSave, 6000);
+  // Si lo guardado no llega (sin red, error del servidor), el juego arranca igual con progreso vacío.
+  const progressFallback = S.progress ? window.setTimeout(() => { if (!progress && !state.dead) applyProgress({ stats: {}, quests: [] }); }, 5000) : 0;
+  function applyProgress(p: Progress) {
+    progress = { stats: { ...p.stats }, quests: [...p.quests] };
+    // Lo que se juntó antes de que llegara también cuenta.
+    const pending = batch; batch = { stats: {}, quests: new Set() };
+    save(pending.stats, [...pending.quests]);
+    modeCtx.progress = progress;
+    signal({ type: "progress-loaded" });
+  }
 
   const modeCtx: ModeContext = {
     now: 0, meId: opts.meId, player, others: [], places, nearPlace: null, shared,
     sound: (name) => cb.onSound(name),
-    bubble: (entity, text) => { state.bubbles = state.bubbles.filter((b) => b.entity !== entity || b.say); state.bubbles.push({ entity, text: text.slice(0, 60), t: 0, dur: 1.6 }); },
+    bubble: (entity, text) => { state.bubbles = state.bubbles.filter((b) => b.entity !== entity || b.say); state.bubbles.push({ entity, text: text.slice(0, 60), t: 0, dur: Math.max(2.2, Math.min(60, text.length) * 0.075) }); },
     hud: (hud) => { const key = JSON.stringify(hud); if (key !== hudKey) { hudKey = key; cb.onHud?.(hud); } },
     propose: (key, value) => commit({ [key]: value }),
     commit,
@@ -1041,6 +1056,7 @@ export function createWorld(opts: {
       if (table === null) { player.table = player.seat = null; refreshPlace(); } else if (table === player.table) player.seat = seat;
     },
     myTable: () => player.table,
+    where: () => ({ x: Math.round(player.x), y: Math.round(player.y) }),
     setShared(next) {
       const prev = shared; shared = next;
       for (const key of new Set([...Object.keys(prev), ...Object.keys(next)])) {
@@ -1057,16 +1073,9 @@ export function createWorld(opts: {
         weak: !!T && player.downT <= 0 && player.table === null && player.hp <= T.player.hp / 2 };
     },
     screenOf: (x, y) => toScreen(x, y),
-    setProgress(p) {
-      progress = { stats: { ...p.stats }, quests: [...p.quests] };
-      // Lo que se juntó antes de que llegara también cuenta.
-      const pending = batch; batch = { stats: {}, quests: new Set() };
-      save(pending.stats, [...pending.quests]);
-      modeCtx.progress = progress;
-      signal({ type: "progress-loaded" });
-    },
+    setProgress: (p) => applyProgress(p),
     destroy() {
-      flushSave(); window.clearInterval(saveTimer); guide.remove();
+      flushSave(); window.clearInterval(saveTimer); window.clearTimeout(progressFallback); guide.remove();
       state.dead = true; cancelAnimationFrame(raf); observer.disconnect();
       window.removeEventListener("keydown", onKeyDown); window.removeEventListener("keyup", onKeyUp); window.removeEventListener("blur", onBlur);
       stage.removeEventListener("pointerdown", onPointerDown);
