@@ -27,9 +27,9 @@ const PLACES: Place[] = [
 
 // Robots de la casa: su ruta sale del reloj, así todos los ven igual.
 const BOTS: BotDef[] = [
-  { id: "bot:ghosty", name: "Ghosty", look: { model: "solo", color: "lilac", pilot: "ghosty" }, note: "Robot de la casa · le da vueltas al Faro",
+  { id: "bot:ghosty", name: "Ghosty", look: { model: "ghosty", color: "sky", pilot: "avatar" }, note: "Robot de la casa · le da vueltas al Faro",
     at: (t) => ({ x: 900 + Math.cos(t * 0.18) * 230, y: 420 + Math.sin(t * 0.18) * 170 }) },
-  { id: "bot:correo", name: "Globo Correo", look: { model: "balloon", color: "amber", pilot: "ghosty" }, note: "Robot de la casa · lleva el correo entre islas",
+  { id: "bot:cartero", name: "Ghostyllo Cartero", look: { model: "ghostling", color: "amber", pilot: "avatar" }, note: "Robot de la casa · lleva el correo entre islas",
     at: (t) => ({ x: 900 + Math.sin(t * 0.07) * 620, y: 600 + Math.sin(t * 0.14 + 1) * 120 }) },
 ];
 
@@ -40,26 +40,23 @@ export const structure: WorldStructure = {
   tables: TABLES,
   tableZone: { name: "Islotes", entry: { x: 610, y: 760 }, x: 200, y: 760, w: 820, h: 300 },
   bots: BOTS,
+  // Cada miembro es un fantasma en pixel art: Ghosty (lavanda, con lentes; su color no cambia) o un
+  // ghostyllo del color que elija. La foto del miembro va junto a su nombre.
   looks: {
     models: [
-      { id: "plane", name: "Avioneta" },
-      { id: "balloon", name: "Globo" },
-      { id: "kite", name: "Papalote" },
-      { id: "solo", name: "Volando solito" },
-    ],
-    colors: [
-      { id: "mint", name: "Menta" },
-      { id: "green", name: "Verde" },
-      { id: "amber", name: "Ámbar" },
-      { id: "lilac", name: "Lila" },
-      { id: "coral", name: "Coral" },
-    ],
-    pilots: [
-      { id: "avatar", name: "Mi avatar" },
+      { id: "ghostling", name: "Ghostyllo" },
       { id: "ghosty", name: "Ghosty" },
     ],
-    initial: { model: "plane", color: "mint", pilot: "ghosty" },
-    fallback: { model: "plane", color: "mint", pilot: "ghosty" },
+    colors: [
+      { id: "sky", name: "Cielo" },
+      { id: "mint", name: "Menta" },
+      { id: "amber", name: "Ámbar" },
+      { id: "coral", name: "Coral" },
+      { id: "green", name: "Verde" },
+    ],
+    pilots: [{ id: "avatar", name: "Mi avatar" }],
+    initial: { model: "ghostling", color: "sky", pilot: "avatar" },
+    fallback: { model: "ghostling", color: "sky", pilot: "avatar" },
   },
   // Vuelo libre con inercia, sin gravedad.
   movement: { maxSpeed: 320, accel: 640, drag: 1.7, idleDrag: 2.6, seatSpeed: 220, margin: 28, targetMargin: 40 },

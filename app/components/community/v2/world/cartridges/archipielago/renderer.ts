@@ -1,258 +1,294 @@
-// Archipiélago: renderizador en canvas 2D con look pixel art.
+// Archipiélago: renderizador en canvas 2D, portado de la vista aérea de «Ghosty sobre las islas».
 //
-// El mundo (mar, islas, sombras, vehículos, estrellas) se pinta en un búfer chico donde un pixel vale
-// `WP` unidades del mapa, alineado a la rejilla, y se amplía sin suavizado al lienzo: pixeles gordos y
-// nítidos. Encima, ya en resolución real, van las caras (foto del miembro o Ghosty oficial, que nunca
-// se repinta), las etiquetas y las burbujas.
+// Todo el mundo se pinta en un búfer chico (un pixel = `WP` unidades del mapa) alineado a la rejilla
+// y se amplía sin suavizado: terreno con tramado, olas que destellan, estelas blancas dobles, sombras
+// de nubes, estrellas que giran, chispas, fantasmas que se inclinan al girar y nubes por encima.
+// Encima, ya en resolución real, van los nombres con contorno, las burbujas y las pistas de orilla.
 
-import type { Entity, Place, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
+import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
+import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
+import { DECOR, bake } from "./landmarks";
 import { STAR_EVERY, starKey, starState, starsOf } from "./stars";
-import { C, DECOR, FONT, TAU, VEHICLES, WP, bake, clamp, colorOf, ghosty, seeded, spriteCache, vehicle } from "./sprites";
+import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
 type Ctx = CanvasRenderingContext2D;
-type Fx = { x: number; y: number; vx: number; vy: number; t: number; dur: number; color: string };
+const PI = Math.PI;
+const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
+const angd = (a: number, b: number) => { let d = (a - b) % TAU; if (d > PI) d -= TAU; if (d < -PI) d += TAU; return d; };
+const OUTLINE = "#0b2f66", FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 
-/** Dónde se planta la decoración de cada tipo de isla (en pixeles, respecto al centro) y su radio. */
-const ISLAND_K: Record<string, number> = { lighthouse: 0.62, mural: 0.6, cinema: 0.6, school: 0.6, islet: 0.5 };
-const LABEL_DY: Record<string, number> = { lighthouse: 0.78, mural: 0.74, cinema: 0.74, school: 0.74, islet: 0.62 };
-
-/** Isla en pixel art: arena, pasto con textura, espuma y agua bajita alrededor. Se hornea una vez. */
-function bakeIsland(p: Place, seed: number) {
-  const R = (p.r * (ISLAND_K[p.kind] ?? 0.6)) / WP, pad = 7, half = Math.ceil(R * 1.2) + pad, size = half * 2;
-  const cv = document.createElement("canvas"); cv.width = cv.height = size;
-  const g = cv.getContext("2d") as Ctx, img = g.createImageData(size, size), rnd = seeded(seed);
-  const s1 = rnd() * TAU, s2 = rnd() * TAU, hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  const cols = { shallow: hex(C.shallow), foam: hex(C.foam), sand: hex(C.sand), sandDark: hex(C.sandDark), grass: hex(C.grass), grassDark: hex(C.grassDark) };
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    const dx = x - half + 0.5, dy = y - half + 0.5, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
-    const edge = R * (1 + 0.09 * Math.sin(3 * a + s1) + 0.05 * Math.sin(7 * a + s2));
-    let c: number[] | null = null;
-    if (d > edge + pad - 1) c = null;
-    else if (d > edge + 1.2) c = cols.shallow;
-    else if (d > edge) c = cols.foam;
-    else if (d > edge - 3) c = (x * 7 + y * 13) % 11 === 0 ? cols.sandDark : cols.sand;
-    else c = rnd() < 0.07 ? cols.grassDark : cols.grass;
-    if (!c) continue;
-    const i = (y * size + x) * 4; img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255;
-  }
-  g.putImageData(img, 0, 0);
-  // Palmeras alrededor de la orilla de pasto.
-  const palm = bake(DECOR.palm), n = p.kind === "islet" ? 1 : 3;
-  for (let i = 0; i < n; i++) {
-    const a = s1 + (i * TAU) / n + 0.9, rr = R - 7;
-    g.drawImage(palm, Math.round(half + Math.cos(a) * rr - 3), Math.round(half + Math.sin(a) * rr * 0.8 - 6));
-  }
-  return { cv, half };
-}
+/** Lo que la skin recuerda de cada fantasma para animarlo (inclinación, giro, estela). */
+type Fly = { rot: number; bank: number; roll: number; trail: { x: number; y: number; ang: number; t: number }[]; lastT: number };
+type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; c: string; s: number };
 
 export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasElement; stage: HTMLElement; structure: WorldStructure }): WorldRenderer {
   const ctx = cv.getContext("2d") as Ctx;
   const buf = document.createElement("canvas"), b = buf.getContext("2d") as Ctx;
-  const cache = spriteCache();
-  const islands = new Map(structure.places.map((p, i) => [p.id, bakeIsland(p, i * 31 + 7)]));
-  const waves = (() => { const r = seeded(5); return Array.from({ length: 160 }, () => ({ x: r() * structure.size.w, y: r() * structure.size.h, ph: r() * TAU, len: 2 + Math.floor(r() * 3) })); })();
-  const seatsPerTable = structure.tables[0]?.seats.length ?? 0;
-  const facing = new Map<string, boolean>();
-  let fx: Fx[] = [];
+  const terrain = buildTerrain(structure), star = buildStar();
+  const sprites = new Map<string, HTMLCanvasElement>();
+  const spr = (key: string, make: () => HTMLCanvasElement) => { let c = sprites.get(key); if (!c) { c = make(); sprites.set(key, c); } return c; };
+  const seats = structure.tables[0]?.seats.length ?? 0;
+  // Nubes: siete formas, catorce nubes que van a la deriva sobre todo el mapa.
+  const clouds = (() => {
+    const rng = mulberry(777), kinds = [[2, 5], [3, 6], [3, 8], [4, 8], [5, 9], [2, 7], [4, 6]];
+    const shapes = kinds.map(([n, rb]) => makeCloud(rng, n, rb));
+    return Array.from({ length: 14 }, () => ({ x: rng() * terrain.w, y: rng() * terrain.h, alt: 52 + rng() * 40, v: 1.5 + rng() * 2.5, s: shapes[(rng() * shapes.length) | 0] as Cloud }));
+  })();
+  const flies = new Map<string, Fly>();
+  let parts: Particle[] = [];
+  const seenStars = new Set<string>();
   let view: View = { vw: 1, vh: 1, scale: 1, camx: 0, camy: 0, ox: 0, oy: 0 }, dpr = 1;
   let frame: WorldFrame;
-  let X0 = 0, Y0 = 0; // esquina del búfer en unidades del mapa (múltiplo de WP)
+  let X0 = 0, Y0 = 0; // esquina del búfer, en pixeles del arte
   const toScreen = (x: number, y: number) => ({ x: (x - view.camx) * view.scale + view.ox, y: (y - view.camy) * view.scale + view.oy });
-  /** Del mapa al pixel del búfer (entero: así todo cae en la rejilla). */
-  const px = (x: number) => Math.round((x - X0) / WP), py = (y: number) => Math.round((y - Y0) / WP);
-  const blit = (img: HTMLCanvasElement, x: number, y: number, ax = 0.5, ay = 0.5) => b.drawImage(img, px(x) - Math.round(img.width * ax), py(y) - Math.round(img.height * ay));
+  /** Del mapa (unidades) al pixel del búfer. */
+  const bx = (x: number) => Math.round(x / WP - X0), by = (y: number) => Math.round(y / WP - Y0);
 
-  // ── Mundo en pixeles ──
-  function drawSea(t: number, quiet: boolean) {
-    b.fillStyle = C.sea; b.fillRect(0, 0, buf.width, buf.height);
-    b.fillStyle = C.wave;
-    for (const w of waves) {
-      const k = quiet ? 1 : Math.sin(t * 1.1 + w.ph);
-      if (k < 0.1) continue;
-      const shift = quiet ? 0 : Math.round(Math.sin(t * 0.6 + w.ph) * 1.5);
-      b.fillRect(px(w.x) + shift, py(w.y), w.len, 1);
+  function ell(cx: number, cy: number, rx: number, ry: number) {
+    for (let dy = -ry; dy <= ry; dy++) { const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry + 0.01)))); b.fillRect(cx - hw, cy + dy, hw * 2 + 1, 1); }
+  }
+  function line(x0: number, y0: number, x1: number, y1: number) {
+    const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx - dy;
+    for (let k = 0; k < 300; k++) { b.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x0 += sx; } if (e2 < dx) { err += dx; y0 += sy; } }
+  }
+  const emit = (p: Particle) => { if (parts.length < 260) parts.push(p); };
+
+  function flyOf(e: Entity, t: number) {
+    let f = flies.get(e.id);
+    if (!f) { f = { rot: 0, bank: 0, roll: 0, trail: [], lastT: 0 }; flies.set(e.id, f); }
+    const dt = frame.dt, moving = e.thrust > 0.15 && e.table == null;
+    // Vuela de cabeza hacia su rumbo; quieto (o sentado) se endereza.
+    const want = moving ? e.ang + PI / 2 : 0, step = angd(want, f.rot) * Math.min(1, 7 * dt);
+    f.rot += step; f.bank += (clamp(step / Math.max(dt, 1e-3) / 2.2, -1, 1) - f.bank) * Math.min(1, 9 * dt);
+    if (f.roll > 0) { f.roll += dt / 0.8; if (f.roll >= 1) f.roll = 0; }
+    // Estela: un punto cada 20 ms mientras se mueve; cada punto dura 1.7 s.
+    if (moving && t - f.lastT > 0.02) { f.lastT = t; f.trail.push({ x: e.x, y: e.y, ang: e.ang, t }); if (f.trail.length > 85) f.trail.shift(); }
+    while (f.trail.length && t - f.trail[0].t > 1.7) f.trail.shift();
+    return f;
+  }
+
+  function drawTrail(f: Fly) {
+    const n = f.trail.length; if (n < 3) return;
+    b.fillStyle = "#fff";
+    for (const side of [-1, 1]) {
+      let px = 0, py = 0;
+      f.trail.forEach((p, i) => {
+        const x = bx(p.x - Math.sin(p.ang) * 18 * side), y = by(p.y + Math.cos(p.ang) * 18 * side) + 6;
+        if (i > 1) { b.globalAlpha = (Math.ceil((i / n) * 4) / 4) * 0.9; line(px, py, x, y); }
+        px = x; py = y;
+      });
     }
-  }
-  function drawIsland(p: Place, t: number) {
-    const isl = islands.get(p.id);
-    if (!isl) return;
-    b.drawImage(isl.cv, px(p.x) - isl.half, py(p.y) - isl.half);
-    const status = frame.placeStatus[p.id];
-    if (p.kind === "lighthouse") {
-      const on = !!status?.on;
-      // Con la sala abierta el faro se enciende y su haz gira.
-      if (on && !frame.quiet) {
-        const a = t * 1.4; b.fillStyle = "rgba(255, 233, 168, .35)";
-        for (let s = 3; s < 34; s++) for (const da of [-0.06, 0, 0.06]) b.fillRect(px(p.x) + Math.round(Math.cos(a + da) * s), py(p.y) - 13 + Math.round(Math.sin(a + da) * s * 0.6), 1, 1);
-      }
-      blit(cache(`lh:${on}`, () => bake(DECOR.lighthouse, { L: on ? "#FFE9A8" : "#7C8A8E" })), p.x, p.y - 6 * WP, 0.5, 0.6);
-    } else if (p.kind === "islet") {
-      const busy = (frame.tableCounts[p.table as number] ?? 0) > 0, tb = structure.tables[p.table as number];
-      for (const s of tb?.seats ?? []) blit(cache("stump", () => bake(DECOR.stump)), s.x, s.y);
-      const flick = busy && !frame.quiet && Math.sin(t * 9) > 0;
-      blit(cache(`fire:${busy}:${flick}`, () => bake(busy ? DECOR.fire : DECOR.fireOff, flick ? { o: "#FFE9A8", Y: "#F7B267" } : {})), p.x, p.y);
-    } else if (DECOR[p.kind]) {
-      blit(cache(`d:${p.kind}`, () => bake(DECOR[p.kind])), p.x, p.y - 3 * WP);
-    }
-  }
-  function drawStars(t: number) {
-    if (!structure.shared) return;
-    const now = starState.now || Date.now() / 1000, wave = Math.floor(now / STAR_EVERY), left = STAR_EVERY - (now % STAR_EVERY);
-    starsOf(wave, structure.size, frame.places).forEach((s, i) => {
-      if (starState.taken.has(starKey(wave, i))) return;
-      // Parpadea los últimos 3 s antes de cambiar de tanda.
-      if (left < 3 && !frame.quiet && Math.sin(t * 18) < 0) return;
-      const up = frame.quiet ? 0 : Math.round(Math.sin(t * 3 + i) * 1);
-      b.fillStyle = C.shadow; b.fillRect(px(s.x) - 2, py(s.y) + 4, 5, 1);
-      b.drawImage(cache("star", () => bake(DECOR.star, { S: C.starDark })), px(s.x) - 2, py(s.y) - 2 + up);
-    });
-  }
-  function bobOf(e: Entity, t: number) { return frame.quiet ? 0 : Math.round(Math.sin(t * 2.2 + e.bob * TAU) * 1); }
-  function drawFlyer(e: Entity, t: number) {
-    const lift = e.table != null ? 1 : 5; // sentado vuela bajito
-    // Sombra sobre el agua: un óvalo de pixeles, más abajo que el vehículo.
-    b.fillStyle = C.shadow; b.globalAlpha = 0.55;
-    b.fillRect(px(e.x) - 4, py(e.y) + lift + 1, 9, 1); b.fillRect(px(e.x) - 3, py(e.y) + lift, 7, 3);
     b.globalAlpha = 1;
-    if (Math.abs(Math.cos(e.ang)) > 0.2 && e.thrust > 0.05) facing.set(e.id, Math.cos(e.ang) < 0);
-    const flip = e.model === "balloon" ? false : facing.get(e.id) ?? false;
-    const v = vehicle(cache, e.model, e.color, flip);
-    if (v) b.drawImage(v, px(e.x) - Math.round(v.width / 2), py(e.y) - Math.round(v.height / 2) + bobOf(e, t));
-    // Estela: soplos blancos cuando acelera.
-    if (!frame.quiet && e.thrust > 0.45 && Math.random() < 0.35) {
-      const back = flip ? 1 : -1;
-      fx.push({ x: e.x + back * 30, y: e.y + (Math.random() - 0.5) * 8, vx: back * 20, vy: 0, t: 0, dur: 0.5, color: C.ink });
-    }
   }
 
-  // ── Encima, en resolución real ──
-  /** Centro de la cara de quien vuela, en pantalla, y su radio. */
-  function seatOf(e: Entity, t: number) {
-    const sp = VEHICLES[e.model], s = toScreen(e.x, e.y), k = WP * view.scale, bob = bobOf(e, t) * k;
-    if (!sp?.seat) return { x: s.x, y: s.y + bob, r: 15 * view.scale, solo: true };
-    const w = Math.max(...sp.rows.map((r) => r.length)), h = sp.rows.length;
-    const flip = e.model === "balloon" ? false : facing.get(e.id) ?? false;
-    const sx = flip ? w - sp.seat.x : sp.seat.x;
-    return { x: s.x + (sx - w / 2) * k, y: s.y + (sp.seat.y - h / 2) * k + bob, r: sp.seat.r * k, solo: false };
-  }
-  function drawFace(e: Entity, t: number) {
-    const st = seatOf(e, t), g = ghosty();
-    if (e.pilot === "ghosty" && g && g.complete && g.naturalWidth) {
-      // Ghosty oficial, sólo escalado (nunca repintado).
-      const h = st.solo ? st.r * 2.6 : st.r * 2.8, w = (h * g.naturalWidth) / g.naturalHeight;
-      ctx.drawImage(g, st.x - w / 2, st.y - h * (st.solo ? 0.5 : 0.75), w, h);
-      return;
-    }
-    const f = e.face, col = colorOf(e.color);
-    ctx.fillStyle = f?.bg ?? col.fill; ctx.strokeStyle = col.dark; ctx.lineWidth = Math.max(1, st.r * 0.18);
-    ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, TAU); ctx.fill();
-    if (f?.img && f.img.complete && f.img.naturalWidth) {
-      ctx.save(); ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, TAU); ctx.clip();
-      const iw = f.img.naturalWidth, ih = f.img.naturalHeight, side = Math.min(iw, ih);
-      ctx.drawImage(f.img, (iw - side) / 2, (ih - side) / 2, side, side, st.x - st.r, st.y - st.r, st.r * 2, st.r * 2); ctx.restore();
-    } else if (f) {
-      ctx.fillStyle = f.fg; ctx.font = `700 ${Math.round(st.r * 1.05)}px ${FONT}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(f.initials, st.x, st.y + 0.5);
-    }
-    ctx.stroke();
-  }
-  type LabelOpts = { size?: number; color?: string; stroke?: string; bg?: string; free?: boolean };
-  function label(x: number, y: number, text: string, o: LabelOpts = {}) {
-    const size = o.size ?? 11; ctx.font = `700 ${size}px ${FONT}`;
-    const w = ctx.measureText(text).width + 14, h = size + 8;
-    const bx = o.free ? x - w / 2 : clamp(x - w / 2, 4, Math.max(4, view.vw - w - 4));
-    ctx.fillStyle = o.bg ?? C.pill; ctx.fillRect(bx, y, w, h);
-    ctx.strokeStyle = o.stroke ?? C.line; ctx.lineWidth = 2; ctx.strokeRect(bx + 1, y + 1, w - 2, h - 2);
-    ctx.fillStyle = o.color ?? C.ink; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(text, bx + 7, y + h / 2 + 0.5);
-    return h;
-  }
-  function drawEdgeHints() {
-    const { vw, vh } = view, top = 56, m = 12;
-    for (const p of frame.places) {
-      if (p.kind === "islet" && p.table !== 1) continue;
-      const s = toScreen(p.x, p.y);
-      if (s.x > -20 && s.x < vw + 20 && s.y > top - 40 && s.y < vh + 20) continue;
-      const name = p.kind === "islet" ? "Islotes" : p.short;
-      ctx.font = `700 10px ${FONT}`; const w = ctx.measureText(name).width + 28, h = 20;
-      const cx = clamp(s.x, m + w / 2, vw - m - w / 2), cy = clamp(s.y, top + h / 2, vh - m - h / 2 - 4);
-      ctx.fillStyle = C.pill; ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
-      ctx.save(); ctx.translate(cx - w / 2 + 11, cy); ctx.rotate(Math.atan2(s.y - cy, s.x - cx)); ctx.fillStyle = C.mint;
-      ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(-3, -4); ctx.lineTo(-3, 4); ctx.closePath(); ctx.fill(); ctx.restore();
-      ctx.fillStyle = C.text; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(name, cx - w / 2 + 20, cy + 0.5);
+  function drawPlace(p: (typeof frame.places)[number], t: number) {
+    const cx = bx(p.x), cy = by(p.y);
+    const put = (img: HTMLCanvasElement, x: number, y: number) => b.drawImage(img, x - (img.width >> 1), y - (img.height >> 1));
+    if (p.kind === "lighthouse") {
+      const on = !!frame.placeStatus[p.id]?.on;
+      if (on && !frame.quiet) {
+        // Sala abierta: el faro gira su haz.
+        const a = t * 1.4; b.fillStyle = "rgba(255, 246, 176, .45)";
+        for (let s = 3; s < 38; s++) for (const da of [-0.07, 0, 0.07]) b.fillRect(cx + Math.round(Math.cos(a + da) * s), cy - 13 + Math.round(Math.sin(a + da) * s * 0.6), 1, 1);
+      }
+      b.fillStyle = "rgba(8,40,100,.32)"; ell(cx + 3, cy + 2, 7, 2);
+      put(spr(`lh:${on}`, () => bake(DECOR.lighthouse, { L: on ? "#fff6b0" : "#8f877f" })), cx, cy - 6);
+    } else if (p.kind === "islet") {
+      const busy = (frame.tableCounts[p.table as number] ?? 0) > 0, flick = busy && !frame.quiet && Math.sin(t * 9) > 0;
+      for (const s of structure.tables[p.table as number]?.seats ?? []) put(spr("stump", () => bake(DECOR.stump)), bx(s.x), by(s.y));
+      put(spr(`fire:${busy}:${flick}`, () => bake(busy ? DECOR.fire : DECOR.fireOff, flick ? { o: "#fff6b0", Y: "#ff9b2e" } : {})), cx, cy);
+    } else if (DECOR[p.kind]) {
+      const img = spr(`d:${p.kind}`, () => bake(DECOR[p.kind]));
+      b.fillStyle = "rgba(8,40,100,.32)"; ell(cx + 3, cy + (img.height >> 1) - 1, img.width >> 1, 2);
+      put(img, cx, cy - 2);
     }
   }
 
   function render(f: WorldFrame) {
     frame = f; view = f.view;
-    for (const e of fx) { e.t += f.dt; e.x += e.vx * f.dt; e.y += e.vy * f.dt; }
-    fx = fx.filter((e) => e.t < e.dur);
-    const { vw, vh, scale } = view, t = f.t;
-    // Búfer alineado a la rejilla de WP que cubre la pantalla.
-    const unit = WP * scale;
-    X0 = Math.floor((view.camx - view.ox / scale) / WP) * WP; Y0 = Math.floor((view.camy - view.oy / scale) / WP) * WP;
+    const { vw, vh, scale } = view, t = f.t, dt = f.dt, unit = WP * scale;
+    X0 = Math.floor((view.camx - view.ox / scale) / WP); Y0 = Math.floor((view.camy - view.oy / scale) / WP);
     const bw = Math.ceil(vw / unit) + 2, bh = Math.ceil(vh / unit) + 2;
     if (buf.width !== bw || buf.height !== bh) { buf.width = bw; buf.height = bh; }
     b.imageSmoothingEnabled = false;
 
-    drawSea(t, f.quiet);
-    for (const p of f.places) drawIsland(p, t);
-    drawStars(t);
-    const flyers = [...f.others, f.player].filter((e) => e.downT <= 0).sort((a, c) => a.y - c.y);
+    // ── Agua y terreno ──
+    b.fillStyle = WATER[5]; b.fillRect(0, 0, bw, bh);
+    b.drawImage(terrain.cv, -X0, -Y0);
+    if (!f.quiet) {
+      // Destellos de ola que aparecen y se apagan, sólo en agua honda.
+      b.fillStyle = "#e4f4ff";
+      const G = 21, gx0 = Math.floor(X0 / G) - 1, gy0 = Math.floor(Y0 / G) - 1;
+      for (let gy = gy0; gy <= gy0 + Math.ceil(bh / G) + 2; gy++) for (let gx = gx0; gx <= gx0 + Math.ceil(bw / G) + 2; gx++) {
+        const r1 = hsh(gx, gy, 41); if (r1 > 0.55) continue;
+        const wx = gx * G + ((hsh(gx, gy, 42) * G) | 0), wy = gy * G + ((hsh(gx, gy, 43) * G) | 0);
+        if (!terrain.deep(wx * WP, wy * WP) && wx >= 0 && wy >= 0 && wx < terrain.w && wy < terrain.h) continue;
+        if ((t * 1.1 + r1 * 9) % 2 > 0.7) continue;
+        b.fillRect(wx - X0, wy - Y0, 1, 3);
+      }
+    }
+
+    const flyers = [...f.others, f.player].filter((e) => e.downT <= 0);
+    const state = new Map(flyers.map((e) => [e.id, flyOf(e, t)] as const));
+    if (!f.mini && !f.quiet) for (const e of flyers) drawTrail(state.get(e.id) as Fly);
+
+    // ── Estrellas: sombra, y si alguien (tú) tomó una, sus chispas ──
+    const now = starState.now || Date.now() / 1000, wave = Math.floor(now / STAR_EVERY), left = STAR_EVERY - (now % STAR_EVERY);
+    const waveStars = structure.shared ? starsOf(wave, structure.size, f.places) : [];
+    waveStars.forEach((s, i) => {
+      const k = starKey(wave, i);
+      if (starState.taken.has(k)) {
+        if (!seenStars.has(k)) { seenStars.add(k); for (let j = 0; j < 9; j++) { const a = (j / 9) * TAU; emit({ x: s.x / WP, y: s.y / WP, vx: Math.cos(a) * 36, vy: Math.sin(a) * 36, life: 0.45, max: 0.45, c: j % 2 ? "#ffd93d" : "#fff6b0", s: 2 }); } }
+        return;
+      }
+      b.fillStyle = "rgba(8,40,100,.32)"; ell(bx(s.x) + 3, by(s.y) + 8, 4, 1);
+    });
+    if (seenStars.size > 80) seenStars.clear();
+    // Sombras de nubes.
+    b.globalAlpha = 0.42;
+    for (const c of clouds) {
+      const x = ((c.x + (f.quiet ? 0 : c.v * t)) % (terrain.w + 80)) - 40;
+      b.drawImage(c.s.s, Math.round(x + c.alt * 0.2 - X0) - (c.s.w >> 1), Math.round(c.y + c.alt * 0.28 - Y0) - (c.s.h >> 1));
+    }
+    b.globalAlpha = 1;
+    for (const p of f.places) drawPlace(p, t);
+
     if (f.mini) {
-      for (const e of flyers) { b.fillStyle = e.kind === "me" ? C.ink : colorOf(e.color).fill; b.fillRect(px(e.x) - 1, py(e.y) - 1, 3, 3); }
-    } else for (const e of flyers) drawFlyer(e, t);
-    for (const e of fx) { b.globalAlpha = 1 - e.t / e.dur; b.fillStyle = e.color; b.fillRect(px(e.x), py(e.y), 1, 1); }
+      for (const e of flyers) { b.fillStyle = e.kind === "me" ? "#ffd93d" : "#fff"; b.fillRect(bx(e.x) - 1, by(e.y) - 1, 3, 3); }
+    } else {
+      // Sombra de cada fantasma.
+      b.fillStyle = "rgba(8,40,100,.38)";
+      for (const e of flyers) ell(bx(e.x) + 6, by(e.y) + (e.table != null ? 5 : 9), 8, 5);
+      for (const [i, s] of waveStars.entries()) {
+        if (starState.taken.has(starKey(wave, i))) continue;
+        if (left < 3 && !f.quiet && Math.sin(t * 18) < 0) continue; // parpadea antes de cambiar de tanda
+        const w = Math.max(3, Math.round(14 * Math.max(0.28, Math.abs(Math.cos(t * 2.6 + i))))), bob = Math.round(Math.sin(t * 3 + i) * 1.5);
+        b.drawImage(star, bx(s.x) - (w >> 1), by(s.y) - 10 + bob, w, 14);
+      }
+    }
+    // Chispas.
+    for (const p of parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+    parts = parts.filter((p) => p.life > 0);
+    for (const p of parts) { b.globalAlpha = clamp((p.life / p.max) * 1.6, 0, 1); b.fillStyle = p.c; b.fillRect(Math.round(p.x - X0 - p.s / 2), Math.round(p.y - Y0 - p.s / 2), p.s, p.s); }
     b.globalAlpha = 1;
 
-    // Ampliar sin suavizado: pixeles gordos y nítidos.
+    if (!f.mini) {
+      // Fantasmas, de atrás para adelante.
+      for (const e of [...flyers].sort((a, c) => a.y - c.y)) {
+        const st = state.get(e.id) as Fly, rc = Math.cos(st.roll * TAU), back = st.roll > 0 && rc < 0;
+        const sp = ghostSprite(e.model, e.color, back);
+        if (!sp) continue;
+        // Turbo: a toda velocidad suelta chispas por detrás.
+        if (!f.quiet && e.thrust > 0.9 && e.table == null) {
+          const fx = Math.cos(e.ang), fy = Math.sin(e.ang), cols = ["#fff6b0", "#ffd93d", "#ff9b2e", "#ffffff"];
+          const j = (Math.random() - 0.5) * 6;
+          emit({ x: e.x / WP - fx * 9 - fy * j, y: e.y / WP - fy * 9 + fx * j, vx: -fx * (30 + Math.random() * 30), vy: -fy * (30 + Math.random() * 30), life: 0.35 + Math.random() * 0.4, max: 0.75, c: cols[(Math.random() * 4) | 0], s: Math.random() < 0.4 ? 2 : 1 });
+        }
+        const scx = (st.roll > 0 ? Math.max(0.12, Math.abs(rc)) : 1) * (1 - 0.22 * Math.abs(st.bank));
+        const q = TAU / 24, rot = Math.round((st.rot + st.bank * 0.12) / q) * q;
+        const wob = f.quiet ? 0 : Math.floor(t * 9 + e.bob * 4) & 3, lift = st.roll > 0 ? Math.sin(st.roll * PI) * 4 : 0;
+        b.save(); b.translate(bx(e.x), Math.round(by(e.y) - 1 - lift)); if (rot) b.rotate(rot); if (scx !== 1) b.scale(scx, 1);
+        b.drawImage(sp.frames[wob], -(sp.w >> 1), -(sp.h >> 1)); b.restore();
+      }
+    }
+    // Nubes por encima de todo.
+    for (const c of clouds) {
+      const x = ((c.x + (f.quiet ? 0 : c.v * t)) % (terrain.w + 80)) - 40;
+      b.drawImage(c.s.c, Math.round(x - X0) - (c.s.w >> 1), Math.round(c.y - Y0) - (c.s.h >> 1));
+    }
+
+    // ── Ampliar sin suavizado ──
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = unit < 1.5; // en el mapa reducido el pixel es menor que uno de pantalla
-    ctx.fillStyle = C.sea; ctx.fillRect(0, 0, vw, vh);
-    ctx.drawImage(buf, (X0 - view.camx) * scale + view.ox, (Y0 - view.camy) * scale + view.oy, bw * unit, bh * unit);
+    ctx.imageSmoothingEnabled = unit < 1.5;
+    ctx.fillStyle = WATER[5]; ctx.fillRect(0, 0, vw, vh);
+    ctx.drawImage(buf, (X0 * WP - view.camx) * scale + view.ox, (Y0 * WP - view.camy) * scale + view.oy, bw * unit, bh * unit);
     ctx.imageSmoothingEnabled = true;
 
     if (f.mini) {
-      for (const p of f.places) if (p.kind !== "islet") { const s = toScreen(p.x, p.y + p.r * 0.7); label(s.x, Math.min(s.y, vh - 22), p.short, { size: 10 }); }
+      for (const p of f.places) if (p.kind !== "islet") { const s = toScreen(p.x, p.y + p.r * 0.6); text(s.x, Math.min(s.y, vh - 14), p.short, 10); }
       return;
     }
-    // Destino del toque: una cruz de pixeles que late.
     if (f.marker) {
-      const s = toScreen(f.marker.x, f.marker.y), k = 3 + Math.round(((f.marker.t * 2) % 1) * 3);
-      ctx.fillStyle = C.ink; for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(s.x + dx * k * 2 - 2, s.y + dy * k * 2 - 2, 4, 4);
+      const s = toScreen(f.marker.x, f.marker.y), k = 4 + Math.round(((f.marker.t * 2) % 1) * 4);
+      ctx.fillStyle = "#fff"; for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ctx.fillRect(s.x + dx * k - 2, s.y + dy * k - 2, 4, 4);
     }
-    for (const e of flyers) drawFace(e, t);
     for (const p of f.places) {
-      const s = toScreen(p.x, p.y + p.r * (LABEL_DY[p.kind] ?? 0.7)), near = p === f.nearPlace;
-      if (p.kind === "islet") { label(s.x, s.y, `${p.short} · ${f.tableCounts[p.table as number] ?? 0} de ${seatsPerTable}`, { size: 10, free: true, stroke: near ? C.mint : C.line, color: near ? C.ink : C.text }); continue; }
-      const h = label(s.x, s.y, p.short, { size: 12, stroke: near ? C.mint : C.line });
-      const sub = f.placeStatus[p.id]?.sub;
-      if (sub) label(s.x, s.y + h + 3, sub, { size: 10, color: f.placeStatus[p.id]?.on ? C.mint : C.gray });
+      const near = p === f.nearPlace, s = toScreen(p.x, p.y + p.r * (p.kind === "islet" ? 0.55 : 0.62));
+      if (p.kind === "islet") { text(s.x, s.y, `${p.short} · ${f.tableCounts[p.table as number] ?? 0} de ${seats}`, 11, near ? "#ffd93d" : "#fff", true); continue; }
+      text(s.x, s.y, p.short, 14, near ? "#ffd93d" : "#fff");
+      const st = f.placeStatus[p.id];
+      if (st?.sub) text(s.x, s.y + 17, st.sub, 11, st.on ? "#ffd93d" : "#dff1ff");
     }
+    // El nombre va justo debajo del sprite (media altura en pixeles del arte, más la sombra).
+    const below = 17 * unit;
     for (const e of f.others) {
       if (e.downT > 0) continue;
-      const s = toScreen(e.x, e.y), near = e === f.nearEntity, dy = 26 * scale + 4;
-      label(s.x, s.y + dy, e.kind === "bot" ? `${e.name} · robot` : e.first, { size: 10, free: true, stroke: near ? C.mint : C.line, color: near ? C.ink : C.text });
+      const s = toScreen(e.x, e.y);
+      nameTag(s.x, s.y + below, e.kind === "bot" ? e.name : e.first, e === f.nearEntity ? "#ffd93d" : "#fff", e.face?.img ?? null);
     }
     const me = toScreen(f.player.x, f.player.y);
-    label(me.x, me.y + 26 * scale + 4, "Tú", { size: 11, free: true, stroke: C.mint, color: C.mint });
+    nameTag(me.x, me.y + below, "Tú", "#ffd93d", null);
     for (const bub of f.bubbles) {
-      const s = toScreen(bub.entity.x, bub.entity.y), k = bub.t / bub.dur, rise = Math.min(1, bub.t / 0.2) * 6;
-      ctx.globalAlpha = k > 0.8 ? (1 - k) / 0.2 : 1;
-      label(s.x, s.y - 38 * scale - 18 - rise, bub.text, { size: 11, bg: C.ink, color: "#0E1317", stroke: C.ink });
-      ctx.globalAlpha = 1;
+      const s = toScreen(bub.entity.x, bub.entity.y), k = bub.t / bub.dur;
+      ctx.globalAlpha = k > 0.8 ? (1 - k) / 0.2 : 1; bubble(s.x, s.y - 15 * unit - 22 - Math.min(1, bub.t / 0.2) * 6, bub.text); ctx.globalAlpha = 1;
     }
-    drawEdgeHints();
+    edgeHints();
+  }
+
+  // ── Texto con contorno, como el letrero del juego ──
+  function text(x: number, y: number, s: string, size: number, color = "#fff", free = false) {
+    ctx.font = `800 ${size}px ${FONT}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    const w = ctx.measureText(s).width, cx = free ? x : clamp(x, w / 2 + 6, view.vw - w / 2 - 6);
+    ctx.lineJoin = "round"; ctx.lineWidth = 4; ctx.strokeStyle = OUTLINE; ctx.strokeText(s, cx, y);
+    ctx.fillStyle = color; ctx.fillText(s, cx, y);
+  }
+  function nameTag(x: number, y: number, s: string, color: string, img: HTMLImageElement | null) {
+    ctx.font = `800 11px ${FONT}`;
+    const w = ctx.measureText(s).width, lead = img ? 16 : 0, x0 = x - (w + lead) / 2;
+    if (img && img.complete && img.naturalWidth) {
+      ctx.save(); ctx.beginPath(); ctx.arc(x0 + 6, y + 6, 6, 0, TAU); ctx.fillStyle = OUTLINE; ctx.fill(); ctx.clip();
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, x0 + 1, y + 1, 10, 10); ctx.restore();
+    }
+    text(x0 + lead + w / 2, y, s, 11, color, true);
+  }
+  function bubble(x: number, y: number, s: string) {
+    ctx.font = `800 11px ${FONT}`; const w = ctx.measureText(s).width + 14, h = 20, x0 = clamp(x - w / 2, 4, view.vw - w - 4);
+    ctx.fillStyle = OUTLINE; ctx.fillRect(x0 - 2, y - 2, w + 4, h + 4); ctx.fillStyle = "#f2f6fb"; ctx.fillRect(x0, y, w, h);
+    ctx.fillStyle = OUTLINE; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(s, x0 + 7, y + h / 2 + 0.5);
+  }
+  function edgeHints() {
+    const { vw, vh } = view, top = 56, m = 12;
+    for (const p of frame.places) {
+      if (p.kind === "islet" && p.table !== 1) continue;
+      const s = toScreen(p.x, p.y);
+      // Si la isla asoma (y con ella su nombre), no hace falta la flechita.
+      const pad = p.r * 0.6 * view.scale;
+      if (s.x > -pad && s.x < vw + pad && s.y > top - 40 - pad && s.y < vh + pad) continue;
+      const name = p.kind === "islet" ? "Islotes" : p.short;
+      ctx.font = `800 10px ${FONT}`; const w = ctx.measureText(name).width + 26, h = 20;
+      const cx = clamp(s.x, m + w / 2, vw - m - w / 2), cy = clamp(s.y, top + h / 2, vh - m - h / 2 - 4);
+      ctx.fillStyle = OUTLINE; ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+      ctx.save(); ctx.translate(cx - w / 2 + 10, cy); ctx.rotate(Math.atan2(s.y - cy, s.x - cx)); ctx.fillStyle = "#ffd93d";
+      ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(-3, -4); ctx.lineTo(-3, 4); ctx.closePath(); ctx.fill(); ctx.restore();
+      ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(name, cx - w / 2 + 18, cy + 0.5);
+    }
   }
 
   function event(ev: WorldEvent) {
-    if (ev.type === "calm") fx = [];
-    else if (ev.type === "greet" || ev.type === "tickle") {
-      const e = ev.entity, n = ev.type === "greet" ? 10 : 4;
-      for (let i = 0; i < n; i++) { const a = (i * TAU) / n; fx.push({ x: e.x, y: e.y, vx: Math.cos(a) * 60, vy: Math.sin(a) * 60, t: 0, dur: 0.7, color: i % 2 ? C.star : C.mint }); }
+    if (ev.type === "calm") { parts = []; for (const f of flies.values()) f.trail = []; }
+    else if (ev.type === "greet") {
+      // Saludo: el fantasma da una vuelta de barril con un aro de chispas, como el doble toque del juego.
+      const e = ev.entity, f = flies.get(e.id);
+      if (f && f.roll <= 0) f.roll = 0.001;
+      for (let i = 0; i < 14; i++) { const a = (i / 14) * TAU; emit({ x: e.x / WP, y: e.y / WP, vx: Math.cos(a) * 34, vy: Math.sin(a) * 34, life: 0.5, max: 0.5, c: "#fff", s: 2 }); }
+    } else if (ev.type === "tickle") {
+      const e = ev.entity;
+      for (let i = 0; i < 6; i++) { const a = (i / 6) * TAU; emit({ x: e.x / WP, y: e.y / WP, vx: Math.cos(a) * 30, vy: Math.sin(a) * 30, life: 0.35, max: 0.35, c: "#ffd93d", s: 1 }); }
     }
   }
 
-  ghosty();
+  loadGhosts();
   return {
     resize(v) {
       view = v; dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -260,6 +296,6 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
     },
     render,
     event,
-    destroy() { fx = []; facing.clear(); },
+    destroy() { parts = []; flies.clear(); },
   };
 }

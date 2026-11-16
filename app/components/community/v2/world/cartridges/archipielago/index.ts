@@ -1,5 +1,5 @@
-// Archipiélago: islas en pixel art vistas desde arriba. Cada miembro vuela (avioneta, globo,
-// papalote o solito) entre las islas del club, con su sombra sobre el agua, y junta estrellas.
+// Archipiélago: la vista aérea de «Ghosty sobre las islas» hecha mundo del club. Cada miembro es un
+// fantasma en pixel art (Ghosty o un ghostyllo de su color) que vuela entre las islas y junta estrellas.
 //
 // Manifiesto: lo leen navegador y servidor (nada de DOM). La skin se carga aparte con `loadSkin`.
 import type { Cartridge, GameMode } from "../../cartridge";
@@ -36,16 +36,16 @@ function starsMode(): GameMode {
 export const archipielago: Cartridge = {
   id: WORLD_ID,
   name: WORLD_NAME,
-  description: "Islas en pixel art: cada miembro vuela entre el Faro, el Mural, el Cine y la Escuelita, y junta estrellas para romper el récord del club.",
+  description: "Ghosty sobre las islas: cada miembro es un fantasma en pixel art que vuela entre el Faro, el Mural, el Cine y la Escuelita y junta estrellas para romper el récord del club.",
   structure,
   copy: {
     loading: "Calentando motores…",
-    lookButton: "Mi vuelo",
-    lookTitle: "Cómo vuelas",
-    lookLabel: "Elegir cómo vuelo y ajustes",
-    modelLabel: "Vehículo",
+    lookButton: "Mi fantasma",
+    lookTitle: "Tu fantasma",
+    lookLabel: "Elegir mi fantasma y ajustes",
+    modelLabel: "Fantasma",
     colorLabel: "Color",
-    pilotLabel: "Piloto",
+    pilotLabel: "Cara",
     count: (n) => (n === 1 ? "1 en el aire" : `${n} en el aire`),
     roaming: "volando sobre las islas",
     hint: "Acércate a una isla o a alguien. Pasa sobre las estrellas para juntarlas.",
@@ -59,7 +59,7 @@ export const archipielago: Cartridge = {
     shootHint: "",
   },
   // Primer pintado: el mar (nunca negro plano).
-  poster: { backgroundColor: "#1D5A6B" },
+  poster: { backgroundColor: "#17529f" },
   loadSkin: () => import("./skin").then((m) => m.default),
   mode: starsMode,
 };

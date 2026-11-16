@@ -7,9 +7,9 @@
 import type { Place, Point } from "../../cartridge";
 
 export const STAR_EVERY = 30;
-export const STARS_PER_WAVE = 7;
+export const STARS_PER_WAVE = 12;
 /** Qué tan cerca hay que pasar para tomar una estrella (unidades del mapa). */
-export const STAR_REACH = 34;
+export const STAR_REACH = 52;
 
 function rng(seed: number) {
   return () => {
@@ -20,14 +20,23 @@ function rng(seed: number) {
   };
 }
 
-/** Las estrellas de una tanda: sobre el mar, nunca encima de una isla. */
+/**
+ * Las estrellas de una tanda, como en el juego original: arcos de 6 estrellas separadas 68 unidades
+ * que arrancan en una isla y se curvan un poco. Dos arcos por tanda, cada uno en un lugar distinto.
+ */
 export function starsOf(wave: number, size: { w: number; h: number }, places: Place[]): Point[] {
   const r = rng(wave * 7919 + 13), out: Point[] = [];
-  for (let tries = 0; out.length < STARS_PER_WAVE && tries < 200; tries++) {
-    const p = { x: 80 + r() * (size.w - 160), y: 80 + r() * (size.h - 160) };
-    if (places.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < q.r * 0.75 + 40)) continue;
-    if (out.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 140)) continue;
-    out.push(p);
+  const pool = places.filter((p) => p.target !== "table");
+  if (!pool.length) return out;
+  const first = Math.floor(r() * pool.length);
+  for (let k = 0; k < 2; k++) {
+    const p = pool[(first + k * Math.max(1, Math.floor(pool.length / 2))) % pool.length];
+    let a = r() * Math.PI * 2; const curve = (r() - 0.5) * 0.3;
+    let x = p.x + Math.cos(a + Math.PI) * p.r * 0.45, y = p.y + Math.sin(a + Math.PI) * p.r * 0.45;
+    for (let i = 0; i < STARS_PER_WAVE / 2; i++) {
+      out.push({ x: Math.min(size.w - 30, Math.max(30, x)), y: Math.min(size.h - 30, Math.max(30, y)) });
+      x += Math.cos(a) * 68; y += Math.sin(a) * 68; a += curve;
+    }
   }
   return out;
 }
