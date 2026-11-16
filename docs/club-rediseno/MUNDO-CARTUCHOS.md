@@ -209,3 +209,10 @@ Detalle y razones en `GODOT-PATRONES.md` (puntos 1 a 5, hechos).
   `world/__tests__/validate.test.ts` para todos los cartuchos registrados y avisa en la consola en desarrollo.
 
 Ejemplo de todo junto: el modo Estrellas de `cartridges/archipielago/index.ts`.
+
+### Interacciones del Archipiélago (16-nov-2026)
+Todas viven en el modo (`cartridges/archipielago/index.ts`) usando señales, áreas y `commit`:
+- **Carrera**: 7 aros fijos (`structure.areas`, `ring:i`); el coral es salida y meta. Récord del club `raceBest` (décimas, `merge: "min"`) con su dueño.
+- **Estrella de dos**: una grande por tanda; sólo se abre si otra persona está junto a ti (+3).
+- **Las traes**: la estrella dorada la toma quien llegue; se pasa tocando a alguien (`it`, `itAt`, 3 s de gracia). Corona sobre quien la trae.
+- **Choca esas cinco**: un saludo entre dos que están cerca suelta una lluvia de estrellas (señal `wave`).

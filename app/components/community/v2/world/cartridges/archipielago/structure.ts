@@ -1,6 +1,7 @@
 // Archipiélago: la estructura (datos). La lee el motor en el navegador y el servidor para validar.
 // Sólo datos y funciones puras: nada de DOM aquí.
 import type { BotDef, Place, TableDef, WorldStructure } from "../../cartridge";
+import { RINGS, RING_R } from "./stars";
 
 export const WORLD_ID = "archipielago";
 export const WORLD_NAME = "Archipiélago";
@@ -63,6 +64,15 @@ export const structure: WorldStructure = {
   movement: { maxSpeed: 320, accel: 640, drag: 1.7, idleDrag: 2.6, seatSpeed: 220, margin: 28, targetMargin: 40, boost: 1.8, steer: { turn: 2.4 } },
   camera: { minScale: 0.7, minScaleNarrow: 0.6, maxScale: 1.4 },
   combat: null,
-  // Modo «Estrellas»: el récord del club y quién lo tiene.
-  shared: { best: { type: "number", min: 0, max: 9999, merge: "max" }, leader: { type: "member" } },
+  // Récords del club y quién los tiene (estrellas y carrera, en décimas de segundo), y quién trae la estrella dorada.
+  shared: {
+    best: { type: "number", min: 0, max: 9999, merge: "max" },
+    leader: { type: "member" },
+    raceBest: { type: "number", min: 1, max: 36000, merge: "min" },
+    raceLeader: { type: "member" },
+    it: { type: "member" },
+    itAt: { type: "number", min: 0, max: 2147483647 },
+  },
+  // Los aros de la carrera: áreas fijas (el modo recibe una señal al cruzar cada uno).
+  areas: RINGS.map((p, i) => ({ id: `ring:${i}`, shape: { kind: "circle" as const, x: p.x, y: p.y, r: RING_R }, tags: ["ring"] })),
 };

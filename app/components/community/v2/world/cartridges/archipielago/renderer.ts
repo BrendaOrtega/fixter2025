@@ -8,7 +8,7 @@
 import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
 import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
 import { DECOR, bake } from "./landmarks";
-import { STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { ALT, createChase } from "./chase";
 import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
@@ -55,6 +55,28 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
 
   function ell(cx: number, cy: number, rx: number, ry: number) {
     for (let dy = -ry; dy <= ry; dy++) { const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry + 0.01)))); b.fillRect(cx - hw, cy + dy, hw * 2 + 1, 1); }
+  }
+  /** Aro de pixeles (vista de arriba): círculo achatado con borde y brillo. */
+  function ringTop(x: number, y: number, r: number, c: string, t: number, hot: boolean) {
+    const cx = bx(x), cy = by(y), rx = Math.round(r / WP), ry = Math.round((r / WP) * 0.55), n = Math.max(24, rx * 4);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU, px = Math.round(cx + Math.cos(a) * rx), py = Math.round(cy + Math.sin(a) * ry);
+      b.fillStyle = "#0b2f66"; b.fillRect(px - 1, py, 3, 2);
+      b.fillStyle = hot && ((i + Math.floor(t * 12)) % 6 < 3) ? "#fff6b0" : c; b.fillRect(px, py - 1, 2, 2);
+    }
+  }
+  /** Coronita de pixeles sobre quien trae la estrella dorada. */
+  function crownTop(x: number, y: number) {
+    b.fillStyle = "#7a4e10"; b.fillRect(x - 5, y - 1, 11, 4);
+    b.fillStyle = "#ffd93d"; b.fillRect(x - 4, y, 9, 2); b.fillRect(x - 4, y - 3, 1, 3); b.fillRect(x, y - 4, 1, 4); b.fillRect(x + 4, y - 3, 1, 3);
+    b.fillStyle = "#fff6b0"; b.fillRect(x - 3, y, 2, 1);
+  }
+  /** Lluvia de estrellas (choca esas cinco): chispas doradas que salen del punto. */
+  function showers() {
+    for (const q of starState.showers.splice(0)) for (let j = 0; j < 26; j++) {
+      const a = (j / 26) * TAU, v = 40 + (j % 3) * 22;
+      emit({ x: q.x / WP, y: q.y / WP, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 10, life: 0.9, max: 0.9, c: ["#ffd93d", "#fff6b0", "#ff9b2e"][j % 3], s: j % 4 ? 2 : 3 });
+    }
   }
   function line(c: Ctx, x0: number, y0: number, x1: number, y1: number) {
     const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx - dy;
@@ -176,6 +198,22 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
         const w = Math.max(3, Math.round(14 * Math.max(0.28, Math.abs(Math.cos(t * 2.6 + i))))), bob = Math.round(Math.sin(t * 3 + i) * 1.5);
         b.drawImage(star, bx(s.x) - (w >> 1), by(s.y) - 10 + bob, w, 14);
       }
+      if (structure.shared) {
+        showers();
+        // Aros de la carrera: la salida en coral, el siguiente que te toca brilla.
+        const race = starState.race;
+        RINGS.forEach((r, i) => ringTop(r.x, r.y, RING_R, i === 0 ? "#f4a39a" : "#e8f1fa", t, race.startedAt !== null ? i === race.next : i === 0));
+        // Estrella de dos: grande, con su círculo punteado.
+        const big = starState.big;
+        if (big && !big.taken) {
+          const bob = Math.round(Math.sin(t * 2.2) * 2), w = Math.max(6, Math.round(28 * Math.max(0.3, Math.abs(Math.cos(t * 1.8)))));
+          const rx = Math.round(BIG_R / WP);
+          for (let i = 0; i < 28; i += 2) { const a = (i / 28) * TAU + t * 0.6; b.fillStyle = "#fff6b0"; b.fillRect(Math.round(bx(big.x) + Math.cos(a) * rx), Math.round(by(big.y) + Math.sin(a) * rx * 0.6), 2, 2); }
+          b.drawImage(star, bx(big.x) - (w >> 1), by(big.y) - 20 + bob, w, 28);
+        }
+        // Estrella dorada sin dueño.
+        if (!starState.it) { const w = Math.max(3, Math.round(18 * Math.abs(Math.cos(t * 4)))); b.drawImage(star, bx(GOLDEN.x) - (w >> 1), by(GOLDEN.y) - 14 + Math.round(Math.sin(t * 5) * 2), w, 18); }
+      }
     }
     // Chispas.
     for (const p of parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; }
@@ -200,6 +238,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
         const wob = f.quiet ? 0 : Math.floor(t * 9 + e.bob * 4) & 3, lift = st.roll > 0 ? Math.sin(st.roll * PI) * 4 : 0;
         b.save(); b.translate(bx(e.x), Math.round(by(e.y) - 1 - lift)); if (rot) b.rotate(rot); if (scx !== 1) b.scale(scx, 1);
         b.drawImage(sp.frames[wob], -(sp.w >> 1), -(sp.h >> 1)); b.restore();
+        if (starState.it && starState.it === e.id) crownTop(bx(e.x), Math.round(by(e.y) - lift - (sp.h >> 1) - 4));
       }
     }
     // Nubes por encima de todo.
@@ -366,6 +405,28 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
       if (gr) { g.fillStyle = "rgba(8,40,100,.3)"; ell2(gr.x, gr.y, Math.max(2, Math.round(5 * p.sk)), Math.max(1, Math.round(1.5 * p.sk))); }
       items.push({ z: p.z, draw: () => { const k = kRel(p.z) * 1.6, w = Math.max(2, Math.round(14 * k * Math.max(0.28, Math.abs(Math.cos(t * 2.6 + i))))), h = Math.max(2, Math.round(14 * k)); g.drawImage(star, Math.round(p.x - w / 2), Math.round(p.y - h / 2), w, h); } });
     });
+    if (structure.shared) {
+      showers();
+      const race = starState.race;
+      RINGS.forEach((r, i) => {
+        const p = chase.project(r.x, r.y, ALT); if (!p || p.z > chase.far * 0.9) return;
+        const hot = race.startedAt !== null ? i === race.next : i === 0;
+        items.push({ z: p.z, draw: () => {
+          const k = kRel(p.z) * 1.6, rx = Math.max(3, Math.round(RING_R * 0.32 * k)), ry = Math.max(3, Math.round(RING_R * 0.38 * k)), n = 40;
+          for (let j = 0; j < n; j++) { const a = (j / n) * TAU; g.fillStyle = hot && ((j + Math.floor(t * 12)) % 6 < 3) ? "#fff6b0" : i === 0 ? "#f4a39a" : "#e8f1fa"; g.fillRect(Math.round(p.x + Math.cos(a) * rx) - 1, Math.round(p.y + Math.sin(a) * ry) - 1, Math.max(2, Math.round(k * 1.5)), Math.max(2, Math.round(k * 1.5))); }
+        } });
+      });
+      const special: { x: number; y: number; size: number }[] = [];
+      if (starState.big && !starState.big.taken) special.push({ ...starState.big, size: 28 });
+      if (!starState.it) special.push({ ...GOLDEN, size: 18 });
+      for (const sp of special) {
+        const p = chase.project(sp.x, sp.y, ALT); if (!p || p.z > chase.far * 0.8) continue;
+        items.push({ z: p.z, draw: () => { const k = kRel(p.z) * 1.6, h = Math.max(3, Math.round(sp.size * k)), w = Math.max(2, Math.round(h * Math.max(0.28, Math.abs(Math.cos(t * 2.6))))); g.drawImage(star, Math.round(p.x - w / 2), Math.round(p.y - h / 2), w, h); } });
+      }
+      const it = starState.it ? flyers.find((e) => e.id === starState.it) : null;
+      const ip = it ? chase.project(it.x, it.y, ALT + 16) : null;
+      if (ip) items.push({ z: ip.z - 0.01, draw: () => { const h = Math.max(4, Math.round(10 * kRel(ip.z) * 1.4)); g.drawImage(star, Math.round(ip.x - h / 2), Math.round(ip.y - h / 2), h, h); } });
+    }
     // Edificios de las islas, de pie sobre el piso.
     for (const pl of f.places) {
       const key = pl.kind === "lighthouse" ? `lh:${!!f.placeStatus[pl.id]?.on}` : pl.kind === "islet" ? "fireOff" : `d:${pl.kind}`;
