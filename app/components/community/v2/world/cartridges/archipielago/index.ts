@@ -85,10 +85,10 @@ function islandGame(st: StarState): GameMode {
           const inStart = Math.hypot(p.x - RINGS[0].x, p.y - RINGS[0].y) <= START_R;
           RINGS.forEach((r, i) => { if (i) ctx.area(`ring:${i}`, { kind: "circle", x: r.x, y: r.y, r: RING_R }, ["ring"]); });
           st.race = inStart ? { next: 1, startedAt: st.raceAt } : { next: -1, startedAt: null };
-          if (inStart) { ctx.sound("finish"); ctx.bubble(p, "¡Arrancan! Sigue los aros"); }
+          if (inStart) { ctx.sound("finish"); ctx.bubble(p, "¡Ya! Sigue la flecha amarilla"); }
         } else {
           RINGS.forEach((_, i) => { if (i) ctx.area(`ring:${i}`, null); });
-          if (phase === "on" && st.race.startedAt !== null) ctx.bubble(p, "Se acabó la carrera");
+          if (phase === "on" && st.race.startedAt !== null) ctx.bubble(p, "Se acabó el tiempo de la carrera");
           st.race = { next: -1, startedAt: null };
         }
         phase = ph; beep = -1;
