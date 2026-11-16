@@ -52,7 +52,7 @@ export const RING_R = 70;
 /** Una vuelta que tarda más que esto se cancela sola. */
 export const RACE_MAX = 180;
 /** Estrella de dos: sólo se abre si otra persona está a esta distancia de ti dentro de ella. */
-export const BIG_SPOTS: Point[] = [{ x: 640, y: 720 }, { x: 1230, y: 520 }, { x: 520, y: 430 }, { x: 1300, y: 440 }, { x: 880, y: 1010 }];
+export const BIG_SPOTS: Point[] = [{ x: 640, y: 720 }, { x: 1230, y: 520 }, { x: 520, y: 430 }, { x: 1300, y: 440 }, { x: 1050, y: 1020 }];
 export const BIG_R = 70, BIG_PAIR = 90;
 /** «Las traes»: la estrella dorada aparece aquí cuando nadie la trae; se pasa tocando a alguien. */
 export const GOLDEN: Point = { x: 700, y: 760 };
