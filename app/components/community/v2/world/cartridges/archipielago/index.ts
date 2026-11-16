@@ -3,7 +3,7 @@
 //
 // Manifiesto: lo leen navegador y servidor (nada de DOM). La skin se carga aparte con `loadSkin`.
 import type { Cartridge, GameMode, ModeContext } from "../../cartridge";
-import { BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RACE_MAX, RINGS, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { FORMATION_ANGLE, FORMATION_EVERY, FORMATION_HOLD, FORMATION_REACH, FORMATION_SPEED, SKY_LIFE, BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RACE_MAX, RINGS, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { WORLD_ID, WORLD_NAME, structure } from "./structure";
 
 const clock = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toFixed(1).padStart(4, "0")}`;
@@ -14,15 +14,17 @@ const clock = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toFixed(
  * - Estrella de dos: una grande por tanda que sólo se abre si otra persona está junto a ti dentro de ella.
  * - Carrera: aros fijos en orden (áreas `ring:i`), contra reloj; el mejor tiempo es récord del club (`merge: "min"`).
  * - Las traes: la estrella dorada la toma quien llegue primero y se pasa tocando a otra persona.
+ * - Formación: volar junto a alguien, en la misma dirección y rápido, suma una estrella cada 4 s.
+ * - Cielo para escribir: dentro del rectángulo la estela de todos se queda 25 s (la pinta la skin).
  * - Choca esas cinco: un saludo entre dos que están cerca suelta una lluvia de estrellas (la pinta la skin).
  */
 function islandGame(st: StarState): GameMode {
-  let mine = 0, wave = -1, count = 0, goldenOn = false;
+  let mine = 0, wave = -1, count = 0, goldenOn = false, together = 0, formT = 0;
   const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
   const humans = (ctx: ModeContext) => ctx.others.filter((e) => e.kind === "human");
   const nameOf = (ctx: ModeContext, id: unknown) => (id === ctx.meId ? "tú" : ctx.others.find((e) => e.id === id)?.first);
   return {
-    update(ctx) {
+    update(ctx, dt) {
       st.now = ctx.now;
       const now = ctx.now, p = ctx.player, w = Math.floor(now / STAR_EVERY);
       // Tanda nueva: estrellas y estrella de dos.
@@ -49,6 +51,14 @@ function islandGame(st: StarState): GameMode {
         const to = humans(ctx).find((e) => Math.hypot(e.x - p.x, e.y - p.y) < TAG_REACH);
         if (to) { ctx.commit({ it: to.id, itAt: Math.floor(now) }); ctx.bubble(to, "¡Las traes!"); ctx.sound("tag"); }
       }
+      // Formación: alguien cerca, con rumbo parecido, y los dos volando rápido.
+      const fast = (e: { vx: number; vy: number }) => Math.hypot(e.vx, e.vy) > FORMATION_SPEED;
+      const mates = fast(p) ? humans(ctx).filter((e) => fast(e) && Math.hypot(e.x - p.x, e.y - p.y) < FORMATION_REACH && Math.abs(Math.atan2(Math.sin(e.ang - p.ang), Math.cos(e.ang - p.ang))) < FORMATION_ANGLE) : [];
+      together = mates.length ? together + dt : 0;
+      const wasOn = st.formation.length > 0;
+      st.formation = together >= FORMATION_HOLD ? [ctx.meId, ...mates.map((e) => e.id)] : [];
+      if (st.formation.length && !wasOn) { formT = 0; ctx.sound("big"); ctx.bubble(p, mates.length > 1 ? `¡Formación de ${mates.length + 1}!` : "¡Formación!"); }
+      if (st.formation.length) { formT += dt; if (formT >= FORMATION_EVERY) { formT -= FORMATION_EVERY; mine += mates.length; ctx.sound("star"); ctx.bubble(p, `+${mates.length} en formación`); } }
       // Una vuelta que se quedó a medias se cancela sola.
       if (st.race.startedAt !== null && now - st.race.startedAt > RACE_MAX) st.race = { next: 0, startedAt: null };
       // Récord de estrellas (atómico: el dueño sólo se escribe si el récord sube).
@@ -76,6 +86,8 @@ function islandGame(st: StarState): GameMode {
           ctx.sound("star"); ctx.bubble(p, mine === 1 ? "¡Tu primera estrella!" : `${mine} estrellas`);
         } else if (tags?.includes("golden")) {
           ctx.commit({ it: ctx.meId, itAt: Math.floor(now) }); ctx.sound("tag"); ctx.bubble(p, "¡La traes tú!");
+        } else if (tags?.includes("sky")) {
+          ctx.bubble(p, `Escribe en el cielo: tu estela dura ${SKY_LIFE} s`);
         } else if (tags?.includes("ring")) {
           const i = Number(id.split(":")[1]), r = st.race;
           if (i === 0 && r.startedAt !== null && r.next === 0) {
@@ -116,7 +128,7 @@ export const archipielago: Cartridge = {
     pilotLabel: "Cara",
     count: (n) => (n === 1 ? "1 en el aire" : `${n} en el aire`),
     roaming: "volando sobre las islas",
-    hint: "Junta estrellas, cruza los aros de la carrera y pásale la estrella dorada a alguien.",
+    hint: "Junta estrellas, corre por los aros, vuela en formación, escribe en el cielo y pásale la estrella dorada a alguien.",
     hintKeys: " Flechas o WASD para volar · Shift turbo · C cambia la cámara · clic para ir a un punto · Enter para aterrizar.",
     hintMini: "Toca el mar o una isla y vuelas para allá.",
     expandMini: " el archipiélago y volar",

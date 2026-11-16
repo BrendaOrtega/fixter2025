@@ -6,9 +6,9 @@
 // Encima, ya en resolución real, van los nombres con contorno, las burbujas y las pistas de orilla.
 
 import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
-import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
+import { TAU, buildStar, inkOf, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
 import { DECOR, bake } from "./landmarks";
-import { BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { SKY, SKY_LIFE, BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { ALT, createChase } from "./chase";
 import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
@@ -38,6 +38,20 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     return Array.from({ length: 14 }, () => ({ x: rng() * terrain.w, y: rng() * terrain.h, alt: 52 + rng() * 40, v: 1.5 + rng() * 2.5, s: shapes[(rng() * shapes.length) | 0] as Cloud }));
   })();
   const flies = new Map<string, Fly>();
+  // Cielo para escribir: la estela de quien vuela adentro se queda SKY_LIFE segundos, en su color.
+  const smoke = new Map<string, { pts: { x: number; y: number; t: number }[]; c: string; last: number }>();
+  const inSky = (x: number, y: number) => x >= SKY.x && y >= SKY.y && x <= SKY.x + SKY.w && y <= SKY.y + SKY.h;
+  function updateSmoke(flyers: WorldFrame["others"], t: number) {
+    for (const e of flyers) {
+      let s = smoke.get(e.id);
+      if (inSky(e.x, e.y) && Math.hypot(e.vx, e.vy) > 20) {
+        if (!s) { s = { pts: [], c: inkOf(e.model, e.color).body, last: 0 }; smoke.set(e.id, s); }
+        if (t - s.last > 0.03) { s.last = t; s.pts.push({ x: e.x, y: e.y, t }); if (s.pts.length > 900) s.pts.shift(); }
+      }
+    }
+    for (const [id, s] of smoke) { while (s.pts.length && t - s.pts[0].t > SKY_LIFE) s.pts.shift(); if (!s.pts.length) smoke.delete(id); }
+  }
+  const smokeAlpha = (t: number, born: number) => clamp((SKY_LIFE - (t - born)) / 5, 0, 1) * 0.95;
   let parts: Particle[] = [];
   const seenStars = new Set<string>();
   let view: View = { vw: 1, vh: 1, scale: 1, camx: 0, camy: 0, ox: 0, oy: 0 }, dpr = 1;
@@ -98,9 +112,9 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     return f;
   }
 
-  function drawTrail(f: Fly) {
+  function drawTrail(f: Fly, gold = false) {
     const n = f.trail.length; if (n < 3) return;
-    b.fillStyle = "#fff";
+    b.fillStyle = gold ? "#ffd93d" : "#fff";
     for (const side of [-1, 1]) {
       let px = 0, py = 0;
       f.trail.forEach((p, i) => {
@@ -163,7 +177,22 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
 
     const flyers = [...f.others, f.player].filter((e) => e.downT <= 0);
     const state = new Map(flyers.map((e) => [e.id, flyOf(e, t)] as const));
-    if (!f.mini && !f.quiet) for (const e of flyers) drawTrail(state.get(e.id) as Fly);
+    const formation = new Set(starState.formation);
+    if (!f.mini && !f.quiet) for (const e of flyers) drawTrail(state.get(e.id) as Fly, formation.has(e.id));
+    // Cielo para escribir: borde punteado y lo escrito.
+    if (structure.shared && !f.mini) {
+      updateSmoke(flyers, t);
+      b.fillStyle = "rgba(255,255,255,.55)";
+      const x0 = bx(SKY.x), y0 = by(SKY.y), x1 = bx(SKY.x + SKY.w), y1 = by(SKY.y + SKY.h);
+      for (let x = x0; x <= x1; x += 6) { b.fillRect(x, y0, 3, 1); b.fillRect(x, y1, 3, 1); }
+      for (let y = y0; y <= y1; y += 6) { b.fillRect(x0, y, 1, 3); b.fillRect(x1, y, 1, 3); }
+      for (const s of smoke.values()) {
+        b.fillStyle = s.c;
+        let prev: { x: number; y: number } | null = null;
+        for (const q of s.pts) { const x = bx(q.x), y = by(q.y); b.globalAlpha = smokeAlpha(t, q.t); if (prev) line(b, prev.x, prev.y, x, y); b.fillRect(x, y, 2, 2); prev = { x, y }; }
+      }
+      b.globalAlpha = 1;
+    }
 
     // ── Estrellas: sombra, y si alguien (tú) tomó una, sus chispas ──
     const now = starState.now || Date.now() / 1000, wave = Math.floor(now / STAR_EVERY), left = STAR_EVERY - (now % STAR_EVERY);
@@ -269,6 +298,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
       const st = f.placeStatus[p.id];
       if (st?.sub) text(s.x, s.y + 17, st.sub, 11, st.on ? "#ffd93d" : "#dff1ff");
     }
+    if (structure.shared) { const s = toScreen(SKY.x + SKY.w / 2, SKY.y + 12); text(s.x, s.y, "Cielo para escribir", 11, "#fff", true); }
     // El nombre va justo debajo del sprite (media altura en pixeles del arte, más la sombra).
     const below = 17 * unit;
     for (const e of f.others) {
@@ -450,9 +480,19 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
         g.drawImage(sp.frames[wob], -(sp.w >> 1), -(sp.h >> 1)); g.restore();
       } });
     }
-    // Estela doble de cada fantasma.
-    g.fillStyle = "#fff";
+    // Cielo para escribir, a la altura de vuelo.
+    if (structure.shared) {
+      updateSmoke(flyers, t);
+      for (const s of smoke.values()) {
+        g.fillStyle = s.c;
+        for (const q of s.pts) { const p = chase.project(q.x, q.y, ALT - 2); if (!p || p.z > chase.far) continue; g.globalAlpha = smokeAlpha(t, q.t); const k = Math.max(1, Math.round(2.4 * kRel(p.z))); g.fillRect(Math.round(p.x - k / 2), Math.round(p.y - k / 2), k, k); }
+      }
+      g.globalAlpha = 1;
+    }
+    // Estela doble de cada fantasma (dorada si vuela en formación).
+    const formation = new Set(starState.formation);
     for (const e of flyers) {
+      g.fillStyle = formation.has(e.id) ? "#ffd93d" : "#fff";
       const tr = (state.get(e.id) as Fly).trail, n = tr.length; if (n < 3) continue;
       for (const side of [-1, 1]) {
         let prev: { x: number; y: number } | null = null;

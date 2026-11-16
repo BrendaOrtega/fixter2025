@@ -216,3 +216,5 @@ Todas viven en el modo (`cartridges/archipielago/index.ts`) usando señales, ár
 - **Estrella de dos**: una grande por tanda; sólo se abre si otra persona está junto a ti (+3).
 - **Las traes**: la estrella dorada la toma quien llegue; se pasa tocando a alguien (`it`, `itAt`, 3 s de gracia). Corona sobre quien la trae.
 - **Choca esas cinco**: un saludo entre dos que están cerca suelta una lluvia de estrellas (señal `wave`).
+- **Formación**: volar junto a alguien (≤150, rumbo parecido, los dos rápido) 2 s activa la formación; estelas doradas y +1 estrella por compañero cada 4 s. Cada cliente lo calcula con las posiciones que ya recibe.
+- **Cielo para escribir**: área `sky` (rectángulo al sur, junto a Cursos); ahí la estela de todos se queda 25 s en el color de cada fantasma. Sin red extra: cada cliente la pinta con las posiciones que ya recibe.

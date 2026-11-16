@@ -1,7 +1,7 @@
 // Archipiélago: la estructura (datos). La lee el motor en el navegador y el servidor para validar.
 // Sólo datos y funciones puras: nada de DOM aquí.
 import type { BotDef, Place, TableDef, WorldStructure } from "../../cartridge";
-import { RINGS, RING_R } from "./stars";
+import { RINGS, RING_R, SKY } from "./stars";
 
 export const WORLD_ID = "archipielago";
 export const WORLD_NAME = "Archipiélago";
@@ -74,5 +74,9 @@ export const structure: WorldStructure = {
     itAt: { type: "number", min: 0, max: 2147483647 },
   },
   // Los aros de la carrera: áreas fijas (el modo recibe una señal al cruzar cada uno).
-  areas: RINGS.map((p, i) => ({ id: `ring:${i}`, shape: { kind: "circle" as const, x: p.x, y: p.y, r: RING_R }, tags: ["ring"] })),
+  // Y el cielo para escribir.
+  areas: [
+    ...RINGS.map((p, i) => ({ id: `ring:${i}`, shape: { kind: "circle" as const, x: p.x, y: p.y, r: RING_R }, tags: ["ring"] })),
+    { id: "sky", shape: { kind: "rect" as const, ...SKY }, tags: ["sky"] },
+  ],
 };
