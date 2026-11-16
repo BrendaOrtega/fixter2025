@@ -202,8 +202,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     ),
     []
   );
-  // Estado de la grabación sólo para el anfitrión, y sólo con la llamada abierta.
-  const rec = canMod && isCallOpen(event) ? settle(recordingState(), null) : null;
+  // Estado de la grabación sólo para el anfitrión: puede iniciar su llamada en cualquier momento.
+  const rec = canMod ? settle(recordingState(), null) : null;
 
   const { ownerId: _owner, ...publicCommunity } = community;
   return {
@@ -305,7 +305,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // ── Llamada en vivo: ticket de un solo uso (120 s) que se pide al dar clic ──
   if (intent === "call") {
     const event = await getNextEvent(community.id);
-    if (!isCallOpen(event)) {
+    // Los miembros entran en la ventana del evento; el anfitrión puede abrir su sala cuando quiera.
+    if (!isCallOpen(event) && !canMod) {
       return data({ error: "La llamada se abre 15 minutos antes." }, { status: 400 });
     }
     // Sesión del taller de paga (Anti-Factory): sólo entra quien lo compró, miembro o no.
@@ -899,11 +900,11 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   <button
                     name="intent"
                     value="call"
-                    disabled={!event.open}
+                    disabled={!event.open && !canMod}
                     aria-busy={enteringCall}
                     className={`${pillBtn} bg-danger text-white disabled:bg-colorOutline disabled:shadow-none ${enteringCall ? "pointer-events-none opacity-70" : ""}`}
                   >
-                    {enteringCall ? "Abriendo la sala…" : event.open ? "🎙 Entrar a la llamada" : "Se abre 15 min antes"}
+                    {enteringCall ? "Abriendo la sala…" : event.open ? "🎙 Entrar a la llamada" : canMod ? "🎙 Iniciar llamada ahora" : "Se abre 15 min antes"}
                   </button>
                   {actionData?.error && !enteringCall && (
                     <p className="max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>
@@ -914,7 +915,7 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   🔒 Sólo miembros
                 </span>
               )}
-              {isInside && canMod && event.open && (
+              {isInside && canMod && (
                 <Suspense
                   fallback={<span aria-busy className="inline-block h-12 w-36 animate-pulse rounded-full border border-colorOutline" />}
                 >
@@ -923,6 +924,33 @@ export default function CommunityHome({ loaderData }: Route.ComponentProps) {
                   </Await>
                 </Suspense>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* ── Llamada del anfitrión sin evento en el calendario ── */}
+        {!event && isInside && canMod && (
+          <section className="mt-8 rounded-2xl border border-colorOutline bg-brand-500/10 p-6">
+            <p className="text-sm font-bold uppercase tracking-wider text-brand-500">Llamada del club</p>
+            <h2 className="mt-1 text-2xl font-bold">Inicia tu llamada cuando quieras</h2>
+            <p className="mt-1 text-sm text-colorCaption">No hay un evento en el calendario. Como anfitrión puedes abrir la sala ahora y grabar o transmitir en vivo.</p>
+            <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+              <Form method="post" className="grid gap-3">
+                <button
+                  name="intent"
+                  value="call"
+                  aria-busy={enteringCall}
+                  className={`${pillBtn} bg-danger text-white ${enteringCall ? "pointer-events-none opacity-70" : ""}`}
+                >
+                  {enteringCall ? "Abriendo la sala…" : "🎙 Iniciar llamada ahora"}
+                </button>
+                {actionData?.error && !enteringCall && <p className="max-w-[16rem] text-sm text-brand-500">{actionData.error}</p>}
+              </Form>
+              <Suspense fallback={<span aria-busy className="inline-block h-12 w-36 animate-pulse rounded-full border border-colorOutline" />}>
+                <Await resolve={rec} errorElement={<RecControl rec={null} />}>
+                  {(state) => <RecControl rec={state} />}
+                </Await>
+              </Suspense>
             </div>
           </section>
         )}
