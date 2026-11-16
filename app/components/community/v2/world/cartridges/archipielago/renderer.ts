@@ -8,7 +8,7 @@
 import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
 import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
 import { DECOR, bake } from "./landmarks";
-import { HIDE_R, HIDE_SPOT, SEE_R, STORM_HP, STORM_R, RACE_WINDOW, START_R, BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { HIDE_R, HIDE_SPOT, SEE_R, STORM_HP, STORM_R, RACE_GO, START_R, BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { ALT, createChase } from "./chase";
 import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
@@ -57,10 +57,10 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     for (const z of starState.zaps) { let x = bx(me.x), y = by(me.y); const tx = bx(z.x), ty = by(z.y); for (let k = 1; k <= 6; k++) { const nx = Math.round(x + (tx - x) / (7 - k) + (hsh(k, Math.floor(t * 20), 3) - 0.5) * 6), ny = Math.round(y + (ty - y) / (7 - k)); line(b, x, y, nx, ny); x = nx; y = ny; } }
   }
   /** Fase de la carrera convocada (la misma cuenta que hace el modo). */
-  const racePhase = () => { const now = starState.now || Date.now() / 1000, at = starState.raceAt; return !at || now >= at + RACE_WINDOW ? "off" : now < at ? "countdown" : "on"; };
+  const racePhase = () => { const now = starState.now || Date.now() / 1000, at = starState.raceAt; return !at || now >= at + RACE_GO ? "off" : now < at ? "countdown" : "on"; };
   /** Qué aros se pintan: sólo la salida, salvo durante la carrera. */
   /** ¿Estoy corriendo? Sólo quien corre ve los aros; al llegar a la meta (o acabarse el tiempo) desaparecen. */
-  const racing = () => starState.race.startedAt !== null && starState.race.next >= 0 && racePhase() === "on";
+  const racing = () => starState.race.startedAt !== null && starState.race.next >= 0;
   const ringOn = (i: number) => i === 0 || racing();
   const ringHot = (i: number) => (racing() ? i === starState.race.next : i === 0);
   /** Guía de la carrera: cuenta regresiva grande y «¡YA!». */
@@ -75,7 +75,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
       return;
     }
     if (!racing()) return;
-    if (now - starState.raceAt < 1.2) text(vw / 2, vh * 0.3, "¡YA!", 64, "#ffd93d", true);
+    if (now - (starState.race.startedAt ?? 0) < 1.2) text(vw / 2, vh * 0.3, "¡YA!", 64, "#ffd93d", true);
     // La flecha al aro que sigue la pinta el motor (objetivo del modo), igual en todas las pieles.
   }
   let parts: Particle[] = [];
@@ -335,7 +335,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
       const hs = toScreen(HIDE_SPOT.x, HIDE_SPOT.y + HIDE_R * 0.55 + 10), hp = starState.hide.phase;
       text(hs.x, hs.y, hp === "off" ? "Escondidillas · entra para buscar" : hp === "hiding" ? "¡A esconderse!" : "Están buscando…", 11, hp === "off" ? "#fff" : "#85ddcb", true);
       if (starState.storm.alive) { const ss = toScreen(starState.storm.x, starState.storm.y - STORM_R * 0.7); text(ss.x, ss.y, `⛈ ${starState.storm.hits}/${STORM_HP} · golpéenla juntos`, 12, "#ffd93d", true); }
-      text(s.x, s.y, ph === "countdown" ? `Carrera en ${Math.ceil(starState.raceAt - (starState.now || Date.now() / 1000))}` : ph === "on" ? (racing() ? "Meta" : `Carrera en curso · termina en ${Math.ceil(starState.raceAt + RACE_WINDOW - (starState.now || Date.now() / 1000))} s`) : "Salida de la carrera · entra para convocar", 11, ph === "off" ? "#fff" : "#ffd93d", true);
+      text(s.x, s.y, racing() ? "Meta" : ph === "countdown" ? `Carrera en ${Math.ceil(starState.raceAt - (starState.now || Date.now() / 1000))}` : "Carrera · entra al aro para correr", 11, racing() || ph === "countdown" ? "#ffd93d" : "#fff", true);
     }
     // El nombre va justo debajo del sprite (media altura en pixeles del arte, más la sombra).
     const below = 17 * unit;

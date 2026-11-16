@@ -1,7 +1,7 @@
 // Archipiélago: la estructura (datos). La lee el motor en el navegador y el servidor para validar.
 // Sólo datos y funciones puras: nada de DOM aquí.
 import type { BotDef, Place, TableDef, WorldStructure } from "../../cartridge";
-import { HIDE_R, HIDE_SPOT, MAP_K, RINGS, START_R, at } from "./stars";
+import { HIDE_R, HIDE_SPOT, MAP_K, RINGS, RING_R, START_R, at } from "./stars";
 
 export const WORLD_ID = "archipielago";
 export const WORLD_NAME = "Archipiélago";
@@ -92,6 +92,8 @@ export const structure: WorldStructure = {
   // La salida de la carrera es un área fija; los demás aros los pone el modo sólo durante la carrera.
   areas: [
     { id: "start", shape: { kind: "circle", x: RINGS[0].x, y: RINGS[0].y, r: START_R }, tags: ["start"] },
+    // Aros de la carrera: siempre registrados; sólo cuentan (y se ven) mientras corres.
+    ...RINGS.slice(1).map((r, i) => ({ id: `ring:${i + 1}`, shape: { kind: "circle" as const, x: r.x, y: r.y, r: RING_R }, tags: ["ring"] })),
     { id: "hide", shape: { kind: "circle", x: HIDE_SPOT.x, y: HIDE_SPOT.y, r: HIDE_R }, tags: ["hide"] },
   ],
 };

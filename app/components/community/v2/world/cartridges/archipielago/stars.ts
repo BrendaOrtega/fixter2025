@@ -57,7 +57,8 @@ export const RINGS: Point[] = [
   at(1180, 120), at(1700, 520), at(1650, 1030),
 ];
 export const RING_R = 80, START_R = 130;
-export const RACE_COUNTDOWN = 10, RACE_WINDOW = 90;
+/** Cuenta regresiva de una carrera convocada; `RACE_GO`: segundos del arranque en grupo; `RACE_LIMIT`: lo más que dura una vuelta. */
+export const RACE_COUNTDOWN = 5, RACE_GO = 3, RACE_LIMIT = 90;
 /** Estrella de dos: sólo se abre si otra persona está a esta distancia de ti dentro de ella. */
 export const BIG_SPOTS: Point[] = [at(640, 720), at(1230, 520), at(520, 430), at(1300, 440), at(760, 700)];
 export const BIG_R = 70, BIG_PAIR = 90;

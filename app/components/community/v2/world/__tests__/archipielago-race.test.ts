@@ -24,30 +24,43 @@ function setup() {
   return { ctx, mode, shared, areas, sent, tick, enter };
 }
 
-describe("Archipiélago: carrera convocada", () => {
-  it("sólo la salida existe; entrar convoca; los que están en la salida arrancan juntos y llegan a la meta", () => {
-    const { ctx, shared, areas, tick, enter } = setup();
+describe("Archipiélago: carrera", () => {
+  const start = () => archipielago.structure.areas!.find((a) => a.id === "start")!;
+  const ring = (i: number) => archipielago.structure.areas!.find((a) => a.id === `ring:${i}`)!;
+
+  it("sin nadie más, entrar al aro arranca la contrarreloj y la meta guarda el tiempo", () => {
+    const { shared, tick, enter } = setup();
     tick(0.1);
-    expect([...areas.keys()].some((k) => k.startsWith("ring:"))).toBe(false);
-    const start = archipielago.structure.areas![0];
-    enter(start);
-    tick(0.1);
-    expect(typeof shared.raceAt).toBe("number");
-    tick(RACE_COUNTDOWN + 0.5);
-    for (let i = 1; i < RINGS.length; i++) expect(areas.has(`ring:${i}`)).toBe(true);
-    for (let i = 1; i < RINGS.length; i++) { enter(areas.get(`ring:${i}`)!); tick(1); }
-    enter(start);
+    enter(start());
+    for (let i = 1; i < RINGS.length; i++) { tick(1); enter(ring(i)); }
+    tick(1);
+    enter(start());
     tick(0.2);
     expect(typeof shared.raceBest).toBe("number");
     expect(shared.raceLeader).toBe("me");
-    void ctx;
+  });
+
+  it("con más gente, entrar convoca; quien está en la salida arranca a los 5 s", () => {
+    const { ctx, shared, tick, enter } = setup();
+    (ctx.others as unknown[]).push({ id: "b", kind: "human", x: 0, y: 0, vx: 0, vy: 0, ang: 0, first: "B" });
+    enter(start());
+    tick(0.2);
+    expect(typeof shared.raceAt).toBe("number");
+    // Los aros no cuentan antes de arrancar.
+    enter(ring(1));
+    tick(RACE_COUNTDOWN + 0.5);
+    for (let i = 1; i < RINGS.length; i++) { enter(ring(i)); tick(0.5); }
+    enter(start());
+    tick(0.2);
+    expect(typeof shared.raceBest).toBe("number");
   });
 
   it("si el primer envío se pierde, se reintenta", () => {
     const { ctx, shared, tick, enter } = setup();
+    (ctx.others as unknown[]).push({ id: "b", kind: "human", x: 0, y: 0, vx: 0, vy: 0, ang: 0, first: "B" });
     const real = ctx.commit; let drop = 3;
     ctx.commit = (c) => { if (drop-- > 0) return; real(c); };
-    enter(archipielago.structure.areas![0]);
+    enter(start());
     tick(1);
     expect(typeof shared.raceAt).toBe("number");
   });
