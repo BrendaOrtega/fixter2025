@@ -24,7 +24,7 @@ import { isMembershipActive } from "~/.server/services/membership.server";
 import { listPastGames, listQuizzes, quizEnabled } from "~/.server/services/club-quiz.server";
 import { QuizAdmin } from "~/components/community/QuizAdmin";
 import { LiveAdmin } from "~/components/community/LiveAdmin";
-import { disconnectYouTube, liveStatus, setYouTubePrivacy } from "~/.server/services/club-live.server";
+import { disconnectDestination, liveStatus, setYouTubePrivacy } from "~/.server/services/club-live.server";
 import { activeCartridge, changeCartridge, hydrateCartridge } from "~/.server/services/club-world.server";
 import { CARTRIDGES } from "~/components/community/v2/world/cartridges";
 import { VoiceSwitch } from "~/components/community/v2/world/VoiceStrip";
@@ -282,8 +282,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   if (intent === "live-disconnect") {
-    await disconnectYouTube(community.id);
-    return { ok: "Canal de YouTube desconectado." };
+    const provider = str("provider") === "facebook" ? "facebook" : "youtube";
+    await disconnectDestination(community.id, provider);
+    return { ok: provider === "facebook" ? "Página de Facebook desconectada." : "Canal de YouTube desconectado." };
   }
 
   return data({ error: "Acción desconocida." }, { status: 400 });

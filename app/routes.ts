@@ -33,7 +33,8 @@ export default [
   route("comunidad/:slug/grabacion/:id", "routes/comunidad.$slug.grabacion.$id.ts"), // video de una llamada, sólo miembros
   route("comunidad/:slug/llamada", "routes/comunidad.$slug.llamada.tsx"), // la sala en iframe, con Grabar/Detener como en Teams
   route("comunidad/:slug/admin", "routes/comunidad.$slug.admin.tsx"), // panel del anfitrión
-  route("comunidad/:slug/transmision", "routes/comunidad.$slug.transmision.ts"), // conectar YouTube para transmitir (redirige a Google)
+  route("comunidad/:slug/transmision", "routes/comunidad.$slug.transmision.ts"), // conectar YouTube (o `?provider=facebook`) para transmitir
+  route("comunidad/live/facebook/callback", "routes/comunidad.live.facebook.callback.tsx"), // vuelta del login de Meta: elegir página
   route("comunidad/:slug/mundo", "routes/comunidad.$slug.mundo.ts"), // «Mundo»: presencia de las naves en memoria (recurso, sin UI)
   route("comunidad/:slug/voz", "routes/comunidad.$slug.voz.ts"), // voz en las mesas del Mundo: interruptor y token de LiveKit (recurso, sin UI)
   route("comunidad/:slug/quiz", "routes/comunidad.$slug.quiz.ts"), // quiz en vivo: estado y controles (recurso, sin UI)
