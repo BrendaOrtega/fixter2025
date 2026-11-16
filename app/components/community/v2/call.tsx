@@ -78,15 +78,20 @@ export function DateTile({ month, day }: { month: string; day: string }) {
   );
 }
 
-/** «Entrar a la llamada»: apagado hasta que la sala abre (15 min antes). Pide el ticket al dar clic. */
+/**
+ * «Entrar a la llamada»: apagado hasta que la sala abre (15 min antes). Pide el ticket al dar clic.
+ * El anfitrión (`host`) puede abrir su sala en cualquier momento: «Iniciar llamada ahora».
+ */
 export function EnterCallButton({
   event,
   label = "Entrar a la llamada",
   block = false,
+  host = false,
 }: {
   event: ClubEvent;
   label?: string;
   block?: boolean;
+  host?: boolean;
 }) {
   const navigation = useNavigation();
   const entering = navigation.formData?.get("intent") === "call";
@@ -96,11 +101,11 @@ export function EnterCallButton({
       <button
         name="intent"
         value="call"
-        disabled={!event.open || entering}
+        disabled={(!event.open && !host) || entering}
         aria-busy={entering}
         className={`${btn} ${block ? "w-full" : ""}`}
       >
-        {entering ? "Abriendo la sala…" : label}
+        {entering ? "Abriendo la sala…" : !event.open && host ? "Iniciar llamada ahora" : label}
       </button>
       {actionData?.error && !entering && (
         <p role="alert" className="max-w-[16rem] text-xs text-[#F08A80]">

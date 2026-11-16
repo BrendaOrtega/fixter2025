@@ -30,8 +30,8 @@ function CallNotice({ data, event, className = "" }: { data: ClubData; event: Cl
         </p>
       </div>
       <div className="ml-auto flex flex-wrap items-start justify-end gap-2">
-        <HostRecControl rec={data.rec} show={data.canMod && event.open} />
-        <EnterCallButton event={event} />
+        <HostRecControl rec={data.rec} show={data.canMod} />
+        <EnterCallButton event={event} host={data.canMod} />
       </div>
       <div className="basis-full border-t border-[#232D33] pt-2.5">
         <RsvpControl event={event} me={data.me} block />
@@ -191,8 +191,8 @@ function HostRail({ data, go }: { data: ClubData; go: Go }) {
             </div>
             <div className="mt-3.5 grid gap-2.5">
               <RsvpControl event={event} me={data.me} block />
-              <EnterCallButton event={event} block />
-              <HostRecControl rec={data.rec} show={event.open} block />
+              <EnterCallButton event={event} block host={data.canMod} />
+              <HostRecControl rec={data.rec} show={data.canMod} block />
             </div>
           </>
         ) : (

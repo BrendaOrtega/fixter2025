@@ -455,7 +455,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   if (place) {
     if (place.target === "call") {
       near = event && call
-        ? { sub: `${event.title} · ${call.status}`, action: <EnterCallButton event={event} /> }
+        ? { sub: `${event.title} · ${call.status}`, action: <EnterCallButton event={event} host={data.canMod} /> }
         : { sub: "No hay llamada programada", action: null };
     } else if (place.target === "wall") {
       near = { sub: "Lo que el club publicó y comentó", action: <button type="button" className={btn} onClick={() => go("wall")}>Entrar al Muro</button> };

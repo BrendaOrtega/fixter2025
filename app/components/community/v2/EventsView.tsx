@@ -55,8 +55,8 @@ export function EventsView({ data }: { data: ClubData }) {
               <a href={`/comunidad/${community.slug}/evento/${event.id}.ics`} className={btnGhost}>
                 Agregar a mi calendario
               </a>
-              <HostRecControl rec={data.rec} show={canMod && event.open} />
-              <EnterCallButton event={event} />
+              <HostRecControl rec={data.rec} show={canMod} />
+              <EnterCallButton event={event} host={canMod} />
             </div>
             </div>
             <div className="border-t border-[#232D33] px-4 py-3">
