@@ -212,9 +212,10 @@ Ejemplo de todo junto: el modo Estrellas de `cartridges/archipielago/index.ts`.
 
 ### Interacciones del Archipiélago (16-nov-2026)
 Todas viven en el modo (`cartridges/archipielago/index.ts`) usando señales, áreas y `commit`:
-- **Carrera**: 7 aros fijos (`structure.areas`, `ring:i`); el coral es salida y meta. Récord del club `raceBest` (décimas, `merge: "min"`) con su dueño.
+- **Carrera convocada**: sólo se ve la salida (área `start`). Quien entra la convoca (`raceAt` compartido); a los 10 s corren juntos los que estén en la salida y aparecen los 6 aros (áreas efímeras `ring:i`) durante 150 s. Récord `raceBest` (décimas, `merge: "min"`).
 - **Estrella de dos**: una grande por tanda; sólo se abre si otra persona está junto a ti (+3).
 - **Las traes**: la estrella dorada la toma quien llegue; se pasa tocando a alguien (`it`, `itAt`, 3 s de gracia). Corona sobre quien la trae.
 - **Choca esas cinco**: un saludo entre dos que están cerca suelta una lluvia de estrellas (señal `wave`).
 - **Formación**: volar junto a alguien (≤150, rumbo parecido, los dos rápido) 2 s activa la formación; estelas doradas y +1 estrella por compañero cada 4 s. Cada cliente lo calcula con las posiciones que ya recibe.
-- **Cielo para escribir**: área `sky` (rectángulo al sur, junto a Cursos); ahí la estela de todos se queda 25 s en el color de cada fantasma. Sin red extra: cada cliente la pinta con las posiciones que ya recibe.
+
+- **Mapa ×1.6** (16-nov): coordenadas en escala vieja con `at(x, y)` de `stars.ts` (`MAP_K`); más islitas de adorno y nubes. El cielo para escribir se quitó (muy chico y difícil).

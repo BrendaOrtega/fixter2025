@@ -6,9 +6,9 @@
 // Encima, ya en resolución real, van los nombres con contorno, las burbujas y las pistas de orilla.
 
 import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
-import { TAU, buildStar, inkOf, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
+import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
 import { DECOR, bake } from "./landmarks";
-import { SKY, SKY_LIFE, BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { RACE_WINDOW, START_R, BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { ALT, createChase } from "./chase";
 import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
@@ -35,23 +35,14 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
   const clouds = (() => {
     const rng = mulberry(777), kinds = [[2, 5], [3, 6], [3, 8], [4, 8], [5, 9], [2, 7], [4, 6]];
     const shapes = kinds.map(([n, rb]) => makeCloud(rng, n, rb));
-    return Array.from({ length: 14 }, () => ({ x: rng() * terrain.w, y: rng() * terrain.h, alt: 52 + rng() * 40, v: 1.5 + rng() * 2.5, s: shapes[(rng() * shapes.length) | 0] as Cloud }));
+    return Array.from({ length: 34 }, () => ({ x: rng() * terrain.w, y: rng() * terrain.h, alt: 52 + rng() * 40, v: 1.5 + rng() * 2.5, s: shapes[(rng() * shapes.length) | 0] as Cloud }));
   })();
   const flies = new Map<string, Fly>();
-  // Cielo para escribir: la estela de quien vuela adentro se queda SKY_LIFE segundos, en su color.
-  const smoke = new Map<string, { pts: { x: number; y: number; t: number }[]; c: string; last: number }>();
-  const inSky = (x: number, y: number) => x >= SKY.x && y >= SKY.y && x <= SKY.x + SKY.w && y <= SKY.y + SKY.h;
-  function updateSmoke(flyers: WorldFrame["others"], t: number) {
-    for (const e of flyers) {
-      let s = smoke.get(e.id);
-      if (inSky(e.x, e.y) && Math.hypot(e.vx, e.vy) > 20) {
-        if (!s) { s = { pts: [], c: inkOf(e.model, e.color).body, last: 0 }; smoke.set(e.id, s); }
-        if (t - s.last > 0.03) { s.last = t; s.pts.push({ x: e.x, y: e.y, t }); if (s.pts.length > 900) s.pts.shift(); }
-      }
-    }
-    for (const [id, s] of smoke) { while (s.pts.length && t - s.pts[0].t > SKY_LIFE) s.pts.shift(); if (!s.pts.length) smoke.delete(id); }
-  }
-  const smokeAlpha = (t: number, born: number) => clamp((SKY_LIFE - (t - born)) / 5, 0, 1) * 0.95;
+  /** Fase de la carrera convocada (la misma cuenta que hace el modo). */
+  const racePhase = () => { const now = starState.now || Date.now() / 1000, at = starState.raceAt; return !at || now >= at + RACE_WINDOW ? "off" : now < at ? "countdown" : "on"; };
+  /** Qué aros se pintan: sólo la salida, salvo durante la carrera. */
+  const ringOn = (i: number) => i === 0 || racePhase() === "on";
+  const ringHot = (i: number) => { const r = starState.race; return r.next >= 0 && r.startedAt !== null ? i === r.next : i === 0 && racePhase() !== "on"; };
   let parts: Particle[] = [];
   const seenStars = new Set<string>();
   let view: View = { vw: 1, vh: 1, scale: 1, camx: 0, camy: 0, ox: 0, oy: 0 }, dpr = 1;
@@ -179,20 +170,6 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     const state = new Map(flyers.map((e) => [e.id, flyOf(e, t)] as const));
     const formation = new Set(starState.formation);
     if (!f.mini && !f.quiet) for (const e of flyers) drawTrail(state.get(e.id) as Fly, formation.has(e.id));
-    // Cielo para escribir: borde punteado y lo escrito.
-    if (structure.shared && !f.mini) {
-      updateSmoke(flyers, t);
-      b.fillStyle = "rgba(255,255,255,.55)";
-      const x0 = bx(SKY.x), y0 = by(SKY.y), x1 = bx(SKY.x + SKY.w), y1 = by(SKY.y + SKY.h);
-      for (let x = x0; x <= x1; x += 6) { b.fillRect(x, y0, 3, 1); b.fillRect(x, y1, 3, 1); }
-      for (let y = y0; y <= y1; y += 6) { b.fillRect(x0, y, 1, 3); b.fillRect(x1, y, 1, 3); }
-      for (const s of smoke.values()) {
-        b.fillStyle = s.c;
-        let prev: { x: number; y: number } | null = null;
-        for (const q of s.pts) { const x = bx(q.x), y = by(q.y); b.globalAlpha = smokeAlpha(t, q.t); if (prev) line(b, prev.x, prev.y, x, y); b.fillRect(x, y, 2, 2); prev = { x, y }; }
-      }
-      b.globalAlpha = 1;
-    }
 
     // ── Estrellas: sombra, y si alguien (tú) tomó una, sus chispas ──
     const now = starState.now || Date.now() / 1000, wave = Math.floor(now / STAR_EVERY), left = STAR_EVERY - (now % STAR_EVERY);
@@ -230,8 +207,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
       if (structure.shared) {
         showers();
         // Aros de la carrera: la salida en coral, el siguiente que te toca brilla.
-        const race = starState.race;
-        RINGS.forEach((r, i) => ringTop(r.x, r.y, RING_R, i === 0 ? "#f4a39a" : "#e8f1fa", t, race.startedAt !== null ? i === race.next : i === 0));
+        RINGS.forEach((r, i) => { if (ringOn(i)) ringTop(r.x, r.y, i === 0 ? START_R : RING_R, i === 0 ? "#f4a39a" : "#e8f1fa", t, ringHot(i)); });
         // Estrella de dos: grande, con su círculo punteado.
         const big = starState.big;
         if (big && !big.taken) {
@@ -298,7 +274,10 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
       const st = f.placeStatus[p.id];
       if (st?.sub) text(s.x, s.y + 17, st.sub, 11, st.on ? "#ffd93d" : "#dff1ff");
     }
-    if (structure.shared) { const s = toScreen(SKY.x + SKY.w / 2, SKY.y + 12); text(s.x, s.y, "Cielo para escribir", 11, "#fff", true); }
+    if (structure.shared) {
+      const s = toScreen(RINGS[0].x, RINGS[0].y + START_R * 0.55 + 10), ph = racePhase();
+      text(s.x, s.y, ph === "countdown" ? `Carrera en ${Math.ceil(starState.raceAt - (starState.now || Date.now() / 1000))}` : ph === "on" ? "Carrera en curso" : "Salida · entra para correr", 11, ph === "off" ? "#fff" : "#ffd93d", true);
+    }
     // El nombre va justo debajo del sprite (media altura en pixeles del arte, más la sombra).
     const below = 17 * unit;
     for (const e of f.others) {
@@ -437,12 +416,12 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     });
     if (structure.shared) {
       showers();
-      const race = starState.race;
       RINGS.forEach((r, i) => {
+        if (!ringOn(i)) return;
         const p = chase.project(r.x, r.y, ALT); if (!p || p.z > chase.far * 0.9) return;
-        const hot = race.startedAt !== null ? i === race.next : i === 0;
+        const hot = ringHot(i), R = i === 0 ? START_R : RING_R;
         items.push({ z: p.z, draw: () => {
-          const k = kRel(p.z) * 1.6, rx = Math.max(3, Math.round(RING_R * 0.32 * k)), ry = Math.max(3, Math.round(RING_R * 0.38 * k)), n = 40;
+          const k = kRel(p.z) * 1.6, rx = Math.max(3, Math.round(R * 0.32 * k)), ry = Math.max(3, Math.round(R * 0.38 * k)), n = 40;
           for (let j = 0; j < n; j++) { const a = (j / n) * TAU; g.fillStyle = hot && ((j + Math.floor(t * 12)) % 6 < 3) ? "#fff6b0" : i === 0 ? "#f4a39a" : "#e8f1fa"; g.fillRect(Math.round(p.x + Math.cos(a) * rx) - 1, Math.round(p.y + Math.sin(a) * ry) - 1, Math.max(2, Math.round(k * 1.5)), Math.max(2, Math.round(k * 1.5))); }
         } });
       });
@@ -479,15 +458,6 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
         g.save(); g.translate(Math.round(p.x + st.bank * 15 * k), Math.round(p.y + (f.quiet ? 0 : Math.sin(t * 3 + e.bob) * 1.2))); if (rot) g.rotate(rot); g.scale(k, k);
         g.drawImage(sp.frames[wob], -(sp.w >> 1), -(sp.h >> 1)); g.restore();
       } });
-    }
-    // Cielo para escribir, a la altura de vuelo.
-    if (structure.shared) {
-      updateSmoke(flyers, t);
-      for (const s of smoke.values()) {
-        g.fillStyle = s.c;
-        for (const q of s.pts) { const p = chase.project(q.x, q.y, ALT - 2); if (!p || p.z > chase.far) continue; g.globalAlpha = smokeAlpha(t, q.t); const k = Math.max(1, Math.round(2.4 * kRel(p.z))); g.fillRect(Math.round(p.x - k / 2), Math.round(p.y - k / 2), k, k); }
-      }
-      g.globalAlpha = 1;
     }
     // Estela doble de cada fantasma (dorada si vuela en formación).
     const formation = new Set(starState.formation);

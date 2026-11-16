@@ -3,7 +3,7 @@
 //
 // Manifiesto: lo leen navegador y servidor (nada de DOM). La skin se carga aparte con `loadSkin`.
 import type { Cartridge, GameMode, ModeContext } from "../../cartridge";
-import { FORMATION_ANGLE, FORMATION_EVERY, FORMATION_HOLD, FORMATION_REACH, FORMATION_SPEED, SKY_LIFE, BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RACE_MAX, RINGS, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { FORMATION_ANGLE, FORMATION_EVERY, FORMATION_HOLD, FORMATION_REACH, FORMATION_SPEED, RACE_COUNTDOWN, RACE_WINDOW, START_R, BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RINGS, RING_R, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { WORLD_ID, WORLD_NAME, structure } from "./structure";
 
 const clock = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toFixed(1).padStart(4, "0")}`;
@@ -12,14 +12,14 @@ const clock = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toFixed(
  * El juego del Archipiélago, armado con señales y áreas:
  * - Estrellas: cada estrella de la tanda es un área; quien rompe el récord lo guarda con su nombre en un solo cambio.
  * - Estrella de dos: una grande por tanda que sólo se abre si otra persona está junto a ti dentro de ella.
- * - Carrera: aros fijos en orden (áreas `ring:i`), contra reloj; el mejor tiempo es récord del club (`merge: "min"`).
+ * - Carrera: sólo se ve la salida. Quien entra la convoca (`raceAt`); a los 10 s corren juntos los que estén en la
+ *   salida y aparecen los aros (áreas `ring:i`, sólo mientras dura). El mejor tiempo es récord del club (`merge: "min"`).
  * - Las traes: la estrella dorada la toma quien llegue primero y se pasa tocando a otra persona.
  * - Formación: volar junto a alguien, en la misma dirección y rápido, suma una estrella cada 4 s.
- * - Cielo para escribir: dentro del rectángulo la estela de todos se queda 25 s (la pinta la skin).
  * - Choca esas cinco: un saludo entre dos que están cerca suelta una lluvia de estrellas (la pinta la skin).
  */
 function islandGame(st: StarState): GameMode {
-  let mine = 0, wave = -1, count = 0, goldenOn = false, together = 0, formT = 0;
+  let mine = 0, wave = -1, count = 0, goldenOn = false, together = 0, formT = 0, phase: "off" | "countdown" | "on" = "off", beep = -1;
   const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
   const humans = (ctx: ModeContext) => ctx.others.filter((e) => e.kind === "human");
   const nameOf = (ctx: ModeContext, id: unknown) => (id === ctx.meId ? "tú" : ctx.others.find((e) => e.id === id)?.first);
@@ -59,16 +59,36 @@ function islandGame(st: StarState): GameMode {
       st.formation = together >= FORMATION_HOLD ? [ctx.meId, ...mates.map((e) => e.id)] : [];
       if (st.formation.length && !wasOn) { formT = 0; ctx.sound("big"); ctx.bubble(p, mates.length > 1 ? `¡Formación de ${mates.length + 1}!` : "¡Formación!"); }
       if (st.formation.length) { formT += dt; if (formT >= FORMATION_EVERY) { formT -= FORMATION_EVERY; mine += mates.length; ctx.sound("star"); ctx.bubble(p, `+${mates.length} en formación`); } }
-      // Una vuelta que se quedó a medias se cancela sola.
-      if (st.race.startedAt !== null && now - st.race.startedAt > RACE_MAX) st.race = { next: 0, startedAt: null };
+      // Carrera convocada: cuenta regresiva, arranque de todos los que estén en la salida y cierre.
+      st.raceAt = typeof ctx.shared.raceAt === "number" ? ctx.shared.raceAt : 0;
+      const ph = !st.raceAt || now >= st.raceAt + RACE_WINDOW ? "off" : now < st.raceAt ? "countdown" : "on";
+      if (ph === "countdown") {
+        const n = Math.ceil(st.raceAt - now);
+        if (n !== beep && n <= 3) { beep = n; ctx.sound("ring"); }
+      }
+      if (ph !== phase) {
+        if (ph === "on") {
+          const inStart = Math.hypot(p.x - RINGS[0].x, p.y - RINGS[0].y) <= START_R;
+          RINGS.forEach((r, i) => { if (i) ctx.area(`ring:${i}`, { kind: "circle", x: r.x, y: r.y, r: RING_R }, ["ring"]); });
+          st.race = inStart ? { next: 1, startedAt: st.raceAt } : { next: -1, startedAt: null };
+          if (inStart) { ctx.sound("finish"); ctx.bubble(p, "¡Arrancan! Sigue los aros"); }
+        } else {
+          RINGS.forEach((_, i) => { if (i) ctx.area(`ring:${i}`, null); });
+          if (phase === "on" && st.race.startedAt !== null) ctx.bubble(p, "Se acabó la carrera");
+          st.race = { next: -1, startedAt: null };
+        }
+        phase = ph; beep = -1;
+      }
       // Récord de estrellas (atómico: el dueño sólo se escribe si el récord sube).
       const best = typeof ctx.shared.best === "number" ? ctx.shared.best : 0;
       if (mine > best) ctx.commit({ best: mine, leader: ctx.meId });
 
       const raceBest = typeof ctx.shared.raceBest === "number" ? ctx.shared.raceBest : 0;
-      const raceLine = st.race.startedAt !== null
-        ? `🏁 ${clock(now - st.race.startedAt)} · aro ${st.race.next === 0 ? "meta" : `${st.race.next} de ${RINGS.length - 1}`}`
-        : raceBest ? `🏁 Récord ${clock(raceBest / 10)}${nameOf(ctx, ctx.shared.raceLeader) ? ` (${nameOf(ctx, ctx.shared.raceLeader)})` : ""} · cruza la salida` : "🏁 Cruza la salida para correr";
+      const raceLeader = nameOf(ctx, ctx.shared.raceLeader);
+      const raceLine = phase === "countdown" ? `🏁 Carrera en ${Math.ceil(st.raceAt - now)} s · quédate en la salida`
+        : st.race.next > 0 || (st.race.next === 0 && st.race.startedAt !== null) ? `🏁 ${clock(now - (st.race.startedAt ?? now))} · ${st.race.next === 0 ? "¡a la meta!" : `aro ${st.race.next} de ${RINGS.length - 1}`}`
+        : phase === "on" ? "🏁 Carrera en curso"
+        : raceBest ? `🏁 Récord ${clock(raceBest / 10)}${raceLeader ? ` (${raceLeader})` : ""} · entra a la salida` : "🏁 Entra a la salida para convocar una carrera";
       const who = nameOf(ctx, ctx.shared.leader);
       ctx.hud({
         title: `⭐ ${mine} · récord ${Math.max(best, mine)}${who ? ` (${who})` : ""}`,
@@ -86,21 +106,22 @@ function islandGame(st: StarState): GameMode {
           ctx.sound("star"); ctx.bubble(p, mine === 1 ? "¡Tu primera estrella!" : `${mine} estrellas`);
         } else if (tags?.includes("golden")) {
           ctx.commit({ it: ctx.meId, itAt: Math.floor(now) }); ctx.sound("tag"); ctx.bubble(p, "¡La traes tú!");
-        } else if (tags?.includes("sky")) {
-          ctx.bubble(p, `Escribe en el cielo: tu estela dura ${SKY_LIFE} s`);
-        } else if (tags?.includes("ring")) {
-          const i = Number(id.split(":")[1]), r = st.race;
-          if (i === 0 && r.startedAt !== null && r.next === 0) {
+        } else if (tags?.includes("start")) {
+          const r = st.race;
+          if (phase === "off") {
+            // Convoca: arranca en RACE_COUNTDOWN s para todos los que estén en la salida.
+            ctx.commit({ raceAt: Math.floor(now) + RACE_COUNTDOWN });
+            ctx.sound("tag"); ctx.bubble(p, `¡Carrera en ${RACE_COUNTDOWN} s! Quédate en la salida`);
+          } else if (phase === "on" && r.next === 0 && r.startedAt !== null) {
             // Meta: tiempo en décimas; el servidor sólo lo guarda si baja el récord.
             const tenths = Math.max(1, Math.round((now - r.startedAt) * 10));
             ctx.commit({ raceBest: tenths, raceLeader: ctx.meId });
             ctx.sound("finish"); ctx.bubble(p, `¡Meta! ${clock(tenths / 10)}`);
-            st.race = { next: 1, startedAt: now }; // y arranca otra vuelta
-          } else if (i === 0 && r.startedAt === null) {
-            st.race = { next: 1, startedAt: now }; ctx.sound("ring"); ctx.bubble(p, "¡Arrancas! Sigue los aros");
-          } else if (r.startedAt !== null && i === r.next) {
-            r.next = i + 1 >= RINGS.length ? 0 : i + 1; ctx.sound("ring");
+            st.race = { next: -1, startedAt: null };
           }
+        } else if (tags?.includes("ring")) {
+          const i = Number(id.split(":")[1]), r = st.race;
+          if (r.startedAt !== null && i === r.next) { r.next = i + 1 >= RINGS.length ? 0 : i + 1; ctx.sound("ring"); }
         }
       } else if (signal.type === "wave") {
         // Choca esas cinco: el saludo entre dos que están cerca.
@@ -128,7 +149,7 @@ export const archipielago: Cartridge = {
     pilotLabel: "Cara",
     count: (n) => (n === 1 ? "1 en el aire" : `${n} en el aire`),
     roaming: "volando sobre las islas",
-    hint: "Junta estrellas, corre por los aros, vuela en formación, escribe en el cielo y pásale la estrella dorada a alguien.",
+    hint: "Junta estrellas, convoca una carrera en la salida, vuela en formación y pásale la estrella dorada a alguien.",
     hintKeys: " Flechas o WASD para volar · Shift turbo · C cambia la cámara · clic para ir a un punto · Enter para aterrizar.",
     hintMini: "Toca el mar o una isla y vuelas para allá.",
     expandMini: " el archipiélago y volar",

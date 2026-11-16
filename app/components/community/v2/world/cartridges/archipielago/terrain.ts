@@ -38,7 +38,7 @@ export function buildTerrain(structure: WorldStructure): Terrain {
   // Islas: una por lugar, más unas chiquitas de adorno lejos de todo.
   const bumps = structure.places.map((p: Place) => ({ x: p.x / WP, y: p.y / WP, r: (p.r * (ISLAND_K[p.kind] ?? 0.85)) / WP }));
   const r2 = mulberry(9);
-  for (let i = 0, tries = 0; i < 7 && tries < 300; tries++) {
+  for (let i = 0, tries = 0; i < 18 && tries < 600; tries++) {
     const b = { x: 20 + r2() * (w - 40), y: 20 + r2() * (h - 40), r: 9 + r2() * 12 };
     if (bumps.some((q) => Math.hypot(q.x - b.x, q.y - b.y) < q.r + b.r + 14)) continue;
     bumps.push(b); i++;
