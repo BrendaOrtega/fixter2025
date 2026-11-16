@@ -55,7 +55,10 @@ function islandGame(st: StarState): GameMode {
   let saved = 0, greeted = false;
   const quest = (e: Parameters<typeof quests.on>[0], ctx: ModeContext) => {
     if (!ctx.progress) return;
+    const before = quests.step;
     const q = quests.on(e, ctx);
+    // Paso nuevo: se anuncia sobre tu fantasma, así nunca queda duda de qué sigue.
+    if (!q && quests.step && quests.step !== before) { ctx.sound("ring"); ctx.bubble(ctx.player, `Siguiente: ${quests.step.text}`); }
     if (q) { mine += 10; ctx.save({}, [q.id]); ctx.sound("finish"); ctx.bubble(ctx.player, `¡${q.title} completo! ${q.reward}`); }
   };
   const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
@@ -190,7 +193,8 @@ function islandGame(st: StarState): GameMode {
         if (quests.current && !greeted) {
           greeted = true;
           const g = ctx.others.find((e) => e.id === "bot:ghosty");
-          if (g) ctx.bubble(g, "¡Hola! Te doy un recorrido: sigue la flecha");
+          if (g) ctx.bubble(g, "¡Hola! Ven conmigo y toca «Saludar» para empezar el recorrido");
+          ctx.bubble(ctx.player, `Misión: ${quests.step?.text ?? ""}`);
           ctx.sound("waveIn");
         }
         return;
