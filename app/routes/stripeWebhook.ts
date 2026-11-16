@@ -20,6 +20,10 @@ import {
   syncFromCheckoutSession,
   syncSubscription,
 } from "~/.server/services/membership.server";
+import {
+  fulfillAntiFactory,
+  isAntiFactoryType,
+} from "~/.server/services/anti-factory.server";
 
 // Inicialización lazy para evitar error durante build
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -68,6 +72,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (session.metadata.type === MEMBERSHIP_TYPE) {
         await syncFromCheckoutSession(session);
         console.info(`WEBHOOK: membresía ${session.metadata.communityId} de ${email}`);
+        return new Response(null);
+      }
+
+      // Taller en vivo «Ghosty Anti-Factory» (dic-2026). Va antes del cumplimiento
+      // por datos porque su correo lleva las dos fechas y un .ics por sesión, y el
+      // correo genérico del Product no sabe adjuntarlos.
+      if (isAntiFactoryType(session.metadata.type)) {
+        const metadata = session.metadata as Record<string, string | undefined>;
+        const { ok, repeated } = await fulfillAntiFactory({
+          sessionId: session.id,
+          email,
+          name: session.customer_details?.name || metadata.name,
+          amountTotal: session.amount_total,
+          currency: session.currency,
+          metadata,
+        });
+        console.info(
+          `WEBHOOK: ${metadata.type} ${repeated ? "ya cumplido" : ok ? "cumplido" : "PARCIAL"}`
+        );
         return new Response(null);
       }
 

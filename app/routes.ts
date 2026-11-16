@@ -79,6 +79,8 @@ export default [
   route("code-mode", "routes/code-mode.tsx"),
   // Taller: Diseño de sistemas agénticos
   route("sistemas-agenticos", "routes/sistemas-agenticos.tsx"),
+  // Taller en vivo «Ghosty Anti-Factory» (dic-2026): una pantalla que manda a Stripe
+  route("anti-factory", "routes/anti-factory.tsx"),
   route("animaciones-ai", "routes/animaciones-ai.tsx"), // lista de espera del curso
   route("software-factory", "routes/software-factory.tsx"), // lista de espera del taller (medir interés)
   route("seis-piezas", "routes/seis-piezas.tsx"), // regalo del webinar → PDF en EasyBits
