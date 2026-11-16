@@ -190,3 +190,22 @@ El control ya no está fijo en el motor. Mismo patrón que Godot/Unity:
 
 Ejemplo: Archipiélago tiene vista aérea (`direct`) y de persecución en modo 7 (`steer`), con botón de
 cámara y tecla `C` (`cartridges/archipielago/chase.ts`).
+
+## Señales, áreas, estado por montaje y validación (16-nov-2026, patrones de Godot)
+
+Detalle y razones en `GODOT-PATRONES.md` (puntos 1 a 5, hechos).
+
+- **Estado compartido atómico**: `ctx.commit({ best: 7, leader: ctx.meId })` manda varias llaves en un solo
+  cambio; el servidor acepta todas o ninguna. `merge: "max" | "min"` en una llave numérica: sólo entra un valor
+  que la supere; si no, el lote entero se rechaza (`stale`). El motor no reenvía un cambio igual a uno en vuelo,
+  así que llamarlo cada cuadro no cuesta. `propose(key, value)` sigue funcionando (es un `commit` de una llave).
+- **Señales**: `GameMode.on(signal, ctx)` recibe `place-entered/exited`, `area-entered/exited`, `wave` y
+  `shared-changed`. Ya no hace falta comparar cada cuadro.
+- **Áreas** (Area2D): `structure.areas` (círculo o rectángulo, con `tags`) y las efímeras del modo con
+  `ctx.area(id, shape | null, tags)`. La etiqueta `safe` protege como un lugar. Sólo tu personaje dispara señales.
+- **Estado por montaje**: `Cartridge.createState()` se crea una vez al montar y llega a `mode(state)` y a
+  `createRenderer({ state })`. Nada de estado en variables de módulo.
+- **Validación**: `world/validate.ts` (`validateStructure`) revisa la coherencia de la estructura. Corre en
+  `world/__tests__/validate.test.ts` para todos los cartuchos registrados y avisa en la consola en desarrollo.
+
+Ejemplo de todo junto: el modo Estrellas de `cartridges/archipielago/index.ts`.

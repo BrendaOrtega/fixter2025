@@ -288,37 +288,53 @@ export function sendHurt(communityId: string, fromId: string, threatId: unknown,
 }
 
 /**
- * Estado compartido del modo de juego: `{ key, value }` (`value: null` borra la llave). Sólo de quien
- * tiene nave presente, sólo llaves que declara el cartucho activo (`structure.shared`) y con su tipo:
- * número entero dentro de `min`–`max`, texto limpio recortado a `max`, o el id de un miembro
- * presente. A lo más un cambio cada `SHARE_EVERY_MS` por persona. Regresa por qué no, si no se aceptó.
+ * Estado compartido del modo de juego. Llega como `{ key, value }` (una llave) o `{ changes: { llave: valor } }`
+ * (varias, atómico: todas o ninguna). `null` borra la llave. Sólo de quien tiene nave presente, sólo llaves
+ * que declara el cartucho activo (`structure.shared`) y con su tipo: número entero dentro de `min`–`max`,
+ * texto limpio recortado a `max`, o el id de un miembro presente. Un número con `merge: "max"`/`"min"` sólo
+ * entra si supera al actual; si no, el lote entero se rechaza (`stale`): así `leader` sólo se escribe si
+ * `best` ganó. A lo más un cambio cada `SHARE_EVERY_MS` por persona. Regresa por qué no, si no se aceptó.
  */
 export function setShared(communityId: string, fromId: string, input: unknown, now = Date.now()) {
   const w = worldOf(communityId);
   prune(w, now);
-  const fail = (error: "absent" | "undeclared" | "invalid" | "rate") => ({ ok: false as const, error });
+  const fail = (error: "absent" | "undeclared" | "invalid" | "rate" | "stale") => ({ ok: false as const, error });
   if (!w.ships.has(fromId)) return fail("absent");
-  const o = (input && typeof input === "object" ? input : {}) as { key?: unknown; value?: unknown };
+  const o = (input && typeof input === "object" ? input : {}) as { key?: unknown; value?: unknown; changes?: unknown };
+  // Lista de cambios: el formato de varias llaves o el de una.
+  let entries: [unknown, unknown][];
+  if (o.changes && typeof o.changes === "object" && !Array.isArray(o.changes)) entries = Object.entries(o.changes as Record<string, unknown>);
+  else entries = [[o.key, o.value]];
   const keys = sharedKeys(structureOf(w));
-  const decl = typeof o.key === "string" && Object.hasOwn(keys, o.key) ? keys[o.key] : null;
-  if (!decl) return fail("undeclared");
-  const key = o.key as string;
-  let value: SharedValue | null;
-  if (o.value === null) value = null;
-  else if (decl.type === "number") {
-    if (typeof o.value !== "number" || !Number.isInteger(o.value) || o.value < decl.min || o.value > decl.max) return fail("invalid");
-    value = o.value;
-  } else if (decl.type === "text") {
-    const text = [...cleanSayText(o.value)].slice(0, Math.max(0, Math.min(decl.max, SHARED_MAX_TEXT))).join("").trim();
-    if (!text) return fail("invalid");
-    value = text;
-  } else {
-    if (typeof o.value !== "string" || !w.ships.has(o.value)) return fail("invalid");
-    value = o.value;
+  if (!entries.length || entries.length > SHARED_MAX_KEYS) return fail("undeclared");
+  const next: [string, SharedValue | null][] = [];
+  for (const [key, raw] of entries) {
+    const decl = typeof key === "string" && Object.hasOwn(keys, key) ? keys[key] : null;
+    if (!decl) return fail("undeclared");
+    let value: SharedValue | null;
+    if (raw === null) value = null;
+    else if (decl.type === "number") {
+      if (typeof raw !== "number" || !Number.isInteger(raw) || raw < decl.min || raw > decl.max) return fail("invalid");
+      value = raw;
+    } else if (decl.type === "text") {
+      const text = [...cleanSayText(raw)].slice(0, Math.max(0, Math.min(decl.max, SHARED_MAX_TEXT))).join("").trim();
+      if (!text) return fail("invalid");
+      value = text;
+    } else {
+      if (typeof raw !== "string" || !w.ships.has(raw)) return fail("invalid");
+      value = raw;
+    }
+    next.push([key as string, value]);
   }
   if (now - (w.shareAt.get(fromId) ?? -Infinity) < SHARE_EVERY_MS) return fail("rate");
+  // Regla de mezcla: un récord sólo sube (o sólo baja). Si una llave así no gana, no entra nada.
+  for (const [key, value] of next) {
+    const decl = keys[key], cur = w.shared.get(key);
+    if (decl.type !== "number" || !decl.merge || decl.merge === "set" || typeof cur !== "number" || value === null) continue;
+    if (decl.merge === "max" ? (value as number) <= cur : (value as number) >= cur) return fail("stale");
+  }
   w.shareAt.set(fromId, now);
-  if (value === null) w.shared.delete(key); else w.shared.set(key, value);
+  for (const [key, value] of next) if (value === null) w.shared.delete(key); else w.shared.set(key, value);
   return { ok: true as const };
 }
 

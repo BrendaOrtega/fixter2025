@@ -214,7 +214,21 @@ export type WorldStructure = {
   threat?: Threat | null;
   /** Llaves del estado compartido que acepta el servidor para este mundo (ver `GameMode`). Sin esto, ninguna. */
   shared?: Record<string, SharedKey>;
+  /** Áreas fijas del mundo (como el Area2D de Godot): al entrar o salir tu personaje, el modo recibe una señal. */
+  areas?: Area[];
 };
+
+// ───────── Áreas (Area2D) ─────────
+
+/** Forma de un área, en unidades del mapa. */
+export type Shape = { kind: "circle"; x: number; y: number; r: number } | { kind: "rect"; x: number; y: number; w: number; h: number };
+/**
+ * Un área: forma, id y etiquetas. Etiqueta que el motor entiende: `safe` (adentro nadie te daña, como en un
+ * lugar). Las demás son libres para el modo. Sólo tu personaje dispara sus señales.
+ */
+export type Area = { id: string; shape: Shape; tags?: string[] };
+export const inShape = (s: Shape, x: number, y: number) =>
+  s.kind === "circle" ? Math.hypot(x - s.x, y - s.y) <= s.r : x >= s.x && y >= s.y && x <= s.x + s.w && y <= s.y + s.h;
 
 // ───────── Modo de juego (opcional): reglas propias del cartucho ─────────
 
@@ -225,7 +239,14 @@ export const SHARED_MAX_TEXT = 80;
  * Una llave del estado compartido: número entero entre `min` y `max`, texto corto (hasta `max`
  * caracteres, tope `SHARED_MAX_TEXT`) o el id de un miembro presente en el Mundo.
  */
-export type SharedKey = { type: "number"; min: number; max: number } | { type: "text"; max: number } | { type: "member" };
+export type SharedKey = { type: "number"; min: number; max: number; merge?: SharedMerge } | { type: "text"; max: number } | { type: "member" };
+/**
+ * Regla de mezcla de un número (la decide el servidor, como la autoridad de Godot): `set` (default) gana el
+ * último que escribe; `max`/`min` sólo acepta un valor que supere al actual. Si un cambio de varias llaves
+ * (`commit`) trae una llave `max`/`min` que no gana, se rechaza completo: así `leader` sólo se escribe si
+ * `best` ganó.
+ */
+export type SharedMerge = "set" | "max" | "min";
 export type SharedValue = number | string;
 /** Diccionario chico por comunidad, en memoria del servidor. Se borra al cambiar de cartucho. */
 export type SharedState = Readonly<Record<string, SharedValue>>;
@@ -250,11 +271,26 @@ export type ModeContext = {
   bubble(entity: Entity, text: string): void;
   /** Fija el letrero. Llamarlo cada cuadro con lo mismo no cuesta. */
   hud(hud: ModeHud): void;
-  /** Propone un valor para una llave declarada (`null` la borra). El servidor decide; lo aceptado vuelve en `shared`. */
+  /** Propone un valor para una llave declarada (`null` la borra). Atajo de `commit({ [key]: value })`. */
   propose(key: string, value: SharedValue | null): void;
+  /**
+   * Propone varias llaves en un solo cambio atómico: el servidor las acepta todas o ninguna (con su regla
+   * `merge`). El motor no reenvía el mismo cambio mientras uno igual va en camino, así que llamarlo cada
+   * cuadro no cuesta. Lo aceptado vuelve en `shared` y como señal `shared-changed`.
+   */
+  commit(changes: Record<string, SharedValue | null>): void;
+  /** Registra (o con `null` quita) un área propia del modo, p. ej. una estrella. Mismo trato que `structure.areas`. */
+  area(id: string, shape: Shape | null, tags?: string[]): void;
 };
-/** Reglas propias de un cartucho. El motor llama `update` cada cuadro (no en el mapa reducido). */
-export type GameMode = { update(ctx: ModeContext, dt: number): void };
+/** Algo que pasó y le interesa al modo (las señales de Godot): así no tiene que revisar todo cada cuadro. */
+export type ModeSignal =
+  | { type: "place-entered" | "place-exited"; place: Place }
+  | { type: "area-entered" | "area-exited"; area: Area }
+  /** Un saludo que viste pasar (de ti, a ti o entre otras dos personas). */
+  | { type: "wave"; from: Entity; to: Entity }
+  | { type: "shared-changed"; key: string; value: SharedValue | null };
+/** Reglas propias de un cartucho. El motor llama `update` cada cuadro (no en el mapa reducido) y `on` con cada señal. */
+export type GameMode = { update(ctx: ModeContext, dt: number): void; on?(signal: ModeSignal, ctx: ModeContext): void };
 
 // ───────── Estado que el motor entrega a la skin ─────────
 
@@ -416,7 +452,7 @@ export type WorldSkin = {
    * Crea el renderizador sobre el `<canvas>` del escenario (pide tú el contexto: `2d` o WebGL). Puedes
    * agregar elementos propios dentro de `stage` (p. ej. una capa para etiquetas) si los quitas en `destroy`.
    */
-  createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLElement; structure: WorldStructure; motor?: MotorHooks }): WorldRenderer;
+  createRenderer(opts: { canvas: HTMLCanvasElement; stage: HTMLElement; structure: WorldStructure; motor?: MotorHooks; state?: unknown }): WorldRenderer;
   sounds: SoundBank;
   /** Selector de aspecto: dibuja la opción `id` de modelo o piloto en un canvas 2D de 56×40 (ya escalado). */
   drawOption?(ctx: CanvasRenderingContext2D, slot: "model" | "pilot", id: string, look: Look, face: Face | null): void;
@@ -477,6 +513,13 @@ export type Cartridge = {
   poster: { backgroundColor: string; backgroundImage?: string };
   /** La skin se carga aparte (`() => import("./skin")`): un renderizador pesado no le cuesta a los demás mundos. */
   loadSkin: () => Promise<WorldSkin>;
-  /** Modo de juego: se crea uno por montaje (su estado local vive en el cierre). Sin esto, el mundo no trae reglas propias. */
-  mode?: () => GameMode;
+  /**
+   * Estado del cartucho por montaje (el autoload de Godot, con alcance): el motor lo crea una vez al montar
+   * y se lo pasa al modo y a la skin (`createRenderer({ state })`). Nada de estado en variables de módulo:
+   * sobreviviría a cambiar de mundo y volver, y el servidor importa la estructura.
+   */
+  createState?: () => unknown;
+  /** Modo de juego: se crea uno por montaje con el estado de `createState`. Sin esto, el mundo no trae reglas propias. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada cartucho tipa su propio estado
+  mode?: (state: any) => GameMode;
 };

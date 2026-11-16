@@ -381,6 +381,38 @@ describe("mundo del club (presencia en memoria)", () => {
       expect(snapshot("c1", T0 + SHARE_EVERY_MS).shared).toEqual({ score: 2 });
     });
 
+    it("varias llaves en un solo cambio: todas o ninguna, y un solo turno de frecuencia", () => {
+      setWorldCartridge("c1", game.id);
+      upsertShip("c1", who("a"), {}, T0);
+      upsertShip("c1", who("b"), {}, T0);
+      const commit = (from: string, changes: unknown, at: number) => setShared("c1", from, { changes }, at);
+      expect(commit("a", { score: 2, winner: "a" }, T0)).toEqual({ ok: true });
+      expect(snapshot("c1", T0).shared).toEqual({ score: 2, winner: "a" });
+      // Una llave mala tumba el lote entero.
+      expect(commit("a", { score: 3, winner: "fantasma" }, T0 + SHARE_EVERY_MS)).toEqual({ ok: false, error: "invalid" });
+      expect(commit("a", { score: 3, otra: 1 }, T0 + SHARE_EVERY_MS)).toEqual({ ok: false, error: "undeclared" });
+      expect(commit("a", {}, T0 + SHARE_EVERY_MS)).toEqual({ ok: false, error: "undeclared" });
+      expect(snapshot("c1", T0).shared).toEqual({ score: 2, winner: "a" });
+    });
+
+    it("merge max: un récord sólo sube y su dueño se escribe sólo si ganó", () => {
+      const rec: Cartridge = { ...game, id: "prueba-record", structure: { ...HOUSE, shared: { best: { type: "number", min: 0, max: 99, merge: "max" }, leader: { type: "member" } } } };
+      list.push(rec);
+      try {
+        setWorldCartridge("c1", rec.id);
+        upsertShip("c1", who("a"), {}, T0);
+        upsertShip("c1", who("b"), {}, T0);
+        const commit = (from: string, changes: unknown, at: number) => setShared("c1", from, { changes }, at);
+        expect(commit("a", { best: 5, leader: "a" }, T0)).toEqual({ ok: true });
+        expect(commit("b", { best: 5, leader: "b" }, T0 + 1)).toEqual({ ok: false, error: "stale" });
+        expect(commit("b", { best: 3, leader: "b" }, T0 + 2)).toEqual({ ok: false, error: "stale" });
+        expect(snapshot("c1", T0 + 2).shared).toEqual({ best: 5, leader: "a" });
+        // Lo rechazado por viejo no gasta el turno.
+        expect(commit("b", { best: 6, leader: "b" }, T0 + 3)).toEqual({ ok: true });
+        expect(snapshot("c1", T0 + 3).shared).toEqual({ best: 6, leader: "b" });
+      } finally { list.splice(list.indexOf(rec), 1); }
+    });
+
     it("cambiar de cartucho borra el estado compartido", () => {
       setWorldCartridge("c1", game.id);
       upsertShip("c1", who("a"), {}, T0);

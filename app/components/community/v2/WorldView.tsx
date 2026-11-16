@@ -198,7 +198,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         // Saludo pedido desde un menú de la skin: mismo camino que el botón «Saludar».
         onGreet: (id) => { if (structure.bots.some((b) => b.id === id)) apiRef.current?.waveBot(id); else waveRef.current(id); },
         // El modo de juego propone un valor compartido: el servidor decide y lo aceptado vuelve en el snapshot.
-        onShare: (key, value) => { post({ share: { key, value } }).then(apply).catch(() => {}); },
+        onShare: (changes) => { post({ share: { changes } }).then(apply).catch(() => {}); },
         onThreat: (phase, name) => { setThreat(phase); if (phase) setThreatName(name); },
         // Destruida o de vuelta: los demás lo saben con el siguiente latido (`down`).
         onDown: (seconds) => { setDownIn(seconds); dirtyRef.current = true; },

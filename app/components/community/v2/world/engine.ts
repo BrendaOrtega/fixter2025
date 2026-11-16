@@ -4,9 +4,10 @@
 // un `useEffect`); React pone encima los controles y las tarjetas.
 // Manual: docs/club-rediseno/MUNDO-CARTUCHOS.md.
 
-import { SHAKE, type Bubble, type Cartridge, type Entity, type Face, type GameMode, type Look, type ModeContext, type ModeHud, type Pickup, type Place, type PlaceTarget, type Point, type SharedState, type SharedValue, type Shot, type View, type WorldEvent, type WorldFrame, type WorldSkin } from "./cartridge";
+import { SHAKE, inShape, type Area, type ModeSignal, type Bubble, type Cartridge, type Entity, type Face, type GameMode, type Look, type ModeContext, type ModeHud, type Pickup, type Place, type PlaceTarget, type Point, type SharedState, type SharedValue, type Shot, type View, type WorldEvent, type WorldFrame, type WorldSkin } from "./cartridge";
 import { CONTROLLERS, DEFAULT_CAMERA } from "./controllers";
 import { BOOST_KEYS, MOVE_KEYS, readActions } from "./input";
+import { validateStructure } from "./validate";
 
 // Mismos seis tonos y mismo reparto que `Avatar` (v2/ui.tsx).
 const FACE_TONES = [["#17302C", "#85DDCB"], ["#33291A", "#F2C98A"], ["#26233F", "#BDB5F7"], ["#3A2020", "#F4AFAF"], ["#1A2B3D", "#9CC8F2"], ["#22331A", "#8DCF6E"]];
@@ -66,7 +67,8 @@ export type Callbacks = {
   /** El modo de juego del cartucho cambió su letrero. */
   onHud?: (hud: ModeHud) => void;
   /** El modo de juego propone un valor del estado compartido: hay que mandarlo al servidor. */
-  onShare?: (key: string, value: SharedValue | null) => void;
+  /** Cambio atómico del estado compartido (varias llaves, todas o ninguna). */
+  onShare?: (changes: Record<string, SharedValue | null>) => void;
   /** La skin pidió saludar a alguien (persona o robot) desde su propio menú. */
   onGreet?: (entityId: string) => void;
   /** Enter con un lugar cerca. */
@@ -128,7 +130,7 @@ function lerpAngle(a: number, b: number, k: number) {
 }
 
 export function createWorld(opts: {
-  canvas: HTMLCanvasElement; stage: HTMLElement; cartridge: Pick<Cartridge, "structure" | "copy" | "mode">; skin: WorldSkin;
+  canvas: HTMLCanvasElement; stage: HTMLElement; cartridge: Pick<Cartridge, "structure" | "copy" | "mode" | "createState">; skin: WorldSkin;
   meId: string; meName: string; mePhoto: string | null; look: Look; quiet: boolean; callbacks: Callbacks;
 }): WorldApi {
   const { stage, callbacks: cb } = opts;
@@ -138,7 +140,12 @@ export function createWorld(opts: {
   const BOT_HP = G?.bot.hp ?? 0, WARP = G?.bot.warp ?? 0;
   /** Amenaza del cartucho (sólo con juego). */
   const T = G ? S.threat ?? null : null;
+  // Un cartucho mal armado se dice en la consola de desarrollo, no en producción.
+  if (import.meta.env?.DEV) { const issues = validateStructure(opts.cartridge); if (issues.length) console.warn("[mundo] estructura con problemas:\n- " + issues.join("\n- ")); }
+  // Estado del cartucho por montaje: lo comparten su modo y su skin, y muere con este montaje.
+  const cartState = opts.cartridge.createState?.();
   const renderer = opts.skin.createRenderer({
+    state: cartState,
     canvas: opts.canvas, stage, structure: S,
     // Ganchos para skins con menús propios: caminar a un punto, saludar y sonar pasan por el motor.
     motor: { walkTo: (p) => flyTo(p.x, p.y), greet: (id) => cb.onGreet?.(id), sound: (name) => cb.onSound(name), nudge: (id, kind) => poke(id, kind) },
@@ -335,7 +342,11 @@ export function createWorld(opts: {
   }
   function updateProximity() {
     const p = placeOf(player);
-    if (p !== state.nearPlace) { state.nearPlace = p; refreshPlace(); if (p) cb.onSound("arrive"); }
+    if (p !== state.nearPlace) {
+      const prev = state.nearPlace; state.nearPlace = p; refreshPlace(); if (p) cb.onSound("arrive");
+      if (prev) signal({ type: "place-exited", place: prev });
+      if (p) signal({ type: "place-entered", place: p });
+    }
     // Una persona cerca siempre gana sobre un robot de la casa; entre iguales, la más cercana.
     let near: Entity | null = null, nd = Infinity;
     for (const group of [[...humans.values()].filter((e) => e.downT <= 0), bots.filter((b) => b.downT <= 0 && b.warpT <= 0)]) {
@@ -397,19 +408,56 @@ export function createWorld(opts: {
   }
 
   // ── Modo de juego del cartucho (opcional): sus reglas corren aquí, cada cuadro, sin DOM ni red ──
-  let mode: GameMode | null = opts.cartridge.mode?.() ?? null, shared: SharedState = {}, hudKey = "null";
+  let mode: GameMode | null = opts.cartridge.mode?.(cartState) ?? null, shared: SharedState = {}, hudKey = "null";
+  // Áreas (Area2D): las fijas del mundo y las que registra el modo; `inside`: en las que está tu personaje.
+  const areas = new Map<string, Area>((S.areas ?? []).map((a) => [a.id, a]));
+  const inside = new Set<string>();
+  const inSafeArea = () => { for (const id of inside) if (areas.get(id)?.tags?.includes("safe")) return true; return false; };
+  // Estado compartido: un cambio igual a uno que va en camino no se reenvía (llamar `commit` cada cuadro no cuesta).
+  let inFlight: { json: string; at: number } | null = null;
+  function commit(changes: Record<string, SharedValue | null>) {
+    const decl = S.shared; if (!decl) return;
+    const ok = Object.entries(changes).filter(([k]) => Object.hasOwn(decl, k));
+    if (!ok.length || ok.every(([k, v]) => (shared[k] ?? null) === v)) return;
+    const json = JSON.stringify(ok), at = performance.now();
+    if (inFlight && inFlight.json === json && at - inFlight.at < 3000) return;
+    inFlight = { json, at }; cb.onShare?.(Object.fromEntries(ok));
+  }
   const modeCtx: ModeContext = {
     now: 0, meId: opts.meId, player, others: [], places, nearPlace: null, shared,
     sound: (name) => cb.onSound(name),
     bubble: (entity, text) => { state.bubbles = state.bubbles.filter((b) => b.entity !== entity || b.say); state.bubbles.push({ entity, text: text.slice(0, 60), t: 0, dur: 1.6 }); },
     hud: (hud) => { const key = JSON.stringify(hud); if (key !== hudKey) { hudKey = key; cb.onHud?.(hud); } },
-    propose: (key, value) => { if (S.shared && key in S.shared) cb.onShare?.(key, value); },
+    propose: (key, value) => commit({ [key]: value }),
+    commit,
+    area: (id, shape, tags) => { if (shape) areas.set(id, { id, shape, tags }); else { areas.delete(id); inside.delete(id); } },
   };
-  function updateMode(dt: number) {
-    if (!mode || state.mini) return;
+  function refreshModeCtx() {
     modeCtx.now = Date.now() / 1000; modeCtx.others = others(); modeCtx.places = places; modeCtx.nearPlace = state.nearPlace; modeCtx.shared = shared;
-    try { mode.update(modeCtx, dt); }
-    catch (err) { console.error("[mundo] el modo de juego falló y se apagó", err); mode = null; modeCtx.hud(null); }
+  }
+  function modeFailed(err: unknown) { console.error("[mundo] el modo de juego falló y se apagó", err); mode = null; modeCtx.hud(null); }
+  /** Señal al modo (como las de Godot): algo pasó y el modo decide si le importa. */
+  function signal(s: ModeSignal) {
+    if (!mode?.on || state.mini) return;
+    refreshModeCtx();
+    try { mode.on(s, modeCtx); } catch (err) { modeFailed(err); }
+  }
+  /** Entradas y salidas de tu personaje en las áreas, por diferencia con el cuadro anterior. */
+  function updateAreas() {
+    if (!areas.size && !inside.size) return;
+    const alive = player.downT <= 0;
+    for (const a of [...areas.values()]) {
+      const now = alive && inShape(a.shape, player.x, player.y);
+      if (now && !inside.has(a.id)) { inside.add(a.id); signal({ type: "area-entered", area: a }); }
+      else if (!now && inside.has(a.id)) { inside.delete(a.id); signal({ type: "area-exited", area: a }); }
+    }
+  }
+  function updateMode(dt: number) {
+    if (state.mini) return;
+    updateAreas();
+    if (!mode) return;
+    refreshModeCtx();
+    try { mode.update(modeCtx, dt); } catch (err) { modeFailed(err); }
   }
 
   // ── Juego: aparatos que cambian tu disparo (sólo si el cartucho trae `combat`) ──
@@ -556,7 +604,7 @@ export function createWorld(opts: {
   // sólo viajan «me destruyó» (`down` en el latido) y «la derribé» (`boom` con el id del ciclo).
   const threatId = (cycle: number) => `${T?.id}:${cycle}`;
   /** Nadie te apunta ni te daña sentado en una mesa, dentro de un lugar, destruido o con escudo. */
-  const exposed = () => player.downT <= 0 && player.shieldT <= 0 && player.warpT <= 0 && player.table === null && !placeOf(player);
+  const exposed = () => player.downT <= 0 && player.shieldT <= 0 && player.warpT <= 0 && player.table === null && !placeOf(player) && !inSafeArea();
   function showDown(seconds: number | null) { if (seconds !== state.downShown) { state.downShown = seconds; cb.onDown?.(seconds); } }
   /** Con `needsWeapon`: aparatos de sobra mientras dura la visita y uno cerca de quien no trae, para que nadie quede indefenso. */
   const SUPPLY = G && T?.needsWeapon ? T.supply ?? null : null;
@@ -893,6 +941,7 @@ export function createWorld(opts: {
       const from = byId(fromId, meId), to = byId(toId, meId); if (!from || !to) return;
       state.bubbles.push({ entity: from, text: `¡Hola, ${to === player ? firstName(opts.meName) : to.first}!`, t: 0, dur: 1.5 });
       if (to === player) burst(player); else if (from === player) to.waveT = 3;
+      signal({ type: "wave", from, to });
     },
     waveBot(botId) {
       const bot = bots.find((b) => b.id === botId); if (!bot || bot.downT > 0) return;
@@ -926,7 +975,12 @@ export function createWorld(opts: {
       if (table === null) { player.table = player.seat = null; refreshPlace(); } else if (table === player.table) player.seat = seat;
     },
     myTable: () => player.table,
-    setShared(next) { shared = next; },
+    setShared(next) {
+      const prev = shared; shared = next;
+      for (const key of new Set([...Object.keys(prev), ...Object.keys(next)])) {
+        if (prev[key] !== next[key]) { inFlight = null; signal({ type: "shared-changed", key, value: next[key] ?? null }); }
+      }
+    },
     myState() {
       const flying = state.wasFlying;
       const seat = player.table !== null && player.seat !== null ? TABLES[player.table].seats[player.seat] : null;

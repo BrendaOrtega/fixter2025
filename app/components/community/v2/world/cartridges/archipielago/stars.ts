@@ -41,6 +41,7 @@ export function starsOf(wave: number, size: { w: number; h: number }, places: Pl
   return out;
 }
 
-/** Estado local compartido entre el modo y la skin (mismo módulo en el navegador). */
-export const starState = { now: 0, taken: new Set<string>() };
+/** Estado del cartucho por montaje (`createState`): lo comparten el modo y la skin y muere con el montaje. */
+export type StarState = { now: number; taken: Set<string> };
+export const createStarState = (): StarState => ({ now: 0, taken: new Set() });
 export const starKey = (wave: number, i: number) => `${wave}:${i}`;

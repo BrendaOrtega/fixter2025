@@ -3,32 +3,44 @@
 //
 // Manifiesto: lo leen navegador y servidor (nada de DOM). La skin se carga aparte con `loadSkin`.
 import type { Cartridge, GameMode } from "../../cartridge";
-import { STAR_EVERY, STAR_REACH, starKey, starState, starsOf } from "./stars";
+import { STAR_EVERY, STAR_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { WORLD_ID, WORLD_NAME, structure } from "./structure";
 
-/** Modo «Estrellas»: cada quien junta las suyas; quien supera el récord del club se queda con él. */
-function starsMode(): GameMode {
-  let mine = 0;
+/**
+ * Modo «Estrellas»: cada estrella de la tanda es un área; al entrar en una (señal `area-entered`) la tomas.
+ * Quien supera el récord del club lo propone junto con su nombre en un solo cambio; el servidor sólo lo
+ * acepta si sube (`merge: "max"`).
+ */
+function starsMode(st: StarState): GameMode {
+  let mine = 0, wave = -1, count = 0;
+  const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
   return {
     update(ctx) {
-      starState.now = ctx.now;
-      const wave = Math.floor(ctx.now / STAR_EVERY), p = ctx.player;
-      starsOf(wave, structure.size, ctx.places).forEach((s, i) => {
-        const key = starKey(wave, i);
-        if (starState.taken.has(key) || Math.hypot(s.x - p.x, s.y - p.y) > STAR_REACH) return;
-        starState.taken.add(key); mine++;
-        ctx.sound("star"); ctx.bubble(p, mine === 1 ? "¡Tu primera estrella!" : `${mine} estrellas`);
-      });
-      // Sólo guardamos las tandas recientes.
-      if (starState.taken.size > 60) for (const k of starState.taken) if (Number(k.split(":")[0]) < wave - 1) starState.taken.delete(k);
+      st.now = ctx.now;
+      const w = Math.floor(ctx.now / STAR_EVERY);
+      if (w !== wave) {
+        // Tanda nueva: se quitan las áreas de la anterior y se ponen las de ésta.
+        for (let i = 0; i < count; i++) ctx.area(areaId(wave, i), null);
+        const stars = starsOf(w, structure.size, ctx.places);
+        stars.forEach((s, i) => { if (!st.taken.has(starKey(w, i))) ctx.area(areaId(w, i), { kind: "circle", x: s.x, y: s.y, r: STAR_REACH }, ["star"]); });
+        for (const k of st.taken) if (Number(k.split(":")[0]) < w - 1) st.taken.delete(k);
+        wave = w; count = stars.length;
+      }
       const best = typeof ctx.shared.best === "number" ? ctx.shared.best : 0, leader = ctx.shared.leader;
-      if (mine > best) { ctx.propose("best", mine); ctx.propose("leader", ctx.meId); }
+      if (mine > best) ctx.commit({ best: mine, leader: ctx.meId });
       const who = leader === ctx.meId ? "tú" : ctx.others.find((e) => e.id === leader)?.first;
       const left = Math.ceil(STAR_EVERY - (ctx.now % STAR_EVERY));
       ctx.hud({
         title: "⭐ Estrellas",
-        lines: [`Tú: ${mine}`, best ? `Récord del club: ${Math.max(best, mine)}${who ? ` (${who})` : ""}` : "Récord del club: nadie aún", `Nueva tanda en ${left} s`],
+        lines: [`Tú: ${mine}`, best || mine ? `Récord del club: ${Math.max(best, mine)}${who ? ` (${who})` : ""}` : "Récord del club: nadie aún", `Nueva tanda en ${left} s`],
       });
+    },
+    on(signal, ctx) {
+      if (signal.type !== "area-entered" || !signal.area.tags?.includes("star")) return;
+      const key = signal.area.id.slice("star:".length);
+      if (st.taken.has(key)) return;
+      st.taken.add(key); mine++; ctx.area(signal.area.id, null);
+      ctx.sound("star"); ctx.bubble(ctx.player, mine === 1 ? "¡Tu primera estrella!" : `${mine} estrellas`);
     },
   };
 }
@@ -61,6 +73,7 @@ export const archipielago: Cartridge = {
   // Primer pintado: el mar (nunca negro plano).
   poster: { backgroundColor: "#17529f" },
   loadSkin: () => import("./skin").then((m) => m.default),
+  createState: createStarState,
   mode: starsMode,
 };
 export default archipielago;

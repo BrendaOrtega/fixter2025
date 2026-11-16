@@ -8,7 +8,7 @@
 import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
 import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
 import { DECOR, bake } from "./landmarks";
-import { STAR_EVERY, starKey, starState, starsOf } from "./stars";
+import { STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { ALT, createChase } from "./chase";
 import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
@@ -22,7 +22,9 @@ const OUTLINE = "#0b2f66", FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, mon
 type Fly = { rot: number; bank: number; roll: number; trail: { x: number; y: number; ang: number; t: number }[]; lastT: number };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; c: string; s: number };
 
-export function createRenderer({ canvas: cv, stage, structure }: { canvas: HTMLCanvasElement; stage: HTMLElement; structure: WorldStructure }): WorldRenderer {
+export function createRenderer({ canvas: cv, stage, structure, state }: { canvas: HTMLCanvasElement; stage: HTMLElement; structure: WorldStructure; state?: unknown }): WorldRenderer {
+  // Estado por montaje que comparte con el modo (las estrellas tomadas).
+  const starState = (state as StarState | undefined) ?? createStarState();
   const ctx = cv.getContext("2d") as Ctx;
   const buf = document.createElement("canvas"), b = buf.getContext("2d") as Ctx;
   const terrain = buildTerrain(structure), star = buildStar();
@@ -276,7 +278,9 @@ export function createRenderer({ canvas: cv, stage, structure }: { canvas: HTMLC
       if (s.x > -pad && s.x < vw + pad && s.y > top - 40 - pad && s.y < vh + pad) continue;
       const name = p.kind === "islet" ? "Islotes" : p.short;
       ctx.font = `800 10px ${FONT}`; const w = ctx.measureText(name).width + 26, h = 20;
-      const cx = clamp(s.x, m + w / 2, vw - m - w / 2), cy = clamp(s.y, top + h / 2, vh - m - h / 2 - 4);
+      // Arriba a la derecha va el botón de cámara: ahí la pista se hace a un lado.
+      const cy = clamp(s.y, top + h / 2, vh - m - h / 2 - 4); const right = cy < 120 ? 70 : m;
+      const cx = clamp(s.x, m + w / 2, vw - right - w / 2);
       ctx.fillStyle = OUTLINE; ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
       ctx.save(); ctx.translate(cx - w / 2 + 10, cy); ctx.rotate(Math.atan2(s.y - cy, s.x - cx)); ctx.fillStyle = "#ffd93d";
       ctx.beginPath(); ctx.moveTo(5, 0); ctx.lineTo(-3, -4); ctx.lineTo(-3, 4); ctx.closePath(); ctx.fill(); ctx.restore();

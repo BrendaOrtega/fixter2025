@@ -64,5 +64,5 @@ export const structure: WorldStructure = {
   camera: { minScale: 0.7, minScaleNarrow: 0.6, maxScale: 1.4 },
   combat: null,
   // Modo «Estrellas»: el récord del club y quién lo tiene.
-  shared: { best: { type: "number", min: 0, max: 9999 }, leader: { type: "member" } },
+  shared: { best: { type: "number", min: 0, max: 9999, merge: "max" }, leader: { type: "member" } },
 };
