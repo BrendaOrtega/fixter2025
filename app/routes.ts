@@ -79,10 +79,11 @@ export default [
   route("code-mode", "routes/code-mode.tsx"),
   // Taller: Diseño de sistemas agénticos
   route("sistemas-agenticos", "routes/sistemas-agenticos.tsx"),
-  // Taller en vivo «Ghosty Anti-Factory» (dic-2026): una pantalla que manda a Stripe
-  route("anti-factory", "routes/anti-factory.tsx"),
+  // «Ghosty Anti-Factory»: webinar gratis → taller en vivo (dic-2026). La misma página se sirve en
+  // /software-factory, donde apunta el anuncio de Meta; canonical en /anti-factory.
+  route("anti-factory", "routes/software-factory.tsx", { id: "anti-factory" }),
   route("animaciones-ai", "routes/animaciones-ai.tsx"), // lista de espera del curso
-  route("software-factory", "routes/software-factory.tsx"), // lista de espera del taller (medir interés)
+  route("software-factory", "routes/software-factory.tsx", { id: "software-factory" }), // mismo componente que /anti-factory
   route("seis-piezas", "routes/seis-piezas.tsx"), // regalo del webinar → PDF en EasyBits
   route("webinar-1/slides", "routes/webinar-1.slides.tsx"), // ruta vieja ya compartida → canónica
   route("sandboxing/slides", "routes/sandboxing.slides.tsx"), // corta, para pegar en el chat del webinar

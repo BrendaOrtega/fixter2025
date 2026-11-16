@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useBotTrap } from "~/hooks/useBotTrap";
-import { data, useFetcher, useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { data, Link, redirect, useFetcher, useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { db } from "~/.server/db";
-import { checkSignupRequest, claimEmailSend } from "~/.server/signup-guard";
-import { sendFactoryWaitlistWelcome } from "~/mailSenders/sendFactoryWaitlistWelcome";
+import { getUserOrNull } from "~/.server/dbGetters";
 import { validateWaitlistConfirmToken } from "~/utils/tokens";
-import { recordOrigin } from "~/.server/origen";
+import {
+  ANTI_FACTORY_TIERS,
+  CLUB_SLUG,
+  isClubMember,
+  pickAntiFactoryTier,
+  priceFor,
+} from "~/.server/services/anti-factory.server";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 
@@ -16,20 +20,22 @@ export const links = () => [
   { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
   { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" },
 ];
-import { RoleChip, type Role } from "~/components/software-factory/RoleChip";
-import { DeliverablesSection, ProofSection, SyllabusSection } from "~/components/software-factory/FactorySections";
 
 // ===========================================
-// Lista de espera: Taller Software Factory
-// Sólo mide interés: una pantalla, sin scroll, un correo.
+// Ghosty Anti-Factory: webinar gratis (18-nov) → taller en vivo de paga (1 y 3 de dic).
+// Antes fue la lista de espera del taller «Software Factory». Esta misma página se sirve en
+// /software-factory (ahí apunta el anuncio de Meta) y en /anti-factory (correo, deck y evento de
+// Facebook): un solo componente, canonical en /anti-factory, y la URL conserva sus UTM y fbclid.
+// Una pantalla, sin scroll.
 // ===========================================
 
-/// Quien se apunta queda con este tag en `Subscriber.tags`
-/// (mismo formato `${slug}-waitlist` que lee `audienceTagsFor`).
-const WAITLIST_TAG = "software-factory-waitlist";
-
-const PAGE_URL = "https://www.fixtergeek.com/software-factory";
-const OG_IMAGE = "https://www.fixtergeek.com/courses/software-factory-og-v2.png";
+/// Se repite aquí y no se importa del `.server`: el componente corre en el navegador.
+const ANTI_FACTORY_PATH = "/anti-factory";
+const PAGE_URL = `https://www.fixtergeek.com${ANTI_FACTORY_PATH}`;
+const FACEBOOK_EVENT_URL = "https://www.facebook.com/events/1603559874408025/";
+/// El evento del webinar en el club (lo crea `scripts/club-anti-factory-events.mts`).
+const WEBINAR_EVENT_TITLE = "Ghosty Anti-Factory · webinar gratis";
+const WEBINAR_STARTS_AT = new Date("2026-11-19T01:00:00Z"); // miércoles 18-nov, 19:00 CDMX
 
 // sombra suave en lugar de la dura: el panel flota, no está pegado con cinta
 const SOFT_SHADOW = "0 40px 80px -40px rgba(0,0,0,0.75)";
@@ -37,141 +43,110 @@ const DISPLAY = { fontFamily: '"Bricolage Grotesque", Inter, sans-serif' };
 
 const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG = "#0E1317", PANEL = "#19262A";
 
-export const meta = () => {
-  const baseMeta = getMetaTags({
-    title: "Software Factory: PRs que revisas en dos minutos | FixterGeek",
+export const meta = () =>
+  getMetaTags({
+    title: "Ghosty Anti-Factory | Webinar gratis y taller en vivo | FixterGeek",
     description:
-      "Taller en vivo: monta en tu repo una fábrica de cuatro agentes (@plan, @build, @check y @eval) que te entrega PRs que revisas en dos minutos, con tu agente y tu stack.",
+      "Hay formas más simples y efectivas de desarrollar que una fábrica. Webinar gratis el miércoles 18 de noviembre a las 7 pm (CDMX) y taller en vivo el martes 1 y el jueves 3 de diciembre de 2026, de 7 a 9 pm, en la llamada del Club de Agentes de IA.",
+    // canonical: las dos rutas sirven esta página y la buena es /anti-factory
     url: PAGE_URL,
-    // imagen propia con sus medidas reales (WhatsApp descarta la vista previa si no cuadran)
-    image: OG_IMAGE,
-    imageWidth: 1200,
-    imageHeight: 630,
     keywords:
-      "software factory, fábrica de software, agentes de código, claude code, codex, antigravity, cursor, agentes en paralelo, spec driven development, taller en vivo",
+      "ghosty anti-factory, ghosty-dev, agentes de código, revisor con contexto limpio, claude code, codex, club de agentes de ia, webinar gratis, taller en vivo",
   });
 
-  // Precio sí, fechas todavía no: sin calendario, un dato falso es peor que nada.
-  const schemaOrg = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Course",
-        "@id": `${PAGE_URL}#course`,
-        name: "Software Factory",
-        alternateName: "Fábrica de software agéntica",
-        description:
-          "Taller en vivo para montar en tu propio repo el patrón de una fábrica de software que ya corre en producción: cuatro roles (@plan, @build, @check y @eval), candados de CI, revisión por riesgo y evals con costo real.",
-        url: PAGE_URL,
-        image: OG_IMAGE,
-        inLanguage: "es",
-        provider: {
-          "@type": "Organization",
-          name: "FixterGeek",
-          url: "https://www.fixtergeek.com",
-          logo: "https://www.fixtergeek.com/logo.png",
-        },
-        instructor: { "@type": "Person", name: "Héctor Bliss", url: "https://www.hectorbliss.com" },
-        hasCourseInstance: { "@type": "CourseInstance", courseMode: "Online", courseWorkload: "PT7H30M" },
-        offers: {
-          "@type": "Offer",
-          category: "Paid",
-          price: PRICE_LAUNCH,
-          priceCurrency: "MXN",
-          availability: "https://schema.org/PreOrder",
-          url: PAGE_URL,
-        },
-        educationalLevel: "Intermediate",
-        teaches: [
-          "Guardar el conocimiento del repo para agentes en AGENTS.md y docs/agents/",
-          "Poner candados de CI que ningún agente se salta",
-          "Firmar el plan de @plan antes de que se escriba código",
-          "Revisar con @check en otro modelo, con tarjeta de riesgo",
-          "Calificar cada rol con @eval y medir el costo real por tarea",
-          "Medir el porcentaje de PRs que pasan la primera revisión",
-        ],
-      },
-      {
-        "@type": "WebPage",
-        "@id": `${PAGE_URL}#webpage`,
-        url: PAGE_URL,
-        name: "Software Factory: PRs que revisas en dos minutos | FixterGeek",
-        description: "Lista de espera del taller Software Factory de FixterGeek.",
-        isPartOf: { "@id": "https://www.fixtergeek.com/#website" },
-        about: { "@id": `${PAGE_URL}#course` },
-        inLanguage: "es",
-      },
-      {
-        "@type": "BreadcrumbList",
-        "@id": `${PAGE_URL}#breadcrumb`,
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Inicio", item: "https://www.fixtergeek.com" },
-          { "@type": "ListItem", position: 2, name: "Software Factory", item: PAGE_URL },
-        ],
-      },
-    ],
-  };
-
-  return [...baseMeta, { "script:ld+json": schemaOrg }];
-};
-
-// Las defensas (honeypot, tiempo, IP, desechables, lista negra, una bienvenida por correo y tope
-// diario) viven en `~/.server/signup-guard`, compartidas con las demás landings.
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (formData.get("intent") !== "direct_checkout") return data({ error: null });
 
-  const guard = await checkSignupRequest(request, formData, { email, label: "software-factory" });
-  if (!guard.ok) {
-    return guard.fake ? data({ ok: true }) : data({ ok: false, error: guard.error }, { status: 400 });
+  try {
+    // El precio lo decide la membresía de quien tiene la sesión abierta; el formulario sólo
+    // trae la intención.
+    const user = await getUserOrNull(request);
+    const tier = pickAntiFactoryTier(await isClubMember(user));
+    const priceMxn = await priceFor(tier);
+
+    const stripe = new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY as string, {});
+    const location =
+      process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://www.fixtergeek.com";
+
+    const session = await stripe.checkout.sessions.create({
+      metadata: { type: tier.key },
+      mode: "payment",
+      ...(user?.email ? { customer_email: user.email } : {}),
+      line_items: [
+        {
+          price_data: {
+            currency: "mxn",
+            product_data: {
+              name: "Ghosty Anti-Factory — taller en vivo",
+              description:
+                "Martes 1 y jueves 3 de diciembre de 2026, de 7 a 9 pm (CDMX). Club de Agentes de IA de FixterGeek.",
+            },
+            unit_amount: priceMxn * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${location}${ANTI_FACTORY_PATH}?success=1&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${location}${ANTI_FACTORY_PATH}?cancel=1`,
+      billing_address_collection: "required",
+      phone_number_collection: { enabled: true },
+      payment_method_options: { card: { installments: { enabled: true } } },
+    });
+
+    if (!session.url) throw new Error("Failed to create checkout session");
+    return redirect(session.url);
+  } catch (error) {
+    console.error("[anti-factory] checkout error:", error);
+    return data({ error: "No pudimos abrir el pago. Intenta de nuevo en un momento." });
   }
-
-  const existing = await db.subscriber.findUnique({
-    where: { email },
-    select: { id: true, tags: true, confirmed: true, tagDates: true },
-  });
-  const isNew = !existing?.tags.includes(WAITLIST_TAG);
-  // la fecha de entrada a ESTA lista; la del subscriber puede ser de otra landing
-  const joinedAt = { [WAITLIST_TAG]: new Date().toISOString() };
-  if (!existing) {
-    await db.subscriber.create({ data: { email, tags: [WAITLIST_TAG], tagDates: joinedAt, confirmed: false } });
-  } else if (isNew) {
-    const tagDates = { ...((existing.tagDates as Record<string, string> | null) ?? {}), ...joinedAt };
-    await db.subscriber.update({ where: { id: existing.id }, data: { tags: { push: WAITLIST_TAG }, tagDates } });
-  }
-
-  await recordOrigin(email, request);
-
-  // bienvenida con doble opt-in: sólo la primera vez que el correo entra a ESTA lista
-  if (isNew && (await claimEmailSend(email, `welcome:${WAITLIST_TAG}`, guard.ip, "once"))) {
-    await sendFactoryWaitlistWelcome(email, WAITLIST_TAG).catch((e) =>
-      console.error("[software-factory] no salió la bienvenida", e),
-    );
-  }
-
-  return data({ ok: true });
 };
 
-// El link del correo trae `?confirmar=<token>`: confirma al subscriber y la página lo celebra.
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const token = new URL(request.url).searchParams.get("confirmar");
-  if (!token) return { confirmed: false };
-  const decoded = validateWaitlistConfirmToken(token);
-  if (!decoded) return { confirmed: false };
-  await db.subscriber.updateMany({
-    where: { email: decoded.email },
-    data: { confirmed: true, confirmedAt: new Date() },
-  });
-  return { confirmed: true };
+  const params = new URL(request.url).searchParams;
+
+  // Correos viejos de la lista de espera traen `?confirmar=<token>`: se sigue confirmando.
+  const token = params.get("confirmar");
+  const decoded = token ? validateWaitlistConfirmToken(token) : null;
+  if (decoded) {
+    await db.subscriber.updateMany({
+      where: { email: decoded.email },
+      data: { confirmed: true, confirmedAt: new Date() },
+    });
+  }
+
+  const user = await getUserOrNull(request);
+  const [member, generalPrice, clubPrice, webinar] = await Promise.all([
+    isClubMember(user),
+    priceFor(ANTI_FACTORY_TIERS.general),
+    priceFor(ANTI_FACTORY_TIERS.club),
+    db.communityEvent.findFirst({
+      where: { title: WEBINAR_EVENT_TITLE, startsAt: WEBINAR_STARTS_AT, community: { slug: CLUB_SLUG } },
+      select: { id: true },
+    }),
+  ]);
+  return {
+    isLoggedIn: !!user,
+    isMember: member,
+    generalPrice,
+    clubPrice,
+    // «Agéndalo gratis»: el .ics del evento del club; sin evento, el de Facebook.
+    webinarIcsUrl: webinar ? `/comunidad/${CLUB_SLUG}/evento/${webinar.id}.ics` : null,
+    success: params.get("success") === "1",
+    canceled: params.get("cancel") === "1",
+    confirmed: !!decoded,
+  };
 };
 
-// ——— El tablero de la fábrica: tickets que avanzan solos de spec a producción ———
+// ——— El tablero de tu repo: pendientes que avanzan solos hasta tu merge ———
+// Sin línea de roles: un escritor por pendiente (varios pendientes a la vez), un revisor con
+// contexto limpio y tú decides el merge.
 
 const COLUMNS = [
-  { title: "@plan", color: INK },
-  { title: "@build", color: MINT },
-  { title: "@check", color: MUTE },
-  { title: "Para ti", color: GREEN },
+  { title: "Pendientes", color: INK },
+  { title: "Escribe", color: MINT },
+  { title: "Revisa", color: MUTE },
+  { title: "Tu merge", color: GREEN },
 ];
 
 // Backlog del que salen los tickets; al desplegarse uno, entra el siguiente.
@@ -188,13 +163,13 @@ const BACKLOG = [
 
 type Ticket = { id: number; label: string; agent: string; col: number; age: number; dwell: number; cost: string };
 
-// lo que costó el ticket en tokens: se enseña desde PR, porque medirlo es parte del taller
+// lo que costó el ticket en tokens (el tablero lo guarda, ya no lo enseña)
 const rollCost = () => `$${(0.12 + Math.random() * 0.8).toFixed(2)}`;
 
-// quién toma cada ticket: el patrón funciona con cualquier agente
-const AGENTS = ["🤖 Claude Code", "🤖 Codex", "🤖 Cursor", "🤖 Antigravity", "👾 Ghosty"];
+// quién escribe cada pendiente: ghosty-dev funciona con Claude Code o Codex (su README)
+const AGENTS = ["🤖 Claude Code", "🤖 Codex"];
 
-const BADGES = [["📝", "por firmar"], ["⚙", "programando"], ["🔍", "revisando"], ["✅", "listo"]];
+const BADGES = [["📝", "en cola"], ["⚙", "escribiendo"], ["🔍", "contexto limpio"], ["✅", "con evidencia"]];
 
 const TICK_MS = 1500;
 const LIVE = COLUMNS.length - 1;
@@ -316,7 +291,7 @@ const FactoryBoard = () => {
           <span key={c} className="h-2.5 w-2.5 rounded-full lg:h-3 lg:w-3" style={{ background: c, opacity: 0.8 }} />
         ))}
         <span className="ml-2 truncate font-mono text-xs sm:text-sm lg:text-base" style={{ color: MUTE }}>
-          tablero · tu repo
+          pendientes · tu repo
         </span>
         {/* contador de despliegues: salta cada vez que un ticket llega a producción */}
         <span className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold tabular-nums sm:text-sm" style={{ background: `${GREEN}1f`, color: GREEN }}>
@@ -326,7 +301,7 @@ const FactoryBoard = () => {
               {deploys}
             </motion.span>
           </AnimatePresence>
-          <span className="hidden sm:inline">PRs listos</span>
+          <span className="hidden sm:inline">listos para tu merge</span>
         </span>
       </div>
 
@@ -339,7 +314,7 @@ const FactoryBoard = () => {
                 className="truncate font-semibold"
                 style={{ color: column.color, fontSize: L.compact ? 10 : 14, padding: L.compact ? "5px 5px 0" : "10px 10px 0" }}
               >
-                {column.title.startsWith("@") ? <RoleChip role={column.title.slice(1) as Role} size={L.compact ? "sm" : "md"} /> : column.title}
+                {column.title}
               </p>
             </div>
           ))}
@@ -384,8 +359,7 @@ const FactoryBoard = () => {
                   ) : (
                     icon
                   )}
-                  {/* desde PR la tarjeta enseña lo que costó; el icono ya dice el estado */}
-                  {t.col >= 2 && !L.compact ? ` ${t.cost}` : L.colW > 150 && ` ${text}`}
+                  {L.colW > 150 && ` ${text}`}
                 </p>
               </motion.div>
             );
@@ -397,11 +371,7 @@ const FactoryBoard = () => {
 
 // El título alterna entre inglés y español. Cada renglón es una ventana de 1em
 // con overflow oculto: la palabra nueva sube y la vieja sale, sin mover el layout.
-const TITLES = [
-  ["Software", "Factory"],
-  // "agéntica" la separa del outsourcing, que es lo que "fábrica de software" significa en México
-  ["Fábrica", "agéntica"],
-];
+const TITLES = [["Ghosty", "Anti\u2011Factory"]];
 
 const OscillatingTitle = () => {
   const [lang, setLang] = useState(0);
@@ -412,7 +382,7 @@ const OscillatingTitle = () => {
 
   return (
     <h1 className="mt-3 flex flex-col whitespace-nowrap text-[clamp(2.6rem,6.1vw,6.5rem)] font-bold leading-[0.95] tracking-[-0.035em] sm:mt-5" style={DISPLAY}>
-      <span className="sr-only">Software Factory · Fábrica agéntica</span>
+      <span className="sr-only">Ghosty Anti-Factory</span>
       {/* la ventana crece 0.15em arriba y abajo (acentos y la cola de la g) y el margen negativo lo devuelve: el renglón ocupa lo mismo. El h1 es flex para que esos márgenes no se colapsen */}
       {TITLES[lang].map((word, line) => (
         <span key={line} aria-hidden className="relative -my-[0.15em] block h-[1.32em] overflow-hidden py-[0.15em]">
@@ -486,31 +456,37 @@ const GhostyPeek = () => {
   );
 };
 
-const POINTS = ["Sobre tu propio repo", "Costo y calidad medidos por rol", "3 sesiones en vivo de 2.5 h"];
+// Lo que te llevas del taller
+const POINTS = [
+  "ghosty-dev instalado en tu repo",
+  "Varios pendientes a la vez",
+  "Un revisor con contexto limpio",
+  "La grabación de las dos sesiones",
+  "Acceso gratis a las cajas de CI de Ghosty Studio",
+];
 
-// Precio por persona; el de lanzamiento es para quien está en la lista de espera
-const PRICE_REGULAR = 5000;
-const PRICE_LAUNCH = 2500;
 const mxn = (n: number) => `$${n.toLocaleString("es-MX")}`;
 
 export default function Route() {
   const fetcher = useFetcher<typeof action>();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const isLoading = fetcher.state !== "idle";
-  const { confirmed } = useLoaderData<typeof loader>();
-  const done = fetcher.data?.ok === true || confirmed;
-  const { trap } = useBotTrap();
-  const error = fetcher.data && "error" in fetcher.data && typeof fetcher.data.error === "string" ? fetcher.data.error : null;
+  const { isLoggedIn, isMember, generalPrice, clubPrice, webinarIcsUrl, success, canceled, confirmed } =
+    useLoaderData<typeof loader>();
+  const busy = fetcher.state !== "idle";
+  const error = fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
+  const price = isMember ? clubPrice : generalPrice;
 
+  // Limpia la URL de regreso de Stripe; los UTM del anuncio no se tocan.
   useEffect(() => {
-    if (error) inputRef.current?.focus();
-  }, [error]);
+    if (!success && !canceled) return;
+    const url = new URL(window.location.href);
+    ["success", "cancel", "session_id"].forEach((k) => url.searchParams.delete(k));
+    window.history.replaceState({}, "", url.pathname + url.search);
+  }, [success, canceled]);
 
   return (
     // una sola pantalla: alto del viewport y sin desborde; la navbar es fixed y se compensa con pt
     <main style={{ background: BG, color: INK }}>
-      {done && <CanvasConfetti />}
-      {/* el hero sigue siendo una sola pantalla; las secciones viven debajo */}
+      {(success || confirmed) && <CanvasConfetti />}
       <div className="relative flex h-[100dvh] flex-col overflow-hidden px-4 pb-4 pt-16 sm:px-8 sm:pt-20">
       <div
         aria-hidden
@@ -518,65 +494,70 @@ export default function Route() {
         style={{ backgroundImage: "radial-gradient(rgba(242,245,244,0.10) 1px, transparent 1px)", backgroundSize: "22px 22px" }}
       />
 
-      <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center gap-5 md:flex-row md:items-center md:gap-10 lg:gap-12">
-        <div className="flex flex-col items-start md:w-[42%]">
+      <section className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-center gap-4 md:flex-row md:items-center md:gap-10 lg:gap-12">
+        <div className="flex flex-col items-start md:w-[46%]">
+          {/* Paso 1: el webinar gratis */}
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium lg:text-base"
+            className="hidden items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium sm:flex lg:text-base"
             style={{ borderColor: `${GREEN}40`, color: GREEN }}
           >
-            {/* punto que late: la lista está abierta */}
+            {/* punto que late: el webinar es lo siguiente */}
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden" style={{ background: GREEN }} />
               <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: GREEN }} />
             </span>
-            Próximamente: taller en vivo
+            Webinar gratis · miércoles 18 de noviembre · 7 pm (CDMX)
           </motion.span>
 
           <OscillatingTitle />
 
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-3 max-w-xl text-base sm:mt-5 sm:text-xl lg:text-2xl" style={{ color: `${INK}cc` }}>
-            Monta en tu repo una fábrica de cuatro agentes con rol fijo, con un patrón que ya corre en producción: te entregan PRs que revisas en dos minutos.
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-1.5 max-w-xl text-[15px] leading-snug sm:mt-4 sm:text-xl lg:text-2xl" style={{ color: `${INK}cc` }}>
+            Hay formas más simples y efectivas de desarrollar que una fábrica.
           </motion.p>
-          {/* "software factory" hoy se usa para vender outsourcing y para prometer agentes que programan solos */}
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-2 hidden max-w-xl text-sm sm:block lg:text-base" style={{ color: MUTE }}>
-            No es outsourcing, y los agentes no programan solos: tú firmas el plan y tú das el merge.
+            Un agente escribe, otro agente revisa con contexto limpio y tú decides el merge. Funciona con Claude Code o Codex.
           </motion.p>
 
-          <ul className="mt-5 hidden flex-wrap gap-2 sm:flex">
-            {/* el chip que más importa: no hay que cambiar de herramienta */}
-            <li
-              // emoji y texto en columnas: si el texto baja de renglón, arranca alineado (sangría francesa)
-              className="flex items-start gap-2 rounded-2xl border px-4 py-2 text-sm font-medium"
-              style={{ background: `${MINT}14`, borderColor: `${MINT}40`, color: INK }}
-            >
-              <span aria-hidden>🤖</span>
-              <span>Con el agente que ya usas:<br />Claude Code · Codex · Antigravity · Cursor · Ghosty</span>
+          {/* Paso 1 → paso 2: primero el webinar gratis, luego el taller en vivo */}
+          <ol className="mt-2.5 w-full max-w-xl space-y-1.5 sm:mt-5 sm:space-y-2">
+            <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 rounded-2xl border px-3 py-2 sm:px-4 sm:py-2.5" style={{ background: `${MINT}14`, borderColor: `${MINT}40` }}>
+              <span className="text-[13px] sm:text-sm lg:text-base">
+                <span className="font-semibold" style={{ color: MINT }}>1 · Webinar gratis</span>{" "}
+                <span style={{ color: `${INK}cc` }}>mié 18 de nov · 7 pm (CDMX)</span>
+              </span>
+              <span className="flex items-center gap-3 text-[13px] sm:text-sm">
+                <a
+                  href={webinarIcsUrl ?? FACEBOOK_EVENT_URL}
+                  {...(webinarIcsUrl ? {} : { target: "_blank", rel: "noopener" })}
+                  className="rounded-lg border px-2.5 py-1 font-semibold transition-colors hover:bg-[#85DDCB]/10 sm:px-3 sm:py-1.5"
+                  style={{ borderColor: `${MINT}66`, color: MINT }}
+                >
+                  Agéndalo gratis
+                </a>
+                <a href={FACEBOOK_EVENT_URL} target="_blank" rel="noopener" className="hidden underline underline-offset-4 sm:inline" style={{ color: MUTE }}>
+                  Facebook
+                </a>
+              </span>
             </li>
-            {/* los 4 roles, cada uno con su carita */}
-            <li className="flex w-full flex-wrap items-center gap-1.5 text-sm" style={{ color: `${INK}cc` }}>
-              {(["plan", "build", "check", "eval"] as Role[]).map((r) => (
-                <RoleChip key={r} role={r} />
-              ))}
+            <li className="rounded-2xl border px-3 py-2 sm:px-4 sm:py-2.5" style={{ borderColor: `${MINT}2e` }}>
+              <span className="text-[12px] sm:text-sm lg:text-base">
+                <span className="font-semibold" style={{ color: GREEN }}>2 · Taller en vivo</span>{" "}
+                <span style={{ color: `${INK}cc` }}>mar 1 y jue 3 de dic · 7 a 9 pm · en la llamada del Club de Agentes de IA</span>
+              </span>
+              <ul className="mt-1 flex flex-wrap gap-1 sm:mt-1.5 sm:gap-1.5">
+                {POINTS.map((p) => (
+                  <li key={p} className="rounded-full border px-2 py-px text-[11px] sm:px-2.5 sm:py-0.5 sm:text-[13px]" style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>
+                    {p}
+                  </li>
+                ))}
+              </ul>
             </li>
-            {POINTS.map((p) => (
-              <li key={p} className="rounded-full border px-3 py-1 text-sm" style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>
-                {p}
-              </li>
-            ))}
-          </ul>
+          </ol>
 
-          <p className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 lg:mt-6">
-            <span className="text-lg line-through lg:text-xl" style={{ color: MUTE }}>{mxn(PRICE_REGULAR)}</span>
-            <span className="text-3xl font-bold tracking-tight lg:text-4xl" style={{ ...DISPLAY, color: GREEN }}>{mxn(PRICE_LAUNCH)} MXN</span>
-            <span className="text-sm font-medium" style={{ color: MINT }}>
-              50% de lanzamiento para la lista
-            </span>
-          </p>
-
-          <div className="mt-4 w-full max-w-xl lg:mt-5">
-            {done ? (
+          <div className="mt-2.5 w-full max-w-xl lg:mt-5">
+            {success ? (
               <motion.div
                 role="status"
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -585,39 +566,49 @@ export default function Route() {
                 className="rounded-2xl border px-5 py-4"
                 style={{ background: `${MINT}14`, borderColor: `${MINT}55`, color: INK }}
               >
-                <p className="text-2xl font-bold lg:text-3xl" style={DISPLAY}>¡Listo, estás dentro! 🏭</p>
-                <p className="mt-1 text-base lg:text-lg">Serás de los primeros en saber fechas y precio de lanzamiento del taller.</p>
+                <p className="text-2xl font-bold lg:text-3xl" style={DISPLAY}>¡Listo, estás dentro! 👻</p>
+                <p className="mt-1 text-[14px] lg:text-lg">Te mandamos un correo con las dos fechas, sus archivos para tu calendario y cómo entrar a la llamada del club.</p>
               </motion.div>
             ) : (
-              <fetcher.Form method="post" className="flex w-full flex-col gap-2.5 sm:flex-row">
-                {trap}
-                <label htmlFor="email" className="sr-only">Correo</label>
-                <input
-                  ref={inputRef}
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="tu@correo.com"
-                  aria-invalid={!!error}
-                  className="h-14 w-full flex-1 rounded-xl border px-5 text-lg transition-colors lg:h-16 lg:text-xl placeholder:text-[#F2F5F4]/35 focus:border-[#85DDCB] focus:outline-none"
-                  style={{ background: `${PANEL}aa`, borderColor: `${INK}26`, color: INK }}
-                />
-                <motion.button
-                  type="submit"
-                  disabled={isLoading}
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="h-14 shrink-0 rounded-xl px-6 text-lg font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] lg:h-16 lg:px-8 lg:text-xl disabled:opacity-60"
-                  style={{ background: GREEN, color: BG }}
-                >
-                  {isLoading ? "Enviando…" : "Quiero enterarme"}
-                </motion.button>
-              </fetcher.Form>
+              <>
+                <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                  <span className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ ...DISPLAY, color: GREEN }}>{mxn(price)} MXN</span>
+                  <span className="text-[13px] font-medium sm:text-sm" style={{ color: MINT }}>
+                    {isMember ? `Tienes el precio del club (general: ${mxn(generalPrice)})` : `Miembros del club: ${mxn(clubPrice)}`}
+                  </span>
+                </p>
+                <fetcher.Form method="post" action={ANTI_FACTORY_PATH} className="mt-2 lg:mt-3">
+                  <input type="hidden" name="intent" value="direct_checkout" />
+                  <motion.button
+                    type="submit"
+                    disabled={busy}
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="h-11 w-full rounded-xl px-8 text-lg font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] disabled:opacity-60 sm:w-auto lg:h-16 lg:text-xl"
+                    style={{ background: GREEN, color: BG }}
+                  >
+                    {busy ? "Abriendo el pago…" : "Inscríbete al taller"}
+                  </motion.button>
+                </fetcher.Form>
+                <div className="mt-1.5 text-[12px] sm:mt-2 sm:text-sm" style={{ color: MUTE }}>
+                  {error ? (
+                    <p role="alert" style={{ color: GREEN }}>{error}</p>
+                  ) : canceled ? (
+                    <p>El pago no se completó. Puedes intentarlo de nuevo.</p>
+                  ) : null}
+                  {!isMember &&
+                    (isLoggedIn ? (
+                      <Link to="/comunidad/club-de-agentes" className="underline-offset-4 hover:underline">
+                        ¿Quieres el precio de {mxn(clubPrice)}? Únete al Club de Agentes de IA.
+                      </Link>
+                    ) : (
+                      <Link to={`/login?next=${encodeURIComponent(ANTI_FACTORY_PATH)}`} className="underline-offset-4 hover:underline">
+                        ¿Eres del club? Inicia sesión para tu precio de {mxn(clubPrice)}.
+                      </Link>
+                    ))}
+                </div>
+              </>
             )}
-            {error && <p role="alert" className="mt-2 text-sm" style={{ color: GREEN }}>{error}</p>}
-            {!done && <p className="mt-3 text-sm" style={{ color: MUTE }}>Sin spam. Sólo te avisamos cuando abra · el precio de lanzamiento es para la lista.</p>}
           </div>
         </div>
 
@@ -625,7 +616,7 @@ export default function Route() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 20 }}
-          className="relative w-full md:w-[58%]"
+          className="relative w-full md:w-[54%]"
         >
           <GhostyPeek />
           <div className="relative z-10">
@@ -633,35 +624,7 @@ export default function Route() {
           </div>
         </motion.div>
       </section>
-
-      <motion.a
-        href="#esto-ya-pasa"
-        aria-label="Ver más"
-        // bajada suave sólo en esta página (no se toca el scroll global del sitio); respeta reduce-motion
-        onClick={(e) => {
-          e.preventDefault();
-          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          document.getElementById("esto-ya-pasa")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
-        }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1, y: [0, 6, 0] }}
-        transition={{ opacity: { delay: 1.2 }, y: { delay: 1.2, duration: 1.4, repeat: 4 } }}
-        className="relative z-10 mx-auto hidden font-mono text-xs sm:block"
-        style={{ color: MUTE }}
-      >
-        ↓ esto ya pasa
-      </motion.a>
       </div>
-
-      <div id="esto-ya-pasa">
-        <ProofSection />
-      </div>
-      <SyllabusSection />
-      <DeliverablesSection />
-
-      <footer className="px-4 py-10 text-center text-xs" style={{ color: `${INK}70` }}>
-        Por <a href="https://www.hectorbliss.com" target="_blank" rel="noopener" className="underline underline-offset-4">Héctorbliss</a> · FixterGeek
-      </footer>
     </main>
   );
 }
