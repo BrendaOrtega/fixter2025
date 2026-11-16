@@ -7,26 +7,32 @@ import { createQuests, type Quest } from "../../quests";
 import { CATCH_R, HIDE_TIME, SEEK_TIME, STORM_EVERY, STORM_HP, STORM_LIFE, STORM_REACH, stormAt, FORMATION_ANGLE, FORMATION_EVERY, FORMATION_HOLD, FORMATION_REACH, FORMATION_SPEED, RACE_COUNTDOWN, RACE_GO, RACE_LIMIT, START_R, BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RINGS, RING_R, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { WORLD_ID, WORLD_NAME, structure } from "./structure";
 
-/** Recorrido de bienvenida con Ghosty: enseña a volar, a saludar y dónde está lo valioso del club. */
+/**
+ * Recorrido de bienvenida: Ghosty vuela contigo como guía (personaje que sólo tú ves), se adelanta a cada
+ * isla, te espera si te quedas atrás y explica qué hay en cada una con el cuadro de diálogo.
+ */
 const placeObj = (id: string, label: string) => (ctx: ModeContext): Objective | null => { const pl = ctx.places.find((q) => q.id === id); return pl ? { x: pl.x, y: pl.y, label } : null; };
+const entered = (id: string) => (e: { type: string }) => e.type === "place-entered" && (e as unknown as { place: { id: string } }).place.id === id;
 function welcomeQuest(st: StarState): Quest {
+  const nearestStar = (ctx: ModeContext): Objective | null => {
+    const w = Math.floor(ctx.now / STAR_EVERY), p = ctx.player;
+    let best: Objective | null = null, bd = Infinity;
+    starsOf(w, structure.size, ctx.places).forEach((s, i) => { if (st.taken.has(starKey(w, i))) return; const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < bd) { bd = d; best = { x: s.x, y: s.y, label: "Estrella" }; } });
+    return best;
+  };
   return {
     id: "bienvenida",
     title: "Recorrido con Ghosty",
     reward: "+10 estrellas",
     steps: [
-      { text: "Saluda a Ghosty: vuela junto a él y toca «Saludar»", target: (ctx) => { const g = ctx.others.find((e) => e.id === "bot:ghosty"); return g ? { x: g.x, y: g.y, label: "Ghosty" } : null; },
-        done: (e, ctx) => e.type === "wave" && (e as { from: { id: string } }).from.id === ctx.player.id },
-      { text: "Vuela al Faro: ahí es la sala en vivo del club", target: placeObj("live", "Sala en vivo"), done: (e) => e.type === "place-entered" && (e as { place: { id: string } }).place.id === "live" },
-      { text: "Junta 3 estrellas", target: (ctx) => {
-          const w = Math.floor(ctx.now / STAR_EVERY), p = ctx.player;
-          let best: Objective | null = null, bd = Infinity;
-          starsOf(w, structure.size, ctx.places).forEach((s, i) => { if (st.taken.has(starKey(w, i))) return; const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < bd) { bd = d; best = { x: s.x, y: s.y, label: "Estrella" }; } });
-          return best;
-        }, done: (e) => e.type === "star" && Number((e as { total?: number }).total) >= 3 },
-      { text: "Conoce Grabaciones: las sesiones pasadas", target: placeObj("recs", "Grabaciones"), done: (e) => e.type === "place-entered" && (e as { place: { id: string } }).place.id === "recs" },
-      { text: "Conoce Cursos", target: placeObj("courses", "Cursos"), done: (e) => e.type === "place-entered" && (e as { place: { id: string } }).place.id === "courses" },
-      { text: "Entra al aro coral: ahí se convoca una carrera", target: () => ({ x: RINGS[0].x, y: RINGS[0].y, label: "Salida de la carrera" }), done: (e) => e.type === "area-entered" && (e as { area: { id: string } }).area.id === "start" },
+      { text: "Sigue a Ghosty al Faro", say: "¡Hola, {first}! Soy Ghosty. Te enseño las islas del club. ¡Sígueme al Faro!", target: placeObj("live", "Faro"), done: entered("live") },
+      { text: "Escucha a Ghosty", say: "Este es el Faro: aquí es la sala en vivo. Cuando hay sesión se enciende la luz; te acercas, presionas Enter y ya estás en la llamada.", wait: 7 },
+      { text: "Junta 3 estrellas", say: "Las estrellas salen cada 30 segundos sobre las islas. Pasa encima de ellas: ¡junta 3!", target: nearestStar, done: (e) => e.type === "star" && Number((e as { total?: number }).total) >= 3 },
+      { text: "Sigue a Ghosty al Cine", say: "¡Muy bien! Ahora vamos al Cine.", target: placeObj("recs", "Cine"), done: entered("recs") },
+      { text: "Escucha a Ghosty", say: "En el Cine están las grabaciones de las sesiones pasadas. Si te perdiste una, aquí la ves.", wait: 6 },
+      { text: "Sigue a Ghosty a la Escuelita", say: "Ahora la Escuelita. ¡Vamos!", target: placeObj("courses", "Escuelita"), done: entered("courses") },
+      { text: "Escucha a Ghosty", say: "En la Escuelita están los cursos del club, a tu ritmo.", wait: 5 },
+      { text: "Entra al aro coral", say: "Lo último: este aro coral es la salida de la carrera. Entra y sigue la flecha amarilla de aro en aro.", target: () => ({ x: RINGS[0].x, y: RINGS[0].y, label: "Salida" }), done: (e) => e.type === "area-entered" && (e as unknown as { area: { id: string } }).area.id === "start" },
     ],
   };
 }
@@ -54,15 +60,44 @@ function islandGame(st: StarState): GameMode {
   const startLap = (ctx: ModeContext, at: number, msg: string) => { st.race = { next: 1, startedAt: at }; ctx.sound("finish"); ctx.bubble(ctx.player, msg); };
   // Misiones y progreso guardado: `saved` es cuánto de `mine` ya se mandó a guardar.
   const quests = createQuests([welcomeQuest(st)]);
-  let saved = 0, greeted = false;
+  let saved = 0, greeted = false, byeT = 0, lastStep: unknown = null, farT = 0;
+  const GUIDE = "guia:ghosty", ghostyLook = { model: "ghosty", color: "sky", pilot: "avatar" };
   const quest = (e: Parameters<typeof quests.on>[0], ctx: ModeContext) => {
     if (!ctx.progress) return;
-    const before = quests.step;
-    const q = quests.on(e, ctx);
-    // Paso nuevo: se anuncia sobre tu fantasma, así nunca queda duda de qué sigue.
-    if (!q && quests.step && quests.step !== before) { ctx.sound("ring"); ctx.bubble(ctx.player, `Siguiente: ${quests.step.text}`); }
-    if (q) { mine += 10; ctx.save({}, [q.id]); ctx.sound("finish"); ctx.bubble(ctx.player, `¡${q.title} completo! ${q.reward}`); }
+    finish(quests.on(e, ctx), ctx);
   };
+  function finish(q: Quest | null, ctx: ModeContext) {
+    if (!q) return;
+    if (!ctx.progress?.quests.includes(q.id)) { mine += 10; ctx.save({}, [q.id]); }
+    ctx.sound("finish");
+    ctx.dialog({ who: "Ghosty", text: `¡Listo, ${ctx.player.first}! Ya conoces el archipiélago. ${q.reward}. Si quieres repetir el recorrido, salúdame: ando dando vueltas al Faro.` });
+    byeT = 7;
+  }
+  /** Ghosty guía: va al objetivo del paso, pero si te quedas lejos regresa por ti. */
+  function guide(ctx: ModeContext, dt: number) {
+    const step = quests.step, p = ctx.player;
+    if (byeT > 0) {
+      byeT -= dt;
+      const faro = ctx.places.find((q) => q.id === "live");
+      ctx.npc(GUIDE, { name: "Ghosty", look: ghostyLook, to: faro ? { x: faro.x, y: faro.y } : p, speed: 260 });
+      if (byeT <= 0) { ctx.npc(GUIDE, null); ctx.dialog(null); }
+      return;
+    }
+    if (!ctx.progress || !step) { ctx.npc(GUIDE, null); return; }
+    if (step !== lastStep) {
+      lastStep = step;
+      if (step.say) ctx.dialog({ who: "Ghosty", text: step.say.replace("{first}", p.first) });
+      ctx.sound("ring");
+    }
+    const g = ctx.npc(GUIDE, { name: "Ghosty", look: ghostyLook, to: p, speed: 340 });
+    if (!g) return;
+    const tgt = step.target?.(ctx), dMe = Math.hypot(g.x - p.x, g.y - p.y);
+    let to: { x: number; y: number };
+    if (!tgt) to = { x: p.x + 70, y: p.y - 60 }; // explica: flota junto a ti
+    else if (dMe > 420) { to = { x: p.x + (tgt.x - p.x) * 0.15, y: p.y + (tgt.y - p.y) * 0.15 }; farT += dt; if (farT > 3) { farT = 0; ctx.bubble(g, "¡Por aquí!"); } }
+    else { const d = Math.hypot(tgt.x - p.x, tgt.y - p.y) || 1, ahead = Math.min(d, 260); to = { x: p.x + ((tgt.x - p.x) / d) * ahead, y: p.y + ((tgt.y - p.y) / d) * ahead - 30 }; farT = 0; }
+    ctx.npc(GUIDE, { name: "Ghosty", look: ghostyLook, to });
+  }
   const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
   const humans = (ctx: ModeContext) => ctx.others.filter((e) => e.kind === "human");
   // Cambios que deben entrar sí o sí (convocar, meta, estrella dorada): se reintentan cada cuadro hasta
@@ -157,6 +192,8 @@ function islandGame(st: StarState): GameMode {
       const best = typeof ctx.shared.best === "number" ? ctx.shared.best : 0;
       if (mine > best) ctx.commit({ best: mine, leader: ctx.meId });
 
+      if (ctx.progress) finish(quests.tick(dt, ctx), ctx);
+      guide(ctx, dt);
       // Guardar estrellas nuevas (el motor junta y manda por lotes).
       if (mine > saved) { ctx.save({ stars: mine - saved }); saved = mine; }
       // A dónde ir: en carrera, el aro que sigue; si no, el paso de la misión.
@@ -183,13 +220,7 @@ function islandGame(st: StarState): GameMode {
       const now = ctx.now, p = ctx.player;
       if (signal.type === "progress-loaded") {
         quests.load(ctx.progress?.quests ?? []);
-        if (quests.current && !greeted) {
-          greeted = true;
-          const g = ctx.others.find((e) => e.id === "bot:ghosty");
-          if (g) ctx.bubble(g, "¡Hola! Ven conmigo y toca «Saludar» para empezar el recorrido");
-          ctx.bubble(ctx.player, `Misión: ${quests.step?.text ?? ""}`);
-          ctx.sound("waveIn");
-        }
+        if (quests.current && !greeted) { greeted = true; ctx.sound("waveIn"); }
         return;
       }
       quest(signal, ctx);
@@ -237,6 +268,9 @@ function islandGame(st: StarState): GameMode {
         if (!company) { if (lonely <= 0) { lonely = 4; ctx.bubble(p, "Sin compañía no cae: trae a alguien más"); } return; }
         hitWave = Math.floor(now / STORM_EVERY);
         ctx.commit({ storm: hitWave * 100 + Math.min(99, sm.hits + 1) });
+      } else if (signal.type === "wave" && signal.to.id === "bot:ghosty" && signal.from === p && !quests.current && byeT <= 0) {
+        // Saludar a Ghosty cuando ya terminaste: repite el recorrido (sin volver a dar la recompensa).
+        quests.replay("bienvenida"); lastStep = null;
       } else if (signal.type === "wave") {
         // Choca esas cinco: el saludo entre dos que están cerca.
         const { from, to } = signal;

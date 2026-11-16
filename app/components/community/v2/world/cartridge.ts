@@ -296,6 +296,13 @@ export type ModeContext = {
   area(id: string, shape: Shape | null, tags?: string[]): void;
   /** Señala a dónde ir (`null` lo quita). Lo pinta el motor encima de la piel, igual en todas. */
   objective(o: Objective | null): void;
+  /**
+   * Personaje propio del modo que sólo ve esta persona (un guía, un compañero): aparece junto a ti y vuela
+   * hacia `to` a `speed`. Se pinta con la piel como cualquier otro. `null` lo quita.
+   */
+  npc(id: string, spec: { name: string; look: Look; to: Point; speed?: number } | null): Entity | null;
+  /** Cuadro de diálogo abajo, con el texto escribiéndose (lo pinta el motor en cualquier piel). `null` lo cierra. */
+  dialog(d: { who: string; text: string } | null): void;
   /** Tu progreso guardado en este cartucho; `null` mientras carga (llega la señal `progress-loaded`). */
   progress: Progress | null;
   /** Guarda progreso: contadores (según su `merge`) y misiones terminadas. El motor junta y manda por lotes. */

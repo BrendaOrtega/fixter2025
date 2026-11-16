@@ -17,7 +17,7 @@ function setup() {
     propose: () => {},
     commit: (c: Record<string, SharedValue | null>) => { sent.push(c); for (const [k, v] of Object.entries(c)) if (v !== null) shared[k] = v; },
     area: (id: string, shape: Area["shape"] | null, tags?: string[]) => { if (shape) areas.set(id, { id, shape, tags }); else areas.delete(id); },
-    objective: () => {}, progress: null, save: () => {},
+    objective: () => {}, progress: null, save: () => {}, npc: () => null, dialog: () => {},
   } as unknown as ModeContext;
   const tick = (secs: number) => { const steps = Math.round(secs * 10); for (let i = 0; i < steps; i++) { ctx.now += 0.1; mode.update(ctx, 0.1); } };
   const enter = (a: Area) => mode.on!({ type: "area-entered", area: a }, ctx);

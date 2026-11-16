@@ -187,6 +187,8 @@ export function createWorld(opts: {
   const bots = BOTS.map((b) => { const p = b.at(Date.now() / 1000); const e = entity(b.id, "bot", b.name, b.look, p.x, p.y); e.note = b.note; return e; });
   /** Las demás naves que hoy están en el mapa (un robot tumbado o una persona destruida no están). */
   const others = () => [...humans.values(), ...bots].filter((e) => e.downT <= 0);
+  // Personajes propios del modo (guía): sólo los ve esta persona; no son tarjetas ni cuentan como gente.
+  const npcs = new Map<string, { e: Entity; to: Point; speed: number }>();
 
   // ── Movimiento ──
   // Llegada suave: acelera hacia el punto y frena al acercarse.
@@ -409,12 +411,13 @@ export function createWorld(opts: {
   };
   function render(dt: number) {
     frame.t = state.animT; frame.dt = dt; frame.mini = state.mini; frame.quiet = state.quiet;
-    frame.others = others(); frame.places = places; frame.tableCounts = TABLES.map((_, i) => tableCount(i));
+    frame.others = npcs.size ? [...others(), ...[...npcs.values()].map((n) => n.e)] : others(); frame.places = places; frame.tableCounts = TABLES.map((_, i) => tableCount(i));
     frame.nearPlace = state.nearPlace; frame.nearEntity = state.nearShip; frame.marker = state.marker;
     frame.bubbles = state.bubbles; frame.shots = state.shots; frame.hostile = state.hostile;
     frame.threat = !threat ? null : state.threatPhase === "away" ? (threat.leaveT > 0 ? { entity: threat, phase: "leaving" } : null) : { entity: threat, phase: state.threatPhase };
     renderer.render(frame);
     drawObjective();
+    drawDialog(dt);
   }
 
   // ── Modo de juego del cartucho (opcional): sus reglas corren aquí, cada cuadro, sin DOM ni red ──
@@ -468,6 +471,32 @@ export function createWorld(opts: {
     gLabel.textContent = `${o.label} · ${dist} m`;
   }
 
+  // ── Diálogo: cuadro abajo con el texto escribiéndose, igual en cualquier piel ──
+  const talk = document.createElement("div");
+  talk.setAttribute("role", "status"); talk.setAttribute("aria-live", "polite");
+  talk.style.cssText = "position:absolute;left:50%;bottom:64px;transform:translateX(-50%);width:min(520px,calc(100% - 24px));z-index:3;pointer-events:none;display:none;background:rgba(11,22,34,.92);border:2px solid #ffd93d;border-radius:14px;padding:10px 14px 12px;box-shadow:0 6px 18px rgba(0,0,0,.35);font:600 14px/1.4 system-ui,sans-serif;color:#f2f5f4";
+  talk.innerHTML = '<b data-who style="display:block;color:#ffd93d;font:800 12px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.04em;margin-bottom:4px"></b><span data-text></span>';
+  stage.appendChild(talk);
+  const tWho = talk.querySelector("[data-who]") as HTMLElement, tText = talk.querySelector("[data-text]") as HTMLElement;
+  let dialogNow: { who: string; text: string; t: number } | null = null;
+  function drawDialog(dt: number) {
+    if (!dialogNow || state.mini) { talk.style.display = "none"; return; }
+    talk.style.display = "block";
+    dialogNow.t += dt;
+    const n = Math.min(dialogNow.text.length, Math.floor(dialogNow.t * 45));
+    if (tText.textContent?.length !== n) tText.textContent = dialogNow.text.slice(0, n);
+  }
+  function moveNpcs(dt: number) {
+    for (const n of npcs.values()) {
+      const e = n.e, dx = n.to.x - e.x, dy = n.to.y - e.y, d = Math.hypot(dx, dy);
+      const v = d < 6 ? 0 : Math.min(n.speed, d * 2.5);
+      e.vx = d ? (dx / d) * v : 0; e.vy = d ? (dy / d) * v : 0;
+      e.x += e.vx * dt; e.y += e.vy * dt;
+      if (v > 20) e.ang = lerpAngle(e.ang, Math.atan2(dy, dx), Math.min(1, dt * 6));
+      e.thrust = Math.min(1, v / Math.max(1, n.speed));
+    }
+  }
+
   // ── Progreso guardado: el modo suma y el motor manda por lotes cada pocos segundos ──
   let progress: Progress | null = null;
   const P = S.progress ?? {};
@@ -506,6 +535,14 @@ export function createWorld(opts: {
     propose: (key, value) => commit({ [key]: value }),
     commit,
     objective: (o) => { objective = o; },
+    npc: (id, spec) => {
+      if (!spec) { npcs.delete(id); return null; }
+      let n = npcs.get(id);
+      if (!n) { const e = entity(id, "bot", spec.name, spec.look, player.x - 60, player.y - 40); npcs.set(id, (n = { e, to: spec.to, speed: spec.speed ?? 300 })); }
+      n.to = spec.to; n.speed = spec.speed ?? n.speed;
+      return n.e;
+    },
+    dialog: (d) => { if (!d) dialogNow = null; else if (!dialogNow || dialogNow.text !== d.text || dialogNow.who !== d.who) { dialogNow = { ...d, t: 0 }; tWho.textContent = d.who; tText.textContent = ""; } },
     progress: null,
     save,
     area: (id, shape, tags) => { if (shape) areas.set(id, { id, shape, tags }); else { areas.delete(id); inside.delete(id); } },
@@ -532,6 +569,7 @@ export function createWorld(opts: {
   }
   function updateMode(dt: number) {
     if (state.mini) return;
+    moveNpcs(dt);
     updateAreas();
     if (!mode) return;
     refreshModeCtx();
@@ -1075,7 +1113,7 @@ export function createWorld(opts: {
     screenOf: (x, y) => toScreen(x, y),
     setProgress: (p) => applyProgress(p),
     destroy() {
-      flushSave(); window.clearInterval(saveTimer); window.clearTimeout(progressFallback); guide.remove();
+      flushSave(); window.clearInterval(saveTimer); window.clearTimeout(progressFallback); guide.remove(); talk.remove();
       state.dead = true; cancelAnimationFrame(raf); observer.disconnect();
       window.removeEventListener("keydown", onKeyDown); window.removeEventListener("keyup", onKeyUp); window.removeEventListener("blur", onBlur);
       stage.removeEventListener("pointerdown", onPointerDown);
