@@ -7,6 +7,17 @@ const fake = vi.hoisted(() => ({
   product: null as { priceMxn: number | null; active: boolean } | null,
   /** Correos con compra pagada del taller. */
   buyers: [] as string[],
+  /** Filas de PurchaseEvent por sesión de Stripe. */
+  purchases: {} as Record<string, { email: string; productKey: string | null; status: string; note?: string | null }>,
+  /** Invitaciones del club por correo. */
+  invites: {} as Record<string, { id: string; callDays: string[] }>,
+  mails: [] as string[],
+}));
+vi.mock("~/mailSenders/sendAntiFactoryConfirmation", () => ({
+  sendAntiFactoryConfirmation: async ({ to }: { to: string }) => void fake.mails.push(`confirm:${to}`),
+}));
+vi.mock("~/mailSenders/successPurchase", () => ({
+  successPurchase: async ({ userMail }: { userMail: string }) => void fake.mails.push(`notice:${userMail}`),
 }));
 vi.mock("~/.server/db", () => ({
   db: {
@@ -16,6 +27,23 @@ vi.mock("~/.server/db", () => ({
     purchaseEvent: {
       findFirst: async ({ where }: { where: { email: { equals: string } } }) =>
         fake.buyers.includes(where.email.equals.toLowerCase()) ? { id: "p1" } : null,
+      findUnique: async ({ where }: { where: { stripeSessionId: string } }) => fake.purchases[where.stripeSessionId] ?? null,
+      upsert: async ({ where, create }: { where: { stripeSessionId: string }; create: any }) => {
+        fake.purchases[where.stripeSessionId] = { ...create };
+      },
+      update: async ({ where, data }: { where: { stripeSessionId: string }; data: any }) => {
+        fake.purchases[where.stripeSessionId] = { ...fake.purchases[where.stripeSessionId], ...data };
+      },
+    },
+    communityInvite: {
+      findUnique: async ({ where }: { where: { communityId_email: { email: string } } }) =>
+        fake.invites[where.communityId_email.email] ?? null,
+      create: async ({ data }: { data: { email: string; callDays: string[] } }) => {
+        fake.invites[data.email] = { id: data.email, callDays: data.callDays };
+      },
+      update: async ({ where, data }: { where: { id: string }; data: { callDays: string[] } }) => {
+        fake.invites[where.id] = { id: where.id, callDays: data.callDays };
+      },
     },
   },
 }));
@@ -23,6 +51,13 @@ vi.mock("~/.server/db", () => ({
 import {
   ANTI_FACTORY_TIERS,
   antiFactoryCallGate,
+  canSeeRecording,
+  filterPaidRecordings,
+  fulfillAntiFactory,
+  isOpenWebinarCall,
+  isPaidCheckout,
+  isPaidRecording,
+  refundAntiFactory,
   isAntiFactoryType,
   isClubMember,
   pickAntiFactoryTier,
@@ -34,6 +69,9 @@ beforeEach(() => {
   fake.membership = null;
   fake.product = null;
   fake.buyers = [];
+  fake.purchases = {};
+  fake.invites = {};
+  fake.mails = [];
 });
 
 describe("pickAntiFactoryTier", () => {
@@ -127,4 +165,87 @@ describe("candado de la llamada en sesiones de paga", () => {
   it("el anfitrión entra siempre", async () => {
     expect(await antiFactoryCallGate(taller1, { ...member, exempt: true })).toBeNull();
   });
+});
+
+describe("webinar gratis del 18-nov", () => {
+  it("la llamada del webinar es abierta", () =>
+    expect(isOpenWebinarCall({ startsAt: new Date("2026-11-19T01:00:00Z") })).toBe(true));
+  it("las sesiones del taller y una llamada normal no son abiertas", () => {
+    expect(isOpenWebinarCall({ startsAt: new Date("2026-12-02T01:00:00Z") })).toBe(false);
+    expect(isOpenWebinarCall({ startsAt: new Date("2026-11-24T01:00:00Z") })).toBe(false);
+    expect(isOpenWebinarCall(null)).toBe(false);
+  });
+});
+
+describe("grabaciones de paga", () => {
+  const taller = new Date("2026-12-02T01:30:00Z"); // martes 1-dic, 19:30 CDMX
+  const normal = new Date("2026-11-24T01:30:00Z");
+  it("son de paga las de los días del taller", () => {
+    expect(isPaidRecording(taller)).toBe(true);
+    expect(isPaidRecording(normal)).toBe(false);
+  });
+  it("un miembro sin compra no ve la del taller", () =>
+    expect(canSeeRecording({ recordedAt: taller, canMod: false, isInside: true, hasPurchase: false })).toBe(false));
+  it("quien compró la ve aunque no sea miembro", () =>
+    expect(canSeeRecording({ recordedAt: taller, canMod: false, isInside: false, hasPurchase: true })).toBe(true));
+  it("las de un día normal siguen siendo de miembros", () => {
+    expect(canSeeRecording({ recordedAt: normal, canMod: false, isInside: true, hasPurchase: false })).toBe(true);
+    expect(canSeeRecording({ recordedAt: normal, canMod: false, isInside: false, hasPurchase: true })).toBe(false);
+  });
+  it("la lista esconde las de paga a quien no compró y las deja a quien compró", async () => {
+    const list = [{ endedAt: taller.toISOString() }, { endedAt: normal.toISOString() }];
+    expect(await filterPaidRecordings(list, { email: "ana@club.mx", canMod: false })).toHaveLength(1);
+    fake.buyers = ["ana@club.mx"];
+    expect(await filterPaidRecordings(list, { email: "ana@club.mx", canMod: false })).toHaveLength(2);
+  });
+});
+
+describe("cumplimiento sólo con pago confirmado", () => {
+  const base = { sessionId: "cs_1", email: "beto@mail.mx", metadata: { type: "anti-factory-taller-dic26" } };
+  it("sin pago no manda correos ni da pase", async () => {
+    const r = await fulfillAntiFactory({ ...base, paymentStatus: "unpaid" });
+    expect(r.unpaid).toBe(true);
+    expect(fake.mails).toEqual([]);
+    expect(fake.invites["beto@mail.mx"]).toBeUndefined();
+    expect(fake.purchases.cs_1.status).toBe("received");
+  });
+  it("pagada: se cumple, avisa y da pase", async () => {
+    const r = await fulfillAntiFactory({ ...base, paymentStatus: "paid" });
+    expect(r.ok).toBe(true);
+    expect(fake.purchases.cs_1.status).toBe("fulfilled");
+    expect(fake.mails).toEqual(["confirm:beto@mail.mx", "notice:beto@mail.mx"]);
+    expect(fake.invites["beto@mail.mx"].callDays).toEqual(["20261201", "20261203"]);
+  });
+});
+
+describe("reembolso", () => {
+  it("marca la compra como reembolsada y quita los pases del taller", async () => {
+    fake.purchases.cs_9 = { email: "Beto@Mail.mx", productKey: "anti-factory-taller-dic26", status: "fulfilled" };
+    fake.invites["beto@mail.mx"] = { id: "beto@mail.mx", callDays: ["20261117", "20261201", "20261203"] };
+    expect(await refundAntiFactory("cs_9")).toBe(true);
+    expect(fake.purchases.cs_9.status).toBe("refunded");
+    expect(fake.invites["beto@mail.mx"].callDays).toEqual(["20261117"]);
+  });
+  it("no toca compras que no son del taller", async () => {
+    fake.purchases.cs_8 = { email: "x@y.mx", productKey: "sistemas-agenticos-workshop", status: "fulfilled" };
+    expect(await refundAntiFactory("cs_8")).toBe(false);
+    expect(fake.purchases.cs_8.status).toBe("fulfilled");
+  });
+});
+
+describe("?success=1 verificado con Stripe", () => {
+  const stripe = (payment_status: string, type = "anti-factory-taller-dic26") => async () => ({
+    payment_status,
+    metadata: { type },
+  });
+  it("sesión pagada del taller: sí", async () =>
+    expect(await isPaidCheckout("cs_test_abc123", stripe("paid"))).toBe(true));
+  it("sin pagar, de otro producto, sin id o con id inventado: no", async () => {
+    expect(await isPaidCheckout("cs_test_abc123", stripe("unpaid"))).toBe(false);
+    expect(await isPaidCheckout("cs_test_abc123", stripe("paid", "otro"))).toBe(false);
+    expect(await isPaidCheckout(null, stripe("paid"))).toBe(false);
+    expect(await isPaidCheckout("{CHECKOUT_SESSION_ID}", stripe("paid"))).toBe(false);
+  });
+  it("si Stripe falla: no", async () =>
+    expect(await isPaidCheckout("cs_live_x1", async () => { throw new Error("404"); })).toBe(false));
 });

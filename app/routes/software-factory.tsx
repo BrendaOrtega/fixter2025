@@ -8,6 +8,7 @@ import {
   ANTI_FACTORY_TIERS,
   CLUB_SLUG,
   isClubMember,
+  isPaidCheckout,
   pickAntiFactoryTier,
   priceFor,
 } from "~/.server/services/anti-factory.server";
@@ -32,6 +33,8 @@ export const links = () => [
 /// Se repite aquí y no se importa del `.server`: el componente corre en el navegador.
 const ANTI_FACTORY_PATH = "/anti-factory";
 const PAGE_URL = `https://www.fixtergeek.com${ANTI_FACTORY_PATH}`;
+/// Portada del evento (la misma del evento de Facebook), en 1200×628.
+const OG_IMAGE = "https://www.fixtergeek.com/anti-factory-og.jpg";
 const FACEBOOK_EVENT_URL = "https://www.facebook.com/events/1603559874408025/";
 /// El evento del webinar en el club (lo crea `scripts/club-anti-factory-events.mts`).
 const WEBINAR_EVENT_TITLE = "Ghosty Anti-Factory · webinar gratis";
@@ -50,6 +53,9 @@ export const meta = () =>
       "Hay formas más simples y efectivas de desarrollar que una fábrica. Webinar gratis el miércoles 18 de noviembre a las 7 pm (CDMX) y taller en vivo el martes 1 y el jueves 3 de diciembre de 2026, de 7 a 9 pm, en la llamada del Club de Agentes de IA.",
     // canonical: las dos rutas sirven esta página y la buena es /anti-factory
     url: PAGE_URL,
+    image: OG_IMAGE,
+    imageWidth: 1200,
+    imageHeight: 628,
     keywords:
       "ghosty anti-factory, ghosty-dev, agentes de código, revisor con contexto limpio, claude code, codex, club de agentes de ia, webinar gratis, taller en vivo",
   });
@@ -91,6 +97,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       cancel_url: `${location}${ANTI_FACTORY_PATH}?cancel=1`,
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
+      payment_method_types: ["card"],
       payment_method_options: { card: { installments: { enabled: true } } },
     });
 
@@ -132,7 +139,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     clubPrice,
     // «Agéndalo gratis»: el .ics del evento del club; sin evento, el de Facebook.
     webinarIcsUrl: webinar ? `/comunidad/${CLUB_SLUG}/evento/${webinar.id}.ics` : null,
-    success: params.get("success") === "1",
+    // Sólo se celebra si Stripe confirma que esa sesión quedó pagada.
+    success:
+      params.get("success") === "1" &&
+      (await isPaidCheckout(params.get("session_id"), async (id) => {
+        const stripe = new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY as string, {});
+        return stripe.checkout.sessions.retrieve(id);
+      })),
     canceled: params.get("cancel") === "1",
     confirmed: !!decoded,
   };

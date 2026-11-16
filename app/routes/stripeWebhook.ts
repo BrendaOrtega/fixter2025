@@ -23,6 +23,7 @@ import {
 import {
   fulfillAntiFactory,
   isAntiFactoryType,
+  refundAntiFactory,
 } from "~/.server/services/anti-factory.server";
 
 // Inicialización lazy para evitar error durante build
@@ -56,6 +57,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "customer.subscription.deleted":
       await syncSubscription(event.data.object);
       return new Response(null);
+    // Reembolso total del taller Anti-Factory: la compra deja de contar y se quitan los pases.
+    // (El endpoint de Stripe debe tener suscrito `charge.refunded`.)
+    case "charge.refunded": {
+      const charge = event.data.object;
+      if (!charge.refunded || !charge.payment_intent) return new Response(null);
+      const paymentIntent =
+        typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent.id;
+      const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntent, limit: 1 });
+      const sessionId = sessions.data[0]?.id;
+      if (sessionId && (await refundAntiFactory(sessionId))) {
+        console.info(`WEBHOOK: reembolso del taller Anti-Factory (${sessionId})`);
+      }
+      return new Response(null);
+    }
     case "checkout.session.async_payment_failed":
       await successPurchase({
         userName: "Error en la compra (stripe error)",
@@ -80,16 +95,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // correo genérico del Product no sabe adjuntarlos.
       if (isAntiFactoryType(session.metadata.type)) {
         const metadata = session.metadata as Record<string, string | undefined>;
-        const { ok, repeated } = await fulfillAntiFactory({
+        const { ok, repeated, unpaid } = await fulfillAntiFactory({
           sessionId: session.id,
           email,
           name: session.customer_details?.name || metadata.name,
           amountTotal: session.amount_total,
           currency: session.currency,
           metadata,
+          paymentStatus: session.payment_status,
         });
         console.info(
-          `WEBHOOK: ${metadata.type} ${repeated ? "ya cumplido" : ok ? "cumplido" : "PARCIAL"}`
+          `WEBHOOK: ${metadata.type} ${unpaid ? `sin pagar (${session.payment_status})` : repeated ? "ya cumplido" : ok ? "cumplido" : "PARCIAL"}`
         );
         return new Response(null);
       }

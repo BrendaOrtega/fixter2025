@@ -55,7 +55,11 @@ import {
   stopRecording,
 } from "~/.server/services/club-recording.server";
 import { applyInvite, isCallGuestToday } from "~/.server/services/club-invites.server";
-import { antiFactoryCallGate } from "~/.server/services/anti-factory.server";
+import {
+  antiFactoryCallGate,
+  filterPaidRecordings,
+  isOpenWebinarCall,
+} from "~/.server/services/anti-factory.server";
 import { badgesForMembers } from "~/.server/services/badges.server";
 import { ClubVideo } from "~/components/community/ClubVideo";
 import { clubIncluded as included } from "~/components/community/clubIncluded";
@@ -191,7 +195,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     null
   );
   // La página muestra las grabaciones como las ve un miembro; ocultar/reintentar vive en el panel.
-  const recordings = settle(listRecordings(community.id, false), []);
+  // Las grabaciones de los días del taller Anti-Factory sólo las ve quien lo compró.
+  const recordings = settle(
+    listRecordings(community.id, false).then((list) =>
+      filterPaidRecordings(list, { email: user?.email ?? null, canMod })
+    ),
+    []
+  );
   // Estado de la grabación sólo para el anfitrión, y sólo con la llamada abierta.
   const rec = canMod && isCallOpen(event) ? settle(recordingState(), null) : null;
 
@@ -217,7 +227,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     recordings,
     recordingCount,
     rec,
-    isCallGuest: !isInside && isCallGuestToday(invite),
+    // Invitado de hoy, o el webinar gratis del 18-nov: abierto a cualquiera con sesión iniciada.
+    isCallGuest: !isInside && (isCallGuestToday(invite) || (!!user && isOpenWebinarCall(event))),
     event: event
       ? {
           id: event.id,
@@ -281,7 +292,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const canMod = canModerate(user, community);
   const inside = canParticipate(user, membership, community);
   // Invitado a la llamada de hoy: entra a la llamada (sólo eso) aunque no sea miembro.
-  const callGuest = !inside && intent === "call" && isCallGuestToday(await applyInvite(user, community.id));
+  // El webinar gratis del 18-nov (Anti-Factory) es abierto: entra cualquiera con sesión iniciada.
+  const callGuest =
+    !inside &&
+    intent === "call" &&
+    (isOpenWebinarCall(await getNextEvent(community.id)) ||
+      isCallGuestToday(await applyInvite(user, community.id)));
   if (!inside && !callGuest) {
     return data({ error: "Únete al club para participar." }, { status: 403 });
   }

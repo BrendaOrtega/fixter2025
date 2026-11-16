@@ -3,7 +3,7 @@
 // el webhook de Stripe. La landing es `app/routes/anti-factory.tsx`.
 import { db } from "~/.server/db";
 import { hasActiveMembership } from "~/.server/services/membership.server";
-import { upsertInvites } from "~/.server/services/club-invites.server";
+import { cdmxDay, upsertInvites } from "~/.server/services/club-invites.server";
 import { recordPurchase, type FulfillmentStep } from "~/.server/services/fulfillment.server";
 import { successPurchase } from "~/mailSenders/successPurchase";
 import { sendAntiFactoryConfirmation } from "~/mailSenders/sendAntiFactoryConfirmation";
@@ -120,6 +120,104 @@ export async function antiFactoryCallGate(
   };
 }
 
+// ── Webinar gratis del 18-nov ───────────────────────────────────────────────────────────────────
+// Esa llamada es abierta: cualquiera con sesión iniciada entra como espectador, sin membresía ni
+// pase. Sólo ese evento.
+export const ANTI_FACTORY_WEBINAR = {
+  startsAt: new Date("2026-11-19T01:00:00Z"), // miércoles 18-nov, 19:00 CDMX
+  endsAt: new Date("2026-11-19T02:00:00Z"),
+};
+
+/** ¿Esta llamada es la del webinar gratis? */
+export function isOpenWebinarCall(event: { startsAt: Date } | null) {
+  return (
+    !!event &&
+    Math.abs(event.startsAt.getTime() - ANTI_FACTORY_WEBINAR.startsAt.getTime()) <= SESSION_MATCH_MS
+  );
+}
+
+// ── Grabaciones de las sesiones de paga ─────────────────────────────────────────────────────────
+// Las grabaciones de los días del taller son de paga: las ve quien compró (miembro o no) y el
+// anfitrión; un miembro sin compra no las ve.
+
+/** ¿La grabación es de un día del taller? Se decide por el día en CDMX en que se grabó. */
+export function isPaidRecording(recordedAt: Date) {
+  return ANTI_FACTORY_CALL_DAYS.includes(cdmxDay(recordedAt));
+}
+
+/** Quién puede ver una grabación: las de paga piden compra; las demás, estar adentro del club. */
+export function canSeeRecording({
+  recordedAt,
+  canMod,
+  isInside,
+  hasPurchase,
+}: {
+  recordedAt: Date;
+  canMod: boolean;
+  isInside: boolean;
+  hasPurchase: boolean;
+}) {
+  if (canMod) return true;
+  return isPaidRecording(recordedAt) ? hasPurchase : isInside;
+}
+
+/** Quita de la lista las grabaciones de paga si quien mira no compró el taller. */
+export async function filterPaidRecordings<R extends { endedAt: string }>(
+  list: R[],
+  who: { email: string | null; canMod: boolean },
+) {
+  if (who.canMod || !list.some((r) => isPaidRecording(new Date(r.endedAt)))) return list;
+  const bought = who.email ? await hasAntiFactoryPurchase(who.email) : false;
+  return bought ? list : list.filter((r) => !isPaidRecording(new Date(r.endedAt)));
+}
+
+// ── Pagos verificados y reembolsos ──────────────────────────────────────────────────────────────
+
+type CheckoutLookup = (id: string) => Promise<{ payment_status: string; metadata: Record<string, string> | null }>;
+
+/** `?success=1` sólo celebra si Stripe confirma que esa sesión del taller quedó pagada. */
+export async function isPaidCheckout(sessionId: string | null, retrieve: CheckoutLookup) {
+  if (!sessionId || !/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) return false;
+  try {
+    const session = await retrieve(sessionId);
+    return session.payment_status === "paid" && isAntiFactoryType(session.metadata?.type);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Reembolso de una compra del taller: la compra queda `refunded` (el candado y las grabaciones
+ * dejan de reconocerla) y se le quitan los pases a la llamada de los días del taller.
+ * Devuelve `false` si esa sesión de Stripe no es del taller.
+ */
+export async function refundAntiFactory(sessionId: string) {
+  const purchase = await db.purchaseEvent.findUnique({
+    where: { stripeSessionId: sessionId },
+    select: { email: true, productKey: true },
+  });
+  if (!purchase || !isAntiFactoryType(purchase.productKey)) return false;
+  await db.purchaseEvent.update({
+    where: { stripeSessionId: sessionId },
+    data: { status: "refunded", note: `Reembolsada el ${new Date().toISOString()}` },
+  });
+  const community = await db.community.findFirst({ where: { slug: CLUB_SLUG }, select: { id: true } });
+  if (community) {
+    const email = purchase.email.trim().toLowerCase();
+    const invite = await db.communityInvite.findUnique({
+      where: { communityId_email: { communityId: community.id, email } },
+      select: { id: true, callDays: true },
+    });
+    if (invite) {
+      await db.communityInvite.update({
+        where: { id: invite.id },
+        data: { callDays: invite.callDays.filter((d) => !ANTI_FACTORY_CALL_DAYS.includes(d)) },
+      });
+    }
+  }
+  return true;
+}
+
 /**
  * Cumple una compra del taller: deja la compra registrada, avisa a bliss y le manda al comprador
  * la confirmación con las dos fechas y su .ics. Cada paso va en su propio try/catch y nada lanza,
@@ -132,6 +230,7 @@ export async function fulfillAntiFactory({
   amountTotal,
   currency,
   metadata,
+  paymentStatus,
 }: {
   sessionId: string;
   email: string;
@@ -139,13 +238,30 @@ export async function fulfillAntiFactory({
   amountTotal?: number | null;
   currency?: string | null;
   metadata: Record<string, string | undefined>;
+  /** `session.payment_status` de Stripe: sólo «paid» se cumple. */
+  paymentStatus: string | null | undefined;
 }) {
+  // Sin cobro confirmado no se entrega nada: queda anotada y se cumple cuando Stripe avise del pago.
+  if (paymentStatus !== "paid") {
+    await recordPurchase({
+      sessionId,
+      email,
+      amountTotal,
+      currency,
+      metadata,
+      productKey: metadata.type,
+      status: "received",
+      note: `payment_status=${paymentStatus ?? "(ninguno)"}`,
+    });
+    return { ok: false, steps: [] as FulfillmentStep[], repeated: false, unpaid: true };
+  }
+
   // Un reintento de Stripe sobre una compra ya cumplida no vuelve a mandar nada.
   const previous = await db.purchaseEvent.findUnique({
     where: { stripeSessionId: sessionId },
     select: { status: true },
   });
-  if (previous?.status === "fulfilled") return { ok: true, steps: [] as FulfillmentStep[], repeated: true };
+  if (previous?.status === "fulfilled") return { ok: true, steps: [] as FulfillmentStep[], repeated: true, unpaid: false };
 
   const base = { sessionId, email, amountTotal, currency, metadata, productKey: metadata.type };
   await recordPurchase({ ...base, status: "received" });
@@ -185,5 +301,5 @@ export async function fulfillAntiFactory({
 
   const ok = !steps.some((s) => s.status === "failed");
   await recordPurchase({ ...base, status: ok ? "fulfilled" : "partial", steps });
-  return { ok, steps, repeated: false };
+  return { ok, steps, repeated: false, unpaid: false };
 }
