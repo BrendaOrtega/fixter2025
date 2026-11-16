@@ -385,6 +385,9 @@ const FactoryBoard = () => {
 
 // El título alterna entre inglés y español. Cada renglón es una ventana de 1em
 // con overflow oculto: la palabra nueva sube y la vieja sale, sin mover el layout.
+/// Puntos del taller que caben en móvil; el resto se resume en «+N».
+const MOBILE_POINTS = 3;
+
 const TITLES = [["Ghosty", "Anti\u2011Factory"]];
 
 const OscillatingTitle = () => {
@@ -395,7 +398,7 @@ const OscillatingTitle = () => {
   }, []);
 
   return (
-    <h1 className="mt-1 flex flex-col whitespace-nowrap text-[clamp(2.3rem,5vw,5.25rem)] font-bold leading-[0.95] tracking-[-0.035em] sm:mt-3" style={DISPLAY}>
+    <h1 className="mt-1 flex flex-col whitespace-nowrap text-[1.9rem] font-bold leading-[0.95] tracking-[-0.035em] sm:mt-3 sm:text-[clamp(2.3rem,5vw,5.25rem)]" style={DISPLAY}>
       <span className="sr-only">Ghosty Anti-Factory</span>
       {/* la ventana crece 0.15em arriba y abajo (acentos y la cola de la g) y el margen negativo lo devuelve: el renglón ocupa lo mismo. El h1 es flex para que esos márgenes no se colapsen */}
       {TITLES[lang].map((word, line) => (
@@ -497,18 +500,25 @@ export default function Route() {
     window.history.replaceState({}, "", url.pathname + url.search);
   }, [success, canceled]);
 
+  const priceNote =
+    priceReason === "waitlist"
+      ? `Tienes el precio de la lista de espera (general: ${mxn(generalPrice)})`
+      : isMember
+        ? `Tienes el precio del club (general: ${mxn(generalPrice)})`
+        : `Miembros del club: ${mxn(clubPrice)}`;
+
   return (
     // una sola pantalla: alto del viewport y sin desborde; la navbar es fixed y se compensa con pt
     <main style={{ background: BG, color: INK }}>
       {(success || confirmed) && <CanvasConfetti />}
-      <div className="relative flex h-[100dvh] flex-col overflow-hidden px-4 pb-4 pt-16 sm:px-8 sm:pt-20">
+      <div className="relative flex h-[100dvh] flex-col overflow-hidden px-4 pb-3 pt-[4.5rem] sm:px-8 sm:pb-4 sm:pt-20">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{ backgroundImage: "radial-gradient(rgba(242,245,244,0.10) 1px, transparent 1px)", backgroundSize: "22px 22px" }}
       />
 
-      <section className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-center gap-3 md:flex-row md:items-center md:gap-10 lg:gap-12">
+      <section className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-[safe_center] gap-3 md:flex-row md:items-center md:gap-10 lg:gap-12">
         <div className="flex flex-col items-start md:w-[46%]">
           {/* Paso 1: el webinar gratis */}
           <motion.span
@@ -527,8 +537,9 @@ export default function Route() {
 
           <OscillatingTitle />
 
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-1.5 max-w-xl text-[15px] leading-snug sm:mt-3 sm:text-xl" style={{ color: `${INK}cc` }}>
-            Hay formas más simples y efectivas de desarrollar que una fábrica.
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-1 max-w-xl text-[14px] leading-snug sm:mt-3 sm:text-xl" style={{ color: `${INK}cc` }}>
+            <span className="sm:hidden">Más simple y efectivo que una fábrica.</span>
+            <span className="hidden sm:inline">Hay formas más simples y efectivas de desarrollar que una fábrica.</span>
           </motion.p>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-2 hidden max-w-xl text-sm sm:block lg:text-base" style={{ color: MUTE }}>
             Un agente escribe, otro agente revisa con contexto limpio y tú decides el merge. Funciona con Claude Code o Codex.
@@ -561,11 +572,15 @@ export default function Route() {
                 <span style={{ color: `${INK}cc` }}>mar 1 y jue 3 de dic · 7 a 9 pm · en la llamada del Club de Agentes de IA</span>
               </span>
               <ul className="mt-1 flex flex-wrap gap-1 sm:mt-1.5 sm:gap-1.5">
-                {POINTS.map((p) => (
-                  <li key={p} className="rounded-full border px-2 py-px text-[11px] sm:px-2.5 sm:py-0.5 sm:text-[13px]" style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>
+                {POINTS.map((p, i) => (
+                  <li key={p} className={`rounded-full border px-2 py-px text-[11px] sm:inline sm:px-2.5 sm:py-0.5 sm:text-[13px] ${i < MOBILE_POINTS ? "" : "hidden"}`} style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>
                     {p}
                   </li>
                 ))}
+                {/* en móvil sólo caben los tres primeros */}
+                <li className="rounded-full border px-2 py-px text-[11px] font-semibold sm:hidden" style={{ borderColor: `${MINT}2e`, color: MINT }}>
+                  +{POINTS.length - MOBILE_POINTS}
+                </li>
               </ul>
             </li>
           </ol>
@@ -585,30 +600,30 @@ export default function Route() {
               </motion.div>
             ) : (
               <>
+                {/* en móvil el precio va al lado del botón; en pantallas anchas, arriba */}
+                <div className="flex items-center gap-3 sm:block">
                 <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                  <span className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ ...DISPLAY, color: GREEN }}>{mxn(price)} MXN</span>
-                  <span className="text-[13px] font-medium sm:text-sm" style={{ color: MINT }}>
-                    {priceReason === "waitlist"
-                      ? `Tienes el precio de la lista de espera (general: ${mxn(generalPrice)})`
-                      : isMember
-                        ? `Tienes el precio del club (general: ${mxn(generalPrice)})`
-                        : `Miembros del club: ${mxn(clubPrice)}`}
+                  <span className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ ...DISPLAY, color: GREEN }}>{mxn(price)}<span className="hidden sm:inline"> MXN</span></span>
+                  <span className="hidden text-[13px] font-medium sm:inline sm:text-sm" style={{ color: MINT }}>
+                    {priceNote}
                   </span>
                 </p>
-                <fetcher.Form method="post" action={ANTI_FACTORY_PATH} className="mt-2 lg:mt-3">
+                <fetcher.Form method="post" action={ANTI_FACTORY_PATH} className="flex-1 sm:mt-2 lg:mt-3">
                   <input type="hidden" name="intent" value="direct_checkout" />
                   <motion.button
                     type="submit"
                     disabled={busy}
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.98 }}
-                    className="h-11 w-full rounded-xl px-8 text-lg font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] disabled:opacity-60 sm:w-auto lg:h-14 lg:text-xl"
+                    className="h-11 w-full rounded-xl px-4 text-lg sm:px-8 font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] disabled:opacity-60 sm:w-auto lg:h-14 lg:text-xl"
                     style={{ background: GREEN, color: BG }}
                   >
-                    {busy ? "Abriendo el pago…" : "Inscríbete al taller"}
+                    {busy ? "Abriendo el pago…" : <>Inscríbete<span className="hidden sm:inline"> al taller</span></>}
                   </motion.button>
                 </fetcher.Form>
+                </div>
                 <div className="mt-1.5 text-[12px] sm:mt-2 sm:text-sm" style={{ color: MUTE }}>
+                  <p className="font-medium sm:hidden" style={{ color: MINT }}>MXN · {priceNote}</p>
                   {error ? (
                     <p role="alert" style={{ color: GREEN }}>{error}</p>
                   ) : canceled ? (
@@ -634,7 +649,7 @@ export default function Route() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 20 }}
-          className="relative w-full md:w-[54%]"
+          className="relative hidden w-full sm:block md:w-[54%]"
         >
           <GhostyPeek />
           <div className="relative z-10">
