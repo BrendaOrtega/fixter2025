@@ -68,7 +68,7 @@ export type Callbacks = {
   onHud?: (hud: ModeHud) => void;
   /** El modo de juego propone un valor del estado compartido: hay que mandarlo al servidor. */
   /** Cambio atómico del estado compartido (varias llaves, todas o ninguna). */
-  onShare?: (changes: Record<string, SharedValue | null>) => void;
+  onShare?: (changes: Record<string, SharedValue | null>) => Promise<unknown> | void;
   /** La skin pidió saludar a alguien (persona o robot) desde su propio menú. */
   onGreet?: (entityId: string) => void;
   /** Enter con un lugar cerca. */
@@ -421,7 +421,9 @@ export function createWorld(opts: {
     if (!ok.length || ok.every(([k, v]) => (shared[k] ?? null) === v)) return;
     const json = JSON.stringify(ok), at = performance.now();
     if (inFlight && inFlight.json === json && at - inFlight.at < 3000) return;
-    inFlight = { json, at }; cb.onShare?.(Object.fromEntries(ok));
+    inFlight = { json, at };
+    // En cuanto contesta el servidor (aceptado o no) se puede volver a intentar: el modo reintenta lo que no entró.
+    Promise.resolve(cb.onShare?.(Object.fromEntries(ok))).catch(() => {}).finally(() => { if (inFlight?.json === json) inFlight = null; });
   }
   const modeCtx: ModeContext = {
     now: 0, meId: opts.meId, player, others: [], places, nearPlace: null, shared,
@@ -485,8 +487,10 @@ export function createWorld(opts: {
     state.shots.push({ kind, x: player.x + Math.cos(a) * 30, y: player.y + Math.sin(a) * 30, vx: Math.cos(a) * sp.speed, vy: Math.sin(a) * sp.speed, t: 0, life: sp.life, dmg: sp.dmg, bounces: sp.bounces ?? 0 });
   };
   /** Sin ángulo dispara hacia donde apunta la nave; el clic derecho manda el ángulo hacia el cursor. */
-  function shoot(angle?: number) {
-    if (!G || state.quiet || state.mini || player.downT > 0 || state.shotT < G.shotEvery) return;
+  function shoot(angle?: number, at: Point | null = null) {
+    // Sin juego de disparos, el clic derecho y Espacio son la acción del modo.
+    if (!G) { if (!state.quiet && !state.mini && player.downT <= 0) signal({ type: "action", at }); return; }
+    if ( state.quiet || state.mini || player.downT > 0 || state.shotT < G.shotEvery) return;
     state.shotT = 0;
     const a = angle ?? player.ang, w = state.weapon, def = w && weaponDef(w.kind);
     if (!w || !def) { fire(a, G.basic.shot); cb.onSound(G.basic.sound); return; }
@@ -810,7 +814,7 @@ export function createWorld(opts: {
     e.preventDefault();
     if (lastPointerType !== "mouse") return;
     const r = stage.getBoundingClientRect(), w = toWorld(e.clientX - r.left, e.clientY - r.top);
-    if (w) shoot(Math.atan2(w.y - player.y, w.x - player.x));
+    if (w) shoot(Math.atan2(w.y - player.y, w.x - player.x), w);
   };
   stage.addEventListener("pointerdown", onPointerType, true);
   stage.addEventListener("contextmenu", onContextMenu);

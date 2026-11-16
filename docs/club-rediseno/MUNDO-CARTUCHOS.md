@@ -219,3 +219,8 @@ Todas viven en el modo (`cartridges/archipielago/index.ts`) usando señales, ár
 - **Formación**: volar junto a alguien (≤150, rumbo parecido, los dos rápido) 2 s activa la formación; estelas doradas y +1 estrella por compañero cada 4 s. Cada cliente lo calcula con las posiciones que ya recibe.
 
 - **Mapa ×1.6** (16-nov): coordenadas en escala vieja con `at(x, y)` de `stars.ts` (`MAP_K`); más islitas de adorno y nubes. El cielo para escribir se quitó (muy chico y difícil).
+- **Islas con la receta del juego** (16-nov): el ruido decide la costa y el mar se corta en el percentil 63; cada lugar sólo empuja el terreno lo justo (radio deformado por ruido), así no salen círculos.
+- **Cambios que deben entrar se reintentan**: el motor suelta el envío al contestar el servidor y el modo repite (`want`) hasta verlo en `shared`. Antes, un rechazo por frecuencia perdía la convocatoria de la carrera.
+- **Acción del modo**: en un mundo sin `combat`, clic derecho o Espacio emiten la señal `action` (con el punto apuntado).
+- **Tormenta cooperativa**: cada 4 min cruza el mapa 100 s; un golpe (acción) sólo cuenta si hay alguien más cerca de ella; 12 golpes del club la tumban (+5 a quien pegó). Llave `storm` = tanda × 100 + golpes, `merge: "max"`.
+- **Escondidillas**: entrar al círculo menta te hace quien busca (`seeker`, `hideAt`); 15 s con la pantalla tapada, luego 90 s viendo sólo a 280 de distancia; atrapas al tocar. Las nubes usan el reloj de la pared para tapar igual en todas las pantallas.

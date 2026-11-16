@@ -64,6 +64,16 @@ export const BIG_R = 70, BIG_PAIR = 90;
 /** «Las traes»: la estrella dorada aparece aquí cuando nadie la trae; se pasa tocando a alguien. */
 export const GOLDEN: Point = at(700, 760);
 export const TAG_REACH = 60, TAG_COOLDOWN = 3;
+/** Tormenta cooperativa: sale cada STORM_EVERY s y dura STORM_LIFE s. Sólo le hace daño un golpe
+ * (clic derecho) cuando hay alguien más junto a ella; con STORM_HP golpes del club, cae. */
+export const STORM_EVERY = 240, STORM_LIFE = 100, STORM_R = 170, STORM_REACH = 300, STORM_HP = 12;
+export function stormAt(now: number, size: { w: number; h: number }): Point {
+  const k = now * 0.035;
+  return { x: size.w / 2 + Math.cos(k) * size.w * 0.32, y: size.h / 2 + Math.sin(k * 1.7) * size.h * 0.3 };
+}
+/** Escondidillas: quien entra al círculo busca; los demás tienen HIDE_TIME s para esconderse (bajo una
+ * nube o lejos); quien busca sólo ve a los que tenga a SEE_R y atrapa al tocarlos. */
+export const HIDE_SPOT: Point = at(240, 1000), HIDE_R = 110, HIDE_TIME = 15, SEEK_TIME = 90, SEE_R = 280, CATCH_R = 70;
 /** Vuelo en formación: alguien a esta distancia, rumbo parecido y los dos volando rápido. */
 export const FORMATION_REACH = 150, FORMATION_ANGLE = 0.6, FORMATION_SPEED = 110, FORMATION_HOLD = 2, FORMATION_EVERY = 4;
 /** Choca esas cinco: un saludo entre dos que están a menos de esto suelta una lluvia de estrellas. */
@@ -83,8 +93,11 @@ export type StarState = {
   big: { x: number; y: number; taken: boolean } | null;
   /** Lluvias de estrellas pendientes de pintar (choca esas cinco). */
   showers: Point[];
+  storm: { x: number; y: number; alive: boolean; hits: number };
+  zaps: { x: number; y: number; t: number }[];
+  hide: { seeker: string | null; at: number; phase: "off" | "hiding" | "seek" };
   /** Quiénes vuelan en formación contigo (ids, incluyéndote); vacío si no.*/
   formation: string[];
 };
-export const createStarState = (): StarState => ({ now: 0, taken: new Set(), race: { next: -1, startedAt: null }, raceAt: 0, it: null, big: null, showers: [], formation: [] });
+export const createStarState = (): StarState => ({ now: 0, taken: new Set(), race: { next: -1, startedAt: null }, raceAt: 0, it: null, big: null, showers: [], formation: [], storm: { x: 0, y: 0, alive: false, hits: 0 }, zaps: [], hide: { seeker: null, at: 0, phase: "off" } });
 export const starKey = (wave: number, i: number) => `${wave}:${i}`;

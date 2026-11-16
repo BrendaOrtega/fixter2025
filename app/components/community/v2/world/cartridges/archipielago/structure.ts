@@ -1,7 +1,7 @@
 // Archipiélago: la estructura (datos). La lee el motor en el navegador y el servidor para validar.
 // Sólo datos y funciones puras: nada de DOM aquí.
 import type { BotDef, Place, TableDef, WorldStructure } from "../../cartridge";
-import { MAP_K, RINGS, START_R, at } from "./stars";
+import { HIDE_R, HIDE_SPOT, MAP_K, RINGS, START_R, at } from "./stars";
 
 export const WORLD_ID = "archipielago";
 export const WORLD_NAME = "Archipiélago";
@@ -74,7 +74,14 @@ export const structure: WorldStructure = {
     raceAt: { type: "number", min: 0, max: 2147483647 },
     it: { type: "member" },
     itAt: { type: "number", min: 0, max: 2147483647 },
+    // Tormenta: tanda × 100 + golpes (sólo sube).
+    storm: { type: "number", min: 0, max: 2147483647, merge: "max" },
+    seeker: { type: "member" },
+    hideAt: { type: "number", min: 0, max: 2147483647 },
   },
   // La salida de la carrera es un área fija; los demás aros los pone el modo sólo durante la carrera.
-  areas: [{ id: "start", shape: { kind: "circle", x: RINGS[0].x, y: RINGS[0].y, r: START_R }, tags: ["start"] }],
+  areas: [
+    { id: "start", shape: { kind: "circle", x: RINGS[0].x, y: RINGS[0].y, r: START_R }, tags: ["start"] },
+    { id: "hide", shape: { kind: "circle", x: HIDE_SPOT.x, y: HIDE_SPOT.y, r: HIDE_R }, tags: ["hide"] },
+  ],
 };

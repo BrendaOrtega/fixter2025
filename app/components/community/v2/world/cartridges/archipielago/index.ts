@@ -3,7 +3,7 @@
 //
 // Manifiesto: lo leen navegador y servidor (nada de DOM). La skin se carga aparte con `loadSkin`.
 import type { Cartridge, GameMode, ModeContext } from "../../cartridge";
-import { FORMATION_ANGLE, FORMATION_EVERY, FORMATION_HOLD, FORMATION_REACH, FORMATION_SPEED, RACE_COUNTDOWN, RACE_WINDOW, START_R, BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RINGS, RING_R, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { CATCH_R, HIDE_TIME, SEEK_TIME, STORM_EVERY, STORM_HP, STORM_LIFE, STORM_REACH, stormAt, FORMATION_ANGLE, FORMATION_EVERY, FORMATION_HOLD, FORMATION_REACH, FORMATION_SPEED, RACE_COUNTDOWN, RACE_WINDOW, START_R, BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RINGS, RING_R, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { WORLD_ID, WORLD_NAME, structure } from "./structure";
 
 const clock = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toFixed(1).padStart(4, "0")}`;
@@ -16,16 +16,30 @@ const clock = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toFixed(
  *   salida y aparecen los aros (áreas `ring:i`, sólo mientras dura). El mejor tiempo es récord del club (`merge: "min"`).
  * - Las traes: la estrella dorada la toma quien llegue primero y se pasa tocando a otra persona.
  * - Formación: volar junto a alguien, en la misma dirección y rápido, suma una estrella cada 4 s.
+ * - Tormenta: cada 4 min cruza el mapa; sólo cae si le pegan (clic derecho) con alguien más junto a ella.
+ * - Escondidillas: quien entra al círculo busca; los demás se esconden 15 s y quien busca sólo ve de cerca.
  * - Choca esas cinco: un saludo entre dos que están cerca suelta una lluvia de estrellas (la pinta la skin).
  */
 function islandGame(st: StarState): GameMode {
   let mine = 0, wave = -1, count = 0, goldenOn = false, together = 0, formT = 0, phase: "off" | "countdown" | "on" = "off", beep = -1;
+  let downWave = -1, hitWave = -1, lonely = 0, hidePhase: "off" | "hiding" | "seek" = "off", caught = false;
+  const found = new Set<string>();
+  let hideWasMine = false;
   const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
   const humans = (ctx: ModeContext) => ctx.others.filter((e) => e.kind === "human");
+  // Cambios que deben entrar sí o sí (convocar, meta, estrella dorada): se reintentan cada cuadro hasta
+  // que el estado compartido los refleje o se venzan. Un envío rechazado (p. ej. por frecuencia) ya no se pierde.
+  let pending: { changes: Record<string, string | number>; until: number; done?: (ctx: ModeContext) => boolean } | null = null;
+  const want = (changes: Record<string, string | number>, now: number, secs = 4, done?: (ctx: ModeContext) => boolean) => { pending = { changes, until: now + secs, done }; };
   const nameOf = (ctx: ModeContext, id: unknown) => (id === ctx.meId ? "tú" : ctx.others.find((e) => e.id === id)?.first);
   return {
     update(ctx, dt) {
       st.now = ctx.now;
+      if (pending) {
+        const pd = pending;
+        const landed = pd.done ? pd.done(ctx) : Object.entries(pd.changes).every(([k, v]) => ctx.shared[k] === v);
+        if (landed || ctx.now > pd.until) pending = null; else ctx.commit(pd.changes);
+      }
       const now = ctx.now, p = ctx.player, w = Math.floor(now / STAR_EVERY);
       // Tanda nueva: estrellas y estrella de dos.
       if (w !== wave) {
@@ -49,7 +63,7 @@ function islandGame(st: StarState): GameMode {
       const itAt = typeof ctx.shared.itAt === "number" ? ctx.shared.itAt : 0;
       if (st.it === ctx.meId && now - itAt >= TAG_COOLDOWN) {
         const to = humans(ctx).find((e) => Math.hypot(e.x - p.x, e.y - p.y) < TAG_REACH);
-        if (to) { ctx.commit({ it: to.id, itAt: Math.floor(now) }); ctx.bubble(to, "¡Las traes!"); ctx.sound("tag"); }
+        if (to && !pending) { want({ it: to.id, itAt: Math.floor(now) }, now, 3, (c) => c.shared.it !== ctx.meId); ctx.bubble(to, "¡Las traes!"); ctx.sound("tag"); }
       }
       // Formación: alguien cerca, con rumbo parecido, y los dos volando rápido.
       const fast = (e: { vx: number; vy: number }) => Math.hypot(e.vx, e.vy) > FORMATION_SPEED;
@@ -79,6 +93,36 @@ function islandGame(st: StarState): GameMode {
         }
         phase = ph; beep = -1;
       }
+      // Tormenta: dónde va, cuántos golpes lleva esta tanda y si ya cayó.
+      const sw = Math.floor(now / STORM_EVERY), sv = typeof ctx.shared.storm === "number" ? ctx.shared.storm : 0;
+      const hits = Math.floor(sv / 100) === sw ? sv % 100 : 0, spos = stormAt(now, structure.size);
+      st.storm = { ...spos, alive: now % STORM_EVERY < STORM_LIFE && hits < STORM_HP, hits };
+      if (hits >= STORM_HP && downWave !== sw) {
+        downWave = sw; st.showers.push(spos); ctx.sound("thunder");
+        if (hitWave === sw) { mine += 5; ctx.bubble(p, "¡Tumbaron la tormenta! +5"); }
+      }
+      lonely = Math.max(0, lonely - dt);
+      // Escondidillas.
+      const seeker = typeof ctx.shared.seeker === "string" ? ctx.shared.seeker : null, hideAt = typeof ctx.shared.hideAt === "number" ? ctx.shared.hideAt : 0;
+      const hp = !seeker || !hideAt || now >= hideAt + SEEK_TIME ? "off" : now < hideAt ? "hiding" : "seek";
+      st.hide = { seeker, at: hideAt, phase: hp };
+      if (hp !== hidePhase) {
+        if (hp === "hiding") { found.clear(); caught = false; if (seeker !== ctx.meId) { ctx.sound("tag"); ctx.bubble(p, `¡Escóndete! ${nameOf(ctx, seeker) ?? "Alguien"} cuenta ${HIDE_TIME} s`); } }
+        else if (hp === "seek") { ctx.sound("finish"); ctx.bubble(p, seeker === ctx.meId ? "¡A buscar!" : "¡Ya te buscan!"); }
+        else if (hidePhase === "seek") {
+          if (seeker === ctx.meId || hideWasMine) { mine += found.size * 2; ctx.bubble(p, `Encontraste ${found.size}`); }
+          else if (!caught) { mine += 3; ctx.sound("big"); ctx.bubble(p, "¡No te encontraron! +3"); }
+        }
+        hideWasMine = seeker === ctx.meId; hidePhase = hp;
+      }
+      if (hp === "seek") {
+        if (seeker === ctx.meId) {
+          for (const e of humans(ctx)) if (!found.has(e.id) && Math.hypot(e.x - p.x, e.y - p.y) < CATCH_R) { found.add(e.id); ctx.sound("tag"); ctx.bubble(e, "¡Te encontré!"); }
+        } else if (!caught) {
+          const s = ctx.others.find((e) => e.id === seeker);
+          if (s && Math.hypot(s.x - p.x, s.y - p.y) < CATCH_R) { caught = true; ctx.sound("tag"); ctx.bubble(p, `¡Te encontró ${s.first}!`); }
+        }
+      }
       // Récord de estrellas (atómico: el dueño sólo se escribe si el récord sube).
       const best = typeof ctx.shared.best === "number" ? ctx.shared.best : 0;
       if (mine > best) ctx.commit({ best: mine, leader: ctx.meId });
@@ -90,9 +134,14 @@ function islandGame(st: StarState): GameMode {
         : phase === "on" ? "🏁 Carrera en curso"
         : raceBest ? `🏁 Récord ${clock(raceBest / 10)}${raceLeader ? ` (${raceLeader})` : ""} · entra a la salida` : "🏁 Entra a la salida para convocar una carrera";
       const who = nameOf(ctx, ctx.shared.leader);
+      const stormLine = st.storm.alive ? `⛈ Tormenta ${hits}/${STORM_HP} · clic derecho junto con alguien` : `⛈ Tormenta en ${clock(Math.max(0, STORM_EVERY - (now % STORM_EVERY))).replace(/\.\d$/, "")}`;
+      const hideLeft = Math.ceil(hp === "hiding" ? hideAt - now : hideAt + SEEK_TIME - now);
+      const hideLine = hp === "off" ? "🫣 Escondidillas: entra al círculo para buscar"
+        : seeker === ctx.meId ? (hp === "hiding" ? `🙈 Cuenta… ${hideLeft} s` : `🔎 Encontraste ${found.size} · ${hideLeft} s`)
+        : hp === "hiding" ? `🫣 ¡Escóndete! ${hideLeft} s` : caught ? "🫣 Te encontraron" : `🤫 Te buscan · ${hideLeft} s`;
       ctx.hud({
         title: `⭐ ${mine} · récord ${Math.max(best, mine)}${who ? ` (${who})` : ""}`,
-        lines: [raceLine, st.it ? `👑 La trae ${nameOf(ctx, st.it) ?? "alguien"}` : "👑 Toma la estrella dorada", `Nueva tanda en ${Math.ceil(STAR_EVERY - (now % STAR_EVERY))} s`],
+        lines: [raceLine, stormLine, hideLine, st.it ? `👑 La trae ${nameOf(ctx, st.it) ?? "alguien"}` : "👑 Toma la estrella dorada", `Nueva tanda en ${Math.ceil(STAR_EVERY - (now % STAR_EVERY))} s`],
       });
     },
     on(signal, ctx) {
@@ -105,17 +154,22 @@ function islandGame(st: StarState): GameMode {
           st.taken.add(key); mine++; ctx.area(id, null);
           ctx.sound("star"); ctx.bubble(p, mine === 1 ? "¡Tu primera estrella!" : `${mine} estrellas`);
         } else if (tags?.includes("golden")) {
-          ctx.commit({ it: ctx.meId, itAt: Math.floor(now) }); ctx.sound("tag"); ctx.bubble(p, "¡La traes tú!");
+          want({ it: ctx.meId, itAt: Math.floor(now) }, now, 3, (c) => !!c.shared.it); ctx.sound("tag"); ctx.bubble(p, "¡La traes tú!");
+        } else if (tags?.includes("hide")) {
+          if (st.hide.phase === "off") { want({ seeker: ctx.meId, hideAt: Math.floor(now) + HIDE_TIME }, now); ctx.bubble(p, "Tú buscas: cuenta 15 s"); }
         } else if (tags?.includes("start")) {
           const r = st.race;
           if (phase === "off") {
             // Convoca: arranca en RACE_COUNTDOWN s para todos los que estén en la salida.
-            ctx.commit({ raceAt: Math.floor(now) + RACE_COUNTDOWN });
+            const at = Math.floor(now) + RACE_COUNTDOWN;
+            // Entra si ya hay una carrera convocada (por mí o por otra persona) que no ha terminado.
+            want({ raceAt: at }, now, 4, (c) => typeof c.shared.raceAt === "number" && c.now < c.shared.raceAt + RACE_WINDOW);
             ctx.sound("tag"); ctx.bubble(p, `¡Carrera en ${RACE_COUNTDOWN} s! Quédate en la salida`);
           } else if (phase === "on" && r.next === 0 && r.startedAt !== null) {
             // Meta: tiempo en décimas; el servidor sólo lo guarda si baja el récord.
             const tenths = Math.max(1, Math.round((now - r.startedAt) * 10));
-            ctx.commit({ raceBest: tenths, raceLeader: ctx.meId });
+            // Se vence pronto: si no bajó el récord, el servidor lo rechaza («stale») y está bien.
+            want({ raceBest: tenths, raceLeader: ctx.meId }, now, 3, (c) => typeof c.shared.raceBest === "number" && c.shared.raceBest <= tenths);
             ctx.sound("finish"); ctx.bubble(p, `¡Meta! ${clock(tenths / 10)}`);
             st.race = { next: -1, startedAt: null };
           }
@@ -123,6 +177,16 @@ function islandGame(st: StarState): GameMode {
           const i = Number(id.split(":")[1]), r = st.race;
           if (r.startedAt !== null && i === r.next) { r.next = i + 1 >= RINGS.length ? 0 : i + 1; ctx.sound("ring"); }
         }
+      } else if (signal.type === "action") {
+        // Golpe a la tormenta: sólo cuenta si hay alguien más cerca de ella.
+        const sm = st.storm;
+        if (!sm.alive || Math.hypot(p.x - sm.x, p.y - sm.y) > STORM_REACH) return;
+        st.zaps.push({ x: sm.x, y: sm.y, t: now });
+        ctx.sound("zap");
+        const company = humans(ctx).some((e) => Math.hypot(e.x - sm.x, e.y - sm.y) < STORM_REACH);
+        if (!company) { if (lonely <= 0) { lonely = 4; ctx.bubble(p, "Sin compañía no cae: trae a alguien más"); } return; }
+        hitWave = Math.floor(now / STORM_EVERY);
+        ctx.commit({ storm: hitWave * 100 + Math.min(99, sm.hits + 1) });
       } else if (signal.type === "wave") {
         // Choca esas cinco: el saludo entre dos que están cerca.
         const { from, to } = signal;
@@ -149,8 +213,8 @@ export const archipielago: Cartridge = {
     pilotLabel: "Cara",
     count: (n) => (n === 1 ? "1 en el aire" : `${n} en el aire`),
     roaming: "volando sobre las islas",
-    hint: "Junta estrellas, convoca una carrera en la salida, vuela en formación y pásale la estrella dorada a alguien.",
-    hintKeys: " Flechas o WASD para volar · Shift turbo · C cambia la cámara · clic para ir a un punto · Enter para aterrizar.",
+    hint: "Junta estrellas, convoca una carrera, juega escondidillas, tumba la tormenta en equipo (clic derecho) y pásale la estrella dorada a alguien.",
+    hintKeys: " Flechas o WASD para volar · Shift turbo · C cambia la cámara · clic derecho o Espacio golpea la tormenta · clic para ir a un punto · Enter para aterrizar.",
     hintMini: "Toca el mar o una isla y vuelas para allá.",
     expandMini: " el archipiélago y volar",
     mapLabel: "Archipiélago del club en pixel art, con quienes están conectados volando entre las islas. Las islas y las personas cercanas aparecen en la franja de abajo.",

@@ -16,7 +16,7 @@ const rgb = (h: string) => { const n = parseInt(h.slice(1), 16); return (0xff000
 
 export const WATER = ["#7fd0f5", "#4fb0ee", "#3593e1", "#2677cd", "#1d63b6", "#17529f"];
 /** Cuánto pesa cada isla según el tipo de lugar (radio = `r` × esto). */
-const ISLAND_K: Record<string, number> = { lighthouse: 0.95, mural: 0.9, cinema: 0.9, school: 0.9, islet: 0.62 };
+const ISLAND_K: Record<string, number> = { lighthouse: 0.95, mural: 0.9, cinema: 0.9, school: 0.9, islet: 0.95 };
 
 export type Terrain = { cv: HTMLCanvasElement; /** Colores por pixel (ABGR), para la vista de persecución. */ col: Uint32Array; w: number; h: number; land: (x: number, y: number) => boolean; deep: (x: number, y: number) => boolean };
 
@@ -24,7 +24,7 @@ export function buildTerrain(structure: WorldStructure): Terrain {
   const w = Math.ceil(structure.size.w / WP), h = Math.ceil(structure.size.h / WP), N = w * h;
   const rng = mulberry(20251116);
   const mk = (p: number) => { const a = new Float32Array(p * p); for (let i = 0; i < a.length; i++) a[i] = rng(); return { p, a }; };
-  const LH = [mk(6), mk(12), mk(24), mk(48)], LP = [mk(5), mk(10), mk(20)], LT = [mk(10), mk(20), mk(40)], WX = mk(4), WY = mk(4);
+  const LH = [mk(3), mk(6), mk(12), mk(24), mk(48)], LP = [mk(5), mk(10), mk(20)], LT = [mk(10), mk(20), mk(40)], WX = mk(4), WY = mk(4);
   type L = { p: number; a: Float32Array };
   const vn = (l: L, u: number, v: number) => {
     const p = l.p, x = u * p, y = v * p; let xi = Math.floor(x), yi = Math.floor(y); const xf = x - xi, yf = y - yi;
@@ -35,24 +35,29 @@ export function buildTerrain(structure: WorldStructure): Terrain {
   };
   const fb = (ls: L[], u: number, v: number) => { let amp = 1, sum = 0, tot = 0; for (const l of ls) { sum += amp * vn(l, u, v); tot += amp; amp *= 0.5; } return sum / tot; };
 
-  // Islas: una por lugar, más unas chiquitas de adorno lejos de todo.
-  const bumps = structure.places.map((p: Place) => ({ x: p.x / WP, y: p.y / WP, r: (p.r * (ISLAND_K[p.kind] ?? 0.85)) / WP }));
-  const r2 = mulberry(9);
-  for (let i = 0, tries = 0; i < 18 && tries < 600; tries++) {
-    const b = { x: 20 + r2() * (w - 40), y: 20 + r2() * (h - 40), r: 9 + r2() * 12 };
-    if (bumps.some((q) => Math.hypot(q.x - b.x, q.y - b.y) < q.r + b.r + 14)) continue;
-    bumps.push(b); i++;
+  // Islas con la receta del juego: el ruido en capas (con torcedura) decide la costa y el mar se corta
+  // en el percentil 63, así salen bahías, penínsulas e islotes sueltos. Cada lugar del club sólo empuja
+  // un poco el terreno hacia arriba para que su edificio quede en tierra, sin volverse un círculo.
+  const lift = structure.places.map((p: Place) => ({ x: p.x / WP, y: p.y / WP, r: (p.r * (ISLAND_K[p.kind] ?? 0.85) * 1.9) / WP }));
+  const S = Math.max(w, h), raw = new Float32Array(N);
+  const noiseAt = (x: number, y: number) => { const u = x / S, v = y / S; return fb(LH, u + (vn(WX, u, v) - 0.5) * 0.16, v + (vn(WY, u, v) - 0.5) * 0.16); };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) raw[y * w + x] = noiseAt(x, y);
+  const sea = Float32Array.from(raw).sort()[(N * 0.63) | 0];
+  // Empujón por lugar: lo justo para que su centro quede bien adentro de tierra. La costa la sigue
+  // dibujando el ruido (curvas de nivel), así que no sale un círculo.
+  for (const b of lift) {
+    const need = Math.max(0.02, sea + 0.09 - noiseAt(b.x, b.y));
+    const x0 = Math.max(0, Math.floor(b.x - b.r)), x1 = Math.min(w - 1, Math.ceil(b.x + b.r)), y0 = Math.max(0, Math.floor(b.y - b.r)), y1 = Math.min(h - 1, Math.ceil(b.y + b.r));
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      // Radio que cambia con el ruido: la orilla sale con entrantes y salientes, no redonda.
+      const d = Math.hypot(x - b.x, y - b.y) / (b.r * (0.55 + 0.9 * vn(LP[1], (x / S) * 3, (y / S) * 3))); if (d >= 1) continue;
+      const k = (1 - d * d) * (1 - d * d), i = y * w + x;
+      raw[i] = Math.max(raw[i], raw[i] + need * k);
+    }
   }
-  const S = Math.max(w, h), e = new Float32Array(N);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const u = x / S, v = y / S;
-    const n = fb(LH, u + (vn(WX, u, v) - 0.5) * 0.16, v + (vn(WY, u, v) - 0.5) * 0.16);
-    let bump = 0;
-    for (const b of bumps) { const d = Math.hypot(x - b.x, y - b.y) / b.r; if (d < 1.6) bump = Math.max(bump, 1 - d * d * 0.62); }
-    // e > 0 es tierra; la escala imita los rangos del juego original.
-    e[y * w + x] = (bump - 0.5 + (n - 0.5) * 0.7) * 0.32;
-  }
-  const LE = 0.022, STEP = 0.019, eHi = 0.17;
+  const sorted = Float32Array.from(raw).sort();
+  const e = raw.map((v) => v - sea);
+  const LE = 0.022, STEP = 0.019, eHi = Math.max(0.06, sorted[(N * 0.982) | 0] - sea);
   const lv = new Uint8Array(N);
   for (let i = 0; i < N; i++) lv[i] = e[i] > LE ? 1 + Math.min(40, Math.floor((e[i] - LE) / STEP)) : 0;
   const WC = WATER.map(rgb);

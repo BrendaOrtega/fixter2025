@@ -288,7 +288,9 @@ export type ModeSignal =
   | { type: "area-entered" | "area-exited"; area: Area }
   /** Un saludo que viste pasar (de ti, a ti o entre otras dos personas). */
   | { type: "wave"; from: Entity; to: Entity }
-  | { type: "shared-changed"; key: string; value: SharedValue | null };
+  | { type: "shared-changed"; key: string; value: SharedValue | null }
+  /** Clic derecho (o Espacio) en un mundo sin `combat`: la acción la decide el modo. `at`: a dónde apuntó, si fue con el mouse. */
+  | { type: "action"; at: Point | null };
 /** Reglas propias de un cartucho. El motor llama `update` cada cuadro (no en el mapa reducido) y `on` con cada señal. */
 export type GameMode = { update(ctx: ModeContext, dt: number): void; on?(signal: ModeSignal, ctx: ModeContext): void };
 

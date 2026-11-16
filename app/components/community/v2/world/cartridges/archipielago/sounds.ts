@@ -33,6 +33,10 @@ export const sounds: SoundBank = {
   finish: (k) => {
     for (const [i, f] of [523, 659, 784, 1047].entries()) k.tone({ type: "square", from: f, at: i * 0.09, dur: 0.12, gain: 0.2 });
   },
+  // golpe a la tormenta: rayo corto
+  zap: (k) => k.tone({ type: "square", from: 1800, to: 220, dur: 0.12, gain: 0.25 }),
+  // trueno: la tormenta cae
+  thunder: (k) => { k.tone({ type: "triangle", from: 140, to: 40, dur: 0.6, gain: 0.7 }); k.tone({ type: "square", from: 90, to: 30, at: 0.05, dur: 0.5, gain: 0.25 }); },
   // pasaste la estrella dorada: «toc» que sube
   tag: (k) => k.tone({ type: "triangle", from: 440, to: 990, dur: 0.16, gain: 0.5 }),
 };

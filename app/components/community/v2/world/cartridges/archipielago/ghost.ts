@@ -127,7 +127,7 @@ function discF(c: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
   for (let dy = -r; dy <= r; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy + 0.25)); c.fillRect(cx - hw, cy + dy, hw * 2 + 1, 1); }
 }
 export type Cloud = { c: HTMLCanvasElement; s: HTMLCanvasElement; w: number; h: number };
-export function makeCloud(rng: () => number, n: number, rb: number): Cloud {
+export function makeCloud(rng: () => number, n: number, rb: number, pal = CL): Cloud {
   const w = Math.ceil(n * rb * 1.45 + rb * 2.2) + 6, h = Math.ceil(rb * 3.1) + 6;
   const cc = mkc(w, h), c = cc.getContext("2d") as CanvasRenderingContext2D, sc = mkc(w, h), s = sc.getContext("2d") as CanvasRenderingContext2D;
   const puffs: { x: number; y: number; r: number }[] = [];
@@ -135,6 +135,6 @@ export function makeCloud(rng: () => number, n: number, rb: number): Cloud {
   for (let i = 0; i < n; i++) { const r = Math.round(rb * (0.72 + rng() * 0.55)); puffs.push({ x: Math.round(px), y: Math.round(py - (i % 2 ? rng() * rb * 0.7 : 0)), r }); px += r * 1.1; }
   puffs.sort((a, b) => b.y - a.y);
   s.fillStyle = "#0a2d6a";
-  for (const p of puffs) { discF(s, p.x, p.y, p.r); for (let k = 0; k < 4; k++) { c.fillStyle = CL[k]; discF(c, p.x, p.y - Math.round(k * 1.8), Math.max(2, p.r - Math.round(k * 1.4))); } }
+  for (const p of puffs) { discF(s, p.x, p.y, p.r); for (let k = 0; k < 4; k++) { c.fillStyle = pal[k]; discF(c, p.x, p.y - Math.round(k * 1.8), Math.max(2, p.r - Math.round(k * 1.4))); } }
   return { c: cc, s: sc, w, h };
 }

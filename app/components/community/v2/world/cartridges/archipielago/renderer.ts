@@ -8,7 +8,7 @@
 import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructure } from "../../cartridge";
 import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
 import { DECOR, bake } from "./landmarks";
-import { RACE_WINDOW, START_R, BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
+import { HIDE_R, HIDE_SPOT, SEE_R, STORM_HP, STORM_R, RACE_WINDOW, START_R, BIG_R, GOLDEN, RINGS, RING_R, STAR_EVERY, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { ALT, createChase } from "./chase";
 import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
@@ -38,6 +38,24 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     return Array.from({ length: 34 }, () => ({ x: rng() * terrain.w, y: rng() * terrain.h, alt: 52 + rng() * 40, v: 1.5 + rng() * 2.5, s: shapes[(rng() * shapes.length) | 0] as Cloud }));
   })();
   const flies = new Map<string, Fly>();
+  /** Reloj de las nubes: el de la pared, igual para todos (quien se esconde bajo una nube queda tapado en todas las pantallas). */
+  const skyT = () => (Date.now() / 1000) % 100000;
+  const storm = makeCloud(mulberry(4242), 6, 13, ["#3b4663", "#4d5878", "#646f90", "#7f8aab"]);
+  /** Tormenta en la vista de arriba: sombra, nube oscura, lluvia y rayos de los golpes. */
+  function stormTop(t: number) {
+    const sm = starState.storm; if (!sm.alive) return;
+    const cx = bx(sm.x), cy = by(sm.y);
+    b.globalAlpha = 0.45; b.drawImage(storm.s, cx - (storm.w >> 1) + 14, cy - (storm.h >> 1) + 22); b.globalAlpha = 1;
+    b.fillStyle = "#cfe3ff";
+    for (let i = 0; i < 40; i++) { const rx = ((hsh(i, 1, 7) * storm.w) | 0) - (storm.w >> 1), ry = (((hsh(i, 2, 7) * 30 + t * 90) % 30) | 0); b.fillRect(cx + rx, cy + 4 + ry, 1, 3); }
+    b.drawImage(storm.c, cx - (storm.w >> 1), cy - (storm.h >> 1) - 8);
+    if (Math.sin(t * 7.3) > 0.97) { b.fillStyle = "#fff6b0"; let x = cx + ((hsh(Math.floor(t * 3), 3, 9) - 0.5) * storm.w * 0.6) | 0, y = cy; for (let k = 0; k < 6; k++) { const nx = x + (((hsh(k, Math.floor(t * 3), 5) - 0.5) * 8) | 0); line(b, x, y, nx, y + 6); x = nx; y += 6; } }
+  }
+  function zapsTop(t: number, me: { x: number; y: number }) {
+    starState.zaps = starState.zaps.filter((z) => (starState.now || 0) - z.t < 0.25);
+    b.fillStyle = "#ffd93d";
+    for (const z of starState.zaps) { let x = bx(me.x), y = by(me.y); const tx = bx(z.x), ty = by(z.y); for (let k = 1; k <= 6; k++) { const nx = Math.round(x + (tx - x) / (7 - k) + (hsh(k, Math.floor(t * 20), 3) - 0.5) * 6), ny = Math.round(y + (ty - y) / (7 - k)); line(b, x, y, nx, ny); x = nx; y = ny; } }
+  }
   /** Fase de la carrera convocada (la misma cuenta que hace el modo). */
   const racePhase = () => { const now = starState.now || Date.now() / 1000, at = starState.raceAt; return !at || now >= at + RACE_WINDOW ? "off" : now < at ? "countdown" : "on"; };
   /** Qué aros se pintan: sólo la salida, salvo durante la carrera. */
@@ -140,7 +158,24 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     }
   }
 
-  function render(f: WorldFrame) {
+  function render(f0: WorldFrame) {
+    const h = starState.hide, seeking = structure.shared && h.seeker === f0.player.id && !f0.mini;
+    let f = f0;
+    if (seeking && h.phase === "seek") {
+      const vis = (e: { kind: string; x: number; y: number }) => e.kind !== "human" || Math.hypot(e.x - f0.player.x, e.y - f0.player.y) < SEE_R;
+      f = { ...f0, others: f0.others.filter(vis), bubbles: f0.bubbles.filter((bb) => bb.entity === f0.player || vis(bb.entity)), nearEntity: f0.nearEntity && vis(f0.nearEntity) ? f0.nearEntity : null };
+    }
+    renderWorld(f);
+    if (seeking && h.phase === "hiding") {
+      // Quien busca cuenta con los ojos tapados.
+      const { vw, vh } = f.view;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = "rgba(6,20,52,.94)"; ctx.fillRect(0, 0, vw, vh);
+      text(vw / 2, vh / 2 - 12, "🙈 Cuenta con los ojos tapados", 18, "#fff");
+      text(vw / 2, vh / 2 + 18, `${Math.max(0, Math.ceil(h.at - (starState.now || Date.now() / 1000)))}`, 28, "#ffd93d");
+    }
+  }
+  function renderWorld(f: WorldFrame) {
     frame = f; view = f.view;
     camBtn.style.display = f.mini ? "none" : "grid";
     if (chaseOn()) { renderChase(f); return; }
@@ -186,7 +221,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     // Sombras de nubes.
     b.globalAlpha = 0.42;
     for (const c of clouds) {
-      const x = ((c.x + (f.quiet ? 0 : c.v * t)) % (terrain.w + 80)) - 40;
+      const x = ((c.x + (f.quiet ? 0 : c.v * skyT())) % (terrain.w + 80)) - 40;
       b.drawImage(c.s.s, Math.round(x + c.alt * 0.2 - X0) - (c.s.w >> 1), Math.round(c.y + c.alt * 0.28 - Y0) - (c.s.h >> 1));
     }
     b.globalAlpha = 1;
@@ -206,6 +241,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
       }
       if (structure.shared) {
         showers();
+        ringTop(HIDE_SPOT.x, HIDE_SPOT.y, HIDE_R, "#85ddcb", t, starState.hide.phase === "off");
         // Aros de la carrera: la salida en coral, el siguiente que te toca brilla.
         RINGS.forEach((r, i) => { if (ringOn(i)) ringTop(r.x, r.y, i === 0 ? START_R : RING_R, i === 0 ? "#f4a39a" : "#e8f1fa", t, ringHot(i)); });
         // Estrella de dos: grande, con su círculo punteado.
@@ -246,9 +282,11 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
         if (starState.it && starState.it === e.id) crownTop(bx(e.x), Math.round(by(e.y) - lift - (sp.h >> 1) - 4));
       }
     }
+    // Tormenta y rayos, sobre los fantasmas.
+    if (structure.shared && !f.mini) { stormTop(t); zapsTop(t, f.player); }
     // Nubes por encima de todo.
     for (const c of clouds) {
-      const x = ((c.x + (f.quiet ? 0 : c.v * t)) % (terrain.w + 80)) - 40;
+      const x = ((c.x + (f.quiet ? 0 : c.v * skyT())) % (terrain.w + 80)) - 40;
       b.drawImage(c.s.c, Math.round(x - X0) - (c.s.w >> 1), Math.round(c.y - Y0) - (c.s.h >> 1));
     }
 
@@ -276,6 +314,9 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     }
     if (structure.shared) {
       const s = toScreen(RINGS[0].x, RINGS[0].y + START_R * 0.55 + 10), ph = racePhase();
+      const hs = toScreen(HIDE_SPOT.x, HIDE_SPOT.y + HIDE_R * 0.55 + 10), hp = starState.hide.phase;
+      text(hs.x, hs.y, hp === "off" ? "Escondidillas · entra para buscar" : hp === "hiding" ? "¡A esconderse!" : "Están buscando…", 11, hp === "off" ? "#fff" : "#85ddcb", true);
+      if (starState.storm.alive) { const ss = toScreen(starState.storm.x, starState.storm.y - STORM_R * 0.7); text(ss.x, ss.y, `⛈ ${starState.storm.hits}/${STORM_HP} · golpéenla juntos`, 12, "#ffd93d", true); }
       text(s.x, s.y, ph === "countdown" ? `Carrera en ${Math.ceil(starState.raceAt - (starState.now || Date.now() / 1000))}` : ph === "on" ? "Carrera en curso" : "Salida · entra para correr", 11, ph === "off" ? "#fff" : "#ffd93d", true);
     }
     // El nombre va justo debajo del sprite (media altura en pixeles del arte, más la sombra).
@@ -398,7 +439,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     // Nubes: su sombra se pinta en el piso de inmediato; la nube va a la lista por distancia.
     g.globalAlpha = 0.4;
     for (const c of clouds) {
-      const cx = (((c.x + (f.quiet ? 0 : c.v * t)) % (terrain.w + 80)) - 40) * WP, cy = c.y * WP;
+      const cx = (((c.x + (f.quiet ? 0 : c.v * skyT())) % (terrain.w + 80)) - 40) * WP, cy = c.y * WP;
       const sh = chase.project(cx + c.alt * 0.2 * WP, cy + c.alt * 0.28 * WP, 0);
       if (sh && sh.z > 14) { const w = c.s.w * sh.sk, h = c.s.h * sh.sk * 0.32; if (w > 2 && w < W * 2) g.drawImage(c.s.s, Math.round(sh.x - w / 2), Math.round(sh.y - h / 2), Math.ceil(w), Math.max(1, Math.ceil(h))); }
       const p = chase.project(cx, cy, c.alt);
@@ -416,6 +457,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     });
     if (structure.shared) {
       showers();
+      { const p = chase.project(HIDE_SPOT.x, HIDE_SPOT.y, ALT); if (p && p.z < chase.far * 0.9) items.push({ z: p.z, draw: () => { const k = kRel(p.z) * 1.6, rx = Math.max(3, Math.round(HIDE_R * 0.32 * k)), ry = Math.max(3, Math.round(HIDE_R * 0.38 * k)); g.fillStyle = "#85ddcb"; for (let j = 0; j < 40; j++) { const a = (j / 40) * TAU; g.fillRect(Math.round(p.x + Math.cos(a) * rx) - 1, Math.round(p.y + Math.sin(a) * ry) - 1, 2, 2); } } }); }
       RINGS.forEach((r, i) => {
         if (!ringOn(i)) return;
         const p = chase.project(r.x, r.y, ALT); if (!p || p.z > chase.far * 0.9) return;
@@ -432,6 +474,8 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
         const p = chase.project(sp.x, sp.y, ALT); if (!p || p.z > chase.far * 0.8) continue;
         items.push({ z: p.z, draw: () => { const k = kRel(p.z) * 1.6, h = Math.max(3, Math.round(sp.size * k)), w = Math.max(2, Math.round(h * Math.max(0.28, Math.abs(Math.cos(t * 2.6))))); g.drawImage(star, Math.round(p.x - w / 2), Math.round(p.y - h / 2), w, h); } });
       }
+      const sm = starState.storm;
+      if (sm.alive) { const p = chase.project(sm.x, sm.y, ALT + 26); if (p && p.z < chase.far) items.push({ z: p.z, draw: () => { const k = kRel(p.z) * 1.6, w = storm.w * k, hh = storm.h * k; if (w < W * 2) g.drawImage(storm.c, Math.round(p.x - w / 2), Math.round(p.y - hh / 2), Math.ceil(w), Math.ceil(hh)); } }); }
       const it = starState.it ? flyers.find((e) => e.id === starState.it) : null;
       const ip = it ? chase.project(it.x, it.y, ALT + 16) : null;
       if (ip) items.push({ z: ip.z - 0.01, draw: () => { const h = Math.max(4, Math.round(10 * kRel(ip.z) * 1.4)); g.drawImage(star, Math.round(ip.x - h / 2), Math.round(ip.y - h / 2), h, h); } });
