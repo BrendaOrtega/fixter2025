@@ -21,6 +21,18 @@ const pageTokensCookie = () =>
     secrets: [signingKey("live-fb-pages").toString("hex")],
   });
 
+type Pending = { code: string; pairs: [id: string, token: string, name: string][] };
+
+async function readPending(request: Request): Promise<Pending | null> {
+  try {
+    const raw = (await pageTokensCookie().parse(request.headers.get("Cookie"))) as string | null;
+    const j = raw ? (JSON.parse(raw) as Pending) : null;
+    return j && typeof j.code === "string" && Array.isArray(j.pairs) ? j : null;
+  } catch {
+    return null;
+  }
+}
+
 const expired = () => new Response("La liga para conectar Facebook caducó. Vuelve a pedirla desde el panel.", { status: 400 });
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -33,6 +45,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (url.searchParams.get("error")) throw redirect(facebookBack(st.slug, "cancelled"));
   const code = url.searchParams.get("code");
   if (!code) throw redirect(facebookBack(st.slug, "error", "Meta no devolvió código"));
+  // El `code` de Meta se canjea UNA vez: si la pantalla se vuelve a cargar (recarga, «atrás»,
+  // doble carga), se reutiliza la lista que ya quedó en la cookie en vez de canjearlo de nuevo.
+  const prev = await readPending(request);
+  if (prev && prev.code === code) {
+    return data({ t: t!, pages: prev.pairs.map(([id, , name]) => ({ id, name })) }, { headers: { "Set-Cookie": await pageTokensCookie().serialize(JSON.stringify(prev)) } });
+  }
   let pages: Awaited<ReturnType<typeof facebookPagesFor>>;
   try {
     pages = await facebookPagesFor(code);
@@ -43,8 +61,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (!pages.length) throw redirect(facebookBack(st.slug, "error", "tu cuenta no administra ninguna página de Facebook"));
   // Siempre se pregunta, aunque haya una sola. Los tokens de página no viajan a la pantalla: van
   // en una cookie firmada (10 min) y el POST toma el de la página elegida.
-  const tokens = JSON.stringify(pages.map((p) => [p.id, p.token]));
-  return data({ t: t!, pages: pages.map((p) => ({ id: p.id, name: p.name })) }, { headers: { "Set-Cookie": await pageTokensCookie().serialize(tokens) } });
+  const pending: Pending = { code, pairs: pages.map((p) => [p.id, p.token, p.name]) };
+  return data({ t: t!, pages: pages.map((p) => ({ id: p.id, name: p.name })) }, { headers: { "Set-Cookie": await pageTokensCookie().serialize(JSON.stringify(pending)) } });
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {
@@ -58,9 +76,7 @@ export async function action({ request }: Route.ActionArgs) {
   const user = await getUserOrNull(request);
   if (user?.email.toLowerCase() !== st.email.toLowerCase()) throw redirect(facebookBack(st.slug, "error", "la sesión cambió: vuelve a intentarlo"));
   const pageId = String(fd.get("pageId") ?? "");
-  const raw = (await pageTokensCookie().parse(request.headers.get("Cookie"))) as string | null;
-  const pairs = raw ? (JSON.parse(raw) as [string, string][]) : [];
-  const token = pairs.find(([id]) => id === pageId)?.[1];
+  const token = (await readPending(request))?.pairs.find(([id]) => id === pageId)?.[1];
   if (!token) throw redirect(facebookBack(st.slug, "error", "se venció la selección; vuelve a conectar"));
   // El nombre se vuelve a pedir a Meta con el propio token de página (no se le cree al formulario).
   const name = await fetch(`https://graph.facebook.com/v23.0/${encodeURIComponent(pageId)}?fields=name&access_token=${encodeURIComponent(token)}`, { signal: AbortSignal.timeout(10_000) })
@@ -75,16 +91,19 @@ export default function FacebookLivePick({ loaderData }: Route.ComponentProps) {
   return (
     <main className="min-h-screen bg-[#0E1317] text-[#F2F5F4]">
       <section className="mx-auto w-full max-w-lg px-6 py-12">
-        <h1 className="text-2xl font-bold tracking-tight">¿En qué página se transmiten tus eventos?</h1>
-        <p className="mt-1 text-sm text-[#7C8A8E]">Cada evento en vivo se publicará en esta página.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Elige la página de Facebook para tus transmisiones</h1>
+        <p className="mt-1 text-sm text-[#7C8A8E]">Toca tu página para conectarla. Cada llamada grabada con «En vivo» se publicará ahí.</p>
         <ul className="mt-5 grid gap-2">
           {pages.map((p) => (
             <li key={p.id}>
               <Form method="post">
                 <input type="hidden" name="t" value={t} />
                 <input type="hidden" name="pageId" value={p.id} />
-                <button type="submit" className="w-full rounded-xl border border-[#232D33] bg-[#141B20] px-4 py-3 text-left text-sm font-medium hover:border-[#85DDCB]">
-                  {p.name} <span className="text-xs text-[#7C8A8E]">· {p.id}</span>
+                <button type="submit" className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#232D33] bg-[#141B20] px-4 py-3 text-left text-sm font-medium hover:border-[#85DDCB]">
+                  <span>
+                    {p.name} <span className="text-xs text-[#7C8A8E]">· {p.id}</span>
+                  </span>
+                  <span className="shrink-0 rounded-lg bg-[#1877F2] px-3 py-1 text-xs font-semibold text-white">Conectar esta página</span>
                 </button>
               </Form>
             </li>
