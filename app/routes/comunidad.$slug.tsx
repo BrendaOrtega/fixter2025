@@ -55,6 +55,7 @@ import {
   stopRecording,
 } from "~/.server/services/club-recording.server";
 import { applyInvite, isCallGuestToday } from "~/.server/services/club-invites.server";
+import { antiFactoryCallGate } from "~/.server/services/anti-factory.server";
 import { badgesForMembers } from "~/.server/services/badges.server";
 import { ClubVideo } from "~/components/community/ClubVideo";
 import { clubIncluded as included } from "~/components/community/clubIncluded";
@@ -291,6 +292,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (!isCallOpen(event)) {
       return data({ error: "La llamada se abre 15 minutos antes." }, { status: 400 });
     }
+    // Sesión del taller de paga (Anti-Factory): sólo entra quien lo compró, miembro o no.
+    const paywall = await antiFactoryCallGate(event, {
+      email: user.email,
+      isMember: isMembershipActive(membership),
+      exempt: canMod || isHostEmail(user.email),
+    });
+    if (paywall) return data({ error: paywall.message, paywallUrl: paywall.url }, { status: 403 });
     // Los participantes del micro-hackatón (invitados con esa fuente) entran como speaker para
     // compartir su pantalla; el resto de la audiencia entra como viewer.
     const speakerInvite = await db.communityInvite.findFirst({

@@ -71,6 +71,55 @@ export async function priceFor(tier: AntiFactoryTier) {
   return product?.active && product.priceMxn ? product.priceMxn : tier.fallbackPrice;
 }
 
+// ── Sesiones de paga en la llamada del club ─────────────────────────────────────────────────────
+// El club da descuento, no acceso: en las dos sesiones del taller la llamada sólo deja entrar a
+// quien compró (miembro o no). La fuente de verdad es la compra registrada en `PurchaseEvent`.
+
+/** Estados de una compra pagada: `partial` también está pagada (falló sólo un correo o aviso). */
+const PAID_STATUSES = ["fulfilled", "partial", "fulfilled_manually"];
+const SESSION_MATCH_MS = 30 * 60_000;
+
+/** La sesión del taller que corresponde a esta llamada, si la llamada empieza a la hora del taller. */
+export function paidSessionAt(startsAt: Date) {
+  return (
+    ANTI_FACTORY_SESSIONS.find(
+      (s) => Math.abs(s.startsAt.getTime() - startsAt.getTime()) <= SESSION_MATCH_MS,
+    ) ?? null
+  );
+}
+
+/** ¿Este correo tiene una compra pagada del taller (cualquiera de los dos precios)? */
+export async function hasAntiFactoryPurchase(email: string) {
+  const found = await db.purchaseEvent.findFirst({
+    where: {
+      email: { equals: email.trim(), mode: "insensitive" },
+      productKey: { in: ANTI_FACTORY_KEYS },
+      status: { in: PAID_STATUSES },
+    },
+    select: { id: true },
+  });
+  return !!found;
+}
+
+/**
+ * Candado de la llamada en una sesión de paga. Devuelve `null` si puede entrar, o el aviso con la
+ * liga para inscribirse. El anfitrión y los moderadores siempre entran.
+ */
+export async function antiFactoryCallGate(
+  event: { startsAt: Date } | null,
+  who: { email: string; isMember: boolean; exempt: boolean },
+) {
+  if (!event || who.exempt || !paidSessionAt(event.startsAt)) return null;
+  if (await hasAntiFactoryPurchase(who.email)) return null;
+  const clubPrice = await priceFor(ANTI_FACTORY_TIERS.club);
+  return {
+    message: who.isMember
+      ? `Esta sesión es del taller de paga; como miembro la tienes en $${clubPrice.toLocaleString("es-MX")}.`
+      : "Esta sesión es del taller de paga. Inscríbete para entrar.",
+    url: ANTI_FACTORY_PATH,
+  };
+}
+
 /**
  * Cumple una compra del taller: deja la compra registrada, avisa a bliss y le manda al comprador
  * la confirmación con las dos fechas y su .ics. Cada paso va en su propio try/catch y nada lanza,

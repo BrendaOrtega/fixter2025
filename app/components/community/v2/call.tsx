@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
-import { Await, Form, useActionData, useFetcher, useNavigation } from "react-router";
+import { Await, Form, Link, useActionData, useFetcher, useNavigation } from "react-router";
 import { Avatar, btn, btnGhost } from "./ui";
 import type { ClubData, ClubEvent } from "./types";
 
@@ -90,7 +90,7 @@ export function EnterCallButton({
 }) {
   const navigation = useNavigation();
   const entering = navigation.formData?.get("intent") === "call";
-  const actionData = useActionData<{ error?: string }>();
+  const actionData = useActionData<{ error?: string; paywallUrl?: string }>();
   return (
     <Form method="post" className={block ? "grid gap-1" : "grid justify-items-end gap-1"}>
       <button
@@ -106,6 +106,12 @@ export function EnterCallButton({
         <p role="alert" className="max-w-[16rem] text-xs text-[#F08A80]">
           {actionData.error}
         </p>
+      )}
+      {/* Sesión de paga sin compra: el aviso trae la liga para inscribirse. */}
+      {actionData?.paywallUrl && !entering && (
+        <Link to={actionData.paywallUrl} className={`${btn} ${block ? "w-full" : ""} text-center`}>
+          Ver el taller
+        </Link>
       )}
     </Form>
   );
