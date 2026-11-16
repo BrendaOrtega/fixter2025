@@ -327,14 +327,16 @@ describe("mundo del club (presencia en memoria)", () => {
   });
 
   describe("estado compartido del modo de juego", () => {
-    // Un cartucho de prueba que declara tres llaves; ni GeekSector ni Isla Menta declaran alguna.
+    // Un cartucho de prueba que declara tres llaves; GeekSector (el de la casa) no declara ninguna.
     const game: Cartridge = { ...getCartridge(DEFAULT_CARTRIDGE_ID), id: "prueba-modo", structure: { ...HOUSE, shared: { score: { type: "number", min: 0, max: 4 }, motto: { type: "text", max: 12 }, winner: { type: "member" } } } };
     const list = CARTRIDGES as Cartridge[];
     beforeEach(() => { if (!list.includes(game)) list.push(game); return () => { list.splice(list.indexOf(game), 1); }; });
     const share = (from: string, key: unknown, value: unknown, at: number) => setShared("c1", from, { key, value }, at);
 
-    it("ningún cartucho del registro trae modo ni llaves hoy, y sin llaves el snapshot no cambia", () => {
-      for (const c of CARTRIDGES) if (c !== game) { expect(c.mode).toBeUndefined(); expect(c.structure.shared).toBeUndefined(); }
+    it("un cartucho sin llaves rechaza todo y su snapshot no cambia", () => {
+      // Modo y llaves van juntos: quien declara uno trae el otro.
+      for (const c of CARTRIDGES) if (c !== game) expect(!!c.mode).toBe(!!c.structure.shared);
+      expect(getCartridge(DEFAULT_CARTRIDGE_ID).structure.shared).toBeUndefined();
       upsertShip("c1", who("a"), {}, T0);
       expect(share("a", "score", 1, T0)).toEqual({ ok: false, error: "undeclared" });
       expect(snapshot("c1", T0)).not.toHaveProperty("shared");

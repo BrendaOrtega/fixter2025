@@ -4,8 +4,9 @@
 import type { Cartridge } from "../cartridge";
 import { geeksector } from "./geeksector";
 import { islaMenta } from "./isla-menta";
+import { archipielago } from "./archipielago";
 
-export const CARTRIDGES: readonly Cartridge[] = [geeksector, islaMenta];
+export const CARTRIDGES: readonly Cartridge[] = [geeksector, islaMenta, archipielago];
 
 /** El mundo de una comunidad que no ha elegido otro. */
 export const DEFAULT_CARTRIDGE_ID = geeksector.id;

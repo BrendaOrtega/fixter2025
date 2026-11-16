@@ -73,7 +73,7 @@ El contrato completo (tipos comentados) es `world/cartridge.ts`. Ejemplo a copia
 
 ## Piezas opcionales
 
-Un cartucho que no las declara se porta igual que antes. Hoy sólo GeekSector usa las dos primeras.
+Un cartucho que no las declara se porta igual que antes. Hoy sólo GeekSector usa las dos primeras y sólo Archipiélago (`cartridges/archipielago/`, pixel art, 16-nov-2026) usa el modo de juego: estrellas por tandas y récord del club.
 
 ### Amenaza (`structure.threat`)
 
