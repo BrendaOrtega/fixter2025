@@ -1,5 +1,7 @@
 // «Mundo» del club: presencia de las naves (recurso, sin UI). Todo en memoria; no escribe en la base.
-//   GET  /comunidad/:slug/mundo  → { cartridge, count, ships, waves, me } (`cartridge`: id del mundo activo)
+//   GET  /comunidad/:slug/mundo  → { cartridge, count, ships, waves, me } (`cartridge`: id del mundo activo);
+//        con `?progress=1` trae también `progress` (lo guardado de esta persona en el mundo activo).
+//   POST `{progress: {stats, quests}}` guarda un lote de progreso (lo único que escribe en la base).
 //   POST /comunidad/:slug/mundo  → cuerpo JSON `{x, y, tx, ty, ship, color, pilot, table?}` (latido y
 //                                   posición), `{wave: userId}` (saludo), `{boom: botId}` (robot tumbado), `{share: {key, value}}` (estado compartido del modo de juego) o `{leave: true}`. Responde
 //                                   lo mismo que el GET, así el cliente sondea con un solo viaje.
@@ -8,6 +10,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { MAX_BODY, hydrateCartridge, removeShip, sendBoom, sendHurt, sendNudge, sendSay, sendWave, setShared, snapshot, upsertShip } from "~/.server/services/club-world.server";
+import { loadProgress, saveProgress } from "~/.server/services/club-world-progress.server";
 import { avatarUrlFor, canParticipate } from "~/.server/services/wall.server";
 import { getSession } from "~/sessions";
 
@@ -56,7 +59,12 @@ const json = (body: unknown, status = 200) =>
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const access = await resolveAccess(request, params.slug as string);
   if (!access) return json({ error: "Únete al club para entrar al Mundo." }, 403);
-  return json({ ...snapshot(access.communityId), me: access.who.id });
+  const snap = snapshot(access.communityId);
+  if (new URL(request.url).searchParams.get("progress") === "1") {
+    const progress = await loadProgress(access.communityId, access.who.id, snap.cartridge).catch(() => null);
+    return json({ ...snap, me: access.who.id, progress });
+  }
+  return json({ ...snap, me: access.who.id });
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -88,6 +96,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   else if ("boom" in body) sendBoom(communityId, who.id, body.boom);
   else if ("hurt" in body) sendHurt(communityId, who.id, body.hurt, body.n);
   else if ("share" in body) setShared(communityId, who.id, body.share);
+  else if ("progress" in body) await saveProgress(communityId, who.id, snapshot(communityId).cartridge, body.progress).catch((err) => console.error("[mundo] no se guardó el progreso", err));
   else if (!upsertShip(communityId, who, body)) return json({ error: "El Mundo está lleno. Intenta en un momento." }, 429);
   return json({ ...snapshot(communityId), me: who.id, waveId, sayId, nudgeId });
 };

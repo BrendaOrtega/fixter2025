@@ -79,6 +79,16 @@ export const structure: WorldStructure = {
     seeker: { type: "member" },
     hideAt: { type: "number", min: 0, max: 2147483647 },
   },
+  // Progreso de cada quien que se guarda en la base: estrellas de por vida, carreras y su mejor vuelta
+  // (décimas), tormentas tumbadas, a cuántos encontraste y cuántas escondidillas ganaste.
+  progress: {
+    stars: { merge: "sum", max: 500 },
+    races: { merge: "sum", max: 5 },
+    bestLap: { merge: "min", max: 36000 },
+    storms: { merge: "sum", max: 3 },
+    found: { merge: "sum", max: 20 },
+    hides: { merge: "sum", max: 3 },
+  },
   // La salida de la carrera es un área fija; los demás aros los pone el modo sólo durante la carrera.
   areas: [
     { id: "start", shape: { kind: "circle", x: RINGS[0].x, y: RINGS[0].y, r: START_R }, tags: ["start"] },

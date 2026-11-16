@@ -216,6 +216,12 @@ export type WorldStructure = {
   shared?: Record<string, SharedKey>;
   /** Áreas fijas del mundo (como el Area2D de Godot): al entrar o salir tu personaje, el modo recibe una señal. */
   areas?: Area[];
+  /**
+   * Progreso de cada miembro que se guarda en la base (estrellas de por vida, carreras, logros…). Cada
+   * cartucho declara sus contadores y cómo se mezclan: `sum` suma lo que llega (a lo más `max` por
+   * guardado), `max`/`min` se queda con el mejor. Sin esto, el mundo no guarda nada.
+   */
+  progress?: Record<string, ProgressKey>;
 };
 
 // ───────── Áreas (Area2D) ─────────
@@ -251,6 +257,13 @@ export type SharedValue = number | string;
 /** Diccionario chico por comunidad, en memoria del servidor. Se borra al cambiar de cartucho. */
 export type SharedState = Readonly<Record<string, SharedValue>>;
 /** Letrero del modo: lo pinta el club en un lugar fijo y discreto. `null`: sin letrero. */
+export type ProgressKey = { merge: "sum" | "max" | "min"; max: number };
+/** Lo guardado de un miembro en este cartucho: contadores y misiones terminadas. */
+export type Progress = { stats: Record<string, number>; quests: string[] };
+export const PROGRESS_MAX_QUESTS = 64;
+export const QUEST_ID = /^[a-z0-9][a-z0-9:-]{0,39}$/;
+/** Objetivo que el motor señala con un marcador y, si no se ve, con una flecha al borde (en cualquier piel). */
+export type Objective = { x: number; y: number; label: string };
 export type ModeHud = { title: string; lines: string[] } | null;
 /** Lo que el modo puede leer y hacer en un cuadro. Sin DOM ni red: todo pasa por el motor. */
 export type ModeContext = {
@@ -281,6 +294,12 @@ export type ModeContext = {
   commit(changes: Record<string, SharedValue | null>): void;
   /** Registra (o con `null` quita) un área propia del modo, p. ej. una estrella. Mismo trato que `structure.areas`. */
   area(id: string, shape: Shape | null, tags?: string[]): void;
+  /** Señala a dónde ir (`null` lo quita). Lo pinta el motor encima de la piel, igual en todas. */
+  objective(o: Objective | null): void;
+  /** Tu progreso guardado en este cartucho; `null` mientras carga (llega la señal `progress-loaded`). */
+  progress: Progress | null;
+  /** Guarda progreso: contadores (según su `merge`) y misiones terminadas. El motor junta y manda por lotes. */
+  save(stats: Record<string, number>, quests?: string[]): void;
 };
 /** Algo que pasó y le interesa al modo (las señales de Godot): así no tiene que revisar todo cada cuadro. */
 export type ModeSignal =
@@ -290,7 +309,9 @@ export type ModeSignal =
   | { type: "wave"; from: Entity; to: Entity }
   | { type: "shared-changed"; key: string; value: SharedValue | null }
   /** Clic derecho (o Espacio) en un mundo sin `combat`: la acción la decide el modo. `at`: a dónde apuntó, si fue con el mouse. */
-  | { type: "action"; at: Point | null };
+  | { type: "action"; at: Point | null }
+  /** Ya llegó tu progreso guardado (`ctx.progress`). */
+  | { type: "progress-loaded" };
 /** Reglas propias de un cartucho. El motor llama `update` cada cuadro (no en el mapa reducido) y `on` con cada señal. */
 export type GameMode = { update(ctx: ModeContext, dt: number): void; on?(signal: ModeSignal, ctx: ModeContext): void };
 
@@ -498,6 +519,8 @@ export type WorldCopy = {
   basicWeapon: string;
   uses: (n: number) => string;
   shootHint: string;
+  /** Botón de acción en el celular para mundos sin `combat` (lo que hace lo decide el modo con la señal `action`). */
+  action?: { label: string; sub?: string };
   /** Sólo con amenaza: el aviso, la pista mientras anda cerca y la tarjeta de «te destruyeron» con su cuenta. */
   /** `arm`: qué hacer si no traes aparato (va tras el aviso). `unarmed`: pista de escritorio sin aparato y con enemigo. Sólo con `needsWeapon`. */
   threat?: { arm?: string; unarmed?: string; warning: (name: string) => string; advice: string; near: (name: string) => string; destroyed: string; back: (seconds: number) => string };

@@ -63,7 +63,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
   const racing = () => starState.race.startedAt !== null && starState.race.next >= 0 && racePhase() === "on";
   const ringOn = (i: number) => i === 0 || racing();
   const ringHot = (i: number) => (racing() ? i === starState.race.next : i === 0);
-  /** Guía de la carrera: cuenta regresiva grande, número sobre el aro que sigue o flecha al borde si no se ve. */
+  /** Guía de la carrera: cuenta regresiva grande y «¡YA!». */
   function raceGuide(f: WorldFrame) {
     const { vw, vh } = f.view, now = starState.now || Date.now() / 1000, ph = racePhase();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -76,20 +76,7 @@ export function createRenderer({ canvas: cv, stage, structure, state }: { canvas
     }
     if (!racing()) return;
     if (now - starState.raceAt < 1.2) text(vw / 2, vh * 0.3, "¡YA!", 64, "#ffd93d", true);
-    const next = starState.race.next, tgt = RINGS[next], label = next === 0 ? "META" : `${next}`;
-    const s = toScreen(tgt.x, tgt.y), me = toScreen(f.player.x, f.player.y), pad = 46;
-    if (s.x > pad && s.y > pad && s.x < vw - pad && s.y < vh - pad) { text(s.x, s.y - 26, label, 30, "#ffd93d", true); return; }
-    // Fuera de pantalla: flecha en el borde, apuntando al aro.
-    let dx = s.x - me.x, dy = s.y - me.y;
-    if (s.x < -9000) { const a = Math.atan2(tgt.y - f.player.y, tgt.x - f.player.x) - f.player.ang; dx = Math.sin(a); dy = -Math.cos(a); }
-    const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
-    const k = Math.min((vw / 2 - pad) / Math.max(0.001, Math.abs(dx)), (vh / 2 - pad) / Math.max(0.001, Math.abs(dy)));
-    const ax = vw / 2 + dx * k, ay = vh / 2 + dy * k, ang = Math.atan2(dy, dx);
-    ctx.save(); ctx.translate(ax, ay); ctx.rotate(ang);
-    ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(-10, -15); ctx.lineTo(-4, 0); ctx.lineTo(-10, 15); ctx.closePath();
-    ctx.lineWidth = 4; ctx.strokeStyle = OUTLINE; ctx.stroke(); ctx.fillStyle = "#ffd93d"; ctx.fill(); ctx.restore();
-    const dist = Math.round(Math.hypot(tgt.x - f.player.x, tgt.y - f.player.y) / 10);
-    text(clamp(ax - dx * 30, 70, f.view.vw - 70), clamp(ay - dy * 30 + 18, 20, f.view.vh - 30), `${next === 0 ? "Meta" : `Aro ${next}`} · ${dist} m`, 12, "#ffd93d", true);
+    // La flecha al aro que sigue la pinta el motor (objetivo del modo), igual en todas las pieles.
   }
   let parts: Particle[] = [];
   const seenStars = new Set<string>();

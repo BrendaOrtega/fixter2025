@@ -2,9 +2,34 @@
 // fantasma en pixel art (Ghosty o un ghostyllo de su color) que vuela entre las islas y junta estrellas.
 //
 // Manifiesto: lo leen navegador y servidor (nada de DOM). La skin se carga aparte con `loadSkin`.
-import type { Cartridge, GameMode, ModeContext } from "../../cartridge";
+import type { Cartridge, GameMode, ModeContext, Objective } from "../../cartridge";
+import { createQuests, type Quest } from "../../quests";
 import { CATCH_R, HIDE_TIME, SEEK_TIME, STORM_EVERY, STORM_HP, STORM_LIFE, STORM_REACH, stormAt, FORMATION_ANGLE, FORMATION_EVERY, FORMATION_HOLD, FORMATION_REACH, FORMATION_SPEED, RACE_COUNTDOWN, RACE_WINDOW, START_R, BIG_PAIR, BIG_R, BIG_SPOTS, GOLDEN, HIGH_FIVE, RINGS, RING_R, STAR_EVERY, STAR_REACH, TAG_COOLDOWN, TAG_REACH, createStarState, starKey, starsOf, type StarState } from "./stars";
 import { WORLD_ID, WORLD_NAME, structure } from "./structure";
+
+/** Recorrido de bienvenida con Ghosty: enseña a volar, a saludar y dónde está lo valioso del club. */
+const placeObj = (id: string, label: string) => (ctx: ModeContext): Objective | null => { const pl = ctx.places.find((q) => q.id === id); return pl ? { x: pl.x, y: pl.y, label } : null; };
+function welcomeQuest(st: StarState): Quest {
+  return {
+    id: "bienvenida",
+    title: "Recorrido con Ghosty",
+    reward: "+10 estrellas",
+    steps: [
+      { text: "Saluda a Ghosty: vuela junto a él y toca «Saludar»", target: (ctx) => { const g = ctx.others.find((e) => e.id === "bot:ghosty"); return g ? { x: g.x, y: g.y, label: "Ghosty" } : null; },
+        done: (e, ctx) => e.type === "wave" && (e as { from: { id: string } }).from.id === ctx.player.id },
+      { text: "Vuela al Faro: ahí es la sala en vivo del club", target: placeObj("live", "Sala en vivo"), done: (e) => e.type === "place-entered" && (e as { place: { id: string } }).place.id === "live" },
+      { text: "Junta 3 estrellas", target: (ctx) => {
+          const w = Math.floor(ctx.now / STAR_EVERY), p = ctx.player;
+          let best: Objective | null = null, bd = Infinity;
+          starsOf(w, structure.size, ctx.places).forEach((s, i) => { if (st.taken.has(starKey(w, i))) return; const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < bd) { bd = d; best = { x: s.x, y: s.y, label: "Estrella" }; } });
+          return best;
+        }, done: (e) => e.type === "star" && Number((e as { total?: number }).total) >= 3 },
+      { text: "Conoce Grabaciones: las sesiones pasadas", target: placeObj("recs", "Grabaciones"), done: (e) => e.type === "place-entered" && (e as { place: { id: string } }).place.id === "recs" },
+      { text: "Conoce Cursos", target: placeObj("courses", "Cursos"), done: (e) => e.type === "place-entered" && (e as { place: { id: string } }).place.id === "courses" },
+      { text: "Entra al aro coral: ahí se convoca una carrera", target: () => ({ x: RINGS[0].x, y: RINGS[0].y, label: "Salida de la carrera" }), done: (e) => e.type === "area-entered" && (e as { area: { id: string } }).area.id === "start" },
+    ],
+  };
+}
 
 const clock = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toFixed(1).padStart(4, "0")}`;
 
@@ -25,6 +50,14 @@ function islandGame(st: StarState): GameMode {
   let downWave = -1, hitWave = -1, lonely = 0, hidePhase: "off" | "hiding" | "seek" = "off", caught = false;
   const found = new Set<string>();
   let hideWasMine = false;
+  // Misiones y progreso guardado: `saved` es cuánto de `mine` ya se mandó a guardar.
+  const quests = createQuests([welcomeQuest(st)]);
+  let saved = 0, greeted = false;
+  const quest = (e: Parameters<typeof quests.on>[0], ctx: ModeContext) => {
+    if (!ctx.progress) return;
+    const q = quests.on(e, ctx);
+    if (q) { mine += 10; ctx.save({}, [q.id]); ctx.sound("finish"); ctx.bubble(ctx.player, `¡${q.title} completo! ${q.reward}`); }
+  };
   const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
   const humans = (ctx: ModeContext) => ctx.others.filter((e) => e.kind === "human");
   // Cambios que deben entrar sí o sí (convocar, meta, estrella dorada): se reintentan cada cuadro hasta
@@ -99,7 +132,7 @@ function islandGame(st: StarState): GameMode {
       st.storm = { ...spos, alive: now % STORM_EVERY < STORM_LIFE && hits < STORM_HP, hits };
       if (hits >= STORM_HP && downWave !== sw) {
         downWave = sw; st.showers.push(spos); ctx.sound("thunder");
-        if (hitWave === sw) { mine += 5; ctx.bubble(p, "¡Tumbaron la tormenta! +5"); }
+        if (hitWave === sw) { mine += 5; ctx.save({ storms: 1 }); ctx.bubble(p, "¡Tumbaron la tormenta! +5"); }
       }
       lonely = Math.max(0, lonely - dt);
       // Escondidillas.
@@ -110,8 +143,8 @@ function islandGame(st: StarState): GameMode {
         if (hp === "hiding") { found.clear(); caught = false; if (seeker !== ctx.meId) { ctx.sound("tag"); ctx.bubble(p, `¡Escóndete! ${nameOf(ctx, seeker) ?? "Alguien"} cuenta ${HIDE_TIME} s`); } }
         else if (hp === "seek") { ctx.sound("finish"); ctx.bubble(p, seeker === ctx.meId ? "¡A buscar!" : "¡Ya te buscan!"); }
         else if (hidePhase === "seek") {
-          if (seeker === ctx.meId || hideWasMine) { mine += found.size * 2; ctx.bubble(p, `Encontraste ${found.size}`); }
-          else if (!caught) { mine += 3; ctx.sound("big"); ctx.bubble(p, "¡No te encontraron! +3"); }
+          if (seeker === ctx.meId || hideWasMine) { mine += found.size * 2; ctx.save({ found: found.size }); ctx.bubble(p, `Encontraste ${found.size}`); }
+          else if (!caught) { mine += 3; ctx.save({ hides: 1 }); ctx.sound("big"); ctx.bubble(p, "¡No te encontraron! +3"); }
         }
         hideWasMine = seeker === ctx.meId; hidePhase = hp;
       }
@@ -127,6 +160,12 @@ function islandGame(st: StarState): GameMode {
       const best = typeof ctx.shared.best === "number" ? ctx.shared.best : 0;
       if (mine > best) ctx.commit({ best: mine, leader: ctx.meId });
 
+      // Guardar estrellas nuevas (el motor junta y manda por lotes).
+      if (mine > saved) { ctx.save({ stars: mine - saved }); saved = mine; }
+      // A dónde ir: en carrera, el aro que sigue; si no, el paso de la misión.
+      const racing = phase === "on" && st.race.startedAt !== null && st.race.next >= 0;
+      ctx.objective(racing ? { x: RINGS[st.race.next].x, y: RINGS[st.race.next].y, label: st.race.next === 0 ? "Meta" : `Aro ${st.race.next}` } : ctx.progress ? quests.target(ctx) : null);
+
       const raceBest = typeof ctx.shared.raceBest === "number" ? ctx.shared.raceBest : 0;
       const raceLeader = nameOf(ctx, ctx.shared.raceLeader);
       const raceLine = phase === "countdown" ? `🏁 Carrera en ${Math.ceil(st.raceAt - now)} s · quédate en la salida`
@@ -140,12 +179,23 @@ function islandGame(st: StarState): GameMode {
         : seeker === ctx.meId ? (hp === "hiding" ? `🙈 Cuenta… ${hideLeft} s` : `🔎 Encontraste ${found.size} · ${hideLeft} s`)
         : hp === "hiding" ? `🫣 ¡Escóndete! ${hideLeft} s` : caught ? "🫣 Te encontraron" : `🤫 Te buscan · ${hideLeft} s`;
       ctx.hud({
-        title: `⭐ ${mine} · récord ${Math.max(best, mine)}${who ? ` (${who})` : ""}`,
-        lines: [raceLine, stormLine, hideLine, st.it ? `👑 La trae ${nameOf(ctx, st.it) ?? "alguien"}` : "👑 Toma la estrella dorada", `Nueva tanda en ${Math.ceil(STAR_EVERY - (now % STAR_EVERY))} s`],
+        title: `⭐ ${mine}${ctx.progress ? ` · ${ctx.progress.stats.stars ?? 0} de por vida` : ""} · récord ${Math.max(best, mine)}${who ? ` (${who})` : ""}`,
+        lines: [...(ctx.progress && quests.line() ? [quests.line() as string] : []), raceLine, stormLine, hideLine, st.it ? `👑 La trae ${nameOf(ctx, st.it) ?? "alguien"}` : "👑 Toma la estrella dorada", `Nueva tanda en ${Math.ceil(STAR_EVERY - (now % STAR_EVERY))} s`],
       });
     },
     on(signal, ctx) {
       const now = ctx.now, p = ctx.player;
+      if (signal.type === "progress-loaded") {
+        quests.load(ctx.progress?.quests ?? []);
+        if (quests.current && !greeted) {
+          greeted = true;
+          const g = ctx.others.find((e) => e.id === "bot:ghosty");
+          if (g) ctx.bubble(g, "¡Hola! Te doy un recorrido: sigue la flecha");
+          ctx.sound("waveIn");
+        }
+        return;
+      }
+      quest(signal, ctx);
       if (signal.type === "area-entered") {
         const { id, tags } = signal.area;
         if (tags?.includes("star")) {
@@ -153,6 +203,7 @@ function islandGame(st: StarState): GameMode {
           if (st.taken.has(key)) return;
           st.taken.add(key); mine++; ctx.area(id, null);
           ctx.sound("star"); ctx.bubble(p, mine === 1 ? "¡Tu primera estrella!" : `${mine} estrellas`);
+          quest({ type: "star", total: mine }, ctx);
         } else if (tags?.includes("golden")) {
           want({ it: ctx.meId, itAt: Math.floor(now) }, now, 3, (c) => !!c.shared.it); ctx.sound("tag"); ctx.bubble(p, "¡La traes tú!");
         } else if (tags?.includes("hide")) {
@@ -171,6 +222,7 @@ function islandGame(st: StarState): GameMode {
             // Se vence pronto: si no bajó el récord, el servidor lo rechaza («stale») y está bien.
             want({ raceBest: tenths, raceLeader: ctx.meId }, now, 3, (c) => typeof c.shared.raceBest === "number" && c.shared.raceBest <= tenths);
             ctx.sound("finish"); ctx.bubble(p, `¡Meta! ${clock(tenths / 10)}`);
+            ctx.save({ races: 1, bestLap: tenths });
             st.race = { next: -1, startedAt: null };
           }
         } else if (tags?.includes("ring")) {
@@ -222,6 +274,8 @@ export const archipielago: Cartridge = {
     basicWeapon: "",
     uses: () => "",
     shootHint: "",
+    // En celular, la acción (clic derecho / Espacio en escritorio) tiene su botón.
+    action: { label: "Golpear", sub: "tormenta" },
   },
   // Primer pintado: el mar (nunca negro plano).
   poster: { backgroundColor: "#17529f" },

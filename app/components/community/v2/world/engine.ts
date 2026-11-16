@@ -4,7 +4,7 @@
 // un `useEffect`); React pone encima los controles y las tarjetas.
 // Manual: docs/club-rediseno/MUNDO-CARTUCHOS.md.
 
-import { SHAKE, inShape, type Area, type ModeSignal, type Bubble, type Cartridge, type Entity, type Face, type GameMode, type Look, type ModeContext, type ModeHud, type Pickup, type Place, type PlaceTarget, type Point, type SharedState, type SharedValue, type Shot, type View, type WorldEvent, type WorldFrame, type WorldSkin } from "./cartridge";
+import { SHAKE, inShape, type Area, type ModeSignal, type Objective, type Progress, type Bubble, type Cartridge, type Entity, type Face, type GameMode, type Look, type ModeContext, type ModeHud, type Pickup, type Place, type PlaceTarget, type Point, type SharedState, type SharedValue, type Shot, type View, type WorldEvent, type WorldFrame, type WorldSkin } from "./cartridge";
 import { CONTROLLERS, DEFAULT_CAMERA } from "./controllers";
 import { BOOST_KEYS, MOVE_KEYS, readActions } from "./input";
 import { validateStructure } from "./validate";
@@ -69,6 +69,8 @@ export type Callbacks = {
   /** El modo de juego propone un valor del estado compartido: hay que mandarlo al servidor. */
   /** Cambio atómico del estado compartido (varias llaves, todas o ninguna). */
   onShare?: (changes: Record<string, SharedValue | null>) => Promise<unknown> | void;
+  /** Progreso para guardar en la base (lote de contadores y misiones terminadas). */
+  onSave?: (batch: { stats: Record<string, number>; quests: string[] }) => void;
   /** La skin pidió saludar a alguien (persona o robot) desde su propio menú. */
   onGreet?: (entityId: string) => void;
   /** Enter con un lugar cerca. */
@@ -105,6 +107,8 @@ export type WorldApi = {
   setThreatHurt: (hurt: Array<{ bot: string; by: Record<string, number> }>, meId: string) => void;
   /** Estado compartido del modo de juego, tal como llegó del servidor. */
   setShared: (shared: SharedState) => void;
+  /** Progreso guardado de este miembro en este cartucho (llega una vez al montar). */
+  setProgress: (progress: Progress) => void;
   /** Dispara hacia donde apunta la nave con el aparato que lleves. A las personas sólo las hace temblar; a los robots los tumba. */
   shoot: () => void;
   /** El aparato flotante más cercano a tu nave (para pruebas y para pistas en pantalla). */
@@ -405,6 +409,7 @@ export function createWorld(opts: {
     frame.bubbles = state.bubbles; frame.shots = state.shots; frame.hostile = state.hostile;
     frame.threat = !threat ? null : state.threatPhase === "away" ? (threat.leaveT > 0 ? { entity: threat, phase: "leaving" } : null) : { entity: threat, phase: state.threatPhase };
     renderer.render(frame);
+    drawObjective();
   }
 
   // ── Modo de juego del cartucho (opcional): sus reglas corren aquí, cada cuadro, sin DOM ni red ──
@@ -425,6 +430,59 @@ export function createWorld(opts: {
     // En cuanto contesta el servidor (aceptado o no) se puede volver a intentar: el modo reintenta lo que no entró.
     Promise.resolve(cb.onShare?.(Object.fromEntries(ok))).catch(() => {}).finally(() => { if (inFlight?.json === json) inFlight = null; });
   }
+  // ── Objetivo (guía): marcador sobre el punto y flecha al borde si no se ve. Es DOM encima del canvas,
+  // así se ve igual en cualquier piel. ──
+  let objective: Objective | null = null;
+  const guide = document.createElement("div");
+  guide.setAttribute("aria-hidden", "true");
+  guide.style.cssText = "position:absolute;left:0;top:0;pointer-events:none;z-index:2;display:none;transform-origin:0 0";
+  guide.innerHTML = '<div data-arrow style="position:absolute;left:-16px;top:-16px;width:32px;height:32px"><svg viewBox="0 0 32 32" width="32" height="32"><path d="M29 16 L6 4 L11 16 L6 28 Z" fill="#ffd93d" stroke="#0b2f66" stroke-width="2.5" stroke-linejoin="round"/></svg></div><div data-label style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 12px/1.2 ui-monospace,Menlo,monospace;color:#ffd93d;background:rgba(11,22,34,.82);border:1px solid #ffd93d;border-radius:999px;padding:3px 9px"></div>';
+  stage.appendChild(guide);
+  const gArrow = guide.querySelector("[data-arrow]") as HTMLElement, gLabel = guide.querySelector("[data-label]") as HTMLElement;
+  function drawObjective() {
+    if (!objective || state.mini) { guide.style.display = "none"; return; }
+    guide.style.display = "block";
+    const o = objective, s = toScreen(o.x, o.y), W = view.vw, H = view.vh, pad = 40;
+    const dist = Math.round(Math.hypot(o.x - player.x, o.y - player.y) / 10);
+    if (s.x > pad && s.y > pad && s.x < W - pad && s.y < H - pad) {
+      // En pantalla: flecha que apunta hacia abajo, sobre el objetivo, con su nombre arriba.
+      const bob = Math.sin(state.animT * 5) * 4;
+      gArrow.style.transform = `translate(${s.x}px, ${s.y - 46 + bob}px) rotate(90deg)`;
+      gLabel.style.left = `${s.x}px`; gLabel.style.top = `${s.y - 78 + bob}px`; gLabel.textContent = o.label;
+      return;
+    }
+    // Fuera de pantalla: flecha en el borde hacia el objetivo (detrás de la cámara: abajo).
+    const me = toScreen(player.x, player.y);
+    let dx = s.x - me.x, dy = s.y - me.y;
+    if (s.x < -9000) { dx = 0; dy = 1; }
+    const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+    const k = Math.min((W / 2 - pad) / Math.max(0.001, Math.abs(dx)), (H / 2 - pad) / Math.max(0.001, Math.abs(dy)));
+    const ax = W / 2 + dx * k, ay = H / 2 + dy * k;
+    gArrow.style.transform = `translate(${ax}px, ${ay}px) rotate(${Math.atan2(dy, dx)}rad)`;
+    gLabel.style.left = `${Math.min(W - 80, Math.max(80, ax - dx * 46))}px`; gLabel.style.top = `${Math.min(H - 24, Math.max(24, ay - dy * 40))}px`;
+    gLabel.textContent = `${o.label} · ${dist} m`;
+  }
+
+  // ── Progreso guardado: el modo suma y el motor manda por lotes cada pocos segundos ──
+  let progress: Progress | null = null;
+  const P = S.progress ?? {};
+  let batch: { stats: Record<string, number>; quests: Set<string> } = { stats: {}, quests: new Set() };
+  function save(stats: Record<string, number>, quests: string[] = []) {
+    for (const [k, v] of Object.entries(stats)) {
+      const d = P[k]; if (!d || !Number.isFinite(v)) continue;
+      const b = batch.stats[k];
+      batch.stats[k] = d.merge === "sum" ? (b ?? 0) + v : b === undefined ? v : d.merge === "max" ? Math.max(b, v) : Math.min(b, v);
+      if (progress) { const c = progress.stats[k]; progress.stats[k] = d.merge === "sum" ? (c ?? 0) + v : c === undefined ? v : d.merge === "max" ? Math.max(c, v) : Math.min(c, v); }
+    }
+    for (const q of quests) { batch.quests.add(q); if (progress && !progress.quests.includes(q)) progress.quests.push(q); }
+  }
+  function flushSave() {
+    if (!Object.keys(batch.stats).length && !batch.quests.size) return;
+    cb.onSave?.({ stats: batch.stats, quests: [...batch.quests] });
+    batch = { stats: {}, quests: new Set() };
+  }
+  const saveTimer = window.setInterval(flushSave, 6000);
+
   const modeCtx: ModeContext = {
     now: 0, meId: opts.meId, player, others: [], places, nearPlace: null, shared,
     sound: (name) => cb.onSound(name),
@@ -432,6 +490,9 @@ export function createWorld(opts: {
     hud: (hud) => { const key = JSON.stringify(hud); if (key !== hudKey) { hudKey = key; cb.onHud?.(hud); } },
     propose: (key, value) => commit({ [key]: value }),
     commit,
+    objective: (o) => { objective = o; },
+    progress: null,
+    save,
     area: (id, shape, tags) => { if (shape) areas.set(id, { id, shape, tags }); else { areas.delete(id); inside.delete(id); } },
   };
   function refreshModeCtx() {
@@ -951,6 +1012,7 @@ export function createWorld(opts: {
       const bot = bots.find((b) => b.id === botId); if (!bot || bot.downT > 0) return;
       state.bubbles.push({ entity: player, text: `¡Hola, ${bot.first}!`, t: 0, dur: 1.5 });
       bot.waveT = 3.5;
+      signal({ type: "wave", from: player, to: bot });
       window.setTimeout(() => { if (state.dead || bot.downT > 0) return; state.bubbles.push({ entity: bot, text: `¡Hola, ${firstName(opts.meName)}!`, t: 0, dur: 1.5 }); burst(bot); cb.onSound("waveIn"); }, 650);
     },
     shoot: () => shoot(),
@@ -995,7 +1057,16 @@ export function createWorld(opts: {
         weak: !!T && player.downT <= 0 && player.table === null && player.hp <= T.player.hp / 2 };
     },
     screenOf: (x, y) => toScreen(x, y),
+    setProgress(p) {
+      progress = { stats: { ...p.stats }, quests: [...p.quests] };
+      // Lo que se juntó antes de que llegara también cuenta.
+      const pending = batch; batch = { stats: {}, quests: new Set() };
+      save(pending.stats, [...pending.quests]);
+      modeCtx.progress = progress;
+      signal({ type: "progress-loaded" });
+    },
     destroy() {
+      flushSave(); window.clearInterval(saveTimer); guide.remove();
       state.dead = true; cancelAnimationFrame(raf); observer.disconnect();
       window.removeEventListener("keydown", onKeyDown); window.removeEventListener("keyup", onKeyUp); window.removeEventListener("blur", onBlur);
       stage.removeEventListener("pointerdown", onPointerDown);

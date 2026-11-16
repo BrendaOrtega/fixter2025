@@ -1506,6 +1506,21 @@ model CommunityInvite {
 /// aquí sólo queda qué partida está viva y su PIN, para dárselo a cada miembro en su panel.
 /// Ids planos, sin @relation: no toca Community ni User.
 /// Quiz de una comunidad. Vive aquí, no en Razzia: se manda completo al lanzar una partida.
+/// Progreso de un miembro en un mundo (cartucho) del club: contadores y misiones. Lo valida
+/// `world/progress.ts` contra lo que declara el cartucho (`structure.progress`).
+model WorldProgress {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  communityId String   @db.ObjectId
+  userId      String   @db.ObjectId
+  cartridgeId String
+  /// { stats: { [contador]: número }, quests: [id de misión] }
+  data        Json
+  updatedAt   DateTime @updatedAt
+
+  @@index([communityId, userId, cartridgeId])
+  @@map("world_progress")
+}
+
 model CommunityQuiz {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   communityId String    @db.ObjectId

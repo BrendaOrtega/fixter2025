@@ -199,6 +199,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         onGreet: (id) => { if (structure.bots.some((b) => b.id === id)) apiRef.current?.waveBot(id); else waveRef.current(id); },
         // El modo de juego propone un valor compartido: el servidor decide y lo aceptado vuelve en el snapshot.
         onShare: (changes) => post({ share: { changes } }).then(apply).catch(() => {}),
+        onSave: (batch) => { post({ progress: batch }).then(apply).catch(() => {}); },
         onThreat: (phase, name) => { setThreat(phase); if (phase) setThreatName(name); },
         // Destruida o de vuelta: los demás lo saben con el siguiente latido (`down`).
         onDown: (seconds) => { setDownIn(seconds); dirtyRef.current = true; },
@@ -252,6 +253,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
       if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || "Sin conexión con el Mundo.");
       return (await res.json()) as Snapshot;
     };
+    // Progreso guardado de este mundo: una sola lectura al montar.
+    fetch(`${url}?progress=1`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (!stopped && d?.progress && d.cartridge === cartridge.id) api.setProgress(d.progress); }).catch(() => {});
     const apply = (snap: Snapshot) => {
       // Quien administra cambió de mundo: se desmonta éste y se monta el otro. La presencia y el chat se quedan.
       if (snap.cartridge && snap.cartridge !== cartridge.id && hasCartridge(snap.cartridge)) {
@@ -593,6 +596,20 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               </button>
             )}
 
+            {/* Acción del modo en celular (mundos sin disparos): el modo decide qué hace con la señal `action`. */}
+            {full && ready && !quiet && !canShoot && copy.action && (
+              <button
+                type="button"
+                data-action
+                aria-label={copy.action.label}
+                onClick={() => apiRef.current?.shoot()}
+                style={{ touchAction: "manipulation" }}
+                className="absolute bottom-3.5 right-3.5 z-[3] grid h-[76px] w-[76px] place-content-center justify-items-center gap-px rounded-full border border-[#357265] bg-[#141B20] text-brand-500 shadow-[0_2px_8px_rgba(0,0,0,0.35)] active:bg-[#17302C] sm:h-[68px] sm:w-[68px] [@media(pointer:fine)]:hidden"
+              >
+                <b className="text-[13px] font-semibold">{copy.action.label}</b>
+                {copy.action.sub && <small className="text-[10px] text-[#7C8A8E]">{copy.action.sub}</small>}
+              </button>
+            )}
             {/* Joystick táctil (opcional) */}
             {full && joyOn && (
               <div
