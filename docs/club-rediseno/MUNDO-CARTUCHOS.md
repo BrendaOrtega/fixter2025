@@ -173,3 +173,20 @@ modo real, junta lo que cambia en una sola llave o propón la segunda en otro cu
   - `Threat.needsWeapon`, `Threat.supply`, `copy.threat.arm/unarmed`.
   - `Place.gravity`, `Movement.gravity`.
   - Modo de juego: `Cartridge.mode`, `WorldStructure.shared`, tipos `GameMode`, `ModeContext`, `ModeHud`, `SharedKey`.
+
+## Controles y cámara (desde el 16-nov-2026)
+
+El control ya no está fijo en el motor. Mismo patrón que Godot/Unity:
+
+- **Mapa de acciones** (`world/input.ts`): teclas y joystick se traducen a `{ x, y, boost }`. Flechas/WASD
+  mueven, `Shift` es turbo. El resto del motor sólo lee acciones.
+- **Controladores** (`world/controllers.ts`, puros y con test): `direct` (el de siempre: acelera hacia la
+  entrada, girada por el `yaw` de la cámara) y `steer` (de avión: izquierda/derecha giran el rumbo,
+  arriba avanza, abajo frena).
+- **La skin elige** cada cuadro con `renderer.camera()` → `{ controls, yaw }`. Sin el método: `direct`
+  con yaw 0 (GeekSector e Isla Menta no cambian).
+- `movement.boost` (multiplica la velocidad tope con Shift) y `movement.steer.turn` (rad/s) son opcionales.
+- El servidor no cambia: sigue recibiendo `x, y, tx, ty`.
+
+Ejemplo: Archipiélago tiene vista aérea (`direct`) y de persecución en modo 7 (`steer`), con botón de
+cámara y tecla `C` (`cartridges/archipielago/chase.ts`).

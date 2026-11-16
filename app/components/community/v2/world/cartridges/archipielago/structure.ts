@@ -59,7 +59,8 @@ export const structure: WorldStructure = {
     fallback: { model: "ghostling", color: "sky", pilot: "avatar" },
   },
   // Vuelo libre con inercia, sin gravedad.
-  movement: { maxSpeed: 320, accel: 640, drag: 1.7, idleDrag: 2.6, seatSpeed: 220, margin: 28, targetMargin: 40 },
+  // Turbo con Shift (×1.8, como el del juego) y, en la vista de persecución, giro de avión.
+  movement: { maxSpeed: 320, accel: 640, drag: 1.7, idleDrag: 2.6, seatSpeed: 220, margin: 28, targetMargin: 40, boost: 1.8, steer: { turn: 2.4 } },
   camera: { minScale: 0.7, minScaleNarrow: 0.6, maxScale: 1.4 },
   combat: null,
   // Modo «Estrellas»: el récord del club y quién lo tiene.

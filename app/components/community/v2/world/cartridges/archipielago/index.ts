@@ -49,7 +49,7 @@ export const archipielago: Cartridge = {
     count: (n) => (n === 1 ? "1 en el aire" : `${n} en el aire`),
     roaming: "volando sobre las islas",
     hint: "Acércate a una isla o a alguien. Pasa sobre las estrellas para juntarlas.",
-    hintKeys: " Flechas o WASD para volar · clic para ir a un punto · Enter para aterrizar.",
+    hintKeys: " Flechas o WASD para volar · Shift turbo · C cambia la cámara · clic para ir a un punto · Enter para aterrizar.",
     hintMini: "Toca el mar o una isla y vuelas para allá.",
     expandMini: " el archipiélago y volar",
     mapLabel: "Archipiélago del club en pixel art, con quienes están conectados volando entre las islas. Las islas y las personas cercanas aparecen en la franja de abajo.",

@@ -9,6 +9,7 @@ import type { Entity, View, WorldEvent, WorldFrame, WorldRenderer, WorldStructur
 import { TAU, buildStar, ghostSprite, loadGhosts, makeCloud, type Cloud } from "./ghost";
 import { DECOR, bake } from "./landmarks";
 import { STAR_EVERY, starKey, starState, starsOf } from "./stars";
+import { ALT, createChase } from "./chase";
 import { WATER, WP, buildTerrain, hsh, mulberry } from "./terrain";
 
 type Ctx = CanvasRenderingContext2D;
@@ -21,7 +22,7 @@ const OUTLINE = "#0b2f66", FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, mon
 type Fly = { rot: number; bank: number; roll: number; trail: { x: number; y: number; ang: number; t: number }[]; lastT: number };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; c: string; s: number };
 
-export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasElement; stage: HTMLElement; structure: WorldStructure }): WorldRenderer {
+export function createRenderer({ canvas: cv, stage, structure }: { canvas: HTMLCanvasElement; stage: HTMLElement; structure: WorldStructure }): WorldRenderer {
   const ctx = cv.getContext("2d") as Ctx;
   const buf = document.createElement("canvas"), b = buf.getContext("2d") as Ctx;
   const terrain = buildTerrain(structure), star = buildStar();
@@ -40,16 +41,22 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
   let view: View = { vw: 1, vh: 1, scale: 1, camx: 0, camy: 0, ox: 0, oy: 0 }, dpr = 1;
   let frame: WorldFrame;
   let X0 = 0, Y0 = 0; // esquina del búfer, en pixeles del arte
-  const toScreen = (x: number, y: number) => ({ x: (x - view.camx) * view.scale + view.ox, y: (y - view.camy) * view.scale + view.oy });
+  const topScreen = (x: number, y: number) => ({ x: (x - view.camx) * view.scale + view.ox, y: (y - view.camy) * view.scale + view.oy });
+  // En persecución, el mapa se proyecta a la altura de vuelo; lo que queda detrás de la cámara, fuera de pantalla.
+  const toScreen = (x: number, y: number) => {
+    if (!chaseOn()) return topScreen(x, y);
+    const p = chase.project(x, y, ALT);
+    return p ? { x: p.x * chase.PS, y: p.y * chase.PS } : { x: -9999, y: -9999 };
+  };
   /** Del mapa (unidades) al pixel del búfer. */
   const bx = (x: number) => Math.round(x / WP - X0), by = (y: number) => Math.round(y / WP - Y0);
 
   function ell(cx: number, cy: number, rx: number, ry: number) {
     for (let dy = -ry; dy <= ry; dy++) { const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry + 0.01)))); b.fillRect(cx - hw, cy + dy, hw * 2 + 1, 1); }
   }
-  function line(x0: number, y0: number, x1: number, y1: number) {
+  function line(c: Ctx, x0: number, y0: number, x1: number, y1: number) {
     const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx - dy;
-    for (let k = 0; k < 300; k++) { b.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x0 += sx; } if (e2 < dx) { err += dx; y0 += sy; } }
+    for (let k = 0; k < 300; k++) { c.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x0 += sx; } if (e2 < dx) { err += dx; y0 += sy; } }
   }
   const emit = (p: Particle) => { if (parts.length < 260) parts.push(p); };
 
@@ -74,7 +81,7 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
       let px = 0, py = 0;
       f.trail.forEach((p, i) => {
         const x = bx(p.x - Math.sin(p.ang) * 18 * side), y = by(p.y + Math.cos(p.ang) * 18 * side) + 6;
-        if (i > 1) { b.globalAlpha = (Math.ceil((i / n) * 4) / 4) * 0.9; line(px, py, x, y); }
+        if (i > 1) { b.globalAlpha = (Math.ceil((i / n) * 4) / 4) * 0.9; line(b, px, py, x, y); }
         px = x; py = y;
       });
     }
@@ -106,6 +113,8 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
 
   function render(f: WorldFrame) {
     frame = f; view = f.view;
+    camBtn.style.display = f.mini ? "none" : "grid";
+    if (chaseOn()) { renderChase(f); return; }
     const { vw, vh, scale } = view, t = f.t, dt = f.dt, unit = WP * scale;
     X0 = Math.floor((view.camx - view.ox / scale) / WP); Y0 = Math.floor((view.camy - view.oy / scale) / WP);
     const bw = Math.ceil(vw / unit) + 2, bh = Math.ceil(vh / unit) + 2;
@@ -288,14 +297,150 @@ export function createRenderer({ canvas: cv, structure }: { canvas: HTMLCanvasEl
     }
   }
 
+  // ── Vista de persecución (modo 7), como la cámara 🎥 del juego ──
+  const chase = createChase(terrain);
+  let camMode = 0, flash = 0, snap = true;
+  const chaseOn = () => camMode === 1 && !frame?.mini;
+  function toggleCam() {
+    camMode = camMode ? 0 : 1; flash = 1; snap = true;
+    window.dispatchEvent(new CustomEvent("archipielago:cam", { detail: camMode }));
+    camBtn.setAttribute("aria-pressed", String(camMode === 1));
+  }
+  // Botón de cámara en pixel art (el icono del juego), arriba a la derecha bajo los botones del club.
+  const camBtn = document.createElement("button");
+  camBtn.type = "button"; camBtn.title = "Cambiar cámara (C)"; camBtn.setAttribute("aria-label", "Cambiar cámara"); camBtn.setAttribute("aria-pressed", "false");
+  camBtn.style.cssText = "position:absolute;right:14px;top:60px;z-index:4;width:46px;height:46px;border:0;padding:0;border-radius:50%;background:#2a86dc;box-shadow:0 0 0 3px #0b2f66,inset 4px 4px 0 #6cc3f7,inset -4px -4px 0 #1a5fb4;display:grid;place-items:center;cursor:pointer";
+  {
+    const ic = document.createElement("canvas"); ic.width = 18; ic.height = 11; ic.style.cssText = "width:27px;height:16.5px;image-rendering:pixelated;pointer-events:none";
+    const rows = ["....XXXX..........", "...XWWWWX.XXXX....", ".XXXXXXXXXXWWX....", "XWWWWWWWWWXWWWX...", "XWWXXXXWWWXXWWWX..", "XWXLLLLXWWWXXWWWX.", "XWXLllLXWWWXXWWWX.", "XWXLLLLXWWWXXWWWX.", "XWWXXXXWWWXXWWX...", "XWWWWWWWWWXWWX....", ".XXXXXXXXXXXXX...."];
+    const pal: Record<string, string> = { X: "#0b2f66", W: "#f2f6fb", L: "#58b8f0", l: "#ffffff" }, ig = ic.getContext("2d") as Ctx;
+    rows.forEach((r, y) => [...r].forEach((ch, x) => { if (pal[ch]) { ig.fillStyle = pal[ch]; ig.fillRect(x, y, 1, 1); } }));
+    camBtn.appendChild(ic);
+  }
+  camBtn.addEventListener("pointerdown", (e) => { e.stopPropagation(); }); // no mover al fantasma con el toque
+  camBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleCam(); });
+  stage.appendChild(camBtn);
+  const onKey = (e: KeyboardEvent) => {
+    const t = e.target as HTMLElement | null;
+    if (e.code !== "KeyC" || e.repeat || e.metaKey || e.ctrlKey || e.altKey || (t && /INPUT|TEXTAREA|SELECT/.test(t.tagName))) return;
+    toggleCam();
+  };
+  window.addEventListener("keydown", onKey);
+
+  function renderChase(f: WorldFrame) {
+    const t = f.t, dt = f.dt, me = f.player, g = chase.ctx, PS = chase.PS, W = chase.W, H = chase.H;
+    // Turbo (por encima de la velocidad tope): el lente se abre un poco, como en el juego.
+    const boost = Math.hypot(me.vx, me.vy) > structure.movement.maxSpeed * 1.05 ? 1 : 0;
+    chase.follow(me.x, me.y, me.ang, dt, boost, snap); snap = false;
+    chase.ground();
+    g.imageSmoothingEnabled = false;
+    const flyers = [...f.others, me].filter((e) => e.downT <= 0);
+    const state = new Map(flyers.map((e) => [e.id, flyOf(e, t)] as const));
+    // Tamaño relativo a tu fantasma (que va fijo a 1×); topado para que nadie tape la pantalla al pasar cerca.
+    const kRel = (z: number) => Math.min(1.25, chase.camBack / z);
+    type Item = { z: number; draw: () => void };
+    const items: Item[] = [];
+    const ell2 = (cx: number, cy: number, rx: number, ry: number) => {
+      for (let dy = -ry; dy <= ry; dy++) { const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy * dy) / (ry * ry + 0.01)))); g.fillRect(Math.round(cx) - hw, Math.round(cy) + dy, hw * 2 + 1, 1); }
+    };
+    // Nubes: su sombra se pinta en el piso de inmediato; la nube va a la lista por distancia.
+    g.globalAlpha = 0.4;
+    for (const c of clouds) {
+      const cx = (((c.x + (f.quiet ? 0 : c.v * t)) % (terrain.w + 80)) - 40) * WP, cy = c.y * WP;
+      const sh = chase.project(cx + c.alt * 0.2 * WP, cy + c.alt * 0.28 * WP, 0);
+      if (sh && sh.z > 14) { const w = c.s.w * sh.sk, h = c.s.h * sh.sk * 0.32; if (w > 2 && w < W * 2) g.drawImage(c.s.s, Math.round(sh.x - w / 2), Math.round(sh.y - h / 2), Math.ceil(w), Math.max(1, Math.ceil(h))); }
+      const p = chase.project(cx, cy, c.alt);
+      if (p && p.z > 18) items.push({ z: p.z, draw: () => { const w = c.s.w * p.sk, h = c.s.h * p.sk; if (w < W * 1.6 && w > 2) g.drawImage(c.s.c, Math.round(p.x - w / 2), Math.round(p.y - h * 0.62), Math.ceil(w), Math.ceil(h)); } });
+    }
+    g.globalAlpha = 1;
+    // Estrellas de la tanda.
+    const now = starState.now || Date.now() / 1000, wave = Math.floor(now / STAR_EVERY);
+    if (structure.shared) starsOf(wave, structure.size, f.places).forEach((s, i) => {
+      if (starState.taken.has(starKey(wave, i))) return;
+      const p = chase.project(s.x, s.y, ALT + Math.sin(t * 3 + i) * 2), gr = chase.project(s.x, s.y, 0);
+      if (!p || p.z > chase.far * 0.8) return;
+      if (gr) { g.fillStyle = "rgba(8,40,100,.3)"; ell2(gr.x, gr.y, Math.max(2, Math.round(5 * p.sk)), Math.max(1, Math.round(1.5 * p.sk))); }
+      items.push({ z: p.z, draw: () => { const k = kRel(p.z) * 1.6, w = Math.max(2, Math.round(14 * k * Math.max(0.28, Math.abs(Math.cos(t * 2.6 + i))))), h = Math.max(2, Math.round(14 * k)); g.drawImage(star, Math.round(p.x - w / 2), Math.round(p.y - h / 2), w, h); } });
+    });
+    // Edificios de las islas, de pie sobre el piso.
+    for (const pl of f.places) {
+      const key = pl.kind === "lighthouse" ? `lh:${!!f.placeStatus[pl.id]?.on}` : pl.kind === "islet" ? "fireOff" : `d:${pl.kind}`;
+      const img = pl.kind === "lighthouse" ? spr(key, () => bake(DECOR.lighthouse, { L: f.placeStatus[pl.id]?.on ? "#fff6b0" : "#8f877f" })) : pl.kind === "islet" ? spr("fire:false:false", () => bake(DECOR.fireOff)) : DECOR[pl.kind] ? spr(key, () => bake(DECOR[pl.kind])) : null;
+      const p = chase.project(pl.x, pl.y, 0);
+      if (!img || !p || p.z > chase.far) continue;
+      items.push({ z: p.z, draw: () => { const w = img.width * p.sk, h = img.height * p.sk; if (w < W * 2) g.drawImage(img, Math.round(p.x - w / 2), Math.round(p.y - h), Math.ceil(w), Math.ceil(h)); } });
+    }
+    // Fantasmas: sombra en el piso y su sprite (de espaldas si van alejándose de la cámara).
+    for (const e of flyers) {
+      const st = state.get(e.id) as Fly, isMe = e === me;
+      const gr = chase.project(e.x, e.y, 0), p = chase.project(e.x, e.y, ALT);
+      if (!p) continue;
+      if (gr) { g.fillStyle = "rgba(8,40,100,.4)"; const k = kRel(p.z); ell2(gr.x + st.bank * 14 * k, gr.y, Math.max(2, Math.round(13 * k)), Math.max(1, Math.round(3 * k))); }
+      items.push({ z: p.z, draw: () => {
+        const away = isMe || Math.cos(angd(e.ang, chase.heading)) > 0.3, rc = Math.cos(st.roll * TAU), back = away ? !(st.roll > 0 && rc < 0) : st.roll > 0 && rc < 0;
+        const sp = ghostSprite(e.model, e.color, back); if (!sp) return;
+        const k = isMe ? 1 : kRel(p.z), wob = f.quiet ? 0 : Math.floor(t * 9 + e.bob * 4) & 3;
+        const q = TAU / 24, rot = Math.round((st.bank * 0.42 + (st.roll > 0 ? st.roll * TAU : 0)) / q) * q;
+        g.save(); g.translate(Math.round(p.x + st.bank * 15 * k), Math.round(p.y + (f.quiet ? 0 : Math.sin(t * 3 + e.bob) * 1.2))); if (rot) g.rotate(rot); g.scale(k, k);
+        g.drawImage(sp.frames[wob], -(sp.w >> 1), -(sp.h >> 1)); g.restore();
+      } });
+    }
+    // Estela doble de cada fantasma.
+    g.fillStyle = "#fff";
+    for (const e of flyers) {
+      const tr = (state.get(e.id) as Fly).trail, n = tr.length; if (n < 3) continue;
+      for (const side of [-1, 1]) {
+        let prev: { x: number; y: number } | null = null;
+        tr.forEach((q, i) => {
+          const p = chase.project(q.x - Math.sin(q.ang) * 18 * side, q.y + Math.cos(q.ang) * 18 * side, ALT - 2);
+          if (p && prev && i > 1) { g.globalAlpha = (Math.ceil((i / n) * 4) / 4) * 0.95; line(g, Math.round(prev.x), Math.round(prev.y), Math.round(p.x), Math.round(p.y)); }
+          prev = p;
+        });
+      }
+    }
+    g.globalAlpha = 1;
+    for (const it of items.sort((a, c) => c.z - a.z)) it.draw();
+    // Chispas.
+    for (const p of parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+    parts = parts.filter((p) => p.life > 0);
+    for (const p of parts) { const q = chase.project(p.x * WP, p.y * WP, ALT); if (!q) continue; g.globalAlpha = clamp((p.life / p.max) * 1.6, 0, 1); g.fillStyle = p.c; const s = Math.max(1, Math.round(p.s * clamp(q.sk * 0.3, 1, 1.7))); g.fillRect(Math.round(q.x - s / 2), Math.round(q.y - s / 2), s, s); }
+    g.globalAlpha = 1;
+    if (flash > 0) { g.globalAlpha = flash * 0.85; g.fillStyle = "#fff"; g.fillRect(0, 0, W, H); g.globalAlpha = 1; flash = Math.max(0, flash - dt * 3.5); }
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(chase.canvas, 0, 0, W * PS, H * PS);
+    ctx.imageSmoothingEnabled = true;
+    // Nombres: lugares sobre el piso, personas bajo su fantasma; sólo lo cercano.
+    for (const pl of f.places) {
+      const p = chase.project(pl.x, pl.y, 0); if (!p || p.z > 260) continue;
+      text(p.x * PS, p.y * PS + 4, pl.kind === "islet" ? `${pl.short} · ${f.tableCounts[pl.table as number] ?? 0} de ${seats}` : pl.short, pl.kind === "islet" ? 11 : 14, pl === f.nearPlace ? "#ffd93d" : "#fff", true);
+    }
+    for (const e of f.others) {
+      if (e.downT > 0) continue;
+      const p = chase.project(e.x, e.y, ALT); if (!p || p.z > 220) continue;
+      nameTag(p.x * PS, (p.y + 15 * kRel(p.z)) * PS, e.kind === "bot" ? e.name : e.first, e === f.nearEntity ? "#ffd93d" : "#fff", e.face?.img ?? null);
+    }
+    for (const bub of f.bubbles) {
+      const p = chase.project(bub.entity.x, bub.entity.y, ALT); if (!p) continue;
+      const k = bub.t / bub.dur, kk = bub.entity === me ? 1 : kRel(p.z);
+      ctx.globalAlpha = k > 0.8 ? (1 - k) / 0.2 : 1; bubble(p.x * PS, (p.y - 18 * kk) * PS - 24, bub.text); ctx.globalAlpha = 1;
+    }
+  }
+
   loadGhosts();
   return {
     resize(v) {
       view = v; dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(v.vw * dpr); cv.height = Math.round(v.vh * dpr);
+      chase.resize(v.vw, v.vh);
     },
     render,
     event,
-    destroy() { parts = []; flies.clear(); },
+    // En persecución los controles son de avión (izquierda/derecha giran, arriba avanza).
+    camera: () => (chaseOn() ? { controls: "steer", yaw: 0 } : { controls: "direct", yaw: 0 }),
+    toScreen,
+    toWorld: (sx, sy) => (chaseOn() ? chase.unproject(sx / chase.PS, sy / chase.PS) : { x: (sx - view.ox) / view.scale + view.camx, y: (sy - view.oy) / view.scale + view.camy }),
+    destroy() { parts = []; flies.clear(); window.removeEventListener("keydown", onKey); camBtn.remove(); },
   };
 }

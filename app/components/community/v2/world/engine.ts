@@ -5,6 +5,8 @@
 // Manual: docs/club-rediseno/MUNDO-CARTUCHOS.md.
 
 import { SHAKE, type Bubble, type Cartridge, type Entity, type Face, type GameMode, type Look, type ModeContext, type ModeHud, type Pickup, type Place, type PlaceTarget, type Point, type SharedState, type SharedValue, type Shot, type View, type WorldEvent, type WorldFrame, type WorldSkin } from "./cartridge";
+import { CONTROLLERS, DEFAULT_CAMERA } from "./controllers";
+import { BOOST_KEYS, MOVE_KEYS, readActions } from "./input";
 
 // Mismos seis tonos y mismo reparto que `Avatar` (v2/ui.tsx).
 const FACE_TONES = [["#17302C", "#85DDCB"], ["#33291A", "#F2C98A"], ["#26233F", "#BDB5F7"], ["#3A2020", "#F4AFAF"], ["#1A2B3D", "#9CC8F2"], ["#22331A", "#8DCF6E"]];
@@ -178,27 +180,20 @@ export function createWorld(opts: {
     e.vx += ((dx / d) * sp - e.vx) * k; e.vy += ((dy / d) * sp - e.vy) * k;
     return d;
   }
-  function integrate(e: Entity, dt: number, max: number) {
+  /** `keepAng`: el rumbo lo manda el controlador (`steer`), no la velocidad. */
+  function integrate(e: Entity, dt: number, max: number, keepAng = false) {
     let x = clamp(e.x + e.vx * dt, M.margin, WORLD_W - M.margin), y = clamp(e.y + e.vy * dt, M.margin, WORLD_H - M.margin);
     // Restricción del cartucho (caminos, isla…): la posición permitida más cercana.
     if (M.constrain) { const p = M.constrain({ x, y }, { x: e.x, y: e.y }, state.hidden, e === player); x = p.x; y = p.y; }
     e.x = x; e.y = y;
     const sp = Math.hypot(e.vx, e.vy);
-    if (sp > 10) e.ang = lerpAngle(e.ang, Math.atan2(e.vy, e.vx), Math.min(1, 7 * dt));
+    if (sp > 10 && !keepAng) e.ang = lerpAngle(e.ang, Math.atan2(e.vy, e.vx), Math.min(1, 7 * dt));
     e.thrust += (Math.min(1, sp / max) - e.thrust) * Math.min(1, 6 * dt);
   }
   function faceTable(e: Entity, dt: number) {
     if (e.table === null) return;
     const t = TABLES[e.table];
     e.ang = lerpAngle(e.ang, Math.atan2(t.y - e.y, t.x - e.x), Math.min(1, 4 * dt));
-  }
-  function inputVector() {
-    const k = state.keys; let x = state.joy.x, y = state.joy.y;
-    if (k.has("ArrowLeft") || k.has("KeyA")) x -= 1;
-    if (k.has("ArrowRight") || k.has("KeyD")) x += 1;
-    if (k.has("ArrowUp") || k.has("KeyW")) y -= 1;
-    if (k.has("ArrowDown") || k.has("KeyS")) y += 1;
-    const d = Math.hypot(x, y); return d > 1 ? { x: x / d, y: y / d } : { x, y };
   }
   function noteMoved() { if (!state.moved) { state.moved = true; cb.onFirstMove(); } }
   /** Sin destino: ni punto al que ir, ni ruta pendiente, ni marca. */
@@ -227,7 +222,8 @@ export function createWorld(opts: {
       if ((player.downT -= dt) <= 0) revivePlayer(); else showDown(Math.ceil(player.downT));
       return;
     }
-    const inp = inputVector();
+    // Acciones (teclado y joystick) y el controlador que pide la skin para su cámara.
+    const inp = readActions(state.keys, state.joy), cam = renderer.camera?.() ?? DEFAULT_CAMERA;
     let flying = !!(inp.x || inp.y);
     // Sentado en una mesa, la primera tecla sólo advierte; hay que soltarla y volver a moverse para salir.
     if (!flying) state.leaveHeld = false;
@@ -236,10 +232,7 @@ export function createWorld(opts: {
     if (flying) {
       clearTarget(); noteMoved();
       if (player.table !== null) { player.table = player.seat = null; refreshPlace(); }
-      player.vx += inp.x * M.accel * dt; player.vy += inp.y * M.accel * dt;
-      gravity(dt, 1);
-      const k = Math.exp(-M.drag * dt); player.vx *= k; player.vy *= k;
-      const sp = Math.hypot(player.vx, player.vy); if (sp > M.maxSpeed) { player.vx *= M.maxSpeed / sp; player.vy *= M.maxSpeed / sp; }
+      CONTROLLERS[cam.controls](player, inp, dt, M, { yaw: cam.yaw, nudge: () => gravity(dt, 1) });
     } else if (player.table !== null && player.seat !== null) {
       const s = TABLES[player.table].seats[player.seat];
       if (steer(player, s.x, s.y, M.seatSpeed, dt) < 10) faceTable(player, dt);
@@ -250,7 +243,7 @@ export function createWorld(opts: {
         if (next) { player.tx = next.x; player.ty = next.y; cb.onIntent(); } else clearTarget();
       } else gravity(dt, GRAV_CLICK); // con destino por clic, apenas una curva: el clic llega a donde tocaste
     } else { gravity(dt, 1); const k = Math.exp(-M.idleDrag * dt); player.vx *= k; player.vy *= k; }
-    integrate(player, dt, M.maxSpeed);
+    integrate(player, dt, M.maxSpeed, cam.controls === "steer" && player.tx === null);
   }
   function updateHuman(e: Entity, dt: number) {
     if (e.downT > 0) return; // destruida: no está en el mapa
@@ -743,11 +736,11 @@ export function createWorld(opts: {
   let meId = "";
 
   // ── Entrada ──
-  const MOVE_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyW", "KeyA", "KeyS", "KeyD"];
   const onKeyDown = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement | null;
     if (e.metaKey || e.ctrlKey || e.altKey || (target && /INPUT|TEXTAREA|SELECT/.test(target.tagName))) return;
-    if (MOVE_KEYS.includes(e.code)) { state.keys.add(e.code); e.preventDefault(); }
+    if ((MOVE_KEYS as readonly string[]).includes(e.code)) { state.keys.add(e.code); e.preventDefault(); }
+    else if ((BOOST_KEYS as readonly string[]).includes(e.code)) state.keys.add(e.code);
     else if (e.code === "Space" && !target?.closest("button, a")) { shoot(); e.preventDefault(); }
     else if (e.code === "Enter" && !target?.closest("button, a")) cb.onEnter();
     else if (e.code === "Escape") cb.onEscape();

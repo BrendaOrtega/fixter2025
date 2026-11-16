@@ -92,6 +92,10 @@ export type Movement = {
    * Sin esto los robots van exactos sobre su ruta (naves que se cruzan).
    */
   giveWay?: (at: Point, bodies: Point[], heading: Point | null) => Point;
+  /** Turbo (Shift): multiplica la velocidad tope mientras se mantiene. Sin el campo no hay turbo. */
+  boost?: number;
+  /** Controlador `steer` (lo pide la skin con `renderer.camera()`): radianes por segundo que gira el rumbo. */
+  steer?: { turn: number };
 };
 
 /** Un proyectil. `seek`: gira hacia quien tenga cerca. `bounces`: rebotes en las orillas. `blast`: revienta y alcanza a todo lo cercano. */
@@ -376,6 +380,12 @@ export type WorldRenderer = {
    */
   toScreen?(x: number, y: number): Point;
   toWorld?(sx: number, sy: number): Point | null;
+  /**
+   * Cámara y controles, cuadro a cuadro (ver `controllers.ts`): `direct` mueve hacia donde apunta la
+   * entrada, girada por `yaw` (rad; 0 = arriba es el norte del mapa); `steer` es de tanque (izquierda y
+   * derecha giran, arriba avanza). Sin el método: `direct` con yaw 0, el control de siempre.
+   */
+  camera?(): { controls: "direct" | "steer"; yaw: number };
   destroy(): void;
 };
 

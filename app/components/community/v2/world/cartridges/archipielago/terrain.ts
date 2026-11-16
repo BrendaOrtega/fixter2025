@@ -18,7 +18,7 @@ export const WATER = ["#7fd0f5", "#4fb0ee", "#3593e1", "#2677cd", "#1d63b6", "#1
 /** Cuánto pesa cada isla según el tipo de lugar (radio = `r` × esto). */
 const ISLAND_K: Record<string, number> = { lighthouse: 0.95, mural: 0.9, cinema: 0.9, school: 0.9, islet: 0.62 };
 
-export type Terrain = { cv: HTMLCanvasElement; w: number; h: number; land: (x: number, y: number) => boolean; deep: (x: number, y: number) => boolean };
+export type Terrain = { cv: HTMLCanvasElement; /** Colores por pixel (ABGR), para la vista de persecución. */ col: Uint32Array; w: number; h: number; land: (x: number, y: number) => boolean; deep: (x: number, y: number) => boolean };
 
 export function buildTerrain(structure: WorldStructure): Terrain {
   const w = Math.ceil(structure.size.w / WP), h = Math.ceil(structure.size.h / WP), N = w * h;
@@ -103,5 +103,5 @@ export function buildTerrain(structure: WorldStructure): Terrain {
   const g = cv.getContext("2d") as CanvasRenderingContext2D, id = g.createImageData(w, h);
   new Uint32Array(id.data.buffer).set(col); g.putImageData(id, 0, 0);
   const at = (x: number, y: number) => { const X = Math.floor(x / WP), Y = Math.floor(y / WP); return X < 0 || Y < 0 || X >= w || Y >= h ? -1 : e[Y * w + X]; };
-  return { cv, w, h, land: (x, y) => at(x, y) > 0.03, deep: (x, y) => at(x, y) < -0.05 };
+  return { cv, col, w, h, land: (x, y) => at(x, y) > 0.03, deep: (x, y) => at(x, y) < -0.05 };
 }
