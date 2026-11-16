@@ -379,7 +379,8 @@ const FactoryBoard = ({ mini = false }: { mini?: boolean }) => {
                   transition: "background-color 0.45s",
                 }}
               >
-                <p className="line-clamp-2 font-extrabold leading-tight" style={{ fontSize: L.mini ? 9 : L.compact ? 10 : 15 }}>{t.label}</p>
+                {/* en la miniatura una palabra larga se parte con guion en vez de cortarse */}
+                <p lang="es" className="line-clamp-2 font-extrabold leading-tight" style={{ fontSize: L.mini ? 9 : L.compact ? 10 : 15, ...(L.mini ? { hyphens: "auto", overflowWrap: "anywhere" } : {}) }}>{t.label}</p>
                 {!L.compact && <p className="mt-1 truncate font-mono text-[11px]">{t.agent}</p>}
                 {!L.mini && (
                 <p className="mt-0.5 truncate font-mono" style={{ fontSize: L.compact ? 9 : 11 }}>
