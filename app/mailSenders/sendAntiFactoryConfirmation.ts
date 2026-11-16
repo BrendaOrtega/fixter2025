@@ -14,7 +14,7 @@ const INCLUDES = [
   "Varios pendientes a la vez",
   "Un revisor con contexto limpio",
   "La grabación de las dos sesiones",
-  "Acceso gratis a las cajas de CI de Ghosty Studio",
+  "Cuenta Power de Ghosty Studio de cortesía hasta el 31 de diciembre (CLI y cajas, incluida la de CI)",
 ];
 
 const template = ({
@@ -55,6 +55,15 @@ const template = ({
 <div style="margin:0 0 24px 0;">
   ${emailButton("Ir a la llamada del club", joinUrl)}
 </div>
+
+<h3 style="margin:0 0 10px 0;color:#19262A;font-size:18px;">Tu cuenta Power de Ghosty Studio</h3>
+<p style="margin:0 0 24px 0;color:#475569;font-size:15px;">
+  La cortesía va con el correo de tu compra, <strong>${escapeHtml(email)}</strong>, y dura hasta el
+  31 de diciembre de 2026. Antes de la sesión 1 se activa en la cuenta de
+  <a href="https://www.ghosty.studio" style="color:#37AB93;">ghosty.studio</a> que tenga ese correo.
+  Si todavía no tienes cuenta, no pasa nada: entra a ghosty.studio con ese mismo correo y la
+  cortesía queda en tu cuenta nueva. Con ella usas el CLI de Ghosty Studio y sus cajas, incluida la de CI.
+</p>
 
 <p style="color:#64748B;font-size:14px;margin:24px 0 8px 0;">
   ¿Tienes dudas? Escríbeme directo por <a href="https://wa.me/527712412825" style="color:#37AB93;">WhatsApp</a>.

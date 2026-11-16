@@ -7,7 +7,7 @@ import { validateWaitlistConfirmToken } from "~/utils/tokens";
 import {
   ANTI_FACTORY_TIERS,
   CLUB_SLUG,
-  isClubMember,
+  clubPriceReason,
   isPaidCheckout,
   pickAntiFactoryTier,
   priceFor,
@@ -65,10 +65,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (formData.get("intent") !== "direct_checkout") return data({ error: null });
 
   try {
-    // El precio lo decide la membresía de quien tiene la sesión abierta; el formulario sólo
-    // trae la intención.
+    // El precio lo decide quien tiene la sesión abierta (miembro del club o lista de espera de
+    // software-factory); el formulario sólo trae la intención.
     const user = await getUserOrNull(request);
-    const tier = pickAntiFactoryTier(await isClubMember(user));
+    const tier = pickAntiFactoryTier(!!(await clubPriceReason(user)));
     const priceMxn = await priceFor(tier);
 
     const stripe = new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY as string, {});
@@ -123,8 +123,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const user = await getUserOrNull(request);
-  const [member, generalPrice, clubPrice, webinar] = await Promise.all([
-    isClubMember(user),
+  const [priceReason, generalPrice, clubPrice, webinar] = await Promise.all([
+    clubPriceReason(user),
     priceFor(ANTI_FACTORY_TIERS.general),
     priceFor(ANTI_FACTORY_TIERS.club),
     db.communityEvent.findFirst({
@@ -134,7 +134,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ]);
   return {
     isLoggedIn: !!user,
-    isMember: member,
+    isMember: !!priceReason,
+    priceReason,
     generalPrice,
     clubPrice,
     // «Agéndalo gratis»: el .ics del evento del club; sin evento, el de Facebook.
@@ -192,7 +193,7 @@ const boardLayout = (width: number) => {
   const compact = width < 420;
   return {
     compact,
-    height: compact ? 168 : 348,
+    height: compact ? 150 : 348,
     header: compact ? 22 : 38,
     cardH: compact ? 44 : 92,
     gap: compact ? 5 : 10,
@@ -296,10 +297,10 @@ const FactoryBoard = () => {
 
   return (
     <div
-      className="w-full rounded-3xl border p-3 sm:p-5 lg:p-6"
+      className="w-full rounded-3xl border p-2.5 sm:p-5 lg:p-6"
       style={{ background: PANEL, borderColor: `${MINT}2e`, boxShadow: SOFT_SHADOW }}
     >
-      <div className="mb-3 flex items-center gap-2 sm:mb-4">
+      <div className="mb-2 flex items-center gap-2 sm:mb-4">
         {[MINT, GREEN, MUTE].map((c) => (
           <span key={c} className="h-2.5 w-2.5 rounded-full lg:h-3 lg:w-3" style={{ background: c, opacity: 0.8 }} />
         ))}
@@ -394,7 +395,7 @@ const OscillatingTitle = () => {
   }, []);
 
   return (
-    <h1 className="mt-3 flex flex-col whitespace-nowrap text-[clamp(2.6rem,6.1vw,6.5rem)] font-bold leading-[0.95] tracking-[-0.035em] sm:mt-5" style={DISPLAY}>
+    <h1 className="mt-1 flex flex-col whitespace-nowrap text-[clamp(2.3rem,5vw,5.25rem)] font-bold leading-[0.95] tracking-[-0.035em] sm:mt-3" style={DISPLAY}>
       <span className="sr-only">Ghosty Anti-Factory</span>
       {/* la ventana crece 0.15em arriba y abajo (acentos y la cola de la g) y el margen negativo lo devuelve: el renglón ocupa lo mismo. El h1 es flex para que esos márgenes no se colapsen */}
       {TITLES[lang].map((word, line) => (
@@ -457,7 +458,7 @@ const GhostyPeek = () => {
       src="https://formmy.app/logo.png"
       alt=""
       aria-hidden
-      className="pointer-events-none absolute z-0 w-16 sm:w-24"
+      className="pointer-events-none absolute z-0 hidden w-16 sm:w-24 md:block"
       style={spot.style}
       initial={{ [spot.axis]: hidden, rotate: 0 }}
       animate={{
@@ -475,14 +476,14 @@ const POINTS = [
   "Varios pendientes a la vez",
   "Un revisor con contexto limpio",
   "La grabación de las dos sesiones",
-  "Acceso gratis a las cajas de CI de Ghosty Studio",
+  "Cuenta Power de Ghosty Studio de cortesía hasta el 31 de diciembre (CLI y cajas, incluida la de CI)",
 ];
 
 const mxn = (n: number) => `$${n.toLocaleString("es-MX")}`;
 
 export default function Route() {
   const fetcher = useFetcher<typeof action>();
-  const { isLoggedIn, isMember, generalPrice, clubPrice, webinarIcsUrl, success, canceled, confirmed } =
+  const { isLoggedIn, isMember, priceReason, generalPrice, clubPrice, webinarIcsUrl, success, canceled, confirmed } =
     useLoaderData<typeof loader>();
   const busy = fetcher.state !== "idle";
   const error = fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
@@ -507,7 +508,7 @@ export default function Route() {
         style={{ backgroundImage: "radial-gradient(rgba(242,245,244,0.10) 1px, transparent 1px)", backgroundSize: "22px 22px" }}
       />
 
-      <section className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-center gap-4 md:flex-row md:items-center md:gap-10 lg:gap-12">
+      <section className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-center gap-3 md:flex-row md:items-center md:gap-10 lg:gap-12">
         <div className="flex flex-col items-start md:w-[46%]">
           {/* Paso 1: el webinar gratis */}
           <motion.span
@@ -526,7 +527,7 @@ export default function Route() {
 
           <OscillatingTitle />
 
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-1.5 max-w-xl text-[15px] leading-snug sm:mt-4 sm:text-xl lg:text-2xl" style={{ color: `${INK}cc` }}>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="mt-1.5 max-w-xl text-[15px] leading-snug sm:mt-3 sm:text-xl" style={{ color: `${INK}cc` }}>
             Hay formas más simples y efectivas de desarrollar que una fábrica.
           </motion.p>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-2 hidden max-w-xl text-sm sm:block lg:text-base" style={{ color: MUTE }}>
@@ -534,7 +535,7 @@ export default function Route() {
           </motion.p>
 
           {/* Paso 1 → paso 2: primero el webinar gratis, luego el taller en vivo */}
-          <ol className="mt-2.5 w-full max-w-xl space-y-1.5 sm:mt-5 sm:space-y-2">
+          <ol className="mt-2.5 w-full max-w-xl space-y-1.5 sm:mt-4 sm:space-y-2">
             <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 rounded-2xl border px-3 py-2 sm:px-4 sm:py-2.5" style={{ background: `${MINT}14`, borderColor: `${MINT}40` }}>
               <span className="text-[13px] sm:text-sm lg:text-base">
                 <span className="font-semibold" style={{ color: MINT }}>1 · Webinar gratis</span>{" "}
@@ -569,7 +570,7 @@ export default function Route() {
             </li>
           </ol>
 
-          <div className="mt-2.5 w-full max-w-xl lg:mt-5">
+          <div className="mt-2.5 w-full max-w-xl lg:mt-4">
             {success ? (
               <motion.div
                 role="status"
@@ -587,7 +588,11 @@ export default function Route() {
                 <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                   <span className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ ...DISPLAY, color: GREEN }}>{mxn(price)} MXN</span>
                   <span className="text-[13px] font-medium sm:text-sm" style={{ color: MINT }}>
-                    {isMember ? `Tienes el precio del club (general: ${mxn(generalPrice)})` : `Miembros del club: ${mxn(clubPrice)}`}
+                    {priceReason === "waitlist"
+                      ? `Tienes el precio de la lista de espera (general: ${mxn(generalPrice)})`
+                      : isMember
+                        ? `Tienes el precio del club (general: ${mxn(generalPrice)})`
+                        : `Miembros del club: ${mxn(clubPrice)}`}
                   </span>
                 </p>
                 <fetcher.Form method="post" action={ANTI_FACTORY_PATH} className="mt-2 lg:mt-3">
@@ -597,7 +602,7 @@ export default function Route() {
                     disabled={busy}
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.98 }}
-                    className="h-11 w-full rounded-xl px-8 text-lg font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] disabled:opacity-60 sm:w-auto lg:h-16 lg:text-xl"
+                    className="h-11 w-full rounded-xl px-8 text-lg font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] disabled:opacity-60 sm:w-auto lg:h-14 lg:text-xl"
                     style={{ background: GREEN, color: BG }}
                   >
                     {busy ? "Abriendo el pago…" : "Inscríbete al taller"}
@@ -616,7 +621,7 @@ export default function Route() {
                       </Link>
                     ) : (
                       <Link to={`/login?next=${encodeURIComponent(ANTI_FACTORY_PATH)}`} className="underline-offset-4 hover:underline">
-                        ¿Eres del club? Inicia sesión para tu precio de {mxn(clubPrice)}.
+                        ¿Eres del club o estás en la lista de espera? Inicia sesión para tu precio de {mxn(clubPrice)}.
                       </Link>
                     ))}
                 </div>

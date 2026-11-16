@@ -12,6 +12,8 @@ const fake = vi.hoisted(() => ({
   /** Invitaciones del club por correo. */
   invites: {} as Record<string, { id: string; callDays: string[] }>,
   mails: [] as string[],
+  /** Correos en la lista de espera de software-factory. */
+  waitlist: [] as string[],
 }));
 vi.mock("~/mailSenders/sendAntiFactoryConfirmation", () => ({
   sendAntiFactoryConfirmation: async ({ to }: { to: string }) => void fake.mails.push(`confirm:${to}`),
@@ -34,6 +36,14 @@ vi.mock("~/.server/db", () => ({
       update: async ({ where, data }: { where: { stripeSessionId: string }; data: any }) => {
         fake.purchases[where.stripeSessionId] = { ...fake.purchases[where.stripeSessionId], ...data };
       },
+      findMany: async ({ where }: { where: { productKey: { in: string[] }; status: { in: string[] } } }) =>
+        Object.values(fake.purchases).filter(
+          (p) => where.productKey.in.includes(p.productKey ?? "") && where.status.in.includes(p.status),
+        ),
+    },
+    subscriber: {
+      findUnique: async ({ where }: { where: { email: string } }) =>
+        fake.waitlist.includes(where.email) ? { tags: ["newsletter", "software-factory-waitlist"] } : { tags: ["newsletter"] },
     },
     communityInvite: {
       findUnique: async ({ where }: { where: { communityId_email: { email: string } } }) =>
@@ -52,6 +62,8 @@ import {
   ANTI_FACTORY_TIERS,
   antiFactoryCallGate,
   canSeeRecording,
+  clubPriceReason,
+  listAntiFactoryBuyers,
   filterPaidRecordings,
   fulfillAntiFactory,
   isOpenWebinarCall,
@@ -72,6 +84,7 @@ beforeEach(() => {
   fake.purchases = {};
   fake.invites = {};
   fake.mails = [];
+  fake.waitlist = [];
 });
 
 describe("pickAntiFactoryTier", () => {
@@ -248,4 +261,36 @@ describe("?success=1 verificado con Stripe", () => {
   });
   it("si Stripe falla: no", async () =>
     expect(await isPaidCheckout("cs_live_x1", async () => { throw new Error("404"); })).toBe(false));
+});
+
+describe("precio del club para la lista de espera de software-factory", () => {
+  it("quien está en la lista paga con la llave del club", async () => {
+    fake.waitlist = ["lista@mail.mx"];
+    const reason = await clubPriceReason({ id: "u2", email: "Lista@Mail.mx" });
+    expect(reason).toBe("waitlist");
+    expect(pickAntiFactoryTier(!!reason).key).toBe("anti-factory-taller-dic26-club");
+  });
+  it("un miembro sigue siendo «member»", async () => {
+    fake.membership = { status: "active", currentPeriodEnd: null };
+    expect(await clubPriceReason({ id: "u1", email: "ana@club.mx" })).toBe("member");
+  });
+  it("quien no es miembro ni está en la lista paga el precio general", async () => {
+    const reason = await clubPriceReason({ id: "u3", email: "nadie@mail.mx" });
+    expect(reason).toBeNull();
+    expect(pickAntiFactoryTier(!!reason).key).toBe("anti-factory-taller-dic26");
+  });
+  it("sin sesión no hay precio del club", async () => expect(await clubPriceReason(null)).toBeNull());
+});
+
+describe("lista de compradores para la cortesía de Ghosty Studio", () => {
+  it("devuelve los correos pagados, sin repetir y sin reembolsados", async () => {
+    fake.purchases = {
+      a: { email: "Beto@Mail.mx", productKey: "anti-factory-taller-dic26", status: "fulfilled" },
+      b: { email: "beto@mail.mx", productKey: "anti-factory-taller-dic26-club", status: "partial" },
+      c: { email: "ana@club.mx", productKey: "anti-factory-taller-dic26-club", status: "fulfilled" },
+      d: { email: "reembolso@mail.mx", productKey: "anti-factory-taller-dic26", status: "refunded" },
+      e: { email: "otro@mail.mx", productKey: "sistemas-agenticos-workshop", status: "fulfilled" },
+    };
+    expect(await listAntiFactoryBuyers()).toEqual(["ana@club.mx", "beto@mail.mx"]);
+  });
 });

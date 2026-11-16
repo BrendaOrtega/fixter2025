@@ -33,7 +33,8 @@ export const MainLayout = ({ children }: { children: ReactNode }) => {
   // El promo flotante promociona Animaciones con AI; no mostrarlo en su propia landing
   const isSistemasRoute = location.pathname.startsWith('/animaciones-ai');
   // Landing de una sola pantalla: el promo flotante la taparía
-  const isFactoryRoute = location.pathname.startsWith('/software-factory');
+  // /software-factory y /anti-factory son la misma landing: el botón flotante tapaba su CTA.
+  const isFactoryRoute = location.pathname.startsWith('/software-factory') || location.pathname.startsWith('/anti-factory');
 
   return (
     <>

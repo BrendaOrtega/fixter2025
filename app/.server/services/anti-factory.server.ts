@@ -62,6 +62,29 @@ export async function isClubMember(user: { id: string } | null) {
   return hasActiveMembership(user.id, community.id);
 }
 
+/// Quien se apuntó a la lista de espera del taller anterior («Software Factory») paga el precio del club.
+export const FACTORY_WAITLIST_TAG = "software-factory-waitlist";
+
+/** ¿Este correo está en la lista de espera de software-factory? */
+export async function isOnFactoryWaitlist(email: string) {
+  const sub = await db.subscriber.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { tags: true },
+  });
+  return !!sub?.tags.includes(FACTORY_WAITLIST_TAG);
+}
+
+/**
+ * Por qué le toca el precio del club a quien tiene la sesión abierta: miembro del club, lista de
+ * espera de software-factory, o nada. Nunca sale de un campo del formulario.
+ */
+export async function clubPriceReason(user: { id: string; email: string } | null) {
+  if (!user) return null;
+  if (await isClubMember(user)) return "member" as const;
+  if (await isOnFactoryWaitlist(user.email)) return "waitlist" as const;
+  return null;
+}
+
 /** Precio vigente de un nivel: el del Product si existe, si no el de respaldo. */
 export async function priceFor(tier: AntiFactoryTier) {
   const product = await db.product.findUnique({
@@ -86,6 +109,15 @@ export function paidSessionAt(startsAt: Date) {
       (s) => Math.abs(s.startsAt.getTime() - startsAt.getTime()) <= SESSION_MATCH_MS,
     ) ?? null
   );
+}
+
+/** Correos (en minúsculas, sin repetir) con compra pagada del taller, sin los reembolsados. */
+export async function listAntiFactoryBuyers() {
+  const rows = await db.purchaseEvent.findMany({
+    where: { productKey: { in: ANTI_FACTORY_KEYS }, status: { in: PAID_STATUSES } },
+    select: { email: true },
+  });
+  return [...new Set(rows.map((r) => r.email.trim().toLowerCase()))].sort();
 }
 
 /** ¿Este correo tiene una compra pagada del taller (cualquiera de los dos precios)? */
