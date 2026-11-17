@@ -71,3 +71,15 @@ piel sólo pinta su versión, así sirve igual con todas las pieles.
   regla: «el iframe de la sala nunca se remonta».
 - El ancho del panel en 375 px: en celular el panel tapa el mapa, así que se abre como hoja que sube
   desde abajo.
+
+## Hecho (16-nov-2026)
+
+- Panel de lugar (Faro, Mural, Cine) e insignias de «nuevo»: `world/PlacePanel.tsx`, `engine.setPlaceBadge`.
+- El Cine proyecta la grabación en grande sobre el mapa (el reproductor no cabe en 320 px).
+- Etapa 3: llamado a la sesión (`engine.summon`), fantasma del récord, misión del día y podio (`ModeHud.board`).
+- Etapa 4: **ventana de llamada del club** (`CallDock` en `v2/call.tsx`, sala en `community/CallRoom.tsx`). En la casa v2
+  «Entrar a la llamada» abre la sala encima de la página (action `call` con `embed=1` regresa la liga en vez de redirigir)
+  y «Minimizar y seguir en el club» la achica a una esquina: sigues en el Mundo o en cualquier sección mientras escuchas.
+  El iframe nunca se remonta: el contenedor sólo cambia de clases. La página `/comunidad/:slug/llamada` sigue igual para v1.
+- Sin probar en una llamada real: cámara y micrófono en la ventana chica, el quiz al minimizar y ampliar, y la voz de
+  las mesas del Mundo sonando a la vez que la llamada.

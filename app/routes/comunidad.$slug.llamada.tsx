@@ -6,9 +6,8 @@
 // que Teams. Nunca cruza una credencial el iframe, sólo «quiero grabar» y «se está grabando».
 //
 // La grabación ya NO arranca sola al entrar: la inicia el anfitrión desde la sala.
-import { useEffect, useRef } from "react";
-import { data, redirect, useFetcher, useLoaderData, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { QuizPanel } from "~/components/community/QuizPanel";
+import { data, redirect, useLoaderData, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { CallRoom } from "~/components/community/CallRoom";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { getNextEvent } from "~/.server/services/wall.server";
@@ -63,67 +62,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   return data({ intent, error: "Acción desconocida" }, { status: 400 });
 };
 
-type RecReply = { intent: string; recording?: boolean; error?: string; liveTargets?: string[]; watchUrls?: string[]; liveErrors?: string[] };
-
 export default function ClubCall() {
   const { slug, src } = useLoaderData<typeof loader>();
-  const frame = useRef<HTMLIFrameElement>(null);
-  const fetcher = useFetcher<RecReply>();
   const navigate = useNavigate();
-  const recording = useRef(false);
-
-  const tell = (msg: Record<string, unknown>) => frame.current?.contentWindow?.postMessage({ t: "gs:rec:state", ...msg }, "*");
-
-  // Respuesta del servidor → al botón de dentro de la sala.
-  useEffect(() => {
-    const d = fetcher.data;
-    if (!d || fetcher.state !== "idle") return;
-    if (d.error) return tell({ recording: recording.current, error: d.error });
-    const stopped = d.intent === "rec-stop";
-    recording.current = !!d.recording;
-    // Al detener, el enlace a las grabaciones del club: el HLS tarda unos minutos en aparecer ahí.
-    tell({
-      recording: recording.current,
-      ...(stopped ? { url: `${window.location.origin}/comunidad/${slug}` } : {}),
-      ...(d.liveTargets ? { liveTargets: d.liveTargets } : {}),
-      // Al arrancar al aire: la liga pública para compartir; si un destino falló, se dice.
-      ...(d.watchUrls?.length ? { watchUrl: d.watchUrls[0] } : {}),
-      ...(d.liveErrors?.length ? { notice: `Se está grabando, pero no salió a: ${d.liveErrors.join("; ")}` } : {}),
-    });
-  }, [fetcher.data, fetcher.state]);
-
-  // Lo que pide la sala. Se filtra por procedencia; quien decide si puede grabar es el action.
-  useEffect(() => {
-    const onMsg = (e: MessageEvent) => {
-      if (!frame.current || e.source !== frame.current.contentWindow) return;
-      const d = e.data as { t?: string; action?: string; live?: boolean };
-      if (d?.t === "gs:leave") return navigate(`/comunidad/${slug}`);
-      if (d?.t === "gs:rec:ask") return fetcher.submit({ intent: "rec-state" }, { method: "post" });
-      if (d?.t === "gs:rec" && (d.action === "start" || d.action === "stop")) {
-        // Detener cierra el MP4 y lo manda a convertir (hasta ~2 min): el botón lo dice ya.
-        if (d.action === "stop") tell({ recording: false, uploading: true });
-        fetcher.submit({ intent: d.action === "start" ? "rec-start" : "rec-stop", live: d.live ? "1" : "" }, { method: "post" });
-      }
-    };
-    window.addEventListener("message", onMsg);
-    return () => window.removeEventListener("message", onMsg);
-  }, [slug]);
-
   return (
-    <div className="fixed inset-0 z-[2147483647] flex flex-col bg-[#0E1317] lg:flex-row">
-      {/* La sala va SIEMPRE primero y con el mismo `src`: su ticket es de un solo uso, remontarla la pierde. */}
-      <div className="relative min-h-0 min-w-0 flex-1">
-        <iframe
-          ref={frame}
-          src={src}
-          title="Llamada del club"
-          className="absolute inset-0 h-full w-full border-0"
-          allow="camera; microphone; display-capture; autoplay; fullscreen; speaker-selection; clipboard-write"
-          allowFullScreen
-        />
-      </div>
-      {/* Quiz en vivo: hermano de la sala, con su propia ruta y su propio fetch. Apagado, no pinta nada. */}
-      <QuizPanel slug={slug} />
+    <div className="fixed inset-0 z-[2147483647] flex flex-col bg-[#0E1317]">
+      <CallRoom slug={slug} src={src} onLeave={() => navigate(`/comunidad/${slug}`)} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router";
 import { CoursesView, MembershipView } from "./AccountView";
 import { EventsView } from "./EventsView";
 import { ClubShell } from "./ClubShell";
+import { CallDock } from "./call";
 import { RecordingsView } from "./RecordingsView";
 import { WallView } from "./WallView";
 import { WorldView } from "./WorldView";
@@ -77,6 +78,7 @@ export function ClubV2(data: ClubData) {
   });
 
   return (
+    <CallDock slug={community.slug}>
     <ClubShell
       community={community}
       me={me}
@@ -93,5 +95,6 @@ export function ClubV2(data: ClubData) {
       {view === "courses" && <CoursesView data={data} />}
       {view === "me" && <MembershipView data={data} />}
     </ClubShell>
+    </CallDock>
   );
 }

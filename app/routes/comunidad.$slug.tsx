@@ -334,6 +334,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
     // La sala va dentro de fixtergeek (iframe), como en Teams: así su botón Grabar/Detener
     // funciona. La grabación ya no arranca sola; la inicia el anfitrión desde la sala.
+    // Casa v2: la sala se abre en la ventana de llamada del club (sin salir de la página); recibe la liga.
+    if (link && form.get("embed") === "1") return { callLink: link };
     if (link) throw redirect(`/comunidad/${slug}/llamada?u=${encodeURIComponent(link)}`);
     return data({ error: "No pudimos abrir la sala. Intenta de nuevo en un momento." }, { status: 502 });
   }

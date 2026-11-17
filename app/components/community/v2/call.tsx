@@ -1,7 +1,8 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Await, Form, Link, useActionData, useFetcher, useNavigation } from "react-router";
 import { Avatar, btn, btnGhost } from "./ui";
 import type { ClubData, ClubEvent } from "./types";
+import { CallRoom } from "../CallRoom";
 
 // La llamada en vivo en la casa v2: mismos `intent` que la página de hoy (call, rec-start,
 // rec-stop), sólo cambia cómo se ve.
@@ -79,6 +80,57 @@ export function DateTile({ month, day }: { month: string; day: string }) {
 }
 
 /**
+ * Ventana de llamada del club (casa v2): la sala se abre encima de la página, sin salir de ella, y se
+ * puede achicar a una esquina para seguir en el Mundo, el Muro o las grabaciones mientras escuchas.
+ * Vive arriba de las secciones: cambiar de sección no la desmonta (su ticket es de un solo uso).
+ */
+type CallDockApi = { enter: () => void; entering: boolean; inCall: boolean; error?: string; paywallUrl?: string };
+const CallDockContext = createContext<CallDockApi | null>(null);
+
+export function CallDock({ slug, children }: { slug: string; children: ReactNode }) {
+  const fetcher = useFetcher<{ callLink?: string; error?: string; paywallUrl?: string }>();
+  const [src, setSrc] = useState<string | null>(null);
+  const [small, setSmall] = useState(false);
+  // La liga llega una vez por entrada; si ya hay sala abierta no se cambia (remontarla la tira).
+  useEffect(() => {
+    const link = fetcher.data?.callLink;
+    if (fetcher.state === "idle" && link) { setSrc((cur) => cur ?? link); setSmall(false); }
+  }, [fetcher.data, fetcher.state]);
+  const inCall = !!src;
+  const api: CallDockApi = {
+    enter: () => { if (inCall) setSmall(false); else fetcher.submit({ intent: "call", embed: "1" }, { method: "post" }); },
+    entering: fetcher.state !== "idle",
+    inCall,
+    error: fetcher.state === "idle" && !inCall ? fetcher.data?.error : undefined,
+    paywallUrl: fetcher.state === "idle" && !inCall ? fetcher.data?.paywallUrl : undefined,
+  };
+  return (
+    <CallDockContext.Provider value={api}>
+      {children}
+      {src && (
+        // Un solo contenedor que cambia de tamaño con clases: el iframe de adentro nunca se desmonta.
+        <div
+          className={
+            small
+              ? "fixed bottom-20 right-3 z-[2147483000] flex h-[min(34dvh,236px)] w-[min(92vw,380px)] flex-col overflow-hidden rounded-xl border border-[#232D33] bg-[#0E1317] shadow-lg lg:bottom-4 lg:right-4"
+              : "fixed inset-0 z-[2147483000] flex flex-col bg-[#0E1317]"
+          }
+        >
+          <div className="flex shrink-0 items-center gap-2 border-b border-[#232D33] bg-[#141B20] px-3 py-1.5">
+            <span aria-hidden className="h-[7px] w-[7px] rounded-full bg-[#F08A80]" />
+            <b className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-[#F2F5F4]">Llamada del club</b>
+            <button type="button" className={btnGhost} onClick={() => setSmall((v) => !v)}>
+              {small ? "Ampliar" : "Minimizar y seguir en el club"}
+            </button>
+          </div>
+          <CallRoom slug={slug} src={src} onLeave={() => { setSrc(null); setSmall(false); }} compact={small} />
+        </div>
+      )}
+    </CallDockContext.Provider>
+  );
+}
+
+/**
  * «Entrar a la llamada»: apagado hasta que la sala abre (15 min antes). Pide el ticket al dar clic.
  * El anfitrión (`host`) puede abrir su sala en cualquier momento: «Iniciar llamada ahora».
  */
@@ -94,10 +146,20 @@ export function EnterCallButton({
   host?: boolean;
 }) {
   const navigation = useNavigation();
-  const entering = navigation.formData?.get("intent") === "call";
-  const actionData = useActionData<{ error?: string; paywallUrl?: string }>();
+  const dock = useContext(CallDockContext);
+  const entering = dock ? dock.entering : navigation.formData?.get("intent") === "call";
+  const formData = useActionData<{ error?: string; paywallUrl?: string }>();
+  const actionData = dock ? { error: dock.error, paywallUrl: dock.paywallUrl } : formData;
+  if (dock?.inCall) {
+    return (
+      <div className={block ? "grid gap-1" : "grid justify-items-end gap-1"}>
+        <button type="button" className={`${btn} ${block ? "w-full" : ""}`} onClick={dock.enter}>Volver a la llamada</button>
+      </div>
+    );
+  }
   return (
-    <Form method="post" className={block ? "grid gap-1" : "grid justify-items-end gap-1"}>
+    // Con ventana de llamada (casa v2) la sala se abre aquí mismo; sin ella, el formulario lleva a la página de la sala.
+    <Form method="post" onSubmit={dock ? (e) => { e.preventDefault(); dock.enter(); } : undefined} className={block ? "grid gap-1" : "grid justify-items-end gap-1"}>
       <button
         name="intent"
         value="call"
