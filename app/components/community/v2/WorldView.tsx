@@ -384,6 +384,14 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
   useEffect(() => { apiRef.current?.setHidden(hiddenKey ? hiddenKey.split(",") : []); }, [ready, hiddenKey]);
 
+  // «Ver aquí»: abre la pestaña del lugar, la trae a la vista (en celular queda debajo del mapa) y la resalta.
+  const asideRef = useRef<HTMLElement>(null);
+  const [flash, setFlash] = useState(false);
+  const showPanel = () => {
+    setPanelTab("place");
+    asideRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    setFlash(true); window.setTimeout(() => setFlash(false), 1200);
+  };
   // Llegas a una isla: su contenido se abre en el panel. Te vas: vuelve el chat (la pestaña del lugar se queda).
   const placeTarget = place && place.table === null && isPanelTarget(place.target) ? place.target : null;
   useEffect(() => {
@@ -511,9 +519,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         ? { sub: `${event.title} · ${call.status}`, action: <EnterCallButton event={event} host={data.canMod} /> }
         : { sub: "No hay llamada programada", action: null };
     } else if (place.target === "wall") {
-      near = { sub: "Lo que el club publicó y comentó", action: <button type="button" className={btn} onClick={() => setPanelTab("place")}>Ver aquí</button> };
+      near = { sub: "Lo que el club publicó y comentó", action: <button type="button" className={btn} onClick={showPanel}>Ver aquí</button> };
     } else if (place.target === "recs") {
-      near = { sub: recordingCount === 1 ? "1 grabación de las llamadas" : `${recordingCount} grabaciones de las llamadas`, action: <button type="button" className={btn} onClick={() => setPanelTab("place")}>Ver aquí</button> };
+      near = { sub: recordingCount === 1 ? "1 grabación de las llamadas" : `${recordingCount} grabaciones de las llamadas`, action: <button type="button" className={btn} onClick={showPanel}>Ver aquí</button> };
     } else if (place.target === "courses") {
       near = { sub: courseCount === 1 ? "1 curso incluido en tu membresía" : `${courseCount} cursos incluidos en tu membresía`, action: <button type="button" className={btn} onClick={() => go("courses")}>Entrar a Cursos</button> };
     } else if (place.table !== null) {
@@ -792,8 +800,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
           {/* ── Chat: columna fija a la derecha del mapa (≥1024) o bloque debajo de él; siempre abierto, nunca encimado ── */}
           <aside
+            ref={asideRef}
             aria-label="Panel del Mundo: chat y lugar"
-            className={`flex min-h-0 shrink-0 flex-col bg-[#141B20] lg:h-auto lg:w-[320px] lg:border-l lg:border-[#232D33] ${
+            className={`${flash ? "ring-2 ring-inset ring-brand-500 " : ""}transition-shadow flex min-h-0 shrink-0 flex-col bg-[#141B20] lg:h-auto lg:w-[320px] lg:border-l lg:border-[#232D33] ${
               expanded
                 ? "h-[min(30dvh,240px)] border-t border-[#232D33] pb-[env(safe-area-inset-bottom)] lg:border-t-0"
                 : "h-[240px] max-sm:mx-2.5 max-sm:mb-2.5 max-sm:rounded-[10px] max-sm:border max-sm:border-[#232D33] max-sm:bg-background sm:border-t sm:border-[#232D33] lg:border-t-0"
