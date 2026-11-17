@@ -91,6 +91,8 @@ export type WorldApi = {
   setPlaceStatus: (placeId: string, status: { on: boolean; sub: string; startsAt?: number; endsAt?: number }) => void;
   /** Lugares que hoy no llevan a nada (p. ej. grabaciones sin grabaciones): no se dibujan. */
   setHidden: (placeIds: string[]) => void;
+  /** Insignia sobre un lugar («2 nuevas»): la pinta el motor en cualquier piel. `null` la quita. */
+  setPlaceBadge: (placeId: string, text: string | null) => void;
   setRemote: (ships: RemoteShip[], meId: string) => void;
   /** Saludo entre dos naves (llegó del servidor o lo acabas de mandar). */
   showWave: (fromId: string, toId: string) => void;
@@ -418,6 +420,7 @@ export function createWorld(opts: {
     renderer.render(frame);
     drawObjective();
     drawDialog(dt);
+    drawBadges();
   }
 
   // ── Modo de juego del cartucho (opcional): sus reglas corren aquí, cada cuadro, sin DOM ni red ──
@@ -469,6 +472,19 @@ export function createWorld(opts: {
     gArrow.style.transform = `translate(${ax}px, ${ay}px) rotate(${Math.atan2(dy, dx)}rad)`;
     gLabel.style.left = `${Math.min(W - 80, Math.max(80, ax - dx * 46))}px`; gLabel.style.top = `${Math.min(H - 24, Math.max(24, ay - dy * 40))}px`;
     gLabel.textContent = `${o.label} · ${dist} m`;
+  }
+
+  // ── Insignias de lugar: pastillas DOM sobre el mapa que avisan qué hay de nuevo ──
+  const badges = new Map<string, { text: string; el: HTMLDivElement }>();
+  function drawBadges() {
+    for (const [id, b] of badges) {
+      const pl = places.find((q) => q.id === id);
+      if (!pl || state.mini) { b.el.style.display = "none"; continue; }
+      const s = toScreen(pl.x, pl.y), bob = Math.sin(state.animT * 3 + pl.x) * 3;
+      if (s.x < 30 || s.y < 60 || s.x > view.vw - 30 || s.y > view.vh - 20) { b.el.style.display = "none"; continue; }
+      b.el.style.display = "block";
+      b.el.style.left = `${s.x}px`; b.el.style.top = `${s.y - 58 + bob}px`;
+    }
   }
 
   // ── Diálogo: cuadro abajo con el texto escribiéndose, igual en cualquier piel ──
@@ -976,6 +992,14 @@ export function createWorld(opts: {
     },
     setLook(look) { player.model = look.model; player.color = look.color; player.pilot = look.pilot; cb.onIntent(); },
     setPlaceStatus(placeId, status) { state.placeStatus[placeId] = status; },
+    setPlaceBadge(id, text) {
+      const cur = badges.get(id);
+      if (!text) { cur?.el.remove(); badges.delete(id); return; }
+      if (cur) { if (cur.text !== text) { cur.text = text; cur.el.textContent = text; } return; }
+      const el = document.createElement("div");
+      el.style.cssText = "position:absolute;transform:translate(-50%,-100%);z-index:2;pointer-events:none;display:none;white-space:nowrap;background:#ff6b6b;color:#fff;border:2px solid #fff;border-radius:999px;padding:2px 9px;font:800 11px/1.3 system-ui,sans-serif;box-shadow:0 3px 8px rgba(0,0,0,.3)";
+      el.textContent = text; stage.appendChild(el); badges.set(id, { text, el });
+    },
     setHidden(ids) { state.hidden = new Set(ids); places = S.places.filter((p) => !state.hidden.has(p.id)); },
     setRemote(ships, me) {
       meId = me;
@@ -1113,7 +1137,7 @@ export function createWorld(opts: {
     screenOf: (x, y) => toScreen(x, y),
     setProgress: (p) => applyProgress(p),
     destroy() {
-      flushSave(); window.clearInterval(saveTimer); window.clearTimeout(progressFallback); guide.remove(); talk.remove();
+      flushSave(); window.clearInterval(saveTimer); window.clearTimeout(progressFallback); guide.remove(); talk.remove(); for (const b of badges.values()) b.el.remove();
       state.dead = true; cancelAnimationFrame(raf); observer.disconnect();
       window.removeEventListener("keydown", onKeyDown); window.removeEventListener("keyup", onKeyUp); window.removeEventListener("blur", onBlur);
       stage.removeEventListener("pointerdown", onPointerDown);

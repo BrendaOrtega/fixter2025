@@ -79,7 +79,7 @@ function islandGame(st: StarState): GameMode {
     if (byeT > 0) {
       byeT -= dt;
       const faro = ctx.places.find((q) => q.id === "live");
-      ctx.npc(GUIDE, { name: "Ghosty", look: ghostyLook, to: faro ? { x: faro.x, y: faro.y } : p, speed: 260 });
+      ctx.npc(GUIDE, { name: "Ghosty · tu guía", look: ghostyLook, to: faro ? { x: faro.x, y: faro.y } : p, speed: 260 });
       if (byeT <= 0) { ctx.npc(GUIDE, null); ctx.dialog(null); }
       return;
     }
@@ -89,14 +89,14 @@ function islandGame(st: StarState): GameMode {
       if (step.say) ctx.dialog({ who: "Ghosty", text: step.say.replace("{first}", p.first) });
       ctx.sound("ring");
     }
-    const g = ctx.npc(GUIDE, { name: "Ghosty", look: ghostyLook, to: p, speed: 340 });
+    const g = ctx.npc(GUIDE, { name: "Ghosty · tu guía", look: ghostyLook, to: p, speed: 340 });
     if (!g) return;
     const tgt = step.target?.(ctx), dMe = Math.hypot(g.x - p.x, g.y - p.y);
     let to: { x: number; y: number };
     if (!tgt) to = { x: p.x + 70, y: p.y - 60 }; // explica: flota junto a ti
     else if (dMe > 420) { to = { x: p.x + (tgt.x - p.x) * 0.15, y: p.y + (tgt.y - p.y) * 0.15 }; farT += dt; if (farT > 3) { farT = 0; ctx.bubble(g, "¡Por aquí!"); } }
     else { const d = Math.hypot(tgt.x - p.x, tgt.y - p.y) || 1, ahead = Math.min(d, 260); to = { x: p.x + ((tgt.x - p.x) / d) * ahead, y: p.y + ((tgt.y - p.y) / d) * ahead - 30 }; farT = 0; }
-    ctx.npc(GUIDE, { name: "Ghosty", look: ghostyLook, to });
+    ctx.npc(GUIDE, { name: "Ghosty · tu guía", look: ghostyLook, to });
   }
   const areaId = (w: number, i: number) => `star:${starKey(w, i)}`;
   const humans = (ctx: ModeContext) => ctx.others.filter((e) => e.kind === "human");

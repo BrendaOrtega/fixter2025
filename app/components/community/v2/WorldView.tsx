@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { EnterCallButton, describeCall, useNow } from "./call";
+import { PlacePanel, isPanelTarget, type PanelTarget } from "./world/PlacePanel";
 import { Icon, type IconName } from "./icons";
 import { Avatar, SectionHead, btn } from "./ui";
 import type { ClubData, Go } from "./types";
@@ -138,6 +139,12 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   const [voiceOn, setVoiceOn] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  // Panel junto al mapa: el chat o el contenido del lugar donde estás (la isla se abre sin salir del Mundo).
+  const [panelTab, setPanelTab] = useState<"chat" | "place">("chat");
+  const [panelTarget, setPanelTarget] = useState<{ target: PanelTarget; id: string; label: string } | null>(null);
+  /** Hasta cuándo viste cada sección (en este navegador): de ahí salen las insignias de «nuevo». */
+  const [seen, setSeen] = useState<{ wall: number; recs: number } | null>(null);
+  const [fresh, setFresh] = useState({ wall: 0, recs: 0 });
   const [waved, setWaved] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
@@ -377,6 +384,52 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
   useEffect(() => { apiRef.current?.setHidden(hiddenKey ? hiddenKey.split(",") : []); }, [ready, hiddenKey]);
 
+  // Llegas a una isla: su contenido se abre en el panel. Te vas: vuelve el chat (la pestaña del lugar se queda).
+  const placeTarget = place && place.table === null && isPanelTarget(place.target) ? place.target : null;
+  useEffect(() => {
+    if (placeTarget && place) { setPanelTarget({ target: placeTarget, id: place.id, label: structure.places.find((q) => q.id === place.id)?.short ?? place.name }); setPanelTab("place"); }
+    else setPanelTab("chat");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placeTarget, place?.id]);
+
+  // Insignias de «nuevo»: lo publicado después de la última vez que abriste esa isla (primera vez: últimos 7 días).
+  const seenKey = `mundo:seen:${community.slug}`;
+  useEffect(() => {
+    let v: { wall?: number; recs?: number } = {};
+    try { v = JSON.parse(localStorage.getItem(seenKey) || "{}") ?? {}; } catch {}
+    const base = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    setSeen({ wall: Number(v.wall) || base, recs: Number(v.recs) || base });
+  }, [seenKey]);
+  useEffect(() => {
+    if (!seen) return;
+    let alive = true;
+    const after = (iso: unknown, t: number) => !!iso && new Date(iso as string).getTime() > t;
+    Promise.all([Promise.resolve(data.wall).catch(() => null), Promise.resolve(data.recordings).catch(() => [])]).then(([wall, recs]) => {
+      if (!alive) return;
+      setFresh({
+        wall: (wall?.posts ?? []).filter((q) => !q.hidden && q.author.id !== me?.id && after(q.createdAt, seen.wall)).length,
+        recs: (recs ?? []).filter((r) => r.status === "ready" && !r.hidden && after(r.endedAt, seen.recs)).length,
+      });
+    });
+    return () => { alive = false; };
+  }, [seen, data.wall, data.recordings, me?.id]);
+  useEffect(() => {
+    for (const q of structure.places) {
+      if (q.target === "wall") apiRef.current?.setPlaceBadge(q.id, fresh.wall ? (fresh.wall === 1 ? "1 nueva" : `${fresh.wall} nuevas`) : null);
+      if (q.target === "recs") apiRef.current?.setPlaceBadge(q.id, fresh.recs ? (fresh.recs === 1 ? "1 nueva" : `${fresh.recs} nuevas`) : null);
+    }
+  }, [ready, fresh, structure.places]);
+  // Abrir la isla la da por vista.
+  useEffect(() => {
+    if (panelTab !== "place" || !seen || (placeTarget !== "wall" && placeTarget !== "recs") || !fresh[placeTarget]) return;
+    const id = window.setTimeout(() => {
+      const next = { ...seen, [placeTarget]: Date.now() };
+      try { localStorage.setItem(seenKey, JSON.stringify(next)); } catch {}
+      setSeen(next);
+    }, 4000);
+    return () => window.clearTimeout(id);
+  }, [panelTab, placeTarget, seen, fresh, seenKey]);
+
   // Expandir es sólo CSS: el canvas y el estado siguen siendo los mismos.
   useEffect(() => {
     const api = apiRef.current;
@@ -458,9 +511,9 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
         ? { sub: `${event.title} · ${call.status}`, action: <EnterCallButton event={event} host={data.canMod} /> }
         : { sub: "No hay llamada programada", action: null };
     } else if (place.target === "wall") {
-      near = { sub: "Lo que el club publicó y comentó", action: <button type="button" className={btn} onClick={() => go("wall")}>Entrar al Muro</button> };
+      near = { sub: "Lo que el club publicó y comentó", action: <button type="button" className={btn} onClick={() => setPanelTab("place")}>Ver aquí</button> };
     } else if (place.target === "recs") {
-      near = { sub: recordingCount === 1 ? "1 grabación de las llamadas" : `${recordingCount} grabaciones de las llamadas`, action: <button type="button" className={btn} onClick={() => go("recs")}>Ver grabaciones</button> };
+      near = { sub: recordingCount === 1 ? "1 grabación de las llamadas" : `${recordingCount} grabaciones de las llamadas`, action: <button type="button" className={btn} onClick={() => setPanelTab("place")}>Ver aquí</button> };
     } else if (place.target === "courses") {
       near = { sub: courseCount === 1 ? "1 curso incluido en tu membresía" : `${courseCount} cursos incluidos en tu membresía`, action: <button type="button" className={btn} onClick={() => go("courses")}>Entrar a Cursos</button> };
     } else if (place.table !== null) {
@@ -739,17 +792,24 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
           {/* ── Chat: columna fija a la derecha del mapa (≥1024) o bloque debajo de él; siempre abierto, nunca encimado ── */}
           <aside
-            aria-label="Chat del Mundo"
+            aria-label="Panel del Mundo: chat y lugar"
             className={`flex min-h-0 shrink-0 flex-col bg-[#141B20] lg:h-auto lg:w-[320px] lg:border-l lg:border-[#232D33] ${
               expanded
                 ? "h-[min(30dvh,240px)] border-t border-[#232D33] pb-[env(safe-area-inset-bottom)] lg:border-t-0"
                 : "h-[240px] max-sm:mx-2.5 max-sm:mb-2.5 max-sm:rounded-[10px] max-sm:border max-sm:border-[#232D33] max-sm:bg-background sm:border-t sm:border-[#232D33] lg:border-t-0"
             }`}
           >
-            <div className="flex items-baseline justify-between gap-3 border-b border-[#232D33] px-3 py-2">
-              <h2 className="text-[13px] font-semibold text-[#F2F5F4]">Chat del Mundo</h2>
-              <p className="text-[11px] text-[#7C8A8E]">Se borra a los 10 minutos</p>
+            <div role="tablist" aria-label="Panel del Mundo" className="flex items-center gap-1 border-b border-[#232D33] px-2 py-1.5">
+              <button type="button" role="tab" aria-selected={panelTab === "chat"} onClick={() => setPanelTab("chat")} className={`rounded-full px-2.5 py-1 text-[12.5px] font-semibold ${panelTab === "chat" ? "bg-[#1C252B] text-[#F2F5F4]" : "text-[#7C8A8E] hover:text-[#F2F5F4]"}`}>Chat</button>
+              {panelTarget && (
+                <button type="button" role="tab" aria-selected={panelTab === "place"} onClick={() => setPanelTab("place")} className={`rounded-full px-2.5 py-1 text-[12.5px] font-semibold ${panelTab === "place" ? "bg-[#1C252B] text-[#F2F5F4]" : "text-[#7C8A8E] hover:text-[#F2F5F4]"}`}>{panelTarget.label}</button>
+              )}
+              {panelTab === "chat" && <p className="ml-auto pr-1 text-[11px] text-[#7C8A8E]">Se borra a los 10 minutos</p>}
             </div>
+            {panelTab === "place" && panelTarget ? (
+              <PlacePanel target={panelTarget.target} here={(counts?.byPlace[panelTarget.id] ?? 0)} data={data} go={go} />
+            ) : (
+              <>
             <div ref={logRef} role="log" aria-label="Mensajes recientes del Mundo" className="min-h-0 flex-1 overflow-y-auto px-3 py-2 text-[13px] leading-snug">
               {messages.length === 0 ? (
                 <p className="text-[#7C8A8E]">Todavía nadie escribe.</p>
@@ -777,6 +837,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               />
               <button type="submit" className={btn} disabled={!ready || sending || !draft.trim()}>Enviar</button>
             </form>
+              </>
+            )}
           </aside>
         </div>
       </div>
