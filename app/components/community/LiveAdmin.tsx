@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Form } from "react-router";
 import { btnGhost, card as panel } from "~/components/community/v2/ui";
 
@@ -45,6 +46,20 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
   const yt = live.youtube;
   const fb = live.facebook;
   const connect = `/comunidad/${slug}/transmision`;
+
+  // Confeti una sola vez al conectar; se quita `live=ok` de la URL para que no se repita al recargar
+  useEffect(() => {
+    if (result !== "ok") return;
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("live") !== "ok") return;
+      url.searchParams.delete("live");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    } catch {}
+    import("@easybits.cloud/confetti").then(({ confetti }) => {
+      confetti({ colors: ["#85DDCB", "#8DCF6E", "#F2F5F4"], outline: "#0E1317" });
+    });
+  }, [result]);
   return (
     <section className="grid gap-3">
       <div>
