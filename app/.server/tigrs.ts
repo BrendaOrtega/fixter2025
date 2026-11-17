@@ -4,6 +4,8 @@ import {
   PutObjectCommand,
   PutBucketCorsCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
   HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -251,4 +253,34 @@ export const removeFilesFor = async (id: string) => {
   await fetch(posterDelete, { method: "DELETE" });
   await fetch(videoDelete, { method: "DELETE" });
   return true;
+};
+
+/**
+ * Borra todos los objetos bajo la carpeta de UNA grabación del club
+ * (`fixtergeek/videos/club/<communityId>/<recordingId>/`: HLS, póster y storyboard).
+ * El prefijo se arma aquí con dos ObjectId validados: no hay forma de pedir un nivel más arriba.
+ * Devuelve cuántos objetos se fueron, o `null` si Tigris falló (quedan residuos: avisar).
+ */
+export const removeClubRecordingFiles = async (communityId: string, recordingId: string): Promise<number | null> => {
+  const OBJECT_ID = /^[a-f0-9]{24}$/i;
+  const bucket = process.env.BUCKET_NAME;
+  if (!OBJECT_ID.test(communityId) || !OBJECT_ID.test(recordingId) || !bucket) return null;
+  const prefix = `fixtergeek/videos/club/${communityId}/${recordingId}/`;
+  let token: string | undefined, n = 0;
+  try {
+    do {
+      const list = await S3.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token, MaxKeys: 1000 }));
+      const keys = (list.Contents ?? []).map((o) => ({ Key: o.Key! })).filter((o) => o.Key.startsWith(prefix));
+      if (keys.length) {
+        const out = await S3.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: keys, Quiet: true } }));
+        if (out.Errors?.length) throw new Error(`${out.Errors.length} objetos no se borraron (${out.Errors[0].Code})`);
+        n += keys.length;
+      }
+      token = list.IsTruncated ? list.NextContinuationToken : undefined;
+    } while (token);
+    return n;
+  } catch (e) {
+    console.error("[tigris] no pude borrar", prefix, e instanceof Error ? e.message : e);
+    return null;
+  }
 };

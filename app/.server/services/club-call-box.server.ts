@@ -111,6 +111,17 @@ const fail = <T>(status: number, error: string, extra: Record<string, unknown> =
 const done = <T>(data: Record<string, unknown>): Result<T> => ({ ok: true, status: 200, data: data as unknown as T & { error?: string } });
 
 /**
+ * Borra de la caja todo lo de una grabación (MP4, HLS local, wav, subtítulos, marcas).
+ * `true` si la caja confirmó; `false` si no contestó o no hay caja configurada.
+ */
+export async function boxDeleteRecording(file: string): Promise<boolean> {
+  const cfg = boxConfig();
+  if (!cfg || !/^[\w.-]+\.mp4$/.test(file)) return false;
+  const r = await box(cfg, "/admin/recording/delete", { file }, DEFAULT_TIMEOUT_MS);
+  return r.ok;
+}
+
+/**
  * Lo mismo que contestaría gs, pero preguntándole directo a la caja. Mismo contrato que
  * `partnerPost`: `data: null` sólo cuando no hubo respuesta.
  */

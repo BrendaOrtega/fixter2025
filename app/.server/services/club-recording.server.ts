@@ -23,10 +23,10 @@
 //   failed     → 12 h sin llegar; el anfitrión tiene «Reintentar».
 // Sólo a miembros se les entrega la URL del proxy HLS firmada (`~/.server/hls`).
 import { db } from "~/.server/db";
-import { fileExist } from "~/.server/tigrs";
+import { fileExist, removeClubRecordingFiles } from "~/.server/tigrs";
 import { buildHlsProxyUrl } from "~/.server/hls";
 import { clubCallRoom } from "~/.server/services/club-call.server";
-import { recordingCall } from "~/.server/services/club-call-box.server";
+import { boxDeleteRecording, recordingCall } from "~/.server/services/club-call-box.server";
 import { prepareBroadcasts, signLiveEnvelope } from "~/.server/services/club-live.server";
 
 /** Si en 12 h no apareció el HLS, la conversión falló (4 h de llamada tardan en transcodificar). */
@@ -247,4 +247,23 @@ export async function recordingPlayAssets(communityId: string, id: string, opts:
     captions: buildHlsProxyUrl(hlsDir + "subtitulos.vtt"),
     storyboardBase: hlsDir.replace(/hls\/$/, ""), // …/<video>/
   };
+}
+
+/**
+ * Borra una grabación sin dejar residuos: la fila (con su transcript y momentos), sus archivos en
+ * Tigris (HLS, póster, storyboard) y lo que quede en la caja (MP4, wav, subtítulos).
+ * Mientras se graba o se sube no se borra: la caja seguiría escribiendo archivos sin dueño.
+ */
+export async function deleteRecording(communityId: string, id: string) {
+  const row = await db.communityRecording.findFirst({ where: { id, communityId }, select: { id: true, status: true, boxFile: true, createdAt: true } });
+  if (!row) return { ok: true as const, files: 0, storage: true, box: true };
+  if (row.status === "recording") return { ok: false as const, error: "Esta grabación sigue en curso. Detenla antes de borrarla." };
+  if (row.status === "uploading" && Date.now() - row.createdAt.getTime() < 6 * 60 * 60 * 1000) {
+    return { ok: false as const, error: "Esta grabación todavía se está subiendo. Espera a que termine (o a que falle) para borrarla." };
+  }
+  await db.communityRecording.delete({ where: { id: row.id } });
+  const files = await removeClubRecordingFiles(communityId, row.id);
+  const box = row.boxFile ? await boxDeleteRecording(row.boxFile) : true;
+  if (files === null || !box) console.error(`[club-recording] borrado con residuos: rec=${row.id} tigris=${files === null ? "falló" : "ok"} caja=${box ? "ok" : `falló (${row.boxFile})`}`);
+  return { ok: true as const, files: files ?? 0, storage: files !== null, box };
 }

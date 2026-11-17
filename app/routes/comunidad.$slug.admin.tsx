@@ -16,7 +16,7 @@ import { CalendarPlus, Eye, EyeOff, Pencil, RotateCw, Trash2, UserMinus } from "
 import { getUserOrNull } from "~/.server/dbGetters";
 import { avatarUrlFor, canModerate, imageUrlFor } from "~/.server/services/wall.server";
 import { occurrencesOf } from "~/.server/services/club-events.server";
-import { listRecordings, retryRecording } from "~/.server/services/club-recording.server";
+import { deleteRecording, listRecordings, retryRecording } from "~/.server/services/club-recording.server";
 import { generateRecordingMoments, parseMoments } from "~/.server/club-moments";
 import { MomentsEditor } from "~/components/community/MomentsEditor";
 import { cdmxDay, parseEmails, upsertInvites } from "~/.server/services/club-invites.server";
@@ -214,10 +214,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
     return { ok: intent === "rec-hide" ? "Grabación oculta." : "Grabación visible para los miembros." };
   }
-  // Borra la fila: deja de existir para todos, el anfitrión incluido. Los archivos HLS se quedan
-  // en el bucket (no hay limpieza todavía).
+  // Borra la fila y sus archivos (Tigris y caja): deja de existir para todos, el anfitrión incluido.
   if (intent === "rec-delete") {
-    await db.communityRecording.deleteMany({ where: { id: str("id"), communityId: community.id } });
+    const r = await deleteRecording(community.id, str("id"));
+    if (!r.ok) return data({ error: r.error }, { status: 409 });
+    if (!r.storage || !r.box) {
+      return { ok: `Grabación borrada, pero quedaron archivos ${!r.storage ? "en el almacenamiento" : "en la caja de llamadas"}: avísale a soporte para limpiarlos.` };
+    }
     return { ok: "Grabación borrada." };
   }
   // Momentos: la IA propone un borrador, el anfitrión lo ajusta y lo aprueba.
