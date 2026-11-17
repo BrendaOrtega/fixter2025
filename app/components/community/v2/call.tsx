@@ -94,8 +94,24 @@ export function CallDock({ slug, children }: { slug: string; children: ReactNode
   // La liga llega una vez por entrada; si ya hay sala abierta no se cambia (remontarla la tira).
   useEffect(() => {
     const link = fetcher.data?.callLink;
-    if (fetcher.state === "idle" && link) { setSrc((cur) => cur ?? link); setSmall(false); }
+    if (fetcher.state === "idle" && link && !src) {
+      setSrc(link); setSmall(false);
+      // «Atrás» con la sala abierta: en vez de sacarte del club (y tirar la llamada), la minimiza.
+      window.history.pushState({ ...(window.history.state ?? {}), callDock: true }, "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher.data, fetcher.state]);
+  useEffect(() => {
+    if (!src) return;
+    const onPop = () => setSmall(true);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [src]);
+  const leave = () => {
+    setSrc(null); setSmall(false);
+    // Si la entrada de la sala sigue arriba del historial, se quita para que «atrás» vuelva a ser el de siempre.
+    if (window.history.state?.callDock) window.history.back();
+  };
   const inCall = !!src;
   const api: CallDockApi = {
     enter: () => { if (inCall) setSmall(false); else fetcher.submit({ intent: "call", embed: "1" }, { method: "post" }); },
@@ -123,7 +139,7 @@ export function CallDock({ slug, children }: { slug: string; children: ReactNode
               {small ? "Ampliar" : "Minimizar y seguir en el club"}
             </button>
           </div>
-          <CallRoom slug={slug} src={src} onLeave={() => { setSrc(null); setSmall(false); }} compact={small} />
+          <CallRoom slug={slug} src={src} onLeave={leave} compact={small} />
         </div>
       )}
     </CallDockContext.Provider>
