@@ -46,6 +46,7 @@ export const structure: WorldStructure = {
   looks: {
     models: [
       { id: "ghostling", name: "Ghostyllo" },
+      { id: "flame", name: "Flamita" },
       { id: "ghosty", name: "Ghosty" },
     ],
     colors: [

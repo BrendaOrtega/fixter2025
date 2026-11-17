@@ -2,8 +2,11 @@
 // - Ghosty: el SVG se rasteriza a 4×, se reduce por votación a una paleta de 4 tintas, lleva contorno,
 //   luz arriba-izquierda y sombra abajo-derecha, y 4 cuadros con la falda ondeando.
 // - Ghostyllo: la misma silueta sin lentes, en el color de quien vuela. Ghosty nunca cambia de color.
+// - Flamita: el ghostyllo de Ghosty Studio (gota con la punta rizada y lentes), en el color de quien vuela;
+//   en vez de falda, le titila la punta.
 // - Estrella de 14 px y nubes de bolitas con su sombra.
 import { GHOST_SVG } from "./ghost-svg";
+import { FLAME_SVG } from "./flame-svg";
 
 export const TAU = Math.PI * 2;
 const mkc = (w: number, h: number) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
@@ -26,15 +29,15 @@ export type GhostSprite = { frames: HTMLCanvasElement[]; w: number; h: number };
 
 // Índices de la rasterización: 0 vacío, 1 cuerpo, 2 lentes, 3 ojos, 4 chapitas.
 type Raster = { idx: Uint8Array; w: number; h: number };
-let rasters: { front: Raster; back: Raster } | null = null;
+let rasters: { front: Raster; back: Raster; flame: Raster; flameBack: Raster } | null = null;
 let loading: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
 function loadImg(svg: string) {
   return new Promise<HTMLImageElement>((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); });
 }
-function rasterize(img: HTMLImageElement, h: number, back: boolean): Raster {
-  const w = Math.round((h * 160) / 190), ss = 4, bw = w * ss, bh = h * ss;
+function rasterize(img: HTMLImageElement, h: number, back: boolean, ratio = 160 / 190): Raster {
+  const w = Math.round(h * ratio), ss = 4, bw = w * ss, bh = h * ss;
   const big = mkc(bw, bh), bx = big.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
   bx.drawImage(img, 0, 0, bw, bh);
   const d = bx.getImageData(0, 0, bw, bh).data;
@@ -53,7 +56,7 @@ function rasterize(img: HTMLImageElement, h: number, back: boolean): Raster {
     idx[oy * w + ox] = v;
   }
   // De espaldas asoman las patitas de los lentes.
-  if (back) { const ty = Math.round(h * 0.27); for (const [x, y] of [[0, ty], [1, ty], [0, ty + 1], [w - 1, ty], [w - 2, ty], [w - 1, ty + 1]]) idx[y * w + x] = 2; }
+  if (back && ratio === 160 / 190) { const ty = Math.round(h * 0.27); for (const [x, y] of [[0, ty], [1, ty], [0, ty + 1], [w - 1, ty], [w - 2, ty], [w - 1, ty + 1]]) idx[y * w + x] = 2; }
   return { idx, w, h };
 }
 
@@ -64,9 +67,12 @@ export function loadGhosts(onReady?: () => void) {
   if (loading || typeof Image === "undefined") return;
   const paths = GHOST_SVG.match(/<path[^>]*\/>/g) ?? [];
   const backSvg = GHOST_SVG.replace(/<path[^>]*\/>/g, "").replace("</svg>", () => paths[0] + "</svg>");
-  loading = Promise.all([loadImg(GHOST_SVG), loadImg(backSvg)]).then(([f, b]) => {
+  // La flamita de espaldas: sólo el cuerpo (su primer trazo).
+  const fPaths = FLAME_SVG.match(/<path[^>]*\/>/g) ?? [];
+  const flameBackSvg = FLAME_SVG.replace(/<path[^>]*\/>/g, "").replace("</svg>", () => fPaths[0] + "</svg>");
+  loading = Promise.all([loadImg(GHOST_SVG), loadImg(backSvg), loadImg(FLAME_SVG), loadImg(flameBackSvg)]).then(([f, b, fl, flb]) => {
     // Un poco más chicos que en el juego (30 y 38 px): aquí vuelan varias personas a la vez.
-    rasters = { front: rasterize(f, 24, false), back: rasterize(b, 30, true) };
+    rasters = { front: rasterize(f, 24, false), back: rasterize(b, 30, true), flame: rasterize(fl, 24, false, 13 / 15), flameBack: rasterize(flb, 30, true, 13 / 15) };
     for (const fn of listeners) fn(); listeners.clear();
   }).catch((err) => console.error("[archipiélago] no cargó el sprite", err));
 }
@@ -75,10 +81,10 @@ const cache = new Map<string, GhostSprite>();
 /** Sprite de un fantasma (`back`: de espaldas, para el giro). `null` mientras carga. */
 export function ghostSprite(model: string, color: string, back = false): GhostSprite | null {
   if (!rasters) return null;
-  const glasses = model === "ghosty", ink = inkOf(model, color), key = `${model}:${glasses ? "" : color}:${back}`;
+  const flame = model === "flame", glasses = model === "ghosty" || flame, ink = inkOf(model, color), key = `${model}:${model === "ghosty" ? "" : color}:${back}`;
   let s = cache.get(key);
   if (s) return s;
-  const { idx: src, w, h } = back ? rasters.back : rasters.front;
+  const { idx: src, w, h } = flame ? (back ? rasters.flameBack : rasters.flame) : back ? rasters.back : rasters.front;
   // El ghostyllo no lleva lentes: esos pixeles pasan a ser cuerpo.
   const idx = glasses ? src : src.map((v) => (v === 2 ? 1 : v));
   const MX = 3, MY = 1, W2 = w + MX * 2, H2 = h + MY * 2;
@@ -97,7 +103,11 @@ export function ghostSprite(model: string, color: string, back = false): GhostSp
   for (let f = 0; f < 4; f++) {
     const fc = mkc(W2, H2), fx = fc.getContext("2d") as CanvasRenderingContext2D;
     for (let r = 0; r < H2; r++) {
-      const sh = r >= skirt ? Math.round(Math.sin((f * TAU) / 4 + r * 0.9) * 1.5 * (r - skirt + 1) / (H2 - skirt)) : 0;
+      // La flamita no tiene falda: le titila la punta (los renglones de arriba).
+      const tip = Math.floor(H2 * 0.22);
+      const sh = flame
+        ? (r < tip ? Math.round(Math.sin((f * TAU) / 4 + r * 0.8) * 1.2 * (tip - r) / tip) : 0)
+        : r >= skirt ? Math.round(Math.sin((f * TAU) / 4 + r * 0.9) * 1.5 * (r - skirt + 1) / (H2 - skirt)) : 0;
       fx.drawImage(base, 0, r, W2, 1, sh, r, W2, 1);
     }
     frames.push(fc);
