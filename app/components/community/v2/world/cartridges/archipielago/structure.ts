@@ -72,6 +72,11 @@ export const structure: WorldStructure = {
     leader: { type: "member" },
     raceBest: { type: "number", min: 1, max: 36000, merge: "min" },
     raceLeader: { type: "member" },
+    // Nombres de quien tiene cada récord (el dueño puede no estar conectado) y la ruta de la vuelta récord:
+    // 20 puntos, 4 caracteres cada uno (x e y entre 4, en base 36). La repite el fantasma del récord.
+    leaderName: { type: "text", max: 24 },
+    raceLeaderName: { type: "text", max: 24 },
+    raceGhost: { type: "text", max: 80 },
     raceAt: { type: "number", min: 0, max: 2147483647 },
     it: { type: "member" },
     itAt: { type: "number", min: 0, max: 2147483647 },
@@ -89,6 +94,9 @@ export const structure: WorldStructure = {
     storms: { merge: "sum", max: 3 },
     found: { merge: "sum", max: 20 },
     hides: { merge: "sum", max: 3 },
+    // Misión del día: último día cumplido (AAAAMMDD, hora de CDMX) y cuántas llevas.
+    daily: { merge: "max", max: 99991231 },
+    dailies: { merge: "sum", max: 1 },
   },
   // La salida de la carrera es un área fija; los demás aros los pone el modo sólo durante la carrera.
   areas: [

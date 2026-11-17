@@ -387,6 +387,21 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
 
   useEffect(() => { apiRef.current?.setHidden(hiddenKey ? hiddenKey.split(",") : []); }, [ready, hiddenKey]);
 
+  // Ritual de la sesión: desde 10 min antes (y mientras está en vivo) el mapa llama a todos a la sala.
+  const minsToCall = event && now !== null ? Math.ceil((new Date(event.startsAt).getTime() - now) / 60000) : null;
+  const callPhase = !event || !call ? null : call.isLive || event.open ? "live" : minsToCall !== null && minsToCall > 0 && minsToCall <= 10 ? "soon" : null;
+  const atCall = place?.target === "call";
+  useEffect(() => {
+    const api = apiRef.current, pl = structure.places.find((q) => q.target === "call");
+    if (!api || !pl) return;
+    if (!callPhase || atCall || !event) { api.summon(null); return; }
+    api.summon({
+      placeId: pl.id, label: pl.short, who: structure.bots[0]?.name ?? "Aviso",
+      text: callPhase === "live" ? `«${event.title}» ya está abierta. ¡Vente a ${pl.short}!` : `«${event.title}» empieza en unos minutos. Vamos juntando gente en ${pl.short}.`,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, callPhase, atCall, event?.id]);
+
   // «Ver aquí»: abre la pestaña del lugar, la trae a la vista (en celular queda debajo del mapa) y la resalta.
   const asideRef = useRef<HTMLElement>(null);
   const [flash, setFlash] = useState(false);
@@ -830,7 +845,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               {panelTab === "chat" && <p className="ml-auto pr-1 text-[11px] text-[#7C8A8E]">Se borra a los 10 minutos</p>}
             </div>
             {panelTab === "place" && panelTarget ? (
-              <PlacePanel target={panelTarget.target} here={(counts?.byPlace[panelTarget.id] ?? 0)} data={data} go={go} playingId={playing?.id ?? null} onPlay={setPlaying} />
+              <PlacePanel target={panelTarget.target} here={(counts?.byPlace[panelTarget.id] ?? 0)} data={data} go={go} playingId={playing?.id ?? null} onPlay={setPlaying} board={hud?.board} />
             ) : (
               <>
             <div ref={logRef} role="log" aria-label="Mensajes recientes del Mundo" className="min-h-0 flex-1 overflow-y-auto px-3 py-2 text-[13px] leading-snug">

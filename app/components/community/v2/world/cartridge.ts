@@ -264,7 +264,8 @@ export const PROGRESS_MAX_QUESTS = 64;
 export const QUEST_ID = /^[a-z0-9][a-z0-9:-]{0,39}$/;
 /** Objetivo que el motor señala con un marcador y, si no se ve, con una flecha al borde (en cualquier piel). */
 export type Objective = { x: number; y: number; label: string };
-export type ModeHud = { title: string; lines: string[] } | null;
+/** `board`: marcadores del club (récords y quién los tiene) que la interfaz muestra como podio. */
+export type ModeHud = { title: string; lines: string[]; board?: Array<{ label: string; value: string }> } | null;
 /** Lo que el modo puede leer y hacer en un cuadro. Sin DOM ni red: todo pasa por el motor. */
 export type ModeContext = {
   /** Reloj del mundo en segundos Unix (el mismo de las rutas de los robots). */

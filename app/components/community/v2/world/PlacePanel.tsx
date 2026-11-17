@@ -18,11 +18,24 @@ const day = (iso: string | Date | null | undefined) => (iso ? new Date(iso).toLo
 /** Grabación que se proyecta sobre el mapa (el reproductor no cabe en el panel angosto). */
 export type Playing = { id: string; title: string; poster: string | null };
 
-export function PlacePanel({ target, here, data, go, playingId, onPlay }: { target: PanelTarget; here: number; data: ClubData; go: Go; playingId: string | null; onPlay: (r: Playing | null) => void }) {
+export function PlacePanel({ target, here, data, go, playingId, onPlay, board }: { target: PanelTarget; here: number; data: ClubData; go: Go; playingId: string | null; onPlay: (r: Playing | null) => void; board?: Array<{ label: string; value: string }> }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2.5">
       {here > 1 && <p className="text-[11px] font-semibold text-brand-500">{here} personas en este lugar</p>}
       {target === "call" && <CallPanel data={data} go={go} />}
+      {target === "call" && !!board?.length && (
+        <div className="rounded-[10px] border border-[#232D33] bg-background p-2.5">
+          <b className="block text-[12px] font-semibold text-[#F2F5F4]">Podio del club</b>
+          <dl className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12px]">
+            {board.map((row) => (
+              <div key={row.label} className="contents">
+                <dt className="text-[#7C8A8E]">{row.label}</dt>
+                <dd className="text-right font-semibold text-[#F2F5F4]">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
       {target === "wall" && (
         <Suspense fallback={<Note>Cargando el Muro…</Note>}>
           <Await resolve={data.wall} errorElement={<Note>No pudimos cargar el Muro.</Note>}>

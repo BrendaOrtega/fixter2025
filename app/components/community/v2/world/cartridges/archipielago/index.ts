@@ -57,7 +57,46 @@ function islandGame(st: StarState): GameMode {
   let downWave = -1, hitWave = -1, lonely = 0, hidePhase: "off" | "hiding" | "seek" = "off", caught = false;
   const found = new Set<string>();
   let hideWasMine = false, wasInStart = false;
-  const startLap = (ctx: ModeContext, at: number, msg: string) => { st.race = { next: 1, startedAt: at }; ctx.sound("finish"); ctx.bubble(ctx.player, msg); };
+  const startLap = (ctx: ModeContext, at: number, msg: string) => { st.race = { next: 1, startedAt: at }; lap = []; lapT = 0; ctx.sound("finish"); ctx.bubble(ctx.player, msg); };
+  // Fantasma del récord: tu vuelta se muestrea; si es récord, viaja resumida en 20 puntos y cualquiera corre contra ella.
+  let lap: Array<{ t: number; x: number; y: number }> = [], lapT = 0;
+  const GHOST = "fantasma:record", GHOST_N = 20;
+  const b36 = (v: number) => Math.max(0, Math.min(1295, Math.round(v / 4))).toString(36).padStart(2, "0");
+  const lapAt = (path: Array<{ t: number; x: number; y: number }>, t: number) => {
+    let i = 1; while (i < path.length - 1 && path[i].t < t) i++;
+    const a = path[i - 1], b = path[i], k = Math.max(0, Math.min(1, (t - a.t) / Math.max(0.001, b.t - a.t)));
+    return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+  };
+  const encodeLap = (total: number) => {
+    if (lap.length < 2) return "";
+    let out = "";
+    for (let i = 0; i < GHOST_N; i++) { const q = lapAt(lap, (total * i) / (GHOST_N - 1)); out += b36(q.x) + b36(q.y); }
+    return out;
+  };
+  const decodeLap = (s: unknown) => {
+    if (typeof s !== "string" || s.length !== GHOST_N * 4) return null;
+    const pts: Array<{ x: number; y: number }> = [];
+    for (let i = 0; i < GHOST_N; i++) { const x = parseInt(s.slice(i * 4, i * 4 + 2), 36) * 4, y = parseInt(s.slice(i * 4 + 2, i * 4 + 4), 36) * 4; if (!Number.isFinite(x) || !Number.isFinite(y)) return null; pts.push({ x, y }); }
+    return pts;
+  };
+  // Misión del día: una distinta cada día (hora de CDMX), con +5 estrellas.
+  const DAILY = [
+    { text: "Junta 10 estrellas", goal: 10, on: "star" },
+    { text: "Termina una vuelta de la carrera", goal: 1, on: "lap" },
+    { text: "Saluda a 2 fantasmas", goal: 2, on: "wave" },
+  ] as const;
+  let dailyN = 0, dailyDay = 0, dailyDone = 0, dailyMsgT = 0;
+  const dayOf = (now: number) => { const d = new Date((now - 6 * 3600) * 1000); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
+  const dailyOf = (now: number) => DAILY[Math.floor((now - 6 * 3600) / 86400) % DAILY.length];
+  const dailyHit = (kind: (typeof DAILY)[number]["on"], ctx: ModeContext) => {
+    const today = dayOf(ctx.now), d = dailyOf(ctx.now);
+    if (!ctx.progress || d.on !== kind) return;
+    if (dailyDay !== today) { dailyDay = today; dailyN = 0; }
+    if (Math.max(dailyDone, ctx.progress.stats.daily ?? 0) >= today) return;
+    if (++dailyN < d.goal) return;
+    dailyDone = today; mine += 5; ctx.save({ daily: today, dailies: 1 });
+    ctx.sound("finish"); ctx.dialog({ who: "Ghosty", text: `¡Misión de hoy cumplida, ${ctx.player.first}! +5 estrellas. Mañana hay otra.` }); dailyMsgT = 6;
+  };
   // Misiones y progreso guardado: `saved` es cuánto de `mine` ya se mandó a guardar.
   const quests = createQuests([welcomeQuest(st)]);
   let saved = 0, greeted = false, byeT = 0, lastStep: unknown = null, farT = 0;
@@ -157,6 +196,16 @@ function islandGame(st: StarState): GameMode {
       if (ph === "on" && phase !== "on" && inStart && !running) startLap(ctx, st.raceAt, "¡Ya! Sigue la flecha amarilla");
       if (ph !== phase) { phase = ph; beep = -1; }
       wasInStart = inStart;
+      if (running) { lapT -= dt; if (lapT <= 0) { lapT = 0.2; lap.push({ t: now - (st.race.startedAt as number), x: p.x, y: p.y }); } }
+      // El fantasma del récord corre contigo: repite la vuelta récord desde tu salida.
+      const ghostPath = running ? decodeLap(ctx.shared.raceGhost) : null, ghostSecs = typeof ctx.shared.raceBest === "number" ? ctx.shared.raceBest / 10 : 0;
+      const gt = running ? now - (st.race.startedAt as number) : 0;
+      if (ghostPath && ghostSecs > 0 && gt <= ghostSecs + 1) {
+        const f = Math.max(0, Math.min(1, gt / ghostSecs)) * (GHOST_N - 1), i = Math.min(GHOST_N - 2, Math.floor(f)), k = f - i;
+        const owner = ctx.shared.raceLeader === ctx.meId ? "tu récord" : typeof ctx.shared.raceLeaderName === "string" && ctx.shared.raceLeaderName ? `récord de ${ctx.shared.raceLeaderName}` : "récord";
+        ctx.npc(GHOST, { name: `👻 ${owner} · ${clock(ghostSecs)}`, look: { model: "flame", color: "amber", pilot: "avatar" }, to: { x: ghostPath[i].x + (ghostPath[i + 1].x - ghostPath[i].x) * k, y: ghostPath[i].y + (ghostPath[i + 1].y - ghostPath[i].y) * k }, speed: 1200 });
+      } else ctx.npc(GHOST, null);
+      if (dailyMsgT > 0) { dailyMsgT -= dt; if (dailyMsgT <= 0 && !quests.current && byeT <= 0) ctx.dialog(null); }
       if (running && now - (st.race.startedAt as number) > RACE_LIMIT) { st.race = { next: -1, startedAt: null }; ctx.bubble(p, "Se acabó el tiempo de la vuelta"); }
       // Tormenta: dónde va, cuántos golpes lleva esta tanda y si ya cayó.
       const sw = Math.floor(now / STORM_EVERY), sv = typeof ctx.shared.storm === "number" ? ctx.shared.storm : 0;
@@ -190,7 +239,7 @@ function islandGame(st: StarState): GameMode {
       }
       // Récord de estrellas (atómico: el dueño sólo se escribe si el récord sube).
       const best = typeof ctx.shared.best === "number" ? ctx.shared.best : 0;
-      if (mine > best) ctx.commit({ best: mine, leader: ctx.meId });
+      if (mine > best) ctx.commit({ best: mine, leader: ctx.meId, leaderName: p.first.slice(0, 24) });
 
       if (ctx.progress) finish(quests.tick(dt, ctx), ctx);
       guide(ctx, dt);
@@ -201,11 +250,14 @@ function islandGame(st: StarState): GameMode {
       ctx.objective(racing ? { x: RINGS[st.race.next].x, y: RINGS[st.race.next].y, label: st.race.next === 0 ? "Meta" : `Aro ${st.race.next}` } : ctx.progress ? quests.target(ctx) : null);
 
       const raceBest = typeof ctx.shared.raceBest === "number" ? ctx.shared.raceBest : 0;
-      const raceLeader = nameOf(ctx, ctx.shared.raceLeader);
+      const savedName = (k: string) => (typeof ctx.shared[k] === "string" && ctx.shared[k] ? (ctx.shared[k] as string) : undefined);
+      const raceLeader = nameOf(ctx, ctx.shared.raceLeader) ?? savedName("raceLeaderName");
       const raceLine = phase === "countdown" && !racing ? `🏁 Carrera en ${Math.ceil(st.raceAt - now)} s · quédate en el aro coral`
         : st.race.next > 0 || (st.race.next === 0 && st.race.startedAt !== null) ? `🏁 ${clock(now - (st.race.startedAt ?? now))} · ${st.race.next === 0 ? "¡a la meta!" : `aro ${st.race.next} de ${RINGS.length - 1}`}`
         : raceBest ? `🏁 Récord ${clock(raceBest / 10)}${raceLeader ? ` (${raceLeader})` : ""} · entra a la salida` : "🏁 Entra a la salida para convocar una carrera";
-      const who = nameOf(ctx, ctx.shared.leader);
+      const who = nameOf(ctx, ctx.shared.leader) ?? savedName("leaderName");
+      const dq = dailyOf(now), dDone = Math.max(dailyDone, ctx.progress?.stats.daily ?? 0) >= dayOf(now);
+      const dailyLine = !ctx.progress || quests.current ? null : dDone ? "📅 Misión de hoy: cumplida ✓" : `📅 Misión de hoy: ${dq.text}${dq.goal > 1 ? ` (${dailyDay === dayOf(now) ? dailyN : 0}/${dq.goal})` : ""} · +5`;
       const stormLine = st.storm.alive ? `⛈ Tormenta ${hits}/${STORM_HP} · clic derecho junto con alguien` : `⛈ Tormenta en ${clock(Math.max(0, STORM_EVERY - (now % STORM_EVERY))).replace(/\.\d$/, "")}`;
       const hideLeft = Math.ceil(hp === "hiding" ? hideAt - now : hideAt + SEEK_TIME - now);
       const hideLine = hp === "off" ? "🫣 Escondidillas: entra al círculo para buscar"
@@ -213,7 +265,12 @@ function islandGame(st: StarState): GameMode {
         : hp === "hiding" ? `🫣 ¡Escóndete! ${hideLeft} s` : caught ? "🫣 Te encontraron" : `🤫 Te buscan · ${hideLeft} s`;
       ctx.hud({
         title: `⭐ ${mine}${ctx.progress ? ` · ${ctx.progress.stats.stars ?? 0} de por vida` : ""} · récord ${Math.max(best, mine)}${who ? ` (${who})` : ""}`,
-        lines: [...(ctx.progress && quests.line() ? [quests.line() as string] : []), raceLine, stormLine, hideLine, st.it ? `👑 La trae ${nameOf(ctx, st.it) ?? "alguien"}` : "👑 Toma la estrella dorada", `Nueva tanda en ${Math.ceil(STAR_EVERY - (now % STAR_EVERY))} s`],
+        board: [
+          { label: "Récord de carrera", value: raceBest ? `${clock(raceBest / 10)}${raceLeader ? ` · ${raceLeader}` : ""}` : "Nadie todavía" },
+          { label: "Más estrellas", value: Math.max(best, mine) ? `${Math.max(best, mine)}${who ? ` · ${who}` : ""}` : "Nadie todavía" },
+          ...(ctx.progress?.stats.bestLap ? [{ label: "Tu mejor vuelta", value: clock(ctx.progress.stats.bestLap / 10) }] : []),
+        ],
+        lines: [...(ctx.progress && quests.line() ? [quests.line() as string] : []), ...(dailyLine ? [dailyLine] : []), raceLine, stormLine, hideLine, st.it ? `👑 La trae ${nameOf(ctx, st.it) ?? "alguien"}` : "👑 Toma la estrella dorada", `Nueva tanda en ${Math.ceil(STAR_EVERY - (now % STAR_EVERY))} s`],
       });
     },
     on(signal, ctx) {
@@ -232,6 +289,7 @@ function islandGame(st: StarState): GameMode {
           st.taken.add(key); mine++; ctx.area(id, null);
           ctx.sound("star"); ctx.bubble(p, mine === 1 ? "¡Tu primera estrella!" : `${mine} estrellas`);
           quest({ type: "star", total: mine }, ctx);
+          dailyHit("star", ctx);
         } else if (tags?.includes("golden")) {
           want({ it: ctx.meId, itAt: Math.floor(now) }, now, 3, (c) => !!c.shared.it); ctx.sound("tag"); ctx.bubble(p, "¡La traes tú!");
         } else if (tags?.includes("hide")) {
@@ -241,9 +299,11 @@ function islandGame(st: StarState): GameMode {
           if (running && r.next === 0) {
             // Meta: tiempo en décimas; el servidor sólo lo guarda si baja el récord («stale» si no, y está bien).
             const tenths = Math.max(1, Math.round((now - (r.startedAt as number)) * 10));
-            want({ raceBest: tenths, raceLeader: ctx.meId }, now, 3, (c) => typeof c.shared.raceBest === "number" && c.shared.raceBest <= tenths);
+            const ghost = encodeLap(tenths / 10);
+            want({ raceBest: tenths, raceLeader: ctx.meId, raceLeaderName: p.first.slice(0, 24), ...(ghost ? { raceGhost: ghost } : {}) }, now, 3, (c) => typeof c.shared.raceBest === "number" && c.shared.raceBest <= tenths);
             ctx.sound("finish"); ctx.bubble(p, `¡Meta! ${clock(tenths / 10)}`);
             ctx.save({ races: 1, bestLap: tenths });
+            dailyHit("lap", ctx);
             st.race = { next: -1, startedAt: null };
           } else if (!running) {
             if (phase === "countdown") ctx.bubble(p, `¡Quédate aquí! Arranca en ${Math.ceil(st.raceAt - now)}`);
@@ -272,6 +332,7 @@ function islandGame(st: StarState): GameMode {
         // Saludar a Ghosty cuando ya terminaste: repite el recorrido (sin volver a dar la recompensa).
         quests.replay("bienvenida"); lastStep = null;
       } else if (signal.type === "wave") {
+        if (signal.from === p) dailyHit("wave", ctx);
         // Choca esas cinco: el saludo entre dos que están cerca.
         const { from, to } = signal;
         if (Math.hypot(from.x - to.x, from.y - to.y) > HIGH_FIVE) return;

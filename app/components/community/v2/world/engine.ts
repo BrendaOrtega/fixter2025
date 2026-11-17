@@ -91,6 +91,8 @@ export type WorldApi = {
   setPlaceStatus: (placeId: string, status: { on: boolean; sub: string; startsAt?: number; endsAt?: number }) => void;
   /** Lugares que hoy no llevan a nada (p. ej. grabaciones sin grabaciones): no se dibujan. */
   setHidden: (placeIds: string[]) => void;
+  /** Llamado a un lugar (p. ej. la sesión está por empezar): flecha guía hacia él y un aviso en el cuadro de diálogo. `null` lo quita. */
+  summon: (s: { placeId: string; label: string; who: string; text: string } | null) => void;
   /** Insignia sobre un lugar («2 nuevas»): la pinta el motor en cualquier piel. `null` la quita. */
   setPlaceBadge: (placeId: string, text: string | null) => void;
   setRemote: (ships: RemoteShip[], meId: string) => void;
@@ -451,9 +453,11 @@ export function createWorld(opts: {
   stage.appendChild(guide);
   const gArrow = guide.querySelector("[data-arrow]") as HTMLElement, gLabel = guide.querySelector("[data-label]") as HTMLElement;
   function drawObjective() {
-    if (!objective || state.mini) { guide.style.display = "none"; return; }
+    // El objetivo del modo manda; si no hay, el llamado a un lugar.
+    const o = objective ?? summonTo;
+    if (!o || state.mini) { guide.style.display = "none"; return; }
     guide.style.display = "block";
-    const o = objective, s = toScreen(o.x, o.y), W = view.vw, H = view.vh, pad = 40;
+    const s = toScreen(o.x, o.y), W = view.vw, H = view.vh, pad = 40;
     const dist = Math.round(Math.hypot(o.x - player.x, o.y - player.y) / 10);
     if (s.x > pad && s.y > pad && s.x < W - pad && s.y < H - pad) {
       // En pantalla: flecha que apunta hacia abajo, sobre el objetivo, con su nombre arriba.
@@ -495,7 +499,10 @@ export function createWorld(opts: {
   stage.appendChild(talk);
   const tWho = talk.querySelector("[data-who]") as HTMLElement, tText = talk.querySelector("[data-text]") as HTMLElement;
   let dialogNow: { who: string; text: string; t: number } | null = null;
+  let summonTo: Objective | null = null, summonText = "", summonT = 0;
   function drawDialog(dt: number) {
+    // El aviso de un llamado se quita solo a los 9 s.
+    if (summonT > 0) { summonT -= dt; if (summonT <= 0 && dialogNow?.text === summonText) dialogNow = null; }
     if (!dialogNow || state.mini) { talk.style.display = "none"; return; }
     talk.style.display = "block";
     dialogNow.t += dt;
@@ -992,6 +999,12 @@ export function createWorld(opts: {
     },
     setLook(look) { player.model = look.model; player.color = look.color; player.pilot = look.pilot; cb.onIntent(); },
     setPlaceStatus(placeId, status) { state.placeStatus[placeId] = status; },
+    summon(sm) {
+      const pl = sm ? S.places.find((q) => q.id === sm.placeId) : null;
+      if (!sm || !pl) { summonTo = null; if (dialogNow?.text === summonText) dialogNow = null; return; }
+      summonTo = { x: pl.x, y: pl.y, label: sm.label };
+      if (summonText !== sm.text) { summonText = sm.text; summonT = 9; dialogNow = { who: sm.who, text: sm.text, t: 0 }; tWho.textContent = sm.who; tText.textContent = ""; cb.onSound("waveIn"); }
+    },
     setPlaceBadge(id, text) {
       const cur = badges.get(id);
       if (!text) { cur?.el.remove(); badges.delete(id); return; }

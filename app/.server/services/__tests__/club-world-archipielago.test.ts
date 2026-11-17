@@ -10,6 +10,8 @@ describe("Archipiélago en el servidor", () => {
     expect(setShared("arch", "a", { changes: { raceAt: t + 10 } }, now)).toEqual({ ok: true });
     expect(setShared("arch", "a", { changes: { seeker: "a", hideAt: t + 15 } }, now + 400)).toEqual({ ok: true });
     expect(setShared("arch", "a", { changes: { storm: Math.floor(t / 240) * 100 + 1 } }, now + 800)).toEqual({ ok: true });
+    // Récord de carrera con su dueño y la ruta del fantasma, en un solo cambio.
+    expect(setShared("arch", "a", { changes: { raceBest: 321, raceLeader: "a", raceLeaderName: "Brenda", raceGhost: "0a1b".repeat(20) } }, now + 1200)).toEqual({ ok: true });
     expect(snapshot("arch", now + 800).shared).toMatchObject({ raceAt: t + 10, seeker: "a" });
   });
 });

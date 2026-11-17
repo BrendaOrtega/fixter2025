@@ -41,3 +41,14 @@ vista de 280 · Atrapas tocando · Recompensas guardadas (`found`, `hides`).
 - Misiones del día rotativas (gana una carrera, tumba la tormenta, encuentra a 2).
 - Fantasma grabado de la vuelta récord (vida con una sola persona).
 - Ficha del miembro con sus logros guardados.
+
+## Etapa 3 (16-nov-2026): ritual, fantasma, misión del día y podio
+
+- **Ritual de la sesión** (motor, `api.summon`): desde 10 min antes del evento y mientras está abierta, la flecha guía
+  apunta a la sala y Ghosty lo avisa en el cuadro de diálogo. Lo decide `WorldView` con el evento; sirve en cualquier piel.
+- **Fantasma del récord**: la vuelta récord viaja en `shared.raceGhost` (20 puntos, 80 caracteres) junto con
+  `raceLeaderName`; al correr, un fantasma ámbar la repite desde tu salida. Hay contra quién correr aunque estés sin nadie.
+- **Misión del día**: rota por día de CDMX (10 estrellas, una vuelta, saludar a 2); da +5 y se guarda en
+  `progress.daily` (AAAAMMDD) y `dailies`.
+- **Podio del club**: `ModeHud.board` (récord de carrera, más estrellas, tu mejor vuelta) se ve en el panel del Faro.
+  Los nombres de los dueños se guardan (`leaderName`, `raceLeaderName`) para que se lean aunque no estén conectados.

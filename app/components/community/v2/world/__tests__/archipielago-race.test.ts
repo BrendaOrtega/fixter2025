@@ -10,7 +10,7 @@ function setup() {
   const shared: Record<string, SharedValue> = {};
   const areas = new Map<string, Area>();
   const sent: Record<string, SharedValue | null>[] = [];
-  const player = { id: "me", x: RINGS[0].x, y: RINGS[0].y, vx: 0, vy: 0, ang: 0 } as never;
+  const player = { id: "me", x: RINGS[0].x, y: RINGS[0].y, vx: 0, vy: 0, ang: 0, first: "Bliss" } as never;
   const ctx = {
     now: 1000, meId: "me", player, others: [], places: archipielago.structure.places, nearPlace: null, shared,
     sound: () => {}, bubble: () => {}, hud: () => {},
@@ -38,6 +38,9 @@ describe("Archipiélago: carrera", () => {
     tick(0.2);
     expect(typeof shared.raceBest).toBe("number");
     expect(shared.raceLeader).toBe("me");
+    // La vuelta récord viaja resumida para el fantasma: 20 puntos de 4 caracteres.
+    expect(String(shared.raceGhost)).toMatch(/^[0-9a-z]{80}$/);
+    expect(shared.raceLeaderName).toBeTruthy();
   });
 
   it("con más gente, entrar convoca; quien está en la salida arranca a los 5 s", () => {
