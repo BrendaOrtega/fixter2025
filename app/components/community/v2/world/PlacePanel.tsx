@@ -1,6 +1,5 @@
-import { Suspense, useState, type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Await } from "react-router";
-import { ClubVideo } from "../../ClubVideo";
 import { EnterCallButton, RsvpControl, describeCall, useNow } from "../call";
 import type { ClubData, ClubRecording, ClubWallData, Go } from "../types";
 
@@ -16,7 +15,10 @@ const day = (iso: string | Date | null | undefined) => (iso ? new Date(iso).toLo
  * El contenido de un lugar, dentro del Mundo: llegas a la isla y lo ves aquí, sin salir del mapa.
  * No depende de la piel: sale de `place.target` y de lo que ya trae el loader del club.
  */
-export function PlacePanel({ target, here, data, go }: { target: PanelTarget; here: number; data: ClubData; go: Go }) {
+/** Grabación que se proyecta sobre el mapa (el reproductor no cabe en el panel angosto). */
+export type Playing = { id: string; title: string; poster: string | null };
+
+export function PlacePanel({ target, here, data, go, playingId, onPlay }: { target: PanelTarget; here: number; data: ClubData; go: Go; playingId: string | null; onPlay: (r: Playing | null) => void }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2.5">
       {here > 1 && <p className="text-[11px] font-semibold text-brand-500">{here} personas en este lugar</p>}
@@ -31,7 +33,7 @@ export function PlacePanel({ target, here, data, go }: { target: PanelTarget; he
       {target === "recs" && (
         <Suspense fallback={<Note>Cargando grabaciones…</Note>}>
           <Await resolve={data.recordings} errorElement={<Note>No pudimos cargar las grabaciones.</Note>}>
-            {(list) => <RecsPanel slug={data.community.slug} recordings={list} go={go} />}
+            {(list) => <RecsPanel recordings={list} go={go} playingId={playingId} onPlay={onPlay} />}
           </Await>
         </Suspense>
       )}
@@ -83,31 +85,27 @@ function WallPanel({ wall, go }: { wall: ClubWallData; go: Go }) {
   );
 }
 
-function RecsPanel({ slug, recordings, go }: { slug: string; recordings: ClubRecording[]; go: Go }) {
-  const ready = recordings.filter((r) => r.status === "ready" && !r.hidden).slice(0, 4);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const playing = ready.find((r) => r.id === playingId);
+function RecsPanel({ recordings, go, playingId, onPlay }: { recordings: ClubRecording[]; go: Go; playingId: string | null; onPlay: (r: Playing | null) => void }) {
+  const ready = recordings.filter((r) => r.status === "ready" && !r.hidden).slice(0, 6);
   if (!ready.length) return <Note>Aún no hay grabaciones listas.</Note>;
   return (
     <>
-      {playing && (
-        <div>
-          <ClubVideo key={playing.id} srcUrl={`/comunidad/${slug}/grabacion/${playing.id}`} poster={playing.poster} />
-          <b className="mt-1 block text-[13px] font-semibold text-[#F2F5F4]">{playing.title}</b>
-        </div>
-      )}
-      {ready.filter((r) => r.id !== playing?.id).map((r) => (
-        <button key={r.id} type="button" onClick={() => setPlayingId(r.id)} className="flex items-center gap-2.5 rounded-[10px] border border-[#232D33] bg-background p-1.5 text-left hover:border-brand-500">
-          <span className="relative h-[46px] w-[82px] shrink-0 overflow-hidden rounded-md bg-[#1C252B]">
-            {r.poster && <img src={r.poster} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
-            <span aria-hidden className="absolute inset-0 grid place-items-center text-[14px] text-white drop-shadow">▶</span>
-          </span>
-          <span className="min-w-0">
-            <b className="line-clamp-2 block text-[12.5px] font-semibold leading-tight text-[#F2F5F4]">{r.title}</b>
-            <small className="text-[11px] text-[#7C8A8E]" suppressHydrationWarning>{day(r.endedAt)}{r.minutes ? ` · ${r.minutes} min` : ""}</small>
-          </span>
-        </button>
-      ))}
+      <Note>Elige una y se proyecta en grande sobre el mapa.</Note>
+      {ready.map((r) => {
+        const on = r.id === playingId;
+        return (
+          <button key={r.id} type="button" aria-pressed={on} onClick={() => onPlay(on ? null : { id: r.id, title: r.title, poster: r.poster })} className={`flex items-center gap-2.5 rounded-[10px] border bg-background p-1.5 text-left hover:border-brand-500 ${on ? "border-brand-500" : "border-[#232D33]"}`}>
+            <span className="relative h-[46px] w-[82px] shrink-0 overflow-hidden rounded-md bg-[#1C252B]">
+              {r.poster && <img src={r.poster} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
+              <span aria-hidden className="absolute inset-0 grid place-items-center text-[14px] text-white drop-shadow">{on ? "■" : "▶"}</span>
+            </span>
+            <span className="min-w-0">
+              <b className="line-clamp-2 block text-[12.5px] font-semibold leading-tight text-[#F2F5F4]">{r.title}</b>
+              <small className="text-[11px] text-[#7C8A8E]" suppressHydrationWarning>{on ? "Proyectando · toca para cerrar" : `${day(r.endedAt)}${r.minutes ? ` · ${r.minutes} min` : ""}`}</small>
+            </span>
+          </button>
+        );
+      })}
       <button type="button" className={`${link} self-start`} onClick={() => go("recs")}>Todas las grabaciones</button>
     </>
   );

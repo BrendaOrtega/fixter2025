@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { EnterCallButton, describeCall, useNow } from "./call";
-import { PlacePanel, isPanelTarget, type PanelTarget } from "./world/PlacePanel";
+import { PlacePanel, isPanelTarget, type PanelTarget, type Playing } from "./world/PlacePanel";
+import { ClubVideo } from "../ClubVideo";
 import { Icon, type IconName } from "./icons";
 import { Avatar, SectionHead, btn } from "./ui";
 import type { ClubData, Go } from "./types";
@@ -145,6 +146,8 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
   /** Hasta cuándo viste cada sección (en este navegador): de ahí salen las insignias de «nuevo». */
   const [seen, setSeen] = useState<{ wall: number; recs: number } | null>(null);
   const [fresh, setFresh] = useState({ wall: 0, recs: 0 });
+  /** Grabación proyectada sobre el mapa (la pantalla del Cine). */
+  const [playing, setPlaying] = useState<Playing | null>(null);
   const [waved, setWaved] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
@@ -787,6 +790,17 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
             </div>
           )}
 
+          {/* ── Pantalla del Cine: la grabación se proyecta en grande sobre el mapa, sin salir del Mundo ── */}
+          {playing && (
+            <div className="absolute inset-x-2 top-14 z-[6] mx-auto max-w-[min(860px,calc((100dvh-300px)*1.77))] overflow-hidden rounded-xl border border-[#232D33] bg-[#0B0F12] shadow-lg lg:inset-x-6">
+              <div className="flex items-center gap-2 px-3 py-2">
+                <b className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#F2F5F4]">{playing.title}</b>
+                <button type="button" className={btn} onClick={() => setPlaying(null)}>Cerrar</button>
+              </div>
+              <ClubVideo key={playing.id} srcUrl={`/comunidad/${community.slug}/grabacion/${playing.id}`} poster={playing.poster} />
+            </div>
+          )}
+
           {sheetOpen && (
             <ShipSheet
               look={look} face={faceRef.current} looks={structure.looks} skin={skin} copy={copy} onChange={changeLook} onClose={() => setSheetOpen(false)}
@@ -816,7 +830,7 @@ export function WorldView({ data, go }: { data: ClubData; go: Go }) {
               {panelTab === "chat" && <p className="ml-auto pr-1 text-[11px] text-[#7C8A8E]">Se borra a los 10 minutos</p>}
             </div>
             {panelTab === "place" && panelTarget ? (
-              <PlacePanel target={panelTarget.target} here={(counts?.byPlace[panelTarget.id] ?? 0)} data={data} go={go} />
+              <PlacePanel target={panelTarget.target} here={(counts?.byPlace[panelTarget.id] ?? 0)} data={data} go={go} playingId={playing?.id ?? null} onPlay={setPlaying} />
             ) : (
               <>
             <div ref={logRef} role="log" aria-label="Mensajes recientes del Mundo" className="min-h-0 flex-1 overflow-y-auto px-3 py-2 text-[13px] leading-snug">
