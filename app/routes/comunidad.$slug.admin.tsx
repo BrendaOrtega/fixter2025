@@ -764,7 +764,7 @@ export default function CommunityAdmin({ loaderData }: Route.ComponentProps) {
       navProps={(view) => ({ href: `/comunidad/${community.slug}${CLUB_TABS[view]}` })}
     >
       <SectionHead title="Administrar club" />
-      <nav aria-label="Secciones del panel" className="flex gap-1 overflow-x-auto border-b border-[#232D33] bg-[#141B20] px-3 lg:px-5">
+      <nav aria-label="Secciones del panel" className="flex gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-b border-[#232D33] bg-[#141B20] px-3 lg:px-5">
         {tabs.map(([key, text]) => (
           <button
             key={key}

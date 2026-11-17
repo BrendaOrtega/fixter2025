@@ -284,7 +284,7 @@ function Editor({ endpoint, slug, initial, onClose }: { endpoint: string; slug: 
 
       <div className={`${card} min-w-0 overflow-hidden lg:grid lg:grid-cols-[230px_1fr]`}>
         {/* Preguntas: fila que se desliza en el teléfono, columna en escritorio. */}
-        <nav aria-label="Preguntas" className="flex gap-1.5 overflow-x-auto border-b border-[#232D33] p-2.5 lg:flex-col lg:overflow-visible lg:border-b-0 lg:border-r">
+        <nav aria-label="Preguntas" className="flex gap-1.5 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:overflow-y-visible border-b border-[#232D33] p-2.5 lg:flex-col lg:overflow-visible lg:border-b-0 lg:border-r">
           {draft.questions.map((item, i) => (
             <button
               key={i}

@@ -366,7 +366,7 @@ export function VoiceStrip({
       </div>
 
       {shown.length > 0 && lk && (
-        <ul className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+        <ul className="mt-2 flex gap-1.5 overflow-x-auto overflow-y-hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {shown.map(({ p, local }) => {
             const pub = p.getTrackPublication(lk.Track.Source.Camera);
             const video = pub && !pub.isMuted && pub.videoTrack ? (pub.videoTrack as VideoTrack) : null;
