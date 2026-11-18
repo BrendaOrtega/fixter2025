@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { data, Link, redirect, useFetcher, useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { db } from "~/.server/db";
+import { recordPageVisit } from "~/.server/page-visit.server";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { validateWaitlistConfirmToken } from "~/utils/tokens";
 import {
@@ -110,6 +111,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  recordPageVisit(request); // analítica por UTM, sin cookies
   const params = new URL(request.url).searchParams;
 
   // Correos viejos de la lista de espera traen `?confirmar=<token>`: se sigue confirmando.

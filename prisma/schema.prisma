@@ -871,6 +871,21 @@ model Backup {
   @@map("backups")
 }
 
+// Visita a una página de campaña (sin cookies ni IP): sirve para leer el tráfico por UTM.
+model PageVisit {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  path        String
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  referrer    String? // sólo el host, p. ej. "www.youtube.com"
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@map("page_visits")
+}
+
 // Video analytics - tracking minimalista de visualizaciones
 model VideoView {
   id        String  @id @default(auto()) @map("_id") @db.ObjectId

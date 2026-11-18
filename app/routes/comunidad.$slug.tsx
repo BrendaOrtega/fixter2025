@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
+import { recordPageVisit } from "~/.server/page-visit.server";
 import {
   Await,
   Form,
@@ -122,6 +123,7 @@ function settle<T, F>(work: Promise<T>, fallback: F): Promise<T | F> {
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  recordPageVisit(request); // analítica por UTM, sin cookies
   // La comunidad y la sesión no dependen una de la otra.
   const [community, user] = await Promise.all([
     loadCommunity(params.slug as string),
