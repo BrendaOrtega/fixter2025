@@ -294,7 +294,8 @@ export async function prepareBroadcasts(communityId: string, title: string): Pro
         try {
           const access = await googleAccessToken(row.id, decryptSecret(row.tokenEnc));
           const s = await ensureStream(fetch, access, row.streamId);
-          const privacy: Privacy = isPrivacy(row.privacy) ? row.privacy : "public";
+          // Siempre pública (bliss, 18-nov): el webinar salió «no listado» y la audiencia no lo encontró.
+          const privacy: Privacy = "public";
           const b = await createBroadcast(fetch, access, { title, privacy, streamId: s.streamId });
           out.targets.push({ name: "YouTube", url: s.rtmpUrl });
           out.watchUrls.push(b.watchUrl);

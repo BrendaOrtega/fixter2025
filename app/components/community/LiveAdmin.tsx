@@ -102,26 +102,6 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
         </div>
         {yt && (
           <>
-            <Form method="post" className="flex flex-wrap items-center gap-2 border-t border-[#232D33] pt-3">
-              <input type="hidden" name="intent" value="live-privacy" />
-              <span className="text-[13px] text-[#D9E0DE]">La transmisión sale como:</span>
-              {(
-                [
-                  ["public", "Pública"],
-                  ["unlisted", "No listada (sólo con la liga)"],
-                ] as const
-              ).map(([value, text]) => (
-                <button
-                  key={value}
-                  name="privacy"
-                  value={value}
-                  aria-pressed={yt.privacy === value}
-                  className={`rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors ${yt.privacy === value ? "border-[#FF0000] bg-[#2A1515] text-[#F2F5F4]" : "border-[#232D33] bg-[#141B20] text-[#7C8A8E] hover:bg-[#1C252B]"}`}
-                >
-                  {text}
-                </button>
-              ))}
-            </Form>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#232D33] pt-3 text-[13px]">
               {yt.lastWatchUrl ? (
                 <a href={yt.lastWatchUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 font-medium text-[#F2F5F4] hover:underline">
