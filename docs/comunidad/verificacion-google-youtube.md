@@ -41,6 +41,21 @@ Si el revisor deja grabando, la caja se detiene sola a los 3 minutos sin nadie p
 7. Click “Detener” to end the broadcast.
 8. Back in the dashboard, click “Desconectar”: the token is deleted and revoked at Google.
 
+## Estado al 20-nov (tarde)
+- En producción: aviso (es/en), revocación al desconectar, sala por comunidad, `unlisted`, aviso de canal sin en
+  vivo (`liveReady`), cuenta de prueba. Comprobado con la liga del revisor: entra, ve el panel y llega al
+  consentimiento en inglés; la caja contestó que no tiene destinos fijos.
+- Toma 1 del video (`~/Movies/oauth-youtube/toma1.mov`, 88 s): panel → consentimiento en inglés con el client_id
+  → «Canal: Mailmask» → sala `fx-google-review-<día>` → «En vivo». Se detuvo ahí: el canal Mailmask no tiene
+  activado el en vivo en YouTube (`liveStreamingNotEnabled`).
+- En YouTube Studio del canal Mailmask se pidió el acceso para transmitir; YouTube pide **verificar el teléfono**
+  (lo hace bliss) y luego tarda hasta 24 h.
+- La comunidad `google-review` quedó con el canal Mailmask conectado: **desconectarlo antes de mandar la liga**.
+
 ## Pendiente
+- Con el en vivo activo en Mailmask (o usando FixterGeek, que ya lo tiene; en esta comunidad sale oculto):
+  regrabar desde «Iniciar llamada ahora» → «En vivo · YouTube» → «Grabar» → liga de YouTube → «Detener» →
+  «Desconectar» → `myaccount.google.com/permissions`. Marcas en inglés y `rec render --aspect native`.
+- Subir el video a YouTube como oculto y ponerlo en la respuesta.
 - Respuesta al correo de Google y «Resubmit» en Cloud Console → Verification Center (con el ok de bliss).
 - Si rechazan otra vez, leer el motivo antes de reenviar: el aviso y el video ya cubren lo que pidieron.
