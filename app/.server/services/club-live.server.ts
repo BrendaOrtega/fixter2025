@@ -238,10 +238,11 @@ const isPrivacy = (p: unknown): p is "public" | "unlisted" => p === "public" || 
  * Destinos FIJOS de la caja de llamadas (llaves manuales en su env): toda transmisión de la caja
  * sale también por ellos, sea de la comunidad que sea. Sólo nombres. Vacío si no hay o no contesta.
  */
-export async function boxFixedTargets(): Promise<string[]> {
+export async function boxFixedTargets(): Promise<string[] | null> {
   const r = await boxGet("/admin/live/targets", 4_000).catch(() => null);
   const t = r?.ok ? (r.json as { targets?: unknown } | null)?.targets : null;
-  return Array.isArray(t) ? t.filter((x): x is string => typeof x === "string").slice(0, 8) : [];
+  // `null` = la caja no contestó (o no hay caja propia configurada): no se sabe.
+  return Array.isArray(t) ? t.filter((x): x is string => typeof x === "string").slice(0, 8) : null;
 }
 
 export async function liveStatus(communityId: string) {
@@ -254,7 +255,9 @@ export async function liveStatus(communityId: string) {
   return {
     configured: youtubeConfigured(),
     facebookConfigured: facebookConfigured(),
-    fixedTargets,
+    fixedTargets: fixedTargets ?? [],
+    /** `false` = no se pudo preguntar a la caja por sus destinos fijos. */
+    fixedTargetsKnown: fixedTargets !== null,
     facebook: fb
       ? {
           account: fb.accountName,

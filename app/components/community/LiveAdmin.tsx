@@ -10,6 +10,7 @@ type Live = {
   facebookConfigured: boolean;
   /** Destinos fijos de la caja de llamadas: toda transmisión sale también por ellos. */
   fixedTargets?: string[];
+  fixedTargetsKnown?: boolean;
   facebook: { account: string; pageUrl: string; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
   youtube: { account: string; channelUrl: string; privacy: "public" | "unlisted"; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
 };
