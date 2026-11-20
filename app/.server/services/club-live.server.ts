@@ -25,6 +25,7 @@ const STATE_PREFIX = "live.";
 const CONNECT_TTL_MS = 15 * 60_000;
 const ENVELOPE_TTL_S = 120;
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
+const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const GRAPH = "https://graph.facebook.com/v23.0";
 export const FB_SCOPES = "pages_show_list,pages_read_engagement,pages_manage_posts,publish_video";
 export type LiveProvider = "youtube" | "facebook";
@@ -64,7 +65,7 @@ export function verifyConnectState(raw: string | null, key = signingKey("live-st
 export const isLiveState = (state: string | null) => !!state?.startsWith(STATE_PREFIX);
 
 /** A dónde mandar al dueño para que dé permiso a su canal. */
-export function youtubeAuthorizeUrl(c: { communityId: string; slug: string; email: string }): string {
+export function youtubeAuthorizeUrl(c: { communityId: string; slug: string; email: string }, lang?: string | null): string {
   const state = signConnectState({ ...c, exp: Date.now() + CONNECT_TTL_MS });
   const q = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID as string,
@@ -75,7 +76,8 @@ export function youtubeAuthorizeUrl(c: { communityId: string; slug: string; emai
     prompt: "select_account consent",
     include_granted_scopes: "false",
     scope: `openid email ${YOUTUBE_SCOPE}`,
-    hl: "es-419",
+    // `?hl=en` en la liga de conectar: la pantalla de consentimiento sale en inglés (revisión de Google).
+    hl: lang === "en" ? "en" : "es-419",
     state,
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${q}`;
@@ -273,8 +275,38 @@ export async function setYouTubePrivacy(communityId: string, privacy: unknown) {
   return r.count > 0;
 }
 
+/**
+ * Le retira a nuestra app el permiso del canal en Google. Es lo que promete el aviso de privacidad:
+ * «Desconectar» no sólo borra el token de aquí, también lo deja inservible. Nunca lanza.
+ */
+export async function revokeGoogleToken(refreshToken: string, f: typeof fetch = fetch): Promise<boolean> {
+  try {
+    const r = await f(REVOKE_URL, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: refreshToken }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function disconnectDestination(communityId: string, provider: unknown) {
   if (provider !== "youtube" && provider !== "facebook") return false;
+  if (provider === "youtube") {
+    const rows = await db.streamDestination.findMany({ where: { communityId, provider }, select: { id: true, tokenEnc: true } });
+    for (const row of rows) {
+      accessCache.delete(row.id);
+      // Si Google no contesta, el token se borra de todos modos: aquí ya no queda copia.
+      let token: string | null = null;
+      try {
+        token = decryptSecret(row.tokenEnc);
+      } catch {}
+      if (token && !(await revokeGoogleToken(token))) console.error("[club-live] Google no confirmó la revocación", communityId);
+    }
+  }
   const r = await db.streamDestination.deleteMany({ where: { communityId, provider } });
   return r.count > 0;
 }

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Form } from "react-router";
+import { Form, Link, useSearchParams } from "react-router";
 import { btnGhost, card as panel } from "~/components/community/v2/ui";
 
 // Pestaña «Transmisión» del panel del anfitrión: conectar el canal de YouTube y la página de
@@ -46,6 +46,9 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
   const yt = live.youtube;
   const fb = live.facebook;
   const connect = `/comunidad/${slug}/transmision`;
+  // `?hl=en` en el panel: la pantalla de permiso de Google sale en inglés.
+  const [params] = useSearchParams();
+  const ytConnect = params.get("hl") === "en" ? `${connect}?hl=en` : connect;
 
   // Confeti una sola vez al conectar; se quita `live=ok` de la URL para que no se repita al recargar
   useEffect(() => {
@@ -94,12 +97,18 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
             </div>
           </div>
           {live.configured && (
-            <a href={connect} className={yt ? btnGhost : ytBtn}>
+            <a href={ytConnect} className={yt ? btnGhost : ytBtn}>
               {!yt && <YouTubeIcon className="h-4 w-6 [&>path:first-child]:fill-white [&>path:last-child]:fill-[#FF0000]" />}
               {yt ? "Cambiar de canal" : "Conectar con YouTube"}
             </a>
           )}
         </div>
+        <p className="text-[13px] text-[#7C8A8E]">
+          El permiso de YouTube sólo se usa para crear en tu canal la transmisión de tus llamadas. No leemos tus videos, comentarios ni estadísticas, y «Desconectar» borra y revoca el acceso al instante.{" "}
+          <Link to="/aviso-de-privacidad#google" className="text-[#D9E0DE] underline">
+            Cómo tratamos los datos de Google
+          </Link>
+        </p>
         {yt && (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#232D33] pt-3 text-[13px]">

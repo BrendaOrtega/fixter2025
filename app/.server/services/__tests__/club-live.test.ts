@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("~/.server/db", () => ({ db: {} }));
 
-import { facebookAuthorizeUrl, facebookState, signConnectState, signLiveEnvelope, verifyConnectState } from "../club-live.server";
+import { YOUTUBE_SCOPE, facebookAuthorizeUrl, facebookState, revokeGoogleToken, signConnectState, signLiveEnvelope, verifyConnectState, youtubeAuthorizeUrl } from "../club-live.server";
 import { createLiveVideo } from "~/.server/live/facebook-live";
 
 const key = Buffer.from("k".repeat(32));
@@ -36,6 +36,30 @@ describe("sobre firmado de destinos", () => {
     const claims = JSON.parse(Buffer.from(body, "base64url").toString());
     expect(claims).toMatchObject({ room: "fx-1", urls: ["rtmp://a.rtmp.youtube.com/live2/abc"], exp: 130 });
     expect(claims.jti).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});
+
+describe("YouTube", () => {
+  it("la liga de Google pide sólo el permiso de YouTube y sale en inglés si se pide", () => {
+    process.env.GOOGLE_CLIENT_ID = "cid";
+    process.env.STREAM_KEYS_MASTER = "a".repeat(64);
+    const who = { communityId: "c1", slug: "club", email: "a@b.mx" };
+    const u = new URL(youtubeAuthorizeUrl(who));
+    expect(u.searchParams.get("scope")).toBe(`openid email ${YOUTUBE_SCOPE}`);
+    expect(u.searchParams.get("hl")).toBe("es-419");
+    expect(new URL(youtubeAuthorizeUrl(who, "en")).searchParams.get("hl")).toBe("en");
+    expect(new URL(youtubeAuthorizeUrl(who, "xx")).searchParams.get("hl")).toBe("es-419");
+  });
+  it("desconectar revoca el token en Google, y un fallo de red no lanza", async () => {
+    const f = vi.fn(async () => new Response("{}", { status: 200 }));
+    expect(await revokeGoogleToken("1//refresh", f as unknown as typeof fetch)).toBe(true);
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://oauth2.googleapis.com/revoke");
+    expect(String(init.body)).toBe("token=1%2F%2Frefresh");
+    const down = vi.fn(async () => {
+      throw new Error("sin red");
+    });
+    expect(await revokeGoogleToken("x", down as unknown as typeof fetch)).toBe(false);
   });
 });
 

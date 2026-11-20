@@ -21,5 +21,5 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     return redirect(facebookAuthorizeUrl(who));
   }
   if (!youtubeConfigured()) throw data("La transmisión a YouTube todavía no está configurada en el servidor.", { status: 503 });
-  return redirect(youtubeAuthorizeUrl(who));
+  return redirect(youtubeAuthorizeUrl(who, new URL(request.url).searchParams.get("hl")));
 };
