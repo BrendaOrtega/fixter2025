@@ -11,16 +11,17 @@ import { CallRoom } from "~/components/community/CallRoom";
 import { db } from "~/.server/db";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { getNextEvent } from "~/.server/services/wall.server";
-import { isHostEmail } from "~/.server/services/club-call.server";
+import { clubCallRoom, isCallHost } from "~/.server/services/club-call.server";
 import { recordingState, startRecording, stopRecording } from "~/.server/services/club-recording.server";
 import { liveTargetNames } from "~/.server/services/club-live.server";
 
 async function load(request: Request, slug: string) {
   const user = await getUserOrNull(request);
   if (!user) throw redirect(`/login?next=/comunidad/${slug}`);
-  const community = await db.community.findFirst({ where: { slug }, select: { id: true, ownerId: true } });
+  const community = await db.community.findFirst({ where: { slug }, select: { id: true, slug: true, ownerId: true } });
   if (!community) throw data("Comunidad no encontrada", { status: 404 });
-  return { user, community, canMod: isHostEmail(user.email) };
+  // Cada comunidad graba y transmite SU sala; modera su dueño (o un correo de casa).
+  return { user, community, canMod: isCallHost(user, community), room: clubCallRoom(new Date(), community.slug) };
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -40,11 +41,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const slug = params.slug as string;
-  const { community, canMod } = await load(request, slug);
+  const { community, canMod, room } = await load(request, slug);
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
   if (intent === "rec-state") {
-    const s = await recordingState();
+    const s = await recordingState(room);
     // Al anfitrión se le dice a dónde puede transmitir (sólo nombres) para que la sala encienda «En vivo».
     return { intent, recording: !!s?.recording, ...(canMod ? { liveTargets: await liveTargetNames(community.id) } : {}) };
   }
@@ -52,11 +53,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const event = await getNextEvent(community.id);
   const title = event?.title ?? "Llamada del club";
   if (intent === "rec-start") {
-    const r = await startRecording(community, title, undefined, { live: form.get("live") === "1", event });
+    const r = await startRecording(community, title, room, { live: form.get("live") === "1", event });
     return r.ok ? { intent, recording: true, watchUrls: r.watchUrls, liveErrors: r.liveErrors } : data({ intent, error: r.error }, { status: 502 });
   }
   if (intent === "rec-stop") {
-    const r = await stopRecording(community, title, undefined, event);
+    const r = await stopRecording(community, title, room, event);
     return r.ok ? { intent, recording: false } : data({ intent, error: r.error }, { status: 502 });
   }
   return data({ intent, error: "Acción desconocida" }, { status: 400 });

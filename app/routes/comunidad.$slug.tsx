@@ -65,7 +65,7 @@ import { badgesForMembers } from "~/.server/services/badges.server";
 import { ClubVideo } from "~/components/community/ClubVideo";
 import { clubIncluded as included } from "~/components/community/clubIncluded";
 import { CommunityIllustration } from "~/components/community/CommunityIllustration";
-import { getCallLink, isHostEmail, type CallSkin } from "~/.server/services/club-call.server";
+import { clubCallRoom, getCallLink, isCallHost, type CallSkin } from "~/.server/services/club-call.server";
 import { EmojiConfetti } from "~/components/common/EmojiConfetti";
 import getMetaTags from "~/utils/getMetaTags";
 import { ClubV2 } from "~/components/community/v2/ClubV2";
@@ -205,7 +205,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     []
   );
   // Estado de la grabación sólo para el anfitrión: puede iniciar su llamada en cualquier momento.
-  const rec = canMod ? settle(recordingState(), null) : null;
+  const rec = canMod ? settle(recordingState(clubCallRoom(new Date(), community.slug)), null) : null;
 
   const { ownerId: _owner, ...publicCommunity } = community;
   return {
@@ -315,7 +315,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const paywall = await antiFactoryCallGate(event, {
       email: user.email,
       isMember: isMembershipActive(membership),
-      exempt: canMod || isHostEmail(user.email),
+      exempt: canMod || isCallHost(user, community),
     });
     if (paywall) return data({ error: paywall.message, paywallUrl: paywall.url }, { status: 403 });
     // Los participantes del micro-hackatón (invitados con esa fuente) entran como speaker para
@@ -329,8 +329,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     // 10-nov una participante con rol ADMIN sacó a bliss de la llamada. Los ADMIN entran como
     // ponentes: comparten pantalla pero no moderan.
     const link = await getCallLink(user, {
-      host: isHostEmail(user.email),
+      host: isCallHost(user, community),
       speaker: !!speakerInvite || canMod,
+      // Cada comunidad tiene su sala y su rótulo; el club conserva los de siempre.
+      slug: community.slug,
+      title: `${community.name} · Llamada en vivo`,
       // Skin de la comunidad; vacío = el de la casa. Sólo viaja cuando fixter firma el ticket.
       skin: (community.callSkin as CallSkin | null) ?? null,
     });
@@ -349,8 +352,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const title = event?.title ?? "Llamada del club";
     const r =
       intent === "rec-start"
-        ? await startRecording(community, title, undefined, { event })
-        : await stopRecording(community, title, undefined, event);
+        ? await startRecording(community, title, clubCallRoom(new Date(), community.slug), { event })
+        : await stopRecording(community, title, clubCallRoom(new Date(), community.slug), event);
     return r.ok ? { ok: true } : data({ error: r.error }, { status: 502 });
   }
   // Confirmar asistencia a la próxima llamada (o retirarla). Sólo quien está adentro.

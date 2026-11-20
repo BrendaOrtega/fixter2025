@@ -258,6 +258,8 @@ model Community {
   welcomeSequenceId String? @db.ObjectId
 
   isActive Boolean @default(true)
+  /// Fuera del directorio público de la portada (comunidades de prueba o privadas). Se llega por liga.
+  unlisted Boolean?
 
   /// Membresía de pago (10-nov-2026). Sin precio la comunidad sigue siendo
   /// la de alta gratuita por correo de siempre.

@@ -19,6 +19,7 @@ import { db } from "~/.server/db";
 import { decryptSecret, encryptSecret, signingKey, vaultIsConfigured } from "~/.server/live/secret-vault.server";
 import { createBroadcast, ensureStream, myChannel, type Privacy } from "~/.server/live/youtube-live";
 import { createLiveVideo, listPages } from "~/.server/live/facebook-live";
+import { boxGet } from "~/.server/services/club-call-box.server";
 
 export const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube";
 const STATE_PREFIX = "live.";
@@ -233,13 +234,27 @@ async function googleAccessToken(destinationId: string, refreshToken: string): P
 // ── Estado, privacidad y desconectar (panel del anfitrión) ────────────────────
 const isPrivacy = (p: unknown): p is "public" | "unlisted" => p === "public" || p === "unlisted";
 
+/**
+ * Destinos FIJOS de la caja de llamadas (llaves manuales en su env): toda transmisión de la caja
+ * sale también por ellos, sea de la comunidad que sea. Sólo nombres. Vacío si no hay o no contesta.
+ */
+export async function boxFixedTargets(): Promise<string[]> {
+  const r = await boxGet("/admin/live/targets", 4_000).catch(() => null);
+  const t = r?.ok ? (r.json as { targets?: unknown } | null)?.targets : null;
+  return Array.isArray(t) ? t.filter((x): x is string => typeof x === "string").slice(0, 8) : [];
+}
+
 export async function liveStatus(communityId: string) {
-  const rows = await db.streamDestination.findMany({ where: { communityId, provider: { in: ["youtube", "facebook"] } } }).catch(() => []);
+  const [rows, fixedTargets] = await Promise.all([
+    db.streamDestination.findMany({ where: { communityId, provider: { in: ["youtube", "facebook"] } } }).catch(() => []),
+    boxFixedTargets(),
+  ]);
   const row = rows.find((r) => r.provider === "youtube");
   const fb = rows.find((r) => r.provider === "facebook");
   return {
     configured: youtubeConfigured(),
     facebookConfigured: facebookConfigured(),
+    fixedTargets,
     facebook: fb
       ? {
           account: fb.accountName,

@@ -8,6 +8,8 @@ import { btnGhost, card as panel } from "~/components/community/v2/ui";
 type Live = {
   configured: boolean;
   facebookConfigured: boolean;
+  /** Destinos fijos de la caja de llamadas: toda transmisión sale también por ellos. */
+  fixedTargets?: string[];
   facebook: { account: string; pageUrl: string; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
   youtube: { account: string; channelUrl: string; privacy: "public" | "unlisted"; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
 };
@@ -171,6 +173,11 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
           </div>
         )}
       </div>
+      {!!live.fixedTargets?.length && (
+        <p className="rounded-lg border border-[#4A3F2C] bg-[#2A241A] px-3 py-2 text-[13px] text-[#E8C27A]">
+          Aviso: la sala tiene destinos fijos de la plataforma ({live.fixedTargets.join(", ")}). Toda transmisión «En vivo» sale también por ellos.
+        </p>
+      )}
       <p className="text-[13px] text-[#7C8A8E]">
         ✓ Tu canal debe tener habilitada la transmisión en vivo en YouTube Studio (la primera vez tarda hasta 24 h).
         {fb && " En Facebook, la transmisión sale sola en tu página al empezar y termina al detener."}

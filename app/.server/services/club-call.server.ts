@@ -24,7 +24,8 @@ import crypto from "node:crypto";
 
 const DEFAULT_API = "https://www.ghosty.studio";
 const DEFAULT_HOSTS = "fixtergeek@gmail.com";
-const ROOM_PREFIX = "fx-club-de-agentes";
+const ROOM_PREFIX = "fx";
+const MAIN_COMMUNITY_SLUG = "club-de-agentes";
 const TITLE = "Club de Agentes de IA · Llamada en vivo";
 
 /**
@@ -70,8 +71,21 @@ function cdmxDay(d = new Date()): string {
   return `${p.year}${p.month}${p.day}`;
 }
 
-export function clubCallRoom(d = new Date()): string {
-  return `${ROOM_PREFIX}-${cdmxDay(d)}`;
+/**
+ * Sala principal del día de UNA comunidad: `fx-<slug>-<YYYYMMDD>`. Cada comunidad tiene la suya
+ * (20-nov-2026); la del club conserva el nombre de siempre, `fx-club-de-agentes-<día>`.
+ */
+export function clubCallRoom(d = new Date(), slug: string = MAIN_COMMUNITY_SLUG): string {
+  const safe = slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40) || MAIN_COMMUNITY_SLUG;
+  return `${ROOM_PREFIX}-${safe}-${cdmxDay(d)}`;
+}
+
+/**
+ * Quién modera, graba y transmite en la sala de una comunidad: su dueño y los correos de casa
+ * (`CLUB_CALL_HOST_EMAILS`). Un ADMIN de fixtergeek que no es dueño entra como ponente.
+ */
+export function isCallHost(user: { id: string; email: string }, community: { ownerId: string }): boolean {
+  return user.id === community.ownerId || isHostEmail(user.email);
 }
 
 export function isHostEmail(email: string): boolean {
@@ -120,8 +134,10 @@ export async function partnerPost<T = Record<string, unknown>>(
  */
 export async function getCallLink(
   user: CallUser,
-  opts: { host?: boolean; speaker?: boolean; skin?: CallSkin | null } = {}
+  opts: { host?: boolean; speaker?: boolean; skin?: CallSkin | null; slug?: string; title?: string } = {}
 ): Promise<string | null> {
+  const room = clubCallRoom(new Date(), opts.slug);
+  const title = opts.title?.trim().slice(0, 80) || TITLE;
   const name = (user.displayName || user.username || user.email.split("@")[0]).trim().slice(0, 40);
   const host = opts.host ?? isHostEmail(user.email);
   // speaker publica mic, cámara y pantalla; viewer sólo ve, escribe en el chat y levanta la mano.
@@ -130,14 +146,14 @@ export async function getCallLink(
   // Caja propia: fixter firma el ticket y manda el skin (el de la comunidad o el de la casa).
   const boxUrl = process.env.CLUB_CALL_BOX_URL, secret = process.env.CLUB_CALL_TICKET_SECRET;
   if (boxUrl && secret) {
-    return signCallTicket({ room: clubCallRoom(), name, role, mode, title: TITLE, skin: opts.skin ?? FIXTER_SKIN }, { secret, baseUrl: boxUrl });
+    return signCallTicket({ room, name, role, mode, title, skin: opts.skin ?? FIXTER_SKIN }, { secret, baseUrl: boxUrl });
   }
   const r = await partnerPost<{ url?: string }>("/api/v2/partner/event-box/ticket", {
-    room: clubCallRoom(),
+    room,
     name,
     role,
     mode,
-    title: TITLE,
+    title,
   });
   return r.ok && r.data?.url ? r.data.url : null;
 }

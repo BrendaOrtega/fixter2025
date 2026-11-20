@@ -135,7 +135,8 @@ async function loadHomeClub(): Promise<HomeClub | null> {
     ]);
     // Directorio: todas las comunidades activas (de pago y las gratuitas por correo).
     const all = await db.community.findMany({
-      where: { isActive: true },
+      // Las `unlisted` (de prueba o privadas) no salen en el directorio; las filas viejas no traen el campo.
+      where: { isActive: true, OR: [{ unlisted: false }, { unlisted: { isSet: false } }] },
       select: { id: true, slug: true, name: true, tagline: true, priceMxn: true, tag: true },
     });
     const directory = await Promise.all(
