@@ -332,7 +332,10 @@ export type Prepared = { targets: { name: string; url: string }[]; watchUrls: st
 /** Crea el evento en cada destino conectado. Sin destinos conectados devuelve todo vacío. */
 export async function prepareBroadcasts(communityId: string, title: string): Promise<Prepared> {
   const out: Prepared = { targets: [], watchUrls: [], errors: [] };
-  const rows = await db.streamDestination.findMany({ where: { communityId, provider: { in: ["youtube", "facebook"] } } });
+  const [rows, community] = await Promise.all([
+    db.streamDestination.findMany({ where: { communityId, provider: { in: ["youtube", "facebook"] } } }),
+    db.community.findUnique({ where: { id: communityId }, select: { unlisted: true } }),
+  ]);
   // Un destino que falla no tumba al otro: el error va por destino.
   await Promise.all(
     rows.map(async (row) => {
@@ -342,7 +345,8 @@ export async function prepareBroadcasts(communityId: string, title: string): Pro
           const access = await googleAccessToken(row.id, decryptSecret(row.tokenEnc));
           const s = await ensureStream(fetch, access, row.streamId);
           // Siempre pública (bliss, 18-nov): el webinar salió «no listado» y la audiencia no lo encontró.
-          const privacy: Privacy = "public";
+          // Excepción: una comunidad fuera del directorio (de prueba o privada) transmite como oculta.
+          const privacy: Privacy = community?.unlisted ? "unlisted" : "public";
           const b = await createBroadcast(fetch, access, { title, privacy, streamId: s.streamId });
           out.targets.push({ name: "YouTube", url: s.rtmpUrl });
           out.watchUrls.push(b.watchUrl);
