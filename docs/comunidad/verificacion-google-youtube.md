@@ -74,7 +74,15 @@ Si el revisor deja grabando, la caja se detiene sola a los 3 minutos sin nadie p
 > The scope is used only to create, on the host’s own channel, the live broadcast of a call the host starts.
 > We do not read videos, comments, subscribers or analytics.
 
+## Enviado (20-nov, ~11:40)
+- Video oculto en YouTube: `https://youtu.be/12EVdJloKGs`.
+- bliss envió la respuesta al correo de Google (sólo a Google) con el video, la liga de acceso (vence ~19-ene-2027),
+  los pasos y la liga del aviso.
+- Cloud Console → Verification Center: «Your app's data access is under review», sin botón de reenviar; la URL del
+  aviso ya era la correcta, así que no hubo nada que volver a mandar ahí.
+
 ## Pendiente
-- Con el ok de bliss: dejar el video como oculto, borrar la transmisión de prueba, contestar el correo con la liga
-  de acceso (`scripts/google-review-community.mts --write` da una nueva) y dar «Resubmit» en Cloud Console.
-- Si rechazan otra vez, leer el motivo antes de reenviar.
+- Esperar la respuesta de Google. Si piden algo más, leer el motivo antes de contestar.
+- Si tardan más de 60 días: `scripts/google-review-community.mts --write` y mandarles la liga nueva.
+- La transmisión de prueba `watch?v=CkOp6tfU8HM` (oculta, 40 s) sigue en el canal FixterGeek: borrarla si bliss lo pide.
+- No conectar ningún canal a `google-review` ni borrar esa comunidad mientras dure la revisión.
