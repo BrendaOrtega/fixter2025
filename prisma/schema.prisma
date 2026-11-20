@@ -1456,6 +1456,8 @@ model StreamDestination {
   lastWatchUrl   String?
   lastPreparedAt DateTime?
   connectedBy    String?
+  /// YouTube: ¿el canal ya tiene activado el en vivo? `false` = falta activarlo en YouTube Studio.
+  liveReady      Boolean?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

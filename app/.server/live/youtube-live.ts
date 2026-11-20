@@ -45,6 +45,20 @@ export async function myChannel(f: Fetch, token: string): Promise<{ id: string; 
   return c ? { id: c.id, title: c.snippet?.title ?? c.id } : null;
 }
 
+/**
+ * ¿El canal ya puede transmitir en vivo? YouTube lo exige activar una vez en YouTube Studio (pide
+ * verificar el teléfono y tarda hasta 24 h) y ninguna app puede hacerlo por el dueño.
+ * `null` = no se pudo saber (otro error de la API).
+ */
+export async function liveEnabled(f: Fetch, token: string): Promise<boolean | null> {
+  try {
+    await call(f, token, "GET", "/liveBroadcasts?part=id&mine=true&maxResults=1");
+    return true;
+  } catch (e) {
+    return e instanceof YouTubeLiveError && e.reason === "liveStreamingNotEnabled" ? false : null;
+  }
+}
+
 type StreamRes = { id: string; cdn?: { ingestionInfo?: { ingestionAddress?: string; streamName?: string } } };
 
 const ingestUrl = (s: StreamRes): string | null => {

@@ -280,8 +280,8 @@ export default function Route({}: Route.ComponentProps) {
             tu nombre, tu correo y tu foto de perfil. Al conectar un canal de
             YouTube (permiso{" "}
             <code>https://www.googleapis.com/auth/youtube</code>): el nombre y
-            el identificador del canal, y un token de acceso que se guarda
-            cifrado. No leemos ni guardamos tus videos, comentarios,
+            el identificador del canal, si el canal tiene habilitada la
+            transmisión en vivo, y un token de acceso que se guarda cifrado. No leemos ni guardamos tus videos, comentarios,
             suscriptores, listas ni estadísticas.
           </p>
           <p className="mt-6">
@@ -354,8 +354,8 @@ export default function Route({}: Route.ComponentProps) {
             <strong>Data we access.</strong> When you sign in with Google: your
             name, email address and profile picture. When you connect a YouTube
             channel (scope <code>https://www.googleapis.com/auth/youtube</code>
-            ): the channel name and channel ID, and an access token that is
-            stored encrypted. We do not read or store your videos, comments,
+            ): the channel name and channel ID, whether live streaming is enabled
+            on the channel, and an access token that is stored encrypted. We do not read or store your videos, comments,
             subscribers, playlists or analytics.
           </p>
           <p className="mt-6">

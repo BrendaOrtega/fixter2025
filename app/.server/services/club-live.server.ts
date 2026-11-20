@@ -17,7 +17,7 @@
 import crypto from "node:crypto";
 import { db } from "~/.server/db";
 import { decryptSecret, encryptSecret, signingKey, vaultIsConfigured } from "~/.server/live/secret-vault.server";
-import { createBroadcast, ensureStream, myChannel, type Privacy } from "~/.server/live/youtube-live";
+import { YouTubeLiveError, createBroadcast, ensureStream, liveEnabled, myChannel, type Privacy } from "~/.server/live/youtube-live";
 import { createLiveVideo, listPages } from "~/.server/live/facebook-live";
 import { boxGet } from "~/.server/services/club-call-box.server";
 
@@ -128,6 +128,8 @@ export async function finishYouTube(o: { code: string | null; state: string | nu
       streamId: null,
       lastWatchUrl: null,
       lastPreparedAt: null,
+      // Se revisa al conectar para avisar en el panel, no hasta dar «Grabar» frente a la audiencia.
+      liveReady: await liveEnabled(fetch, t.access_token),
     };
     const existing = await db.streamDestination.findFirst({ where: { communityId: st.communityId, provider: "youtube" } });
     if (existing) await db.streamDestination.update({ where: { id: existing.id }, data: fields });
@@ -252,6 +254,17 @@ export async function liveStatus(communityId: string) {
   ]);
   const row = rows.find((r) => r.provider === "youtube");
   const fb = rows.find((r) => r.provider === "facebook");
+  // Canal que aún no podía transmitir: se vuelve a preguntar al abrir el panel, por si ya lo activaron.
+  let liveReady = row?.liveReady ?? null;
+  if (row && liveReady === false && youtubeConfigured()) {
+    try {
+      const now = await liveEnabled(fetch, await googleAccessToken(row.id, decryptSecret(row.tokenEnc)));
+      if (now !== null && now !== liveReady) {
+        liveReady = now;
+        await db.streamDestination.update({ where: { id: row.id }, data: { liveReady: now } });
+      }
+    } catch {}
+  }
   return {
     configured: youtubeConfigured(),
     facebookConfigured: facebookConfigured(),
@@ -271,6 +284,7 @@ export async function liveStatus(communityId: string) {
           account: row.accountName,
           channelUrl: `https://www.youtube.com/channel/${row.accountId}`,
           privacy: isPrivacy(row.privacy) ? row.privacy : "public",
+          liveReady,
           lastWatchUrl: row.lastWatchUrl,
           lastPreparedAt: row.lastPreparedAt?.toISOString() ?? null,
         }
@@ -353,9 +367,12 @@ export async function prepareBroadcasts(communityId: string, title: string): Pro
           const b = await createBroadcast(fetch, access, { title, privacy, streamId: s.streamId });
           out.targets.push({ name: "YouTube", url: s.rtmpUrl });
           out.watchUrls.push(b.watchUrl);
-          await db.streamDestination.update({ where: { id: row.id }, data: { streamId: s.streamId, lastWatchUrl: b.watchUrl, lastPreparedAt: new Date() } });
+          await db.streamDestination.update({ where: { id: row.id }, data: { streamId: s.streamId, lastWatchUrl: b.watchUrl, lastPreparedAt: new Date(), liveReady: true } });
         } catch (e) {
           console.error("[club-live] no se pudo preparar YouTube", communityId, e instanceof Error ? e.message : e);
+          if (e instanceof YouTubeLiveError && e.reason === "liveStreamingNotEnabled") {
+            await db.streamDestination.update({ where: { id: row.id }, data: { liveReady: false } }).catch(() => {});
+          }
           out.errors.push(`YouTube: ${e instanceof Error ? e.message : "falló"}`);
         }
       } else if (row.provider === "facebook") {

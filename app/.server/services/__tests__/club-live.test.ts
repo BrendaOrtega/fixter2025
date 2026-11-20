@@ -5,6 +5,7 @@ vi.mock("~/.server/db", () => ({ db: {} }));
 
 import { YOUTUBE_SCOPE, facebookAuthorizeUrl, facebookState, revokeGoogleToken, signConnectState, signLiveEnvelope, verifyConnectState, youtubeAuthorizeUrl } from "../club-live.server";
 import { createLiveVideo } from "~/.server/live/facebook-live";
+import { liveEnabled } from "~/.server/live/youtube-live";
 
 const key = Buffer.from("k".repeat(32));
 const st = { communityId: "c1", slug: "club-de-agentes", email: "a@b.mx", exp: 2_000 };
@@ -60,6 +61,15 @@ describe("YouTube", () => {
       throw new Error("sin red");
     });
     expect(await revokeGoogleToken("x", down as unknown as typeof fetch)).toBe(false);
+  });
+});
+
+describe("canal sin el en vivo activado", () => {
+  it("liveEnabled distingue activado, sin activar y no se sabe", async () => {
+    const res = (status: number, body: unknown) => vi.fn(async () => Response.json(body, { status })) as unknown as typeof fetch;
+    expect(await liveEnabled(res(200, { items: [] }), "tok")).toBe(true);
+    expect(await liveEnabled(res(403, { error: { message: "x", errors: [{ reason: "liveStreamingNotEnabled" }] } }), "tok")).toBe(false);
+    expect(await liveEnabled(res(500, { error: { message: "boom" } }), "tok")).toBeNull();
   });
 });
 

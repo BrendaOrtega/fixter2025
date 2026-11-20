@@ -12,7 +12,7 @@ type Live = {
   fixedTargets?: string[];
   fixedTargetsKnown?: boolean;
   facebook: { account: string; pageUrl: string; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
-  youtube: { account: string; channelUrl: string; privacy: "public" | "unlisted"; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
+  youtube: { account: string; channelUrl: string; privacy: "public" | "unlisted"; liveReady?: boolean | null; lastWatchUrl: string | null; lastPreparedAt: string | null } | null;
 };
 
 /** Ícono oficial de YouTube (botón rojo de reproducir), como lo pide su guía de marca para «conectar con YouTube». */
@@ -112,6 +112,16 @@ export function LiveAdmin({ slug, live, result, detail }: { slug: string; live: 
             Cómo tratamos los datos de Google
           </Link>
         </p>
+        {yt?.liveReady === false && (
+          <div className="rounded-lg border border-[#4A3F2C] bg-[#2A241A] px-3 py-2 text-[13px] text-[#E8C27A]">
+            <b className="font-semibold">A tu canal le falta activar el en vivo.</b> YouTube lo pide una sola vez por canal y sólo lo puede hacer el dueño:
+            entra a{" "}
+            <a href="https://www.youtube.com/features" target="_blank" rel="noopener" className="underline">
+              youtube.com/features
+            </a>
+            , verifica tu teléfono y activa «Transmisiones en vivo». YouTube tarda hasta 24 h en habilitarlo; este aviso se quita solo cuando quede listo.
+          </div>
+        )}
         {yt && (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#232D33] pt-3 text-[13px]">
