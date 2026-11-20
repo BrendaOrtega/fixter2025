@@ -30,32 +30,51 @@ Límites que el revisor comparte con el club (una sola caja de llamadas): un gra
 Si el revisor deja grabando, la caja se detiene sola a los 3 minutos sin nadie publicando.
 
 ## Pasos que se le mandan al revisor (inglés)
-1. Open the access link. Click the confirm button: you are signed in as the host of a test community.
+1. Open the access link and click the confirm button: you are signed in as the host of a test community.
 2. You land on the host dashboard, tab “Transmisión” (Live streaming).
 3. Click “Conectar con YouTube”. Google shows the consent screen requesting the YouTube scope. Choose an
-   account that owns a YouTube channel with live streaming enabled and click Allow.
-4. Back in the dashboard the card shows “Canal: <your channel>”. That is the only data read from YouTube.
-5. Open `https://www.fixtergeek.com/comunidad/google-review` and click the button to open the call room.
-6. In the room, turn on “En vivo” and click “Grabar”. The app creates an unlisted live broadcast on your
-   channel (`liveStreams` + `liveBroadcasts`) and streams the call to it. The watch link appears on screen.
-7. Click “Detener” to end the broadcast.
-8. Back in the dashboard, click “Desconectar”: the token is deleted and revoked at Google.
+   account whose YouTube channel already has live streaming enabled, and allow access.
+4. Back in the dashboard the card shows “Canal: <your channel>”. The channel name and ID are the only data read.
+5. In the left menu click “Eventos”, then “Iniciar llamada ahora”, then “Entrar a la llamada”.
+6. In the call toolbar turn on “En vivo · YouTube” and click “Grabar”. The app creates an unlisted live
+   broadcast on your channel (`liveStreams` + `liveBroadcasts`) and streams the call to it.
+7. The dashboard (“Transmisión” tab) shows “Ver la última transmisión”, the link to the broadcast on YouTube.
+8. Click “Detener” in the call toolbar to end the broadcast.
+9. Back in the dashboard click “Desconectar”: the token is deleted and revoked at Google.
 
-## Estado al 20-nov (tarde)
-- En producción: aviso (es/en), revocación al desconectar, sala por comunidad, `unlisted`, aviso de canal sin en
-  vivo (`liveReady`), cuenta de prueba. Comprobado con la liga del revisor: entra, ve el panel y llega al
-  consentimiento en inglés; la caja contestó que no tiene destinos fijos.
-- Toma 1 del video (`~/Movies/oauth-youtube/toma1.mov`, 88 s): panel → consentimiento en inglés con el client_id
-  → «Canal: Mailmask» → sala `fx-google-review-<día>` → «En vivo». Se detuvo ahí: el canal Mailmask no tiene
-  activado el en vivo en YouTube (`liveStreamingNotEnabled`).
-- En YouTube Studio del canal Mailmask se pidió el acceso para transmitir; YouTube pide **verificar el teléfono**
-  (lo hace bliss) y luego tarda hasta 24 h.
-- La comunidad `google-review` quedó con el canal Mailmask conectado: **desconectarlo antes de mandar la liga**.
+## Estado al 20-nov (11:15)
+- **Video demo grabado completo** con el canal FixterGeek (toma de 134 s, con `rec`):
+  `~/Movies/oauth-youtube/fixtergeek-youtube-scope-demo.mp4` (1668×1444, textos en inglés en la franja de abajo,
+  sin la tira de pestañas). Se ve: panel → consentimiento en inglés con el `client_id` en la barra y «Manage your
+  YouTube account» → «Canal: FixterGeek» → sala → «En vivo · YouTube» + «Grabar» → el en vivo en YouTube como
+  «No listada» → «Detener» → «Desconectar» → aviso de privacidad.
+- Subido a YouTube (canal FixterGeek): `https://youtu.be/12EVdJloKGs`. Quedó **privado**: falta el clic
+  «Publicar de todas formas» para dejarlo oculto (lo confirma bliss).
+- La transmisión de prueba `https://www.youtube.com/watch?v=CkOp6tfU8HM` (oculta, 40 s) sigue en el canal: borrarla.
+- La comunidad `google-review` quedó sin canal conectado, lista para el revisor. Quedó una grabación de 40 s en
+  su pestaña «Grabaciones».
+- El canal Mailmask sigue sin el en vivo: YouTube pide verificar el teléfono (no hace falta para esta verificación).
+
+## Respuesta para Google (borrador, se manda con el ok de bliss)
+> Hello,
+>
+> Thank you for the review. We have addressed the three items:
+>
+> 1. Demo video (unlisted): https://youtu.be/12EVdJloKGs — it shows the full flow of the
+>    `https://www.googleapis.com/auth/youtube` scope: the OAuth consent screen in English with our client ID
+>    in the address bar, the connected channel, a live broadcast created on the channel through the YouTube
+>    Data API, stopping it, and disconnecting (which deletes and revokes the token).
+> 2. Test access, no sign-up, phone or payment needed: <ACCESS LINK>. It signs you in as the host of a
+>    test community. Steps: <los 9 pasos de arriba>. Note: YouTube only allows live streaming on channels
+>    that already have it enabled, so please use a channel with live streaming enabled.
+> 3. Privacy policy, updated and published: https://www.fixtergeek.com/aviso-de-privacidad#google-user-data
+>    It now has the sections “Data sharing, transfer and disclosure” (we do not share Google user data with
+>    anyone) and “Data retention and deletion”, plus the Limited Use statement.
+>
+> The scope is used only to create, on the host’s own channel, the live broadcast of a call the host starts.
+> We do not read videos, comments, subscribers or analytics.
 
 ## Pendiente
-- Con el en vivo activo en Mailmask (o usando FixterGeek, que ya lo tiene; en esta comunidad sale oculto):
-  regrabar desde «Iniciar llamada ahora» → «En vivo · YouTube» → «Grabar» → liga de YouTube → «Detener» →
-  «Desconectar» → `myaccount.google.com/permissions`. Marcas en inglés y `rec render --aspect native`.
-- Subir el video a YouTube como oculto y ponerlo en la respuesta.
-- Respuesta al correo de Google y «Resubmit» en Cloud Console → Verification Center (con el ok de bliss).
-- Si rechazan otra vez, leer el motivo antes de reenviar: el aviso y el video ya cubren lo que pidieron.
+- Con el ok de bliss: dejar el video como oculto, borrar la transmisión de prueba, contestar el correo con la liga
+  de acceso (`scripts/google-review-community.mts --write` da una nueva) y dar «Resubmit» en Cloud Console.
+- Si rechazan otra vez, leer el motivo antes de reenviar.
