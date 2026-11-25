@@ -36,7 +36,7 @@ export const links = () => [
 const ANTI_FACTORY_PATH = "/anti-factory";
 const PAGE_URL = `https://www.fixtergeek.com${ANTI_FACTORY_PATH}`;
 /// Portada del evento (la misma del evento de Facebook), en 1200×628.
-const OG_IMAGE = "https://www.fixtergeek.com/anti-factory-og.jpg";
+const OG_IMAGE = "https://www.fixtergeek.com/anti-factory-taller-og.jpg";
 
 // sombra suave en lugar de la dura: el panel flota, no está pegado con cinta
 const SOFT_SHADOW = "0 40px 80px -40px rgba(0,0,0,0.75)";
