@@ -825,7 +825,7 @@ export default function Route() {
                 ) : (
                   <button type="button" onClick={startRegister} className="truncate underline-offset-4 hover:underline">
                     <span className="sm:hidden">¿Te perdiste el webinar del 18-nov? <span style={{ color: MINT }}>Regístrate y míralo</span></span>
-                    <span className="hidden sm:inline">¿Te perdiste el webinar del 18 de noviembre? <span style={{ color: MINT }}>Regístrate y tus 3 meses del club lo abren</span></span>
+                    <span className="hidden sm:inline">¿Te perdiste el webinar del 18 de noviembre? <span style={{ color: MINT }}>Regístrate y podrás verlo</span></span>
                   </button>
                 )}
               </p>
