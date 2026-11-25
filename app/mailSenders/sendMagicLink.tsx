@@ -7,6 +7,8 @@ const isDev = process.env.NODE_ENV === "development";
 export const sendMagicLink = async (data: {
   email: string;
   next?: string;
+  /** Tags que el login agrega al Subscriber al entrar (p. ej. el registro de un taller). */
+  tags?: string[];
   userId?: string;
 }) => {
   // generate token

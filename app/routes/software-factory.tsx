@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { data, Link, redirect, useFetcher, useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { data, useFetcher, useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { db } from "~/.server/db";
 import { recordPageVisit } from "~/.server/page-visit.server";
 import { getUserOrNull } from "~/.server/dbGetters";
 import { validateWaitlistConfirmToken } from "~/utils/tokens";
 import {
-  ANTI_FACTORY_TIERS,
-  CLUB_SLUG,
-  clubPriceReason,
-  isPaidCheckout,
-  pickAntiFactoryTier,
-  priceFor,
+  isAntiFactoryRegistered,
+  isClubMember,
+  registerAntiFactory,
 } from "~/.server/services/anti-factory.server";
 import { CanvasConfetti } from "~/components/common/CanvasConfetti";
+import { GoogleLoginLink } from "~/components/GoogleLoginLink";
+import { useBotTrap } from "~/hooks/useBotTrap";
+import { LAYER } from "~/utils/layers";
 import getMetaTags from "~/utils/getMetaTags";
 
 // Títulos en Bricolage Grotesque: grotesca con carácter de taller, sin el peso bruto de antes
@@ -24,7 +24,8 @@ export const links = () => [
 ];
 
 // ===========================================
-// Ghosty Anti-Factory: webinar gratis (18-nov) → taller en vivo de paga (1 y 3 de dic).
+// Ghosty Anti-Factory: taller gratis en vivo (1 y 3 de dic), por YouTube y en la llamada del club.
+// Hasta el 25-nov se cobraba con Stripe; desde entonces la página es un registro gratis.
 // Antes fue la lista de espera del taller «Software Factory». Esta misma página se sirve en
 // /software-factory (ahí apunta el anuncio de Meta) y en /anti-factory (correo, deck y evento de
 // Facebook): un solo componente, canonical en /anti-factory, y la URL conserva sus UTM y fbclid.
@@ -36,10 +37,6 @@ const ANTI_FACTORY_PATH = "/anti-factory";
 const PAGE_URL = `https://www.fixtergeek.com${ANTI_FACTORY_PATH}`;
 /// Portada del evento (la misma del evento de Facebook), en 1200×628.
 const OG_IMAGE = "https://www.fixtergeek.com/anti-factory-og.jpg";
-const FACEBOOK_EVENT_URL = "https://www.facebook.com/events/1603559874408025/";
-/// El evento del webinar en el club (lo crea `scripts/club-anti-factory-events.mts`).
-const WEBINAR_EVENT_TITLE = "Ghosty Anti-Factory · webinar gratis";
-const WEBINAR_STARTS_AT = new Date("2026-11-19T01:00:00Z"); // miércoles 18-nov, 19:00 CDMX
 
 // sombra suave en lugar de la dura: el panel flota, no está pegado con cinta
 const SOFT_SHADOW = "0 40px 80px -40px rgba(0,0,0,0.75)";
@@ -49,64 +46,50 @@ const MINT = "#85DDCB", GREEN = "#8DCF6E", INK = "#F2F5F4", MUTE = "#7C8A8E", BG
 
 export const meta = () =>
   getMetaTags({
-    title: "Ghosty Anti-Factory | Webinar gratis y taller en vivo | FixterGeek",
+    title: "Ghosty Anti-Factory | Taller gratis en vivo | FixterGeek",
     description:
-      "Hay formas más simples y efectivas de desarrollar que una fábrica. Webinar gratis el miércoles 18 de noviembre a las 7 pm (CDMX) y taller en vivo el martes 1 y el jueves 3 de diciembre de 2026, de 7 a 9 pm, en la llamada del Club de Agentes de IA.",
+      "Hay formas más simples y efectivas de desarrollar que una fábrica. Taller gratis en vivo el martes 1 y el jueves 3 de diciembre de 2026, de 7 a 9 pm (CDMX), por YouTube y en la llamada del Club de Agentes de IA. Regístrate gratis: te avisamos de las dos sesiones y te llevas 3 meses del Club de Agentes de IA.",
     // canonical: las dos rutas sirven esta página y la buena es /anti-factory
     url: PAGE_URL,
     image: OG_IMAGE,
     imageWidth: 1200,
     imageHeight: 628,
     keywords:
-      "ghosty anti-factory, ghosty-dev, agentes de código, revisor con contexto limpio, claude code, codex, club de agentes de ia, webinar gratis, taller en vivo",
+      "ghosty anti-factory, ghosty-dev, agentes de código, revisor con contexto limpio, claude code, codex, club de agentes de ia, taller gratis, taller en vivo",
   });
+
+/// A dónde regresa el login del modal (Google o magic link): el loader termina el registro con el
+/// correo ya verificado.
+const REGISTER_NEXT = `${ANTI_FACTORY_PATH}?registro=1`;
+const REGISTER_TAG = "anti-factory-registro-dic26"; // = ANTI_FACTORY_REGISTER_TAG del .server
+
+const CTA_CLASS =
+  "h-11 w-full rounded-xl px-4 text-lg font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] disabled:opacity-60 sm:w-auto sm:px-8 lg:h-14 lg:text-xl";
+
+/// La grabación del webinar gratis del 18-nov en el club (CommunityRecording 6afe4a7bac008b86643afe8b).
+/// Las grabaciones normales del club sólo las reproducen los miembros: los 3 meses del registro la abren.
+const WEBINAR_RECORDING_URL = "/comunidad/club-de-agentes?tab=recs&grabacion=6afe4a7bac008b86643afe8b";
+
+/// Navegadores dentro de apps (anuncios de Meta, TikTok, LinkedIn…): Google rechaza ahí el OAuth con
+/// «403 disallowed_useragent», así que el modal no ofrece Google y deja la liga por correo.
+const IN_APP_UA = /Instagram|FBAN|FBAV|FB_IAB|FB4A|musical_ly|TikTok|BytedanceWebview|LinkedInApp|Line\/|Threads|Twitter|; wv\)/i;
+const inAppBrowser = (ua: string) =>
+  IN_APP_UA.test(ua) ? (/Android/i.test(ua) ? ("android" as const) : ("ios" as const)) : null;
+
+const displayName = (u: { displayName?: string | null; username?: string | null }) => u.displayName || u.username || null;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  if (formData.get("intent") !== "direct_checkout") return data({ error: null });
-
+  if (formData.get("intent") !== "register") return data({ error: null });
+  // Sin sesión no hay registro: primero el login del modal, que verifica el correo.
+  const user = await getUserOrNull(request);
+  if (!user) return data({ error: "Inicia sesión para registrarte." }, { status: 401 });
   try {
-    // El precio lo decide quien tiene la sesión abierta (miembro del club o lista de espera de
-    // software-factory); el formulario sólo trae la intención.
-    const user = await getUserOrNull(request);
-    const tier = pickAntiFactoryTier(!!(await clubPriceReason(user)));
-    const priceMxn = await priceFor(tier);
-
-    const stripe = new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY as string, {});
-    const location =
-      process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://www.fixtergeek.com";
-
-    const session = await stripe.checkout.sessions.create({
-      metadata: { type: tier.key },
-      mode: "payment",
-      ...(user?.email ? { customer_email: user.email } : {}),
-      line_items: [
-        {
-          price_data: {
-            currency: "mxn",
-            product_data: {
-              name: "Ghosty Anti-Factory — taller en vivo",
-              description:
-                "Martes 1 y jueves 3 de diciembre de 2026, de 7 a 9 pm (CDMX). Club de Agentes de IA de FixterGeek.",
-            },
-            unit_amount: priceMxn * 100,
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${location}${ANTI_FACTORY_PATH}?success=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${location}${ANTI_FACTORY_PATH}?cancel=1`,
-      billing_address_collection: "required",
-      phone_number_collection: { enabled: true },
-      payment_method_types: ["card"],
-      payment_method_options: { card: { installments: { enabled: true } } },
-    });
-
-    if (!session.url) throw new Error("Failed to create checkout session");
-    return redirect(session.url);
+    const { gift } = await registerAntiFactory({ id: user.id, email: user.email, name: displayName(user) });
+    return data({ ok: true as const, gift });
   } catch (error) {
-    console.error("[anti-factory] checkout error:", error);
-    return data({ error: "No pudimos abrir el pago. Intenta de nuevo en un momento." });
+    console.error("[anti-factory] register error:", error);
+    return data({ error: "No pudimos registrarte. Intenta de nuevo en un momento." }, { status: 500 });
   }
 };
 
@@ -125,31 +108,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   const user = await getUserOrNull(request);
-  const [priceReason, generalPrice, clubPrice, webinar] = await Promise.all([
-    clubPriceReason(user),
-    priceFor(ANTI_FACTORY_TIERS.general),
-    priceFor(ANTI_FACTORY_TIERS.club),
-    db.communityEvent.findFirst({
-      where: { title: WEBINAR_EVENT_TITLE, startsAt: WEBINAR_STARTS_AT, community: { slug: CLUB_SLUG } },
-      select: { id: true },
-    }),
-  ]);
+  // De regreso del login (`?registro=1`): se registra una sola vez; recargar no repite nada.
+  const fresh =
+    user && params.get("registro") === "1"
+      ? await registerAntiFactory({ id: user.id, email: user.email, name: displayName(user) })
+      : null;
   return {
-    isLoggedIn: !!user,
-    isMember: !!priceReason,
-    priceReason,
-    generalPrice,
-    clubPrice,
-    // «Agéndalo gratis»: el .ics del evento del club; sin evento, el de Facebook.
-    webinarIcsUrl: webinar ? `/comunidad/${CLUB_SLUG}/evento/${webinar.id}.ics` : null,
-    // Sólo se celebra si Stripe confirma que esa sesión quedó pagada.
-    success:
-      params.get("success") === "1" &&
-      (await isPaidCheckout(params.get("session_id"), async (id) => {
-        const stripe = new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY as string, {});
-        return stripe.checkout.sessions.retrieve(id);
-      })),
-    canceled: params.get("cancel") === "1",
+    inApp: inAppBrowser(request.headers.get("user-agent") ?? ""),
+    userEmail: user?.email ?? null,
+    // Quien ya se registró (o compró antes) ve directo su confirmación.
+    registered: user ? await isAntiFactoryRegistered(user.email) : false,
+    justRegistered: !!fresh && !fresh.already,
+    gift: fresh?.gift ?? null,
+    isMember: user ? await isClubMember(user) : false,
     confirmed: !!decoded,
   };
 };
@@ -406,8 +377,6 @@ const FactoryBoard = ({ mini = false }: { mini?: boolean }) => {
 
 // El título alterna entre inglés y español. Cada renglón es una ventana de 1em
 // con overflow oculto: la palabra nueva sube y la vieja sale, sin mover el layout.
-/// Puntos del taller que caben en móvil; el resto se resume en «+N».
-const MOBILE_POINTS = 3;
 
 const TITLES = [["Ghosty", "Anti\u2011Factory"]];
 
@@ -494,44 +463,227 @@ const GhostyPeek = () => {
   );
 };
 
-// Lo que te llevas del taller
+// ——— Registro sin salir de la página ———
+// El login de siempre en un modal: Google (sale a su pantalla y regresa a `?registro=1`) o la liga
+// por correo de `/api/user` (`magic_link`, con el tag del taller y el mismo `next`). En el celular es
+// una hoja que sube desde abajo; en escritorio, un modal centrado. Cierra con X, Esc o tocando fuera.
+/// Android: la misma página en Chrome (los navegadores de apps no dejan entrar con Google).
+const chromeIntent = () => {
+  const { host, pathname, search } = window.location;
+  return `intent://${host}${pathname}${search}#Intent;scheme=https;package=com.android.chrome;end`;
+};
+
+const RegisterSheet = ({ open, onClose, inApp }: { open: boolean; onClose: () => void; inApp: "android" | "ios" | null }) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const fetcher = useFetcher<{ sent?: true }>();
+  const { trap } = useBotTrap();
+  const sending = fetcher.state !== "idle";
+  const sent = !!fetcher.data?.sent;
+  const sentTo = String(fetcher.formData?.get("email") ?? "") || null;
+  const [email, setEmail] = useState("");
+
+  // Esc cierra y Tab no sale del panel; el foco arranca en el primer control.
+  useEffect(() => {
+    if (!open) return;
+    const panel = panelRef.current;
+    const focusables = () =>
+      Array.from(panel?.querySelectorAll<HTMLElement>("button, input:not([type=hidden]):not([tabindex='-1']), a[href]") ?? []).filter(
+        (el) => !el.hasAttribute("disabled"),
+      );
+    const previous = document.activeElement as HTMLElement | null;
+    requestAnimationFrame(() => focusables()[1]?.focus());
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return onClose();
+      if (e.key !== "Tab") return;
+      const list = focusables();
+      if (!list.length) return;
+      const first = list[0], last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      previous?.focus();
+    };
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 flex items-end justify-center sm:items-center sm:p-6" style={{ zIndex: LAYER.dialog }}>
+          <motion.div
+            aria-hidden
+            className="absolute inset-0"
+            style={{ background: "rgba(14,19,23,0.72)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="register-title"
+            initial={{ y: "100%", opacity: 0.6 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 380, damping: 34 }}
+            className="relative w-full rounded-t-3xl border px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:max-w-md sm:rounded-3xl sm:p-7"
+            style={{ background: PANEL, borderColor: `${MINT}2e`, color: INK, boxShadow: SOFT_SHADOW }}
+          >
+            {/* asa de la hoja: sólo en el celular */}
+            <div aria-hidden className="mx-auto mb-3 h-1 w-10 rounded-full sm:hidden" style={{ background: `${MUTE}88` }} />
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none transition-colors hover:bg-white/10"
+              style={{ color: MUTE }}
+            >
+              ×
+            </button>
+
+            {sent ? (
+              <div role="status" className="py-2 text-center">
+                <p className="text-4xl">📬</p>
+                <p id="register-title" className="mt-2 text-2xl font-bold" style={DISPLAY}>Revisa tu correo</p>
+                <p className="mt-2 text-[15px]" style={{ color: `${INK}cc` }}>
+                  Te mandamos la liga{sentTo ? <> a <span className="font-semibold" style={{ color: MINT }}>{sentTo}</span></> : null}. Ábrela y quedas registrado; si no la ves, revisa el spam.
+                </p>
+                <button type="button" onClick={onClose} className="mt-5 h-12 w-full rounded-xl text-lg font-semibold" style={{ background: GREEN, color: BG }}>
+                  Listo
+                </button>
+              </div>
+            ) : (
+              <>
+                <p id="register-title" className="pr-8 text-2xl font-bold sm:text-3xl" style={DISPLAY}>Regístrate gratis</p>
+                <p className="mt-1 text-[14px] leading-snug sm:text-[15px]" style={{ color: `${INK}cc` }}>
+                  Te avisamos de las dos sesiones y te llevas 3 meses del Club de Agentes de IA.
+                </p>
+                {inApp ? (
+                  // Dentro de Instagram, Facebook, TikTok…: Google no deja entrar, la liga por correo sí.
+                  <div className="h-4" />
+                ) : (
+                  <>
+                    <GoogleLoginLink
+                      next={REGISTER_NEXT}
+                      label="Continuar con Google"
+                      className="my-0 mt-4 h-12 rounded-xl bg-white text-[17px] text-[#0E1317] shadow-none hover:bg-white/90"
+                    />
+                    <div className="my-4 flex items-center gap-3 text-[13px]" style={{ color: MUTE }}>
+                      <span className="h-px flex-1" style={{ background: `${MINT}2e` }} />o con tu correo<span className="h-px flex-1" style={{ background: `${MINT}2e` }} />
+                    </div>
+                  </>
+                )}
+                <fetcher.Form method="post" action="/api/user" className="grid gap-2">
+                  {trap}
+                  <input type="hidden" name="intent" value="magic_link" />
+                  <input type="hidden" name="inline" value="1" />
+                  <input type="hidden" name="next" value={REGISTER_NEXT} />
+                  <input type="hidden" name="tags" value={REGISTER_TAG} />
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    autoComplete="email"
+                    inputMode="email"
+                    placeholder="tu@correo.com"
+                    aria-label="Tu correo"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 w-full rounded-xl border bg-transparent px-4 text-base outline-none placeholder:text-[#7C8A8E] focus:border-[#85DDCB]"
+                    style={{ borderColor: `${MINT}55`, color: INK }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending}
+                    className="h-12 w-full rounded-xl text-lg font-semibold transition-[filter] hover:brightness-110 disabled:opacity-60"
+                    style={{ background: GREEN, color: BG }}
+                  >
+                    {sending ? "Mandando…" : "Mandarme la liga"}
+                  </button>
+                </fetcher.Form>
+                {inApp && (
+                  <p className="mt-3 text-[13px] leading-snug" style={{ color: MUTE }}>
+                    ¿Prefieres Google?{" "}
+                    {inApp === "android" ? (
+                      <a href={chromeIntent()} className="font-semibold underline underline-offset-4" style={{ color: MINT }}>
+                        Ábrelo en Chrome
+                      </a>
+                    ) : (
+                      <>Toca <span className="font-semibold" style={{ color: INK }}>•••</span> → <span className="font-semibold" style={{ color: INK }}>Abrir en el navegador</span>.</>
+                    )}
+                  </p>
+                )}
+              </>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// Lo que te llega al registrarte; `short` es la versión que cabe en el celular
 const POINTS = [
-  "ghosty-dev instalado en tu repo",
-  "Varios pendientes a la vez",
-  "Un revisor con contexto limpio",
-  "La grabación de las dos sesiones",
-  "Cuenta Power de Ghosty Studio de cortesía hasta el 31 de diciembre (CLI y cajas, incluida la de CI)",
+  { short: "Avisos de las dos sesiones", long: "Avisos de las dos sesiones para tu calendario" },
+  { short: "3 meses del club gratis", long: "3 meses gratis del Club de Agentes de IA" },
+  { short: "Preguntas en vivo", long: "Preguntas en vivo en la llamada del club" },
+  { short: "Quiz en vivo", long: "Quiz en vivo: el premio es revisar tu repo en vivo y mención en pantalla" },
 ];
 
-const mxn = (n: number) => `$${n.toLocaleString("es-MX")}`;
+type Gift = "granted" | "member" | "used" | null;
+
+/// Qué le decimos según cómo quedó su regalo del club.
+const giftLine = (gift: Gift, isMember: boolean) =>
+  gift === "granted"
+    ? "Tus 3 meses del Club de Agentes de IA ya están activos."
+    : gift === "member" || (!gift && isMember)
+      ? "Ya eres miembro del club, así que ya estás dentro."
+      : "Tienes pase a la llamada del club esos dos días.";
 
 export default function Route() {
   const fetcher = useFetcher<typeof action>();
-  const { isLoggedIn, isMember, priceReason, generalPrice, clubPrice, webinarIcsUrl, success, canceled, confirmed } =
-    useLoaderData<typeof loader>();
+  const { inApp, userEmail, registered, justRegistered: justBack, gift: backGift, isMember, confirmed } = useLoaderData<typeof loader>();
   const busy = fetcher.state !== "idle";
   const error = fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
-  const price = isMember ? clubPrice : generalPrice;
+  const justPosted = !!(fetcher.data && "ok" in fetcher.data);
+  const justRegistered = justBack || justPosted;
+  const gift: Gift = (fetcher.data && "gift" in fetcher.data ? fetcher.data.gift : null) ?? backGift;
+  const done = registered || justPosted;
+  const [sheetOpen, setSheetOpen] = useState(false);
+  // Con sesión se registra con un clic; sin sesión, el modal del login.
+  const startRegister = () =>
+    userEmail ? fetcher.submit({ intent: "register" }, { method: "post", action: ANTI_FACTORY_PATH }) : setSheetOpen(true);
 
-  // Limpia la URL de regreso de Stripe; los UTM del anuncio no se tocan.
+  // De regreso del login se quita `?registro=1` (los UTM se quedan) para que recargar no lo repita.
   useEffect(() => {
-    if (!success && !canceled) return;
     const url = new URL(window.location.href);
-    ["success", "cancel", "session_id"].forEach((k) => url.searchParams.delete(k));
-    window.history.replaceState({}, "", url.pathname + url.search);
-  }, [success, canceled]);
+    if (!url.searchParams.has("registro")) return;
+    url.searchParams.delete("registro");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search);
+  }, []);
 
-  const priceNote =
-    priceReason === "waitlist"
-      ? `Tienes el precio de la lista de espera (general: ${mxn(generalPrice)})`
-      : isMember
-        ? `Tienes el precio del club (general: ${mxn(generalPrice)})`
-        : `Miembros del club: ${mxn(clubPrice)}`;
+  // Confeti de EasyBits una vez por registro, además del de la casa; sólo en el cliente.
+  useEffect(() => {
+    if (!justRegistered) return;
+    import("@easybits.cloud/confetti").then(({ confetti }) => {
+      confetti({ colors: ["#85DDCB", "#8DCF6E", "#F2F5F4"], outline: "#0E1317" });
+    });
+  }, [justRegistered]);
 
   return (
     // una sola pantalla: alto del viewport y sin desborde; la navbar es fixed y se compensa con pt
     <main style={{ background: BG, color: INK }}>
-      {(success || confirmed) && <CanvasConfetti />}
+      {(justRegistered || confirmed) && <CanvasConfetti />}
+      <RegisterSheet open={sheetOpen} onClose={() => setSheetOpen(false)} inApp={inApp} />
       <div className="relative flex h-[100dvh] flex-col overflow-hidden px-4 pb-3 pt-[4.5rem] sm:px-8 sm:pb-4 sm:pt-20">
       <div
         aria-hidden
@@ -541,19 +693,18 @@ export default function Route() {
 
       <section className="relative z-10 mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col justify-[safe_center] gap-3 md:flex-row md:items-center md:gap-10 lg:gap-12">
         <div className="flex flex-col items-start md:w-[46%]">
-          {/* Paso 1: el webinar gratis */}
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="hidden items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium sm:flex lg:text-base"
             style={{ borderColor: `${GREEN}40`, color: GREEN }}
           >
-            {/* punto que late: el webinar es lo siguiente */}
+            {/* punto que late: el taller es lo siguiente */}
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden" style={{ background: GREEN }} />
               <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: GREEN }} />
             </span>
-            Webinar gratis · miércoles 18 de noviembre · 7 pm (CDMX)
+            Taller gratis en vivo · martes 1 y jueves 3 de diciembre
           </motion.span>
 
           <OscillatingTitle />
@@ -581,106 +732,100 @@ export default function Route() {
             </div>
           </div>
 
-          {/* Paso 1 → paso 2: primero el webinar gratis, luego el taller en vivo */}
+          {/* Cuándo y dónde, y lo que te llega al registrarte */}
           <ol className="mt-2 w-full max-w-xl space-y-1.5 sm:mt-4 sm:space-y-2">
-            <li className="flex items-center justify-between gap-x-2 gap-y-1.5 rounded-2xl border px-3 py-1.5 sm:flex-wrap sm:gap-x-3 sm:px-4 sm:py-2.5" style={{ background: `${MINT}14`, borderColor: `${MINT}40` }}>
+            <li className="rounded-2xl border px-3 py-1.5 sm:px-4 sm:py-2.5" style={{ background: `${MINT}14`, borderColor: `${MINT}40` }}>
               <span className="text-[13px] sm:text-sm lg:text-base">
-                <span className="font-semibold" style={{ color: MINT }}>1 · Webinar gratis</span>{" "}
-                <span className="whitespace-nowrap sm:whitespace-normal" style={{ color: `${INK}cc` }}>mié 18 de nov · 7 pm<span className="hidden sm:inline"> (CDMX)</span></span>
-              </span>
-              <span className="flex items-center gap-3 text-[13px] sm:text-sm">
-                <a
-                  href={webinarIcsUrl ?? FACEBOOK_EVENT_URL}
-                  {...(webinarIcsUrl ? {} : { target: "_blank", rel: "noopener" })}
-                  className="whitespace-nowrap rounded-lg border px-2 py-0.5 font-semibold transition-colors hover:bg-[#85DDCB]/10 sm:px-3 sm:py-1.5"
-                  style={{ borderColor: `${MINT}66`, color: MINT }}
-                >
-                  Agéndalo<span className="hidden sm:inline"> gratis</span>
-                </a>
-                <a href={FACEBOOK_EVENT_URL} target="_blank" rel="noopener" className="hidden underline underline-offset-4 sm:inline" style={{ color: MUTE }}>
-                  Facebook
-                </a>
+                <span className="font-semibold" style={{ color: MINT }}>Gratis en vivo</span>{" "}
+                <span className="sm:hidden" style={{ color: `${INK}cc` }}>1 y 3 de dic · 7 a 9 pm (CDMX)</span>
+                <span className="hidden sm:inline" style={{ color: `${INK}cc` }}>mar 1 y jue 3 de dic · 7 a 9 pm (CDMX) · por YouTube y en la llamada del Club de Agentes de IA</span>
               </span>
             </li>
             <li className="rounded-2xl border px-3 py-1.5 sm:px-4 sm:py-2.5" style={{ borderColor: `${MINT}2e` }}>
               <span className="text-[12px] sm:text-sm lg:text-base">
-                <span className="font-semibold" style={{ color: GREEN }}>2 · Taller en vivo</span>{" "}
-                <span className="sm:hidden" style={{ color: `${INK}cc` }}>1 y 3 de dic · 7 a 9 pm · llamada del club</span>
-                <span className="hidden sm:inline" style={{ color: `${INK}cc` }}>mar 1 y jue 3 de dic · 7 a 9 pm · en la llamada del Club de Agentes de IA</span>
+                <span className="font-semibold" style={{ color: GREEN }}>Al registrarte te llega</span>
               </span>
               <ul className="mt-1 flex flex-wrap gap-1 sm:mt-1.5 sm:gap-1.5">
-                {POINTS.map((p, i) => (
-                  <li key={p} className={`rounded-full border px-2 py-px text-[11px] sm:inline sm:px-2.5 sm:py-0.5 sm:text-[13px] ${i < MOBILE_POINTS ? "" : "hidden"}`} style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>
-                    {p}
+                {POINTS.map((p) => (
+                  <li key={p.short} className="rounded-full border px-2 py-px text-[11px] sm:px-2.5 sm:py-0.5 sm:text-[13px]" style={{ borderColor: `${MINT}2e`, color: `${INK}cc` }}>
+                    <span className="sm:hidden">{p.short}</span>
+                    <span className="hidden sm:inline">{p.long}</span>
                   </li>
                 ))}
-                {/* en móvil sólo caben los tres primeros */}
-                <li className="rounded-full border px-2 py-px text-[11px] font-semibold sm:hidden" style={{ borderColor: `${MINT}2e`, color: MINT }}>
-                  +{POINTS.length - MOBILE_POINTS}
-                </li>
               </ul>
             </li>
           </ol>
 
           <div className="mt-2 w-full max-w-xl sm:mt-2.5 lg:mt-4">
-            {success ? (
+            {done ? (
               <motion.div
                 role="status"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 18 }}
-                className="rounded-2xl border px-5 py-4"
+                className="rounded-2xl border px-4 py-3 sm:px-5 sm:py-4"
                 style={{ background: `${MINT}14`, borderColor: `${MINT}55`, color: INK }}
               >
-                <p className="text-2xl font-bold lg:text-3xl" style={DISPLAY}>¡Listo, estás dentro! 👻</p>
-                <p className="mt-1 text-[14px] lg:text-lg">Te mandamos un correo con las dos fechas, sus archivos para tu calendario y cómo entrar a la llamada del club.</p>
+                <p className="text-xl font-bold sm:text-2xl lg:text-3xl" style={DISPLAY}>¡Listo, estás registrado! 👻</p>
+                <p className="mt-1 text-[13px] sm:text-[14px] lg:text-lg">
+                  {justRegistered ? "Te mandamos" : "Ya te mandamos"} un correo a <span className="font-semibold">{userEmail}</span> con las dos fechas para tu calendario. {giftLine(gift, isMember)}
+                </p>
               </motion.div>
             ) : (
               <>
-                {/* en móvil el precio va al lado del botón; en pantallas anchas, arriba */}
-                <div className="flex items-center gap-3 sm:block">
-                <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                  <span className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ ...DISPLAY, color: GREEN }}>{mxn(price)}<span className="hidden sm:inline"> MXN</span></span>
-                  <span className="hidden text-[13px] font-medium sm:inline sm:text-sm" style={{ color: MINT }}>
-                    {priceNote}
-                  </span>
-                </p>
-                <fetcher.Form method="post" action={ANTI_FACTORY_PATH} className="flex-1 sm:mt-2 lg:mt-3">
-                  <input type="hidden" name="intent" value="direct_checkout" />
+                {/* con sesión se registra aquí mismo; sin sesión, el modal con el login de siempre (Google o liga) */}
+                {userEmail ? (
+                  <fetcher.Form method="post" action={ANTI_FACTORY_PATH}>
+                    <input type="hidden" name="intent" value="register" />
+                    <motion.button
+                      type="submit"
+                      disabled={busy}
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={CTA_CLASS}
+                      style={{ background: GREEN, color: BG }}
+                    >
+                      {busy ? "Registrando…" : "Regístrate gratis"}
+                    </motion.button>
+                  </fetcher.Form>
+                ) : (
                   <motion.button
-                    type="submit"
-                    disabled={busy}
+                    type="button"
+                    onClick={() => setSheetOpen(true)}
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.98 }}
-                    className="h-11 w-full rounded-xl px-4 text-lg sm:px-8 font-semibold transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#85DDCB] disabled:opacity-60 sm:w-auto lg:h-14 lg:text-xl"
+                    className={CTA_CLASS}
                     style={{ background: GREEN, color: BG }}
                   >
-                    {busy ? "Abriendo el pago…" : <>Inscríbete<span className="hidden sm:inline"> al taller</span></>}
+                    Regístrate gratis
                   </motion.button>
-                </fetcher.Form>
-                </div>
-                <div className="mt-1 text-[12px] sm:mt-2 sm:text-sm" style={{ color: MUTE }}>
-                  {/* en el celular cabe un solo renglón: la nota del precio sólo si ya te toca el del club */}
-                  {isMember && <p className="truncate font-medium sm:hidden" style={{ color: MINT }}>{priceNote}</p>}
+                )}
+                <div className="mt-1 text-[12px] leading-snug sm:mt-2 sm:text-sm" style={{ color: MUTE }}>
                   {error ? (
                     <p role="alert" style={{ color: GREEN }}>{error}</p>
-                  ) : canceled ? (
-                    <p>El pago no se completó. Puedes intentarlo de nuevo.</p>
-                  ) : null}
-                  {!isMember &&
-                    (isLoggedIn ? (
-                      <Link to="/comunidad/club-de-agentes" className="underline-offset-4 hover:underline">
-                        <span className="sm:hidden" style={{ color: MINT }}>Miembros del club: {mxn(clubPrice)} · Únete</span>
-                        <span className="hidden sm:inline">¿Quieres el precio de {mxn(clubPrice)}? Únete al Club de Agentes de IA.</span>
-                      </Link>
-                    ) : (
-                      <Link to={`/login?next=${encodeURIComponent(ANTI_FACTORY_PATH)}`} className="underline-offset-4 hover:underline">
-                        <span className="sm:hidden" style={{ color: MINT }}>Club o lista de espera: {mxn(clubPrice)} · Inicia sesión</span>
-                        <span className="hidden sm:inline">¿Eres del club o estás en la lista de espera? Inicia sesión para tu precio de {mxn(clubPrice)}.</span>
-                      </Link>
-                    ))}
+                  ) : (
+                    <>
+                      <p className="sm:hidden">Te avisamos de las dos sesiones y te llevas 3 meses del club.</p>
+                      <p className="hidden sm:block">Regístrate gratis: te avisamos de las dos sesiones y te llevas 3 meses del Club de Agentes de IA.</p>
+                    </>
+                  )}
                 </div>
               </>
+            )}
+            {/* Renglón secundario: la grabación del webinar del 18-nov; sin membresía, es gancho al registro */}
+            {(isMember || !done) && (
+              <p className="mt-1.5 truncate text-[12px] sm:mt-2 sm:text-sm" style={{ color: MUTE }}>
+                {isMember ? (
+                  <a href={WEBINAR_RECORDING_URL} className="underline-offset-4 hover:underline">
+                    ¿Te perdiste el webinar del 18 de noviembre? <span style={{ color: MINT }}>Míralo en el club →</span>
+                  </a>
+                ) : (
+                  <button type="button" onClick={startRegister} className="truncate underline-offset-4 hover:underline">
+                    <span className="sm:hidden">¿Te perdiste el webinar del 18-nov? <span style={{ color: MINT }}>Regístrate y míralo</span></span>
+                    <span className="hidden sm:inline">¿Te perdiste el webinar del 18 de noviembre? <span style={{ color: MINT }}>Regístrate y tus 3 meses del club lo abren</span></span>
+                  </button>
+                )}
+              </p>
             )}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import { Await } from "react-router";
+import { Await, useSearchParams } from "react-router";
 import { ClubVideo } from "../ClubVideo";
 import { PlayIcon } from "./icons";
 import { EmptyNote, SectionHead, Tag, Wrap, btnGhost, card, shortDate } from "./ui";
@@ -94,7 +94,9 @@ function RecordingCard({ recording, onPlay, featured = false }: { recording: Clu
 }
 
 function RecordingsGrid({ slug, recordings }: { slug: string; recordings: ClubRecording[] }) {
-  const [playingId, setPlayingId] = useState<string | null>(null);
+  // `?grabacion=<id>` abre esa grabación de entrada (p. ej. la liga de la landing de Anti-Factory).
+  const [searchParams] = useSearchParams();
+  const [playingId, setPlayingId] = useState<string | null>(() => searchParams.get("grabacion"));
   const playing = recordings.find((r) => r.id === playingId && r.status === "ready");
   if (recordings.length === 0) {
     return <EmptyNote>Todavía no hay grabaciones. Cada llamada queda aquí completa cuando termina.</EmptyNote>;

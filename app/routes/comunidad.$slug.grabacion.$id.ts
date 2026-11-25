@@ -6,7 +6,7 @@ import { getUserOrNull } from "~/.server/dbGetters";
 import { recordingPlayAssets } from "~/.server/services/club-recording.server";
 import { canModerate, canParticipate } from "~/.server/services/wall.server";
 import { signedStoryboardVtt, storyboardResponse } from "~/.server/storyboard";
-import { canSeeRecording, hasAntiFactoryPurchase, isPaidRecording } from "~/.server/services/anti-factory.server";
+import { canSeeRecording, hasAntiFactoryAccess, isPaidRecording } from "~/.server/services/anti-factory.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserOrNull(request);
@@ -34,10 +34,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     recordedAt,
     canMod,
     isInside: canParticipate(user, membership, community),
-    hasPurchase: isPaidRecording(recordedAt) ? await hasAntiFactoryPurchase(user.email) : false,
+    hasPurchase: isPaidRecording(recordedAt) ? await hasAntiFactoryAccess(user.email) : false,
   });
   if (!allowed) {
-    throw data(isPaidRecording(recordedAt) ? "Esta grabación es del taller de paga" : "Sólo miembros", { status: 403 });
+    throw data(isPaidRecording(recordedAt) ? "Esta grabación es del taller Ghosty Anti-Factory; regístrate gratis en /anti-factory para verla" : "Sólo miembros", { status: 403 });
   }
   const assets = await recordingPlayAssets(community.id, params.id as string, { includeHidden: canMod });
   if (!assets) throw data("No encontrada", { status: 404 });

@@ -28,6 +28,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 const SUBSCRIPTION_EXTRA_TAGS = new Set(["integraciones", "analisis_estrategicos"]);
+/// Tags que un magic link puede llevar (los agrega el login al entrar).
+const MAGIC_LINK_TAGS = new Set(["anti-factory-registro-dic26"]);
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
@@ -85,8 +87,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (guard.ok && (await claimEmailSend(email, "otp:magic-link", guard.ip, "otp"))) {
       const rawNext = String(formData.get("next") ?? "");
       const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : undefined;
-      await sendMagicLink({ email, next });
+      // sólo tags conocidos: el body lo controla quien hace el POST
+      const tags = formData.getAll("tags").map(String).filter((t) => MAGIC_LINK_TAGS.has(t));
+      await sendMagicLink({ email, next, ...(tags.length ? { tags } : {}) });
     }
+    // Desde un modal (`inline=1`) se responde aquí mismo para no salir de la página.
+    if (formData.get("inline") === "1") return data({ sent: true as const });
     return redirect("/login?success=1");
   }
 

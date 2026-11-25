@@ -3,7 +3,13 @@ import { twMerge } from "tailwind-merge";
 import { useState } from "react";
 import Spinner from "~/components/common/Spinner";
 
-export function GoogleLoginLink() {
+/// `next` fijo (p. ej. un modal de registro) en vez del `?next=` de la URL; `label` y `className`
+/// para vestirlo con el estilo de la página que lo usa.
+export function GoogleLoginLink({
+  next: fixedNext,
+  label = "Inicia con Google",
+  className,
+}: { next?: string; label?: string; className?: string } = {}) {
   const [isLoading, setIsLoading] = useState(false);
 
   const GOOGLE_CLIENT_ID = "590084716663-g42lg2ri98auua3oo6n412v9s6rlper4.apps.googleusercontent.com";
@@ -18,7 +24,7 @@ export function GoogleLoginLink() {
       : "https://www.fixtergeek.com";
 
     // Leer next de la URL actual (/login?next=/admin/webinar)
-    const next = new URLSearchParams(window.location.search).get("next") || "/mis-cursos";
+    const next = fixedNext || new URLSearchParams(window.location.search).get("next") || "/mis-cursos";
 
     // Crear state con next (base64 para evitar caracteres especiales)
     // Google devuelve el state intacto en el callback
@@ -40,13 +46,14 @@ export function GoogleLoginLink() {
       onClick={handleClick}
       className={twMerge(
         "cursor-pointer py-3 px-4 text-white to-brand-200 text-base w-full shadow flex items-center gap-3 justify-center font-semibold bg-brand-900 rounded-full mx-auto my-8 hover:bg-brand-800 active:scale-95 transition-transform no-underline",
-        isLoading && "opacity-75 pointer-events-none"
+        isLoading && "opacity-75 pointer-events-none",
+        className
       )}
     >
       <span className="text-xl">
         {isLoading ? <Spinner /> : <FcGoogle />}
       </span>
-      <span>{isLoading ? "Redirigiendo..." : "Inicia con Google"}</span>
+      <span>{isLoading ? "Redirigiendo..." : label}</span>
     </button>
   );
 }

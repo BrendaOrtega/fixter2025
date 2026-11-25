@@ -12,6 +12,12 @@ const fake = vi.hoisted(() => ({
   /** Invitaciones del club por correo. */
   invites: {} as Record<string, { id: string; callDays: string[] }>,
   mails: [] as string[],
+  /** Fechas de fin de cada membresía regalada. */
+  grants: [] as Date[],
+  /** Tags del Subscriber por correo. */
+  tags: {} as Record<string, string[]>,
+  /** tagDates del Subscriber por correo. */
+  tagDates: {} as Record<string, Record<string, string>>,
   /** Correos en la lista de espera de software-factory. */
   waitlist: [] as string[],
 }));
@@ -24,7 +30,14 @@ vi.mock("~/mailSenders/successPurchase", () => ({
 vi.mock("~/.server/db", () => ({
   db: {
     community: { findFirst: async () => fake.community },
-    membership: { findUnique: async () => fake.membership },
+    membership: {
+      findUnique: async () => fake.membership,
+      upsert: async ({ create }: { create: any }) => {
+        fake.grants.push(create.currentPeriodEnd);
+        fake.membership = { status: "active", currentPeriodEnd: create.currentPeriodEnd, provider: "grant" } as any;
+        return fake.membership;
+      },
+    },
     product: { findUnique: async () => fake.product },
     purchaseEvent: {
       findFirst: async ({ where }: { where: { email: { equals: string } } }) =>
@@ -42,8 +55,18 @@ vi.mock("~/.server/db", () => ({
         ),
     },
     subscriber: {
-      findUnique: async ({ where }: { where: { email: string } }) =>
-        fake.waitlist.includes(where.email) ? { tags: ["newsletter", "software-factory-waitlist"] } : { tags: ["newsletter"] },
+      findUnique: async ({ where }: { where: { email: string } }) => ({
+        tags: [
+          "newsletter",
+          ...(fake.waitlist.includes(where.email) ? ["software-factory-waitlist"] : []),
+          ...(fake.tags[where.email] ?? []),
+        ],
+        tagDates: fake.tagDates[where.email] ?? null,
+      }),
+      upsert: async ({ where, update }: { where: { email: string }; update: { tags?: string[]; tagDates?: Record<string, string> } }) => {
+        fake.tags[where.email] = update.tags ?? [];
+        fake.tagDates[where.email] = update.tagDates ?? {};
+      },
     },
     communityInvite: {
       findUnique: async ({ where }: { where: { communityId_email: { email: string } } }) =>
@@ -70,6 +93,7 @@ import {
   isPaidCheckout,
   isPaidRecording,
   refundAntiFactory,
+  registerAntiFactory,
   isAntiFactoryType,
   isClubMember,
   pickAntiFactoryTier,
@@ -84,6 +108,9 @@ beforeEach(() => {
   fake.purchases = {};
   fake.invites = {};
   fake.mails = [];
+  fake.grants = [];
+  fake.tags = {};
+  fake.tagDates = {};
   fake.waitlist = [];
 });
 
@@ -154,10 +181,19 @@ describe("candado de la llamada en sesiones de paga", () => {
   const member = { email: "ana@club.mx", isMember: true, exempt: false };
   const outsider = { email: "Beto@Mail.mx", isMember: false, exempt: false };
 
-  it("un miembro sin compra queda fuera con el aviso de su precio", async () => {
+  it("un miembro sin registro queda fuera con la liga para registrarse gratis", async () => {
     const gate = await antiFactoryCallGate(taller1, member);
     expect(gate?.url).toBe("/anti-factory");
-    expect(gate?.message).toBe("Esta sesión es del taller de paga; como miembro la tienes en $1,490.");
+    expect(gate?.message).toBe("Esta sesión es del taller Ghosty Anti-Factory. Regístrate gratis para entrar.");
+  });
+  it("quien se registró gratis entra (su invitación trae los días del taller)", async () => {
+    fake.invites["beto@mail.mx"] = { id: "beto@mail.mx", callDays: ["20261201", "20261203"] };
+    expect(await antiFactoryCallGate(taller1, outsider)).toBeNull();
+    expect(await antiFactoryCallGate(taller2, outsider)).toBeNull();
+  });
+  it("una invitación a otros días no da lugar en el taller", async () => {
+    fake.invites["beto@mail.mx"] = { id: "beto@mail.mx", callDays: ["20261117"] };
+    expect(await antiFactoryCallGate(taller1, outsider)).not.toBeNull();
   });
   it("un miembro con compra entra", async () => {
     fake.buyers = ["ana@club.mx"];
@@ -292,5 +328,45 @@ describe("lista de compradores para la cortesía de Ghosty Studio", () => {
       e: { email: "otro@mail.mx", productKey: "sistemas-agenticos-workshop", status: "fulfilled" },
     };
     expect(await listAntiFactoryBuyers()).toEqual(["ana@club.mx", "beto@mail.mx"]);
+  });
+});
+
+describe("registro gratis con 3 meses del club", () => {
+  const user = { id: "u1", email: "Cami@Mail.mx", name: "Cami" };
+  it("sin membresía: regala 90 días, deja el tag y manda la confirmación una vez", async () => {
+    const r = await registerAntiFactory(user);
+    expect(r.gift).toBe("granted");
+    const days = (fake.grants[0].getTime() - Date.now()) / 86_400_000;
+    expect(Math.round(days)).toBe(90);
+    expect(fake.tags["cami@mail.mx"]).toContain("anti-factory-registro-dic26");
+    expect(fake.mails).toEqual(["confirm:cami@mail.mx"]);
+    const again = await registerAntiFactory(user);
+    expect(again.already).toBe(true);
+    expect(fake.grants).toHaveLength(1);
+    expect(fake.mails).toHaveLength(1);
+  });
+  it("con membresía vigente no regala y le dice que ya está dentro", async () => {
+    fake.membership = { status: "active", currentPeriodEnd: new Date(Date.now() + 86_400_000) };
+    expect((await registerAntiFactory(user)).gift).toBe("member");
+    expect(fake.grants).toHaveLength(0);
+  });
+  it("si ya tuvo un regalo vencido no recibe otro y le queda el pase de esos dos días", async () => {
+    fake.membership = { status: "active", currentPeriodEnd: new Date(Date.now() - 86_400_000), provider: "grant" } as any;
+    expect((await registerAntiFactory(user)).gift).toBe("used");
+    expect(fake.grants).toHaveLength(0);
+    expect(fake.invites["cami@mail.mx"].callDays).toEqual(["20261201", "20261203"]);
+  });
+  it("el tag que deja el magic link al iniciar sesión no cuenta como registro terminado", async () => {
+    fake.tags["cami@mail.mx"] = ["anti-factory-registro-dic26"];
+    expect((await registerAntiFactory(user)).gift).toBe("granted");
+    expect(fake.mails).toEqual(["confirm:cami@mail.mx"]);
+  });
+  it("quien se registró entra a la sesión del taller", async () => {
+    await registerAntiFactory(user);
+    const gate = await antiFactoryCallGate(
+      { startsAt: new Date("2026-12-02T01:00:00Z") },
+      { email: "cami@mail.mx", isMember: true, exempt: false },
+    );
+    expect(gate).toBeNull();
   });
 });

@@ -2,7 +2,7 @@
 // entrega al pagar: qué precio le toca a quien compra, las dos sesiones y el cumplimiento que llama
 // el webhook de Stripe. La landing es `app/routes/anti-factory.tsx`.
 import { db } from "~/.server/db";
-import { hasActiveMembership } from "~/.server/services/membership.server";
+import { grantMembership, hasActiveMembership, isMembershipActive } from "~/.server/services/membership.server";
 import { cdmxDay, upsertInvites } from "~/.server/services/club-invites.server";
 import { recordPurchase, type FulfillmentStep } from "~/.server/services/fulfillment.server";
 import { successPurchase } from "~/mailSenders/successPurchase";
@@ -134,22 +134,126 @@ export async function hasAntiFactoryPurchase(email: string) {
 }
 
 /**
- * Candado de la llamada en una sesión de paga. Devuelve `null` si puede entrar, o el aviso con la
- * liga para inscribirse. El anfitrión y los moderadores siempre entran.
+ * ¿Este correo tiene lugar en el taller? Desde el 25-nov el taller es gratis: cuenta quien se
+ * registró (tag en `Subscriber`), quien tiene pase por invitación esos días y quien lo compró antes.
+ */
+export async function hasAntiFactoryAccess(email: string) {
+  if (await hasAntiFactoryPurchase(email)) return true;
+  const sub = await db.subscriber.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { tags: true },
+  });
+  if (sub?.tags.includes(ANTI_FACTORY_REGISTER_TAG)) return true;
+  const community = await db.community.findFirst({ where: { slug: CLUB_SLUG }, select: { id: true } });
+  if (!community) return false;
+  const invite = await db.communityInvite.findUnique({
+    where: { communityId_email: { communityId: community.id, email: email.trim().toLowerCase() } },
+    select: { callDays: true },
+  });
+  return !!invite?.callDays.some((d) => ANTI_FACTORY_CALL_DAYS.includes(d));
+}
+
+/**
+ * Candado de la llamada en una sesión del taller. Devuelve `null` si puede entrar, o el aviso con la
+ * liga para registrarse gratis. El anfitrión y los moderadores siempre entran.
  */
 export async function antiFactoryCallGate(
   event: { startsAt: Date } | null,
   who: { email: string; isMember: boolean; exempt: boolean },
 ) {
   if (!event || who.exempt || !paidSessionAt(event.startsAt)) return null;
-  if (await hasAntiFactoryPurchase(who.email)) return null;
-  const clubPrice = await priceFor(ANTI_FACTORY_TIERS.club);
+  if (await hasAntiFactoryAccess(who.email)) return null;
   return {
-    message: who.isMember
-      ? `Esta sesión es del taller de paga; como miembro la tienes en $${clubPrice.toLocaleString("es-MX")}.`
-      : "Esta sesión es del taller de paga. Inscríbete para entrar.",
+    message: "Esta sesión es del taller Ghosty Anti-Factory. Regístrate gratis para entrar.",
     url: ANTI_FACTORY_PATH,
   };
+}
+
+// ── Registro gratis (desde el 25-nov-2026) ──────────────────────────────────────────────────────
+// El taller ya no se cobra. El registro es el login de siempre (Google o magic link, que verifican
+// el correo y dejan un User) y al volver con sesión: tag en `Subscriber`, 3 meses de regalo del club
+// (como `claimBuyerGift`: una sola vez) y la confirmación con los .ics. Sin modelos nuevos.
+export const ANTI_FACTORY_REGISTER_TAG = "anti-factory-registro-dic26";
+export const ANTI_FACTORY_REGISTER_SOURCE = "anti-factory-registro-dic26";
+export const ANTI_FACTORY_GIFT_DAYS = 90;
+
+/** Qué pasó con el regalo del club: se dio ahora, ya era miembro vigente, o ya había tenido regalo. */
+export type AntiFactoryGift = "granted" | "member" | "used";
+
+/// El registro quedó completo (regalo y correo) cuando `tagDates` trae la fecha del tag. El tag solo no
+/// basta: el magic link del modal lo agrega al iniciar sesión, antes de que el registro termine.
+const finishedRegistration = (tagDates: unknown) =>
+  !!(tagDates as Record<string, string> | null)?.[ANTI_FACTORY_REGISTER_TAG];
+
+/** ¿Este correo ya se registró (o compró) el taller? */
+export async function isAntiFactoryRegistered(email: string) {
+  const sub = await db.subscriber.findUnique({
+    where: { email: email.trim().toLowerCase() },
+    select: { tagDates: true },
+  });
+  return finishedRegistration(sub?.tagDates) || (await hasAntiFactoryPurchase(email));
+}
+
+/**
+ * Los 3 meses del club, con el criterio de `canClaimBuyerGift`: quien tiene membresía vigente ya
+ * está dentro y quien ya tuvo un regalo (aunque haya vencido) no recibe otro.
+ */
+export async function giveAntiFactoryGift(userId: string, communityId: string): Promise<AntiFactoryGift> {
+  const current = await db.membership.findUnique({
+    where: { communityId_userId: { communityId, userId } },
+    select: { provider: true, status: true, currentPeriodEnd: true },
+  });
+  if (isMembershipActive(current)) return "member";
+  if (current?.provider === "grant") return "used";
+  const until = new Date(Date.now() + ANTI_FACTORY_GIFT_DAYS * 24 * 60 * 60 * 1000);
+  await grantMembership({ userId, communityId, until });
+  return "granted";
+}
+
+/**
+ * Registra al taller a un usuario con sesión (correo ya verificado por el login). La confirmación
+ * se manda una sola vez: registrarse de nuevo no reenvía nada ni da otro regalo.
+ */
+export async function registerAntiFactory(user: { id: string; email: string; name?: string | null }) {
+  const email = user.email.trim().toLowerCase();
+  const prev = await db.subscriber.findUnique({ where: { email }, select: { tags: true, tagDates: true } });
+  const already = finishedRegistration(prev?.tagDates);
+  const community = await db.community.findFirst({ where: { slug: CLUB_SLUG }, select: { id: true } });
+  if (already || !community) return { already, gift: null };
+
+  const now = new Date().toISOString();
+  await db.subscriber.upsert({
+    where: { email },
+    create: {
+      email,
+      name: user.name || undefined,
+      confirmed: true,
+      confirmedAt: new Date(),
+      tags: ["newsletter", ANTI_FACTORY_REGISTER_TAG],
+      tagDates: { newsletter: now, [ANTI_FACTORY_REGISTER_TAG]: now },
+    },
+    update: {
+      tags: [...new Set([...(prev?.tags ?? []), ANTI_FACTORY_REGISTER_TAG])],
+      tagDates: { ...((prev?.tagDates as Record<string, string> | null) ?? {}), [ANTI_FACTORY_REGISTER_TAG]: now },
+    },
+  });
+  const gift = await giveAntiFactoryGift(user.id, community.id);
+  // Sin membresía vigente (ya había usado su regalo), el pase por invitación lo deja entrar esos dos días.
+  if (gift === "used") {
+    await upsertInvites(community.id, [email], {
+      source: ANTI_FACTORY_REGISTER_SOURCE,
+      giftDays: 0,
+      callDays: ANTI_FACTORY_CALL_DAYS,
+    });
+  }
+  await sendAntiFactoryConfirmation({
+    to: email,
+    userName: user.name,
+    sessions: ANTI_FACTORY_SESSIONS,
+    joinUrl: CLUB_URL,
+    gift,
+  });
+  return { already, gift };
 }
 
 // ── Webinar gratis del 18-nov ───────────────────────────────────────────────────────────────────
@@ -169,8 +273,8 @@ export function isOpenWebinarCall(event: { startsAt: Date } | null) {
 }
 
 // ── Grabaciones de las sesiones de paga ─────────────────────────────────────────────────────────
-// Las grabaciones de los días del taller son de paga: las ve quien compró (miembro o no) y el
-// anfitrión; un miembro sin compra no las ve.
+// Las grabaciones de los días del taller las ve quien tiene lugar (registro gratis o compra previa,
+// miembro o no) y el anfitrión; un miembro sin registro no las ve.
 
 /** ¿La grabación es de un día del taller? Se decide por el día en CDMX en que se grabó. */
 export function isPaidRecording(recordedAt: Date) {
@@ -199,7 +303,7 @@ export async function filterPaidRecordings<R extends { endedAt: string }>(
   who: { email: string | null; canMod: boolean },
 ) {
   if (who.canMod || !list.some((r) => isPaidRecording(new Date(r.endedAt)))) return list;
-  const bought = who.email ? await hasAntiFactoryPurchase(who.email) : false;
+  const bought = who.email ? await hasAntiFactoryAccess(who.email) : false;
   return bought ? list : list.filter((r) => !isPaidRecording(new Date(r.endedAt)));
 }
 

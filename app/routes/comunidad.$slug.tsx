@@ -311,7 +311,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (!isCallOpen(event) && !canMod) {
       return data({ error: "La llamada se abre 15 minutos antes." }, { status: 400 });
     }
-    // Sesión del taller de paga (Anti-Factory): sólo entra quien lo compró, miembro o no.
+    // Sesión del taller Anti-Factory: sólo entra quien se registró gratis (o lo compró antes), miembro o no.
     const paywall = await antiFactoryCallGate(event, {
       email: user.email,
       isMember: isMembershipActive(membership),
