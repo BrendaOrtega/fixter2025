@@ -131,6 +131,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   ]);
   if (!community) throw data("Comunidad no encontrada", { status: 404 });
 
+  // Liga de un correo (p. ej. «se acaban tus meses gratis»): `?unirse=month|year` abre el checkout de
+  // la membresía, el mismo de «Unirme». Con regalo vigente el cobro empieza cuando vence (`giftTrialEnd`).
+  const join = new URL(request.url).searchParams.get("unirse");
+  if (join === "month" || join === "year") {
+    if (!user) throw redirect(`/login?next=${encodeURIComponent(`/comunidad/${community.slug}?unirse=${join}`)}`);
+    const url = await createMembershipCheckout({ user, communitySlug: community.slug, interval: join });
+    if (url) throw redirect(url);
+  }
+
   // Camino crítico (lo que pinta el hero, el estado de quien mira y la próxima llamada), todo en
   // paralelo. La identidad es la única cadena en serie: invitación → membresía → regalo.
   const identity = (async () => {

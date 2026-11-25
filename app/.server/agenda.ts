@@ -282,6 +282,14 @@ getAgenda().define("club_event_reminders", { lockLifetime: 15 * 60 * 1000 }, asy
   if (sent) console.info(`Recordatorios del club: ${sent} correos`);
 });
 
+// Aviso «se acaban tus meses gratis» a los regalos del club que vencen en 10 días. Diario y sólo en
+// producción, por la misma razón que los recordatorios.
+getAgenda().define("club_gift_ending", { lockLifetime: 15 * 60 * 1000 }, async () => {
+  const { sendGiftEndingEmails } = await import("./services/club-gift-ending.server");
+  const { sent } = await sendGiftEndingEmails();
+  if (sent) console.info(`Avisos de fin de regalo del club: ${sent} correos`);
+});
+
 // Initialize Agenda with all job definitions
 export const initializeAgenda = async () => {
   const agenda = getAgenda();
@@ -302,6 +310,9 @@ export const initializeAgenda = async () => {
   if (process.env.NODE_ENV === "production") {
     await agenda.every("10 minutes", "club_event_reminders");
     console.info("📅 Recordatorios del club cada 10 min");
+    // 10 am CDMX: la ventana es de un día, así que cada regalo cae en una sola corrida.
+    await agenda.every("0 10 * * *", "club_gift_ending", {}, { timezone: "America/Mexico_City" });
+    console.info("🎁 Avisos de fin de regalo del club a diario (10 am CDMX)");
   }
 
   // Start backup scheduler (Domingos 3:00 AM)

@@ -1,4 +1,4 @@
-# Verificación OAuth de Google: permiso `youtube` (20-nov-2026)
+# Verificación OAuth de Google: permiso `youtube` (aprobada el 22-nov-2026)
 
 Proyecto de Google `fixter-67253` (590084716663), app «Fixtergeek.com». El mismo cliente sirve al login y a
 «Transmisión» de las comunidades (`club-live.server.ts`), que pide `https://www.googleapis.com/auth/youtube`.
@@ -81,8 +81,15 @@ Si el revisor deja grabando, la caja se detiene sola a los 3 minutos sin nadie p
 - Cloud Console → Verification Center: «Your app's data access is under review», sin botón de reenviar; la URL del
   aviso ya era la correcta, así que no hubo nada que volver a mandar ahí.
 
+## Aprobada (22-nov-2026, 7:47)
+Correo «API OAuth Dev Verification»: Google aprobó el permiso `.../auth/youtube` del proyecto `fixter-67253`.
+Ya no sale la pantalla de «app no verificada» ni el tope de usuarios de prueba.
+
+Reglas que deja la aprobación:
+- **Cualquier cambio en la pantalla de consentimiento** (nombre, logo, dominios, ligas) **o un permiso nuevo** pide
+  otra verificación. No tocar esa configuración sin planearlo.
+- Mantener al día los dueños y editores del proyecto en Cloud Console para recibir los avisos de Google.
+
 ## Pendiente
-- Esperar la respuesta de Google. Si piden algo más, leer el motivo antes de contestar.
-- Si tardan más de 60 días: `scripts/google-review-community.mts --write` y mandarles la liga nueva.
+- Decidir si se borra la comunidad `google-review` y su anfitrión (ya no hace falta; la liga vence ~19-ene-2027).
 - La transmisión de prueba `watch?v=CkOp6tfU8HM` (oculta, 40 s) sigue en el canal FixterGeek: borrarla si bliss lo pide.
-- No conectar ningún canal a `google-review` ni borrar esa comunidad mientras dure la revisión.
