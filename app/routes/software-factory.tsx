@@ -119,6 +119,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Quien ya se registró (o compró antes) ve directo su confirmación.
     registered: user ? await isAntiFactoryRegistered(user.email) : false,
     justRegistered: !!fresh && !fresh.already,
+    // El confeti sale en cada registro que se completa, aunque esa cuenta ya estuviera registrada.
+    celebrate: !!fresh,
     gift: fresh?.gift ?? null,
     isMember: user ? await isClubMember(user) : false,
     confirmed: !!decoded,
@@ -651,11 +653,12 @@ const giftLine = (gift: Gift, isMember: boolean) =>
 
 export default function Route() {
   const fetcher = useFetcher<typeof action>();
-  const { inApp, userEmail, registered, justRegistered: justBack, gift: backGift, isMember, confirmed } = useLoaderData<typeof loader>();
+  const { inApp, userEmail, registered, justRegistered: justBack, celebrate: backCelebrate, gift: backGift, isMember, confirmed } = useLoaderData<typeof loader>();
   const busy = fetcher.state !== "idle";
   const error = fetcher.data && "error" in fetcher.data ? fetcher.data.error : null;
   const justPosted = !!(fetcher.data && "ok" in fetcher.data);
   const justRegistered = justBack || justPosted;
+  const celebrate = backCelebrate || justPosted;
   const gift: Gift = (fetcher.data && "gift" in fetcher.data ? fetcher.data.gift : null) ?? backGift;
   const done = registered || justPosted;
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -671,18 +674,18 @@ export default function Route() {
     window.history.replaceState(window.history.state, "", url.pathname + url.search);
   }, []);
 
-  // Confeti de EasyBits una vez por registro, además del de la casa; sólo en el cliente.
+  // Confeti de EasyBits en cada registro, además del de la casa; sólo en el cliente.
   useEffect(() => {
-    if (!justRegistered) return;
+    if (!celebrate) return;
     import("@easybits.cloud/confetti").then(({ confetti }) => {
       confetti({ colors: ["#85DDCB", "#8DCF6E", "#F2F5F4"], outline: "#0E1317" });
     });
-  }, [justRegistered]);
+  }, [celebrate]);
 
   return (
     // una sola pantalla: alto del viewport y sin desborde; la navbar es fixed y se compensa con pt
     <main style={{ background: BG, color: INK }}>
-      {(justRegistered || confirmed) && <CanvasConfetti />}
+      {(celebrate || confirmed) && <CanvasConfetti />}
       <RegisterSheet open={sheetOpen} onClose={() => setSheetOpen(false)} inApp={inApp} />
       <div className="relative flex h-[100dvh] flex-col overflow-hidden px-4 pb-3 pt-[4.5rem] sm:px-8 sm:pb-4 sm:pt-20">
       <div
